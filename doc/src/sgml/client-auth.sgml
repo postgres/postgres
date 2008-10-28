@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.109 2008/10/23 13:31:09 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.110 2008/10/28 12:10:42 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -310,24 +310,6 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          <para>
           Require the client to supply an MD5-encrypted password for
           authentication.
-          See <xref linkend="auth-password"> for details.
-         </para>
-        </listitem>
-       </varlistentry>
-
-       <varlistentry>
-        <term><literal>crypt</></term>
-        <listitem>
-         <note>
-         <para>
-          This option is recommended only for communicating with pre-7.2
-          clients.
-         </para>
-         </note>
-         <para>
-          Require the client to supply a <function>crypt()</>-encrypted
-          password for authentication.
-          <literal>md5</literal> is now recommended over <literal>crypt</>.
           See <xref linkend="auth-password"> for details.
          </para>
         </listitem>
@@ -705,30 +687,21 @@ omicron       bryanh            guest1
     <primary>MD5</>
    </indexterm>
    <indexterm>
-    <primary>crypt</>
-   </indexterm>
-   <indexterm>
     <primary>password</primary>
     <secondary>authentication</secondary>
    </indexterm>
 
    <para>
     The password-based authentication methods are <literal>md5</>,
-    <literal>crypt</>, and <literal>password</>. These methods operate
+    and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
-    connection: respectively, MD5-hashed, crypt-encrypted, and clear-text.
-    A limitation is that the <literal>crypt</> method does not work with
-    passwords that have been encrypted in <structname>pg_authid</structname>.
+    connection: respectively, MD5-hashed and clear-text.
    </para>
 
    <para>
     If you are at all concerned about password
-    <quote>sniffing</> attacks then <literal>md5</> is preferred, with
-    <literal>crypt</> to be used only if you must support pre-7.2
-    clients. Plain <literal>password</> should be avoided especially for
-    connections over the open Internet (unless you use <acronym>SSL</acronym>,
-    <acronym>SSH</>, or another
-    communications security wrapper around the connection).
+    <quote>sniffing</> attacks then <literal>md5</> is preferred.
+    Plain <literal>password</> should always be avoided if possible.
    </para>
 
    <para>

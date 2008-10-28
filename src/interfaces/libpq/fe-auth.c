@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.137 2008/01/31 18:58:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.138 2008/10/28 12:10:44 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,6 @@
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
 #include <pwd.h>
-#endif
-
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
 #endif
 
 #include "libpq-fe.h"
@@ -787,14 +783,6 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 				}
 				break;
 			}
-		case AUTH_REQ_CRYPT:
-			{
-				char		salt[3];
-
-				strlcpy(salt, conn->cryptSalt, sizeof(salt));
-				crypt_pwd = crypt(password, salt);
-				break;
-			}
 		case AUTH_REQ_PASSWORD:
 			/* discard const so we can assign it */
 			crypt_pwd = (char *) password;
@@ -938,8 +926,12 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 #endif
 
 
-		case AUTH_REQ_MD5:
 		case AUTH_REQ_CRYPT:
+			printfPQExpBuffer(&conn->errorMessage,
+				 libpq_gettext("Crypt authentication not supported\n"));
+			return STATUS_ERROR;
+
+		case AUTH_REQ_MD5:
 		case AUTH_REQ_PASSWORD:
 			conn->password_needed = true;
 			if (conn->pgpass == NULL || conn->pgpass[0] == '\0')

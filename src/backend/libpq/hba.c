@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.171 2008/10/27 20:04:45 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.172 2008/10/28 12:10:43 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -847,8 +847,6 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		parsedline->auth_method = uaReject;
 	else if (strcmp(token, "md5") == 0)
 		parsedline->auth_method = uaMD5;
-	else if (strcmp(token, "crypt") == 0)
-		parsedline->auth_method = uaCrypt;
 	else if (strcmp(token, "pam") == 0)
 #ifdef USE_PAM
 		parsedline->auth_method = uaPAM;

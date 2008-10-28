@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.364 2008/10/27 09:42:31 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.365 2008/10/28 12:10:44 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1669,15 +1669,6 @@ keep_going:						/* We will come back to here until there is
 				{
 					if (pqGetnchar(conn->md5Salt,
 								   sizeof(conn->md5Salt), conn))
-					{
-						/* We'll come back when there are more data */
-						return PGRES_POLLING_READING;
-					}
-				}
-				if (areq == AUTH_REQ_CRYPT)
-				{
-					if (pqGetnchar(conn->cryptSalt,
-								   sizeof(conn->cryptSalt), conn))
 					{
 						/* We'll come back when there are more data */
 						return PGRES_POLLING_READING;

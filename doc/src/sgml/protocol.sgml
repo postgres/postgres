@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.73 2008/02/08 18:18:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.74 2008/10/28 12:10:42 mha Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -289,19 +289,6 @@
        <para>
         The frontend must now send a PasswordMessage containing the
         password in clear-text form.  If
-        this is the correct password, the server responds with an
-        AuthenticationOk, otherwise it responds with an ErrorResponse.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>AuthenticationCryptPassword</term>
-      <listitem>
-       <para>
-        The frontend must now send a PasswordMessage containing the
-        password encrypted via crypt(3), using the 2-character salt
-        specified in the AuthenticationCryptPassword message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </para>
@@ -1526,61 +1513,6 @@ AuthenticationCleartextPassword (B)
 </listitem>
 </varlistentry>
 </variablelist>
-</para>
-</listitem>
-</varlistentry>
-
-
-<varlistentry>
-<term>
-AuthenticationCryptPassword (B)
-</term>
-<listitem>
-<para>
-
-<variablelist>
-<varlistentry>
-<term>
-        Byte1('R')
-</term>
-<listitem>
-<para>
-                Identifies the message as an authentication request.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-        Int32(10)
-</term>
-<listitem>
-<para>
-                Length of message contents in bytes, including self.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-        Int32(4)
-</term>
-<listitem>
-<para>
-                Specifies that a crypt()-encrypted password is required.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-        Byte2
-</term>
-<listitem>
-<para>
-                The salt to use when encrypting the password.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
-
 </para>
 </listitem>
 </varlistentry>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.40 2008/09/08 00:47:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.41 2008/10/28 12:10:42 mha Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -215,8 +215,8 @@ CREATE USER <replaceable>name</replaceable>;
        <para>
         A password is only significant if the client authentication
         method requires the user to supply a password when connecting
-        to the database. The <option>password</>,
-        <option>md5</>, and <option>crypt</> authentication methods
+        to the database. The <option>password</> and
+        <option>md5</> authentication methods
         make use of passwords. Database passwords are separate from
         operating system passwords. Specify a password upon role
         creation with <literal>CREATE ROLE

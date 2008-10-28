@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/pqcomm.h,v 1.108 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/pqcomm.h,v 1.109 2008/10/28 12:10:44 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ extern bool Db_user_namespace;
 #define AUTH_REQ_KRB4		1	/* Kerberos V4. Not supported any more. */
 #define AUTH_REQ_KRB5		2	/* Kerberos V5 */
 #define AUTH_REQ_PASSWORD	3	/* Password */
-#define AUTH_REQ_CRYPT		4	/* crypt password */
+#define AUTH_REQ_CRYPT		4	/* crypt password. Not supported any more. */
 #define AUTH_REQ_MD5		5	/* md5 password */
 #define AUTH_REQ_SCM_CREDS	6	/* transfer SCM credentials */
 #define AUTH_REQ_GSS		7	/* GSSAPI without wrap() */

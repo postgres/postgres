@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.565 2008/09/23 20:35:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.566 2008/10/28 12:10:43 mha Exp $
  *
  * NOTES
  *
@@ -323,7 +323,7 @@ static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static enum CAC_state canAcceptConnections(void);
 static long PostmasterRandom(void);
-static void RandomSalt(char *cryptSalt, char *md5Salt);
+static void RandomSalt(char *md5Salt);
 static void signal_child(pid_t pid, int signal);
 static void SignalSomeChildren(int signal, bool only_autovac);
 
@@ -1808,7 +1808,7 @@ ConnCreate(int serverFd)
 		 * fork, not after.  Else the postmaster's random sequence won't get
 		 * advanced, and all backends would end up using the same salt...
 		 */
-		RandomSalt(port->cryptSalt, port->md5Salt);
+		RandomSalt(port->md5Salt);
 	}
 
 	/*
@@ -3910,49 +3910,20 @@ dummy_handler(SIGNAL_ARGS)
 {
 }
 
-
-/*
- * CharRemap: given an int in range 0..61, produce textual encoding of it
- * per crypt(3) conventions.
- */
-static char
-CharRemap(long ch)
-{
-	if (ch < 0)
-		ch = -ch;
-	ch = ch % 62;
-
-	if (ch < 26)
-		return 'A' + ch;
-
-	ch -= 26;
-	if (ch < 26)
-		return 'a' + ch;
-
-	ch -= 26;
-	return '0' + ch;
-}
-
 /*
  * RandomSalt
  */
 static void
-RandomSalt(char *cryptSalt, char *md5Salt)
+RandomSalt(char *md5Salt)
 {
-	long		rand = PostmasterRandom();
-
-	cryptSalt[0] = CharRemap(rand % 62);
-	cryptSalt[1] = CharRemap(rand / 62);
+	long		rand;
 
 	/*
-	 * It's okay to reuse the first random value for one of the MD5 salt
-	 * bytes, since only one of the two salts will be sent to the client.
-	 * After that we need to compute more random bits.
-	 *
 	 * We use % 255, sacrificing one possible byte value, so as to ensure that
 	 * all bits of the random() value participate in the result. While at it,
 	 * add one to avoid generating any null bytes.
 	 */
+	rand = PostmasterRandom();
 	md5Salt[0] = (rand % 255) + 1;
 	rand = PostmasterRandom();
 	md5Salt[1] = (rand % 255) + 1;
