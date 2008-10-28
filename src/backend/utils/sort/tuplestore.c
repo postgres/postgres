@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.42 2008/10/07 00:05:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.43 2008/10/28 15:51:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1173,9 +1173,17 @@ static void
 writetup_heap(Tuplestorestate *state, void *tup)
 {
 	MinimalTuple tuple = (MinimalTuple) tup;
-	unsigned int tuplen = tuple->t_len;
+	/* the part of the MinimalTuple we'll write: */
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
+	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
+	/* total on-disk footprint: */
+	unsigned int tuplen = tupbodylen + sizeof(int);
 
-	if (BufFileWrite(state->myfile, (void *) tuple, tuplen) != (size_t) tuplen)
+	if (BufFileWrite(state->myfile, (void *) &tuplen,
+					 sizeof(tuplen)) != sizeof(tuplen))
+		elog(ERROR, "write failed");
+	if (BufFileWrite(state->myfile, (void *) tupbody,
+					 tupbodylen) != (size_t) tupbodylen)
 		elog(ERROR, "write failed");
 	if (state->backward)		/* need trailing length word? */
 		if (BufFileWrite(state->myfile, (void *) &tuplen,
@@ -1189,14 +1197,16 @@ writetup_heap(Tuplestorestate *state, void *tup)
 static void *
 readtup_heap(Tuplestorestate *state, unsigned int len)
 {
-	MinimalTuple tuple = (MinimalTuple) palloc(len);
-	unsigned int tuplen;
+	unsigned int tupbodylen = len - sizeof(int);
+	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
+	MinimalTuple tuple = (MinimalTuple) palloc(tuplen);
+	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
 
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* read in the tuple proper */
-	tuple->t_len = len;
-	if (BufFileRead(state->myfile, (void *) ((char *) tuple + sizeof(int)),
-					len - sizeof(int)) != (size_t) (len - sizeof(int)))
+	tuple->t_len = tuplen;
+	if (BufFileRead(state->myfile, (void *) tupbody,
+					 tupbodylen) != (size_t) tupbodylen)
 		elog(ERROR, "unexpected end of data");
 	if (state->backward)		/* need trailing length word? */
 		if (BufFileRead(state->myfile, (void *) &tuplen,

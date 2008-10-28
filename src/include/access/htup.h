@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.101 2008/08/11 11:05:11 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.102 2008/10/28 15:51:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,11 +420,17 @@ do { \
  *
  * Note that t_hoff is computed the same as in a full tuple, hence it includes
  * the MINIMAL_TUPLE_OFFSET distance.  t_len does not include that, however.
+ *
+ * MINIMAL_TUPLE_DATA_OFFSET is the offset to the first useful (non-pad) data
+ * other than the length word.  tuplesort.c and tuplestore.c use this to avoid
+ * writing the padding to disk.
  */
 #define MINIMAL_TUPLE_OFFSET \
 	((offsetof(HeapTupleHeaderData, t_infomask2) - sizeof(uint32)) / MAXIMUM_ALIGNOF * MAXIMUM_ALIGNOF)
 #define MINIMAL_TUPLE_PADDING \
 	((offsetof(HeapTupleHeaderData, t_infomask2) - sizeof(uint32)) % MAXIMUM_ALIGNOF)
+#define MINIMAL_TUPLE_DATA_OFFSET \
+	offsetof(MinimalTupleData, t_infomask2)
 
 typedef struct MinimalTupleData
 {
