@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.100 2008/10/17 22:10:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.101 2008/10/28 17:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,7 +419,6 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_FunctionScan:
 		case T_ValuesScan:
 		case T_CteScan:
-		case T_WorkTableScan:
 			return TargetListSupportsBackwardScan(node->targetlist);
 
 		case T_IndexScan:

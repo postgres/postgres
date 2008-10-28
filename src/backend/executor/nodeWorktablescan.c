@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.3 2008/10/23 15:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.4 2008/10/28 17:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,14 +31,21 @@ WorkTableScanNext(WorkTableScanState *node)
 {
 	TupleTableSlot *slot;
 	EState	   *estate;
-	ScanDirection direction;
 	Tuplestorestate *tuplestorestate;
 
 	/*
 	 * get information from the estate and scan state
+	 *
+	 * Note: we intentionally do not support backward scan.  Although it would
+	 * take only a couple more lines here, it would force nodeRecursiveunion.c
+	 * to create the tuplestore with backward scan enabled, which has a
+	 * performance cost.  In practice backward scan is never useful for a
+	 * worktable plan node, since it cannot appear high enough in the plan
+	 * tree of a scrollable cursor to be exposed to a backward-scan
+	 * requirement.  So it's not worth expending effort to support it.
 	 */
 	estate = node->ss.ps.state;
-	direction = estate->es_direction;
+	Assert(ScanDirectionIsForward(estate->es_direction));
 
 	tuplestorestate = node->rustate->working_table;
 
@@ -46,9 +53,7 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = node->ss.ss_ScanTupleSlot;
-	(void) tuplestore_gettupleslot(tuplestorestate,
-								   ScanDirectionIsForward(direction),
-								   slot);
+	(void) tuplestore_gettupleslot(tuplestorestate, true, slot);
 	return slot;
 }
 
@@ -114,7 +119,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	WorkTableScanState *scanstate;
 
 	/* check for unsupported flags */
-	Assert(!(eflags & EXEC_FLAG_MARK));
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * WorkTableScan should not have any children.
