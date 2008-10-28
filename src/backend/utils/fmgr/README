@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.13 2008/05/15 00:17:40 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.14 2008/10/28 22:02:05 tgl Exp $
 
 Function Manager
 ================
@@ -432,8 +432,7 @@ function is called in).  The function stores pointers to the Tuplestore and
 TupleDesc into ReturnSetInfo, sets returnMode to indicate materialize mode,
 and returns null.  isDone is not used and should be left at ExprSingleResult.
 
-If the function is being called as a table function (ie, it appears in a
-FROM item), then the expected tuple descriptor is passed in ReturnSetInfo;
+If available, the expected tuple descriptor is passed in ReturnSetInfo;
 in other contexts the expectedDesc field will be NULL.  The function need
 not pay attention to expectedDesc, but it may be useful in special cases.
 

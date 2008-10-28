@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.134 2008/09/24 19:51:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.135 2008/10/28 22:02:05 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1575,10 +1575,6 @@ LANGUAGE 'plpgsql' ;
 
 SELECT * FROM getallfoo();
 </programlisting>
-
-      Note that functions using <command>RETURN NEXT</command> or
-      <command>RETURN QUERY</command> must be called as a table source in
-      a <literal>FROM</literal> clause.
      </para>
 
      <note>

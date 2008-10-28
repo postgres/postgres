@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.47 2008/10/01 19:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.48 2008/10/28 22:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
-static void tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -62,32 +61,10 @@ FunctionNext(FunctionScanState *node)
 	 */
 	if (tuplestorestate == NULL)
 	{
-		ExprContext *econtext = node->ss.ps.ps_ExprContext;
-		TupleDesc	funcTupdesc;
-
 		node->tuplestorestate = tuplestorestate =
 			ExecMakeTableFunctionResult(node->funcexpr,
-										econtext,
-										node->tupdesc,
-										&funcTupdesc);
-
-		/*
-		 * If function provided a tupdesc, cross-check it.	We only really
-		 * need to do this for functions returning RECORD, but might as well
-		 * do it always.
-		 */
-		if (funcTupdesc)
-		{
-			tupledesc_match(node->tupdesc, funcTupdesc);
-
-			/*
-			 * If it is a dynamically-allocated TupleDesc, free it: it is
-			 * typically allocated in the EState's per-query context, so we
-			 * must avoid leaking it on rescan.
-			 */
-			if (funcTupdesc->tdrefcount == -1)
-				FreeTupleDesc(funcTupdesc);
-		}
+										node->ss.ps.ps_ExprContext,
+										node->tupdesc);
 	}
 
 	/*
@@ -296,9 +273,9 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 
 	/*
 	 * Here we have a choice whether to drop the tuplestore (and recompute the
-	 * function outputs) or just rescan it.  This should depend on whether the
-	 * function expression contains parameters and/or is marked volatile.
-	 * FIXME soon.
+	 * function outputs) or just rescan it.  We must recompute if the
+	 * expression contains parameters, else we rescan.  XXX maybe we should
+	 * recompute if the function is volatile?
 	 */
 	if (node->ss.ps.chgParam != NULL)
 	{
@@ -307,52 +284,4 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 	}
 	else
 		tuplestore_rescan(node->tuplestorestate);
-}
-
-/*
- * Check that function result tuple type (src_tupdesc) matches or can
- * be considered to match what the query expects (dst_tupdesc). If
- * they don't match, ereport.
- *
- * We really only care about number of attributes and data type.
- * Also, we can ignore type mismatch on columns that are dropped in the
- * destination type, so long as the physical storage matches.  This is
- * helpful in some cases involving out-of-date cached plans.
- */
-static void
-tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
-{
-	int			i;
-
-	if (dst_tupdesc->natts != src_tupdesc->natts)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("function return row and query-specified return row do not match"),
-				 errdetail("Returned row contains %d attributes, but query expects %d.",
-						   src_tupdesc->natts, dst_tupdesc->natts)));
-
-	for (i = 0; i < dst_tupdesc->natts; i++)
-	{
-		Form_pg_attribute dattr = dst_tupdesc->attrs[i];
-		Form_pg_attribute sattr = src_tupdesc->attrs[i];
-
-		if (dattr->atttypid == sattr->atttypid)
-			continue;			/* no worries */
-		if (!dattr->attisdropped)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("function return row and query-specified return row do not match"),
-					 errdetail("Returned type %s at ordinal position %d, but query expects %s.",
-							   format_type_be(sattr->atttypid),
-							   i + 1,
-							   format_type_be(dattr->atttypid))));
-
-		if (dattr->attlen != sattr->attlen ||
-			dattr->attalign != sattr->attalign)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("function return row and query-specified return row do not match"),
-					 errdetail("Physical storage mismatch on dropped attribute at ordinal position %d.",
-							   i + 1)));
-	}
 }

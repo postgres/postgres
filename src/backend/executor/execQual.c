@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.233 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.234 2008/10/28 22:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,9 @@
  *		instead of doing needless copying.	-cim 5/31/91
  *
  *		During expression evaluation, we check_stack_depth only in
- *		ExecMakeFunctionResult rather than at every single node.  This
- *		is a compromise that trades off precision of the stack limit setting
- *		to gain speed.
+ *		ExecMakeFunctionResult (and substitute routines) rather than at every
+ *		single node.  This is a compromise that trades off precision of the
+ *		stack limit setting to gain speed.
  */
 
 #include "postgres.h"
@@ -74,12 +74,23 @@ static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
+static void init_fcache(Oid foid, FuncExprState *fcache,
+						MemoryContext fcacheCxt, bool needDescForSets);
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
 static void ShutdownTupleDescRef(Datum arg);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
+static void ExecPrepareTuplestoreResult(FuncExprState *fcache,
+							ExprContext *econtext,
+							Tuplestorestate *resultStore,
+							TupleDesc resultDesc);
+static void tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
+static Datum ExecMakeFunctionResult(FuncExprState *fcache,
+					   ExprContext *econtext,
+					   bool *isNull,
+					   ExprDoneCond *isDone);
 static Datum ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 							 ExprContext *econtext,
 							 bool *isNull, ExprDoneCond *isDone);
@@ -986,8 +997,9 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 /*
  * init_fcache - initialize a FuncExprState node during first use
  */
-void
-init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
+static void
+init_fcache(Oid foid, FuncExprState *fcache,
+			MemoryContext fcacheCxt, bool needDescForSets)
 {
 	AclResult	aclresult;
 
@@ -1010,11 +1022,60 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);
+	fcache->func.fn_expr = (Node *) fcache->xprstate.expr;
 
-	/* Initialize additional info */
+	/* If function returns set, prepare expected tuple descriptor */
+	if (fcache->func.fn_retset && needDescForSets)
+	{
+		TypeFuncClass functypclass;
+		Oid			funcrettype;
+		TupleDesc	tupdesc;
+		MemoryContext oldcontext;
+
+		functypclass = get_expr_result_type(fcache->func.fn_expr,
+											&funcrettype,
+											&tupdesc);
+
+		/* Must save tupdesc in fcache's context */
+		oldcontext = MemoryContextSwitchTo(fcacheCxt);
+
+		if (functypclass == TYPEFUNC_COMPOSITE)
+		{
+			/* Composite data type, e.g. a table's row type */
+			Assert(tupdesc);
+			/* Must copy it out of typcache for safety */
+			fcache->funcResultDesc = CreateTupleDescCopy(tupdesc);
+			fcache->funcReturnsTuple = true;
+		}
+		else if (functypclass == TYPEFUNC_SCALAR)
+		{
+			/* Base data type, i.e. scalar */
+			tupdesc = CreateTemplateTupleDesc(1, false);
+			TupleDescInitEntry(tupdesc,
+							   (AttrNumber) 1,
+							   NULL,
+							   funcrettype,
+							   -1,
+							   0);
+			fcache->funcResultDesc = tupdesc;
+			fcache->funcReturnsTuple = false;
+		}
+		else
+		{
+			/* Else, we will complain if function wants materialize mode */
+			fcache->funcResultDesc = NULL;
+		}
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+	else
+		fcache->funcResultDesc = NULL;
+
+	/* Initialize additional state */
+	fcache->funcResultStore = NULL;
+	fcache->funcResultSlot = NULL;
 	fcache->setArgsValid = false;
 	fcache->shutdown_reg = false;
-	fcache->func.fn_expr = (Node *) fcache->xprstate.expr;
 }
 
 /*
@@ -1025,6 +1086,15 @@ static void
 ShutdownFuncExpr(Datum arg)
 {
 	FuncExprState *fcache = (FuncExprState *) DatumGetPointer(arg);
+
+	/* If we have a slot, make sure it's let go of any tuplestore pointer */
+	if (fcache->funcResultSlot)
+		ExecClearTuple(fcache->funcResultSlot);
+
+	/* Release any open tuplestore */
+	if (fcache->funcResultStore)
+		tuplestore_end(fcache->funcResultStore);
+	fcache->funcResultStore = NULL;
 
 	/* Clear any active set-argument state */
 	fcache->setArgsValid = false;
@@ -1135,17 +1205,134 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 }
 
 /*
+ *		ExecPrepareTuplestoreResult
+ *
+ * Subroutine for ExecMakeFunctionResult: prepare to extract rows from a
+ * tuplestore function result.  We must set up a funcResultSlot (unless
+ * already done in a previous call cycle) and verify that the function
+ * returned the expected tuple descriptor.
+ */
+static void
+ExecPrepareTuplestoreResult(FuncExprState *fcache,
+							ExprContext *econtext,
+							Tuplestorestate *resultStore,
+							TupleDesc resultDesc)
+{
+	fcache->funcResultStore = resultStore;
+
+	if (fcache->funcResultSlot == NULL)
+	{
+		/* Create a slot so we can read data out of the tuplestore */
+		MemoryContext oldcontext;
+
+		/* We must have been able to determine the result rowtype */
+		if (fcache->funcResultDesc == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("function returning setof record called in "
+							"context that cannot accept type record")));
+
+		oldcontext = MemoryContextSwitchTo(fcache->func.fn_mcxt);
+		fcache->funcResultSlot =
+			MakeSingleTupleTableSlot(fcache->funcResultDesc);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/*
+	 * If function provided a tupdesc, cross-check it.	We only really
+	 * need to do this for functions returning RECORD, but might as well
+	 * do it always.
+	 */
+	if (resultDesc)
+	{
+		if (fcache->funcResultDesc)
+			tupledesc_match(fcache->funcResultDesc, resultDesc);
+
+		/*
+		 * If it is a dynamically-allocated TupleDesc, free it: it is
+		 * typically allocated in a per-query context, so we must avoid
+		 * leaking it across multiple usages.
+		 */
+		if (resultDesc->tdrefcount == -1)
+			FreeTupleDesc(resultDesc);
+	}
+
+	/* Register cleanup callback if we didn't already */
+	if (!fcache->shutdown_reg)
+	{
+		RegisterExprContextCallback(econtext,
+									ShutdownFuncExpr,
+									PointerGetDatum(fcache));
+		fcache->shutdown_reg = true;
+	}
+}
+
+/*
+ * Check that function result tuple type (src_tupdesc) matches or can
+ * be considered to match what the query expects (dst_tupdesc). If
+ * they don't match, ereport.
+ *
+ * We really only care about number of attributes and data type.
+ * Also, we can ignore type mismatch on columns that are dropped in the
+ * destination type, so long as the physical storage matches.  This is
+ * helpful in some cases involving out-of-date cached plans.
+ */
+static void
+tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
+{
+	int			i;
+
+	if (dst_tupdesc->natts != src_tupdesc->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function return row and query-specified return row do not match"),
+				 errdetail("Returned row contains %d attributes, but query expects %d.",
+						   src_tupdesc->natts, dst_tupdesc->natts)));
+
+	for (i = 0; i < dst_tupdesc->natts; i++)
+	{
+		Form_pg_attribute dattr = dst_tupdesc->attrs[i];
+		Form_pg_attribute sattr = src_tupdesc->attrs[i];
+
+		if (dattr->atttypid == sattr->atttypid)
+			continue;			/* no worries */
+		if (!dattr->attisdropped)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("function return row and query-specified return row do not match"),
+					 errdetail("Returned type %s at ordinal position %d, but query expects %s.",
+							   format_type_be(sattr->atttypid),
+							   i + 1,
+							   format_type_be(dattr->atttypid))));
+
+		if (dattr->attlen != sattr->attlen ||
+			dattr->attalign != sattr->attalign)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("function return row and query-specified return row do not match"),
+					 errdetail("Physical storage mismatch on dropped attribute at ordinal position %d.",
+							   i + 1)));
+	}
+}
+
+/*
  *		ExecMakeFunctionResult
  *
  * Evaluate the arguments to a function and then the function itself.
+ * init_fcache is presumed already run on the FuncExprState.
+ *
+ * This function handles the most general case, wherein the function or
+ * one of its arguments might (or might not) return a set.  If we find
+ * no sets involved, we will change the FuncExprState's function pointer
+ * to use a simpler method on subsequent calls.
  */
-Datum
+static Datum
 ExecMakeFunctionResult(FuncExprState *fcache,
 					   ExprContext *econtext,
 					   bool *isNull,
 					   ExprDoneCond *isDone)
 {
-	List	   *arguments = fcache->args;
+	List	   *arguments;
 	Datum		result;
 	FunctionCallInfoData fcinfo;
 	PgStat_FunctionCallUsage fcusage;
@@ -1154,8 +1341,48 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	bool		hasSetArg;
 	int			i;
 
+restart:
+
 	/* Guard against stack overflow due to overly complex expressions */
 	check_stack_depth();
+
+	/*
+	 * If a previous call of the function returned a set result in the form
+	 * of a tuplestore, continue reading rows from the tuplestore until it's
+	 * empty.
+	 */
+	if (fcache->funcResultStore)
+	{
+		Assert(isDone);				/* it was provided before ... */
+		if (tuplestore_gettupleslot(fcache->funcResultStore, true,
+									fcache->funcResultSlot))
+		{
+			*isDone = ExprMultipleResult;
+			if (fcache->funcReturnsTuple)
+			{
+				/* We must return the whole tuple as a Datum. */
+				*isNull = false;
+				return ExecFetchSlotTupleDatum(fcache->funcResultSlot);
+			}
+			else
+			{
+				/* Extract the first column and return it as a scalar. */
+				return slot_getattr(fcache->funcResultSlot, 1, isNull);
+			}
+		}
+		/* Exhausted the tuplestore, so clean up */
+		tuplestore_end(fcache->funcResultStore);
+		fcache->funcResultStore = NULL;
+		/* We are done unless there was a set-valued argument */
+		if (!fcache->setHasSetArg)
+		{
+			*isDone = ExprEndResult;
+			*isNull = true;
+			return (Datum) 0;
+		}
+		/* If there was, continue evaluating the argument values */
+		Assert(!fcache->setArgsValid);
+	}
 
 	/*
 	 * arguments is a list of expressions to evaluate before passing to the
@@ -1163,6 +1390,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	 * previous call (ie, we are continuing the evaluation of a set-valued
 	 * function).  Otherwise, collect the current argument values into fcinfo.
 	 */
+	arguments = fcache->args;
 	if (!fcache->setArgsValid)
 	{
 		/* Need to prep callinfo structure */
@@ -1199,8 +1427,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 		fcinfo.resultinfo = (Node *) &rsinfo;
 		rsinfo.type = T_ReturnSetInfo;
 		rsinfo.econtext = econtext;
-		rsinfo.expectedDesc = NULL;
-		rsinfo.allowedModes = (int) SFRM_ValuePerCall;
+		rsinfo.expectedDesc = fcache->funcResultDesc;
+		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
 		rsinfo.returnMode = SFRM_ValuePerCall;
 		/* isDone is filled below */
 		rsinfo.setResult = NULL;
@@ -1208,8 +1436,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	}
 
 	/*
-	 * now return the value gotten by calling the function manager, passing
-	 * the function the evaluated parameter values.
+	 * Now call the function, passing the evaluated parameter values.
 	 */
 	if (fcache->func.fn_retset || hasSetArg)
 	{
@@ -1270,36 +1497,69 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 				*isDone = ExprEndResult;
 			}
 
-			if (*isDone != ExprEndResult)
+			/* Which protocol does function want to use? */
+			if (rsinfo.returnMode == SFRM_ValuePerCall)
 			{
-				/*
-				 * Got a result from current argument.	If function itself
-				 * returns set, save the current argument values to re-use on
-				 * the next call.
-				 */
-				if (fcache->func.fn_retset && *isDone == ExprMultipleResult)
+				if (*isDone != ExprEndResult)
 				{
-					memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
-					fcache->setHasSetArg = hasSetArg;
-					fcache->setArgsValid = true;
-					/* Register cleanup callback if we didn't already */
-					if (!fcache->shutdown_reg)
+					/*
+					 * Got a result from current argument. If function itself
+					 * returns set, save the current argument values to re-use
+					 * on the next call.
+					 */
+					if (fcache->func.fn_retset &&
+						*isDone == ExprMultipleResult)
 					{
-						RegisterExprContextCallback(econtext,
-													ShutdownFuncExpr,
-													PointerGetDatum(fcache));
-						fcache->shutdown_reg = true;
+						memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
+						fcache->setHasSetArg = hasSetArg;
+						fcache->setArgsValid = true;
+						/* Register cleanup callback if we didn't already */
+						if (!fcache->shutdown_reg)
+						{
+							RegisterExprContextCallback(econtext,
+														ShutdownFuncExpr,
+														PointerGetDatum(fcache));
+							fcache->shutdown_reg = true;
+						}
 					}
-				}
 
-				/*
-				 * Make sure we say we are returning a set, even if the
-				 * function itself doesn't return sets.
-				 */
-				if (hasSetArg)
-					*isDone = ExprMultipleResult;
-				break;
+					/*
+					 * Make sure we say we are returning a set, even if the
+					 * function itself doesn't return sets.
+					 */
+					if (hasSetArg)
+						*isDone = ExprMultipleResult;
+					break;
+				}
 			}
+			else if (rsinfo.returnMode == SFRM_Materialize)
+			{
+				/* check we're on the same page as the function author */
+				if (rsinfo.isDone != ExprSingleResult)
+					ereport(ERROR,
+							(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
+							 errmsg("table-function protocol for materialize mode was not followed")));
+				if (rsinfo.setResult != NULL)
+				{
+					/* prepare to return values from the tuplestore */
+					ExecPrepareTuplestoreResult(fcache, econtext,
+												rsinfo.setResult,
+												rsinfo.setDesc);
+					/* remember whether we had set arguments */
+					fcache->setHasSetArg = hasSetArg;
+					/* loop back to top to start returning from tuplestore */
+					goto restart;
+				}
+				/* if setResult was left null, treat it as empty set */
+				*isDone = ExprEndResult;
+				*isNull = true;
+				result = (Datum) 0;
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
+						 errmsg("unrecognized table-function returnMode: %d",
+								(int) rsinfo.returnMode)));
 
 			/* Else, done with this argument */
 			if (!hasSetArg)
@@ -1437,14 +1697,12 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
  *		ExecMakeTableFunctionResult
  *
  * Evaluate a table function, producing a materialized result in a Tuplestore
- * object.	*returnDesc is set to the tupledesc actually returned by the
- * function, or NULL if it didn't provide one.
+ * object.
  */
 Tuplestorestate *
 ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
-							TupleDesc expectedDesc,
-							TupleDesc *returnDesc)
+							TupleDesc expectedDesc)
 {
 	Tuplestorestate *tupstore = NULL;
 	TupleDesc	tupdesc = NULL;
@@ -1511,7 +1769,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		{
 			FuncExpr   *func = (FuncExpr *) fcache->xprstate.expr;
 
-			init_fcache(func->funcid, fcache, econtext->ecxt_per_query_memory);
+			init_fcache(func->funcid, fcache,
+						econtext->ecxt_per_query_memory, false);
 		}
 		returnsSet = fcache->func.fn_retset;
 
@@ -1734,10 +1993,27 @@ no_function_result:
 		}
 	}
 
+	/*
+	 * If function provided a tupdesc, cross-check it.	We only really
+	 * need to do this for functions returning RECORD, but might as well
+	 * do it always.
+	 */
+	if (rsinfo.setDesc)
+	{
+		tupledesc_match(expectedDesc, rsinfo.setDesc);
+
+		/*
+		 * If it is a dynamically-allocated TupleDesc, free it: it is
+		 * typically allocated in a per-query context, so we must avoid
+		 * leaking it across multiple usages.
+		 */
+		if (rsinfo.setDesc->tdrefcount == -1)
+			FreeTupleDesc(rsinfo.setDesc);
+	}
+
 	MemoryContextSwitchTo(callerContext);
 
-	/* The returned pointers are those in rsinfo */
-	*returnDesc = rsinfo.setDesc;
+	/* All done, pass back the tuplestore */
 	return rsinfo.setResult;
 }
 
@@ -1765,7 +2041,7 @@ ExecEvalFunc(FuncExprState *fcache,
 	FuncExpr   *func = (FuncExpr *) fcache->xprstate.expr;
 
 	/* Initialize function lookup info */
-	init_fcache(func->funcid, fcache, econtext->ecxt_per_query_memory);
+	init_fcache(func->funcid, fcache, econtext->ecxt_per_query_memory, true);
 
 	/* Go directly to ExecMakeFunctionResult on subsequent uses */
 	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
@@ -1787,7 +2063,7 @@ ExecEvalOper(FuncExprState *fcache,
 	OpExpr	   *op = (OpExpr *) fcache->xprstate.expr;
 
 	/* Initialize function lookup info */
-	init_fcache(op->opfuncid, fcache, econtext->ecxt_per_query_memory);
+	init_fcache(op->opfuncid, fcache, econtext->ecxt_per_query_memory, true);
 
 	/* Go directly to ExecMakeFunctionResult on subsequent uses */
 	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
@@ -1829,7 +2105,8 @@ ExecEvalDistinct(FuncExprState *fcache,
 	{
 		DistinctExpr *op = (DistinctExpr *) fcache->xprstate.expr;
 
-		init_fcache(op->opfuncid, fcache, econtext->ecxt_per_query_memory);
+		init_fcache(op->opfuncid, fcache,
+					econtext->ecxt_per_query_memory, true);
 		Assert(!fcache->func.fn_retset);
 	}
 
@@ -1909,7 +2186,7 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	if (sstate->fxprstate.func.fn_oid == InvalidOid)
 	{
 		init_fcache(opexpr->opfuncid, &sstate->fxprstate,
-					econtext->ecxt_per_query_memory);
+					econtext->ecxt_per_query_memory, true);
 		Assert(!sstate->fxprstate.func.fn_retset);
 	}
 
@@ -3096,7 +3373,8 @@ ExecEvalNullIf(FuncExprState *nullIfExpr,
 	{
 		NullIfExpr *op = (NullIfExpr *) nullIfExpr->xprstate.expr;
 
-		init_fcache(op->opfuncid, nullIfExpr, econtext->ecxt_per_query_memory);
+		init_fcache(op->opfuncid, nullIfExpr,
+					econtext->ecxt_per_query_memory, true);
 		Assert(!nullIfExpr->func.fn_retset);
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.191 2008/10/23 14:34:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.192 2008/10/28 22:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,13 +538,29 @@ typedef struct FuncExprState
 
 	/*
 	 * Function manager's lookup info for the target function.  If func.fn_oid
-	 * is InvalidOid, we haven't initialized it yet.
+	 * is InvalidOid, we haven't initialized it yet (nor any of the following
+	 * fields).
 	 */
 	FmgrInfo	func;
 
 	/*
-	 * We also need to store argument values across calls when evaluating a
-	 * function-returning-set.
+	 * For a set-returning function (SRF) that returns a tuplestore, we
+	 * keep the tuplestore here and dole out the result rows one at a time.
+	 * The slot holds the row currently being returned.
+	 */
+	Tuplestorestate *funcResultStore;
+	TupleTableSlot *funcResultSlot;
+
+	/*
+	 * In some cases we need to compute a tuple descriptor for the function's
+	 * output.  If so, it's stored here.
+	 */
+	TupleDesc	funcResultDesc;
+	bool		funcReturnsTuple;	/* valid when funcResultDesc isn't NULL */
+
+	/*
+	 * We need to store argument values across calls when evaluating a SRF
+	 * that uses value-per-call mode.
 	 *
 	 * setArgsValid is true when we are evaluating a set-valued function and
 	 * we are in the middle of a call series; we want to pass the same
@@ -556,14 +572,15 @@ typedef struct FuncExprState
 	/*
 	 * Flag to remember whether we found a set-valued argument to the
 	 * function. This causes the function result to be a set as well. Valid
-	 * only when setArgsValid is true.
+	 * only when setArgsValid is true or funcResultStore isn't NULL.
 	 */
 	bool		setHasSetArg;	/* some argument returns a set */
 
 	/*
 	 * Flag to remember whether we have registered a shutdown callback for
-	 * this FuncExprState.	We do so only if setArgsValid has been true at
-	 * least once (since all the callback is for is to clear setArgsValid).
+	 * this FuncExprState.	We do so only if funcResultStore or setArgsValid
+	 * has been set at least once (since all the callback is for is to release
+	 * the tuplestore or clear setArgsValid).
 	 */
 	bool		shutdown_reg;	/* a shutdown callback is registered */
 
