@@ -20,5 +20,3 @@ if test "$SUN_STUDIO_CC" = yes ; then
     ;;
   esac
 fi
-
-# -D_POSIX_PTHREAD_SEMANTICS enables 5-arg getpwuid_r, among other things
