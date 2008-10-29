@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.c,v 1.54 2008/10/28 22:02:05 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.c,v 1.55 2008/10/29 00:00:38 tgl Exp $ 
  *
  *
  * tablefunc
@@ -51,7 +51,8 @@ static HTAB *load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 						HTAB *crosstab_hash,
 						TupleDesc tupdesc,
-						MemoryContext per_query_ctx);
+						MemoryContext per_query_ctx,
+						bool randomAccess);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
@@ -66,6 +67,7 @@ static Tuplestorestate *connectby(char *relname,
 		  bool show_branch,
 		  bool show_serial,
 		  MemoryContext per_query_ctx,
+		  bool randomAccess,
 		  AttInMetadata *attinmeta);
 static Tuplestorestate *build_tuplestore_recursively(char *key_fld,
 							 char *parent_key_fld,
@@ -745,7 +747,8 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	rsinfo->setResult = get_crosstab_tuplestore(sql,
 												crosstab_hash,
 												tupdesc,
-												per_query_ctx);
+												per_query_ctx,
+												rsinfo->allowedModes & SFRM_Materialize_Random);
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
@@ -852,7 +855,8 @@ static Tuplestorestate *
 get_crosstab_tuplestore(char *sql,
 						HTAB *crosstab_hash,
 						TupleDesc tupdesc,
-						MemoryContext per_query_ctx)
+						MemoryContext per_query_ctx,
+						bool randomAccess)
 {
 	Tuplestorestate *tupstore;
 	int			num_categories = hash_get_num_entries(crosstab_hash);
@@ -863,8 +867,8 @@ get_crosstab_tuplestore(char *sql,
 	int			proc;
 	MemoryContext SPIcontext;
 
-	/* initialize our tuplestore */
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	/* initialize our tuplestore (while still in query context!) */
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -1113,6 +1117,7 @@ connectby_text(PG_FUNCTION_ARGS)
 								  show_branch,
 								  show_serial,
 								  per_query_ctx,
+								  rsinfo->allowedModes & SFRM_Materialize_Random,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
 
@@ -1192,6 +1197,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 								  show_branch,
 								  show_serial,
 								  per_query_ctx,
+								  rsinfo->allowedModes & SFRM_Materialize_Random,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
 
@@ -1222,6 +1228,7 @@ connectby(char *relname,
 		  bool show_branch,
 		  bool show_serial,
 		  MemoryContext per_query_ctx,
+		  bool randomAccess,
 		  AttInMetadata *attinmeta)
 {
 	Tuplestorestate *tupstore = NULL;
@@ -1239,7 +1246,7 @@ connectby(char *relname,
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	/* initialize our tuplestore */
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
 

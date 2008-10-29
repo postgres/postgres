@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.192 2008/10/28 22:02:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.193 2008/10/29 00:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,8 @@ typedef enum
 typedef enum
 {
 	SFRM_ValuePerCall = 0x01,	/* one value returned per call */
-	SFRM_Materialize = 0x02		/* result set instantiated in Tuplestore */
+	SFRM_Materialize = 0x02,	/* result set instantiated in Tuplestore */
+	SFRM_Materialize_Random = 0x04		/* Tuplestore needs randomAccess */
 } SetFunctionReturnMode;
 
 /*
@@ -1180,6 +1181,7 @@ typedef struct SubqueryScanState
  *		Function nodes are used to scan the results of a
  *		function appearing in FROM (typically a function returning set).
  *
+ *		eflags				node's capability flags
  *		tupdesc				expected return tuple description
  *		tuplestorestate		private state of tuplestore.c
  *		funcexpr			state for function expression being evaluated
@@ -1188,6 +1190,7 @@ typedef struct SubqueryScanState
 typedef struct FunctionScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
+	int			eflags;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tuplestorestate;
 	ExprState  *funcexpr;

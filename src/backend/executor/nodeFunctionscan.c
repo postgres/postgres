@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.48 2008/10/28 22:02:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.49 2008/10/29 00:00:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,8 @@ FunctionNext(FunctionScanState *node)
 		node->tuplestorestate = tuplestorestate =
 			ExecMakeTableFunctionResult(node->funcexpr,
 										node->ss.ps.ps_ExprContext,
-										node->tupdesc);
+										node->tupdesc,
+										node->eflags & EXEC_FLAG_BACKWARD);
 	}
 
 	/*
@@ -123,6 +124,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	scanstate = makeNode(FunctionScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->eflags = eflags;
 
 	/*
 	 * Miscellaneous initialization

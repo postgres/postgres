@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.221 2008/09/24 14:40:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.222 2008/10/29 00:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2357,7 +2357,9 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 	estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
 
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
-	estate->tuple_store = tuplestore_begin_heap(true, false, work_mem);
+	estate->tuple_store =
+		tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
+							  false, work_mem);
 	MemoryContextSwitchTo(oldcxt);
 
 	estate->rettupdesc = rsi->expectedDesc;

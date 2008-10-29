@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.111 2008/07/18 20:26:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.112 2008/10/29 00:00:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,11 +354,17 @@ PortalCreateHoldStore(Portal portal)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-	/* Create the tuple store, selecting cross-transaction temp files. */
+	/*
+	 * Create the tuple store, selecting cross-transaction temp files, and
+	 * enabling random access only if cursor requires scrolling.
+	 *
+	 * XXX: Should maintenance_work_mem be used for the portal size?
+	 */
 	oldcxt = MemoryContextSwitchTo(portal->holdContext);
 
-	/* XXX: Should maintenance_work_mem be used for the portal size? */
-	portal->holdStore = tuplestore_begin_heap(true, true, work_mem);
+	portal->holdStore =
+		tuplestore_begin_heap(portal->cursorOptions & CURSOR_OPT_SCROLL,
+							  true, work_mem);
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -913,7 +919,9 @@ pg_cursor(PG_FUNCTION_ARGS)
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.
 	 * This avoids any issue of the hashtable possibly changing between calls.
 	 */
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	tupstore =
+		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+							  false, work_mem);
 
 	hash_seq_init(&hash_seq, PortalHashTable);
 	while ((hentry = hash_seq_search(&hash_seq)) != NULL)
