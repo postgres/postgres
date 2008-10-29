@@ -341,14 +341,14 @@ S043	Enhanced reference types			NO
 S051	Create table of type			NO	
 S071	SQL paths in function and type name resolution			YES	
 S081	Subtables			NO	
-S091	Basic array support			NO	
+S091	Basic array support			NO	partially supported
 S091	Basic array support	01	Arrays of built-in data types	NO	
 S091	Basic array support	02	Arrays of distinct types	NO	
 S091	Basic array support	03	Array expressions	NO	
-S092	Arrays of user-defined types			NO	
+S092	Arrays of user-defined types			YES	
 S094	Arrays of reference types			NO	
-S095	Array constructors by query			NO	
-S096	Optional array bounds			NO	
+S095	Array constructors by query			YES	
+S096	Optional array bounds			YES	
 S097	Array element assignment			NO	
 S098	ARRAY_AGG			NO	
 S111	ONLY in query expressions			YES	
