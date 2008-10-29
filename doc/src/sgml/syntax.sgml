@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.124 2008/10/29 08:04:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.125 2008/10/29 14:35:04 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -485,7 +485,7 @@ U&'\0441\043B\043E\043D'
      the <literal>UESCAPE</literal><indexterm><primary>UESCAPE</primary></indexterm>
      clause after the string, for example:
 <programlisting>
-		   U&'d!0061t!+000061' UESCAPE '!'
+U&'d!0061t!+000061' UESCAPE '!'
 </programlisting>
      The escape character can be any single character other than a
      hexadecimal digit, the plus sign, a single quote, a double quote,
