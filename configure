@@ -1353,10 +1353,13 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-integer-datetimes  disable 64-bit integer date/time support
-  --enable-nls[=LANGUAGES]  enable Native Language Support
+  --disable-integer-datetimes
+                          disable 64-bit integer date/time support
+  --enable-nls[=LANGUAGES]
+                          enable Native Language Support
   --disable-shared        do not build shared libraries
-  --disable-rpath         do not embed shared library search path in executables
+  --disable-rpath         do not embed shared library search path in
+                          executables
   --disable-spinlocks     do not use spinlocks
   --enable-debug          build with debugging symbols (-g)
   --enable-profiling      build with profiling enabled
@@ -1365,7 +1368,8 @@ Optional Features:
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
   --enable-thread-safety  make client libraries thread-safe
-  --enable-thread-safety-force  force thread-safety despite thread test failure
+  --enable-thread-safety-force
+                          force thread-safety despite thread test failure
   --disable-float4-byval  disable float4 passed by value
   --disable-float8-byval  disable float8 passed by value
   --disable-largefile     omit support for large files
@@ -1373,32 +1377,40 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-
+  --with-template=NAME    override operating system template
   --with-includes=DIRS    look for additional header files in DIRS
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   set default port number [5432]
-  --with-blocksize=BLOCKSIZE  set table block size in kB [8]
+  --with-blocksize=BLOCKSIZE
+                          set table block size in kB [8]
   --with-segsize=SEGSIZE  set table segment size in GB [1]
-  --with-wal-blocksize=BLOCKSIZE  set WAL block size in kB [8]
-  --with-wal-segsize=SEGSIZE  set WAL segment size in MB [16]
+  --with-wal-blocksize=BLOCKSIZE
+                          set WAL block size in kB [8]
+  --with-wal-segsize=SEGSIZE
+                          set WAL segment size in MB [16]
+  --with-CC=CMD           set compiler (deprecated)
   --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python modules (PL/Python)
   --with-gssapi           build with GSSAPI support
   --with-krb5             build with Kerberos 5 support
-  --with-krb-srvnam=NAME  default service principal name in Kerberos [postgres]
+  --with-krb-srvnam=NAME  default service principal name in Kerberos
+                          [postgres]
   --with-pam              build with PAM support
   --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
-  --with-libedit-preferred  prefer BSD Libedit over GNU Readline
-  --with-ossp-uuid        use OSSP UUID library when building contrib/uuid-ossp
+  --with-libedit-preferred
+                          prefer BSD Libedit over GNU Readline
+  --with-ossp-uuid        use OSSP UUID library when building
+                          contrib/uuid-ossp
   --with-libxml           build with XML support
   --with-libxslt          use XSLT support when building contrib/xml2
-  --with-system-tzdata=DIR  use system time zone data in DIR
+  --with-system-tzdata=DIR
+                          use system time zone data in DIR
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 

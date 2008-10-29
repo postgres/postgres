@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.567 2008/09/05 18:54:58 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.568 2008/10/29 09:27:24 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -36,7 +36,7 @@ AC_CANONICAL_HOST
 template=
 AC_MSG_CHECKING([which template to use])
 
-PGAC_ARG_REQ(with, template, [],
+PGAC_ARG_REQ(with, template, [NAME], [override operating system template],
 [
   case $withval in
     list)   echo; ls "$srcdir/src/template"; exit;;
@@ -114,16 +114,16 @@ tas_file=dummy.s
 #
 # Add non-standard directories to the include path
 #
-PGAC_ARG_REQ(with, includes, [  --with-includes=DIRS    look for additional header files in DIRS])
+PGAC_ARG_REQ(with, includes, [DIRS], [look for additional header files in DIRS])
 
 
 #
 # Add non-standard directories to the library search path
 #
-PGAC_ARG_REQ(with, libraries, [  --with-libraries=DIRS   look for additional libraries in DIRS],
+PGAC_ARG_REQ(with, libraries, [DIRS], [look for additional libraries in DIRS],
              [LIBRARY_DIRS=$withval])
 
-PGAC_ARG_REQ(with, libs,      [  --with-libs=DIRS        alternative spelling of --with-libraries],
+PGAC_ARG_REQ(with, libs,      [DIRS], [alternative spelling of --with-libraries],
              [LIBRARY_DIRS=$withval])
 
 
@@ -131,7 +131,7 @@ PGAC_ARG_REQ(with, libs,      [  --with-libs=DIRS        alternative spelling of
 # 64-bit integer date/time storage: enabled by default.
 #
 AC_MSG_CHECKING([whether to build with 64-bit integer date/time support])
-PGAC_ARG_BOOL(enable, integer-datetimes, yes, [  --disable-integer-datetimes  disable 64-bit integer date/time support],
+PGAC_ARG_BOOL(enable, integer-datetimes, yes, [disable 64-bit integer date/time support],
               [AC_DEFINE([USE_INTEGER_DATETIMES], 1,
                          [Define to 1 if you want 64-bit integer timestamp and interval support. (--enable-integer-datetimes)])])
 AC_MSG_RESULT([$enable_integer_datetimes])
@@ -142,7 +142,7 @@ AC_MSG_RESULT([$enable_integer_datetimes])
 #
 AC_MSG_CHECKING([whether NLS is wanted])
 PGAC_ARG_OPTARG(enable, nls,
-                [[  --enable-nls[=LANGUAGES]  enable Native Language Support]],
+                [LANGUAGES], [enable Native Language Support],
                 [],
                 [WANTED_LANGUAGES=$enableval],
                 [AC_DEFINE(ENABLE_NLS, 1,
@@ -155,7 +155,7 @@ AC_SUBST(WANTED_LANGUAGES)
 # Default port number (--with-pgport), default 5432
 #
 AC_MSG_CHECKING([for default port number])
-PGAC_ARG_REQ(with, pgport, [  --with-pgport=PORTNUM   set default port number [[5432]]],
+PGAC_ARG_REQ(with, pgport, [PORTNUM], [set default port number [5432]],
              [default_port=$withval],
              [default_port=5432])
 AC_MSG_RESULT([$default_port])
@@ -173,41 +173,41 @@ AC_SUBST(default_port)
 # Option to disable shared libraries
 #
 PGAC_ARG_BOOL(enable, shared, yes,
-              [  --disable-shared        do not build shared libraries])
+              [do not build shared libraries])
 AC_SUBST(enable_shared)
 
 #
 # '-rpath'-like feature can be disabled
 #
 PGAC_ARG_BOOL(enable, rpath, yes,
-              [  --disable-rpath         do not embed shared library search path in executables])
+              [do not embed shared library search path in executables])
 AC_SUBST(enable_rpath)
 
 #
 # Spinlocks
 #
 PGAC_ARG_BOOL(enable, spinlocks, yes,
-              [  --disable-spinlocks     do not use spinlocks])
+              [do not use spinlocks])
 
 #
 # --enable-debug adds -g to compiler flags
 #
 PGAC_ARG_BOOL(enable, debug, no,
-              [  --enable-debug          build with debugging symbols (-g)])
+              [build with debugging symbols (-g)])
 AC_SUBST(enable_debug)
 
 #
 # --enable-profiling enables gcc profiling
 #
 PGAC_ARG_BOOL(enable, profiling, no,
-              [  --enable-profiling      build with profiling enabled ])
+              [build with profiling enabled ])
 AC_SUBST(enable_profiling)
 
 #
 # --enable-coverage enables generation of code coverage metrics with gcov
 #
 PGAC_ARG_BOOL(enable, coverage, no,
-              [  --enable-coverage       build with coverage testing instrumentation],
+              [build with coverage testing instrumentation],
 [AC_CHECK_PROGS(GCOV, gcov)
 if test -z "$GCOV"; then
   AC_MSG_ERROR([gcov not found])
@@ -226,7 +226,7 @@ AC_SUBST(enable_coverage)
 # DTrace
 #
 PGAC_ARG_BOOL(enable, dtrace, no,
-              [  --enable-dtrace         build with DTrace support],
+              [build with DTrace support],
 [AC_DEFINE([ENABLE_DTRACE], 1, 
            [Define to 1 to enable DTrace support. (--enable-dtrace)])
 AC_CHECK_PROGS(DTRACE, dtrace)
@@ -240,7 +240,7 @@ AC_SUBST(enable_dtrace)
 # Block size
 #
 AC_MSG_CHECKING([for block size])
-PGAC_ARG_REQ(with, blocksize, [  --with-blocksize=BLOCKSIZE  set table block size in kB [[8]]],
+PGAC_ARG_REQ(with, blocksize, [BLOCKSIZE], [set table block size in kB [8]],
              [blocksize=$withval],
              [blocksize=8])
 case ${blocksize} in
@@ -272,7 +272,7 @@ AC_DEFINE_UNQUOTED([BLCKSZ], ${BLCKSZ}, [
 # Relation segment size
 #
 AC_MSG_CHECKING([for segment size])
-PGAC_ARG_REQ(with, segsize, [  --with-segsize=SEGSIZE  set table segment size in GB [[1]]],
+PGAC_ARG_REQ(with, segsize, [SEGSIZE], [set table segment size in GB [1]],
              [segsize=$withval],
              [segsize=1])
 # this expression is set up to avoid unnecessary integer overflow
@@ -304,7 +304,7 @@ AC_DEFINE_UNQUOTED([RELSEG_SIZE], ${RELSEG_SIZE}, [
 # WAL block size
 #
 AC_MSG_CHECKING([for WAL block size])
-PGAC_ARG_REQ(with, wal-blocksize, [  --with-wal-blocksize=BLOCKSIZE  set WAL block size in kB [[8]]],
+PGAC_ARG_REQ(with, wal-blocksize, [BLOCKSIZE], [set WAL block size in kB [8]],
              [wal_blocksize=$withval],
              [wal_blocksize=8])
 case ${wal_blocksize} in
@@ -332,7 +332,7 @@ AC_DEFINE_UNQUOTED([XLOG_BLCKSZ], ${XLOG_BLCKSZ}, [
 # WAL segment size
 #
 AC_MSG_CHECKING([for WAL segment size])
-PGAC_ARG_REQ(with, wal-segsize, [  --with-wal-segsize=SEGSIZE  set WAL segment size in MB [[16]]],
+PGAC_ARG_REQ(with, wal-segsize, [SEGSIZE], [set WAL segment size in MB [16]],
              [wal_segsize=$withval],
              [wal_segsize=16])
 case ${wal_segsize} in
@@ -362,7 +362,7 @@ AC_DEFINE_UNQUOTED([XLOG_SEG_SIZE], [(${wal_segsize} * 1024 * 1024)], [
 # For historical reasons you can also use --with-CC to specify the C compiler
 # to use, although the standard way to do this is to set the CC environment
 # variable.
-PGAC_ARG_REQ(with, CC, [], [CC=$with_CC])
+PGAC_ARG_REQ(with, CC, [CMD], [set compiler (deprecated)], [CC=$with_CC])
 
 case $template in
   aix) pgac_cc_list="gcc xlc";;
@@ -507,7 +507,7 @@ AC_SUBST(TAS)
 #
 # Automatic dependency tracking
 #
-PGAC_ARG_BOOL(enable, depend, no, [  --enable-depend         turn on automatic dependency tracking],
+PGAC_ARG_BOOL(enable, depend, no, [turn on automatic dependency tracking],
               [autodepend=yes])
 AC_SUBST(autodepend)
 
@@ -515,7 +515,7 @@ AC_SUBST(autodepend)
 #
 # Enable assert checks
 #
-PGAC_ARG_BOOL(enable, cassert, no, [  --enable-cassert        enable assertion checks (for debugging)],
+PGAC_ARG_BOOL(enable, cassert, no, [enable assertion checks (for debugging)],
               [AC_DEFINE([USE_ASSERT_CHECKING], 1,
                          [Define to 1 to build with assertion checks. (--enable-cassert)])])
 
@@ -557,13 +557,13 @@ IFS=$ac_save_IFS
 #
 AC_MSG_CHECKING([allow thread-safe client libraries])
 if test "$PORTNAME" != "win32"; then
-PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety  make client libraries thread-safe])
+PGAC_ARG_BOOL(enable, thread-safety, no, [make client libraries thread-safe])
 else
 # Win32 should always use threads
-PGAC_ARG_BOOL(enable, thread-safety, yes, [  --enable-thread-safety  make client libraries thread-safe])
+PGAC_ARG_BOOL(enable, thread-safety, yes, [make client libraries thread-safe])
 fi
 
-PGAC_ARG_BOOL(enable, thread-safety-force, no, [  --enable-thread-safety-force  force thread-safety despite thread test failure])
+PGAC_ARG_BOOL(enable, thread-safety-force, no, [force thread-safety despite thread test failure])
 if test "$enable_thread_safety" = yes -o \
         "$enable_thread_safety_force" = yes; then
   enable_thread_safety="yes"	# for 'force'
@@ -577,20 +577,20 @@ AC_SUBST(enable_thread_safety)
 # Optionally build Tcl modules (PL/Tcl)
 #
 AC_MSG_CHECKING([whether to build with Tcl])
-PGAC_ARG_BOOL(with, tcl, no, [  --with-tcl              build Tcl modules (PL/Tcl)])
+PGAC_ARG_BOOL(with, tcl, no, [build Tcl modules (PL/Tcl)])
 AC_MSG_RESULT([$with_tcl])
 AC_SUBST([with_tcl])
 
 # We see if the path to the Tcl/Tk configuration scripts is specified.
 # This will override the use of tclsh to find the paths to search.
 
-PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh is in DIR])
+PGAC_ARG_REQ(with, tclconfig, [DIR], [tclConfig.sh is in DIR])
 
 #
 # Optionally build Perl modules (PL/Perl)
 #
 AC_MSG_CHECKING([whether to build Perl modules])
-PGAC_ARG_BOOL(with, perl, no, [  --with-perl             build Perl modules (PL/Perl)])
+PGAC_ARG_BOOL(with, perl, no, [build Perl modules (PL/Perl)])
 AC_MSG_RESULT([$with_perl])
 AC_SUBST(with_perl)
 
@@ -598,7 +598,7 @@ AC_SUBST(with_perl)
 # Optionally build Python modules (PL/Python)
 #
 AC_MSG_CHECKING([whether to build Python modules])
-PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python modules (PL/Python)])
+PGAC_ARG_BOOL(with, python, no, [build Python modules (PL/Python)])
 AC_MSG_RESULT([$with_python])
 AC_SUBST(with_python)
 
@@ -606,7 +606,7 @@ AC_SUBST(with_python)
 # GSSAPI
 #
 AC_MSG_CHECKING([whether to build with GSSAPI support])
-PGAC_ARG_BOOL(with, gssapi, no, [  --with-gssapi           build with GSSAPI support],
+PGAC_ARG_BOOL(with, gssapi, no, [build with GSSAPI support],
 [
   AC_DEFINE(ENABLE_GSS, 1, [Define to build with GSSAPI support. (--with-gssapi)])
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
@@ -618,7 +618,7 @@ AC_SUBST(with_gssapi)
 # Kerberos 5
 #
 AC_MSG_CHECKING([whether to build with Kerberos 5 support])
-PGAC_ARG_BOOL(with, krb5, no, [  --with-krb5             build with Kerberos 5 support],
+PGAC_ARG_BOOL(with, krb5, no, [build with Kerberos 5 support],
 [
   AC_DEFINE(KRB5, 1, [Define to build with Kerberos 5 support. (--with-krb5)])
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
@@ -634,7 +634,7 @@ AC_SUBST(krb_srvtab)
 # Kerberos configuration parameters
 #
 PGAC_ARG_REQ(with, krb-srvnam,
-             [  --with-krb-srvnam=NAME  default service principal name in Kerberos [[postgres]]],
+             [NAME], [default service principal name in Kerberos [postgres]],
              [],
              [with_krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
@@ -646,7 +646,7 @@ AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
 #
 AC_MSG_CHECKING([whether to build with PAM support])
 PGAC_ARG_BOOL(with, pam, no,
-              [  --with-pam              build with PAM support],
+              [build with PAM support],
               [AC_DEFINE([USE_PAM], 1, [Define to 1 to build with PAM support. (--with-pam)])])
 AC_MSG_RESULT([$with_pam])
 AC_SUBST(with_pam)
@@ -657,7 +657,7 @@ AC_SUBST(with_pam)
 #
 AC_MSG_CHECKING([whether to build with LDAP support])
 PGAC_ARG_BOOL(with, ldap, no,
-              [  --with-ldap             build with LDAP support],
+              [build with LDAP support],
               [AC_DEFINE([USE_LDAP], 1, [Define to 1 to build with LDAP support. (--with-ldap)])])
 AC_MSG_RESULT([$with_ldap])
 AC_SUBST(with_ldap)
@@ -668,7 +668,7 @@ AC_SUBST(with_ldap)
 #
 AC_MSG_CHECKING([whether to build with Bonjour support])
 PGAC_ARG_BOOL(with, bonjour, no,
-              [  --with-bonjour          build with Bonjour support],
+              [build with Bonjour support],
               [AC_DEFINE([USE_BONJOUR], 1, [Define to 1 to build with Bonjour support. (--with-bonjour)])])
 AC_MSG_RESULT([$with_bonjour])
 AC_SUBST(with_bonjour)
@@ -678,7 +678,7 @@ AC_SUBST(with_bonjour)
 # OpenSSL
 #
 AC_MSG_CHECKING([whether to build with OpenSSL support])
-PGAC_ARG_BOOL(with, openssl, no, [  --with-openssl          build with OpenSSL support],
+PGAC_ARG_BOOL(with, openssl, no, [build with OpenSSL support],
               [AC_DEFINE([USE_SSL], 1, [Define to build with (Open)SSL support. (--with-openssl)])])
 AC_MSG_RESULT([$with_openssl])
 AC_SUBST(with_openssl)
@@ -688,7 +688,7 @@ AC_SUBST(with_openssl)
 # Readline
 #
 PGAC_ARG_BOOL(with, readline, yes,
-              [  --without-readline      do not use GNU Readline nor BSD Libedit for editing])
+              [do not use GNU Readline nor BSD Libedit for editing])
 # readline on MinGW has problems with backslashes in psql and other bugs.
 # This is particularly a problem with non-US code pages.
 # Therefore disable its use until we understand the cause. 2004-07-20
@@ -704,20 +704,20 @@ fi
 # Prefer libedit
 #
 PGAC_ARG_BOOL(with, libedit-preferred, no,
-              [  --with-libedit-preferred  prefer BSD Libedit over GNU Readline])
+              [prefer BSD Libedit over GNU Readline])
 
 
 #
 # OSSP UUID library
 #
-PGAC_ARG_BOOL(with, ossp-uuid, no, [  --with-ossp-uuid        use OSSP UUID library when building contrib/uuid-ossp])
+PGAC_ARG_BOOL(with, ossp-uuid, no, [use OSSP UUID library when building contrib/uuid-ossp])
 AC_SUBST(with_ossp_uuid)
 
 
 #
 # XML
 #
-PGAC_ARG_BOOL(with, libxml, no, [  --with-libxml           build with XML support],
+PGAC_ARG_BOOL(with, libxml, no, [build with XML support],
               [AC_DEFINE([USE_LIBXML], 1, [Define to 1 to build with XML support. (--with-libxml)])])
 
 if test "$with_libxml" = yes ; then
@@ -741,7 +741,7 @@ AC_SUBST(with_libxml)
 #
 # XSLT
 #
-PGAC_ARG_BOOL(with, libxslt, no, [  --with-libxslt          use XSLT support when building contrib/xml2],
+PGAC_ARG_BOOL(with, libxslt, no, [use XSLT support when building contrib/xml2],
               [AC_DEFINE([USE_LIBXSLT], 1, [Define to 1 to use XSLT support when building contrib/xml2. (--with-libxslt)])])
 
 
@@ -751,14 +751,14 @@ AC_SUBST(with_libxslt)
 # tzdata
 #
 PGAC_ARG_REQ(with, system-tzdata,
-             [  --with-system-tzdata=DIR  use system time zone data in DIR])
+             [DIR], [use system time zone data in DIR])
 AC_SUBST(with_system_tzdata)
 
 #
 # Zlib
 #
 PGAC_ARG_BOOL(with, zlib, yes,
-              [  --without-zlib          do not use Zlib])
+              [do not use Zlib])
 AC_SUBST(with_zlib)
 
 #
@@ -1509,7 +1509,7 @@ AC_CHECK_SIZEOF([size_t])
 
 # Decide whether float4 is passed by value: user-selectable, enabled by default
 AC_MSG_CHECKING([whether to build with float4 passed by value])   
-PGAC_ARG_BOOL(enable, float4-byval, yes, [  --disable-float4-byval  disable float4 passed by value],
+PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
               [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
                          [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
                float4passbyval=true],
@@ -1521,11 +1521,11 @@ AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are pas
 # Note: this setting also controls int8 and related types such as timestamp.
 # If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
 # If not, trying to select it is an error.
-AC_MSG_CHECKING([whether to build with float8 passed by value])   
+AC_MSG_CHECKING([whether to build with float8 passed by value])
 if test $ac_cv_sizeof_unsigned_long -ge 8 ; then
-  PGAC_ARG_BOOL(enable, float8-byval, yes, [  --disable-float8-byval  disable float8 passed by value])
+  PGAC_ARG_BOOL(enable, float8-byval, yes, [disable float8 passed by value])
 else
-  PGAC_ARG_BOOL(enable, float8-byval, no, [  --disable-float8-byval  disable float8 passed by value])
+  PGAC_ARG_BOOL(enable, float8-byval, no, [disable float8 passed by value])
   if test "$enable_float8_byval" = yes ; then
     AC_MSG_ERROR([--enable-float8-byval is not supported on 32-bit platforms.])
   fi

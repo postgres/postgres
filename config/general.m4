@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/general.m4,v 1.9 2006/11/30 22:21:23 tgl Exp $
+# $PostgreSQL: pgsql/config/general.m4,v 1.10 2008/10/29 09:27:24 petere Exp $
 
 # This file defines new macros to process configure command line
 # arguments, to replace the brain-dead AC_ARG_WITH and AC_ARG_ENABLE.
@@ -17,14 +17,19 @@ m4_define([pgac_arg_to_variable],
           [$1[]_[]patsubst($2, -, _)])
 
 
-# PGAC_ARG(TYPE, NAME, HELP-STRING,
+# PGAC_ARG(TYPE, NAME, HELP-STRING-LHS-EXTRA, HELP-STRING-RHS,
 #          [ACTION-IF-YES], [ACTION-IF-NO], [ACTION-IF-ARG],
 #          [ACTION-IF-OMITTED])
-# ----------------------------------------------------------
+# ------------------------------------------------------------
 # This is the base layer. TYPE is either "with" or "enable", depending
-# on what you like. NAME is the rest of the option name, HELP-STRING
-# as usual. ACTION-IF-YES is executed if the option is given without
-# an argument (or "yes", which is the same); similar for ACTION-IF-NO.
+# on what you like.  NAME is the rest of the option name.
+# HELP-STRING-LHS-EXTRA is a string to append to the option name on
+# the left-hand side of the help output, e.g., an argument name.  If
+# set to "-", append nothing, but let the option appear in the
+# negative form (disable/without).  HELP-STRING-RHS is the option
+# description, for the right-hand side of the help output.
+# ACTION-IF-YES is executed if the option is given without an argument
+# (or "yes", which is the same); similar for ACTION-IF-NO.
 
 AC_DEFUN([PGAC_ARG],
 [
@@ -32,37 +37,37 @@ pgac_args="$pgac_args pgac_arg_to_variable([$1],[$2])"
 m4_case([$1],
 
 enable, [
-AC_ARG_ENABLE([$2], [$3], [
+AC_ARG_ENABLE([$2], [AS_HELP_STRING([--]m4_if($3, -, disable, enable)[-$2]m4_if($3, -, , $3), [$4])], [
   case [$]enableval in
     yes)
-      m4_default([$4], :)
-      ;;
-    no)
       m4_default([$5], :)
       ;;
+    no)
+      m4_default([$6], :)
+      ;;
     *)
-      $6
+      $7
       ;;
   esac
 ],
-[$7])[]dnl AC_ARG_ENABLE
+[$8])[]dnl AC_ARG_ENABLE
 ],
 
 with, [
-AC_ARG_WITH([$2], [$3], [
+AC_ARG_WITH([$2], [AS_HELP_STRING([--]m4_if($3, -, without, with)[-$2]m4_if($3, -, , $3), [$4])], [
   case [$]withval in
     yes)
-      m4_default([$4], :)
-      ;;
-    no)
       m4_default([$5], :)
       ;;
+    no)
+      m4_default([$6], :)
+      ;;
     *)
-      $6
+      $7
       ;;
   esac
 ],
-[$7])[]dnl AC_ARG_WITH
+[$8])[]dnl AC_ARG_WITH
 ],
 
 [m4_fatal([first argument of $0 must be 'enable' or 'with', not '$1'])]
@@ -86,9 +91,9 @@ AC_DEFUN([PGAC_ARG_CHECK],
   AC_MSG_WARN([option ignored: --$pgac_txt])
 done])# PGAC_ARG_CHECK
 
-# PGAC_ARG_BOOL(TYPE, NAME, DEFAULT, HELP-STRING, 
+# PGAC_ARG_BOOL(TYPE, NAME, DEFAULT, HELP-STRING-RHS,
 #               [ACTION-IF-YES], [ACTION-IF-NO])
-# -----------------------------------------------
+# ---------------------------------------------------
 # Accept a boolean option, that is, one that only takes yes or no.
 # ("no" is equivalent to "disable" or "without"). DEFAULT is what
 # should be done if the option is omitted; it should be "yes" or "no".
@@ -96,7 +101,13 @@ done])# PGAC_ARG_CHECK
 # execute.)
 
 AC_DEFUN([PGAC_ARG_BOOL],
-[PGAC_ARG([$1], [$2], [$4], [$5], [$6], 
+[dnl The following hack is necessary because in a few instances this
+dnl macro is called twice for the same option with different default
+dnl values.  But we only want it to appear once in the help.  We achieve
+dnl that by making the help string look the same, which is why we need to
+dnl save the default that was passed in previously.
+m4_define([_pgac_helpdefault], m4_ifdef([pgac_defined_$1_$2_bool], [m4_defn([pgac_defined_$1_$2_bool])], [$3]))dnl
+PGAC_ARG([$1], [$2], [m4_if(_pgac_helpdefault, yes, -)], [$4], [$5], [$6], 
           [AC_MSG_ERROR([no argument expected for --$1-$2 option])],
           [m4_case([$3],
                    yes, [pgac_arg_to_variable([$1], [$2])=yes
@@ -104,25 +115,28 @@ $5],
                    no,  [pgac_arg_to_variable([$1], [$2])=no
 $6],
                    [m4_fatal([third argument of $0 must be 'yes' or 'no', not '$3'])])])[]dnl
+m4_define([pgac_defined_$1_$2_bool], [$3])dnl
 ])# PGAC_ARG_BOOL
 
 
-# PGAC_ARG_REQ(TYPE, NAME, HELP-STRING, [ACTION-IF-GIVEN], [ACTION-IF-NOT-GIVEN])
-# -------------------------------------------------------------------------------
+# PGAC_ARG_REQ(TYPE, NAME, HELP-ARGNAME, HELP-STRING-RHS,
+#              [ACTION-IF-GIVEN], [ACTION-IF-NOT-GIVEN])
+# -------------------------------------------------------
 # This option will require an argument; "yes" or "no" will not be
-# accepted.
+# accepted.  HELP-ARGNAME is a name for the argument for the help output.
 
 AC_DEFUN([PGAC_ARG_REQ],
-[PGAC_ARG([$1], [$2], [$3],
+[PGAC_ARG([$1], [$2], [=$3], [$4],
           [AC_MSG_ERROR([argument required for --$1-$2 option])],
           [AC_MSG_ERROR([argument required for --$1-$2 option])],
-          [$4],
-          [$5])])# PGAC_ARG_REQ
+          [$5],
+          [$6])])# PGAC_ARG_REQ
 
 
-# PGAC_ARG_OPTARG(TYPE, NAME, HELP-STRING, [DEFAULT-ACTION], [ARG-ACTION]
+# PGAC_ARG_OPTARG(TYPE, NAME, HELP-ARGNAME, HELP-STRING-RHS,
+#                 [DEFAULT-ACTION], [ARG-ACTION],
 #                 [ACTION-ENABLED], [ACTION-DISABLED])
-# -----------------------------------------------------------------------
+# ----------------------------------------------------------
 # This will create an option that behaves as follows: If omitted, or
 # called with "no", then set the enable_variable to "no" and do
 # nothing else. If called with "yes", then execute DEFAULT-ACTION. If
@@ -134,18 +148,18 @@ AC_DEFUN([PGAC_ARG_REQ],
 # additional piece of information.
 
 AC_DEFUN([PGAC_ARG_OPTARG],
-[PGAC_ARG([$1], [$2], [$3], [$4], [],
+[PGAC_ARG([$1], [$2], [@<:@=$3@:>@], [$4], [$5], [],
           [pgac_arg_to_variable([$1], [$2])=yes
-$5],
+$6],
           [pgac_arg_to_variable([$1], [$2])=no])
 dnl Add this code only if there's a ACTION-ENABLED or ACTION-DISABLED.
-m4_ifval([$6[]$7],
+m4_ifval([$7[]$8],
 [
 if test "[$]pgac_arg_to_variable([$1], [$2])" = yes; then
-  m4_default([$6], :)
-m4_ifval([$7],
+  m4_default([$7], :)
+m4_ifval([$8],
 [else
-  $7
+  $8
 ])[]dnl
 fi
 ])[]dnl
