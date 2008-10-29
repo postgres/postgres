@@ -18,6 +18,7 @@ test: preproc/autoprep
 test: preproc/comment
 test: preproc/define
 test: preproc/init
+test: preproc/strings
 test: preproc/type
 test: preproc/variable
 test: preproc/whenever

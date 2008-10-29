@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.79 2008/06/18 18:42:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.80 2008/10/29 08:04:53 petere Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -380,6 +380,7 @@ extern const char *GetDatabaseEncodingName(void);
 extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);
 
+extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
 extern int	pg_utf_mblen(const unsigned char *);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 						  int src_encoding,

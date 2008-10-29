@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.166 2008/05/20 23:17:32 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.167 2008/10/29 08:04:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,8 @@ static struct _if_value
  *	<xe> extended quoted strings (support backslash escape sequences)
  *	<xn> national character quoted strings
  *  <xdolq> $foo$ quoted strings
+ *  <xui> quoted identifier with Unicode escapes
+ *  <xus> quoted string with Unicode escapes
  */
 
 %x xb
@@ -117,6 +119,8 @@ static struct _if_value
 %x xdolq
 %x xcond
 %x xskip
+%x xui
+%x xus
 
 /* Bit string
  */
@@ -171,6 +175,18 @@ xdstart			{dquote}
 xdstop			{dquote}
 xddouble		{dquote}{dquote}
 xdinside		[^"]+
+
+/* Unicode escapes */
+/* (The ecpg scanner is not backup-free, so the fail rules in scan.l are not needed here, but could be added if desired.) */
+uescape			[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']{quote}
+
+/* Quoted identifier with Unicode escapes */
+xuistart		[uU]&{dquote}
+xuistop			{dquote}({whitespace}*{uescape})?
+
+/* Quoted string with Unicode escapes */
+xusstart		[uU]&{quote}
+xusstop			{quote}({whitespace}*{uescape})?
 
 /* special stuff for C strings */
 xdcqq			\\\\
@@ -433,6 +449,13 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				BEGIN(xe);
 				startlit();
 			}
+<SQL>{xusstart}	{
+				token_start = yytext;
+				state_before = YYSTATE;
+				BEGIN(xus);
+				startlit();
+				addlit(yytext, yyleng);
+			}
 <xq,xqc>{quotestop} |
 <xq,xqc>{quotefail} {
 				yyless(1);
@@ -454,22 +477,28 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				yylval.str = mm_strdup(literalbuf);
 				return NCONST;
 			}
-<xq,xe,xn>{xqdouble}	{ addlitchar('\''); }
+<xus>{xusstop} {
+				addlit(yytext, yyleng);
+				BEGIN(state_before);
+				yylval.str = mm_strdup(literalbuf);
+				return UCONST;
+			}
+<xq,xe,xn,xus>{xqdouble}	{ addlitchar('\''); }
 <xqc>{xqcquote}		{
 				addlitchar('\\');
 				addlitchar('\'');
 			}
-<xq,xqc,xn>{xqinside}	{ addlit(yytext, yyleng); }
+<xq,xqc,xn,xus>{xqinside}	{ addlit(yytext, yyleng); }
 <xe>{xeinside}		{ addlit(yytext, yyleng); }
 <xe>{xeescape}  	{ addlit(yytext, yyleng); }
 <xe>{xeoctesc}		{ addlit(yytext, yyleng); }
 <xe>{xehexesc}		{ addlit(yytext, yyleng); }
-<xq,xqc,xe,xn>{quotecontinue}	{ /* ignore */ }
+<xq,xqc,xe,xn,xus>{quotecontinue}	{ /* ignore */ }
 <xe>.                   {
 			   /* This is only needed for \ just before EOF */
 			   addlitchar(yytext[0]);
 			}
-<xq,xqc,xe,xn><<EOF>>	{ mmerror(PARSE_ERROR, ET_FATAL, "unterminated quoted string"); }
+<xq,xqc,xe,xn,xus><<EOF>>	{ mmerror(PARSE_ERROR, ET_FATAL, "unterminated quoted string"); }
 <SQL>{dolqfailed}	{
 				/* throw back all but the initial "$" */
 				yyless(1);
@@ -515,6 +544,12 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						BEGIN(xd);
 						startlit();
 					}
+<SQL>{xuistart}		{
+						state_before = YYSTATE;
+						BEGIN(xui);
+						startlit();
+						addlit(yytext, yyleng);
+					}
 <xd>{xdstop}		{
 						BEGIN(state_before);
 						if (literallen == 0)
@@ -528,9 +563,18 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						yylval.str = mm_strdup(literalbuf);
 						return CSTRING;
 					}
-<xd>{xddouble}		{ addlitchar('"'); }
-<xd>{xdinside}		{ addlit(yytext, yyleng); }
-<xd,xdc><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "unterminated quoted identifier"); }
+<xui>{xuistop}		{
+						BEGIN(state_before);
+						if (literallen == 2) /* "U&" */
+							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
+						/* The backend will truncate the idnetifier here. We do not as it does not change the result. */
+						addlit(yytext, yyleng);
+						yylval.str = mm_strdup(literalbuf);
+						return UIDENT;
+					}
+<xd,xui>{xddouble}		{ addlitchar('"'); }
+<xd,xui>{xdinside}		{ addlit(yytext, yyleng); }
+<xd,xdc,xui><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "unterminated quoted identifier"); }
 <C,SQL>{xdstart}	{
 						state_before = YYSTATE;
 						BEGIN(xdc);

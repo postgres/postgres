@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.79 2008/10/14 17:12:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.80 2008/10/29 08:04:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1497,28 +1497,7 @@ unicode_to_sqlchar(pg_wchar c)
 {
 	static unsigned char utf8string[5]; /* need trailing zero */
 
-	if (c <= 0x7F)
-	{
-		utf8string[0] = c;
-	}
-	else if (c <= 0x7FF)
-	{
-		utf8string[0] = 0xC0 | ((c >> 6) & 0x1F);
-		utf8string[1] = 0x80 | (c & 0x3F);
-	}
-	else if (c <= 0xFFFF)
-	{
-		utf8string[0] = 0xE0 | ((c >> 12) & 0x0F);
-		utf8string[1] = 0x80 | ((c >> 6) & 0x3F);
-		utf8string[2] = 0x80 | (c & 0x3F);
-	}
-	else
-	{
-		utf8string[0] = 0xF0 | ((c >> 18) & 0x07);
-		utf8string[1] = 0x80 | ((c >> 12) & 0x3F);
-		utf8string[2] = 0x80 | ((c >> 6) & 0x3F);
-		utf8string[3] = 0x80 | (c & 0x3F);
-	}
+	unicode_to_utf8(c, utf8string);
 
 	return (char *) pg_do_encoding_conversion(utf8string,
 											  pg_mblen((char *) utf8string),

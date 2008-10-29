@@ -16,6 +16,14 @@ SELECT 'first line'
 ' - third line'
 	AS "Illegal comment within continuation";
 
+-- Unicode escapes
+SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
+SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
+
+SELECT U&'wrong: \061';
+SELECT U&'wrong: \+0061';
+SELECT U&'wrong: +0061' UESCAPE '+';
+
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.379 2008/10/28 14:09:45 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.380 2008/10/29 08:04:53 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -509,7 +509,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST
-%token <str>	XCONST DOLCONST ECONST NCONST
+%token <str>	XCONST DOLCONST ECONST NCONST UCONST UIDENT
 %token <ival>	ICONST PARAM
 %token <dval>	FCONST
 
@@ -4966,6 +4966,10 @@ Sconst:  SCONST
 			$$[strlen($1)+3]='\0';
 			free($1);
 		}
+	| UCONST
+		{
+			$$ = $1; 
+		}
 	| DOLCONST
 		{
 			$$ = $1; 
@@ -7013,6 +7017,7 @@ cvariable:	CVARIABLE
 		;
 ident: IDENT				{ $$ = $1; }
 		| CSTRING		{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+		| UIDENT		{ $$ = $1; }
 		;
 
 quoted_ident_stringvar: name

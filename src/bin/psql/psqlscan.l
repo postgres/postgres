@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.25 2008/05/09 15:36:31 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.26 2008/10/29 08:04:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,8 @@ static void emit(const char *txt, int len);
  *  <xq> standard quoted strings
  *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
+ *  <xui> quoted identifier with Unicode escapes
+ *  <xus> quoted string with Unicode escapes
  */
 
 %x xb
@@ -165,6 +167,8 @@ static void emit(const char *txt, int len);
 %x xe
 %x xq
 %x xdolq
+%x xui
+%x xus
 /* Additional exclusive states for psql only: lex backslash commands */
 %x xslashcmd
 %x xslasharg
@@ -280,6 +284,25 @@ xdstart			{dquote}
 xdstop			{dquote}
 xddouble		{dquote}{dquote}
 xdinside		[^"]+
+
+/* Unicode escapes */
+uescape			[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']{quote}
+/* error rule to avoid backup */
+uescapefail		("-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*"-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*|[uU][eE][sS][cC][aA][pP]|[uU][eE][sS][cC][aA]|[uU][eE][sS][cC]|[uU][eE][sS]|[uU][eE]|[uU])
+
+/* Quoted identifier with Unicode escapes */
+xuistart		[uU]&{dquote}
+xuistop1		{dquote}{whitespace}*{uescapefail}?
+xuistop2		{dquote}{whitespace}*{uescape}
+
+/* Quoted string with Unicode escapes */
+xusstart		[uU]&{quote}
+xusstop1		{quote}{whitespace}*{uescapefail}?
+xusstop2		{quote}{whitespace}*{uescape}
+
+/* error rule to avoid backup */
+xufailed		[uU]&
+
 
 /* C-style comments
  *
@@ -460,16 +483,29 @@ other			.
 					BEGIN(xe);
 					ECHO;
 				}
+{xusstart}		{
+					BEGIN(xus);
+					ECHO;
+				}
 <xq,xe>{quotestop}	|
 <xq,xe>{quotefail} {
 					yyless(1);
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xq,xe>{xqdouble} {
+<xus>{xusstop1} {
+					yyless(1);
+					BEGIN(INITIAL);
 					ECHO;
 				}
-<xq>{xqinside}  {
+<xus>{xusstop2} {
+					BEGIN(INITIAL);
+					ECHO;
+				}
+<xq,xe,xus>{xqdouble} {
+					ECHO;
+				}
+<xq,xus>{xqinside}  {
 					ECHO;
 				}
 <xe>{xeinside}  {
@@ -484,7 +520,7 @@ other			.
 <xe>{xehexesc}  {
 					ECHO;
 				}
-<xq,xe>{quotecontinue} {
+<xq,xe,xus>{quotecontinue} {
 					ECHO;
 				}
 <xe>.			{
@@ -535,14 +571,33 @@ other			.
 					BEGIN(xd);
 					ECHO;
 				}
+{xuistart}		{
+					BEGIN(xui);
+					ECHO;
+				}
 <xd>{xdstop}	{
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xd>{xddouble}	{
+<xui>{xuistop1}	{
+					yyless(1);
+					BEGIN(INITIAL);
 					ECHO;
 				}
-<xd>{xdinside}	{
+<xui>{xuistop2}	{
+					BEGIN(INITIAL);
+					ECHO;
+				}
+<xd,xui>{xddouble}	{
+					ECHO;
+				}
+<xd,xui>{xdinside}	{
+					ECHO;
+				}
+
+{xufailed}	{
+					/* throw back all but the initial u/U */
+					yyless(1);
 					ECHO;
 				}
 

@@ -238,8 +238,8 @@ F381	Extended schema manipulation	02	ALTER TABLE statement: ADD CONSTRAINT claus
 F381	Extended schema manipulation	03	ALTER TABLE statement: DROP CONSTRAINT clause	YES	
 F382	Alter column data type			YES	
 F391	Long identifiers			YES	
-F392	Unicode escapes in identifiers			NO	
-F393	Unicode escapes in literals			NO	
+F392	Unicode escapes in identifiers			YES	
+F393	Unicode escapes in literals			YES	
 F394	Optional normal form specification			NO	
 F401	Extended joined table			YES	
 F401	Extended joined table	01	NATURAL JOIN	YES	

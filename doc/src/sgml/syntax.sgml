@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.123 2008/06/26 22:24:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.124 2008/10/29 08:04:52 petere Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -190,6 +190,57 @@ UPDATE "my_table" SET "a" = 5;
    </para>
 
    <para>
+    <indexterm><primary>Unicode escape</primary><secondary>in
+    identifiers</secondary></indexterm> A variant of quoted
+    identifiers allows including escaped Unicode characters identified
+    by their code points.  This variant starts
+    with <literal>U&</literal> (upper or lower case U followed by
+    ampersand) immediately before the opening double quote, without
+    any spaces in between, for example <literal>U&"foo"</literal>.
+    (Note that this creates an ambiguity with the
+    operator <literal>&</literal>.  Use spaces around the operator to
+    avoid this problem.)  Inside the quotes, Unicode characters can be
+    specified in escaped form by writing a backslash followed by the
+    four-digit hexadecimal code point number or alternatively a
+    backslash followed by a plus sign followed by a six-digit
+    hexadecimal code point number.  For example, the
+    identifier <literal>"data"</literal> could be written as
+<programlisting>
+U&"d\0061t\+000061"
+</programlisting>
+    The following less trivial example writes the Russian
+    word <quote>slon</quote> (elephant) in Cyrillic letters:
+<programlisting>
+U&"\0441\043B\043E\043D"
+</programlisting>
+   </para>
+
+   <para>
+    If a different escape character than backslash is desired, it can
+    be specified using
+    the <literal>UESCAPE</literal><indexterm><primary>UESCAPE</primary></indexterm>
+    clause after the string, for example:
+<programlisting>
+U&"d!0061t!+000061" UESCAPE '!'
+</programlisting>
+    The escape character can be any single character other than a
+    hexadecimal digit, the plus sign, a single quote, a double quote,
+    or a whitespace character.  Note that the escape character is
+    written in single quotes, not double quotes.
+   </para>
+
+   <para>
+    To include the escape character in the identifier literally, write
+    it twice.
+   </para>
+
+   <para>
+    The Unicode escape syntax works only when the server encoding is
+    UTF8.  When other server encodings are used, only code points in
+    the ASCII range (up to <literal>\007F</literal>) can be specified.
+   </para>
+
+   <para>
     Quoting an identifier also makes it case-sensitive, whereas
     unquoted names are always folded to lower case.  For example, the
     identifiers <literal>FOO</literal>, <literal>foo</literal>, and
@@ -245,7 +296,7 @@ UPDATE "my_table" SET "a" = 5;
      write two adjacent single quotes, e.g.
      <literal>'Dianne''s horse'</literal>.
      Note that this is <emphasis>not</> the same as a double-quote
-     character (<literal>"</>).
+     character (<literal>"</>). <!-- font-lock sanity: " -->
     </para>
 
     <para>
@@ -269,14 +320,19 @@ SELECT 'foo'      'bar';
      by <acronym>SQL</acronym>; <productname>PostgreSQL</productname> is
      following the standard.)
     </para>
+   </sect3>
 
-    <para>
-     <indexterm>
+   <sect3 id="sql-syntax-strings-escape">
+    <title>String Constants with C-Style Escapes</title>
+
+     <indexterm zone="sql-syntax-strings-escape">
       <primary>escape string syntax</primary>
      </indexterm>
-     <indexterm>
+     <indexterm zone="sql-syntax-strings-escape">
       <primary>backslash escapes</primary>
      </indexterm>
+
+    <para>
      <productname>PostgreSQL</productname> also accepts <quote>escape</>
      string constants, which are an extension to the SQL standard.
      An escape string constant is specified by writing the letter
@@ -287,7 +343,8 @@ SELECT 'foo'      'bar';
      Within an escape string, a backslash character (<literal>\</>) begins a
      C-like <firstterm>backslash escape</> sequence, in which the combination
      of backslash and following character(s) represent a special byte
-     value:
+     value, as shown in <xref linkend="sql-backslash-table">.
+    </para>
 
      <table id="sql-backslash-table">
       <title>Backslash Escape Sequences</title>
@@ -341,12 +398,22 @@ SELECT 'foo'      'bar';
       </tgroup>
      </table>
 
-     It is your responsibility that the byte sequences you create are
-     valid characters in the server character set encoding. Any other
+    <para>
+     Any other
      character following a backslash is taken literally. Thus, to
      include a backslash character, write two backslashes (<literal>\\</>).
      Also, a single quote can be included in an escape string by writing
      <literal>\'</literal>, in addition to the normal way of <literal>''</>.
+    </para>
+
+    <para>
+     It is your responsibility that the byte sequences you create are
+     valid characters in the server character set encoding.  When the
+     server encoding is UTF-8, then the alternative Unicode escape
+     syntax, explained in <xref linkend="sql-syntax-strings-uescape">,
+     should be used instead.  (The alternative would be doing the
+     UTF-8 encoding by hand and writing out the bytes, which would be
+     very cumbersome.)
     </para>
 
     <caution>
@@ -376,6 +443,65 @@ SELECT 'foo'      'bar';
 
     <para>
      The character with the code zero cannot be in a string constant.
+    </para>
+   </sect3>
+
+   <sect3 id="sql-syntax-strings-uescape">
+    <title>String Constants with Unicode Escapes</title>
+
+    <indexterm  zone="sql-syntax-strings-uescape">
+     <primary>Unicode escape</primary>
+     <secondary>in string constants</secondary>
+    </indexterm>
+
+    <para>
+     <productname>PostgreSQL</productname> also supports another type
+     of escape syntax for strings that allows specifying arbitrary
+     Unicode characters by code point.  A Unicode escape string
+     constant starts with <literal>U&</literal> (upper or lower case
+     letter U followed by ampersand) immediately before the opening
+     quote, without any spaces in between, for
+     example <literal>U&'foo'</literal>.  (Note that this creates an
+     ambiguity with the operator <literal>&</literal>.  Use spaces
+     around the operator to avoid this problem.)  Inside the quotes,
+     Unicode characters can be specified in escaped form by writing a
+     backslash followed by the four-digit hexadecimal code point
+     number or alternatively a backslash followed by a plus sign
+     followed by a six-digit hexadecimal code point number.  For
+     example, the string <literal>'data'</literal> could be written as
+<programlisting>
+U&'d\0061t\+000061'
+</programlisting>
+     The following less trivial example writes the Russian
+     word <quote>slon</quote> (elephant) in Cyrillic letters:
+<programlisting>
+U&'\0441\043B\043E\043D'
+</programlisting>
+    </para>
+
+    <para>
+     If a different escape character than backslash is desired, it can
+     be specified using
+     the <literal>UESCAPE</literal><indexterm><primary>UESCAPE</primary></indexterm>
+     clause after the string, for example:
+<programlisting>
+		   U&'d!0061t!+000061' UESCAPE '!'
+</programlisting>
+     The escape character can be any single character other than a
+     hexadecimal digit, the plus sign, a single quote, a double quote,
+     or a whitespace character.
+    </para>
+
+    <para>
+     The Unicode escape syntax works only when the server encoding is
+     UTF8.  When other server encodings are used, only code points in
+     the ASCII range (up to <literal>\007F</literal>) can be
+     specified.
+    </para>
+
+    <para>
+     To include the escape character in the string literally, write it
+     twice.
     </para>
    </sect3>
 
