@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.26 2008/02/19 15:29:58 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/port/Makefile,v 1.27 2008/10/29 16:06:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,8 +33,8 @@ endif
 include $(top_srcdir)/src/backend/common.mk
 
 tas.o: tas.s
-ifeq ($(PORTNAME), solaris)
-# preprocess assembler file with cpp, used by x86
+ifeq ($(SUN_STUDIO_CC), yes)
+# preprocess assembler file with cpp
 	$(CC) $(CFLAGS) -c -P $<
 	mv $*.i $*_cpp.s
 	$(CC) $(CFLAGS) -c $*_cpp.s -o $@

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.568 2008/10/29 09:27:24 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.569 2008/10/29 16:06:46 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -378,6 +378,14 @@ AC_PROG_CC([$pgac_cc_list])
 AC_TRY_COMPILE([], [@%:@ifndef __INTEL_COMPILER
 choke me
 @%:@endif], [ICC=[yes]], [ICC=[no]])
+
+# Check if it's Sun Studio compiler. We assume that
+# __SUNPRO_C will be defined for Sun Studio compilers
+AC_TRY_COMPILE([], [@%:@ifndef __SUNPRO_C
+choke me
+@%:@endif], [SUN_STUDIO_CC=yes], [SUN_STUDIO_CC=no])
+
+AC_SUBST(SUN_STUDIO_CC)
 
 unset CFLAGS
 

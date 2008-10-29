@@ -1,22 +1,22 @@
-if test "$GCC" != yes ; then
+if test "$SUN_STUDIO_CC" = yes ; then
   CC="$CC -Xa"			# relaxed ISO C mode
-  CFLAGS="-v -DSUNOS4_CC"	# -v is like gcc -Wall
+  CFLAGS="-v"			# -v is like gcc -Wall
   if test "$enable_debug" != yes; then
     CFLAGS="$CFLAGS -O"		# any optimization breaks debug
   fi
 
   # Pick the right test-and-set (TAS) code for the Sun compiler.
   # We would like to use in-line assembler, but the compiler
-  # requires *.il files to be on every compile line, making 
+  # requires *.il files to be on every compile line, making
   # the build system too fragile.
-  case $host in
-    sparc-*-solaris*)
+  case $host_cpu in
+    sparc)
 	need_tas=yes
-	tas_file=solaris_sparc.s
+	tas_file=sunstudio_sparc.s
     ;;
-    i?86-*-solaris*)
+    i?86|x86_64)
 	need_tas=yes
-	tas_file=solaris_x86.s
+	tas_file=sunstudio_x86.s
     ;;
   esac
 fi
