@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.8.4.1 2007/01/31 08:20:42 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.8.4.2 2008/10/30 19:21:26 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -270,12 +270,12 @@ msgstr "ungültiger ExecStatusType-Kode"
 #: fe-exec.c:1918 fe-exec.c:1941
 #, c-format
 msgid "column number %d is out of range 0..%d"
-msgstr "Spaltennummer %d ist außerhalb des zulässigem Bereichs 0..%d"
+msgstr "Spaltennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
 #: fe-exec.c:1934
 #, c-format
 msgid "row number %d is out of range 0..%d"
-msgstr "Zeilennummer %d ist außerhalb des zulässigem Bereichs 0..%d"
+msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
 #: fe-exec.c:2216
 #, c-format
@@ -326,7 +326,7 @@ msgstr "kann OID der Funktion lo_close nicht ermitteln\n"
 
 #: fe-lobj.c:653
 msgid "cannot determine OID of function lo_creat\n"
-msgstr "kann OID der Funktion lo_open nicht ermitteln\n"
+msgstr "kann OID der Funktion lo_creat nicht ermitteln\n"
 
 #: fe-lobj.c:660
 msgid "cannot determine OID of function lo_unlink\n"
