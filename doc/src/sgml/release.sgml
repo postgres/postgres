@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.64 2008/09/19 02:46:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.65 2008/10/30 22:23:39 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,90 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-7-4-23">
+  <title>Release 7.4.23</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-11-03</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.22.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.23</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix backend crash when the client encoding cannot represent a localized
+      error message (Tom)
+     </para>
+
+     <para>
+      We have addressed similar issues before, but it would still fail if
+      the <quote>character has no equivalent</> message itself couldn't
+      be converted.  The fix is to disable localization and send the plain
+      ASCII error message when we detect such a situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect tsearch2 headline generation when single query
+      item matches first word of text (Sushant Sinha)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper display of fractional seconds in interval values when
+      using a non-ISO datestyle in an <option>--enable-integer-datetimes</>
+      build (Ron Mayer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <function>SPI_getvalue</> and <function>SPI_getbinval</>
+      behave correctly when the passed tuple and tuple descriptor have
+      different numbers of columns (Tom)
+     </para>
+
+     <para>
+      This situation is normal when a table has had columns added or removed,
+      but these two functions didn't handle it properly.
+      The only likely consequence is an incorrect error indication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s parsing of <command>CREATE USER</> (Michael)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-22">
   <title>Release 7.4.22</title>
