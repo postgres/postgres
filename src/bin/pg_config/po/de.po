@@ -1,7 +1,7 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004 - 2007.
 #
-# pgtranslation Id: pg_config.po,v 1.7 2007/11/07 14:08:59 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.8 2008/10/30 10:22:45 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-24 19:17-0300\n"
-"PO-Revision-Date: 2007-09-25 16:43+0200\n"
+"PO-Revision-Date: 2008-10-30 12:12+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -269,7 +269,7 @@ msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 #: ../../port/exec.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "konnte symbolischen Link »%s« nicht lesen"
+msgstr "konnte symbolische Verknüpfung »%s« nicht lesen"
 
 #: ../../port/exec.c:583
 #, c-format

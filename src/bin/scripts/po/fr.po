@@ -1,7 +1,7 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.15.2.1 2008/06/05 23:36:45 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.15.2.2 2008/10/30 21:30:20 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
@@ -370,7 +370,7 @@ msgstr "Saisissez le nom du rôle à ajouter : "
 
 #: createuser.c:183
 msgid "Enter password for new role: "
-msgstr "Saisissez le mot de passe pour le nouvel rôle : "
+msgstr "Saisissez le mot de passe pour le nouveau rôle : "
 
 #: createuser.c:184
 msgid "Enter it again: "
@@ -383,15 +383,15 @@ msgstr "Les mots de passe ne sont pas identiques.\n"
 
 #: createuser.c:196
 msgid "Shall the new role be a superuser?"
-msgstr "Le nouvel rôle est-il super-utilisateur ?"
+msgstr "Le nouveau rôle est-il super-utilisateur ?"
 
 #: createuser.c:211
 msgid "Shall the new role be allowed to create databases?"
-msgstr "Le nouvel rôle est-il autorisé à créer des bases de données ?"
+msgstr "Le nouveau rôle est-il autorisé à créer des bases de données ?"
 
 #: createuser.c:219
 msgid "Shall the new role be allowed to create more new roles?"
-msgstr "Le nouvel rôle est-il autorisé à créer de nouveaux rôles ?"
+msgstr "Le nouveau rôle est-il autorisé à créer de nouveaux rôles ?"
 
 #: createuser.c:252
 #, c-format
