@@ -1,13 +1,13 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004, 2005.
 #
-# pgtranslation Id: pg_config.po,v 1.4 2006/10/27 13:07:50 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.4.2.1 2008/10/30 10:20:31 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.1\n"
+"Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-20 01:37-0300\n"
 "PO-Revision-Date: 2006-10-27 14:54+0200\n"

@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2006.
 #
-# pgtranslation Id: libpq.po,v 1.3 2006/10/21 11:48:36 petere Exp $
+# pgtranslation Id: libpq.po,v 1.3.2.1 2008/10/30 10:20:31 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -387,7 +387,7 @@ msgstr "kann OID der Funktion lo_close nicht ermitteln\n"
 
 #: fe-lobj.c:716
 msgid "cannot determine OID of function lo_creat\n"
-msgstr "kann OID der Funktion lo_open nicht ermitteln\n"
+msgstr "kann OID der Funktion lo_creat nicht ermitteln\n"
 
 #: fe-lobj.c:723
 msgid "cannot determine OID of function lo_unlink\n"
