@@ -1,7 +1,7 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/de.po,v 1.7.2.3 2007/09/13 20:56:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/de.po,v 1.7.2.4 2008/10/30 19:19:35 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -1482,7 +1482,7 @@ msgstr "verbinde mit Datenbank »%s« als Benutzer »%s«\n"
 #: pg_backup_db.c:150 pg_backup_db.c:183 pg_backup_db.c:226 pg_backup_db.c:255
 #: pg_dumpall.c:712 pg_dumpall.c:738
 msgid "Password: "
-msgstr "Paßwort: "
+msgstr "Passwort: "
 
 #: pg_backup_db.c:162
 msgid "failed to reconnect to database\n"
