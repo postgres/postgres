@@ -25262,7 +25262,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
   { { echo "$as_me:$LINENO: error: thread test program failed
-This platform is not thread-safe.  Check the file 'config.log'for the
+This platform is not thread-safe.  Check the file 'config.log' for the
 exact reason.
 
 You can use the configure option --enable-thread-safety-force to force
@@ -25270,7 +25270,7 @@ threads to be enabled.  But you must then run the program in
 src/test/thread and add locking function calls to your applications to
 guarantee thread safety." >&5
 echo "$as_me: error: thread test program failed
-This platform is not thread-safe.  Check the file 'config.log'for the
+This platform is not thread-safe.  Check the file 'config.log' for the
 exact reason.
 
 You can use the configure option --enable-thread-safety-force to force
