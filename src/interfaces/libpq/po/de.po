@@ -1,13 +1,13 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.11.2.1 2007/01/31 08:27:01 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.11.2.2 2008/10/30 19:23:08 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
+"Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-12-01 19:22-0400\n"
 "PO-Revision-Date: 2006-12-06 21:32+0100\n"
@@ -280,12 +280,12 @@ msgstr "ungültiger ExecStatusType-Kode"
 #: fe-exec.c:1928 fe-exec.c:1951
 #, c-format
 msgid "column number %d is out of range 0..%d"
-msgstr "Spaltennummer %d ist außerhalb des zulässigem Bereichs 0..%d"
+msgstr "Spaltennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
 #: fe-exec.c:1944
 #, c-format
 msgid "row number %d is out of range 0..%d"
-msgstr "Zeilennummer %d ist außerhalb des zulässigem Bereichs 0..%d"
+msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
 #: fe-exec.c:2225
 #, c-format
@@ -294,7 +294,7 @@ msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
 #: fe-exec.c:2430
 msgid "incomplete multibyte character\n"
-msgstr "unvollständiges Mehrbytezeichen\n"
+msgstr "unvollständiges Mehrbyte-Zeichen\n"
 
 #: fe-lobj.c:331
 msgid "cannot determine OID of function lo_create\n"
@@ -340,7 +340,7 @@ msgstr "kann OID der Funktion lo_close nicht ermitteln\n"
 
 #: fe-lobj.c:702
 msgid "cannot determine OID of function lo_creat\n"
-msgstr "kann OID der Funktion lo_open nicht ermitteln\n"
+msgstr "kann OID der Funktion lo_creat nicht ermitteln\n"
 
 #: fe-lobj.c:709
 msgid "cannot determine OID of function lo_unlink\n"

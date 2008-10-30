@@ -1,7 +1,7 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004, 2005.
 #
-# $Id: de.po,v 1.5 2005/11/04 23:31:10 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.2.2.1 2008/10/30 10:19:32 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -56,7 +56,7 @@ msgstr ""
 
 #: pg_config.c:413
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  --bindir              zeige Installationsverzeichnis der Dokumentation\n"
+msgstr "  --docdir              zeige Installationsverzeichnis der Dokumentation\n"
 
 #: pg_config.c:414
 msgid ""
@@ -69,7 +69,7 @@ msgstr ""
 
 #: pg_config.c:416
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --includedir-server   zeige Installationsverzeichnis von weiteren Headerdateien\n"
+msgstr "  --pkgincludedir       zeige Installationsverzeichnis von weiteren Headerdateien\n"
 
 #: pg_config.c:417
 msgid ""
@@ -93,25 +93,25 @@ msgstr ""
 
 #: pg_config.c:420
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --libdir              zeige Installationsverzeichnis der Locale-Dateien\n"
+msgstr "  --localedir           zeige Installationsverzeichnis der Locale-Dateien\n"
 
 #: pg_config.c:421
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --bindir              zeige Installationsverzeichnis der Manpages\n"
+msgstr "  --mandir              zeige Installationsverzeichnis der Manpages\n"
 
 #: pg_config.c:422
 msgid ""
 "  --sharedir            show location of architecture-independent support "
 "files\n"
 msgstr ""
-"  --bindir              zeige Installationsverzeichnis der architektur-\n"
+"  --sharedir            zeige Installationsverzeichnis der architektur-\n"
 "                        unabhängigen Datendateien\n"
 
 #: pg_config.c:423
 msgid ""
 "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr ""
-"  --bindir              zeige Installationsverzeichnis der systemweiten\n"
+"  --sysconfdir          zeige Installationsverzeichnis der systemweiten\n"
 "                        Konfigurationsdateien\n"
 
 #: pg_config.c:424

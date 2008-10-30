@@ -1,7 +1,7 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.10.2.3 2008/06/05 23:37:16 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.10.2.4 2008/10/30 19:23:08 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
@@ -286,7 +286,7 @@ msgstr "Saisissez le nom du rôle à ajouter : "
 
 #: createuser.c:177
 msgid "Enter password for new role: "
-msgstr "Saisissez le mot de passe pour le nouvel rôle : "
+msgstr "Saisissez le mot de passe pour le nouveau rôle : "
 
 #: createuser.c:178
 msgid "Enter it again: "
@@ -299,20 +299,20 @@ msgstr "Les mots de passe ne sont pas identiques.\n"
 
 #: createuser.c:192
 msgid "Shall the new role be a superuser? (y/n) "
-msgstr "Le nouvel rôle est-t-il un super-utilisateur ? (o/n) "
+msgstr "Le nouveau rôle est-t-il un super-utilisateur ? (o/n) "
 
 #: createuser.c:210
 msgid "Shall the new role be allowed to create databases? (y/n) "
-msgstr "Le nouvel rôle doit-il être autorisé à créer des bases de données ? (o/n) "
+msgstr "Le nouveau rôle doit-il être autorisé à créer des bases de données ? (o/n) "
 
 #: createuser.c:221
 msgid "Shall the new role be allowed to create more new roles? (y/n) "
-msgstr "Le nouvel rôle doit-il être autorisé à créer de nouveaux rôles ? (o/n) "
+msgstr "Le nouveau rôle doit-il être autorisé à créer de nouveaux rôles ? (o/n) "
 
 #: createuser.c:284
 #, c-format
 msgid "%s: creation of new role failed: %s"
-msgstr "%s : la création du nouvel rôle a échoué : %s"
+msgstr "%s : la création du nouveau rôle a échoué : %s"
 
 #: createuser.c:303
 #, c-format
@@ -320,7 +320,7 @@ msgid ""
 "%s creates a new PostgreSQL role.\n"
 "\n"
 msgstr ""
-"%s crée un nouvel rôle PostgreSQL.\n"
+"%s crée un nouveau rôle PostgreSQL.\n"
 "\n"
 
 #: createuser.c:305 dropuser.c:148
