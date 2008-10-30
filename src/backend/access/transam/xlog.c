@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.319 2008/09/23 09:20:35 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.320 2008/10/30 04:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4698,6 +4698,9 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
  *
  * Returns TRUE if we are stopping, FALSE otherwise.  On TRUE return,
  * *includeThis is set TRUE if we should apply this record before stopping.
+ *
+ * We also track the timestamp of the latest applied COMMIT/ABORT record
+ * in recoveryLastXTime, for logging purposes.
  * Also, some information is saved in recoveryStopXid et al for use in
  * annotating the new timeline's history file.
  */
@@ -4729,12 +4732,12 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	else
 		return false;
 
-	/* Remember the most recent COMMIT/ABORT time for logging purposes */
-	recoveryLastXTime = recordXtime;
-
 	/* Do we have a PITR target at all? */
 	if (!recoveryTarget)
+	{
+		recoveryLastXTime = recordXtime;
 		return false;
+	}
 
 	if (recoveryTargetExact)
 	{
@@ -4798,7 +4801,12 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 								recoveryStopXid,
 								timestamptz_to_str(recoveryStopTime))));
 		}
+
+		if (recoveryStopAfter)
+			recoveryLastXTime = recordXtime;
 	}
+	else
+		recoveryLastXTime = recordXtime;
 
 	return stopsHere;
 }
