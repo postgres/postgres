@@ -19056,7 +19056,7 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
   { { echo "$as_me:$LINENO: error:
 *** Thread test program failed.  Your platform is not thread-safe.
-*** Check the file 'config.log'for the exact reason.
+*** Check the file 'config.log' for the exact reason.
 ***
 *** You can use the configure option --enable-thread-safety-force
 *** to force threads to be enabled.  However, you must then run
@@ -19065,7 +19065,7 @@ echo "${ECHO_T}no" >&6
 " >&5
 echo "$as_me: error:
 *** Thread test program failed.  Your platform is not thread-safe.
-*** Check the file 'config.log'for the exact reason.
+*** Check the file 'config.log' for the exact reason.
 ***
 *** You can use the configure option --enable-thread-safety-force
 *** to force threads to be enabled.  However, you must then run
