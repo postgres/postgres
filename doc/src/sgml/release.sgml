@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.586 2008/09/30 10:52:09 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.587 2008/10/30 22:22:24 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,258 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-8-3-5">
+  <title>Release 8.3.5</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-11-03</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.4.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.5</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.1,
+    see the release notes for 8.3.1.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix GiST index corruption due to marking the wrong index entry
+      <quote>dead</> after a deletion (Teodor)
+     </para>
+
+     <para>
+      This would result in index searches failing to find rows they
+      should have found.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix backend crash when the client encoding cannot represent a localized
+      error message (Tom)
+     </para>
+
+     <para>
+      We have addressed similar issues before, but it would still fail if
+      the <quote>character has no equivalent</> message itself couldn't
+      be converted.  The fix is to disable localization and send the plain
+      ASCII error message when we detect such a situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash in <type>bytea</>-to-XML mapping (Michael McMaster)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash when deeply nested functions are invoked from
+      a trigger (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve optimization of <replaceable>expression</> <literal>IN</>
+      (<replaceable>expression-list</>) queries (Tom, per an idea from Robert
+      Haas)
+     </para>
+
+     <para>
+      Cases in which there are query variables on the right-hand side had been
+      handled less efficiently in 8.2.x and 8.3.x than in prior versions.
+      The fix restores 8.1 behavior for such cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mis-expansion of rule queries when a sub-<literal>SELECT</> appears
+      in a function call in <literal>FROM</>,  a multi-row <literal>VALUES</>
+      list, or a <literal>RETURNING</> list (Tom)
+     </para>
+
+     <para>
+      The usual symptom of this problem is an <quote>unrecognized node type</>
+      error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix Assert failure during rescan of an <literal>IS NULL</>
+      search of a GiST index (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak during rescan of a hashed aggregation plan (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure an error is reported when a newly-defined PL/pgSQL trigger
+      function is invoked as a normal function (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Force a checkpoint before <command>CREATE DATABASE</> starts to copy
+      files (Heikki)
+     </para>
+
+     <para>
+      This prevents a possible failure if files had recently been deleted
+      in the source database.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible collision of <structfield>relfilenode</> numbers
+      when moving a table to another tablespace with <command>ALTER SET
+      TABLESPACE</> (Heikki)
+     </para>
+
+     <para>
+      The command tried to re-use the existing filename, instead of
+      picking one that is known unused in the destination directory.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect text search headline generation when single query
+      item matches first word of text (Sushant Sinha)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper display of fractional seconds in interval values when
+      using a non-ISO datestyle in an <option>--enable-integer-datetimes</>
+      build (Ron Mayer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <literal>ILIKE</> compare characters case-insensitively
+      even when they're escaped (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <command>DISCARD</> is handled properly by statement logging (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect logging of last-completed-transaction time during
+      PITR recovery (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <function>SPI_getvalue</> and <function>SPI_getbinval</>
+      behave correctly when the passed tuple and tuple descriptor have
+      different numbers of columns (Tom)
+     </para>
+
+     <para>
+      This situation is normal when a table has had columns added or removed,
+      but these two functions didn't handle it properly.
+      The only likely consequence is an incorrect error indication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Mark <varname>SessionReplicationRole</> as <literal>PGDLLIMPORT</>
+      so it can be used by <application>Slony</> on Windows (Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix small memory leak when using <application>libpq</>'s
+      <literal>gsslib</> parameter (Magnus)
+     </para>
+
+     <para>
+      The space used by the parameter string was not freed at connection
+      close.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <application>libgssapi</> is linked into <application>libpq</>
+      if needed (Markus Schaaf)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s parsing of <command>CREATE ROLE</> (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recent breakage of <literal>pg_ctl restart</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <filename>pg_control</> is opened in binary mode
+      (Itagaki Takahiro)
+     </para>
+
+     <para>
+      <application>pg_controldata</> and <application>pg_resetxlog</>
+      did this incorrectly, and so could fail on Windows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008i (for
+      DST law changes in Argentina, Brazil, Mauritius, Syria)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-3-4">
   <title>Release 8.3.4</title>
@@ -3767,6 +4019,187 @@ current_date &lt; 2017-11-17
     </itemizedlist>
 
    </sect3>
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-2-11">
+  <title>Release 8.2.11</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-11-03</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.10.
+   For information about new features in the 8.2 major release, see
+   <xref linkend="release-8-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.11</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+    However, if you are upgrading from a version earlier than 8.2.7,
+    see the release notes for 8.2.7.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix GiST index corruption due to marking the wrong index entry
+      <quote>dead</> after a deletion (Teodor)
+     </para>
+
+     <para>
+      This would result in index searches failing to find rows they
+      should have found.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix backend crash when the client encoding cannot represent a localized
+      error message (Tom)
+     </para>
+
+     <para>
+      We have addressed similar issues before, but it would still fail if
+      the <quote>character has no equivalent</> message itself couldn't
+      be converted.  The fix is to disable localization and send the plain
+      ASCII error message when we detect such a situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash when deeply nested functions are invoked from
+      a trigger (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve optimization of <replaceable>expression</> <literal>IN</>
+      (<replaceable>expression-list</>) queries (Tom, per an idea from Robert
+      Haas)
+     </para>
+
+     <para>
+      Cases in which there are query variables on the right-hand side had been
+      handled less efficiently in 8.2.x and 8.3.x than in prior versions.
+      The fix restores 8.1 behavior for such cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mis-expansion of rule queries when a sub-<literal>SELECT</> appears
+      in a function call in <literal>FROM</>,  a multi-row <literal>VALUES</>
+      list, or a <literal>RETURNING</> list (Tom)
+     </para>
+
+     <para>
+      The usual symptom of this problem is an <quote>unrecognized node type</>
+      error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak during rescan of a hashed aggregation plan (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure an error is reported when a newly-defined PL/pgSQL trigger
+      function is invoked as a normal function (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible collision of <structfield>relfilenode</> numbers
+      when moving a table to another tablespace with <command>ALTER SET
+      TABLESPACE</> (Heikki)
+     </para>
+
+     <para>
+      The command tried to re-use the existing filename, instead of
+      picking one that is known unused in the destination directory.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect tsearch2 headline generation when single query
+      item matches first word of text (Sushant Sinha)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper display of fractional seconds in interval values when
+      using a non-ISO datestyle in an <option>--enable-integer-datetimes</>
+      build (Ron Mayer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <function>SPI_getvalue</> and <function>SPI_getbinval</>
+      behave correctly when the passed tuple and tuple descriptor have
+      different numbers of columns (Tom)
+     </para>
+
+     <para>
+      This situation is normal when a table has had columns added or removed,
+      but these two functions didn't handle it properly.
+      The only likely consequence is an incorrect error indication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s parsing of <command>CREATE ROLE</> (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recent breakage of <literal>pg_ctl restart</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <filename>pg_control</> is opened in binary mode
+      (Itagaki Takahiro)
+     </para>
+
+     <para>
+      <application>pg_controldata</> and <application>pg_resetxlog</>
+      did this incorrectly, and so could fail on Windows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008i (for
+      DST law changes in Argentina, Brazil, Mauritius, Syria)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
   </sect2>
  </sect1>
 
@@ -8041,6 +8474,155 @@ current_date &lt; 2017-11-17
   </sect2>
  </sect1>
 
+ <sect1 id="release-8-1-15">
+  <title>Release 8.1.15</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-11-03</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.14.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.15</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.2,
+    see the release notes for 8.1.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix GiST index corruption due to marking the wrong index entry
+      <quote>dead</> after a deletion (Teodor)
+     </para>
+
+     <para>
+      This would result in index searches failing to find rows they
+      should have found.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix backend crash when the client encoding cannot represent a localized
+      error message (Tom)
+     </para>
+
+     <para>
+      We have addressed similar issues before, but it would still fail if
+      the <quote>character has no equivalent</> message itself couldn't
+      be converted.  The fix is to disable localization and send the plain
+      ASCII error message when we detect such a situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash when deeply nested functions are invoked from
+      a trigger (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mis-expansion of rule queries when a sub-<literal>SELECT</> appears
+      in a function call in <literal>FROM</>,  a multi-row <literal>VALUES</>
+      list, or a <literal>RETURNING</> list (Tom)
+     </para>
+
+     <para>
+      The usual symptom of this problem is an <quote>unrecognized node type</>
+      error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure an error is reported when a newly-defined PL/pgSQL trigger
+      function is invoked as a normal function (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible collision of <structfield>relfilenode</> numbers
+      when moving a table to another tablespace with <command>ALTER SET
+      TABLESPACE</> (Heikki)
+     </para>
+
+     <para>
+      The command tried to re-use the existing filename, instead of
+      picking one that is known unused in the destination directory.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect tsearch2 headline generation when single query
+      item matches first word of text (Sushant Sinha)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper display of fractional seconds in interval values when
+      using a non-ISO datestyle in an <option>--enable-integer-datetimes</>
+      build (Ron Mayer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <function>SPI_getvalue</> and <function>SPI_getbinval</>
+      behave correctly when the passed tuple and tuple descriptor have
+      different numbers of columns (Tom)
+     </para>
+
+     <para>
+      This situation is normal when a table has had columns added or removed,
+      but these two functions didn't handle it properly.
+      The only likely consequence is an incorrect error indication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s parsing of <command>CREATE ROLE</> (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recent breakage of <literal>pg_ctl restart</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008i (for
+      DST law changes in Argentina, Brazil, Mauritius, Syria)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-1-14">
   <title>Release 8.1.14</title>
 
@@ -11958,6 +12540,117 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-0-19">
+  <title>Release 8.0.19</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-11-03</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.18.
+   For information about new features in the 8.0 major release, see
+   <xref linkend="release-8-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.19</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.
+    However, if you are upgrading from a version earlier than 8.0.6,
+    see the release notes for 8.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix backend crash when the client encoding cannot represent a localized
+      error message (Tom)
+     </para>
+
+     <para>
+      We have addressed similar issues before, but it would still fail if
+      the <quote>character has no equivalent</> message itself couldn't
+      be converted.  The fix is to disable localization and send the plain
+      ASCII error message when we detect such a situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash when deeply nested functions are invoked from
+      a trigger (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure an error is reported when a newly-defined PL/pgSQL trigger
+      function is invoked as a normal function (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect tsearch2 headline generation when single query
+      item matches first word of text (Sushant Sinha)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper display of fractional seconds in interval values when
+      using a non-ISO datestyle in an <option>--enable-integer-datetimes</>
+      build (Ron Mayer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <function>SPI_getvalue</> and <function>SPI_getbinval</>
+      behave correctly when the passed tuple and tuple descriptor have
+      different numbers of columns (Tom)
+     </para>
+
+     <para>
+      This situation is normal when a table has had columns added or removed,
+      but these two functions didn't handle it properly.
+      The only likely consequence is an incorrect error indication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s parsing of <command>CREATE USER</> (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recent breakage of <literal>pg_ctl restart</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2008i (for
+      DST law changes in Argentina, Brazil, Mauritius, Syria)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
@@ -16240,6 +16933,90 @@ typedefs (Michael)</para></listitem>
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-7-4-23">
+  <title>Release 7.4.23</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2008-11-03</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.22.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.23</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix backend crash when the client encoding cannot represent a localized
+      error message (Tom)
+     </para>
+
+     <para>
+      We have addressed similar issues before, but it would still fail if
+      the <quote>character has no equivalent</> message itself couldn't
+      be converted.  The fix is to disable localization and send the plain
+      ASCII error message when we detect such a situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect tsearch2 headline generation when single query
+      item matches first word of text (Sushant Sinha)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix improper display of fractional seconds in interval values when
+      using a non-ISO datestyle in an <option>--enable-integer-datetimes</>
+      build (Ron Mayer)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure <function>SPI_getvalue</> and <function>SPI_getbinval</>
+      behave correctly when the passed tuple and tuple descriptor have
+      different numbers of columns (Tom)
+     </para>
+
+     <para>
+      This situation is normal when a table has had columns added or removed,
+      but these two functions didn't handle it properly.
+      The only likely consequence is an incorrect error indication.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s parsing of <command>CREATE USER</> (Michael)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
