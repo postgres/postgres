@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.38 2008/10/06 08:04:11 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.39 2008/10/31 15:04:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,8 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	Buffer		buffer;
 	Page		page;
 
-	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
+	buffer = ReadBufferExtended(gv->index, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								gv->strategy);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
@@ -306,7 +307,8 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	vacuum_delay_point();
 
-	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
+	buffer = ReadBufferExtended(gv->index, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								gv->strategy);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
@@ -595,7 +597,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
-		buffer = ReadBufferWithStrategy(rel, blkno, info->strategy);
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+									info->strategy);
 		LockBuffer(buffer, GIST_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
@@ -691,13 +694,15 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	while (stack)
 	{
-		Buffer		buffer = ReadBufferWithStrategy(rel, stack->blkno, info->strategy);
+		Buffer		buffer;
 		Page		page;
 		OffsetNumber i,
 					maxoff;
 		IndexTuple	idxtuple;
 		ItemId		iid;
 
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, stack->blkno,
+									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(rel, buffer);
 		page = (Page) BufferGetPage(buffer);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.125 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.126 2008/10/31 15:05:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,7 +911,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		 * each tuple, but since we aren't doing much work per tuple, the
 		 * extra lock traffic is probably better avoided.
 		 */
-		targbuffer = ReadBufferWithStrategy(onerel, targblock, vac_strategy);
+		targbuffer = ReadBufferExtended(onerel, MAIN_FORKNUM, targblock,
+										RBM_NORMAL, vac_strategy);
 		LockBuffer(targbuffer, BUFFER_LOCK_SHARE);
 		targpage = BufferGetPage(targbuffer);
 		maxoffset = PageGetMaxOffsetNumber(targpage);

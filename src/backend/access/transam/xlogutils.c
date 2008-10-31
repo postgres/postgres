@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.59 2008/09/30 10:52:11 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.60 2008/10/31 15:04:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,6 +200,20 @@ XLogCheckInvalidPages(void)
 	invalid_page_tab = NULL;
 }
 
+/*
+ * XLogReadBufferExtended
+ *		A shorthand of XLogReadBufferExtended(), for reading from the main
+ *		fork.
+ *
+ * For historical reasons, instead of a ReadBufferMode argument, this only
+ * supports RBM_ZERO (init == true) and RBM_NORMAL (init == false) modes.
+ */
+Buffer
+XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
+{
+	return XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
+								  init ? RBM_ZERO : RBM_NORMAL);
+}
 
 /*
  * XLogReadBuffer
@@ -211,34 +225,21 @@ XLogCheckInvalidPages(void)
  * expect that this is only used during single-process XLOG replay, but
  * some subroutines such as MarkBufferDirty will complain if we don't.)
  *
- * If "init" is true then the caller intends to rewrite the page fully
- * using the info in the XLOG record.  In this case we will extend the
- * relation if needed to make the page exist, and we will not complain about
- * the page being "new" (all zeroes); in fact, we usually will supply a
- * zeroed buffer without reading the page at all, so as to avoid unnecessary
- * failure if the page is present on disk but has corrupt headers.
+ * There's some differences in the behavior wrt. the "mode" argument,
+ * compared to ReadBufferExtended:
  *
- * If "init" is false then the caller needs the page to be valid already.
- * If the page doesn't exist or contains zeroes, we return InvalidBuffer.
- * In this case the caller should silently skip the update on this page.
- * (In this situation, we expect that the page was later dropped or truncated.
- * If we don't see evidence of that later in the WAL sequence, we'll complain
- * at the end of WAL replay.)
+ * In RBM_NORMAL mode, if the page doesn't exist, or contains all-zeroes, we
+ * return InvalidBuffer. In this case the caller should silently skip the
+ * update on this page. (In this situation, we expect that the page was later
+ * dropped or truncated. If we don't see evidence of that later in the WAL
+ * sequence, we'll complain at the end of WAL replay.)
+ *
+ * In RBM_ZERO and RBM_ZERO_ON_ERROR modes, if the page doesn't exist, the
+ * relation is extended with all-zeroes pages up to the given block number.
  */
 Buffer
-XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
-{
-	return XLogReadBufferWithFork(rnode, MAIN_FORKNUM, blkno, init);
-}
-
-/*
- * XLogReadBufferWithFork
- *		Like XLogReadBuffer, but for reading other relation forks than
- *		the main one.
- */
-Buffer
-XLogReadBufferWithFork(RelFileNode rnode, ForkNumber forknum,
-					   BlockNumber blkno, bool init)
+XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
+					   BlockNumber blkno, ReadBufferMode mode)
 {
 	BlockNumber lastblock;
 	Buffer		buffer;
@@ -264,12 +265,13 @@ XLogReadBufferWithFork(RelFileNode rnode, ForkNumber forknum,
 	if (blkno < lastblock)
 	{
 		/* page exists in file */
-		buffer = ReadBufferWithoutRelcache(rnode, false, forknum, blkno, init);
+		buffer = ReadBufferWithoutRelcache(rnode, false, forknum, blkno,
+										   mode, NULL);
 	}
 	else
 	{
 		/* hm, page doesn't exist in file */
-		if (!init)
+		if (mode == RBM_NORMAL)
 		{
 			log_invalid_page(rnode, forknum, blkno, false);
 			return InvalidBuffer;
@@ -283,7 +285,7 @@ XLogReadBufferWithFork(RelFileNode rnode, ForkNumber forknum,
 			if (buffer != InvalidBuffer)
 				ReleaseBuffer(buffer);
 			buffer = ReadBufferWithoutRelcache(rnode, false, forknum,
-											   P_NEW, false);
+											   P_NEW, mode, NULL);
 			lastblock++;
 		}
 		Assert(BufferGetBlockNumber(buffer) == blkno);
@@ -291,7 +293,7 @@ XLogReadBufferWithFork(RelFileNode rnode, ForkNumber forknum,
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
-	if (!init)
+	if (mode == RBM_NORMAL)
 	{
 		/* check that page has been initialized */
 		Page		page = (Page) BufferGetPage(buffer);

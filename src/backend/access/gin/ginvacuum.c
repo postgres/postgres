@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.23 2008/10/06 08:04:11 heikki Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.24 2008/10/31 15:04:59 heikki Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -155,9 +155,13 @@ xlogVacuumPage(Relation index, Buffer buffer)
 static bool
 ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, Buffer *rootBuffer)
 {
-	Buffer		buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
-	Page		page = BufferGetPage(buffer);
+	Buffer		buffer;
+	Page		page;
 	bool		hasVoidPage = FALSE;
+
+	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
+								RBM_NORMAL, gvs->strategy);
+	page = BufferGetPage(buffer);
 
 	/*
 	 * We should be sure that we don't concurrent with inserts, insert process
@@ -241,12 +245,23 @@ static void
 ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkno,
 			  BlockNumber parentBlkno, OffsetNumber myoff, bool isParentRoot)
 {
-	Buffer		dBuffer = ReadBufferWithStrategy(gvs->index, deleteBlkno, gvs->strategy);
-	Buffer		lBuffer = (leftBlkno == InvalidBlockNumber) ?
-	InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
-	Buffer		pBuffer = ReadBufferWithStrategy(gvs->index, parentBlkno, gvs->strategy);
+	Buffer		dBuffer;
+	Buffer		lBuffer;
+	Buffer		pBuffer;
 	Page		page,
 				parentPage;
+
+	dBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, deleteBlkno,
+								 RBM_NORMAL, gvs->strategy);
+
+	if (leftBlkno != InvalidBlockNumber)
+		lBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, leftBlkno,
+									 RBM_NORMAL, gvs->strategy);
+	else
+		lBuffer = InvalidBuffer;
+
+	pBuffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, parentBlkno,
+								 RBM_NORMAL, gvs->strategy);
 
 	LockBuffer(dBuffer, GIN_EXCLUSIVE);
 	if (!isParentRoot)			/* parent is already locked by
@@ -401,7 +416,8 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 			me = parent->child;
 	}
 
-	buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
+	buffer = ReadBufferExtended(gvs->index, MAIN_FORKNUM, blkno,
+								RBM_NORMAL, gvs->strategy);
 	page = BufferGetPage(buffer);
 
 	Assert(GinPageIsData(page));
@@ -589,7 +605,8 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	gvs.strategy = info->strategy;
 	initGinState(&gvs.ginstate, index);
 
-	buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
+	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
+								RBM_NORMAL, info->strategy);
 
 	/* find leaf page */
 	for (;;)
@@ -621,7 +638,8 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		Assert(blkno != InvalidBlockNumber);
 
 		UnlockReleaseBuffer(buffer);
-		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
+		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
+									RBM_NORMAL, info->strategy);
 	}
 
 	/* right now we found leftmost page in entry's BTree */
@@ -663,7 +681,8 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		if (blkno == InvalidBlockNumber)		/* rightmost page */
 			break;
 
-		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
+		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
+									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, GIN_EXCLUSIVE);
 	}
 
@@ -718,7 +737,8 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
-		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
+		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
+									RBM_NORMAL, info->strategy);
 		LockBuffer(buffer, GIN_SHARE);
 		page = (Page) BufferGetPage(buffer);
 

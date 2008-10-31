@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.266 2008/10/27 21:50:12 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.267 2008/10/31 15:04:59 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -205,9 +205,8 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	}
 
 	/* read page using selected strategy */
-	scan->rs_cbuf = ReadBufferWithStrategy(scan->rs_rd,
-										   page,
-										   scan->rs_strategy);
+	scan->rs_cbuf = ReadBufferExtended(scan->rs_rd, MAIN_FORKNUM, page,
+									   RBM_NORMAL, scan->rs_strategy);
 	scan->rs_cblock = page;
 
 	if (!scan->rs_pageatatime)

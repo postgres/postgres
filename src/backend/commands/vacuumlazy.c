@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.108 2008/09/30 10:52:12 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.109 2008/10/31 15:05:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			vacrelstats->num_index_scans++;
 		}
 
-		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
+		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, blkno,
+								 RBM_NORMAL, vac_strategy);
 
 		/* We need buffer cleanup lock so that we can prune HOT chains. */
 		LockBufferForCleanup(buf);
@@ -618,7 +619,8 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		vacuum_delay_point();
 
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
-		buf = ReadBufferWithStrategy(onerel, tblk, vac_strategy);
+		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, tblk, RBM_NORMAL,
+								 vac_strategy);
 		LockBufferForCleanup(buf);
 		tupindex = lazy_vacuum_page(onerel, tblk, buf, tupindex, vacrelstats);
 
@@ -880,7 +882,8 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		blkno--;
 
-		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
+		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, blkno,
+								 RBM_NORMAL, vac_strategy);
 
 		/* In this phase we only need shared access to the buffer */
 		LockBuffer(buf, BUFFER_LOCK_SHARE);

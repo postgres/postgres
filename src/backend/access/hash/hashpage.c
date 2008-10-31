@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.77 2008/09/15 18:43:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.78 2008/10/31 15:04:59 heikki Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -158,7 +158,7 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 	if (blkno == P_NEW)
 		elog(ERROR, "hash AM does not use P_NEW");
 
-	buf = ReadOrZeroBuffer(rel, MAIN_FORKNUM, blkno);
+	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO, NULL);
 
 	LockBuffer(buf, HASH_WRITE);
 
@@ -203,7 +203,7 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno)
 				 BufferGetBlockNumber(buf), blkno);
 	}
 	else
-		buf = ReadOrZeroBuffer(rel, MAIN_FORKNUM, blkno);
+		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO, NULL);
 
 	LockBuffer(buf, HASH_WRITE);
 
@@ -231,7 +231,7 @@ _hash_getbuf_with_strategy(Relation rel, BlockNumber blkno,
 	if (blkno == P_NEW)
 		elog(ERROR, "hash AM does not use P_NEW");
 
-	buf = ReadBufferWithStrategy(rel, blkno, bstrategy);
+	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 
 	if (access != HASH_NOLOCK)
 		LockBuffer(buf, access);

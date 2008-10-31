@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.239 2008/10/20 21:11:15 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.240 2008/10/31 15:05:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,11 +72,10 @@ static bool IsForInput;
 static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
-static Buffer ReadBuffer_relcache(Relation reln, ForkNumber forkNum,
-		BlockNumber blockNum, bool zeroPage, BufferAccessStrategy strategy);
 static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
-				  ForkNumber forkNum, BlockNumber blockNum,
-				  bool zeroPage, BufferAccessStrategy strategy, bool *hit);
+					ForkNumber forkNum, BlockNumber blockNum,
+					ReadBufferMode mode , BufferAccessStrategy strategy,
+					bool *hit);
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -96,7 +95,17 @@ static void AtProcExit_Buffers(int code, Datum arg);
 
 
 /*
- * ReadBuffer -- returns a buffer containing the requested
+ * ReadBuffer -- a shorthand for ReadBufferExtended, for reading from main
+ *		fork with RBM_NORMAL mode and default strategy.
+ */
+Buffer
+ReadBuffer(Relation reln, BlockNumber blockNum)
+{
+	return ReadBufferExtended(reln, MAIN_FORKNUM, blockNum, RBM_NORMAL, NULL);
+}
+
+/*
+ * ReadBufferExtended -- returns a buffer containing the requested
  *		block of the requested relation.  If the blknum
  *		requested is P_NEW, extend the relation file and
  *		allocate a new block.  (Caller is responsible for
@@ -107,75 +116,29 @@ static void AtProcExit_Buffers(int code, Datum arg);
  *		the block read.  The returned buffer has been pinned.
  *		Does not return on error --- elog's instead.
  *
- * Assume when this function is called, that reln has been
- *		opened already.
- */
-Buffer
-ReadBuffer(Relation reln, BlockNumber blockNum)
-{
-	return ReadBuffer_relcache(reln, MAIN_FORKNUM, blockNum, false, NULL);
-}
-
-/*
- * ReadBufferWithFork -- same as ReadBuffer, but for accessing relation
- *		forks other than MAIN_FORKNUM.
- */
-Buffer
-ReadBufferWithFork(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
-{
-	return ReadBuffer_relcache(reln, forkNum, blockNum, false, NULL);
-}
-
-/*
- * ReadBufferWithStrategy -- same as ReadBuffer, except caller can specify
- *		a nondefault buffer access strategy.  See buffer/README for details.
- */
-Buffer
-ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
-					   BufferAccessStrategy strategy)
-{
-	return ReadBuffer_relcache(reln, MAIN_FORKNUM, blockNum, false, strategy);
-}
-
-/*
- * ReadOrZeroBuffer -- like ReadBuffer, but if the page isn't in buffer
- *		cache already, it's filled with zeros instead of reading it from
- *		disk.  Useful when the caller intends to fill the page from scratch,
- *		since this saves I/O and avoids unnecessary failure if the
- *		page-on-disk has corrupt page headers.
+ * Assume when this function is called, that reln has been opened already.
  *
- *		Caution: do not use this to read a page that is beyond the relation's
- *		current physical EOF; that is likely to cause problems in md.c when
- *		the page is modified and written out.  P_NEW is OK, though.
+ * In RBM_NORMAL mode, the page is read from disk, and the page header is
+ * validated. An error is thrown if the page header is not valid.
+ *
+ * RBM_ZERO_ON_ERROR is like the normal mode, but if the page header is not
+ * valid, the page is zeroed instead of throwing an error. This is intended
+ * for non-critical data, where the caller is prepared to repair errors.
+ *
+ * In RBM_ZERO mode, if the page isn't in buffer cache already, it's filled
+ * with zeros instead of reading it from disk.  Useful when the caller is
+ * going to fill the page from scratch, since this saves I/O and avoids
+ * unnecessary failure if the page-on-disk has corrupt page headers.
+ * Caution: do not use this mode to read a page that is beyond the relation's
+ * current physical EOF; that is likely to cause problems in md.c when
+ * the page is modified and written out. P_NEW is OK, though.
+ *
+ * If strategy is not NULL, a nondefault buffer access strategy is used.
+ * See buffer/README for details.
  */
 Buffer
-ReadOrZeroBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
-{
-	return ReadBuffer_relcache(reln, forkNum, blockNum, true, NULL);
-}
-
-/*
- * ReadBufferWithoutRelcache -- like ReadBuffer, but doesn't require a
- *		relcache entry for the relation. If zeroPage is true, this behaves
- *		like ReadOrZeroBuffer rather than ReadBuffer.
- */
-Buffer
-ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
-					  ForkNumber forkNum, BlockNumber blockNum, bool zeroPage)
-{
-	bool hit;
-
-	SMgrRelation smgr = smgropen(rnode);
-	return ReadBuffer_common(smgr, isTemp, forkNum, blockNum, zeroPage, NULL, &hit);
-}
-
-/*
- * ReadBuffer_relcache -- common logic for ReadBuffer-variants that
- *		operate on a Relation.
- */
-static Buffer
-ReadBuffer_relcache(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
-					bool zeroPage, BufferAccessStrategy strategy)
+ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
+				   ReadBufferMode mode, BufferAccessStrategy strategy)
 {
 	bool hit;
 	Buffer buf;
@@ -189,11 +152,29 @@ ReadBuffer_relcache(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 */
 	pgstat_count_buffer_read(reln);
 	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, forkNum, blockNum,
-							zeroPage, strategy, &hit);
+							mode, strategy, &hit);
 	if (hit)
 		pgstat_count_buffer_hit(reln);
 	return buf;
 }
+
+
+/*
+ * ReadBufferWithoutRelcache -- like ReadBufferExtended, but doesn't require
+ *		a relcache entry for the relation.
+ */
+Buffer
+ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
+						  ForkNumber forkNum, BlockNumber blockNum,
+						  ReadBufferMode mode, BufferAccessStrategy strategy)
+{
+	bool hit;
+
+	SMgrRelation smgr = smgropen(rnode);
+	return ReadBuffer_common(smgr, isTemp, forkNum, blockNum, mode, strategy,
+							 &hit);
+}
+
 
 /*
  * ReadBuffer_common -- common logic for all ReadBuffer variants
@@ -202,7 +183,7 @@ ReadBuffer_relcache(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
  */
 static Buffer
 ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
-				  BlockNumber blockNum, bool zeroPage,
+				  BlockNumber blockNum, ReadBufferMode mode,
 				  BufferAccessStrategy strategy, bool *hit)
 {
 	volatile BufferDesc *bufHdr;
@@ -295,8 +276,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
-					(errmsg("unexpected data beyond EOF in block %u of relation %u/%u/%u",
-							blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode),
+					(errmsg("unexpected data beyond EOF in block %u of relation %u/%u/%u/%u",
+							blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, forkNum),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
@@ -356,7 +337,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		 * Read in the page, unless the caller intends to overwrite it and
 		 * just wants us to allocate a buffer.
 		 */
-		if (zeroPage)
+		if (mode == RBM_ZERO)
 			MemSet((char *) bufBlock, 0, BLCKSZ);
 		else
 		{
@@ -365,24 +346,25 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 			/* check for garbage data */
 			if (!PageHeaderIsValid((PageHeader) bufBlock))
 			{
-				if (zero_damaged_pages)
+				if (mode == RBM_ZERO_ON_ERROR || zero_damaged_pages)
 				{
 					ereport(WARNING,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %u/%u/%u; zeroing out page",
+							 errmsg("invalid page header in block %u of relation %u/%u/%u/%u; zeroing out page",
 									blockNum,
 									smgr->smgr_rnode.spcNode,
 									smgr->smgr_rnode.dbNode,
-									smgr->smgr_rnode.relNode)));
+									smgr->smgr_rnode.relNode,
+									forkNum)));
 					MemSet((char *) bufBlock, 0, BLCKSZ);
 				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %u/%u/%u",
+							 errmsg("invalid page header in block %u of relation %u/%u/%u/%u",
 									blockNum, smgr->smgr_rnode.spcNode,
 									smgr->smgr_rnode.dbNode,
-									smgr->smgr_rnode.relNode)));
+									smgr->smgr_rnode.relNode, forkNum)));
 			}
 		}
 	}
@@ -1679,10 +1661,10 @@ PrintBufferLeakWarning(Buffer buffer)
 	/* theoretically we should lock the bufhdr here */
 	elog(WARNING,
 		 "buffer refcount leak: [%03d] "
-		 "(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
+		 "(rel=%u/%u/%u, forkNum=%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
 		 buffer,
 		 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-		 buf->tag.rnode.relNode,
+		 buf->tag.rnode.relNode, buf->tag.forkNum,
 		 buf->tag.blockNum, buf->flags,
 		 buf->refcount, loccount);
 }
@@ -1991,11 +1973,11 @@ PrintBufferDescs(void)
 	{
 		/* theoretically we should lock the bufhdr here */
 		elog(LOG,
-			 "[%02d] (freeNext=%d, rel=%u/%u/%u, "
+			 "[%02d] (freeNext=%d, rel=%u/%u/%u, forkNum=%u, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
 			 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-			 buf->tag.rnode.relNode,
+			 buf->tag.rnode.relNode, buf->tag.forkNum,
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, PrivateRefCount[i]);
 	}
@@ -2015,11 +1997,11 @@ PrintPinnedBufs(void)
 		{
 			/* theoretically we should lock the bufhdr here */
 			elog(LOG,
-				 "[%02d] (freeNext=%d, rel=%u/%u/%u, "
+				 "[%02d] (freeNext=%d, rel=%u/%u/%u, forkNum=%u, "
 				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext,
 				 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-				 buf->tag.rnode.relNode,
+				 buf->tag.rnode.relNode, buf->tag.forkNum,
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 		}
@@ -2654,11 +2636,11 @@ AbortBufferIO(void)
 				/* Buffer is pinned, so we can read tag without spinlock */
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
-						 errmsg("could not write block %u of %u/%u/%u",
+						 errmsg("could not write block %u of %u/%u/%u/%u",
 								buf->tag.blockNum,
 								buf->tag.rnode.spcNode,
 								buf->tag.rnode.dbNode,
-								buf->tag.rnode.relNode),
+								buf->tag.rnode.relNode, buf->tag.forkNum),
 						 errdetail("Multiple failures --- write error might be permanent.")));
 			}
 		}
@@ -2676,9 +2658,10 @@ buffer_write_error_callback(void *arg)
 
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
-		errcontext("writing block %u of relation %u/%u/%u",
+		errcontext("writing block %u of relation %u/%u/%u/%u",
 				   bufHdr->tag.blockNum,
 				   bufHdr->tag.rnode.spcNode,
 				   bufHdr->tag.rnode.dbNode,
-				   bufHdr->tag.rnode.relNode);
+				   bufHdr->tag.rnode.relNode,
+				   bufHdr->tag.forkNum);
 }

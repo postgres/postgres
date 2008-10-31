@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.115 2008/08/11 11:05:11 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.116 2008/10/31 15:05:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,14 @@ typedef enum BufferAccessStrategyType
 								 * ok) */
 	BAS_VACUUM					/* VACUUM */
 } BufferAccessStrategyType;
+
+/* Possible modes for ReadBufferExtended() */
+typedef enum
+{
+	RBM_NORMAL,			/* Normal read */
+	RBM_ZERO,			/* Don't read from disk, caller will initialize */
+	RBM_ZERO_ON_ERROR	/* Read, but return an all-zeros page on error */
+} ReadBufferMode;
 
 /* in globals.c ... this duplicates miscadmin.h */
 extern PGDLLIMPORT int NBuffers;
@@ -144,13 +152,12 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * prototypes for functions in bufmgr.c
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
-extern Buffer ReadBufferWithFork(Relation reln, ForkNumber forkNum, BlockNumber blockNum);
-extern Buffer ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
-					   BufferAccessStrategy strategy);
-extern Buffer ReadOrZeroBuffer(Relation reln, ForkNumber forkNum,
-							   BlockNumber blockNum);
+extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
+								 BlockNumber blockNum, ReadBufferMode mode,
+								 BufferAccessStrategy strategy);
 extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
-					ForkNumber forkNum, BlockNumber blockNum, bool zeroPage);
+						ForkNumber forkNum, BlockNumber blockNum,
+						ReadBufferMode mode, BufferAccessStrategy strategy);
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);

@@ -8,7 +8,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.8 2008/10/06 14:13:17 heikki Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.9 2008/10/31 15:04:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ get_raw_page(PG_FUNCTION_ARGS)
 
 	/* Take a verbatim copy of the page */
 
-	buf = ReadBufferWithFork(rel, forknum, blkno);
+	buf = ReadBufferExtended(rel, forknum, blkno, RBM_NORMAL, NULL);
 	LockBuffer(buf, BUFFER_LOCK_SHARE);
 
 	memcpy(raw_page_data, BufferGetPage(buf), BLCKSZ);

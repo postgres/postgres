@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.378 2008/09/30 10:52:12 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.379 2008/10/31 15:05:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1348,7 +1348,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 		vacuum_delay_point();
 
-		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
+		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								 vac_strategy);
 		page = BufferGetPage(buf);
 
 		/*
@@ -1919,7 +1920,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Process this page of relation.
 		 */
-		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
+		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								 vac_strategy);
 		page = BufferGetPage(buf);
 
 		vacpage->offsets_free = 0;
@@ -2173,9 +2175,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					nextTid = tp.t_data->t_ctid;
 					priorXmax = HeapTupleHeaderGetXmax(tp.t_data);
 					/* assume block# is OK (see heap_fetch comments) */
-					nextBuf = ReadBufferWithStrategy(onerel,
+					nextBuf = ReadBufferExtended(onerel, MAIN_FORKNUM,
 										 ItemPointerGetBlockNumber(&nextTid),
-													 vac_strategy);
+										 RBM_NORMAL, vac_strategy);
 					nextPage = BufferGetPage(nextBuf);
 					/* If bogus or unused slot, assume tp is end of chain */
 					nextOffnum = ItemPointerGetOffsetNumber(&nextTid);
@@ -2318,9 +2320,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						break;	/* out of check-all-items loop */
 					}
 					tp.t_self = vtlp->this_tid;
-					Pbuf = ReadBufferWithStrategy(onerel,
+					Pbuf = ReadBufferExtended(onerel, MAIN_FORKNUM,
 									 ItemPointerGetBlockNumber(&(tp.t_self)),
-												  vac_strategy);
+									 RBM_NORMAL, vac_strategy);
 					Ppage = BufferGetPage(Pbuf);
 					Pitemid = PageGetItemId(Ppage,
 								   ItemPointerGetOffsetNumber(&(tp.t_self)));
@@ -2402,14 +2404,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					/* Get page to move from */
 					tuple.t_self = vtmove[ti].tid;
-					Cbuf = ReadBufferWithStrategy(onerel,
+					Cbuf = ReadBufferExtended(onerel, MAIN_FORKNUM,
 								  ItemPointerGetBlockNumber(&(tuple.t_self)),
-												  vac_strategy);
+								  RBM_NORMAL, vac_strategy);
 
 					/* Get page to move to */
-					dst_buffer = ReadBufferWithStrategy(onerel,
-														destvacpage->blkno,
-														vac_strategy);
+					dst_buffer = ReadBufferExtended(onerel, MAIN_FORKNUM,
+													destvacpage->blkno,
+													RBM_NORMAL, vac_strategy);
 
 					LockBuffer(dst_buffer, BUFFER_LOCK_EXCLUSIVE);
 					if (dst_buffer != Cbuf)
@@ -2502,9 +2504,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (i == num_fraged_pages)
 					break;		/* can't move item anywhere */
 				dst_vacpage = fraged_pages->pagedesc[i];
-				dst_buffer = ReadBufferWithStrategy(onerel,
-													dst_vacpage->blkno,
-													vac_strategy);
+				dst_buffer = ReadBufferExtended(onerel, MAIN_FORKNUM,
+												dst_vacpage->blkno,
+												RBM_NORMAL, vac_strategy);
 				LockBuffer(dst_buffer, BUFFER_LOCK_EXCLUSIVE);
 				dst_page = BufferGetPage(dst_buffer);
 				/* if this page was not used before - clean it */
@@ -2681,9 +2683,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			Page		page;
 
 			/* this page was not used as a move target, so must clean it */
-			buf = ReadBufferWithStrategy(onerel,
-										 (*curpage)->blkno,
-										 vac_strategy);
+			buf = ReadBufferExtended(onerel, MAIN_FORKNUM, (*curpage)->blkno,
+									 RBM_NORMAL, vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			page = BufferGetPage(buf);
 			if (!PageIsEmpty(page))
@@ -2770,7 +2771,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			int			uncnt = 0;
 			int			num_tuples = 0;
 
-			buf = ReadBufferWithStrategy(onerel, vacpage->blkno, vac_strategy);
+			buf = ReadBufferExtended(onerel, MAIN_FORKNUM, vacpage->blkno,
+									 RBM_NORMAL, vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			page = BufferGetPage(buf);
 			maxoff = PageGetMaxOffsetNumber(page);
@@ -3150,7 +3152,8 @@ update_hint_bits(Relation rel, VacPageList fraged_pages, int num_fraged_pages,
 			break;				/* no need to scan any further */
 		if ((*curpage)->offsets_used == 0)
 			continue;			/* this page was never used as a move dest */
-		buf = ReadBufferWithStrategy(rel, (*curpage)->blkno, vac_strategy);
+		buf = ReadBufferExtended(rel, MAIN_FORKNUM, (*curpage)->blkno,
+								 RBM_NORMAL, vac_strategy);
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		page = BufferGetPage(buf);
 		max_offset = PageGetMaxOffsetNumber(page);
@@ -3219,9 +3222,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 		if ((*vacpage)->offsets_free > 0)
 		{
-			buf = ReadBufferWithStrategy(onerel,
-										 (*vacpage)->blkno,
-										 vac_strategy);
+			buf = ReadBufferExtended(onerel, MAIN_FORKNUM, (*vacpage)->blkno,
+									 RBM_NORMAL, vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			vacuum_page(onerel, buf, *vacpage);
 			UnlockReleaseBuffer(buf);

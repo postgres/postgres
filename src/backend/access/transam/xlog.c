@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.320 2008/10/30 04:06:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.321 2008/10/31 15:04:59 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2897,8 +2897,8 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 		memcpy(&bkpb, blk, sizeof(BkpBlock));
 		blk += sizeof(BkpBlock);
 
-		buffer = XLogReadBufferWithFork(bkpb.node, bkpb.fork, bkpb.block,
-										true);
+		buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
+										RBM_ZERO);
 		Assert(BufferIsValid(buffer));
 		page = (Page) BufferGetPage(buffer);
 
