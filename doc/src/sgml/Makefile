@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.108 2008/10/04 02:19:08 tgl Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.109 2008/10/31 14:35:30 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -228,8 +228,8 @@ XSLTPROC = xsltproc
 
 postgres.xml: postgres.sgml $(GENERATED_SGML)
 	$(OSX) -D. -x lower $< | \
-	  sed -e 's/\[\(amp\|copy\|egrave\|gt\|lt\|mdash\|nbsp\|ouml\|pi\|quot\|uuml\) *\]/\&\1;/g' \
-	      -e '1a\' -e '<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">' \
+	  $(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
+	             -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
 	  >$@
 # ' hello Emacs
 
