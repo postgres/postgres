@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.127 2008/10/31 19:37:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.128 2008/10/31 21:07:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,8 +105,7 @@ static execution_state *init_execution_state(List *queryTree_list,
 											 bool lazyEvalOK);
 static void init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
-static TupleTableSlot *postquel_getnext(execution_state *es,
-				 SQLFunctionCachePtr fcache);
+static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo);
@@ -441,10 +440,11 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 }
 
 /* Run one execution_state; either to completion or to first result row */
-static TupleTableSlot *
+/* Returns true if we ran to completion */
+static bool
 postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 {
-	TupleTableSlot *result;
+	bool		result;
 
 	/* Make our snapshot the active one for any called functions */
 	PushActiveSnapshot(es->qd->snapshot);
@@ -460,14 +460,20 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 					   false,		/* not top level */
 					   es->qd->dest,
 					   NULL);
-		result = NULL;
+		result = true;			/* never stops early */
 	}
 	else
 	{
 		/* Run regular commands to completion unless lazyEval */
 		long		count = (es->lazyEval) ? 1L : 0L;
 
-		result = ExecutorRun(es->qd, ForwardScanDirection, count);
+		ExecutorRun(es->qd, ForwardScanDirection, count);
+
+		/*
+		 * If we requested run to completion OR there was no tuple returned,
+		 * command must be complete.
+		 */
+		result = (count == 0L || es->qd->estate->es_processed == 0);
 	}
 
 	PopActiveSnapshot();
@@ -678,22 +684,22 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 */
 	while (es)
 	{
-		TupleTableSlot *slot;
+		bool	completed;
 
 		if (es->status == F_EXEC_START)
 			postquel_start(es, fcache);
 
-		slot = postquel_getnext(es, fcache);
+		completed = postquel_getnext(es, fcache);
 
 		/*
 		 * If we ran the command to completion, we can shut it down now.
 		 * Any row(s) we need to return are safely stashed in the tuplestore,
 		 * and we want to be sure that, for example, AFTER triggers get fired
 		 * before we return anything.  Also, if the function doesn't return
-		 * set, we can shut it down anyway because we don't care about
-		 * fetching any more result rows.
+		 * set, we can shut it down anyway because it must be a SELECT and
+		 * we don't care about fetching any more result rows.
 		 */
-		if (TupIsNull(slot) || !fcache->returnsSet)
+		if (completed || !fcache->returnsSet)
 			postquel_end(es);
 
 		/*

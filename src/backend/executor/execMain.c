@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.313 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.314 2008/10/31 21:07:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ typedef struct evalPlanQual
 static void InitPlan(QueryDesc *queryDesc, int eflags);
 static void ExecCheckPlanOutput(Relation resultRel, List *targetList);
 static void ExecEndPlan(PlanState *planstate, EState *estate);
-static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
+static void ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
 			ScanDirection direction,
@@ -220,26 +220,28 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
  *		Note: count = 0 is interpreted as no portal limit, i.e., run to
  *		completion.
  *
+ *		There is no return value, but output tuples (if any) are sent to
+ *		the destination receiver specified in the QueryDesc; and the number
+ *		of tuples processed at the top level can be found in
+ *		estate->es_processed.
+ *
  *		We provide a function hook variable that lets loadable plugins
  *		get control when ExecutorRun is called.  Such a plugin would
  *		normally call standard_ExecutorRun().
  *
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
+void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
-	TupleTableSlot *result;
-
 	if (ExecutorRun_hook)
-		result = (*ExecutorRun_hook) (queryDesc, direction, count);
+		(*ExecutorRun_hook) (queryDesc, direction, count);
 	else
-		result = standard_ExecutorRun(queryDesc, direction, count);
-	return result;
+		standard_ExecutorRun(queryDesc, direction, count);
 }
 
-TupleTableSlot *
+void
 standard_ExecutorRun(QueryDesc *queryDesc,
 					 ScanDirection direction, long count)
 {
@@ -247,7 +249,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	CmdType		operation;
 	DestReceiver *dest;
 	bool		sendTuples;
-	TupleTableSlot *result;
 	MemoryContext oldcontext;
 
 	/* sanity checks */
@@ -283,15 +284,13 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	/*
 	 * run plan
 	 */
-	if (ScanDirectionIsNoMovement(direction))
-		result = NULL;
-	else
-		result = ExecutePlan(estate,
-							 queryDesc->planstate,
-							 operation,
-							 count,
-							 direction,
-							 dest);
+	if (!ScanDirectionIsNoMovement(direction))
+		ExecutePlan(estate,
+					queryDesc->planstate,
+					operation,
+					count,
+					direction,
+					dest);
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -300,8 +299,6 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		(*dest->rShutdown) (dest);
 
 	MemoryContextSwitchTo(oldcontext);
-
-	return result;
 }
 
 /* ----------------------------------------------------------------
@@ -1271,19 +1268,16 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 /* ----------------------------------------------------------------
  *		ExecutePlan
  *
- *		processes the query plan to retrieve 'numberTuples' tuples in the
- *		direction specified.
+ *		Processes the query plan until we have processed 'numberTuples' tuples,
+ *		moving in the specified direction.
  *
- *		Retrieves all tuples if numberTuples is 0
- *
- *		result is either a slot containing the last tuple in the case
- *		of a SELECT or NULL otherwise.
+ *		Runs to completion if numberTuples is 0
  *
  * Note: the ctid attribute is a 'junk' attribute that is removed before the
  * user can see it
  * ----------------------------------------------------------------
  */
-static TupleTableSlot *
+static void
 ExecutePlan(EState *estate,
 			PlanState *planstate,
 			CmdType operation,
@@ -1297,13 +1291,11 @@ ExecutePlan(EState *estate,
 	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
 	long		current_tuple_count;
-	TupleTableSlot *result;
 
 	/*
 	 * initialize local variables
 	 */
 	current_tuple_count = 0;
-	result = NULL;
 
 	/*
 	 * Set the direction.
@@ -1332,7 +1324,6 @@ ExecutePlan(EState *estate,
 	/*
 	 * Loop until we've processed the proper number of tuples from the plan.
 	 */
-
 	for (;;)
 	{
 		/* Reset the per-output-tuple exprcontext */
@@ -1353,13 +1344,10 @@ lnext:	;
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
-		 * process so we just return null...
+		 * process so we just end the loop...
 		 */
 		if (TupIsNull(planSlot))
-		{
-			result = NULL;
 			break;
-		}
 		slot = planSlot;
 
 		/*
@@ -1453,7 +1441,6 @@ lnext:	;
 						default:
 							elog(ERROR, "unrecognized heap_lock_tuple status: %u",
 								 test);
-							return NULL;
 					}
 				}
 			}
@@ -1488,35 +1475,30 @@ lnext:	;
 
 		/*
 		 * now that we have a tuple, do the appropriate thing with it.. either
-		 * return it to the user, add it to a relation someplace, delete it
-		 * from a relation, or modify some of its attributes.
+		 * send it to the output destination, add it to a relation someplace,
+		 * delete it from a relation, or modify some of its attributes.
 		 */
 		switch (operation)
 		{
 			case CMD_SELECT:
 				ExecSelect(slot, dest, estate);
-				result = slot;
 				break;
 
 			case CMD_INSERT:
 				ExecInsert(slot, tupleid, planSlot, dest, estate);
-				result = NULL;
 				break;
 
 			case CMD_DELETE:
 				ExecDelete(tupleid, planSlot, dest, estate);
-				result = NULL;
 				break;
 
 			case CMD_UPDATE:
 				ExecUpdate(slot, tupleid, planSlot, dest, estate);
-				result = NULL;
 				break;
 
 			default:
 				elog(ERROR, "unrecognized operation code: %d",
 					 (int) operation);
-				result = NULL;
 				break;
 		}
 
@@ -1548,12 +1530,6 @@ lnext:	;
 			/* do nothing */
 			break;
 	}
-
-	/*
-	 * here, result is either a slot containing a tuple in the case of a
-	 * SELECT or NULL otherwise.
-	 */
-	return result;
 }
 
 /* ----------------------------------------------------------------
