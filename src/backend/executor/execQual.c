@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.235 2008/10/29 00:00:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.236 2008/10/31 19:37:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1334,7 +1334,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 {
 	List	   *arguments;
 	Datum		result;
-	FunctionCallInfoData fcinfo;
+	FunctionCallInfoData fcinfo_data;
+	FunctionCallInfo fcinfo;
 	PgStat_FunctionCallUsage fcusage;
 	ReturnSetInfo rsinfo;		/* for functions returning sets */
 	ExprDoneCond argDone;
@@ -1385,6 +1386,20 @@ restart:
 	}
 
 	/*
+	 * For non-set-returning functions, we just use a local-variable
+	 * FunctionCallInfoData.  For set-returning functions we keep the callinfo
+	 * record in fcache->setArgs so that it can survive across multiple
+	 * value-per-call invocations.  (The reason we don't just do the latter
+	 * all the time is that plpgsql expects to be able to use simple expression
+	 * trees re-entrantly.  Which might not be a good idea, but the penalty
+	 * for not doing so is high.)
+	 */
+	if (fcache->func.fn_retset)
+		fcinfo = &fcache->setArgs;
+	else
+		fcinfo = &fcinfo_data;
+
+	/*
 	 * arguments is a list of expressions to evaluate before passing to the
 	 * function manager.  We skip the evaluation if it was already done in the
 	 * previous call (ie, we are continuing the evaluation of a set-valued
@@ -1394,8 +1409,8 @@ restart:
 	if (!fcache->setArgsValid)
 	{
 		/* Need to prep callinfo structure */
-		InitFunctionCallInfoData(fcinfo, &(fcache->func), 0, NULL, NULL);
-		argDone = ExecEvalFuncArgs(&fcinfo, arguments, econtext);
+		InitFunctionCallInfoData(*fcinfo, &(fcache->func), 0, NULL, NULL);
+		argDone = ExecEvalFuncArgs(fcinfo, arguments, econtext);
 		if (argDone == ExprEndResult)
 		{
 			/* input is an empty set, so return an empty set. */
@@ -1412,8 +1427,7 @@ restart:
 	}
 	else
 	{
-		/* Copy callinfo from previous evaluation */
-		memcpy(&fcinfo, &fcache->setArgs, sizeof(fcinfo));
+		/* Re-use callinfo from previous evaluation */
 		hasSetArg = fcache->setHasSetArg;
 		/* Reset flag (we may set it again below) */
 		fcache->setArgsValid = false;
@@ -1424,12 +1438,12 @@ restart:
 	 */
 	if (fcache->func.fn_retset)
 	{
-		fcinfo.resultinfo = (Node *) &rsinfo;
+		fcinfo->resultinfo = (Node *) &rsinfo;
 		rsinfo.type = T_ReturnSetInfo;
 		rsinfo.econtext = econtext;
 		rsinfo.expectedDesc = fcache->funcResultDesc;
 		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-		/* note we do not set SFRM_Materialize_Random */
+		/* note we do not set SFRM_Materialize_Random or _Preferred */
 		rsinfo.returnMode = SFRM_ValuePerCall;
 		/* isDone is filled below */
 		rsinfo.setResult = NULL;
@@ -1468,9 +1482,9 @@ restart:
 
 			if (fcache->func.fn_strict)
 			{
-				for (i = 0; i < fcinfo.nargs; i++)
+				for (i = 0; i < fcinfo->nargs; i++)
 				{
-					if (fcinfo.argnull[i])
+					if (fcinfo->argnull[i])
 					{
 						callit = false;
 						break;
@@ -1480,12 +1494,12 @@ restart:
 
 			if (callit)
 			{
-				pgstat_init_function_usage(&fcinfo, &fcusage);
+				pgstat_init_function_usage(fcinfo, &fcusage);
 
-				fcinfo.isnull = false;
+				fcinfo->isnull = false;
 				rsinfo.isDone = ExprSingleResult;
-				result = FunctionCallInvoke(&fcinfo);
-				*isNull = fcinfo.isnull;
+				result = FunctionCallInvoke(fcinfo);
+				*isNull = fcinfo->isnull;
 				*isDone = rsinfo.isDone;
 
 				pgstat_end_function_usage(&fcusage,
@@ -1511,7 +1525,7 @@ restart:
 					if (fcache->func.fn_retset &&
 						*isDone == ExprMultipleResult)
 					{
-						memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
+						Assert(fcinfo == &fcache->setArgs);
 						fcache->setHasSetArg = hasSetArg;
 						fcache->setArgsValid = true;
 						/* Register cleanup callback if we didn't already */
@@ -1567,7 +1581,7 @@ restart:
 				break;			/* input not a set, so done */
 
 			/* Re-eval args to get the next element of the input set */
-			argDone = ExecEvalFuncArgs(&fcinfo, arguments, econtext);
+			argDone = ExecEvalFuncArgs(fcinfo, arguments, econtext);
 
 			if (argDone != ExprMultipleResult)
 			{
@@ -1605,9 +1619,9 @@ restart:
 		 */
 		if (fcache->func.fn_strict)
 		{
-			for (i = 0; i < fcinfo.nargs; i++)
+			for (i = 0; i < fcinfo->nargs; i++)
 			{
-				if (fcinfo.argnull[i])
+				if (fcinfo->argnull[i])
 				{
 					*isNull = true;
 					return (Datum) 0;
@@ -1615,11 +1629,11 @@ restart:
 			}
 		}
 
-		pgstat_init_function_usage(&fcinfo, &fcusage);
+		pgstat_init_function_usage(fcinfo, &fcusage);
 
-		fcinfo.isnull = false;
-		result = FunctionCallInvoke(&fcinfo);
-		*isNull = fcinfo.isnull;
+		fcinfo->isnull = false;
+		result = FunctionCallInvoke(fcinfo);
+		*isNull = fcinfo->isnull;
 
 		pgstat_end_function_usage(&fcusage, true);
 	}
@@ -1737,7 +1751,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	rsinfo.type = T_ReturnSetInfo;
 	rsinfo.econtext = econtext;
 	rsinfo.expectedDesc = expectedDesc;
-	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
+	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize | SFRM_Materialize_Preferred);
 	if (randomAccess)
 		rsinfo.allowedModes |= (int) SFRM_Materialize_Random;
 	rsinfo.returnMode = SFRM_ValuePerCall;

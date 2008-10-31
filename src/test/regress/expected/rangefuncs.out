@@ -567,3 +567,179 @@ SELECT * FROM foo(3);
 (9 rows)
 
 DROP FUNCTION foo(int);
+--
+-- some tests on SQL functions with RETURNING
+--
+create temp table tt(f1 serial, data text);
+NOTICE:  CREATE TABLE will create implicit sequence "tt_f1_seq" for serial column "tt.f1"
+create function insert_tt(text) returns int as
+$$ insert into tt(data) values($1) returning f1 $$
+language sql;
+select insert_tt('foo');
+ insert_tt 
+-----------
+         1
+(1 row)
+
+select insert_tt('bar');
+ insert_tt 
+-----------
+         2
+(1 row)
+
+select * from tt;
+ f1 | data 
+----+------
+  1 | foo
+  2 | bar
+(2 rows)
+
+-- insert will execute to completion even if function needs just 1 row
+create or replace function insert_tt(text) returns int as
+$$ insert into tt(data) values($1),($1||$1) returning f1 $$
+language sql;
+select insert_tt('fool');
+ insert_tt 
+-----------
+         3
+(1 row)
+
+select * from tt;
+ f1 |   data   
+----+----------
+  1 | foo
+  2 | bar
+  3 | fool
+  4 | foolfool
+(4 rows)
+
+-- setof does what's expected
+create or replace function insert_tt2(text,text) returns setof int as
+$$ insert into tt(data) values($1),($2) returning f1 $$
+language sql;
+select insert_tt2('foolish','barrish');
+ insert_tt2 
+------------
+          5
+          6
+(2 rows)
+
+select * from insert_tt2('baz','quux');
+ insert_tt2 
+------------
+          7
+          8
+(2 rows)
+
+select * from tt;
+ f1 |   data   
+----+----------
+  1 | foo
+  2 | bar
+  3 | fool
+  4 | foolfool
+  5 | foolish
+  6 | barrish
+  7 | baz
+  8 | quux
+(8 rows)
+
+-- limit doesn't prevent execution to completion
+select insert_tt2('foolish','barrish') limit 1;
+ insert_tt2 
+------------
+          9
+(1 row)
+
+select * from tt;
+ f1 |   data   
+----+----------
+  1 | foo
+  2 | bar
+  3 | fool
+  4 | foolfool
+  5 | foolish
+  6 | barrish
+  7 | baz
+  8 | quux
+  9 | foolish
+ 10 | barrish
+(10 rows)
+
+-- triggers will fire, too
+create function noticetrigger() returns trigger as $$
+begin
+  raise notice 'noticetrigger % %', new.f1, new.data;
+  return null;
+end $$ language plpgsql;
+create trigger tnoticetrigger after insert on tt for each row
+execute procedure noticetrigger();
+select insert_tt2('foolme','barme') limit 1;
+NOTICE:  noticetrigger 11 foolme
+CONTEXT:  SQL function "insert_tt2" statement 1
+NOTICE:  noticetrigger 12 barme
+CONTEXT:  SQL function "insert_tt2" statement 1
+ insert_tt2 
+------------
+         11
+(1 row)
+
+select * from tt;
+ f1 |   data   
+----+----------
+  1 | foo
+  2 | bar
+  3 | fool
+  4 | foolfool
+  5 | foolish
+  6 | barrish
+  7 | baz
+  8 | quux
+  9 | foolish
+ 10 | barrish
+ 11 | foolme
+ 12 | barme
+(12 rows)
+
+-- and rules work
+create temp table tt_log(f1 int, data text);
+create rule insert_tt_rule as on insert to tt do also
+  insert into tt_log values(new.*);
+select insert_tt2('foollog','barlog') limit 1;
+NOTICE:  noticetrigger 13 foollog
+CONTEXT:  SQL function "insert_tt2" statement 1
+NOTICE:  noticetrigger 14 barlog
+CONTEXT:  SQL function "insert_tt2" statement 1
+ insert_tt2 
+------------
+         13
+(1 row)
+
+select * from tt;
+ f1 |   data   
+----+----------
+  1 | foo
+  2 | bar
+  3 | fool
+  4 | foolfool
+  5 | foolish
+  6 | barrish
+  7 | baz
+  8 | quux
+  9 | foolish
+ 10 | barrish
+ 11 | foolme
+ 12 | barme
+ 13 | foollog
+ 14 | barlog
+(14 rows)
+
+-- note that nextval() gets executed a second time in the rule expansion,
+-- which is expected.
+select * from tt_log;
+ f1 |  data   
+----+---------
+ 15 | foollog
+ 16 | barlog
+(2 rows)
+

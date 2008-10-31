@@ -61,7 +61,7 @@ LINE 2:     AS 'not even SQL';
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'SELECT 1, 2, 3;';
 ERROR:  return type mismatch in function declared to return integer
-DETAIL:  Final SELECT must return exactly one column.
+DETAIL:  Final statement must return exactly one column.
 CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'SELECT $2;';

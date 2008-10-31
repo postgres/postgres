@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.15 2008/10/29 00:00:38 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/fmgr/README,v 1.16 2008/10/31 19:37:56 tgl Exp $
 
 Function Manager
 ================
@@ -434,7 +434,9 @@ and returns null.  isDone is not used and should be left at ExprSingleResult.
 
 The Tuplestore must be created with randomAccess = true if
 SFRM_Materialize_Random is set in allowedModes, but it can (and preferably
-should) be created with randomAccess = false if not.
+should) be created with randomAccess = false if not.  Callers that can support
+both ValuePerCall and Materialize mode will set SFRM_Materialize_Preferred,
+or not, depending on which mode they prefer.
 
 If available, the expected tuple descriptor is passed in ReturnSetInfo;
 in other contexts the expectedDesc field will be NULL.  The function need

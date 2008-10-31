@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.193 2008/10/29 00:00:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.194 2008/10/31 19:37:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,13 +151,15 @@ typedef enum
 /*
  * Return modes for functions returning sets.  Note values must be chosen
  * as separate bits so that a bitmask can be formed to indicate supported
- * modes.
+ * modes.  SFRM_Materialize_Random and SFRM_Materialize_Preferred are
+ * auxiliary flags about SFRM_Materialize mode, rather than separate modes.
  */
 typedef enum
 {
 	SFRM_ValuePerCall = 0x01,	/* one value returned per call */
 	SFRM_Materialize = 0x02,	/* result set instantiated in Tuplestore */
-	SFRM_Materialize_Random = 0x04		/* Tuplestore needs randomAccess */
+	SFRM_Materialize_Random = 0x04,		/* Tuplestore needs randomAccess */
+	SFRM_Materialize_Preferred = 0x08	/* caller prefers Tuplestore */
 } SetFunctionReturnMode;
 
 /*

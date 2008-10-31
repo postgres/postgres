@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.132 2008/07/18 03:32:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.133 2008/10/31 19:37:56 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -106,7 +106,9 @@
     The body of an SQL function must be a list of SQL
     statements separated by semicolons.  A semicolon after the last
     statement is optional.  Unless the function is declared to return
-    <type>void</>, the last statement must be a <command>SELECT</>.
+    <type>void</>, the last statement must be a <command>SELECT</>,
+    or an <command>INSERT</>, <command>UPDATE</>, or <command>DELETE</>
+    that has a <literal>RETURNING</> clause.
    </para>
 
     <para>
@@ -119,11 +121,11 @@
      <command>BEGIN</>, <command>COMMIT</>, <command>ROLLBACK</>, or
      <command>SAVEPOINT</> commands into a <acronym>SQL</acronym> function.)
      However, the final command
-     must be a <command>SELECT</command> that returns whatever is
+     must be a <command>SELECT</command> or have a <literal>RETURNING</>
+     clause that returns whatever is
      specified as the function's return type.  Alternatively, if you
      want to define a SQL function that performs actions but has no
      useful value to return, you can define it as returning <type>void</>.
-     In that case, the function body must not end with a <command>SELECT</command>.
      For example, this function removes rows with negative salaries from
      the <literal>emp</> table:
 
@@ -257,6 +259,16 @@ $$ LANGUAGE SQL;
 </programlisting>
 
      which adjusts the balance and returns the new balance.
+     The same thing could be done in one command using <literal>RETURNING</>:
+
+<programlisting>
+CREATE FUNCTION tf1 (integer, numeric) RETURNS numeric AS $$
+    UPDATE bank
+        SET balance = balance - $2
+        WHERE accountno = $1
+    RETURNING balance;
+$$ LANGUAGE SQL;
+</programlisting>
     </para>
    </sect2>
 
@@ -422,7 +434,7 @@ SELECT (new_emp()).name;
 
 <screen>
 SELECT new_emp().name;
-ERROR:  syntax error at or near "." at character 17
+ERROR:  syntax error at or near "."
 LINE 1: SELECT new_emp().name;
                         ^
 </screen>
@@ -705,7 +717,7 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
     <para>
      When an SQL function is declared as returning <literal>SETOF
      <replaceable>sometype</></literal>, the function's final
-     <command>SELECT</> query is executed to completion, and each row it
+     query is executed to completion, and each row it
      outputs is returned as an element of the result set.
     </para>
 
@@ -798,6 +810,18 @@ SELECT name, listchildren(name) FROM nodes;
      This happens because <function>listchildren</function> returns an empty set
      for those arguments, so no result rows are generated.
     </para>
+
+    <note>
+     <para>
+      If a function's last command is <command>INSERT</>, <command>UPDATE</>,
+      or <command>DELETE</> with <literal>RETURNING</>, that command will
+      always be executed to completion, even if the function is not declared
+      with <literal>SETOF</> or the calling query does not fetch all the
+      result rows.  Any extra rows produced by the <literal>RETURNING</>
+      clause are silently dropped, but the commanded table modifications
+      still happen (and are all completed before returning from the function).
+     </para>
+    </note>
    </sect2>
 
    <sect2 id="xfunc-sql-functions-returning-table">
@@ -1459,16 +1483,13 @@ PG_MODULE_MAGIC;
     <para>
      By-value  types  can  only be 1, 2, or 4 bytes in length
      (also 8 bytes, if <literal>sizeof(Datum)</literal> is 8 on your machine).
-     You should be careful 
-     to define your types such that  they  will  be  the  same  
-     size (in bytes) on all architectures.  For example, the 
-     <literal>long</literal> type is dangerous because  it  
-     is 4 bytes on some machines and 8 bytes on others, whereas 
-     <type>int</type>  type  is  4  bytes  on  most  
-     Unix machines.  A reasonable implementation of  
-     the  <type>int4</type>  type  on  Unix
-     machines might be:
-     
+     You should be careful to define your types such that they will be the
+     same size (in bytes) on all architectures.  For example, the
+     <literal>long</literal> type is dangerous because it is 4 bytes on some
+     machines and 8 bytes on others, whereas <type>int</type> type is 4 bytes
+     on most Unix machines.  A reasonable implementation of the
+     <type>int4</type> type on Unix machines might be:
+
 <programlisting>
 /* 4-byte integer, passed by value */
 typedef int int4;
@@ -1479,7 +1500,7 @@ typedef int int4;
      On  the  other hand, fixed-length types of any size can
      be passed by-reference.  For example, here is a  sample
      implementation of a <productname>PostgreSQL</productname> type:
-     
+
 <programlisting>
 /* 16-byte structure, passed by reference */
 typedef struct
@@ -1502,7 +1523,7 @@ typedef struct
      Finally, all variable-length types must also be  passed
      by  reference.   All  variable-length  types must begin
      with a length field of exactly 4 bytes, and all data to
-     be  stored within that type must be located in the memory 
+     be  stored within that type must be located in the memory
      immediately  following  that  length  field.   The
      length field contains the total length of the structure,
      that is,  it  includes  the  size  of  the  length  field
@@ -1540,8 +1561,8 @@ typedef struct {
     </para>
 
     <para>
-     When manipulating 
-     variable-length types, we must  be  careful  to  allocate  
+     When manipulating
+     variable-length types, we must  be  careful  to  allocate
      the  correct amount  of memory and set the length field correctly.
      For example, if we wanted to  store  40  bytes  in  a <structname>text</>
      structure, we might use a code fragment like this:
@@ -1772,7 +1793,7 @@ memcpy(destination-&gt;data, buffer, 40);
 #include &lt;string.h&gt;
 
 /* by value */
-         
+
 int
 add_one(int arg)
 {
@@ -1787,7 +1808,7 @@ add_one_float8(float8 *arg)
     float8    *result = (float8 *) palloc(sizeof(float8));
 
     *result = *arg + 1.0;
-       
+
     return result;
 }
 
@@ -1798,7 +1819,7 @@ makepoint(Point *pointx, Point *pointy)
 
     new_point-&gt;x = pointx-&gt;x;
     new_point-&gt;y = pointy-&gt;y;
-       
+
     return new_point;
 }
 
@@ -1841,7 +1862,7 @@ concat_text(text *arg1, text *arg2)
      <filename>funcs.c</filename> and compiled into a shared object,
      we could define the functions to <productname>PostgreSQL</productname>
      with commands like this:
-     
+
 <programlisting>
 CREATE FUNCTION add_one(integer) RETURNS integer
      AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one'
@@ -1855,7 +1876,7 @@ CREATE FUNCTION add_one(double precision) RETURNS double precision
 CREATE FUNCTION makepoint(point, point) RETURNS point
      AS '<replaceable>DIRECTORY</replaceable>/funcs', 'makepoint'
      LANGUAGE C STRICT;
-                         
+
 CREATE FUNCTION copytext(text) RETURNS text
      AS '<replaceable>DIRECTORY</replaceable>/funcs', 'copytext'
      LANGUAGE C STRICT;
@@ -1947,7 +1968,7 @@ PG_FUNCTION_INFO_V1(funcname);
 /* by value */
 
 PG_FUNCTION_INFO_V1(add_one);
-         
+
 Datum
 add_one(PG_FUNCTION_ARGS)
 {
@@ -1981,7 +2002,7 @@ makepoint(PG_FUNCTION_ARGS)
 
     new_point-&gt;x = pointx-&gt;x;
     new_point-&gt;y = pointy-&gt;y;
-       
+
     PG_RETURN_POINT_P(new_point);
 }
 
@@ -2447,7 +2468,7 @@ include $(PGXS)
      in the <literal>results/</literal> directory), and copying them to
      <literal>expected/</literal> if they match what you want from the test.
     </para>
-   
+
    </tip>
   </sect2>
 
@@ -2476,7 +2497,7 @@ SELECT name, c_overpaid(emp, 1500) AS overpaid
 
      Using call conventions version 0, we can define
      <function>c_overpaid</> as:
-     
+
 <programlisting>
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
@@ -2522,11 +2543,11 @@ c_overpaid(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     <function>GetAttributeByName</function> is the 
+     <function>GetAttributeByName</function> is the
      <productname>PostgreSQL</productname> system function that
      returns attributes out of the specified row.  It has
      three arguments: the argument of type <type>HeapTupleHeader</type> passed
-     into 
+     into
      the  function, the name of the desired attribute, and a
      return parameter that tells whether  the  attribute
      is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
@@ -2733,7 +2754,7 @@ typedef struct
 {
     /*
      * Number of times we've been called before
-     * 
+     *
      * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
      * incremented for you every time SRF_RETURN_NEXT() is called.
      */
@@ -2750,7 +2771,7 @@ typedef struct
 
     /*
      * OPTIONAL pointer to result slot
-     * 
+     *
      * This is obsolete and only present for backwards compatibility, viz,
      * user-defined SRFs that use the deprecated TupleDescGetSlot().
      */
@@ -2758,7 +2779,7 @@ typedef struct
 
     /*
      * OPTIONAL pointer to miscellaneous user-provided context information
-     * 
+     *
      * user_fctx is for use as a pointer to your own data to retain
      * arbitrary context information between calls of your function.
      */
@@ -2766,7 +2787,7 @@ typedef struct
 
     /*
      * OPTIONAL pointer to struct containing attribute type input metadata
-     * 
+     *
      * attinmeta is for use when returning tuples (i.e., composite data types)
      * and is not used when returning base data types. It is only needed
      * if you intend to use BuildTupleFromCStrings() to create the return
@@ -2948,7 +2969,7 @@ retcomposite(PG_FUNCTION_ARGS)
     call_cntr = funcctx-&gt;call_cntr;
     max_calls = funcctx-&gt;max_calls;
     attinmeta = funcctx-&gt;attinmeta;
- 
+
     if (call_cntr &lt; max_calls)    /* do when there is more left to send */
     {
         char       **values;
@@ -3126,7 +3147,7 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     <para>
      Add-ins can reserve LWLocks and an allocation of shared memory on server
      startup.  The add-in's shared library must be preloaded by specifying
-     it in 
+     it in
      <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared-preload-libraries</></>.
      Shared memory is reserved by calling:
 <programlisting>
@@ -3139,11 +3160,11 @@ void RequestAddinShmemSpace(int size)
 <programlisting>
 void RequestAddinLWLocks(int n)
 </programlisting>
-     from <function>_PG_init</>. 
+     from <function>_PG_init</>.
     </para>
     <para>
      To avoid possible race-conditions, each backend should use the LWLock
-     <function>AddinShmemInitLock</> when connecting to and initializing 
+     <function>AddinShmemInitLock</> when connecting to and initializing
      its allocation of shared memory, as shown here:
 <programlisting>
         static mystruct *ptr = NULL;

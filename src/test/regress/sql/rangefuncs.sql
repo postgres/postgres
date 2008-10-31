@@ -279,3 +279,62 @@ AS $$ SELECT a, b
               generate_series(1,$1) b(b) $$ LANGUAGE sql;
 SELECT * FROM foo(3);
 DROP FUNCTION foo(int);
+
+--
+-- some tests on SQL functions with RETURNING
+--
+
+create temp table tt(f1 serial, data text);
+
+create function insert_tt(text) returns int as
+$$ insert into tt(data) values($1) returning f1 $$
+language sql;
+
+select insert_tt('foo');
+select insert_tt('bar');
+select * from tt;
+
+-- insert will execute to completion even if function needs just 1 row
+create or replace function insert_tt(text) returns int as
+$$ insert into tt(data) values($1),($1||$1) returning f1 $$
+language sql;
+
+select insert_tt('fool');
+select * from tt;
+
+-- setof does what's expected
+create or replace function insert_tt2(text,text) returns setof int as
+$$ insert into tt(data) values($1),($2) returning f1 $$
+language sql;
+
+select insert_tt2('foolish','barrish');
+select * from insert_tt2('baz','quux');
+select * from tt;
+
+-- limit doesn't prevent execution to completion
+select insert_tt2('foolish','barrish') limit 1;
+select * from tt;
+
+-- triggers will fire, too
+create function noticetrigger() returns trigger as $$
+begin
+  raise notice 'noticetrigger % %', new.f1, new.data;
+  return null;
+end $$ language plpgsql;
+create trigger tnoticetrigger after insert on tt for each row
+execute procedure noticetrigger();
+
+select insert_tt2('foolme','barme') limit 1;
+select * from tt;
+
+-- and rules work
+create temp table tt_log(f1 int, data text);
+
+create rule insert_tt_rule as on insert to tt do also
+  insert into tt_log values(new.*);
+
+select insert_tt2('foollog','barlog') limit 1;
+select * from tt;
+-- note that nextval() gets executed a second time in the rule expansion,
+-- which is expected.
+select * from tt_log;
