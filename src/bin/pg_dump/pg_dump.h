@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.141 2008/09/08 15:26:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.142 2008/10/31 08:39:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,6 +376,7 @@ typedef struct _castInfo
 	Oid			casttarget;
 	Oid			castfunc;
 	char		castcontext;
+	char		castmethod;
 } CastInfo;
 
 /* InhInfo isn't a DumpableObject, just temporary state */

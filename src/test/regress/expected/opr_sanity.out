@@ -22,7 +22,7 @@ create function binary_coercible(oid, oid) returns bool as $$
 SELECT ($1 = $2) OR
  EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
-        castfunc = 0 and castcontext = 'i') OR
+        castmethod = 'b' and castcontext = 'i') OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
          oid = $1 and typelem != 0 and typlen = -1))
@@ -33,7 +33,7 @@ create function physically_coercible(oid, oid) returns bool as $$
 SELECT ($1 = $2) OR
  EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
-        castfunc = 0) OR
+        castmethod = 'b') OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
          oid = $1 and typelem != 0 and typlen = -1))
@@ -262,9 +262,20 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 -- oidjoins test).
 SELECT *
 FROM pg_cast c
-WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i');
- castsource | casttarget | castfunc | castcontext 
-------------+------------+----------+-------------
+WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i')
+    OR castmethod NOT IN ('f', 'b' ,'i');
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
+(0 rows)
+
+-- Check that castfunc is nonzero only for cast methods that need a function,
+-- and zero otherwise
+SELECT *
+FROM pg_cast c
+WHERE (castmethod = 'f' AND castfunc = 0)
+   OR (castmethod IN ('b', 'i') AND castfunc <> 0);
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Look for casts to/from the same type that aren't length coercion functions.
@@ -273,15 +284,15 @@ WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i');
 SELECT *
 FROM pg_cast c
 WHERE castsource = casttarget AND castfunc = 0;
- castsource | casttarget | castfunc | castcontext 
-------------+------------+----------+-------------
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
 (0 rows)
 
 SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND p.pronargs < 2 AND castsource = casttarget;
- castsource | casttarget | castfunc | castcontext 
-------------+------------+----------+-------------
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Look for cast functions that don't have the right signature.  The
@@ -299,8 +310,8 @@ WHERE c.castfunc = p.oid AND
              OR (c.castsource = 'character'::regtype AND
                  p.proargtypes[0] = 'text'::regtype))
      OR NOT binary_coercible(p.prorettype, c.casttarget));
- castsource | casttarget | castfunc | castcontext 
-------------+------------+----------+-------------
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
 (0 rows)
 
 SELECT c.*
@@ -308,8 +319,8 @@ FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
     ((p.pronargs > 1 AND p.proargtypes[1] != 'int4'::regtype) OR
      (p.pronargs > 2 AND p.proargtypes[2] != 'bool'::regtype));
- castsource | casttarget | castfunc | castcontext 
-------------+------------+----------+-------------
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
 (0 rows)
 
 -- Look for binary compatible casts that do not have the reverse
@@ -324,19 +335,19 @@ WHERE c.castfunc = p.oid AND
 -- texttoxml(), which does an XML syntax check.
 SELECT *
 FROM pg_cast c
-WHERE c.castfunc = 0 AND
+WHERE c.castmethod = 'b' AND
     NOT EXISTS (SELECT 1 FROM pg_cast k
-                WHERE k.castfunc = 0 AND
+                WHERE k.castmethod = 'b' AND
                     k.castsource = c.casttarget AND
                     k.casttarget = c.castsource);
- castsource | casttarget | castfunc | castcontext 
-------------+------------+----------+-------------
-         25 |       1042 |        0 | i
-       1043 |       1042 |        0 | i
-        650 |        869 |        0 | i
-        142 |         25 |        0 | a
-        142 |       1043 |        0 | a
-        142 |       1042 |        0 | a
+ castsource | casttarget | castfunc | castcontext | castmethod 
+------------+------------+----------+-------------+------------
+         25 |       1042 |        0 | i           | b
+       1043 |       1042 |        0 | i           | b
+        650 |        869 |        0 | i           | b
+        142 |         25 |        0 | a           | b
+        142 |       1043 |        0 | a           | b
+        142 |       1042 |        0 | a           | b
 (6 rows)
 
 -- **************** pg_operator ****************

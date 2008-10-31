@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.99 2008/10/21 10:38:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.100 2008/10/31 08:39:20 heikki Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -1383,6 +1383,7 @@ CreateCast(CreateCastStmt *stmt)
 	Oid			funcid;
 	int			nargs;
 	char		castcontext;
+	char		castmethod;
 	Relation	relation;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_cast];
@@ -1415,7 +1416,15 @@ CreateCast(CreateCastStmt *stmt)
 						format_type_be(sourcetypeid),
 						format_type_be(targettypeid))));
 
+	/* Detemine the cast method */
 	if (stmt->func != NULL)
+		castmethod = COERCION_METHOD_FUNCTION;
+	else if(stmt->inout)
+		castmethod = COERCION_METHOD_INOUT;
+	else
+		castmethod = COERCION_METHOD_BINARY;
+
+	if (castmethod == COERCION_METHOD_FUNCTION)
 	{
 		Form_pg_proc procstruct;
 
@@ -1476,16 +1485,18 @@ CreateCast(CreateCastStmt *stmt)
 	}
 	else
 	{
+		funcid = InvalidOid;
+		nargs = 0;
+	}
+
+	if (castmethod == COERCION_METHOD_BINARY)
+	{
 		int16		typ1len;
 		int16		typ2len;
 		bool		typ1byval;
 		bool		typ2byval;
 		char		typ1align;
 		char		typ2align;
-
-		/* indicates binary coercibility */
-		funcid = InvalidOid;
-		nargs = 0;
 
 		/*
 		 * Must be superuser to create binary-compatible casts, since
@@ -1562,6 +1573,7 @@ CreateCast(CreateCastStmt *stmt)
 	values[Anum_pg_cast_casttarget - 1] = ObjectIdGetDatum(targettypeid);
 	values[Anum_pg_cast_castfunc - 1] = ObjectIdGetDatum(funcid);
 	values[Anum_pg_cast_castcontext - 1] = CharGetDatum(castcontext);
+	values[Anum_pg_cast_castmethod - 1] = CharGetDatum(castmethod);
 
 	MemSet(nulls, ' ', Natts_pg_cast);
 

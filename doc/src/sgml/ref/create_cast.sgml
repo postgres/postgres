@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.29 2008/07/30 21:23:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.30 2008/10/31 08:39:20 heikki Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -23,6 +23,10 @@ CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</r
 
 CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
     WITHOUT FUNCTION
+    [ AS ASSIGNMENT | AS IMPLICIT ]
+
+CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
+    WITH INOUT
     [ AS ASSIGNMENT | AS IMPLICIT ]
 </synopsis>
  </refsynopsisdiv>
@@ -56,6 +60,13 @@ SELECT CAST(42 AS float8);
    requires a function that performs at least a syntax check.  (Two
    types that are binary coercible both ways are also referred to as
    binary compatible.)
+  </para>
+
+  <para>
+   You can define a cast as an <firstterm>I/O conversion cast</> using
+   the <literal>WITH INOUT</literal> syntax. An I/O conversion cast is
+   performed by invoking the output function of the source data type, and
+   passing the result to the input function of the target data type.
   </para>
 
   <para>
@@ -200,6 +211,18 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     </varlistentry>
 
     <varlistentry>
+     <term><literal>WITH INOUT</literal></term>
+
+     <listitem>
+      <para>
+       Indicates that the cast is an I/O conversion cast, performed by
+       invoking the output function of the source data type, and passing the
+       result to the input function of the target data type.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>AS ASSIGNMENT</literal></term>
 
      <listitem>
@@ -284,15 +307,12 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    It is normally not necessary to create casts between user-defined types
    and the standard string types (<type>text</>, <type>varchar</>, and
    <type>char(<replaceable>n</>)</type>, as well as user-defined types that
-   are defined to be in the string category).  <productname>PostgreSQL</> will
-   automatically handle a cast to a string type by invoking the other
-   type's output function, or conversely handle a cast from a string type
-   by invoking the other type's input function.  These
-   automatically-provided casts are known as <firstterm>I/O conversion
-   casts</>.  I/O conversion casts to string types are treated as
-   assignment casts, while I/O conversion casts from string types are
+   are defined to be in the string category).  <productname>PostgreSQL</>
+   provides automatic I/O conversion casts for that. The automatic casts to
+   string types are treated as assignment casts, while the automatic casts
+   from string types are
    explicit-only.  You can override this behavior by declaring your own
-   cast to replace an I/O conversion cast, but usually the only reason to
+   cast to replace an automatic cast, but usually the only reason to
    do so is if you want the conversion to be more easily invokable than the
    standard assignment-only or explicit-only setting.  Another possible
    reason is that you want the conversion to behave differently from the

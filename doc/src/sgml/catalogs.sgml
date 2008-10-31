@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.179 2008/10/17 22:10:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.180 2008/10/31 08:39:19 heikki Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1415,9 +1415,10 @@
    cannot be deduced from some generic rule.  For example, casting between a
    domain and its base type is not explicitly represented in
    <structname>pg_cast</structname>.  Another important exception is that
-   <quote>I/O conversion casts</>, those performed using a data type's own
-   I/O functions to convert to or from <type>text</> or other string types,
-   are not explicitly represented in <structname>pg_cast</structname>.
+   <quote>automatic I/O conversion casts</>, those performed using a data
+   type's own I/O functions to convert to or from <type>text</> or other
+   string types, are not explicitly represented in
+   <structname>pg_cast</structname>.
   </para>
 
   <table>
@@ -1454,8 +1455,7 @@
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        The OID of the function to use to perform this cast.  Zero is
-       stored if the data types are binary coercible (that is, no
-       run-time operation is needed to perform the cast)
+       stored if the cast method doesn't require a function.
       </entry>
      </row>
 
@@ -1471,6 +1471,17 @@
        to a target column, as well as explicitly.
        <literal>i</> means implicitly in expressions, as well as the
        other cases
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>castmethod</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Indicates how the cast is performed.
+       <literal>f</> means that the function specified in the <structfield>castfunc</> field is used.
+       <literal>i</> means that the input/output functions are used.
+       <literal>b</> means that the types are binary-coercible, thus no conversion is required
       </entry>
      </row>
     </tbody>

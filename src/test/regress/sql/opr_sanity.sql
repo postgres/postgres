@@ -25,7 +25,7 @@ create function binary_coercible(oid, oid) returns bool as $$
 SELECT ($1 = $2) OR
  EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
-        castfunc = 0 and castcontext = 'i') OR
+        castmethod = 'b' and castcontext = 'i') OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
          oid = $1 and typelem != 0 and typlen = -1))
@@ -37,7 +37,7 @@ create function physically_coercible(oid, oid) returns bool as $$
 SELECT ($1 = $2) OR
  EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
-        castfunc = 0) OR
+        castmethod = 'b') OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
          oid = $1 and typelem != 0 and typlen = -1))
@@ -214,7 +214,16 @@ WHERE p1.prorettype = 'internal'::regtype AND NOT
 
 SELECT *
 FROM pg_cast c
-WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i');
+WHERE castsource = 0 OR casttarget = 0 OR castcontext NOT IN ('e', 'a', 'i')
+    OR castmethod NOT IN ('f', 'b' ,'i');
+
+-- Check that castfunc is nonzero only for cast methods that need a function,
+-- and zero otherwise
+
+SELECT *
+FROM pg_cast c
+WHERE (castmethod = 'f' AND castfunc = 0)
+   OR (castmethod IN ('b', 'i') AND castfunc <> 0);
 
 -- Look for casts to/from the same type that aren't length coercion functions.
 -- (We assume they are length coercions if they take multiple arguments.)
@@ -267,9 +276,9 @@ WHERE c.castfunc = p.oid AND
 
 SELECT *
 FROM pg_cast c
-WHERE c.castfunc = 0 AND
+WHERE c.castmethod = 'b' AND
     NOT EXISTS (SELECT 1 FROM pg_cast k
-                WHERE k.castfunc = 0 AND
+                WHERE k.castmethod = 'b' AND
                     k.castsource = c.casttarget AND
                     k.casttarget = c.castsource);
 

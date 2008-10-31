@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.502 2008/09/24 19:33:15 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.503 2008/10/31 08:39:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ int			optreset;
 
 #include "access/attnum.h"
 #include "access/sysattr.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
@@ -4410,21 +4411,31 @@ getCasts(int *numCasts)
 	int			i_casttarget;
 	int			i_castfunc;
 	int			i_castcontext;
+	int			i_castmethod;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, "
-						  "castsource, casttarget, castfunc, castcontext "
+						  "castsource, casttarget, castfunc, castcontext, "
+						  "castmethod "
+						  "FROM pg_cast ORDER BY 3,4");
+	}
+	else if (g_fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query, "SELECT tableoid, oid, "
+						  "castsource, casttarget, castfunc, castcontext, "
+						  "CASE WHEN castfunc = 0 THEN 'b' ELSE 'f' END AS castmethod "
 						  "FROM pg_cast ORDER BY 3,4");
 	}
 	else
 	{
 		appendPQExpBuffer(query, "SELECT 0 as tableoid, p.oid, "
 						  "t1.oid as castsource, t2.oid as casttarget, "
-						  "p.oid as castfunc, 'e' as castcontext "
+						  "p.oid as castfunc, 'e' as castcontext, "
+						  "'f' as castmethod "
 						  "FROM pg_type t1, pg_type t2, pg_proc p "
 						  "WHERE p.pronargs = 1 AND "
 						  "p.proargtypes[0] = t1.oid AND "
@@ -4447,6 +4458,7 @@ getCasts(int *numCasts)
 	i_casttarget = PQfnumber(res, "casttarget");
 	i_castfunc = PQfnumber(res, "castfunc");
 	i_castcontext = PQfnumber(res, "castcontext");
+	i_castmethod = PQfnumber(res, "castmethod");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -4462,6 +4474,7 @@ getCasts(int *numCasts)
 		castinfo[i].casttarget = atooid(PQgetvalue(res, i, i_casttarget));
 		castinfo[i].castfunc = atooid(PQgetvalue(res, i, i_castfunc));
 		castinfo[i].castcontext = *(PQgetvalue(res, i, i_castcontext));
+		castinfo[i].castmethod = *(PQgetvalue(res, i, i_castmethod));
 
 		/*
 		 * Try to name cast as concatenation of typnames.  This is only used
@@ -7188,18 +7201,26 @@ dumpCast(Archive *fout, CastInfo *cast)
 					  getFormattedTypeName(cast->castsource, zeroAsNone),
 					  getFormattedTypeName(cast->casttarget, zeroAsNone));
 
-	if (!OidIsValid(cast->castfunc))
-		appendPQExpBuffer(defqry, "WITHOUT FUNCTION");
-	else
+	switch(cast->castmethod)
 	{
-		/*
-		 * Always qualify the function name, in case it is not in pg_catalog
-		 * schema (format_function_signature won't qualify it).
-		 */
-		appendPQExpBuffer(defqry, "WITH FUNCTION %s.",
-						  fmtId(funcInfo->dobj.namespace->dobj.name));
-		appendPQExpBuffer(defqry, "%s",
-						  format_function_signature(funcInfo, true));
+		case COERCION_METHOD_BINARY:
+			appendPQExpBuffer(defqry, "WITHOUT FUNCTION");
+			break;
+		case COERCION_METHOD_INOUT:
+			appendPQExpBuffer(defqry, "WITH INOUT");
+			break;
+		case COERCION_METHOD_FUNCTION:
+			/*
+			 * Always qualify the function name, in case it is not in
+			 * pg_catalog schema (format_function_signature won't qualify it).
+			 */
+			appendPQExpBuffer(defqry, "WITH FUNCTION %s.",
+							  fmtId(funcInfo->dobj.namespace->dobj.name));
+			appendPQExpBuffer(defqry, "%s",
+							  format_function_signature(funcInfo, true));
+			break;
+		default:
+			write_msg(NULL, "WARNING: bogus value in pg_cast.castmethod field\n");
 	}
 
 	if (cast->castcontext == 'a')

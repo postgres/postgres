@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.170 2008/10/25 17:19:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.171 2008/10/31 08:39:21 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1909,11 +1909,23 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		/* Rely on ordering of enum for correct behavior here */
 		if (ccontext >= castcontext)
 		{
-			*funcid = castForm->castfunc;
-			if (OidIsValid(*funcid))
-				result = COERCION_PATH_FUNC;
-			else
-				result = COERCION_PATH_RELABELTYPE;
+			switch (castForm->castmethod)
+			{
+				case COERCION_METHOD_FUNCTION:
+					result = COERCION_PATH_FUNC;
+					*funcid = castForm->castfunc;
+					break;
+				case COERCION_METHOD_INOUT:
+					result = COERCION_PATH_COERCEVIAIO;
+					break;
+				case COERCION_METHOD_BINARY:
+					result = COERCION_PATH_RELABELTYPE;
+					break;
+				default:
+					elog(ERROR, "unrecognized castmethod: %d",
+						 (int) castForm->castmethod);
+					break;
+			}
 		}
 
 		ReleaseSysCache(tuple);
