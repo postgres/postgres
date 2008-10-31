@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.65 2008/10/31 15:05:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.66 2008/10/31 19:40:27 heikki Exp $
  *
  *
  * NOTES:
@@ -200,6 +200,36 @@ RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk, Size spaceAvail)
 	addr = fsm_get_location(heapBlk, &slot);
 
 	fsm_set_and_search(rel, addr, slot, new_cat, 0);
+}
+
+/*
+ * XLogRecordPageWithFreeSpace - like RecordPageWithFreeSpace, for use in
+ *		WAL replay
+ */
+void
+XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
+							Size spaceAvail)
+{
+	int			new_cat = fsm_space_avail_to_cat(spaceAvail);
+	FSMAddress	addr;
+	uint16		slot;
+	BlockNumber blkno;
+	Buffer		buf;
+	Page		page;
+
+	/* Get the location of the FSM byte representing the heap block */
+	addr = fsm_get_location(heapBlk, &slot);
+	blkno = fsm_logical_to_physical(addr);
+
+	/* If the page doesn't exist already, extend */
+	buf = XLogReadBufferExtended(rnode, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR);
+	page = BufferGetPage(buf);
+	if (PageIsNew(page))
+		PageInit(page, BLCKSZ, 0);
+
+	if (fsm_set_avail(page, slot, new_cat))
+		MarkBufferDirty(buf);
+	UnlockReleaseBuffer(buf);
 }
 
 /*
