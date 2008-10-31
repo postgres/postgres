@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.162 2008/09/30 10:52:13 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.163 2008/10/31 07:15:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3026,7 +3026,7 @@ main(int argc, char *argv[])
 		canonicalize_path(xlog_dir);
 		if (!is_absolute_path(xlog_dir))
 		{
-			fprintf(stderr, _("%s: xlog directory location must be an absolute path\n"), progname);
+			fprintf(stderr, _("%s: transaction log directory location must be an absolute path\n"), progname);
 			exit_nicely();
 		}
 
