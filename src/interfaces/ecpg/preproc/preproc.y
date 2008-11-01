@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.380 2008/10/29 08:04:53 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.381 2008/11/01 12:42:14 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -3970,7 +3970,7 @@ TableFuncElement:	ColId Typename	{ $$ = cat2_str($1, $2); }
 Typename:  SimpleTypename opt_array_bounds
 			{ $$ = cat2_str($1, $2.str); }
 		| SETOF SimpleTypename opt_array_bounds
-			{ $$ = cat_str(3, make_str("setof"), $2, $3); }
+			{ $$ = cat_str(3, make_str("setof"), $2, $3.str); }
 		| SimpleTypename ARRAY '[' PosIntConst ']'
 			{ $$ = cat_str(4, $1, make_str("array ["), $4, make_str("]")); }
 		| SETOF SimpleTypename ARRAY '[' PosIntConst ']'
