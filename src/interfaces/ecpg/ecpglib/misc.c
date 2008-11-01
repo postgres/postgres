@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.42 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.43 2008/11/01 19:53:35 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -204,7 +204,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		PQclear(res);
 	}
 
-	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
+	if (strncmp(transaction, "commit", 6) == 0 || strncmp(transaction, "rollback", 8) == 0)
 		con->committed = true;
 	else
 		con->committed = false;
