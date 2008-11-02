@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.306 2008/10/14 21:47:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.307 2008/11/02 01:45:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -389,7 +389,7 @@ UpdateIndexRelation(Oid indexoid,
 	Datum		exprsDatum;
 	Datum		predDatum;
 	Datum		values[Natts_pg_index];
-	char		nulls[Natts_pg_index];
+	bool		nulls[Natts_pg_index];
 	Relation	pg_index;
 	HeapTuple	tuple;
 	int			i;
@@ -441,7 +441,7 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * Build a pg_index tuple
 	 */
-	MemSet(nulls, ' ', sizeof(nulls));
+	MemSet(nulls, false, sizeof(nulls));
 
 	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
 	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
@@ -458,12 +458,12 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indoption - 1] = PointerGetDatum(indoption);
 	values[Anum_pg_index_indexprs - 1] = exprsDatum;
 	if (exprsDatum == (Datum) 0)
-		nulls[Anum_pg_index_indexprs - 1] = 'n';
+		nulls[Anum_pg_index_indexprs - 1] = true;
 	values[Anum_pg_index_indpred - 1] = predDatum;
 	if (predDatum == (Datum) 0)
-		nulls[Anum_pg_index_indpred - 1] = 'n';
+		nulls[Anum_pg_index_indpred - 1] = true;
 
-	tuple = heap_formtuple(RelationGetDescr(pg_index), values, nulls);
+	tuple = heap_form_tuple(RelationGetDescr(pg_index), values, nulls);
 
 	/*
 	 * insert the tuple into the pg_index catalog

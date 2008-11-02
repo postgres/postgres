@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.89 2008/06/19 00:46:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.90 2008/11/02 01:45:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -359,10 +359,10 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	/*
 	 * Get the tuple descriptor and break down the tuple into fields.
 	 *
-	 * NOTE: it's debatable whether to use heap_deformtuple() here or just
+	 * NOTE: it's debatable whether to use heap_deform_tuple() here or just
 	 * heap_getattr() only the varlena columns.  The latter could win if there
 	 * are few varlena columns and many non-varlena ones. However,
-	 * heap_deformtuple costs only O(N) while the heap_getattr way would cost
+	 * heap_deform_tuple costs only O(N) while the heap_getattr way would cost
 	 * O(N^2) if there are many varlena columns, so it seems better to err on
 	 * the side of linear cost.  (We won't even be here unless there's at
 	 * least one varlena column, by the way.)

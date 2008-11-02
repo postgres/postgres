@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.126 2008/10/31 15:05:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.127 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1277,8 +1277,8 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 					k,
 					n;
 		Datum		values[Natts_pg_statistic];
-		char		nulls[Natts_pg_statistic];
-		char		replaces[Natts_pg_statistic];
+		bool		nulls[Natts_pg_statistic];
+		bool		replaces[Natts_pg_statistic];
 
 		/* Ignore attr if we weren't able to collect stats */
 		if (!stats->stats_valid)
@@ -1289,8 +1289,8 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		 */
 		for (i = 0; i < Natts_pg_statistic; ++i)
 		{
-			nulls[i] = ' ';
-			replaces[i] = 'r';
+			nulls[i] = false;
+			replaces[i] = true;
 		}
 
 		i = 0;
@@ -1326,7 +1326,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 			}
 			else
 			{
-				nulls[i] = 'n';
+				nulls[i] = true;
 				values[i++] = (Datum) 0;
 			}
 		}
@@ -1346,7 +1346,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 			}
 			else
 			{
-				nulls[i] = 'n';
+				nulls[i] = true;
 				values[i++] = (Datum) 0;
 			}
 		}
@@ -1360,7 +1360,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		if (HeapTupleIsValid(oldtup))
 		{
 			/* Yes, replace it */
-			stup = heap_modifytuple(oldtup,
+			stup = heap_modify_tuple(oldtup,
 									RelationGetDescr(sd),
 									values,
 									nulls,
@@ -1371,7 +1371,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		else
 		{
 			/* No, insert new tuple */
-			stup = heap_formtuple(RelationGetDescr(sd), values, nulls);
+			stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
 			simple_heap_insert(sd, stup);
 		}
 

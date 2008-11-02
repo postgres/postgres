@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.341 2008/10/14 23:27:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.342 2008/11/02 01:45:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -618,12 +618,12 @@ InsertPgClassTuple(Relation pg_class_desc,
 {
 	Form_pg_class rd_rel = new_rel_desc->rd_rel;
 	Datum		values[Natts_pg_class];
-	char		nulls[Natts_pg_class];
+	bool		nulls[Natts_pg_class];
 	HeapTuple	tup;
 
 	/* This is a tad tedious, but way cleaner than what we used to do... */
 	memset(values, 0, sizeof(values));
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	values[Anum_pg_class_relname - 1] = NameGetDatum(&rd_rel->relname);
 	values[Anum_pg_class_relnamespace - 1] = ObjectIdGetDatum(rd_rel->relnamespace);
@@ -651,13 +651,13 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	/* start out with empty permissions */
-	nulls[Anum_pg_class_relacl - 1] = 'n';
+	nulls[Anum_pg_class_relacl - 1] = true;
 	if (reloptions != (Datum) 0)
 		values[Anum_pg_class_reloptions - 1] = reloptions;
 	else
-		nulls[Anum_pg_class_reloptions - 1] = 'n';
+		nulls[Anum_pg_class_reloptions - 1] = true;
 
-	tup = heap_formtuple(RelationGetDescr(pg_class_desc), values, nulls);
+	tup = heap_form_tuple(RelationGetDescr(pg_class_desc), values, nulls);
 
 	/*
 	 * The new tuple must have the oid already chosen for the rel.	Sure would
@@ -1464,7 +1464,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
 	Relation	adrel;
 	HeapTuple	tuple;
 	Datum		values[4];
-	static char nulls[4] = {' ', ' ', ' ', ' '};
+	static bool nulls[4] = {false, false, false, false};
 	Relation	attrrel;
 	HeapTuple	atttup;
 	Form_pg_attribute attStruct;
@@ -1495,7 +1495,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
 
 	adrel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
 
-	tuple = heap_formtuple(adrel->rd_att, values, nulls);
+	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
 	attrdefOid = simple_heap_insert(adrel, tuple);
 
 	CatalogUpdateIndexes(adrel, tuple);

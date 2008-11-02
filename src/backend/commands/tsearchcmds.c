@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.13 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.14 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ DefineTSParser(List *names, List *parameters)
 	Relation	prsRel;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_ts_parser];
-	char		nulls[Natts_pg_ts_parser];
+	bool		nulls[Natts_pg_ts_parser];
 	NameData	pname;
 	Oid			prsOid;
 	Oid			namespaceoid;
@@ -182,7 +182,7 @@ DefineTSParser(List *names, List *parameters)
 
 	/* initialize tuple fields with name/namespace */
 	memset(values, 0, sizeof(values));
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	namestrcpy(&pname, prsname);
 	values[Anum_pg_ts_parser_prsname - 1] = NameGetDatum(&pname);
@@ -255,7 +255,7 @@ DefineTSParser(List *names, List *parameters)
 	 */
 	prsRel = heap_open(TSParserRelationId, RowExclusiveLock);
 
-	tup = heap_formtuple(prsRel->rd_att, values, nulls);
+	tup = heap_form_tuple(prsRel->rd_att, values, nulls);
 
 	prsOid = simple_heap_insert(prsRel, tup);
 
@@ -497,7 +497,7 @@ DefineTSDictionary(List *names, List *parameters)
 	Relation	dictRel;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_ts_dict];
-	char		nulls[Natts_pg_ts_dict];
+	bool		nulls[Natts_pg_ts_dict];
 	NameData	dname;
 	Oid			templId = InvalidOid;
 	List	   *dictoptions = NIL;
@@ -547,7 +547,7 @@ DefineTSDictionary(List *names, List *parameters)
 	 * Looks good, insert
 	 */
 	memset(values, 0, sizeof(values));
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	namestrcpy(&dname, dictname);
 	values[Anum_pg_ts_dict_dictname - 1] = NameGetDatum(&dname);
@@ -558,11 +558,11 @@ DefineTSDictionary(List *names, List *parameters)
 		values[Anum_pg_ts_dict_dictinitoption - 1] =
 			PointerGetDatum(serialize_deflist(dictoptions));
 	else
-		nulls[Anum_pg_ts_dict_dictinitoption - 1] = 'n';
+		nulls[Anum_pg_ts_dict_dictinitoption - 1] = true;
 
 	dictRel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
 
-	tup = heap_formtuple(dictRel->rd_att, values, nulls);
+	tup = heap_form_tuple(dictRel->rd_att, values, nulls);
 
 	dictOid = simple_heap_insert(dictRel, tup);
 
@@ -742,8 +742,8 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	Datum		opt;
 	bool		isnull;
 	Datum		repl_val[Natts_pg_ts_dict];
-	char		repl_null[Natts_pg_ts_dict];
-	char		repl_repl[Natts_pg_ts_dict];
+	bool		repl_null[Natts_pg_ts_dict];
+	bool		repl_repl[Natts_pg_ts_dict];
 
 	dictId = TSDictionaryGetDictid(stmt->dictname, false);
 
@@ -813,17 +813,17 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	 * Looks good, update
 	 */
 	memset(repl_val, 0, sizeof(repl_val));
-	memset(repl_null, ' ', sizeof(repl_null));
-	memset(repl_repl, ' ', sizeof(repl_repl));
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
 
 	if (dictoptions)
 		repl_val[Anum_pg_ts_dict_dictinitoption - 1] =
 			PointerGetDatum(serialize_deflist(dictoptions));
 	else
-		repl_null[Anum_pg_ts_dict_dictinitoption - 1] = 'n';
-	repl_repl[Anum_pg_ts_dict_dictinitoption - 1] = 'r';
+		repl_null[Anum_pg_ts_dict_dictinitoption - 1] = true;
+	repl_repl[Anum_pg_ts_dict_dictinitoption - 1] = true;
 
-	newtup = heap_modifytuple(tup, RelationGetDescr(rel),
+	newtup = heap_modify_tuple(tup, RelationGetDescr(rel),
 							  repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &newtup->t_self, newtup);
@@ -995,7 +995,7 @@ DefineTSTemplate(List *names, List *parameters)
 	Relation	tmplRel;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_ts_template];
-	char		nulls[Natts_pg_ts_template];
+	bool		nulls[Natts_pg_ts_template];
 	NameData	dname;
 	int			i;
 	Oid			dictOid;
@@ -1012,7 +1012,7 @@ DefineTSTemplate(List *names, List *parameters)
 
 	for (i = 0; i < Natts_pg_ts_template; i++)
 	{
-		nulls[i] = ' ';
+		nulls[i] = false;
 		values[i] = ObjectIdGetDatum(InvalidOid);
 	}
 
@@ -1031,13 +1031,13 @@ DefineTSTemplate(List *names, List *parameters)
 		{
 			values[Anum_pg_ts_template_tmplinit - 1] =
 				get_ts_template_func(defel, Anum_pg_ts_template_tmplinit);
-			nulls[Anum_pg_ts_template_tmplinit - 1] = ' ';
+			nulls[Anum_pg_ts_template_tmplinit - 1] = false;
 		}
 		else if (pg_strcasecmp(defel->defname, "lexize") == 0)
 		{
 			values[Anum_pg_ts_template_tmpllexize - 1] =
 				get_ts_template_func(defel, Anum_pg_ts_template_tmpllexize);
-			nulls[Anum_pg_ts_template_tmpllexize - 1] = ' ';
+			nulls[Anum_pg_ts_template_tmpllexize - 1] = false;
 		}
 		else
 			ereport(ERROR,
@@ -1060,7 +1060,7 @@ DefineTSTemplate(List *names, List *parameters)
 
 	tmplRel = heap_open(TSTemplateRelationId, RowExclusiveLock);
 
-	tup = heap_formtuple(tmplRel->rd_att, values, nulls);
+	tup = heap_form_tuple(tmplRel->rd_att, values, nulls);
 
 	dictOid = simple_heap_insert(tmplRel, tup);
 
@@ -1327,7 +1327,7 @@ DefineTSConfiguration(List *names, List *parameters)
 	Relation	mapRel = NULL;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_ts_config];
-	char		nulls[Natts_pg_ts_config];
+	bool		nulls[Natts_pg_ts_config];
 	AclResult	aclresult;
 	Oid			namespaceoid;
 	char	   *cfgname;
@@ -1403,7 +1403,7 @@ DefineTSConfiguration(List *names, List *parameters)
 	 * Looks good, build tuple and insert
 	 */
 	memset(values, 0, sizeof(values));
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	namestrcpy(&cname, cfgname);
 	values[Anum_pg_ts_config_cfgname - 1] = NameGetDatum(&cname);
@@ -1413,7 +1413,7 @@ DefineTSConfiguration(List *names, List *parameters)
 
 	cfgRel = heap_open(TSConfigRelationId, RowExclusiveLock);
 
-	tup = heap_formtuple(cfgRel->rd_att, values, nulls);
+	tup = heap_form_tuple(cfgRel->rd_att, values, nulls);
 
 	cfgOid = simple_heap_insert(cfgRel, tup);
 
@@ -1443,17 +1443,17 @@ DefineTSConfiguration(List *names, List *parameters)
 			Form_pg_ts_config_map cfgmap = (Form_pg_ts_config_map) GETSTRUCT(maptup);
 			HeapTuple	newmaptup;
 			Datum		mapvalues[Natts_pg_ts_config_map];
-			char		mapnulls[Natts_pg_ts_config_map];
+			bool		mapnulls[Natts_pg_ts_config_map];
 
 			memset(mapvalues, 0, sizeof(mapvalues));
-			memset(mapnulls, ' ', sizeof(mapnulls));
+			memset(mapnulls, false, sizeof(mapnulls));
 
 			mapvalues[Anum_pg_ts_config_map_mapcfg - 1] = cfgOid;
 			mapvalues[Anum_pg_ts_config_map_maptokentype - 1] = cfgmap->maptokentype;
 			mapvalues[Anum_pg_ts_config_map_mapseqno - 1] = cfgmap->mapseqno;
 			mapvalues[Anum_pg_ts_config_map_mapdict - 1] = cfgmap->mapdict;
 
-			newmaptup = heap_formtuple(mapRel->rd_att, mapvalues, mapnulls);
+			newmaptup = heap_form_tuple(mapRel->rd_att, mapvalues, mapnulls);
 
 			simple_heap_insert(mapRel, newmaptup);
 
@@ -1911,18 +1911,18 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 			if (cfgmap->mapdict == dictOld)
 			{
 				Datum		repl_val[Natts_pg_ts_config_map];
-				char		repl_null[Natts_pg_ts_config_map];
-				char		repl_repl[Natts_pg_ts_config_map];
+				bool		repl_null[Natts_pg_ts_config_map];
+				bool		repl_repl[Natts_pg_ts_config_map];
 				HeapTuple	newtup;
 
 				memset(repl_val, 0, sizeof(repl_val));
-				memset(repl_null, ' ', sizeof(repl_null));
-				memset(repl_repl, ' ', sizeof(repl_repl));
+				memset(repl_null, false, sizeof(repl_null));
+				memset(repl_repl, false, sizeof(repl_repl));
 
 				repl_val[Anum_pg_ts_config_map_mapdict - 1] = ObjectIdGetDatum(dictNew);
-				repl_repl[Anum_pg_ts_config_map_mapdict - 1] = 'r';
+				repl_repl[Anum_pg_ts_config_map_mapdict - 1] = true;
 
-				newtup = heap_modifytuple(maptup,
+				newtup = heap_modify_tuple(maptup,
 										  RelationGetDescr(relMap),
 										  repl_val, repl_null, repl_repl);
 				simple_heap_update(relMap, &newtup->t_self, newtup);
@@ -1943,15 +1943,15 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 			for (j = 0; j < ndict; j++)
 			{
 				Datum		values[Natts_pg_ts_config_map];
-				char		nulls[Natts_pg_ts_config_map];
+				bool		nulls[Natts_pg_ts_config_map];
 
-				memset(nulls, ' ', sizeof(nulls));
+				memset(nulls, false, sizeof(nulls));
 				values[Anum_pg_ts_config_map_mapcfg - 1] = ObjectIdGetDatum(cfgId);
 				values[Anum_pg_ts_config_map_maptokentype - 1] = Int32GetDatum(tokens[i]);
 				values[Anum_pg_ts_config_map_mapseqno - 1] = Int32GetDatum(j + 1);
 				values[Anum_pg_ts_config_map_mapdict - 1] = ObjectIdGetDatum(dictIds[j]);
 
-				tup = heap_formtuple(relMap->rd_att, values, nulls);
+				tup = heap_form_tuple(relMap->rd_att, values, nulls);
 				simple_heap_insert(relMap, tup);
 				CatalogUpdateIndexes(relMap, tup);
 

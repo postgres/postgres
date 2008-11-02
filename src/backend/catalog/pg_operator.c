@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.105 2008/08/16 00:01:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.106 2008/11/02 01:45:27 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -207,7 +207,7 @@ OperatorShellMake(const char *operatorName,
 	int			i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_operator];
-	char		nulls[Natts_pg_operator];
+	bool		nulls[Natts_pg_operator];
 	NameData	oname;
 	TupleDesc	tupDesc;
 
@@ -225,7 +225,7 @@ OperatorShellMake(const char *operatorName,
 	 */
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
-		nulls[i] = ' ';
+		nulls[i] = false;
 		values[i] = (Datum) NULL;		/* redundant, but safe */
 	}
 
@@ -259,7 +259,7 @@ OperatorShellMake(const char *operatorName,
 	/*
 	 * create a new operator tuple
 	 */
-	tup = heap_formtuple(tupDesc, values, nulls);
+	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/*
 	 * insert our "shell" operator tuple
@@ -336,8 +336,8 @@ OperatorCreate(const char *operatorName,
 {
 	Relation	pg_operator_desc;
 	HeapTuple	tup;
-	char		nulls[Natts_pg_operator];
-	char		replaces[Natts_pg_operator];
+	bool		nulls[Natts_pg_operator];
+	bool		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
 	Oid			operatorObjectId;
 	bool		operatorAlreadyDefined;
@@ -483,8 +483,8 @@ OperatorCreate(const char *operatorName,
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
 		values[i] = (Datum) NULL;
-		replaces[i] = 'r';
-		nulls[i] = ' ';
+		replaces[i] = true;
+		nulls[i] = false;
 	}
 
 	i = 0;
@@ -518,7 +518,7 @@ OperatorCreate(const char *operatorName,
 			elog(ERROR, "cache lookup failed for operator %u",
 				 operatorObjectId);
 
-		tup = heap_modifytuple(tup,
+		tup = heap_modify_tuple(tup,
 							   RelationGetDescr(pg_operator_desc),
 							   values,
 							   nulls,
@@ -529,7 +529,7 @@ OperatorCreate(const char *operatorName,
 	else
 	{
 		tupDesc = pg_operator_desc->rd_att;
-		tup = heap_formtuple(tupDesc, values, nulls);
+		tup = heap_form_tuple(tupDesc, values, nulls);
 
 		operatorObjectId = simple_heap_insert(pg_operator_desc, tup);
 	}
@@ -639,15 +639,15 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	int			i;
 	Relation	pg_operator_desc;
 	HeapTuple	tup;
-	char		nulls[Natts_pg_operator];
-	char		replaces[Natts_pg_operator];
+	bool		nulls[Natts_pg_operator];
+	bool		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
 		values[i] = (Datum) 0;
-		replaces[i] = ' ';
-		nulls[i] = ' ';
+		replaces[i] = false;
+		nulls[i] = false;
 	}
 
 	/*
@@ -680,16 +680,16 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 				if (!OidIsValid(t->oprnegate))
 				{
 					values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
-					replaces[Anum_pg_operator_oprnegate - 1] = 'r';
+					replaces[Anum_pg_operator_oprnegate - 1] = true;
 				}
 
 				if (!OidIsValid(t->oprcom))
 				{
 					values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
-					replaces[Anum_pg_operator_oprcom - 1] = 'r';
+					replaces[Anum_pg_operator_oprcom - 1] = true;
 				}
 
-				tup = heap_modifytuple(tup,
+				tup = heap_modify_tuple(tup,
 									   RelationGetDescr(pg_operator_desc),
 									   values,
 									   nulls,
@@ -712,9 +712,9 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprcom)))
 	{
 		values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
-		replaces[Anum_pg_operator_oprcom - 1] = 'r';
+		replaces[Anum_pg_operator_oprcom - 1] = true;
 
-		tup = heap_modifytuple(tup,
+		tup = heap_modify_tuple(tup,
 							   RelationGetDescr(pg_operator_desc),
 							   values,
 							   nulls,
@@ -725,7 +725,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		CatalogUpdateIndexes(pg_operator_desc, tup);
 
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
-		replaces[Anum_pg_operator_oprcom - 1] = ' ';
+		replaces[Anum_pg_operator_oprcom - 1] = false;
 	}
 
 	/* check and update the negator, if necessary */
@@ -738,9 +738,9 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprnegate)))
 	{
 		values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
-		replaces[Anum_pg_operator_oprnegate - 1] = 'r';
+		replaces[Anum_pg_operator_oprnegate - 1] = true;
 
-		tup = heap_modifytuple(tup,
+		tup = heap_modify_tuple(tup,
 							   RelationGetDescr(pg_operator_desc),
 							   values,
 							   nulls,

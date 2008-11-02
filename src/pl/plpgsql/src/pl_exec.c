@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.222 2008/10/29 00:00:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.223 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3578,9 +3578,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				int			fno;
 				HeapTuple	newtup;
 				int			natts;
-				int			i;
 				Datum	   *values;
-				char	   *nulls;
+				bool	   *nulls;
+				bool	   *replaces;
 				void	   *mustfree;
 				bool		attisnull;
 				Oid			atttype;
@@ -3602,10 +3602,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * Get the number of the records field to change and the
-				 * number of attributes in the tuple.
+				 * number of attributes in the tuple.  Note: disallow
+				 * system column names because the code below won't cope.
 				 */
 				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
+				if (fno <= 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("record \"%s\" has no field \"%s\"",
@@ -3614,24 +3615,16 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				natts = rec->tupdesc->natts;
 
 				/*
-				 * Set up values/datums arrays for heap_formtuple.	For all
+				 * Set up values/control arrays for heap_modify_tuple. For all
 				 * the attributes except the one we want to replace, use the
 				 * value that's in the old tuple.
 				 */
 				values = palloc(sizeof(Datum) * natts);
-				nulls = palloc(natts);
+				nulls = palloc(sizeof(bool) * natts);
+				replaces = palloc(sizeof(bool) * natts);
 
-				for (i = 0; i < natts; i++)
-				{
-					if (i == fno)
-						continue;
-					values[i] = SPI_getbinval(rec->tup, rec->tupdesc,
-											  i + 1, &attisnull);
-					if (attisnull)
-						nulls[i] = 'n';
-					else
-						nulls[i] = ' ';
-				}
+				memset(replaces, false, sizeof(bool) * natts);
+				replaces[fno] = true;
 
 				/*
 				 * Now insert the new value, being careful to cast it to the
@@ -3645,10 +3638,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 													 atttype,
 													 atttypmod,
 													 attisnull);
-				if (attisnull)
-					nulls[fno] = 'n';
-				else
-					nulls[fno] = ' ';
+				nulls[fno] = attisnull;
 
 				/*
 				 * Avoid leaking the result of exec_simple_cast_value, if it
@@ -3660,10 +3650,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					mustfree = NULL;
 
 				/*
-				 * Now call heap_formtuple() to create a new tuple that
+				 * Now call heap_modify_tuple() to create a new tuple that
 				 * replaces the old one in the record.
 				 */
-				newtup = heap_formtuple(rec->tupdesc, values, nulls);
+				newtup = heap_modify_tuple(rec->tup, rec->tupdesc,
+										   values, nulls, replaces);
 
 				if (rec->freetup)
 					heap_freetuple(rec->tup);
@@ -3673,6 +3664,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				pfree(values);
 				pfree(nulls);
+				pfree(replaces);
 				if (mustfree)
 					pfree(mustfree);
 
@@ -4519,12 +4511,12 @@ exec_move_row(PLpgSQL_execstate *estate,
 		else if (tupdesc)
 		{
 			/* If we have a tupdesc but no data, form an all-nulls tuple */
-			char	   *nulls;
+			bool	   *nulls;
 
-			nulls = (char *) palloc(tupdesc->natts * sizeof(char));
-			memset(nulls, 'n', tupdesc->natts * sizeof(char));
+			nulls = (bool *) palloc(tupdesc->natts * sizeof(bool));
+			memset(nulls, true, tupdesc->natts * sizeof(bool));
 
-			tup = heap_formtuple(tupdesc, NULL, nulls);
+			tup = heap_form_tuple(tupdesc, NULL, nulls);
 
 			pfree(nulls);
 		}

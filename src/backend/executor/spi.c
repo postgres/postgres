@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.199 2008/10/16 13:23:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.200 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	HeapTuple	mtuple;
 	int			numberOfAttributes;
 	Datum	   *v;
-	char	   *n;
+	bool	   *n;
 	int			i;
 
 	if (rel == NULL || tuple == NULL || natts < 0 || attnum == NULL || Values == NULL)
@@ -645,10 +645,10 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	SPI_result = 0;
 	numberOfAttributes = rel->rd_att->natts;
 	v = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
-	n = (char *) palloc(numberOfAttributes * sizeof(char));
+	n = (bool *) palloc(numberOfAttributes * sizeof(bool));
 
 	/* fetch old values and nulls */
-	heap_deformtuple(tuple, rel->rd_att, v, n);
+	heap_deform_tuple(tuple, rel->rd_att, v, n);
 
 	/* replace values and nulls */
 	for (i = 0; i < natts; i++)
@@ -656,12 +656,12 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		if (attnum[i] <= 0 || attnum[i] > numberOfAttributes)
 			break;
 		v[attnum[i] - 1] = Values[i];
-		n[attnum[i] - 1] = (Nulls && Nulls[i] == 'n') ? 'n' : ' ';
+		n[attnum[i] - 1] = (Nulls && Nulls[i] == 'n') ? true : false;
 	}
 
 	if (i == natts)				/* no errors in *attnum */
 	{
-		mtuple = heap_formtuple(rel->rd_att, v, n);
+		mtuple = heap_form_tuple(rel->rd_att, v, n);
 
 		/*
 		 * copy the identification info of the old tuple: t_ctid, t_self, and

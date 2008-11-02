@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.238 2008/10/24 23:42:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.239 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	int16		tgtype;
 	int2vector *tgattr;
 	Datum		values[Natts_pg_trigger];
-	char		nulls[Natts_pg_trigger];
+	bool		nulls[Natts_pg_trigger];
 	Relation	rel;
 	AclResult	aclresult;
 	Relation	tgrel;
@@ -310,7 +310,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	/*
 	 * Build the new pg_trigger tuple.
 	 */
-	memset(nulls, ' ', Natts_pg_trigger * sizeof(char));
+	memset(nulls, false, sizeof(nulls));
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
@@ -374,7 +374,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	tgattr = buildint2vector(NULL, 0);
 	values[Anum_pg_trigger_tgattr - 1] = PointerGetDatum(tgattr);
 
-	tuple = heap_formtuple(tgrel->rd_att, values, nulls);
+	tuple = heap_form_tuple(tgrel->rd_att, values, nulls);
 
 	/* force tuple to have the desired OID */
 	HeapTupleSetOid(tuple, trigoid);

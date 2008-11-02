@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.26 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.27 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ typedef struct FuncCallContext
 	 *
 	 * tuple_desc is for use when returning tuples (i.e. composite data types)
 	 * and is only needed if you are going to build the tuples with
-	 * heap_formtuple() rather than with BuildTupleFromCStrings().	Note that
+	 * heap_form_tuple() rather than with BuildTupleFromCStrings().	Note that
 	 * the TupleDesc pointer stored here should usually have been run through
 	 * BlessTupleDesc() first.
 	 */
@@ -187,7 +187,7 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  * External declarations:
  * TupleDesc BlessTupleDesc(TupleDesc tupdesc) - "Bless" a completed tuple
  *		descriptor so that it can be used to return properly labeled tuples.
- *		You need to call this if you are going to use heap_formtuple directly.
+ *		You need to call this if you are going to use heap_form_tuple directly.
  *		TupleDescGetAttInMetadata does it for you, however, so no need to call
  *		it if you call TupleDescGetAttInMetadata.
  * AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc) - Build an

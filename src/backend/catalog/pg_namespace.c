@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.19 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.20 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 	Relation	nspdesc;
 	HeapTuple	tup;
 	Oid			nspoid;
-	char		nulls[Natts_pg_namespace];
+	bool		nulls[Natts_pg_namespace];
 	Datum		values[Natts_pg_namespace];
 	NameData	nname;
 	TupleDesc	tupDesc;
@@ -54,18 +54,18 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_namespace; i++)
 	{
-		nulls[i] = ' ';
+		nulls[i] = false;
 		values[i] = (Datum) NULL;
 	}
 	namestrcpy(&nname, nspName);
 	values[Anum_pg_namespace_nspname - 1] = NameGetDatum(&nname);
 	values[Anum_pg_namespace_nspowner - 1] = ObjectIdGetDatum(ownerId);
-	nulls[Anum_pg_namespace_nspacl - 1] = 'n';
+	nulls[Anum_pg_namespace_nspacl - 1] = true;
 
 	nspdesc = heap_open(NamespaceRelationId, RowExclusiveLock);
 	tupDesc = nspdesc->rd_att;
 
-	tup = heap_formtuple(tupDesc, values, nulls);
+	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	nspoid = simple_heap_insert(nspdesc, tup);
 	Assert(OidIsValid(nspoid));

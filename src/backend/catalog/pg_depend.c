@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.29 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.30 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	CatalogIndexState indstate;
 	HeapTuple	tup;
 	int			i;
-	char		nulls[Natts_pg_depend];
+	bool		nulls[Natts_pg_depend];
 	Datum		values[Natts_pg_depend];
 
 	if (nreferenced <= 0)
@@ -77,7 +77,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	/* Don't open indexes unless we need to make an update */
 	indstate = NULL;
 
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	for (i = 0; i < nreferenced; i++, referenced++)
 	{
@@ -102,7 +102,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 			values[Anum_pg_depend_deptype - 1] = CharGetDatum((char) behavior);
 
-			tup = heap_formtuple(dependDesc->rd_att, values, nulls);
+			tup = heap_form_tuple(dependDesc->rd_att, values, nulls);
 
 			simple_heap_insert(dependDesc, tup);
 

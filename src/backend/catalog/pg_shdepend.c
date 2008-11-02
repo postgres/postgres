@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.28 2008/05/12 00:00:47 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.29 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,7 @@ shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
 		Datum		values[Natts_pg_shdepend];
 		bool		nulls[Natts_pg_shdepend];
 
-		memset(nulls, 0, sizeof(nulls));
+		memset(nulls, false, sizeof(nulls));
 
 		values[Anum_pg_shdepend_dbid - 1] = ObjectIdGetDatum(dbid);
 		values[Anum_pg_shdepend_classid - 1] = ObjectIdGetDatum(classid);

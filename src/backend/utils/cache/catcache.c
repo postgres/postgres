@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.144 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.145 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1673,16 +1673,16 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 	HeapTuple	ntp;
 	TupleDesc	tupDesc = cache->cc_tupdesc;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *nulls;
 	Oid			tupOid = InvalidOid;
 	NameData	tempNames[4];
 	int			i;
 
 	values = (Datum *) palloc(tupDesc->natts * sizeof(Datum));
-	nulls = (char *) palloc(tupDesc->natts * sizeof(char));
+	nulls = (bool *) palloc(tupDesc->natts * sizeof(bool));
 
 	memset(values, 0, tupDesc->natts * sizeof(Datum));
-	memset(nulls, 'n', tupDesc->natts * sizeof(char));
+	memset(nulls, true, tupDesc->natts * sizeof(bool));
 
 	for (i = 0; i < nkeys; i++)
 	{
@@ -1695,7 +1695,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 			 * Here we must be careful in case the caller passed a C string
 			 * where a NAME is wanted: convert the given argument to a
 			 * correctly padded NAME.  Otherwise the memcpy() done in
-			 * heap_formtuple could fall off the end of memory.
+			 * heap_form_tuple could fall off the end of memory.
 			 */
 			if (cache->cc_isname[i])
 			{
@@ -1705,7 +1705,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 				keyval = NameGetDatum(newval);
 			}
 			values[attindex - 1] = keyval;
-			nulls[attindex - 1] = ' ';
+			nulls[attindex - 1] = false;
 		}
 		else
 		{
@@ -1714,7 +1714,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 		}
 	}
 
-	ntp = heap_formtuple(tupDesc, values, nulls);
+	ntp = heap_form_tuple(tupDesc, values, nulls);
 	if (tupOid != InvalidOid)
 		HeapTupleSetOid(ntp, tupOid);
 

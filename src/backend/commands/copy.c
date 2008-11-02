@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.299 2008/05/12 20:01:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.300 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1638,7 +1638,7 @@ CopyFrom(CopyState cstate)
 	int			i;
 	Oid			in_func_oid;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *nulls;
 	int			nfields;
 	char	  **field_strings;
 	bool		done = false;
@@ -1872,7 +1872,7 @@ CopyFrom(CopyState cstate)
 	}
 
 	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
-	nulls = (char *) palloc(num_phys_attrs * sizeof(char));
+	nulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
 	/* create workspace for CopyReadAttributes results */
 	nfields = file_has_oids ? (attr_count + 1) : attr_count;
@@ -1916,7 +1916,7 @@ CopyFrom(CopyState cstate)
 
 		/* Initialize all values for row to NULL */
 		MemSet(values, 0, num_phys_attrs * sizeof(Datum));
-		MemSet(nulls, 'n', num_phys_attrs * sizeof(char));
+		MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 
 		if (!cstate->binary)
 		{
@@ -1998,7 +1998,7 @@ CopyFrom(CopyState cstate)
 											  typioparams[m],
 											  attr[m]->atttypmod);
 				if (string != NULL)
-					nulls[m] = ' ';
+					nulls[m] = false;
 				cstate->cur_attname = NULL;
 				cstate->cur_attval = NULL;
 			}
@@ -2054,8 +2054,7 @@ CopyFrom(CopyState cstate)
 													&in_functions[m],
 													typioparams[m],
 													attr[m]->atttypmod,
-													&isnull);
-				nulls[m] = isnull ? 'n' : ' ';
+													&nulls[m]);
 				cstate->cur_attname = NULL;
 			}
 		}
@@ -2068,13 +2067,11 @@ CopyFrom(CopyState cstate)
 		for (i = 0; i < num_defaults; i++)
 		{
 			values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
-											 &isnull, NULL);
-			if (!isnull)
-				nulls[defmap[i]] = ' ';
+											 &nulls[defmap[i]], NULL);
 		}
 
 		/* And now we can form the input tuple. */
-		tuple = heap_formtuple(tupDesc, values, nulls);
+		tuple = heap_form_tuple(tupDesc, values, nulls);
 
 		if (cstate->oids && file_has_oids)
 			HeapTupleSetOid(tuple, loaded_oid);

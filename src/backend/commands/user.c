@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.182 2008/05/12 00:00:48 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.183 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ CreateRole(CreateRoleStmt *stmt)
 	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple;
 	Datum		new_record[Natts_pg_authid];
-	char		new_record_nulls[Natts_pg_authid];
+	bool		new_record_nulls[Natts_pg_authid];
 	Oid			roleid;
 	ListCell   *item;
 	ListCell   *option;
@@ -295,7 +295,7 @@ CreateRole(CreateRoleStmt *stmt)
 	 * Build a tuple to insert
 	 */
 	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
 	new_record[Anum_pg_authid_rolname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->role));
@@ -324,7 +324,7 @@ CreateRole(CreateRoleStmt *stmt)
 		}
 	}
 	else
-		new_record_nulls[Anum_pg_authid_rolpassword - 1] = 'n';
+		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
 
 	if (validUntil)
 		new_record[Anum_pg_authid_rolvaliduntil - 1] =
@@ -334,11 +334,11 @@ CreateRole(CreateRoleStmt *stmt)
 								Int32GetDatum(-1));
 
 	else
-		new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = 'n';
+		new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = true;
 
-	new_record_nulls[Anum_pg_authid_rolconfig - 1] = 'n';
+	new_record_nulls[Anum_pg_authid_rolconfig - 1] = true;
 
-	tuple = heap_formtuple(pg_authid_dsc, new_record, new_record_nulls);
+	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
 	/*
 	 * Insert new record in the pg_authid table
@@ -402,8 +402,8 @@ void
 AlterRole(AlterRoleStmt *stmt)
 {
 	Datum		new_record[Natts_pg_authid];
-	char		new_record_nulls[Natts_pg_authid];
-	char		new_record_repl[Natts_pg_authid];
+	bool		new_record_nulls[Natts_pg_authid];
+	bool		new_record_repl[Natts_pg_authid];
 	Relation	pg_authid_rel;
 	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple,
@@ -586,8 +586,8 @@ AlterRole(AlterRoleStmt *stmt)
 	 * Build an updated tuple, perusing the information just obtained
 	 */
 	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
-	MemSet(new_record_repl, ' ', sizeof(new_record_repl));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 	/*
 	 * issuper/createrole/catupdate/etc
@@ -600,40 +600,40 @@ AlterRole(AlterRoleStmt *stmt)
 	if (issuper >= 0)
 	{
 		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper > 0);
-		new_record_repl[Anum_pg_authid_rolsuper - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolsuper - 1] = true;
 
 		new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper > 0);
-		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = true;
 	}
 
 	if (inherit >= 0)
 	{
 		new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit > 0);
-		new_record_repl[Anum_pg_authid_rolinherit - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolinherit - 1] = true;
 	}
 
 	if (createrole >= 0)
 	{
 		new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(createrole > 0);
-		new_record_repl[Anum_pg_authid_rolcreaterole - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolcreaterole - 1] = true;
 	}
 
 	if (createdb >= 0)
 	{
 		new_record[Anum_pg_authid_rolcreatedb - 1] = BoolGetDatum(createdb > 0);
-		new_record_repl[Anum_pg_authid_rolcreatedb - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolcreatedb - 1] = true;
 	}
 
 	if (canlogin >= 0)
 	{
 		new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(canlogin > 0);
-		new_record_repl[Anum_pg_authid_rolcanlogin - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolcanlogin - 1] = true;
 	}
 
 	if (dconnlimit)
 	{
 		new_record[Anum_pg_authid_rolconnlimit - 1] = Int32GetDatum(connlimit);
-		new_record_repl[Anum_pg_authid_rolconnlimit - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolconnlimit - 1] = true;
 	}
 
 	/* password */
@@ -650,14 +650,14 @@ AlterRole(AlterRoleStmt *stmt)
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(encrypted_password);
 		}
-		new_record_repl[Anum_pg_authid_rolpassword - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;
 	}
 
 	/* unset password */
 	if (dpassword && dpassword->arg == NULL)
 	{
-		new_record_repl[Anum_pg_authid_rolpassword - 1] = 'r';
-		new_record_nulls[Anum_pg_authid_rolpassword - 1] = 'n';
+		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;
+		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
 	}
 
 	/* valid until */
@@ -668,10 +668,10 @@ AlterRole(AlterRoleStmt *stmt)
 								CStringGetDatum(validUntil),
 								ObjectIdGetDatum(InvalidOid),
 								Int32GetDatum(-1));
-		new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = 'r';
+		new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
 	}
 
-	new_tuple = heap_modifytuple(tuple, pg_authid_dsc, new_record,
+	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
 								 new_record_nulls, new_record_repl);
 	simple_heap_update(pg_authid_rel, &tuple->t_self, new_tuple);
 
@@ -721,8 +721,8 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 				newtuple;
 	Relation	rel;
 	Datum		repl_val[Natts_pg_authid];
-	char		repl_null[Natts_pg_authid];
-	char		repl_repl[Natts_pg_authid];
+	bool		repl_null[Natts_pg_authid];
+	bool		repl_repl[Natts_pg_authid];
 
 	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
@@ -755,13 +755,13 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 					 errmsg("permission denied")));
 	}
 
-	memset(repl_repl, ' ', sizeof(repl_repl));
-	repl_repl[Anum_pg_authid_rolconfig - 1] = 'r';
+	memset(repl_repl, false, sizeof(repl_repl));
+	repl_repl[Anum_pg_authid_rolconfig - 1] = true;
 
 	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
 		/* RESET ALL, so just set rolconfig to null */
-		repl_null[Anum_pg_authid_rolconfig - 1] = 'n';
+		repl_null[Anum_pg_authid_rolconfig - 1] = true;
 		repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
 	}
 	else
@@ -770,7 +770,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		bool		isnull;
 		ArrayType  *array;
 
-		repl_null[Anum_pg_authid_rolconfig - 1] = ' ';
+		repl_null[Anum_pg_authid_rolconfig - 1] = false;
 
 		/* Extract old value of rolconfig */
 		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
@@ -786,10 +786,10 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 		if (array)
 			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(array);
 		else
-			repl_null[Anum_pg_authid_rolconfig - 1] = 'n';
+			repl_null[Anum_pg_authid_rolconfig - 1] = true;
 	}
 
-	newtuple = heap_modifytuple(oldtuple, RelationGetDescr(rel),
+	newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
 								repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
@@ -983,8 +983,8 @@ RenameRole(const char *oldname, const char *newname)
 	Datum		datum;
 	bool		isnull;
 	Datum		repl_val[Natts_pg_authid];
-	char		repl_null[Natts_pg_authid];
-	char		repl_repl[Natts_pg_authid];
+	bool		repl_null[Natts_pg_authid];
+	bool		repl_repl[Natts_pg_authid];
 	int			i;
 	Oid			roleid;
 
@@ -1053,26 +1053,26 @@ RenameRole(const char *oldname, const char *newname)
 
 	/* OK, construct the modified tuple */
 	for (i = 0; i < Natts_pg_authid; i++)
-		repl_repl[i] = ' ';
+		repl_repl[i] = false;
 
-	repl_repl[Anum_pg_authid_rolname - 1] = 'r';
+	repl_repl[Anum_pg_authid_rolname - 1] = true;
 	repl_val[Anum_pg_authid_rolname - 1] = DirectFunctionCall1(namein,
 												   CStringGetDatum(newname));
-	repl_null[Anum_pg_authid_rolname - 1] = ' ';
+	repl_null[Anum_pg_authid_rolname - 1] = false;
 
 	datum = heap_getattr(oldtuple, Anum_pg_authid_rolpassword, dsc, &isnull);
 
 	if (!isnull && isMD5(TextDatumGetCString(datum)))
 	{
 		/* MD5 uses the username as salt, so just clear it on a rename */
-		repl_repl[Anum_pg_authid_rolpassword - 1] = 'r';
-		repl_null[Anum_pg_authid_rolpassword - 1] = 'n';
+		repl_repl[Anum_pg_authid_rolpassword - 1] = true;
+		repl_null[Anum_pg_authid_rolpassword - 1] = true;
 
 		ereport(NOTICE,
 				(errmsg("MD5 password cleared because of role rename")));
 	}
 
-	newtuple = heap_modifytuple(oldtuple, dsc, repl_val, repl_null, repl_repl);
+	newtuple = heap_modify_tuple(oldtuple, dsc, repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 
 	CatalogUpdateIndexes(rel, newtuple);
@@ -1296,8 +1296,8 @@ AddRoleMems(const char *rolename, Oid roleid,
 		HeapTuple	authmem_tuple;
 		HeapTuple	tuple;
 		Datum		new_record[Natts_pg_auth_members];
-		char		new_record_nulls[Natts_pg_auth_members];
-		char		new_record_repl[Natts_pg_auth_members];
+		bool		new_record_nulls[Natts_pg_auth_members];
+		bool		new_record_repl[Natts_pg_auth_members];
 
 		/*
 		 * Refuse creation of membership loops, including the trivial case
@@ -1333,8 +1333,8 @@ AddRoleMems(const char *rolename, Oid roleid,
 
 		/* Build a tuple to insert or update */
 		MemSet(new_record, 0, sizeof(new_record));
-		MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
-		MemSet(new_record_repl, ' ', sizeof(new_record_repl));
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 		new_record[Anum_pg_auth_members_roleid - 1] = ObjectIdGetDatum(roleid);
 		new_record[Anum_pg_auth_members_member - 1] = ObjectIdGetDatum(memberid);
@@ -1343,9 +1343,9 @@ AddRoleMems(const char *rolename, Oid roleid,
 
 		if (HeapTupleIsValid(authmem_tuple))
 		{
-			new_record_repl[Anum_pg_auth_members_grantor - 1] = 'r';
-			new_record_repl[Anum_pg_auth_members_admin_option - 1] = 'r';
-			tuple = heap_modifytuple(authmem_tuple, pg_authmem_dsc,
+			new_record_repl[Anum_pg_auth_members_grantor - 1] = true;
+			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
+			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									 new_record,
 									 new_record_nulls, new_record_repl);
 			simple_heap_update(pg_authmem_rel, &tuple->t_self, tuple);
@@ -1354,7 +1354,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		}
 		else
 		{
-			tuple = heap_formtuple(pg_authmem_dsc,
+			tuple = heap_form_tuple(pg_authmem_dsc,
 								   new_record, new_record_nulls);
 			simple_heap_insert(pg_authmem_rel, tuple);
 			CatalogUpdateIndexes(pg_authmem_rel, tuple);
@@ -1453,18 +1453,18 @@ DelRoleMems(const char *rolename, Oid roleid,
 			/* Just turn off the admin option */
 			HeapTuple	tuple;
 			Datum		new_record[Natts_pg_auth_members];
-			char		new_record_nulls[Natts_pg_auth_members];
-			char		new_record_repl[Natts_pg_auth_members];
+			bool		new_record_nulls[Natts_pg_auth_members];
+			bool		new_record_repl[Natts_pg_auth_members];
 
 			/* Build a tuple to update with */
 			MemSet(new_record, 0, sizeof(new_record));
-			MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
-			MemSet(new_record_repl, ' ', sizeof(new_record_repl));
+			MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+			MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 			new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(false);
-			new_record_repl[Anum_pg_auth_members_admin_option - 1] = 'r';
+			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
 
-			tuple = heap_modifytuple(authmem_tuple, pg_authmem_dsc,
+			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									 new_record,
 									 new_record_nulls, new_record_repl);
 			simple_heap_update(pg_authmem_rel, &tuple->t_self, tuple);

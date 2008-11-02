@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.130 2008/10/04 21:56:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.131 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@ InsertRule(char *rulname,
 	char	   *actiontree = nodeToString((Node *) action);
 	int			i;
 	Datum		values[Natts_pg_rewrite];
-	char		nulls[Natts_pg_rewrite];
-	char		replaces[Natts_pg_rewrite];
+	bool		nulls[Natts_pg_rewrite];
+	bool		replaces[Natts_pg_rewrite];
 	NameData	rname;
 	Relation	pg_rewrite_desc;
 	HeapTuple	tup,
@@ -74,7 +74,7 @@ InsertRule(char *rulname,
 	/*
 	 * Set up *nulls and *values arrays
 	 */
-	MemSet(nulls, ' ', sizeof(nulls));
+	MemSet(nulls, false, sizeof(nulls));
 
 	i = 0;
 	namestrcpy(&rname, rulname);
@@ -111,14 +111,14 @@ InsertRule(char *rulname,
 		/*
 		 * When replacing, we don't need to replace every attribute
 		 */
-		MemSet(replaces, ' ', sizeof(replaces));
-		replaces[Anum_pg_rewrite_ev_attr - 1] = 'r';
-		replaces[Anum_pg_rewrite_ev_type - 1] = 'r';
-		replaces[Anum_pg_rewrite_is_instead - 1] = 'r';
-		replaces[Anum_pg_rewrite_ev_qual - 1] = 'r';
-		replaces[Anum_pg_rewrite_ev_action - 1] = 'r';
+		MemSet(replaces, false, sizeof(replaces));
+		replaces[Anum_pg_rewrite_ev_attr - 1] = true;
+		replaces[Anum_pg_rewrite_ev_type - 1] = true;
+		replaces[Anum_pg_rewrite_is_instead - 1] = true;
+		replaces[Anum_pg_rewrite_ev_qual - 1] = true;
+		replaces[Anum_pg_rewrite_ev_action - 1] = true;
 
-		tup = heap_modifytuple(oldtup, RelationGetDescr(pg_rewrite_desc),
+		tup = heap_modify_tuple(oldtup, RelationGetDescr(pg_rewrite_desc),
 							   values, nulls, replaces);
 
 		simple_heap_update(pg_rewrite_desc, &tup->t_self, tup);
@@ -130,7 +130,7 @@ InsertRule(char *rulname,
 	}
 	else
 	{
-		tup = heap_formtuple(pg_rewrite_desc->rd_att, values, nulls);
+		tup = heap_form_tuple(pg_rewrite_desc->rd_att, values, nulls);
 
 		rewriteObjectId = simple_heap_insert(pg_rewrite_desc, tup);
 	}

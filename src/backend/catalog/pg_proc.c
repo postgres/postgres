@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.153 2008/07/18 03:32:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.154 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,9 +89,9 @@ ProcedureCreate(const char *procedureName,
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
-	char		nulls[Natts_pg_proc];
+	bool		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
-	char		replaces[Natts_pg_proc];
+	bool		replaces[Natts_pg_proc];
 	Oid			relid;
 	NameData	procname;
 	TupleDesc	tupDesc;
@@ -276,9 +276,9 @@ ProcedureCreate(const char *procedureName,
 
 	for (i = 0; i < Natts_pg_proc; ++i)
 	{
-		nulls[i] = ' ';
+		nulls[i] = false;
 		values[i] = (Datum) 0;
-		replaces[i] = 'r';
+		replaces[i] = true;
 	}
 
 	namestrcpy(&procname, procedureName);
@@ -300,26 +300,26 @@ ProcedureCreate(const char *procedureName,
 	if (allParameterTypes != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proallargtypes - 1] = allParameterTypes;
 	else
-		nulls[Anum_pg_proc_proallargtypes - 1] = 'n';
+		nulls[Anum_pg_proc_proallargtypes - 1] = true;
 	if (parameterModes != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proargmodes - 1] = parameterModes;
 	else
-		nulls[Anum_pg_proc_proargmodes - 1] = 'n';
+		nulls[Anum_pg_proc_proargmodes - 1] = true;
 	if (parameterNames != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
-		nulls[Anum_pg_proc_proargnames - 1] = 'n';
+		nulls[Anum_pg_proc_proargnames - 1] = true;
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);
 	else
-		nulls[Anum_pg_proc_probin - 1] = 'n';
+		nulls[Anum_pg_proc_probin - 1] = true;
 	if (proconfig != PointerGetDatum(NULL))
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
-		nulls[Anum_pg_proc_proconfig - 1] = 'n';
+		nulls[Anum_pg_proc_proconfig - 1] = true;
 	/* start out with empty permissions */
-	nulls[Anum_pg_proc_proacl - 1] = 'n';
+	nulls[Anum_pg_proc_proacl - 1] = true;
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
@@ -396,11 +396,11 @@ ProcedureCreate(const char *procedureName,
 		}
 
 		/* do not change existing ownership or permissions, either */
-		replaces[Anum_pg_proc_proowner - 1] = ' ';
-		replaces[Anum_pg_proc_proacl - 1] = ' ';
+		replaces[Anum_pg_proc_proowner - 1] = false;
+		replaces[Anum_pg_proc_proacl - 1] = false;
 
 		/* Okay, do it... */
-		tup = heap_modifytuple(oldtup, tupDesc, values, nulls, replaces);
+		tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
 		simple_heap_update(rel, &tup->t_self, tup);
 
 		ReleaseSysCache(oldtup);
@@ -409,7 +409,7 @@ ProcedureCreate(const char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
-		tup = heap_formtuple(tupDesc, values, nulls);
+		tup = heap_form_tuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
 		is_update = false;
 	}

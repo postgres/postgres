@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.103 2008/10/28 22:02:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.104 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1126,12 +1126,12 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	TupleDesc	tupdesc = attinmeta->tupdesc;
 	int			natts = tupdesc->natts;
 	Datum	   *dvalues;
-	char	   *nulls;
+	bool	   *nulls;
 	int			i;
 	HeapTuple	tuple;
 
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
-	nulls = (char *) palloc(natts * sizeof(char));
+	nulls = (bool *) palloc(natts * sizeof(bool));
 
 	/* Call the "in" function for each non-dropped attribute */
 	for (i = 0; i < natts; i++)
@@ -1144,22 +1144,22 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 										   attinmeta->attioparams[i],
 										   attinmeta->atttypmods[i]);
 			if (values[i] != NULL)
-				nulls[i] = ' ';
+				nulls[i] = false;
 			else
-				nulls[i] = 'n';
+				nulls[i] = true;
 		}
 		else
 		{
 			/* Handle dropped attributes by setting to NULL */
 			dvalues[i] = (Datum) 0;
-			nulls[i] = 'n';
+			nulls[i] = true;
 		}
 	}
 
 	/*
 	 * Form a tuple
 	 */
-	tuple = heap_formtuple(tupdesc, dvalues, nulls);
+	tuple = heap_form_tuple(tupdesc, dvalues, nulls);
 
 	/*
 	 * Release locally palloc'd space.  XXX would probably be good to pfree

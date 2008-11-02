@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.42 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.43 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ CreateConstraintEntry(const char *constraintName,
 	Relation	conDesc;
 	Oid			conOid;
 	HeapTuple	tup;
-	char		nulls[Natts_pg_constraint];
+	bool		nulls[Natts_pg_constraint];
 	Datum		values[Natts_pg_constraint];
 	ArrayType  *conkeyArray;
 	ArrayType  *confkeyArray;
@@ -133,7 +133,7 @@ CreateConstraintEntry(const char *constraintName,
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_constraint; i++)
 	{
-		nulls[i] = ' ';
+		nulls[i] = false;
 		values[i] = (Datum) NULL;
 	}
 
@@ -154,27 +154,27 @@ CreateConstraintEntry(const char *constraintName,
 	if (conkeyArray)
 		values[Anum_pg_constraint_conkey - 1] = PointerGetDatum(conkeyArray);
 	else
-		nulls[Anum_pg_constraint_conkey - 1] = 'n';
+		nulls[Anum_pg_constraint_conkey - 1] = true;
 
 	if (confkeyArray)
 		values[Anum_pg_constraint_confkey - 1] = PointerGetDatum(confkeyArray);
 	else
-		nulls[Anum_pg_constraint_confkey - 1] = 'n';
+		nulls[Anum_pg_constraint_confkey - 1] = true;
 
 	if (conpfeqopArray)
 		values[Anum_pg_constraint_conpfeqop - 1] = PointerGetDatum(conpfeqopArray);
 	else
-		nulls[Anum_pg_constraint_conpfeqop - 1] = 'n';
+		nulls[Anum_pg_constraint_conpfeqop - 1] = true;
 
 	if (conppeqopArray)
 		values[Anum_pg_constraint_conppeqop - 1] = PointerGetDatum(conppeqopArray);
 	else
-		nulls[Anum_pg_constraint_conppeqop - 1] = 'n';
+		nulls[Anum_pg_constraint_conppeqop - 1] = true;
 
 	if (conffeqopArray)
 		values[Anum_pg_constraint_conffeqop - 1] = PointerGetDatum(conffeqopArray);
 	else
-		nulls[Anum_pg_constraint_conffeqop - 1] = 'n';
+		nulls[Anum_pg_constraint_conffeqop - 1] = true;
 
 	/*
 	 * initialize the binary form of the check constraint.
@@ -182,7 +182,7 @@ CreateConstraintEntry(const char *constraintName,
 	if (conBin)
 		values[Anum_pg_constraint_conbin - 1] = CStringGetTextDatum(conBin);
 	else
-		nulls[Anum_pg_constraint_conbin - 1] = 'n';
+		nulls[Anum_pg_constraint_conbin - 1] = true;
 
 	/*
 	 * initialize the text form of the check constraint
@@ -190,9 +190,9 @@ CreateConstraintEntry(const char *constraintName,
 	if (conSrc)
 		values[Anum_pg_constraint_consrc - 1] = CStringGetTextDatum(conSrc);
 	else
-		nulls[Anum_pg_constraint_consrc - 1] = 'n';
+		nulls[Anum_pg_constraint_consrc - 1] = true;
 
-	tup = heap_formtuple(RelationGetDescr(conDesc), values, nulls);
+	tup = heap_form_tuple(RelationGetDescr(conDesc), values, nulls);
 
 	conOid = simple_heap_insert(conDesc, tup);
 

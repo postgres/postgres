@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.114 2008/10/11 00:09:33 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.115 2008/11/02 01:45:28 tgl Exp $
  *
  *********************************************************************
  */
@@ -1766,7 +1766,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 	TupleDesc	desc;
 	HeapTuple	tuple;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *nulls;
 	volatile int i;
 
 	Assert(PyMapping_Check(mapping));
@@ -1778,7 +1778,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 
 	/* Build tuple */
 	values = palloc(sizeof(Datum) * desc->natts);
-	nulls = palloc(sizeof(char) * desc->natts);
+	nulls = palloc(sizeof(bool) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
@@ -1793,7 +1793,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 			if (value == Py_None)
 			{
 				values[i] = (Datum) NULL;
-				nulls[i] = 'n';
+				nulls[i] = true;
 			}
 			else if (value)
 			{
@@ -1810,7 +1810,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 											  ,-1);
 				Py_DECREF(so);
 				so = NULL;
-				nulls[i] = ' ';
+				nulls[i] = false;
 			}
 			else
 				ereport(ERROR,
@@ -1831,7 +1831,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 		PG_END_TRY();
 	}
 
-	tuple = heap_formtuple(desc, values, nulls);
+	tuple = heap_form_tuple(desc, values, nulls);
 	ReleaseTupleDesc(desc);
 	pfree(values);
 	pfree(nulls);
@@ -1846,7 +1846,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	TupleDesc	desc;
 	HeapTuple	tuple;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *nulls;
 	volatile int i;
 
 	Assert(PySequence_Check(sequence));
@@ -1868,7 +1868,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 
 	/* Build tuple */
 	values = palloc(sizeof(Datum) * desc->natts);
-	nulls = palloc(sizeof(char) * desc->natts);
+	nulls = palloc(sizeof(bool) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
 		PyObject   *volatile value,
@@ -1882,7 +1882,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 			if (value == Py_None)
 			{
 				values[i] = (Datum) NULL;
-				nulls[i] = 'n';
+				nulls[i] = true;
 			}
 			else if (value)
 			{
@@ -1898,7 +1898,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 											  ,-1);
 				Py_DECREF(so);
 				so = NULL;
-				nulls[i] = ' ';
+				nulls[i] = false;
 			}
 
 			Py_XDECREF(value);
@@ -1913,7 +1913,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 		PG_END_TRY();
 	}
 
-	tuple = heap_formtuple(desc, values, nulls);
+	tuple = heap_form_tuple(desc, values, nulls);
 	ReleaseTupleDesc(desc);
 	pfree(values);
 	pfree(nulls);
@@ -1928,7 +1928,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 	TupleDesc	desc;
 	HeapTuple	tuple;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *nulls;
 	volatile int i;
 
 	desc = lookup_rowtype_tupdesc(info->out.d.typoid, -1);
@@ -1938,7 +1938,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 
 	/* Build tuple */
 	values = palloc(sizeof(Datum) * desc->natts);
-	nulls = palloc(sizeof(char) * desc->natts);
+	nulls = palloc(sizeof(bool) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
@@ -1953,7 +1953,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 			if (value == Py_None)
 			{
 				values[i] = (Datum) NULL;
-				nulls[i] = 'n';
+				nulls[i] = true;
 			}
 			else if (value)
 			{
@@ -1969,7 +1969,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 											  ,-1);
 				Py_DECREF(so);
 				so = NULL;
-				nulls[i] = ' ';
+				nulls[i] = false;
 			}
 			else
 				ereport(ERROR,
@@ -1991,7 +1991,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 		PG_END_TRY();
 	}
 
-	tuple = heap_formtuple(desc, values, nulls);
+	tuple = heap_form_tuple(desc, values, nulls);
 	ReleaseTupleDesc(desc);
 	pfree(values);
 	pfree(nulls);

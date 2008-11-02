@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.141 2008/08/30 01:39:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.142 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,7 +446,7 @@ Exec_Listen(Relation lRel, const char *relname)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_listener];
-	char		nulls[Natts_pg_listener];
+	bool		nulls[Natts_pg_listener];
 	NameData	condname;
 	bool		alreadyListener = false;
 
@@ -475,14 +475,14 @@ Exec_Listen(Relation lRel, const char *relname)
 	/*
 	 * OK to insert a new tuple
 	 */
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	namestrcpy(&condname, relname);
 	values[Anum_pg_listener_relname - 1] = NameGetDatum(&condname);
 	values[Anum_pg_listener_pid - 1] = Int32GetDatum(MyProcPid);
 	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);	/* no notifies pending */
 
-	tuple = heap_formtuple(RelationGetDescr(lRel), values, nulls);
+	tuple = heap_form_tuple(RelationGetDescr(lRel), values, nulls);
 
 	simple_heap_insert(lRel, tuple);
 
@@ -585,14 +585,14 @@ Send_Notify(Relation lRel)
 	HeapTuple	lTuple,
 				rTuple;
 	Datum		value[Natts_pg_listener];
-	char		repl[Natts_pg_listener],
+	bool		repl[Natts_pg_listener],
 				nulls[Natts_pg_listener];
 
 	/* preset data to update notify column to MyProcPid */
-	nulls[0] = nulls[1] = nulls[2] = ' ';
-	repl[0] = repl[1] = repl[2] = ' ';
-	repl[Anum_pg_listener_notify - 1] = 'r';
-	value[0] = value[1] = value[2] = (Datum) 0;
+	memset(nulls, false, sizeof(nulls));
+	memset(repl, false, sizeof(repl));
+	repl[Anum_pg_listener_notify - 1] = true;
+	memset(value, 0, sizeof(value));
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(MyProcPid);
 
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
@@ -647,7 +647,7 @@ Send_Notify(Relation lRel)
 			else if (listener->notification == 0)
 			{
 				/* Rewrite the tuple with my PID in notification column */
-				rTuple = heap_modifytuple(lTuple, tdesc, value, nulls, repl);
+				rTuple = heap_modify_tuple(lTuple, tdesc, value, nulls, repl);
 				simple_heap_update(lRel, &lTuple->t_self, rTuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */
@@ -950,7 +950,7 @@ ProcessIncomingNotify(void)
 	HeapTuple	lTuple,
 				rTuple;
 	Datum		value[Natts_pg_listener];
-	char		repl[Natts_pg_listener],
+	bool		repl[Natts_pg_listener],
 				nulls[Natts_pg_listener];
 	bool		catchup_enabled;
 
@@ -977,10 +977,10 @@ ProcessIncomingNotify(void)
 	scan = heap_beginscan(lRel, SnapshotNow, 1, key);
 
 	/* Prepare data for rewriting 0 into notification field */
-	nulls[0] = nulls[1] = nulls[2] = ' ';
-	repl[0] = repl[1] = repl[2] = ' ';
-	repl[Anum_pg_listener_notify - 1] = 'r';
-	value[0] = value[1] = value[2] = (Datum) 0;
+	memset(nulls, false, sizeof(nulls));
+	memset(repl, false, sizeof(repl));
+	repl[Anum_pg_listener_notify - 1] = true;
+	memset(value, 0, sizeof(value));
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(0);
 
 	while ((lTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -1002,7 +1002,7 @@ ProcessIncomingNotify(void)
 			/*
 			 * Rewrite the tuple with 0 in notification column.
 			 */
-			rTuple = heap_modifytuple(lTuple, tdesc, value, nulls, repl);
+			rTuple = heap_modify_tuple(lTuple, tdesc, value, nulls, repl);
 			simple_heap_update(lRel, &lTuple->t_self, rTuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */

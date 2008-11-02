@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.79 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.80 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ create_proc_lang(const char *languageName,
 	Relation	rel;
 	TupleDesc	tupDesc;
 	Datum		values[Natts_pg_language];
-	char		nulls[Natts_pg_language];
+	bool		nulls[Natts_pg_language];
 	NameData	langname;
 	HeapTuple	tup;
 	ObjectAddress myself,
@@ -281,7 +281,7 @@ create_proc_lang(const char *languageName,
 	tupDesc = rel->rd_att;
 
 	memset(values, 0, sizeof(values));
-	memset(nulls, ' ', sizeof(nulls));
+	memset(nulls, false, sizeof(nulls));
 
 	namestrcpy(&langname, languageName);
 	values[Anum_pg_language_lanname - 1] = NameGetDatum(&langname);
@@ -290,9 +290,9 @@ create_proc_lang(const char *languageName,
 	values[Anum_pg_language_lanpltrusted - 1] = BoolGetDatum(trusted);
 	values[Anum_pg_language_lanplcallfoid - 1] = ObjectIdGetDatum(handlerOid);
 	values[Anum_pg_language_lanvalidator - 1] = ObjectIdGetDatum(valOid);
-	nulls[Anum_pg_language_lanacl - 1] = 'n';
+	nulls[Anum_pg_language_lanacl - 1] = true;
 
-	tup = heap_formtuple(tupDesc, values, nulls);
+	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	simple_heap_insert(rel, tup);
 
@@ -594,8 +594,8 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 	if (lanForm->lanowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_language];
-		char		repl_null[Natts_pg_language];
-		char		repl_repl[Natts_pg_language];
+		bool		repl_null[Natts_pg_language];
+		bool		repl_repl[Natts_pg_language];
 		Acl		   *newAcl;
 		Datum		aclDatum;
 		bool		isNull;
@@ -609,10 +609,10 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		/* Must be able to become new owner */
 		check_is_member_of_role(GetUserId(), newOwnerId);
 
-		memset(repl_null, ' ', sizeof(repl_null));
-		memset(repl_repl, ' ', sizeof(repl_repl));
+		memset(repl_null, false, sizeof(repl_null));
+		memset(repl_repl, false, sizeof(repl_repl));
 
-		repl_repl[Anum_pg_language_lanowner - 1] = 'r';
+		repl_repl[Anum_pg_language_lanowner - 1] = true;
 		repl_val[Anum_pg_language_lanowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
@@ -626,11 +626,11 @@ AlterLanguageOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
 								 lanForm->lanowner, newOwnerId);
-			repl_repl[Anum_pg_language_lanacl - 1] = 'r';
+			repl_repl[Anum_pg_language_lanacl - 1] = true;
 			repl_val[Anum_pg_language_lanacl - 1] = PointerGetDatum(newAcl);
 		}
 
-		newtuple = heap_modifytuple(tup, RelationGetDescr(rel),
+		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel),
 									repl_val, repl_null, repl_repl);
 
 		simple_heap_update(rel, &newtuple->t_self, newtuple);

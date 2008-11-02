@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.154 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.155 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ DefineSequence(CreateSeqStmt *seq)
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
 	Datum		value[SEQ_COL_LASTCOL];
-	char		null[SEQ_COL_LASTCOL];
+	bool		null[SEQ_COL_LASTCOL];
 	int			i;
 	NameData	name;
 
@@ -136,7 +136,7 @@ DefineSequence(CreateSeqStmt *seq)
 		coldef->cooked_default = NULL;
 		coldef->constraints = NIL;
 
-		null[i - 1] = ' ';
+		null[i - 1] = false;
 
 		switch (i)
 		{
@@ -222,7 +222,7 @@ DefineSequence(CreateSeqStmt *seq)
 	rel->rd_targblock = 0;
 
 	/* Now form & insert sequence tuple */
-	tuple = heap_formtuple(tupDesc, value, null);
+	tuple = heap_form_tuple(tupDesc, value, null);
 	simple_heap_insert(rel, tuple);
 
 	Assert(ItemPointerGetOffsetNumber(&(tuple->t_self)) == FirstOffsetNumber);
@@ -249,7 +249,7 @@ DefineSequence(CreateSeqStmt *seq)
 	{
 		/*
 		 * Note that the "tuple" structure is still just a local tuple record
-		 * created by heap_formtuple; its t_data pointer doesn't point at the
+		 * created by heap_form_tuple; its t_data pointer doesn't point at the
 		 * disk buffer.  To scribble on the disk buffer we need to fetch the
 		 * item pointer.  But do the same to the local tuple, since that will
 		 * be the source for the WAL log record, below.

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.104 2008/10/21 10:38:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.105 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,8 +197,8 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	HeapTuple	oldtuple;
 	HeapTuple	newtuple = NULL;
 	Datum		values[Natts_pg_description];
-	char		nulls[Natts_pg_description];
-	char		replaces[Natts_pg_description];
+	bool		nulls[Natts_pg_description];
+	bool		replaces[Natts_pg_description];
 	int			i;
 
 	/* Reduce empty-string to NULL case */
@@ -210,8 +210,8 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	{
 		for (i = 0; i < Natts_pg_description; i++)
 		{
-			nulls[i] = ' ';
-			replaces[i] = 'r';
+			nulls[i] = false;
+			replaces[i] = true;
 		}
 		i = 0;
 		values[i++] = ObjectIdGetDatum(oid);
@@ -248,7 +248,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 			simple_heap_delete(description, &oldtuple->t_self);
 		else
 		{
-			newtuple = heap_modifytuple(oldtuple, RelationGetDescr(description), values,
+			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(description), values,
 										nulls, replaces);
 			simple_heap_update(description, &oldtuple->t_self, newtuple);
 		}
@@ -262,7 +262,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 
 	if (newtuple == NULL && comment != NULL)
 	{
-		newtuple = heap_formtuple(RelationGetDescr(description),
+		newtuple = heap_form_tuple(RelationGetDescr(description),
 								  values, nulls);
 		simple_heap_insert(description, newtuple);
 	}
@@ -297,8 +297,8 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	HeapTuple	oldtuple;
 	HeapTuple	newtuple = NULL;
 	Datum		values[Natts_pg_shdescription];
-	char		nulls[Natts_pg_shdescription];
-	char		replaces[Natts_pg_shdescription];
+	bool		nulls[Natts_pg_shdescription];
+	bool		replaces[Natts_pg_shdescription];
 	int			i;
 
 	/* Reduce empty-string to NULL case */
@@ -310,8 +310,8 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	{
 		for (i = 0; i < Natts_pg_shdescription; i++)
 		{
-			nulls[i] = ' ';
-			replaces[i] = 'r';
+			nulls[i] = false;
+			replaces[i] = true;
 		}
 		i = 0;
 		values[i++] = ObjectIdGetDatum(oid);
@@ -343,7 +343,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 			simple_heap_delete(shdescription, &oldtuple->t_self);
 		else
 		{
-			newtuple = heap_modifytuple(oldtuple, RelationGetDescr(shdescription),
+			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(shdescription),
 										values, nulls, replaces);
 			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
 		}
@@ -357,7 +357,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 
 	if (newtuple == NULL && comment != NULL)
 	{
-		newtuple = heap_formtuple(RelationGetDescr(shdescription),
+		newtuple = heap_form_tuple(RelationGetDescr(shdescription),
 								  values, nulls);
 		simple_heap_insert(shdescription, newtuple);
 	}

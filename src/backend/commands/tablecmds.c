@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.268 2008/10/21 10:38:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.269 2008/11/02 01:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1670,7 +1670,7 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 {
 	TupleDesc	desc = RelationGetDescr(inhRelation);
 	Datum		datum[Natts_pg_inherits];
-	char		nullarr[Natts_pg_inherits];
+	bool		nullarr[Natts_pg_inherits];
 	ObjectAddress childobject,
 				parentobject;
 	HeapTuple	tuple;
@@ -1682,11 +1682,11 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 	datum[1] = ObjectIdGetDatum(parentOid);		/* inhparent */
 	datum[2] = Int16GetDatum(seqNumber);		/* inhseqno */
 
-	nullarr[0] = ' ';
-	nullarr[1] = ' ';
-	nullarr[2] = ' ';
+	nullarr[0] = false;
+	nullarr[1] = false;
+	nullarr[2] = false;
 
-	tuple = heap_formtuple(desc, datum, nullarr);
+	tuple = heap_form_tuple(desc, datum, nullarr);
 
 	simple_heap_insert(inhRelation, tuple);
 
@@ -6142,8 +6142,8 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 	if (tuple_class->relowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_class];
-		char		repl_null[Natts_pg_class];
-		char		repl_repl[Natts_pg_class];
+		bool		repl_null[Natts_pg_class];
+		bool		repl_repl[Natts_pg_class];
 		Acl		   *newAcl;
 		Datum		aclDatum;
 		bool		isNull;
@@ -6175,10 +6175,10 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 			}
 		}
 
-		memset(repl_null, ' ', sizeof(repl_null));
-		memset(repl_repl, ' ', sizeof(repl_repl));
+		memset(repl_null, false, sizeof(repl_null));
+		memset(repl_repl, false, sizeof(repl_repl));
 
-		repl_repl[Anum_pg_class_relowner - 1] = 'r';
+		repl_repl[Anum_pg_class_relowner - 1] = true;
 		repl_val[Anum_pg_class_relowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
@@ -6192,11 +6192,11 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
 								 tuple_class->relowner, newOwnerId);
-			repl_repl[Anum_pg_class_relacl - 1] = 'r';
+			repl_repl[Anum_pg_class_relacl - 1] = true;
 			repl_val[Anum_pg_class_relacl - 1] = PointerGetDatum(newAcl);
 		}
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(class_rel), repl_val, repl_null, repl_repl);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(class_rel), repl_val, repl_null, repl_repl);
 
 		simple_heap_update(class_rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(class_rel, newtuple);
@@ -6408,8 +6408,8 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	bool		isnull;
 	Datum		newOptions;
 	Datum		repl_val[Natts_pg_class];
-	char		repl_null[Natts_pg_class];
-	char		repl_repl[Natts_pg_class];
+	bool		repl_null[Natts_pg_class];
+	bool		repl_repl[Natts_pg_class];
 
 	if (defList == NIL)
 		return;					/* nothing to do */
@@ -6453,17 +6453,17 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	 * propagated into relcaches during post-commit cache inval.
 	 */
 	memset(repl_val, 0, sizeof(repl_val));
-	memset(repl_null, ' ', sizeof(repl_null));
-	memset(repl_repl, ' ', sizeof(repl_repl));
+	memset(repl_null, false, sizeof(repl_null));
+	memset(repl_repl, false, sizeof(repl_repl));
 
 	if (newOptions != (Datum) 0)
 		repl_val[Anum_pg_class_reloptions - 1] = newOptions;
 	else
-		repl_null[Anum_pg_class_reloptions - 1] = 'n';
+		repl_null[Anum_pg_class_reloptions - 1] = true;
 
-	repl_repl[Anum_pg_class_reloptions - 1] = 'r';
+	repl_repl[Anum_pg_class_reloptions - 1] = true;
 
-	newtuple = heap_modifytuple(tuple, RelationGetDescr(pgclass),
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(pgclass),
 								repl_val, repl_null, repl_repl);
 
 	simple_heap_update(pgclass, &newtuple->t_self, newtuple);

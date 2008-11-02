@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.134 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.135 2008/11/02 01:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,8 +522,8 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
-	char		nulls[Natts_pg_largeobject];
-	char		replace[Natts_pg_largeobject];
+	bool		nulls[Natts_pg_largeobject];
+	bool		replace[Natts_pg_largeobject];
 	CatalogIndexState indstate;
 
 	Assert(PointerIsValid(obj_desc));
@@ -627,11 +627,11 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			 * Form and insert updated tuple
 			 */
 			memset(values, 0, sizeof(values));
-			memset(nulls, ' ', sizeof(nulls));
-			memset(replace, ' ', sizeof(replace));
+			memset(nulls, false, sizeof(nulls));
+			memset(replace, false, sizeof(replace));
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
-			replace[Anum_pg_largeobject_data - 1] = 'r';
-			newtup = heap_modifytuple(oldtuple, RelationGetDescr(lo_heap_r),
+			replace[Anum_pg_largeobject_data - 1] = true;
+			newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
 									  values, nulls, replace);
 			simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 			CatalogIndexInsert(indstate, newtup);
@@ -671,11 +671,11 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			 * Form and insert updated tuple
 			 */
 			memset(values, 0, sizeof(values));
-			memset(nulls, ' ', sizeof(nulls));
+			memset(nulls, false, sizeof(nulls));
 			values[Anum_pg_largeobject_loid - 1] = ObjectIdGetDatum(obj_desc->id);
 			values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
-			newtup = heap_formtuple(lo_heap_r->rd_att, values, nulls);
+			newtup = heap_form_tuple(lo_heap_r->rd_att, values, nulls);
 			simple_heap_insert(lo_heap_r, newtup);
 			CatalogIndexInsert(indstate, newtup);
 			heap_freetuple(newtup);
@@ -714,8 +714,8 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
-	char		nulls[Natts_pg_largeobject];
-	char		replace[Natts_pg_largeobject];
+	bool		nulls[Natts_pg_largeobject];
+	bool		replace[Natts_pg_largeobject];
 	CatalogIndexState indstate;
 
 	Assert(PointerIsValid(obj_desc));
@@ -796,11 +796,11 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		 * Form and insert updated tuple
 		 */
 		memset(values, 0, sizeof(values));
-		memset(nulls, ' ', sizeof(nulls));
-		memset(replace, ' ', sizeof(replace));
+		memset(nulls, false, sizeof(nulls));
+		memset(replace, false, sizeof(replace));
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
-		replace[Anum_pg_largeobject_data - 1] = 'r';
-		newtup = heap_modifytuple(oldtuple, RelationGetDescr(lo_heap_r),
+		replace[Anum_pg_largeobject_data - 1] = true;
+		newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
 								  values, nulls, replace);
 		simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 		CatalogIndexInsert(indstate, newtup);
@@ -831,11 +831,11 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		 * Form and insert new tuple
 		 */
 		memset(values, 0, sizeof(values));
-		memset(nulls, ' ', sizeof(nulls));
+		memset(nulls, false, sizeof(nulls));
 		values[Anum_pg_largeobject_loid - 1] = ObjectIdGetDatum(obj_desc->id);
 		values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
-		newtup = heap_formtuple(lo_heap_r->rd_att, values, nulls);
+		newtup = heap_form_tuple(lo_heap_r->rd_att, values, nulls);
 		simple_heap_insert(lo_heap_r, newtup);
 		CatalogIndexInsert(indstate, newtup);
 		heap_freetuple(newtup);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.148 2008/09/08 00:47:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.149 2008/11/02 01:45:27 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -554,8 +554,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 		HeapTuple	tuple;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_class];
-		char		nulls[Natts_pg_class];
-		char		replaces[Natts_pg_class];
+		bool		nulls[Natts_pg_class];
+		bool		replaces[Natts_pg_class];
 		int			noldmembers;
 		int			nnewmembers;
 		Oid		   *oldmembers;
@@ -694,13 +694,13 @@ ExecGrant_Relation(InternalGrant *istmt)
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, ' ', sizeof(nulls));
-		MemSet(replaces, ' ', sizeof(replaces));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		replaces[Anum_pg_class_relacl - 1] = 'r';
+		replaces[Anum_pg_class_relacl - 1] = true;
 		values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
@@ -749,8 +749,8 @@ ExecGrant_Database(InternalGrant *istmt)
 		Oid			ownerId;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_database];
-		char		nulls[Natts_pg_database];
-		char		replaces[Natts_pg_database];
+		bool		nulls[Natts_pg_database];
+		bool		replaces[Natts_pg_database];
 		int			noldmembers;
 		int			nnewmembers;
 		Oid		   *oldmembers;
@@ -809,14 +809,14 @@ ExecGrant_Database(InternalGrant *istmt)
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, ' ', sizeof(nulls));
-		MemSet(replaces, ' ', sizeof(replaces));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		replaces[Anum_pg_database_datacl - 1] = 'r';
+		replaces[Anum_pg_database_datacl - 1] = true;
 		values[Anum_pg_database_datacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values,
-									nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
@@ -866,8 +866,8 @@ ExecGrant_Function(InternalGrant *istmt)
 		HeapTuple	tuple;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_proc];
-		char		nulls[Natts_pg_proc];
-		char		replaces[Natts_pg_proc];
+		bool		nulls[Natts_pg_proc];
+		bool		replaces[Natts_pg_proc];
 		int			noldmembers;
 		int			nnewmembers;
 		Oid		   *oldmembers;
@@ -925,14 +925,14 @@ ExecGrant_Function(InternalGrant *istmt)
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, ' ', sizeof(nulls));
-		MemSet(replaces, ' ', sizeof(replaces));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		replaces[Anum_pg_proc_proacl - 1] = 'r';
+		replaces[Anum_pg_proc_proacl - 1] = true;
 		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values,
-									nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
@@ -982,8 +982,8 @@ ExecGrant_Language(InternalGrant *istmt)
 		HeapTuple	tuple;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_language];
-		char		nulls[Natts_pg_language];
-		char		replaces[Natts_pg_language];
+		bool		nulls[Natts_pg_language];
+		bool		replaces[Natts_pg_language];
 		int			noldmembers;
 		int			nnewmembers;
 		Oid		   *oldmembers;
@@ -1048,14 +1048,14 @@ ExecGrant_Language(InternalGrant *istmt)
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, ' ', sizeof(nulls));
-		MemSet(replaces, ' ', sizeof(replaces));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		replaces[Anum_pg_language_lanacl - 1] = 'r';
+		replaces[Anum_pg_language_lanacl - 1] = true;
 		values[Anum_pg_language_lanacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values,
-									nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
@@ -1105,8 +1105,8 @@ ExecGrant_Namespace(InternalGrant *istmt)
 		HeapTuple	tuple;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_namespace];
-		char		nulls[Natts_pg_namespace];
-		char		replaces[Natts_pg_namespace];
+		bool		nulls[Natts_pg_namespace];
+		bool		replaces[Natts_pg_namespace];
 		int			noldmembers;
 		int			nnewmembers;
 		Oid		   *oldmembers;
@@ -1165,14 +1165,14 @@ ExecGrant_Namespace(InternalGrant *istmt)
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, ' ', sizeof(nulls));
-		MemSet(replaces, ' ', sizeof(replaces));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		replaces[Anum_pg_namespace_nspacl - 1] = 'r';
+		replaces[Anum_pg_namespace_nspacl - 1] = true;
 		values[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values,
-									nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
@@ -1221,8 +1221,8 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 		Oid			ownerId;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_tablespace];
-		char		nulls[Natts_pg_tablespace];
-		char		replaces[Natts_pg_tablespace];
+		bool		nulls[Natts_pg_tablespace];
+		bool		replaces[Natts_pg_tablespace];
 		int			noldmembers;
 		int			nnewmembers;
 		Oid		   *oldmembers;
@@ -1288,14 +1288,14 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, ' ', sizeof(nulls));
-		MemSet(replaces, ' ', sizeof(replaces));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
 
-		replaces[Anum_pg_tablespace_spcacl - 1] = 'r';
+		replaces[Anum_pg_tablespace_spcacl - 1] = true;
 		values[Anum_pg_tablespace_spcacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values,
-									nulls, replaces);
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(relation), values,
+									 nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
