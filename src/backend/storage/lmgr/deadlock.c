@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.54 2008/08/01 13:16:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.55 2008/11/02 21:24:52 tgl Exp $
  *
  *	Interface:
  *
@@ -495,7 +495,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	/*
 	 * If the proc is not waiting, we have no outgoing waits-for edges.
 	 */
-	if (checkProc->links.next == INVALID_OFFSET)
+	if (checkProc->links.next == NULL)
 		return false;
 	lock = checkProc->waitLock;
 	if (lock == NULL)
@@ -629,7 +629,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 		waitQueue = &(lock->waitProcs);
 		queue_size = waitQueue->size;
 
-		proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
+		proc = (PGPROC *) waitQueue->links.next;
 
 		while (queue_size-- > 0)
 		{
@@ -662,7 +662,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 				}
 			}
 
-			proc = (PGPROC *) MAKE_PTR(proc->links.next);
+			proc = (PGPROC *) proc->links.next;
 		}
 	}
 
@@ -772,11 +772,11 @@ TopoSort(LOCK *lock,
 				last;
 
 	/* First, fill topoProcs[] array with the procs in their current order */
-	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
+	proc = (PGPROC *) waitQueue->links.next;
 	for (i = 0; i < queue_size; i++)
 	{
 		topoProcs[i] = proc;
-		proc = (PGPROC *) MAKE_PTR(proc->links.next);
+		proc = (PGPROC *) proc->links.next;
 	}
 
 	/*
@@ -864,12 +864,12 @@ PrintLockQueue(LOCK *lock, const char *info)
 	PGPROC	   *proc;
 	int			i;
 
-	printf("%s lock %lx queue ", info, MAKE_OFFSET(lock));
-	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
+	printf("%s lock %p queue ", info, lock);
+	proc = (PGPROC *) waitQueue->links.next;
 	for (i = 0; i < queue_size; i++)
 	{
 		printf(" %d", proc->pid);
-		proc = (PGPROC *) MAKE_PTR(proc->links.next);
+		proc = (PGPROC *) proc->links.next;
 	}
 	printf("\n");
 	fflush(stdout);

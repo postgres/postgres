@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.46 2008/10/20 19:18:18 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.47 2008/11/02 21:24:51 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -122,7 +122,7 @@ typedef struct GlobalTransactionData
 typedef struct TwoPhaseStateData
 {
 	/* Head of linked list of free GlobalTransactionData structs */
-	SHMEM_OFFSET freeGXacts;
+	GlobalTransaction freeGXacts;
 
 	/* Number of valid prepXacts entries. */
 	int			numPrepXacts;
@@ -184,7 +184,7 @@ TwoPhaseShmemInit(void)
 		int			i;
 
 		Assert(!found);
-		TwoPhaseState->freeGXacts = INVALID_OFFSET;
+		TwoPhaseState->freeGXacts = NULL;
 		TwoPhaseState->numPrepXacts = 0;
 
 		/*
@@ -196,8 +196,8 @@ TwoPhaseShmemInit(void)
 					  sizeof(GlobalTransaction) * max_prepared_xacts));
 		for (i = 0; i < max_prepared_xacts; i++)
 		{
-			gxacts[i].proc.links.next = TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = MAKE_OFFSET(&gxacts[i]);
+			gxacts[i].proc.links.next = (SHM_QUEUE *) TwoPhaseState->freeGXacts;
+			TwoPhaseState->freeGXacts = &gxacts[i];
 		}
 	}
 	else
@@ -242,8 +242,8 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 			TwoPhaseState->numPrepXacts--;
 			TwoPhaseState->prepXacts[i] = TwoPhaseState->prepXacts[TwoPhaseState->numPrepXacts];
 			/* and put it back in the freelist */
-			gxact->proc.links.next = TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = MAKE_OFFSET(gxact);
+			gxact->proc.links.next = (SHM_QUEUE *) TwoPhaseState->freeGXacts;
+			TwoPhaseState->freeGXacts = gxact;
 			/* Back up index count too, so we don't miss scanning one */
 			i--;
 		}
@@ -263,14 +263,14 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	}
 
 	/* Get a free gxact from the freelist */
-	if (TwoPhaseState->freeGXacts == INVALID_OFFSET)
+	if (TwoPhaseState->freeGXacts == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("maximum number of prepared transactions reached"),
 				 errhint("Increase max_prepared_transactions (currently %d).",
 						 max_prepared_xacts)));
-	gxact = (GlobalTransaction) MAKE_PTR(TwoPhaseState->freeGXacts);
-	TwoPhaseState->freeGXacts = gxact->proc.links.next;
+	gxact = TwoPhaseState->freeGXacts;
+	TwoPhaseState->freeGXacts = (GlobalTransaction) gxact->proc.links.next;
 
 	/* Initialize it */
 	MemSet(&gxact->proc, 0, sizeof(PGPROC));
@@ -451,8 +451,8 @@ RemoveGXact(GlobalTransaction gxact)
 			TwoPhaseState->prepXacts[i] = TwoPhaseState->prepXacts[TwoPhaseState->numPrepXacts];
 
 			/* and put it back in the freelist */
-			gxact->proc.links.next = TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = MAKE_OFFSET(gxact);
+			gxact->proc.links.next = (SHM_QUEUE *) TwoPhaseState->freeGXacts;
+			TwoPhaseState->freeGXacts = gxact;
 
 			LWLockRelease(TwoPhaseStateLock);
 

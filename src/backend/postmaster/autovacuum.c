@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.84 2008/08/13 00:07:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.85 2008/11/02 21:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,9 +244,9 @@ typedef struct
 {
 	sig_atomic_t av_signal[AutoVacNumSignals];
 	pid_t		av_launcherpid;
-	SHMEM_OFFSET av_freeWorkers;
+	WorkerInfo	av_freeWorkers;
 	SHM_QUEUE	av_runningWorkers;
-	SHMEM_OFFSET av_startingWorker;
+	WorkerInfo	av_startingWorker;
 } AutoVacuumShmemStruct;
 
 static AutoVacuumShmemStruct *AutoVacuumShmem;
@@ -556,8 +556,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 		if (!PostmasterIsAlive(true))
 			exit(1);
 
-		launcher_determine_sleep(AutoVacuumShmem->av_freeWorkers !=
-								 INVALID_OFFSET, false, &nap);
+		launcher_determine_sleep((AutoVacuumShmem->av_freeWorkers != NULL),
+								 false, &nap);
 
 		/*
 		 * Sleep for a while according to schedule.
@@ -662,13 +662,12 @@ AutoVacLauncherMain(int argc, char *argv[])
 		current_time = GetCurrentTimestamp();
 		LWLockAcquire(AutovacuumLock, LW_SHARED);
 
-		can_launch = (AutoVacuumShmem->av_freeWorkers != INVALID_OFFSET);
+		can_launch = (AutoVacuumShmem->av_freeWorkers != NULL);
 
-		if (AutoVacuumShmem->av_startingWorker != INVALID_OFFSET)
+		if (AutoVacuumShmem->av_startingWorker != NULL)
 		{
 			int			waittime;
-
-			WorkerInfo	worker = (WorkerInfo) MAKE_PTR(AutoVacuumShmem->av_startingWorker);
+			WorkerInfo	worker = AutoVacuumShmem->av_startingWorker;
 
 			/*
 			 * We can't launch another worker when another one is still
@@ -698,16 +697,16 @@ AutoVacLauncherMain(int argc, char *argv[])
 				 * we assume it's the same one we saw above (so we don't
 				 * recheck the launch time).
 				 */
-				if (AutoVacuumShmem->av_startingWorker != INVALID_OFFSET)
+				if (AutoVacuumShmem->av_startingWorker != NULL)
 				{
-					worker = (WorkerInfo) MAKE_PTR(AutoVacuumShmem->av_startingWorker);
+					worker = AutoVacuumShmem->av_startingWorker;
 					worker->wi_dboid = InvalidOid;
 					worker->wi_tableoid = InvalidOid;
 					worker->wi_proc = NULL;
 					worker->wi_launchtime = 0;
-					worker->wi_links.next = AutoVacuumShmem->av_freeWorkers;
-					AutoVacuumShmem->av_freeWorkers = MAKE_OFFSET(worker);
-					AutoVacuumShmem->av_startingWorker = INVALID_OFFSET;
+					worker->wi_links.next = (SHM_QUEUE *) AutoVacuumShmem->av_freeWorkers;
+					AutoVacuumShmem->av_freeWorkers = worker;
+					AutoVacuumShmem->av_startingWorker = NULL;
 					elog(WARNING, "worker took too long to start; cancelled");
 				}
 			}
@@ -1061,7 +1060,7 @@ do_start_worker(void)
 
 	/* return quickly when there are no free workers */
 	LWLockAcquire(AutovacuumLock, LW_SHARED);
-	if (AutoVacuumShmem->av_freeWorkers == INVALID_OFFSET)
+	if (AutoVacuumShmem->av_freeWorkers == NULL)
 	{
 		LWLockRelease(AutovacuumLock);
 		return InvalidOid;
@@ -1192,7 +1191,6 @@ do_start_worker(void)
 	if (avdb != NULL)
 	{
 		WorkerInfo	worker;
-		SHMEM_OFFSET sworker;
 
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
 
@@ -1201,18 +1199,17 @@ do_start_worker(void)
 		 * really should be a free slot -- complain very loudly if there
 		 * isn't.
 		 */
-		sworker = AutoVacuumShmem->av_freeWorkers;
-		if (sworker == INVALID_OFFSET)
+		worker = AutoVacuumShmem->av_freeWorkers;
+		if (worker == NULL)
 			elog(FATAL, "no free worker found");
 
-		worker = (WorkerInfo) MAKE_PTR(sworker);
-		AutoVacuumShmem->av_freeWorkers = worker->wi_links.next;
+		AutoVacuumShmem->av_freeWorkers = (WorkerInfo) worker->wi_links.next;
 
 		worker->wi_dboid = avdb->adw_datid;
 		worker->wi_proc = NULL;
 		worker->wi_launchtime = GetCurrentTimestamp();
 
-		AutoVacuumShmem->av_startingWorker = sworker;
+		AutoVacuumShmem->av_startingWorker = worker;
 
 		LWLockRelease(AutovacuumLock);
 
@@ -1549,9 +1546,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 * launcher might have decided to remove it from the queue and start
 	 * again.
 	 */
-	if (AutoVacuumShmem->av_startingWorker != INVALID_OFFSET)
+	if (AutoVacuumShmem->av_startingWorker != NULL)
 	{
-		MyWorkerInfo = (WorkerInfo) MAKE_PTR(AutoVacuumShmem->av_startingWorker);
+		MyWorkerInfo = AutoVacuumShmem->av_startingWorker;
 		dbid = MyWorkerInfo->wi_dboid;
 		MyWorkerInfo->wi_proc = MyProc;
 
@@ -1563,7 +1560,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 		 * remove from the "starting" pointer, so that the launcher can start
 		 * a new worker if required
 		 */
-		AutoVacuumShmem->av_startingWorker = INVALID_OFFSET;
+		AutoVacuumShmem->av_startingWorker = NULL;
 		LWLockRelease(AutovacuumLock);
 
 		on_shmem_exit(FreeWorkerInfo, 0);
@@ -1648,7 +1645,7 @@ FreeWorkerInfo(int code, Datum arg)
 		AutovacuumLauncherPid = AutoVacuumShmem->av_launcherpid;
 
 		SHMQueueDelete(&MyWorkerInfo->wi_links);
-		MyWorkerInfo->wi_links.next = AutoVacuumShmem->av_freeWorkers;
+		MyWorkerInfo->wi_links.next = (SHM_QUEUE *) AutoVacuumShmem->av_freeWorkers;
 		MyWorkerInfo->wi_dboid = InvalidOid;
 		MyWorkerInfo->wi_tableoid = InvalidOid;
 		MyWorkerInfo->wi_proc = NULL;
@@ -1656,7 +1653,7 @@ FreeWorkerInfo(int code, Datum arg)
 		MyWorkerInfo->wi_cost_delay = 0;
 		MyWorkerInfo->wi_cost_limit = 0;
 		MyWorkerInfo->wi_cost_limit_base = 0;
-		AutoVacuumShmem->av_freeWorkers = MAKE_OFFSET(MyWorkerInfo);
+		AutoVacuumShmem->av_freeWorkers = MyWorkerInfo;
 		/* not mine anymore */
 		MyWorkerInfo = NULL;
 
@@ -2793,9 +2790,9 @@ AutoVacuumShmemInit(void)
 		Assert(!found);
 
 		AutoVacuumShmem->av_launcherpid = 0;
-		AutoVacuumShmem->av_freeWorkers = INVALID_OFFSET;
+		AutoVacuumShmem->av_freeWorkers = NULL;
 		SHMQueueInit(&AutoVacuumShmem->av_runningWorkers);
-		AutoVacuumShmem->av_startingWorker = INVALID_OFFSET;
+		AutoVacuumShmem->av_startingWorker = NULL;
 
 		worker = (WorkerInfo) ((char *) AutoVacuumShmem +
 							   MAXALIGN(sizeof(AutoVacuumShmemStruct)));
@@ -2803,8 +2800,8 @@ AutoVacuumShmemInit(void)
 		/* initialize the WorkerInfo free list */
 		for (i = 0; i < autovacuum_max_workers; i++)
 		{
-			worker[i].wi_links.next = AutoVacuumShmem->av_freeWorkers;
-			AutoVacuumShmem->av_freeWorkers = MAKE_OFFSET(&worker[i]);
+			worker[i].wi_links.next = (SHM_QUEUE *) AutoVacuumShmem->av_freeWorkers;
+			AutoVacuumShmem->av_freeWorkers = &worker[i];
 		}
 	}
 	else

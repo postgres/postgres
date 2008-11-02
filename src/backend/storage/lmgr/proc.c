@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.201 2008/06/09 18:23:05 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.202 2008/11/02 21:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,8 +170,8 @@ InitProcGlobal(void)
 	/*
 	 * Initialize the data structures.
 	 */
-	ProcGlobal->freeProcs = INVALID_OFFSET;
-	ProcGlobal->autovacFreeProcs = INVALID_OFFSET;
+	ProcGlobal->freeProcs = NULL;
+	ProcGlobal->autovacFreeProcs = NULL;
 
 	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 
@@ -187,8 +187,8 @@ InitProcGlobal(void)
 	for (i = 0; i < MaxConnections; i++)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
-		procs[i].links.next = ProcGlobal->freeProcs;
-		ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
+		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
+		ProcGlobal->freeProcs = &procs[i];
 	}
 
 	procs = (PGPROC *) ShmemAlloc((autovacuum_max_workers) * sizeof(PGPROC));
@@ -200,8 +200,8 @@ InitProcGlobal(void)
 	for (i = 0; i < autovacuum_max_workers; i++)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
-		procs[i].links.next = ProcGlobal->autovacFreeProcs;
-		ProcGlobal->autovacFreeProcs = MAKE_OFFSET(&procs[i]);
+		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
+		ProcGlobal->autovacFreeProcs = &procs[i];
 	}
 
 	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
@@ -224,7 +224,6 @@ InitProcess(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
-	SHMEM_OFFSET myOffset;
 	int			i;
 
 	/*
@@ -249,17 +248,16 @@ InitProcess(void)
 	set_spins_per_delay(procglobal->spins_per_delay);
 
 	if (IsAutoVacuumWorkerProcess())
-		myOffset = procglobal->autovacFreeProcs;
+		MyProc = procglobal->autovacFreeProcs;
 	else
-		myOffset = procglobal->freeProcs;
+		MyProc = procglobal->freeProcs;
 
-	if (myOffset != INVALID_OFFSET)
+	if (MyProc != NULL)
 	{
-		MyProc = (PGPROC *) MAKE_PTR(myOffset);
 		if (IsAutoVacuumWorkerProcess())
-			procglobal->autovacFreeProcs = MyProc->links.next;
+			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
 		else
-			procglobal->freeProcs = MyProc->links.next;
+			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -461,7 +459,6 @@ InitAuxiliaryProcess(void)
 bool
 HaveNFreeProcs(int n)
 {
-	SHMEM_OFFSET offset;
 	PGPROC	   *proc;
 
 	/* use volatile pointer to prevent code rearrangement */
@@ -469,12 +466,11 @@ HaveNFreeProcs(int n)
 
 	SpinLockAcquire(ProcStructLock);
 
-	offset = procglobal->freeProcs;
+	proc = procglobal->freeProcs;
 
-	while (n > 0 && offset != INVALID_OFFSET)
+	while (n > 0 && proc != NULL)
 	{
-		proc = (PGPROC *) MAKE_PTR(offset);
-		offset = proc->links.next;
+		proc = (PGPROC *) proc->links.next;
 		n--;
 	}
 
@@ -506,7 +502,7 @@ LockWaitCancel(void)
 	partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
-	if (MyProc->links.next != INVALID_OFFSET)
+	if (MyProc->links.next != NULL)
 	{
 		/* We could not have been granted the lock yet */
 		RemoveFromWaitQueue(MyProc, lockAwaited->hashcode);
@@ -601,13 +597,13 @@ ProcKill(int code, Datum arg)
 	/* Return PGPROC structure (and semaphore) to freelist */
 	if (IsAutoVacuumWorkerProcess())
 	{
-		MyProc->links.next = procglobal->autovacFreeProcs;
-		procglobal->autovacFreeProcs = MAKE_OFFSET(MyProc);
+		MyProc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
+		procglobal->autovacFreeProcs = MyProc;
 	}
 	else
 	{
-		MyProc->links.next = procglobal->freeProcs;
-		procglobal->freeProcs = MAKE_OFFSET(MyProc);
+		MyProc->links.next = (SHM_QUEUE *) procglobal->freeProcs;
+		procglobal->freeProcs = MyProc;
 	}
 
 	/* PGPROC struct isn't mine anymore */
@@ -752,7 +748,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	{
 		LOCKMASK	aheadRequests = 0;
 
-		proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
+		proc = (PGPROC *) waitQueue->links.next;
 		for (i = 0; i < waitQueue->size; i++)
 		{
 			/* Must he wait for me? */
@@ -790,7 +786,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			}
 			/* Nope, so advance to next waiter */
 			aheadRequests |= LOCKBIT_ON(proc->waitLockMode);
-			proc = (PGPROC *) MAKE_PTR(proc->links.next);
+			proc = (PGPROC *) proc->links.next;
 		}
 
 		/*
@@ -1054,13 +1050,13 @@ ProcWakeup(PGPROC *proc, int waitStatus)
 	PGPROC	   *retProc;
 
 	/* Proc should be sleeping ... */
-	if (proc->links.prev == INVALID_OFFSET ||
-		proc->links.next == INVALID_OFFSET)
+	if (proc->links.prev == NULL ||
+		proc->links.next == NULL)
 		return NULL;
 	Assert(proc->waitStatus == STATUS_WAITING);
 
 	/* Save next process before we zap the list link */
-	retProc = (PGPROC *) MAKE_PTR(proc->links.next);
+	retProc = (PGPROC *) proc->links.next;
 
 	/* Remove process from wait queue */
 	SHMQueueDelete(&(proc->links));
@@ -1097,7 +1093,7 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 	if (queue_size == 0)
 		return;
 
-	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
+	proc = (PGPROC *) waitQueue->links.next;
 
 	while (queue_size-- > 0)
 	{
@@ -1130,7 +1126,7 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 			 * Cannot wake this guy. Remember his request for later checks.
 			 */
 			aheadRequests |= LOCKBIT_ON(lockmode);
-			proc = (PGPROC *) MAKE_PTR(proc->links.next);
+			proc = (PGPROC *) proc->links.next;
 		}
 	}
 
@@ -1179,8 +1175,8 @@ CheckDeadLock(void)
 	 * This is quicker than checking our semaphore's state, since no kernel
 	 * call is needed, and it is safe because we hold the lock partition lock.
 	 */
-	if (MyProc->links.prev == INVALID_OFFSET ||
-		MyProc->links.next == INVALID_OFFSET)
+	if (MyProc->links.prev == NULL ||
+		MyProc->links.next == NULL)
 		goto check_done;
 
 #ifdef LOCK_DEBUG

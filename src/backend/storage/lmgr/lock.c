@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.184 2008/08/01 13:16:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.185 2008/11/02 21:24:52 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -1214,7 +1214,7 @@ RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 
 	/* Make sure proc is waiting */
 	Assert(proc->waitStatus == STATUS_WAITING);
-	Assert(proc->links.next != INVALID_OFFSET);
+	Assert(proc->links.next != NULL);
 	Assert(waitLock);
 	Assert(waitLock->waitProcs.size > 0);
 	Assert(0 < lockmethodid && lockmethodid < lengthof(LockMethods));

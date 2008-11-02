@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.31 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.32 2008/11/02 21:24:52 tgl Exp $
  *
  * NOTES
  *
@@ -27,12 +27,6 @@
 
 #include "storage/shmem.h"
 
-/*#define SHMQUEUE_DEBUG*/
-
-#ifdef SHMQUEUE_DEBUG
-static void dumpQ(SHM_QUEUE *q, char *s);
-#endif
-
 
 /*
  * ShmemQueueInit -- make the head of a new queue point
@@ -41,8 +35,8 @@ static void dumpQ(SHM_QUEUE *q, char *s);
 void
 SHMQueueInit(SHM_QUEUE *queue)
 {
-	Assert(SHM_PTR_VALID(queue));
-	(queue)->prev = (queue)->next = MAKE_OFFSET(queue);
+	Assert(ShmemAddrIsValid(queue));
+	queue->prev = queue->next = queue;
 }
 
 /*
@@ -53,8 +47,8 @@ SHMQueueInit(SHM_QUEUE *queue)
 bool
 SHMQueueIsDetached(SHM_QUEUE *queue)
 {
-	Assert(SHM_PTR_VALID(queue));
-	return (queue)->prev == INVALID_OFFSET;
+	Assert(ShmemAddrIsValid(queue));
+	return (queue->prev == NULL);
 }
 #endif
 
@@ -64,8 +58,8 @@ SHMQueueIsDetached(SHM_QUEUE *queue)
 void
 SHMQueueElemInit(SHM_QUEUE *queue)
 {
-	Assert(SHM_PTR_VALID(queue));
-	(queue)->prev = (queue)->next = INVALID_OFFSET;
+	Assert(ShmemAddrIsValid(queue));
+	queue->prev = queue->next = NULL;
 }
 
 /*
@@ -75,21 +69,17 @@ SHMQueueElemInit(SHM_QUEUE *queue)
 void
 SHMQueueDelete(SHM_QUEUE *queue)
 {
-	SHM_QUEUE  *nextElem = (SHM_QUEUE *) MAKE_PTR((queue)->next);
-	SHM_QUEUE  *prevElem = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
+	SHM_QUEUE  *nextElem = queue->next;
+	SHM_QUEUE  *prevElem = queue->prev;
 
-	Assert(SHM_PTR_VALID(queue));
-	Assert(SHM_PTR_VALID(nextElem));
-	Assert(SHM_PTR_VALID(prevElem));
+	Assert(ShmemAddrIsValid(queue));
+	Assert(ShmemAddrIsValid(nextElem));
+	Assert(ShmemAddrIsValid(prevElem));
 
-#ifdef SHMQUEUE_DEBUG
-	dumpQ(queue, "in SHMQueueDelete: begin");
-#endif
+	prevElem->next = queue->next;
+	nextElem->prev = queue->prev;
 
-	prevElem->next = (queue)->next;
-	nextElem->prev = (queue)->prev;
-
-	(queue)->prev = (queue)->next = INVALID_OFFSET;
+	queue->prev = queue->next = NULL;
 }
 
 /*
@@ -100,24 +90,15 @@ SHMQueueDelete(SHM_QUEUE *queue)
 void
 SHMQueueInsertBefore(SHM_QUEUE *queue, SHM_QUEUE *elem)
 {
-	SHM_QUEUE  *prevPtr = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
-	SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
+	SHM_QUEUE  *prevPtr = queue->prev;
 
-	Assert(SHM_PTR_VALID(queue));
-	Assert(SHM_PTR_VALID(elem));
+	Assert(ShmemAddrIsValid(queue));
+	Assert(ShmemAddrIsValid(elem));
 
-#ifdef SHMQUEUE_DEBUG
-	dumpQ(queue, "in SHMQueueInsertBefore: begin");
-#endif
-
-	(elem)->next = prevPtr->next;
-	(elem)->prev = queue->prev;
-	(queue)->prev = elemOffset;
-	prevPtr->next = elemOffset;
-
-#ifdef SHMQUEUE_DEBUG
-	dumpQ(queue, "in SHMQueueInsertBefore: end");
-#endif
+	elem->next = prevPtr->next;
+	elem->prev = queue->prev;
+	queue->prev = elem;
+	prevPtr->next = elem;
 }
 
 /*
@@ -129,24 +110,15 @@ SHMQueueInsertBefore(SHM_QUEUE *queue, SHM_QUEUE *elem)
 void
 SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
 {
-	SHM_QUEUE  *nextPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
-	SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
+	SHM_QUEUE  *nextPtr = queue->next;
 
-	Assert(SHM_PTR_VALID(queue));
-	Assert(SHM_PTR_VALID(elem));
+	Assert(ShmemAddrIsValid(queue));
+	Assert(ShmemAddrIsValid(elem));
 
-#ifdef SHMQUEUE_DEBUG
-	dumpQ(queue, "in SHMQueueInsertAfter: begin");
-#endif
-
-	(elem)->prev = nextPtr->prev;
-	(elem)->next = queue->next;
-	(queue)->next = elemOffset;
-	nextPtr->prev = elemOffset;
-
-#ifdef SHMQUEUE_DEBUG
-	dumpQ(queue, "in SHMQueueInsertAfter: end");
-#endif
+	elem->prev = nextPtr->prev;
+	elem->next = queue->next;
+	queue->next = elem;
+	nextPtr->prev = elem;
 }
 #endif   /* NOT_USED */
 
@@ -159,15 +131,15 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
  * Next element is at curElem->next.  If SHMQueue is part of
  * a larger structure, we want to return a pointer to the
  * whole structure rather than a pointer to its SHMQueue field.
- * I.E. struct {
+ * For example,
+ * struct {
  *		int				stuff;
  *		SHMQueue		elem;
  * } ELEMType;
- * When this element is in a queue, (prevElem->next) is struct.elem.
+ * When this element is in a queue, prevElem->next points at struct.elem.
  * We subtract linkOffset to get the correct start address of the structure.
  *
  * calls to SHMQueueNext should take these parameters:
- *
  *	 &(queueHead), &(queueHead), offsetof(ELEMType, elem)
  * or
  *	 &(queueHead), &(curElem->elem), offsetof(ELEMType, elem)
@@ -176,9 +148,9 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
 Pointer
 SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
 {
-	SHM_QUEUE  *elemPtr = (SHM_QUEUE *) MAKE_PTR((curElem)->next);
+	SHM_QUEUE  *elemPtr = curElem->next;
 
-	Assert(SHM_PTR_VALID(curElem));
+	Assert(ShmemAddrIsValid(curElem));
 
 	if (elemPtr == queue)		/* back to the queue head? */
 		return NULL;
@@ -192,64 +164,12 @@ SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
 bool
 SHMQueueEmpty(SHM_QUEUE *queue)
 {
-	Assert(SHM_PTR_VALID(queue));
+	Assert(ShmemAddrIsValid(queue));
 
-	if (queue->prev == MAKE_OFFSET(queue))
+	if (queue->prev == queue)
 	{
-		Assert(queue->next = MAKE_OFFSET(queue));
+		Assert(queue->next == queue);
 		return TRUE;
 	}
 	return FALSE;
 }
-
-#ifdef SHMQUEUE_DEBUG
-
-static void
-dumpQ(SHM_QUEUE *q, char *s)
-{
-	char		elem[NAMEDATALEN];
-	char		buf[1024];
-	SHM_QUEUE  *start = q;
-	int			count = 0;
-
-	snprintf(buf, sizeof(buf), "q prevs: %lx", MAKE_OFFSET(q));
-	q = (SHM_QUEUE *) MAKE_PTR(q->prev);
-	while (q != start)
-	{
-		snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
-		strcat(buf, elem);
-		q = (SHM_QUEUE *) MAKE_PTR(q->prev);
-		if (q->prev == MAKE_OFFSET(q))
-			break;
-		if (count++ > 40)
-		{
-			strcat(buf, "BAD PREV QUEUE!!");
-			break;
-		}
-	}
-	snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
-	strcat(buf, elem);
-	elog(DEBUG2, "%s: %s", s, buf);
-
-	snprintf(buf, sizeof(buf), "q nexts: %lx", MAKE_OFFSET(q));
-	count = 0;
-	q = (SHM_QUEUE *) MAKE_PTR(q->next);
-	while (q != start)
-	{
-		snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
-		strcat(buf, elem);
-		q = (SHM_QUEUE *) MAKE_PTR(q->next);
-		if (q->next == MAKE_OFFSET(q))
-			break;
-		if (count++ > 10)
-		{
-			strcat(buf, "BAD NEXT QUEUE!!");
-			break;
-		}
-	}
-	snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
-	strcat(buf, elem);
-	elog(DEBUG2, "%s: %s", s, buf);
-}
-
-#endif   /* SHMQUEUE_DEBUG */
