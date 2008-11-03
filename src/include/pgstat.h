@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.78 2008/08/15 08:37:40 mha Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.79 2008/11/03 01:17:08 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -33,6 +33,7 @@ typedef enum TrackFunctionsLevel
 typedef enum StatMsgType
 {
 	PGSTAT_MTYPE_DUMMY,
+	PGSTAT_MTYPE_INQUIRY,
 	PGSTAT_MTYPE_TABSTAT,
 	PGSTAT_MTYPE_TABPURGE,
 	PGSTAT_MTYPE_DROPDB,
@@ -171,6 +172,19 @@ typedef struct PgStat_MsgDummy
 {
 	PgStat_MsgHdr m_hdr;
 } PgStat_MsgDummy;
+
+
+/* ----------
+ * PgStat_MsgInquiry			Sent by a backend to ask the collector
+ *								to write the stats file.
+ * ----------
+ */
+
+typedef struct PgStat_MsgInquiry
+{
+	PgStat_MsgHdr	m_hdr;
+	TimestampTz		inquiry_time;	/* minimum acceptable file timestamp */
+} PgStat_MsgInquiry;
 
 
 /* ----------
@@ -392,6 +406,7 @@ typedef union PgStat_Msg
 {
 	PgStat_MsgHdr msg_hdr;
 	PgStat_MsgDummy msg_dummy;
+	PgStat_MsgInquiry msg_inquiry;
 	PgStat_MsgTabstat msg_tabstat;
 	PgStat_MsgTabpurge msg_tabpurge;
 	PgStat_MsgDropdb msg_dropdb;
@@ -413,7 +428,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC97
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC98
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -494,6 +509,7 @@ typedef struct PgStat_StatFuncEntry
  */
 typedef struct PgStat_GlobalStats
 {
+	TimestampTz stats_timestamp;		/* time of stats file update */
 	PgStat_Counter timed_checkpoints;
 	PgStat_Counter requested_checkpoints;
 	PgStat_Counter buf_written_checkpoints;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.191 2008/09/30 10:52:09 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.192 2008/11/03 01:17:08 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3347,9 +3347,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         improved performance.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        If this parameter is changed while the server is running, there is a
-        small window of time until the new statistics file has been written
-        during which the statistics functions might return no information.
        </para>
       </listitem>
      </varlistentry>

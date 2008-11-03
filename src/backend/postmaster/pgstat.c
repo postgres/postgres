@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.181 2008/08/25 18:55:43 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.182 2008/11/03 01:17:08 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -75,8 +75,14 @@
  * Timer definitions.
  * ----------
  */
-#define PGSTAT_STAT_INTERVAL	500		/* How often to write the status file;
-										 * in milliseconds. */
+#define PGSTAT_STAT_INTERVAL	500		/* Minimum time between stats file
+										 * updates; in milliseconds. */
+
+#define PGSTAT_RETRY_DELAY		10		/* How long to wait between statistics
+										 * update requests; in milliseconds. */
+
+#define PGSTAT_MAX_WAIT_TIME	5000	/* Maximum time to wait for a stats
+										 * file update; in milliseconds. */
 
 #define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
 										 * failed statistics collector; in
@@ -84,6 +90,8 @@
 
 #define PGSTAT_SELECT_TIMEOUT	2		/* How often to check for postmaster
 										 * death; in seconds. */
+
+#define PGSTAT_POLL_LOOP_COUNT	(PGSTAT_MAX_WAIT_TIME / PGSTAT_RETRY_DELAY)
 
 
 /* ----------
@@ -159,6 +167,12 @@ static TabStatusArray *pgStatTabList = NULL;
 static HTAB *pgStatFunctions = NULL;
 
 /*
+ * Indicates if backend has some function stats that it hasn't yet
+ * sent to the collector.
+ */
+static bool have_function_stats = false;
+
+/*
  * Tuple insertion/deletion counts for an open transaction can't be propagated
  * into PgStat_TableStatus counters until we know if it is going to commit
  * or abort.  Hence, we keep these counts in per-subxact structs that live
@@ -201,8 +215,12 @@ static int	localNumBackends = 0;
  */
 static PgStat_GlobalStats globalStats;
 
+/* Last time the collector successfully wrote the stats file */
+static TimestampTz last_statwrite;
+/* Latest statistics request time from backends */
+static TimestampTz last_statrequest;
+
 static volatile bool need_exit = false;
-static volatile bool need_statwrite = false;
 static volatile bool got_SIGHUP = false;
 
 /*
@@ -223,7 +241,6 @@ static pid_t pgstat_forkexec(void);
 
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]);
 static void pgstat_exit(SIGNAL_ARGS);
-static void force_statwrite(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 static void pgstat_sighup_handler(SIGNAL_ARGS);
 
@@ -244,6 +261,7 @@ static void pgstat_setup_memcxt(void);
 static void pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype);
 static void pgstat_send(void *msg, int len);
 
+static void pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len);
 static void pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len);
 static void pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len);
 static void pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len);
@@ -655,9 +673,8 @@ pgstat_report_stat(bool force)
 	int			i;
 
 	/* Don't expend a clock check if nothing to do */
-	/* Note: we ignore pending function stats in this test ... OK? */
-	if (pgStatTabList == NULL ||
-		pgStatTabList->tsa_used == 0)
+	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0)
+		&& !have_function_stats)
 		return;
 
 	/*
@@ -823,6 +840,8 @@ pgstat_send_funcstats(void)
 	if (msg.m_nentries > 0)
 		pgstat_send(&msg, offsetof(PgStat_MsgFuncstat, m_entry[0]) +
 					msg.m_nentries * sizeof(PgStat_FunctionEntry));
+
+	have_function_stats = false;
 }
 
 
@@ -1242,6 +1261,24 @@ pgstat_ping(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
+/* ----------
+ * pgstat_send_inquiry() -
+ *
+ *	Notify collector that we need fresh data.
+ *	ts specifies the minimum acceptable timestamp for the stats file.
+ * ----------
+ */
+static void
+pgstat_send_inquiry(TimestampTz ts)
+{
+	PgStat_MsgInquiry msg;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_INQUIRY);
+	msg.inquiry_time = ts;
+	pgstat_send(&msg, sizeof(msg));
+}
+
+
 /*
  * Initialize function call usage data.
  * Called by the executor before invoking a function.
@@ -1341,6 +1378,9 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 		fs->f_numcalls++;
 	fs->f_time = f_total;
 	INSTR_TIME_ADD(fs->f_time_self, f_self);
+
+	/* indicate that we have something to send */
+	have_function_stats = true;
 }
 
 
@@ -2538,8 +2578,6 @@ pgstat_send_bgwriter(void)
 NON_EXEC_STATIC void
 PgstatCollectorMain(int argc, char *argv[])
 {
-	struct itimerval write_timeout;
-	bool		need_timer = false;
 	int			len;
 	PgStat_Msg	msg;
 
@@ -2571,13 +2609,13 @@ PgstatCollectorMain(int argc, char *argv[])
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
-	 * except SIGQUIT and SIGALRM.
+	 * except SIGQUIT.
 	 */
 	pqsignal(SIGHUP, pgstat_sighup_handler);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
 	pqsignal(SIGQUIT, pgstat_exit);
-	pqsignal(SIGALRM, force_statwrite);
+	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
 	pqsignal(SIGUSR2, SIG_IGN);
@@ -2596,12 +2634,8 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Arrange to write the initial status file right away
 	 */
-	need_statwrite = true;
-
-	/* Preset the delay between status file writes */
-	MemSet(&write_timeout, 0, sizeof(struct itimerval));
-	write_timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
-	write_timeout.it_value.tv_usec = (PGSTAT_STAT_INTERVAL % 1000) * 1000;
+	last_statrequest = GetCurrentTimestamp();
+	last_statwrite = last_statrequest - 1;
 
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
@@ -2623,8 +2657,9 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * death of our parent postmaster.
 	 *
 	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
-	 * after every message; instead, do it at statwrite time and if
-	 * select()/poll() is interrupted by timeout.
+	 * after every message; instead, do it only when select()/poll() is
+	 * interrupted by timeout.  In essence, we'll stay alive as long as
+	 * backends keep sending us stuff often, even if the postmaster is gone.
 	 */
 	for (;;)
 	{
@@ -2638,32 +2673,19 @@ PgstatCollectorMain(int argc, char *argv[])
 
 		/*
 		 * Reload configuration if we got SIGHUP from the postmaster.
-		 * Also, signal a new write of the file, so we drop a new file as
-		 * soon as possible of the directory for it changes.
 		 */
 		if (got_SIGHUP)
 		{
 			ProcessConfigFile(PGC_SIGHUP);
 			got_SIGHUP = false;
-			need_statwrite = true;
 		}
 
 		/*
-		 * If time to write the stats file, do so.	Note that the alarm
-		 * interrupt isn't re-enabled immediately, but only after we next
-		 * receive a stats message; so no cycles are wasted when there is
-		 * nothing going on.
+		 * Write the stats file if a new request has arrived that is not
+		 * satisfied by existing file.
 		 */
-		if (need_statwrite)
-		{
-			/* Check for postmaster death; if so we'll write file below */
-			if (!PostmasterIsAlive(true))
-				break;
-
+		if (last_statwrite < last_statrequest)
 			pgstat_write_statsfile(false);
-			need_statwrite = false;
-			need_timer = true;
-		}
 
 		/*
 		 * Wait for a message to arrive; but not for more than
@@ -2756,6 +2778,10 @@ PgstatCollectorMain(int argc, char *argv[])
 				case PGSTAT_MTYPE_DUMMY:
 					break;
 
+				case PGSTAT_MTYPE_INQUIRY:
+					pgstat_recv_inquiry((PgStat_MsgInquiry *) &msg, len);
+					break;
+
 				case PGSTAT_MTYPE_TABSTAT:
 					pgstat_recv_tabstat((PgStat_MsgTabstat *) &msg, len);
 					break;
@@ -2800,19 +2826,6 @@ PgstatCollectorMain(int argc, char *argv[])
 				default:
 					break;
 			}
-
-			/*
-			 * If this is the first message after we wrote the stats file the
-			 * last time, enable the alarm interrupt to make it be written
-			 * again later.
-			 */
-			if (need_timer)
-			{
-				if (setitimer(ITIMER_REAL, &write_timeout, NULL))
-					ereport(ERROR,
-					(errmsg("could not set statistics collector timer: %m")));
-				need_timer = false;
-			}
 		}
 		else
 		{
@@ -2839,13 +2852,6 @@ static void
 pgstat_exit(SIGNAL_ARGS)
 {
 	need_exit = true;
-}
-
-/* SIGALRM signal handler for collector process */
-static void
-force_statwrite(SIGNAL_ARGS)
-{
-	need_statwrite = true;
 }
 
 /* SIGHUP handler for collector process */
@@ -2943,7 +2949,7 @@ pgstat_write_statsfile(bool permanent)
 	/*
 	 * Open the statistics temp file to write out the current values.
 	 */
-	fpout = fopen(tmpfile, PG_BINARY_W);
+	fpout = AllocateFile(tmpfile, PG_BINARY_W);
 	if (fpout == NULL)
 	{
 		ereport(LOG,
@@ -2952,6 +2958,11 @@ pgstat_write_statsfile(bool permanent)
 						tmpfile)));
 		return;
 	}
+
+	/*
+	 * Set the timestamp of the stats file.
+	 */
+	globalStats.stats_timestamp = GetCurrentTimestamp();
 
 	/*
 	 * Write the file header --- currently just a format ID.
@@ -3017,10 +3028,10 @@ pgstat_write_statsfile(bool permanent)
 				(errcode_for_file_access(),
 			   errmsg("could not write temporary statistics file \"%s\": %m",
 					  tmpfile)));
-		fclose(fpout);
+		FreeFile(fpout);
 		unlink(tmpfile);
 	}
-	else if (fclose(fpout) < 0)
+	else if (FreeFile(fpout) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
@@ -3035,6 +3046,22 @@ pgstat_write_statsfile(bool permanent)
 				 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
 						tmpfile, statfile)));
 		unlink(tmpfile);
+	}
+	else
+	{
+		/*
+		 * Successful write, so update last_statwrite.
+		 */
+		last_statwrite = globalStats.stats_timestamp;
+
+		/*
+		 * It's not entirely clear whether there could be clock skew between
+		 * backends and the collector; but just in case someone manages to
+		 * send us a stats request time that's far in the future, reset it.
+		 * This ensures that no inquiry message can cause more than one stats
+		 * file write to occur.
+		 */
+		last_statrequest = last_statwrite;
 	}
 
 	if (permanent)
@@ -3289,6 +3316,52 @@ done:
 	return dbhash;
 }
 
+/* ----------
+ * pgstat_read_statsfile_timestamp() -
+ *
+ *	Attempt to fetch the timestamp of an existing stats file.
+ *	Returns TRUE if successful (timestamp is stored at *ts).
+ * ----------
+ */
+static bool
+pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
+{
+	PgStat_GlobalStats myGlobalStats;
+	FILE	   *fpin;
+	int32		format_id;
+	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+
+	/*
+	 * Try to open the status file.
+	 */
+	if ((fpin = AllocateFile(statfile, PG_BINARY_R)) == NULL)
+		return false;
+
+	/*
+	 * Verify it's of the expected format.
+	 */
+	if (fread(&format_id, 1, sizeof(format_id), fpin) != sizeof(format_id)
+		|| format_id != PGSTAT_FILE_FORMAT_ID)
+	{
+		FreeFile(fpin);
+		return false;
+	}
+
+	/*
+	 * Read global stats struct
+	 */
+	if (fread(&myGlobalStats, 1, sizeof(myGlobalStats), fpin) != sizeof(myGlobalStats))
+	{
+		FreeFile(fpin);
+		return false;
+	}
+
+	*ts = myGlobalStats.stats_timestamp;
+
+	FreeFile(fpin);
+	return true;
+}
+
 /*
  * If not already done, read the statistics collector stats file into
  * some hash tables.  The results will be kept until pgstat_clear_snapshot()
@@ -3297,10 +3370,49 @@ done:
 static void
 backend_read_statsfile(void)
 {
+	TimestampTz min_ts;
+	int			count;
+
 	/* already read it? */
 	if (pgStatDBHash)
 		return;
 	Assert(!pgStatRunningInCollector);
+
+	/*
+	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
+	 * before now.  This indirectly ensures that the collector needn't write
+	 * the file more often than PGSTAT_STAT_INTERVAL.
+	 *
+	 * Note that we don't recompute min_ts after sleeping; so we might end up
+	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
+	 * that shouldn't happen, though, as long as the sleep time is less than
+	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
+	 * what our cutoff time really is.
+	 */
+	min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
+										 -PGSTAT_STAT_INTERVAL);
+
+	/*
+	 * Loop until fresh enough stats file is available or we ran out of time.
+	 * The stats inquiry message is sent repeatedly in case collector drops it.
+	 */
+	for (count = 0; count < PGSTAT_POLL_LOOP_COUNT; count++)
+	{
+		TimestampTz file_ts;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (pgstat_read_statsfile_timestamp(false, &file_ts) &&
+			file_ts >= min_ts)
+			break;
+
+		/* Not there or too old, so kick the collector and wait a bit */
+		pgstat_send_inquiry(min_ts);
+		pg_usleep(PGSTAT_RETRY_DELAY * 1000L);
+	}
+
+	if (count >= PGSTAT_POLL_LOOP_COUNT)
+		elog(WARNING, "pgstat wait timeout");
 
 	/* Autovacuum launcher wants stats about all databases */
 	if (IsAutoVacuumLauncherProcess())
@@ -3350,6 +3462,20 @@ pgstat_clear_snapshot(void)
 	pgStatDBHash = NULL;
 	localBackendStatusTable = NULL;
 	localNumBackends = 0;
+}
+
+
+/* ----------
+ * pgstat_recv_inquiry() -
+ *
+ *	Process stat inquiry requests.
+ * ----------
+ */
+static void
+pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
+{
+	if (msg->inquiry_time > last_statrequest)
+		last_statrequest = msg->inquiry_time;
 }
 
 
