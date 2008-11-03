@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.521 2008/11/03 17:51:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.522 2008/11/03 20:17:20 adunstan Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1580,6 +1580,9 @@ DESCR("convert int8 to oid");
 DATA(insert OID = 1288 (  int8			   PGNSP PGUID 12 1 0 0 f f t f i 1 20 "26" _null_ _null_ _null_	oidtoi8 _null_ _null_ _null_ ));
 DESCR("convert oid to int8");
 
+DATA(insert OID = 1291 (  suppress_redundant_updates_trigger	PGNSP PGUID 12 1 0 0 f f t f v 0 2279 "" _null_ _null_ _null_ suppress_redundant_updates_trigger _null_ _null_ _null_ ));
+DESCR("trigger to suppress updates when new and old records match");
+
 DATA(insert OID = 1292 ( tideq			   PGNSP PGUID 12 1 0 0 f f t f i 2 16 "27 27" _null_ _null_ _null_ tideq _null_ _null_ _null_ ));
 DESCR("equal");
 DATA(insert OID = 1293 ( currtid		   PGNSP PGUID 12 1 0 0 f f t f v 2 27 "26 27" _null_ _null_ _null_ currtid_byreloid _null_ _null_ _null_ ));
@@ -2289,6 +2292,7 @@ DESCR("result type of a function");
 
 DATA(insert OID = 1686 (  pg_get_keywords		PGNSP PGUID 12 10 400 0 f f t t s 0 2249 "" "{25,18,25}" "{o,o,o}" "{word,catcode,catdesc}" pg_get_keywords _null_ _null_ _null_ ));
 DESCR("list of SQL keywords");
+
 DATA(insert OID = 1619 (  pg_typeof				PGNSP PGUID 12 1 0 0 f f f f i 1 2206  "2276" _null_ _null_ _null_  pg_typeof _null_ _null_ _null_ ));
 DESCR("returns the type of the argument");
 

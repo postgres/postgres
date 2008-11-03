@@ -415,3 +415,32 @@ UPDATE trigger_test SET f3 = NULL;
 DROP TABLE trigger_test;
 
 DROP FUNCTION mytrigger();
+
+
+-- minimal update trigger
+
+CREATE TABLE min_updates_test (
+	f1	text,
+	f2 int,
+	f3 int);
+
+INSERT INTO min_updates_test VALUES ('a',1,2),('b','2',null);
+
+CREATE TRIGGER z_min_update 
+BEFORE UPDATE ON min_updates_test
+FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+
+\set QUIET false
+
+UPDATE min_updates_test SET f1 = f1;
+
+UPDATE min_updates_test SET f2 = f2 + 1;
+
+UPDATE min_updates_test SET f3 = 2 WHERE f3 is null;
+
+\set QUIET true
+
+SELECT * FROM min_updates_test;
+
+DROP TABLE min_updates_test;
+
