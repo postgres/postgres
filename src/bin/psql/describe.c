@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.185 2008/09/23 09:20:38 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.186 2008/11/03 19:08:56 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -826,6 +826,7 @@ describeOneTableDetails(const char *schemaname,
 	PGresult   *res = NULL;
 	printTableOpt myopt = pset.popt.topt;
 	printTableContent cont;
+	bool printTableInitialized = false;
 	int			i;
 	char	   *view_def = NULL;
 	char	   *headers[6];
@@ -887,9 +888,10 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 								atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
+	res = NULL;
 	
 	/*
-	 * This is used to get the values of a sequence and store it in an
+	 * If it's a sequence, fetch its values and store into an
 	 * array that will be used later.
 	 */
 	if (tableinfo.relkind == 'S')
@@ -898,12 +900,14 @@ describeOneTableDetails(const char *schemaname,
 		
 #define SEQ_NUM_COLS 10
 		printfPQExpBuffer(&buf,
-				"SELECT sequence_name, last_value, \n"
-				"		start_value, increment_by, \n"
-				"		max_value, min_value, cache_value, \n"
-				"		log_cnt, is_cycled, is_called \n"
-				"FROM \"%s\"",
-				relationname);
+						  "SELECT sequence_name, last_value,\n"
+						  "       start_value, increment_by,\n"
+						  "       max_value, min_value, cache_value,\n"
+						  "       log_cnt, is_cycled, is_called\n"
+						  "FROM %s",
+						  fmtId(schemaname));
+		/* must be separate because fmtId isn't reentrant */
+		appendPQExpBuffer(&buf, ".%s", fmtId(relationname));
 		
 		result = PSQLexec(buf.data, false);
 		if (!result)
@@ -1000,6 +1004,7 @@ describeOneTableDetails(const char *schemaname,
 	}
 	
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
+	printTableInitialized = true;
 
 	for (i = 0; i < cols; i++)
 		printTableAddHeader(&cont, headers[i], true, 'l');
@@ -1030,12 +1035,8 @@ describeOneTableDetails(const char *schemaname,
 
 		/* Type */
 		printTableAddCell(&cont, PQgetvalue(res, i, 1), false);
-		
-		/* A special 'Value' column for sequences */
-		if (tableinfo.relkind == 'S')
-			printTableAddCell(&cont, seq_values[i], false);
-		
-		/* Extra: not null and default */
+
+		/* Modifiers: not null and default */
 		if (show_modifiers)
 		{
 			resetPQExpBuffer(&tmpbuf);
@@ -1057,10 +1058,15 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddCell(&cont, modifiers[i], false);
 		}
 
+		/* Value: for sequences only */
+		if (tableinfo.relkind == 'S')
+			printTableAddCell(&cont, seq_values[i], false);
+
 		/* Storage and Description */
 		if (verbose)
 		{
 			char *storage = PQgetvalue(res, i, 5);
+
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0]=='p' ? "plain" :
 									  (storage[0]=='m' ? "main" :
@@ -1593,7 +1599,8 @@ describeOneTableDetails(const char *schemaname,
 error_return:
 
 	/* clean up */
-	printTableCleanup(&cont);
+	if (printTableInitialized)
+		printTableCleanup(&cont);
 	termPQExpBuffer(&buf);
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
