@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.152 2008/09/30 10:52:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.153 2008/11/03 20:47:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,7 +343,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			 * we must create temporary page to operate
 			 */
 			dist->buffer = state->stack->buffer;
-			dist->page = PageGetTempPage(BufferGetPage(dist->buffer), sizeof(GISTPageOpaqueData));
+			dist->page = PageGetTempPageCopySpecial(BufferGetPage(dist->buffer));
 
 			/* clean all flags except F_LEAF */
 			GistPageGetOpaque(dist->page)->flags = (is_leaf) ? F_LEAF : 0;

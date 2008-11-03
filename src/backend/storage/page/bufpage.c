@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.80 2008/07/13 21:50:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.81 2008/11/03 20:47:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,28 +254,59 @@ PageAddItem(Page page,
 
 /*
  * PageGetTempPage
- *		Get a temporary page in local memory for special processing
+ *		Get a temporary page in local memory for special processing.
+ *		The returned page is not initialized at all; caller must do that.
  */
 Page
-PageGetTempPage(Page page, Size specialSize)
+PageGetTempPage(Page page)
 {
 	Size		pageSize;
 	Page		temp;
-	PageHeader	thdr;
 
 	pageSize = PageGetPageSize(page);
 	temp = (Page) palloc(pageSize);
-	thdr = (PageHeader) temp;
 
-	/* copy old page in */
+	return temp;
+}
+
+/*
+ * PageGetTempPageCopy
+ *		Get a temporary page in local memory for special processing.
+ *		The page is initialized by copying the contents of the given page.
+ */
+Page
+PageGetTempPageCopy(Page page)
+{
+	Size		pageSize;
+	Page		temp;
+
+	pageSize = PageGetPageSize(page);
+	temp = (Page) palloc(pageSize);
+
 	memcpy(temp, page, pageSize);
 
-	/* set high, low water marks */
-	thdr->pd_lower = SizeOfPageHeaderData;
-	thdr->pd_upper = pageSize - MAXALIGN(specialSize);
+	return temp;
+}
 
-	/* clear out the middle */
-	MemSet((char *) temp + thdr->pd_lower, 0, thdr->pd_upper - thdr->pd_lower);
+/*
+ * PageGetTempPageCopySpecial
+ *		Get a temporary page in local memory for special processing.
+ *		The page is PageInit'd with the same special-space size as the
+ *		given page, and the special space is copied from the given page.
+ */
+Page
+PageGetTempPageCopySpecial(Page page)
+{
+	Size		pageSize;
+	Page		temp;
+
+	pageSize = PageGetPageSize(page);
+	temp = (Page) palloc(pageSize);
+
+	PageInit(temp, pageSize, PageGetSpecialSize(page));
+	memcpy(PageGetSpecialPointer(temp),
+		   PageGetSpecialPointer(page),
+		   PageGetSpecialSize(page));
 
 	return temp;
 }

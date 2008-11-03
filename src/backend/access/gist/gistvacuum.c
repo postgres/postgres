@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.39 2008/10/31 15:04:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.40 2008/11/03 20:47:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,18 +142,6 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buffer);
-}
-
-static Page
-GistPageGetCopyPage(Page page)
-{
-	Size		pageSize = PageGetPageSize(page);
-	Page		tmppage;
-
-	tmppage = (Page) palloc(pageSize);
-	memcpy(tmppage, page, pageSize);
-
-	return tmppage;
 }
 
 static ArrayTuple
@@ -325,7 +313,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 		addon = (IndexTuple *) palloc(sizeof(IndexTuple) * lenaddon);
 
 		/* get copy of page to work */
-		tempPage = GistPageGetCopyPage(page);
+		tempPage = PageGetTempPageCopy(page);
 
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		{

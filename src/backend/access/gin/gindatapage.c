@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.11 2008/06/19 00:46:03 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.12 2008/11/03 20:47:48 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -445,7 +445,7 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
 	char	   *ptr;
 	OffsetNumber separator;
 	ItemPointer bound;
-	Page		lpage = GinPageGetCopyPage(BufferGetPage(lbuf));
+	Page		lpage = PageGetTempPageCopy(BufferGetPage(lbuf));
 	ItemPointerData oldbound = *GinDataPageGetRightBound(lpage);
 	int			sizeofitem = GinSizeOfItem(lpage);
 	OffsetNumber maxoff = GinPageGetOpaque(lpage)->maxoff;

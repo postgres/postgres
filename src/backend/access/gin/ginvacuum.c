@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.24 2008/10/31 15:04:59 heikki Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.25 2008/11/03 20:47:48 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -546,7 +546,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 					 * On first difference we create temporary page in memory
 					 * and copies content in to it.
 					 */
-					tmppage = GinPageGetCopyPage(origpage);
+					tmppage = PageGetTempPageCopy(origpage);
 
 					if (newN > 0)
 					{

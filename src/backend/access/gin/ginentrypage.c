@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.17 2008/07/11 21:06:29 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.18 2008/11/03 20:47:48 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -458,7 +458,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 				leftrightmost = NULL;
 	static ginxlogSplit data;
 	Page		page;
-	Page		lpage = GinPageGetCopyPage(BufferGetPage(lbuf));
+	Page		lpage = PageGetTempPageCopy(BufferGetPage(lbuf));
 	Page		rpage = BufferGetPage(rbuf);
 	Size		pageSize = PageGetPageSize(lpage);
 
