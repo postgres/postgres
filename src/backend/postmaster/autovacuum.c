@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.85 2008/11/02 21:24:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.86 2008/11/03 19:03:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2149,8 +2149,10 @@ do_autovacuum(void)
 		 * It could have changed if something else processed the table while
 		 * we weren't looking.
 		 *
-		 * FIXME we ignore the possibility that the table was finished being
-		 * vacuumed in the last 500ms (PGSTAT_STAT_INTERVAL).  This is a bug.
+		 * Note: we have a special case in pgstat code to ensure that the stats
+		 * we read are as up-to-date as possible, to avoid the problem that
+		 * somebody just finished vacuuming this table.  The window to the race
+		 * condition is not closed but it is very small.
 		 */
 		MemoryContextSwitchTo(AutovacMemCxt);
 		tab = table_recheck_autovac(relid, table_toast_map);

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.182 2008/11/03 01:17:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.183 2008/11/03 19:03:41 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -3381,7 +3381,10 @@ backend_read_statsfile(void)
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
 	 * before now.  This indirectly ensures that the collector needn't write
-	 * the file more often than PGSTAT_STAT_INTERVAL.
+	 * the file more often than PGSTAT_STAT_INTERVAL.  In an autovacuum
+	 * worker, however, we want a lower delay to avoid using stale data, so we
+	 * use PGSTAT_RETRY_DELAY (since the number of worker is low, this
+	 * shouldn't be a problem).
 	 *
 	 * Note that we don't recompute min_ts after sleeping; so we might end up
 	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
@@ -3389,8 +3392,12 @@ backend_read_statsfile(void)
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
 	 */
-	min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
-										 -PGSTAT_STAT_INTERVAL);
+	if (IsAutoVacuumWorkerProcess())
+		min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
+											 -PGSTAT_RETRY_DELAY);
+	else
+		min_ts = TimestampTzPlusMilliseconds(GetCurrentTimestamp(),
+											 -PGSTAT_STAT_INTERVAL);
 
 	/*
 	 * Loop until fresh enough stats file is available or we ran out of time.
