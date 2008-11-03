@@ -469,3 +469,14 @@ select formarray(1, 'x'::text); -- fail, type mismatch
 select formarray(1, variadic array['x'::text]); -- fail, type mismatch
 
 drop function formarray(anyelement, variadic anyarray);
+
+-- test pg_typeof() function
+select pg_typeof(null);           -- unknown
+select pg_typeof(0);              -- integer
+select pg_typeof(0.0);            -- numeric
+select pg_typeof(1+1 = 2);        -- boolean
+select pg_typeof('x');            -- unknown
+select pg_typeof('' || '');       -- text
+select pg_typeof(pg_typeof(0));   -- regtype
+select pg_typeof(array[1.2,55.5]); -- numeric[]
+select pg_typeof(myleast(10, 1, 20, 33));  -- polymorphic input

@@ -721,3 +721,58 @@ LINE 1: select formarray(1, variadic array['x'::text]);
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 drop function formarray(anyelement, variadic anyarray);
+-- test pg_typeof() function
+select pg_typeof(null);           -- unknown
+ pg_typeof 
+-----------
+ unknown
+(1 row)
+
+select pg_typeof(0);              -- integer
+ pg_typeof 
+-----------
+ integer
+(1 row)
+
+select pg_typeof(0.0);            -- numeric
+ pg_typeof 
+-----------
+ numeric
+(1 row)
+
+select pg_typeof(1+1 = 2);        -- boolean
+ pg_typeof 
+-----------
+ boolean
+(1 row)
+
+select pg_typeof('x');            -- unknown
+ pg_typeof 
+-----------
+ unknown
+(1 row)
+
+select pg_typeof('' || '');       -- text
+ pg_typeof 
+-----------
+ text
+(1 row)
+
+select pg_typeof(pg_typeof(0));   -- regtype
+ pg_typeof 
+-----------
+ regtype
+(1 row)
+
+select pg_typeof(array[1.2,55.5]); -- numeric[]
+ pg_typeof 
+-----------
+ numeric[]
+(1 row)
+
+select pg_typeof(myleast(10, 1, 20, 33));  -- polymorphic input
+ pg_typeof 
+-----------
+ integer
+(1 row)
+

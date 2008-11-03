@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.64 2008/10/05 17:33:16 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.65 2008/11/03 17:51:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,4 +370,14 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 	}
 
 	SRF_RETURN_DONE(funcctx);
+}
+
+
+/*
+ * Return the type of the argument.
+ */
+Datum
+pg_typeof(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_OID(get_fn_expr_argtype(fcinfo->flinfo, 0));
 }

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.451 2008/10/27 09:37:46 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.452 2008/11/03 17:51:12 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11643,6 +11643,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>pg_tablespace_databases</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>pg_typeof</primary>
+   </indexterm>
+
   <para>
    <xref linkend="functions-info-catalog-table"> lists functions that
    extract information from the system catalogs.
@@ -11766,6 +11770,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>setof oid</type></entry>
        <entry>get the set of database OIDs that have objects in the tablespace</entry>
       </row>
+      <row>
+       <entry><literal><function>pg_typeof</function>(<parameter>any</parameter>)</literal></entry>
+       <entry><type>regtype</type></entry>
+       <entry>get the data type of any value</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -11846,6 +11855,12 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    tablespace, you will need to connect to the databases identified by
    <function>pg_tablespace_databases</function> and query their
    <structname>pg_class</> catalogs.
+  </para>
+
+  <para>
+   <function>pg_typeof</function> returns the OID of the data type of the
+   value that is passed to it.  This can be helpful for troubleshooting or
+   dynamically constructing SQL queries.
   </para>
 
    <indexterm>
