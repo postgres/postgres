@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.60 2008/10/31 15:04:59 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.61 2008/11/03 15:10:17 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ XLogCheckInvalidPages(void)
 }
 
 /*
- * XLogReadBufferExtended
+ * XLogReadBuffer
  *		A shorthand of XLogReadBufferExtended(), for reading from the main
  *		fork.
  *
@@ -216,7 +216,7 @@ XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
 }
 
 /*
- * XLogReadBuffer
+ * XLogReadBufferExtended
  *		Read a page during XLOG replay
  *
  * This is functionally comparable to ReadBuffer followed by
