@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.8 2008/11/03 22:14:40 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.9 2008/11/03 23:49:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,12 +83,13 @@ static void
 string_to_uuid(const char *source, pg_uuid_t *uuid)
 {
 	const char *src = source;
-	int	i, braces = 0;
+	bool		braces = false;
+	int	i;
 
 	if (src[0] == '{')
 	{
-		++src;
-		braces = 1;
+		src++;
+		braces = true;
 	}
 
 	for (i = 0; i < UUID_LEN; i++)
@@ -111,9 +112,9 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 
 	if (braces)
 	{
-		if (*src!= '}')
+		if (*src != '}')
 			goto syntax_error;
-		++src;
+		src++;
 	}
 
 	if (*src != '\0')
