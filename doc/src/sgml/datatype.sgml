@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.230 2008/10/14 17:12:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.231 2008/11/03 22:14:40 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3550,11 +3550,14 @@ a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
     <productname>PostgreSQL</productname> also accepts the following
     alternative forms for input:
     use of upper-case digits, the standard format surrounded by
-    braces, and omitting the hyphens.  Examples are:
+    braces, omitting some or all hyphens, adding a hyphen after any
+    group of four digits.  Examples are:
 <programlisting>
 A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11
 {a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11}
 a0eebc999c0b4ef8bb6d6bb9bd380a11
+a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
+{a0eebc99-9c0b4ef8-bb6d6bb9-bd380a11}
 </programlisting>
     Output is always in the standard form.
    </para>
