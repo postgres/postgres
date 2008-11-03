@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.73 2008/09/12 08:43:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.74 2008/11/03 15:39:38 alvherre Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -120,7 +120,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://docbook.sourceforge.net/projects/dsssl/index.html">DocBook DSSSL Stylesheets</ulink></term>
+     <term><ulink url="http://wiki.docbook.org/topic/DocBookDssslStylesheets">DocBook DSSSL Stylesheets</ulink></term>
      <listitem>
       <para>
        These contain the processing instructions for converting the
