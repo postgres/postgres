@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.109 2008/10/31 14:35:30 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.110 2008/11/04 14:58:22 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -267,6 +267,20 @@ MAKEINFO = makeinfo
 
 # Cancel built-in suffix rules, interfering with PS building
 .SUFFIXES:
+
+
+##
+## Experimental man page building through docbook2x
+##
+
+# called docbook2man on non-Debian
+DOCBOOK2MAN = docbook2x-man
+
+manx: postgres.xml stylesheet-man.xsl
+	$(DOCBOOK2MAN) -s $(srcdir)/stylesheet-man.xsl --string-param default-manpage-section=$(DEFAULTSECTION)  $<
+	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
+	mv *.1 man1/
+	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
 
 
 ##
