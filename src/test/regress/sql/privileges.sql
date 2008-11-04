@@ -48,7 +48,9 @@ INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
 UPDATE atest1 SET a = 1 WHERE b = 'blech';
 TRUNCATE atest1;
+BEGIN;
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
+COMMIT;
 
 REVOKE ALL ON atest1 FROM PUBLIC;
 SELECT * FROM atest1;
@@ -80,7 +82,9 @@ SELECT * FROM atest1 FOR UPDATE; -- ok
 SELECT * FROM atest2 FOR UPDATE; -- fail
 DELETE FROM atest2; -- fail
 TRUNCATE atest2; -- fail
+BEGIN;
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
+COMMIT;
 COPY atest2 FROM stdin; -- fail
 GRANT ALL ON atest1 TO PUBLIC; -- fail
 
@@ -105,7 +109,9 @@ SELECT * FROM atest1 FOR UPDATE; -- fail
 SELECT * FROM atest2 FOR UPDATE; -- fail
 DELETE FROM atest2; -- fail
 TRUNCATE atest2; -- fail
+BEGIN;
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
+COMMIT;
 COPY atest2 FROM stdin; -- fail
 
 -- checks in subquery, both fail

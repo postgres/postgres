@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.49 2008/09/08 00:47:40 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.50 2008/11/04 00:57:19 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -160,12 +160,15 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    </para>
 
    <para>
-    <command>LOCK TABLE</command> is useful only inside a transaction
-    block (<command>BEGIN</>/<command>COMMIT</> pair), since the lock
-    is dropped as soon as the transaction ends.  A <command>LOCK
-    TABLE</> command appearing outside any transaction block forms a
-    self-contained transaction, so the lock will be dropped as soon as
-    it is obtained.
+    <command>LOCK TABLE</> is useless outside a transaction block: the lock
+    would remain held only to the completion of the statement.  Therefore
+    <productname>PostgreSQL</productname> reports an error if <command>LOCK</>
+    is used outside a transaction block.
+    Use
+    <xref linkend="sql-begin" endterm="sql-begin-title"> and
+    <xref linkend="sql-commit" endterm="sql-commit-title">
+    (or <xref linkend="sql-rollback" endterm="sql-rollback-title">)
+    to define a transaction block.
    </para>
 
   <para>

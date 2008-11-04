@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.42 2007/10/24 23:27:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.43 2008/11/04 00:57:19 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -175,10 +175,9 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <productname>PostgreSQL</productname> reports an error if such a
     command is used outside a transaction block.
     Use
-    <xref linkend="sql-begin" endterm="sql-begin-title">,
+    <xref linkend="sql-begin" endterm="sql-begin-title"> and
     <xref linkend="sql-commit" endterm="sql-commit-title">
-    and
-    <xref linkend="sql-rollback" endterm="sql-rollback-title">
+    (or <xref linkend="sql-rollback" endterm="sql-rollback-title">)
     to define a transaction block.
    </para>
 

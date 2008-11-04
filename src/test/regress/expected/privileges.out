@@ -45,7 +45,9 @@ INSERT INTO atest1 VALUES (1, 'one');
 DELETE FROM atest1;
 UPDATE atest1 SET a = 1 WHERE b = 'blech';
 TRUNCATE atest1;
+BEGIN;
 LOCK atest1 IN ACCESS EXCLUSIVE MODE;
+COMMIT;
 REVOKE ALL ON atest1 FROM PUBLIC;
 SELECT * FROM atest1;
  a | b 
@@ -102,8 +104,10 @@ DELETE FROM atest2; -- fail
 ERROR:  permission denied for relation atest2
 TRUNCATE atest2; -- fail
 ERROR:  permission denied for relation atest2
+BEGIN;
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
 ERROR:  permission denied for relation atest2
+COMMIT;
 COPY atest2 FROM stdin; -- fail
 ERROR:  permission denied for relation atest2
 GRANT ALL ON atest1 TO PUBLIC; -- fail
@@ -155,7 +159,9 @@ DELETE FROM atest2; -- fail
 ERROR:  permission denied for relation atest2
 TRUNCATE atest2; -- fail
 ERROR:  permission denied for relation atest2
+BEGIN;
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
+COMMIT;
 COPY atest2 FROM stdin; -- fail
 ERROR:  permission denied for relation atest2
 -- checks in subquery, both fail
