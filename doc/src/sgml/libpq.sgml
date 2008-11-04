@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.266 2008/10/27 09:42:31 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.267 2008/11/04 22:36:07 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -233,8 +233,8 @@
          <term><literal>sslmode</literal></term>
          <listitem>
           <para>
-           This option determines whether or with what priority an
-           <acronym>SSL</> connection will be negotiated with the
+           This option determines whether or with what priority a
+           <acronym>SSL</> TCP/IP connection will be negotiated with the
            server. There are four modes: <literal>disable</> will attempt
            only an unencrypted <acronym>SSL</> connection;
            <literal>allow</> will negotiate, trying first a
@@ -243,7 +243,8 @@
            will negotiate, trying first an <acronym>SSL</> connection,
            then if that fails, trying a regular non-<acronym>SSL</>
            connection; <literal>require</> will try only an
-           <acronym>SSL</> connection.
+           <acronym>SSL</> connection.  <literal>sslmode</> is ignored
+           for Unix domain socket communication.
           </para>
 
           <para>
