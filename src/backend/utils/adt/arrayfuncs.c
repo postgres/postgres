@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.147 2008/07/21 04:47:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.148 2008/11/04 14:49:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1528,6 +1528,22 @@ array_send(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/*
+ * array_ndims :
+ *        returns the number of dimensions of the array pointed to by "v"
+ */
+Datum
+array_ndims(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+
+	/* Sanity check: does it look like an array at all? */
+	if (ARR_NDIM(v) <= 0 || ARR_NDIM(v) > MAXDIM)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(ARR_NDIM(v));
 }
 
 /*

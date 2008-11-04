@@ -53,6 +53,9 @@ SELECT a[1:3],
           d[1:1][1:2]
    FROM arrtest;
 
+SELECT array_ndims(a) AS a,array_ndims(b) AS b,array_ndims(c) AS c
+   FROM arrtest;
+
 SELECT array_dims(a) AS a,array_dims(b) AS b,array_dims(c) AS c
    FROM arrtest;
 

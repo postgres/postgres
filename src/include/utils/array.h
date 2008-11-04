@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.68 2008/07/16 00:48:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.69 2008/11/04 14:49:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,6 +195,7 @@ extern Datum btarraycmp(PG_FUNCTION_ARGS);
 extern Datum arrayoverlap(PG_FUNCTION_ARGS);
 extern Datum arraycontains(PG_FUNCTION_ARGS);
 extern Datum arraycontained(PG_FUNCTION_ARGS);
+extern Datum array_ndims(PG_FUNCTION_ARGS);
 extern Datum array_dims(PG_FUNCTION_ARGS);
 extern Datum array_lower(PG_FUNCTION_ARGS);
 extern Datum array_upper(PG_FUNCTION_ARGS);

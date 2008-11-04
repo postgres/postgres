@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.454 2008/11/04 00:59:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.455 2008/11/04 14:49:11 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9372,6 +9372,17 @@ SELECT NULLIF(value, '(none)') ...
         <entry>concatenate two arrays</entry>
         <entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal></entry>
         <entry><literal>{1,2,3,4,5}</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>array_ndims</function>(<type>anyarray</type>)
+         </literal>
+        </entry>
+        <entry><type>int</type></entry>
+        <entry>returns the number of dimensions of the array</entry>
+        <entry><literal>array_ndims(ARRAY[[1,2,3], [4,5,6]])</literal></entry>
+        <entry><literal>2</literal></entry>
        </row>
        <row>
         <entry>
