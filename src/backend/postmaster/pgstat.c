@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.183 2008/11/03 19:03:41 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.184 2008/11/04 11:04:06 petere Exp $
  * ----------
  */
 #include "postgres.h"
@@ -3405,7 +3405,7 @@ backend_read_statsfile(void)
 	 */
 	for (count = 0; count < PGSTAT_POLL_LOOP_COUNT; count++)
 	{
-		TimestampTz file_ts;
+		TimestampTz file_ts = 0;
 
 		CHECK_FOR_INTERRUPTS();
 
