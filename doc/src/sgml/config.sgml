@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.192 2008/11/03 01:17:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.193 2008/11/04 22:40:40 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -565,7 +565,8 @@ SET ENABLE_SEQSCAN TO OFF;
         Enables <acronym>SSL</> connections. Please read
         <xref linkend="ssl-tcp"> before using this. The default
         is <literal>off</>. This parameter can only be set at server
-        start.
+        start.  <acronym>SSL</> communication is only possible with
+        TCP/IP connections.
        </para>
       </listitem>
      </varlistentry>
