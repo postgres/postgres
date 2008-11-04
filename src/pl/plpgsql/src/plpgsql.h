@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.102 2008/10/09 17:24:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.103 2008/11/04 20:58:46 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,6 @@ typedef struct
 typedef struct
 {								/* Field in record */
 	int			dtype;
-	int			rfno;
 	char	   *fieldname;
 	int			recparentno;	/* dno of parent record */
 } PLpgSQL_recfield;
