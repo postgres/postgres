@@ -424,10 +424,21 @@ CREATE TABLE min_updates_test (
 	f2 int,
 	f3 int);
 
+CREATE TABLE min_updates_test_oids (
+	f1	text,
+	f2 int,
+	f3 int) WITH OIDS;
+
 INSERT INTO min_updates_test VALUES ('a',1,2),('b','2',null);
+
+INSERT INTO min_updates_test_oids VALUES ('a',1,2),('b','2',null);
 
 CREATE TRIGGER z_min_update 
 BEFORE UPDATE ON min_updates_test
+FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+
+CREATE TRIGGER z_min_update 
+BEFORE UPDATE ON min_updates_test_oids
 FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
 
 \set QUIET false
@@ -438,9 +449,19 @@ UPDATE min_updates_test SET f2 = f2 + 1;
 
 UPDATE min_updates_test SET f3 = 2 WHERE f3 is null;
 
+UPDATE min_updates_test_oids SET f1 = f1;
+
+UPDATE min_updates_test_oids SET f2 = f2 + 1;
+
+UPDATE min_updates_test_oids SET f3 = 2 WHERE f3 is null;
+
 \set QUIET true
 
 SELECT * FROM min_updates_test;
 
+SELECT * FROM min_updates_test_oids;
+
 DROP TABLE min_updates_test;
+
+DROP TABLE min_updates_test_oids;
 
