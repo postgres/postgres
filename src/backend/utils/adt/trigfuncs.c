@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/trigfuncs.c,v 1.3 2008/11/05 18:49:27 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/trigfuncs.c,v 1.4 2008/11/05 19:15:15 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,11 +62,10 @@ suppress_redundant_updates_trigger(PG_FUNCTION_ARGS)
 	newheader = newtuple->t_data;
 	oldheader = oldtuple->t_data;
 
- 	if (oldheader->t_infomask & HEAP_HASOID)
-	{
-		Oid oldoid = HeapTupleHeaderGetOid(oldheader);
-		HeapTupleHeaderSetOid(newheader, oldoid);
-	}
+ 	if (trigdata->tg_relation->rd_rel->relhasoids && 
+		!OidIsValid(HeapTupleHeaderGetOid(newheader)))
+		HeapTupleHeaderSetOid(newheader, HeapTupleHeaderGetOid(oldheader));
+
 
 	/* if the tuple payload is the same ... */
     if (newtuple->t_len == oldtuple->t_len &&
