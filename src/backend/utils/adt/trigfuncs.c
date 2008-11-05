@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/trigfuncs.c,v 1.4 2008/11/05 19:15:15 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/trigfuncs.c,v 1.5 2008/11/05 20:17:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,10 +62,16 @@ suppress_redundant_updates_trigger(PG_FUNCTION_ARGS)
 	newheader = newtuple->t_data;
 	oldheader = oldtuple->t_data;
 
+	/*
+	 * We are called before the OID, if any, has been transcribed from the
+	 * old tuple to the new (in heap_update).  To avoid a bogus compare
+	 * failure, copy the OID now.  But check that someone didn't already put
+	 * another OID value into newtuple.  (That's not actually possible at
+	 * present, but maybe someday.)
+	 */
  	if (trigdata->tg_relation->rd_rel->relhasoids && 
 		!OidIsValid(HeapTupleHeaderGetOid(newheader)))
 		HeapTupleHeaderSetOid(newheader, HeapTupleHeaderGetOid(oldheader));
-
 
 	/* if the tuple payload is the same ... */
     if (newtuple->t_len == oldtuple->t_len &&
@@ -81,7 +87,6 @@ suppress_redundant_updates_trigger(PG_FUNCTION_ARGS)
 		/* ... then suppress the update */
 		rettuple = NULL;
 	}
-	
-	
-    return PointerGetDatum(rettuple);
+
+	return PointerGetDatum(rettuple);
 }
