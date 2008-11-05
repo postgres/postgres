@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.104 2008/11/04 21:00:15 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.105 2008/11/05 00:07:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ typedef struct
 typedef struct PLpgSQL_expr
 {								/* SQL Query to plan and execute	*/
 	int			dtype;
-	int			exprno;
+	int			dno;
 	char	   *query;
 	SPIPlanPtr	plan;
 	Oid		   *plan_argtypes;
@@ -217,7 +217,7 @@ typedef struct PLpgSQL_expr
 typedef struct
 {								/* Scalar variable */
 	int			dtype;
-	int			varno;
+	int			dno;
 	char	   *refname;
 	int			lineno;
 
@@ -238,7 +238,7 @@ typedef struct
 typedef struct
 {								/* Row variable */
 	int			dtype;
-	int			rowno;
+	int			dno;
 	char	   *refname;
 	int			lineno;
 
@@ -260,7 +260,7 @@ typedef struct
 typedef struct
 {								/* Record variable (non-fixed structure) */
 	int			dtype;
-	int			recno;
+	int			dno;
 	char	   *refname;
 	int			lineno;
 
@@ -274,7 +274,7 @@ typedef struct
 typedef struct
 {								/* Field in record */
 	int			dtype;
-	int			rfno;
+	int			dno;
 	char	   *fieldname;
 	int			recparentno;	/* dno of parent record */
 } PLpgSQL_recfield;

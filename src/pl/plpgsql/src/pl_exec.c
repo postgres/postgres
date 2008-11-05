@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.223 2008/11/02 01:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.224 2008/11/05 00:07:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1665,7 +1665,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
 
-	var = (PLpgSQL_var *) (estate->datums[stmt->var->varno]);
+	var = (PLpgSQL_var *) (estate->datums[stmt->var->dno]);
 
 	/*
 	 * Get the value of the lower bound
@@ -2831,9 +2831,9 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 		/* Determine if we assign to a record or a row */
 		if (stmt->rec != NULL)
-			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
 		else if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
 		else
 			elog(ERROR, "unsupported target");
 
@@ -3009,9 +3009,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 
 		/* Determine if we assign to a record or a row */
 		if (stmt->rec != NULL)
-			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
 		else if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
 		else
 			elog(ERROR, "unsupported target");
 
@@ -3320,9 +3320,9 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		 * ----------
 		 */
 		if (stmt->rec != NULL)
-			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
 		else if (stmt->row != NULL)
-			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
 		else
 			elog(ERROR, "unsupported target");
 
@@ -4174,9 +4174,9 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	 * Determine if we assign to a record or a row
 	 */
 	if (stmt->rec != NULL)
-		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->dno]);
 	else if (stmt->row != NULL)
-		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+		row = (PLpgSQL_row *) (estate->datums[stmt->row->dno]);
 	else
 		elog(ERROR, "unsupported target");
 

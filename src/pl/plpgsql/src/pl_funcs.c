@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.73 2008/08/29 13:02:33 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.74 2008/11/05 00:07:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -893,12 +893,12 @@ dump_fetch(PLpgSQL_stmt_fetch *stmt)
 		if (stmt->rec != NULL)
 		{
 			dump_ind();
-			printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
+			printf("    target = %d %s\n", stmt->rec->dno, stmt->rec->refname);
 		}
 		if (stmt->row != NULL)
 		{
 			dump_ind();
-			printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);
+			printf("    target = %d %s\n", stmt->row->dno, stmt->row->refname);
 		}
 		dump_indent -= 2;
 	}
@@ -1107,14 +1107,14 @@ dump_execsql(PLpgSQL_stmt_execsql *stmt)
 		dump_ind();
 		printf("    INTO%s target = %d %s\n",
 			   stmt->strict ? " STRICT" : "",
-			   stmt->rec->recno, stmt->rec->refname);
+			   stmt->rec->dno, stmt->rec->refname);
 	}
 	if (stmt->row != NULL)
 	{
 		dump_ind();
 		printf("    INTO%s target = %d %s\n",
 			   stmt->strict ? " STRICT" : "",
-			   stmt->row->rowno, stmt->row->refname);
+			   stmt->row->dno, stmt->row->refname);
 	}
 	dump_indent -= 2;
 }
@@ -1133,14 +1133,14 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 		dump_ind();
 		printf("    INTO%s target = %d %s\n",
 			   stmt->strict ? " STRICT" : "",
-			   stmt->rec->recno, stmt->rec->refname);
+			   stmt->rec->dno, stmt->rec->refname);
 	}
 	if (stmt->row != NULL)
 	{
 		dump_ind();
 		printf("    INTO%s target = %d %s\n",
 			   stmt->strict ? " STRICT" : "",
-			   stmt->row->rowno, stmt->row->refname);
+			   stmt->row->dno, stmt->row->refname);
 	}
 	if (stmt->params != NIL)
 	{
