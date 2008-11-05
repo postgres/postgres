@@ -725,7 +725,14 @@ select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
  {1,5,3}
 (2 rows)
 
--- note: if above select doesn't produce the expected tuple order,
+select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}';
+    f1    
+----------
+ {1,2,3}
+ {1,2,10}
+(2 rows)
+
+-- note: if above selects don't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
 reset enable_seqscan;
 reset enable_bitmapscan;
@@ -856,6 +863,12 @@ select array[]::text[];
  array 
 -------
  {}
+(1 row)
+
+select '[0:1]={1.1,2.2}'::float8[];
+     float8      
+-----------------
+ [0:1]={1.1,2.2}
 (1 row)
 
 -- all of the above should be accepted
@@ -1014,3 +1027,51 @@ ERROR:  wrong number of array_subscripts
 DETAIL:  Low bound array has different size than dimensions array.
 select array_fill(1, array[1,2,null]);
 ERROR:  dimension values cannot be null
+select string_to_array('1|2|3', '|');
+ string_to_array 
+-----------------
+ {1,2,3}
+(1 row)
+
+select string_to_array('1|2|3|', '|');
+ string_to_array 
+-----------------
+ {1,2,3,""}
+(1 row)
+
+select string_to_array('1||2|3||', '||');
+ string_to_array 
+-----------------
+ {1,2|3,""}
+(1 row)
+
+select string_to_array('1|2|3', '');
+ string_to_array 
+-----------------
+ {1|2|3}
+(1 row)
+
+select string_to_array('', '|');
+ string_to_array 
+-----------------
+ 
+(1 row)
+
+select string_to_array('1|2|3', NULL);
+ string_to_array 
+-----------------
+ 
+(1 row)
+
+select string_to_array(NULL, '|');
+ string_to_array 
+-----------------
+ 
+(1 row)
+
+select array_to_string(string_to_array('1|2|3', '|'), '|');
+ array_to_string 
+-----------------
+ 1|2|3
+(1 row)
+

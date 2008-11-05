@@ -257,7 +257,8 @@ insert into arr_tbl values ('{1,2,10}');
 set enable_seqscan to off;
 set enable_bitmapscan to off;
 select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
--- note: if above select doesn't produce the expected tuple order,
+select * from arr_tbl where f1 >= '{1,2,3}' and f1 < '{1,5,3}';
+-- note: if above selects don't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
 reset enable_seqscan;
 reset enable_bitmapscan;
@@ -297,6 +298,7 @@ select '{
            @ 1 hour @ 42 minutes @ 20 seconds
          }'::interval[];
 select array[]::text[];
+select '[0:1]={1.1,2.2}'::float8[];
 -- all of the above should be accepted
 
 -- tests for array aggregates
@@ -374,3 +376,13 @@ select array_fill(1, null, array[2,2]);
 select array_fill(1, array[2,2], null);
 select array_fill(1, array[3,3], array[1,1,1]);
 select array_fill(1, array[1,2,null]);
+
+select string_to_array('1|2|3', '|');
+select string_to_array('1|2|3|', '|');
+select string_to_array('1||2|3||', '||');
+select string_to_array('1|2|3', '');
+select string_to_array('', '|');
+select string_to_array('1|2|3', NULL);
+select string_to_array(NULL, '|');
+
+select array_to_string(string_to_array('1|2|3', '|'), '|');
