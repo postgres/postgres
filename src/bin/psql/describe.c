@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.186 2008/11/03 19:08:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.187 2008/11/06 15:18:35 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -2082,10 +2082,10 @@ listCasts(const char *pattern)
 
 	initPQExpBuffer(&buf);
 	/*
-	 * We need left join here for binary casts.  Also note that we don't
-	 * attempt to localize '(binary coercible)', because there's too much
-	 * risk of gettext translating a function name that happens to match
-	 * some string in the PO database.
+	 * We need a left join to pg_proc for binary casts; the others are just
+	 * paranoia.  Also note that we don't attempt to localize '(binary
+	 * coercible)', because there's too much risk of gettext translating a
+	 * function name that happens to match some string in the PO database.
 	 */
 	printfPQExpBuffer(&buf,
 			   "SELECT pg_catalog.format_type(castsource, NULL) AS \"%s\",\n"
@@ -2099,12 +2099,38 @@ listCasts(const char *pattern)
 					  "       END as \"%s\"\n"
 				 "FROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
 					  "     ON c.castfunc = p.oid\n"
-					  "ORDER BY 1, 2",
+					  "     LEFT JOIN pg_catalog.pg_type ts\n"
+					  "     ON c.castsource = ts.oid\n"
+					  "     LEFT JOIN pg_catalog.pg_namespace ns\n"
+					  "     ON ns.oid = ts.typnamespace\n"
+					  "     LEFT JOIN pg_catalog.pg_type tt\n"
+					  "     ON c.casttarget = tt.oid\n"
+					  "     LEFT JOIN pg_catalog.pg_namespace nt\n"
+					  "     ON nt.oid = tt.typnamespace\n"
+					  "WHERE (true",
 					  gettext_noop("Source type"),
 					  gettext_noop("Target type"),
 					  gettext_noop("Function"),
 					  gettext_noop("no"), gettext_noop("in assignment"), gettext_noop("yes"),
 					  gettext_noop("Implicit?"));
+
+	/*
+	 * Match name pattern against either internal or external name of either
+	 * castsource or casttarget
+	 */
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "ns.nspname", "ts.typname",
+						  "pg_catalog.format_type(ts.oid, NULL)",
+						  "pg_catalog.pg_type_is_visible(ts.oid)");
+
+	appendPQExpBuffer(&buf, ") OR (true");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "nt.nspname", "tt.typname",
+						  "pg_catalog.format_type(tt.oid, NULL)",
+						  "pg_catalog.pg_type_is_visible(tt.oid)");
+
+	appendPQExpBuffer(&buf, ")\nORDER BY 1, 2;");
 
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);

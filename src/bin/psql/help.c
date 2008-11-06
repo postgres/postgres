@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.130 2008/08/29 15:52:07 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.131 2008/11/06 15:18:36 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -200,7 +200,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\da [PATTERN]  list aggregate functions\n"));
 	fprintf(output, _("  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\dc [PATTERN]  list conversions\n"));
-	fprintf(output, _("  \\dC            list casts\n"));
+	fprintf(output, _("  \\dC [PATTERN]  list casts\n"));
 	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
 	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
 	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));

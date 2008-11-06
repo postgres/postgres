@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.211 2008/09/06 20:18:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.212 2008/11/06 15:18:35 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -894,10 +894,13 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dC</literal></term>
+        <term><literal>\dC [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all available type casts.
+        If <replaceable class="parameter">pattern</replaceable>
+        is specified, only casts whose source or target types match the
+        pattern are listed.
         </para>
         </listitem>
       </varlistentry>
