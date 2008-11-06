@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.314 2008/10/31 21:07:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.315 2008/11/06 20:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1623,8 +1623,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * t_self field.
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
-						estate->es_output_cid,
-						true, true);
+						estate->es_output_cid, 0, NULL);
 
 	IncrAppended();
 	(estate->es_processed)++;
@@ -2621,7 +2620,8 @@ typedef struct
 	DestReceiver pub;			/* publicly-known function pointers */
 	EState	   *estate;			/* EState we are working with */
 	Relation	rel;			/* Relation to write to */
-	bool		use_wal;		/* do we need to WAL-log our writes? */
+	int			hi_options;		/* heap_insert performance options */
+	BulkInsertState bistate;	/* bulk insert state */
 } DR_intorel;
 
 /*
@@ -2753,14 +2753,17 @@ OpenIntoRel(QueryDesc *queryDesc)
 	myState = (DR_intorel *) queryDesc->dest;
 	Assert(myState->pub.mydest == DestIntoRel);
 	myState->estate = estate;
-
-	/*
-	 * We can skip WAL-logging the insertions, unless PITR is in use.
-	 */
-	myState->use_wal = XLogArchivingActive();
 	myState->rel = intoRelationDesc;
 
-	/* use_wal off requires rd_targblock be initially invalid */
+	/*
+	 * We can skip WAL-logging the insertions, unless PITR is in use.  We
+	 * can skip the FSM in any case.
+	 */
+	myState->hi_options = HEAP_INSERT_SKIP_FSM |
+		(XLogArchivingActive() ? 0 : HEAP_INSERT_SKIP_WAL);
+	myState->bistate = GetBulkInsertState();
+
+	/* Not using WAL requires rd_targblock be initially invalid */
 	Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
 }
 
@@ -2775,8 +2778,10 @@ CloseIntoRel(QueryDesc *queryDesc)
 	/* OpenIntoRel might never have gotten called */
 	if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
 	{
+		FreeBulkInsertState(myState->bistate);
+
 		/* If we skipped using WAL, must heap_sync before commit */
-		if (!myState->use_wal)
+		if (myState->hi_options & HEAP_INSERT_SKIP_WAL)
 			heap_sync(myState->rel);
 
 		/* close rel, but keep lock until commit */
@@ -2834,8 +2839,8 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	heap_insert(myState->rel,
 				tuple,
 				myState->estate->es_output_cid,
-				myState->use_wal,
-				false);			/* never any point in using FSM */
+				myState->hi_options,
+				myState->bistate);
 
 	/* We know this is a newly created relation, so there are no indexes */
 

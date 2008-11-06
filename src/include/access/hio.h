@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hio.h,v 1.36 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/hio.h,v 1.37 2008/11/06 20:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,26 @@
 #include "utils/relcache.h"
 #include "storage/buf.h"
 
+
+/*
+ * state for bulk inserts --- private to heapam.c and hio.c
+ *
+ * If current_buf isn't InvalidBuffer, then we are holding an extra pin
+ * on that buffer.
+ *
+ * "typedef struct BulkInsertStateData *BulkInsertState" is in heapam.h
+ */
+typedef struct BulkInsertStateData
+{
+	BufferAccessStrategy strategy;	/* our BULKWRITE strategy object */
+	Buffer current_buf;				/* current insertion target page */
+} BulkInsertStateData;
+
+
 extern void RelationPutHeapTuple(Relation relation, Buffer buffer,
 					 HeapTuple tuple);
 extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
-						  Buffer otherBuffer, bool use_fsm);
+						  Buffer otherBuffer, int options,
+						  struct BulkInsertStateData *bistate);
 
 #endif   /* HIO_H */

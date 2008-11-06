@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.268 2008/10/31 19:40:26 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.269 2008/11/06 20:51:14 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1800,22 +1800,52 @@ UpdateXmaxHintBits(HeapTupleHeader tuple, Buffer buffer, TransactionId xid)
 
 
 /*
+ * GetBulkInsertState - prepare status object for a bulk insert
+ */
+BulkInsertState
+GetBulkInsertState(void)
+{
+	BulkInsertState bistate;
+
+	bistate = (BulkInsertState) palloc(sizeof(BulkInsertStateData));
+	bistate->strategy = GetAccessStrategy(BAS_BULKWRITE);
+	bistate->current_buf = InvalidBuffer;
+	return bistate;
+}
+
+/*
+ * FreeBulkInsertState - clean up after finishing a bulk insert
+ */
+void
+FreeBulkInsertState(BulkInsertState bistate)
+{
+	if (bistate->current_buf != InvalidBuffer)
+		ReleaseBuffer(bistate->current_buf);		
+	FreeAccessStrategy(bistate->strategy);
+	pfree(bistate);
+}
+
+
+/*
  *	heap_insert		- insert tuple into a heap
  *
  * The new tuple is stamped with current transaction ID and the specified
  * command ID.
  *
- * If use_wal is false, the new tuple is not logged in WAL, even for a
- * non-temp relation.  Safe usage of this behavior requires that we arrange
- * that all new tuples go into new pages not containing any tuples from other
- * transactions, and that the relation gets fsync'd before commit.
- * (See also heap_sync() comments)
+ * If the HEAP_INSERT_SKIP_WAL option is specified, the new tuple is not
+ * logged in WAL, even for a non-temp relation.  Safe usage of this behavior
+ * requires that we arrange that all new tuples go into new pages not
+ * containing any tuples from other transactions, and that the relation gets
+ * fsync'd before commit.  (See also heap_sync() comments)
  *
- * use_fsm is passed directly to RelationGetBufferForTuple, which see for
- * more info.
+ * The HEAP_INSERT_SKIP_FSM option is passed directly to
+ * RelationGetBufferForTuple, which see for more info.
  *
- * Note that use_wal and use_fsm will be applied when inserting into the
- * heap's TOAST table, too, if the tuple requires any out-of-line data.
+ * Note that these options will be applied when inserting into the heap's
+ * TOAST table, too, if the tuple requires any out-of-line data.
+ *
+ * The BulkInsertState object (if any; bistate can be NULL for default
+ * behavior) is also just passed through to RelationGetBufferForTuple.
  *
  * The return value is the OID assigned to the tuple (either here or by the
  * caller), or InvalidOid if no OID.  The header fields of *tup are updated
@@ -1825,7 +1855,7 @@ UpdateXmaxHintBits(HeapTupleHeader tuple, Buffer buffer, TransactionId xid)
  */
 Oid
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-			bool use_wal, bool use_fsm)
+			int options, BulkInsertState bistate)
 {
 	TransactionId xid = GetCurrentTransactionId();
 	HeapTuple	heaptup;
@@ -1877,14 +1907,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		heaptup = tup;
 	}
 	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
-		heaptup = toast_insert_or_update(relation, tup, NULL,
-										 use_wal, use_fsm);
+		heaptup = toast_insert_or_update(relation, tup, NULL, options);
 	else
 		heaptup = tup;
 
 	/* Find buffer to insert this tuple into */
 	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
-									   InvalidBuffer, use_fsm);
+									   InvalidBuffer, options, bistate);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -1905,7 +1934,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (use_wal && !relation->rd_istemp)
+	if (!(options & HEAP_INSERT_SKIP_WAL) && !relation->rd_istemp)
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -2000,7 +2029,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 Oid
 simple_heap_insert(Relation relation, HeapTuple tup)
 {
-	return heap_insert(relation, tup, GetCurrentCommandId(true), true, true);
+	return heap_insert(relation, tup, GetCurrentCommandId(true), 0, NULL);
 }
 
 /*
@@ -2595,8 +2624,7 @@ l2:
 		if (need_toast)
 		{
 			/* Note we always use WAL and FSM during updates */
-			heaptup = toast_insert_or_update(relation, newtup, &oldtup,
-											 true, true);
+			heaptup = toast_insert_or_update(relation, newtup, &oldtup, 0);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
@@ -2623,7 +2651,7 @@ l2:
 		{
 			/* Assume there's no chance to put heaptup on same page. */
 			newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
-											   buffer, true);
+											   buffer, 0, NULL);
 		}
 		else
 		{
@@ -2640,7 +2668,7 @@ l2:
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
-												   buffer, true);
+												   buffer, 0, NULL);
 			}
 			else
 			{

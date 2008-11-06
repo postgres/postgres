@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.64 2008/01/01 19:45:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.65 2008/11/06 20:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,6 +382,9 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 			return NULL;
 
 		case BAS_BULKREAD:
+			ring_size = 256 * 1024 / BLCKSZ;
+			break;
+		case BAS_BULKWRITE:
 			ring_size = 256 * 1024 / BLCKSZ;
 			break;
 		case BAS_VACUUM:

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.139 2008/10/08 01:14:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.140 2008/11/06 20:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,12 @@
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
 
+
+/* "options" flag bits for heap_insert */
+#define HEAP_INSERT_SKIP_WAL	0x0001
+#define HEAP_INSERT_SKIP_FSM	0x0002
+
+typedef struct BulkInsertStateData *BulkInsertState;
 
 typedef enum
 {
@@ -86,8 +92,11 @@ extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
 extern void setLastTid(const ItemPointer tid);
 
+extern BulkInsertState GetBulkInsertState(void);
+extern void FreeBulkInsertState(BulkInsertState);
+
 extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-			bool use_wal, bool use_fsm);
+			int options, BulkInsertState bistate);
 extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
 			ItemPointer ctid, TransactionId *update_xmax,
 			CommandId cid, Snapshot crosscheck, bool wait);

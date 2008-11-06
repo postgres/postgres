@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.14 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.15 2008/11/06 20:51:14 tgl Exp $
 
 Notes About Shared Buffer Access Rules
 ======================================
@@ -234,6 +234,10 @@ the buffers.  Before introducing the buffer ring strategy in 8.3, VACUUM's
 buffers were sent to the freelist, which was effectively a buffer ring of 1
 buffer, resulting in excessive WAL flushing.  Allowing VACUUM to update
 256KB between WAL flushes should be more efficient.
+
+Bulk writes work similarly to VACUUM.  Currently this applies only to
+COPY IN and CREATE TABLE AS SELECT.  (Might it be interesting to make
+seqscan UPDATE and DELETE use the bulkwrite strategy?)
 
 
 Background Writer's Processing

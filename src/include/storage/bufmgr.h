@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.116 2008/10/31 15:05:00 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.117 2008/11/06 20:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@ typedef enum BufferAccessStrategyType
 	BAS_NORMAL,					/* Normal random access */
 	BAS_BULKREAD,				/* Large read-only scan (hint bit updates are
 								 * ok) */
+	BAS_BULKWRITE,				/* Large multi-block write (e.g. COPY IN) */
 	BAS_VACUUM					/* VACUUM */
 } BufferAccessStrategyType;
 

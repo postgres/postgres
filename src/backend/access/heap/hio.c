@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.73 2008/09/30 10:52:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.74 2008/11/06 20:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/hio.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
@@ -57,6 +58,43 @@ RelationPutHeapTuple(Relation relation,
 }
 
 /*
+ * Read in a buffer, using bulk-insert strategy if bistate isn't NULL.
+ */
+static Buffer
+ReadBufferBI(Relation relation, BlockNumber targetBlock,
+			 BulkInsertState bistate)
+{
+	Buffer buffer;
+
+	/* If not bulk-insert, exactly like ReadBuffer */
+	if (!bistate)
+		return ReadBuffer(relation, targetBlock);
+
+	/* If we have the desired block already pinned, re-pin and return it */
+	if (bistate->current_buf != InvalidBuffer)
+	{
+		if (BufferGetBlockNumber(bistate->current_buf) == targetBlock)
+		{
+			IncrBufferRefCount(bistate->current_buf);
+			return bistate->current_buf;
+		}
+		/* ... else drop the old buffer */
+		ReleaseBuffer(bistate->current_buf);
+		bistate->current_buf = InvalidBuffer;
+	}
+
+	/* Perform a read using the buffer strategy */
+	buffer = ReadBufferExtended(relation, MAIN_FORKNUM, targetBlock,
+								RBM_NORMAL, bistate->strategy);
+
+	/* Save the selected block as target for future inserts */
+	IncrBufferRefCount(buffer);
+	bistate->current_buf = buffer;
+
+	return buffer;
+}
+
+/*
  * RelationGetBufferForTuple
  *
  *	Returns pinned and exclusive-locked buffer of a page in given relation
@@ -80,19 +118,25 @@ RelationPutHeapTuple(Relation relation,
  *	happen if space is freed in that page after heap_update finds there's not
  *	enough there).	In that case, the page will be pinned and locked only once.
  *
- *	If use_fsm is true (the normal case), we use FSM to help us find free
- *	space.	If use_fsm is false, we always append a new empty page to the
- *	end of the relation if the tuple won't fit on the current target page.
+ *	We normally use FSM to help us find free space.	 However,
+ *	if HEAP_INSERT_SKIP_FSM is specified, we just append a new empty page to
+ *	the end of the relation if the tuple won't fit on the current target page.
  *	This can save some cycles when we know the relation is new and doesn't
  *	contain useful amounts of free space.
  *
- *	The use_fsm = false case is also useful for non-WAL-logged additions to a
+ *	HEAP_INSERT_SKIP_FSM is also useful for non-WAL-logged additions to a
  *	relation, if the caller holds exclusive lock and is careful to invalidate
  *	relation->rd_targblock before the first insertion --- that ensures that
  *	all insertions will occur into newly added pages and not be intermixed
  *	with tuples from other transactions.  That way, a crash can't risk losing
  *	any committed data of other transactions.  (See heap_insert's comments
  *	for additional constraints needed for safe usage of this behavior.)
+ *
+ *	The caller can also provide a BulkInsertState object to optimize many
+ *	insertions into the same relation.  This keeps a pin on the current
+ *	insertion target page (to save pin/unpin cycles) and also passes a
+ *	BULKWRITE buffer selection strategy object to the buffer manager.
+ *	Passing NULL for bistate selects the default behavior.
  *
  *	We always try to avoid filling existing pages further than the fillfactor.
  *	This is OK since this routine is not consulted when updating a tuple and
@@ -104,8 +148,10 @@ RelationPutHeapTuple(Relation relation,
  */
 Buffer
 RelationGetBufferForTuple(Relation relation, Size len,
-						  Buffer otherBuffer, bool use_fsm)
+						  Buffer otherBuffer, int options,
+						  struct BulkInsertStateData *bistate)
 {
+	bool		use_fsm = !(options & HEAP_INSERT_SKIP_FSM);
 	Buffer		buffer = InvalidBuffer;
 	Page		page;
 	Size		pageFreeSpace,
@@ -115,6 +161,9 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	bool		needLock;
 
 	len = MAXALIGN(len);		/* be conservative */
+
+	/* Bulk insert is not supported for updates, only inserts. */
+	Assert(otherBuffer == InvalidBuffer || !bistate);
 
 	/*
 	 * If we're gonna fail for oversize tuple, do it right away
@@ -137,25 +186,27 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 	/*
 	 * We first try to put the tuple on the same page we last inserted a tuple
-	 * on, as cached in the relcache entry.  If that doesn't work, we ask the
-	 * shared Free Space Map to locate a suitable page.  Since the FSM's info
-	 * might be out of date, we have to be prepared to loop around and retry
-	 * multiple times.	(To insure this isn't an infinite loop, we must update
-	 * the FSM with the correct amount of free space on each page that proves
-	 * not to be suitable.)  If the FSM has no record of a page with enough
-	 * free space, we give up and extend the relation.
+	 * on, as cached in the BulkInsertState or relcache entry.  If that
+	 * doesn't work, we ask the Free Space Map to locate a suitable page.
+	 * Since the FSM's info might be out of date, we have to be prepared to
+	 * loop around and retry multiple times. (To insure this isn't an infinite
+	 * loop, we must update the FSM with the correct amount of free space on
+	 * each page that proves not to be suitable.)  If the FSM has no record of
+	 * a page with enough free space, we give up and extend the relation.
 	 *
 	 * When use_fsm is false, we either put the tuple onto the existing target
 	 * page or extend the relation.
 	 */
-	if (len + saveFreeSpace <= MaxHeapTupleSize)
-		targetBlock = relation->rd_targblock;
-	else
+	if (len + saveFreeSpace > MaxHeapTupleSize)
 	{
-		/* can't fit, don't screw up FSM request tracking by trying */
+		/* can't fit, don't bother asking FSM */
 		targetBlock = InvalidBlockNumber;
 		use_fsm = false;
 	}
+	else if (bistate && bistate->current_buf != InvalidBuffer)
+		targetBlock = BufferGetBlockNumber(bistate->current_buf);
+	else
+		targetBlock = relation->rd_targblock;
 
 	if (targetBlock == InvalidBlockNumber && use_fsm)
 	{
@@ -189,7 +240,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		if (otherBuffer == InvalidBuffer)
 		{
 			/* easy case */
-			buffer = ReadBuffer(relation, targetBlock);
+			buffer = ReadBufferBI(relation, targetBlock, bistate);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		}
 		else if (otherBlock == targetBlock)
@@ -274,7 +325,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * it worth keeping an accurate file length in shared memory someplace,
 	 * rather than relying on the kernel to do it for us?
 	 */
-	buffer = ReadBuffer(relation, P_NEW);
+	buffer = ReadBufferBI(relation, P_NEW, bistate);
 
 	/*
 	 * We can be certain that locking the otherBuffer first is OK, since it
