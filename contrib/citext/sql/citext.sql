@@ -220,6 +220,12 @@ SELECT '4.0'::citext::float8 = 4.0 AS t;
 SELECT 'foo'::name::citext = 'foo' AS t;
 SELECT 'foo'::citext::name = 'foo'::name AS t;
 
+SELECT 'f'::char::citext = 'f' AS t;
+SELECT 'f'::citext::char = 'f'::char AS t;
+
+SELECT 'f'::"char"::citext = 'f' AS t;
+SELECT 'f'::citext::"char" = 'f'::"char" AS t;
+
 SELECT 'foo'::bytea::citext = 'foo' AS t;
 SELECT 'foo'::citext::bytea = 'foo'::bytea AS t;
 
@@ -243,9 +249,6 @@ SELECT '192.168.100.128'::citext::inet = '192.168.100.128'::inet AS t;
 
 SELECT '08:00:2b:01:02:03'::macaddr::citext = '08:00:2b:01:02:03' AS t;
 SELECT '08:00:2b:01:02:03'::citext::macaddr = '08:00:2b:01:02:03'::macaddr AS t;
-
-SELECT '<p>foo</p>'::xml::citext = '<p>foo</p>' AS t;
-SELECT '<p>foo</p>'::citext::xml::text = '<p>foo</p>'::xml::text AS t;
 
 SELECT '1999-01-08 04:05:06'::timestamp::citext = '1999-01-08 04:05:06'::timestamp::text AS t;
 SELECT '1999-01-08 04:05:06'::citext::timestamp = '1999-01-08 04:05:06'::timestamp AS t;
@@ -300,6 +303,8 @@ CREATE TABLE caster (
     text        text,
     varchar     varchar,
     bpchar      bpchar,
+    char        char,
+    chr         "char",
     name        name,    
     bytea       bytea,
     boolean     boolean,
@@ -312,7 +317,6 @@ CREATE TABLE caster (
     cidr        cidr,   
     inet        inet,
     macaddr     macaddr,
-    xml         xml,
     money       money,
     timestamp   timestamp,
     timestamptz timestamptz,
@@ -345,6 +349,16 @@ INSERT INTO caster (bpchar)        VALUES ('foo'::text);
 INSERT INTO caster (text)          VALUES ('foo'::bpchar);
 INSERT INTO caster (bpchar)        VALUES ('foo'::citext);
 INSERT INTO caster (citext)        VALUES ('foo'::bpchar);
+
+INSERT INTO caster (char)          VALUES ('f'::text);
+INSERT INTO caster (text)          VALUES ('f'::char);
+INSERT INTO caster (char)          VALUES ('f'::citext);
+INSERT INTO caster (citext)        VALUES ('f'::char);
+
+INSERT INTO caster (chr)           VALUES ('f'::text);
+INSERT INTO caster (text)          VALUES ('f'::"char");
+INSERT INTO caster (chr)           VALUES ('f'::citext);
+INSERT INTO caster (citext)        VALUES ('f'::"char");
 
 INSERT INTO caster (name)          VALUES ('foo'::text);
 INSERT INTO caster (text)          VALUES ('foo'::name);
@@ -416,12 +430,6 @@ INSERT INTO caster (macaddr)       VALUES ('08:00:2b:01:02:03'::text);
 INSERT INTO caster (text)          VALUES ('08:00:2b:01:02:03'::macaddr);
 INSERT INTO caster (macaddr)       VALUES ('08:00:2b:01:02:03'::citext);
 INSERT INTO caster (citext)        VALUES ('08:00:2b:01:02:03'::macaddr);
-
--- Cannot cast to xml on assignment.
-INSERT INTO caster (xml)           VALUES ('<p>foo</p>'::text);
-INSERT INTO caster (text)          VALUES ('<p>foo</p>'::xml);
-INSERT INTO caster (xml)           VALUES ('<p>foo</p>'::citext);
-INSERT INTO caster (citext)        VALUES ('<p>foo</p>'::xml);
 
 -- Cannot cast to money on assignment.
 INSERT INTO caster (money)         VALUES ('12'::text);
