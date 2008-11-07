@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/dbcommands.h,v 1.47 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/dbcommands.h,v 1.48 2008/11/07 18:25:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef struct xl_dbase_drop_rec
 extern void createdb(const CreatedbStmt *stmt);
 extern void dropdb(const char *dbname, bool missing_ok);
 extern void RenameDatabase(const char *oldname, const char *newname);
-extern void AlterDatabase(AlterDatabaseStmt *stmt);
+extern void AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel);
 extern void AlterDatabaseSet(AlterDatabaseSetStmt *stmt);
 extern void AlterDatabaseOwner(const char *dbname, Oid newOwnerId);
 

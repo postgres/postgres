@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.173 2008/10/04 21:56:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.174 2008/11/07 18:25:07 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -420,6 +420,7 @@ static const SchemaQuery Query_for_list_of_views = {
 "  UNION ALL SELECT 'transaction' "\
 "  UNION ALL SELECT 'session' "\
 "  UNION ALL SELECT 'role' "\
+"  UNION ALL SELECT 'tablespace' "\
 "  UNION ALL SELECT 'all') ss "\
 " WHERE substring(name,1,%d)='%s'"
 
@@ -728,7 +729,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "INDEX") == 0)
 	{
 		static const char *const list_ALTERINDEX[] =
-		{"SET TABLESPACE", "OWNER TO", "RENAME TO", "SET", "RESET", NULL};
+		{"OWNER TO", "RENAME TO", "SET", "RESET", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERINDEX);
 	}
@@ -945,9 +946,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_COLUMNALTER);
 	}
-	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0)
+	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "CLUSTER") == 0)
 		COMPLETE_WITH_CONST("ON");
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "CLUSTER") == 0 &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 	{
 		completion_info_charp = prev3_wd;

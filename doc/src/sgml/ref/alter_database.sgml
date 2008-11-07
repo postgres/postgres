@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.20 2007/09/03 18:46:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.21 2008/11/07 18:25:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,6 +29,8 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
@@ -65,6 +67,15 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
    indirect member of the new owning role, and you must have the
    <literal>CREATEDB</literal> privilege.
    (Note that superusers have all these privileges automatically.)
+  </para>
+
+  <para>
+   The fourth form changes the default tablespace of the database.
+   Only the database owner or a superuser can do this; you must also have
+   create privilege for the new tablespace.
+   This command physically moves any tables or indexes in the database's old
+   default tablespace to the new tablespace.  Note that tables and indexes
+   in non-default tablespaces are not affected.
   </para>
 
   <para>
@@ -121,6 +132,15 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_tablespace</replaceable></term>
+    <listitem>
+     <para>
+      The new default tablespace of the database.
+     </para>
+    </listitem>
+   </varlistentry> 
 
      <varlistentry>
       <term><replaceable>configuration_parameter</replaceable></term>
@@ -189,6 +209,7 @@ ALTER DATABASE test SET enable_indexscan TO off;
    <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
    <member><xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title"></member>
    <member><xref linkend="sql-set" endterm="sql-set-title"></member>
+   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

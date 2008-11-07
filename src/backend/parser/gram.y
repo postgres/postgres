@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.634 2008/10/31 16:36:13 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.635 2008/11/07 18:25:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5556,6 +5556,14 @@ AlterDatabaseStmt:
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = $3;
 					n->options = $5;
+					$$ = (Node *)n;
+				 }
+			| ALTER DATABASE database_name SET TABLESPACE name
+				 {
+					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
+					n->dbname = $3;
+					n->options = list_make1(makeDefElem("tablespace",
+													(Node *)makeString($6)));
 					$$ = (Node *)n;
 				 }
 		;

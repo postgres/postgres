@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.97 2008/03/04 19:54:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.98 2008/11/07 18:25:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,6 +658,45 @@ UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objsubid);
 
 	LockRelease(&tag, lockmode, false);
+}
+
+/*
+ *		LockSharedObjectForSession
+ *
+ * Obtain a session-level lock on a shared-across-databases object.
+ * See LockRelationIdForSession for notes about session-level locks.
+ */
+void
+LockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid,
+						   LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   InvalidOid,
+					   classid,
+					   objid,
+					   objsubid);
+
+	(void) LockAcquire(&tag, lockmode, true, false);
+}
+
+/*
+ *		UnlockSharedObjectForSession
+ */
+void
+UnlockSharedObjectForSession(Oid classid, Oid objid, uint16 objsubid,
+							 LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   InvalidOid,
+					   classid,
+					   objid,
+					   objsubid);
+
+	LockRelease(&tag, lockmode, true);
 }
 
 
