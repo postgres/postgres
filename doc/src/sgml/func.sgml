@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.455 2008/11/04 14:49:11 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.456 2008/11/07 22:54:41 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11871,7 +11871,24 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   <para>
    <function>pg_typeof</function> returns the OID of the data type of the
    value that is passed to it.  This can be helpful for troubleshooting or
-   dynamically constructing SQL queries.
+   dynamically constructing SQL queries.  The function is declared as
+   returning <type>regtype</>, which is an OID alias type (see
+   <xref linkend="datatype-oid">); this means that it is the same as an
+   OID for comparison purposes but displays as a type name.  For example:
+<programlisting>
+SELECT pg_typeof(33);
+
+ pg_typeof 
+-----------
+ integer
+(1 row)
+
+SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
+ typlen 
+--------
+      4
+(1 row)
+</programlisting>
   </para>
 
    <indexterm>
