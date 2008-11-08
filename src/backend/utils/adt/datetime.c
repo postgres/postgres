@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.195 2008/10/02 13:47:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.196 2008/11/08 20:51:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2863,7 +2863,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 					if (*cp != '\0')
 						return DTERR_BAD_FORMAT;
 					type = DTK_MONTH;
-					if (val < 0)
+					if (*field[i] == '-')
 						val2 = -val2;
 					val = val * MONTHS_PER_YEAR + val2;
 					fval = 0;
