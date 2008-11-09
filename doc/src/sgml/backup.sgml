@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.120 2008/07/18 17:33:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.121 2008/11/09 17:51:15 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -945,8 +945,6 @@ SELECT pg_stop_backup();
      If you didn't archive <filename>pg_xlog/</> at all, then recreate it,
      being careful to ensure that you re-establish it as a symbolic link
      if you had it set up that way before.
-     Be sure to recreate the subdirectory
-     <filename>pg_xlog/archive_status/</> as well.
     </para>
    </listitem>
    <listitem>

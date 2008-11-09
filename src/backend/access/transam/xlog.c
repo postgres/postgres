@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.321 2008/10/31 15:04:59 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.322 2008/11/09 17:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,6 +416,7 @@ static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
+static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
@@ -2825,6 +2826,53 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 }
 
 /*
+ * Verify whether pg_xlog and pg_xlog/archive_status exist.
+ * If the latter does not exist, recreate it.
+ *
+ * It is not the goal of this function to verify the contents of these
+ * directories, but to help in cases where someone has performed a cluster
+ * copy for PITR purposes but omitted pg_xlog from the copy.
+ *
+ * We could also recreate pg_xlog if it doesn't exist, but a deliberate
+ * policy decision was made not to.  It is fairly common for pg_xlog to be
+ * a symlink, and if that was the DBA's intent then automatically making a
+ * plain directory would result in degraded performance with no notice.
+ */
+static void
+ValidateXLOGDirectoryStructure(void)
+{
+	char		path[MAXPGPATH];
+	struct stat	stat_buf;
+
+	/* Check for pg_xlog; if it doesn't exist, error out */
+	if (stat(XLOGDIR, &stat_buf) != 0 ||
+		!S_ISDIR(stat_buf.st_mode))
+		ereport(FATAL, 
+				(errmsg("required WAL directory \"%s\" does not exist",
+						XLOGDIR)));
+
+	/* Check for archive_status */
+	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status");
+	if (stat(path, &stat_buf) == 0)
+	{
+		/* Check for weird cases where it exists but isn't a directory */
+		if (!S_ISDIR(stat_buf.st_mode))
+			ereport(FATAL, 
+					(errmsg("required WAL directory \"%s\" does not exist",
+							path)));
+	}
+	else
+	{
+		ereport(LOG,
+				(errmsg("creating missing WAL directory \"%s\"", path)));
+		if (mkdir(path, 0700) < 0)
+			ereport(FATAL, 
+					(errmsg("could not create missing directory \"%s\": %m",
+							path)));
+	}
+}
+
+/*
  * Remove previous backup history files.  This also retries creation of
  * .ready files for any backup history files for which XLogArchiveNotify
  * failed earlier.
@@ -4877,6 +4925,13 @@ StartupXLOG(void)
 	if (ControlFile->state != DB_SHUTDOWNED)
 		pg_usleep(60000000L);
 #endif
+
+	/*
+	 * Verify that pg_xlog and pg_xlog/archive_status exist.  In cases where
+	 * someone has performed a copy for PITR, these directories may have
+	 * been excluded and need to be re-created.
+	 */
+	ValidateXLOGDirectoryStructure();
 
 	/*
 	 * Initialize on the assumption we want to recover to the same timeline
