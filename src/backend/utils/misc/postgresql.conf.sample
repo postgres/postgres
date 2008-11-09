@@ -419,6 +419,7 @@
 # - Locale and Formatting -
 
 #datestyle = 'iso, mdy'
+#intervalstyle = 'postgres'
 #timezone = unknown			# actually, defaults to TZ environment
 					# setting
 #timezone_abbreviations = 'Default'     # Select the set of available time zone

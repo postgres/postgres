@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.267 2008/11/04 22:36:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.268 2008/11/09 00:28:34 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -1019,13 +1019,15 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
        <literal>is_superuser</>,
        <literal>session_authorization</>,
        <literal>DateStyle</>,
+       <literal>IntervalStyle</>,
        <literal>TimeZone</>,
        <literal>integer_datetimes</>, and
        <literal>standard_conforming_strings</>.
        (<literal>server_encoding</>, <literal>TimeZone</>, and
        <literal>integer_datetimes</> were not reported by releases before 8.0;
        <literal>standard_conforming_strings</> was not reported by releases
-       before 8.1.)
+       before 8.1; <literal>IntervalStyle</> was not reported by releases
+       before 8.4.)
        Note that
        <literal>server_version</>,
        <literal>server_encoding</> and
@@ -5758,6 +5760,17 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGDATESTYLE</envar> sets the default style of date/time
       representation.  (Equivalent to <literal>SET datestyle TO
+      ...</literal>.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGINTERVALSTYLE</envar></primary>
+      </indexterm>
+      <envar>PGINTERVALSTYLE</envar> sets the default style of interval
+      representation.  (Equivalent to <literal>SET intervalstyle TO
       ...</literal>.)
      </para>
     </listitem>

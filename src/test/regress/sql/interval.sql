@@ -3,6 +3,7 @@
 --
 
 SET DATESTYLE = 'ISO';
+SET IntervalStyle to postgres;
 
 -- check acceptance of "time zone style"
 SELECT INTERVAL '01:00' AS "One hour";
@@ -94,6 +95,7 @@ FROM INTERVAL_MULDIV_TBL;
 DROP TABLE INTERVAL_MULDIV_TBL;
 
 SET DATESTYLE = 'postgres';
+SET IntervalStyle to postgres_verbose;
 
 SELECT '' AS ten, * FROM INTERVAL_TBL;
 
@@ -118,6 +120,8 @@ SELECT justify_interval(interval '1 month -1 hour') as "1 month -1 hour";
 
 -- test fractional second input, and detection of duplicate units
 SET DATESTYLE = 'ISO';
+SET IntervalStyle TO postgres;
+
 SELECT '1 millisecond'::interval, '1 microsecond'::interval,
        '500 seconds 99 milliseconds 51 microseconds'::interval;
 SELECT '3 days 5 milliseconds'::interval;
@@ -174,3 +178,25 @@ SELECT interval '1 2:03:04.5678' hour to second(2);
 SELECT interval '1 2.3456' minute to second(2);
 SELECT interval '1 2:03.5678' minute to second(2);
 SELECT interval '1 2:03:04.5678' minute to second(2);
+
+-- test inputting and outputting SQL standard interval literals
+SET IntervalStyle TO sql_standard;
+SELECT  interval '0'                       AS "zero",
+        interval '1-2' year to month       AS "year-month",
+        interval '1 2:03:04' day to second AS "day-time",
+        - interval '1-2'                   AS "negative year-month",
+        - interval '1 2:03:04'             AS "negative day-time";
+
+-- test input of some not-quite-standard interval values in the sql style
+SET IntervalStyle TO postgres;
+SELECT  interval '+1 -1:00:00',
+        interval '-1 +1:00:00',
+        interval '+1-2 -3 +4:05:06.789',
+        interval '-1-2 +3 -4:05:06.789';
+
+-- test output of couple non-standard interval values in the sql style
+SET IntervalStyle TO sql_standard;
+SELECT  interval '1 day -1 hours',
+        interval '-1 days +1 hours',
+        interval '1 years 2 months -3 days 4 hours 5 minutes 6.789 seconds',
+        - interval '1 years 2 months -3 days 4 hours 5 minutes 6.789 seconds';

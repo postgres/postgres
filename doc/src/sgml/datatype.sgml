@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.231 2008/11/03 22:14:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.232 2008/11/09 00:28:34 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1420,14 +1420,6 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
-        <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
-        <entry>12 bytes</entry>
-        <entry>time intervals</entry>
-        <entry>-178000000 years</entry>
-        <entry>178000000 years</entry>
-        <entry>1 microsecond / 14 digits</entry>
-       </row>
-       <row>
         <entry><type>date</type></entry>
         <entry>4 bytes</entry>
         <entry>dates only</entry>
@@ -1449,6 +1441,14 @@ SELECT b, char_length(b) FROM test2;
         <entry>times of day only, with time zone</entry>
         <entry>00:00:00+1459</entry>
         <entry>24:00:00-1459</entry>
+        <entry>1 microsecond / 14 digits</entry>
+       </row>
+       <row>
+        <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
+        <entry>12 bytes</entry>
+        <entry>time intervals</entry>
+        <entry>-178000000 years</entry>
+        <entry>178000000 years</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
       </tbody>
@@ -1929,65 +1929,6 @@ January 8 04:05:06 1999 PST
     </sect3>
 
     <sect3>
-     <title>Intervals</title>
-
-     <indexterm>
-      <primary>interval</primary>
-     </indexterm>
-
-      <para>
-       <type>interval</type> values can be written with the following syntax:
-
-<programlisting>
-<optional>@</> <replaceable>quantity</> <replaceable>unit</> <optional><replaceable>quantity</> <replaceable>unit</>...</> <optional><replaceable>direction</></optional>
-</programlisting>
-
-      Where: <replaceable>quantity</> is a number (possibly signed);
-      <replaceable>unit</> is <literal>microsecond</literal>,
-      <literal>millisecond</literal>, <literal>second</literal>,
-      <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
-      <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
-      <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
-      or abbreviations or plurals of these units;
-      <replaceable>direction</> can be <literal>ago</literal> or
-      empty.  The at sign (<literal>@</>) is optional noise.  The amounts
-      of different units are implicitly added up with appropriate
-      sign accounting.  <literal>ago</literal> negates all the fields.
-     </para>
-
-     <para>
-      Quantities of days, hours, minutes, and seconds can be specified without
-      explicit unit markings.  For example, <literal>'1 12:59:10'</> is read
-      the same as <literal>'1 day 12 hours 59 min 10 sec'</>.  Also,
-      a combination of years and months can be specified with a dash;
-      for example <literal>'200-10'</> is read the same as <literal>'200 years
-      10 months'</>.  (These shorter forms are in fact the only ones allowed
-      by the SQL standard.)
-     </para>
-
-     <para>
-      When writing an interval constant with a <replaceable>fields</>
-      specification, or when assigning to an interval column that was defined
-      with a <replaceable>fields</> specification, the interpretation of
-      unmarked quantities depends on the <replaceable>fields</>.  For
-      example <literal>INTERVAL '1' YEAR</> is read as 1 year, whereas
-      <literal>INTERVAL '1'</> means 1 second.
-     </para>
-
-     <para>
-      Internally <type>interval</> values are stored as months, days,
-      and seconds. This is done because the number of days in a month
-      varies, and a day can have 23 or 25 hours if a daylight savings
-      time adjustment is involved. Because intervals are usually created
-      from constant strings or <type>timestamp</> subtraction, this
-      storage method works well in most cases. Functions
-      <function>justify_days</> and <function>justify_hours</> are
-      available for adjusting days and hours that overflow their normal
-      periods.
-     </para>
-    </sect3>
-
-    <sect3>
      <title>Special Values</title>
 
      <indexterm>
@@ -2190,18 +2131,6 @@ January 8 04:05:06 1999 PST
      </table>
 
     <para>
-     <type>interval</type> output looks like the input format, except
-     that units like <literal>century</literal> or
-     <literal>week</literal> are converted to years and days and
-     <literal>ago</literal> is converted to an appropriate sign.  In
-     ISO mode the output looks like:
-
-<programlisting>
-<optional> <replaceable>quantity</> <replaceable>unit</> <optional> ... </> </> <optional> <replaceable>days</> </> <optional> <replaceable>hours</>:<replaceable>minutes</>:<replaceable>seconds</> </optional>
-</programlisting>
-    </para>
-
-    <para>
      The date/time styles can be selected by the user using the
      <command>SET datestyle</command> command, the <xref
      linkend="guc-datestyle"> parameter in the
@@ -2209,7 +2138,7 @@ January 8 04:05:06 1999 PST
      <envar>PGDATESTYLE</envar> environment variable on the server or
      client.  The formatting function <function>to_char</function>
      (see <xref linkend="functions-formatting">) is also available as
-     a more flexible way to format the date/time output.
+     a more flexible way to format date/time output.
     </para>
    </sect2>
 
@@ -2411,6 +2340,163 @@ January 8 04:05:06 1999 PST
       </listitem>
      </itemizedlist>
     </para>
+   </sect2>
+
+   <sect2 id="datatype-interval-input">
+    <title>Interval Input</title>
+
+    <indexterm>
+     <primary>interval</primary>
+    </indexterm>
+
+     <para>
+      <type>interval</type> values can be written with the following
+      verbose syntax:
+
+<programlisting>
+<optional>@</> <replaceable>quantity</> <replaceable>unit</> <optional><replaceable>quantity</> <replaceable>unit</>...</> <optional><replaceable>direction</></optional>
+</programlisting>
+
+     where <replaceable>quantity</> is a number (possibly signed);
+     <replaceable>unit</> is <literal>microsecond</literal>,
+     <literal>millisecond</literal>, <literal>second</literal>,
+     <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
+     <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
+     <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
+     or abbreviations or plurals of these units;
+     <replaceable>direction</> can be <literal>ago</literal> or
+     empty.  The at sign (<literal>@</>) is optional noise.  The amounts
+     of different units are implicitly added up with appropriate
+     sign accounting.  <literal>ago</literal> negates all the fields.
+     This syntax is also used for interval output, if
+     <xref linkend="guc-intervalstyle"> is set to
+     <literal>postgres_verbose</>.
+    </para>
+
+    <para>
+     Quantities of days, hours, minutes, and seconds can be specified without
+     explicit unit markings.  For example, <literal>'1 12:59:10'</> is read
+     the same as <literal>'1 day 12 hours 59 min 10 sec'</>.  Also,
+     a combination of years and months can be specified with a dash;
+     for example <literal>'200-10'</> is read the same as <literal>'200 years
+     10 months'</>.  (These shorter forms are in fact the only ones allowed
+     by the <acronym>SQL</acronym> standard, and are used for output when
+     <varname>IntervalStyle</> is set to <literal>sql_standard</literal>.)
+    </para>
+
+    <para>
+     When writing an interval constant with a <replaceable>fields</>
+     specification, or when assigning to an interval column that was defined
+     with a <replaceable>fields</> specification, the interpretation of
+     unmarked quantities depends on the <replaceable>fields</>.  For
+     example <literal>INTERVAL '1' YEAR</> is read as 1 year, whereas
+     <literal>INTERVAL '1'</> means 1 second.
+    </para>
+
+    <para>
+     According to the <acronym>SQL</> standard all fields of an interval
+     value must have the same sign, so a leading negative sign applies to all
+     fields; for example the negative sign in the interval literal
+     <literal>'-1 2:03:04'</> applies to both the days and hour/minute/second
+     parts.  <productname>PostgreSQL</> allows the fields to have different
+     signs, and traditionally treats each field in the textual representation
+     as independently signed, so that the hour/minute/second part is
+     considered positive in this example.  If <varname>IntervalStyle</> is
+     set to <literal>sql_standard</literal> then a leading sign is considered
+     to apply to all fields (but only if no additional signs appear).
+     Otherwise the traditional <productname>PostgreSQL</> interpretation is
+     used.  To avoid ambiguity, it's recommended to attach an explicit sign
+     to each field if any field is negative.
+    </para>
+
+    <para>
+     Internally <type>interval</> values are stored as months, days,
+     and seconds. This is done because the number of days in a month
+     varies, and a day can have 23 or 25 hours if a daylight savings
+     time adjustment is involved. Because intervals are usually created
+     from constant strings or <type>timestamp</> subtraction, this
+     storage method works well in most cases. Functions
+     <function>justify_days</> and <function>justify_hours</> are
+     available for adjusting days and hours that overflow their normal
+     ranges.
+    </para>
+   </sect2>
+
+   <sect2 id="datatype-interval-output">
+    <title>Interval Output</title>
+
+    <indexterm>
+     <primary>interval</primary>
+     <secondary>output format</secondary>
+     <seealso>formatting</seealso>
+    </indexterm>
+
+    <para>
+     The output format of the interval type can be set to one of the
+     three styles <literal>sql_standard</>,
+     <literal>postgres</>, or <literal>postgres_verbose</>,
+     using the command <literal>SET intervalstyle</literal>.
+     The default is the <literal>postgres</> format.
+     <xref linkend="interval-style-output-table"> shows examples of each
+     output style.
+    </para>
+
+    <para>
+     The <literal>sql_standard</> style produces output that conforms to
+     the SQL standard's specification for interval literal strings, if
+     the interval value meets the standard's restrictions (either year-month
+     only or day-time only, with no mixing of positive
+     and negative components).  Otherwise the output looks like a standard
+     year-month literal string followed by a day-time literal string,
+     with explicit signs added to disambiguate mixed-sign intervals.
+    </para>
+
+    <para>
+     The output of the <literal>postgres</> style matches the output of
+     <productname>PostgreSQL</> releases prior to 8.4 when the
+     <xref linkend="guc-datestyle"> parameter was set to <literal>ISO</>.
+    </para>
+
+    <para>
+     The output of the <literal>postgres_verbose</> style matches the output of
+     <productname>PostgreSQL</> releases prior to 8.4 when the
+     <varname>DateStyle</> parameter was set to non-<literal>ISO</> output.
+    </para>
+
+     <table id="interval-style-output-table">
+       <title>Interval Output Style Examples</title>
+       <tgroup cols="4">
+        <thead>
+         <row>
+          <entry>Style Specification</entry>
+          <entry>Year-Month Interval</entry>
+          <entry>Day-Time Interval</entry>
+          <entry>Mixed Interval</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry><literal>sql_standard</></entry>
+          <entry>1-2</entry>
+          <entry>3 4:05:06</entry>
+          <entry>-1-2 +3 -4:05:06</entry>
+         </row>
+         <row>
+          <entry><literal>postgres</></entry>
+          <entry>1 year 2 mons</entry>
+          <entry>3 days 04:05:06</entry>
+          <entry>-1 year -2 mons +3 days -04:05:06</entry>
+         </row>
+         <row>
+          <entry><literal>postgres_verbose</></entry>
+          <entry>@ 1 year 2 mons</entry>
+          <entry>@ 3 days 4 hours 5 mins 6 secs</entry>
+          <entry>@ 1 year 2 mons -3 days 4 hours 5 mins 6 secs ago</entry>
+         </row>
+        </tbody>
+       </tgroup>
+    </table>
+
    </sect2>
 
    <sect2 id="datatype-datetime-internals">

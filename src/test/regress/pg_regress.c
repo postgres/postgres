@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.48 2008/10/01 22:38:57 petere Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.49 2008/11/09 00:28:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -708,6 +708,7 @@ initialize_environment(void)
 	 */
 	putenv("PGTZ=PST8PDT");
 	putenv("PGDATESTYLE=Postgres, MDY");
+	putenv("PGINTERVALSTYLE=postgres_verbose");
 
 	if (temp_install)
 	{

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.82 2008/10/10 21:46:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.83 2008/11/09 00:28:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -349,7 +349,11 @@ COPY <replaceable class="parameter">count</replaceable>
     <productname>PostgreSQL</productname> installations that might use
     non-default <varname>DateStyle</varname> settings,
     <varname>DateStyle</varname> should be set to <literal>ISO</> before
-    using <command>COPY TO</>.
+    using <command>COPY TO</>.  It is also a good idea to avoid dumping
+    data with <varname>IntervalStyle</varname> set to
+    <literal>sql_standard</>, because negative interval values might be
+    misinterpreted by a server that has a different setting for
+    <varname>IntervalStyle</varname>.
    </para>
 
    <para>

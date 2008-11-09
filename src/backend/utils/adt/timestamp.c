@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.193 2008/10/14 15:44:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.194 2008/11/09 00:28:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -677,7 +677,7 @@ interval_out(PG_FUNCTION_ARGS)
 	if (interval2tm(*span, tm, &fsec) != 0)
 		elog(ERROR, "could not convert interval to tm");
 
-	if (EncodeInterval(tm, fsec, DateStyle, buf) != 0)
+	if (EncodeInterval(tm, fsec, IntervalStyle, buf) != 0)
 		elog(ERROR, "could not format interval");
 
 	result = pstrdup(buf);

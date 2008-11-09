@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.203 2008/10/09 17:24:05 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.204 2008/11/09 00:28:35 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -191,6 +191,18 @@ extern PGDLLIMPORT Oid MyDatabaseTableSpace;
 
 extern int	DateStyle;
 extern int	DateOrder;
+ 
+/*
+ * IntervalStyles
+ *   INTSTYLE_POSTGRES             Like Postgres < 8.4 when DateStyle = 'iso'
+ *   INTSTYLE_POSTGRES_VERBOSE     Like Postgres < 8.4 when DateStyle != 'iso'
+ *   INTSTYLE_SQL_STANDARD         SQL standard interval literals
+ */
+#define INTSTYLE_POSTGRES             0
+#define INTSTYLE_POSTGRES_VERBOSE     1
+#define INTSTYLE_SQL_STANDARD         2
+
+extern int	IntervalStyle;
 
 /*
  * HasCTZSet is true if user has set timezone as a numeric offset from UTC.

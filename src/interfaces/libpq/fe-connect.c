@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.366 2008/11/03 14:18:57 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.367 2008/11/09 00:28:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,6 +207,9 @@ static const PQEnvironmentOption EnvironmentOptions[] =
 	/* common user-interface settings */
 	{
 		"PGDATESTYLE", "datestyle"
+	},
+	{
+		"PGINTERVALSTYLE", "intervalstyle"
 	},
 	{
 		"PGTZ", "timezone"

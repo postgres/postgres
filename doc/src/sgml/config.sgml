@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.193 2008/11/04 22:40:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.194 2008/11/09 00:28:34 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4010,6 +4010,33 @@ SET XML OPTION { DOCUMENT | CONTENT };
         <application>initdb</application> will initialize the
         configuration file with a setting that corresponds to the
         behavior of the chosen <varname>lc_time</varname> locale.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-intervalstyle" xreflabel="IntervalStyle">
+      <term><varname>IntervalStyle</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>IntervalStyle</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the display format for interval values.
+        The value <literal>sql_standard</> will produce
+        output matching <acronym>SQL</acronym> standard interval literals.
+        The value <literal>postgres</> (which is the default) will produce
+        output matching <productname>PostgreSQL</> releases prior to 8.4
+        when the <xref linkend="guc-datestyle">
+        parameter was set to <literal>ISO</>.
+        The value <literal>postgres_verbose</> will produce output
+        matching <productname>PostgreSQL</> releases prior to 8.4
+        when the <varname>DateStyle</>
+        parameter was set to non-<literal>ISO</> output.
+       </para>
+       <para>
+        The <varname>IntervalStyle</> parameter also affects the
+        interpretation of ambiguous interval input.  See
+        <xref linkend="datatype-interval-input"> for more information.
        </para>
       </listitem>
      </varlistentry>

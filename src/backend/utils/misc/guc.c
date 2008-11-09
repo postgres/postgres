@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.475 2008/10/06 13:05:36 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.476 2008/11/09 00:28:35 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -210,6 +210,13 @@ static const struct config_enum_entry server_message_level_options[] = {
 	{"log", LOG, false},
 	{"fatal", FATAL, false},
 	{"panic", PANIC, false},
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry intervalstyle_options[] = {
+	{"postgres", INTSTYLE_POSTGRES, false},
+	{"postgres_verbose", INTSTYLE_POSTGRES_VERBOSE, false},
+	{"sql_standard", INTSTYLE_SQL_STANDARD, false},
 	{NULL, 0, false}
 };
 
@@ -2517,6 +2524,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&DefaultXactIsoLevel,
 		XACT_READ_COMMITTED, isolation_level_options, NULL, NULL
+	},
+
+ 	{
+		{"IntervalStyle", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Sets the display format for interval values."),
+			NULL,
+			GUC_REPORT
+		},
+		&IntervalStyle,
+		INTSTYLE_POSTGRES, intervalstyle_options, NULL, NULL
 	},
 
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.196 2008/11/08 20:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.197 2008/11/09 00:28:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3101,6 +3101,11 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 		fmask |= tmask;
 	}
 
+	/* ensure that at least one time field has been found */
+	if (fmask == 0)
+		return DTERR_BAD_FORMAT;
+
+	/* ensure fractional seconds are fractional */
 	if (*fsec != 0)
 	{
 		int			sec;
@@ -3114,6 +3119,60 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 		tm->tm_sec += sec;
 	}
 
+	/*----------
+	 * The SQL standard defines the interval literal
+	 *   '-1 1:00:00'
+	 * to mean "negative 1 days and negative 1 hours", while Postgres
+	 * traditionally treats this as meaning "negative 1 days and positive
+	 * 1 hours".  In SQL_STANDARD intervalstyle, we apply the leading sign
+	 * to all fields if there are no other explicit signs.
+	 *
+	 * We leave the signs alone if there are additional explicit signs.
+	 * This protects us against misinterpreting postgres-style dump output,
+	 * since the postgres-style output code has always put an explicit sign on
+	 * all fields following a negative field.  But note that SQL-spec output
+	 * is ambiguous and can be misinterpreted on load!  (So it's best practice
+	 * to dump in postgres style, not SQL style.)
+	 *----------
+	 */
+	if (IntervalStyle == INTSTYLE_SQL_STANDARD && *field[0] == '-')
+	{
+		/* Check for additional explicit signs */
+		bool	more_signs = false;
+
+		for (i = 1; i < nf; i++)
+		{
+			if (*field[i] == '-' || *field[i] == '+')
+			{
+				more_signs = true;
+				break;
+			}
+		}
+
+		if (!more_signs)
+		{
+			/*
+			 * Rather than re-determining which field was field[0], just
+			 * force 'em all negative.
+			 */
+			if (*fsec > 0)
+				*fsec = -(*fsec);
+			if (tm->tm_sec > 0)
+				tm->tm_sec = -tm->tm_sec;
+			if (tm->tm_min > 0)
+				tm->tm_min = -tm->tm_min;
+			if (tm->tm_hour > 0)
+				tm->tm_hour = -tm->tm_hour;
+			if (tm->tm_mday > 0)
+				tm->tm_mday = -tm->tm_mday;
+			if (tm->tm_mon > 0)
+				tm->tm_mon = -tm->tm_mon;
+			if (tm->tm_year > 0)
+				tm->tm_year = -tm->tm_year;
+		}
+	}
+
+	/* finally, AGO negates everything */
 	if (is_before)
 	{
 		*fsec = -(*fsec);
@@ -3124,10 +3183,6 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 		tm->tm_mon = -tm->tm_mon;
 		tm->tm_year = -tm->tm_year;
 	}
-
-	/* ensure that at least one time field has been found */
-	if (fmask == 0)
-		return DTERR_BAD_FORMAT;
 
 	return 0;
 }
@@ -3606,6 +3661,29 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 }
 
 
+/*
+ * Helper function to avoid duplicated code in EncodeInterval below.
+ * Note that any sign is stripped from the input seconds values.
+ */
+static void
+AppendSeconds(char *cp, int sec, fsec_t fsec)
+{
+	if (fsec == 0)
+	{
+		sprintf(cp, ":%02d", abs(sec));
+	}
+	else
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		sprintf(cp, ":%02d.%06d", abs(sec), Abs(fsec));
+#else
+		sprintf(cp, ":%012.9f", fabs(sec + fsec));
+#endif
+		TrimTrailingZeros(cp);
+	}
+}
+
+
 /* EncodeInterval()
  * Interpret time structure as a delta time and convert to string.
  *
@@ -3613,23 +3691,115 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
  * Actually, afaik ISO does not address time interval formatting,
  *	but this looks similar to the spec for absolute date/time.
  * - thomas 1998-04-30
+ *
+ * Actually, afaik, ISO 8601 does specify formats for "time
+ * intervals...[of the]...format with time-unit designators", which
+ * are pretty ugly.  The format looks something like
+ *     P1Y1M1DT1H1M1.12345S
+ * but useful for exchanging data with computers instead of humans.
+ * - ron 2003-07-14
+ *
+ * And ISO's SQL 2008 standard specifies standards for
+ * "year-month literal"s (that look like '2-3') and
+ * "day-time literal"s (that look like ('4 5:6:7')
  */
 int
 EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 {
+	char	   *cp = str;
+	int			year = tm->tm_year;
+	int			mon  = tm->tm_mon;
+	int			mday = tm->tm_mday;
+	int			hour = tm->tm_hour;
+	int			min  = tm->tm_min;
+	int			sec  = tm->tm_sec;
 	bool		is_before = FALSE;
 	bool		is_nonzero = FALSE;
-	char	   *cp = str;
 
 	/*
 	 * The sign of year and month are guaranteed to match, since they are
 	 * stored internally as "month". But we'll need to check for is_before and
-	 * is_nonzero when determining the signs of hour/minute/seconds fields.
+	 * is_nonzero when determining the signs of day and hour/minute/seconds
+	 * fields.
 	 */
 	switch (style)
 	{
-			/* compatible with ISO date formats */
-		case USE_ISO_DATES:
+		/* SQL Standard interval format */
+		case INTSTYLE_SQL_STANDARD:
+			{
+				bool has_negative = year < 0 || mon  < 0 ||
+									mday < 0 || hour < 0 ||
+									min  < 0 || sec  < 0 || fsec < 0;
+				bool has_positive = year > 0 || mon  > 0 ||
+									mday > 0 || hour > 0 ||
+									min  > 0 || sec  > 0 || fsec > 0;
+				bool has_year_month = year != 0 || mon  != 0;
+				bool has_day_time   = mday != 0 || hour != 0 ||
+									  min  != 0 || sec  != 0 || fsec != 0;
+				bool has_day        = mday != 0;
+				bool sql_standard_value = !(has_negative && has_positive) &&
+										  !(has_year_month && has_day_time);
+
+				/*
+				 * SQL Standard wants only 1 "<sign>" preceding the whole
+				 * interval ... but can't do that if mixed signs.
+				 */
+				if (has_negative && sql_standard_value)
+				{
+					*cp++ = '-';
+					year = -year;
+					mon  = -mon;
+					mday = -mday;
+					hour = -hour;
+					min  = -min;
+					sec  = -sec;
+					fsec = -fsec;
+				}
+
+				if (!has_negative && !has_positive)
+				{
+					sprintf(cp, "0");
+				}
+				else if (!sql_standard_value)
+				{
+					/*
+					 * For non sql-standard interval values,
+					 * force outputting the signs to avoid
+					 * ambiguities with intervals with mixed
+					 * sign components.
+					 */
+					char year_sign = (year < 0 || mon < 0) ? '-' : '+';
+					char day_sign = (mday < 0) ? '-' : '+';
+					char sec_sign = (hour < 0 || min < 0 || sec < 0 || fsec < 0) ? '-' : '+';
+
+					sprintf(cp, "%c%d-%d %c%d %c%d:%02d",
+							year_sign, abs(year), abs(mon),
+							day_sign, abs(mday),
+							sec_sign, abs(hour), abs(min));
+					cp += strlen(cp);
+					AppendSeconds(cp, sec, fsec);
+				}
+				else if (has_year_month)
+				{
+					sprintf(cp, "%d-%d", year, mon);
+				}
+				else if (has_day)
+				{
+					sprintf(cp, "%d %d:%02d", mday, hour, min);
+					cp += strlen(cp);
+					AppendSeconds(cp, sec, fsec);
+				}
+				else
+				{
+					sprintf(cp, "%d:%02d", hour, min);
+					cp += strlen(cp);
+					AppendSeconds(cp, sec, fsec);
+				}
+			}
+			break;
+
+		/* Compatible with postgresql < 8.4 when DateStyle = 'iso' */
+		case INTSTYLE_POSTGRES:
 			if (tm->tm_year != 0)
 			{
 				sprintf(cp, "%d year%s",
@@ -3669,32 +3839,20 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 						(minus ? "-" : (is_before ? "+" : "")),
 						abs(tm->tm_hour), abs(tm->tm_min));
 				cp += strlen(cp);
-				/* Mark as "non-zero" since the fields are now filled in */
+				AppendSeconds(cp, tm->tm_sec, fsec);
+				cp += strlen(cp);
 				is_nonzero = TRUE;
-
-				/* need fractional seconds? */
-				if (fsec != 0)
-				{
-#ifdef HAVE_INT64_TIMESTAMP
-					sprintf(cp, ":%02d", abs(tm->tm_sec));
-					cp += strlen(cp);
-					sprintf(cp, ".%06d", Abs(fsec));
-#else
-					fsec += tm->tm_sec;
-					sprintf(cp, ":%012.9f", fabs(fsec));
-#endif
-					TrimTrailingZeros(cp);
-					cp += strlen(cp);
-				}
-				else
-				{
-					sprintf(cp, ":%02d", abs(tm->tm_sec));
-					cp += strlen(cp);
-				}
+			}
+			/* identically zero? then put in a unitless zero... */
+			if (!is_nonzero)
+			{
+				strcat(cp, "0");
+				cp += strlen(cp);
 			}
 			break;
 
-		case USE_POSTGRES_DATES:
+		/* Compatible with postgresql < 8.4 when DateStyle != 'iso' */
+		case INTSTYLE_POSTGRES_VERBOSE:
 		default:
 			strcpy(cp, "@ ");
 			cp += strlen(cp);
@@ -3821,20 +3979,18 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 					is_before = (tm->tm_sec < 0);
 				is_nonzero = TRUE;
 			}
+			/* identically zero? then put in a unitless zero... */
+			if (!is_nonzero)
+			{
+				strcat(cp, "0");
+				cp += strlen(cp);
+			}
+			if (is_before)
+			{
+				strcat(cp, " ago");
+				cp += strlen(cp);
+			}
 			break;
-	}
-
-	/* identically zero? then put in a unitless zero... */
-	if (!is_nonzero)
-	{
-		strcat(cp, "0");
-		cp += strlen(cp);
-	}
-
-	if (is_before && (style != USE_ISO_DATES))
-	{
-		strcat(cp, " ago");
-		cp += strlen(cp);
 	}
 
 	return 0;
