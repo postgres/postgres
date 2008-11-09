@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.55 2008/09/21 19:38:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.56 2008/11/09 21:24:32 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -84,7 +84,7 @@ CREATE VIEW pg_tables AS
         T.spcname AS tablespace,
         C.relhasindex AS hasindexes, 
         C.relhasrules AS hasrules, 
-        (C.reltriggers > 0) AS hastriggers 
+        C.relhastriggers AS hastriggers 
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
          LEFT JOIN pg_tablespace T ON (T.oid = C.reltablespace)
     WHERE C.relkind = 'r';

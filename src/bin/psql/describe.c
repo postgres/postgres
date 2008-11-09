@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.187 2008/11/06 15:18:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.188 2008/11/09 21:24:33 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -840,10 +840,10 @@ describeOneTableDetails(const char *schemaname,
 	struct
 	{
 		int16		checks;
-		int16		triggers;
 		char		relkind;
 		bool		hasindex;
 		bool		hasrules;
+		bool		hastriggers;
 		bool		hasoids;
 		Oid			tablespace;
 	}			tableinfo;
@@ -861,9 +861,10 @@ describeOneTableDetails(const char *schemaname,
 
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
-	   "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, "
+	   "SELECT relchecks, relkind, relhasindex, relhasrules, %s, "
 					  "relhasoids%s\n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+					  (pset.sversion >= 80400 ? "relhastriggers" : "reltriggers <> 0"),
 					  (pset.sversion >= 80000 ? ", reltablespace" : ""),
 					  oid);
 	res = PSQLexec(buf.data, false);
@@ -879,11 +880,11 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;
 	}
 
-	tableinfo.checks = atoi(PQgetvalue(res, 0, 2));
-	tableinfo.triggers = atoi(PQgetvalue(res, 0, 3));
+	tableinfo.checks = atoi(PQgetvalue(res, 0, 0));
 	tableinfo.relkind = *(PQgetvalue(res, 0, 1));
-	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
-	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
+	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 2), "t") == 0;
+	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 3), "t") == 0;
+	tableinfo.hastriggers = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 								atooid(PQgetvalue(res, 0, 6)) : 0;
@@ -1287,7 +1288,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print foreign-key constraints (there are none if no triggers) */
-		if (tableinfo.triggers)
+		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname,\n"
@@ -1318,7 +1319,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print incoming foreign-key references (none if no triggers) */
-		if (tableinfo.triggers)
+		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname, conrelid::pg_catalog.regclass,\n"
@@ -1446,7 +1447,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* print triggers (but ignore foreign-key triggers) */
-		if (tableinfo.triggers)
+		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT t.tgname, "

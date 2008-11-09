@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.239 2008/11/02 01:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.240 2008/11/09 21:24:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,6 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	Oid			funcoid;
 	Oid			funcrettype;
 	Oid			trigoid;
-	int			found = 0;
 	int			i;
 	char		constrtrigname[NAMEDATALEN];
 	char	   *trigname;
@@ -280,10 +279,9 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 	}
 
 	/*
-	 * Scan pg_trigger for existing triggers on relation.  We do this mainly
-	 * because we must count them; a secondary benefit is to give a nice error
-	 * message if there's already a trigger of the same name. (The unique
-	 * index on tgrelid/tgname would complain anyway.)
+	 * Scan pg_trigger for existing triggers on relation.  We do this only
+	 * to give a nice error message if there's already a trigger of the same
+	 * name.  (The unique index on tgrelid/tgname would complain anyway.)
 	 *
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
@@ -303,7 +301,6 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 				  errmsg("trigger \"%s\" for relation \"%s\" already exists",
 						 trigname, stmt->relation->relname)));
-		found++;
 	}
 	systable_endscan(tgscan);
 
@@ -405,7 +402,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 		elog(ERROR, "cache lookup failed for relation %u",
 			 RelationGetRelid(rel));
 
-	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
+	((Form_pg_class) GETSTRUCT(tuple))->relhastriggers = true;
 
 	simple_heap_update(pgrel, &tuple->t_self, tuple);
 
@@ -818,9 +815,6 @@ RemoveTriggerById(Oid trigOid)
 	HeapTuple	tup;
 	Oid			relid;
 	Relation	rel;
-	Relation	pgrel;
-	HeapTuple	tuple;
-	Form_pg_class classForm;
 
 	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
 
@@ -867,33 +861,15 @@ RemoveTriggerById(Oid trigOid)
 	heap_close(tgrel, RowExclusiveLock);
 
 	/*
-	 * Update relation's pg_class entry.  Crucial side-effect: other backends
-	 * (and this one too!) are sent SI message to make them rebuild relcache
-	 * entries.
-	 *
-	 * Note this is OK only because we have AccessExclusiveLock on the rel, so
-	 * no one else is creating/deleting triggers on this rel at the same time.
+	 * We do not bother to try to determine whether any other triggers remain,
+	 * which would be needed in order to decide whether it's safe to clear
+	 * the relation's relhastriggers.  (In any case, there might be a
+	 * concurrent process adding new triggers.)  Instead, just force a
+	 * relcache inval to make other backends (and this one too!) rebuild
+	 * their relcache entries.  There's no great harm in leaving relhastriggers
+	 * true even if there are no triggers left.
 	 */
-	pgrel = heap_open(RelationRelationId, RowExclusiveLock);
-	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(relid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relid);
-	classForm = (Form_pg_class) GETSTRUCT(tuple);
-
-	if (classForm->reltriggers == 0)	/* should not happen */
-		elog(ERROR, "relation \"%s\" has reltriggers = 0",
-			 RelationGetRelationName(rel));
-	classForm->reltriggers--;
-
-	simple_heap_update(pgrel, &tuple->t_self, tuple);
-
-	CatalogUpdateIndexes(pgrel, tuple);
-
-	heap_freetuple(tuple);
-
-	heap_close(pgrel, RowExclusiveLock);
+	CacheInvalidateRelcache(rel);
 
 	/* Keep lock on trigger's rel until end of xact */
 	heap_close(rel, NoLock);
@@ -1134,18 +1110,23 @@ void
 RelationBuildTriggers(Relation relation)
 {
 	TriggerDesc *trigdesc;
-	int			ntrigs = relation->rd_rel->reltriggers;
+	int			numtrigs;
+	int			maxtrigs;
 	Trigger    *triggers;
-	int			found = 0;
 	Relation	tgrel;
 	ScanKeyData skey;
 	SysScanDesc tgscan;
 	HeapTuple	htup;
 	MemoryContext oldContext;
+	int			i;
 
-	Assert(ntrigs > 0);			/* else I should not have been called */
-
-	triggers = (Trigger *) palloc(ntrigs * sizeof(Trigger));
+	/*
+	 * Allocate a working array to hold the triggers (the array is extended
+	 * if necessary)
+	 */
+	maxtrigs = 16;
+	triggers = (Trigger *) palloc(maxtrigs * sizeof(Trigger));
+	numtrigs = 0;
 
 	/*
 	 * Note: since we scan the triggers using TriggerRelidNameIndexId, we will
@@ -1167,10 +1148,12 @@ RelationBuildTriggers(Relation relation)
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 		Trigger    *build;
 
-		if (found >= ntrigs)
-			elog(ERROR, "too many trigger records found for relation \"%s\"",
-				 RelationGetRelationName(relation));
-		build = &(triggers[found]);
+		if (numtrigs >= maxtrigs)
+		{
+			maxtrigs *= 2;
+			triggers = (Trigger *) repalloc(triggers, maxtrigs * sizeof(Trigger));
+		}
+		build = &(triggers[numtrigs]);
 
 		build->tgoid = HeapTupleGetOid(htup);
 		build->tgname = DatumGetCString(DirectFunctionCall1(nameout,
@@ -1199,7 +1182,6 @@ RelationBuildTriggers(Relation relation)
 			bytea	   *val;
 			bool		isnull;
 			char	   *p;
-			int			i;
 
 			val = DatumGetByteaP(fastgetattr(htup,
 											 Anum_pg_trigger_tgargs,
@@ -1218,23 +1200,25 @@ RelationBuildTriggers(Relation relation)
 		else
 			build->tgargs = NULL;
 
-		found++;
+		numtrigs++;
 	}
 
 	systable_endscan(tgscan);
 	heap_close(tgrel, AccessShareLock);
 
-	if (found != ntrigs)
-		elog(ERROR, "%d trigger record(s) not found for relation \"%s\"",
-			 ntrigs - found,
-			 RelationGetRelationName(relation));
+	/* There might not be any triggers */
+	if (numtrigs == 0)
+	{
+		pfree(triggers);
+		return;
+	}
 
 	/* Build trigdesc */
 	trigdesc = (TriggerDesc *) palloc0(sizeof(TriggerDesc));
 	trigdesc->triggers = triggers;
-	trigdesc->numtriggers = ntrigs;
-	for (found = 0; found < ntrigs; found++)
-		InsertTrigger(trigdesc, &(triggers[found]), found);
+	trigdesc->numtriggers = numtrigs;
+	for (i = 0; i < numtrigs; i++)
+		InsertTrigger(trigdesc, &(triggers[i]), i);
 
 	/* Copy completed trigdesc into cache storage */
 	oldContext = MemoryContextSwitchTo(CacheMemoryContext);

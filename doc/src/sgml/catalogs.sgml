@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.180 2008/10/31 08:39:19 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.181 2008/11/09 21:24:32 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1712,37 +1712,6 @@
      </row>
 
      <row>
-      <entry><structfield>reltriggers</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>
-       Number of triggers on the table; see
-       <link linkend="catalog-pg-trigger"><structname>pg_trigger</structname></link> catalog
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>relukeys</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>Unused  (<emphasis>not</emphasis> the number of unique keys)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>relfkeys</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>Unused  (<emphasis>not</emphasis> the number of foreign keys on the table)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>relrefs</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>Unused</entry>
-     </row>
-
-     <row>
       <entry><structfield>relhasoids</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -1765,8 +1734,18 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if table has rules; see
+       True if table has (or once had) rules; see
        <link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link> catalog
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>relhastriggers</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if table has (or once had) triggers; see
+       <link linkend="catalog-pg-trigger"><structname>pg_trigger</structname></link> catalog
       </entry>
      </row>
 
@@ -4499,13 +4478,6 @@
    </para>
   </note>
 
-  <note>
-   <para>
-    <literal>pg_class.reltriggers</literal> needs to agree with the
-    number of triggers found in this table for each relation.
-   </para>
-  </note>
-
  </sect1>
 
 
@@ -6818,13 +6790,13 @@
       <entry><structfield>hasrules</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasrules</literal></entry>
-      <entry>true if table has rules</entry>
+      <entry>true if table has (or once had) rules</entry>
      </row>
      <row>
       <entry><structfield>hastriggers</structfield></entry>
       <entry><type>boolean</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.reltriggers</literal></entry>
-      <entry>true if table has triggers</entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhastriggers</literal></entry>
+      <entry>true if table has (or once had) triggers</entry>
      </row>
     </tbody>
    </tgroup>

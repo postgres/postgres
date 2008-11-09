@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.274 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.275 2008/11/09 21:24:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -856,7 +856,7 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 		relation->rd_rulescxt = NULL;
 	}
 
-	if (relation->rd_rel->reltriggers > 0)
+	if (relation->rd_rel->relhastriggers)
 		RelationBuildTriggers(relation);
 	else
 		relation->trigdesc = NULL;
@@ -2641,7 +2641,7 @@ RelationCacheInitializePhase2(void)
 		 */
 		if (relation->rd_rel->relhasrules && relation->rd_rules == NULL)
 			RelationBuildRuleLock(relation);
-		if (relation->rd_rel->reltriggers > 0 && relation->trigdesc == NULL)
+		if (relation->rd_rel->relhastriggers && relation->trigdesc == NULL)
 			RelationBuildTriggers(relation);
 	}
 

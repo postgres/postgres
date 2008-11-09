@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.142 2008/10/31 08:39:21 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.143 2008/11/09 21:24:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,9 +240,9 @@ typedef struct _tableInfo
 	char	   *reloptions;		/* options specified by WITH (...) */
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
+	bool		hastriggers;	/* does it have any triggers? */
 	bool		hasoids;		/* does it have OIDs? */
 	int			ncheck;			/* # of CHECK expressions */
-	int			ntrig;			/* # of triggers */
 	/* these two are set only if table is a sequence owned by a column: */
 	Oid			owning_tab;		/* OID of table owning sequence */
 	int			owning_col;		/* attr # of column owning sequence */

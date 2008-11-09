@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.131 2008/11/02 01:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.132 2008/11/09 21:24:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,7 +371,11 @@ DefineQueryRewrite(char *rulename,
 		 *
 		 * If so, check that the relation is empty because the storage for the
 		 * relation is going to be deleted.  Also insist that the rel not have
-		 * any triggers, indexes, or child tables.
+		 * any triggers, indexes, or child tables.  (Note: these tests are
+		 * too strict, because they will reject relations that once had such
+		 * but don't anymore.  But we don't really care, because this whole
+		 * business of converting relations to views is just a kluge to allow
+		 * loading ancient pg_dump files.)
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
 		{
@@ -385,7 +389,7 @@ DefineQueryRewrite(char *rulename,
 								RelationGetRelationName(event_relation))));
 			heap_endscan(scanDesc);
 
-			if (event_relation->rd_rel->reltriggers != 0)
+			if (event_relation->rd_rel->relhastriggers)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has triggers",
