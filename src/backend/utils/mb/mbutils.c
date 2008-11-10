@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.73 2008/06/18 23:08:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.74 2008/11/10 15:18:40 tgl Exp $
  */
 #include "postgres.h"
 
@@ -381,8 +381,6 @@ pg_convert(PG_FUNCTION_ARGS)
 	*(str + len) = '\0';
 
 	result = pg_do_encoding_conversion(str, len, src_encoding, dest_encoding);
-	if (result == NULL)
-		elog(ERROR, "encoding conversion failed");
 
 	/*
 	 * build bytea data type structure.
