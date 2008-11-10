@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.379 2008/10/31 15:05:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.380 2008/11/10 00:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,6 +664,11 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
  *		pg_class would've been obsoleted.  Of course, this only works for
  *		fixed-size never-null columns, but these are.
  *
+ *		Note another assumption: that two VACUUMs/ANALYZEs on a table can't
+ *		run in parallel, nor can VACUUM/ANALYZE run in parallel with a
+ *		schema alteration such as adding an index, rule, or trigger.  Otherwise
+ *		our updates of relhasindex etc might overwrite uncommitted updates.
+ *
  *		Another reason for doing it this way is that when we are in a lazy
  *		VACUUM and have PROC_IN_VACUUM set, we mustn't do any updates ---
  *		somebody vacuuming pg_class might think they could delete a tuple
@@ -673,9 +678,11 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
  *		ANALYZE.
  */
 void
-vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
+vac_update_relstats(Relation relation,
+					BlockNumber num_pages, double num_tuples,
 					bool hasindex, TransactionId frozenxid)
 {
+	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;
 	HeapTuple	ctup;
 	Form_pg_class pgcform;
@@ -722,6 +729,18 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 			pgcform->relhaspkey = false;
 			dirty = true;
 		}
+	}
+
+	/* We also clear relhasrules and relhastriggers if needed */
+	if (pgcform->relhasrules && relation->rd_rules == NULL)
+	{
+		pgcform->relhasrules = false;
+		dirty = true;
+	}
+	if (pgcform->relhastriggers && relation->trigdesc == NULL)
+	{
+		pgcform->relhastriggers = false;
+		dirty = true;
 	}
 
 	/*
@@ -1269,9 +1288,9 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	FreeSpaceMapVacuum(onerel);
 
 	/* update statistics in pg_class */
-	vac_update_relstats(RelationGetRelid(onerel), vacrelstats->rel_pages,
-						vacrelstats->rel_tuples, vacrelstats->hasindex,
-						FreezeLimit);
+	vac_update_relstats(onerel,
+						vacrelstats->rel_pages, vacrelstats->rel_tuples,
+						vacrelstats->hasindex, FreezeLimit);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
@@ -3315,7 +3334,7 @@ scan_index(Relation indrel, double num_tuples)
 		return;
 
 	/* now update statistics in pg_class */
-	vac_update_relstats(RelationGetRelid(indrel),
+	vac_update_relstats(indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false, InvalidTransactionId);
 
@@ -3385,7 +3404,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 		return;
 
 	/* now update statistics in pg_class */
-	vac_update_relstats(RelationGetRelid(indrel),
+	vac_update_relstats(indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false, InvalidTransactionId);
 

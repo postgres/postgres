@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.181 2008/11/09 21:24:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.182 2008/11/10 00:49:36 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4475,6 +4475,13 @@
     with the referenced <structname>pg_constraint</> entry.  The reason we
     keep these fields is that we support <quote>stand-alone</> constraint
     triggers with no corresponding <structname>pg_constraint</> entry.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    <literal>pg_class.relhastriggers</literal>
+    must be true if a table has any triggers in this catalog.
    </para>
   </note>
 

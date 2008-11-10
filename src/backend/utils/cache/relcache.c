@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.275 2008/11/09 21:24:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.276 2008/11/10 00:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,6 +720,17 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	systable_endscan(rewrite_scan);
 	heap_close(rewrite_desc, AccessShareLock);
+
+	/*
+	 * there might not be any rules (if relhasrules is out-of-date)
+	 */
+	if (numlocks == 0)
+	{
+		relation->rd_rules = NULL;
+		relation->rd_rulescxt = NULL;
+		MemoryContextDelete(rulescxt);
+		return;
+	}
 
 	/*
 	 * form a RuleLock and insert into relation

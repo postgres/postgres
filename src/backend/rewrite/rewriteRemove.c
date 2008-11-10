@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.73 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.74 2008/11/10 00:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,9 @@
 #include "catalog/pg_rewrite.h"
 #include "miscadmin.h"
 #include "rewrite/rewriteRemove.h"
-#include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -103,7 +103,6 @@ RemoveRewriteRuleById(Oid ruleOid)
 	Relation	event_relation;
 	HeapTuple	tuple;
 	Oid			eventRelationOid;
-	bool		hasMoreRules;
 
 	/*
 	 * Open the pg_rewrite relation.
@@ -127,16 +126,12 @@ RemoveRewriteRuleById(Oid ruleOid)
 		elog(ERROR, "could not find tuple for rule %u", ruleOid);
 
 	/*
-	 * We had better grab AccessExclusiveLock so that we know no other rule
-	 * additions/deletions are going on for this relation.	Else we cannot set
-	 * relhasrules correctly.  Besides, we don't want to be changing the
-	 * ruleset while queries are executing on the rel.
+	 * We had better grab AccessExclusiveLock to ensure that no queries
+	 * are going on that might depend on this rule.  (Note: a weaker lock
+	 * would suffice if it's not an ON SELECT rule.)
 	 */
 	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
 	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);
-
-	hasMoreRules = event_relation->rd_rules != NULL &&
-		event_relation->rd_rules->numLocks > 1;
 
 	/*
 	 * Now delete the pg_rewrite tuple for the rule
@@ -148,13 +143,10 @@ RemoveRewriteRuleById(Oid ruleOid)
 	heap_close(RewriteRelation, RowExclusiveLock);
 
 	/*
-	 * Set pg_class 'relhasrules' field correctly for event relation.
-	 *
-	 * Important side effect: an SI notice is broadcast to force all backends
-	 * (including me!) to update relcache entries with the new rule set.
-	 * Therefore, must do this even if relhasrules is still true!
+	 * Issue shared-inval notice to force all backends (including me!) to
+	 * update relcache entries with the new rule set.
 	 */
-	SetRelationRuleStatus(eventRelationOid, hasMoreRules, false);
+	CacheInvalidateRelcache(event_relation);
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);

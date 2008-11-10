@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.80 2008/08/13 00:07:50 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.81 2008/11/10 00:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ extern void vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
-extern void vac_update_relstats(Oid relid,
+extern void vac_update_relstats(Relation relation,
 					BlockNumber num_pages,
 					double num_tuples,
 					bool hasindex,
