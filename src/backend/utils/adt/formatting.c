@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.149 2008/10/06 05:03:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.150 2008/11/10 17:36:53 heikki Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -1771,7 +1771,7 @@ from_char_set_int(int *dest, const int value, const FormatNode *node)
 
 /*
  * Read a single integer from the source string, into the int pointed to by
- * 'dest'.
+ * 'dest'. If 'dest' is NULL, the result is discarded.
  *
  * In fixed-width mode (the node does not have the FM suffix), consume at most
  * 'len' characters.
@@ -1862,7 +1862,8 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 				 errdetail("Value must be in the range %d to %d.",
 						   INT_MIN, INT_MAX)));
 
-	from_char_set_int(dest, (int) result, node);
+	if (dest != NULL)
+		from_char_set_int(dest, (int) result, node);
 	return *src - init;
 }
 
