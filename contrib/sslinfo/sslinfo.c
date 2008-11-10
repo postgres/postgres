@@ -4,7 +4,7 @@
  * Written by Victor B. Wagner <vitus@cryptocom.ru>, Cryptocom LTD
  * This file is distributed under BSD-style license.
  *
- * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.7 2008/03/25 22:42:42 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.8 2008/11/10 14:57:38 tgl Exp $
  */
 
 #include "postgres.h"
@@ -113,9 +113,9 @@ ssl_client_serial(PG_FUNCTION_ARGS)
 Datum
 ASN1_STRING_to_text(ASN1_STRING *str)
 {
-	BIO		   *membuf = NULL;
-	size_t		size,
-				outlen;
+	BIO		   *membuf;
+	size_t		size;
+	char		nullterm;
 	char	   *sp;
 	char	   *dp;
 	text	   *result;
@@ -125,16 +125,15 @@ ASN1_STRING_to_text(ASN1_STRING *str)
 	ASN1_STRING_print_ex(membuf, str,
 						 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
 						  | ASN1_STRFLGS_UTF8_CONVERT));
-
-	outlen = 0;
-	BIO_write(membuf, &outlen, 1);
+	/* ensure null termination of the BIO's content */
+	nullterm = '\0';
+	BIO_write(membuf, &nullterm, 1);
 	size = BIO_get_mem_data(membuf, &sp);
 	dp = (char *) pg_do_encoding_conversion((unsigned char *) sp,
 											size - 1,
 											PG_UTF8,
 											GetDatabaseEncoding());
 	result = cstring_to_text(dp);
-
 	if (dp != sp)
 		pfree(dp);
 	BIO_free(membuf);
@@ -271,6 +270,7 @@ X509_NAME_to_text(X509_NAME *name)
 	ASN1_STRING *v;
 	const char *field_name;
 	size_t		size;
+	char		nullterm;
 	char	   *sp;
 	char	   *dp;
 	text	   *result;
@@ -290,24 +290,18 @@ X509_NAME_to_text(X509_NAME *name)
 							  | ASN1_STRFLGS_UTF8_CONVERT));
 	}
 
-	i = 0;
-	BIO_write(membuf, &i, 1);
+	/* ensure null termination of the BIO's content */
+	nullterm = '\0';
+	BIO_write(membuf, &nullterm, 1);
 	size = BIO_get_mem_data(membuf, &sp);
-
 	dp = (char *) pg_do_encoding_conversion((unsigned char *) sp,
 											size - 1,
 											PG_UTF8,
 											GetDatabaseEncoding());
-	BIO_free(membuf);
-
 	result = cstring_to_text(dp);
-
-	/*
-	 * pg_do_encoding_conversion has annoying habit of returning source
-	 * pointer
-	 */
 	if (dp != sp)
 		pfree(dp);
+	BIO_free(membuf);
 
 	PG_RETURN_TEXT_P(result);
 }
