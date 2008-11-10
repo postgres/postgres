@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.16 2008/05/16 16:31:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.17 2008/11/10 21:49:16 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1348,7 +1348,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		if (!is_text_type(SPI_gettypeid(rel->rd_att, numattr)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("column \"%s\" is not of character type",
+					 errmsg("column \"%s\" is not of a character type",
 							trigger->tgargs[i])));
 
 		datum = SPI_getbinval(rettuple, rel->rd_att, numattr, &isnull);

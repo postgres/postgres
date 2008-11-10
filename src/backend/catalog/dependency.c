@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.81 2008/10/04 21:56:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.82 2008/11/10 21:49:16 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2094,9 +2094,13 @@ getObjectDescription(const ObjectAddress *object)
 
 				if (OidIsValid(con->conrelid))
 				{
-					appendStringInfo(&buffer, _("constraint %s on "),
-									 NameStr(con->conname));
-					getRelationDescription(&buffer, con->conrelid);
+					StringInfoData	rel;
+
+					initStringInfo(&rel);
+					getRelationDescription(&rel, con->conrelid);
+					appendStringInfo(&buffer, _("constraint %s on %s"),
+									 NameStr(con->conname), rel.data);
+					pfree(rel.data);
 				}
 				else
 				{
