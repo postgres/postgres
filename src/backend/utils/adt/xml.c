@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.80 2008/10/29 08:04:53 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.81 2008/11/10 18:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1405,7 +1405,11 @@ sqlchar_to_unicode(char *s)
 													GetDatabaseEncoding(),
 													PG_UTF8);
 
-	pg_encoding_mb2wchar_with_len(PG_UTF8, utf8string, ret, pg_mblen(s));
+	pg_encoding_mb2wchar_with_len(PG_UTF8, utf8string, ret,
+								  pg_encoding_mblen(PG_UTF8, utf8string));
+
+	if (utf8string != s)
+		pfree(utf8string);
 
 	return ret[0];
 }
@@ -1495,14 +1499,21 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 static char *
 unicode_to_sqlchar(pg_wchar c)
 {
-	static unsigned char utf8string[5]; /* need trailing zero */
+	unsigned char utf8string[5]; /* need room for trailing zero */
+	char	   *result;
 
+	memset(utf8string, 0, sizeof(utf8string));
 	unicode_to_utf8(c, utf8string);
 
-	return (char *) pg_do_encoding_conversion(utf8string,
-											  pg_mblen((char *) utf8string),
-											  PG_UTF8,
-											  GetDatabaseEncoding());
+	result = (char *) pg_do_encoding_conversion(utf8string,
+												pg_encoding_mblen(PG_UTF8,
+														 (char *) utf8string),
+												PG_UTF8,
+												GetDatabaseEncoding());
+	/* if pg_do_encoding_conversion didn't strdup, we must */
+	if (result == (char *) utf8string)
+		result = pstrdup(result);
+	return result;
 }
 
 
