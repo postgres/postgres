@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.27 2008/09/23 09:20:38 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.28 2008/11/10 16:25:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ main(int argc, char *argv[])
 		{"encoding", required_argument, NULL, 'E'},
 		{"lc-collate", required_argument, NULL, 1},
 		{"lc-ctype", required_argument, NULL, 2},
+		{"locale", required_argument, NULL, 'l'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -54,6 +55,7 @@ main(int argc, char *argv[])
 	char	   *encoding = NULL;
 	char	   *lc_collate = NULL;
 	char	   *lc_ctype = NULL;
+	char	   *locale = NULL;
 
 	PQExpBufferData sql;
 
@@ -65,7 +67,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:WeqO:D:T:E:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:WeqO:D:T:E:l:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -105,6 +107,9 @@ main(int argc, char *argv[])
 			case 2:
 				lc_ctype = optarg;
 				break;
+			case 'l':
+				locale = optarg;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -127,6 +132,24 @@ main(int argc, char *argv[])
 					progname, argv[optind + 2]);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
+	}
+
+	if (locale)
+	{
+		if (lc_ctype)
+		{
+			fprintf(stderr, _("%s: only one of --locale and --lc-ctype can be specified\n"),
+					progname);
+			exit(1);
+		}
+		if (lc_collate)
+		{
+			fprintf(stderr, _("%s: only one of --locale and --lc-collate can be specified\n"),
+					progname);
+			exit(1);
+		}
+		lc_ctype = locale;
+		lc_collate = locale;
 	}
 
 	if (encoding)
@@ -224,6 +247,7 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --tablespace=TABLESPACE  default tablespace for the database\n"));
 	printf(_("  -E, --encoding=ENCODING      encoding for the database\n"));
+	printf(_("  -l, --locale=LOCALE          locale settings for the database\n"));
 	printf(_("  --lc-collate=LOCALE          LC_COLLATE setting for the database\n"));
 	printf(_("  --lc-ctype=LOCALE            LC_CTYPE setting for the database\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));

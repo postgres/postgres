@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.47 2007/12/11 19:57:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.48 2008/11/10 16:25:41 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -107,6 +107,35 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-l <replaceable class="parameter">locale</replaceable></></term>
+      <term><option>--locale <replaceable class="parameter">locale</replaceable></></term>
+      <listitem>
+       <para>
+        Specifies the locale to be used in this database.  This is equivalent
+        to specifying both <option>--lc-collate</option> and <option>--lc-ctype</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--lc-collate <replaceable class="parameter">locale</replaceable></></term>
+      <listitem>
+       <para>
+        Specifies the LC_COLLATE setting to be used in this database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--lc-ctype <replaceable class="parameter">locale</replaceable></></term>
+      <listitem>
+       <para>
+        Specifies the LC_CTYPE setting to be used in this database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-E <replaceable class="parameter">encoding</replaceable></></term>
       <term><option>--encoding <replaceable class="parameter">encoding</replaceable></></term>
       <listitem>
@@ -142,7 +171,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    The options <option>-D</option>, <option>-E</option>,
+    The options <option>-D</option>, <option>-E</option>, <option>-l</option>,
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
     SQL command <xref linkend="SQL-CREATEDATABASE"
