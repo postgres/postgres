@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.335 2008/10/31 08:39:20 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.336 2008/11/11 18:13:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -806,7 +806,6 @@ _equalAppendRelInfo(AppendRelInfo *a, AppendRelInfo *b)
 	COMPARE_SCALAR_FIELD(child_relid);
 	COMPARE_SCALAR_FIELD(parent_reltype);
 	COMPARE_SCALAR_FIELD(child_reltype);
-	COMPARE_NODE_FIELD(col_mappings);
 	COMPARE_NODE_FIELD(translated_vars);
 	COMPARE_SCALAR_FIELD(parent_reloid);
 

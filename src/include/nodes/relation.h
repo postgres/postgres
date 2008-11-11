@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.163 2008/10/22 20:17:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.164 2008/11/11 18:13:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1240,26 +1240,13 @@ typedef struct AppendRelInfo
 	Oid			child_reltype;	/* OID of child's composite type */
 
 	/*
-	 * The N'th element of this list is the integer column number of the child
-	 * column corresponding to the N'th column of the parent. A list element
-	 * is zero if it corresponds to a dropped column of the parent (this is
-	 * only possible for inheritance cases, not UNION ALL).
-	 */
-	List	   *col_mappings;	/* list of child attribute numbers */
-
-	/*
 	 * The N'th element of this list is a Var or expression representing the
 	 * child column corresponding to the N'th column of the parent. This is
 	 * used to translate Vars referencing the parent rel into references to
 	 * the child.  A list element is NULL if it corresponds to a dropped
 	 * column of the parent (this is only possible for inheritance cases, not
-	 * UNION ALL).
-	 *
-	 * This might seem redundant with the col_mappings data, but it is handy
-	 * because flattening of sub-SELECTs that are members of a UNION ALL will
-	 * cause changes in the expressions that need to be substituted for a
-	 * parent Var.	Adjusting this data structure lets us track what really
-	 * needs to be substituted.
+	 * UNION ALL).  The list elements are always simple Vars for inheritance
+	 * cases, but can be arbitrary expressions in UNION ALL cases.
 	 *
 	 * Notice we only store entries for user columns (attno > 0).  Whole-row
 	 * Vars are special-cased, and system columns (attno < 0) need no special

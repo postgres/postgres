@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.410 2008/10/31 08:39:20 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.411 2008/11/11 18:13:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1640,7 +1640,6 @@ _copyAppendRelInfo(AppendRelInfo *from)
 	COPY_SCALAR_FIELD(child_relid);
 	COPY_SCALAR_FIELD(parent_reltype);
 	COPY_SCALAR_FIELD(child_reltype);
-	COPY_NODE_FIELD(col_mappings);
 	COPY_NODE_FIELD(translated_vars);
 	COPY_SCALAR_FIELD(parent_reloid);
 

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.160 2008/10/22 20:17:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.161 2008/11/11 18:13:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,11 +91,10 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 						 Index rti);
-static void make_inh_translation_lists(Relation oldrelation,
-						   Relation newrelation,
-						   Index newvarno,
-						   List **col_mappings,
-						   List **translated_vars);
+static void make_inh_translation_list(Relation oldrelation,
+						  Relation newrelation,
+						  Index newvarno,
+						  List **translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   AppendRelInfo *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
@@ -1279,9 +1278,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		appinfo->child_relid = childRTindex;
 		appinfo->parent_reltype = oldrelation->rd_rel->reltype;
 		appinfo->child_reltype = newrelation->rd_rel->reltype;
-		make_inh_translation_lists(oldrelation, newrelation, childRTindex,
-								   &appinfo->col_mappings,
-								   &appinfo->translated_vars);
+		make_inh_translation_list(oldrelation, newrelation, childRTindex,
+								  &appinfo->translated_vars);
 		appinfo->parent_reloid = parentOID;
 		appinfos = lappend(appinfos, appinfo);
 
@@ -1316,19 +1314,17 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 }
 
 /*
- * make_inh_translation_lists
- *	  Build the lists of translations from parent Vars to child Vars for
- *	  an inheritance child.  We need both a column number mapping list
- *	  and a list of Vars representing the child columns.
+ * make_inh_translation_list
+ *	  Build the list of translations from parent Vars to child Vars for
+ *	  an inheritance child.
  *
  * For paranoia's sake, we match type as well as attribute name.
  */
 static void
-make_inh_translation_lists(Relation oldrelation, Relation newrelation,
-						   Index newvarno,
-						   List **col_mappings, List **translated_vars)
+make_inh_translation_list(Relation oldrelation, Relation newrelation,
+						  Index newvarno,
+						  List **translated_vars)
 {
-	List	   *numbers = NIL;
 	List	   *vars = NIL;
 	TupleDesc	old_tupdesc = RelationGetDescr(oldrelation);
 	TupleDesc	new_tupdesc = RelationGetDescr(newrelation);
@@ -1347,8 +1343,7 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 		att = old_tupdesc->attrs[old_attno];
 		if (att->attisdropped)
 		{
-			/* Just put 0/NULL into this list entry */
-			numbers = lappend_int(numbers, 0);
+			/* Just put NULL into this list entry */
 			vars = lappend(vars, NULL);
 			continue;
 		}
@@ -1362,7 +1357,6 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 		 */
 		if (oldrelation == newrelation)
 		{
-			numbers = lappend_int(numbers, old_attno + 1);
 			vars = lappend(vars, makeVar(newvarno,
 										 (AttrNumber) (old_attno + 1),
 										 atttypid,
@@ -1405,7 +1399,6 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
 				 attname, RelationGetRelationName(newrelation));
 
-		numbers = lappend_int(numbers, new_attno + 1);
 		vars = lappend(vars, makeVar(newvarno,
 									 (AttrNumber) (new_attno + 1),
 									 atttypid,
@@ -1413,7 +1406,6 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 									 0));
 	}
 
-	*col_mappings = numbers;
 	*translated_vars = vars;
 }
 
@@ -1683,70 +1675,6 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
 }
 
 /*
- * adjust_appendrel_attr_needed
- *		Adjust an attr_needed[] array to reference a member rel instead of
- *		the original appendrel
- *
- * oldrel: source of data (we use the attr_needed, min_attr, max_attr fields)
- * appinfo: supplies parent_relid, child_relid, col_mappings
- * new_min_attr, new_max_attr: desired bounds of new attr_needed array
- *
- * The relid sets are adjusted by substituting child_relid for parent_relid.
- * (NOTE: oldrel is not necessarily the parent_relid relation!)  We are also
- * careful to map attribute numbers within the array properly.	User
- * attributes have to be mapped through col_mappings, but system attributes
- * and whole-row references always have the same attno.
- *
- * Returns a palloc'd array with the specified bounds
- */
-Relids *
-adjust_appendrel_attr_needed(RelOptInfo *oldrel, AppendRelInfo *appinfo,
-							 AttrNumber new_min_attr, AttrNumber new_max_attr)
-{
-	Relids	   *new_attr_needed;
-	Index		parent_relid = appinfo->parent_relid;
-	Index		child_relid = appinfo->child_relid;
-	int			parent_attr;
-	ListCell   *lm;
-
-	/* Create empty result array */
-	new_attr_needed = (Relids *)
-		palloc0((new_max_attr - new_min_attr + 1) * sizeof(Relids));
-	/* Process user attributes, with appropriate attno mapping */
-	parent_attr = 1;
-	foreach(lm, appinfo->col_mappings)
-	{
-		int			child_attr = lfirst_int(lm);
-
-		if (child_attr > 0)
-		{
-			Relids		attrneeded;
-
-			Assert(parent_attr <= oldrel->max_attr);
-			Assert(child_attr <= new_max_attr);
-			attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-			attrneeded = adjust_relid_set(attrneeded,
-										  parent_relid, child_relid);
-			new_attr_needed[child_attr - new_min_attr] = attrneeded;
-		}
-		parent_attr++;
-	}
-	/* Process system attributes, including whole-row references */
-	Assert(new_min_attr <= oldrel->min_attr);
-	for (parent_attr = oldrel->min_attr; parent_attr <= 0; parent_attr++)
-	{
-		Relids		attrneeded;
-
-		attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-		attrneeded = adjust_relid_set(attrneeded,
-									  parent_relid, child_relid);
-		new_attr_needed[parent_attr - new_min_attr] = attrneeded;
-	}
-
-	return new_attr_needed;
-}
-
-/*
  * Adjust the targetlist entries of an inherited UPDATE operation
  *
  * The expressions have already been fixed, but we have to make sure that
@@ -1778,24 +1706,24 @@ adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		int			newattno;
+		Var		   *childvar;
 
 		if (tle->resjunk)
 			continue;			/* ignore junk items */
 
-		/* Look up the translation of this column */
+		/* Look up the translation of this column: it must be a Var */
 		if (tle->resno <= 0 ||
-			tle->resno > list_length(context->col_mappings))
+			tle->resno > list_length(context->translated_vars))
 			elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 				 tle->resno, get_rel_name(context->parent_reloid));
-		newattno = list_nth_int(context->col_mappings, tle->resno - 1);
-		if (newattno <= 0)
+		childvar = (Var *) list_nth(context->translated_vars, tle->resno - 1);
+		if (childvar == NULL || !IsA(childvar, Var))
 			elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 				 tle->resno, get_rel_name(context->parent_reloid));
 
-		if (tle->resno != newattno)
+		if (tle->resno != childvar->varattno)
 		{
-			tle->resno = newattno;
+			tle->resno = childvar->varattno;
 			changed_it = true;
 		}
 	}
