@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.168.2.2 2008/04/01 00:48:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.168.2.3 2008/11/11 18:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,14 +351,12 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * Copy the parent's attr_needed data as well, with appropriate
-		 * adjustment of relids and attribute numbers.
+		 * Note: we could compute appropriate attr_needed data for the
+		 * child's variables, by transforming the parent's attr_needed
+		 * through the translated_vars mapping.  However, currently there's
+		 * no need because attr_needed is only examined for base relations
+		 * not otherrels.  So we just leave the child's attr_needed empty.
 		 */
-		pfree(childrel->attr_needed);
-		childrel->attr_needed =
-			adjust_appendrel_attr_needed(rel, appinfo,
-										 childrel->min_attr,
-										 childrel->max_attr);
 
 		/*
 		 * Compute the child's access paths, and add the cheapest one to the
