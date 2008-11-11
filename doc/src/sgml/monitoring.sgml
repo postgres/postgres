@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.62 2008/08/15 08:37:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.63 2008/11/11 20:06:21 mha Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -267,7 +267,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       number of transactions committed and rolled back in that database,
       total disk blocks read, total buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache),
-      number of rows returned, inserted, updated and deleted.
+      number of rows returned, fetched, inserted, updated and deleted.
      </entry>
      </row>
 
