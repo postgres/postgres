@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   	   
   
 #line 10 "parser.pgc"
- int  item [ 3 ]    ,  ind [ 3 ]    ,  i    ;
+ int  item  [ 3 ]   ,  ind  [ 3 ]   ,  i    ;
 /* exec sql end declare section */
 #line 11 "parser.pgc"
 

@@ -50,7 +50,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 95: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 100: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 100: action "commit "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 102: query: drop table history ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -58,7 +58,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 102: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 105: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 105: action "commit "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

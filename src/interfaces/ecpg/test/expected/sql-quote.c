@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
      
   
 #line 9 "quote.pgc"
- char  var [ 25 ]    ;
+ char  var  [ 25 ]   ;
  
 #line 10 "quote.pgc"
  int  i    ;
@@ -126,7 +126,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 35 "quote.pgc"
 
 
-  { ECPGtrans(__LINE__, NULL, "begin transaction ");
+  { ECPGtrans(__LINE__, NULL, "begin  ");
 #line 37 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -174,7 +174,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	printf("value: %d %s\n", i, var);
   }
 
-  { ECPGtrans(__LINE__, NULL, "rollback");
+  { ECPGtrans(__LINE__, NULL, "rollback ");
 #line 50 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

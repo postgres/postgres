@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table indicator_test ( \"id\" int   primary key   , \"str\" text    not null , val int   null )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 22 "indicators.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");}
+	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 23 "indicators.pgc"
 
 
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 30 "indicators.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");}
+	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 31 "indicators.pgc"
 
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table indicator_test ", ECPGt_EOIT, ECPGt_EORT);}
 #line 46 "indicators.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");}
+	{ ECPGtrans(__LINE__, NULL, "commit work");}
 #line 47 "indicators.pgc"
 
 

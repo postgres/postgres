@@ -184,10 +184,10 @@ main (int argc, char **argv)
  int  DATETIME_INTERVAL_CODE    ;
  
 #line 28 "dyntest.pgc"
- char  NAME [ 120 ]    ,  BOOLVAR    ;
+ char  NAME  [ 120 ]   ,  BOOLVAR    ;
  
 #line 29 "dyntest.pgc"
- char  STRINGVAR [ 1024 ]    ;
+ char  STRINGVAR  [ 1024 ]   ;
  
 #line 30 "dyntest.pgc"
  double  DOUBLEVAR    ;

@@ -416,7 +416,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
 	free(text);
 
-	{ ECPGtrans(__LINE__, NULL, "rollback");
+	{ ECPGtrans(__LINE__, NULL, "rollback ");
 #line 350 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

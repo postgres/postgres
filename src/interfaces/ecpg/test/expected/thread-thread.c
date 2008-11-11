@@ -72,13 +72,13 @@ int main(int argc, char *argv[])
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test_thread ", ECPGt_EOIT, ECPGt_EORT);}
 #line 47 "thread.pgc"
  /* DROP might fail */
-  { ECPGtrans(__LINE__, NULL, "commit");}
+  { ECPGtrans(__LINE__, NULL, "commit ");}
 #line 48 "thread.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread text    not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test_thread ( tstamp timestamp    not null default cast ( timeofday ( ) as timestamp   ) , thread text    not null , iteration integer   not null , primary key ( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 53 "thread.pgc"
 
-  { ECPGtrans(__LINE__, NULL, "commit");}
+  { ECPGtrans(__LINE__, NULL, "commit ");}
 #line 54 "thread.pgc"
 
   { ECPGdisconnect(__LINE__, "CURRENT");}
@@ -116,12 +116,12 @@ int main(int argc, char *argv[])
   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 85 "thread.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  count (*)  from test_thread   ", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  count ( * )  from test_thread   ", ECPGt_EOIT, 
 	ECPGt_int,&(l_rows),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 86 "thread.pgc"
 
-  { ECPGtrans(__LINE__, NULL, "commit");}
+  { ECPGtrans(__LINE__, NULL, "commit ");}
 #line 87 "thread.pgc"
 
   { ECPGdisconnect(__LINE__, "CURRENT");}
@@ -146,7 +146,7 @@ void *test_thread(void *arg)
  int  l_i    ;
  
 #line 102 "thread.pgc"
- char  l_connection [ 128 ]    ;
+ char  l_connection  [ 128 ]   ;
 /* exec sql end declare section */
 #line 103 "thread.pgc"
 
@@ -171,7 +171,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
       printf("%s: ERROR: cannot connect to database!\n", l_connection);
       return( NULL );
     }
-  { ECPGtrans(__LINE__, l_connection, "begin transaction ");
+  { ECPGtrans(__LINE__, l_connection, "begin  ");
 #line 118 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -196,7 +196,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
     }
 
   /* all done */
-  { ECPGtrans(__LINE__, l_connection, "commit");
+  { ECPGtrans(__LINE__, l_connection, "commit ");
 #line 129 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

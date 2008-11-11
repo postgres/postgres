@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   	     
   
 #line 10 "autoprep.pgc"
- int  item [ 4 ]    ,  ind [ 4 ]    ,  i   = 1 ;
+ int  item  [ 4 ]   ,  ind  [ 4 ]   ,  i   = 1 ;
 /* exec sql end declare section */
 #line 11 "autoprep.pgc"
 

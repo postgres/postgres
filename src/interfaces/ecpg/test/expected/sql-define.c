@@ -102,7 +102,7 @@ int main(void)
  int  i    ;
  
 #line 11 "define.pgc"
- char  s [ 200 ]    ;
+ char  s  [ 200 ]   ;
 /* exec sql end declare section */
 #line 12 "define.pgc"
 

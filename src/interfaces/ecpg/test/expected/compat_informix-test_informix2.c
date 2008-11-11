@@ -114,7 +114,7 @@ static void sql_check(char *fn, char *caller, int ignore)
       printf("%s\n", errorstring);
 
       /* attempt a ROLLBACK */
-      { ECPGtrans(__LINE__, NULL, "rollback");}
+      { ECPGtrans(__LINE__, NULL, "rollback ");}
 #line 27 "test_informix2.pgc"
 
 
@@ -157,7 +157,7 @@ int main(void)
  timestamp  maxd    ;
  
 #line 53 "test_informix2.pgc"
- char  dbname [ 30 ]    ;
+ char  dbname  [ 30 ]   ;
 /* exec sql end declare section */
 #line 54 "test_informix2.pgc"
 
@@ -245,7 +245,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	sql_check("main", "update", 0);
   
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 100 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -260,7 +260,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	sql_check("main", "drop", 0);
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 105 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

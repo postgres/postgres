@@ -16,7 +16,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 27: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 28: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 28: action "commit "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 31: query: insert into test ( i  , j  ) values ( 7 , 12 ) ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlstate 23505 (sqlcode -239) on line 31: duplicate key value violates unique constraint "test_pkey" on line 31
 [NO_PID]: sqlca: code: -239, state: 23505
-[NO_PID]: ECPGtrans on line 33: action "rollback"; connection "regress1"
+[NO_PID]: ECPGtrans on line 33: action "rollback "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: query: insert into test ( i  , j  ) values (  $1  , 1 ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,7 +36,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 36: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 36: action "commit "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: query: select  i  from test where j = ( select  j  from test    )  ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -46,7 +46,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlstate 21000 (sqlcode -284) on line 39: more than one row returned by a subquery used as an expression on line 39
 [NO_PID]: sqlca: code: -284, state: 21000
-[NO_PID]: ECPGtrans on line 40: action "rollback"; connection "regress1"
+[NO_PID]: ECPGtrans on line 40: action "rollback "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 43: query: select  i  from test where j = ( select  j  from test    order by i   limit 1  )  ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -114,7 +114,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 78: no data found on line 78
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGtrans on line 81: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 81: action "commit "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 82: query: drop table test ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -122,7 +122,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 82: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 83: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 83: action "commit "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

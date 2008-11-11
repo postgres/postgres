@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
        
   
 #line 9 "fetch.pgc"
- char  str [ 25 ]    ;
+ char  str  [ 25 ]   ;
  
 #line 10 "fetch.pgc"
  int  i    ,  count   = 1 ;

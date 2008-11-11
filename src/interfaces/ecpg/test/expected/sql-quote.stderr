@@ -53,7 +53,7 @@ sql error: nonstandard use of \\ in a string literal
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 37: action "begin transaction "; connection "regress1"
+[NO_PID]: ECPGtrans on line 37: action "begin  "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 40: query: declare C  cursor  for select  *  from "My_Table"   ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -109,7 +109,7 @@ sql error: nonstandard use of \\ in a string literal
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 46: no data found on line 46
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGtrans on line 50: action "rollback"; connection "regress1"
+[NO_PID]: ECPGtrans on line 50: action "rollback "; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 51: query: drop table "My_Table" ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

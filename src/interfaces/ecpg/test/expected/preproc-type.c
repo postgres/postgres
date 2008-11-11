@@ -40,7 +40,7 @@ typedef short  mmSmallInt ;
 #line 8 "type.pgc"
 
 
-/* exec sql type string is char [ 11 ]   */
+/* exec sql type string is char  [ 11 ]  */
 #line 10 "type.pgc"
 
 typedef char string[11];
@@ -62,7 +62,7 @@ struct TBempl {
  mmInteger  idnum    ;
  
 #line 20 "type.pgc"
- mmChar  name [ 21 ]    ;
+ mmChar  name  [ 21 ]   ;
  
 #line 21 "type.pgc"
  mmSmallInt  accs    ;
@@ -98,13 +98,13 @@ main (void)
  int  len    ;
  
 #line 35 "type.pgc"
- char  text [ 10 ]    ;
+ char  text  [ 10 ]   ;
  }  vc    ;
 /* exec sql end declare section */
 #line 37 "type.pgc"
 
 
-  /* exec sql var vc is  [ 10 ]   */
+  /* exec sql var vc is   [ 10 ]  */
 #line 39 "type.pgc"
 
   ECPGdebug (1, stderr);

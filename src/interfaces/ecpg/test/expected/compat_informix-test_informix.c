@@ -74,7 +74,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 27 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 28 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -89,7 +89,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 31 "test_informix.pgc"
 
 	printf("INSERT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback");
+	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback ");
 #line 33 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -104,7 +104,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 35 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 36 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -118,7 +118,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 39 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "rollback");
+	{ ECPGtrans(__LINE__, NULL, "rollback ");
 #line 40 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -133,7 +133,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 43 "test_informix.pgc"
 
 	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback");
+	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback ");
 #line 45 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -203,7 +203,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 
 	printf("Does not exist: %ld\n", sqlca.sqlcode);
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 81 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -215,7 +215,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 82 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 83 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}

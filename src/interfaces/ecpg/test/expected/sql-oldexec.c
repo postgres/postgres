@@ -38,19 +38,19 @@ main(void)
 	 
 
 #line 14 "oldexec.pgc"
- int  amount [ 8 ]    ;
+ int  amount  [ 8 ]   ;
  
 #line 15 "oldexec.pgc"
  int  increment   = 100 ;
  
 #line 16 "oldexec.pgc"
- char  name [ 8 ] [ 8 ]    ;
+ char  name  [ 8 ] [ 8 ]   ;
  
 #line 17 "oldexec.pgc"
- char  letter [ 8 ] [ 1 ]    ;
+ char  letter  [ 8 ] [ 1 ]   ;
  
 #line 18 "oldexec.pgc"
- char  command [ 128 ]    ;
+ char  command  [ 128 ]   ;
 /* exec sql end declare section */
 #line 19 "oldexec.pgc"
 
@@ -70,7 +70,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 25 "oldexec.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 26 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -121,7 +121,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("Inserted %ld tuples via prepared execute\n", sqlca.sqlerrd[2]);
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 45 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -168,7 +168,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 58 "oldexec.pgc"
- char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
+ char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
  
 #line 59 "oldexec.pgc"
  int  a   = amount [ i ] ;
@@ -229,7 +229,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 79 "oldexec.pgc"
- char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
+ char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
  
 #line 80 "oldexec.pgc"
  int  a   = amount [ i ] ;
@@ -253,7 +253,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 88 "oldexec.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit");
+	{ ECPGtrans(__LINE__, NULL, "commit ");
 #line 89 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

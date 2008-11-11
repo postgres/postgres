@@ -84,13 +84,13 @@ int main( int argc, char * argv[] )
        
     
 #line 26 "array_of_struct.pgc"
- customer  custs1 [ 10 ]    ;
+ customer  custs1  [ 10 ]   ;
  
 #line 27 "array_of_struct.pgc"
- cust_ind  inds [ 10 ]    ;
+ cust_ind  inds  [ 10 ]   ;
   
 #line 33 "array_of_struct.pgc"
- customer2  custs2 [ 10 ]    ;
+ customer2  custs2  [ 10 ]   ;
  
 #line 38 "array_of_struct.pgc"
  struct customer3 { 
@@ -99,7 +99,7 @@ int main( int argc, char * argv[] )
  
 #line 37 "array_of_struct.pgc"
  int  phone    ;
- }  custs3 [ 10 ]    ;
+ }  custs3  [ 10 ]   ;
  
 #line 43 "array_of_struct.pgc"
  struct customer4 { 

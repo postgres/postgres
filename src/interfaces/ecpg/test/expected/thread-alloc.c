@@ -136,7 +136,7 @@ static void* fn(void* arg)
  int  value    ;
  
 #line 40 "alloc.pgc"
- char  name [ 100 ]    ;
+ char  name  [ 100 ]   ;
  
 #line 41 "alloc.pgc"
  char ** r   = NULL ;

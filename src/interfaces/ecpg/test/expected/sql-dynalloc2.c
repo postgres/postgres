@@ -240,7 +240,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );
 #line 51 "dynalloc2.pgc"
 
-   { ECPGtrans(__LINE__, NULL, "rollback");
+   { ECPGtrans(__LINE__, NULL, "rollback ");
 #line 52 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
   	  
   
 #line 9 "insupd.pgc"
- int  i1 [ 3 ]    ,  i2 [ 3 ]    ;
+ int  i1  [ 3 ]   ,  i2  [ 3 ]   ;
 /* exec sql end declare section */
 #line 10 "insupd.pgc"
 
@@ -91,7 +91,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "insupd.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set ( a  , b  )= ( 5 , 5 )  where a = 4 ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update insupd_test set ( a  , b  ) = ( 5 , 5 )  where a = 4 ", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

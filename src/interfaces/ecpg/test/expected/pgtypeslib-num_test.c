@@ -141,7 +141,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	PGTYPESnumeric_free(value2);
 	PGTYPESnumeric_free(res);
 
-	{ ECPGtrans(__LINE__, NULL, "rollback");
+	{ ECPGtrans(__LINE__, NULL, "rollback ");
 #line 90 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

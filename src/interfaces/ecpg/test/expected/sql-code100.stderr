@@ -8,7 +8,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 18: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 22: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 22: action "commit work"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: query: insert into test ( payload  , index  ) values ( 0 ,  $1  ) ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -90,7 +90,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 31: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 31: action "commit work"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 34: query: update test set payload  = payload + 1  where index = - 1 ; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -122,7 +122,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 44: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 46: action "commit"; connection "regress1"
+[NO_PID]: ECPGtrans on line 46: action "commit work"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

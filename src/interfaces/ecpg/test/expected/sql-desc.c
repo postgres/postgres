@@ -48,7 +48,7 @@ main(void)
  int  val1   = 1 ;
  
 #line 13 "desc.pgc"
- char  val2 [ 4 ]   = "one" ,  val2output []   = "AAA" ;
+ char  val2  [ 4 ]  = "one" ,  val2output  []  = "AAA" ;
  
 #line 14 "desc.pgc"
  int  val1output   = 2 ,  val2i   = 0 ;

@@ -8,7 +8,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 26: action "commit"; connection "main"
+[NO_PID]: ECPGtrans on line 26: action "commit "; connection "main"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 29: query: insert into test (name, amount, letter) values ('db: ''r1''', 1, 'f'); with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -38,7 +38,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: OK: INSERT 0 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 45: action "commit"; connection "main"
+[NO_PID]: ECPGtrans on line 45: action "commit "; connection "main"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGprepare on line 49: name f; query: "select * from test"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -164,7 +164,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 108: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 109: action "commit"; connection "main"
+[NO_PID]: ECPGtrans on line 109: action "commit "; connection "main"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGdeallocate on line 0: name i
 [NO_PID]: sqlca: code: 0, state: 00000

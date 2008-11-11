@@ -141,7 +141,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   /* EXEC SQL COPY foo TO:fname WITH DELIMITER ','; */
   /* printf ("copy to /tmp/foo : sqlca.sqlcode = %ld", sqlca.sqlcode); */
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "copy  foo  to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "copy  foo   to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
