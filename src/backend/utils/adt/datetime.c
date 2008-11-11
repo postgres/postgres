@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.197 2008/11/09 00:28:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.198 2008/11/11 02:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2726,6 +2726,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 /* DecodeInterval()
  * Interpret previously parsed fields for general time interval.
  * Returns 0 if successful, DTERR code if bogus input detected.
+ * dtype, tm, fsec are output parameters.
  *
  * Allow "date" field DTK_DATE since this could be just
  *	an unsigned floating point number. - thomas 1997-11-16
@@ -3182,6 +3183,307 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 		tm->tm_mday = -tm->tm_mday;
 		tm->tm_mon = -tm->tm_mon;
 		tm->tm_year = -tm->tm_year;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Helper functions to avoid duplicated code in DecodeISO8601Interval.
+ *
+ * Parse a decimal value and break it into integer and fractional parts.
+ * Returns 0 or DTERR code.
+ */
+static int
+ParseISO8601Number(char *str, char **endptr, int *ipart, double *fpart)
+{
+	double		val;
+
+	if (!(isdigit((unsigned char) *str) || *str == '-' || *str == '.'))
+		return DTERR_BAD_FORMAT;
+	errno = 0;
+	val = strtod(str, endptr);
+	/* did we not see anything that looks like a double? */
+	if (*endptr == str || errno != 0)
+		return DTERR_BAD_FORMAT;
+	/* watch out for overflow */
+	if (val < INT_MIN || val > INT_MAX)
+		return DTERR_FIELD_OVERFLOW;
+	/* be very sure we truncate towards zero (cf dtrunc()) */
+	if (val >= 0)
+		*ipart = (int) floor(val);
+	else
+		*ipart = (int) -floor(-val);
+	*fpart = val - *ipart;
+	return 0;
+}
+
+/*
+ * Determine number of integral digits in a valid ISO 8601 number field
+ * (we should ignore sign and any fraction part)
+ */
+static int
+ISO8601IntegerWidth(char *fieldstart)
+{
+	/* We might have had a leading '-' */
+	if (*fieldstart == '-')
+		fieldstart++;
+	return strspn(fieldstart, "0123456789");
+}
+
+/*
+ * Multiply frac by scale (to produce seconds) and add to *tm & *fsec.
+ * We assume the input frac is less than 1 so overflow is not an issue.
+ */
+static void
+AdjustFractionalSeconds(double frac, struct pg_tm * tm, fsec_t *fsec,
+						int scale)
+{
+	int	sec;
+
+	if (frac == 0)
+		return;
+	frac       *= scale;
+	sec         = (int) frac;
+	tm->tm_sec += sec;
+	frac       -= sec;
+#ifdef HAVE_INT64_TIMESTAMP
+	*fsec      += rint(frac * 1000000);
+#else
+	*fsec      += frac;
+#endif
+}
+
+/* As above, but initial scale produces days */
+static void
+AdjustFractionalDays(double frac, struct pg_tm * tm, fsec_t *fsec, int scale)
+{
+	int	extra_days;
+
+	if (frac == 0)
+		return;
+	frac        *= scale;
+	extra_days   = (int) frac;
+	tm->tm_mday += extra_days;
+	frac        -= extra_days;
+	AdjustFractionalSeconds(frac, tm, fsec, SECS_PER_DAY);
+}
+
+
+/* DecodeISO8601Interval()
+ *  Decode an ISO 8601 time interval of the "format with designators"
+ *  (section 4.4.3.2) or "alternative format" (section 4.4.3.3)
+ *  Examples:  P1D  for 1 day
+ *             PT1H for 1 hour
+ *             P2Y6M7DT1H30M for 2 years, 6 months, 7 days 1 hour 30 min
+ *             P0002-06-07T01:30:00 the same value in alternative format
+ *
+ * Returns 0 if successful, DTERR code if bogus input detected.
+ * Note: error code should be DTERR_BAD_FORMAT if input doesn't look like
+ * ISO8601, otherwise this could cause unexpected error messages.
+ * dtype, tm, fsec are output parameters.
+ *
+ *  A couple exceptions from the spec:
+ *   - a week field ('W') may coexist with other units
+ *   - allows decimals in fields other than the least significant unit.
+ */
+int
+DecodeISO8601Interval(char *str,
+					  int *dtype, struct pg_tm * tm, fsec_t *fsec)
+{
+	bool	datepart = true;
+	bool	havefield = false;
+
+	*dtype = DTK_DELTA;
+
+	tm->tm_year = 0;
+	tm->tm_mon = 0;
+	tm->tm_mday = 0;
+	tm->tm_hour = 0;
+	tm->tm_min = 0;
+	tm->tm_sec = 0;
+	*fsec = 0;
+
+	if (strlen(str) < 2 || str[0] != 'P')
+		return DTERR_BAD_FORMAT;
+
+	str++;
+	while (*str)
+	{
+		char   *fieldstart;
+		int		val;
+		double	fval;
+		char    unit;
+		int		dterr;
+
+		if (*str == 'T') /* T indicates the beginning of the time part */
+		{
+			datepart = false;
+			havefield = false;
+			str++;
+			continue;
+		}
+
+		fieldstart = str;
+		dterr = ParseISO8601Number(str, &str, &val, &fval);
+		if (dterr)
+			return dterr;
+
+		/*
+		 * Note: we could step off the end of the string here.  Code below
+		 * *must* exit the loop if unit == '\0'.
+		 */
+		unit = *str++;
+
+		if (datepart)
+		{
+			switch (unit) /* before T: Y M W D */
+			{
+				case 'Y':
+					tm->tm_year += val;
+					tm->tm_mon += (fval * 12);
+					break;
+				case 'M':
+					tm->tm_mon += val;
+					AdjustFractionalDays(fval, tm, fsec, DAYS_PER_MONTH);
+					break;
+				case 'W':
+					tm->tm_mday += val * 7;
+					AdjustFractionalDays(fval, tm, fsec, 7);
+					break;
+				case 'D':
+					tm->tm_mday += val;
+					AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_DAY);
+					break;
+				case 'T': /* ISO 8601 4.4.3.3 Alternative Format / Basic */
+				case '\0':
+					if (ISO8601IntegerWidth(fieldstart) == 8 && !havefield)
+					{
+						tm->tm_year += val / 10000;
+						tm->tm_mon  += (val / 100) % 100;
+						tm->tm_mday += val % 100;
+						AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_DAY);
+						if (unit == '\0')
+							return 0;
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+					/* Else fall through to extended alternative format */
+				case '-': /* ISO 8601 4.4.3.3 Alternative Format, Extended */
+					if (havefield)
+						return DTERR_BAD_FORMAT;
+
+					tm->tm_year += val;
+					tm->tm_mon  += (fval * 12);
+					if (unit == '\0')
+						return 0;
+					if (unit == 'T')
+					{
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_mon  += val;
+					AdjustFractionalDays(fval, tm, fsec, DAYS_PER_MONTH);
+					if (*str == '\0')
+						return 0;
+					if (*str == 'T')
+					{
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+					if (*str != '-')
+						return DTERR_BAD_FORMAT;
+					str++;
+					
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_mday += val;
+					AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_DAY);
+					if (*str == '\0')
+						return 0;
+					if (*str == 'T')
+					{
+						datepart = false;
+						havefield = false;
+						continue;
+					}
+					return DTERR_BAD_FORMAT;
+				default:
+					/* not a valid date unit suffix */
+					return DTERR_BAD_FORMAT;
+			}
+		}
+		else
+		{
+			switch (unit) /* after T: H M S */
+			{
+				case 'H':
+					tm->tm_hour += val;
+					AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_HOUR);
+					break;
+				case 'M':
+					tm->tm_min += val;
+					AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_MINUTE);
+					break;
+				case 'S':
+					tm->tm_sec += val;
+					AdjustFractionalSeconds(fval, tm, fsec, 1);
+					break;
+				case '\0': /* ISO 8601 4.4.3.3 Alternative Format */
+				    if (ISO8601IntegerWidth(fieldstart) == 6 && !havefield)
+					{
+						tm->tm_hour += val / 10000;
+						tm->tm_min  += (val / 100) % 100;
+						tm->tm_sec  += val % 100;
+						AdjustFractionalSeconds(fval, tm, fsec, 1);
+						return 0;
+					}
+					/* Else fall through to extended alternative format */
+				case ':': /* ISO 8601 4.4.3.3 Alternative Format, Extended */
+					if (havefield)
+						return DTERR_BAD_FORMAT;
+
+					tm->tm_hour += val;
+					AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_HOUR);
+					if (unit == '\0')
+						return 0;
+					
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_min  += val;
+					AdjustFractionalSeconds(fval, tm, fsec, SECS_PER_MINUTE);
+					if (*str == '\0')
+						return 0;
+					if (*str != ':')
+						return DTERR_BAD_FORMAT;
+					str++;
+					
+					dterr = ParseISO8601Number(str, &str, &val, &fval);
+					if (dterr)
+						return dterr;
+					tm->tm_sec  += val;
+					AdjustFractionalSeconds(fval, tm, fsec, 1);
+					if (*str == '\0')
+						return 0;
+					return DTERR_BAD_FORMAT;
+
+				default:
+					/* not a valid time unit suffix */
+					return DTERR_BAD_FORMAT;
+			}
+		}
+
+		havefield = true;
 	}
 
 	return 0;
@@ -3662,25 +3964,37 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 
 /*
- * Helper function to avoid duplicated code in EncodeInterval below.
+ * Helper functions to avoid duplicated code in EncodeInterval.
+ *
+ * Append sections and fractional seconds (if any) at *cp.
  * Note that any sign is stripped from the input seconds values.
  */
 static void
-AppendSeconds(char *cp, int sec, fsec_t fsec)
+AppendSeconds(char *cp, int sec, fsec_t fsec, bool fillzeros)
 {
 	if (fsec == 0)
 	{
-		sprintf(cp, ":%02d", abs(sec));
+		sprintf(cp, fillzeros ? "%02d" : "%d", abs(sec));
 	}
 	else
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		sprintf(cp, ":%02d.%06d", abs(sec), Abs(fsec));
+		sprintf(cp, fillzeros ? "%02d.%06d" : "%d.%06d", abs(sec), Abs(fsec));
 #else
-		sprintf(cp, ":%012.9f", fabs(sec + fsec));
+		sprintf(cp, fillzeros ? "%012.9f" : "%.9f", fabs(sec + fsec));
 #endif
 		TrimTrailingZeros(cp);
 	}
+}
+
+/* Append an ISO8601 field, but only if value isn't zero */
+static char *
+AddISO8601IntervalPart(char *cp, int value, char units)
+{
+	if (value == 0)
+		return cp;
+	sprintf(cp, "%d%c", value, units);
+	return cp + strlen(cp);
 }
 
 
@@ -3772,12 +4086,12 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 					char day_sign = (mday < 0) ? '-' : '+';
 					char sec_sign = (hour < 0 || min < 0 || sec < 0 || fsec < 0) ? '-' : '+';
 
-					sprintf(cp, "%c%d-%d %c%d %c%d:%02d",
+					sprintf(cp, "%c%d-%d %c%d %c%d:%02d:",
 							year_sign, abs(year), abs(mon),
 							day_sign, abs(mday),
 							sec_sign, abs(hour), abs(min));
 					cp += strlen(cp);
-					AppendSeconds(cp, sec, fsec);
+					AppendSeconds(cp, sec, fsec, true);
 				}
 				else if (has_year_month)
 				{
@@ -3785,16 +4099,44 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 				}
 				else if (has_day)
 				{
-					sprintf(cp, "%d %d:%02d", mday, hour, min);
+					sprintf(cp, "%d %d:%02d:", mday, hour, min);
 					cp += strlen(cp);
-					AppendSeconds(cp, sec, fsec);
+					AppendSeconds(cp, sec, fsec, true);
 				}
 				else
 				{
-					sprintf(cp, "%d:%02d", hour, min);
+					sprintf(cp, "%d:%02d:", hour, min);
 					cp += strlen(cp);
-					AppendSeconds(cp, sec, fsec);
+					AppendSeconds(cp, sec, fsec, true);
 				}
+			}
+			break;
+
+		/* ISO 8601 "time-intervals by duration only" */
+		case INTSTYLE_ISO_8601:
+			/* special-case zero to avoid printing nothing */
+			if (year == 0 && mon == 0 && mday == 0 &&
+			    hour == 0 && min == 0 && sec  == 0 && fsec == 0)
+			{
+				sprintf(cp, "PT0S");
+				break;
+			}
+			*cp++ = 'P';
+			cp = AddISO8601IntervalPart(cp, year, 'Y');
+			cp = AddISO8601IntervalPart(cp, mon , 'M');
+			cp = AddISO8601IntervalPart(cp, mday, 'D');
+			if (hour != 0 || min != 0 || sec != 0 || fsec != 0)
+				*cp++ = 'T';
+			cp = AddISO8601IntervalPart(cp, hour, 'H');
+			cp = AddISO8601IntervalPart(cp, min , 'M');
+			if (sec != 0 || fsec != 0)
+			{
+				if (sec < 0 || fsec < 0)
+					*cp++ = '-';
+				AppendSeconds(cp, sec, fsec, false);
+				cp += strlen(cp);
+				*cp++ = 'S';
+				*cp++ = '\0';
 			}
 			break;
 
@@ -3835,11 +4177,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 				int			minus = (tm->tm_hour < 0 || tm->tm_min < 0 ||
 									 tm->tm_sec < 0 || fsec < 0);
 
-				sprintf(cp, "%s%s%02d:%02d", is_nonzero ? " " : "",
+				sprintf(cp, "%s%s%02d:%02d:", is_nonzero ? " " : "",
 						(minus ? "-" : (is_before ? "+" : "")),
 						abs(tm->tm_hour), abs(tm->tm_min));
 				cp += strlen(cp);
-				AppendSeconds(cp, tm->tm_sec, fsec);
+				AppendSeconds(cp, tm->tm_sec, fsec, true);
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}

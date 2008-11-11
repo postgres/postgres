@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.70 2008/09/10 18:29:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.71 2008/11/11 02:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,9 +289,11 @@ extern int DecodeDateTime(char **field, int *ftype,
 extern int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct pg_tm * tm, fsec_t *fsec, int *tzp);
-extern int DecodeInterval(char **field, int *ftype,
-			   int nf, int range, int *dtype,
-			   struct pg_tm * tm, fsec_t *fsec);
+extern int DecodeInterval(char **field, int *ftype, int nf, int range,
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec);
+extern int DecodeISO8601Interval(char *str,
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec);
+
 extern void DateTimeParseError(int dterr, const char *str,
 				   const char *datatype);
 

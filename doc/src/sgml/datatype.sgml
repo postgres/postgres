@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.233 2008/11/09 17:09:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.234 2008/11/11 02:42:31 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2353,9 +2353,9 @@ January 8 04:05:06 1999 PST
       <type>interval</type> values can be written with the following
       verbose syntax:
 
-<programlisting>
+<synopsis>
 <optional>@</> <replaceable>quantity</> <replaceable>unit</> <optional><replaceable>quantity</> <replaceable>unit</>...</> <optional><replaceable>direction</></optional>
-</programlisting>
+</synopsis>
 
      where <replaceable>quantity</> is a number (possibly signed);
      <replaceable>unit</> is <literal>microsecond</literal>,
@@ -2382,6 +2382,76 @@ January 8 04:05:06 1999 PST
      10 months'</>.  (These shorter forms are in fact the only ones allowed
      by the <acronym>SQL</acronym> standard, and are used for output when
      <varname>IntervalStyle</> is set to <literal>sql_standard</literal>.)
+    </para>
+
+    <para>
+     Interval values can also be written as ISO 8601 time intervals, using
+     either the <quote>format with designators</> of the standard's section
+     4.4.3.2 or the <quote>alternative format</> of section 4.4.3.3.  The
+     format with designators looks like this:
+<synopsis>
+P <replaceable>quantity</> <replaceable>unit</> <optional> <replaceable>quantity</> <replaceable>unit</> ...</optional> <optional> T <optional> <replaceable>quantity</> <replaceable>unit</> ...</optional></optional>
+</synopsis>
+      The string must start with a <literal>P</>, and may include a
+      <literal>T</> that introduces the time-of-day units.  The
+      available unit abbreviations are given in <xref
+      linkend="datatype-interval-iso8601-units">.  Units may be
+      omitted, and may be specified in any order, but units smaller than
+      a day must appear after <literal>T</>.  In particular, the meaning of
+      <literal>M</> depends on whether it is before or after
+      <literal>T</>.
+     </para>
+
+     <table id="datatype-interval-iso8601-units">
+      <title>ISO 8601 interval unit abbreviations</title>
+     <tgroup cols="2">
+       <thead>
+        <row>
+         <entry>Abbreviation</entry>
+         <entry>Meaning</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry>Y</entry>
+         <entry>Years</entry>
+        </row>
+        <row>
+         <entry>M</entry>
+         <entry>Months (in the date part)</entry>
+        </row>
+        <row>
+         <entry>W</entry>
+         <entry>Weeks</entry>
+        </row>
+        <row>
+         <entry>D</entry>
+         <entry>Days</entry>
+        </row>
+        <row>
+         <entry>H</entry>
+         <entry>Hours</entry>
+        </row>
+        <row>
+         <entry>M</entry>
+         <entry>Minutes (in the time part)</entry>
+        </row>
+        <row>
+         <entry>S</entry>
+         <entry>Seconds</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </table>
+
+     <para>
+      In the alternative format:
+<synopsis>
+P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> </optional> <optional> T <replaceable>hours</>:<replaceable>minutes</>:<replaceable>seconds</> </optional>
+</synopsis>
+      the string must begin with <literal>P</literal>, and a
+      <literal>T</> separates the date and time parts of the interval.
+      The values are given as numbers similar to ISO 8601 dates.
     </para>
 
     <para>
@@ -2433,6 +2503,46 @@ January 8 04:05:06 1999 PST
      For example, <literal>'1.5 month'</> becomes 1 month and 15 days.
      Only seconds will ever be shown as fractional on output.
     </para>
+
+    <para>
+     <xref linkend="datatype-interval-input-examples"> shows some examples
+     of valid <type>interval</> input.
+    </para>
+
+     <table id="datatype-interval-input-examples">
+      <title>Interval Input</title>
+      <tgroup cols="2">
+       <thead>
+        <row>
+         <entry>Example</entry>
+         <entry>Description</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry>1-2</entry>
+         <entry>SQL standard format: 1 year 2 months</entry>
+        </row>
+        <row>
+         <entry>3 4:05:06</entry>
+         <entry>SQL standard format: 3 days 4 hours 5 minutes 6 seconds</entry>
+        </row>
+        <row>
+         <entry>1 year 2 months 3 days 4 hours 5 minutes 6 seconds</entry>
+         <entry>Traditional Postgres format: 1 year 2 months 3 days 4 hours 5 minutes 6 seconds</entry>
+        </row>
+        <row>
+         <entry>P1Y2M3DT4H5M6S</entry>
+         <entry>ISO 8601 <quote>format with designators</>: same meaning as above</entry>
+        </row>
+        <row>
+         <entry>P0001-02-03T04:05:06</entry>
+         <entry>ISO 8601 <quote>alternative format</>: same meaning as above</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </table>
+
    </sect2>
 
    <sect2 id="datatype-interval-output">
@@ -2446,8 +2556,8 @@ January 8 04:05:06 1999 PST
 
     <para>
      The output format of the interval type can be set to one of the
-     three styles <literal>sql_standard</>,
-     <literal>postgres</>, or <literal>postgres_verbose</>,
+     four styles <literal>sql_standard</>, <literal>postgres</>,
+     <literal>postgres_verbose</>, or <literal>iso_8601</>,
      using the command <literal>SET intervalstyle</literal>.
      The default is the <literal>postgres</> format.
      <xref linkend="interval-style-output-table"> shows examples of each
@@ -2474,6 +2584,12 @@ January 8 04:05:06 1999 PST
      The output of the <literal>postgres_verbose</> style matches the output of
      <productname>PostgreSQL</> releases prior to 8.4 when the
      <varname>DateStyle</> parameter was set to non-<literal>ISO</> output.
+    </para>
+
+    <para>
+     The output of the <literal>iso_8601</> style matches the <quote>format
+     with designators</> described in section 4.4.3.2 of the
+     ISO 8601 standard.
     </para>
 
      <table id="interval-style-output-table">
@@ -2505,6 +2621,12 @@ January 8 04:05:06 1999 PST
           <entry>@ 1 year 2 mons</entry>
           <entry>@ 3 days 4 hours 5 mins 6 secs</entry>
           <entry>@ 1 year 2 mons -3 days 4 hours 5 mins 6 secs ago</entry>
+         </row>
+         <row>
+          <entry><literal>iso_8601</></entry>
+          <entry>P1Y2M</entry>
+          <entry>P3DT4H5M6S</entry>
+          <entry>P-1Y-2M3DT-4H-5M-6S</entry>
          </row>
         </tbody>
        </tgroup>

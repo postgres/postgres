@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.175 2008/11/09 00:28:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.176 2008/11/11 02:42:32 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1959,7 +1959,7 @@ psql_completion(char *text, int start, int end)
 		else if (pg_strcasecmp(prev2_wd, "IntervalStyle") == 0)
 		{
 			static const char *const my_list[] =
-			{"postgres", "postgres_verbose", "sql_standard", NULL};
+			{"postgres", "postgres_verbose", "sql_standard", "iso_8601", NULL};
 
 			COMPLETE_WITH_LIST(my_list);
 		}

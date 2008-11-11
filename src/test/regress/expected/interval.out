@@ -646,3 +646,54 @@ SELECT  interval '1 day -1 hours',
  +0-0 +1 -1:00:00 | +0-0 -1 +1:00:00 | +1-2 -3 +4:05:06.789 | -1-2 +3 -4:05:06.789
 (1 row)
 
+-- test outputting iso8601 intervals
+SET IntervalStyle to iso_8601;
+select  interval '0'                                AS "zero",
+        interval '1-2'                              AS "a year 2 months",
+        interval '1 2:03:04'                        AS "a bit over a day",
+        interval '2:03:04.45679'                    AS "a bit over 2 hours",
+        (interval '1-2' + interval '3 4:05:06.7')   AS "all fields",
+        (interval '1-2' - interval '3 4:05:06.7')   AS "mixed sign",
+        (- interval '1-2' + interval '3 4:05:06.7') AS "negative";
+ zero | a year 2 months | a bit over a day | a bit over 2 hours |    all fields     |      mixed sign       |      negative       
+------+-----------------+------------------+--------------------+-------------------+-----------------------+---------------------
+ PT0S | P1Y2M           | P1DT2H3M4S       | PT2H3M4.45679S     | P1Y2M3DT4H5M6.70S | P1Y2M-3DT-4H-5M-6.70S | P-1Y-2M3DT4H5M6.70S
+(1 row)
+
+-- test inputting ISO 8601 4.4.2.1 "Format With Time Unit Designators"
+SET IntervalStyle to sql_standard;
+select  interval 'P0Y'                    AS "zero",
+        interval 'P1Y2M'                  AS "a year 2 months",
+        interval 'P1W'                    AS "a week",
+        interval 'P1DT2H3M4S'             AS "a bit over a day",
+        interval 'P1Y2M3DT4H5M6.7S'       AS "all fields",
+        interval 'P-1Y-2M-3DT-4H-5M-6.7S' AS "negative",
+        interval 'PT-0.1S'                AS "fractional second";
+ zero | a year 2 months |  a week   | a bit over a day |     all fields      |      negative       | fractional second 
+------+-----------------+-----------+------------------+---------------------+---------------------+-------------------
+ 0    | 1-2             | 7 0:00:00 | 1 2:03:04        | +1-2 +3 +4:05:06.70 | -1-2 -3 -4:05:06.70 | -0:00:00.10
+(1 row)
+
+-- test inputting ISO 8601 4.4.2.2 "Alternative Format"
+SET IntervalStyle to postgres;
+select  interval 'P00021015T103020'       AS "ISO8601 Basic Format",
+        interval 'P0002-10-15T10:30:20'   AS "ISO8601 Extended Format";
+       ISO8601 Basic Format       |     ISO8601 Extended Format      
+----------------------------------+----------------------------------
+ 2 years 10 mons 15 days 10:30:20 | 2 years 10 mons 15 days 10:30:20
+(1 row)
+
+-- Make sure optional ISO8601 alternative format fields are optional.
+select  interval 'P0002'                  AS "year only",
+        interval 'P0002-10'               AS "year month",
+        interval 'P0002-10-15'            AS "year month day",
+        interval 'P0002T1S'               AS "year only plus time",
+        interval 'P0002-10T1S'            AS "year month plus time",
+        interval 'P0002-10-15T1S'         AS "year month day plus time",
+        interval 'PT10'                   AS "hour only",
+        interval 'PT10:30'                AS "hour minute";
+ year only |   year month    |     year month day      | year only plus time |   year month plus time   |     year month day plus time     | hour only | hour minute 
+-----------+-----------------+-------------------------+---------------------+--------------------------+----------------------------------+-----------+-------------
+ 2 years   | 2 years 10 mons | 2 years 10 mons 15 days | 2 years 00:00:01    | 2 years 10 mons 00:00:01 | 2 years 10 mons 15 days 00:00:01 | 10:00:00  | 10:30:00
+(1 row)
+

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.476 2008/11/09 00:28:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.477 2008/11/11 02:42:32 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -217,6 +217,7 @@ static const struct config_enum_entry intervalstyle_options[] = {
 	{"postgres", INTSTYLE_POSTGRES, false},
 	{"postgres_verbose", INTSTYLE_POSTGRES_VERBOSE, false},
 	{"sql_standard", INTSTYLE_SQL_STANDARD, false},
+	{"iso_8601", INTSTYLE_ISO_8601, false},
 	{NULL, 0, false}
 };
 
