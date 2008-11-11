@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.196 2008/09/15 12:18:00 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.197 2008/11/11 15:01:53 mha Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -64,9 +64,7 @@ static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
 static bool get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf);
 static void minimal_error_message(PGresult *res);
 
-#ifdef USE_SSL
 static void printSSLInfo(void);
-#endif
 
 #ifdef WIN32
 static void checkWin32Codepage(void);
@@ -1327,9 +1325,7 @@ connection_warnings(void)
 #ifdef WIN32
 		checkWin32Codepage();
 #endif
-#ifdef USE_SSL
 		printSSLInfo();
-#endif
 	}
 }
 
@@ -1339,10 +1335,10 @@ connection_warnings(void)
  *
  * Prints information about the current SSL connection, if SSL is in use
  */
-#ifdef USE_SSL
 static void
 printSSLInfo(void)
 {
+#ifdef USE_SSL
 	int			sslbits = -1;
 	SSL		   *ssl;
 
@@ -1353,8 +1349,16 @@ printSSLInfo(void)
 	SSL_get_cipher_bits(ssl, &sslbits);
 	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
 		   SSL_get_cipher(ssl), sslbits);
-}
+#else
+	/*
+	 * If psql is compiled without SSL but is using a libpq with SSL,
+	 * we cannot figure out the specifics about the connection. But
+	 * we know it's SSL secured.
+	 */
+	if (PQgetssl(pset.db))
+		printf(_("SSL connection (unknown cipher)\n"));
 #endif
+}
 
 
 /*
