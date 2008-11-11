@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.59 2008/11/11 18:13:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.60 2008/11/11 19:05:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,10 +709,9 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * insert_targetlist_placeholders() will be adjusted, so having created
 	 * them with the subquery's varno is correct.
 	 *
-	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed (but
-	 * we took care of their translated_vars lists above).	We already checked
-	 * that this won't require introducing multiple subrelids into the
-	 * single-slot AppendRelInfo structs.
+	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed.
+	 * We already checked that this won't require introducing multiple
+	 * subrelids into the single-slot AppendRelInfo structs.
 	 */
 	if (parse->hasSubLinks || root->glob->lastPHId != 0 ||
 		root->append_rel_list)
@@ -1679,7 +1678,8 @@ substitute_multiple_relids(Node *node, int varno, Relids subrelids)
  *
  * When we pull up a subquery, any AppendRelInfo references to the subquery's
  * RT index have to be replaced by the substituted relid (and there had better
- * be only one).
+ * be only one).  We also need to apply substitute_multiple_relids to their
+ * translated_vars lists, since those might contain PlaceHolderVars.
  *
  * We assume we may modify the AppendRelInfo nodes in-place.
  */
@@ -1708,6 +1708,10 @@ fix_append_rel_relids(List *append_rel_list, int varno, Relids subrelids)
 				subvarno = bms_singleton_member(subrelids);
 			appinfo->child_relid = subvarno;
 		}
+
+		/* Also finish fixups for its translated vars */
+		substitute_multiple_relids((Node *) appinfo->translated_vars,
+								   varno, subrelids);
 	}
 }
 
