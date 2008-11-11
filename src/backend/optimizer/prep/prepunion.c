@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.134.2.1 2007/07/12 18:27:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.134.2.2 2008/11/11 18:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1253,70 +1253,6 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
 		relids = bms_add_member(relids, newrelid);
 	}
 	return relids;
-}
-
-/*
- * adjust_appendrel_attr_needed
- *		Adjust an attr_needed[] array to reference a member rel instead of
- *		the original appendrel
- *
- * oldrel: source of data (we use the attr_needed, min_attr, max_attr fields)
- * appinfo: supplies parent_relid, child_relid, col_mappings
- * new_min_attr, new_max_attr: desired bounds of new attr_needed array
- *
- * The relid sets are adjusted by substituting child_relid for parent_relid.
- * (NOTE: oldrel is not necessarily the parent_relid relation!)  We are also
- * careful to map attribute numbers within the array properly.	User
- * attributes have to be mapped through col_mappings, but system attributes
- * and whole-row references always have the same attno.
- *
- * Returns a palloc'd array with the specified bounds
- */
-Relids *
-adjust_appendrel_attr_needed(RelOptInfo *oldrel, AppendRelInfo *appinfo,
-							 AttrNumber new_min_attr, AttrNumber new_max_attr)
-{
-	Relids	   *new_attr_needed;
-	Index		parent_relid = appinfo->parent_relid;
-	Index		child_relid = appinfo->child_relid;
-	int			parent_attr;
-	ListCell   *lm;
-
-	/* Create empty result array */
-	new_attr_needed = (Relids *)
-		palloc0((new_max_attr - new_min_attr + 1) * sizeof(Relids));
-	/* Process user attributes, with appropriate attno mapping */
-	parent_attr = 1;
-	foreach(lm, appinfo->col_mappings)
-	{
-		int			child_attr = lfirst_int(lm);
-
-		if (child_attr > 0)
-		{
-			Relids		attrneeded;
-
-			Assert(parent_attr <= oldrel->max_attr);
-			Assert(child_attr <= new_max_attr);
-			attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-			attrneeded = adjust_relid_set(attrneeded,
-										  parent_relid, child_relid);
-			new_attr_needed[child_attr - new_min_attr] = attrneeded;
-		}
-		parent_attr++;
-	}
-	/* Process system attributes, including whole-row references */
-	Assert(new_min_attr <= oldrel->min_attr);
-	for (parent_attr = oldrel->min_attr; parent_attr <= 0; parent_attr++)
-	{
-		Relids		attrneeded;
-
-		attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-		attrneeded = adjust_relid_set(attrneeded,
-									  parent_relid, child_relid);
-		new_attr_needed[parent_attr - new_min_attr] = attrneeded;
-	}
-
-	return new_attr_needed;
 }
 
 /*
