@@ -11,15 +11,17 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.61 2008/11/03 15:10:17 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.62 2008/11/11 13:19:16 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/xlogutils.h"
+#include "catalog/catalog.h"
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
+#include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/rel.h"
 
@@ -64,12 +66,17 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 	 * tracing of the cause (note the elog context mechanism will tell us
 	 * something about the XLOG record that generated the reference).
 	 */
-	if (present)
-		elog(DEBUG1, "page %u of relation %u/%u/%u/%u is uninitialized",
-			 blkno, node.spcNode, node.dbNode, node.relNode, forkno);
-	else
-		elog(DEBUG1, "page %u of relation %u/%u/%u/%u does not exist",
-			 blkno, node.spcNode, node.dbNode, node.relNode, forkno);
+	if (log_min_messages <= DEBUG1 || client_min_messages <= DEBUG1)
+	{
+		char *path = relpath(node, forkno);
+		if (present)
+			elog(DEBUG1, "page %u of relation %s is uninitialized",
+				 blkno, path);
+		else
+			elog(DEBUG1, "page %u of relation %s does not exist",
+				 blkno, path);
+		pfree(path);
+	}
 
 	if (invalid_page_tab == NULL)
 	{
@@ -123,9 +130,13 @@ forget_invalid_pages(RelFileNode node, ForkNumber forkno, BlockNumber minblkno)
 			hentry->key.forkno == forkno &&
 			hentry->key.blkno >= minblkno)
 		{
-			elog(DEBUG2, "page %u of relation %u/%u/%u/%u has been dropped",
-				 hentry->key.blkno, hentry->key.node.spcNode,
-				 hentry->key.node.dbNode, hentry->key.node.relNode, forkno);
+			if (log_min_messages <= DEBUG2 || client_min_messages <= DEBUG2)
+			{
+				char *path = relpath(hentry->key.node, forkno);
+				elog(DEBUG2, "page %u of relation %s has been dropped",
+					 hentry->key.blkno, path);
+				pfree(path);
+			}
 
 			if (hash_search(invalid_page_tab,
 							(void *) &hentry->key,
@@ -151,9 +162,13 @@ forget_invalid_pages_db(Oid dbid)
 	{
 		if (hentry->key.node.dbNode == dbid)
 		{
-			elog(DEBUG2, "page %u of relation %u/%u/%u has been dropped",
-				 hentry->key.blkno, hentry->key.node.spcNode,
-				 hentry->key.node.dbNode, hentry->key.node.relNode);
+			if (log_min_messages <= DEBUG2 || client_min_messages <= DEBUG2)
+			{
+				char *path = relpath(hentry->key.node, hentry->key.forkno);
+				elog(DEBUG2, "page %u of relation %s has been dropped",
+					 hentry->key.blkno, path);
+				pfree(path);
+			}
 
 			if (hash_search(invalid_page_tab,
 							(void *) &hentry->key,
@@ -182,14 +197,14 @@ XLogCheckInvalidPages(void)
 	 */
 	while ((hentry = (xl_invalid_page *) hash_seq_search(&status)) != NULL)
 	{
+		char *path = relpath(hentry->key.node, hentry->key.forkno);
 		if (hentry->present)
-			elog(WARNING, "page %u of relation %u/%u/%u was uninitialized",
-				 hentry->key.blkno, hentry->key.node.spcNode,
-				 hentry->key.node.dbNode, hentry->key.node.relNode);
+			elog(WARNING, "page %u of relation %s was uninitialized",
+				 hentry->key.blkno, path);
 		else
-			elog(WARNING, "page %u of relation %u/%u/%u did not exist",
-				 hentry->key.blkno, hentry->key.node.spcNode,
-				 hentry->key.node.dbNode, hentry->key.node.relNode);
+			elog(WARNING, "page %u of relation %s did not exist",
+				 hentry->key.blkno, path);
+		pfree(path);
 		foundone = true;
 	}
 

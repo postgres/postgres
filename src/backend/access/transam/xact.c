@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.266 2008/10/20 19:18:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.267 2008/11/11 13:19:15 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4338,12 +4338,10 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			RelFileNode rnode = xlrec->xnodes[i].rnode;
-			ForkNumber	forknum = xlrec->xnodes[i].forknum;
-
-			appendStringInfo(buf, " %u/%u/%u/%u",
-							 rnode.spcNode, rnode.dbNode, rnode.relNode,
-							 forknum);
+			char *path = relpath(xlrec->xnodes[i].rnode,
+								 xlrec->xnodes[i].forknum);
+			appendStringInfo(buf, " %s", path);
+			pfree(path);
 		}
 	}
 	if (xlrec->nsubxacts > 0)
@@ -4368,12 +4366,10 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			RelFileNode rnode = xlrec->xnodes[i].rnode;
-			ForkNumber	forknum = xlrec->xnodes[i].forknum;
-
-			appendStringInfo(buf, " %u/%u/%u/%u",
-							 rnode.spcNode, rnode.dbNode, rnode.relNode,
-							 forknum);
+			char *path = relpath(xlrec->xnodes[i].rnode,
+								 xlrec->xnodes[i].forknum);
+			appendStringInfo(buf, " %s", path);
+			pfree(path);
 		}
 	}
 	if (xlrec->nsubxacts > 0)

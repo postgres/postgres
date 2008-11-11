@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.240 2008/10/31 15:05:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.241 2008/11/11 13:19:16 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+#include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
@@ -276,8 +277,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
-					(errmsg("unexpected data beyond EOF in block %u of relation %u/%u/%u/%u",
-							blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, forkNum),
+					(errmsg("unexpected data beyond EOF in block %u of relation %s",
+							blockNum, relpath(smgr->smgr_rnode, forkNum)),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
@@ -350,21 +351,17 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				{
 					ereport(WARNING,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %u/%u/%u/%u; zeroing out page",
+							 errmsg("invalid page header in block %u of relation %s; zeroing out page",
 									blockNum,
-									smgr->smgr_rnode.spcNode,
-									smgr->smgr_rnode.dbNode,
-									smgr->smgr_rnode.relNode,
-									forkNum)));
+									relpath(smgr->smgr_rnode, forkNum))));
 					MemSet((char *) bufBlock, 0, BLCKSZ);
 				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %u/%u/%u/%u",
-									blockNum, smgr->smgr_rnode.spcNode,
-									smgr->smgr_rnode.dbNode,
-									smgr->smgr_rnode.relNode, forkNum)));
+							 errmsg("invalid page header in block %u of relation %s",
+									blockNum,
+									relpath(smgr->smgr_rnode, forkNum))));
 			}
 		}
 	}
@@ -1645,6 +1642,7 @@ PrintBufferLeakWarning(Buffer buffer)
 {
 	volatile BufferDesc *buf;
 	int32		loccount;
+	char	   *path;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
@@ -1659,14 +1657,14 @@ PrintBufferLeakWarning(Buffer buffer)
 	}
 
 	/* theoretically we should lock the bufhdr here */
+	path = relpath(buf->tag.rnode, buf->tag.forkNum);
 	elog(WARNING,
 		 "buffer refcount leak: [%03d] "
-		 "(rel=%u/%u/%u, forkNum=%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
-		 buffer,
-		 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-		 buf->tag.rnode.relNode, buf->tag.forkNum,
+		 "(rel=%s, blockNum=%u, flags=0x%x, refcount=%u %d)",
+		 buffer, path,
 		 buf->tag.blockNum, buf->flags,
 		 buf->refcount, loccount);
+	pfree(path);
 }
 
 /*
@@ -1973,11 +1971,10 @@ PrintBufferDescs(void)
 	{
 		/* theoretically we should lock the bufhdr here */
 		elog(LOG,
-			 "[%02d] (freeNext=%d, rel=%u/%u/%u, forkNum=%u, "
+			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-			 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-			 buf->tag.rnode.relNode, buf->tag.forkNum,
+			 relpath(buf->tag.rnode, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, PrivateRefCount[i]);
 	}
@@ -1997,11 +1994,10 @@ PrintPinnedBufs(void)
 		{
 			/* theoretically we should lock the bufhdr here */
 			elog(LOG,
-				 "[%02d] (freeNext=%d, rel=%u/%u/%u, forkNum=%u, "
+				 "[%02d] (freeNext=%d, rel=%s, "
 				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext,
-				 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
-				 buf->tag.rnode.relNode, buf->tag.forkNum,
+				 relpath(buf->tag.rnode, buf->tag.forkNum),
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 		}
@@ -2634,14 +2630,13 @@ AbortBufferIO(void)
 			if (sv_flags & BM_IO_ERROR)
 			{
 				/* Buffer is pinned, so we can read tag without spinlock */
+				char *path = relpath(buf->tag.rnode, buf->tag.forkNum);
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
-						 errmsg("could not write block %u of %u/%u/%u/%u",
-								buf->tag.blockNum,
-								buf->tag.rnode.spcNode,
-								buf->tag.rnode.dbNode,
-								buf->tag.rnode.relNode, buf->tag.forkNum),
+						 errmsg("could not write block %u of %s",
+								buf->tag.blockNum, path),
 						 errdetail("Multiple failures --- write error might be permanent.")));
+				pfree(path);
 			}
 		}
 		TerminateBufferIO(buf, false, BM_IO_ERROR);
@@ -2658,10 +2653,10 @@ buffer_write_error_callback(void *arg)
 
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
-		errcontext("writing block %u of relation %u/%u/%u/%u",
-				   bufHdr->tag.blockNum,
-				   bufHdr->tag.rnode.spcNode,
-				   bufHdr->tag.rnode.dbNode,
-				   bufHdr->tag.rnode.relNode,
-				   bufHdr->tag.forkNum);
+	{
+		char *path = relpath(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+		errcontext("writing block %u of relation %s",
+				   bufHdr->tag.blockNum, path);
+		pfree(path);
+	}
 }

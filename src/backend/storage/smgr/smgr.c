@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.112 2008/09/30 10:52:13 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.113 2008/11/11 13:19:16 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "access/xact.h"
 #include "access/xlogutils.h"
+#include "catalog/catalog.h"
 #include "commands/tablespace.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
@@ -911,19 +912,19 @@ smgr_desc(StringInfo buf, uint8 xl_info, char *rec)
 	if (info == XLOG_SMGR_CREATE)
 	{
 		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
+		char *path = relpath(xlrec->rnode, xlrec->forknum);
 
-		appendStringInfo(buf, "file create: %u/%u/%u/%u",
-						 xlrec->rnode.spcNode, xlrec->rnode.dbNode,
-						 xlrec->rnode.relNode, xlrec->forknum);
+		appendStringInfo(buf, "file create: %s", path);
+		pfree(path);
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)
 	{
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
+		char *path = relpath(xlrec->rnode, xlrec->forknum);
 
-		appendStringInfo(buf, "file truncate: %u/%u/%u/%u to %u blocks",
-						 xlrec->rnode.spcNode, xlrec->rnode.dbNode,
-						 xlrec->rnode.relNode, xlrec->forknum,
+		appendStringInfo(buf, "file truncate: %s to %u blocks", path,
 						 xlrec->blkno);
+		pfree(path);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

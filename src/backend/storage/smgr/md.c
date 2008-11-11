@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.139 2008/08/11 11:05:11 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.140 2008/11/11 13:19:16 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,11 +258,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 			errno = save_errno;
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not create relation %u/%u/%u/%u: %m",
-							reln->smgr_rnode.spcNode,
-							reln->smgr_rnode.dbNode,
-							reln->smgr_rnode.relNode,
-							forkNum)));
+					 errmsg("could not create relation %s: %m", path)));
 		}
 	}
 
@@ -349,11 +345,7 @@ mdunlink(RelFileNode rnode, ForkNumber forkNum, bool isRedo)
 		if (!isRedo || errno != ENOENT)
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not remove relation %u/%u/%u/%u: %m",
-							rnode.spcNode,
-							rnode.dbNode,
-							rnode.relNode,
-							forkNum)));
+					 errmsg("could not remove relation %s: %m", path)));
 	}
 
 	/*
@@ -377,12 +369,8 @@ mdunlink(RelFileNode rnode, ForkNumber forkNum, bool isRedo)
 				if (errno != ENOENT)
 					ereport(WARNING,
 							(errcode_for_file_access(),
-							 errmsg("could not remove segment %u of relation %u/%u/%u/%u: %m",
-									segno,
-									rnode.spcNode,
-									rnode.dbNode,
-									rnode.relNode,
-									forkNum)));
+							 errmsg("could not remove segment %u of relation %s: %m",
+									segno, path)));
 				break;
 			}
 		}
@@ -426,11 +414,8 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	if (blocknum == InvalidBlockNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("cannot extend relation %u/%u/%u/%u beyond %u blocks",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum,
+				 errmsg("cannot extend relation %s beyond %u blocks",
+						relpath(reln->smgr_rnode, forknum),
 						InvalidBlockNumber)));
 
 	v = _mdfd_getseg(reln, forknum, blocknum, isTemp, EXTENSION_CREATE);
@@ -450,32 +435,23 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u of relation %u/%u/%u/%u: %m",
+				 errmsg("could not seek to block %u of relation %s: %m",
 						blocknum,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum)));
+						relpath(reln->smgr_rnode, forknum))));
 
 	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		if (nbytes < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not extend relation %u/%u/%u/%u: %m",
-							reln->smgr_rnode.spcNode,
-							reln->smgr_rnode.dbNode,
-							reln->smgr_rnode.relNode,
-							forknum),
+					 errmsg("could not extend relation %s: %m",
+							relpath(reln->smgr_rnode, forknum)),
 					 errhint("Check free disk space.")));
 		/* short write: complain appropriately */
 		ereport(ERROR,
 				(errcode(ERRCODE_DISK_FULL),
-				 errmsg("could not extend relation %u/%u/%u/%u: wrote only %d of %d bytes at block %u",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum,
+				 errmsg("could not extend relation %s: wrote only %d of %d bytes at block %u",
+						relpath(reln->smgr_rnode, forknum),
 						nbytes, BLCKSZ, blocknum),
 				 errhint("Check free disk space.")));
 	}
@@ -529,11 +505,7 @@ mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
 				return NULL;
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not open relation %u/%u/%u/%u: %m",
-							reln->smgr_rnode.spcNode,
-							reln->smgr_rnode.dbNode,
-							reln->smgr_rnode.relNode,
-							forknum)));
+					 errmsg("could not open relation %s: %m", path)));
 		}
 	}
 
@@ -595,24 +567,16 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u of relation %u/%u/%u/%u: %m",
-						blocknum,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum)));
+				 errmsg("could not seek to block %u of relation %s: %m",
+						blocknum, relpath(reln->smgr_rnode, forknum))));
 
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		if (nbytes < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				   errmsg("could not read block %u of relation %u/%u/%u/%u: %m",
-						  blocknum,
-						  reln->smgr_rnode.spcNode,
-						  reln->smgr_rnode.dbNode,
-						  reln->smgr_rnode.relNode,
-						  forknum)));
+				   errmsg("could not read block %u of relation %s: %m",
+						  blocknum, relpath(reln->smgr_rnode, forknum))));
 
 		/*
 		 * Short read: we are at or past EOF, or we read a partial block at
@@ -627,12 +591,8 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("could not read block %u of relation %u/%u/%u/%u: read only %d of %d bytes",
-							blocknum,
-							reln->smgr_rnode.spcNode,
-							reln->smgr_rnode.dbNode,
-							reln->smgr_rnode.relNode,
-							forknum,
+					 errmsg("could not read block %u of relation %s: read only %d of %d bytes",
+							blocknum, relpath(reln->smgr_rnode, forknum),
 							nbytes, BLCKSZ)));
 	}
 }
@@ -665,33 +625,22 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek to block %u of relation %u/%u/%u/%u: %m",
-						blocknum,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum)));
+				 errmsg("could not seek to block %u of relation %s: %m",
+						blocknum, relpath(reln->smgr_rnode, forknum))));
 
 	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		if (nbytes < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				  errmsg("could not write block %u of relation %u/%u/%u/%u: %m",
-						 blocknum,
-						 reln->smgr_rnode.spcNode,
-						 reln->smgr_rnode.dbNode,
-						 reln->smgr_rnode.relNode,
-						 forknum)));
+				  errmsg("could not write block %u of relation %s: %m",
+						 blocknum, relpath(reln->smgr_rnode, forknum))));
 		/* short write: complain appropriately */
 		ereport(ERROR,
 				(errcode(ERRCODE_DISK_FULL),
-				 errmsg("could not write block %u of relation %u/%u/%u/%u: wrote only %d of %d bytes",
+				 errmsg("could not write block %u of relation %s: wrote only %d of %d bytes",
 						blocknum,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum,
+						relpath(reln->smgr_rnode, forknum),
 						nbytes, BLCKSZ),
 				 errhint("Check free disk space.")));
 	}
@@ -758,12 +707,9 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 			if (v->mdfd_chain == NULL)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-				 errmsg("could not open segment %u of relation %u/%u/%u/%u: %m",
+				 errmsg("could not open segment %u of relation %s: %m",
 						segno,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum)));
+						relpath(reln->smgr_rnode, forknum))));
 		}
 
 		v = v->mdfd_chain;
@@ -792,11 +738,8 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 		if (InRecovery)
 			return;
 		ereport(ERROR,
-				(errmsg("could not truncate relation %u/%u/%u/%u to %u blocks: it's only %u blocks now",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode,
-						forknum,
+				(errmsg("could not truncate relation %s to %u blocks: it's only %u blocks now",
+						relpath(reln->smgr_rnode, forknum),
 						nblocks, curnblk)));
 	}
 	if (nblocks == curnblk)
@@ -819,11 +762,8 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 			if (FileTruncate(v->mdfd_vfd, 0) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not truncate relation %u/%u/%u/%u to %u blocks: %m",
-								reln->smgr_rnode.spcNode,
-								reln->smgr_rnode.dbNode,
-								reln->smgr_rnode.relNode,
-								forknum,
+						 errmsg("could not truncate relation %s to %u blocks: %m",
+								relpath(reln->smgr_rnode, forknum),
 								nblocks)));
 			if (!isTemp)
 				register_dirty_segment(reln, forknum, v);
@@ -846,11 +786,8 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not truncate relation %u/%u/%u/%u to %u blocks: %m",
-								reln->smgr_rnode.spcNode,
-								reln->smgr_rnode.dbNode,
-								reln->smgr_rnode.relNode,
-								forknum,
+						 errmsg("could not truncate relation %s to %u blocks: %m",
+								relpath(reln->smgr_rnode, forknum),
 								nblocks)));
 			if (!isTemp)
 				register_dirty_segment(reln, forknum, v);
@@ -894,12 +831,9 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 		if (FileSync(v->mdfd_vfd) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not fsync segment %u of relation %u/%u/%u/%u: %m",
-					   v->mdfd_segno,
-					   reln->smgr_rnode.spcNode,
-					   reln->smgr_rnode.dbNode,
-					   reln->smgr_rnode.relNode,
-					   forknum)));
+					 errmsg("could not fsync segment %u of relation %s: %m",
+							v->mdfd_segno,
+							relpath(reln->smgr_rnode, forknum))));
 		v = v->mdfd_chain;
 	}
 }
@@ -1027,6 +961,7 @@ mdsync(void)
 			{
 				SMgrRelation reln;
 				MdfdVec    *seg;
+				char	   *path;
 
 				/*
 				 * Find or create an smgr hash entry for this relation. This
@@ -1065,25 +1000,19 @@ mdsync(void)
 				 * Don't see one at the moment, but easy to change the test
 				 * here if so.
 				 */
+				path = relpath(entry->tag.rnode, entry->tag.forknum);
 				if (!FILE_POSSIBLY_DELETED(errno) ||
 					failures > 0)
 					ereport(ERROR,
 							(errcode_for_file_access(),
-							 errmsg("could not fsync segment %u of relation %u/%u/%u/%u: %m",
-									entry->tag.segno,
-									entry->tag.rnode.spcNode,
-									entry->tag.rnode.dbNode,
-									entry->tag.rnode.relNode,
-									entry->tag.forknum)));
+							 errmsg("could not fsync segment %u of relation %s: %m",
+									entry->tag.segno, path)));
 				else
 					ereport(DEBUG1,
 							(errcode_for_file_access(),
-							 errmsg("could not fsync segment %u of relation %u/%u/%u/%u but retrying: %m",
-									entry->tag.segno,
-									entry->tag.rnode.spcNode,
-									entry->tag.rnode.dbNode,
-									entry->tag.rnode.relNode,
-									entry->tag.forknum)));
+							 errmsg("could not fsync segment %u of relation %s but retrying: %m",
+									entry->tag.segno, path)));
+				pfree(path);
 
 				/*
 				 * Absorb incoming requests and check to see if canceled.
@@ -1186,11 +1115,7 @@ mdpostckpt(void)
 			if (errno != ENOENT)
 				ereport(WARNING,
 						(errcode_for_file_access(),
-						 errmsg("could not remove relation %u/%u/%u/%u: %m",
-								entry->rnode.spcNode,
-								entry->rnode.dbNode,
-								entry->rnode.relNode,
-								MAIN_FORKNUM)));
+						 errmsg("could not remove relation %s: %m", path)));
 		}
 		pfree(path);
 
@@ -1224,12 +1149,9 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 		if (FileSync(seg->mdfd_vfd) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not fsync segment %u of relation %u/%u/%u/%u: %m",
-					   seg->mdfd_segno,
-					   reln->smgr_rnode.spcNode,
-					   reln->smgr_rnode.dbNode,
-					   reln->smgr_rnode.relNode,
-					   forknum)));
+					 errmsg("could not fsync segment %u of relation %s: %m",
+							seg->mdfd_segno,
+							relpath(reln->smgr_rnode, forknum))));
 	}
 }
 
@@ -1574,12 +1496,9 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 					return NULL;
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not open segment %u of relation %u/%u/%u/%u (target block %u): %m",
+						 errmsg("could not open segment %u of relation %s (target block %u): %m",
 								nextsegno,
-								reln->smgr_rnode.spcNode,
-								reln->smgr_rnode.dbNode,
-								reln->smgr_rnode.relNode,
-								forknum,
+								relpath(reln->smgr_rnode, forknum),
 								blkno)));
 			}
 		}
@@ -1600,12 +1519,8 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 	if (len < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-		errmsg("could not seek to end of segment %u of relation %u/%u/%u/%u: %m",
-			   seg->mdfd_segno,
-			   reln->smgr_rnode.spcNode,
-			   reln->smgr_rnode.dbNode,
-			   reln->smgr_rnode.relNode,
-			   forknum)));
+				 errmsg("could not seek to end of segment %u of relation %s: %m",
+						seg->mdfd_segno, relpath(reln->smgr_rnode, forknum))));
 	/* note that this calculation will ignore any partial block at EOF */
 	return (BlockNumber) (len / BLCKSZ);
 }
