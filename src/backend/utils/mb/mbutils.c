@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.74 2008/11/10 15:18:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.75 2008/11/11 03:01:20 tgl Exp $
  */
 #include "postgres.h"
 
@@ -221,7 +221,13 @@ pg_get_client_encoding_name(void)
  * it's taken from pg_catalog schema. If it even is not in the schema,
  * warn and return src.
  *
+ * If conversion occurs, a palloc'd null-terminated string is returned.
  * In the case of no conversion, src is returned.
+ *
+ * CAUTION: although the presence of a length argument means that callers
+ * can pass non-null-terminated strings, care is required because the same
+ * string will be passed back if no conversion occurs.  Such callers *must*
+ * check whether result == src and handle that case differently.
  *
  * Note: we try to avoid raising error, since that could get us into
  * infinite recursion when this function is invoked during error message
