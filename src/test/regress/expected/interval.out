@@ -223,7 +223,7 @@ FROM INTERVAL_MULDIV_TBL;
  1 year 12 days 122:24:00
  -1 years -12 days +93:36:00
  -3 days -14:24:00
- 2 mons 13 days 01:22:28.80
+ 2 mons 13 days 01:22:28.8
  -10 mons +120 days 37:28:21.6567
  1 mon 6 days
  4 mons 6 days
@@ -237,7 +237,7 @@ FROM INTERVAL_MULDIV_TBL;
  28 years 104 days 2961:36:00
  -28 years -104 days +2942:24:00
  -98 days -09:36:00
- 6 years 1 mon -197 days +93:34:27.20
+ 6 years 1 mon -197 days +93:34:27.2
  -24 years -7 mons +3946 days 640:15:11.9498
  2 years 8 mons 24 days
  9 years 6 mons 24 days
@@ -251,7 +251,7 @@ FROM INTERVAL_MULDIV_TBL;
  4 mons 4 days 40:48:00
  -4 mons -4 days +31:12:00
  -1 days -04:48:00
- 25 days -15:32:30.40
+ 25 days -15:32:30.4
  -3 mons +30 days 12:29:27.2189
  12 days
  1 mon 12 days
@@ -655,9 +655,9 @@ select  interval '0'                                AS "zero",
         (interval '1-2' + interval '3 4:05:06.7')   AS "all fields",
         (interval '1-2' - interval '3 4:05:06.7')   AS "mixed sign",
         (- interval '1-2' + interval '3 4:05:06.7') AS "negative";
- zero | a year 2 months | a bit over a day | a bit over 2 hours |    all fields     |      mixed sign       |      negative       
-------+-----------------+------------------+--------------------+-------------------+-----------------------+---------------------
- PT0S | P1Y2M           | P1DT2H3M4S       | PT2H3M4.45679S     | P1Y2M3DT4H5M6.70S | P1Y2M-3DT-4H-5M-6.70S | P-1Y-2M3DT4H5M6.70S
+ zero | a year 2 months | a bit over a day | a bit over 2 hours |    all fields    |      mixed sign      |      negative      
+------+-----------------+------------------+--------------------+------------------+----------------------+--------------------
+ PT0S | P1Y2M           | P1DT2H3M4S       | PT2H3M4.45679S     | P1Y2M3DT4H5M6.7S | P1Y2M-3DT-4H-5M-6.7S | P-1Y-2M3DT4H5M6.7S
 (1 row)
 
 -- test inputting ISO 8601 4.4.2.1 "Format With Time Unit Designators"
@@ -669,9 +669,9 @@ select  interval 'P0Y'                    AS "zero",
         interval 'P1Y2M3DT4H5M6.7S'       AS "all fields",
         interval 'P-1Y-2M-3DT-4H-5M-6.7S' AS "negative",
         interval 'PT-0.1S'                AS "fractional second";
- zero | a year 2 months |  a week   | a bit over a day |     all fields      |      negative       | fractional second 
-------+-----------------+-----------+------------------+---------------------+---------------------+-------------------
- 0    | 1-2             | 7 0:00:00 | 1 2:03:04        | +1-2 +3 +4:05:06.70 | -1-2 -3 -4:05:06.70 | -0:00:00.10
+ zero | a year 2 months |  a week   | a bit over a day |     all fields     |      negative      | fractional second 
+------+-----------------+-----------+------------------+--------------------+--------------------+-------------------
+ 0    | 1-2             | 7 0:00:00 | 1 2:03:04        | +1-2 +3 +4:05:06.7 | -1-2 -3 -4:05:06.7 | -0:00:00.1
 (1 row)
 
 -- test inputting ISO 8601 4.4.2.2 "Alternative Format"
@@ -695,5 +695,25 @@ select  interval 'P0002'                  AS "year only",
  year only |   year month    |     year month day      | year only plus time |   year month plus time   |     year month day plus time     | hour only | hour minute 
 -----------+-----------------+-------------------------+---------------------+--------------------------+----------------------------------+-----------+-------------
  2 years   | 2 years 10 mons | 2 years 10 mons 15 days | 2 years 00:00:01    | 2 years 10 mons 00:00:01 | 2 years 10 mons 15 days 00:00:01 | 10:00:00  | 10:30:00
+(1 row)
+
+-- test a couple rounding cases that changed since 8.3 w/ HAVE_INT64_TIMESTAMP.
+SET IntervalStyle to postgres_verbose;
+select interval '-10 mons -3 days +03:55:06.70';
+                     interval                     
+--------------------------------------------------
+ @ 10 mons 3 days -3 hours -55 mins -6.7 secs ago
+(1 row)
+
+select interval '1 year 2 mons 3 days 04:05:06.699999';
+                      interval                       
+-----------------------------------------------------
+ @ 1 year 2 mons 3 days 4 hours 5 mins 6.699999 secs
+(1 row)
+
+select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds'; 
+  interval  |  interval  |  interval  
+------------+------------+------------
+ @ 0.7 secs | @ 0.7 secs | @ 0.7 secs
 (1 row)
 

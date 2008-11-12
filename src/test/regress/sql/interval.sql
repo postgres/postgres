@@ -235,3 +235,9 @@ select  interval 'P0002'                  AS "year only",
         interval 'P0002-10-15T1S'         AS "year month day plus time",
         interval 'PT10'                   AS "hour only",
         interval 'PT10:30'                AS "hour minute";
+
+-- test a couple rounding cases that changed since 8.3 w/ HAVE_INT64_TIMESTAMP.
+SET IntervalStyle to postgres_verbose;
+select interval '-10 mons -3 days +03:55:06.70';
+select interval '1 year 2 mons 3 days 04:05:06.699999';
+select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds'; 

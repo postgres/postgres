@@ -423,9 +423,9 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Tue Feb 10 17:32:01 1998
     | Tue Feb 10 17:32:01 1998
     | Tue Feb 10 17:32:02 1998
-    | Tue Feb 10 17:32:01.40 1998
-    | Tue Feb 10 17:32:01.50 1998
-    | Tue Feb 10 17:32:01.60 1998
+    | Tue Feb 10 17:32:01.4 1998
+    | Tue Feb 10 17:32:01.5 1998
+    | Tue Feb 10 17:32:01.6 1998
     | Fri Jan 02 00:00:00 1998
     | Fri Jan 02 03:04:05 1998
     | Tue Feb 10 17:32:01 1998
@@ -493,9 +493,9 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Sat Feb 10 17:32:01 1996
     | Sat Feb 10 17:32:01 1996
     | Sat Feb 10 17:32:02 1996
-    | Sat Feb 10 17:32:01.40 1996
-    | Sat Feb 10 17:32:01.50 1996
-    | Sat Feb 10 17:32:01.60 1996
+    | Sat Feb 10 17:32:01.4 1996
+    | Sat Feb 10 17:32:01.5 1996
+    | Sat Feb 10 17:32:01.6 1996
     | Tue Jan 02 00:00:00 1996
     | Tue Jan 02 03:04:05 1996
     | Sat Feb 10 17:32:01 1996
@@ -668,9 +668,9 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Tue Feb 10 17:32:01 1998 PST
     | Tue Feb 10 17:32:01 1998 PST
     | Tue Feb 10 17:32:02 1998 PST
-    | Tue Feb 10 17:32:01.40 1998 PST
-    | Tue Feb 10 17:32:01.50 1998 PST
-    | Tue Feb 10 17:32:01.60 1998 PST
+    | Tue Feb 10 17:32:01.4 1998 PST
+    | Tue Feb 10 17:32:01.5 1998 PST
+    | Tue Feb 10 17:32:01.6 1998 PST
     | Fri Jan 02 00:00:00 1998 PST
     | Fri Jan 02 03:04:05 1998 PST
     | Tue Feb 10 17:32:01 1998 PST
@@ -739,9 +739,9 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Sat Feb 10 17:32:01 1996 PST
     | Sat Feb 10 17:32:01 1996 PST
     | Sat Feb 10 17:32:02 1996 PST
-    | Sat Feb 10 17:32:01.40 1996 PST
-    | Sat Feb 10 17:32:01.50 1996 PST
-    | Sat Feb 10 17:32:01.60 1996 PST
+    | Sat Feb 10 17:32:01.4 1996 PST
+    | Sat Feb 10 17:32:01.5 1996 PST
+    | Sat Feb 10 17:32:01.6 1996 PST
     | Tue Jan 02 00:00:00 1996 PST
     | Tue Jan 02 03:04:05 1996 PST
     | Sat Feb 10 17:32:01 1996 PST
@@ -884,112 +884,112 @@ SELECT t.d1 AS t, i.f1 AS i, t.d1 + i.f1 AS "add", t.d1 - i.f1 AS "subtract"
   WHERE t.d1 BETWEEN '1990-01-01' AND '2001-01-01'
     AND i.f1 BETWEEN '00:00' AND '23:00'
   ORDER BY 1,2;
-              t              |     i     |             add             |          subtract           
------------------------------+-----------+-----------------------------+-----------------------------
- Wed Feb 28 17:32:01 1996    | @ 1 min   | Wed Feb 28 17:33:01 1996    | Wed Feb 28 17:31:01 1996
- Wed Feb 28 17:32:01 1996    | @ 5 hours | Wed Feb 28 22:32:01 1996    | Wed Feb 28 12:32:01 1996
- Thu Feb 29 17:32:01 1996    | @ 1 min   | Thu Feb 29 17:33:01 1996    | Thu Feb 29 17:31:01 1996
- Thu Feb 29 17:32:01 1996    | @ 5 hours | Thu Feb 29 22:32:01 1996    | Thu Feb 29 12:32:01 1996
- Fri Mar 01 17:32:01 1996    | @ 1 min   | Fri Mar 01 17:33:01 1996    | Fri Mar 01 17:31:01 1996
- Fri Mar 01 17:32:01 1996    | @ 5 hours | Fri Mar 01 22:32:01 1996    | Fri Mar 01 12:32:01 1996
- Mon Dec 30 17:32:01 1996    | @ 1 min   | Mon Dec 30 17:33:01 1996    | Mon Dec 30 17:31:01 1996
- Mon Dec 30 17:32:01 1996    | @ 5 hours | Mon Dec 30 22:32:01 1996    | Mon Dec 30 12:32:01 1996
- Tue Dec 31 17:32:01 1996    | @ 1 min   | Tue Dec 31 17:33:01 1996    | Tue Dec 31 17:31:01 1996
- Tue Dec 31 17:32:01 1996    | @ 5 hours | Tue Dec 31 22:32:01 1996    | Tue Dec 31 12:32:01 1996
- Wed Jan 01 17:32:01 1997    | @ 1 min   | Wed Jan 01 17:33:01 1997    | Wed Jan 01 17:31:01 1997
- Wed Jan 01 17:32:01 1997    | @ 5 hours | Wed Jan 01 22:32:01 1997    | Wed Jan 01 12:32:01 1997
- Thu Jan 02 00:00:00 1997    | @ 1 min   | Thu Jan 02 00:01:00 1997    | Wed Jan 01 23:59:00 1997
- Thu Jan 02 00:00:00 1997    | @ 5 hours | Thu Jan 02 05:00:00 1997    | Wed Jan 01 19:00:00 1997
- Thu Jan 02 03:04:05 1997    | @ 1 min   | Thu Jan 02 03:05:05 1997    | Thu Jan 02 03:03:05 1997
- Thu Jan 02 03:04:05 1997    | @ 5 hours | Thu Jan 02 08:04:05 1997    | Wed Jan 01 22:04:05 1997
- Mon Feb 10 17:32:00 1997    | @ 1 min   | Mon Feb 10 17:33:00 1997    | Mon Feb 10 17:31:00 1997
- Mon Feb 10 17:32:00 1997    | @ 5 hours | Mon Feb 10 22:32:00 1997    | Mon Feb 10 12:32:00 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 1 min   | Mon Feb 10 17:33:01 1997    | Mon Feb 10 17:31:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01 1997    | @ 5 hours | Mon Feb 10 22:32:01 1997    | Mon Feb 10 12:32:01 1997
- Mon Feb 10 17:32:01.40 1997 | @ 1 min   | Mon Feb 10 17:33:01.40 1997 | Mon Feb 10 17:31:01.40 1997
- Mon Feb 10 17:32:01.40 1997 | @ 5 hours | Mon Feb 10 22:32:01.40 1997 | Mon Feb 10 12:32:01.40 1997
- Mon Feb 10 17:32:01.50 1997 | @ 1 min   | Mon Feb 10 17:33:01.50 1997 | Mon Feb 10 17:31:01.50 1997
- Mon Feb 10 17:32:01.50 1997 | @ 5 hours | Mon Feb 10 22:32:01.50 1997 | Mon Feb 10 12:32:01.50 1997
- Mon Feb 10 17:32:01.60 1997 | @ 1 min   | Mon Feb 10 17:33:01.60 1997 | Mon Feb 10 17:31:01.60 1997
- Mon Feb 10 17:32:01.60 1997 | @ 5 hours | Mon Feb 10 22:32:01.60 1997 | Mon Feb 10 12:32:01.60 1997
- Mon Feb 10 17:32:02 1997    | @ 1 min   | Mon Feb 10 17:33:02 1997    | Mon Feb 10 17:31:02 1997
- Mon Feb 10 17:32:02 1997    | @ 5 hours | Mon Feb 10 22:32:02 1997    | Mon Feb 10 12:32:02 1997
- Tue Feb 11 17:32:01 1997    | @ 1 min   | Tue Feb 11 17:33:01 1997    | Tue Feb 11 17:31:01 1997
- Tue Feb 11 17:32:01 1997    | @ 5 hours | Tue Feb 11 22:32:01 1997    | Tue Feb 11 12:32:01 1997
- Wed Feb 12 17:32:01 1997    | @ 1 min   | Wed Feb 12 17:33:01 1997    | Wed Feb 12 17:31:01 1997
- Wed Feb 12 17:32:01 1997    | @ 5 hours | Wed Feb 12 22:32:01 1997    | Wed Feb 12 12:32:01 1997
- Thu Feb 13 17:32:01 1997    | @ 1 min   | Thu Feb 13 17:33:01 1997    | Thu Feb 13 17:31:01 1997
- Thu Feb 13 17:32:01 1997    | @ 5 hours | Thu Feb 13 22:32:01 1997    | Thu Feb 13 12:32:01 1997
- Fri Feb 14 17:32:01 1997    | @ 1 min   | Fri Feb 14 17:33:01 1997    | Fri Feb 14 17:31:01 1997
- Fri Feb 14 17:32:01 1997    | @ 5 hours | Fri Feb 14 22:32:01 1997    | Fri Feb 14 12:32:01 1997
- Sat Feb 15 17:32:01 1997    | @ 1 min   | Sat Feb 15 17:33:01 1997    | Sat Feb 15 17:31:01 1997
- Sat Feb 15 17:32:01 1997    | @ 5 hours | Sat Feb 15 22:32:01 1997    | Sat Feb 15 12:32:01 1997
- Sun Feb 16 17:32:01 1997    | @ 1 min   | Sun Feb 16 17:33:01 1997    | Sun Feb 16 17:31:01 1997
- Sun Feb 16 17:32:01 1997    | @ 1 min   | Sun Feb 16 17:33:01 1997    | Sun Feb 16 17:31:01 1997
- Sun Feb 16 17:32:01 1997    | @ 5 hours | Sun Feb 16 22:32:01 1997    | Sun Feb 16 12:32:01 1997
- Sun Feb 16 17:32:01 1997    | @ 5 hours | Sun Feb 16 22:32:01 1997    | Sun Feb 16 12:32:01 1997
- Fri Feb 28 17:32:01 1997    | @ 1 min   | Fri Feb 28 17:33:01 1997    | Fri Feb 28 17:31:01 1997
- Fri Feb 28 17:32:01 1997    | @ 5 hours | Fri Feb 28 22:32:01 1997    | Fri Feb 28 12:32:01 1997
- Sat Mar 01 17:32:01 1997    | @ 1 min   | Sat Mar 01 17:33:01 1997    | Sat Mar 01 17:31:01 1997
- Sat Mar 01 17:32:01 1997    | @ 5 hours | Sat Mar 01 22:32:01 1997    | Sat Mar 01 12:32:01 1997
- Tue Jun 10 17:32:01 1997    | @ 1 min   | Tue Jun 10 17:33:01 1997    | Tue Jun 10 17:31:01 1997
- Tue Jun 10 17:32:01 1997    | @ 5 hours | Tue Jun 10 22:32:01 1997    | Tue Jun 10 12:32:01 1997
- Tue Jun 10 18:32:01 1997    | @ 1 min   | Tue Jun 10 18:33:01 1997    | Tue Jun 10 18:31:01 1997
- Tue Jun 10 18:32:01 1997    | @ 5 hours | Tue Jun 10 23:32:01 1997    | Tue Jun 10 13:32:01 1997
- Tue Dec 30 17:32:01 1997    | @ 1 min   | Tue Dec 30 17:33:01 1997    | Tue Dec 30 17:31:01 1997
- Tue Dec 30 17:32:01 1997    | @ 5 hours | Tue Dec 30 22:32:01 1997    | Tue Dec 30 12:32:01 1997
- Wed Dec 31 17:32:01 1997    | @ 1 min   | Wed Dec 31 17:33:01 1997    | Wed Dec 31 17:31:01 1997
- Wed Dec 31 17:32:01 1997    | @ 5 hours | Wed Dec 31 22:32:01 1997    | Wed Dec 31 12:32:01 1997
- Fri Dec 31 17:32:01 1999    | @ 1 min   | Fri Dec 31 17:33:01 1999    | Fri Dec 31 17:31:01 1999
- Fri Dec 31 17:32:01 1999    | @ 5 hours | Fri Dec 31 22:32:01 1999    | Fri Dec 31 12:32:01 1999
- Sat Jan 01 17:32:01 2000    | @ 1 min   | Sat Jan 01 17:33:01 2000    | Sat Jan 01 17:31:01 2000
- Sat Jan 01 17:32:01 2000    | @ 5 hours | Sat Jan 01 22:32:01 2000    | Sat Jan 01 12:32:01 2000
- Wed Mar 15 02:14:05 2000    | @ 1 min   | Wed Mar 15 02:15:05 2000    | Wed Mar 15 02:13:05 2000
- Wed Mar 15 02:14:05 2000    | @ 5 hours | Wed Mar 15 07:14:05 2000    | Tue Mar 14 21:14:05 2000
- Wed Mar 15 03:14:04 2000    | @ 1 min   | Wed Mar 15 03:15:04 2000    | Wed Mar 15 03:13:04 2000
- Wed Mar 15 03:14:04 2000    | @ 5 hours | Wed Mar 15 08:14:04 2000    | Tue Mar 14 22:14:04 2000
- Wed Mar 15 08:14:01 2000    | @ 1 min   | Wed Mar 15 08:15:01 2000    | Wed Mar 15 08:13:01 2000
- Wed Mar 15 08:14:01 2000    | @ 5 hours | Wed Mar 15 13:14:01 2000    | Wed Mar 15 03:14:01 2000
- Wed Mar 15 12:14:03 2000    | @ 1 min   | Wed Mar 15 12:15:03 2000    | Wed Mar 15 12:13:03 2000
- Wed Mar 15 12:14:03 2000    | @ 5 hours | Wed Mar 15 17:14:03 2000    | Wed Mar 15 07:14:03 2000
- Wed Mar 15 13:14:02 2000    | @ 1 min   | Wed Mar 15 13:15:02 2000    | Wed Mar 15 13:13:02 2000
- Wed Mar 15 13:14:02 2000    | @ 5 hours | Wed Mar 15 18:14:02 2000    | Wed Mar 15 08:14:02 2000
- Sun Dec 31 17:32:01 2000    | @ 1 min   | Sun Dec 31 17:33:01 2000    | Sun Dec 31 17:31:01 2000
- Sun Dec 31 17:32:01 2000    | @ 5 hours | Sun Dec 31 22:32:01 2000    | Sun Dec 31 12:32:01 2000
+             t              |     i     |            add             |          subtract          
+----------------------------+-----------+----------------------------+----------------------------
+ Wed Feb 28 17:32:01 1996   | @ 1 min   | Wed Feb 28 17:33:01 1996   | Wed Feb 28 17:31:01 1996
+ Wed Feb 28 17:32:01 1996   | @ 5 hours | Wed Feb 28 22:32:01 1996   | Wed Feb 28 12:32:01 1996
+ Thu Feb 29 17:32:01 1996   | @ 1 min   | Thu Feb 29 17:33:01 1996   | Thu Feb 29 17:31:01 1996
+ Thu Feb 29 17:32:01 1996   | @ 5 hours | Thu Feb 29 22:32:01 1996   | Thu Feb 29 12:32:01 1996
+ Fri Mar 01 17:32:01 1996   | @ 1 min   | Fri Mar 01 17:33:01 1996   | Fri Mar 01 17:31:01 1996
+ Fri Mar 01 17:32:01 1996   | @ 5 hours | Fri Mar 01 22:32:01 1996   | Fri Mar 01 12:32:01 1996
+ Mon Dec 30 17:32:01 1996   | @ 1 min   | Mon Dec 30 17:33:01 1996   | Mon Dec 30 17:31:01 1996
+ Mon Dec 30 17:32:01 1996   | @ 5 hours | Mon Dec 30 22:32:01 1996   | Mon Dec 30 12:32:01 1996
+ Tue Dec 31 17:32:01 1996   | @ 1 min   | Tue Dec 31 17:33:01 1996   | Tue Dec 31 17:31:01 1996
+ Tue Dec 31 17:32:01 1996   | @ 5 hours | Tue Dec 31 22:32:01 1996   | Tue Dec 31 12:32:01 1996
+ Wed Jan 01 17:32:01 1997   | @ 1 min   | Wed Jan 01 17:33:01 1997   | Wed Jan 01 17:31:01 1997
+ Wed Jan 01 17:32:01 1997   | @ 5 hours | Wed Jan 01 22:32:01 1997   | Wed Jan 01 12:32:01 1997
+ Thu Jan 02 00:00:00 1997   | @ 1 min   | Thu Jan 02 00:01:00 1997   | Wed Jan 01 23:59:00 1997
+ Thu Jan 02 00:00:00 1997   | @ 5 hours | Thu Jan 02 05:00:00 1997   | Wed Jan 01 19:00:00 1997
+ Thu Jan 02 03:04:05 1997   | @ 1 min   | Thu Jan 02 03:05:05 1997   | Thu Jan 02 03:03:05 1997
+ Thu Jan 02 03:04:05 1997   | @ 5 hours | Thu Jan 02 08:04:05 1997   | Wed Jan 01 22:04:05 1997
+ Mon Feb 10 17:32:00 1997   | @ 1 min   | Mon Feb 10 17:33:00 1997   | Mon Feb 10 17:31:00 1997
+ Mon Feb 10 17:32:00 1997   | @ 5 hours | Mon Feb 10 22:32:00 1997   | Mon Feb 10 12:32:00 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 1 min   | Mon Feb 10 17:33:01 1997   | Mon Feb 10 17:31:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01 1997   | @ 5 hours | Mon Feb 10 22:32:01 1997   | Mon Feb 10 12:32:01 1997
+ Mon Feb 10 17:32:01.4 1997 | @ 1 min   | Mon Feb 10 17:33:01.4 1997 | Mon Feb 10 17:31:01.4 1997
+ Mon Feb 10 17:32:01.4 1997 | @ 5 hours | Mon Feb 10 22:32:01.4 1997 | Mon Feb 10 12:32:01.4 1997
+ Mon Feb 10 17:32:01.5 1997 | @ 1 min   | Mon Feb 10 17:33:01.5 1997 | Mon Feb 10 17:31:01.5 1997
+ Mon Feb 10 17:32:01.5 1997 | @ 5 hours | Mon Feb 10 22:32:01.5 1997 | Mon Feb 10 12:32:01.5 1997
+ Mon Feb 10 17:32:01.6 1997 | @ 1 min   | Mon Feb 10 17:33:01.6 1997 | Mon Feb 10 17:31:01.6 1997
+ Mon Feb 10 17:32:01.6 1997 | @ 5 hours | Mon Feb 10 22:32:01.6 1997 | Mon Feb 10 12:32:01.6 1997
+ Mon Feb 10 17:32:02 1997   | @ 1 min   | Mon Feb 10 17:33:02 1997   | Mon Feb 10 17:31:02 1997
+ Mon Feb 10 17:32:02 1997   | @ 5 hours | Mon Feb 10 22:32:02 1997   | Mon Feb 10 12:32:02 1997
+ Tue Feb 11 17:32:01 1997   | @ 1 min   | Tue Feb 11 17:33:01 1997   | Tue Feb 11 17:31:01 1997
+ Tue Feb 11 17:32:01 1997   | @ 5 hours | Tue Feb 11 22:32:01 1997   | Tue Feb 11 12:32:01 1997
+ Wed Feb 12 17:32:01 1997   | @ 1 min   | Wed Feb 12 17:33:01 1997   | Wed Feb 12 17:31:01 1997
+ Wed Feb 12 17:32:01 1997   | @ 5 hours | Wed Feb 12 22:32:01 1997   | Wed Feb 12 12:32:01 1997
+ Thu Feb 13 17:32:01 1997   | @ 1 min   | Thu Feb 13 17:33:01 1997   | Thu Feb 13 17:31:01 1997
+ Thu Feb 13 17:32:01 1997   | @ 5 hours | Thu Feb 13 22:32:01 1997   | Thu Feb 13 12:32:01 1997
+ Fri Feb 14 17:32:01 1997   | @ 1 min   | Fri Feb 14 17:33:01 1997   | Fri Feb 14 17:31:01 1997
+ Fri Feb 14 17:32:01 1997   | @ 5 hours | Fri Feb 14 22:32:01 1997   | Fri Feb 14 12:32:01 1997
+ Sat Feb 15 17:32:01 1997   | @ 1 min   | Sat Feb 15 17:33:01 1997   | Sat Feb 15 17:31:01 1997
+ Sat Feb 15 17:32:01 1997   | @ 5 hours | Sat Feb 15 22:32:01 1997   | Sat Feb 15 12:32:01 1997
+ Sun Feb 16 17:32:01 1997   | @ 1 min   | Sun Feb 16 17:33:01 1997   | Sun Feb 16 17:31:01 1997
+ Sun Feb 16 17:32:01 1997   | @ 1 min   | Sun Feb 16 17:33:01 1997   | Sun Feb 16 17:31:01 1997
+ Sun Feb 16 17:32:01 1997   | @ 5 hours | Sun Feb 16 22:32:01 1997   | Sun Feb 16 12:32:01 1997
+ Sun Feb 16 17:32:01 1997   | @ 5 hours | Sun Feb 16 22:32:01 1997   | Sun Feb 16 12:32:01 1997
+ Fri Feb 28 17:32:01 1997   | @ 1 min   | Fri Feb 28 17:33:01 1997   | Fri Feb 28 17:31:01 1997
+ Fri Feb 28 17:32:01 1997   | @ 5 hours | Fri Feb 28 22:32:01 1997   | Fri Feb 28 12:32:01 1997
+ Sat Mar 01 17:32:01 1997   | @ 1 min   | Sat Mar 01 17:33:01 1997   | Sat Mar 01 17:31:01 1997
+ Sat Mar 01 17:32:01 1997   | @ 5 hours | Sat Mar 01 22:32:01 1997   | Sat Mar 01 12:32:01 1997
+ Tue Jun 10 17:32:01 1997   | @ 1 min   | Tue Jun 10 17:33:01 1997   | Tue Jun 10 17:31:01 1997
+ Tue Jun 10 17:32:01 1997   | @ 5 hours | Tue Jun 10 22:32:01 1997   | Tue Jun 10 12:32:01 1997
+ Tue Jun 10 18:32:01 1997   | @ 1 min   | Tue Jun 10 18:33:01 1997   | Tue Jun 10 18:31:01 1997
+ Tue Jun 10 18:32:01 1997   | @ 5 hours | Tue Jun 10 23:32:01 1997   | Tue Jun 10 13:32:01 1997
+ Tue Dec 30 17:32:01 1997   | @ 1 min   | Tue Dec 30 17:33:01 1997   | Tue Dec 30 17:31:01 1997
+ Tue Dec 30 17:32:01 1997   | @ 5 hours | Tue Dec 30 22:32:01 1997   | Tue Dec 30 12:32:01 1997
+ Wed Dec 31 17:32:01 1997   | @ 1 min   | Wed Dec 31 17:33:01 1997   | Wed Dec 31 17:31:01 1997
+ Wed Dec 31 17:32:01 1997   | @ 5 hours | Wed Dec 31 22:32:01 1997   | Wed Dec 31 12:32:01 1997
+ Fri Dec 31 17:32:01 1999   | @ 1 min   | Fri Dec 31 17:33:01 1999   | Fri Dec 31 17:31:01 1999
+ Fri Dec 31 17:32:01 1999   | @ 5 hours | Fri Dec 31 22:32:01 1999   | Fri Dec 31 12:32:01 1999
+ Sat Jan 01 17:32:01 2000   | @ 1 min   | Sat Jan 01 17:33:01 2000   | Sat Jan 01 17:31:01 2000
+ Sat Jan 01 17:32:01 2000   | @ 5 hours | Sat Jan 01 22:32:01 2000   | Sat Jan 01 12:32:01 2000
+ Wed Mar 15 02:14:05 2000   | @ 1 min   | Wed Mar 15 02:15:05 2000   | Wed Mar 15 02:13:05 2000
+ Wed Mar 15 02:14:05 2000   | @ 5 hours | Wed Mar 15 07:14:05 2000   | Tue Mar 14 21:14:05 2000
+ Wed Mar 15 03:14:04 2000   | @ 1 min   | Wed Mar 15 03:15:04 2000   | Wed Mar 15 03:13:04 2000
+ Wed Mar 15 03:14:04 2000   | @ 5 hours | Wed Mar 15 08:14:04 2000   | Tue Mar 14 22:14:04 2000
+ Wed Mar 15 08:14:01 2000   | @ 1 min   | Wed Mar 15 08:15:01 2000   | Wed Mar 15 08:13:01 2000
+ Wed Mar 15 08:14:01 2000   | @ 5 hours | Wed Mar 15 13:14:01 2000   | Wed Mar 15 03:14:01 2000
+ Wed Mar 15 12:14:03 2000   | @ 1 min   | Wed Mar 15 12:15:03 2000   | Wed Mar 15 12:13:03 2000
+ Wed Mar 15 12:14:03 2000   | @ 5 hours | Wed Mar 15 17:14:03 2000   | Wed Mar 15 07:14:03 2000
+ Wed Mar 15 13:14:02 2000   | @ 1 min   | Wed Mar 15 13:15:02 2000   | Wed Mar 15 13:13:02 2000
+ Wed Mar 15 13:14:02 2000   | @ 5 hours | Wed Mar 15 18:14:02 2000   | Wed Mar 15 08:14:02 2000
+ Sun Dec 31 17:32:01 2000   | @ 1 min   | Sun Dec 31 17:33:01 2000   | Sun Dec 31 17:31:01 2000
+ Sun Dec 31 17:32:01 2000   | @ 5 hours | Sun Dec 31 22:32:01 2000   | Sun Dec 31 12:32:01 2000
 (104 rows)
 
 SELECT t.f1 AS t, i.f1 AS i, t.f1 + i.f1 AS "add", t.f1 - i.f1 AS "subtract"
@@ -2182,9 +2182,9 @@ SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:02 1997
-    | Mon Feb 10 17:32:01.40 1997
-    | Mon Feb 10 17:32:01.50 1997
-    | Mon Feb 10 17:32:01.60 1997
+    | Mon Feb 10 17:32:01.4 1997
+    | Mon Feb 10 17:32:01.5 1997
+    | Mon Feb 10 17:32:01.6 1997
     | Thu Jan 02 00:00:00 1997
     | Thu Jan 02 03:04:05 1997
     | Mon Feb 10 17:32:01 1997
@@ -2265,9 +2265,9 @@ SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:02
-    | 1997-02-10 17:32:01.40
-    | 1997-02-10 17:32:01.50
-    | 1997-02-10 17:32:01.60
+    | 1997-02-10 17:32:01.4
+    | 1997-02-10 17:32:01.5
+    | 1997-02-10 17:32:01.6
     | 1997-01-02 00:00:00
     | 1997-01-02 03:04:05
     | 1997-02-10 17:32:01
@@ -2354,9 +2354,9 @@ SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
     | 02/10/1997 17:32:01
     | 02/10/1997 17:32:01
     | 02/10/1997 17:32:02
-    | 02/10/1997 17:32:01.40
-    | 02/10/1997 17:32:01.50
-    | 02/10/1997 17:32:01.60
+    | 02/10/1997 17:32:01.4
+    | 02/10/1997 17:32:01.5
+    | 02/10/1997 17:32:01.6
     | 01/02/1997 00:00:00
     | 01/02/1997 03:04:05
     | 02/10/1997 17:32:01
@@ -2450,9 +2450,9 @@ SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
     | Mon 10 Feb 17:32:01 1997
     | Mon 10 Feb 17:32:01 1997
     | Mon 10 Feb 17:32:02 1997
-    | Mon 10 Feb 17:32:01.40 1997
-    | Mon 10 Feb 17:32:01.50 1997
-    | Mon 10 Feb 17:32:01.60 1997
+    | Mon 10 Feb 17:32:01.4 1997
+    | Mon 10 Feb 17:32:01.5 1997
+    | Mon 10 Feb 17:32:01.6 1997
     | Thu 02 Jan 00:00:00 1997
     | Thu 02 Jan 03:04:05 1997
     | Mon 10 Feb 17:32:01 1997
@@ -2540,9 +2540,9 @@ SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:02
-    | 1997-02-10 17:32:01.40
-    | 1997-02-10 17:32:01.50
-    | 1997-02-10 17:32:01.60
+    | 1997-02-10 17:32:01.4
+    | 1997-02-10 17:32:01.5
+    | 1997-02-10 17:32:01.6
     | 1997-01-02 00:00:00
     | 1997-01-02 03:04:05
     | 1997-02-10 17:32:01
@@ -2630,9 +2630,9 @@ SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
     | 10/02/1997 17:32:01
     | 10/02/1997 17:32:01
     | 10/02/1997 17:32:02
-    | 10/02/1997 17:32:01.40
-    | 10/02/1997 17:32:01.50
-    | 10/02/1997 17:32:01.60
+    | 10/02/1997 17:32:01.4
+    | 10/02/1997 17:32:01.5
+    | 10/02/1997 17:32:01.6
     | 02/01/1997 00:00:00
     | 02/01/1997 03:04:05
     | 10/02/1997 17:32:01
