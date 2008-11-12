@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71.2.6 2008/07/23 20:21:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71.2.7 2008/11/12 10:10:43 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,7 @@ typedef enum
 {
 	AutoVacForkFailed,			/* failed trying to start a worker */
 	AutoVacRebalance,			/* rebalance the cost limits */
-	AutoVacNumSignals = AutoVacRebalance		/* must be last */
+	AutoVacNumSignals			/* must be last */
 } AutoVacuumSignal;
 
 /*-------------
