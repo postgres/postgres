@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.456 2008/11/07 22:54:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.457 2008/11/12 13:09:27 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9411,6 +9411,17 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
+          <function>array_length</function>(<type>anyarray</type>, <type>int</type>)
+         </literal>
+        </entry>
+        <entry><type>int</type></entry>
+        <entry>returns the length of the requested array dimension</entry>
+        <entry><literal>array_length(array[1,2,3], 1)</literal></entry>
+        <entry><literal>3</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
           <function>array_lower</function>(<type>anyarray</type>, <type>int</type>)
          </literal>
         </entry>
@@ -9451,6 +9462,19 @@ SELECT NULLIF(value, '(none)') ...
         <entry>returns upper bound of the requested array dimension</entry>
         <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
         <entry><literal>4</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>cardinality</function>(<type>anyarray</type>)
+         </literal>
+        </entry>
+        <entry><type>int</type></entry>
+        <entry>returns the length of the first dimension of the array
+        (special case of <function>array_length</function> for SQL
+        compatibility)</entry>
+        <entry><literal>cardinality(array[1,2,3])</literal></entry>
+        <entry><literal>3</literal></entry>
        </row>
        <row>
         <entry>

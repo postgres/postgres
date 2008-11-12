@@ -386,3 +386,12 @@ select string_to_array('1|2|3', NULL);
 select string_to_array(NULL, '|');
 
 select array_to_string(string_to_array('1|2|3', '|'), '|');
+
+select array_length(array[1,2,3], 1);
+select array_length(array[[1,2,3], [4,5,6]], 0);
+select array_length(array[[1,2,3], [4,5,6]], 1);
+select array_length(array[[1,2,3], [4,5,6]], 2);
+select array_length(array[[1,2,3], [4,5,6]], 3);
+select cardinality(array[1,2,3]);
+select cardinality(array[[1,2,3], [4,5,6]]);
+select c, cardinality(c), d, cardinality(d) from arrtest;

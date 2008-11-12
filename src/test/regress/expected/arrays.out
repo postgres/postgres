@@ -1075,3 +1075,53 @@ select array_to_string(string_to_array('1|2|3', '|'), '|');
  1|2|3
 (1 row)
 
+select array_length(array[1,2,3], 1);
+ array_length 
+--------------
+            3
+(1 row)
+
+select array_length(array[[1,2,3], [4,5,6]], 0);
+ array_length 
+--------------
+             
+(1 row)
+
+select array_length(array[[1,2,3], [4,5,6]], 1);
+ array_length 
+--------------
+            2
+(1 row)
+
+select array_length(array[[1,2,3], [4,5,6]], 2);
+ array_length 
+--------------
+            3
+(1 row)
+
+select array_length(array[[1,2,3], [4,5,6]], 3);
+ array_length 
+--------------
+             
+(1 row)
+
+select cardinality(array[1,2,3]);
+ cardinality 
+-------------
+           3
+(1 row)
+
+select cardinality(array[[1,2,3], [4,5,6]]);
+ cardinality 
+-------------
+           2
+(1 row)
+
+select c, cardinality(c), d, cardinality(d) from arrtest;
+         c         | cardinality |       d       | cardinality 
+-------------------+-------------+---------------+-------------
+ {}                |             | {}            |            
+ {foobar,new_word} |           2 | {{elt1,elt2}} |           1
+ {foo,new_word}    |           2 | {bar,foo}     |           2
+(3 rows)
+
