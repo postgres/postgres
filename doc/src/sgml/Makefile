@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.110 2008/11/04 14:58:22 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.111 2008/11/12 16:01:51 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -39,6 +39,7 @@ endif
 
 # docbook2man generates man pages from docbook refentry source code.
 D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
+D2MLINKS = $(D2MDIR)/docbook2man-spec_makelinks
 
 
 GENERATED_SGML = bookindex.sgml version.sgml \
@@ -74,6 +75,7 @@ man: postgres.sgml $(ALLSGML)
 	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 	$(fix_man_xrefs) *.1 *.$(DEFAULTSECTION)
 	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
+	$(D2MLINKS) < manpage.links
 	mv *.1 man1/
 	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
 
@@ -277,7 +279,7 @@ MAKEINFO = makeinfo
 DOCBOOK2MAN = docbook2x-man
 
 manx: postgres.xml stylesheet-man.xsl
-	$(DOCBOOK2MAN) -s $(srcdir)/stylesheet-man.xsl --string-param default-manpage-section=$(DEFAULTSECTION)  $<
+	$(DOCBOOK2MAN) --solinks -s $(srcdir)/stylesheet-man.xsl --string-param default-manpage-section=$(DEFAULTSECTION)  $<
 	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
 	mv *.1 man1/
 	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
