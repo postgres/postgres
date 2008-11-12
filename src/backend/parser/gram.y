@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.635 2008/11/07 18:25:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.636 2008/11/12 15:50:20 meskes Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1295,7 +1295,7 @@ opt_encoding:
 
 ColId_or_Sconst:
 			ColId									{ $$ = $1; }
-			| SCONST								{ $$ = $1; }
+			| Sconst								{ $$ = $1; }
 		;
 
 VariableResetStmt:
@@ -2834,7 +2834,7 @@ TriggerFuncArgs:
 		;
 
 TriggerFuncArg:
-			ICONST
+			Iconst
 				{
 					char buf[64];
 					snprintf(buf, sizeof(buf), "%d", $1);
@@ -8848,7 +8848,7 @@ extract_list:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-/* Allow delimited string SCONST in extract_arg as an SQL extension.
+/* Allow delimited string Sconst in extract_arg as an SQL extension.
  * - thomas 2001-04-12
  */
 extract_arg:
@@ -8859,7 +8859,7 @@ extract_arg:
 			| HOUR_P								{ $$ = "hour"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
-			| SCONST								{ $$ = $1; }
+			| Sconst								{ $$ = $1; }
 		;
 
 /* OVERLAY() arguments
@@ -9333,9 +9333,9 @@ Iconst:		ICONST									{ $$ = $1; };
 Sconst:		SCONST									{ $$ = $1; };
 RoleId:		ColId									{ $$ = $1; };
 
-SignedIconst: ICONST								{ $$ = $1; }
-			| '+' ICONST							{ $$ = + $2; }
-			| '-' ICONST							{ $$ = - $2; }
+SignedIconst: Iconst								{ $$ = $1; }
+			| '+' Iconst							{ $$ = + $2; }
+			| '-' Iconst							{ $$ = - $2; }
 		;
 
 /*
