@@ -6420,8 +6420,21 @@ echo $ECHO_N "checking for flags to link embedded Perl... $ECHO_C" >&6; }
 pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
 pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
 perl_embed_ldflags=`echo X"$pgac_tmp1" | sed "s/^X//;s%$pgac_tmp2%%"`
-{ echo "$as_me:$LINENO: result: $perl_embed_ldflags" >&5
+if test -z "$perl_embed_ldflags" ; then
+	{ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+	{ { echo "$as_me:$LINENO: error: could not determine flags for linking embedded Perl.
+This probably means that ExtUtils::Embed or ExtUtils::MakeMaker is not
+installed." >&5
+echo "$as_me: error: could not determine flags for linking embedded Perl.
+This probably means that ExtUtils::Embed or ExtUtils::MakeMaker is not
+installed." >&2;}
+   { (exit 1); exit 1; }; }
+else
+	{ echo "$as_me:$LINENO: result: $perl_embed_ldflags" >&5
 echo "${ECHO_T}$perl_embed_ldflags" >&6; }
+fi
+
 fi
 
 if test "$with_python" = yes; then
