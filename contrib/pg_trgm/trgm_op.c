@@ -1,10 +1,11 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_op.c,v 1.10 2008/05/17 01:28:21 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_op.c,v 1.11 2008/11/12 13:43:54 teodor Exp $ 
  */
 #include "trgm.h"
 #include <ctype.h>
 #include "utils/array.h"
 #include "catalog/pg_type.h"
+#include "tsearch/ts_locale.h"
 
 PG_MODULE_MAGIC;
 
@@ -30,9 +31,6 @@ show_limit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT4(trgm_limit);
 }
-
-#define WORDWAIT		0
-#define INWORD			1
 
 static int
 comp_trgm(const void *a, const void *b)
@@ -60,18 +58,119 @@ unique_array(trgm * a, int len)
 	return curend + 1 - a;
 }
 
+#ifdef KEEPONLYALNUM
+#define	iswordchr(c)	(t_isalpha(c) || t_isdigit(c))
+#else
+#define iswordchr(c)	(!t_isspace(c))
+#endif
+
+/*
+ * Finds first word in string, returns pointer to the word,
+ * endword points to the character after word
+ */
+static char*
+find_word(char *str, int lenstr, char **endword, int *charlen) 
+{
+	char *beginword = str;
+
+	while( beginword - str < lenstr && !iswordchr(beginword) )
+		beginword += pg_mblen(beginword);
+
+	if (beginword - str >= lenstr)
+		return NULL;
+
+	*endword = beginword;
+	*charlen = 0;
+	while( *endword - str < lenstr && iswordchr(*endword) ) 
+	{
+		*endword += pg_mblen(*endword);
+		(*charlen)++;
+	}
+
+	return beginword;
+}
+
+#ifdef USE_WIDE_UPPER_LOWER
+static void
+cnt_trigram(trgm *tptr, char *str, int bytelen) 
+{
+	if ( bytelen == 3 ) 
+	{
+		CPTRGM(tptr, str);		
+	}
+	else
+	{
+		pg_crc32	crc;
+
+		INIT_CRC32(crc);
+		COMP_CRC32(crc, str, bytelen);
+		FIN_CRC32(crc);
+
+		/*
+		 * use only 3 upper bytes from crc, hope, it's
+		 * good enough hashing
+		 */
+		CPTRGM(tptr, &crc);
+	}
+}
+#endif
+
+/*
+ * Adds trigramm from words (already padded).
+ */
+static trgm*
+make_trigrams( trgm *tptr, char *str, int bytelen, int charlen )
+{
+	char	*ptr = str;
+
+	if ( charlen < 3 )
+		return tptr;
+
+#ifdef USE_WIDE_UPPER_LOWER
+	if (pg_database_encoding_max_length() > 1)
+	{
+		int lenfirst 	= pg_mblen(str),
+			lenmiddle 	= pg_mblen(str + lenfirst),
+			lenlast		= pg_mblen(str + lenfirst + lenmiddle);
+
+		while( (ptr - str) + lenfirst + lenmiddle + lenlast <= bytelen ) 
+		{
+			cnt_trigram(tptr, ptr, lenfirst + lenmiddle + lenlast);
+
+			ptr += lenfirst;
+			tptr++;
+
+			lenfirst 	= lenmiddle;
+			lenmiddle 	= lenlast;
+			lenlast 	= pg_mblen(ptr + lenfirst + lenmiddle);
+		}
+	}
+	else
+#endif
+	{
+		Assert( bytelen == charlen );
+
+		while (ptr - str < bytelen - 2 /* number of trigrams = strlen - 2 */ )
+		{
+			CPTRGM(tptr, ptr);
+			ptr++;
+			tptr++;
+		}
+	}
+	
+	return tptr;
+}
 
 TRGM *
 generate_trgm(char *str, int slen)
 {
 	TRGM	   *trg;
-	char	   *buf,
-			   *sptr,
-			   *bufptr;
+	char	   *buf;
 	trgm	   *tptr;
-	int			state = WORDWAIT;
-	int			wl,
-				len;
+	int			len,
+				charlen,
+				bytelen;
+	char		*bword, *eword;
 
 	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
 	trg->flag = ARRKEY;
@@ -83,7 +182,6 @@ generate_trgm(char *str, int slen)
 	tptr = GETARR(trg);
 
 	buf = palloc(sizeof(char) * (slen + 4));
-	sptr = str;
 
 	if (LPADDING > 0)
 	{
@@ -92,82 +190,29 @@ generate_trgm(char *str, int slen)
 			*(buf + 1) = ' ';
 	}
 
-	bufptr = buf + LPADDING;
-	while (sptr - str < slen)
+	eword = str;
+	while( (bword=find_word(eword, slen - (eword-str), &eword, &charlen)) != NULL ) 
 	{
-		if (state == WORDWAIT)
-		{
-			if (
-#ifdef	KEEPONLYALNUM
-				isalnum((unsigned char) *sptr)
+#ifdef IGNORECASE
+		bword = lowerstr_with_len(bword, eword - bword);
+		bytelen = strlen(bword);
 #else
-				!isspace((unsigned char) *sptr)
+		bytelen = eword - bword;
 #endif
-				)
-			{
-				*bufptr = *sptr;	/* start put word in buffer */
-				bufptr++;
-				state = INWORD;
-				if (sptr - str == slen - 1 /* last char */ )
-					goto gettrg;
-			}
-		}
-		else
-		{
-			if (
-#ifdef	KEEPONLYALNUM
-				!isalnum((unsigned char) *sptr)
-#else
-				isspace((unsigned char) *sptr)
-#endif
-				)
-			{
-		gettrg:
-				/* word in buffer, so count trigrams */
-				*bufptr = ' ';
-				*(bufptr + 1) = ' ';
-				wl = bufptr - (buf + LPADDING) - 2 + LPADDING + RPADDING;
-				if (wl <= 0)
-				{
-					bufptr = buf + LPADDING;
-					state = WORDWAIT;
-					sptr++;
-					continue;
-				}
+
+		memcpy(buf + LPADDING, bword, bytelen);
 
 #ifdef IGNORECASE
-				do
-				{				/* lower word */
-					int			wwl = bufptr - buf;
-
-					bufptr = buf + LPADDING;
-					while (bufptr - buf < wwl)
-					{
-						*bufptr = tolower((unsigned char) *bufptr);
-						bufptr++;
-					}
-				} while (0);
+		pfree(bword);
 #endif
-				bufptr = buf;
-				/* set trigrams */
-				while (bufptr - buf < wl)
-				{
-					CPTRGM(tptr, bufptr);
-					bufptr++;
-					tptr++;
-				}
-				bufptr = buf + LPADDING;
-				state = WORDWAIT;
-			}
-			else
-			{
-				*bufptr = *sptr;	/* put in buffer */
-				bufptr++;
-				if (sptr - str == slen - 1)
-					goto gettrg;
-			}
-		}
-		sptr++;
+		buf[LPADDING+bytelen] = ' ';
+		buf[LPADDING+bytelen+1] = ' ';
+
+		/*
+		 * count trigrams
+		 */
+		tptr = make_trigrams( tptr, buf, bytelen + LPADDING + RPADDING, 
+										 charlen + LPADDING + RPADDING );
 	}
 
 	pfree(buf);
@@ -186,6 +231,19 @@ generate_trgm(char *str, int slen)
 	return trg;
 }
 
+uint32
+trgm2int(trgm *ptr)
+{
+	uint32	val = 0;
+
+	val |= *( ((unsigned char*)ptr) );
+	val <<= 8;
+	val |= *( ((unsigned char*)ptr) + 1 );
+	val <<= 8;
+	val |= *( ((unsigned char*)ptr) + 2 );
+
+	return val;
+}
 
 PG_FUNCTION_INFO_V1(show_trgm);
 Datum		show_trgm(PG_FUNCTION_ARGS);
@@ -204,10 +262,18 @@ show_trgm(PG_FUNCTION_ARGS)
 
 	for (i = 0, ptr = GETARR(trg); i < ARRNELEM(trg); i++, ptr++)
 	{
-		text	   *item = (text *) palloc(VARHDRSZ + 3);
+		text	   *item = (text *) palloc(VARHDRSZ + Max(12, pg_database_encoding_max_length()*3) );
 
-		SET_VARSIZE(item, VARHDRSZ + 3);
-		CPTRGM(VARDATA(item), ptr);
+		if ( pg_database_encoding_max_length() > 1 && !ISPRINTABLETRGM(ptr) )
+		{
+			snprintf(VARDATA(item), 12, "0x%06x", trgm2int(ptr));
+			SET_VARSIZE(item, VARHDRSZ + strlen(VARDATA(item)));
+		}
+		else
+		{
+			SET_VARSIZE(item, VARHDRSZ + 3);
+			CPTRGM(VARDATA(item), ptr);
+		}
 		d[i] = PointerGetDatum(item);
 	}
 

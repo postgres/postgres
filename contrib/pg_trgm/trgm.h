@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm.h,v 1.9 2008/05/17 01:28:21 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm.h,v 1.10 2008/11/12 13:43:54 teodor Exp $ 
  */
 #ifndef __TRGM_H__
 #define __TRGM_H__
@@ -31,7 +31,14 @@ typedef char trgm[3];
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
 } while(0);
 
-#define TRGMINT(a) ( (*(((char*)(a))+2)<<16)+(*(((char*)(a))+1)<<8)+*(((char*)(a))+0) )
+uint32 trgm2int(trgm *ptr);
+
+#ifdef KEEPONLYALNUM
+#define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && (isalnum( *(unsigned char*)(a) ) || *(unsigned char*)(a)==' ') )
+#else
+#define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && isprint( *(unsigned char*)(a) ) )
+#endif
+#define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)t) ) && ISPRINTABLECHAR( ((char*)t)+1 ) && ISPRINTABLECHAR( ((char*)t)+2 ) )
 
 typedef struct
 {

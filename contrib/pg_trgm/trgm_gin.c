@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.5 2008/07/11 11:56:48 teodor Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.6 2008/11/12 13:43:54 teodor Exp $ 
  */
 #include "trgm.h"
 
@@ -42,7 +42,7 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 		ptr = GETARR(trg);
 		while (ptr - GETARR(trg) < ARRNELEM(trg))
 		{
-			item = TRGMINT(ptr);
+			item = trgm2int(ptr);
 			entries[i++] = Int32GetDatum(item);
 
 			ptr++;
