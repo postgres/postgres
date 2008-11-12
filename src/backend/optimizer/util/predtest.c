@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.4 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.4.2.1 2008/11/12 23:08:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/predtest.h"
 #include "utils/catcache.h"
@@ -482,6 +483,9 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 static bool
 predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 {
+	/* Allow interrupting long proof attempts */
+	CHECK_FOR_INTERRUPTS();
+
 	/* First try the equal() test */
 	if (equal((Node *) predicate, clause))
 		return true;
@@ -529,6 +533,9 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 static bool
 predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 {
+	/* Allow interrupting long proof attempts */
+	CHECK_FOR_INTERRUPTS();
+
 	/* First try the IS NULL case */
 	if (predicate && IsA(predicate, NullTest) &&
 		((NullTest *) predicate)->nulltesttype == IS_NULL)
