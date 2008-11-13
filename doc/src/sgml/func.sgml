@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.419.2.3 2008/07/07 15:55:28 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.419.2.4 2008/11/13 14:37:32 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8262,7 +8262,7 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
 
     <para>
      The function <function>xmlagg</function> is, unlike the other
-     functions below, an aggregate function.  It concatenates the
+     functions described here, an aggregate function.  It concatenates the
      input values to the aggregate function call,
      like <function>xmlconcat</function> does.
      See <xref linkend="functions-aggregate"> for general information
