@@ -8,12 +8,6 @@ EXEC SQL WHENEVER SQLERROR sqlprint;
 int
 main ()
 {
-/*
-  EXEC SQL BEGIN DECLARE SECTION;
-  char *fname = "/tmp/foo";
-  EXEC SQL END DECLARE SECTION;
-*/
-
   ECPGdebug (1, stderr);
 
   EXEC SQL CONNECT TO REGRESSDB1;
@@ -21,10 +15,6 @@ main ()
   EXEC SQL INSERT INTO foo VALUES (5, 'abc');
   EXEC SQL INSERT INTO foo VALUES (6, 'def');
   EXEC SQL INSERT INTO foo VALUES (7, 'ghi');
-
-  /* produces expected file "/tmp/foo" */
-  /* EXEC SQL COPY foo TO:fname WITH DELIMITER ','; */
-  /* printf ("copy to /tmp/foo : sqlca.sqlcode = %ld", sqlca.sqlcode); */
 
   EXEC SQL COPY foo TO STDOUT WITH DELIMITER ',';
   printf ("copy to STDOUT : sqlca.sqlcode = %ld\n", sqlca.sqlcode);

@@ -1,5 +1,5 @@
 /* header */
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.382 2008/11/11 11:41:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.383 2008/11/13 11:54:39 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -390,6 +390,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	struct	prep		prep;
 }
 /* tokens */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.383 2008/11/13 11:54:39 meskes Exp $ */
 /* special embedded SQL token */
 %token  SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
                 SQL_CALL SQL_CARDINALITY SQL_CONNECT
@@ -512,8 +513,6 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> SeqOptElem
 %type <str> opt_by
 %type <str> NumericOnly
-%type <str> FloatOnly
-%type <str> IntegerOnly
 %type <str> CreatePLangStmt
 %type <str> opt_trusted
 %type <str> handler_name
@@ -838,6 +837,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> file_name
 %type <str> func_name
 %type <str> AexprConst
+%type <str> Iconst
 %type <str> RoleId
 %type <str> SignedIconst
 %type <str> ColId
@@ -847,6 +847,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> reserved_keyword
 %type <str> SpecialRuleRelation
 /* ecpgtype */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.383 2008/11/13 11:54:39 meskes Exp $ */
 %type <str> ECPGAllocateDescr
 %type <str> ECPGCKeywords
 %type <str> ECPGColId
@@ -893,7 +894,6 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> char_variable
 %type <str> civar
 %type <str> civarind
-%type <str> ColId_or_real_sconst
 %type <str> ColLabel
 %type <str> connect_options
 %type <str> connection_object
@@ -906,13 +906,10 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> dis_name
 %type <str> ecpg_bconst
 %type <str> ecpg_fconst
-%type <str> ecpg_iconst
 %type <str> ecpg_ident
 %type <str> ecpg_interval
 %type <str> ecpg_into
 %type <str> ecpg_param
-%type <str> ecpg_real_iconst
-%type <str> ecpg_real_sconst
 %type <str> ecpg_sconst
 %type <str> ecpg_using
 %type <str> ecpg_xconst
@@ -1600,7 +1597,7 @@ prog: statements;
  { 
  $$ = cat_str(2,make_str("user"),$2);
 }
-|  SYSID ecpg_iconst
+|  SYSID Iconst
  { 
  $$ = cat_str(2,make_str("sysid"),$2);
 }
@@ -1899,7 +1896,7 @@ ECPGColId
  { 
  $$ = $1;
 }
-| ColId_or_real_sconst
+|  ColId_or_Sconst
  { 
  $$ = $1;
 }
@@ -1957,7 +1954,7 @@ ECPGColId
 
 
  zone_value:
-ecpg_real_sconst
+ ecpg_sconst
  { 
  $$ = $1;
 }
@@ -1969,7 +1966,7 @@ ecpg_real_sconst
  { 
  $$ = cat_str(3,$1,$2,$3);
 }
-|  ConstInterval '(' ecpg_iconst ')' ecpg_sconst opt_interval
+|  ConstInterval '(' Iconst ')' ecpg_sconst opt_interval
  { 
  $$ = cat_str(6,$1,make_str("("),$3,make_str(")"),$5,$6);
 }
@@ -2185,7 +2182,7 @@ SHOW var_name ecpg_into
  { 
  $$ = cat_str(4,make_str("alter"),$2,$3,make_str("set not null"));
 }
-|  ALTER opt_column ColId SET STATISTICS IntegerOnly
+|  ALTER opt_column ColId SET STATISTICS SignedIconst
  { 
  $$ = cat_str(5,make_str("alter"),$2,$3,make_str("set statistics"),$6);
 }
@@ -3085,18 +3082,6 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
 
 
  NumericOnly:
- FloatOnly
- { 
- $$ = $1;
-}
-|  IntegerOnly
- { 
- $$ = $1;
-}
-;
-
-
- FloatOnly:
  ecpg_fconst
  { 
  $$ = $1;
@@ -3105,14 +3090,13 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = cat_str(2,make_str("-"),$2);
 }
-;
-
-
- IntegerOnly:
- SignedIconst
+|  SignedIconst
  { 
  $$ = $1;
 }
+;
+
+
 ;
 
 
@@ -3337,7 +3321,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
 
 
  TriggerFuncArg:
- ecpg_iconst
+ Iconst
  { 
  $$ = $1;
 }
@@ -3345,7 +3329,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = $1;
 }
-| ecpg_real_sconst
+|  ecpg_sconst
  { 
  $$ = $1;
 }
@@ -3555,7 +3539,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = $1;
 }
-| ecpg_real_sconst
+|  ecpg_sconst
  { 
  $$ = $1;
 }
@@ -3635,19 +3619,19 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
 
 
  opclass_item:
- OPERATOR ecpg_iconst any_operator opt_recheck
+ OPERATOR Iconst any_operator opt_recheck
  { 
  $$ = cat_str(4,make_str("operator"),$2,$3,$4);
 }
-|  OPERATOR ecpg_iconst any_operator oper_argtypes opt_recheck
+|  OPERATOR Iconst any_operator oper_argtypes opt_recheck
  { 
  $$ = cat_str(5,make_str("operator"),$2,$3,$4,$5);
 }
-|  FUNCTION ecpg_iconst func_name func_args
+|  FUNCTION Iconst func_name func_args
  { 
  $$ = cat_str(4,make_str("function"),$2,$3,$4);
 }
-|  FUNCTION ecpg_iconst '(' type_list ')' func_name func_args
+|  FUNCTION Iconst '(' type_list ')' func_name func_args
  { 
  $$ = cat_str(7,make_str("function"),$2,make_str("("),$4,make_str(")"),$6,$7);
 }
@@ -3725,11 +3709,11 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
 
 
  opclass_drop:
- OPERATOR ecpg_iconst '(' type_list ')'
+ OPERATOR Iconst '(' type_list ')'
  { 
  $$ = cat_str(5,make_str("operator"),$2,make_str("("),$4,make_str(")"));
 }
-|  FUNCTION ecpg_iconst '(' type_list ')'
+|  FUNCTION Iconst '(' type_list ')'
  { 
  $$ = cat_str(5,make_str("function"),$2,make_str("("),$4,make_str(")"));
 }
@@ -5495,11 +5479,11 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = cat_str(3,make_str("template"),$2,make_str("default"));
 }
-| ENCODING opt_equal ecpg_real_sconst
+|  ENCODING opt_equal ecpg_sconst
  { 
  $$ = cat_str(3,make_str("encoding"),$2,$3);
 }
-|  ENCODING opt_equal ecpg_iconst
+|  ENCODING opt_equal Iconst
  { 
  $$ = cat_str(3,make_str("encoding"),$2,$3);
 }
@@ -6933,11 +6917,11 @@ EXECUTE prepared_name execute_param_clause execute_rest
 	{	$$ = cat2_str($1, $2.str); }
 |  SETOF SimpleTypename opt_array_bounds
 	{	$$ = $$ = cat_str(3, make_str("setof"), $2, $3.str); }
-|  SimpleTypename ARRAY '[' ecpg_iconst ']'
+|  SimpleTypename ARRAY '[' Iconst ']'
  { 
  $$ = cat_str(4,$1,make_str("array ["),$4,make_str("]"));
 }
-|  SETOF SimpleTypename ARRAY '[' ecpg_iconst ']'
+|  SETOF SimpleTypename ARRAY '[' Iconst ']'
  { 
  $$ = cat_str(5,make_str("setof"),$2,make_str("array ["),$5,make_str("]"));
 }
@@ -7007,7 +6991,7 @@ EXECUTE prepared_name execute_param_clause execute_rest
  { 
  $$ = cat_str(2,$1,$2);
 }
-|  ConstInterval '(' ecpg_iconst ')' opt_interval
+|  ConstInterval '(' Iconst ')' opt_interval
  { 
  $$ = cat_str(5,$1,make_str("("),$3,make_str(")"),$5);
 }
@@ -7106,7 +7090,7 @@ EXECUTE prepared_name execute_param_clause execute_rest
 
 
  opt_float:
- '(' ecpg_iconst ')'
+ '(' Iconst ')'
  { 
  $$ = cat_str(3,make_str("("),$2,make_str(")"));
 }
@@ -7181,7 +7165,7 @@ EXECUTE prepared_name execute_param_clause execute_rest
 
 
  CharacterWithLength:
- character '(' ecpg_iconst ')' opt_charset
+ character '(' Iconst ')' opt_charset
  { 
  $$ = cat_str(5,$1,make_str("("),$3,make_str(")"),$5);
 }
@@ -7247,7 +7231,7 @@ EXECUTE prepared_name execute_param_clause execute_rest
 
 
  ConstDatetime:
- TIMESTAMP '(' ecpg_iconst ')' opt_timezone
+ TIMESTAMP '(' Iconst ')' opt_timezone
  { 
  $$ = cat_str(4,make_str("timestamp ("),$3,make_str(")"),$5);
 }
@@ -7255,7 +7239,7 @@ EXECUTE prepared_name execute_param_clause execute_rest
  { 
  $$ = cat_str(2,make_str("timestamp"),$2);
 }
-|  TIME '(' ecpg_iconst ')' opt_timezone
+|  TIME '(' Iconst ')' opt_timezone
  { 
  $$ = cat_str(4,make_str("time ("),$3,make_str(")"),$5);
 }
@@ -7353,7 +7337,7 @@ EXECUTE prepared_name execute_param_clause execute_rest
  { 
  $$ = make_str("second");
 }
-|  SECOND_P '(' ecpg_iconst ')'
+|  SECOND_P '(' Iconst ')'
  { 
  $$ = cat_str(3,make_str("second ("),$3,make_str(")"));
 }
@@ -7774,7 +7758,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = make_str("current_time");
 }
-|  CURRENT_TIME '(' ecpg_iconst ')'
+|  CURRENT_TIME '(' Iconst ')'
  { 
  $$ = cat_str(3,make_str("current_time ("),$3,make_str(")"));
 }
@@ -7782,7 +7766,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = make_str("current_timestamp");
 }
-|  CURRENT_TIMESTAMP '(' ecpg_iconst ')'
+|  CURRENT_TIMESTAMP '(' Iconst ')'
  { 
  $$ = cat_str(3,make_str("current_timestamp ("),$3,make_str(")"));
 }
@@ -7790,7 +7774,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = make_str("localtime");
 }
-|  LOCALTIME '(' ecpg_iconst ')'
+|  LOCALTIME '(' Iconst ')'
  { 
  $$ = cat_str(3,make_str("localtime ("),$3,make_str(")"));
 }
@@ -7798,7 +7782,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = make_str("localtimestamp");
 }
-|  LOCALTIMESTAMP '(' ecpg_iconst ')'
+|  LOCALTIMESTAMP '(' Iconst ')'
  { 
  $$ = cat_str(3,make_str("localtimestamp ("),$3,make_str(")"));
 }
@@ -8645,7 +8629,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
 
 
  AexprConst:
- ecpg_iconst
+ Iconst
  { 
  $$ = $1;
 }
@@ -8653,7 +8637,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = $1;
 }
-| ecpg_real_sconst
+|  ecpg_sconst
  { 
  $$ = $1;
 }
@@ -8681,7 +8665,7 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = cat_str(3,$1,$2,$3);
 }
-|  ConstInterval '(' ecpg_iconst ')' ecpg_sconst opt_interval
+|  ConstInterval '(' Iconst ')' ecpg_sconst opt_interval
  { 
  $$ = cat_str(6,$1,make_str("("),$3,make_str(")"),$5,$6);
 }
@@ -8697,7 +8681,14 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
  { 
  $$ = make_str("null");
 }
+	| civar			{ $$ = $1; }
 	| civarind		{ $$ = $1; }
+;
+
+
+ Iconst:
+ ICONST
+	{ $$ = make_name(); }
 ;
 
 
@@ -8710,12 +8701,19 @@ mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to backend\
 
 
  SignedIconst:
- ecpg_iconst
+ Iconst
  { 
  $$ = $1;
 }
-	| '+' ecpg_real_iconst	{ $$ = cat_str(2, make_str("+"), $2); }
-	| '-' ecpg_real_iconst	{ $$ = cat_str(2, make_str("-"), $2); }
+	| civar	{ $$ = $1; }
+|  '+' Iconst
+ { 
+ $$ = cat_str(2,make_str("+"),$2);
+}
+|  '-' Iconst
+ { 
+ $$ = cat_str(2,make_str("-"),$2);
+}
 ;
 
 
@@ -9442,11 +9440,11 @@ connection_target: opt_database_name opt_server opt_port
 		{
 			$$ = $1;
 		}
-		| ecpg_real_sconst
+		| ecpg_sconst
 		{
 			/* We can only process double quoted strings not single quotes ones,
 			 * so we change the quotes.
-			 * Note, that the rule for ecpg_real_sconst adds these single quotes. */
+			 * Note, that the rule for ecpg_sconst adds these single quotes. */
 			$1[0] = '\"';
 			$1[strlen($1)-1] = '\"';
 			$$ = $1;
@@ -9487,7 +9485,7 @@ server_name: ColId					{ $$ = $1; }
 		| IP						{ $$ = make_name(); }
 		;
 
-opt_port: ':' ecpg_iconst	{ $$ = make2_str(make_str(":"), $2); }
+opt_port: ':' Iconst		{ $$ = make2_str(make_str(":"), $2); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
@@ -9520,22 +9518,22 @@ user_name: RoleId
 		{
 			if ($1[0] == '\"')
 				$$ = $1;
-			else if ($1[1] == '$') /* variable */
-			{
-				enum ECPGttype type = argsinsert->variable->type->type;
-
-				/* if array see what's inside */
-				if (type == ECPGt_array)
-					type = argsinsert->variable->type->u.element->type;
-
-				/* handle varchars */
-				if (type == ECPGt_varchar)
-					$$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
-				else
-					$$ = mm_strdup(argsinsert->variable->name);
-			}
 			else
 				$$ = make3_str(make_str("\""), $1, make_str("\""));
+		}
+		| civar
+		{
+			enum ECPGttype type = argsinsert->variable->type->type;
+
+			/* if array see what's inside */
+			if (type == ECPGt_array)
+				type = argsinsert->variable->type->u.element->type;
+
+			/* handle varchars */
+			if (type == ECPGt_varchar)
+				$$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
+			else
+				$$ = mm_strdup(argsinsert->variable->name);
 		}
 		;
 
@@ -9601,9 +9599,11 @@ connect_options:  ColId opt_opt_value
 
 opt_opt_value: /*EMPTY*/
 			{ $$ = EMPTY; }
-		| '=' ecpg_iconst
+		| '=' Iconst
 			{ $$ = make2_str(make_str("="), $2); }
 		| '=' ecpg_ident
+			{ $$ = make2_str(make_str("="), $2); }
+		| '=' civar
 			{ $$ = make2_str(make_str("="), $2); }
 		;
 
@@ -9773,7 +9773,7 @@ var_declaration: storage_declaration
 		}
 		;
 
-opt_bit_field:	':' ecpg_iconst	{ $$ =cat2_str(make_str(":"), $2); }
+opt_bit_field:	':' Iconst	{ $$ =cat2_str(make_str(":"), $2); }
 		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
@@ -10326,9 +10326,9 @@ UsingValue: UsingConst
 		| civarind { $$ = EMPTY; }
 		; 
 
-UsingConst: ecpg_real_iconst		{ $$ = $1; }
+UsingConst: Iconst			{ $$ = $1; }
 		| ecpg_fconst		{ $$ = $1; }
-		| ecpg_real_sconst	{ $$ = $1; }
+		| ecpg_sconst		{ $$ = $1; }
 		| ecpg_bconst		{ $$ = $1; }
 		| ecpg_xconst		{ $$ = $1; }
 		;
@@ -10421,7 +10421,7 @@ ECPGSetDescHeaderItem: desc_header_item '=' IntConstVar
 		}
 		;
 
-IntConstVar:    ecpg_real_iconst
+IntConstVar:    Iconst
                 {
                         char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
@@ -10482,7 +10482,7 @@ AllConstVar:    ecpg_fconst
                         new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
                         $$ = var;
                 }
-                | '-' ecpg_real_iconst
+                | '-' Iconst
                 {
                         char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
                         char *var = cat2_str(make_str("-"), $2);
@@ -10491,7 +10491,7 @@ AllConstVar:    ecpg_fconst
                         new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
                         $$ = var;
                 }
-                | ecpg_real_sconst
+                | ecpg_sconst
                 {
                         char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
                         char *var = $1 + 1;
@@ -11157,14 +11157,7 @@ ecpg_bconst:	BCONST		{ $$ = make_name(); } ;
 
 ecpg_fconst:	FCONST		{ $$ = make_name(); } ;
 
-ecpg_real_iconst:
-		ICONST		{ $$ = make_name(); } ;
-
-ecpg_iconst:	ecpg_real_iconst	{ $$ = $1; } 
-		| civar			{ $$ = $1; }
-		;
-
-ecpg_real_sconst:
+ecpg_sconst:
 		SCONST
 		{
 			/* could have been input as '' or $$ */
@@ -11199,19 +11192,11 @@ ecpg_real_sconst:
 		| DOLCONST 	{ $$ = $1; }
 		;
 
-ecpg_sconst:	ecpg_real_sconst	{ $$ = $1; } 
-		| civar			{ $$ = $1; }
-		;
-
 ecpg_xconst:	XCONST		{ $$ = make_name(); } ;
 
 ecpg_ident:	IDENT		{ $$ = make_name(); }
 		| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")) }
 		| UIDENT	{ $$ = $1; }
-		;
-
-ColId_or_real_sconst:	ColId			{ $$ = $1; }
-		|	ecpg_real_sconst	{ $$ = $1; }
 		;
 
 quoted_ident_stringvar: name
@@ -11251,9 +11236,9 @@ c_thing:	c_anything		{ $$ = $1; }
 		;
 
 c_anything:  ecpg_ident				{ $$ = $1; }
-		| ecpg_real_iconst		{ $$ = $1; }
+		| Iconst			{ $$ = $1; }
 		| ecpg_fconst			{ $$ = $1; }
-		| ecpg_real_sconst		{ $$ = $1; }
+		| ecpg_sconst			{ $$ = $1; }
 		| '*'				{ $$ = make_str("*"); }
 		| '+'				{ $$ = make_str("+"); }
 		| '-'				{ $$ = make_str("-"); }
@@ -11314,14 +11299,14 @@ DeallocateStmt: DEALLOCATE prepared_name                { $$ = $2; }
                 | DEALLOCATE PREPARE ALL                { $$ = make_str("all"); }
                 ;
 
-Iresult:        ecpg_iconst		{ $$ = $1; }
+Iresult:        Iconst			{ $$ = $1; }
                 | '(' Iresult ')'       { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
                 | Iresult '+' Iresult   { $$ = cat_str(3, $1, make_str("+"), $3); }
                 | Iresult '-' Iresult   { $$ = cat_str(3, $1, make_str("-"), $3); }
                 | Iresult '*' Iresult   { $$ = cat_str(3, $1, make_str("*"), $3); }
                 | Iresult '/' Iresult   { $$ = cat_str(3, $1, make_str("/"), $3); }
                 | Iresult '%' Iresult   { $$ = cat_str(3, $1, make_str("%"), $3); }
-                | ecpg_real_sconst	{ $$ = $1; }
+                | ecpg_sconst		{ $$ = $1; }
                 | ColId                 { $$ = $1; }
                 ;
 

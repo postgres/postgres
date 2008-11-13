@@ -26,10 +26,10 @@ main(void)
 	 
 
 #line 16 "test1.pgc"
- char  db  [ 200 ]    ;
+ char  db  [ 200 ]   ;
  
 #line 17 "test1.pgc"
- char  pw  [ 200 ]    ;
+ char  pw  [ 200 ]   ;
 /* exec sql end declare section */
 #line 18 "test1.pgc"
 
