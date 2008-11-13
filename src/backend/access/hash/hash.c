@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.106 2008/10/17 23:50:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.107 2008/11/13 17:42:10 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -93,7 +93,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	buildstate.indtuples = 0;
 
 	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
 								   hashbuildCallback, (void *) &buildstate);
 
 	if (buildstate.spool)

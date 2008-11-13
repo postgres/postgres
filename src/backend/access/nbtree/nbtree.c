@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.164 2008/10/31 15:04:59 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.165 2008/11/13 17:42:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ btbuild(PG_FUNCTION_ARGS)
 		buildstate.spool2 = _bt_spoolinit(index, false, true);
 
 	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
 								   btbuildCallback, (void *) &buildstate);
 
 	/* okay, all heap tuples are indexed */

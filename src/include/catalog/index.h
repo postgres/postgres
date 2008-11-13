@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.75 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.76 2008/11/13 17:42:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ extern void index_build(Relation heapRelation,
 extern double IndexBuildHeapScan(Relation heapRelation,
 				   Relation indexRelation,
 				   IndexInfo *indexInfo,
+				   bool allow_sync,
 				   IndexBuildCallback callback,
 				   void *callback_state);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.307 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.308 2008/11/13 17:42:10 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1513,6 +1513,7 @@ double
 IndexBuildHeapScan(Relation heapRelation,
 				   Relation indexRelation,
 				   IndexInfo *indexInfo,
+				   bool allow_sync,
 				   IndexBuildCallback callback,
 				   void *callback_state)
 {
@@ -1575,7 +1576,12 @@ IndexBuildHeapScan(Relation heapRelation,
 		OldestXmin = GetOldestXmin(heapRelation->rd_rel->relisshared, true);
 	}
 
-	scan = heap_beginscan(heapRelation, snapshot, 0, NULL);
+	scan = heap_beginscan_strat(heapRelation,	/* relation */
+								snapshot,		/* snapshot */
+								0,				/* number of keys */
+								NULL,			/* scan key */
+								true,			/* buffer access strategy OK */
+								allow_sync);	/* syncscan OK? */
 
 	reltuples = 0;
 
