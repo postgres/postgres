@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.11 2008/01/01 19:45:46 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.11.2.1 2008/11/13 17:42:18 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -326,8 +326,11 @@ ginbuild(PG_FUNCTION_ARGS)
 	buildstate.accum.ginstate = &buildstate.ginstate;
 	ginInitBA(&buildstate.accum);
 
-	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
+	/*
+	 * Do the heap scan.  We disallow sync scan here because dataPlaceToPage
+	 * prefers to receive tuples in TID order.
+	 */
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, false,
 								   ginBuildCallback, (void *) &buildstate);
 
 	oldCtx = MemoryContextSwitchTo(buildstate.tmpCtx);

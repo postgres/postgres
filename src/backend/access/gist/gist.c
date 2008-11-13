@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.149 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.149.2.1 2008/11/13 17:42:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	buildstate.tmpCtx = createTempGistContext();
 
 	/* do the heap scan */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
+	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
 								   gistbuildCallback, (void *) &buildstate);
 
 	/* okay, all heap tuples are indexed */
