@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.458 2008/11/13 15:59:50 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.459 2008/11/13 23:01:09 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8387,8 +8387,8 @@ SELECT xmlagg(x) FROM test;
     </para>
 
     <para>
-     The influence the order of the concatenation, something like the
-     following approach to sort the input values can be used:
+     To determine the order of the concatenation, something like the
+     following approach can be used:
 
 <screen><![CDATA[
 SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
@@ -9772,19 +9772,19 @@ SELECT count(*) FROM sometable;
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values
    depending on the order of the input values.  In the current
-   implementation, the order of the concatenation is in principle
-   undefined.  Making the input values to be sorted in some other way
+   implementation, the order of the input is in principle unspecified.
+   Supplying the input values from a sorted subquery
    will usually work, however.  For example:
 
 <screen><![CDATA[
-SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
+SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 ]]></screen>
 
-   But this approach is not guaranteed to work in all situations, and
-   it is not strictly SQL-conforming.  A future version of PostgreSQL
-   might provide an additional feature to control the order in a
-   better-defined way (<literal>xmlagg(expr ORDER BY expr, expr,
-   ...</literal>).
+   But this syntax is not allowed in the SQL standard, and is
+   not portable to other database systems.  A future version of
+   <productname>PostgreSQL</> might provide an additional feature to control
+   the order in a better-defined way (<literal>xmlagg(expr ORDER BY expr, expr,
+   ...)</literal>).
   </para>
 
   <para>
