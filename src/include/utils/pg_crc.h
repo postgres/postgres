@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.18 2008/11/12 21:53:46 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.19 2008/11/13 14:42:28 tgl Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
@@ -48,7 +48,7 @@ do { \
 #define EQ_CRC32(c1,c2)  ((c1) == (c2))
 
 /* Constant table for CRC calculation */
-extern const uint32 pg_crc32_table[];
+extern PGDLLIMPORT const uint32 pg_crc32_table[];
 
 
 #ifdef PROVIDE_64BIT_CRC
@@ -106,8 +106,8 @@ do { \
 #define EQ_CRC64(c1,c2)  ((c1).crc0 == (c2).crc0 && (c1).crc1 == (c2).crc1)
 
 /* Constant table for CRC calculation */
-extern const uint32 pg_crc64_table0[];
-extern const uint32 pg_crc64_table1[];
+extern PGDLLIMPORT const uint32 pg_crc64_table0[];
+extern PGDLLIMPORT const uint32 pg_crc64_table1[];
 #else							/* int64 works */
 
 typedef struct pg_crc64
@@ -140,7 +140,7 @@ do { \
 #define EQ_CRC64(c1,c2)  ((c1).crc0 == (c2).crc0)
 
 /* Constant table for CRC calculation */
-extern const uint64 pg_crc64_table[];
+extern PGDLLIMPORT const uint64 pg_crc64_table[];
 #endif   /* INT64_IS_BUSTED */
 #endif   /* PROVIDE_64BIT_CRC */
 
