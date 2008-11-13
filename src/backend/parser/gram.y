@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.636 2008/11/12 15:50:20 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.637 2008/11/13 11:10:06 meskes Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -330,7 +330,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <ival>	sub_type
 %type <list>	OptCreateAs CreateAsList
 %type <node>	CreateAsElement ctext_expr
-%type <value>	NumericOnly FloatOnly IntegerOnly
+%type <value>	NumericOnly
 %type <alias>	alias_clause
 %type <sortby>	sortby
 %type <ielem>	index_elem
@@ -1525,13 +1525,13 @@ alter_table_cmd:
 					n->name = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
-			| ALTER opt_column ColId SET STATISTICS IntegerOnly
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS <SignedIconst> */
+			| ALTER opt_column ColId SET STATISTICS SignedIconst
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetStatistics;
 					n->name = $3;
-					n->def = (Node *) $6;
+					n->def = (Node *) makeInteger($6);
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
@@ -2577,20 +2577,14 @@ opt_by:		BY				{}
 	  ;
 
 NumericOnly:
-			FloatOnly								{ $$ = $1; }
-			| IntegerOnly							{ $$ = $1; }
-		;
-
-FloatOnly:	FCONST									{ $$ = makeFloat($1); }
+		FCONST									{ $$ = makeFloat($1); }
 			| '-' FCONST
 				{
 					$$ = makeFloat($2);
 					doNegateFloat($$);
 				}
+			| SignedIconst                                                  { $$ = makeInteger($1); };
 		;
-
-IntegerOnly: SignedIconst							{ $$ = makeInteger($1); };
-
 
 /*****************************************************************************
  *
