@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.457 2008/11/12 13:09:27 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.458 2008/11/13 15:59:50 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8353,7 +8353,7 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="functions-xml-xmlagg">
     <title><literal>xmlagg</literal></title>
 
     <indexterm>
@@ -8366,10 +8366,10 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
 
     <para>
      The function <function>xmlagg</function> is, unlike the other
-     functions below, an aggregate function.  It concatenates the
+     functions described here, an aggregate function.  It concatenates the
      input values to the aggregate function call,
      like <function>xmlconcat</function> does.
-     See <xref linkend="functions-aggregate"> for general information
+     See <xref linkend="functions-aggregate"> for additional information
      about aggregate functions.
     </para>
 
@@ -8387,11 +8387,9 @@ SELECT xmlagg(x) FROM test;
     </para>
 
     <para>
-     Note that in the current implementation, the order of the
-     concatenation is in principle undefined.  Making the input values
-     to be sorted in some other way will usually work, however.  For
-     instance, in the above example, one could influence the order
-     like so:
+     The influence the order of the concatenation, something like the
+     following approach to sort the input values can be used:
+
 <screen><![CDATA[
 SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
         xmlagg
@@ -8399,11 +8397,8 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
  <bar/><foo>abc</foo>
 ]]></screen>
 
-     But this approach is not guaranteed to work in all situations and
-     in all versions of PostgreSQL.  A future version of PostgreSQL
-     will probably provide an additional feature to control the order
-     in a proper way (<literal>xmlagg(expr ORDER BY expr, expr,
-     ...</literal>).
+     Again, see <xref linkend="functions-aggregate"> for additional
+     information.
     </para>
    </sect3>
 
@@ -9490,6 +9485,11 @@ SELECT NULLIF(value, '(none)') ...
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    See also <xref linkend="functions-aggregate"> about the aggregate
+    function <function>array_agg</function> for use with arrays.
+   </para>
   </sect1>
 
  <sect1 id="functions-aggregate">
@@ -9526,6 +9526,22 @@ SELECT NULLIF(value, '(none)') ...
     </thead>
 
     <tbody>
+     <row>
+      <entry>
+       <indexterm>
+        <primary>array_agg</primary>
+       </indexterm>
+       <function>array_agg(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       any
+      </entry>
+      <entry>
+       array of the argument type
+      </entry>
+      <entry>input values concatenated into an array</entry>
+     </row>
+
      <row>
       <entry>
        <indexterm>
@@ -9684,6 +9700,22 @@ SELECT NULLIF(value, '(none)') ...
       </entry>
       <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
      </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>xmlagg</primary>
+       </indexterm>
+       <function>xmlagg(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>xml</type>
+      </entry>
+      <entry>
+       <type>xml</type>
+      </entry>
+      <entry>concatenation of XML values (see also <xref linkend="functions-xml-xmlagg">)</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -9692,8 +9724,10 @@ SELECT NULLIF(value, '(none)') ...
    It should be noted that except for <function>count</function>,
    these functions return a null value when no rows are selected.  In
    particular, <function>sum</function> of no rows returns null, not
-   zero as one might expect.  The <function>coalesce</function> function can be
-   used to substitute zero for null when necessary.
+   zero as one might expect, and <function>array_agg</function>
+   returns null rather than an empty array when there are no input
+   rows.  The <function>coalesce</function> function can be used to
+   substitute zero or an empty array for null when necessary.
   </para>
 
   <note>
@@ -9733,6 +9767,25 @@ SELECT count(*) FROM sometable;
    </para>
   </note>
 
+  <para>
+   The aggregate functions <function>array_agg</function>
+   and <function>xmlagg</function>, as well as similar user-defined
+   aggregate functions, produce meaningfully different result values
+   depending on the order of the input values.  In the current
+   implementation, the order of the concatenation is in principle
+   undefined.  Making the input values to be sorted in some other way
+   will usually work, however.  For example:
+
+<screen><![CDATA[
+SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
+]]></screen>
+
+   But this approach is not guaranteed to work in all situations, and
+   it is not strictly SQL-conforming.  A future version of PostgreSQL
+   might provide an additional feature to control the order in a
+   better-defined way (<literal>xmlagg(expr ORDER BY expr, expr,
+   ...</literal>).
+  </para>
 
   <para>
    <xref linkend="functions-aggregate-statistics-table"> shows

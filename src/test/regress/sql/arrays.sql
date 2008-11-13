@@ -395,3 +395,10 @@ select array_length(array[[1,2,3], [4,5,6]], 3);
 select cardinality(array[1,2,3]);
 select cardinality(array[[1,2,3], [4,5,6]]);
 select c, cardinality(c), d, cardinality(d) from arrtest;
+
+select array_agg(unique1) from tenk1 where unique1 < 15;
+select array_agg(ten) from tenk1 where unique1 < 15;
+select array_agg(nullif(ten, 4)) from tenk1 where unique1 < 15;
+select cardinality(array_agg(unique1)) from tenk1 where unique1 < 15;
+select array_agg(unique1) from (select * from tenk1 order by unique1 asc) as tab where unique1 < 15;
+select array_agg(unique1) from tenk1 where unique1 < -15;

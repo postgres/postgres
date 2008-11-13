@@ -6,12 +6,13 @@
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.23 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.24 2008/11/13 15:59:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "nodes/execnodes.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -464,4 +465,35 @@ create_singleton_array(FunctionCallInfo fcinfo,
 
 	return construct_md_array(dvalues, NULL, ndims, dims, lbs, element_type,
 							  typlen, typbyval, typalign);
+}
+
+Datum
+array_agg_transfn(PG_FUNCTION_ARGS)
+{
+	Oid arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+
+	if (arg1_typeid == InvalidOid)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("could not determine input data type")));
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
+
+	PG_RETURN_POINTER(accumArrayResult(PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0),
+									   PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1),
+									   PG_ARGISNULL(1),
+									   arg1_typeid,
+									   ((AggState *) fcinfo->context)->aggcontext));
+}
+
+Datum
+array_agg_finalfn(PG_FUNCTION_ARGS)
+{
+	/* cannot be called directly because of internal-type argument */
+	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();   /* returns null iff no input values */
+
+	PG_RETURN_ARRAYTYPE_P(makeArrayResult((ArrayBuildState *) PG_GETARG_POINTER(0), CurrentMemoryContext));
 }

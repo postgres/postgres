@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.70 2008/11/12 13:09:28 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.71 2008/11/13 15:59:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,5 +274,8 @@ extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
 					   Oid element_type,
 					   Datum element,
 					   int ndims);
+
+extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
+extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
 
 #endif   /* ARRAY_H */
