@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.367 2008/11/09 00:28:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.368 2008/11/13 09:45:24 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,8 +92,10 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultPassword		  ""
 #ifdef USE_SSL
 #define DefaultSSLMode	"prefer"
+#define DefaultSSLVerify "cn"
 #else
 #define DefaultSSLMode	"disable"
+#define DefaultSSLVerify "none"
 #endif
 
 /* ----------
@@ -180,6 +182,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	 */
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
+
+	{"sslverify", "PGSSLVERIFY", DefaultSSLVerify, NULL,
+	"SSL-Verify", "", 5},		/* sizeof("chain") == 5 */
 
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
@@ -415,6 +420,8 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslmode");
 	conn->sslmode = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslverify");
+	conn->sslverify = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
 	tmp = conninfo_getval(connOptions, "requiressl");
 	if (tmp && tmp[0] == '1')
@@ -528,6 +535,24 @@ connectOptions2(PGconn *conn)
 	}
 	else
 		conn->sslmode = strdup(DefaultSSLMode);
+
+	/*
+	 * Validate sslverify option
+	 */
+	if (conn->sslverify)
+	{
+		if (strcmp(conn->sslverify, "none") != 0
+			&& strcmp(conn->sslverify, "cert") != 0
+			&& strcmp(conn->sslverify, "cn") != 0)
+		{
+			conn->status = CONNECTION_BAD;
+			printfPQExpBuffer(&conn->errorMessage,
+							libpq_gettext("invalid sslverify value: \"%s\"\n"),
+							  conn->sslverify);
+			return false;
+		}
+	}
+
 
 	/*
 	 * Only if we get this far is it appropriate to try to connect. (We need a
@@ -2008,6 +2033,8 @@ freePGconn(PGconn *conn)
 		free(conn->pgpass);
 	if (conn->sslmode)
 		free(conn->sslmode);
+	if (conn->sslverify)
+		free(conn->sslverify);
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);

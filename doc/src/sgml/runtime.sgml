@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.419 2008/11/04 04:18:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.420 2008/11/13 09:45:24 mha Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1418,9 +1418,9 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    <filename>server.key</filename> (key) and
    <filename>server.crt</filename> (certificate) files (<xref
    linkend="ssl-tcp">). The TCP client must connect using
-   <literal>sslmode='require'</> (<xref linkend="libpq-connect">) and have
-   a <filename>~/.postgresql/root.crt</> SSL certificate (<xref
-   linkend="libpq-ssl">).
+   <literal>sslmode='require'</>, specify <literal>sslverify='cn'</>
+   or <literal>sslverify='cert'</> and have the required certificate
+   files present (<xref linkend="libpq-connect">).
   </para>
  </sect1>
   
@@ -1544,8 +1544,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <listitem>
     <para> 
-     It is possible for both the client and server to provide SSL keys
-     or certificates to each other. It takes some extra configuration
+     It is possible for both the client and server to provide SSL
+     certificates to each other. It takes some extra configuration
      on each side, but this provides stronger verification of identity
      than the mere use of passwords. It prevents a computer from
      pretending to be the server just long enough to read the password
@@ -1757,7 +1757,9 @@ chmod og-rwx server.key
     A self-signed certificate can be used for testing, but a certificate
     signed by a certificate authority (<acronym>CA</>) (either one of the
     global <acronym>CAs</> or a local one) should be used in production
-    so the client can verify the server's identity.
+    so the client can verify the server's identity. If all the clients
+    are local to the organization, using a local <acronym>CA</> is
+    recommended.
    </para>
 
   </sect2>

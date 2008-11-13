@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.106 2008/10/24 12:29:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.107 2008/11/13 09:45:25 mha Exp $
  *
  * NOTES
  *
@@ -87,9 +87,7 @@
 #define ERR_pop_to_mark()	((void) 0)
 #endif
 
-#ifdef NOT_USED
-static int	verify_peer_name_matches_certificate(PGconn *);
-#endif
+static bool verify_peer_name_matches_certificate(PGconn *);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int	client_cert_cb(SSL *, X509 **, EVP_PKEY **);
 static int	init_ssl_system(PGconn *conn);
@@ -438,77 +436,44 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
-#ifdef NOT_USED
 /*
  *	Verify that common name resolves to peer.
  */
-static int
+static bool
 verify_peer_name_matches_certificate(PGconn *conn)
 {
-	struct hostent *cn_hostentry = NULL;
-	struct sockaddr server_addr;
-	struct sockaddr_in *sin (struct sockaddr_in *) &server_addr;
-	ACCEPT_TYPE_ARG3 len;
-	char	  **s;
-	unsigned long l;
+	/*
+	 * If told not to verify the peer name, don't do it. Return
+	 * 0 indicating that the verification was successful.
+	 */
+	if(strcmp(conn->sslverify, "cn") != 0)
+		return true;
 
-	/* Get the address on the other side of the socket. */
-	len = sizeof(server_addr);
-	if (getpeername(conn->sock, &server_addr, &len) == -1)
-	{
-		char		sebuf[256];
-
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("error querying socket: %s\n"),
-						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-		return -1;
-	}
-
-	if (server_addr.sa_family != AF_INET)
+	if (conn->pghostaddr)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("unsupported protocol\n"));
-		return -1;
+						  libpq_gettext("verified SSL connections are only supported when connecting to a hostname"));
+		return false;
 	}
-
-	/* Get the IP addresses of the certificate's common name (CN) */
+	else
 	{
-		struct hostent hpstr;
-		char		buf[BUFSIZ];
-		int			herrno = 0;
-
 		/*
-		 * Currently, pqGethostbyname() is used only on platforms that don't
-		 * have getaddrinfo().	If you enable this function, you should
-		 * convert the pqGethostbyname() function call to use getaddrinfo().
+		 * Connect by hostname.
+		 *
+		 * XXX: Should support alternate names here
+		 * XXX: Should support wildcard certificates here
 		 */
-		pqGethostbyname(conn->peer_cn, &hpstr, buf, sizeof(buf),
-						&cn_hostentry, &herrno);
+		if (pg_strcasecmp(conn->peer_cn, conn->pghost) != 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("server common name '%s' does not match hostname '%s'"),
+							  conn->peer_cn, conn->pghost);
+			return false;
+		}
+		else
+			return true;
 	}
-
-	/* Did we get an IP address? */
-	if (cn_hostentry == NULL)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-		  libpq_gettext("could not get information about host \"%s\": %s\n"),
-						  conn->peer_cn, hstrerror(h_errno));
-		return -1;
-	}
-
-	/* Does one of the CN's IP addresses match the server's IP address? */
-	for (s = cn_hostentry->h_addr_list; *s != NULL; s++)
-		if (!memcmp(&sin->sin_addr.s_addr, *s, cn_hostentry->h_length))
-			return 0;
-
-	l = ntohl(sin->sin_addr.s_addr);
-	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext(
-					    "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"),
-					  conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
-					  (l >> 8) % 0x100, l % 0x100);
-	return -1;
 }
-#endif   /* NOT_USED */
 
 /*
  *	Callback used by SSL to load client cert and key.
@@ -846,6 +811,12 @@ initialize_SSL(PGconn *conn)
 	if (init_ssl_system(conn))
 		return -1;
 
+	/*
+	 * If sslverify is set to anything other than "none", perform certificate
+	 * verification. If set to "cn" we will also do further verifications after
+	 * the connection has been completed.
+	 */
+
 	/* Set up to verify server cert, if root.crt is present */
 	if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 	{
@@ -888,6 +859,24 @@ initialize_SSL(PGconn *conn)
 			}
 
 			SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
+		}
+		else
+		{
+			if (strcmp(conn->sslverify, "none") != 0)
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("root certificate file (%s) not found"), fnbuf);
+				return -1;
+			}
+		}
+	}
+	else
+	{
+		if (strcmp(conn->sslverify, "none") != 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("cannot find home directory to locate root certificate file"));
+			return -1;
 		}
 	}
 
@@ -1004,13 +993,11 @@ open_client_SSL(PGconn *conn)
 							  NID_commonName, conn->peer_cn, SM_USER);
 	conn->peer_cn[SM_USER] = '\0';
 
-#ifdef NOT_USED
-	if (verify_peer_name_matches_certificate(conn) == -1)
+	if (!verify_peer_name_matches_certificate(conn))
 	{
 		close_SSL(conn);
 		return PGRES_POLLING_FAILED;
 	}
-#endif
 
 	/* SSL handshake is complete */
 	return PGRES_POLLING_OK;
