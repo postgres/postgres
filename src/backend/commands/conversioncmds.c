@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.35 2008/06/19 00:46:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.36 2008/11/14 17:40:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,13 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 */
 	funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid),
 							 funcargs, false);
+
+	/* Check it returns VOID, else it's probably the wrong function */
+	if (get_func_rettype(funcoid) != VOIDOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("encoding conversion function %s must return type \"void\"",
+						NameListToString(func_name))));
 
 	/* Check we have EXECUTE rights for the function */
 	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
