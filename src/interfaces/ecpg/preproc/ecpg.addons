@@ -1,0 +1,382 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.1 2008/11/14 10:03:33 meskes Exp $ */
+
+ECPG: stmtClosePortalStmt block
+	{
+		if (INFORMIX_MODE)
+		{
+			if (pg_strcasecmp($1+strlen("close "), "database") == 0)
+			{
+				if (connection)
+					mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement\n");
+
+				fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
+				whenever_action(2);
+				free($1);
+				break;
+			}
+		}
+
+		output_statement($1, 0, ECPGst_normal);
+	}
+ECPG: stmtDeallocateStmt block
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement\n");
+
+		output_deallocate_prepare_statement($1);
+	}
+ECPG: stmtDeclareCursorStmt block
+	{ output_simple_statement($1); }
+ECPG: stmtDeleteStmt block
+ECPG: stmtDiscardStmt block
+ECPG: stmtFetchStmt block
+ECPG: stmtInsertStmt block
+ECPG: stmtSelectStmt block
+ECPG: stmtUpdateStmt block
+	{ output_statement($1, 1, ECPGst_normal); }
+ECPG: stmtExecuteStmt block
+	{ output_statement($1, 1, ECPGst_execute); }
+ECPG: stmtPrepareStmt block
+	{
+		if ($1.type == NULL || strlen($1.type) == 0)
+			output_prepare_statement($1.name, $1.stmt);
+		else	
+			output_statement(cat_str(5, make_str("prepare"), $1.name, $1.type, make_str("as"), $1.stmt), 0, ECPGst_normal);
+	}
+ECPG: stmtTransactionStmt block
+	{
+		fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
+		whenever_action(2);
+		free($1);
+	}
+ECPG: stmtViewStmt rule
+	| ECPGAllocateDescr
+	{
+		fprintf(yyout,"ECPGallocate_desc(__LINE__, %s);",$1);
+		whenever_action(0);
+		free($1);
+	}
+	| ECPGConnect
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for connect statement\n");
+
+		fprintf(yyout, "{ ECPGconnect(__LINE__, %d, %s, %d); ", compat, $1, autocommit);
+		reset_variables();
+		whenever_action(2);
+		free($1);
+	}
+	| ECPGCursorStmt
+	{
+		output_simple_statement($1);
+	}
+	| ECPGDeallocateDescr
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement\n");
+		fprintf(yyout,"ECPGdeallocate_desc(__LINE__, %s);",$1);
+		whenever_action(0);
+		free($1);
+	}
+	| ECPGDeclare
+	{
+		output_simple_statement($1);
+	}
+	| ECPGDescribe
+	{
+		fprintf(yyout, "{ ECPGdescribe(__LINE__, %s,", $1);
+		dump_variables(argsresult, 1);
+		fputs("ECPGt_EORT);", yyout);
+		fprintf(yyout, "}");
+		output_line_number();
+
+		free($1);
+	}
+	| ECPGDisconnect
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for disconnect statement\n");
+
+		fprintf(yyout, "{ ECPGdisconnect(__LINE__, %s);",
+				$1 ? $1 : "\"CURRENT\"");
+		whenever_action(2);
+		free($1);
+	}
+	| ECPGExecuteImmediateStmt	{ output_statement($1, 0, ECPGst_exec_immediate); }
+	| ECPGFree
+	{
+		const char *con = connection ? connection : "NULL";
+		if (strcmp($1, "all"))
+			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);
+		else
+			fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
+
+		whenever_action(2);
+		free($1);
+	}
+	| ECPGGetDescriptor
+	{
+		lookup_descriptor($1.name, connection);
+		output_get_descr($1.name, $1.str);
+		free($1.name);
+		free($1.str);
+	}
+	| ECPGGetDescriptorHeader
+	{
+		lookup_descriptor($1, connection);
+		output_get_descr_header($1);
+		free($1);
+	}
+	| ECPGOpen
+	{
+		struct cursor *ptr;
+
+		if ((ptr = add_additional_variables($1, true)) != NULL)
+		{
+			connection = ptr->connection ? mm_strdup(ptr->connection) : NULL;
+			output_statement(mm_strdup(ptr->command), 0, 0);
+			ptr->opened = true;
+		}
+	}
+	| ECPGSetAutocommit
+	{
+		fprintf(yyout, "{ ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
+		whenever_action(2);
+		free($1);
+	}
+	| ECPGSetConnection
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for set connection statement\n");
+
+		fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
+		whenever_action(2);
+		free($1);
+	}
+	| ECPGSetDescriptor
+	{
+		lookup_descriptor($1.name, connection);
+		output_set_descr($1.name, $1.str);
+		free($1.name);
+		free($1.str);
+	}
+	| ECPGSetDescriptorHeader
+	{
+		lookup_descriptor($1, connection);
+		output_set_descr_header($1);
+		free($1);
+	}
+	| ECPGTypedef
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for typedef statement\n");
+
+		fprintf(yyout, "%s", $1);
+		free($1);
+		output_line_number();
+	}
+	| ECPGVar
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for var statement\n");
+
+		output_simple_statement($1);
+	}
+	| ECPGWhenever
+	{
+		if (connection)
+			mmerror(PARSE_ERROR, ET_ERROR, "no at option for whenever statement\n");
+
+		output_simple_statement($1);
+	}
+ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromcopy_file_namecopy_delimiteropt_withcopy_opt_list addon
+			if (strcmp($6, "to") == 0 && strcmp($7, "stdin") == 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible\n");
+			else if (strcmp($6, "from") == 0 && strcmp($7, "stdout") == 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "copy from stdout not possible\n");
+			else if (strcmp($6, "from") == 0 && strcmp($7, "stdin") == 0)
+				mmerror(PARSE_ERROR, ET_WARNING, "copy from stdin not implemented\n");
+ECPG: CopyStmtCOPYselect_with_parensTOcopy_file_nameopt_withcopy_opt_list addon
+			if (strcmp($4, "stdin") == 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible\n");
+ECPG: ConstraintAttributeSpecConstraintDeferrabilitySpecConstraintTimeSpec addon
+			if (strcmp($1, "deferrable") != 0 && strcmp($2, "initially deferrable") == 0 )
+				mmerror(PARSE_ERROR, ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE\n");
+ECPG: ConstraintAttributeSpecConstraintTimeSpecConstraintDeferrabilitySpec addon
+			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
+				mmerror(PARSE_ERROR, ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE\n");
+ECPG: var_valueNumericOnly addon
+ECPG: fetch_directionSignedIconst addon
+		if ($1[1] == '$')
+		{
+			free($1);
+			$1 = make_str("$0");
+		}
+ECPG: fetch_directionABSOLUTE_PSignedIconst addon
+ECPG: fetch_directionRELATIVE_PSignedIconst addon
+ECPG: fetch_directionFORWARDSignedIconst addon
+ECPG: fetch_directionBACKWARDSignedIconst addon
+		if ($2[1] == '$')
+		{
+			free($2);
+			$2 = make_str("$0");
+		}
+ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
+	{
+		$$.name = $2;
+		$$.type = $3;
+		$$.stmt = cat_str(3, make_str("\""), $5, make_str("\""));
+	}
+	| PREPARE prepared_name FROM execstring
+	{
+		$$.name = $2;
+		$$.type = NULL;
+		$$.stmt = $4;
+	}
+ECPG: ExecuteStmtEXECUTEprepared_nameexecute_param_clauseexecute_rest block
+	{ $$ = $2; }
+ECPG: DeclareCursorStmtDECLAREnamecursor_optionsCURSORopt_holdFORSelectStmt block
+	{
+		struct cursor *ptr, *this;
+
+		for (ptr = cur; ptr != NULL; ptr = ptr->next)
+		{
+			if (strcmp($2, ptr->name) == 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" already defined\n", $2);
+		}
+
+		this = (struct cursor *) mm_alloc(sizeof(struct cursor));
+
+		this->next = cur;
+		this->name = $2;
+		this->connection = connection;
+		this->opened = false;
+		this->command =  cat_str(7, make_str("declare"), mm_strdup($2), $3, make_str("cursor"), $5, make_str("for"), $7);
+		this->argsinsert = argsinsert;
+		this->argsresult = argsresult;
+		argsinsert = argsresult = NULL;
+		cur = this;
+
+		if (INFORMIX_MODE)
+			$$ = cat_str(5, adjust_informix(this->argsinsert), adjust_informix(this->argsresult), make_str("/*"), mm_strdup(this->command), make_str("*/"));
+		else
+			$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+	}
+ECPG: opt_hold block
+	{
+		if (compat == ECPG_COMPAT_INFORMIX_SE && autocommit == true)
+			$$ = make_str("with hold");
+		else
+			$$ = EMPTY;
+	}
+ECPG: into_clauseINTOOptTempTableName block
+					{
+						FoundInto = 1;
+						$$= cat2_str(make_str("into"), $2);
+					}
+	| ecpg_into                     { $$ = EMPTY; }
+ECPG: table_refselect_with_parens addon
+		mmerror(PARSE_ERROR, ET_ERROR, "sub-SELECT in FROM must have an alias\n");
+ECPG: TypenameSimpleTypenameopt_array_bounds block
+	{	$$ = cat2_str($1, $2.str); }
+ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block
+	{	$$ = $$ = cat_str(3, make_str("setof"), $2, $3.str); }
+ECPG: opt_array_boundsopt_array_bounds'['']' block
+	{
+		$$.index1 = $1.index1;
+		$$.index2 = $1.index2;
+		if (strcmp($$.index1, "-1") == 0)
+			$$.index1 = make_str("0");
+		else if (strcmp($1.index2, "-1") == 0)
+			$$.index2 = make_str("0");
+		$$.str = cat_str(2, $1.str, make_str("[]"));
+	}
+	| opt_array_bounds '[' Iresult ']'
+	{
+		$$.index1 = $1.index1;
+		$$.index2 = $1.index2;
+		if (strcmp($1.index1, "-1") == 0)
+			$$.index1 = strdup($3);
+		else if (strcmp($1.index2, "-1") == 0)
+			$$.index2 = strdup($3);
+		$$.str = cat_str(4, $1.str, make_str("["), $3, make_str("]"));
+	}
+ECPG: opt_array_bounds
+	{
+		$$.index1 = make_str("-1");
+		$$.index2 = make_str("-1");
+		$$.str= EMPTY;
+	}
+ECPG: IconstICONST block
+	{ $$ = make_name(); }
+ECPG: AexprConstNULL_P rule
+	| civar			{ $$ = $1; }
+	| civarind		{ $$ = $1; }
+ECPG: ColIdcol_name_keyword rule
+	| ECPGKeywords                  { $$ = $1; }
+	| ECPGCKeywords                 { $$ = $1; }
+	| CHAR_P                        { $$ = make_str("char"); }
+	| VALUES                        { $$ = make_str("values"); }
+ECPG: type_function_nametype_func_name_keyword rule
+	| ECPGKeywords                          { $$ = $1; }
+	| ECPGTypeName                          { $$ = $1; }
+	| ECPGCKeywords                         { $$ = $1; }
+ECPG: VariableShowStmtSHOWALL block
+	{
+		mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL not implemented\n");
+		$$ = EMPTY;
+	}
+ECPG: FetchStmtFETCHfetch_directionfrom_inname block 
+	{
+		add_additional_variables($4, false);
+		$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+	}
+ECPG: FetchStmtFETCHname block
+	{
+		add_additional_variables($2, false);
+		$$ = cat_str(2, make_str("fetch"), $2);
+	}
+ECPG: FetchStmtMOVEname rule
+	| FETCH fetch_direction from_in name ecpg_into
+		{
+			add_additional_variables($4, false);
+			$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+		}
+	| FETCH fetch_direction name ecpg_into
+		{
+			add_additional_variables($3, false);
+			$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
+		}
+	| FETCH from_in name ecpg_into
+		{
+			add_additional_variables($3, false);
+			$$ = cat_str(3, make_str("fetch"), $2, $3);
+		}
+	| FETCH name ecpg_into
+		{
+			add_additional_variables($2, false);
+			$$ = cat2_str(make_str("fetch"), $2);
+		}
+	| FETCH fetch_direction name
+		{
+			add_additional_variables($3, false);
+			$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
+		}
+	| FETCH from_in name
+		{
+			add_additional_variables($3, false);
+			$$ = cat_str(3, make_str("fetch"), $2, $3);
+		}
+ECPG: SpecialRuleRelationOLD addon
+		if (!QueryIsRule)
+			mmerror(PARSE_ERROR, ET_ERROR, "OLD used in non-rule query\n");
+ECPG: SpecialRuleRelationNEW addon
+		if (!QueryIsRule)
+			mmerror(PARSE_ERROR, ET_ERROR, "NEW used in non-rule query\n");
+ECPG: select_limitLIMITselect_limit_value','select_offset_value block
+        {
+                mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to backend");
+                $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4);
+        }
+ECPG: SignedIconstIconst rule
+	| civar	{ $$ = $1; }
