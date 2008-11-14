@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.31 2008/05/21 19:51:01 meskes Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.32 2008/11/14 22:12:37 mha Exp $
 #
 use Carp;
 use Win32;
@@ -31,7 +31,7 @@ my $contrib_extrasource = {
     'cube' => ['cubescan.l','cubeparse.y'],
     'seg' => ['segscan.l','segparse.y']
 };
-my @contrib_excludes = ('pgcrypto');
+my @contrib_excludes = ('pgcrypto','intagg');
 
 sub mkvcbuild
 {
