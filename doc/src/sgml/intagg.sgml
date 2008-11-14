@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intagg.sgml,v 1.3 2007/12/10 05:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intagg.sgml,v 1.4 2008/11/14 19:58:45 tgl Exp $ -->
 
 <sect1 id="intagg">
  <title>intagg</title>
@@ -9,7 +9,10 @@
 
  <para>
   The <filename>intagg</filename> module provides an integer aggregator and an
-  enumerator.
+  enumerator.  <filename>intagg</filename> is now obsolete, because there
+  are built-in functions that provide a superset of its capabilities.
+  However, the module is still provided as a compatibility wrapper around
+  the built-in functions.
  </para>
 
  <sect2>
@@ -20,37 +23,18 @@
   <function>int_array_aggregate(integer)</>
   that produces an integer array
   containing exactly the integers it is fed.
-  Here is a not-tremendously-useful example:
+  This is a wrapper around <function>array_agg</>,
+  which does the same thing for any array type.
  </para>
-
- <programlisting>
-test=# select int_array_aggregate(i) from
-test-#   generate_series(1,10,2) i;
- int_array_aggregate
----------------------
- {1,3,5,7,9}
-(1 row)
- </programlisting>
 
  <para>
   The enumerator is a function
   <function>int_array_enum(integer[])</>
   that returns <type>setof integer</>.  It is essentially the reverse
   operation of the aggregator: given an array of integers, expand it
-  into a set of rows.  For example,
+  into a set of rows.  This is a wrapper around <function>unnest</>,
+  which does the same thing for any array type.
  </para>
-
- <programlisting>
-test=# select * from int_array_enum(array[1,3,5,7,9]);
- int_array_enum
-----------------
-              1
-              3
-              5
-              7
-              9
-(5 rows)
- </programlisting>
 
  </sect2>
 

@@ -2,11 +2,9 @@
 # Makefile for integer aggregator
 # Copyright (C) 2001 Digital Music Network.
 # by Mark L. Woodward
-# $PostgreSQL: pgsql/contrib/intagg/Makefile,v 1.9 2007/11/10 23:59:51 momjian Exp $
+# $PostgreSQL: pgsql/contrib/intagg/Makefile,v 1.10 2008/11/14 19:58:45 tgl Exp $
 
-MODULES = int_aggregate
-DATA_built = int_aggregate.sql
-DATA = uninstall_int_aggregate.sql
+DATA = int_aggregate.sql uninstall_int_aggregate.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
