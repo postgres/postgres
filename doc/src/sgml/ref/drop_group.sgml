@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.14 2007/05/15 19:43:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.15 2008/11/14 10:22:46 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPGROUP">
  <refmeta>
   <refentrytitle id="SQL-DROPGROUP-TITLE">DROP GROUP</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.5 2008/10/22 11:00:34 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.6 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-VALUES">
  <refmeta>
   <refentrytitle id="SQL-VALUES-TITLE">VALUES</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

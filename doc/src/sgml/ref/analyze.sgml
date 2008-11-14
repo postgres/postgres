@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.23 2007/10/07 01:16:42 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.24 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ANALYZE">
  <refmeta>
   <refentrytitle id="sql-analyze-title">ANALYZE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

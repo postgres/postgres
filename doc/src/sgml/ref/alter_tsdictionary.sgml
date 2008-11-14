@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsdictionary.sgml,v 1.3 2007/10/17 01:01:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsdictionary.sgml,v 1.4 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTSDICTIONARY">
  <refmeta>
   <refentrytitle id="SQL-ALTERTSDICTIONARY-TITLE">ALTER TEXT SEARCH DICTIONARY</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

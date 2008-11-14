@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.93 2008/10/27 09:37:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.94 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SET">
  <refmeta>
   <refentrytitle id="SQL-SET-TITLE">SET</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

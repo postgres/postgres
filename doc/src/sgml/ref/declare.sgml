@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.43 2008/11/04 00:57:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.44 2008/11/14 10:22:46 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DECLARE">
  <refmeta>
   <refentrytitle id="SQL-DECLARE-TITLE">DECLARE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

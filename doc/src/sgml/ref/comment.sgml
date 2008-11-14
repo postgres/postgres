@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.37 2008/07/16 01:30:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.38 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-COMMENT">
  <refmeta>
   <refentrytitle id="SQL-COMMENT-TITLE">COMMENT</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

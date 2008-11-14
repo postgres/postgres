@@ -8,5 +8,3 @@ CFLAGS_SL = -G 0
 
 %.so: %.c
 	$(CC) -c -G 0 $(CPPFLAGS) $(CFLAGS) -o $@ $<
-
-sqlmansect = 7

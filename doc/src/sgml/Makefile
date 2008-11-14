@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.111 2008/11/12 16:01:51 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.112 2008/11/14 10:22:45 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 
 .PHONY: html man draft clean
 
-DEFAULTSECTION = $(sqlmansect_dummy)
+DEFAULTSECTION = l
 
 fix_man_xrefs = $(PERL) -npi -e 's{\[XRef to GUC-([A-Z0-9-]*)\]}{($$l = $$1) =~ tr/A-Z-/a-z_/, $$l}ge || s{\[XRef to [A-Z0-9-]*\]}{in the documentation}g'
 
@@ -73,11 +73,12 @@ man: postgres.sgml $(ALLSGML)
 	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 # One more time, to resolve cross-references
 	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
-	$(fix_man_xrefs) *.1 *.$(DEFAULTSECTION)
-	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
+	$(fix_man_xrefs) *.1 *.7
+	$(mkinstalldirs) man1 man7
 	$(D2MLINKS) < manpage.links
 	mv *.1 man1/
-	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
+	mv *.7 man7/
+	rm *.$(DEFAULTSECTION)
 
 
 ##
@@ -280,9 +281,10 @@ DOCBOOK2MAN = docbook2x-man
 
 manx: postgres.xml stylesheet-man.xsl
 	$(DOCBOOK2MAN) --solinks -s $(srcdir)/stylesheet-man.xsl --string-param default-manpage-section=$(DEFAULTSECTION)  $<
-	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
+	$(mkinstalldirs) man1 man7
 	mv *.1 man1/
-	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
+	mv *.7 man7/
+	rm *.$(DEFAULTSECTION)
 
 
 ##
@@ -302,7 +304,7 @@ clean distclean maintainer-clean:
 # HTML
 	rm -f HTML.manifest *.html
 # man
-	rm -rf *.1 *.$(DEFAULTSECTION) man1 man$(DEFAULTSECTION) manpage.refs manpage.links manpage.log
+	rm -rf *.1 *.7 *.$(DEFAULTSECTION) man1 man7 manpage.refs manpage.links manpage.log
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.fot
 # index

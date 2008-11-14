@@ -9,5 +9,3 @@ endif
 
 %.so: %.o
 	$(LD) -assert pure-text -Bdynamic -o $@ $<
-
-sqlmansect = 7

@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.24 2007/07/03 01:30:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.25 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPVIEW">
  <refmeta>
   <refentrytitle id="SQL-DROPVIEW-TITLE">DROP VIEW</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

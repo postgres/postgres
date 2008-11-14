@@ -1,8 +1,9 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.11 2007/01/31 23:26:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.12 2008/11/14 10:22:46 petere Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
   <refentrytitle id="SQL-DROPCONVERSION-TITLE">DROP CONVERSION</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

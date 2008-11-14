@@ -1,8 +1,9 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.20 2007/09/24 01:29:28 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.21 2008/11/14 10:22:46 petere Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
   <refentrytitle id="SQL-CREATECONVERSION-TITLE">CREATE CONVERSION</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

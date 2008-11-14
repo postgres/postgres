@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.36 2007/09/11 00:06:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.37 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-RESET">
  <refmeta>
   <refentrytitle id="SQL-RESET-TITLE">RESET</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

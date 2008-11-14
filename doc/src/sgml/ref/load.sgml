@@ -1,10 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/load.sgml,v 1.24 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/load.sgml,v 1.25 2008/11/14 10:22:47 petere Exp $
 -->
 
 <refentry id="SQL-LOAD">
  <refmeta>
   <refentrytitle id="SQL-LOAD-TITLE">LOAD</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

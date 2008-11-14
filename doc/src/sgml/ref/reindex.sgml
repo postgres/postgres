@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.37 2007/11/18 18:42:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.38 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-REINDEX">
  <refmeta>
   <refentrytitle id="SQL-REINDEX-TITLE">REINDEX</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

@@ -1,8 +1,9 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.15 2007/01/31 23:26:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.16 2008/11/14 10:22:45 petere Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
   <refentrytitle id="sql-checkpoint-title">CHECKPOINT</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

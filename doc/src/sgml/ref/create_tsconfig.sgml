@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsconfig.sgml,v 1.2 2007/08/22 05:13:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsconfig.sgml,v 1.3 2008/11/14 10:22:46 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETSCONFIG">
  <refmeta>
   <refentrytitle id="sql-createtsconfig-title">CREATE TEXT SEARCH CONFIGURATION</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

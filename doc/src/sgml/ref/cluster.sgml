@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.44 2007/11/07 14:07:53 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.45 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CLUSTER">
  <refmeta>
   <refentrytitle id="sql-cluster-title">CLUSTER</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

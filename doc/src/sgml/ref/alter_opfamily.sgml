@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opfamily.sgml,v 1.4 2008/04/14 17:05:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opfamily.sgml,v 1.5 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEROPFAMILY">
  <refmeta>
   <refentrytitle id="SQL-ALTEROPFAMILY-TITLE">ALTER OPERATOR FAMILY</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

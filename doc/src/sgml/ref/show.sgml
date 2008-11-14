@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.46 2008/09/23 09:20:35 heikki Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.47 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SHOW">
  <refmeta>
   <refentrytitle id="SQL-SHOW-TITLE">SHOW</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

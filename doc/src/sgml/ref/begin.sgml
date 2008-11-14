@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.36 2007/05/15 19:43:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.37 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-BEGIN">
  <refmeta>
   <refentrytitle id="SQL-BEGIN-TITLE">BEGIN</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

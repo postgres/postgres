@@ -1,10 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.80 2008/07/18 03:32:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.81 2008/11/14 10:22:46 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
  <refmeta>
   <refentrytitle id="SQL-CREATEFUNCTION-TITLE">CREATE FUNCTION</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

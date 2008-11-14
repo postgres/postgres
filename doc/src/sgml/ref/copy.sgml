@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.83 2008/11/09 00:28:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.84 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -7,6 +7,7 @@ PostgreSQL documentation
 <refentry id="SQL-COPY">
  <refmeta>
   <refentrytitle id="sql-copy-title">COPY</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

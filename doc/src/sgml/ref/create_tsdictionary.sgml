@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsdictionary.sgml,v 1.2 2007/08/22 01:39:44 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsdictionary.sgml,v 1.3 2008/11/14 10:22:46 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETSDICTIONARY">
  <refmeta>
   <refentrytitle id="sql-createtsdictionary-title">CREATE TEXT SEARCH DICTIONARY</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

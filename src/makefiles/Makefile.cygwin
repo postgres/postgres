@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.10 2007/08/22 06:34:18 tgl Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.11 2008/11/14 10:22:47 petere Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 ifdef PGXS
@@ -40,5 +40,3 @@ endif
 ifneq (,$(findstring src/pl/plpython,$(subdir)))
 override CPPFLAGS+= -DUSE_DL_IMPORT
 endif
-
-sqlmansect = 7

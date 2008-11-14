@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.29 2008/10/18 07:49:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.30 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-TRUNCATE">
  <refmeta>
   <refentrytitle id="SQL-TRUNCATE-TITLE">TRUNCATE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

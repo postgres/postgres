@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.7 2007/03/26 16:58:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.8 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERLANGUAGE">
  <refmeta>
   <refentrytitle id="SQL-ALTERLANGUAGE-title">ALTER LANGUAGE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

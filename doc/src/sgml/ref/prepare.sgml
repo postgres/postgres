@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.23 2007/05/15 19:13:55 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.24 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-PREPARE">
  <refmeta>
   <refentrytitle id="sql-prepare-title">PREPARE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

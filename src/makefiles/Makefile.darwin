@@ -14,5 +14,3 @@ endif
 # shlib ... should go away, since this is not really enough knowledge)
 %.so: %.o
 	$(CC) $(CFLAGS) -bundle -o $@ $< $(BE_DLLLIBS)
-
-sqlmansect = 7

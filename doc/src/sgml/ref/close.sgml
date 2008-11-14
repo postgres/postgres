@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.27 2008/05/12 16:23:26 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.28 2008/11/14 10:22:45 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CLOSE">
  <refmeta>
   <refentrytitle id="SQL-CLOSE-TITLE">CLOSE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

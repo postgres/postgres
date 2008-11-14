@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.31 2008/03/18 16:24:50 petere Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.32 2008/11/14 10:22:45 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -45,26 +45,30 @@ sqlmansectnum = $(shell expr X'$(sqlmansect)' : X'\([0-9]\)')
 
 all: man1/.timestamp man$(sqlmansectnum)/.timestamp
 
-man1/.timestamp: man$(sqlmansect_dummy)/.timestamp
+man1/.timestamp: man7/.timestamp
 	@echo timestamp >$@
 
-man$(sqlmansect_dummy)/.timestamp: man.tar.gz
+man7/.timestamp: man.tar.gz
 	gzip -d -c $< | $(TAR) xf -
+ifneq ($(sqlmansectnum),7)
 	for file in man1/*.1; do \
 	  mv $$file $$file.bak && \
-	  sed -e 's/\\fR($(sqlmansect_dummy))/\\fR($(sqlmansectnum))/' $$file.bak >$$file && \
+	  sed -e 's/\\fR(7)/\\fR($(sqlmansectnum))/g' $$file.bak >$$file && \
 	  rm -f $$file.bak || exit; \
 	done
+endif
 	@echo timestamp >$@
 
-man$(sqlmansectnum)/.timestamp: man$(sqlmansect_dummy)/.timestamp
+ifneq ($(sqlmansectnum),7)
+man$(sqlmansectnum)/.timestamp: man7/.timestamp
 	$(mkinstalldirs) man$(sqlmansectnum)
-	for file in man$(sqlmansect_dummy)/*.$(sqlmansect_dummy); do \
-	  sed -e '/^\.TH/s/"$(sqlmansect_dummy)"/"$(sqlmansect)"/'   \
-              -e 's/\\fR($(sqlmansect_dummy))/\\fR($(sqlmansectnum))/' \
-	      $$file >man$(sqlmansectnum)/`basename $$file | sed 's/.$(sqlmansect_dummy)$$/.$(sqlmansect)/'` || exit; \
+	for file in man7/*.7; do \
+	  sed -e '/^\.TH/s/"7"/"$(sqlmansect)"/'   \
+              -e 's/\\fR(7)/\\fR($(sqlmansectnum))/g' \
+	      $$file >man$(sqlmansectnum)/`basename $$file | sed 's/.7$$/.$(sqlmansect)/'` || exit; \
 	done
 	@echo timestamp >$@
+endif
 endif # found_man
 
 
@@ -93,10 +97,10 @@ ifdef found_html
 	rm -f $(addprefix $(DESTDIR)$(htmldir)/html/, $(shell gunzip -c $(srcdir)/postgres.tar.gz | tar tf -))
 endif
 ifdef found_man
-	rm -f $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c $(srcdir)/man.tar.gz | tar tf - | sed -e 's,man$(sqlmansect_dummy)/,man$(sqlmansectnum)/,' -e 's/.$(sqlmansect_dummy)$$/.$(sqlmansect)/'))
+	rm -f $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c $(srcdir)/man.tar.gz | tar tf - | sed -e 's,man7/,man$(sqlmansectnum)/,' -e 's/.7$$/.$(sqlmansect)/'))
 endif
 
 
 clean distclean maintainer-clean:
-	rm -rf man1/ man$(sqlmansectnum)/ man$(sqlmansect_dummy)/
+	rm -rf man1/ man7/ man$(sqlmansectnum)/
 	$(MAKE) -C src $@

@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.42 2008/10/22 11:00:34 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.43 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECTINTO">
  <refmeta>
   <refentrytitle id="SQL-SELECTINTO-TITLE">SELECT INTO</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

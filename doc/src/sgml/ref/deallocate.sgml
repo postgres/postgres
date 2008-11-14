@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.10 2007/04/12 06:53:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.11 2008/11/14 10:22:46 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DEALLOCATE">
  <refmeta>
   <refentrytitle id="sql-deallocate-title">DEALLOCATE</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

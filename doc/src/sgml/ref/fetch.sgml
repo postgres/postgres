@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.41 2007/10/24 22:55:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.42 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-FETCH">
  <refmeta>
   <refentrytitle id="SQL-FETCH-TITLE">FETCH</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.3 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.4 2008/11/14 10:22:47 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK-PREPARED">
  <refmeta>
   <refentrytitle id="sql-rollback-prepared-title">ROLLBACK PREPARED</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 

@@ -22,5 +22,3 @@ endif
 
 %.so: %.o
 	$(CC) $(CFLAGS) -shared -o $@ $<
-
-sqlmansect = 7
