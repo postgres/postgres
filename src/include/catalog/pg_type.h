@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.201 2008/10/13 16:25:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.202 2008/11/14 02:09:52 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -613,7 +613,7 @@ DATA(insert OID = 2279 ( trigger		PGNSP PGUID  4 t p P f t \054 0 0 0 trigger_in
 #define TRIGGEROID		2279
 DATA(insert OID = 2280 ( language_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 language_handler_in language_handler_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define LANGUAGE_HANDLEROID		2280
-DATA(insert OID = 2281 ( internal		PGNSP PGUID  4 t p P f t \054 0 0 0 internal_in internal_out - - - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2281 ( internal		PGNSP PGUID  SIZEOF_POINTER t p P f t \054 0 0 0 internal_in internal_out - - - - - ALIGNOF_POINTER p f 0 -1 0 _null_ _null_ ));
 #define INTERNALOID		2281
 DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p P f t \054 0 0 0 opaque_in opaque_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define OPAQUEOID		2282

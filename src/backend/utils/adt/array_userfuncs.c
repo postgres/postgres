@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.25 2008/11/14 00:12:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.26 2008/11/14 02:09:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,14 +495,10 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 							 ((AggState *) fcinfo->context)->aggcontext);
 
 	/*
-	 * We cheat quite a lot here by assuming that a pointer datum will be
-	 * preserved intact when nodeAgg.c thinks it is a value of type "internal".
-	 * This will in fact work because internal is stated to be pass-by-value
-	 * in pg_type.h, and nodeAgg will never do anything with a pass-by-value
-	 * transvalue except pass it around in Datum form.  But it's mighty
-	 * shaky seeing that internal is also stated to be 4 bytes wide in
-	 * pg_type.h.  If nodeAgg did put the value into a tuple this would
-	 * crash and burn on 64-bit machines.
+	 * The transition type for array_agg() is declared to be "internal",
+	 * which is a pass-by-value type the same size as a pointer.  So we
+	 * can safely pass the ArrayBuildState pointer through nodeAgg.c's
+	 * machinations.
 	 */
 	PG_RETURN_POINTER(state);
 }
