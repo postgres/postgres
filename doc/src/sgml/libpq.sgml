@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.269 2008/11/13 09:45:24 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.270 2008/11/14 22:58:51 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5255,6 +5255,19 @@ int eventproc(PGEventId evtId, void *evtInfo, void *passThrough)
        <structname>PGconn</>.  This is because the address of the procedure
        is used as a lookup key to identify the associated instance data.
       </para>
+
+      <caution>
+       <para>
+        On Windows, functions can have two different addresses: one visible
+        from outside a DLL and another visible from inside the DLL.  One
+        should be careful that only one of these addresses is used with
+        <application>libpq</>'s event-procedure functions, else confusion will
+        result.  The simplest rule for writing code that will work is to
+        ensure that event procedures are declared <literal>static</>.  If the
+        procedure's address must be available outside its own source file,
+        expose a separate function to return the address.
+       </para>
+      </caution>
      </listitem>
     </varlistentry>
    </variablelist>
