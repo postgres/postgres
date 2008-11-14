@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.96 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.97 2008/11/14 19:47:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@ AggregateCreate(const char *aggName,
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			sortop = InvalidOid;	/* can be omitted */
 	bool		hasPolyArg;
+	bool		hasInternalArg;
 	Oid			rettype;
 	Oid			finaltype;
 	Oid		   *fnArgs;
@@ -78,15 +79,15 @@ AggregateCreate(const char *aggName,
 	if (!aggtransfnName)
 		elog(ERROR, "aggregate must have a transition function");
 
-	/* check for polymorphic arguments */
+	/* check for polymorphic and INTERNAL arguments */
 	hasPolyArg = false;
+	hasInternalArg = false;
 	for (i = 0; i < numArgs; i++)
 	{
 		if (IsPolymorphicType(aggArgTypes[i]))
-		{
 			hasPolyArg = true;
-			break;
-		}
+		else if (aggArgTypes[i] == INTERNALOID)
+			hasInternalArg = true;
 	}
 
 	/*
@@ -176,6 +177,18 @@ AggregateCreate(const char *aggName,
 				 errmsg("cannot determine result data type"),
 				 errdetail("An aggregate returning a polymorphic type "
 						   "must have at least one polymorphic argument.")));
+
+	/*
+	 * Also, the return type can't be INTERNAL unless there's at least one
+	 * INTERNAL argument.  This is the same type-safety restriction we
+	 * enforce for regular functions, but at the level of aggregates.  We
+	 * must test this explicitly because we allow INTERNAL as the transtype.
+	 */
+	if (finaltype == INTERNALOID && !hasInternalArg)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("unsafe use of pseudo-type \"internal\""),
+				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
 
 	/* handle sortop, if supplied */
 	if (aggsortopName)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.46 2008/06/08 21:09:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.47 2008/11/14 19:47:50 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -173,15 +173,24 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	 *
 	 * transtype can't be a pseudo-type, since we need to be able to store
 	 * values of the transtype.  However, we can allow polymorphic transtype
-	 * in some cases (AggregateCreate will check).
+	 * in some cases (AggregateCreate will check).  Also, we allow "internal"
+	 * for functions that want to pass pointers to private data structures;
+	 * but allow that only to superusers, since you could crash the system
+	 * (or worse) by connecting up incompatible internal-using functions
+	 * in an aggregate.
 	 */
 	transTypeId = typenameTypeId(NULL, transType, NULL);
 	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("aggregate transition data type cannot be %s",
-						format_type_be(transTypeId))));
+	{
+		if (transTypeId == INTERNALOID && superuser())
+			/* okay */ ;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("aggregate transition data type cannot be %s",
+							format_type_be(transTypeId))));
+	}
 
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
