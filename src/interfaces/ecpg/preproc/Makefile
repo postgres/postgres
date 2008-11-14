@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.138 2008/11/14 17:11:40 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.139 2008/11/14 17:18:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -77,8 +77,8 @@ clean distclean:
 # garbage from development
 	@rm -f core a.out
 
-# `make clean' does not remove preproc.c, preproc.h, or pgc.c since we
-# want to ship those files in the distribution for people with
-# inadequate tools.
+# `make distclean' must not remove preproc.y, preproc.c, preproc.h, or pgc.c
+# since we want to ship those files in the distribution for people with
+# inadequate tools.  Instead, `make maintainer-clean' will remove them.
 maintainer-clean: distclean
 	rm -f $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
