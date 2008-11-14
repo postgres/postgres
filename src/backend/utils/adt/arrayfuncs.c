@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.149 2008/11/12 13:09:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.150 2008/11/14 00:51:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4634,4 +4634,108 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	}
 
 	return result;
+}
+
+
+/*
+ * UNNEST
+ */
+Datum
+array_unnest(PG_FUNCTION_ARGS)
+{
+	typedef struct
+	{
+		ArrayType *arr;
+		int		nextelem;
+		int		numelems;
+		char   *elemdataptr;	/* this moves with nextelem */
+		bits8  *arraynullsptr;	/* this does not */
+		int16	elmlen;
+		bool	elmbyval;
+		char	elmalign;
+	} array_unnest_fctx;
+
+	FuncCallContext *funcctx;
+	array_unnest_fctx *fctx;
+	MemoryContext oldcontext;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(0);
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* allocate memory for user context */
+		fctx = (array_unnest_fctx *) palloc(sizeof(array_unnest_fctx));
+
+		/*
+		 * Initialize state.  Note we assume that the originally passed
+		 * array will stick around for the whole call series.
+		 */
+		fctx->arr = arr;
+		fctx->nextelem = 0;
+		fctx->numelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+
+		fctx->elemdataptr = ARR_DATA_PTR(arr);
+		fctx->arraynullsptr = ARR_NULLBITMAP(arr);
+
+		get_typlenbyvalalign(ARR_ELEMTYPE(arr),
+							 &fctx->elmlen,
+							 &fctx->elmbyval,
+							 &fctx->elmalign);
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	fctx = funcctx->user_fctx;
+
+	if (fctx->nextelem < fctx->numelems)
+	{
+		int		offset = fctx->nextelem++;
+		Datum	elem;
+
+		/*
+		 * Check for NULL array element
+		 */
+		if (array_get_isnull(fctx->arraynullsptr, offset))
+		{
+			fcinfo->isnull = true;
+			elem = (Datum) 0;
+			/* elemdataptr does not move */
+		}
+		else
+		{
+			/*
+			 * OK, get the element
+			 */
+			char   *ptr = fctx->elemdataptr;
+
+			fcinfo->isnull = false;
+			elem = ArrayCast(ptr, fctx->elmbyval, fctx->elmlen);
+
+			/*
+			 * Advance elemdataptr over it
+			 */
+			ptr = att_addlength_pointer(ptr, fctx->elmlen, ptr);
+			ptr = (char *) att_align_nominal(ptr, fctx->elmalign);
+			fctx->elemdataptr = ptr;
+		}
+
+		SRF_RETURN_NEXT(funcctx, elem);
+	}
+	else
+	{
+		/* do when there is no more left */
+		SRF_RETURN_DONE(funcctx);
+	}
 }

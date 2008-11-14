@@ -1161,3 +1161,65 @@ select array_agg(unique1) from tenk1 where unique1 < -15;
  
 (1 row)
 
+select unnest(array[1,2,3]);
+ unnest 
+--------
+      1
+      2
+      3
+(3 rows)
+
+select * from unnest(array[1,2,3]);
+ unnest 
+--------
+      1
+      2
+      3
+(3 rows)
+
+select unnest(array[1,2,3,4.5]::float8[]);
+ unnest 
+--------
+      1
+      2
+      3
+    4.5
+(4 rows)
+
+select unnest(array[1,2,3,4.5]::numeric[]);
+ unnest 
+--------
+      1
+      2
+      3
+    4.5
+(4 rows)
+
+select unnest(array[1,2,3,null,4,null,null,5,6]);
+ unnest 
+--------
+      1
+      2
+      3
+       
+      4
+       
+       
+      5
+      6
+(9 rows)
+
+select unnest(array[1,2,3,null,4,null,null,5,6]::text[]);
+ unnest 
+--------
+ 1
+ 2
+ 3
+ 
+ 4
+ 
+ 
+ 5
+ 6
+(9 rows)
+
