@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.343 2008/11/09 21:24:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.344 2008/11/14 01:57:41 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -478,6 +478,60 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	}
 }
 
+/*
+ * InsertPgAttributeTuple
+ *		Construct and insert a new tuple in pg_attribute.
+ *
+ * Caller has already opened and locked pg_attribute.  new_attribute is the
+ * attribute to insert.
+ *
+ * indstate is the index state for CatalogIndexInsert.  It can be passed as
+ * NULL, in which case we'll fetch the necessary info.  (Don't do this when
+ * inserting multiple attributes, because it's a tad more expensive.)
+ */
+void
+InsertPgAttributeTuple(Relation pg_attribute_rel,
+					   Form_pg_attribute new_attribute,
+					   CatalogIndexState indstate)
+{
+	Datum		values[Natts_pg_attribute];
+	bool		nulls[Natts_pg_attribute];
+	HeapTuple	tup;
+
+	/* This is a tad tedious, but way cleaner than what we used to do... */
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
+
+	values[Anum_pg_attribute_attrelid - 1] = ObjectIdGetDatum(new_attribute->attrelid);
+	values[Anum_pg_attribute_attname - 1] = NameGetDatum(&new_attribute->attname);
+	values[Anum_pg_attribute_atttypid - 1] = ObjectIdGetDatum(new_attribute->atttypid);
+	values[Anum_pg_attribute_attstattarget - 1] = Int32GetDatum(new_attribute->attstattarget);
+	values[Anum_pg_attribute_attlen - 1] = Int16GetDatum(new_attribute->attlen);
+	values[Anum_pg_attribute_attnum - 1] = Int16GetDatum(new_attribute->attnum);
+	values[Anum_pg_attribute_attndims - 1] = Int32GetDatum(new_attribute->attndims);
+	values[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(new_attribute->attcacheoff);
+	values[Anum_pg_attribute_atttypmod - 1] = Int32GetDatum(new_attribute->atttypmod);
+	values[Anum_pg_attribute_attbyval - 1] = BoolGetDatum(new_attribute->attbyval);
+	values[Anum_pg_attribute_attstorage - 1] = CharGetDatum(new_attribute->attstorage);
+	values[Anum_pg_attribute_attalign - 1] = CharGetDatum(new_attribute->attalign);
+	values[Anum_pg_attribute_attnotnull - 1] = BoolGetDatum(new_attribute->attnotnull);
+	values[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(new_attribute->atthasdef);
+	values[Anum_pg_attribute_attisdropped - 1] = BoolGetDatum(new_attribute->attisdropped);
+	values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(new_attribute->attislocal);
+	values[Anum_pg_attribute_attinhcount - 1] = Int32GetDatum(new_attribute->attinhcount);
+
+	tup = heap_form_tuple(RelationGetDescr(pg_attribute_rel), values, nulls);
+
+	/* finally insert the new tuple, update the indexes, and clean up */
+	simple_heap_insert(pg_attribute_rel, tup);
+
+	if (indstate != NULL)
+		CatalogIndexInsert(indstate, tup);
+	else
+		CatalogUpdateIndexes(pg_attribute_rel, tup);
+
+	heap_freetuple(tup);
+}
 /* --------------------------------
  *		AddNewAttributeTuples
  *
@@ -492,9 +546,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 					  bool oidislocal,
 					  int oidinhcount)
 {
-	const Form_pg_attribute *dpp;
+	Form_pg_attribute attr;
 	int			i;
-	HeapTuple	tup;
 	Relation	rel;
 	CatalogIndexState indstate;
 	int			natts = tupdesc->natts;
@@ -512,35 +565,25 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 * First we add the user attributes.  This is also a convenient place to
 	 * add dependencies on their datatypes.
 	 */
-	dpp = tupdesc->attrs;
 	for (i = 0; i < natts; i++)
 	{
+		attr = tupdesc->attrs[i];
 		/* Fill in the correct relation OID */
-		(*dpp)->attrelid = new_rel_oid;
+		attr->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
-		(*dpp)->attstattarget = -1;
-		(*dpp)->attcacheoff = -1;
+		attr->attstattarget = -1;
+		attr->attcacheoff = -1;
 
-		tup = heap_addheader(Natts_pg_attribute,
-							 false,
-							 ATTRIBUTE_TUPLE_SIZE,
-							 (void *) *dpp);
+		InsertPgAttributeTuple(rel, attr, indstate);
 
-		simple_heap_insert(rel, tup);
-
-		CatalogIndexInsert(indstate, tup);
-
-		heap_freetuple(tup);
-
+		/* Add dependency info */
 		myself.classId = RelationRelationId;
 		myself.objectId = new_rel_oid;
 		myself.objectSubId = i + 1;
 		referenced.classId = TypeRelationId;
-		referenced.objectId = (*dpp)->atttypid;
+		referenced.objectId = attr->atttypid;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-
-		dpp++;
 	}
 
 	/*
@@ -550,43 +593,28 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 */
 	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
 	{
-		dpp = SysAtt;
-		for (i = 0; i < (int) lengthof(SysAtt); i++, dpp++)
+		for (i = 0; i < (int) lengthof(SysAtt); i++)
 		{
-			if (tupdesc->tdhasoid ||
-				(*dpp)->attnum != ObjectIdAttributeNumber)
+			FormData_pg_attribute attStruct;
+
+			/* skip OID where appropriate */
+			if (!tupdesc->tdhasoid &&
+				SysAtt[i]->attnum == ObjectIdAttributeNumber)
+				continue;
+
+			memcpy(&attStruct, (char *) SysAtt[i], sizeof(FormData_pg_attribute));
+
+			/* Fill in the correct relation OID in the copied tuple */
+			attStruct.attrelid = new_rel_oid;
+
+			/* Fill in correct inheritance info for the OID column */
+			if (attStruct.attnum == ObjectIdAttributeNumber)
 			{
-				Form_pg_attribute attStruct;
-
-				tup = heap_addheader(Natts_pg_attribute,
-									 false,
-									 ATTRIBUTE_TUPLE_SIZE,
-									 (void *) *dpp);
-				attStruct = (Form_pg_attribute) GETSTRUCT(tup);
-
-				/* Fill in the correct relation OID in the copied tuple */
-				attStruct->attrelid = new_rel_oid;
-
-				/* Fill in correct inheritance info for the OID column */
-				if (attStruct->attnum == ObjectIdAttributeNumber)
-				{
-					attStruct->attislocal = oidislocal;
-					attStruct->attinhcount = oidinhcount;
-				}
-
-				/*
-				 * Unneeded since they should be OK in the constant data
-				 * anyway
-				 */
-				/* attStruct->attstattarget = 0; */
-				/* attStruct->attcacheoff = -1; */
-
-				simple_heap_insert(rel, tup);
-
-				CatalogIndexInsert(indstate, tup);
-
-				heap_freetuple(tup);
+				attStruct.attislocal = oidislocal;
+				attStruct.attinhcount = oidinhcount;
 			}
+
+			InsertPgAttributeTuple(rel, &attStruct, indstate);
 		}
 	}
 

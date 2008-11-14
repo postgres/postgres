@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.269 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.270 2008/11/14 01:57:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3450,9 +3450,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	Relation	pgclass,
 				attrdesc;
 	HeapTuple	reltup;
-	HeapTuple	attributeTuple;
-	Form_pg_attribute attribute;
-	FormData_pg_attribute attributeD;
+	FormData_pg_attribute attribute;
 	int			i;
 	int			minattnum,
 				maxatts;
@@ -3543,37 +3541,27 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colDef->colname, typeOid);
 
-	attributeTuple = heap_addheader(Natts_pg_attribute,
-									false,
-									ATTRIBUTE_TUPLE_SIZE,
-									(void *) &attributeD);
-
-	attribute = (Form_pg_attribute) GETSTRUCT(attributeTuple);
-
-	attribute->attrelid = myrelid;
-	namestrcpy(&(attribute->attname), colDef->colname);
-	attribute->atttypid = typeOid;
-	attribute->attstattarget = -1;
-	attribute->attlen = tform->typlen;
-	attribute->attcacheoff = -1;
-	attribute->atttypmod = typmod;
-	attribute->attnum = i;
-	attribute->attbyval = tform->typbyval;
-	attribute->attndims = list_length(colDef->typename->arrayBounds);
-	attribute->attstorage = tform->typstorage;
-	attribute->attalign = tform->typalign;
-	attribute->attnotnull = colDef->is_not_null;
-	attribute->atthasdef = false;
-	attribute->attisdropped = false;
-	attribute->attislocal = colDef->is_local;
-	attribute->attinhcount = colDef->inhcount;
+	attribute.attrelid = myrelid;
+	namestrcpy(&(attribute.attname), colDef->colname);
+	attribute.atttypid = typeOid;
+	attribute.attstattarget = -1;
+	attribute.attlen = tform->typlen;
+	attribute.attcacheoff = -1;
+	attribute.atttypmod = typmod;
+	attribute.attnum = i;
+	attribute.attbyval = tform->typbyval;
+	attribute.attndims = list_length(colDef->typename->arrayBounds);
+	attribute.attstorage = tform->typstorage;
+	attribute.attalign = tform->typalign;
+	attribute.attnotnull = colDef->is_not_null;
+	attribute.atthasdef = false;
+	attribute.attisdropped = false;
+	attribute.attislocal = colDef->is_local;
+	attribute.attinhcount = colDef->inhcount;
 
 	ReleaseSysCache(typeTuple);
 
-	simple_heap_insert(attrdesc, attributeTuple);
-
-	/* Update indexes on pg_attribute */
-	CatalogUpdateIndexes(attrdesc, attributeTuple);
+	InsertPgAttributeTuple(attrdesc, &attribute, NULL);
 
 	heap_close(attrdesc, RowExclusiveLock);
 
@@ -3602,7 +3590,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 		RawColumnDefault *rawEnt;
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
-		rawEnt->attnum = attribute->attnum;
+		rawEnt->attnum = attribute.attnum;
 		rawEnt->raw_default = copyObject(colDef->raw_default);
 
 		/*
@@ -3637,7 +3625,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
 	 */
-	defval = (Expr *) build_column_default(rel, attribute->attnum);
+	defval = (Expr *) build_column_default(rel, attribute.attnum);
 
 	if (!defval && GetDomainConstraints(typeOid) != NIL)
 	{
@@ -3664,7 +3652,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 		NewColumnValue *newval;
 
 		newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
-		newval->attnum = attribute->attnum;
+		newval->attnum = attribute.attnum;
 		newval->expr = defval;
 
 		tab->newvals = lappend(tab->newvals, newval);
@@ -3678,7 +3666,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Add needed dependency entries for the new column.
 	 */
-	add_column_datatype_dependency(myrelid, i, attribute->atttypid);
+	add_column_datatype_dependency(myrelid, i, attribute.atttypid);
 }
 
 /*

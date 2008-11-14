@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.103 2008/11/02 01:45:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.104 2008/11/14 01:57:42 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -847,7 +847,5 @@ extern void heap_free_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple heap_copy_minimal_tuple(MinimalTuple mtup);
 extern HeapTuple heap_tuple_from_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
-extern HeapTuple heap_addheader(int natts, bool withoid,
-			   Size structlen, void *structure);
 
 #endif   /* HTUP_H */

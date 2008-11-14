@@ -50,7 +50,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.123 2008/11/02 01:45:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.124 2008/11/14 01:57:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1575,57 +1575,4 @@ minimal_tuple_from_heap_tuple(HeapTuple htup)
 	memcpy(result, (char *) htup->t_data + MINIMAL_TUPLE_OFFSET, len);
 	result->t_len = len;
 	return result;
-}
-
-
-/* ----------------
- *		heap_addheader
- *
- * This routine forms a HeapTuple by copying the given structure (tuple
- * data) and adding a generic header.  Note that the tuple data is
- * presumed to contain no null fields and no varlena fields.
- *
- * This routine is really only useful for certain system tables that are
- * known to be fixed-width and null-free.  Currently it is only used for
- * pg_attribute tuples.
- * ----------------
- */
-HeapTuple
-heap_addheader(int natts,		/* max domain index */
-			   bool withoid,	/* reserve space for oid */
-			   Size structlen,	/* its length */
-			   void *structure) /* pointer to the struct */
-{
-	HeapTuple	tuple;
-	HeapTupleHeader td;
-	Size		len;
-	int			hoff;
-
-	AssertArg(natts > 0);
-
-	/* header needs no null bitmap */
-	hoff = offsetof(HeapTupleHeaderData, t_bits);
-	if (withoid)
-		hoff += sizeof(Oid);
-	hoff = MAXALIGN(hoff);
-	len = hoff + structlen;
-
-	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
-	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
-
-	tuple->t_len = len;
-	ItemPointerSetInvalid(&(tuple->t_self));
-	tuple->t_tableOid = InvalidOid;
-
-	/* we don't bother to fill the Datum fields */
-
-	HeapTupleHeaderSetNatts(td, natts);
-	td->t_hoff = hoff;
-
-	if (withoid)				/* else leave infomask = 0 */
-		td->t_infomask = HEAP_HASOID;
-
-	memcpy((char *) td + hoff, structure, structlen);
-
-	return tuple;
 }

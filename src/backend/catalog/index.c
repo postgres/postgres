@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.308 2008/11/13 17:42:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.309 2008/11/14 01:57:41 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -327,7 +327,6 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	Relation	pg_attribute;
 	CatalogIndexState indstate;
 	TupleDesc	indexTupDesc;
-	HeapTuple	new_tuple;
 	int			i;
 
 	/*
@@ -351,16 +350,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		Assert(indexTupDesc->attrs[i]->attnum == i + 1);
 		Assert(indexTupDesc->attrs[i]->attcacheoff == -1);
 
-		new_tuple = heap_addheader(Natts_pg_attribute,
-								   false,
-								   ATTRIBUTE_TUPLE_SIZE,
-								   (void *) indexTupDesc->attrs[i]);
-
-		simple_heap_insert(pg_attribute, new_tuple);
-
-		CatalogIndexInsert(indstate, new_tuple);
-
-		heap_freetuple(new_tuple);
+		InsertPgAttributeTuple(pg_attribute, indexTupDesc->attrs[i], indstate);
 	}
 
 	CatalogCloseIndexes(indstate);
