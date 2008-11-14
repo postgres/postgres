@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.24 2008/11/13 15:59:50 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.25 2008/11/14 00:12:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,33 +467,57 @@ create_singleton_array(FunctionCallInfo fcinfo,
 							  typlen, typbyval, typalign);
 }
 
+
+/*
+ * ARRAY_AGG aggregate function
+ */
 Datum
 array_agg_transfn(PG_FUNCTION_ARGS)
 {
 	Oid arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	ArrayBuildState *state;
+	Datum		elem;
 
 	if (arg1_typeid == InvalidOid)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("could not determine input data type")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data type")));
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
 
-	PG_RETURN_POINTER(accumArrayResult(PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0),
-									   PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1),
-									   PG_ARGISNULL(1),
-									   arg1_typeid,
-									   ((AggState *) fcinfo->context)->aggcontext));
+	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
+	elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+	state = accumArrayResult(state,
+							 elem,
+							 PG_ARGISNULL(1),
+							 arg1_typeid,
+							 ((AggState *) fcinfo->context)->aggcontext);
+
+	/*
+	 * We cheat quite a lot here by assuming that a pointer datum will be
+	 * preserved intact when nodeAgg.c thinks it is a value of type "internal".
+	 * This will in fact work because internal is stated to be pass-by-value
+	 * in pg_type.h, and nodeAgg will never do anything with a pass-by-value
+	 * transvalue except pass it around in Datum form.  But it's mighty
+	 * shaky seeing that internal is also stated to be 4 bytes wide in
+	 * pg_type.h.  If nodeAgg did put the value into a tuple this would
+	 * crash and burn on 64-bit machines.
+	 */
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 array_agg_finalfn(PG_FUNCTION_ARGS)
 {
+	ArrayBuildState *state;
+
 	/* cannot be called directly because of internal-type argument */
 	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();   /* returns null iff no input values */
 
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult((ArrayBuildState *) PG_GETARG_POINTER(0), CurrentMemoryContext));
+	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
+	PG_RETURN_ARRAYTYPE_P(makeArrayResult(state, CurrentMemoryContext));
 }
