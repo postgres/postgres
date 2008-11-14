@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $PostgreSQL: pgsql/doc/src/Makefile,v 1.34 2008/11/14 10:22:45 petere Exp $
+# $PostgreSQL: pgsql/doc/src/Makefile,v 1.35 2008/11/14 10:43:59 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -9,10 +9,7 @@ clean distclean maintainer-clean:
 	rm -f *.tar *.gz
 	$(MAKE) -C sgml $@
 
-# Build twice to resolve index entries
 postgres.tar:
-	$(MAKE) -C sgml clean
-	$(MAKE) -C sgml html
 	$(MAKE) -C sgml html JADEFLAGS='-V html-manifest'
 	cd sgml && $(TAR) -cf ../$@ `cat HTML.manifest` `echo *.gif | grep -v '\*'` *.css
 
