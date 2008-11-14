@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.44 2008/08/16 12:42:27 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.45 2008/11/14 17:11:40 meskes Exp $
 #
 use Carp;
 use strict;
@@ -235,6 +235,19 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         chdir('src\bin\psql');
         system("perl create_help.pl ../../../doc/src/sgml/ref sql_help.h");
         chdir('..\..\..');
+    }
+
+    if (
+        IsNewer(
+            'src\interfaces\ecpg\preproc\preproc.y',
+            'src\backend\parser\gram.y'
+        )
+      )
+    {
+        print "Generating preproc.y...\n";
+        chdir('src\interfaces\ecpg\preproc');
+        system('perl parse.pl < ..\..\..\backend\parser\gram.y > preproc.y');
+        chdir('..\..\..\..');
     }
 
     if (

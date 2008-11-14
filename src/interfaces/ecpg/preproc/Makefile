@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.137 2008/10/14 09:31:04 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.138 2008/11/14 17:11:40 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,19 +38,22 @@ preproc.o: $(srcdir)/pgc.c
 
 $(srcdir)/preproc.h: $(srcdir)/preproc.c ;
 
-$(srcdir)/preproc.c: preproc.y
+$(srcdir)/preproc.c: $(srcdir)/preproc.y
 ifdef BISON
 	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
 
-$(srcdir)/pgc.c: pgc.l
+$(srcdir)/pgc.c: $(srcdir)/pgc.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
+
+$(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y
+	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
@@ -58,7 +61,7 @@ ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 keywords.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
-distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
+distprep: $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
@@ -78,4 +81,4 @@ clean distclean:
 # want to ship those files in the distribution for people with
 # inadequate tools.
 maintainer-clean: distclean
-	rm -f $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
+	rm -f $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
