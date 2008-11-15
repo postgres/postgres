@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.176 2008/11/11 18:13:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.177 2008/11/15 19:43:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,17 +282,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	double	   *parent_attrsizes;
 	int			nattrs;
 	ListCell   *l;
-
-	/*
-	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE; can
-	 * we do better?  (This will take some redesign because the executor
-	 * currently supposes that every rowMark relation is involved in every row
-	 * returned by the query.)
-	 */
-	if (get_rowmark(root->parse, parentRTindex))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
 
 	/*
 	 * Initialize to compute size estimates for whole append relation.

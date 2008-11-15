@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.161 2008/11/11 18:13:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.162 2008/11/15 19:43:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1169,6 +1169,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 {
 	Query	   *parse = root->parse;
 	Oid			parentOID;
+	RowMarkClause *oldrc;
 	Relation	oldrelation;
 	LOCKMODE	lockmode;
 	List	   *inhOIDs;
@@ -1209,6 +1210,15 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	}
 
 	/*
+	 * Find out if parent relation is selected FOR UPDATE/SHARE.  If so,
+	 * we need to mark its RowMarkClause as isParent = true, and generate
+	 * a new RowMarkClause for each child.
+	 */
+	oldrc = get_rowmark(parse, rti);
+	if (oldrc)
+		oldrc->isParent = true;
+
+	/*
 	 * Must open the parent relation to examine its tupdesc.  We need not lock
 	 * it since the rewriter already obtained at least AccessShareLock on each
 	 * relation used in the query.
@@ -1221,14 +1231,15 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 * in the parse/rewrite/plan pipeline.
 	 *
 	 * If the parent relation is the query's result relation, then we need
-	 * RowExclusiveLock.  Otherwise, check to see if the relation is accessed
-	 * FOR UPDATE/SHARE or not.  We can't just grab AccessShareLock because
-	 * then the executor would be trying to upgrade the lock, leading to
-	 * possible deadlocks.	(This code should match the parser and rewriter.)
+	 * RowExclusiveLock.  Otherwise, if it's accessed FOR UPDATE/SHARE, we
+	 * need RowShareLock; otherwise AccessShareLock.  We can't just grab
+	 * AccessShareLock because then the executor would be trying to upgrade
+	 * the lock, leading to possible deadlocks.  (This code should match the
+	 * parser and rewriter.)
 	 */
 	if (rti == parse->resultRelation)
 		lockmode = RowExclusiveLock;
-	else if (get_rowmark(parse, rti))
+	else if (oldrc)
 		lockmode = RowShareLock;
 	else
 		lockmode = AccessShareLock;
@@ -1282,6 +1293,22 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 								  &appinfo->translated_vars);
 		appinfo->parent_reloid = parentOID;
 		appinfos = lappend(appinfos, appinfo);
+
+		/*
+		 * Build a RowMarkClause if parent is marked FOR UPDATE/SHARE.
+		 */
+		if (oldrc)
+		{
+			RowMarkClause *newrc = makeNode(RowMarkClause);
+
+			newrc->rti = childRTindex;
+			newrc->prti = rti;
+			newrc->forUpdate = oldrc->forUpdate;
+			newrc->noWait = oldrc->noWait;
+			newrc->isParent = false;
+
+			parse->rowMarks = lappend(parse->rowMarks, newrc);
+		}
 
 		/* Close child relations, but keep locks */
 		if (childOID != parentOID)

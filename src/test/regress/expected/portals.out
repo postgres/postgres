@@ -1118,7 +1118,7 @@ SELECT * FROM uctest;
 (3 rows)
 
 BEGIN;
-DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
 FETCH 1 FROM c1;
  f1 |  f2   
 ----+-------

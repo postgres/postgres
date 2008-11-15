@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.315 2008/11/06 20:51:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.316 2008/11/15 19:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,18 +590,25 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	foreach(l, plannedstmt->rowMarks)
 	{
 		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-		Oid			relid = getrelid(rc->rti, rangeTable);
+		Oid			relid;
 		Relation	relation;
 		ExecRowMark *erm;
 
+		/* ignore "parent" rowmarks; they are irrelevant at runtime */
+		if (rc->isParent)
+			continue;
+
+		relid = getrelid(rc->rti, rangeTable);
 		relation = heap_open(relid, RowShareLock);
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
 		erm->relation = relation;
 		erm->rti = rc->rti;
+		erm->prti = rc->prti;
 		erm->forUpdate = rc->forUpdate;
 		erm->noWait = rc->noWait;
-		/* We'll set up ctidAttno below */
+		/* We'll locate the junk attrs below */
 		erm->ctidAttNo = InvalidAttrNumber;
+		erm->toidAttNo = InvalidAttrNumber;
 		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 	}
 
@@ -822,17 +829,29 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 						elog(ERROR, "could not find junk ctid column");
 				}
 
-				/* For SELECT FOR UPDATE/SHARE, find the ctid attrs now */
+				/* For SELECT FOR UPDATE/SHARE, find the junk attrs now */
 				foreach(l, estate->es_rowMarks)
 				{
 					ExecRowMark *erm = (ExecRowMark *) lfirst(l);
 					char		resname[32];
 
-					snprintf(resname, sizeof(resname), "ctid%u", erm->rti);
+					/* always need the ctid */
+					snprintf(resname, sizeof(resname), "ctid%u",
+							 erm->prti);
 					erm->ctidAttNo = ExecFindJunkAttribute(j, resname);
 					if (!AttributeNumberIsValid(erm->ctidAttNo))
 						elog(ERROR, "could not find junk \"%s\" column",
 							 resname);
+					/* if child relation, need tableoid too */
+					if (erm->rti != erm->prti)
+					{
+						snprintf(resname, sizeof(resname), "tableoid%u",
+								 erm->prti);
+						erm->toidAttNo = ExecFindJunkAttribute(j, resname);
+						if (!AttributeNumberIsValid(erm->toidAttNo))
+							elog(ERROR, "could not find junk \"%s\" column",
+								 resname);
+					}
 				}
 			}
 		}
@@ -1383,13 +1402,33 @@ lnext:	;
 					LockTupleMode lockmode;
 					HTSU_Result test;
 
+					/* if child rel, must check whether it produced this row */
+					if (erm->rti != erm->prti)
+					{
+						Oid		tableoid;
+
+						datum = ExecGetJunkAttribute(slot,
+													 erm->toidAttNo,
+													 &isNull);
+						/* shouldn't ever get a null result... */
+						if (isNull)
+							elog(ERROR, "tableoid is NULL");
+						tableoid = DatumGetObjectId(datum);
+
+						if (tableoid != RelationGetRelid(erm->relation))
+						{
+							/* this child is inactive right now */
+							continue;
+						}
+					}
+
+					/* okay, fetch the tuple by ctid */
 					datum = ExecGetJunkAttribute(slot,
 												 erm->ctidAttNo,
 												 &isNull);
 					/* shouldn't ever get a null result... */
 					if (isNull)
 						elog(ERROR, "ctid is NULL");
-
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 
 					if (erm->forUpdate)
@@ -2122,9 +2161,11 @@ EvalPlanQual(EState *estate, Index rti,
 		relation = NULL;
 		foreach(l, estate->es_rowMarks)
 		{
-			if (((ExecRowMark *) lfirst(l))->rti == rti)
+			ExecRowMark *erm = lfirst(l);
+
+			if (erm->rti == rti)
 			{
-				relation = ((ExecRowMark *) lfirst(l))->relation;
+				relation = erm->relation;
 				break;
 			}
 		}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.194 2008/10/31 19:37:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.195 2008/11/15 19:43:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,14 +368,19 @@ typedef struct EState
 } EState;
 
 
-/* es_rowMarks is a list of these structs: */
+/*
+ * es_rowMarks is a list of these structs.  See RowMarkClause for details
+ * about rti and prti.  toidAttno is not used in a "plain" rowmark.
+ */
 typedef struct ExecRowMark
 {
 	Relation	relation;		/* opened and RowShareLock'd relation */
 	Index		rti;			/* its range table index */
+	Index		prti;			/* parent range table index, if child */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
 	AttrNumber	ctidAttNo;		/* resno of its ctid junk attribute */
+	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
 } ExecRowMark;
 
 
