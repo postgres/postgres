@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.226 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.226.2.1 2008/11/15 20:53:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2848,13 +2848,10 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
 	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
-	text	   *result;
-	StringInfoData buf;
 	Datum		value;
 	bool		isnull;
 	ListCell   *arg;
 	ListCell   *narg;
-	int			i;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -2880,12 +2877,16 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 					*isNull = false;
 					return PointerGetDatum(xmlconcat(values));
 				}
+				else
+					return (Datum) 0;
 			}
 			break;
 
 		case IS_XMLFOREST:
+		{
+			StringInfoData buf;
+
 			initStringInfo(&buf);
-			i = 0;
 			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
 			{
 				ExprState  *e = (ExprState *) lfirst(arg);
@@ -2900,11 +2901,30 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 									 argname);
 					*isNull = false;
 				}
-				i++;
 			}
+
+			if (*isNull)
+			{
+				pfree(buf.data);
+				return (Datum) 0;
+			}
+			else
+			{
+				int			len;
+				text	   *result;
+
+				len = buf.len + VARHDRSZ;
+
+				result = palloc(len);
+				SET_VARSIZE(result, len);
+				memcpy(VARDATA(result), buf.data, buf.len);
+				pfree(buf.data);
+
+				return PointerGetDatum(result);
+			}
+		}
 			break;
 
-			/* The remaining cases don't need to set up buf */
 		case IS_XMLELEMENT:
 			*isNull = false;
 			return PointerGetDatum(xmlelement(xmlExpr, econtext));
@@ -3039,19 +3059,8 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			break;
 	}
 
-	if (*isNull)
-		result = NULL;
-	else
-	{
-		int			len = buf.len + VARHDRSZ;
-
-		result = palloc(len);
-		SET_VARSIZE(result, len);
-		memcpy(VARDATA(result), buf.data, buf.len);
-	}
-
-	pfree(buf.data);
-	return PointerGetDatum(result);
+	elog(ERROR, "unrecognized XML operation");
+	return (Datum) 0;
 }
 
 /* ----------------------------------------------------------------

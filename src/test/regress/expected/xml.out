@@ -71,6 +71,18 @@ SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" stand
  <?xml version="1.1"?><foo/><bar/>
 (1 row)
 
+SELECT xmlconcat(NULL);
+ xmlconcat 
+-----------
+ 
+(1 row)
+
+SELECT xmlconcat(NULL, NULL);
+ xmlconcat 
+-----------
+ 
+(1 row)
+
 SELECT xmlelement(name element,
                   xmlattributes (1 as one, 'deuce' as two),
                   'content');

@@ -26,6 +26,8 @@ SELECT xmlconcat(1, 2);
 SELECT xmlconcat('bad', '<syntax');
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
+SELECT xmlconcat(NULL);
+SELECT xmlconcat(NULL, NULL);
 
 
 SELECT xmlelement(name element,

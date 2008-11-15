@@ -63,6 +63,18 @@ SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" stand
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT xmlconcat(NULL);
+ xmlconcat 
+-----------
+ 
+(1 row)
+
+SELECT xmlconcat(NULL, NULL);
+ xmlconcat 
+-----------
+ 
+(1 row)
+
 SELECT xmlelement(name element,
                   xmlattributes (1 as one, 'deuce' as two),
                   'content');
