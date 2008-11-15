@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2008, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.139 2008/11/14 17:18:20 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.140 2008/11/15 22:20:55 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ else
 	@$(missing) flex $< $@
 endif
 
-$(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y
+$(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
 	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
