@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.1 2008/11/14 10:03:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.2 2008/11/15 22:18:05 adunstan Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -1852,7 +1852,7 @@ ecpg_sconst:
 ecpg_xconst:	XCONST		{ $$ = make_name(); } ;
 
 ecpg_ident:	IDENT		{ $$ = make_name(); }
-		| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")) }
+		| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		| UIDENT	{ $$ = $1; }
 		;
 
