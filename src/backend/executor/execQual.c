@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.236 2008/10/31 19:37:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.237 2008/11/15 20:52:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3163,13 +3163,10 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
 	XmlExpr    *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
-	text	   *result;
-	StringInfoData buf;
 	Datum		value;
 	bool		isnull;
 	ListCell   *arg;
 	ListCell   *narg;
-	int			i;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -3195,12 +3192,16 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 					*isNull = false;
 					return PointerGetDatum(xmlconcat(values));
 				}
+				else
+					return (Datum) 0;
 			}
 			break;
 
 		case IS_XMLFOREST:
+		{
+			StringInfoData buf;
+
 			initStringInfo(&buf);
-			i = 0;
 			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
 			{
 				ExprState  *e = (ExprState *) lfirst(arg);
@@ -3215,11 +3216,25 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 									 argname);
 					*isNull = false;
 				}
-				i++;
 			}
+
+			if (*isNull)
+			{
+				pfree(buf.data);
+				return (Datum) 0;
+			}
+			else
+			{
+				text	   *result;
+
+				result = cstring_to_text_with_len(buf.data, buf.len);
+				pfree(buf.data);
+
+				return PointerGetDatum(result);
+			}
+		}
 			break;
 
-			/* The remaining cases don't need to set up buf */
 		case IS_XMLELEMENT:
 			*isNull = false;
 			return PointerGetDatum(xmlelement(xmlExpr, econtext));
@@ -3354,13 +3369,8 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			break;
 	}
 
-	if (*isNull)
-		result = NULL;
-	else
-		result = cstring_to_text_with_len(buf.data, buf.len);
-
-	pfree(buf.data);
-	return PointerGetDatum(result);
+	elog(ERROR, "unrecognized XML operation");
+	return (Datum) 0;
 }
 
 /* ----------------------------------------------------------------
