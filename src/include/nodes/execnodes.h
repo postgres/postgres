@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.195 2008/11/15 19:43:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.196 2008/11/16 17:34:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,6 +381,7 @@ typedef struct ExecRowMark
 	bool		noWait;			/* NOWAIT option */
 	AttrNumber	ctidAttNo;		/* resno of its ctid junk attribute */
 	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
+	ItemPointerData curCtid;	/* ctid of currently locked tuple, if any */
 } ExecRowMark;
 
 

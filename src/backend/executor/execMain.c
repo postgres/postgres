@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.316 2008/11/15 19:43:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.317 2008/11/16 17:34:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,6 +609,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		/* We'll locate the junk attrs below */
 		erm->ctidAttNo = InvalidAttrNumber;
 		erm->toidAttNo = InvalidAttrNumber;
+		ItemPointerSetInvalid(&(erm->curCtid));
 		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 	}
 
@@ -1418,6 +1419,7 @@ lnext:	;
 						if (tableoid != RelationGetRelid(erm->relation))
 						{
 							/* this child is inactive right now */
+							ItemPointerSetInvalid(&(erm->curCtid));
 							continue;
 						}
 					}
@@ -1481,6 +1483,9 @@ lnext:	;
 							elog(ERROR, "unrecognized heap_lock_tuple status: %u",
 								 test);
 					}
+
+					/* Remember tuple TID for WHERE CURRENT OF */
+					erm->curCtid = tuple.t_self;
 				}
 			}
 

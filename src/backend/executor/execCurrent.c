@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.7 2008/05/12 00:00:48 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.8 2008/11/16 17:34:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,6 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	char	   *table_name;
 	Portal		portal;
 	QueryDesc  *queryDesc;
-	ScanState  *scanstate;
-	bool		lisnull;
-	Oid			tuple_tableoid;
-	ItemPointer tuple_tid;
 
 	/* Get the cursor name --- may have to look up a parameter reference */
 	if (cexpr->cursor_name)
@@ -79,57 +75,129 @@ execCurrentOf(CurrentOfExpr *cexpr,
 				 errmsg("cursor \"%s\" is not a SELECT query",
 						cursor_name)));
 	queryDesc = PortalGetQueryDesc(portal);
-	if (queryDesc == NULL)
+	if (queryDesc == NULL || queryDesc->estate == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cursor \"%s\" is held from a previous transaction",
 						cursor_name)));
 
 	/*
-	 * Dig through the cursor's plan to find the scan node.  Fail if it's not
-	 * there or buried underneath aggregation.
+	 * We have two different strategies depending on whether the cursor uses
+	 * FOR UPDATE/SHARE or not.  The reason for supporting both is that the
+	 * FOR UPDATE code is able to identify a target table in many cases where
+	 * the other code can't, while the non-FOR-UPDATE case allows use of WHERE
+	 * CURRENT OF with an insensitive cursor.
 	 */
-	scanstate = search_plan_tree(ExecGetActivePlanTree(queryDesc),
-								 table_oid);
-	if (!scanstate)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-		errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
-			   cursor_name, table_name)));
+	if (queryDesc->estate->es_rowMarks)
+	{
+		ExecRowMark *erm;
+		ListCell   *lc;
 
-	/*
-	 * The cursor must have a current result row: per the SQL spec, it's an
-	 * error if not.  We test this at the top level, rather than at the scan
-	 * node level, because in inheritance cases any one table scan could
-	 * easily not be on a row.	We want to return false, not raise error, if
-	 * the passed-in table OID is for one of the inactive scans.
-	 */
-	if (portal->atStart || portal->atEnd)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_STATE),
-				 errmsg("cursor \"%s\" is not positioned on a row",
-						cursor_name)));
+		/*
+		 * Here, the query must have exactly one FOR UPDATE/SHARE reference to
+		 * the target table, and we dig the ctid info out of that.
+		 */
+		erm = NULL;
+		foreach(lc, queryDesc->estate->es_rowMarks)
+		{
+			ExecRowMark *thiserm = (ExecRowMark *) lfirst(lc);
 
-	/* Now OK to return false if we found an inactive scan */
-	if (TupIsNull(scanstate->ss_ScanTupleSlot))
+			if (RelationGetRelid(thiserm->relation) == table_oid)
+			{
+				if (erm)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_CURSOR_STATE),
+							 errmsg("cursor \"%s\" has multiple FOR UPDATE/SHARE references to table \"%s\"",
+									cursor_name, table_name)));
+				erm = thiserm;
+			}
+		}
+
+		if (erm == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_STATE),
+					 errmsg("cursor \"%s\" does not have a FOR UPDATE/SHARE reference to table \"%s\"",
+							cursor_name, table_name)));
+
+		/*
+		 * The cursor must have a current result row: per the SQL spec, it's
+		 * an error if not.
+		 */
+		if (portal->atStart || portal->atEnd)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_STATE),
+					 errmsg("cursor \"%s\" is not positioned on a row",
+							cursor_name)));
+
+		/* Return the currently scanned TID, if there is one */
+		if (ItemPointerIsValid(&(erm->curCtid)))
+		{
+			*current_tid = erm->curCtid;
+			return true;
+		}
+
+		/*
+		 * This table didn't produce the cursor's current row; some other
+		 * inheritance child of the same parent must have.  Signal caller
+		 * to do nothing on this table.
+		 */
 		return false;
+	}
+	else
+	{
+		ScanState  *scanstate;
+		bool		lisnull;
+		Oid			tuple_tableoid;
+		ItemPointer tuple_tid;
 
-	/* Use slot_getattr to catch any possible mistakes */
-	tuple_tableoid = DatumGetObjectId(slot_getattr(scanstate->ss_ScanTupleSlot,
-												   TableOidAttributeNumber,
-												   &lisnull));
-	Assert(!lisnull);
-	tuple_tid = (ItemPointer)
-		DatumGetPointer(slot_getattr(scanstate->ss_ScanTupleSlot,
-									 SelfItemPointerAttributeNumber,
-									 &lisnull));
-	Assert(!lisnull);
+		/*
+		 * Without FOR UPDATE, we dig through the cursor's plan to find the
+		 * scan node.  Fail if it's not there or buried underneath
+		 * aggregation.
+		 */
+		scanstate = search_plan_tree(ExecGetActivePlanTree(queryDesc),
+									 table_oid);
+		if (!scanstate)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_STATE),
+					 errmsg("cursor \"%s\" is not a simply updatable scan of table \"%s\"",
+							cursor_name, table_name)));
 
-	Assert(tuple_tableoid == table_oid);
+		/*
+		 * The cursor must have a current result row: per the SQL spec, it's
+		 * an error if not.  We test this at the top level, rather than at the
+		 * scan node level, because in inheritance cases any one table scan
+		 * could easily not be on a row. We want to return false, not raise
+		 * error, if the passed-in table OID is for one of the inactive scans.
+		 */
+		if (portal->atStart || portal->atEnd)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_STATE),
+					 errmsg("cursor \"%s\" is not positioned on a row",
+							cursor_name)));
 
-	*current_tid = *tuple_tid;
+		/* Now OK to return false if we found an inactive scan */
+		if (TupIsNull(scanstate->ss_ScanTupleSlot))
+			return false;
 
-	return true;
+		/* Use slot_getattr to catch any possible mistakes */
+		tuple_tableoid =
+			DatumGetObjectId(slot_getattr(scanstate->ss_ScanTupleSlot,
+										  TableOidAttributeNumber,
+										  &lisnull));
+		Assert(!lisnull);
+		tuple_tid = (ItemPointer)
+			DatumGetPointer(slot_getattr(scanstate->ss_ScanTupleSlot,
+										 SelfItemPointerAttributeNumber,
+										 &lisnull));
+		Assert(!lisnull);
+
+		Assert(tuple_tableoid == table_oid);
+
+		*current_tid = *tuple_tid;
+
+		return true;
+	}
 }
 
 /*

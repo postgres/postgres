@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.34 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.35 2008/11/16 17:34:28 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -148,10 +148,13 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
      <para>
       The name of the cursor to use in a <literal>WHERE CURRENT OF</>
       condition.  The row to be deleted is the one most recently fetched
-      from this cursor.  The cursor must be a simple (non-join, non-aggregate)
+      from this cursor.  The cursor must be a non-grouping
       query on the <command>DELETE</>'s target table.
       Note that <literal>WHERE CURRENT OF</> cannot be
-      specified together with a Boolean condition.
+      specified together with a Boolean condition.  See
+      <xref linkend="sql-declare" endterm="sql-declare-title">
+      for more information about using cursors with
+      <literal>WHERE CURRENT OF</>.
      </para>
     </listitem>
    </varlistentry>
@@ -244,14 +247,14 @@ DELETE FROM films WHERE kind &lt;&gt; 'Musical';
    Clear the table <literal>films</literal>:
 <programlisting>
 DELETE FROM films;
-</programlisting>      
+</programlisting>
   </para>
 
   <para>
    Delete completed tasks, returning full details of the deleted rows:
 <programlisting>
 DELETE FROM tasks WHERE status = 'DONE' RETURNING *;
-</programlisting>      
+</programlisting>
   </para>
 
    <para>
@@ -259,7 +262,7 @@ DELETE FROM tasks WHERE status = 'DONE' RETURNING *;
    <literal>c_tasks</> is currently positioned:
 <programlisting>
 DELETE FROM tasks WHERE CURRENT OF c_tasks;
-</programlisting>      
+</programlisting>
   </para>
  </refsect1>
 

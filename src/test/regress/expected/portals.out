@@ -1154,6 +1154,47 @@ SELECT * FROM uctest;
  110 | hundred
 (3 rows)
 
+-- Can update from a self-join, but only if FOR UPDATE says which to use
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest a, uctest b WHERE a.f1 = b.f1 + 5;
+FETCH 1 FROM c1;
+ f1 | f2  | f1 |  f2   
+----+-----+----+-------
+ 18 | one | 13 | three
+(1 row)
+
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;  -- fail
+ERROR:  cursor "c1" is not a simply updatable scan of table "uctest"
+ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest a, uctest b WHERE a.f1 = b.f1 + 5 FOR UPDATE;
+FETCH 1 FROM c1;
+ f1 | f2  | f1 |  f2   
+----+-----+----+-------
+ 18 | one | 13 | three
+(1 row)
+
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;  -- fail
+ERROR:  cursor "c1" has multiple FOR UPDATE/SHARE references to table "uctest"
+ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest a, uctest b WHERE a.f1 = b.f1 + 5 FOR SHARE OF a;
+FETCH 1 FROM c1;
+ f1 | f2  | f1 |  f2   
+----+-----+----+-------
+ 18 | one | 13 | three
+(1 row)
+
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+SELECT * FROM uctest;
+ f1  |   f2    
+-----+---------
+  13 | three
+  28 | one
+ 110 | hundred
+(3 rows)
+
+ROLLBACK;
 -- Check various error cases
 DELETE FROM uctest WHERE CURRENT OF c1;  -- fail, no such cursor
 ERROR:  cursor "c1" does not exist
@@ -1164,6 +1205,11 @@ BEGIN;
 DECLARE c CURSOR FOR SELECT * FROM tenk2;
 DELETE FROM uctest WHERE CURRENT OF c;  -- fail, cursor on wrong table
 ERROR:  cursor "c" is not a simply updatable scan of table "uctest"
+ROLLBACK;
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM tenk2 FOR SHARE;
+DELETE FROM uctest WHERE CURRENT OF c;  -- fail, cursor on wrong table
+ERROR:  cursor "c" does not have a FOR UPDATE/SHARE reference to table "uctest"
 ROLLBACK;
 BEGIN;
 DECLARE c CURSOR FOR SELECT * FROM tenk1 JOIN tenk2 USING (unique1);

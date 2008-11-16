@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.44 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.45 2008/11/16 17:34:28 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -214,6 +214,12 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    </para>
 
    <para>
+    Backward fetches are also disallowed when the query
+    includes <literal>FOR UPDATE</> or <literal>FOR SHARE</>; therefore
+    <literal>SCROLL</literal> may not be specified in this case.
+   </para>
+
+   <para>
     If the cursor's query includes <literal>FOR UPDATE</> or <literal>FOR
     SHARE</>, then returned rows are locked at the time they are first
     fetched, in the same way as for a regular
@@ -221,19 +227,40 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     these options.
     In addition, the returned rows will be the most up-to-date versions;
     therefore these options provide the equivalent of what the SQL standard
-    calls a <quote>sensitive cursor</>.  It is often wise to use <literal>FOR
-    UPDATE</> if the cursor is intended to be used with <command>UPDATE
-    ... WHERE CURRENT OF</> or <command>DELETE ... WHERE CURRENT OF</>,
-    since this will prevent other sessions from changing the rows between
-    the time they are fetched and the time they are updated.  Without
-    <literal>FOR UPDATE</>, a subsequent <literal>WHERE CURRENT OF</> command
-    will have no effect if the row was changed meanwhile.
+    calls a <quote>sensitive cursor</>.  (Specifying <literal>INSENSITIVE</>
+    together with <literal>FOR UPDATE</> or <literal>FOR SHARE</> is an error.)
    </para>
 
-   <para>
-    <literal>SCROLL</literal> may not be specified when the query
-    includes <literal>FOR UPDATE</> or <literal>FOR SHARE</>.
-   </para>
+   <caution>
+    <para>
+     It is generally recommended to use <literal>FOR UPDATE</> if the cursor
+     is intended to be used with <command>UPDATE ... WHERE CURRENT OF</> or
+     <command>DELETE ... WHERE CURRENT OF</>.  Using <literal>FOR UPDATE</>
+     prevents other sessions from changing the rows between the time they are
+     fetched and the time they are updated.  Without <literal>FOR UPDATE</>,
+     a subsequent <literal>WHERE CURRENT OF</> command will have no effect if
+     the row was changed since the cursor was created.
+    </para>
+
+    <para>
+     Another reason to use <literal>FOR UPDATE</> is that without it, a
+     subsequent <literal>WHERE CURRENT OF</> might fail if the cursor query
+     does not meet the SQL standard's rules for being <quote>simply
+     updatable</> (in particular, the cursor must reference just one table
+     and not use grouping or <literal>ORDER BY</>).  Cursors
+     that are not simply updatable might work, or might not, depending on plan
+     choice details; so in the worst case, an application might work in testing
+     and then fail in production.
+    </para>
+
+    <para>
+     The main reason not to use <literal>FOR UPDATE</> with <literal>WHERE
+     CURRENT OF</> is if you need the cursor to be scrollable, or to be
+     insensitive to the subsequent updates (that is, continue to show the old
+     data).  If this is a requirement, pay close heed to the caveats shown
+     above.
+    </para>
+   </caution>
 
    <para>
     The SQL standard only makes provisions for cursors in embedded
