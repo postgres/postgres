@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.32 2008/01/30 10:49:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.33 2008/11/17 18:55:14 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability, Load Balancing, and Replication</title>
@@ -212,6 +212,7 @@ protocol to make nodes agree on a serializable transactional order.
      server works independently, and periodically communicates with
      the other servers to identify conflicting transactions.  The
      conflicts can be resolved by users or conflict resolution rules.
+     Bucardo is an example of this type of replication.
     </para>
    </listitem>
   </varlistentry>
