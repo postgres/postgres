@@ -182,6 +182,9 @@
 /* Define to 1 if you have the `getpeereid' function. */
 #undef HAVE_GETPEEREID
 
+/* Define to 1 if you have the `getpeerucred' function. */
+#undef HAVE_GETPEERUCRED
+
 /* Define to 1 if you have the `getpwuid_r' function. */
 #undef HAVE_GETPWUID_R
 
@@ -556,6 +559,9 @@
 
 /* Define to 1 if you have the external array `tzname'. */
 #undef HAVE_TZNAME
+
+/* Define to 1 if you have the <ucred.h> header file. */
+#undef HAVE_UCRED_H
 
 /* Define to 1 if the system has the type `uint64'. */
 #undef HAVE_UINT64

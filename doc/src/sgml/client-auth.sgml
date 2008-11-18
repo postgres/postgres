@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.110 2008/10/28 12:10:42 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.111 2008/11/18 13:10:20 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1005,7 +1005,7 @@ omicron       bryanh            guest1
     Unix-domain sockets (currently <systemitem
     class="osname">Linux</>, <systemitem class="osname">FreeBSD</>,
     <systemitem class="osname">NetBSD</>, <systemitem class="osname">OpenBSD</>, 
-    and <systemitem class="osname">BSD/OS</>), ident authentication can also 
+    <systemitem class="osname">BSD/OS</>, and <systemitem class="osname">Solaris</systemitem>), ident authentication can also 
     be applied to local connections. In this case, no security risk is added by
     using ident authentication; indeed it is a preferable choice for
     local connections on such systems.

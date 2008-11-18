@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.170 2008/10/28 12:10:43 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.171 2008/11/18 13:10:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 #if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
 #include <sys/uio.h>
 #include <sys/ucred.h>
+#endif
+#ifdef HAVE_UCRED_H
+# include <ucred.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -1606,6 +1609,43 @@ ident_unix(int sock, char *ident_user)
 		ereport(LOG,
 				(errmsg("local user with ID %d does not exist",
 						(int) peercred.uid)));
+		return false;
+	}
+
+	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+
+	return true;
+#elif defined(HAVE_GETPEERUCRED)
+	/* Solaris > 10 */
+	uid_t		uid;
+	struct passwd *pass;
+	ucred_t	   *ucred;
+
+	ucred = NULL; /* must be initialized to NULL */
+	if (getpeerucred(sock, &ucred) == -1)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not get peer credentials: %m")));
+		return false;
+	}
+
+	if ((uid = ucred_geteuid(ucred)) == -1)
+	{
+		ereport(LOG,
+				(errcode_for_socket_access(),
+				 errmsg("could not get effective UID from peer credentials: %m")));
+		return false;
+	}
+
+	ucred_free(ucred);
+
+	pass = getpwuid(uid);
+	if (pass == NULL)
+	{
+		ereport(LOG,
+			(errmsg("local user with ID %d does not exist",
+					(int) uid)));
 		return false;
 	}
 
