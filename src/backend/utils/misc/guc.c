@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.478 2008/11/19 01:10:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.479 2008/11/19 02:07:07 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5657,6 +5657,7 @@ define_custom_variable(struct config_generic * variable)
 	const char **nameAddr = &name;
 	const char *value;
 	struct config_string *pHolder;
+	GucContext phcontext;
 	struct config_generic **res;
 
 	/*
@@ -5703,6 +5704,28 @@ define_custom_variable(struct config_generic * variable)
 	*res = variable;
 
 	/*
+	 * Infer context for assignment based on source of existing value.
+	 * We can't tell this with exact accuracy, but we can at least do
+	 * something reasonable in typical cases.
+	 */
+	switch (pHolder->gen.source)
+	{
+		case PGC_S_DEFAULT:
+		case PGC_S_ENV_VAR:
+		case PGC_S_FILE:
+		case PGC_S_ARGV:
+			phcontext = PGC_SIGHUP;
+			break;
+		case PGC_S_DATABASE:
+		case PGC_S_USER:
+		case PGC_S_CLIENT:
+		case PGC_S_SESSION:
+		default:
+			phcontext = PGC_USERSET;
+			break;
+	}
+
+	/*
 	 * Assign the string value stored in the placeholder to the real variable.
 	 *
 	 * XXX this is not really good enough --- it should be a nontransactional
@@ -5713,7 +5736,7 @@ define_custom_variable(struct config_generic * variable)
 
 	if (value)
 		set_config_option(name, value,
-						  pHolder->gen.context, pHolder->gen.source,
+						  phcontext, pHolder->gen.source,
 						  GUC_ACTION_SET, true);
 
 	/*
