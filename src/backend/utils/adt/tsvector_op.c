@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.18 2008/11/17 12:17:09 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.19 2008/11/19 10:23:21 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -812,7 +812,7 @@ insertStatEntry(MemoryContext persistentContext, TSVectorStat *stat, TSVector tx
 	StatEntry	*node = stat->root, 
 				*pnode=NULL;
 	int			n,
-				res;
+				res = 0;
 	uint32		depth=1;
 
 	if (stat->weight == 0) 
