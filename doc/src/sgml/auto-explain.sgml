@@ -1,0 +1,176 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.1 2008/11/19 02:59:28 tgl Exp $ -->
+
+<sect1 id="auto-explain">
+ <title>auto_explain</title>
+
+ <indexterm zone="auto-explain">
+  <primary>auto_explain</primary>
+ </indexterm>
+
+ <para>
+  The <filename>auto_explain</filename> module provides a means for
+  logging execution plans of slow statements automatically, without
+  having to run <xref linkend="sql-explain" endterm="sql-explain-title">
+  by hand.  This is especially helpful for tracking down un-optimized queries
+  in large applications.
+ </para>
+
+ <para>
+  The module provides no SQL-accessible functions.  To use it, simply
+  load it into the server.  You can load it into an individual session:
+
+  <programlisting>
+LOAD 'auto_explain';
+  </programlisting>
+
+  (You must be superuser to do that.)  More typical usage is to preload
+  it into all sessions by including <literal>auto_explain</> in
+  <xref linkend="guc-shared-preload-libraries"> in
+  <filename>postgresql.conf</>.  Then you can track unexpectedly slow queries
+  no matter when they happen.  Of course there is a price in overhead for
+  that.
+ </para>
+
+ <sect2>
+  <title>Configuration parameters</title>
+
+ <para>
+  There are several configuration parameters that control the behavior of
+  <filename>auto_explain</filename>.  Note that the default behavior is
+  to do nothing, so you must set at least
+  <varname>explain.log_min_duration</varname> if you want any results.
+ </para>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <varname>explain.log_min_duration</varname> (<type>integer</type>)
+    </term>
+    <indexterm>
+     <primary><varname>explain.log_min_duration</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>explain.log_min_duration</varname> is the minimum statement
+      execution time, in milliseconds, that will cause the statement's plan to
+      be logged. Setting this to zero logs all plans. Minus-one (the default)
+      disables logging of plans.  For example, if you set it to
+      <literal>250ms</literal> then all statements that run 250ms or longer
+      will be logged. Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>explain.log_analyze</varname> (<type>boolean</type>)
+    </term>
+    <indexterm>
+     <primary><varname>explain.log_analyze</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>explain.log_analyze</varname> causes <command>EXPLAIN ANALYZE</>
+      output, rather than just <command>EXPLAIN</> output, to be printed
+      when an execution plan is logged. This parameter is off by default.
+      Only superusers can change this setting.
+     </para>
+     <note>
+      <para>
+       When this parameter is on, per-plan-node timing occurs for all
+       statements executed, whether or not they run long enough to actually
+       get logged.  This can have extremely negative impact on performance.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>explain.log_verbose</varname> (<type>boolean</type>)
+    </term>
+    <indexterm>
+     <primary><varname>explain.log_verbose</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>explain.log_verbose</varname> causes <command>EXPLAIN VERBOSE</>
+      output, rather than just <command>EXPLAIN</> output, to be printed
+      when an execution plan is logged. This parameter is off by default.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>explain.log_nested_statements</varname> (<type>boolean</type>)
+    </term>
+    <indexterm>
+     <primary><varname>explain.log_nested_statements</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>explain.log_nested_statements</varname> causes nested
+      statements (statements executed inside a function) to be considered
+      for logging.  When it is off, only top-level query plans are logged. This
+      parameter is off by default. Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   In order to set these parameters in your <filename>postgresql.conf</> file,
+   you will need to add <literal>explain</> in
+   <varname>custom_variable_classes</>.  Typical usage might be:
+  </para>
+
+  <programlisting>
+# postgresql.conf
+shared_preload_libraries = 'auto_explain'
+
+custom_variable_classes = 'explain'
+explain.log_min_duration = '3s'
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Example</title>
+
+  <programlisting>
+  postgres=# LOAD 'auto_explain';
+  postgres=# SET explain.log_min_duration = 0;
+  postgres=# SELECT count(*)
+               FROM pg_class, pg_index
+              WHERE oid = indrelid AND indisunique;
+  </programlisting>
+
+  <para>
+   This might produce log output such as:
+  </para>
+
+  <programlisting>
+  LOG:  duration: 0.986 ms  plan:
+          Aggregate  (cost=14.90..14.91 rows=1 width=0)
+            -&gt;  Hash Join  (cost=3.91..14.70 rows=81 width=0)
+                  Hash Cond: (pg_class.oid = pg_index.indrelid)
+                  -&gt;  Seq Scan on pg_class  (cost=0.00..8.27 rows=227 width=4)
+                  -&gt;  Hash  (cost=2.90..2.90 rows=81 width=4)
+                        -&gt;  Seq Scan on pg_index  (cost=0.00..2.90 rows=81 width=4)
+                              Filter: indisunique
+  STATEMENT:  SELECT count(*)
+            FROM pg_class, pg_index
+           WHERE oid = indrelid AND indisunique;
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   Takahiro Itagaki <email>itagaki.takahiro@oss.ntt.co.jp</email>
+  </para>
+ </sect2>
+
+</sect1>
