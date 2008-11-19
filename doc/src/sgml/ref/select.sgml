@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.108 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.109 2008/11/19 12:21:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -12,11 +12,17 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>SELECT</refname>
+  <refname>WITH</refname>
   <refpurpose>retrieve rows from a table or view</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-select">
   <primary>SELECT</primary>
+ </indexterm>
+
+ <indexterm zone="sql-select">
+  <primary>WITH</primary>
+  <secondary>in SELECT</secondary>
  </indexterm>
 
  <refsynopsisdiv>
