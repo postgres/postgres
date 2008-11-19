@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.270 2008/11/14 01:57:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.271 2008/11/19 10:34:51 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
+#include "catalog/storage.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
@@ -6567,22 +6568,26 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	 * of old physical files.
 	 *
 	 * NOTE: any conflict in relfilenode value will be caught in
-	 *		 smgrcreate() below.
+	 *		 RelationCreateStorage().
 	 */
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+	RelationCreateStorage(newrnode, rel->rd_istemp);
+
+	/* copy main fork */
+	copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM, rel->rd_istemp);
+
+	/* copy those extra forks that exist */
+	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
 	{
 		if (smgrexists(rel->rd_smgr, forkNum))
 		{
-			smgrcreate(dstrel, forkNum, rel->rd_istemp, false);
+			smgrcreate(dstrel, forkNum, false);
 			copy_relation_data(rel->rd_smgr, dstrel, forkNum, rel->rd_istemp);
-
-			smgrscheduleunlink(rel->rd_smgr, forkNum, rel->rd_istemp);
 		}
 	}
 
-	/* Close old and new relation */
+	/* drop old relation, and close new one */
+	RelationDropStorage(rel);
 	smgrclose(dstrel);
-	RelationCloseSmgr(rel);
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;

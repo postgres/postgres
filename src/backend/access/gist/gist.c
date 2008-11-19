@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.154 2008/11/13 17:42:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.155 2008/11/19 10:34:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,9 +102,6 @@ gistbuild(PG_FUNCTION_ARGS)
 	if (RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
-
-	/* Initialize FSM */
-	InitIndexFreeSpaceMap(index);
 
 	/* no locking is needed */
 	initGISTstate(&buildstate.giststate, index);

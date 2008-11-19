@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.309 2008/11/14 01:57:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.310 2008/11/19 10:34:51 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,6 +41,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
+#include "catalog/storage.h"
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -897,7 +898,6 @@ index_drop(Oid indexId)
 	Relation	indexRelation;
 	HeapTuple	tuple;
 	bool		hasexprs;
-	ForkNumber	forknum;
 
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
@@ -918,12 +918,7 @@ index_drop(Oid indexId)
 	/*
 	 * Schedule physical removal of the files
 	 */
-	RelationOpenSmgr(userIndexRelation);
-	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-		if (smgrexists(userIndexRelation->rd_smgr, forknum))
-			smgrscheduleunlink(userIndexRelation->rd_smgr, forknum,
-							   userIndexRelation->rd_istemp);
-	RelationCloseSmgr(userIndexRelation);
+	RelationDropStorage(userIndexRelation);
 
 	/*
 	 * Close and flush the index's relcache entry, to ensure relcache doesn't
@@ -1283,11 +1278,9 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 {
 	Oid			newrelfilenode;
 	RelFileNode newrnode;
-	SMgrRelation srel;
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
-	ForkNumber	i;
 
 	/* Can't change relfilenode for nailed tables (indexes ok though) */
 	Assert(!relation->rd_isnailed ||
@@ -1318,8 +1311,6 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 			 RelationGetRelid(relation));
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
-	RelationOpenSmgr(relation);
-
 	/*
 	 * ... and create storage for corresponding forks in the new relfilenode.
 	 *
@@ -1327,28 +1318,14 @@ setNewRelfilenode(Relation relation, TransactionId freezeXid)
 	 */
 	newrnode = relation->rd_node;
 	newrnode.relNode = newrelfilenode;
-	srel = smgropen(newrnode);
-
-	/* Create the main fork, like heap_create() does */
-	smgrcreate(srel, MAIN_FORKNUM, relation->rd_istemp, false);
 
 	/*
-	 * For a heap, create FSM fork as well. Indexams are responsible for
-	 * creating any extra forks themselves.
+	 * Create the main fork, like heap_create() does, and drop the old
+	 * storage.
 	 */
-	if (relation->rd_rel->relkind == RELKIND_RELATION ||
-		relation->rd_rel->relkind == RELKIND_TOASTVALUE)
-		smgrcreate(srel, FSM_FORKNUM, relation->rd_istemp, false);
-
-	/* schedule unlinking old files */
-	for (i = 0; i <= MAX_FORKNUM; i++)
-	{
-		if (smgrexists(relation->rd_smgr, i))
-			smgrscheduleunlink(relation->rd_smgr, i, relation->rd_istemp);
-	}
-
-	smgrclose(srel);
-	RelationCloseSmgr(relation);
+	RelationCreateStorage(newrnode, relation->rd_istemp);
+	smgrclosenode(newrnode);
+	RelationDropStorage(relation);
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;
@@ -2326,8 +2303,7 @@ reindex_index(Oid indexId)
 		if (inplace)
 		{
 			/*
-			 * Truncate the actual file (and discard buffers). The indexam
-			 * is responsible for truncating the FSM, if applicable
+			 * Truncate the actual file (and discard buffers).
 			 */
 			RelationTruncate(iRel, 0);
 		}

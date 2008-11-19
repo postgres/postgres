@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/freespace.h,v 1.30 2008/10/31 19:40:27 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/freespace.h,v 1.31 2008/11/19 10:34:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,5 @@ extern void XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 
 extern void FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks);
 extern void FreeSpaceMapVacuum(Relation rel);
-
-/* WAL prototypes */
-extern void fsm_desc(StringInfo buf, uint8 xl_info, char *rec);
-extern void fsm_redo(XLogRecPtr lsn, XLogRecord *record);
 
 #endif   /* FREESPACE_H */

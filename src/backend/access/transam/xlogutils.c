@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.62 2008/11/11 13:19:16 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.63 2008/11/19 10:34:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 	 * filesystem loses an inode during a crash.  Better to write the data
 	 * until we are actually told to delete the file.)
 	 */
-	smgrcreate(smgr, forknum, false, true);
+	smgrcreate(smgr, forknum, true);
 
 	lastblock = smgrnblocks(smgr, forknum);
 

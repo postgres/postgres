@@ -3,7 +3,7 @@
  *
  * Resource managers definition
  *
- * $PostgreSQL: pgsql/src/include/access/rmgr.h,v 1.18 2008/09/30 10:52:13 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/rmgr.h,v 1.19 2008/11/19 10:34:52 heikki Exp $
  */
 #ifndef RMGR_H
 #define RMGR_H
@@ -23,7 +23,6 @@ typedef uint8 RmgrId;
 #define RM_DBASE_ID				4
 #define RM_TBLSPC_ID			5
 #define RM_MULTIXACT_ID			6
-#define RM_FREESPACE_ID			7
 #define RM_HEAP2_ID				9
 #define RM_HEAP_ID				10
 #define RM_BTREE_ID				11

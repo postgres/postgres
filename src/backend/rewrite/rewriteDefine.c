@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.132 2008/11/09 21:24:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.133 2008/11/19 10:34:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,13 +19,13 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/storage.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_utilcmd.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
-#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
@@ -484,16 +484,7 @@ DefineQueryRewrite(char *rulename,
 	 * XXX what about getting rid of its TOAST table?  For now, we don't.
 	 */
 	if (RelisBecomingView)
-	{
-		ForkNumber forknum;
-
-		RelationOpenSmgr(event_relation);
-		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-			if (smgrexists(event_relation->rd_smgr, forknum))
-				smgrscheduleunlink(event_relation->rd_smgr, forknum,
-								   event_relation->rd_istemp);
-		RelationCloseSmgr(event_relation);
-	}
+		RelationDropStorage(event_relation);
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);

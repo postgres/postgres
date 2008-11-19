@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/indexfsm.c,v 1.2 2008/10/06 08:04:11 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/indexfsm.c,v 1.3 2008/11/19 10:34:52 heikki Exp $
  *
  *
  * NOTES:
@@ -29,20 +29,6 @@
 /*
  * Exported routines
  */
-
-/*
- * InitIndexFreeSpaceMap - Create or reset the FSM fork for relation.
- */
-void
-InitIndexFreeSpaceMap(Relation rel)
-{
-	/* Create FSM fork if it doesn't exist yet, or truncate it if it does */
-	RelationOpenSmgr(rel);
-	if (!smgrexists(rel->rd_smgr, FSM_FORKNUM))
-		smgrcreate(rel->rd_smgr, FSM_FORKNUM, rel->rd_istemp, false);
-	else
-		smgrtruncate(rel->rd_smgr, FSM_FORKNUM, 0, rel->rd_istemp);
-}
 
 /*
  * GetFreeIndexPage - return a free page from the FSM
@@ -77,18 +63,6 @@ void
 RecordUsedIndexPage(Relation rel, BlockNumber usedBlock)
 {
 	RecordPageWithFreeSpace(rel, usedBlock, 0);
-}
-
-/*
- * IndexFreeSpaceMapTruncate - adjust for truncation of a relation.
- *
- * We need to delete any stored data past the new relation length, so that
- * we don't bogusly return removed block numbers.
- */
-void
-IndexFreeSpaceMapTruncate(Relation rel, BlockNumber nblocks)
-{
-	FreeSpaceMapTruncateRel(rel, nblocks);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.344 2008/11/14 01:57:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.345 2008/11/19 10:34:51 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -47,6 +47,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
+#include "catalog/storage.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
 #include "miscadmin.h"
@@ -295,22 +296,13 @@ heap_create(const char *relname,
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
 	 *
-	 * We create storage for the main fork here, and also for the FSM for a
-	 * heap or toast relation. The caller is responsible for creating any
-	 * additional forks if needed.
+	 * We only create the main fork here, other forks will be created on
+	 * demand.
 	 */
 	if (create_storage)
 	{
-		Assert(rel->rd_smgr == NULL);
 		RelationOpenSmgr(rel);
-		smgrcreate(rel->rd_smgr, MAIN_FORKNUM, rel->rd_istemp, false);
-
-		/*
-		 * For a real heap, create FSM fork as well. Indexams are
-		 * responsible for creating any extra forks themselves.
-		 */
-		if (relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE)
-			smgrcreate(rel->rd_smgr, FSM_FORKNUM, rel->rd_istemp, false);
+		RelationCreateStorage(rel->rd_node, rel->rd_istemp);
 	}
 
 	return rel;
@@ -1426,13 +1418,7 @@ heap_drop_with_catalog(Oid relid)
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 	{
-		ForkNumber forknum;
-
-		RelationOpenSmgr(rel);
-		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-			if (smgrexists(rel->rd_smgr, forknum))
-				smgrscheduleunlink(rel->rd_smgr, forknum, rel->rd_istemp);
-		RelationCloseSmgr(rel);
+		RelationDropStorage(rel);
 	}
 
 	/*
@@ -2348,7 +2334,6 @@ heap_truncate(List *relids)
 		Relation	rel = lfirst(cell);
 
 		/* Truncate the FSM and actual file (and discard buffers) */
-		FreeSpaceMapTruncateRel(rel, 0);
 		RelationTruncate(rel, 0);
 
 		/* If this relation has indexes, truncate the indexes too */

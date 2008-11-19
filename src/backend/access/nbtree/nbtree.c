@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.165 2008/11/13 17:42:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.166 2008/11/19 10:34:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "catalog/index.h"
+#include "catalog/storage.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -108,9 +109,6 @@ btbuild(PG_FUNCTION_ARGS)
 	if (RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
-
-	/* Initialize FSM */
-	InitIndexFreeSpaceMap(index);
 
 	buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
 
@@ -696,7 +694,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		/*
 		 * Okay to truncate.
 		 */
-		FreeSpaceMapTruncateRel(rel, new_pages);
 		RelationTruncate(rel, new_pages);
 
 		/* update statistics */

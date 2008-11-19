@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.380 2008/11/10 00:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.381 2008/11/19 10:34:51 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/storage.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -2863,7 +2864,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	/* Truncate relation, if needed */
 	if (blkno < nblocks)
 	{
-		FreeSpaceMapTruncateRel(onerel, blkno);
 		RelationTruncate(onerel, blkno);
 		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
@@ -3258,7 +3258,6 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 				(errmsg("\"%s\": truncated %u to %u pages",
 						RelationGetRelationName(onerel),
 						vacrelstats->rel_pages, relblocks)));
-		FreeSpaceMapTruncateRel(onerel, relblocks);
 		RelationTruncate(onerel, relblocks);
 		vacrelstats->rel_pages = relblocks;		/* set new number of blocks */
 	}

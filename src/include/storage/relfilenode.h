@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.19 2008/10/06 14:13:17 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.20 2008/11/19 10:34:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,14 +77,5 @@ typedef struct RelFileNode
 	((node1).relNode == (node2).relNode && \
 	 (node1).dbNode == (node2).dbNode && \
 	 (node1).spcNode == (node2).spcNode)
-
-/*
- * RelFileFork identifies a particular fork of a relation.
- */
-typedef struct RelFileFork
-{
-	RelFileNode rnode;
-	ForkNumber forknum;
-} RelFileFork;
 
 #endif   /* RELFILENODE_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.16 2008/11/13 17:42:09 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.17 2008/11/19 10:34:50 heikki Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -283,9 +283,6 @@ ginbuild(PG_FUNCTION_ARGS)
 	if (RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
-
-	/* Initialize FSM */
-	InitIndexFreeSpaceMap(index);
 
 	initGinState(&buildstate.ginstate, index);
 

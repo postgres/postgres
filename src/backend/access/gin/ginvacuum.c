@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.25 2008/11/03 20:47:48 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.26 2008/11/19 10:34:50 heikki Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -16,6 +16,7 @@
 
 #include "access/genam.h"
 #include "access/gin.h"
+#include "catalog/storage.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -757,7 +758,6 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	if (info->vacuum_full && lastBlock > lastFilledBlock)
 	{
 		/* try to truncate index */
-		FreeSpaceMapTruncateRel(index, lastFilledBlock + 1);
 		RelationTruncate(index, lastFilledBlock + 1);
 
 		stats->pages_removed = lastBlock - lastFilledBlock;

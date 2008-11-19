@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.66 2008/10/31 19:40:27 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.67 2008/11/19 10:34:52 heikki Exp $
  *
  *
  * NOTES:
@@ -47,7 +47,7 @@
  * MaxFSMRequestSize depends on the architecture and BLCKSZ, but assuming
  * default 8k BLCKSZ, and that MaxFSMRequestSize is 24 bytes, the categories
  * look like this
- * 
+ *
  *
  * Range     Category
  * 0    - 31   0
@@ -93,15 +93,6 @@ typedef struct
 /* Address of the root page. */
 static const FSMAddress FSM_ROOT_ADDRESS = { FSM_ROOT_LEVEL, 0 };
 
-/* XLOG record types */
-#define XLOG_FSM_TRUNCATE     0x00    /* truncate */
-
-typedef struct
-{
-	RelFileNode node;			/* truncated relation */
-	BlockNumber nheapblocks;	/* new number of blocks in the heap */
-} xl_fsm_truncate;
-
 /* functions to navigate the tree */
 static FSMAddress fsm_get_child(FSMAddress parent, uint16 slot);
 static FSMAddress fsm_get_parent(FSMAddress child, uint16 *slot);
@@ -110,7 +101,7 @@ static BlockNumber fsm_get_heap_blk(FSMAddress addr, uint16 slot);
 static BlockNumber fsm_logical_to_physical(FSMAddress addr);
 
 static Buffer fsm_readbuf(Relation rel, FSMAddress addr, bool extend);
-static void fsm_extend(Relation rel, BlockNumber nfsmblocks);
+static void fsm_extend(Relation rel, BlockNumber nfsmblocks, bool createstorage);
 
 /* functions to convert amount of free space to a FSM category */
 static uint8 fsm_space_avail_to_cat(Size avail);
@@ -122,8 +113,6 @@ static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 							  uint8 newValue, uint8 minValue);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
-
-static void fsm_redo_truncate(xl_fsm_truncate *xlrec);
 
 
 /******** Public API ********/
@@ -275,6 +264,13 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 
 	RelationOpenSmgr(rel);
 
+	/*
+	 * If no FSM has been created yet for this relation, there's nothing to
+	 * truncate.
+	 */
+	if (!smgrexists(rel->rd_smgr, FSM_FORKNUM))
+		return;
+
 	/* Get the location in the FSM of the first removed heap block */
 	first_removed_address = fsm_get_location(nblocks, &first_removed_slot);
 
@@ -307,42 +303,11 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_istemp);
 
 	/*
-	 * FSM truncations are WAL-logged, because we must never return a block
-	 * that doesn't exist in the heap, not even if we crash before the FSM
-	 * truncation has made it to disk. smgrtruncate() writes its own WAL
-	 * record, but that's not enough to zero out the last remaining FSM page.
-	 * (if we didn't need to zero out anything above, we can skip this)
-	 */
-	if (!rel->rd_istemp && first_removed_slot != 0)
-	{
-		xl_fsm_truncate xlrec;
-		XLogRecData		rdata;
-		XLogRecPtr		recptr;
-
-		xlrec.node = rel->rd_node;
-		xlrec.nheapblocks = nblocks;
-
-		rdata.data = (char *) &xlrec;
-		rdata.len = sizeof(xl_fsm_truncate);
-		rdata.buffer = InvalidBuffer;
-		rdata.next = NULL;
-
-		recptr = XLogInsert(RM_FREESPACE_ID, XLOG_FSM_TRUNCATE, &rdata);
-
-		/*
-		 * Flush, because otherwise the truncation of the main relation
-		 * might hit the disk before the WAL record of truncating the
-		 * FSM is flushed. If we crashed during that window, we'd be
-		 * left with a truncated heap, without a truncated FSM.
-		 */
-		XLogFlush(recptr);
-	}
-
-	/*
 	 * Need to invalidate the relcache entry, because rd_fsm_nblocks_cache
 	 * seen by other backends is no longer valid.
 	 */
-	CacheInvalidateRelcache(rel);
+	if (!InRecovery)
+		CacheInvalidateRelcache(rel);
 
 	rel->rd_fsm_nblocks_cache = new_nfsmblocks;
 }
@@ -538,14 +503,19 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 
 	RelationOpenSmgr(rel);
 
-	if (rel->rd_fsm_nblocks_cache == InvalidBlockNumber || 
+	if (rel->rd_fsm_nblocks_cache == InvalidBlockNumber ||
 		rel->rd_fsm_nblocks_cache <= blkno)
-		rel->rd_fsm_nblocks_cache = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+	{
+		if (!smgrexists(rel->rd_smgr, FSM_FORKNUM))
+			fsm_extend(rel, blkno + 1, true);
+		else
+			rel->rd_fsm_nblocks_cache = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+	}
 
 	if (blkno >= rel->rd_fsm_nblocks_cache)
 	{
 		if (extend)
-			fsm_extend(rel, blkno + 1);
+			fsm_extend(rel, blkno + 1, false);
 		else
 			return InvalidBuffer;
 	}
@@ -566,10 +536,11 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 /*
  * Ensure that the FSM fork is at least n_fsmblocks long, extending
  * it if necessary with empty pages. And by empty, I mean pages filled
- * with zeros, meaning there's no free space.
+ * with zeros, meaning there's no free space. If createstorage is true,
+ * the FSM file might need to be created first.
  */
 static void
-fsm_extend(Relation rel, BlockNumber n_fsmblocks)
+fsm_extend(Relation rel, BlockNumber n_fsmblocks, bool createstorage)
 {
 	BlockNumber n_fsmblocks_now;
 	Page pg;
@@ -589,7 +560,15 @@ fsm_extend(Relation rel, BlockNumber n_fsmblocks)
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
-	n_fsmblocks_now = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+	/* Create the FSM file first if it doesn't exist */
+	if (createstorage && !smgrexists(rel->rd_smgr, FSM_FORKNUM))
+	{
+		smgrcreate(rel->rd_smgr, FSM_FORKNUM, false);
+		n_fsmblocks_now = 0;
+	}
+	else
+		n_fsmblocks_now = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+
 	while (n_fsmblocks_now < n_fsmblocks)
 	{
 		smgrextend(rel->rd_smgr, FSM_FORKNUM, n_fsmblocks_now,
@@ -798,76 +777,4 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 	ReleaseBuffer(buf);
 
 	return max_avail;
-}
-
-
-/****** WAL-logging ******/
-
-static void
-fsm_redo_truncate(xl_fsm_truncate *xlrec)
-{
-	FSMAddress	first_removed_address;
-	uint16		first_removed_slot;
-	BlockNumber fsmblk;
-	Buffer		buf;
-
-	/* Get the location in the FSM of the first removed heap block */
-	first_removed_address = fsm_get_location(xlrec->nheapblocks,
-											 &first_removed_slot);
-	fsmblk = fsm_logical_to_physical(first_removed_address);
-
-	/*
-	 * Zero out the tail of the last remaining FSM page. We rely on the
-	 * replay of the smgr truncation record to remove completely unused
-	 * pages.
-	 */
-	buf = XLogReadBufferExtended(xlrec->node, FSM_FORKNUM, fsmblk,
-								 RBM_ZERO_ON_ERROR);
-	if (BufferIsValid(buf))
-	{
-		Page page = BufferGetPage(buf);
-
-		if (PageIsNew(page))
-			PageInit(page, BLCKSZ, 0);
-		fsm_truncate_avail(page, first_removed_slot);
-		MarkBufferDirty(buf);
-		UnlockReleaseBuffer(buf);
-	}
-}
-
-void
-fsm_redo(XLogRecPtr lsn, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-
-	switch (info)
-	{
-		case XLOG_FSM_TRUNCATE:
-			fsm_redo_truncate((xl_fsm_truncate *) XLogRecGetData(record));
-			break;
-		default:
-			elog(PANIC, "fsm_redo: unknown op code %u", info);
-	}
-}
-
-void
-fsm_desc(StringInfo buf, uint8 xl_info, char *rec)
-{
-	uint8           info = xl_info & ~XLR_INFO_MASK;
-
-	switch (info)
-	{
-		case XLOG_FSM_TRUNCATE:
-		{
-			xl_fsm_truncate *xlrec = (xl_fsm_truncate *) rec;
-
-			appendStringInfo(buf, "truncate: rel %u/%u/%u; nheapblocks %u;",
-							 xlrec->node.spcNode, xlrec->node.dbNode,
-							 xlrec->node.relNode, xlrec->nheapblocks);
-			break;
-		}
-		default:
-			appendStringInfo(buf, "UNKNOWN");
-			break;
-	}
 }

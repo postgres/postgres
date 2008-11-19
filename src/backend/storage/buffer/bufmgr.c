@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.241 2008/11/11 13:19:16 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.242 2008/11/19 10:34:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1695,8 +1695,6 @@ void
 BufmgrCommit(void)
 {
 	/* Nothing to do in bufmgr anymore... */
-
-	smgrcommit();
 }
 
 /*
@@ -1846,26 +1844,6 @@ RelationGetNumberOfBlocks(Relation relation)
 	RelationOpenSmgr(relation);
 
 	return smgrnblocks(relation->rd_smgr, MAIN_FORKNUM);
-}
-
-/*
- * RelationTruncate
- *		Physically truncate a relation to the specified number of blocks.
- *
- * As of Postgres 8.1, this includes getting rid of any buffers for the
- * blocks that are to be dropped; previously, callers had to do that.
- */
-void
-RelationTruncate(Relation rel, BlockNumber nblocks)
-{
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(rel);
-
-	/* Make sure rd_targblock isn't pointing somewhere past end */
-	rel->rd_targblock = InvalidBlockNumber;
-
-	/* Do the real work */
-	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks, rel->rd_istemp);
 }
 
 /* ---------------------------------------------------------------------
