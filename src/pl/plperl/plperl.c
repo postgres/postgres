@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.141 2008/10/29 00:00:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.142 2008/11/19 01:10:24 tgl Exp $
  *
  **********************************************************************/
 
@@ -196,7 +196,8 @@ _PG_init(void)
 	  gettext_noop("If true, will compile trusted and untrusted perl code in strict mode"),
 							 NULL,
 							 &plperl_use_strict,
-							 PGC_USERSET,
+							 false,
+							 PGC_USERSET, 0,
 							 NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plperl");

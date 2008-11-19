@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.152 2008/10/31 21:07:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.153 2008/11/19 01:10:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,11 +60,19 @@
 	((*(expr)->evalfunc) (expr, econtext, isNull, isDone))
 
 
+/* Hook for plugins to get control in ExecutorStart() */
+typedef void (*ExecutorStart_hook_type) (QueryDesc *queryDesc, int eflags);
+extern PGDLLIMPORT ExecutorStart_hook_type ExecutorStart_hook;
+
 /* Hook for plugins to get control in ExecutorRun() */
 typedef void (*ExecutorRun_hook_type) (QueryDesc *queryDesc,
 									   ScanDirection direction,
 									   long count);
 extern PGDLLIMPORT ExecutorRun_hook_type ExecutorRun_hook;
+
+/* Hook for plugins to get control in ExecutorEnd() */
+typedef void (*ExecutorEnd_hook_type) (QueryDesc *queryDesc);
+extern PGDLLIMPORT ExecutorEnd_hook_type ExecutorEnd_hook;
 
 
 /*
@@ -140,11 +148,13 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
  * prototypes from functions in execMain.c
  */
 extern void ExecutorStart(QueryDesc *queryDesc, int eflags);
+extern void standard_ExecutorStart(QueryDesc *queryDesc, int eflags);
 extern void ExecutorRun(QueryDesc *queryDesc,
 						ScanDirection direction, long count);
 extern void standard_ExecutorRun(QueryDesc *queryDesc,
 								 ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc);
+extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,

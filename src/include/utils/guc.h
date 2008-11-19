@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.98 2008/07/23 17:29:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.99 2008/11/19 01:10:23 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -122,6 +122,30 @@ typedef enum
 
 #define GUC_QUALIFIER_SEPARATOR '.'
 
+/*
+ * bit values in "flags" of a GUC variable
+ */
+#define GUC_LIST_INPUT			0x0001	/* input can be list format */
+#define GUC_LIST_QUOTE			0x0002	/* double-quote list elements */
+#define GUC_NO_SHOW_ALL			0x0004	/* exclude from SHOW ALL */
+#define GUC_NO_RESET_ALL		0x0008	/* exclude from RESET ALL */
+#define GUC_REPORT				0x0010	/* auto-report changes to client */
+#define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */
+#define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */
+#define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
+#define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
+#define GUC_IS_NAME				0x0200	/* limit string to NAMEDATALEN-1 */
+
+#define GUC_UNIT_KB				0x0400	/* value is in kilobytes */
+#define GUC_UNIT_BLOCKS			0x0800	/* value is in blocks */
+#define GUC_UNIT_XBLOCKS		0x0C00	/* value is in xlog blocks */
+#define GUC_UNIT_MEMORY			0x0C00	/* mask for KB, BLOCKS, XBLOCKS */
+
+#define GUC_UNIT_MS				0x1000	/* value is in milliseconds */
+#define GUC_UNIT_S				0x2000	/* value is in seconds */
+#define GUC_UNIT_MIN			0x4000	/* value is in minutes */
+#define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
+
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;
 extern bool Debug_print_plan;
@@ -164,7 +188,9 @@ extern void DefineCustomBoolVariable(
 						 const char *short_desc,
 						 const char *long_desc,
 						 bool *valueAddr,
+						 bool bootValue,
 						 GucContext context,
+						 int flags,
 						 GucBoolAssignHook assign_hook,
 						 GucShowHook show_hook);
 
@@ -173,9 +199,11 @@ extern void DefineCustomIntVariable(
 						const char *short_desc,
 						const char *long_desc,
 						int *valueAddr,
+						int bootValue,
 						int minValue,
 						int maxValue,
 						GucContext context,
+						int flags,
 						GucIntAssignHook assign_hook,
 						GucShowHook show_hook);
 
@@ -184,9 +212,11 @@ extern void DefineCustomRealVariable(
 						 const char *short_desc,
 						 const char *long_desc,
 						 double *valueAddr,
+						 double bootValue,
 						 double minValue,
 						 double maxValue,
 						 GucContext context,
+						 int flags,
 						 GucRealAssignHook assign_hook,
 						 GucShowHook show_hook);
 
@@ -195,7 +225,9 @@ extern void DefineCustomStringVariable(
 						   const char *short_desc,
 						   const char *long_desc,
 						   char **valueAddr,
+						   const char *bootValue,
 						   GucContext context,
+						   int flags,
 						   GucStringAssignHook assign_hook,
 						   GucShowHook show_hook);
 
@@ -204,8 +236,10 @@ extern void DefineCustomEnumVariable(
 						   const char *short_desc,
 						   const char *long_desc,
 						   int *valueAddr,
+						   int bootValue,
 						   const struct config_enum_entry *options,
 						   GucContext context,
+						   int flags,
 						   GucEnumAssignHook assign_hook,
 						   GucShowHook show_hook);
 

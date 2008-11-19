@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.317 2008/11/16 17:34:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.318 2008/11/19 01:10:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,10 @@
 #include "utils/tqual.h"
 
 
-/* Hook for plugins to get control in ExecutorRun() */
-ExecutorRun_hook_type ExecutorRun_hook = NULL;
+/* Hooks for plugins to get control in ExecutorStart/Run/End() */
+ExecutorStart_hook_type	ExecutorStart_hook = NULL;
+ExecutorRun_hook_type	ExecutorRun_hook = NULL;
+ExecutorEnd_hook_type	ExecutorEnd_hook = NULL;
 
 typedef struct evalPlanQual
 {
@@ -129,10 +131,24 @@ static void intorel_destroy(DestReceiver *self);
  *
  * NB: the CurrentMemoryContext when this is called will become the parent
  * of the per-query context used for this Executor invocation.
+ *
+ * We provide a function hook variable that lets loadable plugins
+ * get control when ExecutorStart is called.  Such a plugin would
+ * normally call standard_ExecutorStart().
+ *
  * ----------------------------------------------------------------
  */
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
+{
+	if (ExecutorStart_hook)
+		(*ExecutorStart_hook) (queryDesc, eflags);
+	else
+		standard_ExecutorStart(queryDesc, eflags);
+}
+
+void
+standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -263,6 +279,10 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
+	/* Allow instrumentation of ExecutorRun overall runtime */
+	if (queryDesc->totaltime)
+		InstrStartNode(queryDesc->totaltime);
+
 	/*
 	 * extract information from the query descriptor and the query feature.
 	 */
@@ -298,6 +318,9 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	if (sendTuples)
 		(*dest->rShutdown) (dest);
 
+	if (queryDesc->totaltime)
+		InstrStopNode(queryDesc->totaltime, estate->es_processed);
+
 	MemoryContextSwitchTo(oldcontext);
 }
 
@@ -306,10 +329,24 @@ standard_ExecutorRun(QueryDesc *queryDesc,
  *
  *		This routine must be called at the end of execution of any
  *		query plan
+ *
+ *		We provide a function hook variable that lets loadable plugins
+ *		get control when ExecutorEnd is called.  Such a plugin would
+ *		normally call standard_ExecutorEnd().
+ *
  * ----------------------------------------------------------------
  */
 void
 ExecutorEnd(QueryDesc *queryDesc)
+{
+	if (ExecutorEnd_hook)
+		(*ExecutorEnd_hook) (queryDesc);
+	else
+		standard_ExecutorEnd(queryDesc);
+}
+
+void
+standard_ExecutorEnd(QueryDesc *queryDesc)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -353,6 +390,7 @@ ExecutorEnd(QueryDesc *queryDesc)
 	queryDesc->tupDesc = NULL;
 	queryDesc->estate = NULL;
 	queryDesc->planstate = NULL;
+	queryDesc->totaltime = NULL;
 }
 
 /* ----------------------------------------------------------------

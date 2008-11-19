@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.37 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.38 2008/11/19 01:10:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,9 @@ typedef struct QueryDesc
 	TupleDesc	tupDesc;		/* descriptor for result tuples */
 	EState	   *estate;			/* executor's query-wide state */
 	PlanState  *planstate;		/* tree of per-plan-node state */
+
+	/* This is always set NULL by the core system, but plugins can change it */
+	struct Instrumentation *totaltime;	/* total time spent in ExecutorRun */
 } QueryDesc;
 
 /* in pquery.c */

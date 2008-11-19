@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.124 2008/08/01 13:16:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.125 2008/11/19 01:10:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->tupDesc = NULL;
 	qd->estate = NULL;
 	qd->planstate = NULL;
+	qd->totaltime = NULL;
 
 	return qd;
 }
@@ -110,6 +111,7 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->tupDesc = NULL;
 	qd->estate = NULL;
 	qd->planstate = NULL;
+	qd->totaltime = NULL;
 
 	return qd;
 }

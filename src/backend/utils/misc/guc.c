@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.477 2008/11/11 02:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.478 2008/11/19 01:10:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2687,6 +2687,7 @@ static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 static int	guc_var_compare(const void *a, const void *b);
 static int	guc_name_compare(const char *namea, const char *nameb);
+static void InitializeOneGUCOption(struct config_generic *gconf);
 static void push_old_value(struct config_generic * gconf, GucAction action);
 static void ReportGUCOption(struct config_generic * record);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
@@ -3194,113 +3195,7 @@ InitializeGUCOptions(void)
 	 */
 	for (i = 0; i < num_guc_variables; i++)
 	{
-		struct config_generic *gconf = guc_variables[i];
-
-		gconf->status = 0;
-		gconf->reset_source = PGC_S_DEFAULT;
-		gconf->source = PGC_S_DEFAULT;
-		gconf->stack = NULL;
-		gconf->sourcefile = NULL;
-		gconf->sourceline = 0;
-
-		switch (gconf->vartype)
-		{
-			case PGC_BOOL:
-				{
-					struct config_bool *conf = (struct config_bool *) gconf;
-
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, (int) conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val;
-					break;
-				}
-			case PGC_INT:
-				{
-					struct config_int *conf = (struct config_int *) gconf;
-
-					Assert(conf->boot_val >= conf->min);
-					Assert(conf->boot_val <= conf->max);
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val;
-					break;
-				}
-			case PGC_REAL:
-				{
-					struct config_real *conf = (struct config_real *) gconf;
-
-					Assert(conf->boot_val >= conf->min);
-					Assert(conf->boot_val <= conf->max);
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %g",
-								 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val;
-					break;
-				}
-			case PGC_STRING:
-				{
-					struct config_string *conf = (struct config_string *) gconf;
-					char	   *str;
-
-					*conf->variable = NULL;
-					conf->reset_val = NULL;
-
-					if (conf->boot_val == NULL)
-					{
-						/* leave the value NULL, do not call assign hook */
-						break;
-					}
-
-					str = guc_strdup(FATAL, conf->boot_val);
-					conf->reset_val = str;
-
-					if (conf->assign_hook)
-					{
-						const char *newstr;
-
-						newstr = (*conf->assign_hook) (str, true,
-													   PGC_S_DEFAULT);
-						if (newstr == NULL)
-						{
-							elog(FATAL, "failed to initialize %s to \"%s\"",
-								 conf->gen.name, str);
-						}
-						else if (newstr != str)
-						{
-							free(str);
-
-							/*
-							 * See notes in set_config_option about casting
-							 */
-							str = (char *) newstr;
-							conf->reset_val = str;
-						}
-					}
-					*conf->variable = str;
-					break;
-				}
-			case PGC_ENUM:
-				{
-					struct config_enum *conf = (struct config_enum *) gconf;
-
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %s",
-								 conf->gen.name, 
-								 config_enum_lookup_by_value(conf, conf->boot_val));
-					*conf->variable = conf->reset_val = conf->boot_val;
-					break;
-				}
-		}
+		InitializeOneGUCOption(guc_variables[i]);
 	}
 
 	guc_dirty = false;
@@ -3352,6 +3247,119 @@ InitializeGUCOptions(void)
 			sprintf(limbuf, "%d", new_limit);
 			SetConfigOption("max_stack_depth", limbuf,
 							PGC_POSTMASTER, PGC_S_ENV_VAR);
+		}
+	}
+}
+
+/*
+ * Initialize one GUC option variable to its compiled-in default.
+ */
+static void
+InitializeOneGUCOption(struct config_generic *gconf)
+{
+	gconf->status = 0;
+	gconf->reset_source = PGC_S_DEFAULT;
+	gconf->source = PGC_S_DEFAULT;
+	gconf->stack = NULL;
+	gconf->sourcefile = NULL;
+	gconf->sourceline = 0;
+
+	switch (gconf->vartype)
+	{
+		case PGC_BOOL:
+		{
+			struct config_bool *conf = (struct config_bool *) gconf;
+
+			if (conf->assign_hook)
+				if (!(*conf->assign_hook) (conf->boot_val, true,
+										   PGC_S_DEFAULT))
+					elog(FATAL, "failed to initialize %s to %d",
+						 conf->gen.name, (int) conf->boot_val);
+			*conf->variable = conf->reset_val = conf->boot_val;
+			break;
+		}
+		case PGC_INT:
+		{
+			struct config_int *conf = (struct config_int *) gconf;
+
+			Assert(conf->boot_val >= conf->min);
+			Assert(conf->boot_val <= conf->max);
+			if (conf->assign_hook)
+				if (!(*conf->assign_hook) (conf->boot_val, true,
+										   PGC_S_DEFAULT))
+					elog(FATAL, "failed to initialize %s to %d",
+						 conf->gen.name, conf->boot_val);
+			*conf->variable = conf->reset_val = conf->boot_val;
+			break;
+		}
+		case PGC_REAL:
+		{
+			struct config_real *conf = (struct config_real *) gconf;
+
+			Assert(conf->boot_val >= conf->min);
+			Assert(conf->boot_val <= conf->max);
+			if (conf->assign_hook)
+				if (!(*conf->assign_hook) (conf->boot_val, true,
+										   PGC_S_DEFAULT))
+					elog(FATAL, "failed to initialize %s to %g",
+						 conf->gen.name, conf->boot_val);
+			*conf->variable = conf->reset_val = conf->boot_val;
+			break;
+		}
+		case PGC_STRING:
+		{
+			struct config_string *conf = (struct config_string *) gconf;
+			char	   *str;
+
+			*conf->variable = NULL;
+			conf->reset_val = NULL;
+
+			if (conf->boot_val == NULL)
+			{
+				/* leave the value NULL, do not call assign hook */
+				break;
+			}
+
+			str = guc_strdup(FATAL, conf->boot_val);
+			conf->reset_val = str;
+
+			if (conf->assign_hook)
+			{
+				const char *newstr;
+
+				newstr = (*conf->assign_hook) (str, true,
+											   PGC_S_DEFAULT);
+				if (newstr == NULL)
+				{
+					elog(FATAL, "failed to initialize %s to \"%s\"",
+						 conf->gen.name, str);
+				}
+				else if (newstr != str)
+				{
+					free(str);
+
+					/*
+					 * See notes in set_config_option about casting
+					 */
+					str = (char *) newstr;
+					conf->reset_val = str;
+				}
+			}
+			*conf->variable = str;
+			break;
+		}
+		case PGC_ENUM:
+		{
+			struct config_enum *conf = (struct config_enum *) gconf;
+
+			if (conf->assign_hook)
+				if (!(*conf->assign_hook) (conf->boot_val, true,
+										   PGC_S_DEFAULT))
+					elog(FATAL, "failed to initialize %s to %s",
+						 conf->gen.name, 
+						 config_enum_lookup_by_value(conf, conf->boot_val));
+			*conf->variable = conf->reset_val = conf->boot_val;
+			break;
 		}
 	}
 }
@@ -5618,6 +5626,7 @@ init_custom_variable(const char *name,
 					 const char *short_desc,
 					 const char *long_desc,
 					 GucContext context,
+					 int flags,
 					 enum config_type type,
 					 size_t sz)
 {
@@ -5631,6 +5640,7 @@ init_custom_variable(const char *name,
 	gen->group = CUSTOM_OPTIONS;
 	gen->short_desc = short_desc;
 	gen->long_desc = long_desc;
+	gen->flags = flags;
 	gen->vartype = type;
 
 	return gen;
@@ -5649,6 +5659,9 @@ define_custom_variable(struct config_generic * variable)
 	struct config_string *pHolder;
 	struct config_generic **res;
 
+	/*
+	 * See if there's a placeholder by the same name.
+	 */
 	res = (struct config_generic **) bsearch((void *) &nameAddr,
 											 (void *) guc_variables,
 											 num_guc_variables,
@@ -5656,7 +5669,11 @@ define_custom_variable(struct config_generic * variable)
 											 guc_var_compare);
 	if (res == NULL)
 	{
-		/* No placeholder to replace, so just add it */
+		/*
+		 * No placeholder to replace, so we can just add it ... but first,
+		 * make sure it's initialized to its default value.
+		 */
+		InitializeOneGUCOption(variable);
 		add_guc_variable(variable, ERROR);
 		return;
 	}
@@ -5673,6 +5690,13 @@ define_custom_variable(struct config_generic * variable)
 	pHolder = (struct config_string *) (*res);
 
 	/*
+	 * First, set the variable to its default value.  We must do this even
+	 * though we intend to immediately apply a new value, since it's possible
+	 * that the new value is invalid.
+	 */
+	InitializeOneGUCOption(variable);
+
+	/*
 	 * Replace the placeholder. We aren't changing the name, so no re-sorting
 	 * is necessary
 	 */
@@ -5683,7 +5707,7 @@ define_custom_variable(struct config_generic * variable)
 	 *
 	 * XXX this is not really good enough --- it should be a nontransactional
 	 * assignment, since we don't want it to roll back if the current xact
-	 * fails later.
+	 * fails later.  (Or do we?)
 	 */
 	value = *pHolder->variable;
 
@@ -5707,18 +5731,20 @@ DefineCustomBoolVariable(const char *name,
 						 const char *short_desc,
 						 const char *long_desc,
 						 bool *valueAddr,
+						 bool bootValue,
 						 GucContext context,
+						 int flags,
 						 GucBoolAssignHook assign_hook,
 						 GucShowHook show_hook)
 {
 	struct config_bool *var;
 
 	var = (struct config_bool *)
-		init_custom_variable(name, short_desc, long_desc, context,
+		init_custom_variable(name, short_desc, long_desc, context, flags,
 							 PGC_BOOL, sizeof(struct config_bool));
 	var->variable = valueAddr;
-	var->boot_val = *valueAddr;
-	var->reset_val = *valueAddr;
+	var->boot_val = bootValue;
+	var->reset_val = bootValue;
 	var->assign_hook = assign_hook;
 	var->show_hook = show_hook;
 	define_custom_variable(&var->gen);
@@ -5729,20 +5755,22 @@ DefineCustomIntVariable(const char *name,
 						const char *short_desc,
 						const char *long_desc,
 						int *valueAddr,
+						int bootValue,
 						int minValue,
 						int maxValue,
 						GucContext context,
+						int flags,
 						GucIntAssignHook assign_hook,
 						GucShowHook show_hook)
 {
 	struct config_int *var;
 
 	var = (struct config_int *)
-		init_custom_variable(name, short_desc, long_desc, context,
+		init_custom_variable(name, short_desc, long_desc, context, flags,
 							 PGC_INT, sizeof(struct config_int));
 	var->variable = valueAddr;
-	var->boot_val = *valueAddr;
-	var->reset_val = *valueAddr;
+	var->boot_val = bootValue;
+	var->reset_val = bootValue;
 	var->min = minValue;
 	var->max = maxValue;
 	var->assign_hook = assign_hook;
@@ -5755,20 +5783,22 @@ DefineCustomRealVariable(const char *name,
 						 const char *short_desc,
 						 const char *long_desc,
 						 double *valueAddr,
+						 double bootValue,
 						 double minValue,
 						 double maxValue,
 						 GucContext context,
+						 int flags,
 						 GucRealAssignHook assign_hook,
 						 GucShowHook show_hook)
 {
 	struct config_real *var;
 
 	var = (struct config_real *)
-		init_custom_variable(name, short_desc, long_desc, context,
+		init_custom_variable(name, short_desc, long_desc, context, flags,
 							 PGC_REAL, sizeof(struct config_real));
 	var->variable = valueAddr;
-	var->boot_val = *valueAddr;
-	var->reset_val = *valueAddr;
+	var->boot_val = bootValue;
+	var->reset_val = bootValue;
 	var->min = minValue;
 	var->max = maxValue;
 	var->assign_hook = assign_hook;
@@ -5781,17 +5811,19 @@ DefineCustomStringVariable(const char *name,
 						   const char *short_desc,
 						   const char *long_desc,
 						   char **valueAddr,
+						   const char *bootValue,
 						   GucContext context,
+						   int flags,
 						   GucStringAssignHook assign_hook,
 						   GucShowHook show_hook)
 {
 	struct config_string *var;
 
 	var = (struct config_string *)
-		init_custom_variable(name, short_desc, long_desc, context,
+		init_custom_variable(name, short_desc, long_desc, context, flags,
 							 PGC_STRING, sizeof(struct config_string));
 	var->variable = valueAddr;
-	var->boot_val = *valueAddr;
+	var->boot_val = bootValue;
 	/* we could probably do without strdup, but keep it like normal case */
 	if (var->boot_val)
 		var->reset_val = guc_strdup(ERROR, var->boot_val);
@@ -5805,19 +5837,21 @@ DefineCustomEnumVariable(const char *name,
 						 const char *short_desc,
 						 const char *long_desc,
 						 int *valueAddr,
+						 int bootValue,
 						 const struct config_enum_entry *options,
 						 GucContext context,
+						 int flags,
 						 GucEnumAssignHook assign_hook,
 						 GucShowHook show_hook)
 {
 	struct config_enum *var;
 
 	var = (struct config_enum *)
-		init_custom_variable(name, short_desc, long_desc, context,
+		init_custom_variable(name, short_desc, long_desc, context, flags,
 							 PGC_ENUM, sizeof(struct config_enum));
 	var->variable = valueAddr;
-	var->boot_val = *valueAddr;
-	var->reset_val = *valueAddr;
+	var->boot_val = bootValue;
+	var->reset_val = bootValue;
 	var->options = options;
 	var->assign_hook = assign_hook;
 	var->show_hook = show_hook;
