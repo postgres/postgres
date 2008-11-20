@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.109 2008/11/19 12:21:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.110 2008/11/20 14:04:45 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -12,12 +12,17 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>SELECT</refname>
+  <refname>TABLE</refname>
   <refname>WITH</refname>
   <refpurpose>retrieve rows from a table or view</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-select">
   <primary>SELECT</primary>
+ </indexterm>
+
+ <indexterm zone="sql-select">
+  <primary>TABLE command</primary>
  </indexterm>
 
  <indexterm zone="sql-select">
@@ -53,6 +58,8 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
 and <replaceable class="parameter">with_query</replaceable> is:
 
     <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
+
+TABLE <replaceable class="parameter">table_name</replaceable> | <replaceable class="parameter">with_query_name</replaceable>
 </synopsis>
 
  </refsynopsisdiv>
@@ -1070,6 +1077,23 @@ ROLLBACK TO s;
     anymore, in which case it will not be returned.
    </para>
   </caution>
+  </refsect2>
+
+  <refsect2 id="SQL-TABLE">
+   <title><literal>TABLE</literal> Command</title>
+
+   <para>
+    The command
+<programlisting>
+TABLE <replaceable class="parameter">name</replaceable>
+</programlisting>
+    is completely equivalent to
+<programlisting>
+SELECT * FROM <replaceable class="parameter">name</replaceable>
+</programlisting>
+    It can be used as a top-level command or as a space-saving syntax
+    variant in parts of complex queries.
+   </para>
   </refsect2>
  </refsect1>
 

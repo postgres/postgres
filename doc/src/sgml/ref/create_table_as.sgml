@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.39 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.40 2008/11/20 14:04:45 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -196,10 +196,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
     <term><replaceable>query</replaceable></term>
     <listitem>
      <para>
-      A <xref linkend="sql-select" endterm="sql-select-title"> or
+      A <xref linkend="sql-select"
+      endterm="sql-select-title">, <link linkend="sql-table">TABLE</link>,
+      or
       <xref linkend="sql-values" endterm="sql-values-title"> command,
       or an <xref linkend="sql-execute" endterm="sql-execute-title"> command
-      that runs a prepared <command>SELECT</> or <command>VALUES</> query.
+      that runs a prepared <command>SELECT</>, <command>TABLE</>, or <command>VALUES</> query.
      </para>
     </listitem>
    </varlistentry>
@@ -257,6 +259,16 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
 <programlisting>
 CREATE TABLE films_recent AS
   SELECT * FROM films WHERE date_prod &gt;= '2002-01-01';
+</programlisting>
+  </para>
+
+  <para>
+   To copy a table completely, the short form using
+   the <literal>TABLE</literal> command can also be used:
+
+<programlisting>
+CREATE TABLE films2 AS
+  TABLE films;
 </programlisting>
   </para>
 

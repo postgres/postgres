@@ -146,7 +146,7 @@ VALUES (1,2), (3,4+4), (7,77.7)
 UNION ALL
 SELECT 2+2, 57
 UNION ALL
-SELECT * FROM int8_tbl;
+TABLE int8_tbl;
 
 --
 -- Test ORDER BY options

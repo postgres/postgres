@@ -280,7 +280,7 @@ F591	Derived tables			YES
 F611	Indicator data types			YES	
 F641	Row and table constructors			NO	
 F651	Catalog name qualifiers			YES	
-F661	Simple tables			NO	
+F661	Simple tables			YES	
 F671	Subqueries in CHECK			NO	intentionally omitted
 F672	Retrospective check constraints			YES	
 F690	Collation support			NO	
