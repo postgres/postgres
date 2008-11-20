@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.85 2008/10/24 12:24:35 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.86 2008/11/20 09:29:36 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -102,6 +102,7 @@ static const char *SSLerrmessage(void);
 #define RENEGOTIATION_LIMIT (512 * 1024 * 1024)
 
 static SSL_CTX *SSL_context = NULL;
+static bool ssl_loaded_verify_locations = false;
 
 /* GUC variable controlling SSL cipher list */
 char	   *SSLCipherSuites = NULL;
@@ -200,6 +201,19 @@ secure_destroy(void)
 #ifdef USE_SSL
 	destroy_SSL();
 #endif
+}
+
+/*
+ * Indicate if we have loaded the root CA store to verify certificates
+ */
+bool
+secure_loaded_verify_locations(void)
+{
+#ifdef USE_SSL
+	return ssl_loaded_verify_locations;
+#endif
+
+	return false;
 }
 
 /*
@@ -754,15 +768,34 @@ initialize_SSL(void)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
 	/*
-	 * Require and check client certificates only if we have a root.crt file.
+	 * Attempt to load CA store, so we can verify client certificates if needed.
 	 */
-	if (!SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL))
+	if (access(ROOT_CERT_FILE, R_OK))
 	{
-		/* Not fatal - we do not require client certificates */
-		ereport(LOG,
+		ssl_loaded_verify_locations = false;
+
+		/*
+		 * If root certificate file simply not found. Don't log an error here, because
+		 * it's quite likely the user isn't planning on using client certificates.
+		 * If we can't access it for other reasons, it is an error.
+		 */
+		if (errno != ENOENT)
+		{
+			ereport(FATAL,
+					(errmsg("could not access root certificate file \"%s\": %m",
+							ROOT_CERT_FILE)));
+		}
+	}
+	else if (!SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL))
+	{
+		/*
+		 * File was there, but we could not load it. This means the file is somehow
+		 * broken, and we cannot do verification at all - so abort here.
+		 */
+		ssl_loaded_verify_locations = false;
+		ereport(FATAL,
 				(errmsg("could not load root certificate file \"%s\": %s",
-						ROOT_CERT_FILE, SSLerrmessage()),
-				 errdetail("Will not verify client certificates.")));
+						ROOT_CERT_FILE, SSLerrmessage())));
 	}
 	else
 	{
@@ -795,13 +828,18 @@ initialize_SSL(void)
 								ROOT_CRL_FILE, SSLerrmessage()),
 						 errdetail("Certificates will not be checked against revocation list.")));
 			}
-		}
 
-		SSL_CTX_set_verify(SSL_context,
-						   (SSL_VERIFY_PEER |
-							SSL_VERIFY_FAIL_IF_NO_PEER_CERT |
-							SSL_VERIFY_CLIENT_ONCE),
-						   verify_cb);
+			/*
+			 * Always ask for SSL client cert, but don't fail if it's not presented. We'll fail later in this case,
+			 * based on what we find in pg_hba.conf.
+			 */
+			SSL_CTX_set_verify(SSL_context,
+							   (SSL_VERIFY_PEER |
+								SSL_VERIFY_CLIENT_ONCE),
+							   verify_cb);
+
+			ssl_loaded_verify_locations = true;
+		}
 	}
 }
 

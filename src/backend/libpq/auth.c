@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.171 2008/11/18 13:10:20 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.172 2008/11/20 09:29:36 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,6 +275,40 @@ ClientAuthentication(Port *port)
 				 errmsg("missing or erroneous pg_hba.conf file"),
 				 errhint("See server log for details.")));
 
+	/*
+	 * This is the first point where we have access to the hba record for
+	 * the current connection, so perform any verifications based on the
+	 * hba options field that should be done *before* the authentication
+	 * here.
+	 */
+	if (port->hba->clientcert)
+	{
+		/*
+		 * When we parse pg_hba.conf, we have already made sure that we have
+		 * been able to load a certificate store. Thus, if a certificate is
+		 * present on the client, it has been verified against our root
+		 * certificate store, and the connection would have been aborted
+		 * already if it didn't verify ok.
+		 */
+#ifdef USE_SSL
+		if (!port->peer)
+		{
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					 errmsg("connection requires a valid client certificate")));
+		}
+#else
+		/*
+		 * hba.c makes sure hba->clientcert can't be set unless OpenSSL
+		 * is present.
+		 */
+		Assert(false);
+#endif
+	}
+
+	/*
+	 * Now proceed to do the actual authentication check
+	 */
 	switch (port->hba->auth_method)
 	{
 		case uaReject:

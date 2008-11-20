@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.420 2008/11/13 09:45:24 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.421 2008/11/20 09:29:35 mha Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1646,13 +1646,17 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    been entered.
   </para>
 
-  <para>
+  <sect2 id="ssl-client-certificates">
+   <title>Using client certificates</title>
+   <para>
    To require the client to supply a trusted certificate, place
    certificates of the certificate authorities (<acronym>CA</acronym>)
    you trust in the file <filename>root.crt</filename> in the data
-   directory.  A certificate will then be requested from the client during
+   directory, and set the <literal>clientcert</literal> parameter
+   to <literal>1</literal> on the appropriate line(s) in pg_hba.conf.
+   A certificate will then be requested from the client during
    SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
-   description of how to set up client certificates.)  The server will
+   description of how to set up certificates on the client.)  The server will
    verify that the client's certificate is signed by one of the trusted
    certificate authorities.  Certificate Revocation List (CRL) entries
    are also checked if the file <filename>root.crl</filename> exists.
@@ -1663,11 +1667,23 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   If the <filename>root.crt</filename> file is not present, client
-   certificates will not be requested or checked.  In this mode, SSL
-   provides encrypted communication but not authentication.
+   The <literal>clientcert</literal> option in <filename>pg_hba.conf</>
+   is available for all authentication methods, but only for rows
+   specified as <literal>hostssl</>. Unless specified, the default is
+   not to verify the client certificate.
   </para>
 
+  <para>
+   <productname>PostgreSQL</> currently does not support authentication
+   using client certificates, since it cannot differentiate between
+   different users. As long as the user holds any certificate issued
+   by a trusted CA it will be accepted, regardless of what account the
+   user is trying to connect with.
+  </para>
+  </sect2>
+
+  <sect2 id="ssl-server-files">
+   <title>SSL Server File Usage</title>
   <para>
    The files <filename>server.key</>, <filename>server.crt</>,
    <filename>root.crt</filename>, and <filename>root.crl</filename>
@@ -1704,7 +1720,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      <row>
       <entry><filename>root.crt</></entry>
       <entry>trusted certificate authorities</entry>
-      <entry>requests client certificate; checks certificate is
+      <entry>checks that client certificate is
       signed by a trusted certificate authority</entry>
      </row>
 
@@ -1717,6 +1733,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     </tbody>
    </tgroup>
   </table>
+  </sect2>
 
   <sect2 id="ssl-certificate-creation">
    <title>Creating a Self-Signed Certificate</title>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.172 2008/10/28 12:10:43 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.173 2008/11/20 09:29:36 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -926,6 +926,38 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					parsedline->auth_method != uaSSPI)
 					INVALID_AUTH_OPTION("map", "ident, krb5, gssapi and sspi");
 				parsedline->usermap = pstrdup(c);
+			}
+			else if (strcmp(token, "clientcert") == 0)
+			{
+				/*
+				 * Since we require ctHostSSL, this really can never happen on non-SSL-enabled
+				 * builds, so don't bother checking for USE_SSL.
+				 */
+				if (parsedline->conntype != ctHostSSL)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("clientcert can only be configured for \"hostssl\" rows"),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
+					return false;
+				}
+				if (strcmp(c, "1") == 0)
+				{
+					if (!secure_loaded_verify_locations())
+					{
+						ereport(LOG,
+								(errcode(ERRCODE_CONFIG_FILE_ERROR),
+								 errmsg("client certificates can only be checked if a root certificate store is available"),
+								 errdetail("make sure the root certificate store is present and readable"),
+								 errcontext("line %d of configuration file \"%s\"",
+											line_num, HbaFileName)));
+						return false;
+					}
+					parsedline->clientcert = true;
+				}
+				else
+					parsedline->clientcert = false;
 			}
 			else if (strcmp(token, "pamservice") == 0)
 			{
