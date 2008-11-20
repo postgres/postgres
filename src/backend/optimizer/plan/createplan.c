@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.251 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.252 2008/11/20 19:52:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
 						BitmapHeapPath *best_path,
 						List *tlist, List *scan_clauses);
 static Plan *create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
-					  List **qual);
+					  List **qual, List **indexqual);
 static TidScan *create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
@@ -987,6 +987,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	Index		baserelid = best_path->path.parent->relid;
 	Plan	   *bitmapqualplan;
 	List	   *bitmapqualorig;
+	List	   *indexquals;
 	List	   *qpqual;
 	ListCell   *l;
 	BitmapHeapScan *scan_plan;
@@ -995,9 +996,9 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	Assert(baserelid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
-	/* Process the bitmapqual tree into a Plan tree and qual list */
+	/* Process the bitmapqual tree into a Plan tree and qual lists */
 	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual,
-										   &bitmapqualorig);
+										   &bitmapqualorig, &indexquals);
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
@@ -1021,7 +1022,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * (either by the index itself, or by nodeBitmapHeapscan.c), but if there
 	 * are any "special" operators involved then they must be added to qpqual.
 	 * The upshot is that qpqual must contain scan_clauses minus whatever
-	 * appears in bitmapqualorig.
+	 * appears in indexquals.
 	 *
 	 * In normal cases simple equal() checks will be enough to spot duplicate
 	 * clauses, so we try that first.  In some situations (particularly with
@@ -1033,22 +1034,22 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 *
 	 * Unlike create_indexscan_plan(), we need take no special thought here
 	 * for partial index predicates; this is because the predicate conditions
-	 * are already listed in bitmapqualorig.  Bitmap scans have to do it that
-	 * way because predicate conditions need to be rechecked if the scan's
-	 * bitmap becomes lossy.
+	 * are already listed in bitmapqualorig and indexquals.  Bitmap scans have
+	 * to do it that way because predicate conditions need to be rechecked if
+	 * the scan becomes lossy.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
 	{
 		Node	   *clause = (Node *) lfirst(l);
 
-		if (list_member(bitmapqualorig, clause))
+		if (list_member(indexquals, clause))
 			continue;
 		if (!contain_mutable_functions(clause))
 		{
 			List	   *clausel = list_make1(clause);
 
-			if (predicate_implied_by(clausel, bitmapqualorig))
+			if (predicate_implied_by(clausel, indexquals))
 				continue;
 		}
 		qpqual = lappend(qpqual, clause);
@@ -1082,19 +1083,21 @@ create_bitmap_scan_plan(PlannerInfo *root,
 /*
  * Given a bitmapqual tree, generate the Plan tree that implements it
  *
- * As a byproduct, we also return in *qual a qual list (in implicit-AND
- * form, without RestrictInfos) describing the generated indexqual
- * conditions, as needed for rechecking heap tuples in lossy cases.
- * This list also includes partial-index predicates, because we have to
- * recheck predicates as well as index conditions if the scan's bitmap
- * becomes lossy.
+ * As byproducts, we also return in *qual and *indexqual the qual lists
+ * (in implicit-AND form, without RestrictInfos) describing the original index
+ * conditions and the generated indexqual conditions.  (These are the same in
+ * simple cases, but when special index operators are involved, the former
+ * list includes the special conditions while the latter includes the actual
+ * indexable conditions derived from them.)  Both lists include partial-index
+ * predicates, because we have to recheck predicates as well as index
+ * conditions if the bitmap scan becomes lossy.
  *
  * Note: if you find yourself changing this, you probably need to change
  * make_restrictinfo_from_bitmapqual too.
  */
 static Plan *
 create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
-					  List **qual)
+					  List **qual, List **indexqual)
 {
 	Plan	   *plan;
 
@@ -1103,6 +1106,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
 		List	   *subplans = NIL;
 		List	   *subquals = NIL;
+		List	   *subindexquals = NIL;
 		ListCell   *l;
 
 		/*
@@ -1116,11 +1120,13 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		{
 			Plan	   *subplan;
 			List	   *subqual;
+			List	   *subindexqual;
 
 			subplan = create_bitmap_subplan(root, (Path *) lfirst(l),
-											&subqual);
+											&subqual, &subindexqual);
 			subplans = lappend(subplans, subplan);
 			subquals = list_concat_unique(subquals, subqual);
+			subindexquals = list_concat_unique(subindexquals, subindexqual);
 		}
 		plan = (Plan *) make_bitmap_and(subplans);
 		plan->startup_cost = apath->path.startup_cost;
@@ -1129,13 +1135,16 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			clamp_row_est(apath->bitmapselectivity * apath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 		*qual = subquals;
+		*indexqual = subindexquals;
 	}
 	else if (IsA(bitmapqual, BitmapOrPath))
 	{
 		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
 		List	   *subplans = NIL;
 		List	   *subquals = NIL;
+		List	   *subindexquals = NIL;
 		bool		const_true_subqual = false;
+		bool		const_true_subindexqual = false;
 		ListCell   *l;
 
 		/*
@@ -1151,15 +1160,21 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		{
 			Plan	   *subplan;
 			List	   *subqual;
+			List	   *subindexqual;
 
 			subplan = create_bitmap_subplan(root, (Path *) lfirst(l),
-											&subqual);
+											&subqual, &subindexqual);
 			subplans = lappend(subplans, subplan);
 			if (subqual == NIL)
 				const_true_subqual = true;
 			else if (!const_true_subqual)
 				subquals = lappend(subquals,
 								   make_ands_explicit(subqual));
+			if (subindexqual == NIL)
+				const_true_subindexqual = true;
+			else if (!const_true_subindexqual)
+				subindexquals = lappend(subindexquals,
+										make_ands_explicit(subindexqual));
 		}
 
 		/*
@@ -1191,6 +1206,12 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			*qual = subquals;
 		else
 			*qual = list_make1(make_orclause(subquals));
+		if (const_true_subindexqual)
+			*indexqual = NIL;
+		else if (list_length(subindexquals) <= 1)
+			*indexqual = subindexquals;
+		else
+			*indexqual = list_make1(make_orclause(subindexquals));
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
@@ -1211,6 +1232,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 		*qual = get_actual_clauses(ipath->indexclauses);
+		*indexqual = get_actual_clauses(ipath->indexquals);
 		foreach(l, ipath->indexinfo->indpred)
 		{
 			Expr	   *pred = (Expr *) lfirst(l);
@@ -1222,7 +1244,10 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			 * generating redundant conditions.
 			 */
 			if (!predicate_implied_by(list_make1(pred), ipath->indexclauses))
+			{
 				*qual = lappend(*qual, pred);
+				*indexqual = lappend(*indexqual, pred);
+			}
 		}
 	}
 	else

@@ -98,3 +98,32 @@ SELECT b.*
   4500 | 2080851358
 (1 row)
 
+--
+-- Check correct optimization of LIKE (special index operator support)
+-- for both indexscan and bitmapscan cases
+--
+set enable_seqscan to false;
+set enable_indexscan to true;
+set enable_bitmapscan to false;
+select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+        proname         
+------------------------
+ RI_FKey_cascade_del
+ RI_FKey_noaction_del
+ RI_FKey_restrict_del
+ RI_FKey_setdefault_del
+ RI_FKey_setnull_del
+(5 rows)
+
+set enable_indexscan to false;
+set enable_bitmapscan to true;
+select proname from pg_proc where proname like E'RI\\_FKey%del' order by 1;
+        proname         
+------------------------
+ RI_FKey_cascade_del
+ RI_FKey_noaction_del
+ RI_FKey_restrict_del
+ RI_FKey_setdefault_del
+ RI_FKey_setnull_del
+(5 rows)
+
