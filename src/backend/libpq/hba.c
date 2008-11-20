@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.173 2008/11/20 09:29:36 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.174 2008/11/20 11:48:26 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -859,6 +859,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 #else
 		unsupauth = "ldap";
 #endif
+	else if (strcmp(token, "cert") == 0)
+#ifdef USE_SSL
+		parsedline->auth_method = uaCert;
+#else
+		unsupauth = "cert";
+#endif
 	else
 	{
 		ereport(LOG,
@@ -893,6 +899,17 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		return false;
 	}
 
+	if (parsedline->conntype != ctHostSSL &&
+		parsedline->auth_method == uaCert)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("cert authentication is only supported on hostssl connections"),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, HbaFileName)));
+		return false;
+	}
+
 	/* Parse remaining arguments */
 	while ((line_item = lnext(line_item)) != NULL)
 	{
@@ -923,8 +940,9 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				if (parsedline->auth_method != uaIdent &&
 					parsedline->auth_method != uaKrb5 &&
 					parsedline->auth_method != uaGSS &&
-					parsedline->auth_method != uaSSPI)
-					INVALID_AUTH_OPTION("map", "ident, krb5, gssapi and sspi");
+					parsedline->auth_method != uaSSPI &&
+					parsedline->auth_method != uaCert)
+					INVALID_AUTH_OPTION("map", "ident, krb5, gssapi, sspi and cert");
 				parsedline->usermap = pstrdup(c);
 			}
 			else if (strcmp(token, "clientcert") == 0)
@@ -957,7 +975,18 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					parsedline->clientcert = true;
 				}
 				else
+				{
+					if (parsedline->auth_method == uaCert)
+					{
+						ereport(LOG,
+								(errcode(ERRCODE_CONFIG_FILE_ERROR),
+								 errmsg("clientcert can not be set to 0 when using \"cert\" authentication"),
+								 errcontext("line %d of configuration file \"%s\"",
+											line_num, HbaFileName)));
+						return false;
+					}
 					parsedline->clientcert = false;
+				}
 			}
 			else if (strcmp(token, "pamservice") == 0)
 			{
@@ -1020,6 +1049,14 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	if (parsedline->auth_method == uaLDAP)
 	{
 		MANDATORY_AUTH_ARG(parsedline->ldapserver, "ldapserver", "ldap");
+	}
+
+	/*
+	 * Enforce any parameters implied by other settings.
+	 */
+	if (parsedline->auth_method == uaCert)
+	{
+		parsedline->clientcert = true;
 	}
 	
 	return true;

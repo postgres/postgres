@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.421 2008/11/20 09:29:35 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.422 2008/11/20 11:48:26 mha Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1674,11 +1674,9 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   </para>
 
   <para>
-   <productname>PostgreSQL</> currently does not support authentication
-   using client certificates, since it cannot differentiate between
-   different users. As long as the user holds any certificate issued
-   by a trusted CA it will be accepted, regardless of what account the
-   user is trying to connect with.
+   You can use the authentication method <literal>cert</> to use the
+   client certificate for authenticating users. See
+   <xref linkend="auth-cert"> for details.
   </para>
   </sect2>
 

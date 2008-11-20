@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.111 2008/11/18 13:10:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.112 2008/11/20 11:48:26 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -383,6 +383,16 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
          <para>
           Authenticate using LDAP to a central server. See <xref
           linkend="auth-ldap"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>cert</></term>
+        <listitem>
+         <para>
+          Authenticate using SSL client certificates. See
+          <xref linkend="auth-cert"> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -1112,6 +1122,25 @@ omicron       bryanh            guest1
 ldapserver=ldap.example.net prefix="cn=" suffix="dc=example, dc=net"
     </synopsis>
 
+  </sect2>
+
+  <sect2 id="auth-cert">
+   <title>Certificate authentication</title>
+
+   <indexterm zone="auth-cert">
+    <primary>Certificate</primary>
+   </indexterm>
+
+   <para>
+    This authentication method uses SSL client certificates to perform
+    authentication. It is therefore only available for SSL connections.
+    When using this authentication method, the server will require that
+    the client provide a certificate. No password prompt will be sent
+    to the client. The <literal>cn</literal> attribute of the certificate
+    will be matched with the username the user is trying to log in as,
+    and if they match the login will be allowed. Username mapping can be
+    used if the usernames don't match.
+   </para>
   </sect2>
 
   <sect2 id="auth-pam">

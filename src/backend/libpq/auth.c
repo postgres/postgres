@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.172 2008/11/20 09:29:36 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.173 2008/11/20 11:48:26 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,14 @@ ULONG(*__ldap_start_tls_sA) (
 
 static int	CheckLDAPAuth(Port *port);
 #endif /* USE_LDAP */
+
+/*----------------------------------------------------------------
+ * Cert authentication
+ *----------------------------------------------------------------
+ */
+#ifdef USE_SSL
+static int	CheckCertAuth(Port *port);
+#endif
 
 
 /*----------------------------------------------------------------
@@ -426,6 +434,14 @@ ClientAuthentication(Port *port)
 		case uaLDAP:
 #ifdef USE_LDAP
 			status = CheckLDAPAuth(port);
+#else
+			Assert(false);
+#endif
+			break;
+
+		case uaCert:
+#ifdef USE_SSL
+			status = CheckCertAuth(port);
 #else
 			Assert(false);
 #endif
@@ -2120,3 +2136,28 @@ CheckLDAPAuth(Port *port)
 }
 #endif   /* USE_LDAP */
 
+
+/*----------------------------------------------------------------
+ * SSL client certificate authentication
+ *----------------------------------------------------------------
+ */
+#ifdef USE_SSL
+static int
+CheckCertAuth(Port *port)
+{
+	Assert(port->ssl);
+
+	/* Make sure we have received a username in the certificate */
+	if (port->peer_cn == NULL ||
+		strlen(port->peer_cn) <= 0)
+	{
+		ereport(LOG,
+				(errmsg("Certificate login failed for user \"%s\": client certificate contains no username",
+						port->user_name)));
+		return STATUS_ERROR;
+	}
+
+	/* Just pass the certificate CN to the usermap check */
+	return check_usermap(port->hba->usermap, port->user_name, port->peer_cn, false);
+}
+#endif
