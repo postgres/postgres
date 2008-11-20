@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.174 2008/11/20 11:48:26 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.175 2008/11/20 20:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,7 +846,16 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	else if (strcmp(token, "reject") == 0)
 		parsedline->auth_method = uaReject;
 	else if (strcmp(token, "md5") == 0)
+	{
+		if (Db_user_namespace)
+		{
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
+			return false;
+		}
 		parsedline->auth_method = uaMD5;
+	}
 	else if (strcmp(token, "pam") == 0)
 #ifdef USE_PAM
 		parsedline->auth_method = uaPAM;

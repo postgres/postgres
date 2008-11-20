@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.112 2008/11/20 11:48:26 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.113 2008/11/20 20:45:29 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -712,6 +712,8 @@ omicron       bryanh            guest1
     If you are at all concerned about password
     <quote>sniffing</> attacks then <literal>md5</> is preferred.
     Plain <literal>password</> should always be avoided if possible.
+    <literal>md5</> cannot be used with <xref
+    linkend="guc-db-user-namespace">.
    </para>
 
    <para>

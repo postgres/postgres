@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.173 2008/11/20 11:48:26 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.174 2008/11/20 20:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -413,6 +413,10 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaMD5:
+			if (Db_user_namespace)
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
 			sendAuthRequest(port, AUTH_REQ_MD5);
 			status = recv_and_check_password_packet(port);
 			break;
