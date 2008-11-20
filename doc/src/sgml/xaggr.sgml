@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.35 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.36 2008/11/20 21:10:44 tgl Exp $ -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>
@@ -9,7 +9,7 @@
   </indexterm>
 
   <para>
-   Aggregate functions  in <productname>PostgreSQL</productname> 
+   Aggregate functions  in <productname>PostgreSQL</productname>
    are expressed in terms of <firstterm>state values</firstterm>
    and <firstterm>state transition functions</firstterm>.
    That is, an aggregate operates using a state value that is updated
@@ -41,7 +41,7 @@
    aggregate to work on a data type for complex numbers,
    we only need the addition function for that data type.
    The aggregate definition would be:
-   
+
 <screen>
 CREATE AGGREGATE sum (complex)
 (
@@ -80,7 +80,7 @@ SELECT sum(a) FROM test_complex;
    the transition function is marked <quote>strict</> (i.e., not to be called
    for null inputs).
   </para>
-  
+
   <para>
    Another bit of default behavior for a <quote>strict</> transition function
    is that the previous state value is retained unchanged whenever a
@@ -89,7 +89,7 @@ SELECT sum(a) FROM test_complex;
    transition function as strict; instead code it to test for null inputs and
    do whatever is needed.
   </para>
-  
+
   <para>
    <function>avg</> (average) is a more complex example of an aggregate.
    It requires
@@ -132,7 +132,10 @@ CREATE AGGREGATE array_accum (anyelement)
 </programlisting>
 
    Here, the actual state type for any aggregate call is the array type
-   having the actual input type as elements.
+   having the actual input type as elements.  The behavior of the aggregate
+   is to concatenate all the inputs into an array of that type.
+   (Note: the built-in aggregate <function>array_agg</> provides similar
+   functionality, with better performance than this definition would have.)
   </para>
 
   <para>
@@ -149,14 +152,14 @@ SELECT attrelid::regclass, array_accum(attname)
  pg_tablespace | {spcname,spcowner,spclocation,spcacl}
 (1 row)
 
-SELECT attrelid::regclass, array_accum(atttypid)
+SELECT attrelid::regclass, array_accum(atttypid::regtype)
     FROM pg_attribute
     WHERE attnum &gt; 0 AND attrelid = 'pg_tablespace'::regclass
     GROUP BY attrelid;
 
-   attrelid    |   array_accum   
----------------+-----------------
- pg_tablespace | {19,26,25,1034}
+   attrelid    |        array_accum        
+---------------+---------------------------
+ pg_tablespace | {name,oid,text,aclitem[]}
 (1 row)
 </programlisting>
   </para>
