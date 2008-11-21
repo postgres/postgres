@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.638 2008/11/20 14:04:46 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.639 2008/11/21 11:47:55 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6431,9 +6431,9 @@ simple_select:
 					$$ = (Node *)n;
 				}
 			| values_clause							{ $$ = $1; }
-			| TABLE qualified_name
+			| TABLE relation_expr
 				{
-					/* same as SELECT * FROM qualified_name */
+					/* same as SELECT * FROM relation_expr */
 					ColumnRef *cr = makeNode(ColumnRef);
 					ResTarget *rt = makeNode(ResTarget);
 					SelectStmt *n = makeNode(SelectStmt);
@@ -6445,9 +6445,6 @@ simple_select:
 					rt->indirection = NIL;
 					rt->val = (Node *)cr;
 					rt->location = -1;
-
-					$2->inhOpt = INH_DEFAULT;
-					$2->alias = NULL;
 
 					n->targetList = list_make1(rt);
 					n->fromClause = list_make1($2);
