@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.313 2008/09/05 12:11:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.314 2008/11/21 16:46:19 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -96,7 +96,9 @@ su - postgres
      <para>
       <application>tar</> is required to unpack the source
       distribution in the first place, in addition to either
-      <application>gzip</> or <application>bzip2</>.
+      <application>gzip</> or <application>bzip2</>.  In
+      addition, <application>gzip</> is required to install the
+      documentation.
      </para>
     </listitem>
 
@@ -109,9 +111,12 @@ su - postgres
        <primary>libedit</primary>
       </indexterm>
 
-      The <acronym>GNU</> <productname>Readline</> library (for
-      simple line editing and command history retrieval) is
-      used by default. If you don't want to use it then you must specify
+      The <acronym>GNU</> <productname>Readline</> library is used by
+      default.  It allows <application>psql</application> (the
+      PostgreSQL command line SQL interpreter) to remember each
+      command you type, and allows you to use arrow keys to recall and
+      edit previous commands.  This is very helpful and is strongly
+      recommended.  If you don't want to use it then you must specify
       the <option>--without-readline</option> option for
       <filename>configure</>. As an alternative, you can often use the
       BSD-licensed <filename>libedit</filename> library, originally
@@ -2001,8 +2006,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    FreeBSD, OpenBSD, NetBSD, Mac OS X, AIX, HP/UX, IRIX, Solaris, Tru64 Unix,
    and UnixWare.  Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
-   a given operating system will work.  Look in the <filename>doc/</>
-   directory of the source distribution to see if there is a FAQ document
+   a given operating system will work.  Look in
+   the <xref linkend="installation-platform-notes"> below to see if
+   there is information
    specific to your operating system, particularly if using an older system.
   </para>
 
@@ -2011,9 +2017,651 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    to be supported according to recent build farm results, please report
    it to <email>pgsql-bugs@postgresql.org</email>.  If you are interested
    in porting <productname>PostgreSQL</> to a new platform,
-   <email>pgsql-ports@postgresql.org</email> is the appropriate place
+   <email>pgsql-hackers@postgresql.org</email> is the appropriate place
    to discuss that.
   </para>
+ </sect1>
+
+ <sect1 id="installation-platform-notes">
+  <title>Platform-Specific Notes</title>
+
+  <para>
+   This section documents additional platform-specific issues
+   regarding the installation and setup of PostgreSQL.  Be sure to
+   read the installation instructions, and in
+   particular <xref linkend="install-requirements"> as well.  Also,
+   check <![%standalone-include[the
+   file <filename>src/test/regress/README</> and the documentation]]>
+   <![%standalone-ignore[<xref linkend="regress">]]> regarding the
+   interpretation of regression test results.
+  </para>
+
+  <para>
+   Platforms that are not covered here have no known platform-specific
+   installation issues.
+  </para>
+
+  <sect2 id="installation-notes-cygwin">
+   <title>Cygwin</title>
+
+   <indexterm zone="installation-notes-cygwin">
+    <primary>Cyginw</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL can be built using Cygwin, a Linux-like environment for
+    Windows, but that method is inferior to the native Windows build
+    <![%standalone-ignore[(see <xref linkend="install-win32">)]]> and
+    is no longer recommended.
+   </para>
+
+   <para>
+    When building from source, proceed according to the normal
+    installation procedure (i.e., <literal>./configure;
+    make</literal>; etc.), noting the following-Cygwin specific
+    differences:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Set your path to use the Cygwin bin directory before the
+       Windows utilities.  This will help prevent problems with
+       compilation.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The GNU make command is called "make" not "gmake".
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <command>adduser</command> command is not supported; use
+       the appropriate user management application on Windows NT,
+       2000, or XP.  Otherwise, skip this step.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <command>su</command> command is not supported; use ssh to
+       simulate su on Windows NT, 2000, or XP. Otherwise, skip this
+       step.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Start <command>cygserver</command> for shared memory support.
+       To do this, enter the command <literal>/usr/sbin/cygserver
+       &</literal>.  This program needs to be running anytime you
+       start the PostgreSQL server or initialize a database cluster
+       (<command>initdb</command>).  The
+       default <command>cygserver</command> configuration may need to
+       be changed (e.g., increase <symbol>SEMMNS</symbol>) to prevent
+       PostgreSQL from failing due to a lack of system resources.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The parallel regression tests (<literal>make check</literal>)
+       can generate spurious regression test failures due to
+       overflowing the <function>listen()</function> backlog queue
+       which causes connection refused errors or hangs.  You can limit
+       the number of connections using the make
+       variable <varname>MAX_CONNECTIONS</varname> thus:
+<programlisting>
+make MAX_CONNECTIONS=5 check
+</programlisting>
+       (On some systems you can have up to about 10 simultaneous
+       connections).
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    It is possible to install <command>cygserver</command> and the
+    PostgreSQL server as Windows NT services.  For information on how
+    to do this, please refer to the <filename>README</filename>
+    document included with the PostgreSQL binary package on Cygwin.
+    It is installed in the
+    directory <filename>/usr/share/doc/Cygwin</filename>.
+   </para>
+  </sect2>
+
+  <sect2 id="installation-notes-hpux">
+   <title>HP-UX</title>
+
+   <indexterm zone="installation-notes-hpux">
+    <primary>HP-UX</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL 7.3+ should work on Series 700/800 PA-RISC machines
+    running HP-UX 10.X or 11.X, given appropriate system patch levels
+    and build tools.  At least one developer routinely tests on HP-UX
+    10.20, and we have reports of successful installations on HP-UX
+    11.00 and 11.11.
+   </para>
+
+   <para>
+    Aside from the PostgreSQL source distribution, you will need GNU
+    make (HP's make will not do), and either GCC or HP's full ANSI C
+    compiler.  If you intend to build from CVS sources rather than a
+    distribution tarball, you will also need Flex (GNU lex) and Bison
+    (GNU yacc).  We also recommend making sure you are fairly
+    up-to-date on HP patches.  At a minimum, if you are building 64
+    bit binaries on on HP-UX 11.11 you may need PHSS_30966 (11.11) or a
+    successor patch otherwise <command>initdb</command> may hang:
+<literallayout>
+PHSS_30966  s700_800 ld(1) and linker tools cumulative patch
+</literallayout>
+
+    On general principles you should be current on libc and ld/dld
+    patches, as well as compiler patches if you are using HP's C
+    compiler.  See HP's support sites such
+    as <ulink url="http://itrc.hp.com"></ulink> and
+    <ulink url="ftp://us-ffs.external.hp.com/"></ulink> for free
+    copies of their latest patches.
+   </para>
+
+   <para>
+    If you are building on a PA-RISC 2.0 machine and want to have
+    64-bit binaries using GCC, you must use GCC 64-bit version. GCC
+    binaries for HP-UX PA-RISC and Itanium are available from
+    <ulink url="http://www.hp.com/go/gcc"></ulink>.  Don't forget to
+    get and install binutils at the same time.
+   </para>
+
+   <para>
+    If you are building on a PA-RISC 2.0 machine and want the compiled
+    binaries to run on PA-RISC 1.1 machines you will need to specify
+    <option>+DAportable</option> in <envar>CFLAGS</envar>.
+   </para>
+
+   <para>
+    If you are building on a HP-UX Itanium machine, you will need the
+    latest HP ANSI C compiler with its dependent patch or successor
+    patches:
+<literallayout>
+PHSS_30848  s700_800 HP C Compiler (A.05.57)
+PHSS_30849  s700_800 u2comp/be/plugin library Patch
+</literallayout>
+   </para>
+
+   <para>
+    If you have both HP's C compiler and GCC's, then you might want to
+    explicitly select the compiler to use when you
+    run <command>configure</command>:
+<programlisting>
+./configure CC=cc
+</programlisting>
+    for HP's C compiler, or
+<programlisting>
+./configure CC=gcc
+</programlisting>
+    for GCC.  If you omit this setting, then configure will
+    pick <command>gcc</command> if it has a choice.
+   </para>
+
+   <para>
+    The default install target location
+    is <filename>/usr/local/pgsql</filename>, which you might want to
+    change to something under <filename>/opt</filename>.  If so, use
+    the
+    <option>--prefix</option> switch to <command>configure</command>.
+   </para>
+
+   <para>
+    In the regression tests, there might be some low-order-digit
+    differences in the geometry tests, which vary depending on which
+    compiler and math library versions you use.  Any other error is
+    cause for suspicion.
+   </para>
+  </sect2>
+
+  <sect2 id="installation-notes-irix">
+   <title>IRIX</title>
+
+   <indexterm zone="installation-notes-irix">
+    <primary>IRIX</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL has been reported to run successfully on MIPS r8000,
+    r10000 (both ip25 and ip27) and r12000(ip35) processors, running
+    IRIX 6.5.5m, 6.5.12, 6.5.13, and 6.5.26 with MIPSPro compilers
+    version 7.30, 7.3.1.2m, 7.3, and 7.4.4m.
+   </para>
+
+   <para>
+    You will need the MIPSPro full ANSI C compiler.  There are
+    problems trying to build with GCC.  It is a known GCC bug (not
+    fixed as of version 3.0) related to using functions that return
+    certain kinds of structures. This bug affects functions like
+    <function>inet_ntoa</>, <function>inet_lnaof</>, <function>inet_netof</>, <function>inet_makeaddr</>,
+    and <function>semctl</>.  It is supposed to be fixed by forcing
+    code to link those functions with libgcc, but this has not been
+    tested yet.
+   </para>
+
+   <para>
+    It is known that version 7.4.1m of the MIPSPro compiler generates
+    incorrect code.  The symptom is <quote>invalid primary checkpoint
+    record</quote> when trying to start the database.)  Version 7.4.4m
+    is OK; the status of intermediate versions is uncertain.
+   </para>
+
+   <para>
+    There may be a compilation problem like the following:
+<screen>
+cc-1020 cc: ERROR File = pqcomm.c, Line = 427
+  The identifier "TCP_NODELAY" is undefined.
+
+                if (setsockopt(port->sock, IPPROTO_TCP, TCP_NODELAY,
+</screen>
+    Some versions include TCP definitions
+    in <filename>sys/xti.h</filename>, so it is necessary to
+    add <literal>#include &lt;sys/xti.h&gt;</literal>
+    in <filename>src/backend/libpq/pqcomm.c</> and in
+    <filename>src/interfaces/libpq/fe-connect.c</>.  If you encounter
+    this, please let us know so we can develop a proper fix.
+   </para>
+
+   <para>
+    In the regression tests, there might be some low-order-digit
+    differences in the geometry tests, depending on which FPU are you
+    using.  Any other error is cause for suspicion.
+   </para>
+  </sect2>
+
+  <sect2 id="installation-notes-mingw">
+   <title>MinGW/Native Windows</title>
+
+   <indexterm zone="installation-notes-mingw">
+    <primary>MinGW</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL for Windows can be built using MinGW, a Unix-like build
+    environment for Microsoft operating systems, or using
+    Microsoft's <productname>Visual C++</productname> compiler suite.
+    The MinGW build variant uses the normal build system described in
+    this chapter; the Visual C++ build works completely differently
+    and is described in <![%standalone-include[the
+    documentation]]><![%standalone-ignore[<xref linkend="install-win32">]]>.
+    There is also a precompiled binary installer which you can find at
+    from <ulink url="http://pgfoundry.org/projects/pginstaller"></ulink>.
+    It is a fully native build and uses no additional software like
+    MinGW.  The ready-made installer files are available on the main
+    PostgreSQL FTP servers in the <filename>binary/win32</filename>
+    directory.
+   </para>   
+
+   <para>
+    The native Win32 port requires a 32-bit NT-based Microsoft
+    operating system, like Windows NT 4, Windows 2000/2003, or Windows
+    XP.  (NT 4 is no longer supported.)  Earlier operating systems do
+    not have sufficient infrastructure (but Cygwin may be used on
+    those).  MinGW, the Unix-like build tools, and MSYS, a collection
+    of Unix tools required to run shell scripts
+    like <command>configure</command>, can be downloaded
+    from <ulink url="http://www.mingw.org/"></ulink>.  Neither is
+    required to run the resulting binaries; they are needed only for
+    creating the binaries.
+   </para>
+
+   <para>
+    After you have everything installed, it is suggested that you
+    run <application>psql</application>
+    under <command>CMD.EXE</command>, as the MSYS console has
+    buffering issues.
+   </para>
+  </sect2>
+
+  <sect2 id="installation-notes-sco">
+   <title>SCO OpenServer and SCO UnixWare</title>
+
+   <indexterm zone="installation-notes-sco">
+    <primary>SCO</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <indexterm zone="installation-notes-sco">
+    <primary>UnixWare</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL can be built on SCO UnixWare 7 and SCO OpenServer 5.
+    On OpenServer, you can use either the OpenServer Development Kit
+    or the Universal Development Kit.  However, some tweaking may be
+    needed, as described below.
+   </para>
+
+   <sect3>
+    <title>Skunkware</title>
+
+    <para>
+     You should locate your copy of the SCO Skunkware CD.  The
+     Skunkware CD is included with UnixWare 7 and current versions of
+     OpenServer 5.  Skunkware includes ready-to-install versions of
+     many popular programs that are available on the Internet.  For
+     example, gzip, gunzip, GNU Make, Flex, and Bison are all
+     included.  For UnixWare 7.1, this CD is now labeled "Open License
+     Software Supplement".  If you do not have this CD, the software
+     on it is available via anonymous FTP
+     from <ulink url="ftp://ftp.sco.com/skunkware"></ulink>.
+    </para>
+
+    <para>
+     Skunkware has different versions for UnixWare and OpenServer.
+     Make sure you install the correct version for your operating
+     system, except as noted below.
+    </para>
+
+    <para>
+     On UnixWare 7.1.3 and beyond, the GCC compiler is included on the
+     UDK CD as is GNU Make.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>GNU Make</title>
+
+    <para>
+     You need to use the GNU Make program, which is on the Skunkware
+     CD.  By default, it installs
+     as <filename>/usr/local/bin/make</filename>.  To avoid confusion
+     with the SCO <filename>make</filename> program, you may want to rename GNU <filename>make</filename> to
+     <filename>gmake</filename>.
+    </para>
+
+    <para>
+     As of UnixWare 7.1.3 and above, the GNU Make program is is the
+     OSTK portion of the UDK CD, and is
+     in <filename>/usr/gnu/bin/gmake</filename>.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Readline</title>
+
+    <para>
+     The Readline library is on the Skunkware CD.  But it is not
+     included on the UnixWare 7.1 Skunkware CD.  If you have the
+     UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it from
+     there.  Otherwise,
+     try <ulink url="ftp://ftp.sco.com/skunkware"></ulink>.
+    </para>
+
+    <para>
+     By default, Readline installs into <filename>/usr/local/lib</> and
+     <filename>/usr/local/include</>.  However, the
+     PostgreSQL <command>configure</command> program will not find it
+     there without help.  If you installed Readline, then use the
+     following options to <command>configure</command>:
+<programlisting>
+./configure --with-libraries=/usr/local/lib --with-includes=/usr/local/include
+</programlisting>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Using the UDK on OpenServer</title>
+
+    <para>
+     If you are using the new Universal Development Kit (UDK) compiler
+     on OpenServer, you need to specify the locations of the UDK
+     libraries:
+<programlisting>
+./configure --with-libraries=/udk/usr/lib --with-includes=/udk/usr/include
+</programlisting>
+     Putting these together with the Readline options from above:
+<programlisting>
+./configure --with-libraries="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include"
+</programlisting>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Reading the PostgreSQL man pages</title>
+
+    <para>
+     By default, the PostgreSQL man pages are installed into
+     <filename>/usr/local/pgsql/man</filename>.  By default, UnixWare
+     does not look there for man pages.  To be able to read them you
+     need to modify the
+     <varname>MANPATH</varname> variable
+     in <filename>/etc/default/man</filename>, for example:
+<programlisting>
+MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr/local/man:/usr/local/pgsql/man
+</programlisting>
+    </para>
+
+    <para>
+     On OpenServer, some extra research needs to be invested to make
+     the man pages usable, because the man system is a bit different
+     from other platforms.  Currently, PostgreSQL will not install
+     them at all.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>C99 Issues with the 7.1.1b Feature Supplement</title>
+
+    <para>
+     For compilers earlier than the one released with OpenUNIX 8.0.0
+     (UnixWare 7.1.2), including the 7.1.1b Feature Supplement, you
+     may need to specify <option>-Xb</option>
+     in <varname>CFLAGS</varname> or the <varname>CC</varname>
+     environment variable.  The indication of this is an error in
+     compiling <filename>tuplesort.c</filename> referencing inline
+     functions.  Apparently there was a change in the 7.1.2(8.0.0)
+     compiler and beyond.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title><option>--enable-thread-safety</option> and UnixWare</title>
+
+    <para>
+     If you use the <command>configure</command>
+     option <option>--enable-thread-safety</option>,
+     you <emphasis>must</emphasis> use <option>-Kpthread</option>
+     on <emphasis>all</emphasis> libpqiusing programs.  libpq
+     uses <function>pthread_*</function> calls, which are only
+     available with the
+     <option>-Kpthread</>/<option>-Kthread</> flag.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="installation-notes-solaris">
+   <title>Solaris</title>
+
+   <indexterm zone="installation-notes-solaris">
+    <primary>Solaris</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL is well-supported on Solaris.  The more up to date your
+    operating system, the fewer issues you will experience; details
+    below.
+   </para>
+
+   <para>
+    Note that PostgreSQL is bundled with Solaris 10 (from update 2).
+    Official packages are also available on
+    <ulink url="http://pgfoundry.org/projects/solarispackages/"></ulink>.
+    Packages for older Solaris versions (8, 9) you can be obtained
+    from <ulink url="http://www.sunfreeware.com/"></ulink> or
+    <ulink url="http://www.blastwave.org/"></ulink>.
+   </para>
+
+   <sect3>
+    <title>Required tools</title>
+
+    <para>
+     You can build with either GCC or Sun's compiler suite.  For
+     better code optimization, Sun's compiler is strongly recommended
+     on the SPARC architecture.  We have heard reports of problems
+     when using GCC 2.95.1; gcc 2.95.3 or later is recommended.  If
+     you are using Sun's compiler, be careful not to select
+     <filename>/usr/ucb/cc</filename>;
+     use <filename>/opt/SUNWspro/bin/cc</filename>.
+    </para>
+
+    <para>
+     You can download Sun Studio
+     from <ulink url="http://developers.sun.com/sunstudio/downloads/"></ulink>.
+     Many of GNU tools are integrated into Solaris 10, or they are
+     present on the Solaris companion CD.  If you like packages for
+     older version of Solaris, you can find these tools
+     at <ulink url="http://www.sunfreeware.com"></ulink>
+     or <ulink url="http://www.blastwave.org"></ulink>.  If you prefer
+     sources, look
+     at <ulink url="http://www.gnu.org/order/ftp.html"></ulink>.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Problems with OpenSSL</title>
+
+    <para>
+     When you build PostgreSQL with OpenSSL support you might get
+     compilation errors in the following files:
+     <itemizedlist>
+      <listitem><para><filename>src/backend/libpq/crypt.c</filename></para></listitem>
+      <listitem><para><filename>src/backend/libpq/password.c</filename></para></listitem>
+      <listitem><para><filename>src/interfaces/libpq/fe-auth.c</filename></para></listitem>
+      <listitem><para><filename>src/interfaces/libpq/fe-connect.c</filename></para></listitem>
+     </itemizedlist>
+
+     This is because of a namespace conflict between the standard
+     <filename>/usr/include/crypt.h</filename> header and the header
+     files provided by OpenSSL.
+    </para>
+
+    <para>
+     Upgrading your OpenSSL installation to version 0.9.6a fixes this
+     problem.  Solaris 9 and above has a newer version of OpenSSL.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>configure complains about a failed test program</title>
+
+    <para>
+     If <command>configure</command> complains about a failed test
+     program, this is probably a case of the run-time linker being
+     unable to find some library, probably libz, libreadline or some
+     other non-standard library such as libssl.  To point it to the
+     right location, set the <envar>LDFLAGS</envar> environment
+     variable on the <command>configure</command> command line, e.g.,
+<programlisting>
+configure ... LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
+</programlisting>
+     See
+     the <citerefentry><refentrytitle>ld</><manvolnum>1</></citerefentry>
+     man page for more information.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>64-bit build sometimes crashes</title>
+
+    <para>
+     On Solaris 7 and older, the 64-bit version of libc has a buggy
+     <function>vsnprintf</function> routine, which leads to erratic
+     core dumps in PostgreSQL.  The simplest known workaround is to
+     force PostgreSQL to use its own version of vsnprintf rather than
+     the library copy.  To do this, after you
+     run <command>configure</command> edit a file produced by
+     <command>configure</command>:
+     In <filename>src/Makefile.global</filename>, change the line
+<programlisting>
+LIBOBJS =
+</programlisting>
+     to read
+<programlisting>
+LIBOBJS = snprintf.o
+</programlisting>
+     (There might be other files already listed in this variable.
+     Order does not matter.)  Then build as usual.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Compiling for optimal performance</title>
+
+    <para>
+     On the SPARC architecture, Sun Studio is strongly recommended for
+     compilation.  Try using the <option>-xO5</option> optimization
+     flag to generate significantly faster binaries.  Do not use any
+     flags that modify behavior of floating-point operations
+     and <varname>errno</varname> processing (e.g.,
+     <option>-fast</option>).  These flags could raise some
+     nonstandard PostgreSQL behavior for example in the date/time
+     computing.
+    </para>
+
+    <para>
+     If you do not have a reason to use 64-bit binaries on SPARC,
+     prefer the 32-bit version.  The 64-bit operations are slower and
+     64-bit binaries are slower than the 32-bit variants.  And on
+     other hand, 32-bit code on the AMD64 CPU family is not native,
+     and that is why 32-bit code is significant slower on this CPU
+     family.
+    </para>
+
+    <para>
+     Some tricks for tuning PostgreSQL and Solaris for performance can
+     be found
+     at <ulink url="http://www.sun.com/servers/coolthreads/tnb/applications_postgresql.jsp"></ulink>.
+     This article is primary focused on T2000 platform, but many of
+     the recommendations are also useful on other hardware with
+     Solaris.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Using DTrace for tracing PostgreSQL</title>
+
+    <para>
+     Yes, using DTrace is possible.  See <![%standalone-include[the
+     documentation]]>
+     <![%standalone-ignore[<xref linkend="monitoring">]]> for further
+     information.  You can also find more information in this
+     article: <ulink url="http://blogs.sun.com/robertlor/entry/user_level_dtrace_probes_in"></ulink>.
+    </para>
+
+    <para>
+     If you see the linking of the postgres executable abort with an
+     error message like
+<screen>
+Undefined                       first referenced
+ symbol                             in file
+AbortTransaction                    utils/probes.o
+CommitTransaction                   utils/probes.o
+ld: fatal: Symbol referencing errors. No output written to postgres
+collect2: ld returned 1 exit status
+gmake: *** [postgres] Error 1
+</screen>
+     your DTrace installation is too old to handle probes in static
+     functions.  You need Solaris 10u4 or newer.
+    </para>
+   </sect3>
+  </sect2>
  </sect1>
 
 </chapter>
