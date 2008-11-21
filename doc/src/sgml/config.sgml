@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.197 2008/11/21 19:42:12 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.198 2008/11/21 20:21:59 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -32,7 +32,8 @@
     Some settings specify a memory or time value.  Each of these has an
     implicit unit, which is either kilobytes, blocks (typically eight
     kilobytes), milliseconds, seconds, or minutes.  Default units can be
-    queried by referencing <literal>pg_settings.unit</>. For convenience,
+    found by referencing <structname>pg_settings</>.<structfield>unit</>.
+    For convenience,
     a different unit can also be specified explicitly.  Valid memory units
     are <literal>kB</literal> (kilobytes), <literal>MB</literal>
     (megabytes), and <literal>GB</literal> (gigabytes); valid time units
@@ -43,10 +44,11 @@
    </para>
 
    <para>
-    Settings of type 'enum' are specified the same way at string settings,
-    but are restricted to a limited range of values. To find available
-    values, look at <literal>pg_settings.enumvals</>. Enum settings are
-    case insensitive.
+    Parameters of type <quote>enum</> are specified in the same way as string
+    parameters, but are restricted to a limited set of values.  The allowed
+    values can be found
+    from <structname>pg_settings</>.<structfield>enumvals</>.
+    Enum parameter values are case-insensitive.
    </para>
 
    <para>
