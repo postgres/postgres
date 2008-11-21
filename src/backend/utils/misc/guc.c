@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.479 2008/11/19 02:07:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.480 2008/11/21 18:49:24 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -168,11 +168,14 @@ static bool assign_maxconnections(int newval, bool doit, GucSource source);
 static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
 
 static char *config_enum_get_options(struct config_enum *record, 
-									 const char *prefix, const char *suffix);
+									 const char *prefix, const char *suffix,
+									 const char *separator);
 
 
 /*
  * Options for enum values defined in this module.
+ *
+ * NOTE! Option values may not contain double quotes!
  */
 
 /*
@@ -4427,7 +4430,8 @@ config_enum_lookup_by_name(struct config_enum *record, const char *value, int *r
  * If suffix is non-NULL, it is added to the end of the string.
  */
 static char *
-config_enum_get_options(struct config_enum *record, const char *prefix, const char *suffix)
+config_enum_get_options(struct config_enum *record, const char *prefix,
+						const char *suffix, const char *separator)
 {
 	const struct config_enum_entry *entry = record->options;
 	int		len = 0;
@@ -4439,7 +4443,7 @@ config_enum_get_options(struct config_enum *record, const char *prefix, const ch
 	while (entry && entry->name)
 	{
 		if (!entry->hidden)
-			len += strlen(entry->name) + 2; /* string and ", " */
+			len += strlen(entry->name) + strlen(separator);
 
 		entry++;
 	}
@@ -4454,7 +4458,7 @@ config_enum_get_options(struct config_enum *record, const char *prefix, const ch
 		if (!entry->hidden)
 		{
 			strcat(hintmsg, entry->name);
-			strcat(hintmsg, ", ");
+			strcat(hintmsg, separator);
 		}
 
 		entry++;
@@ -4469,15 +4473,14 @@ config_enum_get_options(struct config_enum *record, const char *prefix, const ch
 	 * to make sure we don't write to invalid memory instead of actually
 	 * trying to do something smart with it.
 	 */
-	if (len > 1)
-		/* Replace final comma/space */
-		hintmsg[len-2] = '\0';
+	if (len >= strlen(separator))
+		/* Replace final separator */
+		hintmsg[len-strlen(separator)] = '\0';
 
 	strcat(hintmsg, suffix);
 
 	return hintmsg;
 }
-
 
 /*
  * Call a GucStringAssignHook function, being careful to free the
@@ -5044,7 +5047,7 @@ set_config_option(const char *name, const char *value,
 				{
 					if (!config_enum_lookup_by_name(conf, value, &newval))
 					{
-						char *hintmsg = config_enum_get_options(conf, "Available values: ", ".");
+						char *hintmsg = config_enum_get_options(conf, "Available values: ", ".", ", ");
 
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -6249,7 +6252,8 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 				values[10] = NULL;
 
 				/* enumvals */
-				values[11] = config_enum_get_options((struct config_enum *) conf, "", "");
+				/* NOTE! enumvals with double quotes in them are not supported! */
+				values[11] = config_enum_get_options((struct config_enum *) conf, "{\"", "\"}", "\",\"");
 
  				/* boot_val */
 				values[12] = pstrdup(config_enum_lookup_by_value(lconf, lconf->boot_val));
@@ -6385,7 +6389,7 @@ show_all_settings(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "max_val",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "enumvals",
-						   TEXTOID, -1, 0);
+						   TEXTARRAYOID, -1, 0);
  		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "boot_val",
  						   TEXTOID, -1, 0);
  		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "reset_val",
