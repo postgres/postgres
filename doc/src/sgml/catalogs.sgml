@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.182 2008/11/10 00:49:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.183 2008/11/21 19:31:58 mha Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -6429,7 +6429,7 @@
      </row>
      <row>
       <entry><structfield>enumvals</structfield></entry>
-      <entry><type>text</type></entry>
+      <entry><type>text[]</type></entry>
       <entry>Allowed values of an enum parameter (NULL for non-enum
       values)</entry>
      </row>
