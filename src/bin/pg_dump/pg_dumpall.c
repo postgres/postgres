@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.107 2008/09/23 09:20:38 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.108 2008/11/21 20:14:27 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 
 			case 2:
 				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout=");
-				appendPQExpBuffer(pgdumpopts, optarg);
+				appendPQExpBuffer(pgdumpopts, "%s", optarg);
 				break;
 
 			default:

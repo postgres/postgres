@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.197 2008/11/11 15:01:53 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.198 2008/11/21 20:14:27 mha Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -2076,7 +2076,7 @@ minimal_error_message(PGresult *res)
 		appendPQExpBufferStr(msg, "(not available)");
 	appendPQExpBufferStr(msg, "\n");
 
-	psql_error(msg->data);
+	psql_error("%s", msg->data);
 
 	destroyPQExpBuffer(msg);
 }

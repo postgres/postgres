@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.480 2008/11/21 18:49:24 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.481 2008/11/21 20:14:27 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4789,7 +4789,7 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid value for parameter \"%s\": \"%s\"",
 								name, value),
-								 hintmsg ? errhint(hintmsg) : 0));
+								 hintmsg ? errhint("%s", hintmsg) : 0));
 						return false;
 					}
 					if (newval < conf->min || newval > conf->max)
@@ -5053,7 +5053,7 @@ set_config_option(const char *name, const char *value,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("invalid value for parameter \"%s\": \"%s\"",
 										name, value),
-								 hintmsg ? errhint(hintmsg) : 0));
+								 hintmsg ? errhint("%s", hintmsg) : 0));
 
 						if (hintmsg)
 							pfree(hintmsg);
