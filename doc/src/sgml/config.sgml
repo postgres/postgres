@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.196 2008/11/20 20:45:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.197 2008/11/21 19:42:12 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -20,8 +20,8 @@
 
    <para>
     All parameter names are case-insensitive. Every parameter takes a
-    value of one of four types: Boolean, integer, floating point,
-    or string. Boolean values can be written as <literal>ON</literal>,
+    value of one of five types: Boolean, integer, floating point,
+    string or enum. Boolean values can be written as <literal>ON</literal>,
     <literal>OFF</literal>, <literal>TRUE</literal>,
     <literal>FALSE</literal>, <literal>YES</literal>,
     <literal>NO</literal>, <literal>1</literal>, <literal>0</literal>
@@ -40,6 +40,13 @@
     (seconds), <literal>min</literal> (minutes), <literal>h</literal>
     (hours), and <literal>d</literal> (days).  Note that the multiplier
     for memory units is 1024, not 1000.
+   </para>
+
+   <para>
+    Settings of type 'enum' are specified the same way at string settings,
+    but are restricted to a limited range of values. To find available
+    values, look at <literal>pg_settings.enumvals</>. Enum settings are
+    case insensitive.
    </para>
 
    <para>
@@ -1329,7 +1336,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
      
      <varlistentry id="guc-wal-sync-method" xreflabel="wal_sync_method">
-      <term><varname>wal_sync_method</varname> (<type>string</type>)</term>
+      <term><varname>wal_sync_method</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>wal_sync_method</> configuration parameter</primary>
       </indexterm>
@@ -2464,7 +2471,7 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-syslog-facility" xreflabel="syslog_facility">
-      <term><varname>syslog_facility</varname> (<type>string</type>)</term>
+      <term><varname>syslog_facility</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>syslog_facility</> configuration parameter</primary>
       </indexterm>
@@ -2511,7 +2518,7 @@ local0.*    /var/log/postgresql
      <variablelist>
 
      <varlistentry id="guc-client-min-messages" xreflabel="client_min_messages">
-      <term><varname>client_min_messages</varname> (<type>string</type>)</term>
+      <term><varname>client_min_messages</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>client_min_messages</> configuration parameter</primary>
       </indexterm>
@@ -2532,7 +2539,7 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-min-messages" xreflabel="log_min_messages">
-      <term><varname>log_min_messages</varname> (<type>string</type>)</term>
+      <term><varname>log_min_messages</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>log_min_messages</> configuration parameter</primary>
       </indexterm>
@@ -2554,7 +2561,7 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
-      <term><varname>log_error_verbosity</varname> (<type>string</type>)</term>
+      <term><varname>log_error_verbosity</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>log_error_verbosity</> configuration parameter</primary>
       </indexterm>
@@ -2570,7 +2577,7 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-min-error-statement" xreflabel="log_min_error_statement">
-      <term><varname>log_min_error_statement</varname> (<type>string</type>)</term>
+      <term><varname>log_min_error_statement</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>log_min_error_statement</> configuration parameter</primary>
       </indexterm>
@@ -3056,7 +3063,7 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-statement" xreflabel="log_statement">
-      <term><varname>log_statement</varname> (<type>string</type>)</term>
+      <term><varname>log_statement</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>log_statement</> configuration parameter</primary>
       </indexterm>
@@ -3314,7 +3321,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-track-functions" xreflabel="track_functions">
-      <term><varname>track_functions</varname> (<type>string</type>)</term>
+      <term><varname>track_functions</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>track_functions</> configuration parameter</primary>
       </indexterm>
@@ -3828,7 +3835,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <indexterm>
        <primary><varname>default_transaction_isolation</> configuration parameter</primary>
       </indexterm>
-      <term><varname>default_transaction_isolation</varname> (<type>string</type>)</term>
+      <term><varname>default_transaction_isolation</varname> (<type>enum</type>)</term>
       <listitem>
        <para>
         Each SQL transaction has an isolation level, which can be
@@ -3871,7 +3878,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-session-replication-role" xreflabel="session_replication_role">
-      <term><varname>session_replication_role</varname> (<type>string</type>)</term>
+      <term><varname>session_replication_role</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>session_replication_role</> configuration parameter</primary>
       </indexterm>
@@ -3933,7 +3940,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-xmlbinary" xreflabel="xmlbinary">
-      <term><varname>xmlbinary</varname> (<type>string</type>)</term>
+      <term><varname>xmlbinary</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>xmlbinary</> configuration parameter</primary>
       </indexterm>
@@ -3960,7 +3967,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-xmloption" xreflabel="xmloption">
-      <term><varname>xmloption</varname> (<type>string</type>)</term>
+      <term><varname>xmloption</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>xmloption</> configuration parameter</primary>
       </indexterm>
@@ -4026,7 +4033,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-intervalstyle" xreflabel="IntervalStyle">
-      <term><varname>IntervalStyle</varname> (<type>string</type>)</term>
+      <term><varname>IntervalStyle</varname> (<type>enum</type>)</term>
       <indexterm>
        <primary><varname>IntervalStyle</> configuration parameter</primary>
       </indexterm>
@@ -4514,7 +4521,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-backslash-quote" xreflabel="backslash_quote">
-      <term><varname>backslash_quote</varname> (<type>string</type>)</term>
+      <term><varname>backslash_quote</varname> (<type>enum</type>)</term>
       <indexterm><primary>strings</><secondary>backslash quotes</></>
       <indexterm>
        <primary><varname>backslash_quote</> configuration parameter</primary>
@@ -4602,7 +4609,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-regex-flavor" xreflabel="regex_flavor">
-      <term><varname>regex_flavor</varname> (<type>string</type>)</term>
+      <term><varname>regex_flavor</varname> (<type>enum</type>)</term>
       <indexterm><primary>regular expressions</></>
       <indexterm>
        <primary><varname>regex_flavor</> configuration parameter</primary>
