@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.94 2008/08/17 19:40:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.95 2008/11/22 22:47:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,6 +419,27 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			match_sjinfo = sjinfo;
 			reversed = true;
 		}
+		else if (sjinfo->jointype == JOIN_SEMI &&
+				 bms_equal(sjinfo->syn_righthand, rel2->relids))
+		{
+			/*
+			 * For a semijoin, we can join the RHS to anything else by
+			 * unique-ifying the RHS.
+			 */
+			if (match_sjinfo)
+				return false;	/* invalid join path */
+			match_sjinfo = sjinfo;
+			reversed = false;
+		}
+		else if (sjinfo->jointype == JOIN_SEMI &&
+				 bms_equal(sjinfo->syn_righthand, rel1->relids))
+		{
+			/* Reversed semijoin case */
+			if (match_sjinfo)
+				return false;	/* invalid join path */
+			match_sjinfo = sjinfo;
+			reversed = true;
+		}
 		else
 		{
 			/*----------
@@ -444,13 +465,23 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * We assume that make_outerjoininfo() set things up correctly
 			 * so that we'll only match to some SJ if the join is valid.
 			 * Set flag here to check at bottom of loop.
+			 *
+			 * For a semijoin, assume it's okay if either side fully contains
+			 * the RHS (per the unique-ification case above).
 			 *----------
 			 */
-			if (bms_overlap(rel1->relids, sjinfo->min_righthand) &&
+			if (sjinfo->jointype != JOIN_SEMI &&
+				bms_overlap(rel1->relids, sjinfo->min_righthand) &&
 				bms_overlap(rel2->relids, sjinfo->min_righthand))
 			{
 				/* seems OK */
 				Assert(!bms_overlap(joinrelids, sjinfo->min_lefthand));
+			}
+			else if (sjinfo->jointype == JOIN_SEMI &&
+					 (bms_is_subset(sjinfo->syn_righthand, rel1->relids) ||
+					  bms_is_subset(sjinfo->syn_righthand, rel2->relids)))
+			{
+				/* seems OK */
 			}
 			else
 				is_valid_inner = false;
@@ -612,15 +643,23 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_SEMI:
-			if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
-				restriction_is_constant_false(restrictlist))
+			/*
+			 * Do these steps only if we actually have a regular semijoin,
+			 * as opposed to a case where we should unique-ify the RHS.
+			 */
+			if (bms_is_subset(sjinfo->min_lefthand, rel1->relids) &&
+				bms_is_subset(sjinfo->min_righthand, rel2->relids))
 			{
-				mark_dummy_rel(joinrel);
-				break;
+				if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
+					restriction_is_constant_false(restrictlist))
+				{
+					mark_dummy_rel(joinrel);
+					break;
+				}
+				add_paths_to_joinrel(root, joinrel, rel1, rel2,
+									 JOIN_SEMI, sjinfo,
+									 restrictlist);
 			}
-			add_paths_to_joinrel(root, joinrel, rel1, rel2,
-								 JOIN_SEMI, sjinfo,
-								 restrictlist);
 
 			/*
 			 * If we know how to unique-ify the RHS and one input rel is

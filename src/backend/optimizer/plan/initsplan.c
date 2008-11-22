@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.144 2008/10/25 19:51:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.145 2008/11/22 22:47:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -851,16 +851,11 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		maybe_equivalence = false;
 		maybe_outer_join = false;
 	}
-	else if (bms_overlap(relids, outerjoin_nonnullable) &&
-			 (jointype != JOIN_SEMI ||
-			  bms_nonempty_difference(relids, outerjoin_nonnullable)))
+	else if (bms_overlap(relids, outerjoin_nonnullable))
 	{
 		/*
 		 * The qual is attached to an outer join and mentions (some of the)
-		 * rels on the nonnullable side, so it's not degenerate.  (For a
-		 * JOIN_SEMI qual, we consider it non-degenerate only if it mentions
-		 * both sides of the join --- if it mentions only one side, it can
-		 * be pushed down.)
+		 * rels on the nonnullable side, so it's not degenerate.
 		 *
 		 * We can't use such a clause to deduce equivalence (the left and
 		 * right sides might be unequal above the join because one of them has
@@ -1062,6 +1057,7 @@ distribute_sublink_quals_to_rels(PlannerInfo *root,
 	SpecialJoinInfo *sjinfo;
 	Relids		qualscope;
 	Relids		ojscope;
+	Relids		outerjoin_nonnullable;
 	ListCell   *l;
 
 	/*
@@ -1076,17 +1072,27 @@ distribute_sublink_quals_to_rels(PlannerInfo *root,
 								fslink->jointype,
 								quals);
 
+	/* Treat as inner join if SEMI, outer join if ANTI */
 	qualscope = bms_union(sjinfo->syn_lefthand, sjinfo->syn_righthand);
-	ojscope = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+	if (fslink->jointype == JOIN_SEMI)
+	{
+		ojscope = outerjoin_nonnullable = NULL;
+	}
+	else
+	{
+		Assert(fslink->jointype == JOIN_ANTI);
+		ojscope = bms_union(sjinfo->min_lefthand, sjinfo->min_righthand);
+		outerjoin_nonnullable = fslink->lefthand;
+	}
 
-	/* Distribute the join quals much as for a regular LEFT JOIN */
+	/* Distribute the join quals much as for a regular JOIN node */
 	foreach(l, quals)
 	{
 		Node   *qual = (Node *) lfirst(l);
 
 		distribute_qual_to_rels(root, qual,
 								false, below_outer_join, fslink->jointype,
-								qualscope, ojscope, fslink->lefthand);
+								qualscope, ojscope, outerjoin_nonnullable);
 	}
 
 	/* Now we can add the SpecialJoinInfo to join_info_list */

@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.200 2008/10/21 20:42:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.201 2008/11/22 22:47:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2481,7 +2481,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 			break;
 		case JOIN_SEMI:
 			nrows = outer_rel->rows * jselec;
-			nrows *= pselec;
+			/* pselec not used */
 			break;
 		case JOIN_ANTI:
 			nrows = outer_rel->rows * (1.0 - jselec);

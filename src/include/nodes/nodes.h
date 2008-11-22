@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.214 2008/10/21 20:42:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.215 2008/11/22 22:47:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,15 +542,23 @@ typedef enum JoinType
 
 /*
  * OUTER joins are those for which pushed-down quals must behave differently
- * from the join's own quals.  This is in fact everything except INNER joins.
- * However, this macro must also exclude the JOIN_UNIQUE symbols since those
- * are temporary proxies for what will eventually be an INNER join.
+ * from the join's own quals.  This is in fact everything except INNER and
+ * SEMI joins.  However, this macro must also exclude the JOIN_UNIQUE symbols
+ * since those are temporary proxies for what will eventually be an INNER
+ * join.
  *
- * Note: in some places it is preferable to treat JOIN_SEMI as not being
- * an outer join, since it doesn't produce null-extended rows.  Be aware
- * of that distinction when deciding whether to use this macro.
+ * Note: semijoins are a hybrid case, but we choose to treat them as not
+ * being outer joins.  This is okay principally because the SQL syntax makes
+ * it impossible to have a pushed-down qual that refers to the inner relation
+ * of a semijoin; so there is no strong need to distinguish join quals from
+ * pushed-down quals.  This is convenient because for almost all purposes,
+ * quals attached to a semijoin can be treated the same as innerjoin quals.
  */
 #define IS_OUTER_JOIN(jointype) \
-	((jointype) > JOIN_INNER && (jointype) < JOIN_UNIQUE_OUTER)
+	(((1 << (jointype)) & \
+	  ((1 << JOIN_LEFT) | \
+	   (1 << JOIN_FULL) | \
+	   (1 << JOIN_RIGHT) | \
+	   (1 << JOIN_ANTI))) != 0)
 
 #endif   /* NODES_H */
