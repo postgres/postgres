@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.53 2008/10/14 08:06:39 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.54 2008/11/23 01:40:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -864,6 +864,7 @@ RequestCheckpoint(int flags)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+	int			ntries;
 	int			old_failed,
 				old_started;
 
@@ -905,15 +906,38 @@ RequestCheckpoint(int flags)
 	SpinLockRelease(&bgs->ckpt_lck);
 
 	/*
-	 * Send signal to request checkpoint.  When not waiting, we consider
-	 * failure to send the signal to be nonfatal.
+	 * Send signal to request checkpoint.  It's possible that the bgwriter
+	 * hasn't started yet, or is in process of restarting, so we will retry
+	 * a few times if needed.  Also, if not told to wait for the checkpoint
+	 * to occur, we consider failure to send the signal to be nonfatal and
+	 * merely LOG it.
 	 */
-	if (BgWriterShmem->bgwriter_pid == 0)
-		elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-			 "could not request checkpoint because bgwriter not running");
-	if (kill(BgWriterShmem->bgwriter_pid, SIGINT) != 0)
-		elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-			 "could not signal for checkpoint: %m");
+	for (ntries = 0; ; ntries++)
+	{
+		if (BgWriterShmem->bgwriter_pid == 0)
+		{
+			if (ntries >= 20)		/* max wait 2.0 sec */
+			{
+				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
+					 "could not request checkpoint because bgwriter not running");
+				break;
+			}
+		}
+		else if (kill(BgWriterShmem->bgwriter_pid, SIGINT) != 0)
+		{
+			if (ntries >= 20)		/* max wait 2.0 sec */
+			{
+				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
+					 "could not signal for checkpoint: %m");
+				break;
+			}
+		}
+		else
+			break;				/* signal sent successfully */
+
+		CHECK_FOR_INTERRUPTS();
+		pg_usleep(100000L);		/* wait 0.1 sec, then retry */
+	}
 
 	/*
 	 * If requested, wait for completion.  We detect completion according to
