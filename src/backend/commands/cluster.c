@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.178 2008/10/14 17:19:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.179 2008/11/24 08:46:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef struct
 } RelToCluster;
 
 
-static void cluster_rel(RelToCluster *rv, bool recheck);
+static void cluster_rel(RelToCluster *rv, bool recheck, bool verbose);
 static void rebuild_relation(Relation OldHeap, Oid indexOid);
 static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
@@ -177,7 +177,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		heap_close(rel, NoLock);
 
 		/* Do the job */
-		cluster_rel(&rvtc, false);
+		cluster_rel(&rvtc, false, stmt->verbose);
 	}
 	else
 	{
@@ -226,7 +226,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
-			cluster_rel(rvtc, true);
+			cluster_rel(rvtc, true, stmt->verbose);
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -254,7 +254,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * them incrementally while we load the table.
  */
 static void
-cluster_rel(RelToCluster *rvtc, bool recheck)
+cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 {
 	Relation	OldHeap;
 
@@ -344,6 +344,10 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	check_index_is_clusterable(OldHeap, rvtc->indexOid, recheck);
 
 	/* rebuild_relation does all the dirty work */
+	ereport(verbose ? INFO : DEBUG2,
+			(errmsg("clustering \"%s.%s\"",
+					get_namespace_name(RelationGetNamespace(OldHeap)),
+					RelationGetRelationName(OldHeap))));
 	rebuild_relation(OldHeap, rvtc->indexOid);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */

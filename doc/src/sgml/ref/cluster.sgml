@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.45 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.46 2008/11/24 08:46:03 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER <replaceable class="PARAMETER">tablename</replaceable> [ USING <replaceable class="PARAMETER">indexname</replaceable> ]
-CLUSTER
+CLUSTER [VERBOSE] <replaceable class="PARAMETER">tablename</replaceable> [ USING <replaceable class="PARAMETER">indexname</replaceable> ]
+CLUSTER [VERBOSE]
 </synopsis>
  </refsynopsisdiv>
 
@@ -92,6 +92,15 @@ CLUSTER
     <listitem>
      <para>
       The name of an index.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VERBOSE</literal></term>
+    <listitem>
+     <para>
+      Prints a progress report as each table is clustered.
      </para>
     </listitem>
    </varlistentry>

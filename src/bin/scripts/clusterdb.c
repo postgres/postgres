@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.20 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.21 2008/11/24 08:46:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,11 +14,11 @@
 #include "dumputils.h"
 
 
-static void cluster_one_database(const char *dbname, const char *table,
+static void cluster_one_database(const char *dbname, bool verbose, const char *table,
 					 const char *host, const char *port,
 					 const char *username, bool password,
 					 const char *progname, bool echo);
-static void cluster_all_databases(const char *host, const char *port,
+static void cluster_all_databases(bool verbose, const char *host, const char *port,
 					  const char *username, bool password,
 					  const char *progname, bool echo, bool quiet);
 
@@ -38,6 +38,7 @@ main(int argc, char *argv[])
 		{"dbname", required_argument, NULL, 'd'},
 		{"all", no_argument, NULL, 'a'},
 		{"table", required_argument, NULL, 't'},
+		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -54,13 +55,14 @@ main(int argc, char *argv[])
 	bool		quiet = false;
 	bool		alldb = false;
 	char	   *table = NULL;
+	bool		verbose = false;
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], "pgscripts");
 
 	handle_help_version_opts(argc, argv, "clusterdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:Weqd:at:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:Weqd:at:v", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -90,6 +92,9 @@ main(int argc, char *argv[])
 				break;
 			case 't':
 				table = optarg;
+				break;
+			case 'v':
+				verbose = true;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -128,7 +133,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		cluster_all_databases(host, port, username, password,
+		cluster_all_databases(verbose, host, port, username, password,
 							  progname, echo, quiet);
 	}
 	else
@@ -143,7 +148,7 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
-		cluster_one_database(dbname, table,
+		cluster_one_database(dbname, verbose, table,
 							 host, port, username, password,
 							 progname, echo);
 	}
@@ -153,7 +158,7 @@ main(int argc, char *argv[])
 
 
 static void
-cluster_one_database(const char *dbname, const char *table,
+cluster_one_database(const char *dbname, bool verbose, const char *table,
 					 const char *host, const char *port,
 					 const char *username, bool password,
 					 const char *progname, bool echo)
@@ -165,6 +170,8 @@ cluster_one_database(const char *dbname, const char *table,
 	initPQExpBuffer(&sql);
 
 	appendPQExpBuffer(&sql, "CLUSTER");
+	if (verbose)
+		appendPQExpBuffer(&sql, " VERBOSE");
 	if (table)
 		appendPQExpBuffer(&sql, " %s", fmtId(table));
 	appendPQExpBuffer(&sql, ";\n");
@@ -187,7 +194,7 @@ cluster_one_database(const char *dbname, const char *table,
 
 
 static void
-cluster_all_databases(const char *host, const char *port,
+cluster_all_databases(bool verbose, const char *host, const char *port,
 					  const char *username, bool password,
 					  const char *progname, bool echo, bool quiet)
 {
@@ -209,7 +216,7 @@ cluster_all_databases(const char *host, const char *port,
 			fflush(stdout);
 		}
 
-		cluster_one_database(dbname, NULL,
+		cluster_one_database(dbname, verbose, NULL,
 							 host, port, username, password,
 							 progname, echo);
 	}
@@ -230,6 +237,7 @@ help(const char *progname)
 	printf(_("  -t, --table=TABLE         cluster specific table only\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));
+	printf(_("  -v, --verbose             write a lot of output\n"));
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));

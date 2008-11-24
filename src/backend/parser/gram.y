@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.639 2008/11/21 11:47:55 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.640 2008/11/24 08:46:03 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5781,33 +5781,36 @@ CreateConversionStmt:
 /*****************************************************************************
  *
  *		QUERY:
- *				CLUSTER <qualified_name> [ USING <index_name> ]
- *				CLUSTER
- *				CLUSTER <index_name> ON <qualified_name> (for pre-8.3)
+ *				CLUSTER [VERBOSE] <qualified_name> [ USING <index_name> ]
+ *				CLUSTER [VERBOSE]
+ *				CLUSTER [VERBOSE] <index_name> ON <qualified_name> (for pre-8.3)
  *
  *****************************************************************************/
 
 ClusterStmt:
-			CLUSTER qualified_name cluster_index_specification
+			CLUSTER opt_verbose qualified_name cluster_index_specification
 				{
 			       ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = $2;
-				   n->indexname = $3;
+				   n->relation = $3;
+				   n->indexname = $4;
+				   n->verbose = $2;
 				   $$ = (Node*)n;
 				}
-			| CLUSTER
+			| CLUSTER opt_verbose
 			    {
 				   ClusterStmt *n = makeNode(ClusterStmt);
 				   n->relation = NULL;
 				   n->indexname = NULL;
+				   n->verbose = $2;
 				   $$ = (Node*)n;
 				}
 			/* kept for pre-8.3 compatibility */
-			| CLUSTER index_name ON qualified_name
+			| CLUSTER opt_verbose index_name ON qualified_name
 				{
 				   ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = $4;
-				   n->indexname = $2;
+				   n->relation = $5;
+				   n->indexname = $3;
+				   n->verbose = $2;
 				   $$ = (Node*)n;
 				}
 		;
