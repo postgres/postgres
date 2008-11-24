@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.107 2008/11/13 09:45:25 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.108 2008/11/24 09:15:16 mha Exp $
  *
  * NOTES
  *
@@ -62,6 +62,13 @@
 #endif
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
 #include <openssl/engine.h>
+#endif
+
+/* fnmatch() needed for client certificate checking */
+#ifdef HAVE_FNMATCH
+#include <fnmatch.h>
+#else
+#include "fnmatchstub.h"
 #endif
 #endif   /* USE_SSL */
 
@@ -461,17 +468,20 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		 * Connect by hostname.
 		 *
 		 * XXX: Should support alternate names here
-		 * XXX: Should support wildcard certificates here
 		 */
-		if (pg_strcasecmp(conn->peer_cn, conn->pghost) != 0)
+		if (pg_strcasecmp(conn->peer_cn, conn->pghost) == 0)
+			/* Exact name match */
+			return true;
+		else if (fnmatch(conn->peer_cn, conn->pghost, FNM_NOESCAPE | FNM_CASEFOLD) == 0)
+			/* Matched wildcard certificate */
+			return true;
+		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("server common name '%s' does not match hostname '%s'"),
 							  conn->peer_cn, conn->pghost);
 			return false;
 		}
-		else
-			return true;
 	}
 }
 

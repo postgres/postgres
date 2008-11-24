@@ -143,6 +143,9 @@
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
 
+/* Define to 1 if your system has a working POSIX `fnmatch' function. */
+#undef HAVE_FNMATCH
+
 /* Define to 1 if you have the `fpclass' function. */
 #undef HAVE_FPCLASS
 
