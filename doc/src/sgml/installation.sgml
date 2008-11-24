@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.314 2008/11/21 16:46:19 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.315 2008/11/24 11:59:37 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2040,6 +2040,302 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    Platforms that are not covered here have no known platform-specific
    installation issues.
   </para>
+
+  <sect2 id="installation-notes-aix">
+   <title>AIX</title>
+
+   <indexterm zone="installation-notes-aix">
+    <primary>AIX</primary>
+    <secondary>installation on</secondary>
+   </indexterm>
+
+   <para>
+    PostgreSQL on AIX works, but getting it installed properly can be
+    challenging.  Both AIX version 4.3 and 5.3 are supported in
+    theory.  You can use GCC or the native IBM compiler xlc.  In
+    general, using recent versions of AIX and PostgreSQL helps.  Check
+    the build farm for up to date information about which versions of
+    AIX are known to work.
+   </para>
+
+   <para>
+    Use the following <command>configure</command> flags in addition
+    to your own if you have Readline or libz
+    there: <literal>--with-includes=/usr/local/include
+    --with-libraries=/usr/local/lib</literal>.
+   </para>
+
+   <para>
+    If you don't have a PowerPC or use GCC you might see rounding
+    differences in the geometry regression test.  There will probably
+    be warnings about 0.0/0.0 division and duplicate symbols which you
+    can safely ignore.
+   </para>
+
+   <para>
+    Some of the AIX tools may be <quote>a little different</quote>
+    from what you may be accustomed to on other platforms.  If you are
+    looking for a version of <command>ldd</command>, useful for
+    determining what object code depends on what libraries, the
+    following URLs may help you:
+    <ulink url="http://www.faqs.org/faqs/aix-faq/part4/section-22.html"></ulink>,
+    <ulink url="http://www.han.de/~jum/aix/ldd.c"></ulink>.
+   </para>
+
+   <sect3>
+    <title>AIX 4.3.2</title>
+
+    <para>
+     On AIX 4.3.2, you need <filename>libm.a</filename> that is in the
+     fileset bos.adt.libm.  Try the following command:
+<screen>
+$ lslpp -l bos.adt.libm
+</screen>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>GCC issues</title>
+
+    <para>
+     On AIX 5.3, there have been some problems getting PostgreSQL to
+     compile and run using GCC.
+    </para>
+
+    <para>
+     You will want to use a version of GCC subsequent to 3.3.2,
+     particularly if you use a prepackaged version.  We had good
+     success with 4.0.1.  Problems with earlier versions seem to have
+     more to do with the way IBM packaged GCC than with actual issues
+     with GCC, so that if you compile GCC yourself, you might well
+     have success with an earlier version of GCC.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Unix-domain sockets broken</title>
+
+    <para>
+     AIX 5.3 has a problem
+     where <structname>sockadr_storage</structname> is not defined to
+     be large enough.  In version 5.3, IBM increased the size of
+     <structname>sockaddr_un</structname>, the address structure for
+     Unix-domain sockets, but did not correspondingly increase the
+     size of <structname>sockadr_storage</structname>.  The result of
+     this is that attempts to use Unix-domain sockets with PostgreSQL
+     lead to libpq overflowing the data structure.  TCP/IP connections
+     work OK, but not Unix-domain sockets, which prevents the
+     regression tests from working.
+    </para>
+
+    <para>
+     The problem was reported to IBM, and is recorded as bug report
+     PMR29657.  If you upgrade to maintenance level 5300-03, that will
+     include this fix.  Use the command <literal>oslevel -r</literal>
+     to determine what maintenance level you are at.  An immediate
+     resolution is to alter <symbol>_SS_MAXSIZE</symbol> to = 1025 in
+     <filename>/usr/include/sys/socket.h</filename>.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Memory Management</title>
+    <!-- http://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
+
+    <para>
+     AIX can be somewhat peculiar with regards to the way it does
+     memory management.  You can have a server with many multiples of
+     gigabytes of RAM free, but still get out of memory or address
+     space errors when running applications.  One example
+     is <command>createlang</command> failing with unusual errors.
+     For example, running as the owner of the PostgreSQL installation:
+<screen>
+-bash-3.00$ createlang plpgsql template1
+createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plpgsql.so": A memory address is not in the address space for the process.
+</screen>
+    Running as a non-owner in the group posessing the PostgreSQL
+    installation:
+<screen>
+-bash-3.00$ createlang plpgsql template1
+createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plpgsql.so": Bad address
+</screen>
+     Another example is out of memory errors in the PostgreSQL server
+     logs, with every memory allocation near or greater than 256 MB
+     failing.
+    </para>
+
+    <para>
+     The overall cause of all these problems is the default bittedness
+     and memory model used by the server process.  By default, all
+     binaries built on AIX are 32-bit.  This does not depend upon
+     hardware type or kernel in use.  These 32-bit processes are
+     limited to 4 GB of memory laid out in 256 MB segments using one
+     of a few models.  The default allows for less than 256 MB in the
+     heap as it shares a single segment with the stack.
+    </para>
+
+    <para>
+     In the case of the <command>createlang</command> example, above,
+     check your umask and the permissions of the binaries in your
+     PostgreSQL installation.  The binaries involved in that example
+     were 32-bit and installed as mode 750 instead of 755.  Due to the
+     permissions being set in this fashion, only the owner or a member
+     of the possessing group can load the library.  Since it isn't
+     world-readable, the loader places the object into the process'
+     heap instead of the shared library segments where it would
+     otherwise be placed.
+    </para>
+
+    <para>
+     The <quote>ideal</quote> solution for this is to use a 64-bit
+     build of PostgreSQL, but that is not always practical, because
+     systems with 32-bit processors can build, but not run, 64-bit
+     binaries.
+    </para>
+
+    <para>
+     If a 32-bit binary is desired, set <symbol>LDR_CNTRL</symbol> to
+     <literal>MAXDATA=0x<replaceable>n</replaceable>0000000</literal>,
+     where 1 &lt;= n &lt;= 8, before starting the PostgreSQL server,
+     and try different values and <filename>postgresql.conf</filename>
+     settings to find a configuration that works satisfactorily.  This
+     use of <symbol>LDR_CNTRL</symbol> tells AIX that you want the
+     server to have <symbol>MAXDATA</symbol> bytes set aside for the
+     heap, allocated in 256 MB segments.  When you find a workable
+     configuration,
+     <command>ldedit</command> can be used to modify the binaries so
+     that they default to using the desired heap size.  PostgreSQL can
+     also be rebuilt, passing <literal>configure
+     LDFLAGS="-Wl,-bmaxdata:0x<replaceable>n</replaceable>0000000"</literal>
+     to achieve the same effect.
+    </para>
+
+    <para>
+     For a 64-bit build, set <envar>OBJECT_MODE</envar> to 64 and
+     pass <literal>CC="gcc -maix64"</literal>
+     and <literal>LDFLAGS="-Wl,-bbigtoc"</literal>
+     to <command>configure</command>.  (Options for
+    <command>xlc</command> might differ.)  If you omit the export of
+    <envar>OBJECT_MODE</envar>, your build may fail with linker errors.  When
+    <envar>OBJECT_MODE</envar> is set, it tells AIX's build utilities
+    such as <command>ar</>, <command>as</>, and <command>ld</> what
+    type of objects to default to handling.
+    </para>
+
+    <para>
+     By default, overcommit of paging space can happen.  While we have
+     not seen this occur, AIX will kill processes when it runs out of
+     memory and the overcommit is accessed.  The closest to this that
+     we have seen is fork failing because the system decided that
+     there was not enough memory for another process.  Like many other
+     parts of AIX, the paging space allocation method and
+     out-of-memory kill is configurable on a system- or process-wide
+     basis if this becomes a problem.
+    </para>
+
+    <bibliography>
+     <title>References and resources</title>
+
+     <biblioentry>
+      <biblioset relation="article">
+       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/topic/com.ibm.aix.doc/aixprggd/genprogc/lrg_prg_support.htm">Large Program Support</ulink></title>
+      </biblioset>
+      <biblioset relation="book">
+       <title>AIX Documentation: General Programming Concepts: Writing and Debugging Programs</title>
+      </biblioset>
+     </biblioentry>
+
+     <biblioentry>
+      <biblioset relation="article">
+       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/topic/com.ibm.aix.doc/aixprggd/genprogc/address_space.htm">Program Address Space Overview</ulink></title>
+      </biblioset>
+      <biblioset relation="book">
+       <title>AIX Documentation: General Programming Concepts: Writing and Debugging Programs</title>
+      </biblioset>
+     </biblioentry>
+
+     <biblioentry>
+      <biblioset relation="article">
+       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/resmgmt2.htm">Performance Overview of the Virtual Memory Manager (VMM)</ulink></title>
+      </biblioset>
+      <biblioset relation="book">
+       <title>AIX Documentation: Performance Management Guide</title>
+      </biblioset>
+     </biblioentry>
+
+     <biblioentry>
+      <biblioset relation="article">
+       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/memperf7.htm">Page Space Allocation</ulink></title>
+      </biblioset>
+      <biblioset relation="book">
+       <title>AIX Documentation: Performance Management Guide</title>
+      </biblioset>
+     </biblioentry>
+
+     <biblioentry>
+      <biblioset relation="article">
+       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/memperf6.htm">Paging-space thresholds tuning</ulink></title>
+      </biblioset>
+      <biblioset relation="book">
+       <title>AIX Documentation: Performance Management Guide</title>
+      </biblioset>
+     </biblioentry>
+
+     <biblioentry>
+       <title><ulink url="  http://www.redbooks.ibm.com/abstracts/sg245674.html?Open">Developing and Porting C and C++ Applications on AIX</ulink></title>
+       <publisher>
+        <publishername>IBM Redbook</publishername>
+       </publisher>
+     </biblioentry>
+    </bibliography>
+   </sect3>
+
+   <sect3>
+    <title>Statistics Collector Issues</title>
+    <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
+
+    <para>
+     When implementing PostgreSQL version 8.1 on AIX 5.3, we
+     periodically ran into problems where the statistics collector
+     would <quote>mysteriously</quote> not come up successfully.  This
+     appears to be the result of unexpected behaviour in the IPv6
+     implementation.  It looks like PostgreSQL and IPv6 do not play
+     very well together at this time on AIX.
+    </para>
+
+    <para>
+     Any of the following actions <quote>fix</quote> the problem.
+     <itemizedlist>
+      <listitem>
+       <para>
+        Delete the IPv6 address for localhost:
+<screen>
+(as root)
+# ifconfig lo0 inet6 ::1/0 delete
+</screen>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove IPv6 from net services.  The
+        file <filename>/etc/netsvc.conf</filename> on AIX is roughly
+        equivalent to <filename>/etc/nsswitch.conf</filename> on
+        Solaris/Linux.  The default, on AIX, is thus:
+<programlisting>
+hosts=local,bind
+</programlisting>
+        Replace this with:
+<programlisting>
+hosts=local4,bind4
+</programlisting>
+        to deactivate searching for IPv6 addresses.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect3>
+  </sect2>
 
   <sect2 id="installation-notes-cygwin">
    <title>Cygwin</title>

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.117 2008/09/01 08:50:09 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.118 2008/11/24 11:59:37 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -479,6 +479,7 @@ ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib) installdirs-lib
 ifdef soname
 # we don't install $(shlib) on AIX
+# (see http://archives.postgresql.org/message-id/52EF20B2E3209443BC37736D00C3C1380A6E79FE@EXADV1.host.magwien.gv.at)
 ifneq ($(PORTNAME), aix)
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(libdir)/$(shlib)'
 ifneq ($(PORTNAME), cygwin)
