@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.29.2.2 2007/03/24 16:46:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.29.2.3 2008/11/25 20:47:55 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2191,7 +2191,7 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the database that contains the table that contains the
-       column that is restricted by some constraint (always the
+       column that is restricted by this constraint (always the
        current database)
       </entry>
      </row>
@@ -2201,7 +2201,7 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the table that contains the
-       column that is restricted by some constraint
+       column that is restricted by this constraint
       </entry>
      </row>
 
@@ -2210,7 +2210,7 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the table that contains the column that is restricted
-       by some constraint
+       by this constraint
       </entry>
      </row>
 
@@ -2218,7 +2218,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the column that is restricted by some constraint
+       Name of the column that is restricted by this constraint
       </entry>
      </row>
 
@@ -2235,7 +2235,9 @@ ORDER BY c.ordinal_position;
       <entry><literal>position_in_unique_constraint</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       Not yet implemented
+       For a foreign-key constraint, ordinal position of the referenced
+       column within its unique constraint (count starts at 1);
+       otherwise null
       </entry>
      </row>
     </tbody>
