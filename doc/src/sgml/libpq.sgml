@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.270 2008/11/14 22:58:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.271 2008/11/25 19:30:42 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5816,17 +5816,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGDATESTYLE</envar> sets the default style of date/time
       representation.  (Equivalent to <literal>SET datestyle TO
-      ...</literal>.)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
-       <primary><envar>PGINTERVALSTYLE</envar></primary>
-      </indexterm>
-      <envar>PGINTERVALSTYLE</envar> sets the default style of interval
-      representation.  (Equivalent to <literal>SET intervalstyle TO
       ...</literal>.)
      </para>
     </listitem>
