@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.50 2008/11/20 15:03:39 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.51 2008/11/25 11:49:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,14 @@ stop_postmaster(void)
 		snprintf(buf, sizeof(buf),
 				 SYSTEMQUOTE "\"%s/pg_ctl\" stop -D \"%s/data\" -s -m fast" SYSTEMQUOTE,
 				 bindir, temp_install);
-		r = system(buf);			/* ignore exit status. Store in variable to silence gcc */
+		r = system(buf);
+		if (r != 0)
+		{
+			fprintf(stderr, _("\n%s: could not stop postmaster: exit code was %d\n"),
+					progname, r);
+			exit(2);   /* not exit_nicely(), that would be recursive */
+		}
+
 		postmaster_running = false;
 	}
 }
