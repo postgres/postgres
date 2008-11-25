@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.29 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.30 2008/11/25 20:28:29 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
+#include "utils/snapmgr.h"
 
 
 /*
@@ -66,6 +67,11 @@ typedef struct ResourceOwnerData
 	int			ntupdescs;		/* number of owned tupdesc references */
 	TupleDesc  *tupdescs;		/* dynamically allocated array */
 	int			maxtupdescs;	/* currently allocated array size */
+
+	/* We have built-in support for remembering snapshot references */
+	int			nsnapshots;		/* number of owned snapshot references */
+	Snapshot   *snapshots;		/* dynamically allocated array */
+	int			maxsnapshots;	/* currently allocated array size */
 } ResourceOwnerData;
 
 
@@ -98,6 +104,7 @@ static void ResourceOwnerReleaseInternal(ResourceOwner owner,
 static void PrintRelCacheLeakWarning(Relation rel);
 static void PrintPlanCacheLeakWarning(CachedPlan *plan);
 static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
+static void PrintSnapshotLeakWarning(Snapshot snapshot);
 
 
 /*****************************************************************************
@@ -301,6 +308,13 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 				PrintTupleDescLeakWarning(owner->tupdescs[owner->ntupdescs - 1]);
 			DecrTupleDescRefCount(owner->tupdescs[owner->ntupdescs - 1]);
 		}
+		/* Ditto for snapshot references */
+		while (owner->nsnapshots > 0)
+		{
+			if (isCommit)
+				PrintSnapshotLeakWarning(owner->snapshots[owner->nsnapshots -1]);
+			UnregisterSnapshot(owner->snapshots[owner->nsnapshots -1]);
+		}
 
 		/* Clean up index scans too */
 		ReleaseResources_hash();
@@ -332,6 +346,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 	Assert(owner->nrelrefs == 0);
 	Assert(owner->nplanrefs == 0);
 	Assert(owner->ntupdescs == 0);
+	Assert(owner->nsnapshots == 0);
 
 	/*
 	 * Delete children.  The recursive call will delink the child from me, so
@@ -360,6 +375,8 @@ ResourceOwnerDelete(ResourceOwner owner)
 		pfree(owner->planrefs);
 	if (owner->tupdescs)
 		pfree(owner->tupdescs);
+	if (owner->snapshots)
+		pfree(owner->snapshots);
 
 	pfree(owner);
 }
@@ -935,4 +952,86 @@ PrintTupleDescLeakWarning(TupleDesc tupdesc)
 	elog(WARNING,
 		 "TupleDesc reference leak: TupleDesc %p (%u,%d) still referenced",
 		 tupdesc, tupdesc->tdtypeid, tupdesc->tdtypmod);
+}
+
+/*
+ * Make sure there is room for at least one more entry in a ResourceOwner's
+ * snapshot reference array.
+ *
+ * This is separate from actually inserting an entry because if we run out
+ * of memory, it's critical to do so *before* acquiring the resource.
+ */
+void
+ResourceOwnerEnlargeSnapshots(ResourceOwner owner)
+{
+	int			newmax;
+
+	if (owner->nsnapshots < owner->maxsnapshots)
+		return;					/* nothing to do */
+
+	if (owner->snapshots == NULL)
+	{
+		newmax = 16;
+		owner->snapshots = (Snapshot *)
+			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(Snapshot));
+		owner->maxsnapshots = newmax;
+	}
+	else
+	{
+		newmax = owner->maxsnapshots * 2;
+		owner->snapshots = (Snapshot *)
+			repalloc(owner->snapshots, newmax * sizeof(Snapshot));
+		owner->maxsnapshots = newmax;
+	}
+}
+
+/*
+ * Remember that a snapshot reference is owned by a ResourceOwner
+ *
+ * Caller must have previously done ResourceOwnerEnlargeSnapshots()
+ */
+void
+ResourceOwnerRememberSnapshot(ResourceOwner owner, Snapshot snapshot)
+{
+	Assert(owner->nsnapshots < owner->maxsnapshots);
+	owner->snapshots[owner->nsnapshots] = snapshot;
+	owner->nsnapshots++;
+}
+
+/*
+ * Forget that a snapshot reference is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetSnapshot(ResourceOwner owner, Snapshot snapshot)
+{
+	Snapshot   *snapshots = owner->snapshots;
+	int			ns1 = owner->nsnapshots -1;
+	int			i;
+
+	for (i = ns1; i >= 0; i--)
+	{
+		if (snapshots[i] == snapshot)
+		{
+			while (i < ns1)
+			{
+				snapshots[i] = snapshots[i + 1];
+				i++;
+			}
+			owner->nsnapshots = ns1;
+			return;
+		}
+	}
+	elog(ERROR, "snapshot reference %p is not owned by resource owner %s",
+		 snapshot, owner->name);
+}
+
+/*
+ * Debugging subroutine
+ */
+static void
+PrintSnapshotLeakWarning(Snapshot snapshot)
+{
+	elog(WARNING,
+		 "Snapshot reference leak: Snapshot %p still referenced",
+		 snapshot);
 }

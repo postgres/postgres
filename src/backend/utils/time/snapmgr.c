@@ -2,7 +2,7 @@
  * snapmgr.c
  *		PostgreSQL snapshot manager
  *
- * We keep track of snapshots in two ways: the "registered snapshots" list,
+ * We keep track of snapshots in two ways: those "registered" by resowner.c,
  * and the "active snapshot" stack.  All snapshots in either of them live in
  * persistent memory.  When a snapshot is no longer in any of these lists
  * (tracked by separate refcounts on each snapshot), its memory can be freed.
@@ -14,15 +14,12 @@
  * anyway it should be rather uncommon to keep snapshots referenced for too
  * long.)
  *
- * Note: parts of this code could probably be replaced by appropriate use
- * of resowner.c.
- *
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.6 2008/10/27 22:15:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.7 2008/11/25 20:28:29 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +31,7 @@
 #include "storage/procarray.h"
 #include "utils/memutils.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
@@ -69,33 +67,9 @@ TransactionId RecentXmin = FirstNormalTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
 
 /*
- * Elements of the list of registered snapshots.
- *
- * Note that we keep refcounts both here and in SnapshotData.  This is because
- * the same snapshot may be registered more than once in a subtransaction, and
- * if a subxact aborts we want to be able to subtract the correct amount of
- * counts from SnapshotData.  (Another approach would be keeping one
- * RegdSnapshotElt each time a snapshot is registered, but that seems
- * unnecessary wastage.)
- *
- * NB: the code assumes that elements in this list are in non-increasing
- * order of s_level; also, the list must be NULL-terminated.
- */
-typedef struct RegdSnapshotElt
-{
-	Snapshot	s_snap;
-	uint32		s_count;
-	int			s_level;
-	struct RegdSnapshotElt	*s_next;
-} RegdSnapshotElt;
-
-/*
  * Elements of the active snapshot stack.
  *
- * It's not necessary to keep a refcount like we do for the registered list;
- * each element here accounts for exactly one active_count on SnapshotData.
- * We cannot condense them like we do for RegdSnapshotElt because it would mess
- * up the order of entries in the stack.
+ * Each element here accounts for exactly one active_count on SnapshotData.
  *
  * NB: the code assumes that elements in this list are in non-increasing
  * order of as_level; also, the list must be NULL-terminated.
@@ -107,11 +81,17 @@ typedef struct ActiveSnapshotElt
 	struct ActiveSnapshotElt *as_next;
 } ActiveSnapshotElt;
 
-/* Head of the list of registered snapshots */
-static RegdSnapshotElt	   *RegisteredSnapshotList = NULL;
-
 /* Top of the stack of active snapshots */
 static ActiveSnapshotElt	*ActiveSnapshot = NULL;
+
+/*
+ * How many snapshots is resowner.c tracking for us?
+ *
+ * Note: for now, a simple counter is enough.  However, if we ever want to be
+ * smarter about advancing our MyProc->xmin we will need to be more
+ * sophisticated about this, perhaps keeping our own list of snapshots.
+ */
+static int				RegisteredSnapshots = 0;
 
 /* first GetTransactionSnapshot call in a transaction? */
 bool					FirstSnapshotSet = false;
@@ -133,7 +113,6 @@ static void	SnapshotResetXmin(void);
  * GetTransactionSnapshot
  *		Get the appropriate snapshot for a new query in a transaction.
  *
- *
  * Note that the return value may point at static storage that will be modified
  * by future calls and by CommandCounterIncrement().  Callers should call
  * RegisterSnapshot or PushActiveSnapshot on the returned snap if it is to be
@@ -145,6 +124,8 @@ GetTransactionSnapshot(void)
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)
 	{
+		Assert(RegisteredSnapshots == 0);
+
 		CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 		FirstSnapshotSet = true;
 
@@ -371,108 +352,47 @@ ActiveSnapshotSet(void)
 Snapshot
 RegisterSnapshot(Snapshot snapshot)
 {
-	RegdSnapshotElt	*elt;
-	RegdSnapshotElt	*newhead;
-	int		level;
+	Snapshot	snap;
 
 	if (snapshot == InvalidSnapshot)
 		return InvalidSnapshot;
 
-	level = GetCurrentTransactionNestLevel();
-
-	/*
-	 * If there's already an item in the list for the same snapshot and the
-	 * same subxact nest level, increment its refcounts.  Otherwise create a
-	 * new one.
-	 */
-	for (elt = RegisteredSnapshotList; elt != NULL; elt = elt->s_next)
-	{
-		if (elt->s_level < level)
-			break;
-
-		if (elt->s_snap == snapshot && elt->s_level == level)
-		{
-			elt->s_snap->regd_count++;
-			elt->s_count++;
-
-			return elt->s_snap;
-		}
-	}
-
-	/*
-	 * Create the new list element.  If it's not been copied into persistent
-	 * memory already, we must do so; otherwise we can just increment the
-	 * reference count.
-	 */
-	newhead = MemoryContextAlloc(TopTransactionContext, sizeof(RegdSnapshotElt));
-	newhead->s_next = RegisteredSnapshotList;
 	/* Static snapshot?  Create a persistent copy */
-	newhead->s_snap = snapshot->copied ? snapshot : CopySnapshot(snapshot);
-	newhead->s_level = level;
-	newhead->s_count = 1;
+	snap = snapshot->copied ? snapshot : CopySnapshot(snapshot);
 
-	newhead->s_snap->regd_count++;
+	/* and tell resowner.c about it */
+	ResourceOwnerEnlargeSnapshots(CurrentResourceOwner);
+	snap->regd_count++;
+	ResourceOwnerRememberSnapshot(CurrentResourceOwner, snap);
 
-	RegisteredSnapshotList = newhead;
+	RegisteredSnapshots++;
 
-	return RegisteredSnapshotList->s_snap;
+	return snap;
 }
 
 /*
  * UnregisterSnapshot
- * 		Signals that a snapshot is no longer necessary
  *
- * If both reference counts fall to zero, the snapshot memory is released.
- * If only the registered list refcount falls to zero, just the list element is
- * freed.
+ * Decrement the reference count of a snapshot, remove the corresponding
+ * reference from CurrentResourceOwner, and free the snapshot if no more
+ * references remain.
  */
 void
 UnregisterSnapshot(Snapshot snapshot)
 {
-	RegdSnapshotElt	*prev = NULL;
-	RegdSnapshotElt	*elt;
-	bool		found = false;
-
-	if (snapshot == InvalidSnapshot)
+	if (snapshot == NULL)
 		return;
 
-	for (elt = RegisteredSnapshotList; elt != NULL; elt = elt->s_next)
+	Assert(snapshot->regd_count > 0);
+	Assert(RegisteredSnapshots > 0);
+
+	ResourceOwnerForgetSnapshot(CurrentResourceOwner, snapshot);
+	RegisteredSnapshots--;
+	if (--snapshot->regd_count == 0 && snapshot->active_count == 0)
 	{
-		if (elt->s_snap == snapshot)
-		{
-			Assert(elt->s_snap->regd_count > 0);
-			Assert(elt->s_count > 0);
-
-			elt->s_snap->regd_count--;
-			elt->s_count--;
-			found = true;
-
-			if (elt->s_count == 0)
-			{
-				/* delink it from the registered snapshot list */
-				if (prev)
-					prev->s_next = elt->s_next;
-				else
-					RegisteredSnapshotList = elt->s_next;
-
-				/* free the snapshot itself if it's no longer relevant */
-				if (elt->s_snap->regd_count == 0 && elt->s_snap->active_count == 0)
-					FreeSnapshot(elt->s_snap);
-
-				/* and free the list element */
-				pfree(elt);
-			}
-
-			break;
-		}
-
-		prev = elt;
+		FreeSnapshot(snapshot);
+		SnapshotResetXmin();
 	}
-
-	if (!found)
-		elog(WARNING, "unregistering failed for snapshot %p", snapshot);
-
-	SnapshotResetXmin();
 }
 
 /*
@@ -485,7 +405,7 @@ UnregisterSnapshot(Snapshot snapshot)
 static void
 SnapshotResetXmin(void)
 {
-	if (RegisteredSnapshotList == NULL && ActiveSnapshot == NULL)
+	if (RegisteredSnapshots == 0 && ActiveSnapshot == NULL)
 		MyProc->xmin = InvalidTransactionId;
 }
 
@@ -496,7 +416,6 @@ void
 AtSubCommit_Snapshot(int level)
 {
 	ActiveSnapshotElt	*active;
-	RegdSnapshotElt	*regd;
 
 	/*
 	 * Relabel the active snapshots set in this subtransaction as though they
@@ -508,20 +427,6 @@ AtSubCommit_Snapshot(int level)
 			break;
 		active->as_level = level - 1;
 	}
-
-	/*
-	 * Reassign all registered snapshots to the parent subxact.
-	 *
-	 * Note: this code is somewhat bogus in that we could end up with multiple
-	 * entries for the same snapshot and the same subxact level (my parent's
-	 * level).  Cleaning that up is more trouble than it's currently worth,
-	 * however.
-	 */
-	for (regd = RegisteredSnapshotList; regd != NULL; regd = regd->s_next)
-	{
-		if (regd->s_level == level)
-			regd->s_level--;
-	}
 }
 
 /*
@@ -531,9 +436,6 @@ AtSubCommit_Snapshot(int level)
 void
 AtSubAbort_Snapshot(int level)
 {
-	RegdSnapshotElt	*prev;
-	RegdSnapshotElt	*regd;
-
 	/* Forget the active snapshots set by this subtransaction */
 	while (ActiveSnapshot && ActiveSnapshot->as_level >= level)
 	{
@@ -558,39 +460,6 @@ AtSubAbort_Snapshot(int level)
 		ActiveSnapshot = next;
 	}
 
-	/* Unregister all snapshots registered during this subtransaction */
-	prev = NULL;
-	for (regd = RegisteredSnapshotList; regd != NULL; )
-	{
-		if (regd->s_level >= level)
-		{
-			RegdSnapshotElt	*tofree;
-
-			if (prev)
-				prev->s_next = regd->s_next;
-			else
-				RegisteredSnapshotList = regd->s_next;
-
-			tofree = regd;
-			regd = regd->s_next;
-
-			tofree->s_snap->regd_count -= tofree->s_count;
-
-			/* free the snapshot if possible */
-			if (tofree->s_snap->regd_count == 0 &&
-				tofree->s_snap->active_count == 0)
-				FreeSnapshot(tofree->s_snap);
-
-			/* and free the list element */
-			pfree(tofree);
-		}
-		else
-		{
-			prev = regd;
-			regd = regd->s_next;
-		}
-	}
-
 	SnapshotResetXmin();
 }
 
@@ -605,7 +474,6 @@ AtEOXact_Snapshot(bool isCommit)
 	if (isCommit)
 	{
 		ActiveSnapshotElt	*active;
-		RegdSnapshotElt	*regd;
 
 		/*
 		 * On a serializable snapshot we must first unregister our private
@@ -614,16 +482,13 @@ AtEOXact_Snapshot(bool isCommit)
 		if (registered_serializable)
 			UnregisterSnapshot(CurrentSnapshot);
 
+		if (RegisteredSnapshots != 0)
+			elog(WARNING, "%d registered snapshots seem to remain after cleanup",
+				 RegisteredSnapshots);
+
 		/* complain about unpopped active snapshots */
 		for (active = ActiveSnapshot; active != NULL; active = active->as_next)
 			elog(WARNING, "snapshot %p still active", active);
-
-		/* complain about any unregistered snapshot */
-		for (regd = RegisteredSnapshotList; regd != NULL; regd = regd->s_next)
-			elog(WARNING,
-				 "snapshot %p not destroyed at commit (%d regd refs, %d active refs)",
-				 regd->s_snap, regd->s_snap->regd_count,
-				 regd->s_snap->active_count);
 	}
 
 	/*
@@ -631,7 +496,7 @@ AtEOXact_Snapshot(bool isCommit)
 	 * it'll go away with TopTransactionContext.
 	 */
 	ActiveSnapshot = NULL;
-	RegisteredSnapshotList = NULL;
+	RegisteredSnapshots = 0;
 
 	CurrentSnapshot = NULL;
 	SecondarySnapshot = NULL;

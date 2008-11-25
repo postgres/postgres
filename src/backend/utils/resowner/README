@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.7 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.8 2008/11/25 20:28:29 alvherre Exp $
 
 Notes About Resource Owners
 ===========================
@@ -61,11 +61,11 @@ ResourceOwner transfers lock ownership to the parent instead of actually
 releasing the lock, if isCommit is true.
 
 Currently, ResourceOwners contain direct support for recording ownership of
-buffer pins, lmgr locks, and catcache, relcache, plancache, and tupdesc
-references.  Other objects can be associated with a ResourceOwner by recording
-the address of the owning ResourceOwner in such an object.  There is an API
-for other modules to get control during ResourceOwner release, so that they
-can scan their own data structures to find the objects that need to be
+buffer pins, lmgr locks, and catcache, relcache, plancache, tupdesc, and
+snapshot references.  Other objects can be associated with a ResourceOwner by
+recording the address of the owning ResourceOwner in such an object.  There is
+an API for other modules to get control during ResourceOwner release, so that
+they can scan their own data structures to find the objects that need to be
 deleted.
 
 Whenever we are inside a transaction, the global variable
