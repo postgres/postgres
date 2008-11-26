@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.276 2008/11/10 00:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.277 2008/11/26 17:08:57 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	 */
 	MemSet(relation, 0, sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks_cache = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1376,7 +1376,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 */
 	relation = (Relation) palloc0(sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks_cache = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1665,9 +1665,9 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
-	/* Must reset targblock and fsm_nblocks_cache in case rel was truncated */
+	/* Must reset targblock and fsm_nblocks in case rel was truncated */
 	relation->rd_targblock = InvalidBlockNumber;
-	relation->rd_fsm_nblocks_cache = InvalidBlockNumber;
+	relation->rd_fsm_nblocks = InvalidBlockNumber;
 	/* Must free any AM cached data, too */
 	if (relation->rd_amcache)
 		pfree(relation->rd_amcache);
@@ -1750,7 +1750,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 	if (relation->rd_isnailed)
 	{
 		relation->rd_targblock = InvalidBlockNumber;
-		relation->rd_fsm_nblocks_cache = InvalidBlockNumber;
+		relation->rd_fsm_nblocks = InvalidBlockNumber;
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
 			relation->rd_isvalid = false;		/* needs to be revalidated */
@@ -2345,7 +2345,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel = (Relation) palloc0(sizeof(RelationData));
 
 	rel->rd_targblock = InvalidBlockNumber;
-	rel->rd_fsm_nblocks_cache = InvalidBlockNumber;
+	rel->rd_fsm_nblocks = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
@@ -3602,7 +3602,7 @@ load_relcache_init_file(void)
 		 */
 		rel->rd_smgr = NULL;
 		rel->rd_targblock = InvalidBlockNumber;
-		rel->rd_fsm_nblocks_cache = InvalidBlockNumber;
+		rel->rd_fsm_nblocks = InvalidBlockNumber;
 		if (rel->rd_isnailed)
 			rel->rd_refcnt = 1;
 		else

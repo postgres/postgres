@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.67 2008/11/19 10:34:52 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.68 2008/11/26 17:08:57 heikki Exp $
  *
  *
  * NOTES:
@@ -101,7 +101,7 @@ static BlockNumber fsm_get_heap_blk(FSMAddress addr, uint16 slot);
 static BlockNumber fsm_logical_to_physical(FSMAddress addr);
 
 static Buffer fsm_readbuf(Relation rel, FSMAddress addr, bool extend);
-static void fsm_extend(Relation rel, BlockNumber nfsmblocks, bool createstorage);
+static void fsm_extend(Relation rel, BlockNumber fsm_nblocks);
 
 /* functions to convert amount of free space to a FSM category */
 static uint8 fsm_space_avail_to_cat(Size avail);
@@ -303,13 +303,13 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_istemp);
 
 	/*
-	 * Need to invalidate the relcache entry, because rd_fsm_nblocks_cache
+	 * Need to invalidate the relcache entry, because rd_fsm_nblocks
 	 * seen by other backends is no longer valid.
 	 */
 	if (!InRecovery)
 		CacheInvalidateRelcache(rel);
 
-	rel->rd_fsm_nblocks_cache = new_nfsmblocks;
+	rel->rd_fsm_nblocks = new_nfsmblocks;
 }
 
 /*
@@ -503,19 +503,20 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 
 	RelationOpenSmgr(rel);
 
-	if (rel->rd_fsm_nblocks_cache == InvalidBlockNumber ||
-		rel->rd_fsm_nblocks_cache <= blkno)
+	/* If we haven't cached the size of the FSM yet, check it first */
+	if (rel->rd_fsm_nblocks == InvalidBlockNumber)
 	{
-		if (!smgrexists(rel->rd_smgr, FSM_FORKNUM))
-			fsm_extend(rel, blkno + 1, true);
+		if (smgrexists(rel->rd_smgr, FSM_FORKNUM))
+			rel->rd_fsm_nblocks = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
 		else
-			rel->rd_fsm_nblocks_cache = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+			rel->rd_fsm_nblocks = 0;
 	}
 
-	if (blkno >= rel->rd_fsm_nblocks_cache)
+	/* Handle requests beyond EOF */
+	if (blkno >= rel->rd_fsm_nblocks)
 	{
 		if (extend)
-			fsm_extend(rel, blkno + 1, false);
+			fsm_extend(rel, blkno + 1);
 		else
 			return InvalidBuffer;
 	}
@@ -536,13 +537,12 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 /*
  * Ensure that the FSM fork is at least n_fsmblocks long, extending
  * it if necessary with empty pages. And by empty, I mean pages filled
- * with zeros, meaning there's no free space. If createstorage is true,
- * the FSM file might need to be created first.
+ * with zeros, meaning there's no free space.
  */
 static void
-fsm_extend(Relation rel, BlockNumber n_fsmblocks, bool createstorage)
+fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 {
-	BlockNumber n_fsmblocks_now;
+	BlockNumber fsm_nblocks_now;
 	Page pg;
 
 	pg = (Page) palloc(BLCKSZ);
@@ -561,27 +561,30 @@ fsm_extend(Relation rel, BlockNumber n_fsmblocks, bool createstorage)
 	LockRelationForExtension(rel, ExclusiveLock);
 
 	/* Create the FSM file first if it doesn't exist */
-	if (createstorage && !smgrexists(rel->rd_smgr, FSM_FORKNUM))
+	if ((rel->rd_fsm_nblocks == 0 || rel->rd_fsm_nblocks == InvalidBlockNumber)
+		&& !smgrexists(rel->rd_smgr, FSM_FORKNUM))
 	{
 		smgrcreate(rel->rd_smgr, FSM_FORKNUM, false);
-		n_fsmblocks_now = 0;
+		fsm_nblocks_now = 0;
 	}
 	else
-		n_fsmblocks_now = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
+		fsm_nblocks_now = smgrnblocks(rel->rd_smgr, FSM_FORKNUM);
 
-	while (n_fsmblocks_now < n_fsmblocks)
+	while (fsm_nblocks_now < fsm_nblocks)
 	{
-		smgrextend(rel->rd_smgr, FSM_FORKNUM, n_fsmblocks_now,
+		smgrextend(rel->rd_smgr, FSM_FORKNUM, fsm_nblocks_now,
 				   (char *) pg, rel->rd_istemp);
-		n_fsmblocks_now++;
+		fsm_nblocks_now++;
 	}
 
 	UnlockRelationForExtension(rel, ExclusiveLock);
 
 	pfree(pg);
 
-	/* update the cache with the up-to-date size */
-	rel->rd_fsm_nblocks_cache = n_fsmblocks_now;
+	/* Update the relcache with the up-to-date size */
+	if (!InRecovery)
+		CacheInvalidateRelcache(rel);
+	rel->rd_fsm_nblocks = fsm_nblocks_now;
 }
 
 /*

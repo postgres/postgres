@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.63 2008/11/19 10:34:50 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.64 2008/11/26 17:08:57 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,7 +376,7 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	rel->rd_lockInfo.lockRelId.relId = rnode.relNode;
 
 	rel->rd_targblock = InvalidBlockNumber;
-	rel->rd_fsm_nblocks_cache = InvalidBlockNumber;
+	rel->rd_fsm_nblocks = InvalidBlockNumber;
 	rel->rd_smgr = NULL;
 
 	return rel;
