@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.246 2008/11/14 10:22:47 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.247 2008/11/26 11:26:54 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -189,6 +189,7 @@ PTHREAD_LIBS		= @PTHREAD_LIBS@
 have_docbook	= @have_docbook@
 DOCBOOKSTYLE	= @DOCBOOKSTYLE@
 COLLATEINDEX	= @COLLATEINDEX@
+DOCBOOK2MAN	= @DOCBOOK2MAN@
 
 
 ##########################################################################

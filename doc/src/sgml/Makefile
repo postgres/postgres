@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.112 2008/11/14 10:22:45 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.113 2008/11/26 11:26:54 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -35,6 +35,10 @@ endif
 
 ifndef SGMLSPL
 SGMLSPL = sgmlspl
+endif
+
+ifndef DOCBOOK2MAN
+DOCBOOK2MAN = docbook2man_is_missing
 endif
 
 # docbook2man generates man pages from docbook refentry source code.
@@ -275,9 +279,6 @@ MAKEINFO = makeinfo
 ##
 ## Experimental man page building through docbook2x
 ##
-
-# called docbook2man on non-Debian
-DOCBOOK2MAN = docbook2x-man
 
 manx: postgres.xml stylesheet-man.xsl
 	$(DOCBOOK2MAN) --solinks -s $(srcdir)/stylesheet-man.xsl --string-param default-manpage-section=$(DEFAULTSECTION)  $<
