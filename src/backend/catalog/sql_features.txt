@@ -257,7 +257,7 @@ F431	Read-only scrollable cursors	04	FETCH PRIOR	YES
 F431	Read-only scrollable cursors	05	FETCH ABSOLUTE	YES	
 F431	Read-only scrollable cursors	06	FETCH RELATIVE	YES	
 F441	Extended set function support			YES	
-F442	Mixed column references in set functions			NO	
+F442	Mixed column references in set functions			YES	
 F451	Character set definition			NO	
 F461	Named character sets			NO	
 F471	Scalar subquery values			YES	
