@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/discard.c,v 1.4 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/discard.c,v 1.5 2008/11/26 01:21:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ DiscardAll(bool isTopLevel)
 	DropAllPreparedStatements();
 	PortalHashTableDeleteAll();
 	Async_UnlistenAll();
+	LockReleaseAll(USER_LOCKMETHOD, true);
 	ResetPlanCache();
 	ResetTempTableNamespace();
 }
