@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.h,v 1.20 2008/11/26 00:26:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.h,v 1.21 2008/11/26 16:23:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef PQExpBufferData *PQExpBuffer;
  *------------------------
  */
 #define PQExpBufferBroken(str)  \
-	(!(str) || (str)->maxlen == 0)
+	((str) == NULL || (str)->maxlen == 0)
 
 /*------------------------
  * Initial size of the data buffer in a PQExpBuffer.
