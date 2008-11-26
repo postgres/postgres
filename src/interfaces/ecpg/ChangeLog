@@ -2394,6 +2394,8 @@ Sat, 25 Oct 2008 16:34:28 +0200
 Wed, 26 Nov 2008 14:09:08 +0100
 
 	- When creating a varchar struct name braces must be discarded.
+	- Applied patch by Ron Mayer <rm_pg@cheapcomplexdevices.com> to merge
+	  the new interval style into ecpg.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

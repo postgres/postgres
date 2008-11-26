@@ -77,6 +77,12 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 30 "dt_test.pgc"
 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set intervalstyle to postgres_verbose", ECPGt_EOIT, ECPGt_EORT);
+#line 31 "dt_test.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint (  );}
+#line 31 "dt_test.pgc"
+
 
 	date1 = PGTYPESdate_from_asc(d1, NULL); 
 	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
@@ -86,10 +92,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 35 "dt_test.pgc"
+#line 36 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 35 "dt_test.pgc"
+#line 36 "dt_test.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  *  from date_test where d =  $1   ", 
@@ -99,10 +105,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 37 "dt_test.pgc"
+#line 38 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 37 "dt_test.pgc"
+#line 38 "dt_test.pgc"
 
 
 	text = PGTYPESdate_to_asc(date1);
@@ -417,16 +423,16 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	free(text);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback ");
-#line 350 "dt_test.pgc"
+#line 351 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 350 "dt_test.pgc"
+#line 351 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 351 "dt_test.pgc"
+#line 352 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 351 "dt_test.pgc"
+#line 352 "dt_test.pgc"
 
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.39 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.40 2008/11/26 16:31:02 meskes Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -24,6 +24,22 @@ typedef double fsec_t;
 #define USE_ISO_DATES					1
 #define USE_SQL_DATES					2
 #define USE_GERMAN_DATES				3
+
+#define INTSTYLE_POSTGRES             0
+#define INTSTYLE_POSTGRES_VERBOSE     1
+#define INTSTYLE_SQL_STANDARD         2
+#define INTSTYLE_ISO_8601             3
+
+#define INTERVAL_FULL_RANGE (0x7FFF)
+#define INTERVAL_MASK(b) (1 << (b))
+#define MAX_INTERVAL_PRECISION 6
+
+#define DTERR_BAD_FORMAT		(-1)
+#define DTERR_FIELD_OVERFLOW	(-2)
+#define DTERR_MD_FIELD_OVERFLOW (-3)	/* triggers hint about DateStyle */
+#define DTERR_INTERVAL_OVERFLOW (-4)
+#define DTERR_TZDISP_OVERFLOW	(-5)
+
 
 #define DAGO			"ago"
 #define EPOCH			"epoch"
@@ -77,6 +93,9 @@ typedef double fsec_t;
  * Furthermore, the values for YEAR, MONTH, DAY, HOUR, MINUTE, SECOND
  * must be in the range 0..14 so that the associated bitmasks can fit
  * into the left half of an INTERVAL's typmod value.
+ *
+ * Copy&pasted these values from src/include/utils/datetime.h
+ * 2008-11-20, changing a number of their values.
  */
 
 #define RESERV	0
@@ -92,19 +111,22 @@ typedef double fsec_t;
 #define HOUR	10
 #define MINUTE	11
 #define SECOND	12
-#define DOY		13
-#define DOW		14
-#define UNITS	15
-#define ADBC	16
+#define MILLISECOND 13
+#define MICROSECOND 14
+#define DOY		15
+#define DOW		16
+#define UNITS	17
+#define ADBC	18
 /* these are only for relative dates */
-#define AGO		17
-#define ABS_BEFORE		18
-#define ABS_AFTER		19
+#define AGO		19
+#define ABS_BEFORE		20
+#define ABS_AFTER		21
 /* generic fields to help with parsing */
-#define ISODATE 20
-#define ISOTIME 21
+#define ISODATE 22
+#define ISOTIME 23
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
+
 
 /*
  * Token field definitions for time parsing and decoding.
@@ -164,13 +186,13 @@ typedef double fsec_t;
 /*
  * Bit mask definitions for time parsing.
  */
-
+/* Copy&pasted these values from src/include/utils/datetime.h */
 #define DTK_M(t)		(0x01 << (t))
-
+#define DTK_ALL_SECS_M     (DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
 
-#define MAXDATELEN		51		/* maximum possible length of an input date
+#define MAXDATELEN		63		/* maximum possible length of an input date
 								 * string (not counting tr. null) */
 #define MAXDATEFIELDS	25		/* maximum possible number of fields in a date
 								 * string */
