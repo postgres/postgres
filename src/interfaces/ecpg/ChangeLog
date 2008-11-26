@@ -2390,6 +2390,10 @@ Tue, 14 Oct 2008 11:25:51 +0200
 Sat, 25 Oct 2008 16:34:28 +0200
 
 	- Free allocated memory even if the next alloc failed with ENOMEM.
+
+Wed, 26 Nov 2008 14:09:08 +0100
+
+	- When creating a varchar struct name braces must be discarded.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

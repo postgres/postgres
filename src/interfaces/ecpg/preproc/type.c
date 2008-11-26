@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.79 2008/05/16 15:20:04 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.80 2008/11/26 13:18:22 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -327,8 +327,9 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
 	else
 	{
-		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
-		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
+		char *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
+		char *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
+		char *var_name; 
 
 		switch (type)
 		{
@@ -350,10 +351,14 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
+				/* remove trailing [] is name is array element */
+				var_name = strdup(name);
+				*(strchrnul(var_name, '[')) = '\0';
 				if (lineno)
-					sprintf(offset, "sizeof(struct varchar_%s_%d)", name, lineno);
+					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, lineno);
 				else
-					sprintf(offset, "sizeof(struct varchar_%s)", name);
+					sprintf(offset, "sizeof(struct varchar_%s)", var_name);
+				free(var_name);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
