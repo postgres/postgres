@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.52 2008/11/25 19:30:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.53 2008/11/26 13:26:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,7 +723,7 @@ initialize_environment(void)
 	 * the user's ability to set other variables through that.
 	 */
 	{
-		const char *my_pgoptions = "--intervalstyle=postgres_verbose";
+		const char *my_pgoptions = "-c intervalstyle=postgres_verbose";
 		const char *old_pgoptions = getenv("PGOPTIONS");
 		char   *new_pgoptions;
 
