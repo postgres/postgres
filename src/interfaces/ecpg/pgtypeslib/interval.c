@@ -1,8 +1,9 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.38 2008/11/26 16:31:02 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.39 2008/11/26 16:47:08 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
 #include <math.h>
+#include <limits.h>
 
 #ifdef __FAST_MATH__
 #error -ffast-math is known to break this code
