@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.77.2.2 2008/11/26 13:19:34 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.77.2.3 2008/11/26 15:37:01 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -329,7 +329,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	{
 		char *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
-		char *var_name; 
+		char *var_name, *ptr; 
 
 		switch (type)
 		{
@@ -353,7 +353,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 
 				/* remove trailing [] is name is array element */
 				var_name = strdup(name);
-				*(strchrnul(var_name, '[')) = '\0';
+				ptr = strchr(var_name, '[');
+				if (ptr) *ptr = '\0';
 				if (lineno)
 					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, lineno);
 				else
