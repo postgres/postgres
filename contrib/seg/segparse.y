@@ -40,6 +40,7 @@
 %}
 
 /* BISON Declarations */
+%expect 0
 %name-prefix="seg_yy"
 
 %union {

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.116 2008/11/05 00:07:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.117 2008/11/26 08:45:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ static List				*read_raise_options(void);
 
 %}
 
+%expect 0
 %name-prefix="plpgsql_yy"
 
 %union {

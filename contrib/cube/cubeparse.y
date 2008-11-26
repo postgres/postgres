@@ -2,7 +2,7 @@
 /* NdBox = [(lowerleft),(upperright)] */
 /* [(xLL(1)...xLL(N)),(xUR(1)...xUR(n))] */
 
-/* $PostgreSQL: pgsql/contrib/cube/cubeparse.y,v 1.18 2008/09/02 20:37:54 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/cube/cubeparse.y,v 1.19 2008/11/26 08:45:11 petere Exp $ */
 
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
 #define YYSTYPE char *
@@ -38,6 +38,7 @@ static NDBOX * write_point_as_box(char *s, int dim);
 %}
 
 /* BISON Declarations */
+%expect 0
 %name-prefix="cube_yy"
 
 %token CUBEFLOAT O_PAREN C_PAREN O_BRACKET C_BRACKET COMMA
