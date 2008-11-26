@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.64 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.65 2008/11/26 00:26:23 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -184,13 +184,20 @@ gets_fromFile(FILE *source)
 		{
 			if (ferror(source))
 			{
-				psql_error("could not read from input file: %s\n", strerror(errno));
+				psql_error("could not read from input file: %s\n",
+						   strerror(errno));
 				return NULL;
 			}
 			break;
 		}
 
 		appendPQExpBufferStr(buffer, line);
+
+		if (PQExpBufferBroken(buffer))
+		{
+			psql_error("out of memory\n");
+			return NULL;
+		}
 
 		/* EOL? */
 		if (buffer->data[buffer->len - 1] == '\n')

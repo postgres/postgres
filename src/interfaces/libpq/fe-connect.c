@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.369 2008/11/25 19:30:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.370 2008/11/26 00:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,7 +585,7 @@ PQconndefaults(void)
 	PQconninfoOption *connOptions;
 
 	initPQExpBuffer(&errorBuf);
-	if (errorBuf.data == NULL)
+	if (PQExpBufferBroken(&errorBuf))
 		return NULL;			/* out of memory already :-( */
 	connOptions = conninfo_parse("", &errorBuf, true);
 	termPQExpBuffer(&errorBuf);
@@ -1970,8 +1970,8 @@ makeEmptyPGconn(void)
 
 	if (conn->inBuffer == NULL ||
 		conn->outBuffer == NULL ||
-		conn->errorMessage.data == NULL ||
-		conn->workBuffer.data == NULL)
+		PQExpBufferBroken(&conn->errorMessage) ||
+		PQExpBufferBroken(&conn->workBuffer))
 	{
 		/* out of memory already :-( */
 		freePGconn(conn);
@@ -3151,7 +3151,7 @@ PQconninfoParse(const char *conninfo, char **errmsg)
 	if (errmsg)
 		*errmsg = NULL;			/* default */
 	initPQExpBuffer(&errorBuf);
-	if (errorBuf.data == NULL)
+	if (PQExpBufferBroken(&errorBuf))
 		return NULL;			/* out of memory already :-( */
 	connOptions = conninfo_parse(conninfo, &errorBuf, false);
 	if (connOptions == NULL && errmsg)

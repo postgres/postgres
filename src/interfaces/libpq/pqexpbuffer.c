@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.24 2008/01/01 19:46:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.25 2008/11/26 00:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,32 @@
 #ifdef WIN32
 #include "win32.h"
 #endif
+
+
+/* All "broken" PQExpBuffers point to this string. */
+static const char oom_buffer[1] = "";
+
+
+/*
+ * markPQExpBufferBroken
+ *
+ * Put a PQExpBuffer in "broken" state if it isn't already.
+ */
+static void
+markPQExpBufferBroken(PQExpBuffer str)
+{
+	if (str->data != oom_buffer)
+		free(str->data);
+	/*
+	 * Casting away const here is a bit ugly, but it seems preferable to
+	 * not marking oom_buffer const.  We want to do that to encourage the
+	 * compiler to put oom_buffer in read-only storage, so that anyone who
+	 * tries to scribble on a broken PQExpBuffer will get a failure.
+	 */
+	str->data = (char *) oom_buffer;
+	str->len = 0;
+	str->maxlen = 0;
+}
 
 /*
  * createPQExpBuffer
@@ -61,6 +87,7 @@ initPQExpBuffer(PQExpBuffer str)
 	str->data = (char *) malloc(INITIAL_EXPBUFFER_SIZE);
 	if (str->data == NULL)
 	{
+		str->data = (char *) oom_buffer;		/* see comment above */
 		str->maxlen = 0;
 		str->len = 0;
 	}
@@ -96,12 +123,10 @@ destroyPQExpBuffer(PQExpBuffer str)
 void
 termPQExpBuffer(PQExpBuffer str)
 {
-	if (str->data)
-	{
+	if (str->data != oom_buffer)
 		free(str->data);
-		str->data = NULL;
-	}
 	/* just for luck, make the buffer validly empty. */
+	str->data = (char *) oom_buffer;		/* see comment above */
 	str->maxlen = 0;
 	str->len = 0;
 }
@@ -109,15 +134,24 @@ termPQExpBuffer(PQExpBuffer str)
 /*
  * resetPQExpBuffer
  *		Reset a PQExpBuffer to empty
+ *
+ * Note: if possible, a "broken" PQExpBuffer is returned to normal.
  */
 void
 resetPQExpBuffer(PQExpBuffer str)
 {
 	if (str)
 	{
-		str->len = 0;
-		if (str->data)
+		if (str->data != oom_buffer)
+		{
+			str->len = 0;
 			str->data[0] = '\0';
+		}
+		else
+		{
+			/* try to reinitialize to valid state */
+			initPQExpBuffer(str);
+		}
 	}
 }
 
@@ -126,7 +160,8 @@ resetPQExpBuffer(PQExpBuffer str)
  * Make sure there is enough space for 'needed' more bytes in the buffer
  * ('needed' does not include the terminating null).
  *
- * Returns 1 if OK, 0 if failed to enlarge buffer.
+ * Returns 1 if OK, 0 if failed to enlarge buffer.  (In the latter case
+ * the buffer is left in "broken" state.)
  */
 int
 enlargePQExpBuffer(PQExpBuffer str, size_t needed)
@@ -134,13 +169,19 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	size_t		newlen;
 	char	   *newdata;
 
+	if (PQExpBufferBroken(str))
+		return 0;				/* already failed */
+
 	/*
 	 * Guard against ridiculous "needed" values, which can occur if we're fed
 	 * bogus data.	Without this, we can get an overflow or infinite loop in
 	 * the following.
 	 */
 	if (needed >= ((size_t) INT_MAX - str->len))
+	{
+		markPQExpBufferBroken(str);
 		return 0;
+	}
 
 	needed += str->len + 1;		/* total space required now */
 
@@ -173,6 +214,8 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 		str->maxlen = newlen;
 		return 1;
 	}
+
+	markPQExpBufferBroken(str);
 	return 0;
 }
 
@@ -191,6 +234,9 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	int			nprinted;
 
 	resetPQExpBuffer(str);
+
+	if (PQExpBufferBroken(str))
+		return;					/* already failed */
 
 	for (;;)
 	{
@@ -239,6 +285,9 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	va_list		args;
 	size_t		avail;
 	int			nprinted;
+
+	if (PQExpBufferBroken(str))
+		return;					/* already failed */
 
 	for (;;)
 	{
