@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.68 2008/11/26 17:08:57 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.69 2008/11/27 13:32:26 heikki Exp $
  *
  *
  * NOTES:
@@ -638,13 +638,8 @@ fsm_search(Relation rel, uint8 min_cat)
 		Buffer buf;
 		uint8 max_avail = 0;
 
-		/*
-		 * Read the FSM page. The root page is created if it doesn't exist
-		 * yet, to save future searchers the effort of having to call
-		 * smgrnblocks() in fsm_readbuf(), only to see that the FSM is
-		 * completely empty.
-		 */
-		buf = fsm_readbuf(rel, addr, (addr.level != FSM_ROOT_LEVEL));
+		/* Read the FSM page. */
+		buf = fsm_readbuf(rel, addr, false);
 
 		/* Search within the page */
 		if (BufferIsValid(buf))
