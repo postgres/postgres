@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.345 2008/11/19 10:34:51 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.346 2008/11/27 15:59:28 heikki Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2276,9 +2276,7 @@ RelationTruncateIndexes(Relation heapRelation)
 		indexInfo = BuildIndexInfo(currentIndex);
 
 		/*
-		 * Now truncate the actual file (and discard buffers). The indexam
-		 * is responsible for truncating the FSM in index_build(), if
-		 * applicable.
+		 * Now truncate the actual file (and discard buffers).
 		 */
 		RelationTruncate(currentIndex, 0);
 
@@ -2333,7 +2331,7 @@ heap_truncate(List *relids)
 	{
 		Relation	rel = lfirst(cell);
 
-		/* Truncate the FSM and actual file (and discard buffers) */
+		/* Truncate the actual file (and discard buffers) */
 		RelationTruncate(rel, 0);
 
 		/* If this relation has indexes, truncate the indexes too */
