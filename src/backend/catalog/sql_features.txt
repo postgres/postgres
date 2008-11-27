@@ -400,10 +400,10 @@ T061	UCS support			NO
 T071	BIGINT data type			YES	
 T101	Enhanced nullability determiniation			NO	
 T111	Updatable joins, unions, and columns			NO	
-T121	WITH (excluding RECURSIVE) in query expression			NO	
-T122	WITH (excluding RECURSIVE) in subquery			NO	
-T131	Recursive query			NO	
-T132	Recursive query in subquery			NO	
+T121	WITH (excluding RECURSIVE) in query expression			YES	
+T122	WITH (excluding RECURSIVE) in subquery			YES	
+T131	Recursive query			YES	
+T132	Recursive query in subquery			YES	
 T141	SIMILAR predicate			YES	
 T151	DISTINCT predicate			YES	
 T152	DISTINCT predicate with negation			YES	
