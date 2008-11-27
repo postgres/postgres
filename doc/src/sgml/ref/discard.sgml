@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.4 2008/11/26 01:21:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.5 2008/11/27 00:28:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -71,9 +71,9 @@ DISCARD { ALL | PLANS | TEMPORARY | TEMP }
     <listitem>
      <para>
       Releases all temporary resources associated with the current
-      session and resets the session to its initial state. This has
-      the same effect as executing the following sequence of
-      statements:
+      session and resets the session to its initial state.
+      Currently, this has the same effect as executing the following sequence
+      of statements:
 <programlisting>
 SET SESSION AUTHORIZATION DEFAULT;
 RESET ALL;
