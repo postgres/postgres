@@ -29,7 +29,6 @@ B125	Routine language MUMPS			NO
 B126	Routine language Pascal			NO	
 B127	Routine language PL/I			NO	
 B128	Routine language SQL			NO	
-C011	Call-Level Interface			NO	
 E011	Numeric data types			YES	
 E011	Numeric data types	01	INTEGER and SMALLINT data types	YES	
 E011	Numeric data types	02	REAL, DOUBLE PRECISION, and FLOAT data types	YES	
