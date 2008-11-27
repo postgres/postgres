@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.2 2008/09/19 19:03:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.3 2008/11/27 21:17:39 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,32 +290,33 @@ compute_tsvector_stats(VacAttrStats *stats,
 		if (num_mcelem > track_len)
 			num_mcelem = track_len;
 
-		/* Grab the minimal and maximal frequencies that will get stored */
-		minfreq = sort_table[num_mcelem - 1]->frequency;
-		maxfreq = sort_table[0]->frequency;
-
-		/*
-		 * We want to store statistics sorted on the lexeme value using first
-		 * length, then byte-for-byte comparison. The reason for doing length
-		 * comparison first is that we don't care about the ordering so long
-		 * as it's consistent, and comparing lengths first gives us a chance
-		 * to avoid a strncmp() call.
-		 *
-		 * This is different from what we do with scalar statistics -- they get
-		 * sorted on frequencies. The rationale is that we usually search
-		 * through most common elements looking for a specific value, so we can
-		 * grab its frequency.  When values are presorted we can employ binary
-		 * search for that.  See ts_selfuncs.c for a real usage scenario.
-		 */
-		qsort(sort_table, num_mcelem, sizeof(TrackItem *),
-			  trackitem_compare_lexemes);
-
 		/* Generate MCELEM slot entry */
 		if (num_mcelem > 0)
 		{
 			MemoryContext	old_context;
 			Datum			*mcelem_values;
 			float4			*mcelem_freqs;
+
+			/* Grab the minimal and maximal frequencies that will get stored */
+			minfreq = sort_table[num_mcelem - 1]->frequency;
+			maxfreq = sort_table[0]->frequency;
+
+			/*
+			 * We want to store statistics sorted on the lexeme value using
+			 * first length, then byte-for-byte comparison. The reason for
+			 * doing length comparison first is that we don't care about the
+			 * ordering so long as it's consistent, and comparing lengths first
+			 * gives us a chance to avoid a strncmp() call.
+			 *
+			 * This is different from what we do with scalar statistics -- they
+			 * get sorted on frequencies. The rationale is that we usually
+			 * search through most common elements looking for a specific
+			 * value, so we can grab its frequency.  When values are presorted
+			 * we can employ binary search for that.  See ts_selfuncs.c for a
+			 * real usage scenario.
+			 */
+			qsort(sort_table, num_mcelem, sizeof(TrackItem *),
+				  trackitem_compare_lexemes);
 
 			/* Must copy the target values into anl_context */
 			old_context = MemoryContextSwitchTo(stats->anl_context);
