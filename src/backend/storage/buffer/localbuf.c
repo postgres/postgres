@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.83 2008/11/11 14:17:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.84 2008/11/27 07:38:01 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		bufHdr = &LocalBufferDescriptors[b];
 		Assert(BUFFERTAGS_EQUAL(bufHdr->tag, newTag));
 #ifdef LBDEBUG
-		fprintf(stderr, "LB ALLOC (%u,%d) %d\n",
-				smgr->smgr_rnode.relNode, blockNum, -b - 1);
+		fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
+				smgr->smgr_rnode.relNode, forkNum, blockNum, -b - 1);
 #endif
 		/* this part is equivalent to PinBuffer for a shared buffer */
 		if (LocalRefCount[b] == 0)
@@ -111,8 +111,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	}
 
 #ifdef LBDEBUG
-	fprintf(stderr, "LB ALLOC (%u,%d) %d\n",
-			RelationGetRelid(reln), blockNum, -nextFreeLocalBuf - 1);
+	fprintf(stderr, "LB ALLOC (%u,%d,%d) %d\n",
+		smgr->smgr_rnode.relNode, forkNum, blockNum, -nextFreeLocalBuf - 1);
 #endif
 
 	/*
