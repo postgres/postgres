@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.2 2007/04/26 18:00:24 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.2.2.1 2008/11/27 00:34:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -70,15 +70,16 @@ DISCARD { ALL | PLANS | TEMPORARY | TEMP }
     <listitem>
      <para>
       Releases all temporary resources associated with the current
-      session and resets the session to its initial state. This has
-      the same effect as executing the following sequence of
-      statements:
+      session and resets the session to its initial state.
+      Currently, this has the same effect as executing the following sequence
+      of statements:
 <programlisting>
 SET SESSION AUTHORIZATION DEFAULT;
 RESET ALL;
 DEALLOCATE ALL;
 CLOSE ALL;
 UNLISTEN *;
+SELECT pg_advisory_unlock_all();
 DISCARD PLANS;
 DISCARD TEMP;
 </programlisting>
