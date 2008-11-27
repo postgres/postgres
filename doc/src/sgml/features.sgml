@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.28 2008/10/18 00:35:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.29 2008/11/27 12:12:02 petere Exp $ -->
 
 <appendix id="features">
  <title>SQL Conformance</title>
@@ -58,24 +58,25 @@
   are not consecutively numbered.
 
   <itemizedlist>
-   <listitem><para>ISO/IEC 9075-1 Framework (SQL/Framework)</para></listitem>
-   <listitem><para>ISO/IEC 9075-2 Foundation (SQL/Foundation)</para></listitem>
-   <listitem><para>ISO/IEC 9075-3 Call Level Interface (SQL/CLI)</para></listitem>
-   <listitem><para>ISO/IEC 9075-4 Persistent Stored Modules (SQL/PSM)</para></listitem>
-   <listitem><para>ISO/IEC 9075-9 Management of External Data (SQL/MED)</para></listitem>
-   <listitem><para>ISO/IEC 9075-10 Object Language Bindings (SQL/OLB)</para></listitem>
-   <listitem><para>ISO/IEC 9075-11 Information and Definition Schemas (SQL/Schemata)</para></listitem>
-   <listitem><para>ISO/IEC 9075-13 Routines and Types using the Java Language (SQL/JRT)</para></listitem>
-   <listitem><para>ISO/IEC 9075-14 XML-related specifications (SQL/XML)</para></listitem>
+   <listitem><para>ISO/IEC 9075-1 Framework (SQL/Framework)</para><indexterm><primary>SQL/Framework</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-2 Foundation (SQL/Foundation)</para><indexterm><primary>SQL/Foundation</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-3 Call Level Interface (SQL/CLI)</para><indexterm><primary>SQL/CLI</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-4 Persistent Stored Modules (SQL/PSM)</para><indexterm><primary>SQL/PSM</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-9 Management of External Data (SQL/MED)</para><indexterm><primary>SQL/MED</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-10 Object Language Bindings (SQL/OLB)</para><indexterm><primary>SQL/OLB</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-11 Information and Definition Schemas (SQL/Schemata)</para><indexterm><primary>SQL/Schemata</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-13 Routines and Types using the Java Language (SQL/JRT)</para><indexterm><primary>SQL/JRT</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-14 XML-related specifications (SQL/XML)</para><indexterm><primary>SQL/XML</primary></indexterm></listitem>
   </itemizedlist>
  </para>
 
  <para>
-  <productname>PostgreSQL</productname> covers parts 1, 2, 11, and 14.
-  Part 3 is similar to the ODBC interface, and part 4 is similar to
-  the <application>PL/pgSQL</application> programming language, but
-  exact conformance is not specifically intended or verified in either
-  case.
+  The <productname>PostgreSQL</productname> core covers parts 1, 2,
+  11, and 14.  Part 3 is covered by the ODBC driver, and part 13 is
+  covered by the PL/Java plug-in, but exact conformance is currently
+  not being verified for these components.  There are currently no
+  implementations of parts 4, 9, and 10
+  for <productname>PostgreSQL</productname>.
  </para>
 
  <para>
