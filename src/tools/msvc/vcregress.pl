@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.8 2008/10/06 02:55:20 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.9 2008/11/28 23:47:51 tgl Exp $
 
 use strict;
 
@@ -119,8 +119,7 @@ sub check
         "--load-language=plpgsql",
         "--no-locale",
         "--temp-install=./tmp_check",
-        "--top-builddir=\"$topdir\"",
-        "--temp-port=$temp_port"
+        "--top-builddir=\"$topdir\""
     );
     push(@args,$maxconn) if $maxconn;
 	push(@args,$temp_config) if $temp_config;
@@ -148,7 +147,7 @@ sub ecpgcheck
         "--no-locale",
         "--temp-install=./tmp_chk",
         "--top-builddir=\"$topdir\"",
-        "--temp-port=$temp_port"
+        "--port=$temp_port"
     );
     push(@args,$maxconn) if $maxconn;
     system(@args);
