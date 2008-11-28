@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.8 2008/01/01 19:45:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.9 2008/11/28 18:04:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,15 +17,14 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 
-PG_MODULE_MAGIC;
-
 #include "isn.h"
-
 #include "EAN13.h"
 #include "ISBN.h"
 #include "ISMN.h"
 #include "ISSN.h"
 #include "UPC.h"
+
+PG_MODULE_MAGIC;
 
 #define MAXEAN13LEN 18
 
@@ -34,7 +33,7 @@ enum isn_type
 	INVALID, ANY, EAN13, ISBN, ISMN, ISSN, UPC
 };
 
-static const char *isn_names[] = {"EAN13/UPC/ISxN", "EAN13/UPC/ISxN", "EAN13", "ISBN", "ISMN", "ISSN", "UPC"};
+static const char * const isn_names[] = {"EAN13/UPC/ISxN", "EAN13/UPC/ISxN", "EAN13", "ISBN", "ISMN", "ISSN", "UPC"};
 
 static bool g_weak = false;
 static bool g_initialized = false;
@@ -58,8 +57,7 @@ static bool g_initialized = false;
  * Check if the table and its index is correct (just for debugging)
  */
 #ifdef ISN_DEBUG
-static
-bool
+static bool
 check_table(const char *(*TABLE)[2], const unsigned TABLE_index[10][2])
 {
 	const char *aux1,
@@ -139,8 +137,7 @@ invalidindex:
  * Formatting and conversion routines.
  *---------------------------------------------------------*/
 
-static
-unsigned
+static unsigned
 dehyphenate(char *bufO, char *bufI)
 {
 	unsigned	ret = 0;
@@ -165,8 +162,7 @@ dehyphenate(char *bufO, char *bufI)
  *
  * Returns the number of characters acctually hyphenated.
  */
-static
-unsigned
+static unsigned
 hyphenate(char *bufO, char *bufI, const char *(*TABLE)[2], const unsigned TABLE_index[10][2])
 {
 	unsigned	ret = 0;
@@ -276,8 +272,7 @@ hyphenate(char *bufO, char *bufI, const char *(*TABLE)[2], const unsigned TABLE_
  *
  * Returns the weight of the number (the check digit value, 0-10)
  */
-static
-unsigned
+static unsigned
 weight_checkdig(char *isn, unsigned size)
 {
 	unsigned	weight = 0;
@@ -303,8 +298,7 @@ weight_checkdig(char *isn, unsigned size)
  *
  * Returns the check digit value (0-9)
  */
-static
-unsigned
+static unsigned
 checkdig(char *num, unsigned size)
 {
 	unsigned	check = 0,
@@ -341,8 +335,7 @@ checkdig(char *num, unsigned size)
  * If errorOK is false, ereport a useful error message if the ean13 is bad.
  * If errorOK is true, just return "false" for bad input.
  */
-static
-bool
+static bool
 ean2isn(ean13 ean, bool errorOK, ean13 * result, enum isn_type accept)
 {
 	enum isn_type type = INVALID;
@@ -445,8 +438,7 @@ eantoobig:
  * ean2UPC/ISxN --- Convert in-place a normalized EAN13 string to the corresponding
  *					UPC/ISxN string number. Assumes the input string is normalized.
  */
-static inline
-void
+static inline void
 ean2ISBN(char *isn)
 {
 	char	   *aux;
@@ -463,8 +455,8 @@ ean2ISBN(char *isn)
 	else
 		*aux = check + '0';
 }
-static inline
-void
+
+static inline void
 ean2ISMN(char *isn)
 {
 	/* the number should come in this format: 979-0-000-00000-0 */
@@ -472,8 +464,8 @@ ean2ISMN(char *isn)
 	hyphenate(isn, isn + 4, NULL, NULL);
 	isn[0] = 'M';
 }
-static inline
-void
+
+static inline void
 ean2ISSN(char *isn)
 {
 	unsigned	check;
@@ -488,8 +480,8 @@ ean2ISSN(char *isn)
 		isn[8] = check + '0';
 	isn[9] = '\0';
 }
-static inline
-void
+
+static inline void
 ean2UPC(char *isn)
 {
 	/* the number should come in this format: 000-000000000-0 */
@@ -505,8 +497,7 @@ ean2UPC(char *isn)
  *
  * Returns the ean13 value of the string.
  */
-static
-			ean13
+static ean13
 str2ean(const char *num)
 {
 	ean13		ean = 0;		/* current ean */
@@ -530,8 +521,7 @@ str2ean(const char *num)
  * If errorOK is false, ereport a useful error message if the string is bad.
  * If errorOK is true, just return "false" for bad input.
  */
-static
-bool
+static bool
 ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 {
 	const char *(*TABLE)[2];
@@ -677,8 +667,7 @@ eantoobig:
  * if the input string ends with '!' it will always be treated as invalid
  * (even if the check digit is valid)
  */
-static
-bool
+static bool
 string2ean(const char *str, bool errorOK, ean13 * result,
 		   enum isn_type accept)
 {
@@ -1110,7 +1099,6 @@ make_valid(PG_FUNCTION_ARGS)
 	PG_RETURN_EAN13(val);
 }
 
-#ifdef ISN_WEAK_MODE
 /* this function temporarily sets weak input flag
  * (to lose the strictness of check digit acceptance)
  * It's a helper function, not intended to be used!!
@@ -1119,18 +1107,13 @@ PG_FUNCTION_INFO_V1(accept_weak_input);
 Datum
 accept_weak_input(PG_FUNCTION_ARGS)
 {
+#ifdef ISN_WEAK_MODE
 	g_weak = PG_GETARG_BOOL(0);
+#else
+	/* function has no effect */
+#endif   /* ISN_WEAK_MODE */
 	PG_RETURN_BOOL(g_weak);
 }
-#else
-PG_FUNCTION_INFO_V1(accept_weak_input);
-Datum
-accept_weak_input(PG_FUNCTION_ARGS)
-{
-	/* function has no effect */
-	PG_RETURN_BOOL(false);
-}
-#endif   /* ISN_WEAK_MODE */
 
 PG_FUNCTION_INFO_V1(weak_input_status);
 Datum

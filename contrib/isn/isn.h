@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.5 2008/01/01 19:45:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.6 2008/11/28 18:04:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,8 @@ typedef uint64 ean13;
 
 #define EAN13_FORMAT UINT64_FORMAT
 
-#define PG_GETARG_EAN13(n) PG_GETARG_INT64((int64)n)
-#define PG_RETURN_EAN13(x) PG_RETURN_INT64((int64)x)
+#define PG_GETARG_EAN13(n) PG_GETARG_INT64(n)
+#define PG_RETURN_EAN13(x) PG_RETURN_INT64(x)
 
 extern Datum isn_out(PG_FUNCTION_ARGS);
 extern Datum ean13_out(PG_FUNCTION_ARGS);
