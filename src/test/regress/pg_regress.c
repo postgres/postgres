@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.53 2008/11/26 13:26:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.54 2008/11/28 12:45:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,10 +83,10 @@ static _stringlist *extra_tests = NULL;
 static char *temp_install = NULL;
 static char *temp_config = NULL;
 static char *top_builddir = NULL;
-static int	temp_port = 65432;
 static bool nolocale = false;
 static char *hostname = NULL;
 static int	port = -1;
+static bool port_specified_by_user = false;
 static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
 static _stringlist *extraroles = NULL;
@@ -1844,7 +1844,7 @@ help(void)
 	printf(_("Options for \"temp-install\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
 	printf(_("  --top-builddir=DIR        (relative) path to top level build directory\n"));
-	printf(_("  --temp-port=PORT          port number to start temp postmaster on\n"));
+	printf(_("  --port=PORT               start postmaster on PORT\n"));
 	printf(_("  --temp-config=PATH        append contents of PATH to temporary config\n"));
 	printf(_("\n"));
 	printf(_("Options for using an existing installation:\n"));
@@ -1867,6 +1867,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	int			i;
 	int			option_index;
 	char		buf[MAXPGPATH * 4];
+	char		buf2[MAXPGPATH * 4];
 
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -1882,7 +1883,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"temp-install", required_argument, NULL, 9},
 		{"no-locale", no_argument, NULL, 10},
 		{"top-builddir", required_argument, NULL, 11},
-		{"temp-port", required_argument, NULL, 12},
 		{"host", required_argument, NULL, 13},
 		{"port", required_argument, NULL, 14},
 		{"user", required_argument, NULL, 15},
@@ -1956,20 +1956,12 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 11:
 				top_builddir = strdup(optarg);
 				break;
-			case 12:
-				{
-					int			p = atoi(optarg);
-
-					/* Since Makefile isn't very bright, check port range */
-					if (p >= 1024 && p <= 65535)
-						temp_port = p;
-				}
-				break;
 			case 13:
 				hostname = strdup(optarg);
 				break;
 			case 14:
 				port = atoi(optarg);
+				port_specified_by_user = true;
 				break;
 			case 15:
 				user = strdup(optarg);
@@ -2005,8 +1997,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		optind++;
 	}
 
-	if (temp_install)
-		port = temp_port;
+	if (temp_install && !port_specified_by_user)
+		/*
+		 * To reduce chances of interference with parallel
+		 * installations, use a port number starting in the private
+		 * range (49152-65535) calculated from the version number.
+		 */
+		port = 0xC000 | (PG_VERSION_NUM & 0x3FFF);
 
 	inputdir = make_absolute_path(inputdir);
 	outputdir = make_absolute_path(outputdir);
@@ -2107,6 +2104,37 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		}
 
 		/*
+		 * Check if there is a postmaster running already.
+		 */
+		snprintf(buf2, sizeof(buf2),
+				 SYSTEMQUOTE "\"%s/psql\" -X postgres <%s 2>%s" SYSTEMQUOTE,
+				 bindir, DEVNULL, DEVNULL);
+
+		for (i = 0; i < 16; i++)
+		{
+			if (system(buf2) == 0)
+			{
+				char		s[16];
+
+				if (port_specified_by_user || i == 15)
+				{
+					fprintf(stderr, _("port %d apparently in use\n"), port);
+					if (!port_specified_by_user)
+						fprintf(stderr, _("%s: could not determine an available port\n"), progname);
+					fprintf(stderr, _("Specify an unused port using the --port option or shut down any conflicting PostgreSQL servers.\n"));
+					exit_nicely(2);
+				}
+
+				fprintf(stderr, _("port %d apparently in use, trying %d\n"), port, port+1);
+				port++;
+				sprintf(s, "%d", port);
+				doputenv("PGPORT", s);
+			}
+			else
+				break;
+		}
+
+		/*
 		 * Start the temp postmaster
 		 */
 		header(_("starting postmaster"));
@@ -2129,13 +2157,10 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		 * second or so, but Cygwin is reportedly *much* slower).  Don't wait
 		 * forever, however.
 		 */
-		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s/psql\" -X postgres <%s 2>%s" SYSTEMQUOTE,
-				 bindir, DEVNULL, DEVNULL);
 		for (i = 0; i < 60; i++)
 		{
 			/* Done if psql succeeds */
-			if (system(buf) == 0)
+			if (system(buf2) == 0)
 				break;
 
 			/*
@@ -2180,7 +2205,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		postmaster_running = true;
 
 		printf(_("running on port %d with pid %lu\n"),
-			   temp_port, (unsigned long) postmaster_pid);
+			   port, (unsigned long) postmaster_pid);
 	}
 	else
 	{
