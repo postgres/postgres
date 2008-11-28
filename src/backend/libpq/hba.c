@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.175 2008/11/20 20:45:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.176 2008/11/28 14:26:58 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
+#include "regex/regex.h"
 #include "storage/fd.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
@@ -1403,20 +1404,128 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 	token = lfirst(line_item);
 	file_pgrole = token;
 
+	if (strcmp(file_map, usermap_name) != 0)
+		/* Line does not match the map name we're looking for, so just abort */
+		return;
+
 	/* Match? */
-	if (case_insensitive)
+	if (file_ident_user[0] == '/')
 	{
-		if (strcmp(file_map, usermap_name) == 0 &&
-			pg_strcasecmp(file_pgrole, pg_role) == 0 &&
-			pg_strcasecmp(file_ident_user, ident_user) == 0)
-			*found_p = true;
+		/*
+		 * When system username starts with a slash, treat it as a regular expression.
+		 * In this case, we process the system username as a regular expression that
+		 * returns exactly one match. This is replaced for \1 in the database username
+		 * string, if present.
+		 */
+		int			r;
+		regex_t		re;
+		regmatch_t	matches[2];
+		pg_wchar   *wstr;
+		int			wlen;
+		char	   *ofs;
+		char	   *regexp_pgrole;
+
+		wstr = palloc((strlen(file_ident_user+1) + 1) * sizeof(pg_wchar));
+		wlen = pg_mb2wchar_with_len(file_ident_user+1, wstr, strlen(file_ident_user+1));
+
+		/*
+		 * XXX: Major room for optimization: regexps could be compiled when the file is loaded
+		 * and then re-used in every connection.
+		 */
+		r = pg_regcomp(&re, wstr, wlen, REG_ADVANCED);
+		if (r)
+		{
+			char errstr[100];
+
+			pg_regerror(r, &re, errstr, sizeof(errstr));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+					 errmsg("invalid regular expression '%s': %s", file_ident_user+1, errstr)));
+
+			pfree(wstr);
+			*error_p = true;
+			return;
+		}
+		pfree(wstr);
+
+		wstr = palloc((strlen(ident_user) + 1) * sizeof(pg_wchar));
+		wlen = pg_mb2wchar_with_len(ident_user, wstr, strlen(ident_user));
+
+		r = pg_regexec(&re, wstr, wlen, 0, NULL, 2, matches,0);
+		if (r)
+		{
+			char errstr[100];
+
+			if (r != REG_NOMATCH)
+			{
+				/* REG_NOMATCH is not an error, everything else is */
+				pg_regerror(r, &re, errstr, sizeof(errstr));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+						 errmsg("regular expression match for '%s' failed: %s", file_ident_user+1, errstr)));
+				*error_p = true;
+			}
+
+			pfree(wstr);
+			pg_regfree(&re);
+			return;
+		}
+		pfree(wstr);
+
+		if ((ofs = strstr(file_pgrole, "\\1")) != NULL)
+		{
+			/* substitution of the first argument requested */
+			if (matches[1].rm_so < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+						 errmsg("regular expression '%s' has no subexpressions as requested by backreference in '%s'",
+								file_ident_user+1, file_pgrole)));
+			/* length: original length minus length of \1 plus length of match plus null terminator */
+			regexp_pgrole = palloc0(strlen(file_pgrole) - 2 + (matches[1].rm_eo-matches[1].rm_so) + 1);
+			strncpy(regexp_pgrole, file_pgrole, (ofs-file_pgrole));
+			memcpy(regexp_pgrole+strlen(regexp_pgrole),
+				   ident_user+matches[1].rm_so,
+				   matches[1].rm_eo-matches[1].rm_so);
+			strcat(regexp_pgrole, ofs+2);
+		}
+		else
+		{
+			/* no substitution, so copy the match */
+			regexp_pgrole = pstrdup(file_pgrole);
+		}
+
+		pg_regfree(&re);
+
+		/* now check if the username actually matched what the user is trying to connect as */
+		if (case_insensitive)
+		{
+			if (pg_strcasecmp(regexp_pgrole, pg_role) == 0)
+				*found_p = true;
+		}
+		else
+		{
+			if (strcmp(regexp_pgrole, pg_role) == 0)
+				*found_p = true;
+		}
+		pfree(regexp_pgrole);
+
+		return;
 	}
 	else
 	{
-		if (strcmp(file_map, usermap_name) == 0 &&
-			strcmp(file_pgrole, pg_role) == 0 &&
-			strcmp(file_ident_user, ident_user) == 0)
-			*found_p = true;
+		/* Not regular expression, so make complete match */
+		if (case_insensitive)
+		{
+			if (pg_strcasecmp(file_pgrole, pg_role) == 0 &&
+				pg_strcasecmp(file_ident_user, ident_user) == 0)
+				*found_p = true;
+		}
+		else
+		{
+			if (strcmp(file_pgrole, pg_role) == 0 &&
+				strcmp(file_ident_user, ident_user) == 0)
+				*found_p = true;
+		}
 	}
 
 	return;

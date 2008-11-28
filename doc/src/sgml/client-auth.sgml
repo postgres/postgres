@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.113 2008/11/20 20:45:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.114 2008/11/28 14:26:58 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -594,6 +594,19 @@ local   db1,db2,@demodbs  all                         md5
    used repeatedly to specify more user-mappings within a single map.
    There is no restriction regarding how many database users a given
    operating system user can correspond to, nor vice versa.
+  </para>
+  <para>
+   If the <replaceable>system-username</> field starts with a slash (<literal>/</>),
+   the contents of the field is treated as a regular expression. This regular
+   expression supports a single capture, which can be back-referenced as
+   <literal>\1</> (backslash-one). This allows the mapping of different syntax
+   names with a single line.
+   <programlisting>
+mymap   /(.*)@mydomain.com   \1
+mymap   /(.*)@otherdomain.com guest
+   </programlisting>
+   will "remove" the domain part for users with system usernames @mydomain.com, and
+   allow all users from @otherdomain.com to log in as guest.
   </para>
 
   <para>

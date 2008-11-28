@@ -17,8 +17,13 @@
 # pg_hba.conf.  SYSTEM-USERNAME is the detected user name of the
 # client.  PG-USERNAME is the requested PostgreSQL user name.  The
 # existence of a record specifies that SYSTEM-USERNAME may connect as
-# PG-USERNAME.  Multiple maps may be specified in this file and used
-# by pg_hba.conf.
+# PG-USERNAME.
+#
+# If SYSTEM-USERNAME starts with a slash (/), it will be treated as
+# a regular expression. Up to one capture is allowed, and this will
+# be replaced in PG-USERNAME for backslash-one (\1) if present.
+#
+# Multiple maps may be specified in this file and used # by pg_hba.conf.
 #
 # This file is read on server startup and when the postmaster receives
 # a SIGHUP signal.  If you edit the file on a running system, you have
