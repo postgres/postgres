@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.95 2008/11/22 22:47:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.96 2008/11/28 19:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,11 +420,13 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			reversed = true;
 		}
 		else if (sjinfo->jointype == JOIN_SEMI &&
-				 bms_equal(sjinfo->syn_righthand, rel2->relids))
+				 bms_equal(sjinfo->syn_righthand, rel2->relids) &&
+				 create_unique_path(root, rel2, rel2->cheapest_total_path,
+									sjinfo) != NULL)
 		{
 			/*
 			 * For a semijoin, we can join the RHS to anything else by
-			 * unique-ifying the RHS.
+			 * unique-ifying the RHS (if the RHS can be unique-ified).
 			 */
 			if (match_sjinfo)
 				return false;	/* invalid join path */
@@ -432,7 +434,9 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			reversed = false;
 		}
 		else if (sjinfo->jointype == JOIN_SEMI &&
-				 bms_equal(sjinfo->syn_righthand, rel1->relids))
+				 bms_equal(sjinfo->syn_righthand, rel1->relids) &&
+				 create_unique_path(root, rel1, rel1->cheapest_total_path,
+									sjinfo) != NULL)
 		{
 			/* Reversed semijoin case */
 			if (match_sjinfo)
@@ -664,7 +668,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			/*
 			 * If we know how to unique-ify the RHS and one input rel is
 			 * exactly the RHS (not a superset) we can consider unique-ifying
-			 * it and then doing a regular join.
+			 * it and then doing a regular join.  (The create_unique_path
+			 * check here is probably redundant with what join_is_legal did,
+			 * but if so the check is cheap because it's cached.  So test
+			 * anyway to be sure.)
 			 */
 			if (bms_equal(sjinfo->syn_righthand, rel2->relids) &&
 				create_unique_path(root, rel2, rel2->cheapest_total_path,
