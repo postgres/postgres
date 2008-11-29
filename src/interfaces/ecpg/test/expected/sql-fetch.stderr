@@ -138,10 +138,10 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult on line 53: ERROR:  relation 16491 is still open
+[NO_PID]: ecpg_check_PQresult on line 53: ERROR:  cannot drop "my_table" because it is being used by active queries in this session
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate XX000 (sqlcode -400) on line 53: relation 16491 is still open on line 53
-[NO_PID]: sqlca: code: -400, state: XX000
-sql error: relation 16491 is still open on line 53
+[NO_PID]: raising sqlstate 55006 (sqlcode -400) on line 53: cannot drop "my_table" because it is being used by active queries in this session on line 53
+[NO_PID]: sqlca: code: -400, state: 55006
+sql error: cannot drop "my_table" because it is being used by active queries in this session on line 53
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000
