@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.75 2008/09/22 13:55:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.76 2008/11/30 23:23:52 tgl Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -213,7 +213,6 @@ dblink_connect(PG_FUNCTION_ARGS)
 	char	   *connstr = NULL;
 	char	   *connname = NULL;
 	char	   *msg;
-	MemoryContext oldcontext;
 	PGconn	   *conn = NULL;
 	remoteConn *rconn = NULL;
 
@@ -227,16 +226,13 @@ dblink_connect(PG_FUNCTION_ARGS)
 	else if (PG_NARGS() == 1)
 		connstr = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
 	if (connname)
-		rconn = (remoteConn *) palloc(sizeof(remoteConn));
+		rconn = (remoteConn *) MemoryContextAlloc(TopMemoryContext,
+												  sizeof(remoteConn));
 
 	/* check password in connection string if not superuser */
 	dblink_connstr_check(connstr);
 	conn = PQconnectdb(connstr);
-
-	MemoryContextSwitchTo(oldcontext);
 
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
@@ -562,10 +558,10 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function calls
+		 * Try to execute the query.  Note that since libpq uses malloc,
+		 * the PGresult will be long-lived even though we are still in
+		 * a short-lived memory context.
 		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
 		res = PQexec(conn, buf.data);
 		if (!res ||
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
@@ -607,9 +603,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		/* make sure we have a persistent copy of the tupdesc */
-		tupdesc = CreateTupleDescCopy(tupdesc);
-
 		/* check result and tuple descriptor have the same number of columns */
 		if (PQnfields(res) != tupdesc->natts)
 			ereport(ERROR,
@@ -617,13 +610,24 @@ dblink_fetch(PG_FUNCTION_ARGS)
 					 errmsg("remote query result rowtype does not match "
 							"the specified FROM clause rowtype")));
 
-		/* fast track when no results */
+		/*
+		 * fast track when no results.  We could exit earlier, but then
+		 * we'd not report error if the result tuple type is wrong.
+		 */
 		if (funcctx->max_calls < 1)
 		{
-			if (res)
-				PQclear(res);
+			PQclear(res);
 			SRF_RETURN_DONE(funcctx);
 		}
+
+		/*
+		 * switch to memory context appropriate for multiple function calls,
+		 * so we can make long-lived copy of tupdesc etc
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* make sure we have a persistent copy of the tupdesc */
+		tupdesc = CreateTupleDescCopy(tupdesc);
 
 		/* store needed metadata for subsequent calls */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
@@ -815,7 +819,10 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 				res = PQgetResult(conn);
 				/* NULL means we're all done with the async results */
 				if (!res)
+				{
+					MemoryContextSwitchTo(oldcontext);
 					SRF_RETURN_DONE(funcctx);
+				}
 			}
 
 			if (!res ||
@@ -825,6 +832,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 				dblink_res_error(conname, res, "could not execute query", fail);
 				if (freeconn)
 					PQfinish(conn);
+				MemoryContextSwitchTo(oldcontext);
 				SRF_RETURN_DONE(funcctx);
 			}
 
@@ -894,6 +902,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 			{
 				if (res)
 					PQclear(res);
+				MemoryContextSwitchTo(oldcontext);
 				SRF_RETURN_DONE(funcctx);
 			}
 
@@ -1261,8 +1270,11 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 			funcctx->user_fctx = results;
 		}
 		else
+		{
 			/* fast track when no results */
+			MemoryContextSwitchTo(oldcontext);
 			SRF_RETURN_DONE(funcctx);
+		}
 
 		MemoryContextSwitchTo(oldcontext);
 	}
