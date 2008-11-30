@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.126 2008/11/02 01:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.127 2008/11/30 19:01:29 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -100,7 +100,6 @@ DefineType(List *names, List *parameters)
 	char	   *typeName;
 	Oid			typeNamespace;
 	int16		internalLength = -1;	/* default: variable-length */
-	Oid			elemType = InvalidOid;
 	List	   *inputName = NIL;
 	List	   *outputName = NIL;
 	List	   *receiveName = NIL;
@@ -108,13 +107,31 @@ DefineType(List *names, List *parameters)
 	List	   *typmodinName = NIL;
 	List	   *typmodoutName = NIL;
 	List	   *analyzeName = NIL;
-	char	   *defaultValue = NULL;
-	bool		byValue = false;
 	char		category = TYPCATEGORY_USER;
 	bool		preferred = false;
 	char		delimiter = DEFAULT_TYPDELIM;
+	Oid			elemType = InvalidOid;
+	char	   *defaultValue = NULL;
+	bool		byValue = false;
 	char		alignment = 'i';	/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
+	DefElem	   *likeTypeEl = NULL;
+	DefElem	   *internalLengthEl = NULL;
+	DefElem	   *inputNameEl = NULL;
+	DefElem	   *outputNameEl = NULL;
+	DefElem	   *receiveNameEl = NULL;
+	DefElem	   *sendNameEl = NULL;
+	DefElem	   *typmodinNameEl = NULL;
+	DefElem	   *typmodoutNameEl = NULL;
+	DefElem	   *analyzeNameEl = NULL;
+	DefElem	   *categoryEl = NULL;
+	DefElem	   *preferredEl = NULL;
+	DefElem	   *delimiterEl = NULL;
+	DefElem	   *elemTypeEl = NULL;
+	DefElem	   *defaultValueEl = NULL;
+	DefElem	   *byValueEl = NULL;
+	DefElem	   *alignmentEl = NULL;
+	DefElem	   *storageEl = NULL;
 	Oid			inputOid;
 	Oid			outputOid;
 	Oid			receiveOid = InvalidOid;
@@ -124,10 +141,10 @@ DefineType(List *names, List *parameters)
 	Oid			analyzeOid = InvalidOid;
 	char	   *array_type;
 	Oid			array_oid;
-	ListCell   *pl;
 	Oid			typoid;
 	Oid			resulttype;
 	Relation	pg_type;
+	ListCell   *pl;
 
 	/*
 	 * As of Postgres 8.4, we require superuser privilege to create a base
@@ -202,111 +219,175 @@ DefineType(List *names, List *parameters)
 					 errmsg("type \"%s\" already exists", typeName)));
 	}
 
+	/* Extract the parameters from the parameter list */
 	foreach(pl, parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
+		DefElem   **defelp;
 
-		if (pg_strcasecmp(defel->defname, "internallength") == 0)
-			internalLength = defGetTypeLength(defel);
+		if (pg_strcasecmp(defel->defname, "like") == 0)
+			defelp = &likeTypeEl;
+		else if (pg_strcasecmp(defel->defname, "internallength") == 0)
+			defelp = &internalLengthEl;
 		else if (pg_strcasecmp(defel->defname, "input") == 0)
-			inputName = defGetQualifiedName(defel);
+			defelp = &inputNameEl;
 		else if (pg_strcasecmp(defel->defname, "output") == 0)
-			outputName = defGetQualifiedName(defel);
+			defelp = &outputNameEl;
 		else if (pg_strcasecmp(defel->defname, "receive") == 0)
-			receiveName = defGetQualifiedName(defel);
+			defelp = &receiveNameEl;
 		else if (pg_strcasecmp(defel->defname, "send") == 0)
-			sendName = defGetQualifiedName(defel);
+			defelp = &sendNameEl;
 		else if (pg_strcasecmp(defel->defname, "typmod_in") == 0)
-			typmodinName = defGetQualifiedName(defel);
+			defelp = &typmodinNameEl;
 		else if (pg_strcasecmp(defel->defname, "typmod_out") == 0)
-			typmodoutName = defGetQualifiedName(defel);
+			defelp = &typmodoutNameEl;
 		else if (pg_strcasecmp(defel->defname, "analyze") == 0 ||
 				 pg_strcasecmp(defel->defname, "analyse") == 0)
-			analyzeName = defGetQualifiedName(defel);
+			defelp = &analyzeNameEl;
 		else if (pg_strcasecmp(defel->defname, "category") == 0)
-		{
-			char	   *p = defGetString(defel);
-
-			category = p[0];
-			/* restrict to non-control ASCII */
-			if (category < 32 || category > 126)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid type category \"%s\": must be simple ASCII",
-								p)));
-		}
+			defelp = &categoryEl;
 		else if (pg_strcasecmp(defel->defname, "preferred") == 0)
-			preferred = defGetBoolean(defel);
+			defelp = &preferredEl;
 		else if (pg_strcasecmp(defel->defname, "delimiter") == 0)
-		{
-			char	   *p = defGetString(defel);
-
-			delimiter = p[0];
-			/* XXX shouldn't we restrict the delimiter? */
-		}
+			defelp = &delimiterEl;
 		else if (pg_strcasecmp(defel->defname, "element") == 0)
-		{
-			elemType = typenameTypeId(NULL, defGetTypeName(defel), NULL);
-			/* disallow arrays of pseudotypes */
-			if (get_typtype(elemType) == TYPTYPE_PSEUDO)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("array element type cannot be %s",
-								format_type_be(elemType))));
-		}
+			defelp = &elemTypeEl;
 		else if (pg_strcasecmp(defel->defname, "default") == 0)
-			defaultValue = defGetString(defel);
+			defelp = &defaultValueEl;
 		else if (pg_strcasecmp(defel->defname, "passedbyvalue") == 0)
-			byValue = defGetBoolean(defel);
+			defelp = &byValueEl;
 		else if (pg_strcasecmp(defel->defname, "alignment") == 0)
-		{
-			char	   *a = defGetString(defel);
-
-			/*
-			 * Note: if argument was an unquoted identifier, parser will have
-			 * applied translations to it, so be prepared to recognize
-			 * translated type names as well as the nominal form.
-			 */
-			if (pg_strcasecmp(a, "double") == 0 ||
-				pg_strcasecmp(a, "float8") == 0 ||
-				pg_strcasecmp(a, "pg_catalog.float8") == 0)
-				alignment = 'd';
-			else if (pg_strcasecmp(a, "int4") == 0 ||
-					 pg_strcasecmp(a, "pg_catalog.int4") == 0)
-				alignment = 'i';
-			else if (pg_strcasecmp(a, "int2") == 0 ||
-					 pg_strcasecmp(a, "pg_catalog.int2") == 0)
-				alignment = 's';
-			else if (pg_strcasecmp(a, "char") == 0 ||
-					 pg_strcasecmp(a, "pg_catalog.bpchar") == 0)
-				alignment = 'c';
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("alignment \"%s\" not recognized", a)));
-		}
+			defelp = &alignmentEl;
 		else if (pg_strcasecmp(defel->defname, "storage") == 0)
-		{
-			char	   *a = defGetString(defel);
-
-			if (pg_strcasecmp(a, "plain") == 0)
-				storage = 'p';
-			else if (pg_strcasecmp(a, "external") == 0)
-				storage = 'e';
-			else if (pg_strcasecmp(a, "extended") == 0)
-				storage = 'x';
-			else if (pg_strcasecmp(a, "main") == 0)
-				storage = 'm';
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("storage \"%s\" not recognized", a)));
-		}
+			defelp = &storageEl;
 		else
+		{
+			/* WARNING, not ERROR, for historical backwards-compatibility */
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("type attribute \"%s\" not recognized",
 							defel->defname)));
+			continue;
+		}
+		if (*defelp != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("conflicting or redundant options")));
+		*defelp = defel;
+	}
+
+	/*
+	 * Now interpret the options; we do this separately so that LIKE can
+	 * be overridden by other options regardless of the ordering in the
+	 * parameter list.
+	 */
+	if (likeTypeEl)
+	{
+		Type	 likeType;
+		Form_pg_type likeForm;
+
+		likeType = typenameType(NULL, defGetTypeName(likeTypeEl), NULL);
+		likeForm = (Form_pg_type) GETSTRUCT(likeType);
+		internalLength = likeForm->typlen;
+		byValue = likeForm->typbyval;
+		alignment = likeForm->typalign;
+		storage = likeForm->typstorage;
+		ReleaseSysCache(likeType);
+	}
+	if (internalLengthEl)
+		internalLength = defGetTypeLength(internalLengthEl);
+	if (inputNameEl)
+		inputName = defGetQualifiedName(inputNameEl);
+	if (outputNameEl)
+		outputName = defGetQualifiedName(outputNameEl);
+	if (receiveNameEl)
+		receiveName = defGetQualifiedName(receiveNameEl);
+	if (sendNameEl)
+		sendName = defGetQualifiedName(sendNameEl);
+	if (typmodinNameEl)
+		typmodinName = defGetQualifiedName(typmodinNameEl);
+	if (typmodoutNameEl)
+		typmodoutName = defGetQualifiedName(typmodoutNameEl);
+	if (analyzeNameEl)
+		analyzeName = defGetQualifiedName(analyzeNameEl);
+	if (categoryEl)
+	{
+		char	   *p = defGetString(categoryEl);
+
+		category = p[0];
+		/* restrict to non-control ASCII */
+		if (category < 32 || category > 126)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid type category \"%s\": must be simple ASCII",
+							p)));
+	}
+	if (preferredEl)
+		preferred = defGetBoolean(preferredEl);
+	if (delimiterEl)
+	{
+		char	   *p = defGetString(delimiterEl);
+
+		delimiter = p[0];
+		/* XXX shouldn't we restrict the delimiter? */
+	}
+	if (elemTypeEl)
+	{
+		elemType = typenameTypeId(NULL, defGetTypeName(elemTypeEl), NULL);
+		/* disallow arrays of pseudotypes */
+		if (get_typtype(elemType) == TYPTYPE_PSEUDO)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("array element type cannot be %s",
+							format_type_be(elemType))));
+	}
+	if (defaultValueEl)
+		defaultValue = defGetString(defaultValueEl);
+	if (byValueEl)
+		byValue = defGetBoolean(byValueEl);
+	if (alignmentEl)
+	{
+		char	   *a = defGetString(alignmentEl);
+
+		/*
+		 * Note: if argument was an unquoted identifier, parser will have
+		 * applied translations to it, so be prepared to recognize
+		 * translated type names as well as the nominal form.
+		 */
+		if (pg_strcasecmp(a, "double") == 0 ||
+			pg_strcasecmp(a, "float8") == 0 ||
+			pg_strcasecmp(a, "pg_catalog.float8") == 0)
+			alignment = 'd';
+		else if (pg_strcasecmp(a, "int4") == 0 ||
+				 pg_strcasecmp(a, "pg_catalog.int4") == 0)
+			alignment = 'i';
+		else if (pg_strcasecmp(a, "int2") == 0 ||
+				 pg_strcasecmp(a, "pg_catalog.int2") == 0)
+			alignment = 's';
+		else if (pg_strcasecmp(a, "char") == 0 ||
+				 pg_strcasecmp(a, "pg_catalog.bpchar") == 0)
+			alignment = 'c';
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("alignment \"%s\" not recognized", a)));
+	}
+	if (storageEl)
+	{
+		char	   *a = defGetString(storageEl);
+
+		if (pg_strcasecmp(a, "plain") == 0)
+			storage = 'p';
+		else if (pg_strcasecmp(a, "external") == 0)
+			storage = 'e';
+		else if (pg_strcasecmp(a, "extended") == 0)
+			storage = 'x';
+		else if (pg_strcasecmp(a, "main") == 0)
+			storage = 'm';
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("storage \"%s\" not recognized", a)));
 	}
 
 	/*

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.78 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.79 2008/11/30 19:01:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -39,6 +39,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     [ , PASSEDBYVALUE ]
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
     [ , STORAGE = <replaceable class="parameter">storage</replaceable> ]
+    [ , LIKE = <replaceable class="parameter">like_type</replaceable> ]
     [ , CATEGORY = <replaceable class="parameter">category</replaceable> ]
     [ , PREFERRED = <replaceable class="parameter">preferred</replaceable> ]
     [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
@@ -291,6 +292,21 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   The <replaceable class="parameter">like_type</replaceable> parameter
+   provides an alternative method for specifying the basic representation
+   properties of a data type: copy them from some existing type. The values of
+   <replaceable class="parameter">internallength</replaceable>,
+   <replaceable class="parameter">passedbyvalue</replaceable>,
+   <replaceable class="parameter">alignment</replaceable>, and
+   <replaceable class="parameter">storage</replaceable> are copied from the
+   named type.  (It is possible, though usually undesirable, to override
+   some of these values by specifying them along with the <literal>LIKE</>
+   clause.)  Specifying representation this way is especially useful when
+   the low-level implementation of the new type <quote>piggybacks</> on an
+   existing type in some fashion.
+  </para>
+
+  <para>
    The <replaceable class="parameter">category</replaceable> and
    <replaceable class="parameter">preferred</replaceable> parameters can be
    used to help control which implicit cast will be applied in ambiguous
@@ -520,6 +536,22 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
       <literal>plain</literal>, <literal>external</literal>,
       <literal>extended</literal>, or <literal>main</literal>; the
       default is <literal>plain</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">like_type</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing data type that the new type will have the
+      same representation as.  The values of
+      <replaceable class="parameter">internallength</replaceable>,
+      <replaceable class="parameter">passedbyvalue</replaceable>,
+      <replaceable class="parameter">alignment</replaceable>, and
+      <replaceable class="parameter">storage</replaceable>
+      are copied from that type, unless overridden by explicit
+      specification elsewhere in this <command>CREATE TYPE</> command.
      </para>
     </listitem>
    </varlistentry>
