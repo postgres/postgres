@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.73 2008/10/31 19:37:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.74 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,21 +94,16 @@ BeginCommand(const char *commandTag, CommandDest dest)
 
 /* ----------------
  *		CreateDestReceiver - return appropriate receiver function set for dest
- *
- * Note: a Portal must be specified for destinations DestRemote,
- * DestRemoteExecute, and DestTuplestore.  It can be NULL for the others.
  * ----------------
  */
 DestReceiver *
-CreateDestReceiver(CommandDest dest, Portal portal)
+CreateDestReceiver(CommandDest dest)
 {
 	switch (dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
-			if (portal == NULL)
-				elog(ERROR, "no portal specified for DestRemote receiver");
-			return printtup_create_DR(dest, portal);
+			return printtup_create_DR(dest);
 
 		case DestNone:
 			return &donothingDR;
@@ -120,13 +115,7 @@ CreateDestReceiver(CommandDest dest, Portal portal)
 			return &spi_printtupDR;
 
 		case DestTuplestore:
-			if (portal == NULL)
-				elog(ERROR, "no portal specified for DestTuplestore receiver");
-			if (portal->holdStore == NULL ||
-				portal->holdContext == NULL)
-				elog(ERROR, "portal has no holdStore");
-			return CreateTuplestoreDestReceiver(portal->holdStore,
-												portal->holdContext);
+			return CreateTuplestoreDestReceiver();
 
 		case DestIntoRel:
 			return CreateIntoRelDestReceiver();

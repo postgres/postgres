@@ -35,6 +35,12 @@
  * The same receiver object may be re-used multiple times; eventually it is
  * destroyed by calling its rDestroy method.
  *
+ * In some cases, receiver objects require additional parameters that must
+ * be passed to them after calling CreateDestReceiver.  Since the set of
+ * parameters varies for different receiver types, this is not handled by
+ * this module, but by direct calls from the calling code to receiver type
+ * specific functions.
+ *
  * The DestReceiver object returned by CreateDestReceiver may be a statically
  * allocated object (for destination types that require no local state),
  * in which case rDestroy is a no-op.  Alternatively it can be a palloc'd
@@ -54,7 +60,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.55 2008/10/31 19:37:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.56 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,14 +126,10 @@ struct _DestReceiver
 
 extern DestReceiver *None_Receiver;		/* permanent receiver for DestNone */
 
-/* This is a forward reference to utils/portal.h */
-
-typedef struct PortalData *Portal;
-
 /* The primary destination management functions */
 
 extern void BeginCommand(const char *commandTag, CommandDest dest);
-extern DestReceiver *CreateDestReceiver(CommandDest dest, Portal portal);
+extern DestReceiver *CreateDestReceiver(CommandDest dest);
 extern void EndCommand(const char *commandTag, CommandDest dest);
 
 /* Additional functions that go with destination management, more or less. */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.301 2008/11/06 20:51:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.302 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1050,7 +1050,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		PushUpdatedSnapshot(GetActiveSnapshot());
 
 		/* Create dest receiver for COPY OUT */
-		dest = CreateDestReceiver(DestCopyOut, NULL);
+		dest = CreateDestReceiver(DestCopyOut);
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */

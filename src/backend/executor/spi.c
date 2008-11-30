@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.200 2008/11/02 01:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.201 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1227,7 +1227,7 @@ SPI_cursor_fetch(Portal portal, bool forward, long count)
 {
 	_SPI_cursor_operation(portal,
 						  forward ? FETCH_FORWARD : FETCH_BACKWARD, count,
-						  CreateDestReceiver(DestSPI, NULL));
+						  CreateDestReceiver(DestSPI));
 	/* we know that the DestSPI receiver doesn't need a destroy call */
 }
 
@@ -1256,7 +1256,7 @@ SPI_scroll_cursor_fetch(Portal portal, FetchDirection direction, long count)
 {
 	_SPI_cursor_operation(portal,
 						  direction, count,
-						  CreateDestReceiver(DestSPI, NULL));
+						  CreateDestReceiver(DestSPI));
 	/* we know that the DestSPI receiver doesn't need a destroy call */
 }
 
@@ -1744,8 +1744,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			if (!read_only)
 				CommandCounterIncrement();
 
-			dest = CreateDestReceiver(canSetTag ? DestSPI : DestNone,
-									  NULL);
+			dest = CreateDestReceiver(canSetTag ? DestSPI : DestNone);
 
 			if (snapshot == InvalidSnapshot)
 			{

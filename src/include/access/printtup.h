@@ -7,16 +7,18 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/printtup.h,v 1.36 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/printtup.h,v 1.37 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PRINTTUP_H
 #define PRINTTUP_H
 
-#include "tcop/dest.h"
+#include "utils/portal.h"
 
-extern DestReceiver *printtup_create_DR(CommandDest dest, Portal portal);
+extern DestReceiver *printtup_create_DR(CommandDest dest);
+
+extern void SetRemoteDestReceiverParams(DestReceiver *self, Portal portal);
 
 extern void SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist,
 						  int16 *formats);

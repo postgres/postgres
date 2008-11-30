@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.75 2008/07/18 20:26:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.76 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "access/xact.h"
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
+#include "executor/tstoreReceiver.h"
 #include "tcop/pquery.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -351,7 +352,10 @@ PersistHoldablePortal(Portal portal)
 		ExecutorRewind(queryDesc);
 
 		/* Change the destination to output to the tuplestore */
-		queryDesc->dest = CreateDestReceiver(DestTuplestore, portal);
+		queryDesc->dest = CreateDestReceiver(DestTuplestore);
+		SetTuplestoreDestReceiverParams(queryDesc->dest,
+										portal->holdStore,
+										portal->holdContext);
 
 		/* Fetch the result set into the tuplestore */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);

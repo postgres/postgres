@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.129 2008/11/27 00:10:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.130 2008/11/30 20:51:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,7 +398,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	{
 		DR_sqlfunction *myState;
 
-		dest = CreateDestReceiver(DestSQLFunction, NULL);
+		dest = CreateDestReceiver(DestSQLFunction);
 		/* pass down the needed info to the dest receiver routines */
 		myState = (DR_sqlfunction *) dest;
 		Assert(myState->pub.mydest == DestSQLFunction);
@@ -1269,10 +1269,6 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 /*
  * CreateSQLFunctionDestReceiver -- create a suitable DestReceiver object
- *
- * Since CreateDestReceiver doesn't accept the parameters we'd need,
- * we just leave the private fields zeroed here.  postquel_start will
- * fill them in.
  */
 DestReceiver *
 CreateSQLFunctionDestReceiver(void)
@@ -1284,6 +1280,8 @@ CreateSQLFunctionDestReceiver(void)
 	self->pub.rShutdown = sqlfunction_shutdown;
 	self->pub.rDestroy = sqlfunction_destroy;
 	self->pub.mydest = DestSQLFunction;
+
+	/* private fields will be set by postquel_start */
 
 	return (DestReceiver *) self;
 }
