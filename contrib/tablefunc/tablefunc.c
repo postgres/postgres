@@ -378,11 +378,6 @@ crosstab(PG_FUNCTION_ARGS)
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
-		/*
-		 * switch to memory context appropriate for multiple function calls
-		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
 		/* Connect to SPI manager */
 		if ((ret = SPI_connect()) < 0)
 			/* internal error */
@@ -423,9 +418,6 @@ crosstab(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 
-		/* SPI switches context on us, so reset it */
-		MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
 		/* get a tuple descriptor for our result type */
 		switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 		{
@@ -445,9 +437,6 @@ crosstab(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		/* make sure we have a persistent copy of the tupdesc */
-		tupdesc = CreateTupleDescCopy(tupdesc);
-
 		/*
 		 * Check that return tupdesc is compatible with the data we got from
 		 * SPI, at least based on number and type of attributes
@@ -457,6 +446,14 @@ crosstab(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("return and sql tuple descriptions are " \
 							"incompatible")));
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* make sure we have a persistent copy of the tupdesc */
+		tupdesc = CreateTupleDescCopy(tupdesc);
 
 		/*
 		 * Generate attribute metadata needed later to produce tuples from raw
