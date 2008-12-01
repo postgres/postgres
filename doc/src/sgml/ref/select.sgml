@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.111 2008/11/21 11:47:55 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.112 2008/12/01 09:38:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -59,7 +59,7 @@ and <replaceable class="parameter">with_query</replaceable> is:
 
     <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
 
-TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] | <replaceable class="parameter">with_query_name</replaceable>
+TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] | <replaceable class="parameter">with_query_name</replaceable> }
 </synopsis>
 
  </refsynopsisdiv>
