@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.9 2008/11/28 23:47:51 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.10 2008/12/01 13:39:45 tgl Exp $
 
 use strict;
 
@@ -48,16 +48,6 @@ unless ($schedule)
 	$schedule = "serial";
 	$schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
 }
-
-my $temp_port;
-if (-e "src/tools/msvc/config.pl")
-{
-    eval{
-        require "src/tools/msvc/config.pl";
-        $temp_port = $config->{'--with-pgport'};
-      }
-}
-$temp_port ||= 55432;
 
 my $topdir = getcwd();
 
@@ -146,8 +136,7 @@ sub ecpgcheck
         "--load-language=plpgsql",
         "--no-locale",
         "--temp-install=./tmp_chk",
-        "--top-builddir=\"$topdir\"",
-        "--port=$temp_port"
+        "--top-builddir=\"$topdir\""
     );
     push(@args,$maxconn) if $maxconn;
     system(@args);
