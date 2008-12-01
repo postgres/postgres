@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.82.2.1 2007/08/31 23:35:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.82.2.2 2008/12/01 21:06:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,6 +443,12 @@ clause_selectivity(PlannerInfo *root,
 			if (!IsA(rinfo->clause, Const))
 				return s1;
 		}
+
+		/*
+		 * If the clause is marked redundant, always return 1.0.
+		 */
+		if (rinfo->this_selec > 1)
+			return (Selectivity) 1.0;
 
 		/*
 		 * If possible, cache the result of the selectivity calculation for
