@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.13 2008/10/21 20:42:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.14 2008/12/01 21:06:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1198,7 +1198,7 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 					list_delete_cell(root->left_join_clauses, cell, prev);
 				/* we throw it back anyway (see notes above) */
 				/* but the thrown-back clause has no extra selectivity */
-				rinfo->this_selec = 1.0;
+				rinfo->this_selec = 2.0;
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
 			else
@@ -1220,7 +1220,7 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 					list_delete_cell(root->right_join_clauses, cell, prev);
 				/* we throw it back anyway (see notes above) */
 				/* but the thrown-back clause has no extra selectivity */
-				rinfo->this_selec = 1.0;
+				rinfo->this_selec = 2.0;
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
 			else
@@ -1242,7 +1242,7 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 					list_delete_cell(root->full_join_clauses, cell, prev);
 				/* we throw it back anyway (see notes above) */
 				/* but the thrown-back clause has no extra selectivity */
-				rinfo->this_selec = 1.0;
+				rinfo->this_selec = 2.0;
 				distribute_restrictinfo_to_rels(root, rinfo);
 			}
 			else

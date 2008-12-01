@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.164 2008/11/11 18:13:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.165 2008/12/01 21:06:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -991,7 +991,8 @@ typedef struct RestrictInfo
 
 	/* cache space for cost and selectivity */
 	QualCost	eval_cost;		/* eval cost of clause; -1 if not yet set */
-	Selectivity this_selec;		/* selectivity; -1 if not yet set */
+	Selectivity this_selec;		/* selectivity; -1 if not yet set; >1 means
+								 * a redundant clause */
 
 	/* valid if clause is mergejoinable, else NIL */
 	List	   *mergeopfamilies;	/* opfamilies containing clause operator */

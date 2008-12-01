@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.345 2008/11/15 19:43:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.346 2008/12/01 21:06:12 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1563,6 +1563,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_BITMAPSET_FIELD(right_relids);
 	WRITE_NODE_FIELD(orclause);
 	/* don't write parent_ec, leads to infinite recursion in plan tree dump */
+	WRITE_FLOAT_FIELD(this_selec, "%.4f");
 	WRITE_NODE_FIELD(mergeopfamilies);
 	/* don't write left_ec, leads to infinite recursion in plan tree dump */
 	/* don't write right_ec, leads to infinite recursion in plan tree dump */
