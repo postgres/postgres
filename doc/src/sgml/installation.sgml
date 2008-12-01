@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.315 2008/11/24 11:59:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.316 2008/12/01 08:24:19 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2773,7 +2773,7 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
      If you use the <command>configure</command>
      option <option>--enable-thread-safety</option>,
      you <emphasis>must</emphasis> use <option>-Kpthread</option>
-     on <emphasis>all</emphasis> libpqiusing programs.  libpq
+     on <emphasis>all</emphasis> libpq-using programs.  libpq
      uses <function>pthread_*</function> calls, which are only
      available with the
      <option>-Kpthread</>/<option>-Kthread</> flag.
