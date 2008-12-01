@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.212 2008/11/06 15:18:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.213 2008/12/01 09:20:37 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -573,8 +573,6 @@ $ <userinput>psql "service=myservice sslmode=require"</userinput>
 $ <userinput>psql testdb</userinput>
 psql (&version;)
 Type "help" for help.
-
-test=>
 
 testdb=&gt;
 </programlisting>
