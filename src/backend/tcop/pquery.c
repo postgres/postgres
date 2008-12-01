@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.126 2008/11/30 20:51:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.127 2008/12/01 17:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1036,7 +1036,8 @@ FillPortalStore(Portal portal, bool isTopLevel)
 	treceiver = CreateDestReceiver(DestTuplestore);
 	SetTuplestoreDestReceiverParams(treceiver,
 									portal->holdStore,
-									portal->holdContext);
+									portal->holdContext,
+									false);
 
 	completionTag[0] = '\0';
 
