@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.481 2008/11/21 20:14:27 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.482 2008/12/02 02:00:32 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4382,16 +4382,17 @@ parse_real(const char *value, double *result)
 const char *
 config_enum_lookup_by_value(struct config_enum *record, int val)
 {
-	const struct config_enum_entry *entry = record->options;
-	while (entry && entry->name)
+	const struct config_enum_entry *entry;
+
+	for (entry = record->options; entry && entry->name; entry++)
 	{
 		if (entry->val == val)
 			return entry->name;
-		entry++;
 	}
+
 	elog(ERROR, "could not find enum option %d for %s",
 		 val, record->gen.name);
-	return NULL; /* silence compiler */
+	return NULL;		/* silence compiler */
 }
 
 
@@ -4400,32 +4401,30 @@ config_enum_lookup_by_value(struct config_enum *record, int val)
  * (case-insensitive).
  * If the enum option is found, sets the retval value and returns
  * true. If it's not found, return FALSE and retval is set to 0.
- *
  */
 bool
-config_enum_lookup_by_name(struct config_enum *record, const char *value, int *retval)
+config_enum_lookup_by_name(struct config_enum *record, const char *value,
+						   int *retval)
 {
-	const struct config_enum_entry *entry = record->options;
-	
-	if (retval)
-		*retval = 0;			/* suppress compiler warning */
-	
-	while (entry && entry->name)
+	const struct config_enum_entry *entry;
+
+	for (entry = record->options; entry && entry->name; entry++)
 	{
 		if (pg_strcasecmp(value, entry->name) == 0)
 		{
 			*retval = entry->val;
 			return TRUE;
 		}
-		entry++;
 	}
+
+	*retval = 0;
 	return FALSE;
 }
 
 
 /*
  * Return a list of all available options for an enum, excluding
- * hidden ones, separated by ", " (comma-space).
+ * hidden ones, separated by the given separator.
  * If prefix is non-NULL, it is added before the first enum value.
  * If suffix is non-NULL, it is added to the end of the string.
  */
@@ -4433,38 +4432,22 @@ static char *
 config_enum_get_options(struct config_enum *record, const char *prefix,
 						const char *suffix, const char *separator)
 {
-	const struct config_enum_entry *entry = record->options;
-	int		len = 0;
-	char   *hintmsg;
+	const struct config_enum_entry *entry;
+	StringInfoData	retstr;
+	int			seplen;
 
-	if (!entry || !entry->name)
-		return NULL;					/* Should not happen */
-
-	while (entry && entry->name)
-	{
-		if (!entry->hidden)
-			len += strlen(entry->name) + strlen(separator);
-
-		entry++;
-	}
-
-	hintmsg = palloc(len + strlen(prefix) + strlen(suffix) + 2);
-
-	strcpy(hintmsg, prefix);
+	initStringInfo(&retstr);
+	appendStringInfoString(&retstr, prefix);
 	
-	entry = record->options;
-	while (entry && entry->name)
+	seplen = strlen(separator);
+	for (entry = record->options; entry && entry->name; entry++)
 	{
 		if (!entry->hidden)
 		{
-			strcat(hintmsg, entry->name);
-			strcat(hintmsg, separator);
+			appendStringInfoString(&retstr, entry->name);
+			appendBinaryStringInfo(&retstr, separator, seplen);
 		}
-
-		entry++;
 	}
-
-	len = strlen(hintmsg);
 
 	/*
 	 * All the entries may have been hidden, leaving the string empty
@@ -4473,13 +4456,16 @@ config_enum_get_options(struct config_enum *record, const char *prefix,
 	 * to make sure we don't write to invalid memory instead of actually
 	 * trying to do something smart with it.
 	 */
-	if (len >= strlen(separator))
+	if (retstr.len >= seplen)
+	{
 		/* Replace final separator */
-		hintmsg[len-strlen(separator)] = '\0';
+		retstr.data[retstr.len - seplen] = '\0';
+		retstr.len -= seplen;
+	}
 
-	strcat(hintmsg, suffix);
+	appendStringInfoString(&retstr, suffix);
 
-	return hintmsg;
+	return retstr.data;
 }
 
 /*
@@ -5047,7 +5033,11 @@ set_config_option(const char *name, const char *value,
 				{
 					if (!config_enum_lookup_by_name(conf, value, &newval))
 					{
-						char *hintmsg = config_enum_get_options(conf, "Available values: ", ".", ", ");
+						char *hintmsg;
+					   
+						hintmsg	= config_enum_get_options(conf,
+														  "Available values: ",
+														  ".", ", ");
 
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -6253,13 +6243,16 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* enumvals */
 				/* NOTE! enumvals with double quotes in them are not supported! */
-				values[11] = config_enum_get_options((struct config_enum *) conf, "{\"", "\"}", "\",\"");
+				values[11] = config_enum_get_options((struct config_enum *) conf,
+													 "{\"", "\"}", "\",\"");
 
  				/* boot_val */
-				values[12] = pstrdup(config_enum_lookup_by_value(lconf, lconf->boot_val));
+				values[12] = pstrdup(config_enum_lookup_by_value(lconf,
+																 lconf->boot_val));
 
  				/* reset_val */
-				values[13] = pstrdup(config_enum_lookup_by_value(lconf, lconf->reset_val));
+				values[13] = pstrdup(config_enum_lookup_by_value(lconf,
+																 lconf->reset_val));
 			}
 			break;
 
@@ -6672,8 +6665,8 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 				struct config_enum *conf = (struct config_enum *) record;
 				int			newval;
 
-				return config_enum_lookup_by_name(conf, newvalue, &newval)
-					&& *conf->variable == newval;
+				return config_enum_lookup_by_name(conf, newvalue, &newval) &&
+					*conf->variable == newval;
 			}
 	}
 
