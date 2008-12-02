@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.109 2008/11/24 19:19:46 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.110 2008/12/02 10:39:30 mha Exp $
  *
  * NOTES
  *
@@ -55,6 +55,7 @@
 #endif
 
 #ifdef USE_SSL
+
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L)
@@ -64,16 +65,6 @@
 #include <openssl/engine.h>
 #endif
 
-/* fnmatch() needed for client certificate checking */
-#ifdef HAVE_FNMATCH
-#include <fnmatch.h>
-#else
-#include "fnmatchstub.h"
-#endif
-#endif   /* USE_SSL */
-
-
-#ifdef USE_SSL
 
 #ifndef WIN32
 #define USER_CERT_FILE		".postgresql/postgresql.crt"
@@ -443,6 +434,51 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
+
+/*
+ * Check if a wildcard certificate matches the server hostname.
+ *
+ * The rule for this is:
+ *  1. We only match the '*' character as wildcard
+ *  2. We match only wildcards at the start of the string
+ *  3. The '*' character does *not* match '.', meaning that we match only
+ *     a single pathname component.
+ *  4. We don't support more than one '*' in a single pattern.
+ *
+ * This is roughly in line with RFC2818, but contrary to what most browsers
+ * appear to be implementing (point 3 being the difference)
+ *
+ * Matching is always cone case-insensitive, since DNS is case insensitive.
+ */
+static int
+wildcard_certificate_match(const char *pattern, const char *string)
+{
+	int lenpat = strlen(pattern);
+	int lenstr = strlen(string);
+
+	/* If we don't start with a wildcard, it's not a match (rule 1 & 2) */
+	if (lenpat < 3 ||
+		pattern[0] != '*' ||
+		pattern[1] != '.')
+		return 0;
+
+	if (lenpat > lenstr)
+		/* If pattern is longer than the string, we can never match */
+		return 0;
+
+	if (pg_strcasecmp(pattern+1, string+lenstr-lenpat+1) != 0)
+		/* If string does not end in pattern (minus the wildcard), we don't match */
+		return 0;
+
+	if (strchr(string, '.') < string+lenstr-lenpat)
+		/* If there is a dot left of where the pattern started to match, we don't match (rule 3) */
+		return 0;
+
+	/* String ended with pattern, and didn't have a dot before, so we match */
+	return 1;
+}
+
+
 /*
  *	Verify that common name resolves to peer.
  */
@@ -472,7 +508,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		if (pg_strcasecmp(conn->peer_cn, conn->pghost) == 0)
 			/* Exact name match */
 			return true;
-		else if (fnmatch(conn->peer_cn, conn->pghost, FNM_NOESCAPE/* | FNM_CASEFOLD*/) == 0)
+		else if (wildcard_certificate_match(conn->peer_cn, conn->pghost))
 			/* Matched wildcard certificate */
 			return true;
 		else
