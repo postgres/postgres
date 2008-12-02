@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.12 2008/05/16 16:31:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.13 2008/12/02 11:30:53 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
 Datum
 gin_cmp_tslexeme(PG_FUNCTION_ARGS)
 {
-	text    *a = PG_GETARG_TEXT_P(0);
-	text    *b = PG_GETARG_TEXT_P(1);
+	text    *a = PG_GETARG_TEXT_PP(0);
+	text    *b = PG_GETARG_TEXT_PP(1);
 	int     cmp;
 
 	cmp = tsCompareString(
-					VARDATA(a), VARSIZE(a) - VARHDRSZ,
-					VARDATA(b), VARSIZE(b) - VARHDRSZ,
+					VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
+					VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
 					false );
 
 	PG_FREE_IF_COPY(a,0);
@@ -39,16 +39,16 @@ gin_cmp_tslexeme(PG_FUNCTION_ARGS)
 Datum
 gin_cmp_prefix(PG_FUNCTION_ARGS)
 {
-	text    *a = PG_GETARG_TEXT_P(0);
-	text    *b = PG_GETARG_TEXT_P(1);
+	text    *a = PG_GETARG_TEXT_PP(0);
+	text    *b = PG_GETARG_TEXT_PP(1);
 #ifdef NOT_USED
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
 #endif
 	int     cmp;
 
 	cmp = tsCompareString(
-					VARDATA(a), VARSIZE(a) - VARHDRSZ,
-					VARDATA(b), VARSIZE(b) - VARHDRSZ,
+					VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
+					VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
 					true );
 
 	if ( cmp < 0 )
