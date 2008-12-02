@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.271 2008/11/25 19:30:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.272 2008/12/02 12:42:11 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -282,6 +282,15 @@
            to aliased names. It can be used with pure IP address connections
            only if the certificate also has just the IP address in the
            <literal>cn</> field.
+          </para>
+
+          <para>
+           If the <literal>cn</> attribute in the certificate sent by the
+           server starts with an asterisk (<literal>*</>), it will be treated
+           as a wildcard. This wildcard can only be present at the start of
+           the value, and will match all characters <emphasis>except</> a
+           dot (<literal>.</>). This means the certificate will not match
+           subdomains.
           </para>
          </listitem>
         </varlistentry>
