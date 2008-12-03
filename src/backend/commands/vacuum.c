@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.381 2008/11/19 10:34:51 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.382 2008/12/03 13:05:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/transam.h"
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/namespace.h"
@@ -3005,9 +3006,18 @@ move_chain_tuple(Relation rel,
 
 	END_CRIT_SECTION();
 
+	PageClearAllVisible(BufferGetPage(old_buf));
+	if (dst_buf != old_buf)
+		PageClearAllVisible(BufferGetPage(dst_buf));
+
 	LockBuffer(dst_buf, BUFFER_LOCK_UNLOCK);
 	if (dst_buf != old_buf)
 		LockBuffer(old_buf, BUFFER_LOCK_UNLOCK);
+
+	/* Clear the bits in the visibility map. */
+	visibilitymap_clear(rel, BufferGetBlockNumber(old_buf));
+	if (dst_buf != old_buf)
+		visibilitymap_clear(rel, BufferGetBlockNumber(dst_buf));
 
 	/* Create index entries for the moved tuple */
 	if (ec->resultRelInfo->ri_NumIndices > 0)
@@ -3106,6 +3116,23 @@ move_plain_tuple(Relation rel,
 	}
 
 	END_CRIT_SECTION();
+
+	/*
+	 * Clear the visible-to-all hint bits on the page, and bits in the
+	 * visibility map. Normally we'd release the locks on the heap pages
+	 * before updating the visibility map, but doesn't really matter here
+	 * because we're holding an AccessExclusiveLock on the relation anyway.
+	 */
+	if (PageIsAllVisible(dst_page))
+	{
+		PageClearAllVisible(dst_page);
+		visibilitymap_clear(rel, BufferGetBlockNumber(dst_buf));
+	}
+	if (PageIsAllVisible(old_page))
+	{
+		PageClearAllVisible(old_page);
+		visibilitymap_clear(rel, BufferGetBlockNumber(old_buf));
+	}
 
 	dst_vacpage->free = PageGetFreeSpaceWithFillFactor(rel, dst_page);
 	LockBuffer(dst_buf, BUFFER_LOCK_UNLOCK);

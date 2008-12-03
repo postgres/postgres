@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.84 2008/11/03 20:47:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.85 2008/12/03 13:05:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,8 +152,10 @@ typedef PageHeaderData *PageHeader;
 #define PD_HAS_FREE_LINES	0x0001		/* are there any unused line pointers? */
 #define PD_PAGE_FULL		0x0002		/* not enough free space for new
 										 * tuple? */
+#define PD_ALL_VISIBLE		0x0004		/* all tuples on page are visible to
+										 * everyone */
 
-#define PD_VALID_FLAG_BITS	0x0003		/* OR of all valid pd_flags bits */
+#define PD_VALID_FLAG_BITS	0x0007		/* OR of all valid pd_flags bits */
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
@@ -335,6 +337,13 @@ typedef PageHeaderData *PageHeader;
 	(((PageHeader) (page))->pd_flags |= PD_PAGE_FULL)
 #define PageClearFull(page) \
 	(((PageHeader) (page))->pd_flags &= ~PD_PAGE_FULL)
+
+#define PageIsAllVisible(page) \
+	(((PageHeader) (page))->pd_flags & PD_ALL_VISIBLE)
+#define PageSetAllVisible(page) \
+	(((PageHeader) (page))->pd_flags |= PD_ALL_VISIBLE)
+#define PageClearAllVisible(page) \
+	(((PageHeader) (page))->pd_flags &= ~PD_ALL_VISIBLE)
 
 #define PageIsPrunable(page, oldestxmin) \
 ( \

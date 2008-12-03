@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.1 2008/11/19 10:34:51 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.2 2008/12/03 13:05:22 heikki Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
@@ -175,6 +176,7 @@ void
 RelationTruncate(Relation rel, BlockNumber nblocks)
 {
 	bool fsm;
+	bool vm;
 
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(rel);
@@ -186,6 +188,11 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	fsm = smgrexists(rel->rd_smgr, FSM_FORKNUM);
 	if (fsm)
 		FreeSpaceMapTruncateRel(rel, nblocks);
+
+	/* Truncate the visibility map too if it exists. */
+	vm = smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
+	if (vm)
+		visibilitymap_truncate(rel, nblocks);
 
 	/*
 	 * We WAL-log the truncation before actually truncating, which
@@ -217,12 +224,12 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 
 		/*
 		 * Flush, because otherwise the truncation of the main relation
-		 * might hit the disk before the WAL record of truncating the
-		 * FSM is flushed. If we crashed during that window, we'd be
-		 * left with a truncated heap, but the FSM would still contain
-		 * entries for the non-existent heap pages.
+		 * might hit the disk before the WAL record, and the truncation of
+		 * the FSM or visibility map. If we crashed during that window, we'd
+		 * be left with a truncated heap, but the FSM or visibility map would
+		 * still contain entries for the non-existent heap pages.
 		 */
-		if (fsm)
+		if (fsm || vm)
 			XLogFlush(lsn);
 	}
 

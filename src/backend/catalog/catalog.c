@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.79 2008/10/06 14:13:17 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.80 2008/12/03 13:05:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@
  */
 const char *forkNames[] = {
 	"main", /* MAIN_FORKNUM */
-	"fsm"   /* FSM_FORKNUM */
+	"fsm",   /* FSM_FORKNUM */
+	"vm"   /* VISIBILITYMAP_FORKNUM */
 };
 
 /*
