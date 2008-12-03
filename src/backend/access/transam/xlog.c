@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.322 2008/11/09 17:51:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.323 2008/12/03 08:20:11 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6674,6 +6674,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
 	char		stopxlogfilename[MAXFNAMELEN];
+	char		lastxlogfilename[MAXFNAMELEN];
+	char		histfilename[MAXFNAMELEN];
 	uint32		_logId;
 	uint32		_logSeg;
 	FILE	   *lfp;
@@ -6801,14 +6803,18 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 * we assume the admin wanted his backup to work completely. If you
 	 * don't wish to wait, you can set statement_timeout.
 	 */
-	BackupHistoryFileName(histfilepath, ThisTimeLineID, _logId, _logSeg,
+	XLByteToPrevSeg(stoppoint, _logId, _logSeg);
+	XLogFileName(lastxlogfilename, ThisTimeLineID, _logId, _logSeg);
+
+	XLByteToSeg(startpoint, _logId, _logSeg);
+	BackupHistoryFileName(histfilename, ThisTimeLineID, _logId, _logSeg,
 						  startpoint.xrecoff % XLogSegSize);
 
 	seconds_before_warning = 60;
 	waits = 0;
 
-	while (XLogArchiveIsBusy(stopxlogfilename) ||
-		   XLogArchiveIsBusy(histfilepath))
+	while (XLogArchiveIsBusy(lastxlogfilename) ||
+		   XLogArchiveIsBusy(histfilename))
 	{
 		CHECK_FOR_INTERRUPTS();
 
