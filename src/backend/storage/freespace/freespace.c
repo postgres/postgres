@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.69 2008/11/27 13:32:26 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.70 2008/12/03 12:22:53 heikki Exp $
  *
  *
  * NOTES:
@@ -535,7 +535,7 @@ fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 }
 
 /*
- * Ensure that the FSM fork is at least n_fsmblocks long, extending
+ * Ensure that the FSM fork is at least fsm_nblocks long, extending
  * it if necessary with empty pages. And by empty, I mean pages filled
  * with zeros, meaning there's no free space.
  */
@@ -555,8 +555,8 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 	 * FSM happens seldom enough that it doesn't seem worthwhile to
 	 * have a separate lock tag type for it.
 	 *
-	 * Note that another backend might have extended the relation
-	 * before we get the lock.
+	 * Note that another backend might have extended or created the
+	 * relation before we get the lock.
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
