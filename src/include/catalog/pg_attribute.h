@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.141 2008/11/09 21:24:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.142 2008/12/04 17:51:27 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -300,15 +300,17 @@ DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1255, {"proretset"},			16, -1, 1, 11, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1255, {"provolatile"},		18, -1, 1, 12, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1255, {"pronargs"},			21, -1, 2, 13, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
-{ 1255, {"prorettype"},			26, -1, 4, 14, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proargtypes"},		30, -1, -1, 15, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proallargtypes"},   1028, -1, -1, 16, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proargmodes"},	  1002, -1, -1, 17, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proargnames"},	  1009, -1, -1, 18, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"prosrc"},				25, -1, -1, 19, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"probin"},				17, -1, -1, 20, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proconfig"},		  1009, -1, -1, 21, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1255, {"proacl"},			  1034, -1, -1, 22, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
+{ 1255, {"pronargdefaults"},		21, -1, 2, 14, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
+{ 1255, {"prorettype"},			26, -1, 4, 15, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"proargtypes"},		30, -1, -1, 16, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 1255, {"proallargtypes"},   1028, -1, -1, 17, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proargmodes"},	  1002, -1, -1, 18, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proargnames"},	  1009, -1, -1, 19, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proargdefaults"},		25, -1, -1, 20, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"prosrc"},				25, -1, -1, 21, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"probin"},				17, -1, -1, 22, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proconfig"},		  1009, -1, -1, 23, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proacl"},			  1034, -1, -1, 24, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
 DATA(insert ( 1255 proname			19 -1 NAMEDATALEN	1 0 -1 -1 f p c t f f t 0));
 DATA(insert ( 1255 pronamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
@@ -323,15 +325,17 @@ DATA(insert ( 1255 proisstrict		16 -1 1  10 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 proretset		16 -1 1  11 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 provolatile		18 -1 1  12 0 -1 -1 t p c t f f t 0));
 DATA(insert ( 1255 pronargs			21 -1 2  13 0 -1 -1 t p s t f f t 0));
-DATA(insert ( 1255 prorettype		26 -1 4  14 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1255 proargtypes		30 -1 -1 15 1 -1 -1 f p i t f f t 0));
-DATA(insert ( 1255 proallargtypes 1028 -1 -1 16 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proargmodes	  1002 -1 -1 17 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proargnames	  1009 -1 -1 18 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 prosrc			25 -1 -1 19 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 probin			17 -1 -1 20 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proconfig	  1009 -1 -1 21 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1255 proacl		  1034 -1 -1 22 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 pronargdefaults	21 -1 2  14 0 -1 -1 t p s t f f t 0));
+DATA(insert ( 1255 prorettype		26 -1 4  15 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1255 proargtypes		30 -1 -1 16 1 -1 -1 f p i t f f t 0));
+DATA(insert ( 1255 proallargtypes 1028 -1 -1 17 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 proargmodes	  1002 -1 -1 18 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 proargnames	  1009 -1 -1 19 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 proargdefaults	25 -1 -1 20 0 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 prosrc			25 -1 -1 21 0 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 probin			17 -1 -1 22 0 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 proconfig	  1009 -1 -1 23 1 -1 -1 f x i f f f t 0));
+DATA(insert ( 1255 proacl		  1034 -1 -1 24 1 -1 -1 f x i f f f t 0));
 DATA(insert ( 1255 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
 DATA(insert ( 1255 oid				26 0  4  -2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));

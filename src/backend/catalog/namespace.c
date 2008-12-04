@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.112 2008/09/09 18:58:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.113 2008/12/04 17:51:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,6 +571,11 @@ TypeIsVisible(Oid typid)
  * If expand_variadic is false, variadic arguments are not treated specially,
  * and the returned nvargs will always be zero.
  *
+ * If expand_variadic is true, functions with argument default values
+ * will also be retrieved.  If expand_variadic is false, default
+ * values will not be taken into account and functions that do not
+ * have exactly nargs arguments in total will not be considered.
+ *
  * We search a single namespace if the function name is qualified, else
  * all namespaces in the search path.  The return list will never contain
  * multiple entries with identical argument lists --- in the multiple-
@@ -621,13 +626,45 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		int			pathpos = 0;
 		bool		variadic;
 		Oid			va_elem_type;
+		List	   *defaults = NIL;
 		FuncCandidateList newResult;
+
+		/*
+		 * Check if function has some parameter defaults if some
+		 * parameters are missing.
+		 */
+		if (pronargs > nargs && expand_variadic)
+		{
+			bool		isnull;
+			Datum		proargdefaults;
+			char	   *str;
+
+			/* skip when not enough default expressions */
+			if (nargs + procform->pronargdefaults < pronargs)
+				continue;
+
+			proargdefaults = SysCacheGetAttr(PROCOID, proctup,
+											 Anum_pg_proc_proargdefaults, &isnull);
+			Assert(!isnull);
+			str = TextDatumGetCString(proargdefaults);
+			defaults = (List *) stringToNode(str);
+
+			Assert(IsA(defaults, List));
+
+			/*
+			 * If we don't have to use all default parameters, we skip
+			 * some cells from the left.
+			 */
+			defaults = list_copy_tail(defaults, procform->pronargdefaults - pronargs + nargs);
+
+			pfree(str);
+		}
 
 		/*
 		 * Check if function is variadic, and get variadic element type if so.
 		 * If expand_variadic is false, we should just ignore variadic-ness.
 		 */
-		if (expand_variadic)
+		if (pronargs <= nargs && expand_variadic)
 		{
 			va_elem_type = procform->provariadic;
 			variadic = OidIsValid(va_elem_type);
@@ -638,10 +675,15 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 			variadic = false;
 		}
 
+		Assert(!variadic || !defaults);
+
 		/* Ignore if it doesn't match requested argument count */
 		if (nargs >= 0 &&
-			(variadic ? (pronargs > nargs) : (pronargs != nargs)))
+			(variadic ? (pronargs > nargs) : (defaults ? (pronargs < nargs) : (pronargs != nargs))))
 			continue;
+
+		Assert(!variadic || (pronargs <= nargs));
+		Assert(!defaults || (pronargs > nargs));
 
 		if (OidIsValid(namespaceId))
 		{
@@ -681,6 +723,7 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		newResult->pathpos = pathpos;
 		newResult->oid = HeapTupleGetOid(proctup);
 		newResult->nargs = effective_nargs;
+		newResult->argdefaults = defaults;
 		memcpy(newResult->args, procform->proargtypes.values,
 			   pronargs * sizeof(Oid));
 		if (variadic)
@@ -695,6 +738,8 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		else
 			newResult->nvargs = 0;
 
+		any_variadic = variadic || defaults;
+
 		/*
 		 * Does it have the same arguments as something we already accepted?
 		 * If so, decide which one to keep.  We can skip this check for the
@@ -704,6 +749,9 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		 */
 		if (any_variadic || !OidIsValid(namespaceId))
 		{
+			if (defaults)
+				effective_nargs = nargs;
+
 			/*
 			 * If we have an ordered list from SearchSysCacheList (the normal
 			 * case), then any conflicting proc must immediately adjoin this
@@ -733,11 +781,21 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 						 prevResult;
 						 prevResult = prevResult->next)
 					{
-						if (effective_nargs == prevResult->nargs &&
-							memcmp(newResult->args,
-								   prevResult->args,
-								   effective_nargs * sizeof(Oid)) == 0)
+						if (!defaults)
+						{
+							if (effective_nargs == prevResult->nargs &&
+								memcmp(newResult->args,
+									    prevResult->args,
+									    effective_nargs * sizeof(Oid)) == 0)
+								break;
+						}
+						else
+						{
+							if (memcmp(newResult->args,
+									    prevResult->args,
+									    effective_nargs * sizeof(Oid)) == 0)
 							break;
+						}
 					}
 				}
 				if (prevResult)
@@ -777,6 +835,20 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 							pfree(newResult);
 							continue;	/* keep previous result */
 						}
+
+						if (defaults)
+						{
+							if (prevResult->argdefaults != NIL)
+								ereport(ERROR,
+										(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+										 errmsg("functions with parameter defaults %s and %s are ambiguous",
+												func_signature_string(names, pronargs, procform->proargtypes.values),
+												func_signature_string(names, prevResult->nargs, prevResult->args))));
+							/* else, previous result didn't have defaults */
+							pfree(newResult);
+							continue;	/* keep previous result */
+						}
+
 						/* non-variadic can replace a previous variadic */
 						Assert(prevResult->nvargs > 0);
 					}
@@ -784,6 +856,7 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 					prevResult->pathpos = pathpos;
 					prevResult->oid = newResult->oid;
 					prevResult->nvargs = newResult->nvargs;
+					prevResult->argdefaults = newResult->argdefaults;
 					pfree(newResult);
 					continue;	/* args are same, of course */
 				}

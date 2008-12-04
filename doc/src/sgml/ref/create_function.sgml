@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.81 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.82 2008/12/04 17:51:26 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -21,7 +21,7 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.81 2008/11/14 10:22
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
-    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable>] [, ...] ] )
     [ RETURNS <replaceable class="parameter">rettype</replaceable>
       | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
@@ -150,6 +150,20 @@ CREATE [ OR REPLACE ] FUNCTION
        class="parameter">columnname</replaceable>%TYPE</literal>.
        Using this feature can sometimes help make a function independent of
        changes to the definition of a table.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">defexpr</replaceable></term>
+
+     <listitem>
+      <para>
+       An expression to be used as default value if the parameter is
+       not specified.  The expression has to be convertable to the
+       argument type of the parameter.  All parameters after a
+       parameter with default value have to be parameters with default
+       values as well.
       </para>
      </listitem>
     </varlistentry>
@@ -666,6 +680,14 @@ COMMIT;
    <replaceable class="parameter">argmode</replaceable> can be written
    either before or after <replaceable class="parameter">argname</replaceable>.
    But only the first way is standard-compliant.
+  </para>
+
+  <para>
+   The SQL standard does not specify parameter defaults.  The syntax
+   with the <literal>DEFAULT</literal> key word is from Oracle, and it
+   is somewhat in the spirit of the standard: SQL/PSM uses it for
+   variable default values.  The syntax with <literal>=</literal> is
+   used in T-SQL and Firebird.
   </para>
  </refsect1>
 

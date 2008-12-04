@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.55 2008/07/16 01:30:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.56 2008/12/04 17:51:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ typedef struct _FuncCandidateList
 	Oid			oid;			/* the function or operator's OID */
 	int			nargs;			/* number of arg types returned */
 	int			nvargs;			/* number of args to become variadic array */
+	List			*argdefaults;		/* list of parameter defaults */
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
 }	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
 

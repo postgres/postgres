@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.301 2008/11/07 18:25:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.302 2008/12/04 17:51:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,7 +700,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
-			CreateFunction((CreateFunctionStmt *) parsetree);
+			CreateFunction((CreateFunctionStmt *) parsetree, queryString);
 			break;
 
 		case T_AlterFunctionStmt:		/* ALTER FUNCTION */

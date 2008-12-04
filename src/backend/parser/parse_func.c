@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.207 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.208 2008/12/04 17:51:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	bool		retset;
 	int			nvargs;
 	FuncDetailCode fdresult;
+	List	   *argdefaults;
 
 	/*
 	 * Most of the rest of the parser just assumes that functions do not have
@@ -164,7 +165,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	fdresult = func_get_detail(funcname, fargs, nargs, actual_arg_types,
 							   !func_variadic,
 							   &funcid, &rettype, &retset, &nvargs,
-							   &declared_arg_types);
+							   &declared_arg_types, &argdefaults);
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
 		/*
@@ -233,6 +234,21 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					"You might need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
 	}
+
+	/* add stored expressions as called values for arguments with defaults */
+	if (argdefaults)
+	{
+		ListCell  *lc;
+
+		foreach(lc, argdefaults)
+		{
+			Node	*expr = (Node *) lfirst(lc);
+    
+			fargs = lappend(fargs, expr);
+			actual_arg_types[nargs++] = exprType(expr);
+		}
+	}
+
 
 	/*
 	 * enforce consistency with polymorphic argument and return types,
@@ -729,7 +745,8 @@ func_get_detail(List *funcname,
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
 				int *nvargs,	/* return value */
-				Oid **true_typeids)		/* return value */
+				Oid **true_typeids,		/* return value */
+				List **argdefaults)	/* return value */
 {
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
@@ -870,6 +887,8 @@ func_get_detail(List *funcname,
 		*funcid = best_candidate->oid;
 		*nvargs = best_candidate->nvargs;
 		*true_typeids = best_candidate->args;
+		if (argdefaults)
+			*argdefaults = best_candidate->argdefaults;
 
 		ftup = SearchSysCache(PROCOID,
 							  ObjectIdGetDatum(best_candidate->oid),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.154 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.155 2008/12/04 17:51:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,8 @@ ProcedureCreate(const char *procedureName,
 				Datum parameterNames,
 				Datum proconfig,
 				float4 procost,
-				float4 prorows)
+				float4 prorows,
+				List *parameterDefaults)
 {
 	Oid			retval;
 	int			parameterCount;
@@ -295,6 +296,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_proretset - 1] = BoolGetDatum(returnsSet);
 	values[Anum_pg_proc_provolatile - 1] = CharGetDatum(volatility);
 	values[Anum_pg_proc_pronargs - 1] = UInt16GetDatum(parameterCount);
+	values[Anum_pg_proc_pronargdefaults - 1] = UInt16GetDatum(list_length(parameterDefaults));
 	values[Anum_pg_proc_prorettype - 1] = ObjectIdGetDatum(returnType);
 	values[Anum_pg_proc_proargtypes - 1] = PointerGetDatum(parameterTypes);
 	if (allParameterTypes != PointerGetDatum(NULL))
@@ -309,6 +311,13 @@ ProcedureCreate(const char *procedureName,
 		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
 		nulls[Anum_pg_proc_proargnames - 1] = true;
+	if (parameterDefaults != PointerGetDatum(NULL))
+	{
+		Assert(list_length(parameterDefaults) > 0);
+		values[Anum_pg_proc_proargdefaults - 1] = CStringGetTextDatum(nodeToString(parameterDefaults));
+	}
+	else
+		nulls[Anum_pg_proc_proargdefaults - 1] = true;
 	values[Anum_pg_proc_prosrc - 1] = CStringGetTextDatum(prosrc);
 	if (probin)
 		values[Anum_pg_proc_probin - 1] = CStringGetTextDatum(probin);

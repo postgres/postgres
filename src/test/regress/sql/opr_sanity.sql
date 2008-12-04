@@ -62,6 +62,11 @@ SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
 
+-- pronargdefaults should be 0 iff proargdefaults is null
+SELECT p.oid, p.proname
+FROM pg_proc AS p
+WHERE pronargdefaults <> 0 OR proargdefaults IS NOT NULL;
+
 -- probin should be non-empty for C functions, null everywhere else
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1

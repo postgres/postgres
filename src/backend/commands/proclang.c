@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.80 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.81 2008/12/04 17:51:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
 										 1,
-										 0);
+										 0,
+										 NULL);
 		}
 
 		/*
@@ -182,7 +183,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
 										 1,
-										 0);
+										 0,
+										 NULL);
 			}
 		}
 		else

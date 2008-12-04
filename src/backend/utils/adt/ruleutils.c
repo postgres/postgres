@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.287 2008/10/06 20:29:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.288 2008/12/04 17:51:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,8 @@ static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args);
+						 bool print_table_args,
+						 bool full);
 static void print_function_rettype(StringInfo buf, HeapTuple proctup);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
@@ -1449,7 +1450,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	nsp = get_namespace_name(proc->pronamespace);
 	appendStringInfo(&buf, "CREATE OR REPLACE FUNCTION %s(",
 					 quote_qualified_identifier(nsp, name));
-	(void) print_function_arguments(&buf, proctup, false);
+	(void) print_function_arguments(&buf, proctup, false, true);
 	appendStringInfoString(&buf, ")\n RETURNS ");
 	print_function_rettype(&buf, proctup);
 	appendStringInfo(&buf, "\n LANGUAGE %s\n",
@@ -1598,12 +1599,42 @@ pg_get_function_arguments(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 
-	(void) print_function_arguments(&buf, proctup, false);
+	(void) print_function_arguments(&buf, proctup, false, true);
 
 	ReleaseSysCache(proctup);
 
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
+
+/*
+ * pg_get_function_identity_arguments
+ *		Get a formatted list of arguments for a function.
+ *		This is everything that would go between the parentheses in
+ *		ALTER FUNCTION, etc. skip names and defaults/
+ */
+Datum
+pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	StringInfoData buf;
+	HeapTuple	proctup;
+
+	initStringInfo(&buf);
+
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	(void) print_function_arguments(&buf, proctup, false, false);
+
+	ReleaseSysCache(proctup);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
+
 
 /*
  * pg_get_function_result
@@ -1649,7 +1680,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 	{
 		/* It might be a table function; try to print the arguments */
 		appendStringInfoString(&rbuf, "TABLE(");
-		ntabargs = print_function_arguments(&rbuf, proctup, true);
+		ntabargs = print_function_arguments(&rbuf, proctup, true, true);
 		if (ntabargs > 0)
 			appendStringInfoString(&rbuf, ")");
 		else
@@ -1672,10 +1703,12 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
  * append the desired subset of arguments to buf.  We print only TABLE
  * arguments when print_table_args is true, and all the others when it's false.
  * Function return value is the number of arguments printed.
+ * When full is false, then don't print argument names and argument defaults.
  */
 static int
 print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args)
+						 bool print_table_args,
+						 bool full)
 {
 	int			numargs;
 	Oid		   *argtypes;
@@ -1683,9 +1716,36 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	char	   *argmodes;
 	int			argsprinted;
 	int			i;
+	Datum		proargdefaults;
+	List	   *argdefaults;
+	int			nargdefaults;
+	bool		isnull;
+	List	   *dcontext = NIL;
 
 	numargs = get_func_arg_info(proctup,
 								&argtypes, &argnames, &argmodes);
+
+	proargdefaults = SysCacheGetAttr(PROCOID, proctup,
+									 Anum_pg_proc_proargdefaults, &isnull);
+	if (!isnull)
+	{
+		char	*str;
+
+		str = TextDatumGetCString(proargdefaults);
+		argdefaults = (List *) stringToNode(str);
+		Assert(IsA(argdefaults, List));
+		nargdefaults = list_length(argdefaults);
+	    
+		/* we will need deparse context */
+		//dcontext = deparse_context_for("", InvalidOid);
+		dcontext = NULL;
+		pfree(str);
+	}
+	else
+	{
+		argdefaults = NIL;
+		nargdefaults = 0;
+	}
 
 	argsprinted = 0;
 	for (i = 0; i < numargs; i++)
@@ -1723,9 +1783,19 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		if (argsprinted)
 			appendStringInfoString(buf, ", ");
 		appendStringInfoString(buf, modename);
-		if (argname && argname[0])
+		if (argname && argname[0] && full)
 			appendStringInfo(buf, "%s ", argname);
 		appendStringInfoString(buf, format_type_be(argtype));
+
+		/* search given default expression, expect less numargs */
+		if (nargdefaults > 0 && i >= (numargs - nargdefaults) && full)
+		{
+			Node	*expr;
+
+			expr = (Node *) list_nth(argdefaults, i - (numargs - nargdefaults));
+			appendStringInfo(buf, " DEFAULT %s",  deparse_expression(expr, dcontext, false, false));
+		}
+
 		argsprinted++;
 	}
 
@@ -6002,7 +6072,7 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 	p_result = func_get_detail(list_make1(makeString(proname)),
 							   NIL, nargs, argtypes, false,
 							   &p_funcid, &p_rettype,
-							   &p_retset, &p_nvargs, &p_true_typeids);
+							   &p_retset, &p_nvargs, &p_true_typeids, NULL);
 	if ((p_result == FUNCDETAIL_NORMAL || p_result == FUNCDETAIL_AGGREGATE) &&
 		p_funcid == funcid)
 		nspname = NULL;

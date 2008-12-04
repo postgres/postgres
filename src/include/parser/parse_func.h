@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.60 2008/07/16 01:30:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.61 2008/12/04 17:51:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,8 @@ extern Node *ParseFuncOrColumn(ParseState *pstate,
 extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 				int nargs, Oid *argtypes, bool expand_variadic,
 				Oid *funcid, Oid *rettype,
-				bool *retset, int *nvargs, Oid **true_typeids);
+				bool *retset, int *nvargs, Oid **true_typeids,
+				List **argdefaults);
 
 extern int func_match_argtypes(int nargs,
 					Oid *input_typeids,

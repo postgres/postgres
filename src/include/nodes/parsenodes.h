@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.380 2008/12/04 11:42:24 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.381 2008/12/04 17:51:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1686,6 +1686,7 @@ typedef struct FunctionParameter
 	char	   *name;			/* parameter name, or NULL if not given */
 	TypeName   *argType;		/* TypeName for parameter type */
 	FunctionParameterMode mode; /* IN/OUT/INOUT */
+	Node		*defexpr;	/* Default expression, or NULL if not given */
 } FunctionParameter;
 
 typedef struct AlterFunctionStmt

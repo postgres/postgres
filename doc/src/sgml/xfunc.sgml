@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.133 2008/10/31 19:37:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.134 2008/12/04 17:51:26 petere Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -660,6 +660,60 @@ SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4]);
      element type, thereby allowing the array argument value to match
      normally.  <literal>VARIADIC</> can only be attached to the last
      actual argument of a function call.
+    </para>
+   </sect2>
+
+   <sect2 id="xfunc-parameter-defaults">
+    <title><acronym>SQL</> Functions with Parameters Default Values</title>
+
+    <indexterm>
+     <primary>default values</primary>
+    </indexterm>
+
+    <para>
+     Functions can be declared with parameters with default values or
+     expressions.  The default expressions are used as parameter value
+     if the parameter is not explicitly specified in a function call.
+     All parameters after a a parameter with default value have to be
+     parameters with default values as well.
+    </para>
+
+    <para>
+     For example:
+<screen>
+CREATE FUNCTION foo(a int DEFAULT 1, b int DEFAULT 2, c int DEFAULT 3) 
+RETURNS int
+LANGUAGE SQL
+AS $$
+    SELECT $1 + $2 + $3;
+$$;
+
+SELECT foo(10, 20, 30);
+ foo 
+-----
+  60
+(1 row)
+
+SELECT foo(10, 20);
+ foo 
+-----
+  33
+(1 row)
+
+SELECT foo(10);
+ foo 
+-----
+  15
+(1 row)
+
+SELECT foo();
+ foo 
+-----
+   6
+(1 row)
+</screen>
+     Instead of the key word <literal>DEFAULT</literal>,
+     the <literal>=</literal> sign can also be used.
     </para>
    </sect2>
 
