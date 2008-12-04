@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.112 2008/12/03 13:05:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.113 2008/12/04 11:42:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-	bool		scan_all;
 
 	pg_rusage_init(&ru0);
 
@@ -169,15 +168,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
 	vacrelstats->hasindex = (nindexes > 0);
-
-	/* Should we use the visibility map or scan all pages? */
-	if (vacstmt->freeze_min_age != -1)
-		scan_all = true;
-	else
-		scan_all = false;
  
 	/* Do the vacuuming */
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all);
+	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, vacstmt->scan_all);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
