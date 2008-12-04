@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.7 2008/11/25 20:28:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.8 2008/12/04 14:51:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,8 @@ GetTransactionSnapshot(void)
 		 */
 		if (IsXactIsoLevelSerializable)
 		{
-			CurrentSnapshot = RegisterSnapshot(CurrentSnapshot);
+			CurrentSnapshot = RegisterSnapshotOnOwner(CurrentSnapshot,
+													  TopTransactionResourceOwner);
 			registered_serializable = true;
 		}
 
@@ -345,14 +346,27 @@ ActiveSnapshotSet(void)
 
 /*
  * RegisterSnapshot
- * 		Register a snapshot as being in use
+ * 		Register a snapshot as being in use by the current resource owner
  *
  * If InvalidSnapshot is passed, it is not registered.
  */
 Snapshot
 RegisterSnapshot(Snapshot snapshot)
 {
-	Snapshot	snap;
+	if (snapshot == InvalidSnapshot)
+		return InvalidSnapshot;
+
+	return RegisterSnapshotOnOwner(snapshot, CurrentResourceOwner);
+}
+
+/*
+ * RegisterSnapshotOnOwner
+ * 		As above, but use the specified resource owner
+ */
+Snapshot
+RegisterSnapshotOnOwner(Snapshot snapshot, ResourceOwner owner)
+{
+	Snapshot		snap;
 
 	if (snapshot == InvalidSnapshot)
 		return InvalidSnapshot;
@@ -361,9 +375,9 @@ RegisterSnapshot(Snapshot snapshot)
 	snap = snapshot->copied ? snapshot : CopySnapshot(snapshot);
 
 	/* and tell resowner.c about it */
-	ResourceOwnerEnlargeSnapshots(CurrentResourceOwner);
+	ResourceOwnerEnlargeSnapshots(owner);
 	snap->regd_count++;
-	ResourceOwnerRememberSnapshot(CurrentResourceOwner, snap);
+	ResourceOwnerRememberSnapshot(owner, snap);
 
 	RegisteredSnapshots++;
 
@@ -383,10 +397,23 @@ UnregisterSnapshot(Snapshot snapshot)
 	if (snapshot == NULL)
 		return;
 
+	UnregisterSnapshotFromOwner(snapshot, CurrentResourceOwner);
+}
+
+/*
+ * UnregisterSnapshotFromOwner
+ * 		As above, but use the specified resource owner
+ */
+void
+UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner)
+{
+	if (snapshot == NULL)
+		return;
+
 	Assert(snapshot->regd_count > 0);
 	Assert(RegisteredSnapshots > 0);
 
-	ResourceOwnerForgetSnapshot(CurrentResourceOwner, snapshot);
+	ResourceOwnerForgetSnapshot(owner, snapshot);
 	RegisteredSnapshots--;
 	if (--snapshot->regd_count == 0 && snapshot->active_count == 0)
 	{
@@ -464,6 +491,26 @@ AtSubAbort_Snapshot(int level)
 }
 
 /*
+ * AtEarlyCommit_Snapshot
+ *
+ * Snapshot manager's cleanup function, to be called on commit, before
+ * doing resowner.c resource release.
+ */
+void
+AtEarlyCommit_Snapshot(void)
+{
+	/*
+	 * On a serializable transaction we must unregister our private refcount to
+	 * the serializable snapshot.
+	 */
+	if (registered_serializable)
+		UnregisterSnapshotFromOwner(CurrentSnapshot,
+									TopTransactionResourceOwner);
+	registered_serializable = false;
+
+}
+
+/*
  * AtEOXact_Snapshot
  * 		Snapshot manager's cleanup function for end of transaction
  */
@@ -474,13 +521,6 @@ AtEOXact_Snapshot(bool isCommit)
 	if (isCommit)
 	{
 		ActiveSnapshotElt	*active;
-
-		/*
-		 * On a serializable snapshot we must first unregister our private
-		 * refcount to the serializable snapshot.
-		 */
-		if (registered_serializable)
-			UnregisterSnapshot(CurrentSnapshot);
 
 		if (RegisteredSnapshots != 0)
 			elog(WARNING, "%d registered snapshots seem to remain after cleanup",

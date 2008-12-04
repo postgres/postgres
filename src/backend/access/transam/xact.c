@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.269 2008/11/19 10:34:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.270 2008/12/04 14:51:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1667,6 +1667,9 @@ CommitTransaction(void)
 	/* Clean up the relation cache */
 	AtEOXact_RelationCache(true);
 
+	/* Clean up the snapshot manager */
+	AtEarlyCommit_Snapshot();
+
 	/*
 	 * Make catalog changes visible to all backends.  This has to happen after
 	 * relcache references are dropped (see comments for
@@ -1905,6 +1908,9 @@ PrepareTransaction(void)
 
 	/* Clean up the relation cache */
 	AtEOXact_RelationCache(true);
+
+	/* Clean up the snapshot manager */
+	AtEarlyCommit_Snapshot();
 
 	/* notify and flatfiles don't need a postprepare call */
 

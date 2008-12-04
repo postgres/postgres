@@ -116,6 +116,15 @@ SELECT lo_close(fd) FROM lotest_stash_values;
 (1 row)
 
 END;
+-- Test resource management
+BEGIN;
+SELECT lo_open(loid, x'40000'::int) from lotest_stash_values;
+ lo_open 
+---------
+       0
+(1 row)
+
+ABORT;
 -- Test truncation.
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
