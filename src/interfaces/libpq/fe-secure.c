@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.112 2008/12/04 02:52:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.113 2008/12/04 14:07:42 mha Exp $
  *
  * NOTES
  *
@@ -918,8 +918,6 @@ destroy_ssl_system(void)
 			 * This means we leak a little memory on repeated load/unload
 			 * of the library.
 			 */
-			free(pq_lockarray);
-			pq_lockarray = NULL;
 		}
 	}
 
