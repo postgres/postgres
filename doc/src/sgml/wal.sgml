@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.53 2008/05/02 19:52:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.54 2008/12/06 21:34:27 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -134,6 +134,21 @@
     the data pages can be redone from the log records.  (This is
     roll-forward recovery, also known as REDO.)
    </para>
+
+   <tip>
+    <para>
+     Because <acronym>WAL</acronym> restores database file
+     contents after a crash, it is not necessary to use a
+     journaled filesystem;  in fact, journaling overhead can
+     reduce performance.  For best performance, turn off
+     <emphasis>data</emphasis> journaling as a filesystem mount
+     option, e.g. use <literal>data=writeback</> on Linux.
+     Meta-data journaling (e.g.  file creation and directory
+     modification) is still desirable for faster rebooting after
+     a crash.
+    </para>
+   </tip>
+
 
    <para>
     Using <acronym>WAL</acronym> results in a
