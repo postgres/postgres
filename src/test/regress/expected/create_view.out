@@ -49,15 +49,18 @@ SELECT * FROM viewtest;
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a FROM viewtest_tbl WHERE a <> 20;
-ERROR:  cannot change number of columns in view
+ERROR:  cannot drop columns from view
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT 1, * FROM viewtest_tbl;
-ERROR:  cannot change number of columns in view
+ERROR:  column "b" of relation "viewtest" already exists
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
 ERROR:  cannot change data type of view column "b"
+-- should work 
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, 0 AS c FROM viewtest_tbl;
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
 -- tests for temporary views

@@ -61,6 +61,10 @@ CREATE OR REPLACE VIEW viewtest AS
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
 
+-- should work 
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, 0 AS c FROM viewtest_tbl;
+
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
 

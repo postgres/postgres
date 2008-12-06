@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.107 2008/08/25 22:42:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.108 2008/12/06 23:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,8 +173,33 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		Assert(relation->istemp == rel->rd_istemp);
 
 		/*
+ 		 * If new attributes have been added, we must modify the pre-existing
+ 		 * view.
+ 		 */
+		if (list_length(attrList) > rel->rd_att->natts) {
+			List		*atcmds = NIL;
+			ListCell 	*c;
+			int			skip = rel->rd_att->natts;
+
+			foreach(c, attrList) {
+				AlterTableCmd *atcmd;
+
+				if (skip > 0) {
+					--skip;
+					continue;
+				}
+				atcmd = makeNode(AlterTableCmd);
+				atcmd->subtype = AT_AddColumnToView;
+				atcmd->def = lfirst(c);
+				atcmds = lappend(atcmds, atcmd);
+			}
+			AlterTableInternal(viewOid, atcmds, true);
+		}
+
+		/*
 		 * Create a tuple descriptor to compare against the existing view, and
-		 * verify it matches.
+		 * verify that the old column list is an initial prefix of the new
+		 * column list.
 		 */
 		descriptor = BuildDescForRelation(attrList);
 		checkViewTupleDesc(descriptor, rel->rd_att);
@@ -219,13 +244,13 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 {
 	int			i;
 
-	if (newdesc->natts != olddesc->natts)
+	if (newdesc->natts < olddesc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot change number of columns in view")));
+				 errmsg("cannot drop columns from view")));
 	/* we can ignore tdhasoid */
 
-	for (i = 0; i < newdesc->natts; i++)
+	for (i = 0; i < olddesc->natts; i++)
 	{
 		Form_pg_attribute newattr = newdesc->attrs[i];
 		Form_pg_attribute oldattr = olddesc->attrs[i];
@@ -234,7 +259,7 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 		if (newattr->attisdropped != oldattr->attisdropped)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot change number of columns in view")));
+					 errmsg("cannot drop columns from view")));
 
 		if (strcmp(NameStr(newattr->attname), NameStr(oldattr->attname)) != 0)
 			ereport(ERROR,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.271 2008/11/19 10:34:51 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.272 2008/12/06 23:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2334,6 +2334,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepAddColumn(wqueue, rel, recurse, cmd);
 			pass = AT_PASS_ADD_COL;
 			break;
+		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
+			ATSimplePermissions(rel, true);
+			/* Performs own recursion */
+			ATPrepAddColumn(wqueue, rel, recurse, cmd);
+			pass = AT_PASS_ADD_COL;
+			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 
 			/*
@@ -2555,6 +2561,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
+		case AT_AddColumnToView: /* add column via CREATE OR REPLACE VIEW */
 			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
@@ -3455,6 +3462,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	int			i;
 	int			minattnum,
 				maxatts;
+	char		relkind;
 	HeapTuple	typeTuple;
 	Oid			typeOid;
 	int32		typmod;
@@ -3527,6 +3535,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 						colDef->colname, RelationGetRelationName(rel))));
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
+	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
 	maxatts = minattnum + 1;
 	if (maxatts > MaxHeapAttributeNumber)
 		ereport(ERROR,
@@ -3625,44 +3634,48 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * Note: we use build_column_default, and not just the cooked default
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
+	 *
+	 * We skip this logic completely for views.
 	 */
-	defval = (Expr *) build_column_default(rel, attribute.attnum);
+	if (relkind != RELKIND_VIEW) {
+		defval = (Expr *) build_column_default(rel, attribute.attnum);
 
-	if (!defval && GetDomainConstraints(typeOid) != NIL)
-	{
-		Oid			baseTypeId;
-		int32		baseTypeMod;
+		if (!defval && GetDomainConstraints(typeOid) != NIL)
+		{
+			Oid			baseTypeId;
+			int32		baseTypeMod;
 
-		baseTypeMod = typmod;
-		baseTypeId = getBaseTypeAndTypmod(typeOid, &baseTypeMod);
-		defval = (Expr *) makeNullConst(baseTypeId, baseTypeMod);
-		defval = (Expr *) coerce_to_target_type(NULL,
-												(Node *) defval,
-												baseTypeId,
-												typeOid,
-												typmod,
-												COERCION_ASSIGNMENT,
-												COERCE_IMPLICIT_CAST,
-												-1);
-		if (defval == NULL)		/* should not happen */
-			elog(ERROR, "failed to coerce base type to domain");
+			baseTypeMod = typmod;
+			baseTypeId = getBaseTypeAndTypmod(typeOid, &baseTypeMod);
+			defval = (Expr *) makeNullConst(baseTypeId, baseTypeMod);
+			defval = (Expr *) coerce_to_target_type(NULL,
+													(Node *) defval,
+													baseTypeId,
+													typeOid,
+													typmod,
+													COERCION_ASSIGNMENT,
+													COERCE_IMPLICIT_CAST,
+													-1);
+			if (defval == NULL)		/* should not happen */
+				elog(ERROR, "failed to coerce base type to domain");
+		}
+
+		if (defval)
+		{
+			NewColumnValue *newval;
+
+			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+			newval->attnum = attribute.attnum;
+			newval->expr = defval;
+
+			tab->newvals = lappend(tab->newvals, newval);
+		}
+
+		/*
+		 * If the new column is NOT NULL, tell Phase 3 it needs to test that.
+		 */
+		tab->new_notnull |= colDef->is_not_null;
 	}
-
-	if (defval)
-	{
-		NewColumnValue *newval;
-
-		newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
-		newval->attnum = attribute.attnum;
-		newval->expr = defval;
-
-		tab->newvals = lappend(tab->newvals, newval);
-	}
-
-	/*
-	 * If the new column is NOT NULL, tell Phase 3 it needs to test that.
-	 */
-	tab->new_notnull |= colDef->is_not_null;
 
 	/*
 	 * Add needed dependency entries for the new column.

@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.17 2008/09/01 20:42:45 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.18 2008/12/06 23:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1721,6 +1721,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		switch (cmd->subtype)
 		{
 			case AT_AddColumn:
+			case AT_AddColumnToView:
 				{
 					ColumnDef  *def = (ColumnDef *) cmd->def;
 
