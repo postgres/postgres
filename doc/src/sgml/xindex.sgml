@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.63 2008/05/16 16:31:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.64 2008/12/07 23:46:39 alvherre Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -499,8 +499,8 @@
    reduces the odds of getting inconsistent results for corner cases.
    Following this approach, we first write:
 
-<programlisting>
-#define Mag(c)  ((c)-&gt;x*(c)-&gt;x + (c)-&gt;y*(c)-&gt;y)
+<programlisting><![CDATA[
+#define Mag(c)  ((c)->x*(c)->x + (c)->y*(c)->y)
 
 static int
 complex_abs_cmp_internal(Complex *a, Complex *b)
@@ -508,17 +508,18 @@ complex_abs_cmp_internal(Complex *a, Complex *b)
     double      amag = Mag(a),
                 bmag = Mag(b);
 
-    if (amag &lt; bmag)
+    if (amag < bmag)
         return -1;
-    if (amag &gt; bmag)
+    if (amag > bmag)
         return 1;
     return 0;
 }
+]]>
 </programlisting>
 
    Now the less-than function looks like:
 
-<programlisting>
+<programlisting><![CDATA[
 PG_FUNCTION_INFO_V1(complex_abs_lt);
 
 Datum
@@ -527,8 +528,9 @@ complex_abs_lt(PG_FUNCTION_ARGS)
     Complex    *a = (Complex *) PG_GETARG_POINTER(0);
     Complex    *b = (Complex *) PG_GETARG_POINTER(1);
 
-    PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) &lt; 0);
+    PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) < 0);
 }
+]]>
 </programlisting>
 
    The other four functions differ only in how they compare the internal
@@ -617,15 +619,16 @@ CREATE FUNCTION complex_abs_cmp(complex, complex)
    Now that we have the required operators and support routine,
    we can finally create the operator class:
 
-<programlisting>
+<programlisting><![CDATA[
 CREATE OPERATOR CLASS complex_abs_ops
     DEFAULT FOR TYPE complex USING btree AS
-        OPERATOR        1       &lt; ,
-        OPERATOR        2       &lt;= ,
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
         OPERATOR        3       = ,
-        OPERATOR        4       &gt;= ,
-        OPERATOR        5       &gt; ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
         FUNCTION        1       complex_abs_cmp(complex, complex);
+]]>
 </programlisting>
   </para>
 
@@ -708,87 +711,88 @@ CREATE OPERATOR CLASS complex_abs_ops
    on one of these types can be searched using a comparison value of another
    type.  The family could be duplicated by these definitions:
 
-<programlisting>
+<programlisting><![CDATA[
 CREATE OPERATOR FAMILY integer_ops USING btree;
 
 CREATE OPERATOR CLASS int8_ops
 DEFAULT FOR TYPE int8 USING btree FAMILY integer_ops AS
   -- standard int8 comparisons
-  OPERATOR 1 &lt; ,
-  OPERATOR 2 &lt;= ,
+  OPERATOR 1 < ,
+  OPERATOR 2 <= ,
   OPERATOR 3 = ,
-  OPERATOR 4 &gt;= ,
-  OPERATOR 5 &gt; ,
+  OPERATOR 4 >= ,
+  OPERATOR 5 > ,
   FUNCTION 1 btint8cmp(int8, int8) ;
 
 CREATE OPERATOR CLASS int4_ops
 DEFAULT FOR TYPE int4 USING btree FAMILY integer_ops AS
   -- standard int4 comparisons
-  OPERATOR 1 &lt; ,
-  OPERATOR 2 &lt;= ,
+  OPERATOR 1 < ,
+  OPERATOR 2 <= ,
   OPERATOR 3 = ,
-  OPERATOR 4 &gt;= ,
-  OPERATOR 5 &gt; ,
+  OPERATOR 4 >= ,
+  OPERATOR 5 > ,
   FUNCTION 1 btint4cmp(int4, int4) ;
 
 CREATE OPERATOR CLASS int2_ops
 DEFAULT FOR TYPE int2 USING btree FAMILY integer_ops AS
   -- standard int2 comparisons
-  OPERATOR 1 &lt; ,
-  OPERATOR 2 &lt;= ,
+  OPERATOR 1 < ,
+  OPERATOR 2 <= ,
   OPERATOR 3 = ,
-  OPERATOR 4 &gt;= ,
-  OPERATOR 5 &gt; ,
+  OPERATOR 4 >= ,
+  OPERATOR 5 > ,
   FUNCTION 1 btint2cmp(int2, int2) ;
 
 ALTER OPERATOR FAMILY integer_ops USING btree ADD
   -- cross-type comparisons int8 vs int2
-  OPERATOR 1 &lt; (int8, int2) ,
-  OPERATOR 2 &lt;= (int8, int2) ,
+  OPERATOR 1 < (int8, int2) ,
+  OPERATOR 2 <= (int8, int2) ,
   OPERATOR 3 = (int8, int2) ,
-  OPERATOR 4 &gt;= (int8, int2) ,
-  OPERATOR 5 &gt; (int8, int2) ,
+  OPERATOR 4 >= (int8, int2) ,
+  OPERATOR 5 > (int8, int2) ,
   FUNCTION 1 btint82cmp(int8, int2) ,
 
   -- cross-type comparisons int8 vs int4
-  OPERATOR 1 &lt; (int8, int4) ,
-  OPERATOR 2 &lt;= (int8, int4) ,
+  OPERATOR 1 < (int8, int4) ,
+  OPERATOR 2 <= (int8, int4) ,
   OPERATOR 3 = (int8, int4) ,
-  OPERATOR 4 &gt;= (int8, int4) ,
-  OPERATOR 5 &gt; (int8, int4) ,
+  OPERATOR 4 >= (int8, int4) ,
+  OPERATOR 5 > (int8, int4) ,
   FUNCTION 1 btint84cmp(int8, int4) ,
 
   -- cross-type comparisons int4 vs int2
-  OPERATOR 1 &lt; (int4, int2) ,
-  OPERATOR 2 &lt;= (int4, int2) ,
+  OPERATOR 1 < (int4, int2) ,
+  OPERATOR 2 <= (int4, int2) ,
   OPERATOR 3 = (int4, int2) ,
-  OPERATOR 4 &gt;= (int4, int2) ,
-  OPERATOR 5 &gt; (int4, int2) ,
+  OPERATOR 4 >= (int4, int2) ,
+  OPERATOR 5 > (int4, int2) ,
   FUNCTION 1 btint42cmp(int4, int2) ,
 
   -- cross-type comparisons int4 vs int8
-  OPERATOR 1 &lt; (int4, int8) ,
-  OPERATOR 2 &lt;= (int4, int8) ,
+  OPERATOR 1 < (int4, int8) ,
+  OPERATOR 2 <= (int4, int8) ,
   OPERATOR 3 = (int4, int8) ,
-  OPERATOR 4 &gt;= (int4, int8) ,
-  OPERATOR 5 &gt; (int4, int8) ,
+  OPERATOR 4 >= (int4, int8) ,
+  OPERATOR 5 > (int4, int8) ,
   FUNCTION 1 btint48cmp(int4, int8) ,
 
   -- cross-type comparisons int2 vs int8
-  OPERATOR 1 &lt; (int2, int8) ,
-  OPERATOR 2 &lt;= (int2, int8) ,
+  OPERATOR 1 < (int2, int8) ,
+  OPERATOR 2 <= (int2, int8) ,
   OPERATOR 3 = (int2, int8) ,
-  OPERATOR 4 &gt;= (int2, int8) ,
-  OPERATOR 5 &gt; (int2, int8) ,
+  OPERATOR 4 >= (int2, int8) ,
+  OPERATOR 5 > (int2, int8) ,
   FUNCTION 1 btint28cmp(int2, int8) ,
 
   -- cross-type comparisons int2 vs int4
-  OPERATOR 1 &lt; (int2, int4) ,
-  OPERATOR 2 &lt;= (int2, int4) ,
+  OPERATOR 1 < (int2, int4) ,
+  OPERATOR 2 <= (int2, int4) ,
   OPERATOR 3 = (int2, int4) ,
-  OPERATOR 4 &gt;= (int2, int4) ,
-  OPERATOR 5 &gt; (int2, int4) ,
+  OPERATOR 4 >= (int2, int4) ,
+  OPERATOR 5 > (int2, int4) ,
   FUNCTION 1 btint24cmp(int2, int4) ;
+]]>
 </programlisting>
 
    Notice that this definition <quote>overloads</> the operator strategy and

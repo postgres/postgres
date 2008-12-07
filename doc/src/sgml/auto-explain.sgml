@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.1 2008/11/19 02:59:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.2 2008/12/07 23:46:39 alvherre Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -150,18 +150,19 @@ explain.log_min_duration = '3s'
    This might produce log output such as:
   </para>
 
-  <programlisting>
+  <programlisting><![CDATA[
   LOG:  duration: 0.986 ms  plan:
           Aggregate  (cost=14.90..14.91 rows=1 width=0)
-            -&gt;  Hash Join  (cost=3.91..14.70 rows=81 width=0)
+            ->  Hash Join  (cost=3.91..14.70 rows=81 width=0)
                   Hash Cond: (pg_class.oid = pg_index.indrelid)
-                  -&gt;  Seq Scan on pg_class  (cost=0.00..8.27 rows=227 width=4)
-                  -&gt;  Hash  (cost=2.90..2.90 rows=81 width=4)
-                        -&gt;  Seq Scan on pg_index  (cost=0.00..2.90 rows=81 width=4)
+                  ->  Seq Scan on pg_class  (cost=0.00..8.27 rows=227 width=4)
+                  ->  Hash  (cost=2.90..2.90 rows=81 width=4)
+                        ->  Seq Scan on pg_index  (cost=0.00..2.90 rows=81 width=4)
                               Filter: indisunique
   STATEMENT:  SELECT count(*)
             FROM pg_class, pg_index
            WHERE oid = indrelid AND indisunique;
+]]>
   </programlisting>
  </sect2>
 

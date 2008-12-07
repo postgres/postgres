@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.272 2008/12/02 12:42:11 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.273 2008/12/07 23:46:39 alvherre Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5415,8 +5415,9 @@ int eventproc(PGEventId evtId, void *evtInfo, void *passThrough)
    </para>
 
    <programlisting>
+<![CDATA[
 /* required header for libpq events (note: includes libpq-fe.h) */
-#include &lt;libpq-events.h&gt;
+#include <libpq-events.h>
 
 /* The instanceData */
 typedef struct
@@ -5488,17 +5489,17 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
         case PGEVT_REGISTER:
         {
             PGEventRegister *e = (PGEventRegister *)evtInfo;
-            mydata *data = get_mydata(e-&gt;conn);
+            mydata *data = get_mydata(e->conn);
 
             /* associate app specific data with connection */
-            PQsetInstanceData(e-&gt;conn, myEventProc, data);
+            PQsetInstanceData(e->conn, myEventProc, data);
             break;
         }
 
         case PGEVT_CONNRESET:
         {
             PGEventConnReset *e = (PGEventConnReset *)evtInfo;
-            mydata *data = PQinstanceData(e-&gt;conn, myEventProc);
+            mydata *data = PQinstanceData(e->conn, myEventProc);
 
             if (data)
               memset(data, 0, sizeof(mydata));
@@ -5508,7 +5509,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
         case PGEVT_CONNDESTROY:
         {
             PGEventConnDestroy *e = (PGEventConnDestroy *)evtInfo;
-            mydata *data = PQinstanceData(e-&gt;conn, myEventProc);
+            mydata *data = PQinstanceData(e->conn, myEventProc);
 
             /* free instance data because the conn is being destroyed */
             if (data)
@@ -5519,29 +5520,29 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
         case PGEVT_RESULTCREATE:
         {
             PGEventResultCreate *e = (PGEventResultCreate *)evtInfo;
-            mydata *conn_data = PQinstanceData(e-&gt;conn, myEventProc);
+            mydata *conn_data = PQinstanceData(e->conn, myEventProc);
             mydata *res_data = dup_mydata(conn_data);
 
             /* associate app specific data with result (copy it from conn) */
-            PQsetResultInstanceData(e-&gt;result, myEventProc, res_data);
+            PQsetResultInstanceData(e->result, myEventProc, res_data);
             break;
         }
 
         case PGEVT_RESULTCOPY:
         {
             PGEventResultCopy *e = (PGEventResultCopy *)evtInfo;
-            mydata *src_data = PQresultInstanceData(e-&gt;src, myEventProc);
+            mydata *src_data = PQresultInstanceData(e->src, myEventProc);
             mydata *dest_data = dup_mydata(src_data);
 
             /* associate app specific data with result (copy it from a result) */
-            PQsetResultInstanceData(e-&gt;dest, myEventProc, dest_data);
+            PQsetResultInstanceData(e->dest, myEventProc, dest_data);
             break;
         }
 
         case PGEVT_RESULTDESTROY:
         {
             PGEventResultDestroy *e = (PGEventResultDestroy *)evtInfo;
-            mydata *data = PQresultInstanceData(e-&gt;result, myEventProc);
+            mydata *data = PQresultInstanceData(e->result, myEventProc);
 
             /* free instance data because the result is being destroyed */
             if (data)
@@ -5556,6 +5557,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
 
     return TRUE; /* event processing succeeded */
 }
+]]>
 </programlisting>
   </sect2>
  </sect1>
@@ -6407,13 +6409,14 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
    <title><application>libpq</application> Example Program 1</title>
 
 <programlisting>
+<![CDATA[
 /*
  * testlibpq.c
  *
  *      Test the C version of libpq, the PostgreSQL frontend library.
  */
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
+#include <stdio.h>
+#include <stdlib.h>
 #include "libpq-fe.h"
 
 static void
@@ -6438,7 +6441,7 @@ main(int argc, char **argv)
      * conninfo string; otherwise default to setting dbname=postgres and using
      * environment variables or defaults for all other connection parameters.
      */
-    if (argc &gt; 1)
+    if (argc > 1)
         conninfo = argv[1];
     else
         conninfo = "dbname = postgres";
@@ -6498,14 +6501,14 @@ main(int argc, char **argv)
 
     /* first, print out the attribute names */
     nFields = PQnfields(res);
-    for (i = 0; i &lt; nFields; i++)
+    for (i = 0; i < nFields; i++)
         printf("%-15s", PQfname(res, i));
     printf("\n\n");
 
     /* next, print out the rows */
-    for (i = 0; i &lt; PQntuples(res); i++)
+    for (i = 0; i < PQntuples(res); i++)
     {
-        for (j = 0; j &lt; nFields; j++)
+        for (j = 0; j < nFields; j++)
             printf("%-15s", PQgetvalue(res, i, j));
         printf("\n");
     }
@@ -6525,6 +6528,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+]]>
 </programlisting>
   </example>
 
@@ -6532,6 +6536,7 @@ main(int argc, char **argv)
    <title><application>libpq</application> Example Program 2</title>
 
 <programlisting>
+<![CDATA[
 /*
  * testlibpq2.c
  *      Test of the asynchronous notification interface
@@ -6555,11 +6560,11 @@ main(int argc, char **argv)
  *
  *   INSERT INTO TBL1 VALUES (10);
  */
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;errno.h&gt;
-#include &lt;sys/time.h&gt;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/time.h>
 #include "libpq-fe.h"
 
 static void
@@ -6583,7 +6588,7 @@ main(int argc, char **argv)
      * conninfo string; otherwise default to setting dbname=postgres and using
      * environment variables or defaults for all other connection parameters.
      */
-    if (argc &gt; 1)
+    if (argc > 1)
         conninfo = argv[1];
     else
         conninfo = "dbname = postgres";
@@ -6618,7 +6623,7 @@ main(int argc, char **argv)
 
     /* Quit after four notifies are received. */
     nnotifies = 0;
-    while (nnotifies &lt; 4)
+    while (nnotifies < 4)
     {
         /*
          * Sleep until something happens on the connection.  We use select(2)
@@ -6630,13 +6635,13 @@ main(int argc, char **argv)
 
         sock = PQsocket(conn);
 
-        if (sock &lt; 0)
+        if (sock < 0)
             break;              /* shouldn't happen */
 
-        FD_ZERO(&amp;input_mask);
-        FD_SET(sock, &amp;input_mask);
+        FD_ZERO(&input_mask);
+        FD_SET(sock, &input_mask);
 
-        if (select(sock + 1, &amp;input_mask, NULL, NULL, NULL) &lt; 0)
+        if (select(sock + 1, &input_mask, NULL, NULL, NULL) < 0)
         {
             fprintf(stderr, "select() failed: %s\n", strerror(errno));
             exit_nicely(conn);
@@ -6648,7 +6653,7 @@ main(int argc, char **argv)
         {
             fprintf(stderr,
                     "ASYNC NOTIFY of '%s' received from backend pid %d\n",
-                    notify-&gt;relname, notify-&gt;be_pid);
+                    notify->relname, notify->be_pid);
             PQfreemem(notify);
             nnotifies++;
         }
@@ -6661,6 +6666,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+]]>
 </programlisting>
   </example>
 
@@ -6668,6 +6674,7 @@ main(int argc, char **argv)
    <title><application>libpq</application> Example Program 3</>
 
 <programlisting>
+<![CDATA[
 /*
  * testlibpq3.c
  *      Test out-of-line parameters and binary I/O.
@@ -6692,15 +6699,15 @@ main(int argc, char **argv)
  *  t = (8 bytes) 'ho there'
  *  b = (5 bytes) \004\003\002\001\000
  */
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;sys/types.h&gt;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include "libpq-fe.h"
 
 /* for ntohl/htonl */
-#include &lt;netinet/in.h&gt;
-#include &lt;arpa/inet.h&gt;
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 
 static void
@@ -6729,7 +6736,7 @@ show_binary_results(PGresult *res)
     t_fnum = PQfnumber(res, "t");
     b_fnum = PQfnumber(res, "b");
 
-    for (i = 0; i &lt; PQntuples(res); i++)
+    for (i = 0; i < PQntuples(res); i++)
     {
         char       *iptr;
         char       *tptr;
@@ -6764,7 +6771,7 @@ show_binary_results(PGresult *res)
         printf(" t = (%d bytes) '%s'\n",
                PQgetlength(res, i, t_fnum), tptr);
         printf(" b = (%d bytes) ", blen);
-        for (j = 0; j &lt; blen; j++)
+        for (j = 0; j < blen; j++)
             printf("\\%03o", bptr[j]);
         printf("\n\n");
     }
@@ -6786,7 +6793,7 @@ main(int argc, char **argv)
      * conninfo string; otherwise default to setting dbname=postgres and using
      * environment variables or defaults for all other connection parameters.
      */
-    if (argc &gt; 1)
+    if (argc > 1)
         conninfo = argv[1];
     else
         conninfo = "dbname = postgres";
@@ -6850,7 +6857,7 @@ main(int argc, char **argv)
     binaryIntVal = htonl((uint32_t) 2);
 
     /* Set up parameter arrays for PQexecParams */
-    paramValues[0] = (char *) &amp;binaryIntVal;
+    paramValues[0] = (char *) &binaryIntVal;
     paramLengths[0] = sizeof(binaryIntVal);
     paramFormats[0] = 1;        /* binary */
 
@@ -6879,6 +6886,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+]]>
 </programlisting>
   </example>
 

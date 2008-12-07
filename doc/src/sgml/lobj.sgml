@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.48 2008/03/22 01:55:14 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.49 2008/12/07 23:46:39 alvherre Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -457,7 +457,7 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 
   <example id="lo-example">
    <title>Large Objects with <application>libpq</application> Example Program</title>
-<programlisting>
+<programlisting><![CDATA[
 /*--------------------------------------------------------------
  *
  * testlo.c--
@@ -467,15 +467,15 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
  *
  *--------------------------------------------------------------
  */
-#include &lt;stdio.h&gt;
-#include &quot;libpq-fe.h&quot;
-#include &quot;libpq/libpq-fs.h&quot;
+#include <stdio.h>
+#include "libpq-fe.h"
+#include "libpq/libpq-fs.h"
 
 #define BUFSIZE          1024
 
 /*
  * importFile
- *    import file &quot;in_filename&quot; into database as large object &quot;lobjOid&quot;
+ *    import file "in_filename" into database as large object "lobjOid"
  *
  */
 Oid
@@ -492,9 +492,9 @@ importFile(PGconn *conn, char *filename)
      * open the file to be read in
      */
     fd = open(filename, O_RDONLY, 0666);
-    if (fd &lt; 0)
+    if (fd < 0)
     {                           /* error */
-        fprintf(stderr, &quot;cannot open unix file %s\n&quot;, filename);
+        fprintf(stderr, "cannot open unix file %s\n", filename);
     }
 
     /*
@@ -502,18 +502,18 @@ importFile(PGconn *conn, char *filename)
      */
     lobjId = lo_creat(conn, INV_READ | INV_WRITE);
     if (lobjId == 0)
-        fprintf(stderr, &quot;cannot create large object\n&quot;);
+        fprintf(stderr, "cannot create large object\n");
 
     lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 
     /*
      * read in from the Unix file and write to the inversion file
      */
-    while ((nbytes = read(fd, buf, BUFSIZE)) &gt; 0)
+    while ((nbytes = read(fd, buf, BUFSIZE)) > 0)
     {
         tmp = lo_write(conn, lobj_fd, buf, nbytes);
-        if (tmp &lt; nbytes)
-            fprintf(stderr, &quot;error while reading large object\n&quot;);
+        if (tmp < nbytes)
+            fprintf(stderr, "error while reading large object\n");
     }
 
     (void) close(fd);
@@ -531,9 +531,9 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
     int         nread;
 
     lobj_fd = lo_open(conn, lobjId, INV_READ);
-    if (lobj_fd &lt; 0)
+    if (lobj_fd < 0)
     {
-        fprintf(stderr, &quot;cannot open large object %d\n&quot;,
+        fprintf(stderr, "cannot open large object %d\n",
                 lobjId);
     }
 
@@ -541,15 +541,15 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
     buf = malloc(len + 1);
 
     nread = 0;
-    while (len - nread &gt; 0)
+    while (len - nread > 0)
     {
         nbytes = lo_read(conn, lobj_fd, buf, len - nread);
         buf[nbytes] = ' ';
-        fprintf(stderr, &quot;&gt;&gt;&gt; %s&quot;, buf);
+        fprintf(stderr, ">>> %s", buf);
         nread += nbytes;
     }
     free(buf);
-    fprintf(stderr, &quot;\n&quot;);
+    fprintf(stderr, "\n");
     lo_close(conn, lobj_fd);
 }
 
@@ -563,33 +563,33 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
     int         i;
 
     lobj_fd = lo_open(conn, lobjId, INV_WRITE);
-    if (lobj_fd &lt; 0)
+    if (lobj_fd < 0)
     {
-        fprintf(stderr, &quot;cannot open large object %d\n&quot;,
+        fprintf(stderr, "cannot open large object %d\n",
                 lobjId);
     }
 
     lo_lseek(conn, lobj_fd, start, SEEK_SET);
     buf = malloc(len + 1);
 
-    for (i = 0; i &lt; len; i++)
+    for (i = 0; i < len; i++)
         buf[i] = 'X';
     buf[i] = ' ';
 
     nwritten = 0;
-    while (len - nwritten &gt; 0)
+    while (len - nwritten > 0)
     {
         nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
         nwritten += nbytes;
     }
     free(buf);
-    fprintf(stderr, &quot;\n&quot;);
+    fprintf(stderr, "\n");
     lo_close(conn, lobj_fd);
 }
 
 /*
  * exportFile
- *    export large object &quot;lobjOid&quot; to file &quot;out_filename&quot;
+ *    export large object "lobjOid" to file "out_filename"
  *
  */
 void
@@ -605,9 +605,9 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
      * open the large object
      */
     lobj_fd = lo_open(conn, lobjId, INV_READ);
-    if (lobj_fd &lt; 0)
+    if (lobj_fd < 0)
     {
-        fprintf(stderr, &quot;cannot open large object %d\n&quot;,
+        fprintf(stderr, "cannot open large object %d\n",
                 lobjId);
     }
 
@@ -615,21 +615,21 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
      * open the file to be written to
      */
     fd = open(filename, O_CREAT | O_WRONLY, 0666);
-    if (fd &lt; 0)
+    if (fd < 0)
     {                           /* error */
-        fprintf(stderr, &quot;cannot open unix file %s\n&quot;,
+        fprintf(stderr, "cannot open unix file %s\n",
                 filename);
     }
 
     /*
      * read in from the inversion file and write to the Unix file
      */
-    while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) &gt; 0)
+    while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) > 0)
     {
         tmp = write(fd, buf, nbytes);
-        if (tmp &lt; nbytes)
+        if (tmp < nbytes)
         {
-            fprintf(stderr, &quot;error while writing %s\n&quot;,
+            fprintf(stderr, "error while writing %s\n",
                     filename);
         }
     }
@@ -659,7 +659,7 @@ main(int argc, char **argv)
 
     if (argc != 4)
     {
-        fprintf(stderr, &quot;Usage: %s database_name in_filename out_filename\n&quot;,
+        fprintf(stderr, "Usage: %s database_name in_filename out_filename\n",
                 argv[0]);
         exit(1);
     }
@@ -676,36 +676,37 @@ main(int argc, char **argv)
     /* check to see that the backend connection was successfully made */
     if (PQstatus(conn) == CONNECTION_BAD)
     {
-        fprintf(stderr, &quot;Connection to database '%s' failed.\n&quot;, database);
-        fprintf(stderr, &quot;%s&quot;, PQerrorMessage(conn));
+        fprintf(stderr, "Connection to database '%s' failed.\n", database);
+        fprintf(stderr, "%s", PQerrorMessage(conn));
         exit_nicely(conn);
     }
 
-    res = PQexec(conn, &quot;begin&quot;);
+    res = PQexec(conn, "begin");
     PQclear(res);
 
-    printf(&quot;importing file %s\n&quot;, in_filename);
+    printf("importing file %s\n", in_filename);
 /*  lobjOid = importFile(conn, in_filename); */
     lobjOid = lo_import(conn, in_filename);
 /*
-    printf(&quot;as large object %d.\n&quot;, lobjOid);
+    printf("as large object %d.\n", lobjOid);
 
-    printf(&quot;picking out bytes 1000-2000 of the large object\n&quot;);
+    printf("picking out bytes 1000-2000 of the large object\n");
     pickout(conn, lobjOid, 1000, 1000);
 
-    printf(&quot;overwriting bytes 1000-2000 of the large object with X's\n&quot;);
+    printf("overwriting bytes 1000-2000 of the large object with X's\n");
     overwrite(conn, lobjOid, 1000, 1000);
 */
 
-    printf(&quot;exporting large object to file %s\n&quot;, out_filename);
+    printf("exporting large object to file %s\n", out_filename);
 /*    exportFile(conn, lobjOid, out_filename); */
     lo_export(conn, lobjOid, out_filename);
 
-    res = PQexec(conn, &quot;end&quot;);
+    res = PQexec(conn, "end");
     PQclear(res);
     PQfinish(conn);
     exit(0);
 }
+]]>
 </programlisting>
 </example>
 

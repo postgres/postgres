@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.86 2008/06/12 19:15:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.87 2008/12/07 23:46:39 alvherre Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -717,9 +717,9 @@ EXEC SQL EXECUTE mystmt USING 42, 'foobar';
 </programlisting>
    If the statement you are executing returns values, then add an
    <literal>INTO</literal> clause:
-<programlisting>
+<programlisting><![CDATA[
 EXEC SQL BEGIN DECLARE SECTION;
-const char *stmt = "SELECT a, b, c FROM test1 WHERE a &gt; ?";
+const char *stmt = "SELECT a, b, c FROM test1 WHERE a > ?";
 int v1, v2;
 VARCHAR v3;
 EXEC SQL END DECLARE SECTION;
@@ -727,6 +727,7 @@ EXEC SQL END DECLARE SECTION;
 EXEC SQL PREPARE mystmt FROM :stmt;
  ...
 EXEC SQL EXECUTE mystmt INTO v1, v2, v3 USING 37;
+]]>
 </programlisting>
    An <command>EXECUTE</command> command can have an
    <literal>INTO</literal> clause, a <literal>USING</literal> clause,
@@ -752,7 +753,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
    functions to do basic calculations with those types within C, i.e. without
    the help of the <productname>PostgreSQL</productname> server. See the
    following example:
-<programlisting>
+<programlisting><![CDATA[
 EXEC SQL BEGIN DECLARE SECTION;
    date date1;
    timestamp ts1, tsout;
@@ -760,12 +761,13 @@ EXEC SQL BEGIN DECLARE SECTION;
    char *out;
 EXEC SQL END DECLARE SECTION;
 
-PGTYPESdate_today(&amp;date1);
+PGTYPESdate_today(&date1);
 EXEC SQL SELECT started, duration INTO :ts1, :iv1 FROM datetbl WHERE d=:date1;
-PGTYPEStimestamp_add_interval(&amp;ts1, &amp;iv1, &amp;tsout);
-out = PGTYPEStimestamp_to_asc(&amp;tsout);
+PGTYPEStimestamp_add_interval(&ts1, &iv1, &tsout);
+out = PGTYPEStimestamp_to_asc(&tsout);
 printf("Started + duration: %s\n", out);
 free(out);
+]]>
 </programlisting>
   </para>
 
@@ -3449,14 +3451,15 @@ int rsetnull(int t, char *ptr);
 
        <para>
         Here is an example of a call to this function:
-<programlisting>
+<programlisting><![CDATA[
 $char c[] = "abc       ";
 $short s = 17;
 $int i = -74874;
 
 rsetnull(CCHARTYPE, (char *) c);
-rsetnull(CSHORTTYPE, (char *) &amp;s);
-rsetnull(CINTTYPE, (char *) &amp;i);
+rsetnull(CSHORTTYPE, (char *) &s);
+rsetnull(CINTTYPE, (char *) &i);
+]]>
 </programlisting>
        </para>
       </listitem>
@@ -3477,14 +3480,15 @@ int risnull(int t, char *ptr);
        </para>
        <para>
         Here is an example of how to use this function:
-<programlisting>
+<programlisting><![CDATA[
 $char c[] = "abc       ";
 $short s = 17;
 $int i = -74874;
 
 risnull(CCHARTYPE, (char *) c);
-risnull(CSHORTTYPE, (char *) &amp;s);
-risnull(CINTTYPE, (char *) &amp;i);
+risnull(CSHORTTYPE, (char *) &s);
+risnull(CINTTYPE, (char *) &i);
+]]>
 </programlisting>
        </para>
       </listitem>
@@ -4960,11 +4964,11 @@ EXEC SQL END DECLARE SECTION;
 EXEC SQL SELECT res INTO :result FROM mytable WHERE index = :index;
 </programlisting>
     is translated into:
-<programlisting>
+<programlisting><![CDATA[
 /* Processed by ecpg (2.6.0) */
 /* These two include files are added by the preprocessor */
-#include &lt;ecpgtype.h&gt;;
-#include &lt;ecpglib.h&gt;;
+#include <ecpgtype.h>;
+#include <ecpglib.h>;
 
 /* exec sql begin declare section */
 
@@ -4975,11 +4979,12 @@ EXEC SQL SELECT res INTO :result FROM mytable WHERE index = :index;
 /* exec sql end declare section */
 ...
 ECPGdo(__LINE__, NULL, "SELECT res FROM mytable WHERE index = ?     ",
-        ECPGt_int,&amp;(index),1L,1L,sizeof(int),
+        ECPGt_int,&(index),1L,1L,sizeof(int),
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT,
-        ECPGt_int,&amp;(result),1L,1L,sizeof(int),
+        ECPGt_int,&(result),1L,1L,sizeof(int),
         ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 147 "foo.pgc"
+]]>
 </programlisting>
     (The indentation here is added for readability and not
     something the preprocessor does.)

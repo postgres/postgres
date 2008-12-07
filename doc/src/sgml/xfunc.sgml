@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.134 2008/12/04 17:51:26 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.135 2008/12/07 23:46:39 alvherre Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1621,15 +1621,16 @@ typedef struct {
      For example, if we wanted to  store  40  bytes  in  a <structname>text</>
      structure, we might use a code fragment like this:
 
-<programlisting>
+<programlisting><![CDATA[
 #include "postgres.h"
 ...
 char buffer[40]; /* our source data */
 ...
 text *destination = (text *) palloc(VARHDRSZ + 40);
-destination-&gt;length = VARHDRSZ + 40;
-memcpy(destination-&gt;data, buffer, 40);
+destination->length = VARHDRSZ + 40;
+memcpy(destination->data, buffer, 40);
 ...
+]]>
 </programlisting>
 
      <literal>VARHDRSZ</> is the same as <literal>sizeof(int4)</>, but
@@ -1842,9 +1843,9 @@ memcpy(destination-&gt;data, buffer, 40);
     <para>
      Here are some examples:
 
-<programlisting>
+<programlisting><![CDATA[
 #include "postgres.h"
-#include &lt;string.h&gt;
+#include <string.h>
 
 /* by value */
 
@@ -1871,8 +1872,8 @@ makepoint(Point *pointx, Point *pointy)
 {
     Point     *new_point = (Point *) palloc(sizeof(Point));
 
-    new_point-&gt;x = pointx-&gt;x;
-    new_point-&gt;y = pointy-&gt;y;
+    new_point->x = pointx->x;
+    new_point->y = pointy->y;
 
     return new_point;
 }
@@ -1908,6 +1909,7 @@ concat_text(text *arg1, text *arg2)
            VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
     return new_text;
 }
+]]>
 </programlisting>
     </para>
 
@@ -2014,9 +2016,9 @@ PG_FUNCTION_INFO_V1(funcname);
     <para>
      Here we show the same functions as above, coded in version-1 style:
 
-<programlisting>
+<programlisting><![CDATA[
 #include "postgres.h"
-#include &lt;string.h&gt;
+#include <string.h>
 #include "fmgr.h"
 
 /* by value */
@@ -2054,8 +2056,8 @@ makepoint(PG_FUNCTION_ARGS)
     Point     *pointy = PG_GETARG_POINT_P(1);
     Point     *new_point = (Point *) palloc(sizeof(Point));
 
-    new_point-&gt;x = pointx-&gt;x;
-    new_point-&gt;y = pointy-&gt;y;
+    new_point->x = pointx->x;
+    new_point->y = pointy->y;
 
     PG_RETURN_POINT_P(new_point);
 }
@@ -2098,6 +2100,7 @@ concat_text(PG_FUNCTION_ARGS)
            VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
     PG_RETURN_TEXT_P(new_text);
 }
+]]>
 </programlisting>
     </para>
 
@@ -2552,7 +2555,7 @@ SELECT name, c_overpaid(emp, 1500) AS overpaid
      Using call conventions version 0, we can define
      <function>c_overpaid</> as:
 
-<programlisting>
+<programlisting><![CDATA[
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
@@ -2563,16 +2566,17 @@ c_overpaid(HeapTupleHeader t, /* the current row of emp */
     bool isnull;
     int32 salary;
 
-    salary = DatumGetInt32(GetAttributeByName(t, "salary", &amp;isnull));
+    salary = DatumGetInt32(GetAttributeByName(t, "salary", &isnull));
     if (isnull)
         return false;
-    return salary &gt; limit;
+    return salary > limit;
 }
+]]>
 </programlisting>
 
      In version-1 coding, the above would look like this:
 
-<programlisting>
+<programlisting><![CDATA[
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
@@ -2586,13 +2590,14 @@ c_overpaid(PG_FUNCTION_ARGS)
     bool isnull;
     Datum salary;
 
-    salary = GetAttributeByName(t, "salary", &amp;isnull);
+    salary = GetAttributeByName(t, "salary", &isnull);
     if (isnull)
         PG_RETURN_BOOL(false);
     /* Alternatively, we might prefer to do PG_RETURN_NULL() for null salary. */
 
-    PG_RETURN_BOOL(DatumGetInt32(salary) &gt; limit);
+    PG_RETURN_BOOL(DatumGetInt32(salary) > limit);
 }
+]]>
 </programlisting>
     </para>
 
@@ -2974,7 +2979,7 @@ my_set_returning_function(PG_FUNCTION_ARGS)
     <para>
      A complete example of a simple <acronym>SRF</> returning a composite type
      looks like:
-<programlisting>
+<programlisting><![CDATA[
 PG_FUNCTION_INFO_V1(retcomposite);
 
 Datum
@@ -2995,13 +3000,13 @@ retcomposite(PG_FUNCTION_ARGS)
         funcctx = SRF_FIRSTCALL_INIT();
 
         /* switch to memory context appropriate for multiple function calls */
-        oldcontext = MemoryContextSwitchTo(funcctx-&gt;multi_call_memory_ctx);
+        oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
         /* total number of tuples to be returned */
-        funcctx-&gt;max_calls = PG_GETARG_UINT32(0);
+        funcctx->max_calls = PG_GETARG_UINT32(0);
 
         /* Build a tuple descriptor for our result type */
-        if (get_call_result_type(fcinfo, NULL, &amp;tupdesc) != TYPEFUNC_COMPOSITE)
+        if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                      errmsg("function returning record called in context "
@@ -3012,7 +3017,7 @@ retcomposite(PG_FUNCTION_ARGS)
          * C strings
          */
         attinmeta = TupleDescGetAttInMetadata(tupdesc);
-        funcctx-&gt;attinmeta = attinmeta;
+        funcctx->attinmeta = attinmeta;
 
         MemoryContextSwitchTo(oldcontext);
     }
@@ -3020,11 +3025,11 @@ retcomposite(PG_FUNCTION_ARGS)
     /* stuff done on every call of the function */
     funcctx = SRF_PERCALL_SETUP();
 
-    call_cntr = funcctx-&gt;call_cntr;
-    max_calls = funcctx-&gt;max_calls;
-    attinmeta = funcctx-&gt;attinmeta;
+    call_cntr = funcctx->call_cntr;
+    max_calls = funcctx->max_calls;
+    attinmeta = funcctx->attinmeta;
 
-    if (call_cntr &lt; max_calls)    /* do when there is more left to send */
+    if (call_cntr < max_calls)    /* do when there is more left to send */
     {
         char       **values;
         HeapTuple    tuple;
@@ -3063,6 +3068,7 @@ retcomposite(PG_FUNCTION_ARGS)
         SRF_RETURN_DONE(funcctx);
     }
 }
+]]>
 </programlisting>
 
      One way to declare this function in SQL is:
