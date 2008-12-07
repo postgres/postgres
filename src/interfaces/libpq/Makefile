@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.170 2008/12/02 10:39:30 mha Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.171 2008/12/07 08:36:22 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ ifeq ($(PORTNAME), win32)
 OBJS += win32.o pgsleep.o libpqrc.o
 
 libpqrc.o: libpq.rc
-	windres -i $< -o $@
+	$(WINDRES) -i $< -o $@
 
 ifeq ($(enable_thread_safety), yes)
 OBJS += pthread-win32.o

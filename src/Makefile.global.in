@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.247 2008/11/26 11:26:54 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.248 2008/12/07 08:36:22 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -226,6 +226,9 @@ DTRACEFLAGS = @DTRACEFLAGS@
 
 # Linking
 
+AR = @AR@
+DLLTOOL = @DLLTOOL@
+DLLWRAP = @DLLWRAP@
 LIBS = @LIBS@
 LDAP_LIBS_FE = @LDAP_LIBS_FE@
 LDAP_LIBS_BE = @LDAP_LIBS_BE@
@@ -238,6 +241,7 @@ LDFLAGS_SL = @LDFLAGS_SL@
 LDREL = -r
 LDOUT = -o
 RANLIB = @RANLIB@
+WINDRES = @WINDRES@
 X = @EXEEXT@
 
 # Perl 
@@ -465,25 +469,6 @@ TAS         = @TAS@
 
 %.bz2: %
 	$(BZIP2) -f $<
-
-ifeq ($(PORTNAME),win32)
-# Build rules to add versioninfo resources to win32 binaries
-WIN32RES += win32ver.o
-ifeq ($(PGFILESHLIB),1)
-PGFTYPE=VFT_DLL
-else
-PGFTYPE=VFT_APP
-endif
-ifneq (,$(PGAPPICON))
-PGICOSTR=$(subst /,\/,IDI_ICON ICON \"$(top_builddir)/src/port/$(PGAPPICON).ico\")
-endif
-win32ver.rc: $(top_builddir)/src/port/win32ver.rc
-	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $(top_builddir)/src/port/win32ver.rc > win32ver.rc
-win32ver.o: $(top_builddir)/src/port/win32ver.rc
-	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $(top_builddir)/src/port/win32ver.rc > win32ver.rc
-	windres -i win32ver.rc -o win32ver.o --include-dir=$(top_builddir)/src/include
-	rm -f win32ver.rc
-endif
 
 ifndef PGXS
 
