@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.198 2008/11/21 20:21:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.199 2008/12/08 15:11:39 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -880,6 +880,11 @@ SET ENABLE_SEQSCAN TO OFF;
         concurrently, it's safe to set this value significantly larger
         than <varname>work_mem</varname>.  Larger settings might improve
         performance for vacuuming and for restoring database dumps.
+       </para>
+       <para>
+        Note that when autovacuum runs, up to
+        <xref linkend="guc-autovacuum-max-workers"> times this memory may be
+        allocated, so be careful not to set the default value too high.
        </para>
       </listitem>
      </varlistentry>
