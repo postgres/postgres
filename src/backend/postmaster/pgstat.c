@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.184 2008/11/04 11:04:06 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.185 2008/12/08 15:44:54 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -967,55 +967,60 @@ pgstat_vacuum_stat(void)
 	hash_destroy(htab);
 
 	/*
-	 * Now repeat the above steps for functions.
+	 * Now repeat the above steps for functions.  However, we needn't bother
+	 * in the common case where no function stats are being collected.
 	 */
-	htab = pgstat_collect_oids(ProcedureRelationId);
-
-	pgstat_setheader(&f_msg.m_hdr, PGSTAT_MTYPE_FUNCPURGE);
-	f_msg.m_databaseid = MyDatabaseId;
-	f_msg.m_nentries = 0;
-
-	hash_seq_init(&hstat, dbentry->functions);
-	while ((funcentry = (PgStat_StatFuncEntry *) hash_seq_search(&hstat)) != NULL)
+	if (dbentry->functions != NULL &&
+		hash_get_num_entries(dbentry->functions) > 0)
 	{
-		Oid			funcid = funcentry->functionid;
+		htab = pgstat_collect_oids(ProcedureRelationId);
 
-		CHECK_FOR_INTERRUPTS();
+		pgstat_setheader(&f_msg.m_hdr, PGSTAT_MTYPE_FUNCPURGE);
+		f_msg.m_databaseid = MyDatabaseId;
+		f_msg.m_nentries = 0;
 
-		if (hash_search(htab, (void *) &funcid, HASH_FIND, NULL) != NULL)
-			continue;
+		hash_seq_init(&hstat, dbentry->functions);
+		while ((funcentry = (PgStat_StatFuncEntry *) hash_seq_search(&hstat)) != NULL)
+		{
+			Oid			funcid = funcentry->functionid;
+
+			CHECK_FOR_INTERRUPTS();
+
+			if (hash_search(htab, (void *) &funcid, HASH_FIND, NULL) != NULL)
+				continue;
+
+			/*
+			 * Not there, so add this function's Oid to the message
+			 */
+			f_msg.m_functionid[f_msg.m_nentries++] = funcid;
+
+			/*
+			 * If the message is full, send it out and reinitialize to empty
+			 */
+			if (f_msg.m_nentries >= PGSTAT_NUM_FUNCPURGE)
+			{
+				len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
+					+f_msg.m_nentries * sizeof(Oid);
+
+				pgstat_send(&f_msg, len);
+
+				f_msg.m_nentries = 0;
+			}
+		}
 
 		/*
-		 * Not there, so add this function's Oid to the message
+		 * Send the rest
 		 */
-		f_msg.m_functionid[f_msg.m_nentries++] = funcid;
-
-		/*
-		 * If the message is full, send it out and reinitialize to empty
-		 */
-		if (f_msg.m_nentries >= PGSTAT_NUM_FUNCPURGE)
+		if (f_msg.m_nentries > 0)
 		{
 			len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
 				+f_msg.m_nentries * sizeof(Oid);
 
 			pgstat_send(&f_msg, len);
-
-			f_msg.m_nentries = 0;
 		}
+
+		hash_destroy(htab);
 	}
-
-	/*
-	 * Send the rest
-	 */
-	if (f_msg.m_nentries > 0)
-	{
-		len = offsetof(PgStat_MsgFuncpurge, m_functionid[0])
-			+f_msg.m_nentries * sizeof(Oid);
-
-		pgstat_send(&f_msg, len);
-	}
-
-	hash_destroy(htab);
 }
 
 
