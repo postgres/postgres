@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.86 2008/06/16 03:13:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.87 2008/12/08 20:30:58 mha Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -522,10 +522,16 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     The <quote>autovacuum daemon</> actually consists of multiple processes.
     There is a persistent daemon process, called the
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
-    an <firstterm>autovacuum worker</firstterm> process on each database every
-    <xref linkend="guc-autovacuum-naptime"> seconds. On each run, the worker
-    process checks each table within that database, and executes
-    <command>VACUUM</> and/or <command>ANALYZE</> commands as needed.
+    <firstterm>autovacuum worker</firstterm> processes for all databases. The
+    launcher will distribute the work across time, but attempt to start one
+    worker on each database every <xref linkend="guc-autovacuum-naptime">
+    seconds. One worker will be launched for each database, with a maximum
+    of <xref linkend="guc-autovacuum-max-workers"> processes running at the
+    same time. If there are more than
+    <xref linkend="guc-autovacuum-max-workers"> databases to be processed,
+    the next database will be processed as soon as the first worker finishes.
+    The worker processes will check each table within its database and
+    execute <command>VACUUM</> and/or <command>ANALYZE</> as needed.
    </para>
 
    <para>
