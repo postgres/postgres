@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.125 2008/10/29 14:35:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.126 2008/12/09 20:52:03 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1387,7 +1387,18 @@ $1.somecolumn
 </programlisting>
 
     (Thus, a qualified column reference is actually just a special case
-    of the field selection syntax.)
+    of the field selection syntax.)  An important special case is
+    extracting a field from a table column that is of a composite type:
+
+<programlisting>
+(compositecol).somefield
+(mytable.compositecol).somefield
+</programlisting>
+
+    The parentheses are required here to show that
+    <structfield>compositecol</> is a column name not a table name,
+    or that <structname>mytable</> is a table name not a schema name
+    in the second case.
    </para>
   </sect2>
 
