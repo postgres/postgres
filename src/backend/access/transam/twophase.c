@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.49 2008/12/09 14:28:20 heikki Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.50 2008/12/09 15:59:39 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -287,7 +287,6 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	gxact->proc.databaseId = databaseid;
 	gxact->proc.roleId = owner;
 	gxact->proc.inCommit = false;
-	MemSet(gxact->proc.signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
 	gxact->proc.vacuumFlags = 0;
 	gxact->proc.lwWaiting = false;
 	gxact->proc.lwExclusive = false;

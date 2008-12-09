@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.75 2008/12/09 14:28:20 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.76 2008/12/09 15:59:39 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "storage/backendid.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
-#include "storage/procarray.h"
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
@@ -137,9 +136,9 @@
 /* Per-backend state in shared invalidation structure */
 typedef struct ProcState
 {
-	/* proc is NULL in an inactive ProcState array entry. */
-	PGPROC	   *proc;			/* PGPROC entry of backend, for signaling */
-	/* nextMsgNum is meaningless if proc == NULL or resetState is true. */
+	/* procPid is zero in an inactive ProcState array entry. */
+	pid_t		procPid;		/* PID of backend, for signaling */
+	/* nextMsgNum is meaningless if procPid == 0 or resetState is true. */
 	int			nextMsgNum;		/* next message number to read */
 	bool		resetState;		/* backend needs to reset its state */
 	bool		signaled;		/* backend has been sent catchup signal */
@@ -236,7 +235,7 @@ CreateSharedInvalidationState(void)
 	/* Mark all backends inactive, and initialize nextLXID */
 	for (i = 0; i < shmInvalBuffer->maxBackends; i++)
 	{
-		shmInvalBuffer->procState[i].proc = NULL;			/* inactive */
+		shmInvalBuffer->procState[i].procPid = 0;			/* inactive */
 		shmInvalBuffer->procState[i].nextMsgNum = 0;		/* meaningless */
 		shmInvalBuffer->procState[i].resetState = false;
 		shmInvalBuffer->procState[i].signaled = false;
@@ -267,7 +266,7 @@ SharedInvalBackendInit(void)
 	/* Look for a free entry in the procState array */
 	for (index = 0; index < segP->lastBackend; index++)
 	{
-		if (segP->procState[index].proc == NULL)		/* inactive slot? */
+		if (segP->procState[index].procPid == 0)		/* inactive slot? */
 		{
 			stateP = &segP->procState[index];
 			break;
@@ -279,7 +278,7 @@ SharedInvalBackendInit(void)
 		if (segP->lastBackend < segP->maxBackends)
 		{
 			stateP = &segP->procState[segP->lastBackend];
-			Assert(stateP->proc == NULL);
+			Assert(stateP->procPid == 0);
 			segP->lastBackend++;
 		}
 		else
@@ -304,7 +303,7 @@ SharedInvalBackendInit(void)
 	nextLocalTransactionId = stateP->nextLXID;
 
 	/* mark myself active, with all extant messages already read */
-	stateP->proc = MyProc;
+	stateP->procPid = MyProcPid;
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
 	stateP->signaled = false;
@@ -342,7 +341,7 @@ CleanupInvalidationState(int status, Datum arg)
 	stateP->nextLXID = nextLocalTransactionId;
 
 	/* Mark myself inactive */
-	stateP->proc = NULL;
+	stateP->procPid = 0;
 	stateP->nextMsgNum = 0;
 	stateP->resetState = false;
 	stateP->signaled = false;
@@ -350,7 +349,7 @@ CleanupInvalidationState(int status, Datum arg)
 	/* Recompute index of last active backend */
 	for (i = segP->lastBackend; i > 0; i--)
 	{
-		if (segP->procState[i - 1].proc != NULL)
+		if (segP->procState[i - 1].procPid != 0)
 			break;
 	}
 	segP->lastBackend = i;
@@ -375,7 +374,7 @@ BackendIdIsActive(int backendID)
 	{
 		ProcState  *stateP = &segP->procState[backendID - 1];
 
-		result = (stateP->proc != NULL);
+		result = (stateP->procPid != 0);
 	}
 	else
 		result = false;
@@ -591,7 +590,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		int		n = stateP->nextMsgNum;
 
 		/* Ignore if inactive or already in reset state */
-		if (stateP->proc == NULL || stateP->resetState)
+		if (stateP->procPid == 0 || stateP->resetState)
 			continue;
 
 		/*
@@ -645,20 +644,18 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		segP->nextThreshold = (numMsgs / CLEANUP_QUANTUM + 1) * CLEANUP_QUANTUM;
 
 	/*
-	 * Lastly, signal anyone who needs a catchup interrupt.  Since
-	 * SendProcSignal() might not be fast, we don't want to hold locks while
-	 * executing it.
+	 * Lastly, signal anyone who needs a catchup interrupt.  Since kill()
+	 * might not be fast, we don't want to hold locks while executing it.
 	 */
 	if (needSig)
 	{
-		PGPROC *his_proc = needSig->proc;
+		pid_t	his_pid = needSig->procPid;
 
 		needSig->signaled = true;
 		LWLockRelease(SInvalReadLock);
 		LWLockRelease(SInvalWriteLock);
-		elog(DEBUG4, "sending sinval catchup signal to PID %d",
-			 (int) his_proc->pid);
-		SendProcSignal(his_proc, PROCSIG_CATCHUP_INTERRUPT);
+		elog(DEBUG4, "sending sinval catchup signal to PID %d", (int) his_pid);
+		kill(his_pid, SIGUSR1);
 		if (callerHasWriteLock)
 			LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
 	}

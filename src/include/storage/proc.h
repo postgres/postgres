@@ -7,14 +7,12 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.108 2008/12/09 14:28:20 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.109 2008/12/09 15:59:39 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _PROC_H_
 #define _PROC_H_
-
-#include <signal.h>
 
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
@@ -39,19 +37,6 @@ struct XidCache
 	int			nxids;
 	TransactionId xids[PGPROC_MAX_CACHED_SUBXIDS];
 };
-
-/*
- * Reasons for signaling a process (a backend or an auxiliary process, like
- * autovacuum worker). We can cope with simultaneous signals for different
- * reasons. If the same reason is signaled multiple times in quick succession,
- * however, the process is likely to observe only one notification of it.
- * This is okay for the present uses.
- */
-typedef enum
-{
-	PROCSIG_CATCHUP_INTERRUPT,	/* catchup interrupt */
-	NUM_PROCSIGNALS				/* Must be last value of enum! */
-} ProcSignalReason;
 
 /* Flags for PGPROC->vacuumFlags */
 #define		PROC_IS_AUTOVACUUM	0x01	/* is it an autovac worker? */
@@ -107,16 +92,6 @@ struct PGPROC
 	bool		inCommit;		/* true if within commit critical section */
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
-
-	/*
-	 * SIGUSR1 signal is multiplexed for multiple purposes. signalFlags
-	 * indicates which "reasons" have been signaled.
-	 *
-	 * The flags are declared as "volatile sig_atomic_t" for maximum
-	 * portability.  This should ensure that loads and stores of the flag
-	 * values are atomic, allowing us to dispense with any explicit locking.
-	 */
-	volatile sig_atomic_t signalFlags[NUM_PROCSIGNALS];
 
 	/* Info about LWLock the process is currently waiting for, if any. */
 	bool		lwWaiting;		/* true if waiting for an LW lock */
@@ -195,9 +170,6 @@ extern void LockWaitCancel(void);
 
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);
-
-extern void SendProcSignal(PGPROC *proc, ProcSignalReason reason);
-extern bool CheckProcSignal(ProcSignalReason reason);
 
 extern bool enable_sig_alarm(int delayms, bool is_statement_timeout);
 extern bool disable_sig_alarm(bool is_statement_timeout);
