@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.86 2008/06/19 21:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.87 2008/12/09 14:28:20 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
  * it catch up before the sinval queue overflows and forces it to go
- * through a cache reset exercise.	This is done by sending SIGUSR1
- * to any backend that gets too far behind.
+ * through a cache reset exercise.	This is done by sending
+ * PROCSIG_CATCHUP_INTERRUPT to any backend that gets too far behind.
  *
  * State for catchup events consists of two flags: one saying whether
  * the signal handler is currently allowed to call ProcessCatchupEvent
@@ -144,9 +144,9 @@ ReceiveSharedInvalidMessages(
 
 
 /*
- * CatchupInterruptHandler
+ * HandleCatchupInterrupt
  *
- * This is the signal handler for SIGUSR1.
+ * This is called when PROCSIG_CATCHUP_INTERRUPT signal is received.
  *
  * If we are idle (catchupInterruptEnabled is set), we can safely
  * invoke ProcessCatchupEvent directly.  Otherwise, just set a flag
@@ -156,13 +156,11 @@ ReceiveSharedInvalidMessages(
  * since there's no longer any reason to do anything.)
  */
 void
-CatchupInterruptHandler(SIGNAL_ARGS)
+HandleCatchupInterrupt(void)
 {
-	int			save_errno = errno;
-
 	/*
-	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
-	 * here.
+	 * Note: this is called by a SIGNAL HANDLER.	
+	 * You must be very wary what you do here.
 	 */
 
 	/* Don't joggle the elbow of proc_exit */
@@ -216,8 +214,6 @@ CatchupInterruptHandler(SIGNAL_ARGS)
 		 */
 		catchupInterruptOccurred = 1;
 	}
-
-	errno = save_errno;
 }
 
 /*
@@ -289,7 +285,8 @@ DisableCatchupInterrupt(void)
 /*
  * ProcessCatchupEvent
  *
- * Respond to a catchup event (SIGUSR1) from another backend.
+ * Respond to a catchup event (PROCSIG_CATCHUP_INTERRUPT) from another
+ * backend.
  *
  * This is called either directly from the SIGUSR1 signal handler,
  * or the next time control reaches the outer idle loop (assuming

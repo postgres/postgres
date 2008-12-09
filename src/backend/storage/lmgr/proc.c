@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.202 2008/11/02 21:24:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.203 2008/12/09 14:28:20 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,6 +289,7 @@ InitProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;
+	MemSet(MyProc->signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
 	MyProc->vacuumFlags = 0;
 	if (IsAutoVacuumWorkerProcess())
 		MyProc->vacuumFlags |= PROC_IS_AUTOVACUUM;
@@ -428,6 +429,7 @@ InitAuxiliaryProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;
+	MemSet(MyProc->signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
 	/* we don't set the "is autovacuum" flag in the launcher */
 	MyProc->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
@@ -1275,6 +1277,54 @@ ProcSendSignal(int pid)
 
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);
+}
+
+/*
+ * SendProcSignal - send the signal with the reason to a process.
+ *
+ * The process can be a backend or an auxiliary process that has a PGPROC
+ * entry, like an autovacuum worker.
+ */
+void
+SendProcSignal(PGPROC *proc, ProcSignalReason reason)
+{
+	pid_t pid;
+
+	/*
+	 * If the process is gone, do nothing.
+	 *
+	 * Since there's no locking, it's possible that the process detaches
+	 * from shared memory and exits right after this test, before we set
+	 * the flag and send signal. And the PGPROC entry might even be recycled
+	 * by a new process, so it's remotely possible that we signal a wrong
+	 * process. That's OK, all the signals are such that no harm is done.
+	 */
+	pid = proc->pid;
+	if (pid == 0)
+		return;
+
+	/* Atomically set the proper flag */
+	proc->signalFlags[reason] = true;
+	/* Send SIGUSR1 to the process */
+	kill(pid, SIGUSR1);
+}
+
+/*
+ * CheckProcSignal - check to see if the particular reason has been
+ * signaled, and clear the signal flag.  Should be called after 
+ * receiving SIGUSR1.
+ */
+bool
+CheckProcSignal(ProcSignalReason reason)
+{
+	/* Careful here --- don't clear flag if we haven't seen it set */
+	if (MyProc->signalFlags[reason])
+	{
+		MyProc->signalFlags[reason] = false;
+		return true;
+	}
+
+	return false;
 }
 
 

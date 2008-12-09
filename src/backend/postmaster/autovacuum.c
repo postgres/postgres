@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.88 2008/12/04 11:42:24 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.89 2008/12/09 14:28:20 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1477,7 +1477,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	pqsignal(SIGALRM, handle_sig_alarm);
 
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, CatchupInterruptHandler);
+	pqsignal(SIGUSR1, proc_sigusr1_handler);
 	/* We don't listen for async notifies */
 	pqsignal(SIGUSR2, SIG_IGN);
 	pqsignal(SIGFPE, FloatExceptionHandler);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.142 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.143 2008/12/09 14:28:20 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,9 +915,10 @@ EnableNotifyInterrupt(void)
  *		a frontend command.  Signal handler execution of inbound notifies
  *		is disabled until the next EnableNotifyInterrupt call.
  *
- *		The SIGUSR1 signal handler also needs to call this, so as to
- *		prevent conflicts if one signal interrupts the other.  So we
- *		must return the previous state of the flag.
+ *		This also needs to be called when SIGUSR1 with 
+ *		PROCSIG_CATCHUP_INTERRUPT is received, so as to prevent conflicts 
+ *		if one signal interrupts the other.  So we must return the previous 
+ *		state of the flag.
  */
 bool
 DisableNotifyInterrupt(void)
@@ -954,7 +955,7 @@ ProcessIncomingNotify(void)
 				nulls[Natts_pg_listener];
 	bool		catchup_enabled;
 
-	/* Must prevent SIGUSR1 interrupt while I am running */
+	/* Must prevent catchup interrupt while I am running */
 	catchup_enabled = DisableCatchupInterrupt();
 
 	if (Trace_notify)

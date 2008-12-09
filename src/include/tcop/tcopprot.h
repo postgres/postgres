@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.93 2008/03/10 12:55:13 mha Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.94 2008/12/09 14:28:20 heikki Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -56,6 +56,7 @@ extern List *pg_plan_queries(List *querytrees, int cursorOptions,
 
 extern bool assign_max_stack_depth(int newval, bool doit, GucSource source);
 
+extern void proc_sigusr1_handler(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);
 extern void authdie(SIGNAL_ARGS);
