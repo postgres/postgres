@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/fsmpage.c,v 1.2 2008/10/07 21:10:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/fsmpage.c,v 1.3 2008/12/10 17:11:18 tgl Exp $
  *
  * NOTES:
  *
@@ -243,17 +243,20 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 	 */
 	while (nodeno < NonLeafNodesPerPage)
 	{
-		int leftnodeno = leftchild(nodeno);
-		int rightnodeno = leftnodeno + 1;
-		bool leftok = (leftnodeno < NodesPerPage) &&
-			(fsmpage->fp_nodes[leftnodeno] >= minvalue);
-		bool rightok = (rightnodeno < NodesPerPage) &&
-			(fsmpage->fp_nodes[rightnodeno] >= minvalue);
+		int childnodeno = leftchild(nodeno);
 
-		if (leftok)
-			nodeno = leftnodeno;
-		else if (rightok)
-			nodeno = rightnodeno;
+		if (childnodeno < NodesPerPage &&
+			fsmpage->fp_nodes[childnodeno] >= minvalue)
+		{
+			nodeno = childnodeno;
+			continue;
+		}
+		childnodeno++;			/* point to right child */
+		if (childnodeno < NodesPerPage &&
+			fsmpage->fp_nodes[childnodeno] >= minvalue)
+		{
+			nodeno = childnodeno;
+		}
 		else
 		{
 			/*
