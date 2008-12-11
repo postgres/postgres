@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.53 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.54 2008/12/11 18:16:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,8 +40,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
 
   <para>
    With no parameter, <command>VACUUM</command> processes every table in the
-   current database.  With a parameter, <command>VACUUM</command> processes
-   only that table.
+   current database that the current user has permission to vacuum.
+   With a parameter, <command>VACUUM</command> processes only that table.
   </para>
 
   <para>
@@ -145,6 +145,16 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
 
  <refsect1>
   <title>Notes</title>
+
+   <para>
+    To vacuum a table, one must ordinarily be the table's owner or a
+    superuser.  However, database owners are allowed to
+    vacuum all tables in their databases, except shared catalogs.
+    (The restriction for shared catalogs means that a true database-wide
+    <command>VACUUM</> can only be performed by a superuser.)
+    <command>VACUUM</> will skip over any tables that the calling user
+    does not have permission to vacuum.
+   </para>
 
    <para>
     <command>VACUUM</> cannot be executed inside a transaction block.

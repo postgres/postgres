@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.87 2008/12/08 20:30:58 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.88 2008/12/11 18:16:18 tgl Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -472,9 +472,13 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 
 <programlisting>
 WARNING:  database "mydb" must be vacuumed within 177009986 transactions
-HINT:  To avoid a database shutdown, execute a full-database VACUUM in "mydb".
+HINT:  To avoid a database shutdown, execute a database-wide VACUUM in "mydb".
 </programlisting>
 
+    (A manual <command>VACUUM</> should fix the problem, as suggested by the
+    hint; but note that the <command>VACUUM</> must be performed by a
+    superuser, else it will fail to process system catalogs and thus not
+    be able to advance the database's <structfield>datfrozenxid</>.)
     If these warnings are
     ignored, the system will shut down and refuse to execute any new
     transactions once there are fewer than 1 million transactions left
