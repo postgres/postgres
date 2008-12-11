@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.231 2008/12/11 07:34:08 petere Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.232 2008/12/11 09:17:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,10 +767,6 @@ typedef NameData *Name;
 #define PG_BINARY_A "a"
 #define PG_BINARY_R "r"
 #define PG_BINARY_W "w"
-#endif
-
-#if defined(sun) && defined(__sparc__) && !defined(__SVR4)
-#include <unistd.h>
 #endif
 
 /* These are for things that are one way on Unix and another on NT */
