@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.60 2008/04/16 22:16:00 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.61 2008/12/11 07:34:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,7 +630,7 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 																 * PGLOCALEDIR */
 
 	/* don't set LC_ALL in the backend */
-	if (strcmp(app, "postgres") != 0)
+	if (strcmp(app, PG_TEXTDOMAIN("postgres")) != 0)
 		setlocale(LC_ALL, "");
 
 	if (find_my_exec(argv0, my_exec_path) < 0)

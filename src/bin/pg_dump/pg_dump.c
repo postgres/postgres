@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.506 2008/12/04 17:51:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.507 2008/12/11 07:34:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,7 @@ main(int argc, char **argv)
 		{NULL, 0, NULL, 0}
 	};
 
-	set_pglocale_pgservice(argv[0], "pg_dump");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_dump"));
 
 	g_verbose = false;
 

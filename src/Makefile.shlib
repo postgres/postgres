@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.118 2008/11/24 11:59:37 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.119 2008/12/11 07:34:07 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -115,6 +115,10 @@ endif
 # Try to keep the sections in some kind of order, folks...
 
 override CFLAGS += $(CFLAGS_SL)
+ifdef SO_MAJOR_VERSION
+# libraries ought to use this to refer to versioned gettext domain names
+override CPPFLAGS += -DSO_MAJOR_VERSION=$(SO_MAJOR_VERSION)
+endif
 
 ifeq ($(PORTNAME), aix)
   ifdef SO_MAJOR_VERSION

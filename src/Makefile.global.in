@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.248 2008/12/07 08:36:22 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.249 2008/12/11 07:34:07 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -30,6 +30,7 @@ all:
 
 # PostgreSQL version number
 VERSION = @PACKAGE_VERSION@
+MAJORVERSION = @PG_MAJORVERSION@
 
 # Support for VPATH builds
 vpath_build = @vpath_build@

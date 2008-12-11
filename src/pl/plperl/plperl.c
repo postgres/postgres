@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.142 2008/11/19 01:10:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.143 2008/12/11 07:34:09 petere Exp $
  *
  **********************************************************************/
 
@@ -32,7 +32,7 @@
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
-#define TEXTDOMAIN "plperl"
+#define TEXTDOMAIN PG_TEXTDOMAIN("plperl")
 
 /* perl stuff */
 #include "plperl.h"
@@ -190,7 +190,7 @@ _PG_init(void)
 	if (inited)
 		return;
 
-	set_text_domain(TEXTDOMAIN);
+	pg_bindtextdomain(TEXTDOMAIN);
 
 	DefineCustomBoolVariable("plperl.use_strict",
 	  gettext_noop("If true, will compile trusted and untrusted perl code in strict mode"),

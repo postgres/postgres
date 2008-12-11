@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.41 2008/10/09 17:24:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.42 2008/12/11 07:34:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ _PG_init(void)
 	if (inited)
 		return;
 
-	set_text_domain(TEXTDOMAIN);
+	pg_bindtextdomain(TEXTDOMAIN);
 
 	plpgsql_HashTableInit();
 	RegisterXactCallback(plpgsql_xact_cb, NULL);

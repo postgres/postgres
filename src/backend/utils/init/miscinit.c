@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.168 2008/10/09 17:24:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.169 2008/12/11 07:34:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1214,7 +1214,7 @@ process_local_preload_libraries(void)
 }
 
 void
-set_text_domain(const char *domain)
+pg_bindtextdomain(const char *domain)
 {
 #ifdef ENABLE_NLS
 	if (my_exec_path[0] != '\0')

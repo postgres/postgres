@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.28 2008/03/27 03:57:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.29 2008/12/11 07:34:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 	int			j;
 	int			ret;
 
-	set_pglocale_pgservice(argv[0], "pg_config");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_config"));
 
 	progname = get_progname(argv[0]);
 

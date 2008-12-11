@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.123 2008/10/11 00:09:33 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.124 2008/12/11 07:34:09 petere Exp $
  *
  **********************************************************************/
 
@@ -44,7 +44,7 @@
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
-#define TEXTDOMAIN "pltcl"
+#define TEXTDOMAIN PG_TEXTDOMAIN("pltcl")
 
 #if defined(UNICODE_CONVERSION) && HAVE_TCL_VERSION(8,1)
 
@@ -268,7 +268,7 @@ _PG_init(void)
 	if (pltcl_pm_init_done)
 		return;
 
-	set_text_domain(TEXTDOMAIN);
+	pg_bindtextdomain(TEXTDOMAIN);
 
 #ifdef WIN32
 	/* Required on win32 to prevent error loading init.tcl */

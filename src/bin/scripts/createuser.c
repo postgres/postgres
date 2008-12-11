@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.38 2008/01/01 19:45:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.39 2008/12/11 07:34:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 	PGresult   *result;
 
 	progname = get_progname(argv[0]);
-	set_pglocale_pgservice(argv[0], "pgscripts");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 
 	handle_help_version_opts(argc, argv, "createuser", help);
 

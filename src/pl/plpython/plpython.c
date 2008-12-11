@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.116 2008/11/04 15:16:48 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.117 2008/12/11 07:34:09 petere Exp $
  *
  *********************************************************************
  */
@@ -66,7 +66,7 @@ typedef int Py_ssize_t;
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
-#define TEXTDOMAIN "plpython"
+#define TEXTDOMAIN PG_TEXTDOMAIN("plpython")
 
 #include <compile.h>
 #include <eval.h>
@@ -2750,7 +2750,7 @@ _PG_init(void)
 	if (inited)
 		return;
 
-	set_text_domain(TEXTDOMAIN);
+	pg_bindtextdomain(TEXTDOMAIN);
 
 	Py_Initialize();
 	PLy_init_interp();

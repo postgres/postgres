@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.105 2008/11/05 00:07:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.106 2008/12/11 07:34:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
-#define TEXTDOMAIN "plpgsql"
+#define TEXTDOMAIN PG_TEXTDOMAIN("plpgsql")
 
 /* ----------
  * Compiler's namestack item types

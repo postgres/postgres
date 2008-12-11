@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.576 2008/12/07 08:36:21 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.577 2008/12/11 07:34:07 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -30,6 +30,9 @@ AC_PREFIX_DEFAULT(/usr/local/pgsql)
 AC_SUBST(configure_args, [$ac_configure_args])
 
 AC_DEFINE_UNQUOTED(PG_VERSION, "$PACKAGE_VERSION", [PostgreSQL version as a string])
+[PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`]
+AC_SUBST(PG_MAJORVERSION)
+AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major version as a string])
 
 AC_CANONICAL_HOST
 

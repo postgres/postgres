@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.164 2008/11/14 02:09:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.165 2008/12/11 07:34:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2511,7 +2511,7 @@ main(int argc, char *argv[])
 	};
 
 	progname = get_progname(argv[0]);
-	set_pglocale_pgservice(argv[0], "initdb");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
 
 	if (argc > 1)
 	{

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.110 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.111 2008/12/11 07:34:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 	 * error messages to be localized.
 	 */
 
-	set_pglocale_pgservice(argv[0], "postgres");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
 
 #ifdef WIN32
 

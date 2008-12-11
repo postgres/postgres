@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.69 2008/11/14 21:45:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.70 2008/12/11 07:34:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	int			fd;
 	char		path[MAXPGPATH];
 
-	set_pglocale_pgservice(argv[0], "pg_resetxlog");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_resetxlog"));
 
 	progname = get_progname(argv[0]);
 

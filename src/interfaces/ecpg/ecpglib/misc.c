@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.43 2008/11/01 19:53:35 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.44 2008/12/11 07:34:09 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -474,7 +474,7 @@ ecpg_gettext(const char *msgid)
 		ldir = getenv("PGLOCALEDIR");
 		if (!ldir)
 			ldir = LOCALEDIR;
-		bindtextdomain("ecpg", ldir);
+		bindtextdomain(PG_TEXTDOMAIN("ecpg"), ldir);
 #ifdef WIN32
 		SetLastError(save_errno);
 #else
@@ -482,7 +482,7 @@ ecpg_gettext(const char *msgid)
 #endif
 	}
 
-	return dgettext("ecpg", msgid);
+	return dgettext(PG_TEXTDOMAIN("ecpg"), msgid);
 }
 
 #endif   /* ENABLE_NLS */

@@ -642,6 +642,9 @@
    (--with-krb-srvnam=NAME) */
 #undef PG_KRB_SRVNAM
 
+/* PostgreSQL major version as a string */
+#undef PG_MAJORVERSION
+
 /* PostgreSQL version as a string */
 #undef PG_VERSION
 

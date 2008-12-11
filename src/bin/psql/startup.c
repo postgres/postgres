@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.151 2008/07/20 06:08:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.152 2008/12/11 07:34:08 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	char	   *password_prompt = NULL;
 	bool		new_pass;
 
-	set_pglocale_pgservice(argv[0], "psql");
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("psql"));
 
 	if (argc > 1)
 	{

@@ -656,6 +656,7 @@ build_alias
 host_alias
 target_alias
 configure_args
+PG_MAJORVERSION
 build
 build_cpu
 build_vendor
@@ -1908,6 +1909,13 @@ configure_args=$ac_configure_args
 
 cat >>confdefs.h <<_ACEOF
 #define PG_VERSION "$PACKAGE_VERSION"
+_ACEOF
+
+PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`
+
+
+cat >>confdefs.h <<_ACEOF
+#define PG_MAJORVERSION "$PG_MAJORVERSION"
 _ACEOF
 
 
@@ -27183,6 +27191,7 @@ build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
 configure_args!$configure_args$ac_delim
+PG_MAJORVERSION!$PG_MAJORVERSION$ac_delim
 build!$build$ac_delim
 build_cpu!$build_cpu$ac_delim
 build_vendor!$build_vendor$ac_delim
@@ -27241,7 +27250,6 @@ EGREP!$EGREP$ac_delim
 ELF_SYS!$ELF_SYS$ac_delim
 LDFLAGS_SL!$LDFLAGS_SL$ac_delim
 LD!$LD$ac_delim
-with_gnu_ld!$with_gnu_ld$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -27283,6 +27291,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+with_gnu_ld!$with_gnu_ld$ac_delim
 ld_R_works!$ld_R_works$ac_delim
 RANLIB!$RANLIB$ac_delim
 STRIP!$STRIP$ac_delim
@@ -27343,7 +27352,7 @@ vpath_build!$vpath_build$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 58; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 59; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.230 2008/10/09 22:23:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.231 2008/12/11 07:34:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,6 +713,32 @@ typedef NameData *Name;
 #define STATUS_EOF				(-2)
 #define STATUS_FOUND			(1)
 #define STATUS_WAITING			(2)
+
+
+/* gettext domain name mangling */
+
+/*
+ * To better support parallel installations of major PostgeSQL
+ * versions as well as parallel installations of major library soname
+ * versions, we mangle the gettext domain name by appending those
+ * version numbers.  The coding rule ought to be that whereever the
+ * domain name is mentioned as a literal, it must be wrapped into
+ * PG_TEXTDOMAIN().  The macros below do not work on non-literals; but
+ * that is somewhat intentional because it avoids having to worry
+ * about multiple states of premangling and postmangling as the values
+ * are being passed around.
+ *
+ * Make sure this matches the installation rules in nls-global.mk.
+ */
+
+/* need a second indirection because we want to stringize the macro value, not the name */
+#define CppAsString2(x) CppAsString(x)
+
+#ifdef SO_MAJOR_VERSION
+# define PG_TEXTDOMAIN(domain) (domain CppAsString2(SO_MAJOR_VERSION) "-" PG_MAJORVERSION)
+#else
+# define PG_TEXTDOMAIN(domain) (domain "-" PG_MAJORVERSION)
+#endif
 
 
 /* ----------------------------------------------------------------
