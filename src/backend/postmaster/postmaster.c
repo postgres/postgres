@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.566 2008/10/28 12:10:43 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.567 2008/12/11 10:25:17 petere Exp $
  *
  * NOTES
  *
@@ -1181,7 +1181,7 @@ pmdaemonize(void)
 		ExitPostmaster(1);
 	}
 #endif
-	i = open(NULL_DEV, O_RDWR, 0);
+	i = open(DEVNULL, O_RDWR, 0);
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);

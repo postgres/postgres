@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.232 2008/12/11 09:17:07 petere Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.233 2008/12/11 10:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,9 +768,6 @@ typedef NameData *Name;
 #define PG_BINARY_R "r"
 #define PG_BINARY_W "w"
 #endif
-
-/* These are for things that are one way on Unix and another on NT */
-#define NULL_DEV		"/dev/null"
 
 /*
  * Provide prototypes for routines not present in a particular machine's
