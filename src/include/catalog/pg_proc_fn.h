@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc_fn.h,v 1.2 2008/12/04 17:51:27 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc_fn.h,v 1.3 2008/12/12 22:56:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PG_PROC_FN_H
 #define PG_PROC_FN_H
+
+#include "nodes/pg_list.h"
 
 extern Oid ProcedureCreate(const char *procedureName,
 				Oid procNamespace,

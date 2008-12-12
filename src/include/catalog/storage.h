@@ -7,16 +7,18 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/storage.h,v 1.1 2008/11/19 10:34:52 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/storage.h,v 1.2 2008/12/12 22:56:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef STORAGE_H
 #define STORAGE_H
 
+#include "access/xlog.h"
+#include "lib/stringinfo.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
-#include "utils/rel.h"
+#include "utils/relcache.h"
 
 extern void RelationCreateStorage(RelFileNode rnode, bool istemp);
 extern void RelationDropStorage(Relation rel);
