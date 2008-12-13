@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.201 2008/11/30 20:51:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.202 2008/12/13 02:29:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1606,8 +1606,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		/* Need a copyObject here to keep parser from modifying raw tree */
 		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
 										   src, argtypes, nargs);
-		stmt_list = pg_plan_queries(stmt_list, cursor_options,
-									boundParams, false);
+		stmt_list = pg_plan_queries(stmt_list, cursor_options, boundParams);
 
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));

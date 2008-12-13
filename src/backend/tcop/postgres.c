@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.561 2008/12/13 02:00:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.562 2008/12/13 02:29:21 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -732,24 +732,14 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 /*
  * Generate plans for a list of already-rewritten queries.
  *
- * If needSnapshot is TRUE, we haven't yet set a snapshot for the current
- * query.  A snapshot must be set before invoking the planner, since it
- * might try to evaluate user-defined functions.  But we must not set a
- * snapshot if the list contains only utility statements, because some
- * utility statements depend on not having frozen the snapshot yet.
- * (We assume that such statements cannot appear together with plannable
- * statements in the rewriter's output.)
- *
  * Normal optimizable statements generate PlannedStmt entries in the result
  * list.  Utility statements are simply represented by their statement nodes.
  */
 List *
-pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams,
-				bool needSnapshot)
+pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
 {
 	List	   *stmt_list = NIL;
 	ListCell   *query_list;
-	bool		snapshot_set = false;
 
 	foreach(query_list, querytrees)
 	{
@@ -763,21 +753,11 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams,
 		}
 		else
 		{
-			if (needSnapshot && !snapshot_set)
-			{
-				PushActiveSnapshot(GetTransactionSnapshot());
-				snapshot_set = true;
-			}
-
-			stmt = (Node *) pg_plan_query(query, cursorOptions,
-										  boundParams);
+			stmt = (Node *) pg_plan_query(query, cursorOptions, boundParams);
 		}
 
 		stmt_list = lappend(stmt_list, stmt);
 	}
-
-	if (snapshot_set)
-		PopActiveSnapshot();
 
 	return stmt_list;
 }
@@ -937,7 +917,7 @@ exec_simple_query(const char *query_string)
 		querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
 												NULL, 0);
 
-		plantree_list = pg_plan_queries(querytree_list, 0, NULL, false);
+		plantree_list = pg_plan_queries(querytree_list, 0, NULL);
 
 		/* Done with the snapshot used for parsing/planning */
 		if (snapshot_set)
@@ -1276,7 +1256,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		}
 		else
 		{
-			stmt_list = pg_plan_queries(querytree_list, 0, NULL, false);
+			stmt_list = pg_plan_queries(querytree_list, 0, NULL);
 			fully_planned = true;
 		}
 
@@ -1725,7 +1705,7 @@ exec_bind_message(StringInfo input_message)
 		 */
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		query_list = copyObject(cplan->stmt_list);
-		plan_list = pg_plan_queries(query_list, 0, params, false);
+		plan_list = pg_plan_queries(query_list, 0, params);
 		MemoryContextSwitchTo(oldContext);
 
 		/* We no longer need the cached plan refcount ... */

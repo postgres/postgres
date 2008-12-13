@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.24 2008/12/13 02:00:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.25 2008/12/13 02:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,8 +503,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			/*
 			 * Generate plans for queries.
 			 */
-			slist = pg_plan_queries(slist, plansource->cursor_options,
-									NULL, false);
+			slist = pg_plan_queries(slist, plansource->cursor_options, NULL);
 		}
 
 		/*
