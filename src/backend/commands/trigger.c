@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.210.2.6 2008/10/25 03:32:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.210.2.7 2008/12/13 02:00:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3181,19 +3181,51 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	if (!stmt->deferred)
 	{
 		AfterTriggerEventList *events = &afterTriggers->events;
+		Snapshot	saveActiveSnapshot = ActiveSnapshot;
 
-		while (afterTriggerMarkEvents(events, NULL, true))
+		/* PG_TRY to ensure previous ActiveSnapshot is restored on error */
+		PG_TRY();
 		{
-			CommandId	firing_id = afterTriggers->firing_counter++;
+			Snapshot	mySnapshot = NULL;
 
-			/*
-			 * We can delete fired events if we are at top transaction level,
-			 * but we'd better not if inside a subtransaction, since the
-			 * subtransaction could later get rolled back.
-			 */
-			afterTriggerInvokeEvents(-1, firing_id, NULL,
-									 !IsSubTransaction());
+			while (afterTriggerMarkEvents(events, NULL, true))
+			{
+				CommandId	firing_id = afterTriggers->firing_counter++;
+
+				/*
+				 * Make sure a snapshot has been established in case trigger
+				 * functions need one.  Note that we avoid setting a snapshot
+				 * if we don't find at least one trigger that has to be fired
+				 * now.  This is so that BEGIN; SET CONSTRAINTS ...; SET
+				 * TRANSACTION ISOLATION LEVEL SERIALIZABLE; ... works
+				 * properly.  (If we are at the start of a transaction it's
+				 * not possible for any trigger events to be queued yet.)
+				 */
+				if (mySnapshot == NULL)
+				{
+					mySnapshot = CopySnapshot(GetTransactionSnapshot());
+					ActiveSnapshot = mySnapshot;
+				}
+
+				/*
+				 * We can delete fired events if we are at top transaction level,
+				 * but we'd better not if inside a subtransaction, since the
+				 * subtransaction could later get rolled back.
+				 */
+				afterTriggerInvokeEvents(-1, firing_id, NULL,
+										 !IsSubTransaction());
+			}
+
+			if (mySnapshot)
+				FreeSnapshot(mySnapshot);
 		}
+		PG_CATCH();
+		{
+			ActiveSnapshot = saveActiveSnapshot;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+		ActiveSnapshot = saveActiveSnapshot;
 	}
 }
 

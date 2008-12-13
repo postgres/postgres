@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.353.2.1 2007/06/20 18:21:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.353.2.2 2008/12/13 02:00:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,6 +428,52 @@ transformStmt(ParseState *pstate, Node *parseTree,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("target lists can have at most %d entries",
 						MaxTupleAttributeNumber)));
+
+	return result;
+}
+
+/*
+ * analyze_requires_snapshot
+ *		Returns true if a snapshot must be set before doing parse analysis
+ *		on the given raw parse tree.
+ *
+ * Classification here should match transformStmt().
+ */
+bool
+analyze_requires_snapshot(Node *parseTree)
+{
+	bool		result;
+
+	switch (nodeTag(parseTree))
+	{
+			/*
+			 * Optimizable statements
+			 */
+		case T_InsertStmt:
+		case T_DeleteStmt:
+		case T_UpdateStmt:
+		case T_SelectStmt:
+			result = true;
+			break;
+
+			/*
+			 * Special cases
+			 */
+		case T_DeclareCursorStmt:
+			/* yes, because it's analyzed just like SELECT */
+			result = true;
+			break;
+
+		case T_ExplainStmt:
+			/* yes, because it's analyzed just like SELECT */
+			result = true;
+			break;
+
+		default:
+			/* other utility statements don't have any active parse analysis */
+			result = false;
+			break;
+	}
 
 	return result;
 }
