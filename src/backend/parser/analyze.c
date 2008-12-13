@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.371 2008/01/01 19:45:50 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.371.2.1 2008/12/13 02:00:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,55 @@ transformStmt(ParseState *pstate, Node *parseTree)
 	/* Mark as original query until we learn differently */
 	result->querySource = QSRC_ORIGINAL;
 	result->canSetTag = true;
+
+	return result;
+}
+
+/*
+ * analyze_requires_snapshot
+ *		Returns true if a snapshot must be set before doing parse analysis
+ *		on the given raw parse tree.
+ *
+ * Classification here should match transformStmt().
+ */
+bool
+analyze_requires_snapshot(Node *parseTree)
+{
+	bool		result;
+
+	switch (nodeTag(parseTree))
+	{
+			/*
+			 * Optimizable statements
+			 */
+		case T_InsertStmt:
+		case T_DeleteStmt:
+		case T_UpdateStmt:
+		case T_SelectStmt:
+			result = true;
+			break;
+
+			/*
+			 * Special cases
+			 */
+		case T_DeclareCursorStmt:
+			/* yes, because it's analyzed just like SELECT */
+			result = true;
+			break;
+
+		case T_ExplainStmt:
+			/*
+			 * We only need a snapshot in varparams case, but it doesn't seem
+			 * worth complicating this function's API to distinguish that.
+			 */
+			result = true;
+			break;
+
+		default:
+			/* utility statements don't have any active parse analysis */
+			result = false;
+			break;
+	}
 
 	return result;
 }
