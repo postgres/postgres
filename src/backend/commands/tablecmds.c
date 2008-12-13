@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.272 2008/12/06 23:22:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.273 2008/12/13 19:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3942,9 +3942,9 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue)
 				 errmsg("statistics target %d is too low",
 						newtarget)));
 	}
-	else if (newtarget > 1000)
+	else if (newtarget > 10000)
 	{
-		newtarget = 1000;
+		newtarget = 10000;
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("lowering statistics target to %d",

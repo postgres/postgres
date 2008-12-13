@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.482 2008/12/02 02:00:32 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.483 2008/12/13 19:13:44 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1245,7 +1245,7 @@ static struct config_int ConfigureNamesInt[] =
 				"column-specific target set via ALTER TABLE SET STATISTICS.")
 		},
 		&default_statistics_target,
-		10, 1, 1000, NULL, NULL
+		100, 1, 10000, NULL, NULL
 	},
 	{
 		{"from_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.128 2008/11/10 00:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.129 2008/12/13 19:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ typedef struct AnlIndexData
 
 
 /* Default statistics target (GUC parameter) */
-int			default_statistics_target = 10;
+int			default_statistics_target = 100;
 
 /* A few variables that don't seem worth passing around as parameters */
 static int	elevel = -1;
@@ -1531,10 +1531,10 @@ std_typanalyze(VacAttrStats *stats)
 		 * error in bin size f, and error probability gamma, the minimum
 		 * random sample size is
 		 *		r = 4 * k * ln(2*n/gamma) / f^2
-		 * Taking f = 0.5, gamma = 0.01, n = 1 million rows, we obtain
+		 * Taking f = 0.5, gamma = 0.01, n = 10^6 rows, we obtain
 		 *		r = 305.82 * k
 		 * Note that because of the log function, the dependence on n is
-		 * quite weak; even at n = 1 billion, a 300*k sample gives <= 0.59
+		 * quite weak; even at n = 10^12, a 300*k sample gives <= 0.66
 		 * bin size error with probability 0.99.  So there's no real need to
 		 * scale for n, which is a good thing because we don't necessarily
 		 * know it at this point.

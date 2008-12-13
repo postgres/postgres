@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.68 2007/12/28 21:03:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.69 2008/12/13 19:13:43 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -562,7 +562,7 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
    command, or globally by setting the
    <xref linkend="guc-default-statistics-target"> configuration variable.
-   The default limit is presently 10 entries.  Raising the limit
+   The default limit is presently 100 entries.  Raising the limit
    might allow more accurate planner estimates to be made, particularly for
    columns with irregular data distributions, at the price of consuming
    more space in <structname>pg_statistic</structname> and slightly more

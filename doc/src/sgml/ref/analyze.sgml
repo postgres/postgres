@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.24 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.25 2008/12/13 19:13:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -132,10 +132,10 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    will change slightly each time <command>ANALYZE</command> is run,
    even if the actual table contents did not change.  This might result
    in small changes in the planner's estimated costs shown by
-   <xref linkend="sql-explain" endterm="sql-explain-title">. In rare situations, this
-   non-determinism will cause the query optimizer to choose a
-   different query plan between runs of <command>ANALYZE</command>. To
-   avoid this, raise the amount of statistics collected by
+   <xref linkend="sql-explain" endterm="sql-explain-title">.
+   In rare situations, this non-determinism will cause the planner's
+   choices of query plans to change after <command>ANALYZE</command> is run.
+   To avoid this, raise the amount of statistics collected by
    <command>ANALYZE</command>, as described below.
   </para>
 
@@ -148,7 +148,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    endterm="sql-altertable-title">).  The target value sets the
    maximum number of entries in the most-common-value list and the
    maximum number of bins in the histogram.  The default target value
-   is 10, but this can be adjusted up or down to trade off accuracy of
+   is 100, but this can be adjusted up or down to trade off accuracy of
    planner estimates against the time taken for
    <command>ANALYZE</command> and the amount of space occupied in
    <literal>pg_statistic</literal>.  In particular, setting the

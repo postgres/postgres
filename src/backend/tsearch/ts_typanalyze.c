@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.3 2008/11/27 21:17:39 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.4 2008/12/13 19:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ ts_typanalyze(PG_FUNCTION_ARGS)
 		attr->attstattarget = default_statistics_target;
 
 	stats->compute_stats = compute_tsvector_stats;
-	/* see comment about the choice of minrows from analyze.c */
+	/* see comment about the choice of minrows in commands/analyze.c */
 	stats->minrows = 300 * attr->attstattarget;
 
 	PG_RETURN_BOOL(true);
@@ -105,8 +105,8 @@ ts_typanalyze(PG_FUNCTION_ARGS)
  *	is no more than a few times w.
  *
  *	We use a hashtable for the D structure and a bucket width of
- *	statistic_target * 100, where 100 is an arbitrarily chosen constant, meant
- *	to approximate the number of lexemes in a single tsvector.
+ *	statistics_target * 100, where 100 is an arbitrarily chosen constant,
+ *	meant to approximate the number of lexemes in a single tsvector.
  */
 static void
 compute_tsvector_stats(VacAttrStats *stats,
@@ -130,7 +130,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 	LexemeHashKey 	hash_key;
 	TrackItem		*item;
 
-	/* We want statistic_target * 100 lexemes in the MCELEM array */
+	/* We want statistics_target * 100 lexemes in the MCELEM array */
 	num_mcelem = stats->attr->attstattarget * 100;
 
 	/*

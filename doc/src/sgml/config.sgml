@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.199 2008/12/08 15:11:39 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.200 2008/12/13 19:13:43 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2133,7 +2133,7 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
         not had a column-specific target set via <command>ALTER TABLE
         SET STATISTICS</>.  Larger values increase the time needed to
         do <command>ANALYZE</>, but might improve the quality of the
-        planner's estimates. The default is 10. For more information
+        planner's estimates. The default is 100. For more information
         on the use of statistics by the <productname>PostgreSQL</>
         query planner, refer to <xref linkend="planner-stats">.
        </para>
