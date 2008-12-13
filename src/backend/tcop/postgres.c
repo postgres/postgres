@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.560 2008/12/09 15:59:39 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.561 2008/12/13 02:00:19 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -685,6 +685,9 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 	if (querytree->commandType == CMD_UTILITY)
 		return NULL;
 
+	/* Planner must have a snapshot in case it calls user-defined functions. */
+	Assert(ActiveSnapshotSet());
+
 	TRACE_POSTGRESQL_QUERY_PLAN_START();
 
 	if (log_planner_stats)
@@ -872,6 +875,7 @@ exec_simple_query(const char *query_string)
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+		bool		snapshot_set = false;
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
 		List	   *querytree_list,
@@ -914,6 +918,15 @@ exec_simple_query(const char *query_string)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
+		 * Set up a snapshot if parse analysis/planning will need one.
+		 */
+		if (analyze_requires_snapshot(parsetree))
+		{
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_set = true;
+		}
+
+		/*
 		 * OK to analyze, rewrite, and plan this query.
 		 *
 		 * Switch to appropriate context for constructing querytrees (again,
@@ -924,7 +937,11 @@ exec_simple_query(const char *query_string)
 		querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
 												NULL, 0);
 
-		plantree_list = pg_plan_queries(querytree_list, 0, NULL, true);
+		plantree_list = pg_plan_queries(querytree_list, 0, NULL, false);
+
+		/* Done with the snapshot used for parsing/planning */
+		if (snapshot_set)
+			PopActiveSnapshot();
 
 		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
@@ -939,7 +956,7 @@ exec_simple_query(const char *query_string)
 
 		/*
 		 * We don't have to copy anything into the portal, because everything
-		 * we are passsing here is in MessageContext, which will outlive the
+		 * we are passing here is in MessageContext, which will outlive the
 		 * portal anyway.
 		 */
 		PortalDefineQuery(portal,
@@ -1178,6 +1195,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	if (parsetree_list != NIL)
 	{
 		Query	   *query;
+		bool		snapshot_set = false;
 		int			i;
 
 		raw_parse_tree = (Node *) linitial(parsetree_list);
@@ -1201,6 +1219,15 @@ exec_parse_message(const char *query_string,	/* string to execute */
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
 						"commands ignored until end of transaction block")));
+
+		/*
+		 * Set up a snapshot if parse analysis/planning will need one.
+		 */
+		if (analyze_requires_snapshot(raw_parse_tree))
+		{
+			PushActiveSnapshot(GetTransactionSnapshot());
+			snapshot_set = true;
+		}
 
 		/*
 		 * OK to analyze, rewrite, and plan this query.  Note that the
@@ -1249,9 +1276,13 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		}
 		else
 		{
-			stmt_list = pg_plan_queries(querytree_list, 0, NULL, true);
+			stmt_list = pg_plan_queries(querytree_list, 0, NULL, false);
 			fully_planned = true;
 		}
+
+		/* Done with the snapshot used for parsing/planning */
+		if (snapshot_set)
+			PopActiveSnapshot();
 	}
 	else
 	{
@@ -1375,6 +1406,7 @@ exec_bind_message(StringInfo input_message)
 	List	   *plan_list;
 	MemoryContext oldContext;
 	bool		save_log_statement_stats = log_statement_stats;
+	bool		snapshot_set = false;
 	char		msec_str[32];
 
 	/* Get the fixed part of the message */
@@ -1493,6 +1525,17 @@ exec_bind_message(StringInfo input_message)
 		saved_stmt_name = pstrdup(stmt_name);
 	else
 		saved_stmt_name = NULL;
+
+	/*
+	 * Set a snapshot if we have parameters to fetch (since the input
+	 * functions might need it) or the query isn't a utility command (and
+	 * hence could require redoing parse analysis and planning).
+	 */
+	if (numParams > 0 || analyze_requires_snapshot(psrc->raw_parse_tree))
+	{
+		PushActiveSnapshot(GetTransactionSnapshot());
+		snapshot_set = true;
+	}
 
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
@@ -1682,7 +1725,7 @@ exec_bind_message(StringInfo input_message)
 		 */
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		query_list = copyObject(cplan->stmt_list);
-		plan_list = pg_plan_queries(query_list, 0, params, true);
+		plan_list = pg_plan_queries(query_list, 0, params, false);
 		MemoryContextSwitchTo(oldContext);
 
 		/* We no longer need the cached plan refcount ... */
@@ -1690,6 +1733,10 @@ exec_bind_message(StringInfo input_message)
 		/* ... and we don't want the portal to depend on it, either */
 		cplan = NULL;
 	}
+
+	/* Done with the snapshot used for parameter I/O and parsing/planning */
+	if (snapshot_set)
+		PopActiveSnapshot();
 
 	/*
 	 * Define portal and start execution.

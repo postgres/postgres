@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.241 2008/11/21 20:14:27 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.242 2008/12/13 02:00:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3716,10 +3716,26 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	if (!stmt->deferred)
 	{
 		AfterTriggerEventList *events = &afterTriggers->events;
+		bool		snapshot_set = false;
 
 		while (afterTriggerMarkEvents(events, NULL, true))
 		{
 			CommandId	firing_id = afterTriggers->firing_counter++;
+
+			/*
+			 * Make sure a snapshot has been established in case trigger
+			 * functions need one.  Note that we avoid setting a snapshot if
+			 * we don't find at least one trigger that has to be fired now.
+			 * This is so that BEGIN; SET CONSTRAINTS ...; SET TRANSACTION
+			 * ISOLATION LEVEL SERIALIZABLE; ... works properly.  (If we are
+			 * at the start of a transaction it's not possible for any trigger
+			 * events to be queued yet.)
+			 */
+			if (!snapshot_set)
+			{
+				PushActiveSnapshot(GetTransactionSnapshot());
+				snapshot_set = true;
+			}
 
 			/*
 			 * We can delete fired events if we are at top transaction level,
@@ -3730,6 +3746,9 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 										 !IsSubTransaction()))
 				break;			/* all fired */
 		}
+
+		if (snapshot_set)
+			PopActiveSnapshot();
 	}
 }
 
