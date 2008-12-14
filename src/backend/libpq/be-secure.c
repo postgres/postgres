@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.87 2008/12/03 20:04:26 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.88 2008/12/14 19:39:37 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -394,33 +394,59 @@ wloop:
 #ifdef USE_SSL
 
 /*
- * Private substitute BIO: this wraps the SSL library's standard socket BIO
- * so that we can enable and disable interrupts just while calling recv().
- * We cannot have interrupts occurring while the bulk of openssl runs,
- * because it uses malloc() and possibly other non-reentrant libc facilities.
+ * Private substitute BIO: this does the sending and receiving using send() and
+ * recv() instead. This is so that we can enable and disable interrupts
+ * just while calling recv(). We cannot have interrupts occurring while
+ * the bulk of openssl runs, because it uses malloc() and possibly other
+ * non-reentrant libc facilities. We also need to call send() and recv()
+ * directly so it gets passed through the socket/signals layer on Win32.
  *
- * As of openssl 0.9.7, we can use the reasonably clean method of interposing
- * a wrapper around the standard socket BIO's sock_read() method.  This relies
- * on the fact that sock_read() doesn't call anything non-reentrant, in fact
- * not much of anything at all except recv().  If this ever changes we'd
- * probably need to duplicate the code of sock_read() in order to push the
- * interrupt enable/disable down yet another level.
+ * They are closely modelled on the original socket implementations in OpenSSL.
+ *
  */
 
 static bool my_bio_initialized = false;
 static BIO_METHOD my_bio_methods;
-static int	(*std_sock_read) (BIO *h, char *buf, int size);
 
 static int
 my_sock_read(BIO *h, char *buf, int size)
 {
-	int			res;
+	int			res = 0;
 
 	prepare_for_client_read();
 
-	res = std_sock_read(h, buf, size);
+	if (buf != NULL)
+	{
+		res = recv(h->num, buf, size, 0);
+		BIO_clear_retry_flags(h);
+		if (res <= 0)
+		{
+			/* If we were interrupted, tell caller to retry */
+			if (errno == EINTR)
+			{
+				BIO_set_retry_read(h);
+			}
+		}
+	}
 
 	client_read_ended();
+
+	return res;
+}
+
+static int
+my_sock_write(BIO *h, const char *buf, int size)
+{
+	int			res = 0;
+
+	res = send(h->num, buf, size, 0);
+	if (res <= 0)
+	{
+		if (errno == EINTR)
+		{
+			BIO_set_retry_write(h);
+		}
+	}
 
 	return res;
 }
@@ -431,8 +457,8 @@ my_BIO_s_socket(void)
 	if (!my_bio_initialized)
 	{
 		memcpy(&my_bio_methods, BIO_s_socket(), sizeof(BIO_METHOD));
-		std_sock_read = my_bio_methods.bread;
 		my_bio_methods.bread = my_sock_read;
+		my_bio_methods.bwrite = my_sock_write;
 		my_bio_initialized = true;
 	}
 	return &my_bio_methods;
