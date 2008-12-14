@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.171 2008/10/31 08:39:21 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.172 2008/12/14 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1424,6 +1424,15 @@ check_generic_type_consistency(Oid *actual_arg_types,
  * arg types, and we can return ANYARRAY or ANYELEMENT as the result.  (This
  * case is currently used only to check compatibility of an aggregate's
  * declaration with the underlying transfn.)
+ *
+ * A special case is that we could see ANYARRAY as an actual_arg_type even
+ * when allow_poly is false (this is possible only because pg_statistic has
+ * columns shown as anyarray in the catalogs).  We allow this to match a
+ * declared ANYARRAY argument, but only if there is no ANYELEMENT argument
+ * or result (since we can't determine a specific element type to match to
+ * ANYELEMENT).  Note this means that functions taking ANYARRAY had better
+ * behave sanely if applied to the pg_statistic columns; they can't just
+ * assume that successive inputs are of the same actual element type.
  */
 Oid
 enforce_generic_type_consistency(Oid *actual_arg_types,
@@ -1438,6 +1447,9 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
 	Oid			array_typelem;
+	bool		have_anyelement = (rettype == ANYELEMENTOID ||
+								   rettype == ANYNONARRAYOID ||
+								   rettype == ANYENUMOID);
 	bool		have_anynonarray = (rettype == ANYNONARRAYOID);
 	bool		have_anyenum = (rettype == ANYENUMOID);
 
@@ -1454,7 +1466,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			decl_type == ANYNONARRAYOID ||
 			decl_type == ANYENUMOID)
 		{
-			have_generics = true;
+			have_generics = have_anyelement = true;
 			if (decl_type == ANYNONARRAYOID)
 				have_anynonarray = true;
 			else if (decl_type == ANYENUMOID)
@@ -1506,12 +1518,20 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	/* Get the element type based on the array type, if we have one */
 	if (OidIsValid(array_typeid))
 	{
-		array_typelem = get_element_type(array_typeid);
-		if (!OidIsValid(array_typelem))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("argument declared \"anyarray\" is not an array but type %s",
-							format_type_be(array_typeid))));
+		if (array_typeid == ANYARRAYOID && !have_anyelement)
+		{
+			/* Special case for ANYARRAY input: okay iff no ANYELEMENT */
+			array_typelem = InvalidOid;
+		}
+		else
+		{
+			array_typelem = get_element_type(array_typeid);
+			if (!OidIsValid(array_typelem))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared \"anyarray\" is not an array but type %s",
+								format_type_be(array_typeid))));
+		}
 
 		if (!OidIsValid(elem_typeid))
 		{
