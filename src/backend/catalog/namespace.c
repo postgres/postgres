@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.113 2008/12/04 17:51:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.114 2008/12/15 18:09:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3250,12 +3250,26 @@ fetch_search_path_array(Oid *sarray, int sarray_len)
 
 /*
  * Export the FooIsVisible functions as SQL-callable functions.
+ *
+ * Note: as of Postgres 8.4, these will silently return NULL if called on
+ * a nonexistent object OID, rather than failing.  This is to avoid race
+ * condition errors when a query that's scanning a catalog using an MVCC
+ * snapshot uses one of these functions.  The underlying IsVisible functions
+ * operate on SnapshotNow semantics and so might see the object as already
+ * gone when it's still visible to the MVCC snapshot.  (There is no race
+ * condition in the current coding because we don't accept sinval messages
+ * between the SearchSysCacheExists test and the subsequent lookup.)
  */
 
 Datum
 pg_table_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	PG_RETURN_BOOL(RelationIsVisible(oid));
 }
@@ -3265,6 +3279,11 @@ pg_type_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
 
+	if (!SearchSysCacheExists(TYPEOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	PG_RETURN_BOOL(TypeIsVisible(oid));
 }
 
@@ -3272,6 +3291,11 @@ Datum
 pg_function_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+
+	if (!SearchSysCacheExists(PROCOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	PG_RETURN_BOOL(FunctionIsVisible(oid));
 }
@@ -3281,6 +3305,11 @@ pg_operator_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
 
+	if (!SearchSysCacheExists(OPEROID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	PG_RETURN_BOOL(OperatorIsVisible(oid));
 }
 
@@ -3288,6 +3317,11 @@ Datum
 pg_opclass_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+
+	if (!SearchSysCacheExists(CLAOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	PG_RETURN_BOOL(OpclassIsVisible(oid));
 }
@@ -3297,6 +3331,11 @@ pg_conversion_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
 
+	if (!SearchSysCacheExists(CONVOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	PG_RETURN_BOOL(ConversionIsVisible(oid));
 }
 
@@ -3304,6 +3343,11 @@ Datum
 pg_ts_parser_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+
+	if (!SearchSysCacheExists(TSPARSEROID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	PG_RETURN_BOOL(TSParserIsVisible(oid));
 }
@@ -3313,6 +3357,11 @@ pg_ts_dict_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
 
+	if (!SearchSysCacheExists(TSDICTOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	PG_RETURN_BOOL(TSDictionaryIsVisible(oid));
 }
 
@@ -3321,6 +3370,11 @@ pg_ts_template_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
 
+	if (!SearchSysCacheExists(TSTEMPLATEOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	PG_RETURN_BOOL(TSTemplateIsVisible(oid));
 }
 
@@ -3328,6 +3382,11 @@ Datum
 pg_ts_config_is_visible(PG_FUNCTION_ARGS)
 {
 	Oid			oid = PG_GETARG_OID(0);
+
+	if (!SearchSysCacheExists(TSCONFIGOID,
+							  ObjectIdGetDatum(oid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	PG_RETURN_BOOL(TSConfigIsVisible(oid));
 }

@@ -321,7 +321,11 @@ ERROR:  unrecognized privilege type: "sel"
 select has_table_privilege(-999999,'pg_authid','update');
 ERROR:  role with OID 4293967297 does not exist
 select has_table_privilege(1,'select');
-ERROR:  relation with OID 1 does not exist
+ has_table_privilege 
+---------------------
+ 
+(1 row)
+
 -- superuser
 \c -
 select has_table_privilege(current_user,'pg_authid','select');

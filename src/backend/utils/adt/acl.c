@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.142 2008/09/09 18:58:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.143 2008/12/15 18:09:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1361,7 +1361,9 @@ convert_priv_string(text *priv_type_text)
  *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
- *		privilege, false if not.
+ *		privilege, false if not.  The variants that take a relation OID
+ *		return NULL if the OID doesn't exist (rather than failing, as
+ *		they did before Postgres 8.4).
  */
 
 /*
@@ -1432,6 +1434,11 @@ has_table_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_roleid_checked(NameStr(*username));
 	mode = convert_table_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(tableoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -1454,6 +1461,11 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_table_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(tableoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
@@ -1498,6 +1510,11 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_table_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(tableoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
@@ -1587,7 +1604,7 @@ convert_table_priv_string(text *priv_type_text)
  *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
- *		privilege, false if not.
+ *		privilege, false if not, or NULL if object doesn't exist.
  */
 
 /*
@@ -1658,6 +1675,11 @@ has_database_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_roleid_checked(NameStr(*username));
 	mode = convert_database_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists(DATABASEOID,
+							  ObjectIdGetDatum(databaseoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -1680,6 +1702,11 @@ has_database_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_database_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(DATABASEOID,
+							  ObjectIdGetDatum(databaseoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
@@ -1724,6 +1751,11 @@ has_database_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_database_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(DATABASEOID,
+							  ObjectIdGetDatum(databaseoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
@@ -1798,7 +1830,7 @@ convert_database_priv_string(text *priv_type_text)
  *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
- *		privilege, false if not.
+ *		privilege, false if not, or NULL if object doesn't exist.
  */
 
 /*
@@ -1869,6 +1901,11 @@ has_function_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_roleid_checked(NameStr(*username));
 	mode = convert_function_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists(PROCOID,
+							  ObjectIdGetDatum(functionoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -1891,6 +1928,11 @@ has_function_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_function_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(PROCOID,
+							  ObjectIdGetDatum(functionoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
@@ -1935,6 +1977,11 @@ has_function_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_function_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(PROCOID,
+							  ObjectIdGetDatum(functionoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
@@ -1996,7 +2043,7 @@ convert_function_priv_string(text *priv_type_text)
  *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
- *		privilege, false if not.
+ *		privilege, false if not, or NULL if object doesn't exist.
  */
 
 /*
@@ -2067,6 +2114,11 @@ has_language_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_roleid_checked(NameStr(*username));
 	mode = convert_language_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists(LANGOID,
+							  ObjectIdGetDatum(languageoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -2089,6 +2141,11 @@ has_language_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_language_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(LANGOID,
+							  ObjectIdGetDatum(languageoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
@@ -2133,6 +2190,11 @@ has_language_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_language_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(LANGOID,
+							  ObjectIdGetDatum(languageoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
@@ -2194,7 +2256,7 @@ convert_language_priv_string(text *priv_type_text)
  *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
- *		privilege, false if not.
+ *		privilege, false if not, or NULL if object doesn't exist.
  */
 
 /*
@@ -2265,6 +2327,11 @@ has_schema_privilege_name_id(PG_FUNCTION_ARGS)
 	roleid = get_roleid_checked(NameStr(*username));
 	mode = convert_schema_priv_string(priv_type_text);
 
+	if (!SearchSysCacheExists(NAMESPACEOID,
+							  ObjectIdGetDatum(schemaoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
 	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
@@ -2287,6 +2354,11 @@ has_schema_privilege_id(PG_FUNCTION_ARGS)
 
 	roleid = GetUserId();
 	mode = convert_schema_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(NAMESPACEOID,
+							  ObjectIdGetDatum(schemaoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
@@ -2331,6 +2403,11 @@ has_schema_privilege_id_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	mode = convert_schema_priv_string(priv_type_text);
+
+	if (!SearchSysCacheExists(NAMESPACEOID,
+							  ObjectIdGetDatum(schemaoid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
 
 	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
