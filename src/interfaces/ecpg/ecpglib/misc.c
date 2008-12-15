@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.44 2008/12/11 07:34:09 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.45 2008/12/15 15:34:07 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -241,49 +241,46 @@ void
 ecpg_log(const char *format,...)
 {
 	va_list		ap;
-	struct sqlca_t *sqlca = ECPGget_sqlca();
+	struct sqlca_t	*sqlca = ECPGget_sqlca();
+	int		bufsize = strlen(format) + 100;
+	char		*f = (char *) malloc(bufsize),
+			*intl_format;
+
+	if (!simple_debug || f == NULL)
+		return;
 
 	/* internationalize the error message string */
-	format = ecpg_gettext(format);
+	intl_format = ecpg_gettext(format);
 
-	if (simple_debug)
-	{
-		int			bufsize = strlen(format) + 100;
-		char	   *f = (char *) malloc(bufsize);
-
-		if (f == NULL)
-			return;
-
-		/*
-		 * regression tests set this environment variable to get the same
-		 * output for every run.
-		 */
-		if (ecpg_internal_regression_mode)
-			snprintf(f, bufsize, "[NO_PID]: %s", format);
-		else
-			snprintf(f, bufsize, "[%d]: %s", (int) getpid(), format);
+	/*
+	 * regression tests set this environment variable to get the same
+	 * output for every run.
+	 */
+	if (ecpg_internal_regression_mode)
+		snprintf(f, bufsize, "[NO_PID]: %s", intl_format);
+	else
+		snprintf(f, bufsize, "[%d]: %s", (int) getpid(), intl_format);
 
 #ifdef ENABLE_THREAD_SAFETY
-		pthread_mutex_lock(&debug_mutex);
+	pthread_mutex_lock(&debug_mutex);
 #endif
 
-		va_start(ap, format);
-		vfprintf(debugstream, f, ap);
-		va_end(ap);
+	va_start(ap, format);
+	vfprintf(debugstream, f, ap);
+	va_end(ap);
 
-		/* dump out internal sqlca variables */
-		if (ecpg_internal_regression_mode)
-			fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
-					sqlca->sqlcode, sqlca->sqlstate);
+	/* dump out internal sqlca variables */
+	if (ecpg_internal_regression_mode)
+		fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
+				sqlca->sqlcode, sqlca->sqlstate);
 
-		fflush(debugstream);
+	fflush(debugstream);
 
 #ifdef ENABLE_THREAD_SAFETY
-		pthread_mutex_unlock(&debug_mutex);
+	pthread_mutex_unlock(&debug_mutex);
 #endif
 
-		free(f);
-	}
+	free(f);
 }
 
 void
