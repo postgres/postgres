@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.273 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.274 2008/12/15 10:28:21 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -313,6 +313,50 @@
            the server (equivalent to <literal>sslmode</>
            <literal>prefer</>).  This option is only available if
            <productname>PostgreSQL</> is compiled with SSL support.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>sslcert</literal></term>
+         <listitem>
+          <para>
+           This parameter specifies the file name of the client SSL
+           certificate.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>sslkey</literal></term>
+         <listitem>
+          <para>
+           This parameter specifies the location for the secret key
+           used for the client certificate. It can either specify a filename
+           that will be used instead of the default
+           <filename>~/.postgresql/postgresql.key</>, or can specify an external
+           engine (engines are <productname>OpenSSL</> loadable modules). The
+           external engine specification should consist of a colon-separated
+           engine name and an engine-specific key identifier.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>sslrootcert</literal></term>
+         <listitem>
+          <para>
+           This parameter specifies the file name of the root SSL certificate.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>sslcrl</literal></term>
+         <listitem>
+          <para>
+           This parameter specifies the file name of the SSL certificate
+           revocation list (CRL).
           </para>
          </listitem>
         </varlistentry>
@@ -5764,14 +5808,45 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
+       <primary><envar>PGSSLCERT</envar></primary>
+      </indexterm>
+      <envar>PGSSLCERT</envar> specifies the location for the client
+      certificate to use if the server requests one.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
        <primary><envar>PGSSLKEY</envar></primary>
       </indexterm>
-      <envar>PGSSLKEY</envar> specifies the hardware token that stores the
-      secret key for the client certificate. The value of this variable
-      should consist of a colon-separated engine name (engines are
-      <productname>OpenSSL</> loadable modules) and an engine-specific key
-      identifier.  If this is not set, the secret key must be kept in a
-      file.
+      <envar>PGSSLKEY</envar> specifies the location for the secret key
+      used for the client certificate. It can either specify a filename
+      that will be used instead of the default
+      <filename>~/.postgresql/postgresql.key</>, or can specify an external
+      engine (engines are <productname>OpenSSL</> loadable modules). The
+      external engine specification should consist of a colon-separated
+      engine name and an engine-specific key identifier.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLROOTCERT</envar></primary>
+      </indexterm>
+      <envar>PGSSLROOTCERT</envar> specifies the file name where the SSL
+      root certificate is stored.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLCRL</envar></primary>
+      </indexterm>
+      <envar>PGSSLCRL</envar> specifies the file name where the SSL certificate
+      revocation list is stored.
      </para>
     </listitem>
 
@@ -6096,6 +6171,9 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    if the file <filename>~/.postgresql/root.crl</filename> exists
    (<filename>%APPDATA%\postgresql\root.crl</filename> on Microsoft
    Windows).
+   The location of the root certificate store and the CRL can be overridden
+   by the connection parameters <literal>sslrootcert</> and <literal>sslcrl</>
+   or the environment variables <envar>PGSSLROOTCERT</> and <envar>PGSSLCRL</>.
   </para>
 
   <para>
@@ -6105,26 +6183,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    directory.  The certificate must be signed by one of the certificate
    authorities (<acronym>CA</acronym>) trusted by the server.  A matching
    private key file <filename>~/.postgresql/postgresql.key</> must also
-   be present, unless the secret key for the certificate is stored in a
-   hardware token, as specified by <envar>PGSSLKEY</envar>.  The private
+   be present. The private
    key file must not allow any access to world or group; achieve this by the
    command <command>chmod 0600 ~/.postgresql/postgresql.key</command>.
    On Microsoft Windows these files are named
    <filename>%APPDATA%\postgresql\postgresql.crt</filename> and
    <filename>%APPDATA%\postgresql\postgresql.key</filename>, and there
    is no special permissions check since the directory is presumed secure.
-  </para>
-
-  <para>
-   If the environment variable <envar>PGSSLKEY</envar> is set, its value
-   should consist of a colon-separated engine name and key identifier. In
-   this case, <application>libpq</application> will load the specified
-   engine, i.e. the <productname>OpenSSL</> module which supports special
-   hardware, and reference the key with the specified identifier.
-   Identifiers are engine-specific. Typically, cryptography hardware tokens
-   do not reveal secret keys to the application. Instead, applications
-   delegate all cryptography operations which require the secret key to
-   the hardware token.
+   The location of the certificate and key files can be overridden by the
+   connection parameters <literal>sslcert</> and <literal>sslkey</> or the
+   environment variables <envar>PGSSLCERT</> and <envar>PGSSLKEY</>.
   </para>
 
   <para>

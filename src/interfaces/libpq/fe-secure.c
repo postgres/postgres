@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.113 2008/12/04 14:07:42 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.114 2008/12/15 10:28:22 mha Exp $
  *
  * NOTES
  *
@@ -568,7 +568,10 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 
 	/* read the user certificate */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
+	if (conn->sslcert)
+		strncpy(fnbuf, conn->sslcert, sizeof(fnbuf));
+	else
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
 
 	/*
 	 * OpenSSL <= 0.9.8 lacks error stack handling, which means it's likely to
@@ -618,60 +621,78 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 	BIO_free(bio);
 
-#if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
-	if (getenv("PGSSLKEY"))
+	/*
+	 * Read the SSL key. If a key is specified, treat it as an engine:key combination
+	 * if there is colon present - we don't support files with colon in the name. The
+	 * exception is if the second character is a colon, in which case it can be a Windows
+	 * filename with drive specification.
+	 */
+	if (conn->sslkey && strlen(conn->sslkey) > 0)
 	{
-		/* read the user key from engine */
-		char	   *engine_env = getenv("PGSSLKEY");
-		char	   *engine_colon = strchr(engine_env, ':');
-		char	   *engine_str;
-		ENGINE	   *engine_ptr;
-
-		if (!engine_colon)
+#if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
+		if (strchr(conn->sslkey, ':')
+#ifdef WIN32
+			&& conn->sslkey[1] != ':'
+#endif
+		   )
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid value of PGSSLKEY environment variable\n"));
-			ERR_pop_to_mark();
-			return 0;
-		}
+			/* Colon, but not in second character, treat as engine:key */
+			ENGINE	   *engine_ptr;
+			char	   *engine_str = strdup(conn->sslkey);
+			char	   *engine_colon = strchr(engine_str, ':');
 
-		engine_str = malloc(engine_colon - engine_env + 1);
-		strlcpy(engine_str, engine_env, engine_colon - engine_env + 1);
-		engine_ptr = ENGINE_by_id(engine_str);
-		if (engine_ptr == NULL)
-		{
-			char	   *err = SSLerrmessage();
+			*engine_colon = '\0';	/* engine_str now has engine name */
+			engine_colon++;			/* engine_colon now has key name */
 
-			printfPQExpBuffer(&conn->errorMessage,
-					 libpq_gettext("could not load SSL engine \"%s\": %s\n"),
-							  engine_str, err);
-			SSLerrfree(err);
+			engine_ptr = ENGINE_by_id(engine_str);
+			if (engine_ptr == NULL)
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not load SSL engine \"%s\": %s\n"),
+								  engine_str, err);
+				SSLerrfree(err);
+				free(engine_str);
+				ERR_pop_to_mark();
+				return 0;
+			}
+
+			*pkey = ENGINE_load_private_key(engine_ptr, engine_colon,
+											NULL, NULL);
+			if (*pkey == NULL)
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
+								  engine_colon, engine_str, err);
+				SSLerrfree(err);
+				free(engine_str);
+				ERR_pop_to_mark();
+				return 0;
+			}
 			free(engine_str);
-			ERR_pop_to_mark();
-			return 0;
-		}
 
-		*pkey = ENGINE_load_private_key(engine_ptr, engine_colon + 1,
-										NULL, NULL);
-		if (*pkey == NULL)
+			fnbuf[0] = '\0'; /* indicate we're not going to load from a file */
+		}
+		else
+#endif /* support for SSL engines */
 		{
-			char	   *err = SSLerrmessage();
-
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
-							  engine_colon + 1, engine_str, err);
-			SSLerrfree(err);
-			free(engine_str);
-			ERR_pop_to_mark();
-			return 0;
+			/* PGSSLKEY is not an engine, treat it as a filename */
+			strncpy(fnbuf, conn->sslkey, sizeof(fnbuf));
 		}
-		free(engine_str);
 	}
 	else
-#endif   /* use PGSSLKEY */
+	{
+		/* No PGSSLKEY specified, load default file */
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
+	}
+
+	if (fnbuf[0] != '\0')
 	{
 		/* read the user key from file */
-		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
+
 		if (stat(fnbuf, &buf) != 0)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
@@ -948,7 +969,11 @@ initialize_SSL(PGconn *conn)
 	/* Set up to verify server cert, if root.crt is present */
 	if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 	{
-		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
+		if (conn->sslrootcert)
+			strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
+		else
+			snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
+
 		if (stat(fnbuf, &buf) == 0)
 		{
 			X509_STORE *cvstore;
@@ -966,8 +991,13 @@ initialize_SSL(PGconn *conn)
 
 			if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
 			{
+				if (conn->sslcrl)
+					strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
+				else
+					snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
+
 				/* setting the flags to check against the complete CRL chain */
-				if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) != 0)
+				if (X509_STORE_load_locations(cvstore, fnbuf, NULL) != 0)
 /* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 					X509_STORE_set_flags(cvstore,

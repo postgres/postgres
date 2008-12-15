@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.370 2008/11/26 00:26:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.371 2008/12/15 10:28:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,14 +177,28 @@ static const PQconninfoOption PQconninfoOptions[] = {
 #endif
 
 	/*
-	 * "sslmode" option is allowed even without client SSL support because the
-	 * client can still handle SSL modes "disable" and "allow".
+	 * ssl options are allowed even without client SSL support because the
+	 * client can still handle SSL modes "disable" and "allow". Other parameters
+	 * have no effect on non-SSL connections, so there is no reason to exclude them
+	 * since none of them are mandatory.
 	 */
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
 
 	{"sslverify", "PGSSLVERIFY", DefaultSSLVerify, NULL,
 	"SSL-Verify", "", 5},		/* sizeof("chain") == 5 */
+
+	{"sslcert", "PGSSLCERT", NULL, NULL,
+	"SSL-Client-Cert", "", 64},
+
+	{"sslkey", "PGSSLKEY", NULL, NULL,
+	"SSL-Client-Key", "", 64},
+
+	{"sslrootcert", "PGSSLROOTCERT", NULL, NULL,
+	"SSL-Root-Certificate", "", 64},
+
+	{"sslcrl", "PGSSLCRL", NULL, NULL,
+	"SSL-Revocation-List", "", 64},
 
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
@@ -419,6 +433,14 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	conn->sslmode = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslverify");
 	conn->sslverify = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslkey");
+	conn->sslkey = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslcert");
+	conn->sslcert = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslrootcert");
+	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslcrl");
+	conn->sslcrl = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
 	tmp = conninfo_getval(connOptions, "requiressl");
 	if (tmp && tmp[0] == '1')
@@ -2032,6 +2054,14 @@ freePGconn(PGconn *conn)
 		free(conn->sslmode);
 	if (conn->sslverify)
 		free(conn->sslverify);
+	if (conn->sslcert)
+		free(conn->sslcert);
+	if (conn->sslkey)
+		free(conn->sslkey);
+	if (conn->sslrootcert)
+		free(conn->sslrootcert);
+	if (conn->sslcrl)
+		free(conn->sslcrl);
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
