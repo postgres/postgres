@@ -426,10 +426,3 @@ create aggregate build_group(int8, integer) (
   SFUNC = add_group,
   STYPE = int8[]
 );
-
--- check that we can apply functions taking ANYARRAY to pg_stats
-select distinct array_eq(histogram_bounds,histogram_bounds) from pg_stats
-where histogram_bounds is not null;
-
--- such functions must protect themselves if varying element type isn't OK
-select max(histogram_bounds) from pg_stats;
