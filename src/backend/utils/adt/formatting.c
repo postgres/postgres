@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.151 2008/12/01 17:11:18 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.152 2008/12/15 14:55:50 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2008, PostgreSQL Global Development Group
@@ -1461,7 +1461,14 @@ str_tolower(const char *buff, size_t nbytes)
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
 		wchar_t		*workspace;
-		int			curr_char = 0;
+		size_t		curr_char;
+		size_t		result_size;
+
+		/* Overflow paranoia */
+		if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
@@ -1472,9 +1479,10 @@ str_tolower(const char *buff, size_t nbytes)
 			workspace[curr_char] = towlower(workspace[curr_char]);
 
 		/* Make result large enough; case change might change number of bytes */
-		result = palloc(curr_char * MB_CUR_MAX + 1);
+		result_size = curr_char * pg_database_encoding_max_length() + 1;
+		result = palloc(result_size);
 
-		wchar2char(result, workspace, curr_char * MB_CUR_MAX + 1);
+		wchar2char(result, workspace, result_size);
 		pfree(workspace);
 	}
 	else
@@ -1509,7 +1517,14 @@ str_toupper(const char *buff, size_t nbytes)
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
 		wchar_t		*workspace;
-		int			curr_char = 0;
+		size_t		curr_char;
+		size_t		result_size;
+
+		/* Overflow paranoia */
+		if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
@@ -1520,9 +1535,10 @@ str_toupper(const char *buff, size_t nbytes)
 			workspace[curr_char] = towupper(workspace[curr_char]);
 
 		/* Make result large enough; case change might change number of bytes */
-		result = palloc(curr_char * MB_CUR_MAX + 1);
+		result_size = curr_char * pg_database_encoding_max_length() + 1;
+		result = palloc(result_size);
 
-		wchar2char(result, workspace, curr_char * MB_CUR_MAX + 1);
+		wchar2char(result, workspace, result_size);
 		pfree(workspace);
 	}
 	else
@@ -1558,7 +1574,14 @@ str_initcap(const char *buff, size_t nbytes)
 	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
 	{
 		wchar_t		*workspace;
-		int			curr_char = 0;
+		size_t		curr_char;
+		size_t		result_size;
+
+		/* Overflow paranoia */
+		if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		/* Output workspace cannot have more codes than input bytes */
 		workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
@@ -1575,9 +1598,10 @@ str_initcap(const char *buff, size_t nbytes)
 		}
 
 		/* Make result large enough; case change might change number of bytes */
-		result = palloc(curr_char * MB_CUR_MAX + 1);
+		result_size = curr_char * pg_database_encoding_max_length() + 1;
+		result = palloc(result_size);
 
-		wchar2char(result, workspace, curr_char * MB_CUR_MAX + 1);
+		wchar2char(result, workspace, result_size);
 		pfree(workspace);
 	}
 	else
