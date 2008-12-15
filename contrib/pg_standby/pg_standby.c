@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.13 2008/07/08 15:11:58 heikki Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.14 2008/12/15 21:11:54 momjian Exp $ 
  *
  *
  * pg_standby.c
@@ -117,6 +117,7 @@ CustomizableInitialize(void)
 	{
 		case RESTORE_COMMAND_LINK:
 			SET_RESTORE_COMMAND("mklink", WALFilePath, xlogFilePath);
+			break;
 		case RESTORE_COMMAND_COPY:
 		default:
 			SET_RESTORE_COMMAND("copy", WALFilePath, xlogFilePath);
