@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.108 2008/12/06 23:22:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.109 2008/12/15 21:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,9 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
 
+		/* Also check it's not in use already */
+		CheckTableNotInUse(rel, "CREATE OR REPLACE VIEW");
+
 		/*
 		 * Due to the namespace visibility rules for temporary objects, we
 		 * should only end up replacing a temporary view with another
@@ -173,36 +176,40 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		Assert(relation->istemp == rel->rd_istemp);
 
 		/*
- 		 * If new attributes have been added, we must modify the pre-existing
- 		 * view.
- 		 */
-		if (list_length(attrList) > rel->rd_att->natts) {
-			List		*atcmds = NIL;
-			ListCell 	*c;
-			int			skip = rel->rd_att->natts;
-
-			foreach(c, attrList) {
-				AlterTableCmd *atcmd;
-
-				if (skip > 0) {
-					--skip;
-					continue;
-				}
-				atcmd = makeNode(AlterTableCmd);
-				atcmd->subtype = AT_AddColumnToView;
-				atcmd->def = lfirst(c);
-				atcmds = lappend(atcmds, atcmd);
-			}
-			AlterTableInternal(viewOid, atcmds, true);
-		}
-
-		/*
 		 * Create a tuple descriptor to compare against the existing view, and
 		 * verify that the old column list is an initial prefix of the new
 		 * column list.
 		 */
 		descriptor = BuildDescForRelation(attrList);
 		checkViewTupleDesc(descriptor, rel->rd_att);
+
+		/*
+ 		 * If new attributes have been added, we must add pg_attribute entries
+		 * for them.  It is convenient (although overkill) to use the ALTER
+		 * TABLE ADD COLUMN infrastructure for this.
+		 */
+		if (list_length(attrList) > rel->rd_att->natts)
+		{
+			List		*atcmds = NIL;
+			ListCell 	*c;
+			int			skip = rel->rd_att->natts;
+
+			foreach(c, attrList)
+			{
+				AlterTableCmd *atcmd;
+
+				if (skip > 0)
+				{
+					skip--;
+					continue;
+				}
+				atcmd = makeNode(AlterTableCmd);
+				atcmd->subtype = AT_AddColumnToView;
+				atcmd->def = (Node *) lfirst(c);
+				atcmds = lappend(atcmds, atcmd);
+			}
+			AlterTableInternal(viewOid, atcmds, true);
+		}
 
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
@@ -238,6 +245,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
  * Verify that tupledesc associated with proposed new view definition
  * matches tupledesc of old view.  This is basically a cut-down version
  * of equalTupleDescs(), with code added to generate specific complaints.
+ * Also, we allow the new tupledesc to have more columns than the old.
  */
 static void
 checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)

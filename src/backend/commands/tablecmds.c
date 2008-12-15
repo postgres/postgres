@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.273 2008/12/13 19:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.274 2008/12/15 21:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3459,9 +3459,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				attrdesc;
 	HeapTuple	reltup;
 	FormData_pg_attribute attribute;
-	int			i;
-	int			minattnum,
-				maxatts;
+	int			newattnum;
 	char		relkind;
 	HeapTuple	typeTuple;
 	Oid			typeOid;
@@ -3520,6 +3518,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
+	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
 
 	/*
 	 * this test is deliberately not attisdropped-aware, since if one tries to
@@ -3534,15 +3533,12 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				 errmsg("column \"%s\" of relation \"%s\" already exists",
 						colDef->colname, RelationGetRelationName(rel))));
 
-	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
-	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
-	maxatts = minattnum + 1;
-	if (maxatts > MaxHeapAttributeNumber)
+	newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
+	if (newattnum > MaxHeapAttributeNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_COLUMNS),
 				 errmsg("tables can have at most %d columns",
 						MaxHeapAttributeNumber)));
-	i = minattnum + 1;
 
 	typeTuple = typenameType(NULL, colDef->typename, &typmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
@@ -3551,6 +3547,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colDef->colname, typeOid);
 
+	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
 	namestrcpy(&(attribute.attname), colDef->colname);
 	attribute.atttypid = typeOid;
@@ -3558,7 +3555,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	attribute.attlen = tform->typlen;
 	attribute.attcacheoff = -1;
 	attribute.atttypmod = typmod;
-	attribute.attnum = i;
+	attribute.attnum = newattnum;
 	attribute.attbyval = tform->typbyval;
 	attribute.attndims = list_length(colDef->typename->arrayBounds);
 	attribute.attstorage = tform->typstorage;
@@ -3578,7 +3575,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Update number of attributes in pg_class tuple
 	 */
-	((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
+	((Form_pg_class) GETSTRUCT(reltup))->relnatts = newattnum;
 
 	simple_heap_update(pgclass, &reltup->t_self, reltup);
 
@@ -3635,9 +3632,13 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
 	 *
-	 * We skip this logic completely for views.
+	 * We skip this step completely for views.  For a view, we can only get
+	 * here from CREATE OR REPLACE VIEW, which historically doesn't set up
+	 * defaults, not even for domain-typed columns.  And in any case we mustn't
+	 * invoke Phase 3 on a view, since it has no storage.
 	 */
-	if (relkind != RELKIND_VIEW) {
+	if (relkind != RELKIND_VIEW)
+	{
 		defval = (Expr *) build_column_default(rel, attribute.attnum);
 
 		if (!defval && GetDomainConstraints(typeOid) != NIL)
@@ -3680,7 +3681,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Add needed dependency entries for the new column.
 	 */
-	add_column_datatype_dependency(myrelid, i, attribute.atttypid);
+	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
 }
 
 /*

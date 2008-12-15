@@ -53,7 +53,7 @@ ERROR:  cannot drop columns from view
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT 1, * FROM viewtest_tbl;
-ERROR:  column "b" of relation "viewtest" already exists
+ERROR:  cannot change name of view column "a"
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
