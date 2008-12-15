@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.45 2008/12/15 15:34:07 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.46 2008/12/15 19:07:48 tgl Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -242,31 +242,36 @@ ecpg_log(const char *format,...)
 {
 	va_list		ap;
 	struct sqlca_t	*sqlca = ECPGget_sqlca();
-	int		bufsize = strlen(format) + 100;
-	char		*f = (char *) malloc(bufsize),
-			*intl_format;
+	const char *intl_format;
+	int			bufsize;
+	char		*fmt;
 
-	if (!simple_debug || f == NULL)
+	if (!simple_debug)
 		return;
 
 	/* internationalize the error message string */
 	intl_format = ecpg_gettext(format);
 
 	/*
-	 * regression tests set this environment variable to get the same
-	 * output for every run.
+	 * Insert PID into the format, unless ecpg_internal_regression_mode is
+	 * set (regression tests want unchanging output).
 	 */
+	bufsize = strlen(intl_format) + 100;
+	fmt = (char *) malloc(bufsize);
+	if (fmt == NULL)
+		return;
+
 	if (ecpg_internal_regression_mode)
-		snprintf(f, bufsize, "[NO_PID]: %s", intl_format);
+		snprintf(fmt, bufsize, "[NO_PID]: %s", intl_format);
 	else
-		snprintf(f, bufsize, "[%d]: %s", (int) getpid(), intl_format);
+		snprintf(fmt, bufsize, "[%d]: %s", (int) getpid(), intl_format);
 
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&debug_mutex);
 #endif
 
 	va_start(ap, format);
-	vfprintf(debugstream, f, ap);
+	vfprintf(debugstream, fmt, ap);
 	va_end(ap);
 
 	/* dump out internal sqlca variables */
@@ -280,7 +285,7 @@ ecpg_log(const char *format,...)
 	pthread_mutex_unlock(&debug_mutex);
 #endif
 
-	free(f);
+	free(fmt);
 }
 
 void
