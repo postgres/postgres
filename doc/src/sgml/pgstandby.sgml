@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.5 2008/05/07 18:48:40 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.6 2008/12/15 22:08:35 momjian Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -295,7 +295,16 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
   </itemizedlist>
 
   <para>
-   Since the Windows example uses <literal>copy</> at both ends, either
+   The <literal>copy</> command on Windows sets the final file size
+   before the file is completely copied, which would ordinarly confuse
+   <application>pg_standby</application>.  Therefore
+   <application>pg_standby</application> waits <literal>sleeptime</>
+   seconds once it sees the proper file size.  GNUWin32's <literal>cp</>
+   sets the file size only after the file copy is complete.
+  </para>
+
+  <para>
+   Using the Since the Windows example uses <literal>copy</> at both ends, either
    or both servers might be accessing the archive directory across the
    network.
   </para>
