@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.15 2008/12/15 21:39:25 momjian Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.16 2008/12/15 22:13:02 momjian Exp $ 
  *
  *
  * pg_standby.c
@@ -179,12 +179,11 @@ CustomizableNextWALFileReady()
 #ifdef WIN32
 
 			/*
-			 * Windows reports that the file has the right number of bytes
-			 * even though the file is still being copied and cannot be opened
-			 * by pg_standby yet. So we wait for sleeptime secs before
-			 * attempting to restore. If that is not enough, we will rely on
-			 * the retry/holdoff mechanism.  GNUWin32's cp does not have
-			 * this problem.
+			 * Windows 'cp' sets the final file size before the copy is
+			 * complete, and not yet ready to be opened by pg_standby.
+			 * So we wait for sleeptime secs before attempting to restore.
+			 * If that is not enough, we will rely on the retry/holdoff
+			 * mechanism.  GNUWin32's cp does not have this problem.
 			 */
 			pg_usleep(sleeptime * 1000000L);
 #endif
