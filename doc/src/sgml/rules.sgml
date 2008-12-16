@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.51 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.52 2008/12/16 03:12:08 momjian Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -1869,13 +1869,9 @@ GRANT SELECT ON phone_number TO secretary;
 </para>
 
 <para>
-    On the other hand, a trigger that is fired on
-    <command>INSERT</command> on a view can do the same as a rule: put
-    the data somewhere else and suppress the insert in the view. But
-    it cannot do the same thing on <command>UPDATE</command> or
-    <command>DELETE</command>, because there is no real data in the
-    view relation that could be scanned, and thus the trigger would
-    never get called. Only a rule will help.
+    On the other hand, a trigger cannot be created on views because
+    there is no real data in a view relation;  however INSERT, UPDATE,
+    and DELETE rules can be created on views.
 </para>
 
 <para>
