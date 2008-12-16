@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.422 2008/11/20 11:48:26 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.423 2008/12/16 19:30:43 alvherre Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1124,6 +1124,16 @@ set semsys:seminfo_semmsl=32
      </tbody>
     </tgroup>
    </table>
+
+   <note>
+    <para>
+     The multipliers for <varname>shared_buffers</> and
+     <varname>wal_buffers</> should be the number of buffers, not the
+     amount in bytes.  To find out the number of shared or wal buffers, divide
+     the amount in bytes by <xref linkend="guc-block-size"> and
+     <xref linkend="guc-wal-block-size">, respectively.
+    </para>
+   </note>
   </sect2>
 
 
