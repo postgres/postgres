@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.109 2008/12/15 21:35:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.110 2008/12/16 00:56:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
@@ -263,7 +264,7 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 		Form_pg_attribute newattr = newdesc->attrs[i];
 		Form_pg_attribute oldattr = olddesc->attrs[i];
 
-		/* XXX not right, but we don't support DROP COL on view anyway */
+		/* XXX msg not right, but we don't support DROP COL on view anyway */
 		if (newattr->attisdropped != oldattr->attisdropped)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -272,15 +273,20 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 		if (strcmp(NameStr(newattr->attname), NameStr(oldattr->attname)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot change name of view column \"%s\"",
-							NameStr(oldattr->attname))));
+					 errmsg("cannot change name of view column \"%s\" to \"%s\"",
+							NameStr(oldattr->attname),
+							NameStr(newattr->attname))));
 		/* XXX would it be safe to allow atttypmod to change?  Not sure */
 		if (newattr->atttypid != oldattr->atttypid ||
 			newattr->atttypmod != oldattr->atttypmod)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot change data type of view column \"%s\"",
-							NameStr(oldattr->attname))));
+					 errmsg("cannot change data type of view column \"%s\" from %s to %s",
+							NameStr(oldattr->attname),
+							format_type_with_typemod(oldattr->atttypid,
+													 oldattr->atttypmod),
+							format_type_with_typemod(newattr->atttypid,
+													 newattr->atttypmod))));
 		/* We can ignore the remaining attributes of an attribute... */
 	}
 

@@ -53,11 +53,11 @@ ERROR:  cannot drop columns from view
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT 1, * FROM viewtest_tbl;
-ERROR:  cannot change name of view column "a"
+ERROR:  cannot change name of view column "a" to "?column?"
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
-ERROR:  cannot change data type of view column "b"
+ERROR:  cannot change data type of view column "b" from integer to numeric
 -- should work 
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b, 0 AS c FROM viewtest_tbl;
