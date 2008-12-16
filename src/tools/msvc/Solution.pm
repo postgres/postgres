@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.45 2008/11/14 17:11:40 meskes Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.46 2008/12/16 15:42:21 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -125,6 +125,7 @@ sub GenerateFiles
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER)};
             print O;
         }
+		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
         print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
         print O "/* defines added by config steps */\n";
         print O "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
