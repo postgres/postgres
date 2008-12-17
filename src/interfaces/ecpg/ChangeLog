@@ -2400,6 +2400,11 @@ Wed, 26 Nov 2008 14:09:08 +0100
 Mon, 15 Dec 2008 16:31:31 +0100
 
 	- Do not try to change a const variable in ecpg_log.
+
+Wed, 17 Dec 2008 17:49:11 +0100
+
+	- Applied patch by ITAGAKI Takahiro <itagaki.takahiro@oss.ntt.co.jp> to
+	  fix segfault on non-glibc systems.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
