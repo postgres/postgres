@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.323 2008/12/03 08:20:11 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.324 2008/12/17 01:39:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
+#include "pg_trace.h"
 
 
 /* File path names (all relative to $PGDATA) */
@@ -486,6 +487,8 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	if (info & XLR_INFO_MASK)
 		elog(PANIC, "invalid xlog info mask %02X", info);
 
+	TRACE_POSTGRESQL_XLOG_INSERT(rmid, info);
+
 	/*
 	 * In bootstrap mode, we don't actually log anything but XLOG resources;
 	 * return a phony record pointer.
@@ -914,6 +917,8 @@ begin:;
 		XLogwrtRqst FlushRqst;
 		XLogRecPtr	OldSegEnd;
 
+		TRACE_POSTGRESQL_XLOG_SWITCH();
+
 		LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
 
 		/*
@@ -1313,12 +1318,14 @@ AdvanceXLInsertBuffer(bool new_segment)
 				 * Have to write buffers while holding insert lock. This is
 				 * not good, so only write as much as we absolutely must.
 				 */
+				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_START();
 				WriteRqst.Write = OldPageRqstPtr;
 				WriteRqst.Flush.xlogid = 0;
 				WriteRqst.Flush.xrecoff = 0;
 				XLogWrite(WriteRqst, false, false);
 				LWLockRelease(WALWriteLock);
 				Insert->LogwrtResult = LogwrtResult;
+				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_DONE();
 			}
 		}
 	}
@@ -5904,6 +5911,8 @@ CreateCheckPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointStart(flags);
 
+	TRACE_POSTGRESQL_CHECKPOINT_START(flags);
+
 	/*
 	 * Before flushing data, we must wait for any transactions that are
 	 * currently in their commit critical sections.  If an xact inserted its
@@ -6068,6 +6077,11 @@ CreateCheckPoint(int flags)
 	/* All real work is done, but log before releasing lock. */
 	if (log_checkpoints)
 		LogCheckpointEnd();
+
+        TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
+                                NBuffers, CheckpointStats.ckpt_segs_added,
+                                CheckpointStats.ckpt_segs_removed,
+                                CheckpointStats.ckpt_segs_recycled);
 
 	LWLockRelease(CheckpointLock);
 }

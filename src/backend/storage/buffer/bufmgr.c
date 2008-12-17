@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.242 2008/11/19 10:34:52 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.243 2008/12/17 01:39:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,8 +203,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	if (isExtend)
 		blockNum = smgrnblocks(smgr, forkNum);
 
-	TRACE_POSTGRESQL_BUFFER_READ_START(blockNum, smgr->smgr_rnode.spcNode,
-		smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, isLocalBuf);
+	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, isLocalBuf);
 
 	if (isLocalBuf)
 	{
@@ -253,7 +252,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;
 
-			TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum,
+			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
 				smgr->smgr_rnode.spcNode,
 				smgr->smgr_rnode.dbNode,
 				smgr->smgr_rnode.relNode, isLocalBuf, found);
@@ -380,9 +379,9 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	if (VacuumCostActive)
 		VacuumCostBalance += VacuumCostPageMiss;
 
-	TRACE_POSTGRESQL_BUFFER_READ_DONE(blockNum, smgr->smgr_rnode.spcNode,
-			smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode,
-			isLocalBuf, found);
+	TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
+			smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode,
+			smgr->smgr_rnode.relNode, isLocalBuf, found);
 
 	return BufferDescriptorGetBuffer(bufHdr);
 }
@@ -526,6 +525,11 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 			 * happens to be trying to split the page the first one got from
 			 * StrategyGetBuffer.)
 			 */
+
+                        TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum,
+			  blockNum, smgr->smgr_rnode.spcNode,
+			  smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode);
+
 			if (LWLockConditionalAcquire(buf->content_lock, LW_SHARED))
 			{
 				/*
@@ -548,6 +552,11 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 				/* OK, do the I/O */
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
+
+                                TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(
+                                  forkNum, blockNum, smgr->smgr_rnode.spcNode,
+                                  smgr->smgr_rnode.dbNode,
+				  smgr->smgr_rnode.relNode);
 			}
 			else
 			{
@@ -1682,6 +1691,7 @@ CheckPointBuffers(int flags)
 	CheckpointStats.ckpt_write_t = GetCurrentTimestamp();
 	BufferSync(flags);
 	CheckpointStats.ckpt_sync_t = GetCurrentTimestamp();
+	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_SYNC_START();
 	smgrsync();
 	CheckpointStats.ckpt_sync_end_t = GetCurrentTimestamp();
 	TRACE_POSTGRESQL_BUFFER_CHECKPOINT_DONE();
