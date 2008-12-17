@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.113 2008/12/04 11:42:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.114 2008/12/17 09:15:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
@@ -135,7 +136,7 @@ static int	vac_cmp_itemptr(const void *left, const void *right);
  */
 void
 lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy)
+				BufferAccessStrategy bstrategy, bool *scanned_all)
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
@@ -163,7 +164,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
 	vacrelstats->num_index_scans = 0;
-	vacrelstats->scanned_all = true;
+	vacrelstats->scanned_all = true; /* will be cleared if we skip a page */
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
@@ -190,16 +191,23 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	FreeSpaceMapVacuum(onerel);
 
 	/*
-	 * Update statistics in pg_class. We can only advance relfrozenxid if we
-	 * didn't skip any pages.
+	 * Update statistics in pg_class.  But only if we didn't skip any pages;
+	 * the tuple count only includes tuples from the pages we've visited, and
+	 * we haven't frozen tuples in unvisited pages either.  The page count is
+	 * accurate in any case, but because we use the reltuples / relpages
+	 * ratio in the planner, it's better to not update relpages either if we
+	 * can't update reltuples.
 	 */
-	vac_update_relstats(onerel,
-						vacrelstats->rel_pages, vacrelstats->rel_tuples,
-						vacrelstats->hasindex,
-						vacrelstats->scanned_all ? FreezeLimit : InvalidOid);
+	if (vacrelstats->scanned_all)
+		vac_update_relstats(onerel,
+							vacrelstats->rel_pages, vacrelstats->rel_tuples,
+							vacrelstats->hasindex,
+							FreezeLimit);
 
 	/* report results to the stats collector, too */
-	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
+	pgstat_report_vacuum(RelationGetRelid(onerel),
+						 onerel->rd_rel->relisshared,
+						 vacrelstats->scanned_all,
 						 vacstmt->analyze, vacrelstats->rel_tuples);
 
 	/* and log the action if appropriate */
@@ -221,6 +229,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						vacrelstats->tuples_deleted, vacrelstats->rel_tuples,
 							pg_rusage_show(&ru0))));
 	}
+
+	if (scanned_all)
+		*scanned_all = vacrelstats->scanned_all;
 }
 
 
@@ -952,12 +963,14 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 */
 	RelationTruncate(onerel, new_rel_pages);
 
+	/* force relcache inval so all backends reset their rd_targblock */
+	CacheInvalidateRelcache(onerel);
+
 	/*
 	 * Note: once we have truncated, we *must* keep the exclusive lock until
-	 * commit.	The sinval message that will be sent at commit (as a result of
-	 * vac_update_relstats()) must be received by other backends, to cause
-	 * them to reset their rd_targblock values, before they can safely access
-	 * the table again.
+	 * commit.	The sinval message won't be sent until commit, and other
+	 * backends must see it and reset their rd_targblock values before they
+	 * can safely access the table again.
 	 */
 
 	/* update statistics */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.129 2008/12/13 19:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.130 2008/12/17 09:15:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,10 +101,18 @@ static bool std_typanalyze(VacAttrStats *stats);
 
 /*
  *	analyze_rel() -- analyze one relation
+ *
+ * If update_reltuples is true, we update reltuples and relpages columns
+ * in pg_class.  Caller should pass false if we're part of VACUUM ANALYZE,
+ * and the VACUUM didn't skip any pages.  We only have an approximate count,
+ * so we don't want to overwrite the accurate values already inserted by the
+ * VACUUM in that case.  VACUUM always scans all indexes, however, so the
+ * pg_class entries for indexes are never updated if we're part of VACUUM
+ * ANALYZE.
  */
 void
 analyze_rel(Oid relid, VacuumStmt *vacstmt,
-			BufferAccessStrategy bstrategy)
+			BufferAccessStrategy bstrategy, bool update_reltuples)
 {
 	Relation	onerel;
 	int			attr_cnt,
@@ -364,7 +372,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		 * autovacuum code doesn't go nuts trying to get stats about a
 		 * zero-column table.
 		 */
-		if (!vacstmt->vacuum)
+		if (update_reltuples)
 			pgstat_report_analyze(onerel, 0, 0);
 		goto cleanup;
 	}
@@ -455,18 +463,24 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * If we are running a standalone ANALYZE, update pages/tuples stats in
-	 * pg_class.  We know the accurate page count from the smgr, but only an
-	 * approximate number of tuples; therefore, if we are part of VACUUM
-	 * ANALYZE do *not* overwrite the accurate count already inserted by
-	 * VACUUM.	The same consideration applies to indexes.
+	 * Update pages/tuples stats in pg_class.
 	 */
-	if (!vacstmt->vacuum)
+	if (update_reltuples)
 	{
 		vac_update_relstats(onerel,
 							RelationGetNumberOfBlocks(onerel),
 							totalrows, hasindex, InvalidTransactionId);
+		/* report results to the stats collector, too */
+		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
+	}
 
+	/*
+	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
+	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by 
+	 * VACUUM.
+	 */
+	if (!vacstmt->vacuum)
+	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
 			AnlIndexData *thisdata = &indexdata[ind];
@@ -477,9 +491,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 								RelationGetNumberOfBlocks(Irel[ind]),
 								totalindexrows, false, InvalidTransactionId);
 		}
-
-		/* report results to the stats collector, too */
-		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
 	}
 
 	/* We skip to here if there were no analyzable columns */

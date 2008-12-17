@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.382 2008/12/03 13:05:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.383 2008/12/17 09:15:02 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,7 +216,7 @@ static List *get_rel_oids(Oid relid, const RangeVar *vacrel,
 			 const char *stmttype);
 static void vac_truncate_clog(TransactionId frozenXID);
 static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
-		   bool for_wraparound);
+		   bool for_wraparound, bool *scanned_all);
 static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
@@ -436,9 +436,11 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		foreach(cur, relations)
 		{
 			Oid			relid = lfirst_oid(cur);
+			bool		scanned_all = false;
 
 			if (vacstmt->vacuum)
-				vacuum_rel(relid, vacstmt, do_toast, for_wraparound);
+				vacuum_rel(relid, vacstmt, do_toast, for_wraparound,
+						   &scanned_all);
 
 			if (vacstmt->analyze)
 			{
@@ -460,7 +462,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 				else
 					old_context = MemoryContextSwitchTo(anl_context);
 
-				analyze_rel(relid, vacstmt, vac_strategy);
+				analyze_rel(relid, vacstmt, vac_strategy, !scanned_all);
 
 				if (use_own_xacts)
 				{
@@ -756,21 +758,9 @@ vac_update_relstats(Relation relation,
 		dirty = true;
 	}
 
-	/*
-	 * If anything changed, write out the tuple.  Even if nothing changed,
-	 * force relcache invalidation so all backends reset their rd_targblock
-	 * --- otherwise it might point to a page we truncated away.
-	 */
+	/* If anything changed, write out the tuple. */
 	if (dirty)
-	{
 		heap_inplace_update(rd, ctup);
-		/* the above sends a cache inval message */
-	}
-	else
-	{
-		/* no need to change tuple, but force relcache inval anyway */
-		CacheInvalidateRelcacheByTuple(ctup);
-	}
 
 	heap_close(rd, RowExclusiveLock);
 }
@@ -986,10 +976,14 @@ vac_truncate_clog(TransactionId frozenXID)
  *		many small transactions.  Otherwise, two-phase locking would require
  *		us to lock the entire database during one pass of the vacuum cleaner.
  *
+ *		We'll return true in *scanned_all if the vacuum scanned all heap
+ *		pages, and updated pg_class.
+ *
  *		At entry and exit, we are not inside a transaction.
  */
 static void
-vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
+vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
+		   bool *scanned_all)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
@@ -997,6 +991,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	Oid			toast_relid;
 	Oid			save_userid;
 	bool		save_secdefcxt;
+
+	if (scanned_all)
+		*scanned_all = false;
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -1162,7 +1159,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	if (vacstmt->full)
 		full_vacuum_rel(onerel, vacstmt);
 	else
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
+		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
 
 	/* Restore userid */
 	SetUserIdAndContext(save_userid, save_secdefcxt);
@@ -1184,7 +1181,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 * totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt, false, for_wraparound);
+		vacuum_rel(toast_relid, vacstmt, false, for_wraparound, NULL);
 
 	/*
 	 * Now release the session-level lock on the master table.
@@ -1296,7 +1293,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
-						 vacstmt->analyze, vacrelstats->rel_tuples);
+						 true, vacstmt->analyze, vacrelstats->rel_tuples);
 }
 
 
@@ -2866,6 +2863,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	if (blkno < nblocks)
 	{
 		RelationTruncate(onerel, blkno);
+
+		/* force relcache inval so all backends reset their rd_targblock */
+		CacheInvalidateRelcache(onerel);
+
 		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
 
@@ -3286,6 +3287,10 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 						RelationGetRelationName(onerel),
 						vacrelstats->rel_pages, relblocks)));
 		RelationTruncate(onerel, relblocks);
+
+		/* force relcache inval so all backends reset their rd_targblock */
+		CacheInvalidateRelcache(onerel);
+
 		vacrelstats->rel_pages = relblocks;		/* set new number of blocks */
 	}
 }

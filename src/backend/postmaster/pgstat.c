@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.185 2008/12/08 15:44:54 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.186 2008/12/17 09:15:03 heikki Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1178,7 +1178,7 @@ pgstat_report_autovac(Oid dboid)
  * ---------
  */
 void
-pgstat_report_vacuum(Oid tableoid, bool shared,
+pgstat_report_vacuum(Oid tableoid, bool shared, bool scanned_all,
 					 bool analyze, PgStat_Counter tuples)
 {
 	PgStat_MsgVacuum msg;
@@ -1189,6 +1189,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
 	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
+	msg.m_scanned_all = scanned_all;
 	msg.m_analyze = analyze;
 	msg.m_autovacuum = IsAutoVacuumWorkerProcess();		/* is this autovacuum? */
 	msg.m_vacuumtime = GetCurrentTimestamp();
@@ -3765,12 +3766,14 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 		tabentry->autovac_vacuum_timestamp = msg->m_vacuumtime;
 	else
 		tabentry->vacuum_timestamp = msg->m_vacuumtime;
-	tabentry->n_live_tuples = msg->m_tuples;
+	if (msg->m_scanned_all)
+		tabentry->n_live_tuples = msg->m_tuples;
 	/* Resetting dead_tuples to 0 is an approximation ... */
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
 	{
-		tabentry->last_anl_tuples = msg->m_tuples;
+		if (msg->m_scanned_all)
+			tabentry->last_anl_tuples = msg->m_tuples;
 		if (msg->m_autovacuum)
 			tabentry->autovac_analyze_timestamp = msg->m_vacuumtime;
 		else
@@ -3780,7 +3783,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	{
 		/* last_anl_tuples must never exceed n_live_tuples+n_dead_tuples */
 		tabentry->last_anl_tuples = Min(tabentry->last_anl_tuples,
-										msg->m_tuples);
+										tabentry->n_live_tuples);
 	}
 }
 
