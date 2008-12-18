@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.82 2008/12/04 17:51:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.83 2008/12/18 18:20:33 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -21,7 +21,7 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.82 2008/12/04 17:51
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
-    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable>] [, ...] ] )
+    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable> ] [, ...] ] )
     [ RETURNS <replaceable class="parameter">rettype</replaceable>
       | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
@@ -37,7 +37,7 @@ CREATE [ OR REPLACE ] FUNCTION
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1 id="sql-createfunction-description">
   <title>Description</title>
 
@@ -133,7 +133,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The data type(s) of the function's arguments (optionally 
+       The data type(s) of the function's arguments (optionally
        schema-qualified), if any. The argument types can be base, composite,
        or domain types, or can reference the type of a table column.
       </para>
@@ -160,10 +160,11 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        An expression to be used as default value if the parameter is
-       not specified.  The expression has to be convertable to the
-       argument type of the parameter.  All parameters after a
-       parameter with default value have to be parameters with default
-       values as well.
+       not specified.  The expression has to be coercible to the
+       argument type of the parameter.
+       Only input (including <literal>INOUT</>) parameters can have a default
+        value.  All input parameters following a
+       parameter with a default value must have default values as well.
       </para>
      </listitem>
     </varlistentry>
@@ -173,7 +174,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The return data type (optionally schema-qualified). The return type 
+       The return data type (optionally schema-qualified). The return type
        can be a base, composite, or domain type,
        or can reference the type of a table column.
        Depending on the implementation language it might also be allowed
@@ -497,6 +498,18 @@ CREATE FUNCTION foo(int, out text) ...
    </para>
 
    <para>
+    Functions that have different argument type lists will not be considered
+    to conflict at creation time, but if defaults are provided they might
+    conflict in use.  For example, consider
+<programlisting>
+CREATE FUNCTION foo(int) ...
+CREATE FUNCTION foo(int, int default 42) ...
+</programlisting>
+    A call <literal>foo(10)</> will fail due to the ambiguity about which
+    function should be called.
+   </para>
+
+   <para>
     When repeated <command>CREATE FUNCTION</command> calls refer to
     the same object file, the file is only loaded once per session.
     To unload and
@@ -664,7 +677,6 @@ COMMIT;
 
  </refsect1>
 
- 
  <refsect1 id="sql-createfunction-compat">
   <title>Compatibility</title>
 

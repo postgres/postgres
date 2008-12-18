@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.81 2008/12/04 17:51:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.82 2008/12/18 18:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,10 +147,10 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
+										 NIL,
 										 PointerGetDatum(NULL),
 										 1,
-										 0,
-										 NULL);
+										 0);
 		}
 
 		/*
@@ -181,10 +181,10 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
 										 PointerGetDatum(NULL),
+										 NIL,
 										 PointerGetDatum(NULL),
 										 1,
-										 0,
-										 NULL);
+										 0);
 			}
 		}
 		else
@@ -548,9 +548,9 @@ AlterLanguageOwner(const char *name, Oid newOwnerId)
 				 errmsg("language \"%s\" does not exist", name)));
 
 	AlterLanguageOwner_internal(tup, rel, newOwnerId);
-	
+
 	ReleaseSysCache(tup);
-	
+
 	heap_close(rel, RowExclusiveLock);
 
 }

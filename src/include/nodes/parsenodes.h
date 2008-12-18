@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.382 2008/12/06 23:22:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.383 2008/12/18 18:20:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1677,7 +1677,7 @@ typedef enum FunctionParameterMode
 	FUNC_PARAM_IN = 'i',		/* input only */
 	FUNC_PARAM_OUT = 'o',		/* output only */
 	FUNC_PARAM_INOUT = 'b',		/* both */
-	FUNC_PARAM_VARIADIC = 'v',	/* variadic */
+	FUNC_PARAM_VARIADIC = 'v',	/* variadic (always input) */
 	FUNC_PARAM_TABLE = 't'		/* table function output column */
 } FunctionParameterMode;
 
@@ -1686,8 +1686,8 @@ typedef struct FunctionParameter
 	NodeTag		type;
 	char	   *name;			/* parameter name, or NULL if not given */
 	TypeName   *argType;		/* TypeName for parameter type */
-	FunctionParameterMode mode; /* IN/OUT/INOUT */
-	Node		*defexpr;	/* Default expression, or NULL if not given */
+	FunctionParameterMode mode; /* IN/OUT/etc */
+	Node	   *defexpr;		/* raw default expr, or NULL if not given */
 } FunctionParameter;
 
 typedef struct AlterFunctionStmt

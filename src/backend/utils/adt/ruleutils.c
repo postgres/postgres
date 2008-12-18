@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.288 2008/12/04 17:51:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.289 2008/12/18 18:20:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,8 +141,7 @@ static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args,
-						 bool full);
+						 bool print_table_args, bool print_defaults);
 static void print_function_rettype(StringInfo buf, HeapTuple proctup);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
@@ -1610,7 +1609,7 @@ pg_get_function_arguments(PG_FUNCTION_ARGS)
  * pg_get_function_identity_arguments
  *		Get a formatted list of arguments for a function.
  *		This is everything that would go between the parentheses in
- *		ALTER FUNCTION, etc. skip names and defaults/
+ *		ALTER FUNCTION, etc.  In particular, don't print defaults.
  */
 Datum
 pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
@@ -1633,8 +1632,6 @@ pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
-
-
 
 /*
  * pg_get_function_result
@@ -1680,7 +1677,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 	{
 		/* It might be a table function; try to print the arguments */
 		appendStringInfoString(&rbuf, "TABLE(");
-		ntabargs = print_function_arguments(&rbuf, proctup, true, true);
+		ntabargs = print_function_arguments(&rbuf, proctup, true, false);
 		if (ntabargs > 0)
 			appendStringInfoString(&rbuf, ")");
 		else
@@ -1702,100 +1699,112 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
  * Common code for pg_get_function_arguments and pg_get_function_result:
  * append the desired subset of arguments to buf.  We print only TABLE
  * arguments when print_table_args is true, and all the others when it's false.
+ * We print argument defaults only if print_defaults is true.
  * Function return value is the number of arguments printed.
- * When full is false, then don't print argument names and argument defaults.
  */
 static int
 print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args,
-						 bool full)
+						 bool print_table_args, bool print_defaults)
 {
+	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			numargs;
 	Oid		   *argtypes;
 	char	  **argnames;
 	char	   *argmodes;
 	int			argsprinted;
+	int			inputargno;
+	int			nlackdefaults;
+	ListCell   *nextargdefault = NULL;
 	int			i;
-	Datum		proargdefaults;
-	List	   *argdefaults;
-	int			nargdefaults;
-	bool		isnull;
-	List	   *dcontext = NIL;
 
 	numargs = get_func_arg_info(proctup,
 								&argtypes, &argnames, &argmodes);
 
-	proargdefaults = SysCacheGetAttr(PROCOID, proctup,
-									 Anum_pg_proc_proargdefaults, &isnull);
-	if (!isnull)
+	nlackdefaults = numargs;
+	if (print_defaults && proc->pronargdefaults > 0)
 	{
-		char	*str;
+		Datum		proargdefaults;
+		bool		isnull;
 
-		str = TextDatumGetCString(proargdefaults);
-		argdefaults = (List *) stringToNode(str);
-		Assert(IsA(argdefaults, List));
-		nargdefaults = list_length(argdefaults);
-	    
-		/* we will need deparse context */
-		//dcontext = deparse_context_for("", InvalidOid);
-		dcontext = NULL;
-		pfree(str);
-	}
-	else
-	{
-		argdefaults = NIL;
-		nargdefaults = 0;
+		proargdefaults = SysCacheGetAttr(PROCOID, proctup,
+										 Anum_pg_proc_proargdefaults,
+										 &isnull);
+		if (!isnull)
+		{
+			char   *str;
+			List   *argdefaults;
+
+			str = TextDatumGetCString(proargdefaults);
+			argdefaults = (List *) stringToNode(str);
+			Assert(IsA(argdefaults, List));
+			pfree(str);
+			nextargdefault = list_head(argdefaults);
+			/* nlackdefaults counts only *input* arguments lacking defaults */
+			nlackdefaults = proc->pronargs - list_length(argdefaults);
+		}
 	}
 
 	argsprinted = 0;
+	inputargno = 0;
 	for (i = 0; i < numargs; i++)
 	{
 		Oid		argtype = argtypes[i];
 		char   *argname = argnames ? argnames[i] : NULL;
 		char	argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
 		const char *modename;
-
-		if (print_table_args != (argmode == PROARGMODE_TABLE))
-			continue;
+		bool	isinput;
 
 		switch (argmode)
 		{
 			case PROARGMODE_IN:
 				modename = "";
+				isinput = true;
 				break;
 			case PROARGMODE_INOUT:
 				modename = "INOUT ";
+				isinput = true;
 				break;
 			case PROARGMODE_OUT:
 				modename = "OUT ";
+				isinput = false;
 				break;
 			case PROARGMODE_VARIADIC:
 				modename = "VARIADIC ";
+				isinput = true;
 				break;
 			case PROARGMODE_TABLE:
 				modename = "";
+				isinput = false;
 				break;
 			default:
 				elog(ERROR, "invalid parameter mode '%c'", argmode);
 				modename = NULL; /* keep compiler quiet */
+				isinput = false;
 				break;
 		}
+		if (isinput)
+			inputargno++;		/* this is a 1-based counter */
+
+		if (print_table_args != (argmode == PROARGMODE_TABLE))
+			continue;
+
 		if (argsprinted)
 			appendStringInfoString(buf, ", ");
 		appendStringInfoString(buf, modename);
-		if (argname && argname[0] && full)
+		if (argname && argname[0])
 			appendStringInfo(buf, "%s ", argname);
 		appendStringInfoString(buf, format_type_be(argtype));
-
-		/* search given default expression, expect less numargs */
-		if (nargdefaults > 0 && i >= (numargs - nargdefaults) && full)
+		if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
 			Node	*expr;
 
-			expr = (Node *) list_nth(argdefaults, i - (numargs - nargdefaults));
-			appendStringInfo(buf, " DEFAULT %s",  deparse_expression(expr, dcontext, false, false));
-		}
+			Assert(nextargdefault != NULL);
+			expr = (Node *) lfirst(nextargdefault);
+			nextargdefault = lnext(nextargdefault);
 
+			appendStringInfo(buf, " DEFAULT %s",
+							 deparse_expression(expr, NIL, false, false));
+		}
 		argsprinted++;
 	}
 
@@ -6062,7 +6071,6 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 	proname = NameStr(procform->proname);
-	Assert(nargs >= procform->pronargs);
 
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
@@ -6070,7 +6078,7 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes,
 	 * specified argtypes.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
-							   NIL, nargs, argtypes, false,
+							   NIL, nargs, argtypes, false, true,
 							   &p_funcid, &p_rettype,
 							   &p_retset, &p_nvargs, &p_true_typeids, NULL);
 	if ((p_result == FUNCDETAIL_NORMAL || p_result == FUNCDETAIL_AGGREGATE) &&

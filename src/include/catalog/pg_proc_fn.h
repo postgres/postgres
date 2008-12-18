@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc_fn.h,v 1.3 2008/12/12 22:56:00 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc_fn.h,v 1.4 2008/12/18 18:20:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,10 @@ extern Oid ProcedureCreate(const char *procedureName,
 				Datum allParameterTypes,
 				Datum parameterModes,
 				Datum parameterNames,
+				List *parameterDefaults,
 				Datum proconfig,
 				float4 procost,
-				float4 prorows,
-				List *parameterDefaults);
+				float4 prorows);
 
 extern bool function_parse_error_transpose(const char *prosrc);
 

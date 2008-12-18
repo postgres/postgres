@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.270 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.271 2008/12/18 18:20:34 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -36,6 +36,7 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_func.h"
 #include "rewrite/rewriteManip.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -91,9 +92,11 @@ static List *simplify_and_arguments(List *args,
 					   bool *haveNull, bool *forceFalse);
 static Expr *simplify_boolean_equality(List *args);
 static Expr *simplify_function(Oid funcid,
-				  Oid result_type, int32 result_typmod, List *args,
+				  Oid result_type, int32 result_typmod, List **args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
+static List *add_function_defaults(List *args, Oid result_type,
+								   HeapTuple func_tuple);
 static Expr *evaluate_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List *args,
 				  HeapTuple func_tuple,
@@ -2025,7 +2028,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		simple = simplify_function(expr->funcid,
 								   expr->funcresulttype, exprTypmod(node),
-								   args,
+								   &args,
 								   true, context);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
@@ -2072,7 +2075,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		simple = simplify_function(expr->opfuncid,
 								   expr->opresulttype, -1,
-								   args,
+								   &args,
 								   true, context);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
@@ -2163,7 +2166,7 @@ eval_const_expressions_mutator(Node *node,
 			 */
 			simple = simplify_function(expr->opfuncid,
 									   expr->opresulttype, -1,
-									   args,
+									   &args,
 									   false, context);
 			if (simple)			/* successfully simplified it */
 			{
@@ -2329,6 +2332,7 @@ eval_const_expressions_mutator(Node *node,
 	{
 		CoerceViaIO *expr = (CoerceViaIO *) node;
 		Expr	   *arg;
+		List	   *args;
 		Oid			outfunc;
 		bool		outtypisvarlena;
 		Oid			infunc;
@@ -2341,6 +2345,7 @@ eval_const_expressions_mutator(Node *node,
 		 */
 		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
 													  context);
+		args = list_make1(arg);
 
 		/*
 		 * CoerceViaIO represents calling the source type's output function
@@ -2353,7 +2358,7 @@ eval_const_expressions_mutator(Node *node,
 
 		simple = simplify_function(outfunc,
 								   CSTRINGOID, -1,
-								   list_make1(arg),
+								   &args,
 								   true, context);
 		if (simple)				/* successfully simplified output fn */
 		{
@@ -2361,8 +2366,6 @@ eval_const_expressions_mutator(Node *node,
 			 * Input functions may want 1 to 3 arguments.  We always supply
 			 * all three, trusting that nothing downstream will complain.
 			 */
-			List	   *args;
-
 			args = list_make3(simple,
 							  makeConst(OIDOID, -1, sizeof(Oid),
 										ObjectIdGetDatum(intypioparam),
@@ -2373,7 +2376,7 @@ eval_const_expressions_mutator(Node *node,
 
 			simple = simplify_function(infunc,
 									   expr->resulttype, -1,
-									   args,
+									   &args,
 									   true, context);
 			if (simple)			/* successfully simplified input fn */
 				return (Node *) simple;
@@ -3126,10 +3129,16 @@ simplify_boolean_equality(List *args)
  *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function call.
+ *
+ * This function is also responsible for adding any default argument
+ * expressions onto the function argument list; which is a bit grotty,
+ * but it avoids an extra fetch of the function's pg_proc tuple.  For this
+ * reason, the args list is pass-by-reference, and it may get modified
+ * even if simplification fails.
  */
 static Expr *
 simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
-				  List *args,
+				  List **args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context)
 {
@@ -3150,16 +3159,91 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 
-	newexpr = evaluate_function(funcid, result_type, result_typmod, args,
+	/* While we have the tuple, check if we need to add defaults */
+	if (((Form_pg_proc) GETSTRUCT(func_tuple))->pronargs > list_length(*args))
+		*args = add_function_defaults(*args, result_type, func_tuple);
+
+	newexpr = evaluate_function(funcid, result_type, result_typmod, *args,
 								func_tuple, context);
 
 	if (!newexpr && allow_inline)
-		newexpr = inline_function(funcid, result_type, args,
+		newexpr = inline_function(funcid, result_type, *args,
 								  func_tuple, context);
 
 	ReleaseSysCache(func_tuple);
 
 	return newexpr;
+}
+
+/*
+ * add_function_defaults: add missing function arguments from its defaults
+ *
+ * It is possible for some of the defaulted arguments to be polymorphic;
+ * therefore we can't assume that the default expressions have the correct
+ * data types already.  We have to re-resolve polymorphics and do coercion
+ * just like the parser did.
+ */
+static List *
+add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
+{
+	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	Datum		proargdefaults;
+	bool		isnull;
+	char	   *str;
+	List	   *defaults;
+	int			ndelete;
+	int			nargs;
+	Oid			actual_arg_types[FUNC_MAX_ARGS];
+	Oid			declared_arg_types[FUNC_MAX_ARGS];
+	Oid			rettype;
+	ListCell   *lc;
+
+	/* The error cases here shouldn't happen, but check anyway */
+	proargdefaults = SysCacheGetAttr(PROCOID, func_tuple,
+									 Anum_pg_proc_proargdefaults,
+									 &isnull);
+	if (isnull)
+		elog(ERROR, "not enough default arguments");
+	str = TextDatumGetCString(proargdefaults);
+	defaults = (List *) stringToNode(str);
+	Assert(IsA(defaults, List));
+	pfree(str);
+	/* Delete any unused defaults from the list */
+	ndelete = list_length(args) + list_length(defaults) - funcform->pronargs;
+	if (ndelete < 0)
+		elog(ERROR, "not enough default arguments");
+	while (ndelete-- > 0)
+		defaults = list_delete_first(defaults);
+	/* And form the combined argument list */
+	args = list_concat(args, defaults);
+	Assert(list_length(args) == funcform->pronargs);
+
+	/*
+	 * The rest of this should be a no-op if there are no polymorphic
+	 * arguments, but we do it anyway to be sure.
+	 */
+	if (list_length(args) > FUNC_MAX_ARGS)
+		elog(ERROR, "too many function arguments");
+	nargs = 0;
+	foreach(lc, args)
+	{
+		actual_arg_types[nargs++] = exprType((Node *) lfirst(lc));
+	}
+	memcpy(declared_arg_types, funcform->proargtypes.values,
+		   funcform->pronargs * sizeof(Oid));
+	rettype = enforce_generic_type_consistency(actual_arg_types,
+											   declared_arg_types,
+											   nargs,
+											   funcform->prorettype,
+											   false);
+	/* let's just check we got the same answer as the parser did ... */
+	if (rettype != result_type)
+		elog(ERROR, "function's resolved result type changed during planning");
+
+	/* perform any necessary typecasting of arguments */
+	make_fn_arguments(NULL, args, actual_arg_types, declared_arg_types);
+
+	return args;
 }
 
 /*

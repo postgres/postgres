@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.530 2008/12/04 17:51:27 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.531 2008/12/18 18:20:34 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -47,14 +47,16 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP
 	bool		proretset;		/* returns a set? */
 	char		provolatile;	/* see PROVOLATILE_ categories below */
 	int2		pronargs;		/* number of arguments */
-	int2		pronargdefaults;/* number of arguments defaults */
+	int2		pronargdefaults;	/* number of arguments with defaults */
 	Oid			prorettype;		/* OID of result type */
+
 	/* VARIABLE LENGTH FIELDS: */
 	oidvector	proargtypes;	/* parameter types (excludes OUT params) */
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
-	text		proargdefaults;	/* list of argument defaults */
+	text		proargdefaults;	/* list of expression trees for argument
+								 * defaults (NULL if none) */
 	text		prosrc;			/* procedure source text */
 	bytea		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
@@ -2886,11 +2888,11 @@ DATA(insert OID = 1911 (  int2up		   PGNSP PGUID 12 1 0 0 f f t f i 1 0 21 "21" 
 DESCR("unary plus");
 DATA(insert OID = 1912 (  int4up		   PGNSP PGUID 12 1 0 0 f f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ int4up _null_ _null_ _null_ ));
 DESCR("unary plus");
-DATA(insert OID = 1913 (  float4up		   PGNSP PGUID 12 1 0 0 f f t f i 1 0 700 "700" _null_ _null_ _null_ _null_		float4up _null_ _null_ _null_ ));
+DATA(insert OID = 1913 (  float4up		   PGNSP PGUID 12 1 0 0 f f t f i 1 0 700 "700" _null_ _null_ _null_ _null_ float4up _null_ _null_ _null_ ));
 DESCR("unary plus");
-DATA(insert OID = 1914 (  float8up		   PGNSP PGUID 12 1 0 0 f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_		float8up _null_ _null_ _null_ ));
+DATA(insert OID = 1914 (  float8up		   PGNSP PGUID 12 1 0 0 f f t f i 1 0 701 "701" _null_ _null_ _null_ _null_ float8up _null_ _null_ _null_ ));
 DESCR("unary plus");
-DATA(insert OID = 1915 (  numeric_uplus    PGNSP PGUID 12 1 0 0 f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_	numeric_uplus _null_ _null_ _null_ ));
+DATA(insert OID = 1915 (  numeric_uplus    PGNSP PGUID 12 1 0 0 f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_uplus _null_ _null_ _null_ ));
 DESCR("unary plus");
 
 DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_table_privilege_name_name _null_ _null_ _null_ ));
@@ -3991,7 +3993,7 @@ DATA(insert OID = 2510 (  pg_prepared_statement PGNSP PGUID 12 1 1000 0 f f t t 
 DESCR("get the prepared statements for this session");
 DATA(insert OID = 2511 (  pg_cursor PGNSP PGUID 12 1 1000 0 f f t t s 0 0 2249 "" "{25,25,16,16,16,1184}" "{o,o,o,o,o,o}" "{name,statement,is_holdable,is_binary,is_scrollable,creation_time}" _null_ pg_cursor _null_ _null_ _null_ ));
 DESCR("get the open cursors for this session");
-DATA(insert OID = 2599 (  pg_timezone_abbrevs	PGNSP PGUID 12 1 1000 0 f f t t s 0 0 2249 "" "{25,1186,16}" "{o,o,o}" "{abbrev,utc_offset,is_dst}" _null_                              pg_timezone_abbrevs _null_ _null_ _null_ ));
+DATA(insert OID = 2599 (  pg_timezone_abbrevs	PGNSP PGUID 12 1 1000 0 f f t t s 0 0 2249 "" "{25,1186,16}" "{o,o,o}" "{abbrev,utc_offset,is_dst}" _null_ pg_timezone_abbrevs _null_ _null_ _null_ ));
 DESCR("get the available time zone abbreviations");
 DATA(insert OID = 2856 (  pg_timezone_names		PGNSP PGUID 12 1 1000 0 f f t t s 0 0 2249 "" "{25,25,1186,16}" "{o,o,o,o}" "{name,abbrev,utc_offset,is_dst}" _null_ pg_timezone_names _null_ _null_ _null_ ));
 DESCR("get the available time zone names");

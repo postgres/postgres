@@ -787,7 +787,7 @@ select pg_typeof(myleast(10, 1, 20, 33));  -- polymorphic input
  integer
 (1 row)
 
--- test functions with parameter defaults
+-- test functions with default parameters
 -- test basic functionality
 create function dfunc(a int = 1, int = 2) returns int as $$
   select $1 + $2;
@@ -810,17 +810,41 @@ select dfunc(10, 20);
     30
 (1 row)
 
+select dfunc(10, 20, 30);  -- fail
+ERROR:  function dfunc(integer, integer, integer) does not exist
+LINE 1: select dfunc(10, 20, 30);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 drop function dfunc();  -- fail
 ERROR:  function dfunc() does not exist
 drop function dfunc(int);  -- fail
 ERROR:  function dfunc(integer) does not exist
 drop function dfunc(int, int);  -- ok
--- fail, gap in arguments with defaults
+-- fail: defaults must be at end of argument list
 create function dfunc(a int = 1, b int) returns int as $$
   select $1 + $2;
 $$ language sql;
-ERROR:  parameter without default value specified after parameter with default value
--- check implicit coercion 
+ERROR:  input parameters after one with a default value must also have defaults
+-- however, this should work:
+create function dfunc(a int = 1, out sum int, b int = 2) as $$
+  select $1 + $2;
+$$ language sql;
+select dfunc();
+ dfunc 
+-------
+     3
+(1 row)
+
+-- verify it lists properly
+\df dfunc
+                                       List of functions
+ Schema | Name  | Result data type |                    Argument data types                    
+--------+-------+------------------+-----------------------------------------------------------
+ public | dfunc | integer          | a integer DEFAULT 1, OUT sum integer, b integer DEFAULT 2
+(1 row)
+
+drop function dfunc(int, int);
+-- check implicit coercion
 create function dfunc(a int DEFAULT 1.0, int DEFAULT '-1') returns int as $$
   select $1 + $2;
 $$ language sql;
@@ -833,8 +857,11 @@ select dfunc();
 create function dfunc(a text DEFAULT 'Hello', b text DEFAULT 'World') returns text as $$
   select $1 || ', ' || $2;
 $$ language sql;
-select dfunc();  -- fail; which dfunc should be called? int or text
-ERROR:  functions with parameter defaults dfunc(text, text) and dfunc(integer, integer) are ambiguous
+select dfunc();  -- fail: which dfunc should be called? int or text
+ERROR:  function dfunc() is not unique
+LINE 1: select dfunc();
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
 select dfunc('Hi');  -- ok
    dfunc   
 -----------
@@ -862,24 +889,28 @@ select dfunc(10, 20);  -- ok
 drop function dfunc(int, int);
 drop function dfunc(text, text);
 create function dfunc(int = 1, int = 2) returns int as $$
-  select 2; 
+  select 2;
 $$ language sql;
 create function dfunc(int = 1, int = 2, int = 3, int = 4) returns int as $$
   select 4;
 $$ language sql;
 -- Now, dfunc(nargs = 2) and dfunc(nargs = 4) are ambiguous when called
--- with 0 or 1 arguments.  For 2 arguments, a normall call of
--- dfunc(nargs = 2) takes place.
+-- with 0 to 2 arguments.
 select dfunc();  -- fail
-ERROR:  functions with parameter defaults dfunc(integer, integer, integer, integer) and dfunc(integer, integer) are ambiguous
+ERROR:  function dfunc() is not unique
+LINE 1: select dfunc();
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
 select dfunc(1);  -- fail
-ERROR:  functions with parameter defaults dfunc(integer, integer, integer, integer) and dfunc(integer, integer) are ambiguous
-select dfunc(1, 2);  -- ok
- dfunc 
--------
-     2
-(1 row)
-
+ERROR:  function dfunc(integer) is not unique
+LINE 1: select dfunc(1);
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+select dfunc(1, 2);  -- fail
+ERROR:  function dfunc(integer, integer) is not unique
+LINE 1: select dfunc(1, 2);
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
 select dfunc(1, 2, 3);  -- ok
  dfunc 
 -------
@@ -896,9 +927,9 @@ drop function dfunc(int, int);
 drop function dfunc(int, int, int, int);
 -- default values are not allowed for output parameters
 create function dfunc(out int = 20) returns int as $$
-  select 1; 
+  select 1;
 $$ language sql;
-ERROR:  only IN and INOUT parameters can have default values
+ERROR:  only input parameters can have default values
 -- polymorphic parameter test
 create function dfunc(anyelement = 'World'::text) returns text as $$
   select 'Hello, ' || $1::text;
@@ -928,49 +959,82 @@ select dfunc('City'::text);
 (1 row)
 
 drop function dfunc(anyelement);
--- check null values
-create function dfunc(int = null, int = null, int = null) returns int[] as $$
-  select array[$1, $2, $3];
-$$ language sql;
-select dfunc(1);
-     dfunc     
----------------
- {1,NULL,NULL}
+-- check defaults for variadics
+create function dfunc(a variadic int[]) returns int as
+$$ select array_upper($1, 1) $$ language sql;
+select dfunc();  -- fail
+ERROR:  function dfunc() does not exist
+LINE 1: select dfunc();
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select dfunc(10);
+ dfunc 
+-------
+     1
 (1 row)
 
-select dfunc(1, 2);
-   dfunc    
-------------
- {1,2,NULL}
+select dfunc(10,20);
+ dfunc 
+-------
+     2
 (1 row)
 
-select dfunc(1, 2, 3);
-  dfunc  
----------
- {1,2,3}
+create or replace function dfunc(a variadic int[] default array[]::int[]) returns int as
+$$ select array_upper($1, 1) $$ language sql;
+select dfunc();  -- now ok
+ dfunc 
+-------
+      
 (1 row)
 
-drop function dfunc(int, int, int);
--- The conflict detection algorithm doesn't consider the actual parameter
--- types.  It detects any possible conflict for n arguments for some
--- function.  This is unwanted behavior, but solving it needs a move of
--- coercion routines.
+select dfunc(10);
+ dfunc 
+-------
+     1
+(1 row)
+
+select dfunc(10,20);
+ dfunc 
+-------
+     2
+(1 row)
+
+-- can't remove the default once it exists
+create or replace function dfunc(a variadic int[]) returns int as
+$$ select array_upper($1, 1) $$ language sql;
+ERROR:  cannot remove parameter defaults from existing function
+HINT:  Use DROP FUNCTION first.
+\df dfunc
+                            List of functions
+ Schema | Name  | Result data type |         Argument data types          
+--------+-------+------------------+--------------------------------------
+ public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]
+(1 row)
+
+drop function dfunc(a variadic int[]);
+-- Ambiguity should be reported only if there's not a better match available
 create function dfunc(int = 1, int = 2, int = 3) returns int as $$
   select 3;
 $$ language sql;
 create function dfunc(int = 1, int = 2) returns int as $$
   select 2;
 $$ language sql;
--- for n = 1 dfunc(narg=2) and dfunc(narg=3) are ambiguous
-select dfunc(1);  -- fail
-ERROR:  functions with parameter defaults dfunc(integer, integer, integer) and dfunc(integer, integer) are ambiguous
 create function dfunc(text) returns text as $$
   select $1;
 $$ language sql;
--- Will fail, it detects ambiguity between dfunc(int, int, int) and
--- dfunc(int, int), but dfunc(text) isn't in conflict with either.
+-- dfunc(narg=2) and dfunc(narg=3) are ambiguous
+select dfunc(1);  -- fail
+ERROR:  function dfunc(integer) is not unique
+LINE 1: select dfunc(1);
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+-- but this works since the ambiguous functions aren't preferred anyway
 select dfunc('Hi');
-ERROR:  functions with parameter defaults dfunc(integer, integer, integer) and dfunc(integer, integer) are ambiguous
+ dfunc 
+-------
+ Hi
+(1 row)
+
 drop function dfunc(int, int, int);
 drop function dfunc(int, int);
 drop function dfunc(text);

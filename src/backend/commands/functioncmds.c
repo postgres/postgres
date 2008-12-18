@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.102 2008/12/04 17:51:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.103 2008/12/18 18:20:33 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -48,11 +48,11 @@
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
+#include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
-#include "parser/parse_utilcmd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -162,13 +162,13 @@ compute_return_type(TypeName *returnType, Oid languageOid,
  */
 static void
 examine_parameter_list(List *parameters, Oid languageOid,
+					   const char *queryString,
 					   oidvector **parameterTypes,
 					   ArrayType **allParameterTypes,
 					   ArrayType **parameterModes,
 					   ArrayType **parameterNames,
 					   List **parameterDefaults,
-					   Oid *requiredResultType,
-					   const char *queryString)
+					   Oid *requiredResultType)
 {
 	int			parameterCount = list_length(parameters);
 	Oid		   *inTypes;
@@ -179,9 +179,9 @@ examine_parameter_list(List *parameters, Oid languageOid,
 	int			outCount = 0;
 	int			varCount = 0;
 	bool		have_names = false;
+	bool		have_defaults = false;
 	ListCell   *x;
 	int			i;
-	bool		have_defaults = false;
 	ParseState *pstate;
 
 	*requiredResultType = InvalidOid;	/* default result */
@@ -192,6 +192,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 	paramNames = (Datum *) palloc0(parameterCount * sizeof(Datum));
 	*parameterDefaults = NIL;
 
+	/* may need a pstate for parse analysis of default exprs */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
@@ -201,6 +202,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 	{
 		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
 		TypeName   *t = fp->argType;
+		bool		isinput = false;
 		Oid			toid;
 		Type		typtup;
 
@@ -247,6 +249,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("VARIADIC parameter must be the last input parameter")));
 			inTypes[inCount++] = toid;
+			isinput = true;
 		}
 
 		/* handle output parameters */
@@ -288,24 +291,46 @@ examine_parameter_list(List *parameters, Oid languageOid,
 
 		if (fp->defexpr)
 		{
-			if (fp->mode != FUNC_PARAM_IN && fp->mode != FUNC_PARAM_INOUT)
+			Node   *def;
+
+			if (!isinput)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("only IN and INOUT parameters can have default values")));
+						 errmsg("only input parameters can have default values")));
 
-			*parameterDefaults = lappend(*parameterDefaults,
-										 coerce_to_specific_type(NULL,
-																 transformExpr(pstate, fp->defexpr),
-																 toid,
-																 "DEFAULT"));
+			def = transformExpr(pstate, fp->defexpr);
+			def = coerce_to_specific_type(pstate, def, toid, "DEFAULT");
+
+			/*
+			 * Make sure no variables are referred to.
+			 */
+			if (list_length(pstate->p_rtable) != 0 ||
+				contain_var_clause(def))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg("cannot use table references in parameter default value")));
+
+			/*
+			 * No subplans or aggregates, either...
+			 */
+			if (pstate->p_hasSubLinks)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot use subquery in parameter default value")));
+			if (pstate->p_hasAggs)
+				ereport(ERROR,
+						(errcode(ERRCODE_GROUPING_ERROR),
+						 errmsg("cannot use aggregate function in parameter default value")));
+
+			*parameterDefaults = lappend(*parameterDefaults, def);
 			have_defaults = true;
 		}
 		else
 		{
-			if (have_defaults)
+			if (isinput && have_defaults)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("parameter without default value specified after parameter with default value")));
+						 errmsg("input parameters after one with a default value must also have defaults")));
 		}
 
 		i++;
@@ -704,6 +729,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	ArrayType  *allParameterTypes;
 	ArrayType  *parameterModes;
 	ArrayType  *parameterNames;
+	List	   *parameterDefaults;
 	Oid			requiredResultType;
 	bool		isStrict,
 				security;
@@ -714,7 +740,6 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
 	List	   *as_clause;
-	List		*defaults = NULL;
 
 	/* Convert list of names to a name and namespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
@@ -783,14 +808,13 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	 * Convert remaining parameters of CREATE to form wanted by
 	 * ProcedureCreate.
 	 */
-	examine_parameter_list(stmt->parameters, languageOid,
+	examine_parameter_list(stmt->parameters, languageOid, queryString,
 						   &parameterTypes,
 						   &allParameterTypes,
 						   &parameterModes,
 						   &parameterNames,
-						   &defaults,
-						   &requiredResultType,
-						   queryString);
+						   &parameterDefaults,
+						   &requiredResultType);
 
 	if (stmt->returnType)
 	{
@@ -871,10 +895,10 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 					PointerGetDatum(allParameterTypes),
 					PointerGetDatum(parameterModes),
 					PointerGetDatum(parameterNames),
+					parameterDefaults,
 					PointerGetDatum(proconfig),
 					procost,
-					prorows,
-					defaults);
+					prorows);
 }
 
 

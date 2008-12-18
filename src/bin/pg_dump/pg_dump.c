@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.507 2008/12/11 07:34:08 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.508 2008/12/18 18:20:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,7 @@ main(int argc, char **argv)
 	 */
 	if (g_fout->remoteVersion >= 70300)
 		do_sql_command(g_conn, "SET statement_timeout = 0");
-         
+
 	/*
 	 * Start serializable transaction to dump consistent data.
 	 */
@@ -6621,7 +6621,7 @@ static char *format_function_arguments(FuncInfo *finfo, char *funcargs)
  * is never qualified.
  *
  * This is used only with pre-8.4 servers, so we aren't expecting to see
- * VARIADIC or TABLE arguments.
+ * VARIADIC or TABLE arguments, nor are there any defaults for arguments.
  *
  * Any or all of allargtypes, argmodes, argnames may be NULL.
  */
@@ -7011,14 +7011,15 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	/* funcargs and funciargs are supported from 8.4 */
-	if (funciargs)
+	if (funcargs)
 	{
-		funcsig = format_function_arguments(finfo, funciargs);
+		/* 8.4 or later; we rely on server-side code for most of the work */
 		funcfullsig = format_function_arguments(finfo, funcargs);
+		funcsig = format_function_arguments(finfo, funciargs);
 	}
 	else
 	{
+		/* pre-8.4, do it ourselves */
 		funcsig = format_function_arguments_old(finfo, nallargs, allargtypes,
 												argmodes, argnames);
 		funcfullsig = funcsig;

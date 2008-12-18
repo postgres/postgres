@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.114 2008/12/15 18:09:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.115 2008/12/18 18:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,7 +562,8 @@ TypeIsVisible(Oid typid)
  *		retrieve a list of the possible matches.
  *
  * If nargs is -1, we return all functions matching the given name,
- * regardless of argument count. (expand_variadic must be false in this case.)
+ * regardless of argument count.  (expand_variadic and expand_defaults must be
+ * false in this case.)
  *
  * If expand_variadic is true, then variadic functions having the same number
  * or fewer arguments will be retrieved, with the variadic argument and any
@@ -571,23 +572,43 @@ TypeIsVisible(Oid typid)
  * If expand_variadic is false, variadic arguments are not treated specially,
  * and the returned nvargs will always be zero.
  *
- * If expand_variadic is true, functions with argument default values
- * will also be retrieved.  If expand_variadic is false, default
- * values will not be taken into account and functions that do not
- * have exactly nargs arguments in total will not be considered.
+ * If expand_defaults is true, functions that could match after insertion of
+ * default argument values will also be retrieved.  In this case the returned
+ * structs could have nargs > passed-in nargs, and ndargs is set to the number
+ * of additional args (which can be retrieved from the function's
+ * proargdefaults entry).
+ *
+ * It is not possible for nvargs and ndargs to both be nonzero in the same
+ * list entry, since default insertion allows matches to functions with more
+ * than nargs arguments while the variadic transformation requires the same
+ * number or less.
  *
  * We search a single namespace if the function name is qualified, else
- * all namespaces in the search path.  The return list will never contain
- * multiple entries with identical argument lists --- in the multiple-
- * namespace case, we arrange for entries in earlier namespaces to mask
- * identical entries in later namespaces.  We also arrange for non-variadic
- * functions to mask variadic ones if the expanded argument list is the same.
+ * all namespaces in the search path.  In the multiple-namespace case,
+ * we arrange for entries in earlier namespaces to mask identical entries in
+ * later namespaces.
+ *
+ * When expanding variadics, we arrange for non-variadic functions to mask
+ * variadic ones if the expanded argument list is the same.  It is still
+ * possible for there to be conflicts between different variadic functions,
+ * however.
+ *
+ * It is guaranteed that the return list will never contain multiple entries
+ * with identical argument lists.  When expand_defaults is true, the entries
+ * could have more than nargs positions, but we still guarantee that they are
+ * distinct in the first nargs positions.  However, if either expand_variadic
+ * or expand_defaults is true, there might be multiple candidate functions
+ * that expand to identical argument lists.  Rather than throw error here,
+ * we report such situations by setting oid = 0 in the ambiguous entries.
+ * The caller might end up discarding such an entry anyway, but if it selects
+ * such an entry it should react as though the call were ambiguous.
  */
 FuncCandidateList
-FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
+FuncnameGetCandidates(List *names, int nargs,
+					  bool expand_variadic, bool expand_defaults)
 {
 	FuncCandidateList resultList = NULL;
-	bool		any_variadic = false;
+	bool		any_special = false;
 	char	   *schemaname;
 	char	   *funcname;
 	Oid			namespaceId;
@@ -595,7 +616,7 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 	int			i;
 
 	/* check for caller error */
-	Assert(nargs >= 0 || !expand_variadic);
+	Assert(nargs >= 0 || !(expand_variadic | expand_defaults));
 
 	/* deconstruct the name list */
 	DeconstructQualifiedName(names, &schemaname, &funcname);
@@ -625,40 +646,9 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		int			effective_nargs;
 		int			pathpos = 0;
 		bool		variadic;
+		bool		use_defaults;
 		Oid			va_elem_type;
-		List	   *defaults = NIL;
 		FuncCandidateList newResult;
-
-		/*
-		 * Check if function has some parameter defaults if some
-		 * parameters are missing.
-		 */
-		if (pronargs > nargs && expand_variadic)
-		{
-			bool		isnull;
-			Datum		proargdefaults;
-			char	   *str;
-
-			/* skip when not enough default expressions */
-			if (nargs + procform->pronargdefaults < pronargs)
-				continue;
-
-			proargdefaults = SysCacheGetAttr(PROCOID, proctup,
-											 Anum_pg_proc_proargdefaults, &isnull);
-			Assert(!isnull);
-			str = TextDatumGetCString(proargdefaults);
-			defaults = (List *) stringToNode(str);
-
-			Assert(IsA(defaults, List));
-
-			/*
-			 * If we don't have to use all default parameters, we skip
-			 * some cells from the left.
-			 */
-			defaults = list_copy_tail(defaults, procform->pronargdefaults - pronargs + nargs);
-
-			pfree(str);
-		}
 
 		/*
 		 * Check if function is variadic, and get variadic element type if so.
@@ -668,6 +658,7 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		{
 			va_elem_type = procform->provariadic;
 			variadic = OidIsValid(va_elem_type);
+			any_special |= variadic;
 		}
 		else
 		{
@@ -675,15 +666,23 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 			variadic = false;
 		}
 
-		Assert(!variadic || !defaults);
+		/*
+		 * Check if function can match by using parameter defaults.
+		 */
+		if (pronargs > nargs && expand_defaults)
+		{
+			/* Ignore if not enough default expressions */
+			if (nargs + procform->pronargdefaults < pronargs)
+				continue;
+			use_defaults = true;
+			any_special = true;
+		}
+		else
+			use_defaults = false;
 
 		/* Ignore if it doesn't match requested argument count */
-		if (nargs >= 0 &&
-			(variadic ? (pronargs > nargs) : (defaults ? (pronargs < nargs) : (pronargs != nargs))))
+		if (nargs >= 0 && pronargs != nargs && !variadic && !use_defaults)
 			continue;
-
-		Assert(!variadic || (pronargs <= nargs));
-		Assert(!defaults || (pronargs > nargs));
 
 		if (OidIsValid(namespaceId))
 		{
@@ -723,7 +722,6 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		newResult->pathpos = pathpos;
 		newResult->oid = HeapTupleGetOid(proctup);
 		newResult->nargs = effective_nargs;
-		newResult->argdefaults = defaults;
 		memcpy(newResult->args, procform->proargtypes.values,
 			   pronargs * sizeof(Oid));
 		if (variadic)
@@ -737,128 +735,140 @@ FuncnameGetCandidates(List *names, int nargs, bool expand_variadic)
 		}
 		else
 			newResult->nvargs = 0;
-
-		any_variadic = variadic || defaults;
+		newResult->ndargs = use_defaults ? pronargs - nargs : 0;
 
 		/*
 		 * Does it have the same arguments as something we already accepted?
-		 * If so, decide which one to keep.  We can skip this check for the
-		 * single-namespace case if no variadic match has been made, since
-		 * then the unique index on pg_proc guarantees all the matches have
-		 * different argument lists.
+		 * If so, decide what to do to avoid returning duplicate argument
+		 * lists.  We can skip this check for the single-namespace case if no
+		 * special (variadic or defaults) match has been made, since then the
+		 * unique index on pg_proc guarantees all the matches have different
+		 * argument lists.
 		 */
-		if (any_variadic || !OidIsValid(namespaceId))
+		if (resultList != NULL &&
+			(any_special || !OidIsValid(namespaceId)))
 		{
-			if (defaults)
-				effective_nargs = nargs;
-
 			/*
 			 * If we have an ordered list from SearchSysCacheList (the normal
 			 * case), then any conflicting proc must immediately adjoin this
 			 * one in the list, so we only need to look at the newest result
 			 * item.  If we have an unordered list, we have to scan the whole
 			 * result list.  Also, if either the current candidate or any
-			 * previous candidate is a variadic match, we can't assume that
+			 * previous candidate is a special match, we can't assume that
 			 * conflicts are adjacent.
+			 *
+			 * We ignore defaulted arguments in deciding what is a match.
 			 */
-			if (resultList)
-			{
-				FuncCandidateList prevResult;
+			FuncCandidateList prevResult;
 
-				if (catlist->ordered && !any_variadic)
+			if (catlist->ordered && !any_special)
+			{
+				/* ndargs must be 0 if !any_special */
+				if (effective_nargs == resultList->nargs &&
+					memcmp(newResult->args,
+						   resultList->args,
+						   effective_nargs * sizeof(Oid)) == 0)
+					prevResult = resultList;
+				else
+					prevResult = NULL;
+			}
+			else
+			{
+				int		cmp_nargs = newResult->nargs - newResult->ndargs;
+
+				for (prevResult = resultList;
+					 prevResult;
+					 prevResult = prevResult->next)
 				{
-					if (effective_nargs == resultList->nargs &&
+					if (cmp_nargs == prevResult->nargs - prevResult->ndargs &&
 						memcmp(newResult->args,
-							   resultList->args,
-							   effective_nargs * sizeof(Oid)) == 0)
-						prevResult = resultList;
-					else
-						prevResult = NULL;
+							   prevResult->args,
+							   cmp_nargs * sizeof(Oid)) == 0)
+						break;
+				}
+			}
+
+			if (prevResult)
+			{
+				/*
+				 * We have a match with a previous result.  Decide which one
+				 * to keep, or mark it ambiguous if we can't decide.  The
+				 * logic here is preference > 0 means prefer the old result,
+				 * preference < 0 means prefer the new, preference = 0 means
+				 * ambiguous.
+				 */
+				int		preference;
+
+				if (pathpos != prevResult->pathpos)
+				{
+					/*
+					 * Prefer the one that's earlier in the search path.
+					 */
+					preference = pathpos - prevResult->pathpos;
+				}
+				else if (variadic && prevResult->nvargs == 0)
+				{
+					/*
+					 * With variadic functions we could have, for example,
+					 * both foo(numeric) and foo(variadic numeric[]) in
+					 * the same namespace; if so we prefer the
+					 * non-variadic match on efficiency grounds.
+					 */
+					preference = 1;
+				}
+				else if (!variadic && prevResult->nvargs > 0)
+				{
+					preference = -1;
 				}
 				else
 				{
-					for (prevResult = resultList;
-						 prevResult;
-						 prevResult = prevResult->next)
-					{
-						if (!defaults)
-						{
-							if (effective_nargs == prevResult->nargs &&
-								memcmp(newResult->args,
-									    prevResult->args,
-									    effective_nargs * sizeof(Oid)) == 0)
-								break;
-						}
-						else
-						{
-							if (memcmp(newResult->args,
-									    prevResult->args,
-									    effective_nargs * sizeof(Oid)) == 0)
-							break;
-						}
-					}
-				}
-				if (prevResult)
-				{
-					/*
-					 * We have a match with a previous result.  Prefer the
-					 * one that's earlier in the search path.
+					/*----------
+					 * We can't decide.  This can happen with, for example,
+					 * both foo(numeric, variadic numeric[]) and
+					 * foo(variadic numeric[]) in the same namespace, or
+					 * both foo(int) and foo (int, int default something)
+					 * in the same namespace.
+					 *----------
 					 */
-					if (pathpos > prevResult->pathpos)
-					{
-						pfree(newResult);
-						continue;		/* keep previous result */
-					}
-					else if (pathpos == prevResult->pathpos)
-					{
-						/*
-						 * With variadic functions we could have, for example,
-						 * both foo(numeric) and foo(variadic numeric[]) in
-						 * the same namespace; if so we prefer the
-						 * non-variadic match on efficiency grounds.  It's
-						 * also possible to have conflicting variadic
-						 * functions, such as foo(numeric, variadic numeric[])
-						 * and foo(variadic numeric[]).  If you're silly
-						 * enough to do that, we throw an error.  (XXX It'd be
-						 * better to detect such conflicts when the functions
-						 * are created.)
-						 */
-						if (variadic)
-						{
-							if (prevResult->nvargs > 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-										 errmsg("variadic function %s conflicts with another",
-												func_signature_string(names, pronargs,
-																	  procform->proargtypes.values))));
-							/* else, previous result wasn't variadic */
-							pfree(newResult);
-							continue;	/* keep previous result */
-						}
+					preference = 0;
+				}
 
-						if (defaults)
-						{
-							if (prevResult->argdefaults != NIL)
-								ereport(ERROR,
-										(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-										 errmsg("functions with parameter defaults %s and %s are ambiguous",
-												func_signature_string(names, pronargs, procform->proargtypes.values),
-												func_signature_string(names, prevResult->nargs, prevResult->args))));
-							/* else, previous result didn't have defaults */
-							pfree(newResult);
-							continue;	/* keep previous result */
-						}
-
-						/* non-variadic can replace a previous variadic */
-						Assert(prevResult->nvargs > 0);
-					}
-					/* replace previous result */
-					prevResult->pathpos = pathpos;
-					prevResult->oid = newResult->oid;
-					prevResult->nvargs = newResult->nvargs;
-					prevResult->argdefaults = newResult->argdefaults;
+				if (preference > 0)
+				{
+					/* keep previous result */
 					pfree(newResult);
-					continue;	/* args are same, of course */
+					continue;
+				}
+				else if (preference < 0)
+				{
+					/* remove previous result from the list */
+					if (prevResult == resultList)
+						resultList = prevResult->next;
+					else
+					{
+						FuncCandidateList prevPrevResult;
+
+						for (prevPrevResult = resultList;
+							 prevPrevResult;
+							 prevPrevResult = prevPrevResult->next)
+						{
+							if (prevResult == prevPrevResult->next)
+							{
+								prevPrevResult->next = prevResult->next;
+								break;
+							}
+						}
+						Assert(prevPrevResult);		/* assert we found it */
+					}
+					pfree(prevResult);
+					/* fall through to add newResult to list */
+				}
+				else
+				{
+					/* mark old result as ambiguous, discard new */
+					prevResult->oid = InvalidOid;
+					pfree(newResult);
+					continue;
 				}
 			}
 		}
@@ -922,7 +932,7 @@ FunctionIsVisible(Oid funcid)
 		visible = false;
 
 		clist = FuncnameGetCandidates(list_make1(makeString(proname)),
-									  nargs, false);
+									  nargs, false, false);
 
 		for (; clist; clist = clist->next)
 		{
@@ -1191,6 +1201,7 @@ OpernameGetCandidates(List *names, char oprkind)
 		newResult->oid = HeapTupleGetOid(opertup);
 		newResult->nargs = 2;
 		newResult->nvargs = 0;
+		newResult->ndargs = 0;
 		newResult->args[0] = operform->oprleft;
 		newResult->args[1] = operform->oprright;
 		newResult->next = resultList;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.644 2008/12/17 09:15:02 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.645 2008/12/18 18:20:34 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3465,7 +3465,7 @@ opt_restart_seqs:
  *
  *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW |
  *				   CONVERSION | LANGUAGE | OPERATOR CLASS | LARGE OBJECT |
- *				   CAST | COLUMN | SCHEMA | TABLESPACE | ROLE | 
+ *				   CAST | COLUMN | SCHEMA | TABLESPACE | ROLE |
  *				   TEXT SEARCH PARSER | TEXT SEARCH DICTIONARY |
  *				   TEXT SEARCH TEMPLATE |
  *				   TEXT SEARCH CONFIGURATION ] <objname> |
@@ -4230,14 +4230,14 @@ func_args_list:
  */
 func_args_with_defaults:
 		'(' func_args_with_defaults_list ')'		{ $$ = $2; }
-			| '(' ')'								{ $$ = NIL; }
+		| '(' ')'									{ $$ = NIL; }
 		;
 
 func_args_with_defaults_list:
-		func_arg_with_default						{ $$ = list_make1( $1); }
-			| func_args_with_defaults_list ',' func_arg_with_default	{ $$ = lappend($1, $3); }
+		func_arg_with_default						{ $$ = list_make1($1); }
+		| func_args_with_defaults_list ',' func_arg_with_default
+													{ $$ = lappend($1, $3); }
 		;
-
 
 /*
  * The style with arg_class first is SQL99 standard, but Oracle puts
@@ -4345,7 +4345,7 @@ func_type:	Typename								{ $$ = $1; }
 
 func_arg_with_default:
 		func_arg
-			    { 
+			    {
 				    $$ = $1;
 			    }
 		| func_arg DEFAULT a_expr
@@ -4459,6 +4459,7 @@ table_func_column:	param_name func_type
 					n->name = $1;
 					n->argType = $2;
 					n->mode = FUNC_PARAM_TABLE;
+					n->defexpr = NULL;
 					$$ = n;
 				}
 		;
@@ -5755,7 +5756,7 @@ AlterTSConfigurationStmt:
 					n->replace = false;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING REPLACE any_name WITH any_name 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING REPLACE any_name WITH any_name
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5765,7 +5766,7 @@ AlterTSConfigurationStmt:
 					n->replace = true;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list REPLACE any_name WITH any_name 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list REPLACE any_name WITH any_name
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5775,7 +5776,7 @@ AlterTSConfigurationStmt:
 					n->replace = true;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING FOR name_list 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING FOR name_list
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5783,7 +5784,7 @@ AlterTSConfigurationStmt:
 					n->missing_ok = false;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING IF_P EXISTS FOR name_list 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING IF_P EXISTS FOR name_list
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;

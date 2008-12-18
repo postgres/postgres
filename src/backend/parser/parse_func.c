@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.208 2008/12/04 17:51:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.209 2008/12/18 18:20:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,13 +71,14 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	ListCell   *nextl;
 	Node	   *first_arg = NULL;
 	int			nargs;
+	int			nargsplusdefs;
 	Oid			actual_arg_types[FUNC_MAX_ARGS];
 	Oid		   *declared_arg_types;
+	List	   *argdefaults;
 	Node	   *retval;
 	bool		retset;
 	int			nvargs;
 	FuncDetailCode fdresult;
-	List	   *argdefaults;
 
 	/*
 	 * Most of the rest of the parser just assumes that functions do not have
@@ -157,13 +158,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the
 	 * function's return value.  It also returns the true argument types to
-	 * the function.  (In the case of a variadic function call, the reported
+	 * the function.  In the case of a variadic function call, the reported
 	 * "true" types aren't really what is in pg_proc: the variadic argument is
 	 * replaced by a suitable number of copies of its element type.  We'll fix
-	 * it up below.)
+	 * it up below.  We may also have to deal with default arguments.
 	 */
 	fdresult = func_get_detail(funcname, fargs, nargs, actual_arg_types,
-							   !func_variadic,
+							   !func_variadic, true,
 							   &funcid, &rettype, &retset, &nvargs,
 							   &declared_arg_types, &argdefaults);
 	if (fdresult == FUNCDETAIL_COERCION)
@@ -235,20 +236,28 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 	}
 
-	/* add stored expressions as called values for arguments with defaults */
-	if (argdefaults)
+	/*
+	 * If there are default arguments, we have to include their types in
+	 * actual_arg_types for the purpose of checking generic type consistency.
+	 * However, we do NOT put them into the generated parse node, because
+	 * their actual values might change before the query gets run.  The
+	 * planner has to insert the up-to-date values at plan time.
+	 */
+	nargsplusdefs = nargs;
+	foreach(l, argdefaults)
 	{
-		ListCell  *lc;
+		Node	*expr = (Node *) lfirst(l);
 
-		foreach(lc, argdefaults)
-		{
-			Node	*expr = (Node *) lfirst(lc);
-    
-			fargs = lappend(fargs, expr);
-			actual_arg_types[nargs++] = exprType(expr);
-		}
+		/* probably shouldn't happen ... */
+		if (nargsplusdefs >= FUNC_MAX_ARGS)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("cannot pass more than %d arguments to a function",
+							FUNC_MAX_ARGS),
+					 parser_errposition(pstate, location)));
+
+		actual_arg_types[nargsplusdefs++] = exprType(expr);
 	}
-
 
 	/*
 	 * enforce consistency with polymorphic argument and return types,
@@ -257,7 +266,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
-											   nargs,
+											   nargsplusdefs,
 											   rettype,
 											   false);
 
@@ -741,18 +750,20 @@ func_get_detail(List *funcname,
 				int nargs,
 				Oid *argtypes,
 				bool expand_variadic,
+				bool expand_defaults,
 				Oid *funcid,	/* return value */
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
 				int *nvargs,	/* return value */
 				Oid **true_typeids,		/* return value */
-				List **argdefaults)	/* return value */
+				List **argdefaults)		/* optional return value */
 {
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
 
 	/* Get list of possible candidates from namespace search */
-	raw_candidates = FuncnameGetCandidates(funcname, nargs, expand_variadic);
+	raw_candidates = FuncnameGetCandidates(funcname, nargs,
+										   expand_variadic, expand_defaults);
 
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
@@ -884,11 +895,17 @@ func_get_detail(List *funcname,
 		Form_pg_proc pform;
 		FuncDetailCode result;
 
+		/*
+		 * If expanding variadics or defaults, the "best candidate" might
+		 * represent multiple equivalently good functions; treat this case
+		 * as ambiguous.
+		 */
+		if (!OidIsValid(best_candidate->oid))
+			return FUNCDETAIL_MULTIPLE;
+
 		*funcid = best_candidate->oid;
 		*nvargs = best_candidate->nvargs;
 		*true_typeids = best_candidate->args;
-		if (argdefaults)
-			*argdefaults = best_candidate->argdefaults;
 
 		ftup = SearchSysCache(PROCOID,
 							  ObjectIdGetDatum(best_candidate->oid),
@@ -899,6 +916,38 @@ func_get_detail(List *funcname,
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
+		/* fetch default args if caller wants 'em */
+		if (argdefaults)
+		{
+			if (best_candidate->ndargs > 0)
+			{
+				Datum		proargdefaults;
+				bool		isnull;
+				char	   *str;
+				List	   *defaults;
+				int			ndelete;
+
+				/* shouldn't happen, FuncnameGetCandidates messed up */
+				if (best_candidate->ndargs > pform->pronargdefaults)
+					elog(ERROR, "not enough default arguments");
+
+				proargdefaults = SysCacheGetAttr(PROCOID, ftup,
+												 Anum_pg_proc_proargdefaults,
+												 &isnull);
+				Assert(!isnull);
+				str = TextDatumGetCString(proargdefaults);
+				defaults = (List *) stringToNode(str);
+				Assert(IsA(defaults, List));
+				pfree(str);
+				/* Delete any unused defaults from the returned list */
+				ndelete = list_length(defaults) - best_candidate->ndargs;
+				while (ndelete-- > 0)
+					defaults = list_delete_first(defaults);
+				*argdefaults = defaults;
+			}
+			else
+				*argdefaults = NIL;
+		}
 		result = pform->proisagg ? FUNCDETAIL_AGGREGATE : FUNCDETAIL_NORMAL;
 		ReleaseSysCache(ftup);
 		return result;
@@ -1243,7 +1292,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
 
-	clist = FuncnameGetCandidates(funcname, nargs, false);
+	clist = FuncnameGetCandidates(funcname, nargs, false, false);
 
 	while (clist)
 	{

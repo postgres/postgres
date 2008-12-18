@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.246 2008/10/22 20:17:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.247 2008/12/18 18:20:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,27 +513,18 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	/*
 	 * Simplify constant expressions.
 	 *
+	 * Note: one essential effect here is to insert the current actual values
+	 * of any default arguments for functions.  To ensure that happens, we
+	 * *must* process all expressions here.  Previous PG versions sometimes
+	 * skipped const-simplification if it didn't seem worth the trouble, but
+	 * we can't do that anymore.
+	 *
 	 * Note: this also flattens nested AND and OR expressions into N-argument
 	 * form.  All processing of a qual expression after this point must be
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
-	 *
-	 * Because this is a relatively expensive process, we skip it when the
-	 * query is trivial, such as "SELECT 2+2;" or "INSERT ... VALUES()". The
-	 * expression will only be evaluated once anyway, so no point in
-	 * pre-simplifying; we can't execute it any faster than the executor can,
-	 * and we will waste cycles copying the tree.  Notice however that we
-	 * still must do it for quals (to get AND/OR flatness); and if we are in a
-	 * subquery we should not assume it will be done only once.
-	 *
-	 * For VALUES lists we never do this at all, again on the grounds that we
-	 * should optimize for one-time evaluation.
 	 */
-	if (kind != EXPRKIND_VALUES &&
-		(root->parse->jointree->fromlist != NIL ||
-		 kind == EXPRKIND_QUAL ||
-		 root->query_level > 1))
-		expr = eval_const_expressions(root, expr);
+	expr = eval_const_expressions(root, expr);
 
 	/*
 	 * If it's a qual or havingQual, canonicalize it.

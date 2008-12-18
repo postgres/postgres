@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.461 2008/12/04 17:51:26 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.462 2008/12/18 18:20:33 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11808,7 +11808,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_get_function_identity_arguments</function>(<parameter>func_oid</parameter>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>get argument list to identify a function (without argument names, default values)</entry>
+       <entry>get argument list to identify a function (without default values)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_function_result</function>(<parameter>func_oid</parameter>)</literal></entry>
@@ -11929,12 +11929,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    of a function, in the form it would need to appear in within
    <command>CREATE FUNCTION</>.
    <function>pg_get_function_result</function> similarly returns the
-   appropriate <literal>RETURNS</> clause for the function. 
+   appropriate <literal>RETURNS</> clause for the function.
    <function>pg_get_function_identity_arguments</function> returns the
    argument list necessary to identify a function, in the form it
    would need to appear in within <command>ALTER FUNCTION</>, for
-   instance.  This form omits default values and argument names, for
-   example.
+   instance.  This form omits default values.
   </para>
 
   <para>

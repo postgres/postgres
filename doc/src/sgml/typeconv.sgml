@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.57 2008/07/30 19:35:12 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.58 2008/12/18 18:20:33 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -496,7 +496,20 @@ of its element type, as needed to match the call.  After such expansion the
 function might have effective argument types identical to some non-variadic
 function.  In that case the function appearing earlier in the search path is
 used, or if the two functions are in the same schema, the non-variadic one is
-selected.
+preferred.
+</para>
+</step>
+<step performance="optional">
+<para>
+Functions that have default values for parameters are considered to match any
+call that omits zero or more of the defaultable parameter positions.  If more
+than one such function matches a call, the one appearing earliest in the
+search path is used.  If there are two or more such functions in the same
+schema with identical parameter types in the non-defaulted positions (which is
+possible if they have different sets of defaultable parameters), the system
+will not be able to determine which to prefer, and so an <quote>ambiguous
+function call</> error will result if no better match to the call can be
+found.
 </para>
 </step>
 </substeps>

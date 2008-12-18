@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.135 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.136 2008/12/18 18:20:33 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -663,25 +663,27 @@ SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4]);
     </para>
    </sect2>
 
-   <sect2 id="xfunc-parameter-defaults">
-    <title><acronym>SQL</> Functions with Parameters Default Values</title>
+   <sect2 id="xfunc-sql-parameter-defaults">
+    <title><acronym>SQL</> Functions with Default Values for Arguments</title>
 
     <indexterm>
-     <primary>default values</primary>
+     <primary>function</primary>
+     <secondary>default values for arguments</secondary>
     </indexterm>
 
     <para>
-     Functions can be declared with parameters with default values or
-     expressions.  The default expressions are used as parameter value
-     if the parameter is not explicitly specified in a function call.
-     All parameters after a a parameter with default value have to be
-     parameters with default values as well.
+     Functions can be declared with default values for some or all input
+     arguments.  The default values are inserted whenever the function is
+     called with insufficiently many actual arguments.  Since arguments
+     can only be omitted from the end of the actual argument list, all
+     parameters after a parameter with a default value have to have
+     default values as well.
     </para>
 
     <para>
      For example:
 <screen>
-CREATE FUNCTION foo(a int DEFAULT 1, b int DEFAULT 2, c int DEFAULT 3) 
+CREATE FUNCTION foo(a int, b int DEFAULT 2, c int DEFAULT 3)
 RETURNS int
 LANGUAGE SQL
 AS $$
@@ -706,14 +708,11 @@ SELECT foo(10);
   15
 (1 row)
 
-SELECT foo();
- foo 
------
-   6
-(1 row)
+SELECT foo();  -- fails since there is no default for the first argument
+ERROR:  function foo() does not exist
 </screen>
-     Instead of the key word <literal>DEFAULT</literal>,
-     the <literal>=</literal> sign can also be used.
+     The <literal>=</literal> sign can also be used in place of the
+     key word <literal>DEFAULT</literal>,
     </para>
    </sect2>
 

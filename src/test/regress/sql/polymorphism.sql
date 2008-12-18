@@ -488,7 +488,8 @@ select pg_typeof(pg_typeof(0));   -- regtype
 select pg_typeof(array[1.2,55.5]); -- numeric[]
 select pg_typeof(myleast(10, 1, 20, 33));  -- polymorphic input
 
--- test functions with parameter defaults
+-- test functions with default parameters
+
 -- test basic functionality
 create function dfunc(a int = 1, int = 2) returns int as $$
   select $1 + $2;
@@ -497,26 +498,40 @@ $$ language sql;
 select dfunc();
 select dfunc(10);
 select dfunc(10, 20);
+select dfunc(10, 20, 30);  -- fail
 
 drop function dfunc();  -- fail
 drop function dfunc(int);  -- fail
 drop function dfunc(int, int);  -- ok
 
--- fail, gap in arguments with defaults
+-- fail: defaults must be at end of argument list
 create function dfunc(a int = 1, b int) returns int as $$
   select $1 + $2;
 $$ language sql;
 
--- check implicit coercion 
+-- however, this should work:
+create function dfunc(a int = 1, out sum int, b int = 2) as $$
+  select $1 + $2;
+$$ language sql;
+
+select dfunc();
+
+-- verify it lists properly
+\df dfunc
+
+drop function dfunc(int, int);
+
+-- check implicit coercion
 create function dfunc(a int DEFAULT 1.0, int DEFAULT '-1') returns int as $$
   select $1 + $2;
 $$ language sql;
 select dfunc();
+
 create function dfunc(a text DEFAULT 'Hello', b text DEFAULT 'World') returns text as $$
   select $1 || ', ' || $2;
 $$ language sql;
 
-select dfunc();  -- fail; which dfunc should be called? int or text
+select dfunc();  -- fail: which dfunc should be called? int or text
 select dfunc('Hi');  -- ok
 select dfunc('Hi', 'City');  -- ok
 select dfunc(0);  -- ok
@@ -526,7 +541,7 @@ drop function dfunc(int, int);
 drop function dfunc(text, text);
 
 create function dfunc(int = 1, int = 2) returns int as $$
-  select 2; 
+  select 2;
 $$ language sql;
 
 create function dfunc(int = 1, int = 2, int = 3, int = 4) returns int as $$
@@ -534,12 +549,11 @@ create function dfunc(int = 1, int = 2, int = 3, int = 4) returns int as $$
 $$ language sql;
 
 -- Now, dfunc(nargs = 2) and dfunc(nargs = 4) are ambiguous when called
--- with 0 or 1 arguments.  For 2 arguments, a normall call of
--- dfunc(nargs = 2) takes place.
+-- with 0 to 2 arguments.
 
 select dfunc();  -- fail
 select dfunc(1);  -- fail
-select dfunc(1, 2);  -- ok
+select dfunc(1, 2);  -- fail
 select dfunc(1, 2, 3);  -- ok
 select dfunc(1, 2, 3, 4);  -- ok
 
@@ -548,7 +562,7 @@ drop function dfunc(int, int, int, int);
 
 -- default values are not allowed for output parameters
 create function dfunc(out int = 20) returns int as $$
-  select 1; 
+  select 1;
 $$ language sql;
 
 -- polymorphic parameter test
@@ -563,21 +577,31 @@ select dfunc('City'::text);
 
 drop function dfunc(anyelement);
 
--- check null values
-create function dfunc(int = null, int = null, int = null) returns int[] as $$
-  select array[$1, $2, $3];
-$$ language sql;
+-- check defaults for variadics
 
-select dfunc(1);
-select dfunc(1, 2);
-select dfunc(1, 2, 3);
+create function dfunc(a variadic int[]) returns int as
+$$ select array_upper($1, 1) $$ language sql;
 
-drop function dfunc(int, int, int);
+select dfunc();  -- fail
+select dfunc(10);
+select dfunc(10,20);
 
--- The conflict detection algorithm doesn't consider the actual parameter
--- types.  It detects any possible conflict for n arguments for some
--- function.  This is unwanted behavior, but solving it needs a move of
--- coercion routines.
+create or replace function dfunc(a variadic int[] default array[]::int[]) returns int as
+$$ select array_upper($1, 1) $$ language sql;
+
+select dfunc();  -- now ok
+select dfunc(10);
+select dfunc(10,20);
+
+-- can't remove the default once it exists
+create or replace function dfunc(a variadic int[]) returns int as
+$$ select array_upper($1, 1) $$ language sql;
+
+\df dfunc
+
+drop function dfunc(a variadic int[]);
+
+-- Ambiguity should be reported only if there's not a better match available
 
 create function dfunc(int = 1, int = 2, int = 3) returns int as $$
   select 3;
@@ -587,15 +611,14 @@ create function dfunc(int = 1, int = 2) returns int as $$
   select 2;
 $$ language sql;
 
--- for n = 1 dfunc(narg=2) and dfunc(narg=3) are ambiguous
-select dfunc(1);  -- fail
-
 create function dfunc(text) returns text as $$
   select $1;
 $$ language sql;
 
--- Will fail, it detects ambiguity between dfunc(int, int, int) and
--- dfunc(int, int), but dfunc(text) isn't in conflict with either.
+-- dfunc(narg=2) and dfunc(narg=3) are ambiguous
+select dfunc(1);  -- fail
+
+-- but this works since the ambiguous functions aren't preferred anyway
 select dfunc('Hi');
 
 drop function dfunc(int, int, int);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.183 2008/11/21 19:31:58 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.184 2008/12/18 18:20:33 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3653,7 +3653,14 @@
       <entry><structfield>pronargs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Number of arguments</entry>
+      <entry>Number of input arguments</entry>
+     </row>
+
+     <row>
+      <entry><structfield>pronargdefaults</structfield></entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Number of arguments that have defaults</entry>
      </row>
 
      <row>
@@ -3717,6 +3724,20 @@
         If none of the arguments have a name, this field will be null.
         Note that subscripts correspond to positions of
         <structfield>proallargtypes</> not <structfield>proargtypes</>
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>proargdefaults</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Expression trees (in <function>nodeToString()</function> representation)
+       for default values.  This is a list with
+       <structfield>pronargdefaults</> elements, corresponding to the last
+       <replaceable>N</> <emphasis>input</> arguments (i.e., the last
+       <replaceable>N</> <structfield>proargtypes</> positions).
+       If none of the arguments have defaults, this field will be null
       </entry>
      </row>
 

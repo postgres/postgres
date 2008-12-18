@@ -51,6 +51,8 @@ SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
        p1.pronargs < 0 OR
+       p1.pronargdefaults < 0 OR
+       p1.pronargdefaults > p1.pronargs OR
        array_lower(p1.proargtypes, 1) != 0 OR
        array_upper(p1.proargtypes, 1) != p1.pronargs-1 OR
        0::oid = ANY (p1.proargtypes) OR
@@ -63,9 +65,9 @@ FROM pg_proc as p1
 WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
 
 -- pronargdefaults should be 0 iff proargdefaults is null
-SELECT p.oid, p.proname
-FROM pg_proc AS p
-WHERE pronargdefaults <> 0 OR proargdefaults IS NOT NULL;
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE (pronargdefaults <> 0) != (proargdefaults IS NOT NULL);
 
 -- probin should be non-empty for C functions, null everywhere else
 SELECT p1.oid, p1.proname
