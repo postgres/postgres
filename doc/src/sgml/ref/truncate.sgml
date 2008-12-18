@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.30 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.31 2008/12/18 10:45:00 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -100,6 +100,13 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ... ]
   <para>
    You must have the <literal>TRUNCATE</literal> privilege on a table
    to truncate it.
+  </para>
+
+  <para>
+   <command>TRUNCATE</> acquires an access exclusive lock on the
+   tables in operates on, which blocks all other concurrent operations
+   on the table.  If concurrent access to a table is required, then
+   the <command>DELETE</> command should be used instead.
   </para>
 
   <para>
