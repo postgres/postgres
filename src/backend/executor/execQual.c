@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.237 2008/11/15 20:52:35 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.238 2008/12/18 19:38:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1434,23 +1434,6 @@ restart:
 	}
 
 	/*
-	 * If function returns set, prepare a resultinfo node for communication
-	 */
-	if (fcache->func.fn_retset)
-	{
-		fcinfo->resultinfo = (Node *) &rsinfo;
-		rsinfo.type = T_ReturnSetInfo;
-		rsinfo.econtext = econtext;
-		rsinfo.expectedDesc = fcache->funcResultDesc;
-		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-		/* note we do not set SFRM_Materialize_Random or _Preferred */
-		rsinfo.returnMode = SFRM_ValuePerCall;
-		/* isDone is filled below */
-		rsinfo.setResult = NULL;
-		rsinfo.setDesc = NULL;
-	}
-
-	/*
 	 * Now call the function, passing the evaluated parameter values.
 	 */
 	if (fcache->func.fn_retset || hasSetArg)
@@ -1463,6 +1446,23 @@ restart:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("set-valued function called in context that cannot accept a set")));
+
+		/*
+		 * Prepare a resultinfo node for communication.  If the function
+		 * doesn't itself return set, we don't pass the resultinfo to the
+		 * function, but we need to fill it in anyway for internal use.
+		 */
+		if (fcache->func.fn_retset)
+			fcinfo->resultinfo = (Node *) &rsinfo;
+		rsinfo.type = T_ReturnSetInfo;
+		rsinfo.econtext = econtext;
+		rsinfo.expectedDesc = fcache->funcResultDesc;
+		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
+		/* note we do not set SFRM_Materialize_Random or _Preferred */
+		rsinfo.returnMode = SFRM_ValuePerCall;
+		/* isDone is filled below */
+		rsinfo.setResult = NULL;
+		rsinfo.setDesc = NULL;
 
 		/*
 		 * This loop handles the situation where we have both a set argument
