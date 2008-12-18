@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.56 2008/12/18 22:21:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.57 2008/12/18 22:34:21 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -138,7 +138,7 @@
    <tip>
     <para>
      Because <acronym>WAL</acronym> restores database file
-     contents after a crash, journaled filesystems are necessary for
+     contents after a crash, journaled filesystems are not necessary for
      reliable storage of the data files or WAL files.  In fact, journaling
      overhead can reduce performance, especially if journaling
      causes file system <emphasis>data</emphasis> to be flushed
