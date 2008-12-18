@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.423 2008/12/16 19:30:43 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.424 2008/12/18 17:03:09 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1080,41 +1080,45 @@ set semsys:seminfo_semmsl=32
 
 
    <table id="shared-memory-parameters">
-    <title>Configuration parameters affecting
-    <productname>PostgreSQL</productname>'s shared memory usage</>
+    <title><productname>PostgreSQL</productname> shared memory usage</>
 
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Name</>
-       <entry>Approximate multiplier (bytes per increment) as of 8.3</>
+       <entry>Usage</>
+       <entry>Approximate shared memory bytes required (as of 8.3)</>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry><xref linkend="guc-max-connections"></>
-       <entry>1800 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>Connections</>
+       <entry>(1800 + 270 * <xref
+       linkend="guc-max-locks-per-transaction">) * <xref
+       linkend="guc-max-connections"></entry>
       </row>
 
       <row>
-       <entry><xref linkend="guc-autovacuum-max-workers"></>
-       <entry>1800 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>Autovacuum workers</>
+       <entry>(1800 + 270 * <xref
+       linkend="guc-max-locks-per-transaction">) * <xref
+       linkend="guc-autovacuum-max-workers"></entry>
       </row>
 
       <row>
-       <entry><xref linkend="guc-max-prepared-transactions"></>
-       <entry>770 + 270 * <xref linkend="guc-max-locks-per-transaction"></entry>
+       <entry>Prepared transactions</>
+       <entry>(770 + 270 * <xref
+       linkend="guc-max-locks-per-transaction">) * <xref linkend="guc-max-prepared-transactions"></entry>
       </row>
 
       <row>
-       <entry><xref linkend="guc-shared-buffers"></>
-       <entry>8400 (assuming 8 kB <symbol>BLCKSZ</>)</entry>
+       <entry>Shared disk buffers</>
+       <entry>(<xref linkend="guc-block-size"> + 208) * <xref linkend="guc-shared-buffers"></entry>
       </row>
 
       <row>
-       <entry><xref linkend="guc-wal-buffers"></>
-       <entry>8200 (assuming 8 kB <symbol>XLOG_BLCKSZ</>)</entry>
+       <entry>WAL buffers</>
+       <entry>(<xref linkend="guc-wal-block-size"> + 8) * <xref linkend="guc-wal-buffers"></entry>
       </row>
 
       <row>
@@ -1125,17 +1129,7 @@ set semsys:seminfo_semmsl=32
     </tgroup>
    </table>
 
-   <note>
-    <para>
-     The multipliers for <varname>shared_buffers</> and
-     <varname>wal_buffers</> should be the number of buffers, not the
-     amount in bytes.  To find out the number of shared or wal buffers, divide
-     the amount in bytes by <xref linkend="guc-block-size"> and
-     <xref linkend="guc-wal-block-size">, respectively.
-    </para>
-   </note>
   </sect2>
-
 
   <sect2>
    <title>Resource Limits</title>
