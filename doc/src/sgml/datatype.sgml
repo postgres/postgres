@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.234 2008/11/11 02:42:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.235 2008/12/19 01:34:19 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2742,6 +2742,10 @@ SELECT * FROM test1 WHERE a;
     <secondary>enumerated (enum)</secondary>
    </indexterm>
 
+   <indexterm zone="datatype-enum">
+    <primary>enumerated types</primary>
+   </indexterm>
+
    <para>
     Enumerated (enum) types are data types that
     are comprised of a static, predefined set of values with a
@@ -2884,6 +2888,13 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
      Enum labels are case sensitive, so
      <type>'happy'</type> is not the same as <type>'HAPPY'</type>.
      Spaces in the labels are significant, too.
+    </para>
+
+    <para>
+     The translations from internal enum values to textual labels are
+     kept in the system catalog
+     <link linkend="catalog-pg-enum"><structname>pg_enum</structname></link>.
+     Querying this catalog directly can be useful.
     </para>
 
    </sect2>
