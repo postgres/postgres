@@ -64,6 +64,11 @@ SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
 
+-- proiswindow shouldn't be set together with proisagg or proretset
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE proiswindow AND (proisagg OR proretset);
+
 -- pronargdefaults should be 0 iff proargdefaults is null
 SELECT p1.oid, p1.proname
 FROM pg_proc AS p1

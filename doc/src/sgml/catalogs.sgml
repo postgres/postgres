@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.185 2008/12/19 16:25:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.186 2008/12/19 18:25:19 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3838,6 +3838,13 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Function is an aggregate function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>proiswindow</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Function is a window function</entry>
      </row>
 
      <row>
