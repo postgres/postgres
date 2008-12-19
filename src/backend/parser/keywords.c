@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.205 2008/10/27 09:37:47 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.206 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"least", LEAST, COL_NAME_KEYWORD},
 	{"left", LEFT, TYPE_FUNC_NAME_KEYWORD},
 	{"level", LEVEL, UNRESERVED_KEYWORD},
+	{"library", LIBRARY, UNRESERVED_KEYWORD},
 	{"like", LIKE, TYPE_FUNC_NAME_KEYWORD},
 	{"limit", LIMIT, RESERVED_KEYWORD},
 	{"listen", LISTEN, UNRESERVED_KEYWORD},
@@ -281,6 +282,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"only", ONLY, RESERVED_KEYWORD},
 	{"operator", OPERATOR, UNRESERVED_KEYWORD},
 	{"option", OPTION, UNRESERVED_KEYWORD},
+	{"options", OPTIONS, UNRESERVED_KEYWORD},
 	{"or", OR, RESERVED_KEYWORD},
 	{"order", ORDER, RESERVED_KEYWORD},
 	{"out", OUT_P, COL_NAME_KEYWORD},
@@ -339,6 +341,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"select", SELECT, RESERVED_KEYWORD},
 	{"sequence", SEQUENCE, UNRESERVED_KEYWORD},
 	{"serializable", SERIALIZABLE, UNRESERVED_KEYWORD},
+	{"server", SERVER, UNRESERVED_KEYWORD},
 	{"session", SESSION, UNRESERVED_KEYWORD},
 	{"session_user", SESSION_USER, RESERVED_KEYWORD},
 	{"set", SET, UNRESERVED_KEYWORD},
@@ -411,6 +414,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"with", WITH, RESERVED_KEYWORD},
 	{"without", WITHOUT, UNRESERVED_KEYWORD},
 	{"work", WORK, UNRESERVED_KEYWORD},
+	{"wrapper", WRAPPER, UNRESERVED_KEYWORD},
 	{"write", WRITE, UNRESERVED_KEYWORD},
 	{"xml", XML_P, UNRESERVED_KEYWORD},
 	{"xmlattributes", XMLATTRIBUTES, COL_NAME_KEYWORD},

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.60 2008/09/01 20:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.61 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,5 +359,18 @@ makeDefElem(char *name, Node *arg)
 
 	res->defname = name;
 	res->arg = arg;
+	return res;
+}
+
+/*
+ * makeOptionDefElem -
+ *	build an OptionDefElem node
+ */
+OptionDefElem *
+makeOptionDefElem(int op, DefElem *def)
+{
+	OptionDefElem *res = makeNode(OptionDefElem);
+	res->alter_op = op;
+	res->def = def;
 	return res;
 }

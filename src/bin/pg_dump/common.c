@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.104 2008/05/09 23:32:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.105 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,8 @@ getSchemaData(int *numTablesPtr)
 	TSTemplateInfo *tmplinfo;
 	TSDictInfo *dictinfo;
 	TSConfigInfo *cfginfo;
+	FdwInfo	   *fdwinfo;
+	ForeignServerInfo *srvinfo;
 	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
@@ -104,6 +106,8 @@ getSchemaData(int *numTablesPtr)
 	int			numTSTemplates;
 	int			numTSDicts;
 	int			numTSConfigs;
+	int			numForeignDataWrappers;
+	int			numForeignServers;
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
@@ -153,6 +157,14 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search configurations\n");
 	cfginfo = getTSConfigurations(&numTSConfigs);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined foreign-data wrappers\n");
+	fdwinfo = getForeignDataWrappers(&numForeignDataWrappers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined foreign servers\n");
+	srvinfo = getForeignServers(&numForeignServers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator families\n");

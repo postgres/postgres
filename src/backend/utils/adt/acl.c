@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.143 2008/12/15 18:09:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.144 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -576,6 +577,14 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 		case ACL_OBJECT_TABLESPACE:
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_TABLESPACE;
+			break;
+		case ACL_OBJECT_FDW:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_FDW;
+			break;
+		case ACL_OBJECT_FOREIGN_SERVER:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
@@ -1824,6 +1833,156 @@ convert_database_priv_string(text *priv_type_text)
 
 
 /*
+ * has_foreign_data_wrapper_privilege variants
+ *		These are all named "has_foreign_data_wrapper_privilege" at the SQL level.
+ *		They take various combinations of foreign-data wrapper name,
+ *		fdw OID, user name, user OID, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.  The variants that take an OID return
+ *		NULL if the OID doesn't exist.
+ */
+
+/*
+ * has_foreign_data_wrapper_privilege
+ *		Check user privileges on a foreign-data wrapper.
+ */
+static Datum
+has_foreign_data_wrapper_privilege(Oid roleid, Oid fdwid, text *priv_type_text)
+{
+	AclResult	aclresult;
+	AclMode		mode = ACL_NO_RIGHTS;
+	char	   *priv_type = text_to_cstring(priv_type_text);
+
+	if (pg_strcasecmp(priv_type, "USAGE") == 0)
+		mode = ACL_USAGE;
+	else if (pg_strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
+		mode = ACL_GRANT_OPTION_FOR(ACL_USAGE);
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
+
+	aclresult = pg_foreign_data_wrapper_aclcheck(fdwid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_foreign_data_wrapper_privilege_name_name
+ *		Check user privileges on a foreign-data wrapper given
+ *		name username, text fdwname, and text priv name.
+ */
+Datum
+has_foreign_data_wrapper_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	char	   *fdwname = text_to_cstring(PG_GETARG_TEXT_P(1));
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	return has_foreign_data_wrapper_privilege(get_roleid_checked(NameStr(*username)),
+											  GetForeignDataWrapperOidByName(fdwname, false),
+											  priv_type_text);
+}
+
+/*
+ * has_foreign_data_wrapper_privilege_name
+ *		Check user privileges on a foreign-data wrapper given
+ *		text fdwname and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_foreign_data_wrapper_privilege_name(PG_FUNCTION_ARGS)
+{
+	char	   *fdwname = text_to_cstring(PG_GETARG_TEXT_P(0));
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+
+	return has_foreign_data_wrapper_privilege(GetUserId(),
+											  GetForeignDataWrapperOidByName(fdwname, false),
+											  priv_type_text);
+}
+
+/*
+ * has_foreign_data_wrapper_privilege_name_id
+ *		Check user privileges on a foreign-data wrapper given
+ *		name usename, foreign-data wrapper oid, and text priv name.
+ */
+Datum
+has_foreign_data_wrapper_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			fdwid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	if (!SearchSysCacheExists(FOREIGNDATAWRAPPEROID,
+							  ObjectIdGetDatum(fdwid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
+	return has_foreign_data_wrapper_privilege(get_roleid_checked(NameStr(*username)),
+											  fdwid, priv_type_text);
+}
+
+/*
+ * has_foreign_data_wrapper_privilege_id
+ *		Check user privileges on a foreign-data wrapper given
+ *		foreign-data wrapper oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_foreign_data_wrapper_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			fdwid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+
+	if (!SearchSysCacheExists(FOREIGNDATAWRAPPEROID,
+							  ObjectIdGetDatum(fdwid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
+	return has_foreign_data_wrapper_privilege(GetUserId(), fdwid,
+											  priv_type_text);
+}
+
+/*
+ * has_foreign_data_wrapper_privilege_id_name
+ *		Check user privileges on a foreign-data wrapper given
+ *		roleid, text fdwname, and text priv name.
+ */
+Datum
+has_foreign_data_wrapper_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	char	   *fdwname = text_to_cstring(PG_GETARG_TEXT_P(1));
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	return has_foreign_data_wrapper_privilege(roleid,
+											  GetForeignDataWrapperOidByName(fdwname, false),
+											  priv_type_text);
+}
+
+/*
+ * has_foreign_data_wrapper_privilege_id_id
+ *		Check user privileges on a foreign-data wrapper given
+ *		roleid, fdw oid, and text priv name.
+ */
+Datum
+has_foreign_data_wrapper_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	Oid			fdwid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	if (!SearchSysCacheExists(FOREIGNDATAWRAPPEROID,
+							  ObjectIdGetDatum(fdwid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
+	return has_foreign_data_wrapper_privilege(roleid, fdwid, priv_type_text);
+}
+
+
+/*
  * has_function_privilege variants
  *		These are all named "has_function_privilege" at the SQL level.
  *		They take various combinations of function name, function OID,
@@ -2465,6 +2624,154 @@ convert_schema_priv_string(text *priv_type_text)
 			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
+
+/*
+ * has_server_privilege variants
+ *		These are all named "has_server_privilege" at the SQL level.
+ *		They take various combinations of foreign server name,
+ *		server OID, user name, user OID, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_server_privilege
+ *		Check user privileges on a foreign server.
+ */
+static Datum
+has_server_privilege(Oid roleid, Oid serverid, text *priv_type_text)
+{
+	AclResult	aclresult;
+	AclMode		mode = ACL_NO_RIGHTS;
+	char	   *priv_type = text_to_cstring(priv_type_text);
+
+	if (pg_strcasecmp(priv_type, "USAGE") == 0)
+		mode = ACL_USAGE;
+	else if (pg_strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
+		mode = ACL_GRANT_OPTION_FOR(ACL_USAGE);
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
+
+	aclresult = pg_foreign_server_aclcheck(serverid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_server_privilege_name_name
+ *		Check user privileges on a foreign server given
+ *		name username, text servername, and text priv name.
+ */
+Datum
+has_server_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	char	   *servername = text_to_cstring(PG_GETARG_TEXT_P(1));
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	return has_server_privilege(get_roleid_checked(NameStr(*username)),
+								GetForeignServerOidByName(servername, false),
+								priv_type_text);
+}
+
+/*
+ * has_server_privilege_name
+ *		Check user privileges on a foreign server given
+ *		text servername and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_server_privilege_name(PG_FUNCTION_ARGS)
+{
+	char	   *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+
+	return has_server_privilege(GetUserId(),
+								GetForeignServerOidByName(servername, false),
+								priv_type_text);
+}
+
+/*
+ * has_server_privilege_name_id
+ *		Check user privileges on a foreign server given
+ *		name usename, foreign server oid, and text priv name.
+ */
+Datum
+has_server_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			serverid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	if (!SearchSysCacheExists(FOREIGNSERVEROID,
+							  ObjectIdGetDatum(serverid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
+	return has_server_privilege(get_roleid_checked(NameStr(*username)), serverid,
+								priv_type_text);
+}
+
+/*
+ * has_server_privilege_id
+ *		Check user privileges on a foreign server given
+ *		server oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_server_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			serverid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+
+	if (!SearchSysCacheExists(FOREIGNSERVEROID,
+							  ObjectIdGetDatum(serverid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
+	return has_server_privilege(GetUserId(), serverid, priv_type_text);
+}
+
+/*
+ * has_server_privilege_id_name
+ *		Check user privileges on a foreign server given
+ *		roleid, text servername, and text priv name.
+ */
+Datum
+has_server_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	char	   *servername = text_to_cstring(PG_GETARG_TEXT_P(1));
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	return has_server_privilege(roleid,
+								GetForeignServerOidByName(servername, false),
+								priv_type_text);
+}
+
+/*
+ * has_server_privilege_id_id
+ *		Check user privileges on a foreign server given
+ *		roleid, server oid, and text priv name.
+ */
+Datum
+has_server_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	Oid			serverid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+
+	if (!SearchSysCacheExists(FOREIGNSERVEROID,
+							  ObjectIdGetDatum(serverid),
+							  0, 0, 0))
+		PG_RETURN_NULL();
+
+	return has_server_privilege(roleid, serverid, priv_type_text);
+}
+
 
 /*
  * has_tablespace_privilege variants

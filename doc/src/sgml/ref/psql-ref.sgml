@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.213 2008/12/01 09:20:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.214 2008/12/19 16:25:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -941,6 +941,64 @@ testdb=&gt;
         Lists all available domains. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only matching domains are shown.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\des [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\des+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Lists all foreign servers (mnemonic: <quote>external
+        servers</quote>).
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only those servers whose name matches the pattern
+        are listed.  If the form <literal>\des+</literal> is used, a
+        full desription of each server is shown, including the
+        server's ACL, type, version, and options.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\deu [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\deu+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Lists all user mappings (mnemonic: <quote>external
+        users</quote>).
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only those mappings whose user names match the
+        pattern are listed.  If the form <literal>\deu+</literal> is
+        used, additional information about each mapping is shown.
+        </para>
+
+        <caution>
+        <para>
+        <literal>\deu+</literal> might also display the user name and
+        password of the remote user, so care should be taken not to
+        disclose them.
+        </para>
+        </caution>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dew [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dew+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Lists all foreign-data wrappers (mnemonic: <quote>external
+        wrappers</quote>).
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only those foreign-data wrappers whose name matches
+        the pattern are listed.  If the form <literal>\dew+</literal>
+        is used, the ACL and options of the foreign-data wrapper are
+        also shown.
         </para>
         </listitem>
       </varlistentry>

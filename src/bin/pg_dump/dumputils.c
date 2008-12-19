@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.41 2008/09/08 00:47:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.42 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -687,6 +687,10 @@ do { \
 	}
 	else if (strcmp(type, "TABLESPACE") == 0)
 		CONVERT_PRIV('C', "CREATE");
+	else if (strcmp(type, "FOREIGN DATA WRAPPER") == 0)
+		CONVERT_PRIV('U', "USAGE");
+	else if (strcmp(type, "SERVER") == 0)
+		CONVERT_PRIV('U', "USAGE");
 	else
 		abort();
 

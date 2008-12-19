@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.302 2008/12/04 17:51:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.303 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,6 +203,15 @@ check_xact_readonly(Node *parsetree)
 		case T_ReassignOwnedStmt:
 		case T_AlterTSDictionaryStmt:
 		case T_AlterTSConfigurationStmt:
+		case T_CreateFdwStmt:
+		case T_AlterFdwStmt:
+		case T_DropFdwStmt:
+		case T_CreateForeignServerStmt:
+		case T_AlterForeignServerStmt:
+		case T_DropForeignServerStmt:
+		case T_CreateUserMappingStmt:
+		case T_AlterUserMappingStmt:
+		case T_DropUserMappingStmt:
 			ereport(ERROR,
 					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 					 errmsg("transaction is read-only")));
@@ -450,6 +459,42 @@ ProcessUtility(Node *parsetree,
 		case T_DropTableSpaceStmt:
 			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
 			DropTableSpace((DropTableSpaceStmt *) parsetree);
+			break;
+
+		case T_CreateFdwStmt:
+			CreateForeignDataWrapper((CreateFdwStmt *) parsetree);
+			break;
+
+		case T_AlterFdwStmt:
+			AlterForeignDataWrapper((AlterFdwStmt *) parsetree);
+			break;
+
+		case T_DropFdwStmt:
+			RemoveForeignDataWrapper((DropFdwStmt *) parsetree);
+			break;
+
+		case T_CreateForeignServerStmt:
+			CreateForeignServer((CreateForeignServerStmt *) parsetree);
+			break;
+
+		case T_AlterForeignServerStmt:
+			AlterForeignServer((AlterForeignServerStmt *) parsetree);
+			break;
+
+		case T_DropForeignServerStmt:
+			RemoveForeignServer((DropForeignServerStmt *) parsetree);
+			break;
+
+		case T_CreateUserMappingStmt:
+			CreateUserMapping((CreateUserMappingStmt *) parsetree);
+			break;
+
+		case T_AlterUserMappingStmt:
+			AlterUserMapping((AlterUserMappingStmt *) parsetree);
+			break;
+
+		case T_DropUserMappingStmt:
+			RemoveUserMapping((DropUserMappingStmt *) parsetree);
 			break;
 
 		case T_DropStmt:
@@ -1310,6 +1355,42 @@ CreateCommandTag(Node *parsetree)
 			tag = "DROP TABLESPACE";
 			break;
 
+		case T_CreateFdwStmt:
+			tag = "CREATE FOREIGN DATA WRAPPER";
+			break;
+
+		case T_AlterFdwStmt:
+			tag = "ALTER FOREIGN DATA WRAPPER";
+			break;
+
+		case T_DropFdwStmt:
+			tag = "DROP FOREIGN DATA WRAPPER";
+			break;
+
+		case T_CreateForeignServerStmt:
+			tag = "CREATE SERVER";
+			break;
+
+		case T_AlterForeignServerStmt:
+			tag = "ALTER SERVER";
+			break;
+
+		case T_DropForeignServerStmt:
+			tag = "DROP SERVER";
+			break;
+
+		case T_CreateUserMappingStmt:
+			tag = "CREATE USER MAPPING";
+			break;
+
+		case T_AlterUserMappingStmt:
+			tag = "ALTER USER MAPPING";
+			break;
+
+		case T_DropUserMappingStmt:
+			tag = "DROP USER MAPPING";
+			break;
+
 		case T_DropStmt:
 			switch (((DropStmt *) parsetree)->removeType)
 			{
@@ -1522,6 +1603,12 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TSDICTIONARY:
 					tag = "ALTER TEXT SEARCH DICTIONARY";
+					break;
+				case OBJECT_FDW:
+					tag = "ALTER FOREIGN DATA WRAPPER";
+					break;
+				case OBJECT_FOREIGN_SERVER:
+					tag = "ALTER SERVER";
 					break;
 				default:
 					tag = "???";
@@ -2034,6 +2121,18 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_DropTableSpaceStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateFdwStmt:
+		case T_AlterFdwStmt:
+		case T_DropFdwStmt:
+		case T_CreateForeignServerStmt:
+		case T_AlterForeignServerStmt:
+		case T_DropForeignServerStmt:
+		case T_CreateUserMappingStmt:
+		case T_AlterUserMappingStmt:
+		case T_DropUserMappingStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

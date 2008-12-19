@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.66 2008/03/27 17:24:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.67 2008/12/19 16:25:16 petere Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -38,6 +38,7 @@
    &alterConversion;
    &alterDatabase;
    &alterDomain;
+   &alterForeignDataWrapper;
    &alterFunction;
    &alterGroup;
    &alterIndex;
@@ -48,6 +49,7 @@
    &alterRole;
    &alterSchema;
    &alterSequence;
+   &alterServer;
    &alterTable;
    &alterTableSpace;
    &alterTSConfig;
@@ -57,6 +59,7 @@
    &alterTrigger;
    &alterType;
    &alterUser;
+   &alterUserMapping;
    &alterView;
    &analyze;
    &begin;
@@ -73,6 +76,7 @@
    &createConversion;
    &createDatabase;
    &createDomain;
+   &createForeignDataWrapper;
    &createFunction;
    &createGroup;
    &createIndex;
@@ -84,6 +88,7 @@
    &createRule;
    &createSchema;
    &createSequence;
+   &createServer;
    &createTable;
    &createTableAs;
    &createTableSpace;
@@ -94,6 +99,7 @@
    &createTrigger;
    &createType;
    &createUser;
+   &createUserMapping;
    &createView;
    &deallocate;
    &declare;
@@ -104,6 +110,7 @@
    &dropConversion;
    &dropDatabase;
    &dropDomain;
+   &dropForeignDataWrapper;
    &dropFunction;
    &dropGroup;
    &dropIndex;
@@ -116,6 +123,7 @@
    &dropRule;
    &dropSchema;
    &dropSequence;
+   &dropServer;
    &dropTable;
    &dropTableSpace;
    &dropTSConfig;
@@ -125,6 +133,7 @@
    &dropTrigger;
    &dropType;
    &dropUser;
+   &dropUserMapping;
    &dropView;
    &end;
    &execute;

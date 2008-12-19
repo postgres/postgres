@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.198 2008/11/21 20:14:27 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.199 2008/12/19 16:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -416,7 +416,23 @@ exec_command(const char *cmd,
 						break;
 				}
 				break;
-
+			case 'e':			/* SQL/MED subsystem */
+				switch(cmd[2])
+				{
+					case 's':
+						success = listForeignServers(pattern, show_verbose);
+						break;
+					case 'u':
+						success = listUserMappings(pattern, show_verbose);
+						break;
+					case 'w':
+						success = listForeignDataWrappers(pattern, show_verbose);
+						break;
+					default:
+						status = PSQL_CMD_UNKNOWN;
+						break;
+				}
+				break;
 			default:
 				status = PSQL_CMD_UNKNOWN;
 		}

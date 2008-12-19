@@ -1,0 +1,185 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEFOREIGNDATAWRAPPER">
+ <refmeta>
+  <refentrytitle id="sql-createforeigndatawrapper-title">CREATE FOREIGN DATA WRAPPER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE FOREIGN DATA WRAPPER</refname>
+  <refpurpose>define a new foreign-data wrapper</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createforeigndatawrapper">
+  <primary>CREATE FOREIGN DATA WRAPPER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
+    LIBRARY '<replaceable class="parameter">libraryname</replaceable>'
+    LANGUAGE C
+    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE FOREIGN DATA WRAPPER</command> creates a new
+   foreign-data wrapper.  The user who defines a foreign-data wrapper
+   becomes its owner.
+  </para>
+
+  <para>
+   The foreign-data wrapper name must be unique within the database.
+  </para>
+
+  <para>
+   Only superusers can create foreign-data wrappers.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the foreign-data wrapper to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">libraryname</replaceable></term>
+    <listitem>
+     <para>
+      The name of the shared library implementing the foreign-data
+      wrapper.  The file name is specified in the same way as for
+      shared library names in <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title">; in particular, one can rely
+      on a search path and automatic addition of the system's standard
+      shared library file name extension.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>LANGUAGE C</literal></term>
+    <listitem>
+     <para>
+      Currently, only the C programming language is supported for
+      implementing foreign-data wrappers.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies options for the new foreign-data wrapper.
+      The allowed option names and values are specific to each foreign
+      data wrapper and are validated using the foreign-data wrapper
+      library.  Option names must be unique.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   At the moment, the foreign-data wrapper functionality is very
+   rudimentary.  The purpose of foreign-data wrappers, foreign
+   servers, and user mappings is to store this information in a
+   standard way so that it can be queried by interested applications.
+   The functionality to actually query external data does not exist
+   yet.
+  </para>
+
+  <para>
+   The C language API for foreign-data wrappers is currently not
+   documented, stable, or complete.  Would-be authors of functionality
+   interfacing with the SQL/MED functionality are advised to contact
+   the PostgreSQL developers.
+  </para>
+
+  <para>
+   There are currently two foreign-data wrapper libraries
+   provided: <filename>dummy_fdw</filename>, which does nothing and
+   could be useful for testing,
+   and <filename>postgresql_fdw</filename>, which accepts options
+   corresponding to <application>libpq</> connection parameters.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a foreign-data wrapper <literal>dummy</> with
+   library <literal>dummy_fdw</>:
+<programlisting>
+CREATE FOREIGN DATA WRAPPER dummy LIBRARY 'dummy_fdw' LANGUAGE C;
+</programlisting>
+  </para>
+
+  <para>
+   Create a foreign-data wrapper <literal>postgresql</> with
+   library <literal>postgresql_fdw</>:
+<programlisting>
+CREATE FOREIGN DATA WRAPPER postgresql LIBRARY 'postgresql_fdw' LANGUAGE C;
+</programlisting>
+  </para>
+
+  <para>
+   Create a foreign-data wrapper <literal>mywrapper</> with library
+   <literal>/home/bob/mywrapper.so</> and some options:
+<programlisting>
+CREATE FOREIGN DATA WRAPPER mywrapper
+    LIBRARY '/home/bob/mywrapper.so'
+    LANGUAGE C
+    OPTIONS (debug 'true');
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
+   9075-9 (SQL/MED), with the exception that
+   the <literal>LIBRARY</literal> clause is not optional in
+   PostgreSQL.
+  </para>
+
+  <para>
+   Note, however, that the SQL/MED functionality as a whole is not yet
+   conforming.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterforeigndatawrapper" endterm="sql-alterforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-dropforeigndatawrapper" endterm="sql-dropforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
+   <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

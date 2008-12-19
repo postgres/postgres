@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.72 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.73 2008/12/19 16:25:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -35,6 +35,14 @@ GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON FOREIGN DATA WRAPPER <replaceable>fdwname</> [, ...]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON FOREIGN SERVER <replaceable>servername</> [, ...]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTION <replaceable>funcname</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
@@ -61,10 +69,10 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
   <para>
    The <command>GRANT</command> command has two basic variants: one
    that grants privileges on a database object (table, view, sequence,
-   database, function, procedural language, schema, or tablespace),
-   and one that grants membership in a role.  These variants are
-   similar in many ways, but they are different enough to be described
-   separately.
+   database, foreign-data wrapper, foreign server, function,
+   procedural language, schema, or tablespace), and one that grants
+   membership in a role.  These variants are similar in many ways, but
+   they are different enough to be described separately.
   </para>
 
   <para>
@@ -298,6 +306,14 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
       <para>
        For sequences, this privilege allows the use of the
        <function>currval</function> and <function>nextval</function> functions.
+      </para>
+      <para>
+       For foreign-data wrappers, this privilege enables the grantee
+       to create new servers using that foreign-data wrapper.
+      </para>
+      <para>
+       For servers, this privilege enables the grantee to query the
+       options of the server and associated user mappings.
       </para>
      </listitem>
     </varlistentry>

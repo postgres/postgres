@@ -1,0 +1,123 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_server.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERSERVER">
+ <refmeta>
+  <refentrytitle id="sql-alterserver-title">ALTER SERVER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER SERVER</refname>
+  <refpurpose>change the definition of a foreign server</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterserver">
+  <primary>ALTER SERVER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER SERVER <replaceable class="parameter">servername</replaceable> [ VERSION 'newversion' ]
+    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
+ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER SERVER</command> changes the definition of a foreign
+   server.  The first form changes the server version string or the
+   generic options of the server (at least one clause is required).
+   The second form changes the owner of the server.
+  </para>
+
+  <para>
+   To alter the server you must be the owner of the server.
+   Additionally to alter the owner, you must own the server and also
+   be a direct or indirect member of the new owning role, and you must
+   have <literal>USAGE</> privilege on the server's foreign-data
+   wrapper.  (Note that superusers satisfy all these criteria
+   automatically.)
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">servername</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">serverversion</replaceable></term>
+    <listitem>
+     <para>
+      New server version.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      Change options for the
+      server.  <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
+      specify the action to be performed.  <literal>ADD</> is assumed
+      if no operation is explicitly specified.  Option names must be
+      unique; names and values are also validated using the server's
+      foreign-data wrapper library.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Alter server <literal>foo</>, add connection options:
+<programlisting>
+ALTER SERVER foo OPTIONS (host 'foo', dbname 'foodb');
+</programlisting>
+  </para>
+
+  <para>
+   Alter server <literal>foo</>, change version,
+   change <literal>host</> option:
+<programlisting>
+ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER SERVER</command> conforms to ISO/IEC 9075-9 (SQL/MED).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
+   <member><xref linkend="sql-dropserver" endterm="sql-dropserver-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

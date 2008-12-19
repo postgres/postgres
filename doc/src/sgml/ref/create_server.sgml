@@ -1,0 +1,140 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATESERVER">
+ <refmeta>
+  <refentrytitle id="sql-createserver-title">CREATE SERVER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE SERVER</refname>
+  <refpurpose>define a new foreign server</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createserver">
+  <primary>CREATE SERVER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'servertype' ] [ VERSION 'serverversion' ]
+    FOREIGN DATA WRAPPER <replaceable class="parameter">fdwname</replaceable>
+    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE SERVER</command> defines a new foreign server.  The
+   user who defines the server becomes its owner.
+  </para>
+
+  <para>
+   The server name must be unique within database.
+  </para>
+
+  <para>
+   Creating a server requires <literal>USAGE</> privilege on the
+   foreign-data wrapper being used.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">servername</replaceable></term>
+    <listitem>
+     <para>
+      The name of the foreign server to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">servertype</replaceable></term>
+    <listitem>
+     <para>
+      Optional server type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">serverversion</replaceable></term>
+    <listitem>
+     <para>
+      Optional server version.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">fdwname</replaceable></term>
+    <listitem>
+     <para>
+      The name of the foreign-data wrapper that manages the server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies the options for the server.  The options
+      typically define the connection details of the server, but the
+      actual names and values are dependent on the server's
+      foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a server <literal>foo</> that uses the built-in foreign-data
+   wrapper <literal>default</>:
+<programlisting>
+CREATE SERVER foo FOREIGN DATA WRAPPER "default";
+</programlisting>
+  </para>
+
+  <para>
+   Create a server <literal>myserver</> that uses the
+   foreign-data wrapper <literal>pgsql</>:
+<programlisting>
+CREATE SERVER myserver FOREIGN DATA WRAPPER pgsql OPTIONS (host 'foo', dbname 'foodb', port '5432');
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE SERVER</command> conforms to ISO/IEC 9075-9 (SQL/MED).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterserver" endterm="sql-alterserver-title"></member>
+   <member><xref linkend="sql-dropserver" endterm="sql-dropserver-title"></member>
+   <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

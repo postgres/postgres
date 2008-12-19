@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.131 2008/11/06 15:18:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.132 2008/12/19 16:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -203,6 +203,9 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dC [PATTERN]  list casts\n"));
 	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
 	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
+	fprintf(output, _("  \\des [PATTERN] list foreign servers (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\deu [PATTERN] list user mappings (add \"+\" for more detail)\n"));
+	fprintf(output, _("  \\dew [PATTERN] list foreign-data wrappers (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\dF [PATTERN]  list text search configurations (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"));

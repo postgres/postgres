@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.184 2008/12/18 18:20:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.185 2008/12/19 16:25:16 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -134,6 +134,16 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-foreign-data-wrapper"><structname>pg_foreign_data_wrapper</structname></link></entry>
+      <entry>foreign-data wrapper definitions</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link></entry>
+      <entry>foreign server definitions</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-index"><structname>pg_index</structname></link></entry>
       <entry>additional index information</entry>
      </row>
@@ -246,6 +256,11 @@
      <row>
       <entry><link linkend="catalog-pg-type"><structname>pg_type</structname></link></entry>
       <entry>data types</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-user-mapping"><structname>pg_user_mapping</structname></link></entry>
+      <entry>mappings of users to foreign servers</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2545,6 +2560,229 @@
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>The textual label for this enum value</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-foreign-data-wrapper">
+  <title><structname>pg_foreign_data_wrapper</structname></title>
+
+  <indexterm zone="catalog-pg-foreign-data-wrapper">
+   <primary>pg_foreign_data_wrapper</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_foreign_data_wrapper</structname> stores
+   foreign-data wrapper definitions.  A foreign-data wrapper is the
+   mechanism by which external data, residing on foreign servers, is
+   accessed.
+  </para>
+
+  <table>
+   <title><structname>pg_foreign_data_wrapper</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>fdwname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the foreign-data wrapper</entry>
+     </row>
+
+     <row>
+      <entry><structfield>fdwowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the foreign-data wrapper</entry>
+     </row>
+
+     <row>
+      <entry><structfield>fdwlibrary</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>File name of the library implementing this foreign-data wrapper</entry>
+     </row>
+
+     <row>
+      <entry><structfield>fdwacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>fdwoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       Foreign-data wrapper specific options, as <quote>keyword=value</> strings
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-foreign-server">
+  <title><structname>pg_foreign_server</structname></title>
+
+  <indexterm zone="catalog-pg-foreign-server">
+   <primary>pg_foreign_server</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_foreign_server</structname> stores
+   foreign server definitions.  A foreign server describes the
+   connection to a remote server, managing external data.  Foreign
+   servers are accessed via foreign-data wrappers.
+  </para>
+
+  <table>
+   <title><structname>pg_foreign_server</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>srvname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the foreign server</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the foreign server</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvfdw</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-foreign-data-wrapper"><structname>pg_foreign_data_wrapper</structname></link>.oid</literal></entry>
+      <entry>The OID of the foreign-data wrapper of this foreign server</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvtype</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Type of the server (optional)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvversion</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Version of the server (optional)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant" endterm="sql-grant-title"> and
+       <xref linkend="sql-revoke" endterm="sql-revoke-title">
+       for details
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       Foreign server specific options, as <quote>keyword=value</> strings.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-user-mapping">
+  <title><structname>pg_user_mapping</structname></title>
+
+  <indexterm zone="catalog-pg-user-mapping">
+   <primary>pg_user_mapping</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_user_mapping</structname> stores
+   the mappings from local user to remote.  Access to this catalog is
+   restricted from normal users, use the view
+   <link linkend="view-pg-user-mappings"><structname>pg_user_mappings</structname></link>
+   instead.
+  </para>
+
+  <table>
+   <title><structname>pg_user_mapping</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>umuser</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>OID of the local role being mapped, 0 if the user mapping is public</entry>
+     </row>
+
+     <row>
+      <entry><structfield>umserver</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the foreign server that contains this mapping
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>umoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       User mapping specific options, as <quote>keyword=value</> strings.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -7018,6 +7256,91 @@
   </table>
 
  </sect1>
+
+ <sect1 id="view-pg-user-mappings">
+  <title><structname>pg_user_mappings</structname></title>
+
+  <indexterm zone="view-pg-user-mappings">
+   <primary>pg_user_mappings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_user_mappings</structname> provides access
+   to information about user mappings.  This is essentially a publicly
+   readable view of
+   <link linkend="catalog-pg-user-mapping"><structname>pg_user_mapping</structname></link>
+   that leaves out the options field if the user has no rights to use
+   it.
+  </para>
+
+  <table>
+   <title><structname>pg_user_mappings</> Columns</title>
+
+   <tgroup cols=3>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>umid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-user-mapping"><structname>pg_user_mapping</structname></link>.oid</literal></entry>
+      <entry>OID of the user mapping</entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the foreign server that contains this mapping
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>srvname</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Name of the foreign server
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>umuser</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>OID of the local role being mapped, 0 if the user mapping is public</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the local user to be mapped</entry>
+     </row>
+
+     <row>
+      <entry><structfield>umoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       User mapping specific options, as <quote>keyword=value</>
+       strings, if the current user is the owner of the foreign
+       server, else null.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
 
  <sect1 id="view-pg-views">
   <title><structname>pg_views</structname></title>

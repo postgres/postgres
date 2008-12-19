@@ -1,0 +1,111 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEUSERMAPPING">
+ <refmeta>
+  <refentrytitle id="sql-createusermapping-title">CREATE USER MAPPING</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE USER MAPPING</refname>
+  <refpurpose>define a new mapping of a user to a foreign server</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createusermapping">
+  <primary>CREATE USER MAPPING</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE USER MAPPING FOR { <replaceable class="parameter">username</replaceable> | USER | CURRENT_USER | PUBLIC }
+    SERVER <replaceable class="parameter">servername</replaceable>
+    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [ , ... ] ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE USER MAPPING</command> defines a mapping of a user
+   to a foreign server.  You must be the owner of the server to define
+   user mappings for it.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">username</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing user that is mapped to foreign server.
+      <literal>CURRENT_USER</> and <literal>USER</> match the name of
+      the current user.  <literal>PUBLIC</> is used to match all
+      present and future user names in the system.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">servername</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing server for which the user mapping is
+      to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies the options of the user mapping.  The
+      options typically define the actual user name and password of
+      the mapping.  Option names must be unque.  The allowed option
+      names and values are specific to the server's foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a user mapping for user <literal>bob</>, server <literal>foo</>:
+<programlisting>
+CREATE USER MAPPING FOR bob SERVER foo OPTIONS (user 'bob', password 'secret');
+</programlisting>
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE USER MAPPING</command> conforms to ISO/IEC 9075-9 (SQL/MED).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterusermapping" endterm="sql-alterusermapping-title"></member>
+   <member><xref linkend="sql-dropusermapping" endterm="sql-dropusermapping-title"></member>
+   <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

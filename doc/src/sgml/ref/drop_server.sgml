@@ -1,0 +1,112 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_server.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPSERVER">
+ <refmeta>
+  <refentrytitle id="sql-dropserver-title">DROP SERVER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP SERVER</refname>
+  <refpurpose>remove a foreign server descriptor</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-dropserver">
+  <primary>DROP SERVER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP SERVER [ IF EXISTS ] <replaceable class="parameter">servername</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP SERVER</command> removes an existing foreign server
+   descriptor.  To execute this command, the current user must be the
+   owner of the server.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the server does not exist.  A notice is
+      issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">servername</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the server (such as
+      user mappings).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the server if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Drop a server <literal>foo</> if it exists:
+<programlisting>
+DROP SERVER IF EXISTS foo;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>DROP SERVER</command> conforms to ISO/IEC 9075-9
+   (SQL/MED).  The <literal>IF EXISTS</> clause is
+   a <productname>PostgreSQL</> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
+   <member><xref linkend="sql-alterserver" endterm="sql-alterserver-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

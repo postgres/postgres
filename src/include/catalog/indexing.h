@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.103 2008/06/19 00:46:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.104 2008/12/19 16:25:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,6 +251,24 @@ DECLARE_UNIQUE_INDEX(pg_type_oid_index, 2703, on pg_type using btree(oid oid_ops
 #define TypeOidIndexId	2703
 DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index, 2704, on pg_type using btree(typname name_ops, typnamespace oid_ops));
 #define TypeNameNspIndexId	2704
+
+DECLARE_UNIQUE_INDEX(pg_foreign_data_wrapper_oid_index, 112, on pg_foreign_data_wrapper using btree(oid oid_ops));
+#define ForeignDataWrapperOidIndexId	112
+
+DECLARE_UNIQUE_INDEX(pg_foreign_data_wrapper_name_index, 548, on pg_foreign_data_wrapper using btree(fdwname name_ops));
+#define ForeignDataWrapperNameIndexId	548
+
+DECLARE_UNIQUE_INDEX(pg_foreign_server_oid_index, 113, on pg_foreign_server using btree(oid oid_ops));
+#define ForeignServerOidIndexId	113
+
+DECLARE_UNIQUE_INDEX(pg_foreign_server_name_index, 549, on pg_foreign_server using btree(srvname name_ops));
+#define ForeignServerNameIndexId	549
+
+DECLARE_UNIQUE_INDEX(pg_user_mapping_oid_index, 174, on pg_user_mapping using btree(oid oid_ops));
+#define UserMappingOidIndexId	174
+
+DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, on pg_user_mapping using btree(umuser oid_ops, umserver oid_ops));
+#define UserMappingUserServerIndexId	175
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

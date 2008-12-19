@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.130 2008/08/29 13:02:32 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.131 2008/12/19 16:25:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = access bootstrap catalog parser commands executor lib libpq \
+SUBDIRS = access bootstrap catalog parser commands executor foreign lib libpq \
 	main nodes optimizer port postmaster regex rewrite \
 	storage tcop tsearch utils $(top_builddir)/src/timezone
 

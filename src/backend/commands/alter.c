@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.29 2008/06/15 01:25:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.30 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,6 +268,15 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_TSCONFIGURATION:
 			AlterTSConfigurationOwner(stmt->object, newowner);
+			break;
+
+		case OBJECT_FDW:
+			AlterForeignDataWrapperOwner(strVal(linitial(stmt->object)),
+										 newowner);
+			break;
+
+		case OBJECT_FOREIGN_SERVER:
+			AlterForeignServerOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		default:

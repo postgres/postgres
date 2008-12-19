@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.327 2008/12/04 17:51:28 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.328 2008/12/19 16:25:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,12 @@ extern Datum has_database_privilege_id_name(PG_FUNCTION_ARGS);
 extern Datum has_database_privilege_id_id(PG_FUNCTION_ARGS);
 extern Datum has_database_privilege_name(PG_FUNCTION_ARGS);
 extern Datum has_database_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_foreign_data_wrapper_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_foreign_data_wrapper_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_foreign_data_wrapper_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_foreign_data_wrapper_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_foreign_data_wrapper_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_foreign_data_wrapper_privilege_id(PG_FUNCTION_ARGS);
 extern Datum has_function_privilege_name_name(PG_FUNCTION_ARGS);
 extern Datum has_function_privilege_name_id(PG_FUNCTION_ARGS);
 extern Datum has_function_privilege_id_name(PG_FUNCTION_ARGS);
@@ -52,6 +58,12 @@ extern Datum has_schema_privilege_id_name(PG_FUNCTION_ARGS);
 extern Datum has_schema_privilege_id_id(PG_FUNCTION_ARGS);
 extern Datum has_schema_privilege_name(PG_FUNCTION_ARGS);
 extern Datum has_schema_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_server_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_server_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_server_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_server_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_server_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_server_privilege_id(PG_FUNCTION_ARGS);
 extern Datum has_tablespace_privilege_name_name(PG_FUNCTION_ARGS);
 extern Datum has_tablespace_privilege_name_id(PG_FUNCTION_ARGS);
 extern Datum has_tablespace_privilege_id_name(PG_FUNCTION_ARGS);

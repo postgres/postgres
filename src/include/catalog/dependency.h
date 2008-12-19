@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.36 2008/06/08 22:41:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.37 2008/12/19 16:25:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,9 @@ typedef enum ObjectClass
 	OCLASS_ROLE,				/* pg_authid */
 	OCLASS_DATABASE,			/* pg_database */
 	OCLASS_TBLSPACE,			/* pg_tablespace */
+	OCLASS_FDW,					/* pg_foreign_data_wrapper */
+	OCLASS_FOREIGN_SERVER,		/* pg_foreign_server */
+	OCLASS_USER_MAPPING,		/* pg_user_mapping */
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 

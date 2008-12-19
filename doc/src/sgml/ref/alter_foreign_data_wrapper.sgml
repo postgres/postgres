@@ -1,0 +1,132 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_foreign_data_wrapper.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERFOREIGNDATAWRAPPER">
+ <refmeta>
+  <refentrytitle id="sql-alterforeigndatawrapper-title">ALTER FOREIGN DATA WRAPPER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER FOREIGN DATA WRAPPER</refname>
+  <refpurpose>change the definition of a foreign-data wrapper</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterforeigndatawrapper">
+  <primary>ALTER FOREIGN DATA WRAPPER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
+    [ LIBRARY '<replaceable class="parameter">libraryname</replaceable>' ]
+    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ]) ]
+ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER FOREIGN DATA WRAPPER</command> changes the
+   definition of a foreign-data wrapper.  The first form of the
+   command changes the library or the generic options of the
+   foreign-data wrapper (at least one clause is required).  The second
+   form changes the owner of the foreign-data wrapper.
+  </para>
+
+  <para>
+   Only superusers can alter foreign-data wrappers.  Additionally,
+   only superusers can own foreign-data wrappers.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">libraryname</replaceable></term>
+    <listitem>
+     <para>
+      New name of the foreign-data wrapper library.
+     </para>
+
+     <para>
+      Note that it is possible that after changing the library, the
+      options to the foreign-data wrapper, servers, and user mappings
+      have become invalid.   It is up to the user to make sure that
+      these options are correct before using the foreign-data
+      wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      Change options for the foreign-data
+      wrapper.  <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
+      specify the action to be performed.  <literal>ADD</> is assumed
+      if no operation is explicitly specified.  Option names must be
+      unique; names and values are also validated using the foreign
+      data wrapper library.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Change a foreign-data wrapper <literal>dbi</>, add
+   option <literal>foo</>, drop <literal>bar</>:
+<programlisting>
+ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP 'bar');
+</programlisting>
+  </para>
+
+  <para>
+   Change the foreign-data wrapper <literal>dbi</> library
+   to <literal>/home/bob/mylibrary.so</>:
+<programlisting>
+ALTER FOREIGN DATA WRAPPER dbi LIBRARY '/home/bob/mylibrary.so';
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
+   9075-9 (SQL/MED).  The standard does not specify the <literal>OWNER
+   TO</> variant of the command.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
+   <member><xref linkend="sql-dropforeigndatawrapper" endterm="sql-dropforeigndatawrapper-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

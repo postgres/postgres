@@ -1313,6 +1313,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
  pg_timezone_abbrevs      | SELECT pg_timezone_abbrevs.abbrev, pg_timezone_abbrevs.utc_offset, pg_timezone_abbrevs.is_dst FROM pg_timezone_abbrevs() pg_timezone_abbrevs(abbrev, utc_offset, is_dst);
  pg_timezone_names        | SELECT pg_timezone_names.name, pg_timezone_names.abbrev, pg_timezone_names.utc_offset, pg_timezone_names.is_dst FROM pg_timezone_names() pg_timezone_names(name, abbrev, utc_offset, is_dst);
  pg_user                  | SELECT pg_shadow.usename, pg_shadow.usesysid, pg_shadow.usecreatedb, pg_shadow.usesuper, pg_shadow.usecatupd, '********'::text AS passwd, pg_shadow.valuntil, pg_shadow.useconfig FROM pg_shadow;
+ pg_user_mappings         | SELECT u.oid AS umid, s.oid AS srvid, s.srvname, u.umuser, CASE WHEN (u.umuser = (0)::oid) THEN 'public'::name ELSE a.rolname END AS usename, CASE WHEN (pg_has_role(s.srvowner, 'USAGE'::text) OR has_server_privilege(s.oid, 'USAGE'::text)) THEN u.umoptions ELSE NULL::text[] END AS umoptions FROM ((pg_user_mapping u LEFT JOIN pg_authid a ON ((a.oid = u.umuser))) JOIN pg_foreign_server s ON ((u.umserver = s.oid)));
  pg_views                 | SELECT n.nspname AS schemaname, c.relname AS viewname, pg_get_userbyid(c.relowner) AS viewowner, pg_get_viewdef(c.oid) AS definition FROM (pg_class c LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) WHERE (c.relkind = 'v'::"char");
  rtest_v1                 | SELECT rtest_t1.a, rtest_t1.b FROM rtest_t1;
  rtest_vcomp              | SELECT x.part, (x.size * y.factor) AS size_in_cm FROM rtest_comp x, rtest_unitfact y WHERE (x.unit = y.unit);
@@ -1328,7 +1329,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
  shoelace_obsolete        | SELECT shoelace.sl_name, shoelace.sl_avail, shoelace.sl_color, shoelace.sl_len, shoelace.sl_unit, shoelace.sl_len_cm FROM shoelace WHERE (NOT (EXISTS (SELECT shoe.shoename FROM shoe WHERE (shoe.slcolor = shoelace.sl_color))));
  street                   | SELECT r.name, r.thepath, c.cname FROM ONLY road r, real_city c WHERE (c.outline ## r.thepath);
  toyemp                   | SELECT emp.name, emp.age, emp.location, (12 * emp.salary) AS annualsal FROM emp;
-(50 rows)
+(51 rows)
 
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.645 2008/12/18 18:20:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.646 2008/12/19 16:25:17 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -156,6 +156,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	FunctionParameterMode fun_param_mode;
 	FuncWithArgs		*funwithargs;
 	DefElem				*defelt;
+	OptionDefElem		*optdef;
 	SortBy				*sortby;
 	JoinExpr			*jexpr;
 	IndexElem			*ielem;
@@ -172,19 +173,22 @@ static TypeName *TableFuncTypeName(List *columns);
 }
 
 %type <node>	stmt schema_stmt
-		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
+		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterFdwStmt
+		AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
-		AlterUserStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
+		AlterUserStmt AlterUserMappingStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
 		CreateDomainStmt CreateGroupStmt CreateOpClassStmt
 		CreateOpFamilyStmt AlterOpFamilyStmt CreatePLangStmt
 		CreateSchemaStmt CreateSeqStmt CreateStmt CreateTableSpaceStmt
-		CreateAssertStmt CreateTrigStmt CreateUserStmt CreateRoleStmt
+		CreateFdwStmt CreateForeignServerStmt CreateAssertStmt CreateTrigStmt
+		CreateUserStmt CreateUserMappingStmt CreateRoleStmt
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt
 		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
-		DropUserStmt DropdbStmt DropTableSpaceStmt ExplainStmt FetchStmt
+		DropUserStmt DropdbStmt DropTableSpaceStmt DropFdwStmt
+		DropForeignServerStmt DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt IndexStmt InsertStmt ListenStmt LoadStmt
 		LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
@@ -221,6 +225,10 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <list>	OptRoleList
 %type <defelt>	OptRoleElem
+
+%type <str>		opt_type
+%type <str>		foreign_server_version opt_foreign_server_version
+%type <str>		auth_ident
 
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
@@ -274,6 +282,7 @@ static TypeName *TableFuncTypeName(List *columns);
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
 				enum_val_list table_func_column_list
+				create_generic_options alter_generic_options
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
@@ -341,6 +350,12 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
 %type <target>	target_el single_set_clause set_target insert_column_item
+
+%type <str>		generic_option_name
+%type <node>	generic_option_arg
+%type <defelt>	generic_option_elem
+%type <optdef>	alter_generic_option_elem
+%type <list>	generic_option_list alter_generic_option_list
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -436,7 +451,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	KEY
 
 	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
-	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+	LIBRARY LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOGIN_P
 
 	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -445,7 +460,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NULLS_P NUMERIC
 
-	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
+	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
 	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
@@ -459,7 +474,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	REVOKE RIGHT ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE
-	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
+	SERIALIZABLE SERVER SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE_P START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
 	SYMMETRIC SYSID SYSTEM_P
@@ -474,7 +489,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
 	VERBOSE VERSION_P VIEW VOLATILE
 
-	WHEN WHERE WHITESPACE_P WITH WITHOUT WORK WRITE
+	WHEN WHERE WHITESPACE_P WITH WITHOUT WORK WRAPPER WRITE
 
 	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
@@ -562,6 +577,8 @@ stmt :
 			AlterDatabaseStmt
 			| AlterDatabaseSetStmt
 			| AlterDomainStmt
+			| AlterFdwStmt
+			| AlterForeignServerStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
 			| AlterObjectSchemaStmt
@@ -572,6 +589,7 @@ stmt :
 			| AlterRoleStmt
 			| AlterTSConfigurationStmt
 			| AlterTSDictionaryStmt
+			| AlterUserMappingStmt
 			| AlterUserSetStmt
 			| AlterUserStmt
 			| AnalyzeStmt
@@ -586,6 +604,8 @@ stmt :
 			| CreateCastStmt
 			| CreateConversionStmt
 			| CreateDomainStmt
+			| CreateFdwStmt
+			| CreateForeignServerStmt
 			| CreateFunctionStmt
 			| CreateGroupStmt
 			| CreateOpClassStmt
@@ -599,6 +619,7 @@ stmt :
 			| CreateTrigStmt
 			| CreateRoleStmt
 			| CreateUserStmt
+			| CreateUserMappingStmt
 			| CreatedbStmt
 			| DeallocateStmt
 			| DeclareCursorStmt
@@ -607,6 +628,8 @@ stmt :
 			| DiscardStmt
 			| DropAssertStmt
 			| DropCastStmt
+			| DropFdwStmt
+			| DropForeignServerStmt
 			| DropGroupStmt
 			| DropOpClassStmt
 			| DropOpFamilyStmt
@@ -618,6 +641,7 @@ stmt :
 			| DropTrigStmt
 			| DropRoleStmt
 			| DropUserStmt
+			| DropUserMappingStmt
 			| DropdbStmt
 			| ExecuteStmt
 			| ExplainStmt
@@ -2717,6 +2741,313 @@ DropTableSpaceStmt: DROP TABLESPACE name
 
 /*****************************************************************************
  *
+ * 		QUERY:
+ *             CREATE FOREIGN DATA WRAPPER name LIBRARY 'library_name' LANGUAGE C
+ *
+ *****************************************************************************/
+
+CreateFdwStmt: CREATE FOREIGN DATA_P WRAPPER name LIBRARY Sconst LANGUAGE ColId create_generic_options
+				{
+					CreateFdwStmt *n = makeNode(CreateFdwStmt);
+					n->fdwname = $5;
+					n->library = $7;
+					n->options = $10;
+					$$ = (Node *) n;
+
+					if (pg_strcasecmp($9, "C") != 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("language for foreign-data wrapper must be C"),
+								 scanner_errposition(@9)));
+				}
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				DROP FOREIGN DATA WRAPPER name
+ *
+ ****************************************************************************/
+
+DropFdwStmt: DROP FOREIGN DATA_P WRAPPER name opt_drop_behavior
+				{
+					DropFdwStmt *n = makeNode(DropFdwStmt);
+					n->fdwname = $5;
+					n->missing_ok = false;
+					n->behavior = $6;
+					$$ = (Node *) n;
+				}
+				|  DROP FOREIGN DATA_P WRAPPER IF_P EXISTS name opt_drop_behavior
+                {
+					DropFdwStmt *n = makeNode(DropFdwStmt);
+					n->fdwname = $7;
+					n->missing_ok = true;
+					n->behavior = $8;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				ALTER FOREIGN DATA WRAPPER name
+ *
+ ****************************************************************************/
+
+AlterFdwStmt: ALTER FOREIGN DATA_P WRAPPER name LIBRARY Sconst alter_generic_options
+				{
+					AlterFdwStmt *n = makeNode(AlterFdwStmt);
+					n->fdwname = $5;
+					n->library = $7;
+					n->options = $8;
+					$$ = (Node *) n;
+				}
+			| ALTER FOREIGN DATA_P WRAPPER name LIBRARY Sconst
+				{
+					AlterFdwStmt *n = makeNode(AlterFdwStmt);
+					n->fdwname = $5;
+					n->library = $7;
+					$$ = (Node *) n;
+				}
+			| ALTER FOREIGN DATA_P WRAPPER name alter_generic_options
+				{
+					AlterFdwStmt *n = makeNode(AlterFdwStmt);
+					n->fdwname = $5;
+					n->options = $6;
+					$$ = (Node *) n;
+				}
+		;
+
+/* Options definition for CREATE FDW, SERVER and USER MAPPING */
+create_generic_options:
+				OPTIONS '(' generic_option_list ')'			{ $$ = $3; }
+				| /*EMPTY*/									{ $$ = NIL; }
+		;
+
+generic_option_list:		generic_option_elem
+					{
+						$$ = list_make1(makeOptionDefElem(ALTER_OPT_ADD, $1));
+					}
+				| generic_option_list ',' generic_option_elem
+					{
+						$$ = lappend($1, makeOptionDefElem(ALTER_OPT_ADD, $3));
+					}
+		;
+
+/* Options definition for ALTER FDW, SERVER and USER MAPPING */
+alter_generic_options:
+				OPTIONS	'(' alter_generic_option_list ')'	{ $$ = $3; }
+		;
+
+alter_generic_option_list:
+				alter_generic_option_elem
+					{
+						$$ = list_make1($1);
+					}
+				| generic_option_elem
+					{
+						$$ = list_make1(makeOptionDefElem(ALTER_OPT_ADD, $1));
+					}
+				| alter_generic_option_list ',' alter_generic_option_elem
+					{
+						$$ = lappend($1, $3);
+					}
+				| alter_generic_option_list ',' generic_option_elem
+					{
+						$$ = lappend($1, makeOptionDefElem(ALTER_OPT_ADD, $3));
+					}
+		;
+
+alter_generic_option_elem:
+				ADD_P generic_option_elem
+					{
+						$$ = makeOptionDefElem(ALTER_OPT_ADD, $2);
+					}
+				| SET generic_option_elem
+					{
+						$$ = makeOptionDefElem(ALTER_OPT_SET, $2);
+					}
+				| DROP generic_option_name
+					{
+						$$ = makeOptionDefElem(ALTER_OPT_DROP,
+											   makeDefElem($2, NULL));
+					}
+		;
+
+generic_option_elem:
+				generic_option_name generic_option_arg			{ $$ = makeDefElem($1, $2); }
+		;
+
+generic_option_name:
+				attr_name			{ $$ = $1; }
+		;
+
+generic_option_arg:
+				Sconst				{ $$ = (Node *)makeString($1); }
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY:
+ *             CREATE SERVER name [TYPE] [VERSION] [OPTIONS]
+ *
+ *****************************************************************************/
+
+CreateForeignServerStmt: CREATE SERVER name opt_type opt_foreign_server_version
+						 FOREIGN DATA_P WRAPPER name create_generic_options
+				{
+					CreateForeignServerStmt *n = makeNode(CreateForeignServerStmt);
+					n->servername = $3;
+					n->servertype = $4;
+					n->version = $5;
+					n->fdwname = $9;
+					n->options = $10;
+					$$ = (Node *) n;
+				}
+		;
+
+opt_type:
+			TYPE_P Sconst			{ $$ = $2; }
+			| /*EMPTY*/				{ $$ = NULL; }
+		;
+
+
+foreign_server_version:
+			VERSION_P Sconst		{ $$ = $2; }
+		|	VERSION_P NULL_P		{ $$ = NULL; }
+		;
+
+opt_foreign_server_version:
+			foreign_server_version 	{ $$ = $1; }
+			| /*EMPTY*/				{ $$ = NULL; }
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				DROP SERVER name
+ *
+ ****************************************************************************/
+
+DropForeignServerStmt: DROP SERVER name opt_drop_behavior
+				{
+					DropForeignServerStmt *n = makeNode(DropForeignServerStmt);
+					n->servername = $3;
+					n->missing_ok = false;
+					n->behavior = $4;
+					$$ = (Node *) n;
+				}
+				|  DROP SERVER IF_P EXISTS name opt_drop_behavior
+                {
+					DropForeignServerStmt *n = makeNode(DropForeignServerStmt);
+					n->servername = $5;
+					n->missing_ok = true;
+					n->behavior = $6;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				ALTER SERVER name [VERSION] [OPTIONS]
+ *
+ ****************************************************************************/
+
+AlterForeignServerStmt: ALTER SERVER name foreign_server_version alter_generic_options
+				{
+					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
+					n->servername = $3;
+					n->version = $4;
+					n->options = $5;
+					n->has_version = true;
+					$$ = (Node *) n;
+				}
+			| ALTER SERVER name foreign_server_version
+				{
+					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
+					n->servername = $3;
+					n->version = $4;
+					n->has_version = true;
+					$$ = (Node *) n;
+				}
+			| ALTER SERVER name alter_generic_options
+				{
+					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
+					n->servername = $3;
+					n->options = $4;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY:
+ *             CREATE USER MAPPING FOR auth_ident SERVER name [OPTIONS]
+ *
+ *****************************************************************************/
+
+CreateUserMappingStmt: CREATE USER MAPPING FOR auth_ident SERVER name create_generic_options
+				{
+					CreateUserMappingStmt *n = makeNode(CreateUserMappingStmt);
+					n->username = $5;
+					n->servername = $7;
+					n->options = $8;
+					$$ = (Node *) n;
+				}
+		;
+
+/* User mapping authorization identifier */
+auth_ident:
+			CURRENT_USER 	{ $$ = "current_user"; }
+		|	USER			{ $$ = "current_user"; }
+		|	RoleId 			{ $$ = (strcmp($1, "public") == 0) ? NULL : $1 }
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				DROP USER MAPPING FOR auth_ident SERVER name
+ *
+ ****************************************************************************/
+
+DropUserMappingStmt: DROP USER MAPPING FOR auth_ident SERVER name
+				{
+					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
+					n->username = $5;
+					n->servername = $7;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+				|  DROP USER MAPPING IF_P EXISTS FOR auth_ident SERVER name
+                {
+					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
+					n->username = $7;
+					n->servername = $9;
+					n->missing_ok = true;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				ALTER USER MAPPING FOR auth_ident SERVER name OPTIONS
+ *
+ ****************************************************************************/
+
+AlterUserMappingStmt: ALTER USER MAPPING FOR auth_ident SERVER name alter_generic_options
+				{
+					AlterUserMappingStmt *n = makeNode(AlterUserMappingStmt);
+					n->username = $5;
+					n->servername = $7;
+					n->options = $8;
+					$$ = (Node *) n;
+				}
+		;
+
+/*****************************************************************************
+ *
  *		QUERIES :
  *				CREATE TRIGGER ...
  *				DROP TRIGGER ...
@@ -3910,6 +4241,20 @@ privilege_target:
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_SEQUENCE;
 					n->objs = $2;
+					$$ = n;
+				}
+			| FOREIGN DATA_P WRAPPER name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = ACL_OBJECT_FDW;
+					n->objs = $4;
+					$$ = n;
+				}
+			| FOREIGN SERVER name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = ACL_OBJECT_FOREIGN_SERVER;
+					n->objs = $3;
 					$$ = n;
 				}
 			| FUNCTION function_with_argtypes_list
@@ -5121,6 +5466,22 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->objectType = OBJECT_TSCONFIGURATION;
 					n->object = $5;
 					n->newowner = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER FOREIGN DATA_P WRAPPER name OWNER TO RoleId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_FDW;
+					n->object = list_make1(makeString($5));
+					n->newowner = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER SERVER name OWNER TO RoleId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_FOREIGN_SERVER;
+					n->object = list_make1(makeString($3));
+					n->newowner = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -9556,6 +9917,7 @@ unreserved_keyword:
 			| INVOKER
 			| ISOLATION
 			| KEY
+			| LIBRARY
 			| LANCOMPILER
 			| LANGUAGE
 			| LARGE_P
@@ -9594,6 +9956,7 @@ unreserved_keyword:
 			| OIDS
 			| OPERATOR
 			| OPTION
+			| OPTIONS
 			| OWNED
 			| OWNER
 			| PARSER
@@ -9629,6 +9992,7 @@ unreserved_keyword:
 			| ROWS
 			| RULE
 			| SAVEPOINT
+			| SERVER
 			| SCHEMA
 			| SCROLL
 			| SEARCH
@@ -9681,6 +10045,7 @@ unreserved_keyword:
 			| WHITESPACE_P
 			| WITHOUT
 			| WORK
+			| WRAPPER
 			| WRITE
 			| XML_P
 			| YEAR_P

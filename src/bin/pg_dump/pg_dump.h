@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.143 2008/11/09 21:24:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.144 2008/12/19 16:25:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,8 @@ typedef enum
 	DO_TSDICT,
 	DO_TSTEMPLATE,
 	DO_TSCONFIG,
+	DO_FDW,
+	DO_FOREIGN_SERVER,
 	DO_BLOBS,
 	DO_BLOB_COMMENTS
 } DumpableObjectType;
@@ -418,6 +420,26 @@ typedef struct _cfgInfo
 	Oid			cfgparser;
 } TSConfigInfo;
 
+typedef struct _fdwInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	char	   *fdwlibrary;
+	char	   *fdwoptions;
+	char	   *fdwacl;
+} FdwInfo;
+
+typedef struct _foreignServerInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	Oid			srvfdw;
+	char	   *srvtype;
+	char	   *srvversion;
+	char	   *srvacl;
+	char	   *srvoptions;
+} ForeignServerInfo;
+
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
 extern bool g_verbose;			/* verbose flag */
@@ -500,5 +522,7 @@ extern TSParserInfo *getTSParsers(int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
 extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
+extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
+extern ForeignServerInfo *getForeignServers(int *numForeignServers);
 
 #endif   /* PG_DUMP_H */

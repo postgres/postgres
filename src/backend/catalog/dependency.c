@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.82 2008/11/10 21:49:16 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.83 2008/12/19 16:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,8 @@
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -47,6 +49,7 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_user_mapping.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -55,6 +58,7 @@
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
@@ -1105,6 +1109,18 @@ doDeletion(const ObjectAddress *object)
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
+		case OCLASS_USER_MAPPING:
+			RemoveUserMappingById(object->objectId);
+			break;
+
+		case OCLASS_FOREIGN_SERVER:
+			RemoveForeignServerById(object->objectId);
+			break;
+
+		case OCLASS_FDW:
+			RemoveForeignDataWrapperById(object->objectId);
+			break;
+
 			/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
 
 		default:
@@ -2005,6 +2021,18 @@ getObjectClass(const ObjectAddress *object)
 		case TableSpaceRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_TBLSPACE;
+
+		case ForeignDataWrapperRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_FDW;
+
+		case ForeignServerRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_FOREIGN_SERVER;
+
+		case UserMappingRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_USER_MAPPING;
 	}
 
 	/* shouldn't get here */
@@ -2498,6 +2526,50 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for tablespace %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("tablespace %s"), tblspace);
+				break;
+			}
+
+		case OCLASS_FDW:
+			{
+				ForeignDataWrapper *fdw;
+
+				fdw = GetForeignDataWrapper(object->objectId);
+				appendStringInfo(&buffer, _("foreign-data wrapper %s"), fdw->fdwname);
+				break;
+			}
+
+		case OCLASS_FOREIGN_SERVER:
+			{
+				ForeignServer *srv;
+
+				srv = GetForeignServer(object->objectId);
+				appendStringInfo(&buffer, _("server %s"), srv->servername);
+				break;
+			}
+
+		case OCLASS_USER_MAPPING:
+			{
+				HeapTuple		tup;
+				Oid				useid;
+				char		   *usename;
+
+				tup = SearchSysCache(USERMAPPINGOID,
+									 ObjectIdGetDatum(object->objectId),
+									 0, 0, 0);
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for user mapping %u",
+						 object->objectId);
+
+				useid = ((Form_pg_user_mapping) GETSTRUCT(tup))->umuser;
+
+				ReleaseSysCache(tup);
+
+				if (OidIsValid(useid))
+					usename = GetUserNameFromId(useid);
+				else
+					usename = "public";
+
+				appendStringInfo(&buffer, _("user mapping for %s"), usename);
 				break;
 			}
 

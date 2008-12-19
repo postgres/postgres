@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.462 2008/12/18 18:20:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.463 2008/12/19 16:25:16 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11336,6 +11336,21 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry>does current user have privilege for database</entry>
       </row>
       <row>
+       <entry><literal><function>has_foreign_data_wrapper_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>fdw</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for foreign-data wrapper</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_foreign_data_wrapper_privilege</function>(<parameter>fdw</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for foreign-data wrapper</entry>
+      </row>
+      <row>
        <entry><literal><function>has_function_privilege</function>(<parameter>user</parameter>,
                                   <parameter>function</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -11379,6 +11394,21 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        </entry>
        <entry><type>boolean</type></entry>
        <entry>does current user have privilege for schema</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_server_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>server</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for foreign server</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_server_privilege</function>(<parameter>server</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for foreign server</entry>
       </row>
       <row>
        <entry><literal><function>has_table_privilege</function>(<parameter>user</parameter>,
@@ -11436,10 +11466,16 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     <primary>has_function_privilege</primary>
    </indexterm>
    <indexterm>
+    <primary>has_foreign_data_wrapper_privilege</primary>
+   </indexterm>
+   <indexterm>
     <primary>has_language_privilege</primary>
    </indexterm>
    <indexterm>
     <primary>has_schema_privilege</primary>
+   </indexterm>
+   <indexterm>
+    <primary>has_server_privilege</primary>
    </indexterm>
    <indexterm>
     <primary>has_table_privilege</primary>
@@ -11479,6 +11515,14 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
    </para>
 
    <para>
+    <function>has_foreign_data_wrapper_privilege</function> checks whether a user
+    can access a foreign-data wrapper in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access privilege type must evaluate to
+    <literal>USAGE</literal>.
+   </para>
+
+   <para>
     <function>has_language_privilege</function> checks whether a user
     can access a procedural language in a particular way.  The possibilities
     for its arguments are analogous to <function>has_table_privilege</function>.
@@ -11492,6 +11536,14 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     arguments are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>CREATE</literal> or
+    <literal>USAGE</literal>.
+   </para>
+
+   <para>
+    <function>has_server_privilege</function> checks whether a user
+    can access a foreign server in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
    </para>
 

@@ -487,6 +487,31 @@ T652	SQL-dynamic statements in SQL routines			NO
 T653	SQL-schema statements in external routines			NO	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			NO	
+M001	Datalinks			NO	
+M002	Datalinks via SQL/CLI			NO	
+M003	Datalinks via Embedded SQL			NO	
+M004	Foreign data support			NO	
+M005	Foreign schema support			NO	
+M006	GetSQLString routine			NO	
+M007	TransmitRequest			NO	
+M009	GetOpts and GetStatistics routines			NO	
+M010	Foreign data wrapper support			NO	
+M011	Datalinks via Ada			NO	
+M012	Datalinks via C			NO	
+M013	Datalinks via COBOL			NO	
+M014	Datalinks via Fortran			NO	
+M015	Datalinks via M			NO	
+M016	Datalinks via Pascal			NO	
+M017	Datalinks via PL/I			NO	
+M018	Foreign data wrapper interface routines in Ada			NO	
+M019	Foreign data wrapper interface routines in C			NO	
+M020	Foreign data wrapper interface routines in COBOL			NO	
+M021	Foreign data wrapper interface routines in Fortran			NO	
+M022	Foreign data wrapper interface routines in MUMPS			NO	
+M023	Foreign data wrapper interface routines in Pascal			NO	
+M024	Foreign data wrapper interface routines in PL/I			NO	
+M030	SQL-server foreign data support			NO	
+M031	Foreign data wrapper general routines			NO	
 X010	XML type			YES	
 X011	Arrays of XML type			YES	
 X012	Multisets of XML type			NO	

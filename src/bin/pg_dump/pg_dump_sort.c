@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.21 2008/09/08 15:26:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.22 2008/12/19 16:25:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,8 @@ static const int oldObjectTypePriority[] =
 	4,							/* DO_TSDICT */
 	3,							/* DO_TSTEMPLATE */
 	5,							/* DO_TSCONFIG */
+	3,							/* DO_FDW */
+	4,							/* DO_FOREIGN_SERVER */
 	10,							/* DO_BLOBS */
 	11							/* DO_BLOB_COMMENTS */
 };
@@ -84,6 +86,8 @@ static const int newObjectTypePriority[] =
 	6,							/* DO_TSDICT */
 	5,							/* DO_TSTEMPLATE */
 	7,							/* DO_TSCONFIG */
+	3,							/* DO_FDW */
+	4,							/* DO_FOREIGN_SERVER */
 	14,							/* DO_BLOBS */
 	15							/* DO_BLOB_COMMENTS */
 };
@@ -1121,6 +1125,16 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_TSCONFIG:
 			snprintf(buf, bufsize,
 					 "TEXT SEARCH CONFIGURATION %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_FDW:
+			snprintf(buf, bufsize,
+					 "FOREIGN DATA WRAPPER %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_FOREIGN_SERVER:
+			snprintf(buf, bufsize,
+					 "FOREIGN SERVER %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_BLOBS:

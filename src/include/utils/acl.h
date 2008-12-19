@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.104 2008/09/08 00:47:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.105 2008/12/19 16:25:19 petere Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -146,6 +146,8 @@ typedef ArrayType Acl;
 #define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_TRUNCATE|ACL_REFERENCES|ACL_TRIGGER)
 #define ACL_ALL_RIGHTS_SEQUENCE		(ACL_USAGE|ACL_SELECT|ACL_UPDATE)
 #define ACL_ALL_RIGHTS_DATABASE		(ACL_CREATE|ACL_CREATE_TEMP|ACL_CONNECT)
+#define ACL_ALL_RIGHTS_FDW			(ACL_USAGE)
+#define ACL_ALL_RIGHTS_FOREIGN_SERVER (ACL_USAGE)
 #define ACL_ALL_RIGHTS_FUNCTION		(ACL_EXECUTE)
 #define ACL_ALL_RIGHTS_LANGUAGE		(ACL_USAGE)
 #define ACL_ALL_RIGHTS_NAMESPACE	(ACL_USAGE|ACL_CREATE)
@@ -184,6 +186,8 @@ typedef enum AclObjectKind
 	ACL_KIND_TABLESPACE,		/* pg_tablespace */
 	ACL_KIND_TSDICTIONARY,		/* pg_ts_dict */
 	ACL_KIND_TSCONFIGURATION,	/* pg_ts_config */
+	ACL_KIND_FDW,				/* pg_foreign_data_wrapper */
+	ACL_KIND_FOREIGN_SERVER,	/* pg_foreign_server */
 	MAX_ACL_KIND				/* MUST BE LAST */
 } AclObjectKind;
 
@@ -261,6 +265,10 @@ extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 					 AclMode mask, AclMaskHow how);
 extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 					  AclMode mask, AclMaskHow how);
+extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
+					  AclMode mask, AclMaskHow how);
+extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
+					  AclMode mask, AclMaskHow how);
 
 extern AclResult pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode);
 extern AclResult pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode);
@@ -268,6 +276,8 @@ extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode);
 extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
 extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);
+extern AclResult pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode);
+extern AclResult pg_foreign_server_aclcheck(Oid srv_oid, Oid roleid, AclMode mode);
 
 extern void aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 			   const char *objectname);
@@ -286,5 +296,6 @@ extern bool pg_database_ownercheck(Oid db_oid, Oid roleid);
 extern bool pg_conversion_ownercheck(Oid conv_oid, Oid roleid);
 extern bool pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid);
 extern bool pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid);
+extern bool pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid);
 
 #endif   /* ACL_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.117 2008/06/19 00:46:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.118 2008/12/19 16:25:17 petere Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -32,6 +32,8 @@
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_enum.h"
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -46,6 +48,7 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_user_mapping.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -365,6 +368,54 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		256
 	},
+	{ForeignDataWrapperRelationId,                  /* FOREIGNDATAWRAPPERNAME */
+		ForeignDataWrapperNameIndexId,
+		0,
+		1,
+		{
+			Anum_pg_foreign_data_wrapper_fdwname,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{ForeignDataWrapperRelationId,                  /* FOREIGNDATAWRAPPEROID */
+		ForeignDataWrapperOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{ForeignServerRelationId,                       /* FOREIGNSERVERNAME */
+		ForeignServerNameIndexId,
+		0,
+		1,
+		{
+			Anum_pg_foreign_server_srvname,
+			0,
+			0,
+			0
+		},
+		32
+	},
+	{ForeignServerRelationId,                       /* FOREIGNSERVEROID */
+		ForeignServerOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		32
+	},
 	{IndexRelationId,			/* INDEXRELID */
 		IndexRelidIndexId,
 		Anum_pg_index_indrelid,
@@ -676,6 +727,30 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		1024
+	},
+	{UserMappingRelationId,                  /* USERMAPPINGOID */
+		UserMappingOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		128
+	},
+	{UserMappingRelationId,                  /* USERMAPPINGUSERSERVER */
+		UserMappingUserServerIndexId,
+		0,
+		2,
+		{
+			Anum_pg_user_mapping_umuser,
+			Anum_pg_user_mapping_umserver,
+			0,
+			0
+		},
+		128
 	}
 };
 

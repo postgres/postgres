@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.49 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.50 2008/12/19 16:25:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -38,6 +38,18 @@ REVOKE [ GRANT OPTION FOR ]
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { USAGE | ALL [ PRIVILEGES ] }
+    ON FOREIGN DATA WRAPPER <replaceable>fdwname</replaceable> [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { USAGE | ALL [ PRIVILEGES ] }
+    ON FOREIGN SERVER <replaceable>servername</replaceable> [, ...]
     FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 

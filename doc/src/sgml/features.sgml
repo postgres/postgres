@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.29 2008/11/27 12:12:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.30 2008/12/19 16:25:16 petere Exp $ -->
 
 <appendix id="features">
  <title>SQL Conformance</title>
@@ -71,11 +71,11 @@
  </para>
 
  <para>
-  The <productname>PostgreSQL</productname> core covers parts 1, 2,
+  The <productname>PostgreSQL</productname> core covers parts 1, 2, 9,
   11, and 14.  Part 3 is covered by the ODBC driver, and part 13 is
   covered by the PL/Java plug-in, but exact conformance is currently
   not being verified for these components.  There are currently no
-  implementations of parts 4, 9, and 10
+  implementations of parts 4 and 10
   for <productname>PostgreSQL</productname>.
  </para>
 

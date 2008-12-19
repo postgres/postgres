@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.56 2008/11/09 21:24:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.57 2008/12/19 16:25:17 petere Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -380,6 +380,28 @@ CREATE VIEW pg_stat_bgwriter AS
         pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean,
         pg_stat_get_buf_written_backend() AS buffers_backend,
         pg_stat_get_buf_alloc() AS buffers_alloc;
+
+CREATE VIEW pg_user_mappings AS
+    SELECT
+        U.oid       AS umid,
+        S.oid       AS srvid,
+        S.srvname   AS srvname,
+        U.umuser    AS umuser,
+        CASE WHEN U.umuser = 0 THEN
+            'public'
+        ELSE
+            A.rolname
+        END AS usename,
+        CASE WHEN pg_has_role(S.srvowner, 'USAGE') OR has_server_privilege(S.oid, 'USAGE') THEN
+            U.umoptions
+        ELSE
+            NULL
+        END AS umoptions
+    FROM pg_user_mapping U
+         LEFT JOIN pg_authid A ON (A.oid = U.umuser) JOIN
+        pg_foreign_server S ON (U.umserver = S.oid);
+
+REVOKE ALL on pg_user_mapping FROM public;
 
 -- Tsearch debug function.  Defined here because it'd be pretty unwieldy
 -- to put it into pg_proc.h

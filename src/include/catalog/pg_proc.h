@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.531 2008/12/18 18:20:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.532 2008/12/19 16:25:18 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3582,6 +3582,32 @@ DESCR("current user privilege on tablespace by tablespace name");
 DATA(insert OID = 2395 (  has_tablespace_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_tablespace_privilege_id _null_ _null_ _null_ ));
 DESCR("current user privilege on tablespace by tablespace oid");
 
+DATA(insert OID = 3000 (  has_foreign_data_wrapper_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_foreign_data_wrapper_privilege_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on foreign data wrapper by username, foreign data wrapper name");
+DATA(insert OID = 3001 (  has_foreign_data_wrapper_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	has_foreign_data_wrapper_privilege_name_id _null_ _null_ _null_ ));
+DESCR("user privilege on foreign data wrapper by username, foreign data wrapper oid");
+DATA(insert OID = 3002 (  has_foreign_data_wrapper_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "26 25 25" _null_ _null_ _null_ _null_	has_foreign_data_wrapper_privilege_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on foreign data wrapper by user oid, foreign data wrapper name");
+DATA(insert OID = 3003 (  has_foreign_data_wrapper_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "26 26 25" _null_ _null_ _null_ _null_	has_foreign_data_wrapper_privilege_id_id _null_ _null_ _null_ ));
+DESCR("user privilege on foreign data wrapper by user oid, foreign data wrapper oid");
+DATA(insert OID = 3004 (  has_foreign_data_wrapper_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ has_foreign_data_wrapper_privilege_name _null_ _null_ _null_ ));
+DESCR("current user privilege on foreign data wrapper by foreign data wrapper name");
+DATA(insert OID = 3005 (  has_foreign_data_wrapper_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_foreign_data_wrapper_privilege_id _null_ _null_ _null_ ));
+DESCR("current user privilege on foreign data wrapper by foreign data wrapper oid");
+
+DATA(insert OID = 3006 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_server_privilege_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on server by username, server name");
+DATA(insert OID = 3007 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	has_server_privilege_name_id _null_ _null_ _null_ ));
+DESCR("user privilege on server by username, server oid");
+DATA(insert OID = 3008 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "26 25 25" _null_ _null_ _null_ _null_	has_server_privilege_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on server by user oid, server name");
+DATA(insert OID = 3009 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "26 26 25" _null_ _null_ _null_ _null_	has_server_privilege_id_id _null_ _null_ _null_ ));
+DESCR("user privilege on server by user oid, server oid");
+DATA(insert OID = 3010 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ has_server_privilege_name _null_ _null_ _null_ ));
+DESCR("current user privilege on server by server name");
+DATA(insert OID = 3011 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_server_privilege_id _null_ _null_ _null_ ));
+DESCR("current user privilege on server by server oid");
+
 DATA(insert OID = 2705 (  pg_has_role		PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 19 25" _null_ _null_ _null_ _null_	pg_has_role_name_name _null_ _null_ _null_ ));
 DESCR("user privilege on role by username, role name");
 DATA(insert OID = 2706 (  pg_has_role		PGNSP PGUID 12 1 0 0 f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	pg_has_role_name_id _null_ _null_ _null_ ));
@@ -4603,6 +4629,9 @@ DATA(insert OID = 2986 (  record_ge		   PGNSP PGUID 12 1 0 0 f f t f i 2 0 16 "2
 DESCR("record greater than or equal");
 DATA(insert OID = 2987 (  btrecordcmp	   PGNSP PGUID 12 1 0 0 f f t f i 2 0 23 "2249 2249" _null_ _null_ _null_ _null_ btrecordcmp _null_ _null_ _null_ ));
 DESCR("btree less-equal-greater");
+
+DATA(insert OID = 2998 (  pg_options_to_table		PGNSP PGUID 12 1 3 0 f f t t s 1 0 2249 "1009" "{1009,25,25}" "{i,o,o}" "{options_array,option_name,option_value}" _null_ pg_options_to_table _null_ _null_ _null_ ));
+DESCR("convert generic options array to name/value table");
 
 
 /*

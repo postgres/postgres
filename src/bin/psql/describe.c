@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.189 2008/12/19 14:39:58 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.190 2008/12/19 16:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -2781,6 +2781,159 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	termPQExpBuffer(&title);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dew
+ *
+ * Describes foreign-data wrappers
+ */
+bool
+listForeignDataWrappers(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT fdwname AS \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n"
+					  "  fdwlibrary AS \"%s\"\n",
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"),
+					  gettext_noop("Library"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n  fdwacl AS \"%s\","
+						  "  fdwoptions AS \"%s\"",
+						  gettext_noop("Access privileges"),
+						  gettext_noop("Options"));
+
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper WHERE 1=1\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "fdwname", NULL, NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of foreign-data wrappers");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * \des
+ *
+ * Describes servers.
+ */
+bool
+listForeignServers(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT s.srvname AS \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(s.srvowner) AS \"%s\",\n"
+					  "  f.fdwname AS \"%s\"\n",
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"),
+					  gettext_noop("Foreign-data wrapper"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n  s.srvacl AS \"%s\","
+						  "  s.srvtype AS \"%s\","
+						  "  s.srvversion AS \"%s\","
+						  "  s.srvoptions AS \"%s\"",
+						  gettext_noop("Access privileges"),
+						  gettext_noop("Type"),
+						  gettext_noop("Version"),
+						  gettext_noop("Options"));
+
+	appendPQExpBuffer(&buf,
+			  		  "\nFROM pg_foreign_server s\n"
+					  "JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "s.srvname", NULL, NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of foreign servers");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * \deu
+ *
+ * Describes user mappings.
+ */
+bool
+listUserMappings(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT um.srvname AS \"%s\",\n"
+					  "  um.usename AS \"%s\"",
+					  gettext_noop("Server"),
+					  gettext_noop("Username"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\n  um.umoptions AS \"%s\"",
+						  gettext_noop("Options"));
+
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_user_mappings um WHERE 1=1\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "um.srvname", "um.usename", NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of user mappings");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
