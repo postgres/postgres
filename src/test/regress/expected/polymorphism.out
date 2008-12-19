@@ -1005,10 +1005,10 @@ $$ select array_upper($1, 1) $$ language sql;
 ERROR:  cannot remove parameter defaults from existing function
 HINT:  Use DROP FUNCTION first.
 \df dfunc
-                            List of functions
- Schema | Name  | Result data type |         Argument data types          
---------+-------+------------------+--------------------------------------
- public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]
+                                  List of functions
+ Schema | Name  | Result data type |               Argument data types               
+--------+-------+------------------+-------------------------------------------------
+ public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]::integer[]
 (1 row)
 
 drop function dfunc(a variadic int[]);
