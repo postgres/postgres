@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.188 2008/11/09 21:24:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.189 2008/12/19 14:39:58 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -846,6 +846,7 @@ describeOneTableDetails(const char *schemaname,
 		bool		hastriggers;
 		bool		hasoids;
 		Oid			tablespace;
+		char	   *reloptions;
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -862,9 +863,12 @@ describeOneTableDetails(const char *schemaname,
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
 	   "SELECT relchecks, relkind, relhasindex, relhasrules, %s, "
-					  "relhasoids%s\n"
+					  "relhasoids"
+					 "%s%s\n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 					  (pset.sversion >= 80400 ? "relhastriggers" : "reltriggers <> 0"),
+					  (pset.sversion >= 80200 && verbose ?
+					   ", pg_catalog.array_to_string(reloptions, E', ')" : ",''"),
 					  (pset.sversion >= 80000 ? ", reltablespace" : ""),
 					  oid);
 	res = PSQLexec(buf.data, false);
@@ -886,8 +890,10 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 3), "t") == 0;
 	tableinfo.hastriggers = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
+	tableinfo.reloptions = pset.sversion >= 80200 ?
+							strdup(PQgetvalue(res, 0, 6)) : 0;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
-								atooid(PQgetvalue(res, 0, 6)) : 0;
+								atooid(PQgetvalue(res, 0, 7)) : 0;
 	PQclear(res);
 	res = NULL;
 	
@@ -1586,6 +1592,19 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&buf, "%s: %s", s,
 							  (tableinfo.hasoids ? _("yes") : _("no")));
 			printTableAddFooter(&cont, buf.data);
+
+			/* print reloptions */
+			if (pset.sversion >= 80200)
+			{
+				if (tableinfo.reloptions && tableinfo.reloptions[0] != '\0')
+				{
+					const char *t = _("Options");
+
+					printfPQExpBuffer(&buf, "%s: %s", t,
+									  tableinfo.reloptions);
+					printTableAddFooter(&cont, buf.data);
+				}
+			}
 		}
 
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
