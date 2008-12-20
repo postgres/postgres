@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.2 2008/12/20 09:40:56 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.3 2008/12/20 15:51:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@
 /*
  * Convert a DefElem list to the text array format that is used in
  * pg_foreign_data_wrapper, pg_foreign_server, and pg_user_mapping.
+ * Returns the array in the form of a Datum, or PointerGetDatum(NULL)
+ * if the list is empty.
  *
  * Note: The array is usually stored to database without further
  * processing, hence any validation should be done before this
@@ -45,13 +47,13 @@ optionListToArray(List *options)
 {
 	ArrayBuildState    *astate = NULL;
 	ListCell		   *cell;
-	text			   *t;
 
-	foreach (cell, options)
+	foreach(cell, options)
 	{
 		DefElem    *def = lfirst(cell);
-		const char *value = "";
+		const char *value;
 		Size		len;
+		text	   *t;
 
 		value = defGetString(def);
 		len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
@@ -76,6 +78,9 @@ optionListToArray(List *options)
  * The result is converted to array of text suitable for storing in
  * options.
  *
+ * Returns the array in the form of a Datum, or PointerGetDatum(NULL)
+ * if the list is empty.
+ *
  * This is used by CREATE/ALTER of FOREIGN DATA WRAPPER/SERVER/USER
  * MAPPING.  In the ALTER cases, oldOptions is the current text array
  * of options.
@@ -90,15 +95,15 @@ transformGenericOptions(Datum oldOptions,
 	List	 *resultOptions = untransformRelOptions(oldOptions);
 	ListCell *optcell;
 
-	foreach (optcell, optionDefList)
+	foreach(optcell, optionDefList)
 	{
+		OptionDefElem	*od = lfirst(optcell);
 		ListCell	    *cell;
 		ListCell		*prev = NULL;
-		OptionDefElem	*od = lfirst(optcell);
 
 		/*
 		 * Find the element in resultOptions.  We need this for
-		 * validation in all cases.
+		 * validation in all cases.  Also identify the previous element.
 		 */
 		foreach (cell, resultOptions)
 		{
@@ -190,7 +195,6 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 	Oid			fdwId;
-
 	Form_pg_foreign_data_wrapper form;
 
     /* Must be a superuser to change a FDW owner */
@@ -345,7 +349,8 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	 */
 	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
-	MemSet(nulls, false, Natts_pg_foreign_data_wrapper);
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
 
 	values[Anum_pg_foreign_data_wrapper_fdwname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->fdwname));
@@ -359,7 +364,8 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	 */
 	fdwlib = GetForeignDataWrapperLibrary(stmt->library);
 
-	fdwoptions = transformGenericOptions(0, stmt->options, FdwOpt, NULL,
+	fdwoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
+										 FdwOpt, NULL,
 										 fdwlib->validateOptionList);
 
 	if (PointerIsValid(DatumGetPointer(fdwoptions)))
@@ -447,6 +453,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 								tp,
 								Anum_pg_foreign_data_wrapper_fdwlibrary,
 								&isnull);
+		Assert(!isnull);
 		fdwlib = GetForeignDataWrapperLibrary(TextDatumGetCString(datum));
 	}
 
@@ -460,13 +467,15 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 								tp,
 								Anum_pg_foreign_data_wrapper_fdwoptions,
 								&isnull);
+		if (isnull)
+			datum = PointerGetDatum(NULL);
 
 		/* Transform the options */
 		datum = transformGenericOptions(datum, stmt->options, FdwOpt,
 										NULL, fdwlib->validateOptionList);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
-			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = ObjectIdGetDatum(datum);
+			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
 
@@ -603,7 +612,8 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	 */
 	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
 
-	MemSet(nulls, false, Natts_pg_foreign_server);
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
 
 	values[Anum_pg_foreign_server_srvname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->servername));
@@ -628,7 +638,8 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	nulls[Anum_pg_foreign_server_srvacl - 1] = true;
 
 	/* Add server options */
-	srvoptions = transformGenericOptions(0, stmt->options, ServerOpt, fdw,
+	srvoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
+										 ServerOpt, fdw,
 										 fdw->lib->validateOptionList);
 
 	if (PointerIsValid(DatumGetPointer(srvoptions)))
@@ -722,6 +733,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 								tp,
 								Anum_pg_foreign_server_srvoptions,
 								&isnull);
+		if (isnull)
+			datum = PointerGetDatum(NULL);
 
 		/* Prepare the options array */
 		datum = transformGenericOptions(datum, stmt->options, ServerOpt,
@@ -868,13 +881,15 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	 */
 	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
 
-	MemSet(nulls, false, Natts_pg_user_mapping);
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
 
 	values[Anum_pg_user_mapping_umuser - 1] = ObjectIdGetDatum(useId);
 	values[Anum_pg_user_mapping_umserver - 1] = ObjectIdGetDatum(srv->serverid);
 
 	/* Add user options */
-	useoptions = transformGenericOptions(0, stmt->options, UserMappingOpt,
+	useoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
+										 UserMappingOpt,
 										 fdw, fdw->lib->validateOptionList);
 
 	if (PointerIsValid(DatumGetPointer(useoptions)))
@@ -931,12 +946,10 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 						  ObjectIdGetDatum(srv->serverid),
 						  0, 0);
 	if (!OidIsValid(umId))
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				errmsg("user mapping \"%s\" does not exist for the server",
 					MappingUserName(useId))));
-	}
 
 	/*
 	 * Must be owner of the server to alter user mapping.
@@ -972,6 +985,8 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 								tp,
 								Anum_pg_user_mapping_umoptions,
 								&isnull);
+		if (isnull)
+			datum = PointerGetDatum(NULL);
 
 		/* Prepare the options array */
 		datum = transformGenericOptions(datum, stmt->options, UserMappingOpt,
