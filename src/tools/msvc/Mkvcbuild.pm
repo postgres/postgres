@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.34 2008/12/02 10:39:31 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.35 2008/12/20 22:04:02 mha Exp $
 #
 use Carp;
 use Win32;
@@ -310,6 +310,15 @@ sub mkvcbuild
             $p->AddFile('src\backend\utils\mb\conversion_procs\\' . $sub . '\\' . $1);
         }
         $p->AddReference($postgres);
+    }
+
+    $mf = Project::read_file('src\backend\foreign\Makefile');
+    $mf =~ s{\\s*[\r\n]+}{}mg;
+    $mf =~ m{FDW\s*=\s*(.*)$}m || die 'Could not match in foreign makefile' . "\n";
+    foreach my $foreign (split /\s+/,$1)
+    {
+        my $proj = $solution->AddProject($foreign . '_fdw', 'dll', 'foreign', 'src\backend\foreign\\' . $foreign);
+        $proj->AddReference($postgres);
     }
 
     $mf = Project::read_file('src\bin\scripts\Makefile');
