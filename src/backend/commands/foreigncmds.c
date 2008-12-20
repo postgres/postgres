@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.1 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.2 2008/12/20 09:40:56 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,7 +316,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	bool			nulls[Natts_pg_foreign_data_wrapper];
 	HeapTuple		tuple;
 	Oid				fdwId;
-	Datum			fdwoptions = InvalidOid;
+	Datum			fdwoptions;
 	Oid				ownerId;
 	ForeignDataWrapperLibrary  *fdwlib;
 
@@ -362,7 +362,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	fdwoptions = transformGenericOptions(0, stmt->options, FdwOpt, NULL,
 										 fdwlib->validateOptionList);
 
-	if (OidIsValid(fdwoptions))
+	if (PointerIsValid(DatumGetPointer(fdwoptions)))
 		values[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = fdwoptions;
 	else
 		nulls[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
@@ -465,7 +465,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		datum = transformGenericOptions(datum, stmt->options, FdwOpt,
 										NULL, fdwlib->validateOptionList);
 
-		if (OidIsValid(datum))
+		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = ObjectIdGetDatum(datum);
 		else
 			repl_null[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
@@ -565,7 +565,7 @@ void
 CreateForeignServer(CreateForeignServerStmt *stmt)
 {
 	Relation		rel;
-	Datum			srvoptions = InvalidOid;
+	Datum			srvoptions;
 	Datum			values[Natts_pg_foreign_server];
 	bool			nulls[Natts_pg_foreign_server];
 	HeapTuple		tuple;
@@ -631,7 +631,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	srvoptions = transformGenericOptions(0, stmt->options, ServerOpt, fdw,
 										 fdw->lib->validateOptionList);
 
-	if (OidIsValid(srvoptions))
+	if (PointerIsValid(DatumGetPointer(srvoptions)))
 		values[Anum_pg_foreign_server_srvoptions - 1] = srvoptions;
 	else
 		nulls[Anum_pg_foreign_server_srvoptions - 1] = true;
@@ -727,7 +727,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 		datum = transformGenericOptions(datum, stmt->options, ServerOpt,
 										fdw, fdw->lib->validateOptionList);
 
-		if (OidIsValid(datum))
+		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_foreign_server_srvoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_foreign_server_srvoptions - 1] = true;
@@ -822,7 +822,7 @@ void
 CreateUserMapping(CreateUserMappingStmt *stmt)
 {
 	Relation			rel;
-	Datum				useoptions = InvalidOid;
+	Datum				useoptions;
 	Datum				values[Natts_pg_user_mapping];
 	bool				nulls[Natts_pg_user_mapping];
 	HeapTuple			tuple;
@@ -877,7 +877,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	useoptions = transformGenericOptions(0, stmt->options, UserMappingOpt,
 										 fdw, fdw->lib->validateOptionList);
 
-	if (OidIsValid(useoptions))
+	if (PointerIsValid(DatumGetPointer(useoptions)))
 		values[Anum_pg_user_mapping_umoptions - 1] = useoptions;
 	else
 		nulls[Anum_pg_user_mapping_umoptions - 1] = true;
@@ -977,7 +977,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 		datum = transformGenericOptions(datum, stmt->options, UserMappingOpt,
 										fdw, fdw->lib->validateOptionList);
 
-		if (OidIsValid(datum))
+		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_user_mapping_umoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_user_mapping_umoptions - 1] = true;
