@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.646 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.647 2008/12/20 16:02:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3001,7 +3001,7 @@ CreateUserMappingStmt: CREATE USER MAPPING FOR auth_ident SERVER name create_gen
 auth_ident:
 			CURRENT_USER 	{ $$ = "current_user"; }
 		|	USER			{ $$ = "current_user"; }
-		|	RoleId 			{ $$ = (strcmp($1, "public") == 0) ? NULL : $1 }
+		|	RoleId 			{ $$ = (strcmp($1, "public") == 0) ? NULL : $1; }
 		;
 
 /*****************************************************************************
