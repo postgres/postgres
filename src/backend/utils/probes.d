@@ -3,7 +3,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.4 2008/12/17 01:39:04 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.5 2008/12/24 20:41:29 momjian Exp $
  * ----------
  */
 
@@ -89,6 +89,6 @@ provider postgresql {
 
 	probe xlog__insert(unsigned char, unsigned char);
 	probe xlog__switch();
-	probe wal__buffer__write__start();
-	probe wal__buffer__write__done();
+	probe wal__buffer__write__dirty__start();
+	probe wal__buffer__write__dirty__done();
 };
