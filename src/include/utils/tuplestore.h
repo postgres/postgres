@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.25 2008/10/04 21:56:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.26 2008/12/27 17:39:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,8 @@ extern void tuplestore_select_read_pointer(Tuplestorestate *state, int ptr);
 
 extern void tuplestore_copy_read_pointer(Tuplestorestate *state,
 										 int srcptr, int destptr);
+
+extern void tuplestore_trim(Tuplestorestate *state);
 
 extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 						TupleTableSlot *slot);

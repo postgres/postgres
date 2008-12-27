@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.63 2008/10/01 19:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.64 2008/12/27 17:39:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,11 +66,11 @@ ExecMaterial(MaterialState *node)
 			 * Allocate a second read pointer to serve as the mark.
 			 * We know it must have index 1, so needn't store that.
 			 */
-			int		ptrn;
+			int		ptrno;
 
-			ptrn = tuplestore_alloc_read_pointer(tuplestorestate,
-												 node->eflags);
-			Assert(ptrn == 1);
+			ptrno = tuplestore_alloc_read_pointer(tuplestorestate,
+												  node->eflags);
+			Assert(ptrno == 1);
 		}
 		node->tuplestorestate = tuplestorestate;
 	}
@@ -182,6 +182,16 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 								  EXEC_FLAG_BACKWARD |
 								  EXEC_FLAG_MARK));
 
+	/*
+	 * Tuplestore's interpretation of the flag bits is subtly different from
+	 * the general executor meaning: it doesn't think BACKWARD necessarily
+	 * means "backwards all the way to start".  If told to support BACKWARD we
+	 * must include REWIND in the tuplestore eflags, else tuplestore_trim
+	 * might throw away too much.
+	 */
+	if (eflags & EXEC_FLAG_BACKWARD)
+		matstate->eflags |= EXEC_FLAG_REWIND;
+
 	matstate->eof_underlying = false;
 	matstate->tuplestorestate = NULL;
 
@@ -278,6 +288,11 @@ ExecMaterialMarkPos(MaterialState *node)
 	 * copy the active read pointer to the mark.
 	 */
 	tuplestore_copy_read_pointer(node->tuplestorestate, 0, 1);
+
+	/*
+	 * since we may have advanced the mark, try to truncate the tuplestore.
+	 */
+	tuplestore_trim(node->tuplestorestate);
 }
 
 /* ----------------------------------------------------------------

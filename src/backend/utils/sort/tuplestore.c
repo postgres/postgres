@@ -30,9 +30,10 @@
  * in a format that allows either forward or backward scan.  Otherwise, only
  * forward scan is allowed.  A request for backward scan must be made before
  * putting any tuples into the tuplestore.  Rewind is normally allowed but
- * can be turned off via tuplestore_set_eflags; turning off both backward
- * scan and rewind for all read pointers enables truncation of the tuplestore
- * at the oldest read point for minimal memory usage.
+ * can be turned off via tuplestore_set_eflags; turning off rewind for all
+ * read pointers enables truncation of the tuplestore at the oldest read point
+ * for minimal memory usage.  (The caller must explicitly call tuplestore_trim
+ * at appropriate times for truncation to actually happen.)
  *
  * Note: in TSS_WRITEFILE state, the temp file's seek position is the
  * current write position, and the write-position variables in the tuplestore
@@ -46,7 +47,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.43 2008/10/28 15:51:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.44 2008/12/27 17:39:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +102,7 @@ struct Tuplestorestate
 	int			eflags;			/* capability flags (OR of pointers' flags) */
 	bool		backward;		/* store extra length words in file? */
 	bool		interXact;		/* keep open through transactions? */
+	bool		truncated;		/* tuplestore_trim has removed tuples? */
 	long		availMem;		/* remaining memory available, in bytes */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 
@@ -220,7 +222,6 @@ static Tuplestorestate *tuplestore_begin_common(int eflags,
 						int maxKBytes);
 static void tuplestore_puttuple_common(Tuplestorestate *state, void *tuple);
 static void dumptuples(Tuplestorestate *state);
-static void tuplestore_trim(Tuplestorestate *state);
 static unsigned int getlen(Tuplestorestate *state, bool eofOK);
 static void *copytup_heap(Tuplestorestate *state, void *tup);
 static void writetup_heap(Tuplestorestate *state, void *tup);
@@ -242,6 +243,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->status = TSS_INMEM;
 	state->eflags = eflags;
 	state->interXact = interXact;
+	state->truncated = false;
 	state->availMem = maxKBytes * 1024L;
 	state->myfile = NULL;
 
@@ -319,6 +321,10 @@ tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)
  *		EXEC_FLAG_BACKWARD		need backward fetch
  * If tuplestore_set_eflags is not called, REWIND is allowed, and BACKWARD
  * is set per "randomAccess" in the tuplestore_begin_xxx call.
+ *
+ * NOTE: setting BACKWARD without REWIND means the pointer can read backwards,
+ * but not further than the truncation point (the furthest-back read pointer
+ * position at the time of the last tuplestore_trim call).
  */
 void
 tuplestore_set_eflags(Tuplestorestate *state, int eflags)
@@ -397,6 +403,7 @@ tuplestore_clear(Tuplestorestate *state)
 		}
 	}
 	state->status = TSS_INMEM;
+	state->truncated = false;
 	state->memtupcount = 0;
 	readptr = state->readptrs;
 	for (i = 0; i < state->readptrcount; readptr++, i++)
@@ -723,12 +730,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 					return NULL;
 				if (readptr->current < state->memtupcount)
 				{
-					/*
-					 * We have another tuple, so return it.  Note: in
-					 * principle we could try tuplestore_trim() here after
-					 * advancing current, but this would cost cycles with
-					 * little chance of success, so we don't bother.
-					 */
+					/* We have another tuple, so return it */
 					return state->memtuples[readptr->current++];
 				}
 				readptr->eof_reached = true;
@@ -738,7 +740,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			{
 				/*
 				 * if all tuples are fetched already then we return last
-				 * tuple, else - tuple before last returned.
+				 * tuple, else tuple before last returned.
 				 */
 				if (readptr->eof_reached)
 				{
@@ -748,11 +750,17 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				else
 				{
 					if (readptr->current <= 0)
+					{
+						Assert(!state->truncated);
 						return NULL;
+					}
 					readptr->current--;	/* last returned tuple */
 				}
 				if (readptr->current <= 0)
+				{
+					Assert(!state->truncated);
 					return NULL;
+				}
 				return state->memtuples[readptr->current - 1];
 			}
 			break;
@@ -795,7 +803,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			 * Backward.
 			 *
 			 * if all tuples are fetched already then we return last tuple,
-			 * else - tuple before last returned.
+			 * else tuple before last returned.
 			 *
 			 * Back up to fetch previously-returned tuple's ending length
 			 * word. If seek fails, assume we are at start of file.
@@ -805,6 +813,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			{
 				/* even a failed backwards fetch gets you out of eof state */
 				readptr->eof_reached = false;
+				Assert(!state->truncated);
 				return NULL;
 			}
 			tuplen = getlen(state, false);
@@ -833,6 +842,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 									-(long) (tuplen + sizeof(unsigned int)),
 									SEEK_CUR) != 0)
 						elog(ERROR, "bogus tuple length in backward scan");
+					Assert(!state->truncated);
 					return NULL;
 				}
 				tuplen = getlen(state, false);
@@ -887,7 +897,8 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
  * tuplestore_advance - exported function to adjust position without fetching
  *
  * We could optimize this case to avoid palloc/pfree overhead, but for the
- * moment it doesn't seem worthwhile.
+ * moment it doesn't seem worthwhile.  (XXX this probably needs to be
+ * reconsidered given the needs of window functions.)
  */
 bool
 tuplestore_advance(Tuplestorestate *state, bool forward)
@@ -948,6 +959,7 @@ tuplestore_rescan(Tuplestorestate *state)
 	TSReadPointer *readptr = &state->readptrs[state->activeptr];
 
 	Assert(readptr->eflags & EXEC_FLAG_REWIND);
+	Assert(!state->truncated);
 
 	switch (state->status)
 	{
@@ -1006,10 +1018,8 @@ tuplestore_copy_read_pointer(Tuplestorestate *state,
 	switch (state->status)
 	{
 		case TSS_INMEM:
-			/* We might be able to truncate the tuplestore */
-			tuplestore_trim(state);
-			break;
 		case TSS_WRITEFILE:
+			/* no work */
 			break;
 		case TSS_READFILE:
 			/*
@@ -1053,8 +1063,17 @@ tuplestore_copy_read_pointer(Tuplestorestate *state,
 
 /*
  * tuplestore_trim	- remove all no-longer-needed tuples
+ *
+ * Calling this function authorizes the tuplestore to delete all tuples
+ * before the oldest read pointer, if no read pointer is marked as requiring
+ * REWIND capability.
+ *
+ * Note: this is obviously safe if no pointer has BACKWARD capability either.
+ * If a pointer is marked as BACKWARD but not REWIND capable, it means that
+ * the pointer can be moved backward but not before the oldest other read
+ * pointer.
  */
-static void
+void
 tuplestore_trim(Tuplestorestate *state)
 {
 	int			oldest;
@@ -1062,10 +1081,9 @@ tuplestore_trim(Tuplestorestate *state)
 	int			i;
 
 	/*
-	 * We can truncate the tuplestore if neither backward scan nor
-	 * rewind capability are required by any read pointer.
+	 * Truncation is disallowed if any read pointer requires rewind capability.
 	 */
-	if (state->eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_REWIND))
+	if (state->eflags & EXEC_FLAG_REWIND)
 		return;
 
 	/*
@@ -1125,6 +1143,9 @@ tuplestore_trim(Tuplestorestate *state)
 		if (!state->readptrs[i].eof_reached)
 			state->readptrs[i].current -= nremove;
 	}
+
+	/* mark tuplestore as truncated (used for Assert crosschecks only) */
+	state->truncated = true;
 }
 
 
