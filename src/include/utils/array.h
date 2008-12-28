@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.72 2008/11/14 00:51:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.73 2008/12/28 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ extern ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
 extern Datum makeArrayResult(ArrayBuildState *astate,
 				MemoryContext rcontext);
 extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
-				  int *dims, int *lbs, MemoryContext rcontext);
+				  int *dims, int *lbs, MemoryContext rcontext, bool release);
 
 /*
  * prototypes for functions defined in arrayutils.c

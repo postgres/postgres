@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.15 2008/10/04 21:56:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.16 2008/12/28 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,14 @@
 
 {
 	"invalid_argument_for_logarithm", ERRCODE_INVALID_ARGUMENT_FOR_LOG
+},
+
+{
+	"invalid_argument_for_ntile_function", ERRCODE_INVALID_ARGUMENT_FOR_NTILE
+},
+
+{
+	"invalid_argument_for_nth_value_function", ERRCODE_INVALID_ARGUMENT_FOR_NTH_VALUE
 },
 
 {
@@ -481,6 +489,10 @@
 
 {
 	"grouping_error", ERRCODE_GROUPING_ERROR
+},
+
+{
+	"windowing_error", ERRCODE_WINDOWING_ERROR
 },
 
 {

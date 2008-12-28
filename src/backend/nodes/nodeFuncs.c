@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.35 2008/10/21 20:42:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.36 2008/12/28 18:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,9 @@ exprType(Node *expr)
 			break;
 		case T_Aggref:
 			type = ((Aggref *) expr)->aggtype;
+			break;
+		case T_WindowFunc:
+			type = ((WindowFunc *) expr)->wintype;
 			break;
 		case T_ArrayRef:
 			{
@@ -548,6 +551,8 @@ expression_returns_set_walker(Node *node, void *context)
 	/* Avoid recursion for some cases that can't return a set */
 	if (IsA(node, Aggref))
 		return false;
+	if (IsA(node, WindowFunc))
+		return false;
 	if (IsA(node, DistinctExpr))
 		return false;
 	if (IsA(node, ScalarArrayOpExpr))
@@ -633,6 +638,10 @@ exprLocation(Node *expr)
 		case T_Aggref:
 			/* function name should always be the first thing */
 			loc = ((Aggref *) expr)->location;
+			break;
+		case T_WindowFunc:
+			/* function name should always be the first thing */
+			loc = ((WindowFunc *) expr)->location;
 			break;
 		case T_ArrayRef:
 			/* just use array argument's location */
@@ -868,6 +877,9 @@ exprLocation(Node *expr)
 			/* just use argument's location (ignore operator, if any) */
 			loc = exprLocation(((SortBy *) expr)->node);
 			break;
+		case T_WindowDef:
+			loc = ((WindowDef *) expr)->location;
+			break;
 		case T_TypeName:
 			loc = ((TypeName *) expr)->location;
 			break;
@@ -1038,6 +1050,16 @@ expression_tree_walker(Node *node,
 		case T_Aggref:
 			{
 				Aggref	   *expr = (Aggref *) node;
+
+				/* recurse directly on List */
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
+		case T_WindowFunc:
+			{
+				WindowFunc *expr = (WindowFunc *) node;
 
 				/* recurse directly on List */
 				if (expression_tree_walker((Node *) expr->args,
@@ -1220,6 +1242,16 @@ expression_tree_walker(Node *node,
 			return walker(((TargetEntry *) node)->expr, context);
 		case T_Query:
 			/* Do nothing with a sub-Query, per discussion above */
+			break;
+		case T_WindowClause:
+			{
+				WindowClause    *wc = (WindowClause *) node;
+
+				if (walker(wc->partitionClause, context))
+					return true;
+				if (walker(wc->orderClause, context))
+					return true;
+			}
 			break;
 		case T_CommonTableExpr:
 			{
@@ -1539,6 +1571,16 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_WindowFunc:
+			{
+				WindowFunc *wfunc = (WindowFunc *) node;
+				WindowFunc *newnode;
+
+				FLATCOPY(newnode, wfunc, WindowFunc);
+				MUTATE(newnode->args, wfunc->args, List *);
+				return (Node *) newnode;
+			}
+			break;
 		case T_ArrayRef:
 			{
 				ArrayRef   *arrayref = (ArrayRef *) node;
@@ -1848,6 +1890,17 @@ expression_tree_mutator(Node *node,
 		case T_Query:
 			/* Do nothing with a sub-Query, per discussion above */
 			return node;
+		case T_WindowClause:
+			{
+				WindowClause    *wc = (WindowClause *) node;
+				WindowClause    *newnode;
+
+				FLATCOPY(newnode, wc, WindowClause);
+				MUTATE(newnode->partitionClause, wc->partitionClause, List *);
+				MUTATE(newnode->orderClause, wc->orderClause, List *);
+				return (Node *) newnode;
+			}
+			break;
 		case T_CommonTableExpr:
 			{
 				CommonTableExpr *cte = (CommonTableExpr *) node;
@@ -2280,6 +2333,8 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 					return true;
 				if (walker(stmt->havingClause, context))
 					return true;
+				if (walker(stmt->windowClause, context))
+					return true;
 				if (walker(stmt->withClause, context))
 					return true;
 				if (walker(stmt->valuesLists, context))
@@ -2317,6 +2372,8 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 				FuncCall *fcall = (FuncCall *) node;
 
 				if (walker(fcall->args, context))
+					return true;
+				if (walker(fcall->over, context))
 					return true;
 				/* function name is deemed uninteresting */
 			}
@@ -2365,6 +2422,16 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_SortBy:
 			return walker(((SortBy *) node)->node, context);
+		case T_WindowDef:
+			{
+				WindowDef *wd = (WindowDef *) node;
+
+				if (walker(wd->partitionClause, context))
+					return true;
+				if (walker(wd->orderClause, context))
+					return true;
+			}
+			break;
 		case T_RangeSubselect:
 			{
 				RangeSubselect *rs = (RangeSubselect *) node;

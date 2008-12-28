@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.114 2008/05/09 21:31:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.115 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2611,7 +2611,9 @@ int2_sum(PG_FUNCTION_ARGS)
 	 * as incorrect, so just ifdef it out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
@@ -2660,7 +2662,9 @@ int4_sum(PG_FUNCTION_ARGS)
 	 * as incorrect, so just ifdef it out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
@@ -2753,7 +2757,9 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 	 * parameter in-place to reduce palloc overhead. Otherwise we need to make
 	 * a copy of it before scribbling on it.
 	 */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 		transarray = PG_GETARG_ARRAYTYPE_P(0);
 	else
 		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
@@ -2781,7 +2787,9 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 	 * parameter in-place to reduce palloc overhead. Otherwise we need to make
 	 * a copy of it before scribbling on it.
 	 */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 		transarray = PG_GETARG_ARRAYTYPE_P(0);
 	else
 		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.126 2008/12/09 20:52:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.127 2008/12/28 18:53:54 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1203,6 +1203,12 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
+      A window function call.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       A type cast.
      </para>
     </listitem>
@@ -1445,7 +1451,7 @@ $1.somecolumn
     enclosed in parentheses:
 
 <synopsis>
-<replaceable>function</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional> )
+<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional> )
 </synopsis>
    </para>
 
@@ -1480,7 +1486,7 @@ sqrt(2)
 <synopsis>
 <replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable> [ , ... ] )
 <replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable> [ , ... ] )
-<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable> [ , ... ] )
+<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)
 <replaceable>aggregate_name</replaceable> ( * )
 </synopsis>
 
@@ -1488,7 +1494,7 @@ sqrt(2)
     defined aggregate (possibly qualified with a schema name), and
     <replaceable>expression</replaceable> is
     any value expression that does not itself contain an aggregate
-    expression.
+    expression or a window function call.
    </para>
 
    <para>
@@ -1548,6 +1554,89 @@ sqrt(2)
      <literal>DISTINCT</> with more than one input expression.
     </para>
    </note>
+  </sect2>
+
+  <sect2 id="syntax-window-functions">
+   <title>Window Function Calls</title>
+
+   <indexterm zone="syntax-window-functions">
+    <primary>window function</primary>
+    <secondary>invocation</secondary>
+   </indexterm>
+
+   <indexterm zone="syntax-window-functions">
+    <primary>OVER clause</primary>
+   </indexterm>
+
+   <para>
+    A <firstterm>window function call</firstterm> represents the application
+    of an aggregate-like function over some portion of the rows selected
+    by a query.  Unlike regular aggregate function calls, this is not tied
+    to grouping of the selected rows into a single output row &mdash; each
+    row remains separate in the query output.  However the window function
+    is able to scan all the rows that would be part of the current row's
+    group according to the grouping specification (<literal>PARTITION BY</>
+    list) of the window function call.
+    The syntax of a window function call is one of the following:
+
+<synopsis>
+<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) OVER ( <replaceable class="parameter">window_definition</replaceable> )
+<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) OVER <replaceable>window_name</replaceable>
+<replaceable>function_name</replaceable> ( * ) OVER ( <replaceable class="parameter">window_definition</replaceable> )
+<replaceable>function_name</replaceable> ( * ) OVER <replaceable>window_name</replaceable>
+</synopsis>
+    where <replaceable class="parameter">window_definition</replaceable>
+    has the syntax
+<synopsis>
+[ <replaceable class="parameter">window_name</replaceable> ]
+[ PARTITION BY <replaceable class="parameter">expression</replaceable> [, ...] ]
+[ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
+</synopsis>
+
+    Here, <replaceable>expression</replaceable> represents any value
+    expression that does not itself contain window function calls.
+    The <literal>PARTITION BY</> and <literal>ORDER BY</> lists have
+    essentially the same syntax and semantics as <literal>GROUP BY</>
+    and <literal>ORDER BY</> clauses of the whole query.
+    <replaceable>window_name</replaceable> is a reference to a named window
+    specification defined in the query's <literal>WINDOW</literal> clause.
+    Named window specifications are usually referenced with just
+    <literal>OVER</> <replaceable>window_name</replaceable>, but it is
+    also possible to write a window name inside the parentheses and then
+    optionally override its ordering clause with <literal>ORDER BY</>.
+    This latter syntax follows the same rules as modifying an existing
+    window name within the <literal>WINDOW</literal> clause; see the
+    <xref linkend="sql-select" endterm="sql-select-title"> reference
+    page for details.
+   </para>
+
+   <para>
+    The built-in window functions are described in <xref
+    linkend="functions-window-table">.  Also, any built-in or
+    user-defined aggregate function can be used as a window function.
+    Currently, there is no provision for user-defined window functions
+    other than aggregates.
+   </para>
+
+   <para>
+    The syntaxes using <literal>*</> are used for calling parameter-less
+    aggregate functions as window functions, for example
+    <literal>count(*) OVER (PARTITION BY x ORDER BY y)</>.
+    <literal>*</> is customarily not used for non-aggregate window functions.
+    Aggregate window functions, unlike normal aggregate functions, do not
+    allow <literal>DISTINCT</> to be used within the function argument list.
+   </para>
+
+   <para>
+    Window function calls are permitted only in the <literal>SELECT</literal>
+    list and the <literal>ORDER BY</> clause of the query.
+   </para>
+
+   <para>
+    More information about window functions can be found in
+    <xref linkend="tutorial-window"> and
+    <xref linkend="queries-window">.
+   </para>
   </sect2>
 
   <sect2 id="sql-syntax-type-casts">

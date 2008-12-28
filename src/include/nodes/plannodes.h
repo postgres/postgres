@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.105 2008/10/07 19:27:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.106 2008/12/28 18:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,6 +535,21 @@ typedef struct Agg
 	Oid		   *grpOperators;	/* equality operators to compare with */
 	long		numGroups;		/* estimated number of groups in input */
 } Agg;
+
+/* ----------------
+ *		window aggregate node
+ * ----------------
+ */
+typedef struct WindowAgg
+{
+	Plan		plan;
+	int			partNumCols;	/* number of columns in partition clause */
+	AttrNumber *partColIdx;		/* their indexes in the target list */
+	Oid		   *partOperators;	/* equality operators for partition columns */
+	int			ordNumCols;		/* number of columns in ordering clause */
+	AttrNumber *ordColIdx;		/* their indexes in the target list */
+	Oid		   *ordOperators;	/* equality operators for ordering columns */
+} WindowAgg;
 
 /* ----------------
  *		unique node

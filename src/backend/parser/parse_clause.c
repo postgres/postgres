@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.181 2008/10/06 02:12:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.182 2008/12/28 18:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,14 @@
 #define ORDER_CLAUSE 0
 #define GROUP_CLAUSE 1
 #define DISTINCT_ON_CLAUSE 2
+#define PARTITION_CLAUSE 3
 
-static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
+static const char * const clauseText[] = {
+	"ORDER BY",
+	"GROUP BY",
+	"DISTINCT ON",
+	"PARTITION BY"
+};
 
 static void extractRemainingColumns(List *common_colnames,
 						List *src_colnames, List *src_colvars,
@@ -76,6 +82,7 @@ static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
+static WindowClause *findWindowClause(List *wclist, const char *name);
 
 
 /*
@@ -555,15 +562,20 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * Disallow aggregate functions in the expression.	(No reason to postpone
 	 * this check until parseCheckAggregates.)
 	 */
-	if (pstate->p_hasAggs)
-	{
-		if (checkExprHasAggs(funcexpr))
-			ereport(ERROR,
-					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("cannot use aggregate function in function expression in FROM"),
-					 parser_errposition(pstate,
-										locate_agg_of_level(funcexpr, 0))));
-	}
+	if (pstate->p_hasAggs &&
+		checkExprHasAggs(funcexpr))
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate function in function expression in FROM"),
+				 parser_errposition(pstate,
+									locate_agg_of_level(funcexpr, 0))));
+	if (pstate->p_hasWindowFuncs &&
+		checkExprHasWindowFuncs(funcexpr))
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in function expression in FROM"),
+				 parser_errposition(pstate,
+									locate_windowfunc(funcexpr))));
 
 	/*
 	 * OK, build an RTE for the function.
@@ -1156,15 +1168,27 @@ transformLimitClause(ParseState *pstate, Node *clause,
 				 parser_errposition(pstate,
 									locate_var_of_level(qual, 0))));
 	}
-	if (checkExprHasAggs(qual))
+	if (pstate->p_hasAggs &&
+		checkExprHasAggs(qual))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain aggregates",
+				 errmsg("argument of %s must not contain aggregate functions",
 						constructName),
 				 parser_errposition(pstate,
 									locate_agg_of_level(qual, 0))));
+	}
+	if (pstate->p_hasWindowFuncs &&
+		checkExprHasWindowFuncs(qual))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+		/* translator: %s is name of a SQL construct, eg LIMIT */
+				 errmsg("argument of %s must not contain window functions",
+						constructName),
+				 parser_errposition(pstate,
+									locate_windowfunc(qual))));
 	}
 
 	return qual;
@@ -1234,7 +1258,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));
 		int			location = ((ColumnRef *) node)->location;
 
-		if (clause == GROUP_CLAUSE)
+		if (clause == GROUP_CLAUSE || clause == PARTITION_CLAUSE)
 		{
 			/*
 			 * In GROUP BY, we must prefer a match against a FROM-clause
@@ -1251,6 +1275,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 			 * SQL99 do not allow GROUPing BY an outer reference, so this
 			 * breaks no cases that are legal per spec, and it seems a more
 			 * self-consistent behavior.
+			 *
+			 * Window PARTITION BY clauses should act exactly like GROUP BY.
 			 */
 			if (colNameToVar(pstate, name, true, location) != NULL)
 				name = NULL;
@@ -1356,12 +1382,17 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
  *
  * GROUP BY items will be added to the targetlist (as resjunk columns)
  * if not already present, so the targetlist must be passed by reference.
+ *
+ * This is also used for window PARTITION BY clauses (which actually act
+ * just the same, except for the clause name used in error messages).
  */
 List *
 transformGroupClause(ParseState *pstate, List *grouplist,
-					 List **targetlist, List *sortClause)
+					 List **targetlist, List *sortClause,
+					 bool isPartition)
 {
 	List	   *result = NIL;
+	int			clause = isPartition ? PARTITION_CLAUSE : GROUP_CLAUSE;
 	ListCell   *gl;
 
 	foreach(gl, grouplist)
@@ -1370,8 +1401,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		TargetEntry *tle;
 		bool		found = false;
 
-		tle = findTargetlistEntry(pstate, gexpr,
-								  targetlist, GROUP_CLAUSE);
+		tle = findTargetlistEntry(pstate, gexpr, targetlist, clause);
 
 		/* Eliminate duplicates (GROUP BY x, x) */
 		if (targetIsInSortList(tle, InvalidOid, result))
@@ -1449,6 +1479,125 @@ transformSortClause(ParseState *pstate,
 	}
 
 	return sortlist;
+}
+
+/*
+ * transformWindowDefinitions -
+ *		transform window definitions (WindowDef to WindowClause)
+ */
+List *
+transformWindowDefinitions(ParseState *pstate,
+						   List *windowdefs,
+						   List **targetlist)
+{
+	List	   *result = NIL;
+	Index		winref = 0;
+	ListCell   *lc;
+
+	foreach(lc, windowdefs)
+	{
+		WindowDef	 *windef = (WindowDef *) lfirst(lc);
+		WindowClause *refwc = NULL;
+		List		 *partitionClause;
+		List		 *orderClause;
+		WindowClause *wc;
+
+		winref++;
+
+		/*
+		 * Check for duplicate window names.
+		 */
+		if (windef->name &&
+			findWindowClause(result, windef->name) != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WINDOWING_ERROR),
+					 errmsg("window \"%s\" is already defined", windef->name),
+					 parser_errposition(pstate, windef->location)));
+
+		/*
+		 * If it references a previous window, look that up.
+		 */
+		if (windef->refname)
+		{
+			refwc = findWindowClause(result, windef->refname);
+			if (refwc == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("window \"%s\" does not exist",
+								windef->refname),
+						 parser_errposition(pstate, windef->location)));
+		}
+
+		/*
+		 * Transform PARTITION and ORDER specs, if any.  These are treated
+		 * exactly like top-level GROUP BY and ORDER BY clauses, including
+		 * the special handling of nondefault operator semantics.
+		 */
+		orderClause = transformSortClause(pstate,
+										  windef->orderClause,
+										  targetlist,
+										  true);
+		partitionClause = transformGroupClause(pstate,
+											   windef->partitionClause,
+											   targetlist,
+											   orderClause,
+											   true);
+
+		/*
+		 * And prepare the new WindowClause.
+		 */
+		wc = makeNode(WindowClause);
+		wc->name = windef->name;
+		wc->refname = windef->refname;
+
+		/*
+		 * Per spec, a windowdef that references a previous one copies the
+		 * previous partition clause (and mustn't specify its own).  It can
+		 * specify its own ordering clause. but only if the previous one
+		 * had none.
+		 */
+		if (refwc)
+		{
+			if (partitionClause)
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+						 errmsg("cannot override PARTITION BY clause of window \"%s\"",
+								windef->refname),
+						 parser_errposition(pstate, windef->location)));
+			wc->partitionClause = copyObject(refwc->partitionClause);
+		}
+		else
+			wc->partitionClause = partitionClause;
+		if (refwc)
+		{
+			if (orderClause && refwc->orderClause)
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+						 errmsg("cannot override ORDER BY clause of window \"%s\"",
+								windef->refname),
+						 parser_errposition(pstate, windef->location)));
+			if (orderClause)
+			{
+				wc->orderClause = orderClause;
+				wc->copiedOrder = false;
+			}
+			else
+			{
+				wc->orderClause = copyObject(refwc->orderClause);
+				wc->copiedOrder = true;
+			}
+		}
+		else
+		{
+			wc->orderClause = orderClause;
+			wc->copiedOrder = false;
+		}
+		wc->winref = winref;
+
+		result = lappend(result, wc);
+	}
+
+	return result;
 }
 
 /*
@@ -1918,4 +2067,24 @@ targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList)
 			return true;
 	}
 	return false;
+}
+
+/*
+ * findWindowClause
+ *		Find the named WindowClause in the list, or return NULL if not there
+ */
+static WindowClause *
+findWindowClause(List *wclist, const char *name)
+{
+	ListCell   *l;
+
+	foreach(l, wclist)
+	{
+		WindowClause *wc = (WindowClause *) lfirst(l);
+
+		if (wc->name && strcmp(wc->name, name) == 0)
+			return wc;
+	}
+
+	return NULL;
 }

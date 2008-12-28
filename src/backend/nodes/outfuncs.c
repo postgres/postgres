@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.346 2008/12/01 21:06:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.347 2008/12/28 18:53:56 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -567,6 +567,36 @@ _outAgg(StringInfo str, Agg *node)
 }
 
 static void
+_outWindowAgg(StringInfo str, WindowAgg *node)
+{
+	int			i;
+
+	WRITE_NODE_TYPE("WINDOWAGG");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_INT_FIELD(partNumCols);
+
+	appendStringInfo(str, " :partColIdx");
+	for (i = 0; i < node->partNumCols; i++)
+		appendStringInfo(str, " %d", node->partColIdx[i]);
+
+	appendStringInfo(str, " :partOperations");
+	for (i = 0; i < node->partNumCols; i++)
+		appendStringInfo(str, " %u", node->partOperators[i]);
+
+	WRITE_INT_FIELD(ordNumCols);
+
+	appendStringInfo(str, " :ordColIdx");
+	for (i = 0; i< node->ordNumCols; i++)
+		appendStringInfo(str, " %d", node->ordColIdx[i]);
+
+	appendStringInfo(str, " :ordOperations");
+	for (i = 0; i < node->ordNumCols; i++)
+		appendStringInfo(str, " %u", node->ordOperators[i]);
+}
+
+static void
 _outGroup(StringInfo str, Group *node)
 {
 	int			i;
@@ -795,6 +825,20 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_BOOL_FIELD(aggstar);
 	WRITE_BOOL_FIELD(aggdistinct);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outWindowFunc(StringInfo str, WindowFunc *node)
+{
+	WRITE_NODE_TYPE("WINDOWFUNC");
+
+	WRITE_OID_FIELD(winfnoid);
+	WRITE_OID_FIELD(wintype);
+	WRITE_NODE_FIELD(args);
+	WRITE_UINT_FIELD(winref);
+	WRITE_BOOL_FIELD(winstar);
+	WRITE_BOOL_FIELD(winagg);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1440,6 +1484,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(placeholder_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
+	WRITE_NODE_FIELD(window_pathkeys);
 	WRITE_NODE_FIELD(distinct_pathkeys);
 	WRITE_NODE_FIELD(sort_pathkeys);
 	WRITE_FLOAT_FIELD(total_table_pages, "%.0f");
@@ -1722,6 +1767,7 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(whereClause);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingClause);
+	WRITE_NODE_FIELD(windowClause);
 	WRITE_NODE_FIELD(withClause);
 	WRITE_NODE_FIELD(valuesLists);
 	WRITE_NODE_FIELD(sortClause);
@@ -1744,6 +1790,7 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
 	WRITE_BOOL_FIELD(func_variadic);
+	WRITE_NODE_FIELD(over);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1866,6 +1913,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_INT_FIELD(resultRelation);
 	WRITE_NODE_FIELD(intoClause);
 	WRITE_BOOL_FIELD(hasAggs);
+	WRITE_BOOL_FIELD(hasWindowFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_BOOL_FIELD(hasDistinctOn);
 	WRITE_BOOL_FIELD(hasRecursive);
@@ -1876,6 +1924,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(returningList);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingQual);
+	WRITE_NODE_FIELD(windowClause);
 	WRITE_NODE_FIELD(distinctClause);
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(limitOffset);
@@ -1893,6 +1942,19 @@ _outSortGroupClause(StringInfo str, SortGroupClause *node)
 	WRITE_OID_FIELD(eqop);
 	WRITE_OID_FIELD(sortop);
 	WRITE_BOOL_FIELD(nulls_first);
+}
+
+static void
+_outWindowClause(StringInfo str, WindowClause *node)
+{
+	WRITE_NODE_TYPE("WINDOWCLAUSE");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_STRING_FIELD(refname);
+	WRITE_NODE_FIELD(partitionClause);
+	WRITE_NODE_FIELD(orderClause);
+	WRITE_UINT_FIELD(winref);
+	WRITE_BOOL_FIELD(copiedOrder);
 }
 
 static void
@@ -2172,6 +2234,18 @@ _outSortBy(StringInfo str, SortBy *node)
 }
 
 static void
+_outWindowDef(StringInfo str, WindowDef *node)
+{
+	WRITE_NODE_TYPE("WINDOWDEF");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_STRING_FIELD(refname);
+	WRITE_NODE_FIELD(partitionClause);
+	WRITE_NODE_FIELD(orderClause);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
 _outRangeSubselect(StringInfo str, RangeSubselect *node)
 {
 	WRITE_NODE_TYPE("RANGESUBSELECT");
@@ -2347,6 +2421,9 @@ _outNode(StringInfo str, void *obj)
 			case T_Agg:
 				_outAgg(str, obj);
 				break;
+			case T_WindowAgg:
+				_outWindowAgg(str, obj);
+				break;
 			case T_Group:
 				_outGroup(str, obj);
 				break;
@@ -2391,6 +2468,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Aggref:
 				_outAggref(str, obj);
+				break;
+			case T_WindowFunc:
+				_outWindowFunc(str, obj);
 				break;
 			case T_ArrayRef:
 				_outArrayRef(str, obj);
@@ -2616,6 +2696,9 @@ _outNode(StringInfo str, void *obj)
 			case T_SortGroupClause:
 				_outSortGroupClause(str, obj);
 				break;
+			case T_WindowClause:
+				_outWindowClause(str, obj);
+				break;
 			case T_RowMarkClause:
 				_outRowMarkClause(str, obj);
 				break;
@@ -2660,6 +2743,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SortBy:
 				_outSortBy(str, obj);
+				break;
+			case T_WindowDef:
+				_outWindowDef(str, obj);
 				break;
 			case T_RangeSubselect:
 				_outRangeSubselect(str, obj);

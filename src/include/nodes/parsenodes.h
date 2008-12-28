@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.384 2008/12/19 16:25:19 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.385 2008/12/28 18:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@ typedef struct Query
 	IntoClause *intoClause;		/* target for SELECT INTO / CREATE TABLE AS */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
+	bool		hasWindowFuncs;	/* has window functions in tlist */
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
@@ -136,6 +137,8 @@ typedef struct Query
 	List	   *groupClause;	/* a list of SortGroupClause's */
 
 	Node	   *havingQual;		/* qualifications applied to groups */
+
+	List	   *windowClause;	/* a list of WindowClause's */
 
 	List	   *distinctClause; /* a list of SortGroupClause's */
 
@@ -269,7 +272,8 @@ typedef struct TypeCast
  * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
  * indicates we saw 'foo(DISTINCT ...)'.  In either case, the construct
  * *must* be an aggregate call.  Otherwise, it might be either an
- * aggregate or some other kind of function.
+ * aggregate or some other kind of function.  However, if OVER is present
+ * it had better be an aggregate or window function.
  */
 typedef struct FuncCall
 {
@@ -279,6 +283,7 @@ typedef struct FuncCall
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */
+	struct WindowDef *over;		/* OVER clause, if any */
 	int			location;		/* token location, or -1 if unknown */
 } FuncCall;
 
@@ -374,6 +379,19 @@ typedef struct SortBy
 	List	   *useOp;			/* name of op to use, if SORTBY_USING */
 	int			location;		/* operator location, or -1 if none/unknown */
 } SortBy;
+
+/*
+ * WindowDef - raw representation of WINDOW and OVER clauses
+ */
+typedef struct WindowDef
+{
+	NodeTag		type;
+	char	   *name;				/* window name (NULL in an OVER clause) */
+	char	   *refname;			/* referenced window name, if any */
+	List	   *partitionClause;	/* PARTITION BY expression list */
+	List	   *orderClause;		/* ORDER BY (list of SortBy) */
+	int			location;			/* parse location, or -1 if none/unknown */
+} WindowDef;
 
 /*
  * RangeSubselect - subquery appearing in a FROM clause
@@ -662,7 +680,8 @@ typedef struct RangeTblEntry
 
 /*
  * SortGroupClause -
- *	   representation of ORDER BY, GROUP BY, DISTINCT, DISTINCT ON items
+ *		representation of ORDER BY, GROUP BY, PARTITION BY,
+ *		DISTINCT, DISTINCT ON items
  *
  * You might think that ORDER BY is only interested in defining ordering,
  * and GROUP/DISTINCT are only interested in defining equality.  However,
@@ -713,6 +732,31 @@ typedef struct SortGroupClause
 	Oid			sortop;				/* the ordering operator ('<' op), or 0 */
 	bool		nulls_first;		/* do NULLs come before normal values? */
 } SortGroupClause;
+
+/*
+ * WindowClause -
+ *		transformed representation of WINDOW and OVER clauses
+ *
+ * A parsed Query's windowClause list contains these structs.  "name" is set
+ * if the clause originally came from WINDOW, and is NULL if it originally
+ * was an OVER clause (but note that we collapse out duplicate OVERs).
+ * partitionClause and orderClause are lists of SortGroupClause structs.
+ * winref is an ID number referenced by WindowFunc nodes; it must be unique
+ * among the members of a Query's windowClause list.
+ * When refname isn't null, the partitionClause is always copied from there;
+ * the orderClause might or might not be copied.  (We don't implement
+ * framing clauses yet, but if we did, they are never copied, per spec.)
+ */
+typedef struct WindowClause
+{
+	NodeTag		type;
+	char	   *name;				/* window name (NULL in an OVER clause) */
+	char	   *refname;			/* referenced window name, if any */
+	List	   *partitionClause;	/* PARTITION BY list */
+	List	   *orderClause;		/* ORDER BY list */
+	Index		winref;				/* ID referenced by window functions */
+	bool		copiedOrder;		/* did we copy orderClause from refname? */
+} WindowClause;
 
 /*
  * RowMarkClause -
@@ -858,6 +902,7 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
+	List	   *windowClause;	/* WINDOW window_name AS (...), ... */
 	WithClause *withClause;		/* WITH clause */
 
 	/*

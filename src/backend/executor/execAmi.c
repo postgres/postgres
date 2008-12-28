@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.101 2008/10/28 17:13:51 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.102 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "executor/nodeBitmapHeapscan.h"
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeBitmapOr.h"
+#include "executor/nodeCtescan.h"
 #include "executor/nodeFunctionscan.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeGroup.h"
@@ -40,7 +41,7 @@
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeValuesscan.h"
-#include "executor/nodeCtescan.h"
+#include "executor/nodeWindowAgg.h"
 #include "executor/nodeWorktablescan.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/syscache.h"
@@ -208,6 +209,10 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 
 		case T_AggState:
 			ExecReScanAgg((AggState *) node, exprCtxt);
+			break;
+
+		case T_WindowAggState:
+			ExecReScanWindowAgg((WindowAggState *) node, exprCtxt);
 			break;
 
 		case T_UniqueState:

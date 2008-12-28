@@ -781,12 +781,12 @@ LINE 2:                           WHERE n IN (SELECT * FROM x))
 -- aggregate functions
 WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT count(*) FROM x)
   SELECT * FROM x;
-ERROR:  aggregates not allowed in a recursive query's recursive term
+ERROR:  aggregate functions not allowed in a recursive query's recursive term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT count(*) F...
                                                           ^
 WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT sum(n) FROM x)
   SELECT * FROM x;
-ERROR:  aggregates not allowed in a recursive query's recursive term
+ERROR:  aggregate functions not allowed in a recursive query's recursive term
 LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT sum(n) FRO...
                                                           ^
 -- ORDER BY

@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.51 2008/12/19 16:25:19 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.52 2008/12/28 18:54:01 tgl Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -83,7 +83,7 @@ test: select_views portals_p2 rules foreign_key cluster dependency guc bitmapops
 # Another group of parallel tests
 # ----------
 # "plpgsql" cannot run concurrently with "rules", nor can "plancache"
-test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
+test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject window with xml
 
 # run stats by itself because its delay may be insufficient under heavy load
 test: stats

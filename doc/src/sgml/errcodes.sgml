@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.25 2008/10/04 21:56:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.26 2008/12/28 18:53:53 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -376,6 +376,18 @@
 <entry><literal>2201E</literal></entry>
 <entry>INVALID ARGUMENT FOR LOGARITHM</entry>
 <entry>invalid_argument_for_logarithm</entry>
+</row>
+
+<row>
+<entry><literal>22014</literal></entry>
+<entry>INVALID ARGUMENT FOR NTILE FUNCTION</entry>
+<entry>invalid_argument_for_ntile_function</entry>
+</row>
+
+<row>
+<entry><literal>22016</literal></entry>
+<entry>INVALID ARGUMENT FOR NTH_VALUE FUNCTION</entry>
+<entry>invalid_argument_for_nth_value_function</entry>
 </row>
 
 <row>
@@ -988,6 +1000,12 @@
 <entry><literal>42803</literal></entry>
 <entry>GROUPING ERROR</entry>
 <entry>grouping_error</entry>
+</row>
+
+<row>
+<entry><literal>42P20</literal></entry>
+<entry>WINDOWING ERROR</entry>
+<entry>windowing_error</entry>
 </row>
 
 <row>

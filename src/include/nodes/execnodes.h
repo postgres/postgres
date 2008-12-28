@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.196 2008/11/16 17:34:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.197 2008/12/28 18:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,9 +119,12 @@ typedef struct ExprContext
 	ParamExecData *ecxt_param_exec_vals;		/* for PARAM_EXEC params */
 	ParamListInfo ecxt_param_list_info; /* for other param types */
 
-	/* Values to substitute for Aggref nodes in expression */
-	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
-	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+	/*
+	 * Values to substitute for Aggref nodes in the expressions of an Agg node,
+	 * or for WindowFunc nodes within a WindowAgg node.
+	 */
+	Datum	   *ecxt_aggvalues; /* precomputed values for aggs/windowfuncs */
+	bool	   *ecxt_aggnulls;	/* null flags for aggs/windowfuncs */
 
 	/* Value to substitute for CaseTestExpr nodes in expression */
 	Datum		caseValue_datum;
@@ -510,6 +513,17 @@ typedef struct AggrefExprState
 	List	   *args;			/* states of argument expressions */
 	int			aggno;			/* ID number for agg within its plan node */
 } AggrefExprState;
+
+/* ----------------
+ *		WindowFuncExprState node
+ * ----------------
+ */
+typedef struct WindowFuncExprState
+{
+	ExprState	xprstate;
+	List	   *args;			/* states of argument expressions */
+	int			wfuncno;		/* ID number for wfunc within its plan node */
+} WindowFuncExprState;
 
 /* ----------------
  *		ArrayRefExprState node
@@ -1481,6 +1495,53 @@ typedef struct AggState
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
 } AggState;
+
+/* ----------------
+ *	WindowAggState information
+ * ----------------
+ */
+/* these structs are private in nodeWindowAgg.c: */
+typedef struct WindowStatePerFuncData *WindowStatePerFunc;
+typedef struct WindowStatePerAggData *WindowStatePerAgg;
+
+typedef struct WindowAggState
+{
+	ScanState	ss;					/* its first field is NodeTag */
+
+	/* these fields are filled in by ExecInitExpr: */
+	List	   *funcs;				/* all WindowFunc nodes in targetlist */
+	int			numfuncs;			/* total number of window functions */
+	int			numaggs;			/* number that are plain aggregates */
+
+	WindowStatePerFunc perfunc;		/* per-window-function information */
+	WindowStatePerAgg peragg;		/* per-plain-aggregate information */
+	FmgrInfo   *partEqfunctions;	/* equality funcs for partition columns */
+	FmgrInfo   *ordEqfunctions;		/* equality funcs for ordering columns */
+	Tuplestorestate	   *buffer;		/* stores rows of current partition */
+	int			current_ptr;		/* read pointer # for current */
+	int			agg_ptr;			/* read pointer # for aggregates */
+	int64		spooled_rows;		/* total # of rows in buffer */
+	int64		currentpos;			/* position of current row in partition */
+	int64		frametailpos;		/* current frame tail position */
+	int64		aggregatedupto;		/* rows before this one are aggregated */
+
+	MemoryContext wincontext;		/* context for partition-lifespan data */
+	ExprContext *tmpcontext;		/* short-term evaluation context */
+
+	bool		all_done;			/* true if the scan is finished */
+	bool		partition_spooled;	/* true if all tuples in current partition
+									 * have been spooled into tuplestore */
+	bool		more_partitions;	/* true if there's more partitions after
+									 * this one */
+
+	TupleTableSlot *first_part_slot;	/* first tuple of current or next
+										 * partition */
+
+	/* temporary slots for tuples fetched back from tuplestore */
+	TupleTableSlot *first_peer_slot;
+	TupleTableSlot *temp_slot_1;
+	TupleTableSlot *temp_slot_2;
+} WindowAggState;
 
 /* ----------------
  *	 UniqueState information

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.62 2008/12/18 18:20:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.63 2008/12/28 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ typedef enum
 	FUNCDETAIL_MULTIPLE,		/* too many matching functions */
 	FUNCDETAIL_NORMAL,			/* found a matching regular function */
 	FUNCDETAIL_AGGREGATE,		/* found a matching aggregate function */
+	FUNCDETAIL_WINDOWFUNC,		/* found a matching window function */
 	FUNCDETAIL_COERCION			/* it's a type coercion request */
 } FuncDetailCode;
 
@@ -44,7 +45,7 @@ typedef enum
 extern Node *ParseFuncOrColumn(ParseState *pstate,
 				  List *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct, bool func_variadic,
-				  bool is_column, int location);
+				  WindowDef *over, bool is_column, int location);
 
 extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 				int nargs, Oid *argtypes,

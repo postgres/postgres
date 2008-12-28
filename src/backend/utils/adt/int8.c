@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.71 2008/10/05 23:18:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.72 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -666,7 +666,9 @@ int8inc(PG_FUNCTION_ARGS)
 	 * as incorrect, so just ifdef it out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 	{
 		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
 		int64		result;

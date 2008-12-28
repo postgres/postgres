@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.93 2008/12/13 02:29:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.94 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,6 +347,10 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 			  errmsg("cannot use aggregate function in EXECUTE parameter")));
+		if (pstate->p_hasWindowFuncs)
+			ereport(ERROR,
+					(errcode(ERRCODE_WINDOWING_ERROR),
+			  errmsg("cannot use window function in EXECUTE parameter")));
 
 		given_type_id = exprType(expr);
 

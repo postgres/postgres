@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.112 2008/12/01 09:38:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.113 2008/12/28 18:53:54 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -39,6 +39,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ WHERE <replaceable class="parameter">condition</replaceable> ]
     [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
     [ HAVING <replaceable class="parameter">condition</replaceable> [, ...] ]
+    [ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceable class="parameter">window_definition</replaceable> ) [, ...] ]
     [ { UNION | INTERSECT | EXCEPT } [ ALL ] <replaceable class="parameter">select</replaceable> ]
     [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
@@ -566,6 +567,67 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
   </refsect2>
 
+  <refsect2 id="SQL-WINDOW">
+   <title id="sql-window-title"><literal>WINDOW</literal> Clause</title>
+
+   <para>
+    The optional <literal>WINDOW</literal> clause has the general form
+<synopsis>
+WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceable class="parameter">window_definition</replaceable> ) [, ...]
+</synopsis>
+    where <replaceable class="parameter">window_name</replaceable> is
+    a name that can be referenced from subsequent window definitions or
+    <literal>OVER</> clauses, and
+    <replaceable class="parameter">window_definition</replaceable> is
+<synopsis>
+[ <replaceable class="parameter">existing_window_name</replaceable> ]
+[ PARTITION BY <replaceable class="parameter">expression</replaceable> [, ...] ]
+[ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
+</synopsis>
+    The elements of the <literal>PARTITION BY</> list are interpreted in
+    the same fashion as elements of a
+    <xref linkend="sql-groupby" endterm="sql-groupby-title">, and
+    the elements of the <literal>ORDER BY</> list are interpreted in the
+    same fashion as elements of an
+    <xref linkend="sql-orderby" endterm="sql-orderby-title">.
+    The only difference is that these expressions can contain aggregate
+    function calls, which are not allowed in a regular <literal>GROUP BY</>
+    clause.  They are allowed here because windowing occurs after grouping
+    and aggregation.
+   </para>
+
+   <para>
+    If an <replaceable class="parameter">existing_window_name</replaceable>
+    is specified it must refer to an earlier entry in the <literal>WINDOW</>
+    list; the new window copies its partitioning clause from that entry,
+    as well as its ordering clause if any.  In this case the new window cannot
+    specify its own <literal>PARTITION BY</> clause, and it can specify
+    <literal>ORDER BY</> only if the copied window does not have one.
+   </para>
+
+   <para>
+    The purpose of a <literal>WINDOW</literal> clause is to specify the
+    behavior of <firstterm>window functions</> appearing in the query's
+    <xref linkend="sql-select-list" endterm="sql-select-list-title"> or
+    <xref linkend="sql-orderby" endterm="sql-orderby-title">.  These functions
+    can reference the <literal>WINDOW</literal> clause entries by name
+    in their <literal>OVER</> clauses.  A <literal>WINDOW</literal> clause
+    entry does not have to be referenced anywhere, however; if it is not
+    used in the query it is simply ignored.  It is possible to use window
+    functions without any <literal>WINDOW</literal> clause at all, since
+    a window function call can specify its window definition directly in
+    its <literal>OVER</> clause.  However, the <literal>WINDOW</literal>
+    clause saves typing when the same window definition is needed for more
+    than one window function.
+   </para>
+
+   <para>
+    Window functions are described in detail in
+    <xref linkend="tutorial-window"> and
+    <xref linkend="syntax-window-functions">.
+   </para>
+  </refsect2>
+
   <refsect2 id="sql-select-list">
    <title id="sql-select-list-title"><command>SELECT</command> List</title>
 
@@ -922,7 +984,7 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
     constants for the offset or fetch count, parentheses will be
     necessary in most cases.  If the fetch count is omitted, it
     defaults to 1.
-   </para>    
+   </para>
 
    <para>
     When using <literal>LIMIT</>, it is a good idea to use an
@@ -1384,6 +1446,19 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     In most cases, however, <productname>PostgreSQL</productname>
     will interpret an <literal>ORDER BY</literal> or <literal>GROUP
     BY</literal> expression the same way SQL:1999 does.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>WINDOW</literal> Clause Restrictions</title>
+
+   <para>
+    The SQL standard provides for an optional <quote>framing clause</>,
+    introduced by the key word <literal>RANGE</> or <literal>ROWS</>,
+    in window definitions.  <productname>PostgreSQL</productname> does
+    not yet implement framing clauses, and always follows the
+    default framing behavior, which is equivalent to the framing clause
+    <literal>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</>.
    </para>
   </refsect2>
 

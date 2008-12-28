@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.54 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.55 2008/12/28 18:53:53 tgl Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -240,7 +240,7 @@ COMMIT;
    <para>
     <productname>PostgreSQL</> actually treats every SQL statement as being
     executed within a transaction.  If you do not issue a <command>BEGIN</>
-    command, 
+    command,
     then each individual statement has an implicit <command>BEGIN</> and
     (if successful) <command>COMMIT</> wrapped around it.  A group of
     statements surrounded by <command>BEGIN</> and <command>COMMIT</>
@@ -265,7 +265,7 @@ COMMIT;
     with <command>ROLLBACK TO</>.  All the transaction's database changes
     between defining the savepoint and rolling back to it are discarded, but
     changes earlier than the savepoint are kept.
-   </para> 
+   </para>
 
    <para>
     After rolling back to a savepoint, it continues to be defined, so you can
@@ -274,7 +274,7 @@ COMMIT;
     system can free some resources.  Keep in mind that either releasing or
     rolling back to a savepoint
     will automatically release all savepoints that were defined after it.
-   </para> 
+   </para>
 
    <para>
     All this is happening within the transaction block, so none of it
@@ -282,7 +282,7 @@ COMMIT;
     transaction block, the committed actions become visible as a unit
     to other sessions, while the rolled-back actions never become visible
     at all.
-   </para> 
+   </para>
 
    <para>
     Remembering the bank database, suppose we debit $100.00 from Alice's
@@ -314,6 +314,242 @@ COMMIT;
     again.
    </para>
 
+  </sect1>
+
+
+  <sect1 id="tutorial-window">
+   <title id="tutorial-window-title">Window Functions</title>
+
+   <indexterm zone="tutorial-window">
+    <primary>window function</primary>
+   </indexterm>
+
+   <para>
+    A <firstterm>window function</> performs a calculation across a set of
+    table rows that are somehow related to the current row.  This is comparable
+    to the type of calculation that can be done with an aggregate function.
+    But unlike regular aggregate functions, use of a window function does not
+    cause rows to become grouped into a single output row &mdash; the
+    rows retain their separate identities.  Behind the scenes, the window
+    function is able to access more than just the current row of the query
+    result.
+   </para>
+
+   <para>
+    Here is an example that shows how to compare each employee's salary
+    with the average salary in his or her department:
+
+<programlisting>
+SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM empsalary;
+</programlisting>
+
+<screen>
+  depname  | empno | salary |          avg          
+-----------+-------+--------+-----------------------
+ develop   |    11 |   5200 | 5020.0000000000000000
+ develop   |     7 |   4200 | 5020.0000000000000000
+ develop   |     9 |   4500 | 5020.0000000000000000
+ develop   |     8 |   6000 | 5020.0000000000000000
+ develop   |    10 |   5200 | 5020.0000000000000000
+ personnel |     5 |   3500 | 3700.0000000000000000
+ personnel |     2 |   3900 | 3700.0000000000000000
+ sales     |     3 |   4800 | 4866.6666666666666667
+ sales     |     1 |   5000 | 4866.6666666666666667
+ sales     |     4 |   4800 | 4866.6666666666666667
+(10 rows)
+</screen>
+
+    The first three output columns come directly from the table
+    <structname>empsalary</>, and there is one output row for each row in the
+    table.  The fourth column represents an average taken across all the table
+    rows that have the same <structfield>depname</> value as the current row.
+    (This actually is the same function as the regular <function>avg</>
+    aggregate function, but the <literal>OVER</> clause causes it to be
+    treated as a window function and computed across an appropriate set of
+    rows.)
+   </para>
+
+   <para>
+    A window function call always contains an <literal>OVER</> clause
+    following the window function's name and argument(s).  This is what
+    syntactically distinguishes it from a regular function or aggregate
+    function.  The <literal>OVER</> clause determines exactly how the
+    rows of the query are split up for processing by the window function.
+    The <literal>PARTITION BY</> list within <literal>OVER</> specifies
+    dividing the rows into groups, or partitions, that share the same
+    values of the <literal>PARTITION BY</> expression(s).  For each row,
+    the window function is computed across the rows that fall into the
+    same partition as the current row.
+   </para>
+
+   <para>
+    Although <function>avg</> will produce the same result no matter
+    what order it processes the partition's rows in, this is not true of all
+    window functions.  When needed, you can control that order using
+    <literal>ORDER BY</> within <literal>OVER</>.  Here is an example:
+
+<programlisting>
+SELECT depname, empno, salary, rank() OVER (PARTITION BY depname ORDER BY salary DESC) FROM empsalary;
+</programlisting>
+
+<screen>
+  depname  | empno | salary | rank 
+-----------+-------+--------+------
+ develop   |     8 |   6000 |    1
+ develop   |    10 |   5200 |    2
+ develop   |    11 |   5200 |    2
+ develop   |     9 |   4500 |    4
+ develop   |     7 |   4200 |    5
+ personnel |     2 |   3900 |    1
+ personnel |     5 |   3500 |    2
+ sales     |     1 |   5000 |    1
+ sales     |     4 |   4800 |    2
+ sales     |     3 |   4800 |    2
+(10 rows)
+</screen>
+
+    As shown here, the <function>rank</> function produces a numerical rank
+    within the current row's partition for each distinct <literal>ORDER BY</>
+    value, in the order defined by the <literal>ORDER BY</> clause.
+    <function>rank</> needs no explicit parameter, because its behavior
+    is entirely determined by the <literal>OVER</> clause.
+   </para>
+
+   <para>
+    The rows considered by a window function are those of the <quote>virtual
+    table</> produced by the query's <literal>FROM</> clause as filtered by its
+    <literal>WHERE</>, <literal>GROUP BY</>, and <literal>HAVING</> clauses
+    if any.  For example, a row removed because it does not meet the
+    <literal>WHERE</> condition is not seen by any window function.
+    A query can contain multiple window functions that slice up the data
+    in different ways by means of different <literal>OVER</> clauses, but
+    they all act on the same collection of rows defined by this virtual table.
+   </para>
+
+   <para>
+    We already saw that <literal>ORDER BY</> can be omitted if the ordering
+    of rows is not important.  It is also possible to omit <literal>PARTITION
+    BY</>, in which case the window function is computed over all rows of the
+    virtual table; that is, there is one partition containing all the rows.
+   </para>
+
+   <para>
+    There is another important concept associated with window functions:
+    for each row, there is a set of rows within its partition called its
+    <firstterm>window frame</>.  When <literal>ORDER BY</> is omitted the
+    frame is always the same as the partition.  If <literal>ORDER BY</> is
+    supplied, the frame consists of all rows from the start of the partition
+    up to the current row, plus any following rows that are equal to the
+    current row according to the <literal>ORDER BY</> clause.
+     <footnote>
+      <para>
+       The SQL standard includes options to define the window frame in
+       other ways, but this definition is the only one currently supported
+       by <productname>PostgreSQL</productname>.
+      </para>
+     </footnote>
+    Many window functions act only on the rows of the window frame, rather
+    than of the whole partition.  Here is an example using <function>sum</>:
+   </para>
+
+<programlisting>
+SELECT salary, sum(salary) OVER () FROM empsalary;
+</programlisting>
+
+<screen>
+ salary |  sum  
+--------+-------
+   5200 | 47100
+   5000 | 47100
+   3500 | 47100
+   4800 | 47100
+   3900 | 47100
+   4200 | 47100
+   4500 | 47100
+   4800 | 47100
+   6000 | 47100
+   5200 | 47100
+(10 rows)
+</screen>
+
+   <para>
+    Above, since there is no <literal>ORDER BY</> in the <literal>OVER</>
+    clause, the window frame is the same as the partition, which for lack of
+    <literal>PARTITION BY</> is the whole table; in other words each sum is
+    taken over the whole table and so we get the same result for each output
+    row.  But if we add an <literal>ORDER BY</> clause, we get very different
+    results:
+   </para>
+
+<programlisting>
+SELECT salary, sum(salary) OVER (ORDER BY salary) FROM empsalary;
+</programlisting>
+
+<screen>
+ salary |  sum  
+--------+-------
+   3500 |  3500
+   3900 |  7400
+   4200 | 11600
+   4500 | 16100
+   4800 | 25700
+   4800 | 25700
+   5000 | 30700
+   5200 | 41100
+   5200 | 41100
+   6000 | 47100
+(10 rows)
+</screen>
+
+   <para>
+    Here the sum is taken from the first (lowest) salary up through the
+    current one, including any duplicates of the current one (notice the
+    results for the duplicated salaries).
+   </para>
+
+   <para>
+    Window functions are permitted only in the <literal>SELECT</literal> list
+    and the <literal>ORDER BY</> clause of the query. They are forbidden
+    elsewhere, such as in <literal>GROUP BY</>, <literal>HAVING</>
+    and <literal>WHERE</literal> clauses.  This is because they logically
+    execute after the processing of those clauses.  Also, window functions
+    execute after regular aggregate functions.  This means it is valid to
+    include an aggregate function call in the arguments of a window function,
+    but not vice versa.
+   </para>
+
+   <para>
+    If there is a need to filter or group rows after the window calculations
+    are performed, you can use a sub-select.  For example:
+
+<programlisting>
+SELECT depname, empno, salary, enroll_date
+FROM
+  (SELECT depname, empno, salary, enroll_date,
+          rank() OVER (PARTITION BY depname ORDER BY salary DESC, empno) AS pos
+     FROM empsalary
+  ) AS ss
+WHERE pos < 3;
+</programlisting>
+
+    The above query only shows the rows from the inner query having
+    <literal>rank</> less than <literal>3</>.
+   </para>
+
+   <para>
+    When a query involves multiple window functions, it is possible to write
+    out each one with a separate <literal>OVER</> clause, but this is
+    duplicative and error-prone if the same windowing behavior is wanted
+    for several functions.  Instead, each windowing behavior can be named
+    in a <literal>WINDOW</> clause and then referenced in <literal>OVER</>.
+    For example:
+
+<programlisting>
+SELECT sum(salary) OVER w, avg(salary) OVER w
+  FROM empsalary
+  WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
+</programlisting>
+   </para>
   </sect1>
 
 
@@ -391,7 +627,7 @@ CREATE TABLE capitals (
 
    <para>
     For example, the  following  query finds the  names  of  all  cities,
-    including  state capitals, that are located at an altitude 
+    including  state capitals, that are located at an altitude
     over 500 feet:
 
 <programlisting>
@@ -455,7 +691,7 @@ SELECT name, altitude
 
   <sect1 id="tutorial-conclusion">
    <title>Conclusion</title>
- 
+
    <para>
     <productname>PostgreSQL</productname> has many features not
     touched upon in this tutorial introduction, which has been

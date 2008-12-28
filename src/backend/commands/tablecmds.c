@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.274 2008/12/15 21:35:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.275 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5506,6 +5506,10 @@ ATPrepAlterColumnType(List **wqueue,
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 			errmsg("cannot use aggregate function in transform expression")));
+		if (pstate->p_hasWindowFuncs)
+			ereport(ERROR,
+					(errcode(ERRCODE_WINDOWING_ERROR),
+			errmsg("cannot use window function in transform expression")));
 	}
 	else
 	{

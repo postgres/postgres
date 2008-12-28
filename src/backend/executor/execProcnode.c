@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.63 2008/10/04 21:56:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.64 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@
 #include "executor/nodeBitmapHeapscan.h"
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeBitmapOr.h"
+#include "executor/nodeCtescan.h"
 #include "executor/nodeFunctionscan.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
@@ -104,7 +105,7 @@
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeValuesscan.h"
-#include "executor/nodeCtescan.h"
+#include "executor/nodeWindowAgg.h"
 #include "executor/nodeWorktablescan.h"
 #include "miscadmin.h"
 
@@ -258,6 +259,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_Agg:
 			result = (PlanState *) ExecInitAgg((Agg *) node,
 											   estate, eflags);
+			break;
+
+		case T_WindowAgg:
+			result = (PlanState *) ExecInitWindowAgg((WindowAgg *) node,
+													 estate, eflags);
 			break;
 
 		case T_Unique:
@@ -423,6 +429,10 @@ ExecProcNode(PlanState *node)
 
 		case T_AggState:
 			result = ExecAgg((AggState *) node);
+			break;
+
+		case T_WindowAggState:
+			result = ExecWindowAgg((WindowAggState *) node);
 			break;
 
 		case T_UniqueState:
@@ -601,6 +611,10 @@ ExecCountSlotsNode(Plan *node)
 		case T_Agg:
 			return ExecCountSlotsAgg((Agg *) node);
 
+		case T_WindowAgg:
+			return ExecCountSlotsWindowAgg((WindowAgg *) node);
+			break;
+
 		case T_Unique:
 			return ExecCountSlotsUnique((Unique *) node);
 
@@ -747,6 +761,10 @@ ExecEndNode(PlanState *node)
 
 		case T_AggState:
 			ExecEndAgg((AggState *) node);
+			break;
+
+		case T_WindowAggState:
+			ExecEndWindowAgg((WindowAggState *) node);
 			break;
 
 		case T_UniqueState:

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.50 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.51 2008/12/28 18:53:54 tgl Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -621,7 +621,7 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
  San Francisco |  43 |   57 | San Francisco |  46 |   50
  Hayward       |  37 |   54 | San Francisco |  46 |   50
 (2 rows)
-</programlisting>     
+</programlisting>
 
     Here we have relabeled the weather table as <literal>W1</> and
     <literal>W2</> to be able to distinguish the left and right side
@@ -651,9 +651,9 @@ SELECT *
     <indexterm><primary>min</primary></indexterm>
     <indexterm><primary>sum</primary></indexterm>
 
-    Like  most  other relational database products, 
+    Like  most  other relational database products,
     <productname>PostgreSQL</productname> supports
-    aggregate functions.
+    <firstterm>aggregate functions</>.
     An aggregate function computes a single result from multiple input rows.
     For example, there are aggregates to compute the
     <function>count</function>, <function>sum</function>,
@@ -815,7 +815,7 @@ SELECT city, max(temp_lo)
 
    <para>
     You can update existing rows using the
-    <command>UPDATE</command> command. 
+    <command>UPDATE</command> command.
     Suppose you discover the temperature readings are
     all off by 2 degrees after November 28.  You can correct the
     data as follows:

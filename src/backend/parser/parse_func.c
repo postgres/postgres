@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.209 2008/12/18 18:20:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.210 2008/12/28 18:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct, bool func_variadic,
-				  bool is_column, int location)
+				  WindowDef *over, bool is_column, int location)
 {
 	Oid			rettype;
 	Oid			funcid;
@@ -131,8 +131,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * the "function call" could be a projection.  We also check that there
 	 * wasn't any aggregate or variadic decoration.
 	 */
-	if (nargs == 1 && !agg_star && !agg_distinct && !func_variadic &&
-		list_length(funcname) == 1)
+	if (nargs == 1 && !agg_star && !agg_distinct && over == NULL &&
+		!func_variadic && list_length(funcname) == 1)
 	{
 		Oid			argtype = actual_arg_types[0];
 
@@ -196,8 +196,15 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			errmsg("DISTINCT specified, but %s is not an aggregate function",
 				   NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
+		if (over)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("OVER specified, but %s is not a window function nor an aggregate function",
+					 		NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
 	}
-	else if (fdresult != FUNCDETAIL_AGGREGATE)
+	else if (!(fdresult == FUNCDETAIL_AGGREGATE ||
+			   fdresult == FUNCDETAIL_WINDOWFUNC))
 	{
 		/*
 		 * Oops.  Time to die.
@@ -317,7 +324,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		retval = (Node *) funcexpr;
 	}
-	else
+	else if (fdresult == FUNCDETAIL_AGGREGATE && !over)
 	{
 		/* aggregate function */
 		Aggref	   *aggref = makeNode(Aggref);
@@ -340,16 +347,69 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 
-		/* parse_agg.c does additional aggregate-specific processing */
-		transformAggregateCall(pstate, aggref);
-
-		retval = (Node *) aggref;
-
 		if (retset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("aggregates cannot return sets"),
 					 parser_errposition(pstate, location)));
+
+		/* parse_agg.c does additional aggregate-specific processing */
+		transformAggregateCall(pstate, aggref);
+
+		retval = (Node *) aggref;
+	}
+	else
+	{
+		/* window function */
+		WindowFunc *wfunc = makeNode(WindowFunc);
+
+		/*
+		 * True window functions must be called with a window definition.
+		 */
+		if (!over)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("window function call requires an OVER clause"),
+					 parser_errposition(pstate, location)));
+
+		wfunc->winfnoid = funcid;
+		wfunc->wintype = rettype;
+		wfunc->args = fargs;
+		/* winref will be set by transformWindowFuncCall */
+		wfunc->winstar = agg_star;
+		wfunc->winagg = (fdresult == FUNCDETAIL_AGGREGATE);
+		wfunc->location = location;
+
+		/*
+		 * agg_star is allowed for aggregate functions but distinct isn't
+		 */
+		if (agg_distinct)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("DISTINCT is not implemented for window functions"),
+					 parser_errposition(pstate, location)));
+
+		/*
+		 * Reject attempt to call a parameterless aggregate without (*)
+		 * syntax.	This is mere pedantry but some folks insisted ...
+		 */
+		if (wfunc->winagg && fargs == NIL && !agg_star)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("%s(*) must be used to call a parameterless aggregate function",
+							NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+
+		if (retset)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("window functions cannot return sets"),
+					 parser_errposition(pstate, location)));
+
+		/* parse_agg.c does additional window-func-specific processing */
+		transformWindowFuncCall(pstate, wfunc, over);
+
+		retval = (Node *) wfunc;
 	}
 
 	return retval;
@@ -948,7 +1008,12 @@ func_get_detail(List *funcname,
 			else
 				*argdefaults = NIL;
 		}
-		result = pform->proisagg ? FUNCDETAIL_AGGREGATE : FUNCDETAIL_NORMAL;
+		if (pform->proisagg)
+			result = FUNCDETAIL_AGGREGATE;
+		else if (pform->proiswindow)
+			result = FUNCDETAIL_WINDOWFUNC;
+		else
+			result = FUNCDETAIL_NORMAL;
 		ReleaseSysCache(ftup);
 		return result;
 	}

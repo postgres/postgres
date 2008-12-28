@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.36 2008/11/20 21:10:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.37 2008/12/28 18:53:54 tgl Exp $ -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>
@@ -167,10 +167,13 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
   <para>
    A function written in C can detect that it is being called as an
    aggregate transition or final function by seeing if it was passed
-   an <structname>AggState</> node as the function call <quote>context</>,
+   an <structname>AggState</> or <structname>WindowAggState</> node
+   as the function call <quote>context</>,
    for example by:
 <programlisting>
-        if (fcinfo->context &amp;&amp; IsA(fcinfo->context, AggState))
+        if (fcinfo-&gt;context &amp;&amp;
+            (IsA(fcinfo-&gt;context, AggState) ||
+             IsA(fcinfo-&gt;context, WindowAggState)))
 </programlisting>
    One reason for checking this is that when it is true, the first input
    must be a temporary transition value and can therefore safely be modified

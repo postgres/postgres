@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.143 2008/12/08 00:16:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.144 2008/12/28 18:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1243,6 +1243,7 @@ simplify_EXISTS_query(Query *query)
 		query->intoClause ||
 		query->setOperations ||
 		query->hasAggs ||
+		query->hasWindowFuncs ||
 		query->havingQual ||
 		query->limitOffset ||
 		query->limitCount ||
@@ -1258,13 +1259,14 @@ simplify_EXISTS_query(Query *query)
 
 	/*
 	 * Otherwise, we can throw away the targetlist, as well as any GROUP,
-	 * DISTINCT, and ORDER BY clauses; none of those clauses will change
-	 * a nonzero-rows result to zero rows or vice versa.  (Furthermore,
+	 * WINDOW, DISTINCT, and ORDER BY clauses; none of those clauses will
+	 * change a nonzero-rows result to zero rows or vice versa.  (Furthermore,
 	 * since our parsetree representation of these clauses depends on the
 	 * targetlist, we'd better throw them away if we drop the targetlist.)
 	 */
 	query->targetList = NIL;
 	query->groupClause = NIL;
+	query->windowClause = NIL;
 	query->distinctClause = NIL;
 	query->sortClause = NIL;
 	query->hasDistinctOn = false;
@@ -1321,8 +1323,8 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 * The rest of the sub-select must not refer to any Vars of the parent
 	 * query.  (Vars of higher levels should be okay, though.)
 	 *
-	 * Note: we need not check for Aggs separately because we know the
-	 * sub-select is as yet unoptimized; any uplevel Agg must therefore
+	 * Note: we need not check for Aggrefs separately because we know the
+	 * sub-select is as yet unoptimized; any uplevel Aggref must therefore
 	 * contain an uplevel Var reference.  This is not the case below ...
 	 */
 	if (contain_vars_of_level((Node *) subselect, 1))
@@ -1432,7 +1434,8 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	/*
 	 * And there can't be any child Vars in the stuff we intend to pull up.
 	 * (Note: we'd need to check for child Aggs too, except we know the
-	 * child has no aggs at all because of simplify_EXISTS_query's check.)
+	 * child has no aggs at all because of simplify_EXISTS_query's check.
+	 * The same goes for window functions.)
 	 */
 	if (contain_vars_of_level((Node *) leftargs, 0))
 		return NULL;
@@ -1955,6 +1958,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 		case T_RecursiveUnion:
 		case T_Hash:
 		case T_Agg:
+		case T_WindowAgg:
 		case T_SeqScan:
 		case T_Material:
 		case T_Sort:

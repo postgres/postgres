@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.26 2008/11/14 02:09:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.27 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,6 +475,7 @@ Datum
 array_agg_transfn(PG_FUNCTION_ARGS)
 {
 	Oid arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	MemoryContext aggcontext;
 	ArrayBuildState *state;
 	Datum		elem;
 
@@ -483,8 +484,16 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-	/* cannot be called directly because of internal-type argument */
-	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+		aggcontext = ((AggState *) fcinfo->context)->aggcontext;
+	else if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
+		aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;
+	else
+	{
+		/* cannot be called directly because of internal-type argument */
+		elog(ERROR, "array_agg_transfn called in non-aggregate context");
+		aggcontext = NULL;		/* keep compiler quiet */
+	}
 
 	state = PG_ARGISNULL(0) ? NULL : (ArrayBuildState *) PG_GETARG_POINTER(0);
 	elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
@@ -492,7 +501,7 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 							 elem,
 							 PG_ARGISNULL(1),
 							 arg1_typeid,
-							 ((AggState *) fcinfo->context)->aggcontext);
+							 aggcontext);
 
 	/*
 	 * The transition type for array_agg() is declared to be "internal",
@@ -506,14 +515,28 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 Datum
 array_agg_finalfn(PG_FUNCTION_ARGS)
 {
+	Datum		result;
 	ArrayBuildState *state;
+	int			dims[1];
+	int			lbs[1];
 
 	/* cannot be called directly because of internal-type argument */
-	Assert(fcinfo->context && IsA(fcinfo->context, AggState));
+	Assert(fcinfo->context &&
+		   (IsA(fcinfo->context, AggState) ||
+			IsA(fcinfo->context, WindowAggState)));
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();   /* returns null iff no input values */
 
 	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(state, CurrentMemoryContext));
+
+	dims[0] = state->nelems;
+	lbs[0] = 1;
+
+	/* Release working state if regular aggregate, but not if window agg */
+	result = makeMdArrayResult(state, 1, dims, lbs,
+							   CurrentMemoryContext,
+							   IsA(fcinfo->context, AggState));
+
+	PG_RETURN_DATUM(result);
 }

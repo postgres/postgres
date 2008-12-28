@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.463 2008/12/19 16:25:16 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.464 2008/12/28 18:53:53 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10149,6 +10149,278 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
 
  </sect1>
 
+ <sect1 id="functions-window">
+  <title>Window Functions</title>
+
+  <indexterm zone="functions-window">
+   <primary>window function</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+
+  <para>
+   <firstterm>Window functions</firstterm> provide the ability to perform
+   calculations across sets of rows that are related to the current query
+   row.  For information about this feature see
+   <xref linkend="tutorial-window"> and
+   <xref linkend="syntax-window-functions">.
+  </para>
+
+  <para>
+   The built-in window functions are listed in
+   <xref linkend="functions-window-table">.  Note that these functions
+   <emphasis>must</> be invoked using window function syntax; that is an
+   <literal>OVER</> clause is required.
+  </para>
+
+  <para>
+   In addition to these functions, any built-in or user-defined aggregate
+   function can be used as a window function (see
+   <xref linkend="functions-aggregate"> for a list of the built-in aggregates).
+   Aggregate functions act as window functions only when an <literal>OVER</>
+   clause follows the call; otherwise they act as regular aggregates.
+  </para>
+
+  <table id="functions-window-table">
+   <title>General-Purpose Window Functions</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>
+       <indexterm>
+        <primary>row_number</primary>
+       </indexterm>
+       <function>row_number()</function>
+      </entry>
+      <entry>
+       <type>bigint</type>
+      </entry>
+      <entry>number of the current row within its partition, counting from 1</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>rank</primary>
+       </indexterm>
+       <function>rank()</function>
+      </entry>
+      <entry>
+       <type>bigint</type>
+      </entry>
+      <entry>rank of the current row with gaps; same as <function>row_number</> of its first peer</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>dense_rank</primary>
+       </indexterm>
+       <function>dense_rank()</function>
+      </entry>
+      <entry>
+       <type>bigint</type>
+      </entry>
+      <entry>rank of the current row without gaps; this function counts peer groups</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>percent_rank</primary>
+       </indexterm>
+       <function>percent_rank()</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>relative rank of the current row: (<function>rank</> - 1) / (total rows - 1)</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>cume_dist</primary>
+       </indexterm>
+       <function>cume_dist()</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>relative rank of the current row: (number of rows preceding or peer with current row) / (total rows)</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>ntile</primary>
+       </indexterm>
+       <function>ntile(<replaceable class="parameter">num_buckets</replaceable> <type>integer</>)</function>
+      </entry>
+      <entry>
+       <type>integer</type>
+      </entry>
+      <entry>integer ranging from 1 to the argument value, dividing the
+       partition as equally as possible</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>lag</primary>
+       </indexterm>
+       <function>
+         lag(<replaceable class="parameter">value</replaceable> <type>any</>
+             [, <replaceable class="parameter">offset</replaceable> <type>integer</>
+             [, <replaceable class="parameter">default</replaceable> <type>any</> ]])
+       </function>
+      </entry>
+      <entry>
+       <type>same type as <replaceable class="parameter">value</replaceable></type>
+      </entry>
+      <entry>
+       returns <replaceable class="parameter">value</replaceable> evaluated at
+       the row that is <replaceable class="parameter">offset</replaceable>
+       rows before the current row within the partition; if there is no such
+       row, instead return <replaceable class="parameter">default</replaceable>.
+       Both <replaceable class="parameter">offset</replaceable> and
+       <replaceable class="parameter">default</replaceable> are evaluated
+       with respect to the current row.  If omitted,
+       <replaceable class="parameter">offset</replaceable> defaults to 1 and
+       <replaceable class="parameter">default</replaceable> to null
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>lead</primary>
+       </indexterm>
+       <function>
+         lead(<replaceable class="parameter">value</replaceable> <type>any</>
+              [, <replaceable class="parameter">offset</replaceable> <type>integer</>
+              [, <replaceable class="parameter">default</replaceable> <type>any</> ]])
+       </function>
+      </entry>
+      <entry>
+       <type>same type as <replaceable class="parameter">value</replaceable></type>
+      </entry>
+      <entry>
+       returns <replaceable class="parameter">value</replaceable> evaluated at
+       the row that is <replaceable class="parameter">offset</replaceable>
+       rows after the current row within the partition; if there is no such
+       row, instead return <replaceable class="parameter">default</replaceable>.
+       Both <replaceable class="parameter">offset</replaceable> and
+       <replaceable class="parameter">default</replaceable> are evaluated
+       with respect to the current row.  If omitted,
+       <replaceable class="parameter">offset</replaceable> defaults to 1 and
+       <replaceable class="parameter">default</replaceable> to null
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>first_value</primary>
+       </indexterm>
+       <function>first_value(<replaceable class="parameter">value</replaceable> <type>any</>)</function>
+      </entry>
+      <entry>
+       <type>same type as <replaceable class="parameter">value</replaceable></type>
+      </entry>
+      <entry>
+       returns <replaceable class="parameter">value</replaceable> evaluated
+       at the row that is the first row of the window frame
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>last_value</primary>
+       </indexterm>
+       <function>last_value(<replaceable class="parameter">value</replaceable> <type>any</>)</function>
+      </entry>
+      <entry>
+       <type>same type as <replaceable class="parameter">value</replaceable></type>
+      </entry>
+      <entry>
+       returns <replaceable class="parameter">value</replaceable> evaluated
+       at the row that is the last row of the window frame
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>nth_value</primary>
+       </indexterm>
+       <function>
+         nth_value(<replaceable class="parameter">value</replaceable> <type>any</>, <replaceable class="parameter">nth</replaceable> <type>integer</>)
+       </function>
+      </entry>
+      <entry>
+       <type>same type as <replaceable class="parameter">value</replaceable></type>
+      </entry>
+      <entry>
+       returns <replaceable class="parameter">value</replaceable> evaluated
+       at the row that is the <replaceable class="parameter">nth</replaceable>
+       row of the window frame (counting from 1); null if no such row
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   All of the functions listed in
+   <xref linkend="functions-window-table"> depend on the sort ordering
+   specified by the <literal>ORDER BY</> clause of the associated window
+   definition.  Rows that are not distinct in the <literal>ORDER BY</>
+   ordering are said to be <firstterm>peers</>; the four ranking functions
+   are defined so that they give the same answer for any two peer rows.
+  </para>
+
+  <para>
+   Note that <function>first_value</>, <function>last_value</>, and
+   <function>nth_value</> consider only the rows within the <quote>window
+   frame</>, that is the rows from the start of the partition through the
+   last peer of the current row.  This is particularly likely to give
+   unintuitive results for <function>last_value</>.
+  </para>
+
+  <para>
+   When an aggregate function is used as a window function, it aggregates
+   over the rows within the current row's window frame.  To obtain
+   aggregation over the whole partition, be sure to omit <literal>ORDER BY</>
+   from the window definition.  An aggregate used with <literal>ORDER BY</>
+   produces a <quote>running sum</> type of behavior, which may or may not
+   be what's wanted.
+  </para>
+
+  <note>
+   <para>
+    The SQL standard defines a <literal>RESPECT NULLS</> or
+    <literal>IGNORE NULLS</> option for <function>lead</>, <function>lag</>,
+    <function>first_value</>, <function>last_value</>, and
+    <function>nth_value</>.  This is not implemented in
+    <productname>PostgreSQL</productname>: the behavior is always the
+    same as the standard's default, namely <literal>RESPECT NULLS</>.
+    Likewise, the standard's <literal>FROM FIRST</> or <literal>FROM LAST</>
+    option for <function>nth_value</> is not implemented: only the
+    default <literal>FROM FIRST</> behavior is supported.
+   </para>
+  </note>
+
+ </sect1>
 
  <sect1 id="functions-subquery">
   <title>Subquery Expressions</title>

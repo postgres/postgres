@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.122 2008/08/25 22:42:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.123 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2218,6 +2218,7 @@ pg_detoast_datum_packed(struct varlena * datum)
  *
  * These are needed by polymorphic functions, which accept multiple possible
  * input types and need help from the parser to know what they've got.
+ * Also, some functions might be interested in whether a parameter is constant.
  *-------------------------------------------------------------------------
  */
 
@@ -2288,6 +2289,8 @@ get_call_expr_argtype(Node *expr, int argnum)
 		args = list_make1(((ArrayCoerceExpr *) expr)->arg);
 	else if (IsA(expr, NullIfExpr))
 		args = ((NullIfExpr *) expr)->args;
+	else if (IsA(expr, WindowFunc))
+		args = ((WindowFunc *) expr)->args;
 	else
 		return InvalidOid;
 
@@ -2309,4 +2312,74 @@ get_call_expr_argtype(Node *expr, int argnum)
 		argtype = get_element_type(argtype);
 
 	return argtype;
+}
+
+/*
+ * Find out whether a specific function argument is constant for the
+ * duration of a query
+ *
+ * Returns false if information is not available
+ */
+bool
+get_fn_expr_arg_stable(FmgrInfo *flinfo, int argnum)
+{
+	/*
+	 * can't return anything useful if we have no FmgrInfo or if its fn_expr
+	 * node has not been initialized
+	 */
+	if (!flinfo || !flinfo->fn_expr)
+		return false;
+
+	return get_call_expr_arg_stable(flinfo->fn_expr, argnum);
+}
+
+/*
+ * Find out whether a specific function argument is constant for the
+ * duration of a query, but working from the calling expression tree
+ *
+ * Returns false if information is not available
+ */
+bool
+get_call_expr_arg_stable(Node *expr, int argnum)
+{
+	List	   *args;
+	Node	   *arg;
+
+	if (expr == NULL)
+		return false;
+
+	if (IsA(expr, FuncExpr))
+		args = ((FuncExpr *) expr)->args;
+	else if (IsA(expr, OpExpr))
+		args = ((OpExpr *) expr)->args;
+	else if (IsA(expr, DistinctExpr))
+		args = ((DistinctExpr *) expr)->args;
+	else if (IsA(expr, ScalarArrayOpExpr))
+		args = ((ScalarArrayOpExpr *) expr)->args;
+	else if (IsA(expr, ArrayCoerceExpr))
+		args = list_make1(((ArrayCoerceExpr *) expr)->arg);
+	else if (IsA(expr, NullIfExpr))
+		args = ((NullIfExpr *) expr)->args;
+	else if (IsA(expr, WindowFunc))
+		args = ((WindowFunc *) expr)->args;
+	else
+		return false;
+
+	if (argnum < 0 || argnum >= list_length(args))
+		return false;
+
+	arg = (Node *) list_nth(args, argnum);
+
+	/*
+	 * Either a true Const or an external Param will have a value that
+	 * doesn't change during the execution of the query.  In future we
+	 * might want to consider other cases too, e.g. now().
+	 */
+	if (IsA(arg, Const))
+		return true;
+	if (IsA(arg, Param) &&
+		((Param *) arg)->paramkind == PARAM_EXTERN)
+		return true;
+
+	return false;
 }

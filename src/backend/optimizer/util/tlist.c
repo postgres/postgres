@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.83 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.84 2008/12/28 18:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,28 +101,28 @@ flatten_tlist(List *tlist)
 
 /*
  * add_to_flat_tlist
- *		Add more vars to a flattened tlist (if they're not already in it)
+ *		Add more items to a flattened tlist (if they're not already in it)
  *
  * 'tlist' is the flattened tlist
- * 'vars' is a list of Var and/or PlaceHolderVar nodes
+ * 'exprs' is a list of expressions (usually, but not necessarily, Vars)
  *
  * Returns the extended tlist.
  */
 List *
-add_to_flat_tlist(List *tlist, List *vars)
+add_to_flat_tlist(List *tlist, List *exprs)
 {
 	int			next_resno = list_length(tlist) + 1;
-	ListCell   *v;
+	ListCell   *lc;
 
-	foreach(v, vars)
+	foreach(lc, exprs)
 	{
-		Node	   *var = (Node *) lfirst(v);
+		Node	   *expr = (Node *) lfirst(lc);
 
-		if (!tlist_member(var, tlist))
+		if (!tlist_member(expr, tlist))
 		{
 			TargetEntry *tle;
 
-			tle = makeTargetEntry(copyObject(var),		/* copy needed?? */
+			tle = makeTargetEntry(copyObject(expr),		/* copy needed?? */
 								  next_resno++,
 								  NULL,
 								  false);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.127 2008/11/30 19:01:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.128 2008/12/28 18:53:55 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2255,6 +2255,10 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 			   errmsg("cannot use aggregate function in check constraint")));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in check constraint")));
 
 	/*
 	 * Convert to string form for storage.

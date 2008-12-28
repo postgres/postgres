@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.533 2008/12/19 18:25:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.534 2008/12/28 18:53:59 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4634,6 +4634,38 @@ DATA(insert OID = 2986 (  record_ge		   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 
 DESCR("record greater than or equal");
 DATA(insert OID = 2987 (  btrecordcmp	   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "2249 2249" _null_ _null_ _null_ _null_ btrecordcmp _null_ _null_ _null_ ));
 DESCR("btree less-equal-greater");
+
+/* SQL-spec window functions */
+DATA(insert OID = 3100 (  row_number	PGNSP PGUID 12 1 0 0 f t f f f i 0 0 20 "" _null_ _null_ _null_ _null_ window_row_number _null_ _null_ _null_ ));
+DESCR("row number within partition");
+DATA(insert OID = 3101 (  rank			PGNSP PGUID 12 1 0 0 f t f f f i 0 0 20 "" _null_ _null_ _null_ _null_ window_rank _null_ _null_ _null_ ));
+DESCR("integer rank with gaps");
+DATA(insert OID = 3102 (  dense_rank	PGNSP PGUID 12 1 0 0 f t f f f i 0 0 20 "" _null_ _null_ _null_ _null_ window_dense_rank _null_ _null_ _null_ ));
+DESCR("integer rank without gaps");
+DATA(insert OID = 3103 (  percent_rank	PGNSP PGUID 12 1 0 0 f t f f f i 0 0 701 "" _null_ _null_ _null_ _null_ window_percent_rank _null_ _null_ _null_ ));
+DESCR("fractional rank within partition");
+DATA(insert OID = 3104 (  cume_dist		PGNSP PGUID 12 1 0 0 f t f f f i 0 0 701 "" _null_ _null_ _null_ _null_ window_cume_dist _null_ _null_ _null_ ));
+DESCR("fractional row number within partition");
+DATA(insert OID = 3105 (  ntile			PGNSP PGUID 12 1 0 0 f t f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ window_ntile _null_ _null_ _null_ ));
+DESCR("split rows into N groups");
+DATA(insert OID = 3106 (  lag			PGNSP PGUID 12 1 0 0 f t f t f i 1 0 2283 "2283" _null_ _null_ _null_ _null_ window_lag _null_ _null_ _null_ ));
+DESCR("fetch the preceding row value");
+DATA(insert OID = 3107 (  lag			PGNSP PGUID 12 1 0 0 f t f t f i 2 0 2283 "2283 23" _null_ _null_ _null_ _null_ window_lag_with_offset _null_ _null_ _null_ ));
+DESCR("fetch the Nth preceding row value");
+DATA(insert OID = 3108 (  lag			PGNSP PGUID 12 1 0 0 f t f t f i 3 0 2283 "2283 23 2283" _null_ _null_ _null_ _null_ window_lag_with_offset_and_default _null_ _null_ _null_ ));
+DESCR("fetch the Nth preceding row value with default");
+DATA(insert OID = 3109 (  lead			PGNSP PGUID 12 1 0 0 f t f t f i 1 0 2283 "2283" _null_ _null_ _null_ _null_ window_lead _null_ _null_ _null_ ));
+DESCR("fetch the following row value");
+DATA(insert OID = 3110 (  lead			PGNSP PGUID 12 1 0 0 f t f t f i 2 0 2283 "2283 23" _null_ _null_ _null_ _null_ window_lead_with_offset _null_ _null_ _null_ ));
+DESCR("fetch the Nth following row value");
+DATA(insert OID = 3111 (  lead			PGNSP PGUID 12 1 0 0 f t f t f i 3 0 2283 "2283 23 2283" _null_ _null_ _null_ _null_ window_lead_with_offset_and_default _null_ _null_ _null_ ));
+DESCR("fetch the Nth following row value with default");
+DATA(insert OID = 3112 (  first_value	PGNSP PGUID 12 1 0 0 f t f t f i 1 0 2283 "2283" _null_ _null_ _null_ _null_ window_first_value _null_ _null_ _null_ ));
+DESCR("fetch the first row value");
+DATA(insert OID = 3113 (  last_value	PGNSP PGUID 12 1 0 0 f t f t f i 1 0 2283 "2283" _null_ _null_ _null_ _null_ window_last_value _null_ _null_ _null_ ));
+DESCR("fetch the last row value");
+DATA(insert OID = 3114 (  nth_value		PGNSP PGUID 12 1 0 0 f t f t f i 2 0 2283 "2283 23" _null_ _null_ _null_ _null_ window_nth_value _null_ _null_ _null_ ));
+DESCR("fetch the Nth row value");
 
 
 /*

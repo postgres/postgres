@@ -47,7 +47,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.44 2008/12/27 17:39:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.45 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1146,6 +1146,19 @@ tuplestore_trim(Tuplestorestate *state)
 
 	/* mark tuplestore as truncated (used for Assert crosschecks only) */
 	state->truncated = true;
+}
+
+/*
+ * tuplestore_in_memory
+ *
+ * Returns true if the tuplestore has not spilled to disk.
+ *
+ * XXX exposing this is a violation of modularity ... should get rid of it.
+ */
+bool
+tuplestore_in_memory(Tuplestorestate *state)
+{
+	return (state->status == TSS_INMEM);
 }
 
 

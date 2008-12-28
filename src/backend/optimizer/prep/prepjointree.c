@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.60 2008/11/11 19:05:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.61 2008/12/28 18:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,7 +742,10 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * Miscellaneous housekeeping.
 	 */
 	parse->hasSubLinks |= subquery->hasSubLinks;
-	/* subquery won't be pulled up if it hasAggs, so no work there */
+	/*
+	 * subquery won't be pulled up if it hasAggs or hasWindowFuncs, so no
+	 * work needed on those flags
+	 */
 
 	/*
 	 * Return the adjusted subquery jointree to replace the RangeTblRef entry
@@ -931,6 +934,7 @@ is_simple_subquery(Query *subquery)
 	 * limiting, or WITH.  (XXX WITH could possibly be allowed later)
 	 */
 	if (subquery->hasAggs ||
+		subquery->hasWindowFuncs ||
 		subquery->groupClause ||
 		subquery->havingQual ||
 		subquery->sortClause ||

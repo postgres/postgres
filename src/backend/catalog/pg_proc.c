@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.157 2008/12/19 18:25:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.158 2008/12/28 18:53:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,8 @@ ProcedureCreate(const char *procedureName,
 				float4 prorows)
 {
 	Oid			retval;
+	/* XXX we don't currently have a way to make new window functions */
+	bool		isWindowFunc = false;
 	int			parameterCount;
 	int			allParamCount;
 	Oid		   *allParams;
@@ -292,8 +294,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
-	/* XXX we don't currently have a way to make new window functions */
-	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(false);
+	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(isWindowFunc);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
 	values[Anum_pg_proc_proretset - 1] = BoolGetDatum(returnsSet);
@@ -440,18 +441,31 @@ ProcedureCreate(const char *procedureName,
 			}
 		}
 
-		/* Can't change aggregate status, either */
+		/* Can't change aggregate or window-function status, either */
 		if (oldproc->proisagg != isAgg)
 		{
 			if (oldproc->proisagg)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is an aggregate",
+						 errmsg("function \"%s\" is an aggregate function",
 								procedureName)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function \"%s\" is not an aggregate",
+						 errmsg("function \"%s\" is not an aggregate function",
+								procedureName)));
+		}
+		if (oldproc->proiswindow != isWindowFunc)
+		{
+			if (oldproc->proiswindow)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("function \"%s\" is a window function",
+								procedureName)));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("function \"%s\" is not a window function",
 								procedureName)));
 		}
 

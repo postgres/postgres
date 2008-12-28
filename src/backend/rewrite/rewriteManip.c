@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.118 2008/11/15 19:43:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.119 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,18 @@ typedef struct
 	int			sublevels_up;
 } locate_agg_of_level_context;
 
+typedef struct
+{
+	int			win_location;
+} locate_windowfunc_context;
+
 static bool contain_aggs_of_level_walker(Node *node,
 						contain_aggs_of_level_context *context);
 static bool locate_agg_of_level_walker(Node *node,
 						locate_agg_of_level_context *context);
+static bool contain_windowfuncs_walker(Node *node, void *context);
+static bool locate_windowfunc_walker(Node *node,
+									 locate_windowfunc_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -172,6 +180,87 @@ locate_agg_of_level_walker(Node *node,
 		return result;
 	}
 	return expression_tree_walker(node, locate_agg_of_level_walker,
+								  (void *) context);
+}
+
+/*
+ * checkExprHasWindowFuncs -
+ *	Check if an expression contains a window function call of the
+ *	current query level.
+ */
+bool
+checkExprHasWindowFuncs(Node *node)
+{
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	return query_or_expression_tree_walker(node,
+										   contain_windowfuncs_walker,
+										   NULL,
+										   0);
+}
+
+static bool
+contain_windowfuncs_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, WindowFunc))
+		return true;		/* abort the tree traversal and return true */
+	/* Mustn't recurse into subselects */
+	return expression_tree_walker(node, contain_windowfuncs_walker,
+								  (void *) context);
+}
+
+/*
+ * locate_windowfunc -
+ *	  Find the parse location of any windowfunc of the current query level.
+ *
+ * Returns -1 if no such windowfunc is in the querytree, or if they all have
+ * unknown parse location.  (The former case is probably caller error,
+ * but we don't bother to distinguish it from the latter case.)
+ *
+ * Note: it might seem appropriate to merge this functionality into
+ * contain_windowfuncs, but that would complicate that function's API.
+ * Currently, the only uses of this function are for error reporting,
+ * and so shaving cycles probably isn't very important.
+ */
+int
+locate_windowfunc(Node *node)
+{
+	locate_windowfunc_context context;
+
+	context.win_location = -1;		/* in case we find nothing */
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	(void) query_or_expression_tree_walker(node,
+										   locate_windowfunc_walker,
+										   (void *) &context,
+										   0);
+
+	return context.win_location;
+}
+
+static bool
+locate_windowfunc_walker(Node *node, locate_windowfunc_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, WindowFunc))
+	{
+		if (((WindowFunc *) node)->location >= 0)
+		{
+			context->win_location = ((WindowFunc *) node)->location;
+			return true;		/* abort the tree traversal and return true */
+		}
+		/* else fall through to examine argument */
+	}
+	/* Mustn't recurse into subselects */
+	return expression_tree_walker(node, locate_windowfunc_walker,
 								  (void *) context);
 }
 
@@ -1023,6 +1112,7 @@ AddInvertedQual(Query *parsetree, Node *qual)
  * Messy, isn't it?  We do not need to do similar pushups for hasAggs,
  * because it isn't possible for this transformation to insert a level-zero
  * aggregate reference into a subquery --- it could only insert outer aggs.
+ * Likewise for hasWindowFuncs.
  */
 
 typedef struct

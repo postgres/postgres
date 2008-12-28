@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.143 2008/10/06 17:39:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.144 2008/12/28 18:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,6 +221,21 @@ typedef struct Aggref
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
+
+/*
+ * WindowFunc
+ */
+typedef struct WindowFunc
+{
+	Expr		xpr;
+	Oid			winfnoid;		/* pg_proc Oid of the function */
+	Oid			wintype;		/* type Oid of result of the window function */
+	List	   *args;			/* arguments to the window function */
+	Index		winref;			/* index of associated WindowClause */
+	bool		winstar;		/* TRUE if argument list was really '*' */
+	bool		winagg;			/* is function a simple aggregate? */
+	int			location;		/* token location, or -1 if unknown */
+} WindowFunc;
 
 /* ----------------
  *	ArrayRef: describes an array subscripting operation

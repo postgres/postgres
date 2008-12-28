@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.216 2008/12/19 16:25:19 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.217 2008/12/28 18:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ typedef enum NodeTag
 	T_Sort,
 	T_Group,
 	T_Agg,
+	T_WindowAgg,
 	T_Unique,
 	T_Hash,
 	T_SetOp,
@@ -103,6 +104,7 @@ typedef enum NodeTag
 	T_SortState,
 	T_GroupState,
 	T_AggState,
+	T_WindowAggState,
 	T_UniqueState,
 	T_HashState,
 	T_SetOpState,
@@ -118,6 +120,7 @@ typedef enum NodeTag
 	T_Const,
 	T_Param,
 	T_Aggref,
+	T_WindowFunc,
 	T_ArrayRef,
 	T_FuncExpr,
 	T_OpExpr,
@@ -164,6 +167,7 @@ typedef enum NodeTag
 	T_ExprState = 400,
 	T_GenericExprState,
 	T_AggrefExprState,
+	T_WindowFuncExprState,
 	T_ArrayRefExprState,
 	T_FuncExprState,
 	T_ScalarArrayOpExprState,
@@ -350,6 +354,7 @@ typedef enum NodeTag
 	T_ResTarget,
 	T_TypeCast,
 	T_SortBy,
+	T_WindowDef,
 	T_RangeSubselect,
 	T_RangeFunction,
 	T_TypeName,
@@ -360,6 +365,7 @@ typedef enum NodeTag
 	T_OptionDefElem,
 	T_RangeTblEntry,
 	T_SortGroupClause,
+	T_WindowClause,
 	T_FkConstraint,
 	T_PrivGrantee,
 	T_FuncWithArgs,
@@ -383,6 +389,7 @@ typedef enum NodeTag
 	 */
 	T_TriggerData = 950,		/* in commands/trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
+	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap					/* in nodes/tidbitmap.h */
 } NodeTag;
 

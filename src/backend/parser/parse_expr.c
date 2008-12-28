@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.237 2008/10/26 02:46:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.238 2008/12/28 18:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,6 +286,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_Const:
 		case T_Param:
 		case T_Aggref:
+		case T_WindowFunc:
 		case T_ArrayRef:
 		case T_FuncExpr:
 		case T_OpExpr:
@@ -361,7 +362,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 									   list_make1(n),
 									   list_make1(result),
 									   false, false, false,
-									   true, -1);
+									   NULL, true, -1);
 		}
 	}
 	/* process trailing subscripts, if any */
@@ -505,7 +506,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 											 list_make1(makeString(name2)),
 											 list_make1(node),
 											 false, false, false,
-											 true, cref->location);
+											 NULL, true, cref->location);
 				}
 				break;
 			}
@@ -546,7 +547,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 											 list_make1(makeString(name3)),
 											 list_make1(node),
 											 false, false, false,
-											 true, cref->location);
+											 NULL, true, cref->location);
 				}
 				break;
 			}
@@ -601,7 +602,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 											 list_make1(makeString(name4)),
 											 list_make1(node),
 											 false, false, false,
-											 true, cref->location);
+											 NULL, true, cref->location);
 				}
 				break;
 			}
@@ -1108,6 +1109,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 							 fn->agg_star,
 							 fn->agg_distinct,
 							 fn->func_variadic,
+							 fn->over,
 							 false,
 							 fn->location);
 }

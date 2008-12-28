@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.14 2008/12/01 21:06:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.15 2008/12/28 18:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,14 +438,16 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning
-	 * functions, or aggregates, but such could appear in sort expressions; so
-	 * we have to check whether its const-marking was correct.
+	 * functions, aggregates, or window functions, but such could appear
+	 * in sort expressions; so we have to check whether its const-marking
+	 * was correct.
 	 */
 	if (newec->ec_has_const)
 	{
 		if (newec->ec_has_volatile ||
 			expression_returns_set((Node *) expr) ||
-			contain_agg_clause((Node *) expr))
+			contain_agg_clause((Node *) expr) ||
+			contain_window_function((Node *) expr))
 		{
 			newec->ec_has_const = false;
 			newem->em_is_const = false;

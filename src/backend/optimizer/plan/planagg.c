@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.43 2008/08/25 22:42:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.44 2008/12/28 18:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,11 +95,11 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	/*
 	 * Reject unoptimizable cases.
 	 *
-	 * We don't handle GROUP BY, because our current implementations of
-	 * grouping require looking at all the rows anyway, and so there's not
-	 * much point in optimizing MIN/MAX.
+	 * We don't handle GROUP BY or windowing, because our current
+	 * implementations of grouping require looking at all the rows anyway,
+	 * and so there's not much point in optimizing MIN/MAX.
 	 */
-	if (parse->groupClause)
+	if (parse->groupClause || parse->hasWindowFuncs)
 		return NULL;
 
 	/*

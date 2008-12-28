@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.416 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.417 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,6 +669,32 @@ _copyAgg(Agg *from)
 }
 
 /*
+ * _copyWindowAgg
+ */
+static WindowAgg *
+_copyWindowAgg(WindowAgg *from)
+{
+	WindowAgg  *newnode = makeNode(WindowAgg);
+
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	COPY_SCALAR_FIELD(partNumCols);
+	if (from->partNumCols > 0)
+	{
+		COPY_POINTER_FIELD(partColIdx, from->partNumCols * sizeof(AttrNumber));
+		COPY_POINTER_FIELD(partOperators, from->partNumCols * sizeof(Oid));
+	}
+	COPY_SCALAR_FIELD(ordNumCols);
+	if (from->ordNumCols > 0)
+	{
+		COPY_POINTER_FIELD(ordColIdx, from->ordNumCols * sizeof(AttrNumber));
+		COPY_POINTER_FIELD(ordOperators, from->ordNumCols * sizeof(Oid));
+	}
+
+	return newnode;
+}
+
+/*
  * _copyUnique
  */
 static Unique *
@@ -926,6 +952,25 @@ _copyAggref(Aggref *from)
 	COPY_SCALAR_FIELD(agglevelsup);
 	COPY_SCALAR_FIELD(aggstar);
 	COPY_SCALAR_FIELD(aggdistinct);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyWindowFunc
+ */
+static WindowFunc *
+_copyWindowFunc(WindowFunc *from)
+{
+	WindowFunc *newnode = makeNode(WindowFunc);
+
+	COPY_SCALAR_FIELD(winfnoid);
+	COPY_SCALAR_FIELD(wintype);
+	COPY_NODE_FIELD(args);
+	COPY_SCALAR_FIELD(winref);
+	COPY_SCALAR_FIELD(winstar);
+	COPY_SCALAR_FIELD(winagg);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1729,6 +1774,21 @@ _copySortGroupClause(SortGroupClause *from)
 	return newnode;
 }
 
+static WindowClause *
+_copyWindowClause(WindowClause *from)
+{
+	WindowClause *newnode = makeNode(WindowClause);
+
+	COPY_STRING_FIELD(name);
+	COPY_STRING_FIELD(refname);
+	COPY_NODE_FIELD(partitionClause);
+	COPY_NODE_FIELD(orderClause);
+	COPY_SCALAR_FIELD(winref);
+	COPY_SCALAR_FIELD(copiedOrder);
+
+	return newnode;
+}
+
 static RowMarkClause *
 _copyRowMarkClause(RowMarkClause *from)
 {
@@ -1850,6 +1910,7 @@ _copyFuncCall(FuncCall *from)
 	COPY_SCALAR_FIELD(agg_star);
 	COPY_SCALAR_FIELD(agg_distinct);
 	COPY_SCALAR_FIELD(func_variadic);
+	COPY_NODE_FIELD(over);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -1935,6 +1996,20 @@ _copySortBy(SortBy *from)
 	COPY_SCALAR_FIELD(sortby_dir);
 	COPY_SCALAR_FIELD(sortby_nulls);
 	COPY_NODE_FIELD(useOp);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static WindowDef *
+_copyWindowDef(WindowDef *from)
+{
+	WindowDef  *newnode = makeNode(WindowDef);
+
+	COPY_STRING_FIELD(name);
+	COPY_STRING_FIELD(refname);
+	COPY_NODE_FIELD(partitionClause);
+	COPY_NODE_FIELD(orderClause);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2081,6 +2156,7 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(resultRelation);
 	COPY_NODE_FIELD(intoClause);
 	COPY_SCALAR_FIELD(hasAggs);
+	COPY_SCALAR_FIELD(hasWindowFuncs);
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_SCALAR_FIELD(hasDistinctOn);
 	COPY_SCALAR_FIELD(hasRecursive);
@@ -2091,6 +2167,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
+	COPY_NODE_FIELD(windowClause);
 	COPY_NODE_FIELD(distinctClause);
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(limitOffset);
@@ -2153,6 +2230,7 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingClause);
+	COPY_NODE_FIELD(windowClause);
 	COPY_NODE_FIELD(withClause);
 	COPY_NODE_FIELD(valuesLists);
 	COPY_NODE_FIELD(sortClause);
@@ -3440,6 +3518,9 @@ copyObject(void *from)
 		case T_Agg:
 			retval = _copyAgg(from);
 			break;
+		case T_WindowAgg:
+			retval = _copyWindowAgg(from);
+			break;
 		case T_Unique:
 			retval = _copyUnique(from);
 			break;
@@ -3479,6 +3560,9 @@ copyObject(void *from)
 			break;
 		case T_Aggref:
 			retval = _copyAggref(from);
+			break;
+		case T_WindowFunc:
+			retval = _copyWindowFunc(from);
 			break;
 		case T_ArrayRef:
 			retval = _copyArrayRef(from);
@@ -3951,6 +4035,9 @@ copyObject(void *from)
 		case T_SortBy:
 			retval = _copySortBy(from);
 			break;
+		case T_WindowDef:
+			retval = _copyWindowDef(from);
+			break;
 		case T_RangeSubselect:
 			retval = _copyRangeSubselect(from);
 			break;
@@ -3983,6 +4070,9 @@ copyObject(void *from)
 			break;
 		case T_SortGroupClause:
 			retval = _copySortGroupClause(from);
+			break;
+		case T_WindowClause:
+			retval = _copyWindowClause(from);
 			break;
 		case T_RowMarkClause:
 			retval = _copyRowMarkClause(from);

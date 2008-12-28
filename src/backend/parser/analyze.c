@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.384 2008/12/13 02:00:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.385 2008/12/28 18:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,6 +306,9 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
+	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
+	if (pstate->p_hasWindowFuncs)
+		parseCheckWindowFuncs(pstate, qry);
 
 	return qry;
 }
@@ -673,6 +676,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				 errmsg("cannot use aggregate function in VALUES"),
 				 parser_errposition(pstate,
 									locate_agg_of_level((Node *) qry, 0))));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in VALUES"),
+				 parser_errposition(pstate,
+									locate_windowfunc((Node *) qry))));
 
 	return qry;
 }
@@ -764,6 +773,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
 	pstate->p_locking_clause = stmt->lockingClause;
 
+	/* make WINDOW info available for window functions, too */
+	pstate->p_windowdefs = stmt->windowClause;
+
 	/* process the WITH clause */
 	if (stmt->withClause)
 	{
@@ -803,7 +815,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
 											&qry->targetList,
-											qry->sortClause);
+											qry->sortClause,
+											false);
 
 	if (stmt->distinctClause == NIL)
 	{
@@ -834,6 +847,11 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->limitCount = transformLimitClause(pstate, stmt->limitCount,
 										   "LIMIT");
 
+	/* transform window clauses after we have seen all window functions */
+	qry->windowClause = transformWindowDefinitions(pstate,
+												   pstate->p_windowdefs,
+												   &qry->targetList);
+
 	/* handle any SELECT INTO/CREATE TABLE AS spec */
 	if (stmt->intoClause)
 	{
@@ -849,6 +867,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
+	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
+	if (pstate->p_hasWindowFuncs)
+		parseCheckWindowFuncs(pstate, qry);
 
 	foreach(l, stmt->lockingClause)
 	{
@@ -889,6 +910,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	Assert(stmt->whereClause == NULL);
 	Assert(stmt->groupClause == NIL);
 	Assert(stmt->havingClause == NULL);
+	Assert(stmt->windowClause == NIL);
 	Assert(stmt->op == SETOP_NONE);
 
 	/* process the WITH clause */
@@ -1061,6 +1083,12 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				 errmsg("cannot use aggregate function in VALUES"),
 				 parser_errposition(pstate,
 									locate_agg_of_level((Node *) newExprsLists, 0))));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in VALUES"),
+				 parser_errposition(pstate,
+									locate_windowfunc((Node *) newExprsLists))));
 
 	return qry;
 }
@@ -1289,6 +1317,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
+	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
+	if (pstate->p_hasWindowFuncs)
+		parseCheckWindowFuncs(pstate, qry);
 
 	foreach(l, lockingClause)
 	{
@@ -1623,6 +1654,12 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 				 errmsg("cannot use aggregate function in UPDATE"),
 				 parser_errposition(pstate,
 									locate_agg_of_level((Node *) qry, 0))));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in UPDATE"),
+				 parser_errposition(pstate,
+									locate_windowfunc((Node *) qry))));
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
@@ -1692,6 +1729,7 @@ transformReturningList(ParseState *pstate, List *returningList)
 	List	   *rlist;
 	int			save_next_resno;
 	bool		save_hasAggs;
+	bool		save_hasWindowFuncs;
 	int			length_rtable;
 
 	if (returningList == NIL)
@@ -1708,6 +1746,8 @@ transformReturningList(ParseState *pstate, List *returningList)
 	/* save other state so that we can detect disallowed stuff */
 	save_hasAggs = pstate->p_hasAggs;
 	pstate->p_hasAggs = false;
+	save_hasWindowFuncs = pstate->p_hasWindowFuncs;
+	pstate->p_hasWindowFuncs = false;
 	length_rtable = list_length(pstate->p_rtable);
 
 	/* transform RETURNING identically to a SELECT targetlist */
@@ -1722,6 +1762,12 @@ transformReturningList(ParseState *pstate, List *returningList)
 				 errmsg("cannot use aggregate function in RETURNING"),
 				 parser_errposition(pstate,
 									locate_agg_of_level((Node *) rlist, 0))));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in RETURNING"),
+				 parser_errposition(pstate,
+									locate_windowfunc((Node *) rlist))));
 
 	/* no new relation references please */
 	if (list_length(pstate->p_rtable) != length_rtable)
@@ -1748,6 +1794,7 @@ transformReturningList(ParseState *pstate, List *returningList)
 	/* restore state */
 	pstate->p_next_resno = save_next_resno;
 	pstate->p_hasAggs = save_hasAggs;
+	pstate->p_hasWindowFuncs = save_hasWindowFuncs;
 
 	return rlist;
 }
@@ -1883,6 +1930,10 @@ CheckSelectLocking(Query *qry)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with aggregate functions")));
+	if (qry->hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with window functions")));
 }
 
 /*

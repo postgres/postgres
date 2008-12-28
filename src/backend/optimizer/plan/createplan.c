@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.252 2008/11/20 19:52:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.253 2008/12/28 18:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3237,8 +3237,8 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	 * anything for Aggref nodes; this is okay since they are really
 	 * comparable to Vars.
 	 *
-	 * See notes in grouping_planner about why this routine and make_group are
-	 * the only ones in this file that worry about tlist eval cost.
+	 * See notes in grouping_planner about why only make_agg, make_windowagg
+	 * and make_group worry about tlist eval cost.
 	 */
 	if (qual)
 	{
@@ -3256,6 +3256,53 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
+
+	return node;
+}
+
+WindowAgg *
+make_windowagg(PlannerInfo *root, List *tlist, int numWindowFuncs,
+			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
+			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
+			   Plan *lefttree)
+{
+	WindowAgg  *node = makeNode(WindowAgg);
+	Plan	   *plan = &node->plan;
+	Path		windowagg_path;		/* dummy for result of cost_windowagg */
+	QualCost	qual_cost;
+
+	node->partNumCols = partNumCols;
+	node->partColIdx = partColIdx;
+	node->partOperators = partOperators;
+	node->ordNumCols = ordNumCols;
+	node->ordColIdx = ordColIdx;
+	node->ordOperators = ordOperators;
+
+	copy_plan_costsize(plan, lefttree);	/* only care about copying size */
+	cost_windowagg(&windowagg_path, root,
+				   numWindowFuncs, partNumCols, ordNumCols,
+				   lefttree->startup_cost,
+				   lefttree->total_cost,
+				   lefttree->plan_rows);
+	plan->startup_cost = windowagg_path.startup_cost;
+	plan->total_cost = windowagg_path.total_cost;
+
+	/*
+	 * We also need to account for the cost of evaluation of the tlist.
+	 *
+	 * See notes in grouping_planner about why only make_agg, make_windowagg
+	 * and make_group worry about tlist eval cost.
+	 */
+	cost_qual_eval(&qual_cost, tlist, root);
+	plan->startup_cost += qual_cost.startup;
+	plan->total_cost += qual_cost.startup;
+	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+
+	plan->targetlist = tlist;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+	/* WindowAgg nodes never have a qual clause */
+	plan->qual = NIL;
 
 	return node;
 }
@@ -3300,8 +3347,8 @@ make_group(PlannerInfo *root,
 	 * lower plan level and will only be copied by the Group node. Worth
 	 * fixing?
 	 *
-	 * See notes in grouping_planner about why this routine and make_agg are
-	 * the only ones in this file that worry about tlist eval cost.
+	 * See notes in grouping_planner about why only make_agg, make_windowagg
+	 * and make_group worry about tlist eval cost.
 	 */
 	if (qual)
 	{

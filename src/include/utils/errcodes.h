@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.26 2008/10/04 21:56:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.27 2008/12/28 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,6 +122,8 @@
 #define ERRCODE_INDICATOR_OVERFLOW			MAKE_SQLSTATE('2','2', '0','2','2')
 #define ERRCODE_INTERVAL_FIELD_OVERFLOW		MAKE_SQLSTATE('2','2', '0','1','5')
 #define ERRCODE_INVALID_ARGUMENT_FOR_LOG	MAKE_SQLSTATE('2','2', '0','1','E')
+#define ERRCODE_INVALID_ARGUMENT_FOR_NTILE	MAKE_SQLSTATE('2','2', '0','1','4')
+#define ERRCODE_INVALID_ARGUMENT_FOR_NTH_VALUE	MAKE_SQLSTATE('2','2', '0','1','6')
 #define ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION MAKE_SQLSTATE('2','2', '0', '1', 'F')
 #define ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION	MAKE_SQLSTATE('2','2', '0', '1', 'G')
 #define ERRCODE_INVALID_CHARACTER_VALUE_FOR_CAST		MAKE_SQLSTATE('2','2', '0','1','8')
@@ -246,6 +248,7 @@
 #define ERRCODE_INSUFFICIENT_PRIVILEGE		MAKE_SQLSTATE('4','2', '5','0','1')
 #define ERRCODE_CANNOT_COERCE				MAKE_SQLSTATE('4','2', '8','4','6')
 #define ERRCODE_GROUPING_ERROR				MAKE_SQLSTATE('4','2', '8','0','3')
+#define ERRCODE_WINDOWING_ERROR				MAKE_SQLSTATE('4','2', 'P','2','0')
 #define ERRCODE_INVALID_RECURSION			MAKE_SQLSTATE('4','2', 'P','1','9')
 #define ERRCODE_INVALID_FOREIGN_KEY			MAKE_SQLSTATE('4','2', '8','3','0')
 #define ERRCODE_INVALID_NAME				MAKE_SQLSTATE('4','2', '6','0','2')

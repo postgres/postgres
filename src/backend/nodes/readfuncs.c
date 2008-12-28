@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.217 2008/11/15 19:43:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.218 2008/12/28 18:53:56 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -153,6 +153,7 @@ _readQuery(void)
 	READ_INT_FIELD(resultRelation);
 	READ_NODE_FIELD(intoClause);
 	READ_BOOL_FIELD(hasAggs);
+	READ_BOOL_FIELD(hasWindowFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_BOOL_FIELD(hasDistinctOn);
 	READ_BOOL_FIELD(hasRecursive);
@@ -163,6 +164,7 @@ _readQuery(void)
 	READ_NODE_FIELD(returningList);
 	READ_NODE_FIELD(groupClause);
 	READ_NODE_FIELD(havingQual);
+	READ_NODE_FIELD(windowClause);
 	READ_NODE_FIELD(distinctClause);
 	READ_NODE_FIELD(sortClause);
 	READ_NODE_FIELD(limitOffset);
@@ -213,6 +215,24 @@ _readSortGroupClause(void)
 	READ_OID_FIELD(eqop);
 	READ_OID_FIELD(sortop);
 	READ_BOOL_FIELD(nulls_first);
+
+	READ_DONE();
+}
+
+/*
+ * _readWindowClause
+ */
+static WindowClause *
+_readWindowClause(void)
+{
+	READ_LOCALS(WindowClause);
+
+	READ_STRING_FIELD(name);
+	READ_STRING_FIELD(refname);
+	READ_NODE_FIELD(partitionClause);
+	READ_NODE_FIELD(orderClause);
+	READ_UINT_FIELD(winref);
+	READ_BOOL_FIELD(copiedOrder);
 
 	READ_DONE();
 }
@@ -397,6 +417,25 @@ _readAggref(void)
 	READ_UINT_FIELD(agglevelsup);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggdistinct);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readWindowFunc
+ */
+static WindowFunc *
+_readWindowFunc(void)
+{
+	READ_LOCALS(WindowFunc);
+
+	READ_OID_FIELD(winfnoid);
+	READ_OID_FIELD(wintype);
+	READ_NODE_FIELD(args);
+	READ_UINT_FIELD(winref);
+	READ_BOOL_FIELD(winstar);
+	READ_BOOL_FIELD(winagg);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1091,6 +1130,8 @@ parseNodeString(void)
 		return_value = _readQuery();
 	else if (MATCH("SORTGROUPCLAUSE", 15))
 		return_value = _readSortGroupClause();
+	else if (MATCH("WINDOWCLAUSE", 12))
+		return_value = _readWindowClause();
 	else if (MATCH("ROWMARKCLAUSE", 13))
 		return_value = _readRowMarkClause();
 	else if (MATCH("COMMONTABLEEXPR", 15))
@@ -1111,6 +1152,8 @@ parseNodeString(void)
 		return_value = _readParam();
 	else if (MATCH("AGGREF", 6))
 		return_value = _readAggref();
+	else if (MATCH("WINDOWFUNC", 10))
+		return_value = _readWindowFunc();
 	else if (MATCH("ARRAYREF", 8))
 		return_value = _readArrayRef();
 	else if (MATCH("FUNCEXPR", 8))

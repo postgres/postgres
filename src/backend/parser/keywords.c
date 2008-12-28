@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.206 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.207 2008/12/28 18:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,12 +287,14 @@ const ScanKeyword ScanKeywords[] = {
 	{"order", ORDER, RESERVED_KEYWORD},
 	{"out", OUT_P, COL_NAME_KEYWORD},
 	{"outer", OUTER_P, TYPE_FUNC_NAME_KEYWORD},
+	{"over", OVER, TYPE_FUNC_NAME_KEYWORD},
 	{"overlaps", OVERLAPS, TYPE_FUNC_NAME_KEYWORD},
 	{"overlay", OVERLAY, COL_NAME_KEYWORD},
 	{"owned", OWNED, UNRESERVED_KEYWORD},
 	{"owner", OWNER, UNRESERVED_KEYWORD},
 	{"parser", PARSER, UNRESERVED_KEYWORD},
 	{"partial", PARTIAL, UNRESERVED_KEYWORD},
+	{"partition", PARTITION, UNRESERVED_KEYWORD},
 	{"password", PASSWORD, UNRESERVED_KEYWORD},
 	{"placing", PLACING, RESERVED_KEYWORD},
 	{"plans", PLANS, UNRESERVED_KEYWORD},
@@ -411,6 +413,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"when", WHEN, RESERVED_KEYWORD},
 	{"where", WHERE, RESERVED_KEYWORD},
 	{"whitespace", WHITESPACE_P, UNRESERVED_KEYWORD},
+	{"window", WINDOW, RESERVED_KEYWORD},
 	{"with", WITH, RESERVED_KEYWORD},
 	{"without", WITHOUT, UNRESERVED_KEYWORD},
 	{"work", WORK, UNRESERVED_KEYWORD},

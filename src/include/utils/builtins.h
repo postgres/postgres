@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.328 2008/12/19 16:25:19 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.329 2008/12/28 18:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -987,6 +987,23 @@ extern Datum uuid_gt(PG_FUNCTION_ARGS);
 extern Datum uuid_ne(PG_FUNCTION_ARGS);
 extern Datum uuid_cmp(PG_FUNCTION_ARGS);
 extern Datum uuid_hash(PG_FUNCTION_ARGS);
+
+/* windowfuncs.c */
+extern Datum window_row_number(PG_FUNCTION_ARGS);
+extern Datum window_rank(PG_FUNCTION_ARGS);
+extern Datum window_dense_rank(PG_FUNCTION_ARGS);
+extern Datum window_percent_rank(PG_FUNCTION_ARGS);
+extern Datum window_cume_dist(PG_FUNCTION_ARGS);
+extern Datum window_ntile(PG_FUNCTION_ARGS);
+extern Datum window_lag(PG_FUNCTION_ARGS);
+extern Datum window_lag_with_offset(PG_FUNCTION_ARGS);
+extern Datum window_lag_with_offset_and_default(PG_FUNCTION_ARGS);
+extern Datum window_lead(PG_FUNCTION_ARGS);
+extern Datum window_lead_with_offset(PG_FUNCTION_ARGS);
+extern Datum window_lead_with_offset_and_default(PG_FUNCTION_ARGS);
+extern Datum window_first_value(PG_FUNCTION_ARGS);
+extern Datum window_last_value(PG_FUNCTION_ARGS);
+extern Datum window_nth_value(PG_FUNCTION_ARGS);
 
 /* access/transam/twophase.c */
 extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);

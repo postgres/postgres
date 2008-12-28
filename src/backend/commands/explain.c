@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.181 2008/11/19 01:10:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.182 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,6 +589,9 @@ explain_outNode(StringInfo str,
 					pname = "Aggregate ???";
 					break;
 			}
+			break;
+		case T_WindowAgg:
+			pname = "WindowAgg";
 			break;
 		case T_Unique:
 			pname = "Unique";

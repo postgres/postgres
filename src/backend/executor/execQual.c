@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.238 2008/12/18 19:38:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.239 2008/12/28 18:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,9 @@ static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
+			   ExprContext *econtext,
+			   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalWindowFunc(WindowFuncExprState *wfunc,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
@@ -441,6 +444,27 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
 
 	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
 	return econtext->ecxt_aggvalues[aggref->aggno];
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalWindowFunc
+ *
+ *		Returns a Datum whose value is the value of the precomputed
+ *		window function found in the given expression context.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalWindowFunc(WindowFuncExprState *wfunc, ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone)
+{
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	if (econtext->ecxt_aggvalues == NULL)		/* safety check */
+		elog(ERROR, "no window functions in this expression context");
+
+	*isNull = econtext->ecxt_aggnulls[wfunc->wfuncno];
+	return econtext->ecxt_aggvalues[wfunc->wfuncno];
 }
 
 /* ----------------------------------------------------------------
@@ -4062,12 +4086,12 @@ ExecEvalExprSwitchContext(ExprState *expression,
  * executions of the expression are needed.  Typically the context will be
  * the same as the per-query context of the associated ExprContext.
  *
- * Any Aggref and SubPlan nodes found in the tree are added to the lists
- * of such nodes held by the parent PlanState.	Otherwise, we do very little
- * initialization here other than building the state-node tree.  Any nontrivial
- * work associated with initializing runtime info for a node should happen
- * during the first actual evaluation of that node.  (This policy lets us
- * avoid work if the node is never actually evaluated.)
+ * Any Aggref, WindowFunc, or SubPlan nodes found in the tree are added to the
+ * lists of such nodes held by the parent PlanState. Otherwise, we do very
+ * little initialization here other than building the state-node tree.  Any
+ * nontrivial work associated with initializing runtime info for a node should
+ * happen during the first actual evaluation of that node.  (This policy lets
+ * us avoid work if the node is never actually evaluated.)
  *
  * Note: there is no ExecEndExpr function; we assume that any resource
  * cleanup needed will be handled by just releasing the memory context
@@ -4145,9 +4169,47 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				else
 				{
 					/* planner messed up */
-					elog(ERROR, "aggref found in non-Agg plan node");
+					elog(ERROR, "Aggref found in non-Agg plan node");
 				}
 				state = (ExprState *) astate;
+			}
+			break;
+		case T_WindowFunc:
+			{
+				WindowFunc *wfunc = (WindowFunc *) node;
+				WindowFuncExprState *wfstate = makeNode(WindowFuncExprState);
+
+				wfstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalWindowFunc;
+				if (parent && IsA(parent, WindowAggState))
+				{
+					WindowAggState *winstate = (WindowAggState *) parent;
+					int			nfuncs;
+
+					winstate->funcs = lcons(wfstate, winstate->funcs);
+					nfuncs = ++winstate->numfuncs;
+					if (wfunc->winagg)
+						winstate->numaggs++;
+
+					wfstate->args = (List *) ExecInitExpr((Expr *) wfunc->args,
+														  parent);
+
+					/*
+					 * Complain if the windowfunc's arguments contain any
+					 * windowfuncs; nested window functions are semantically
+					 * nonsensical.  (This should have been caught earlier,
+					 * but we defend against it here anyway.)
+					 */
+					if (nfuncs != winstate->numfuncs)
+						ereport(ERROR,
+								(errcode(ERRCODE_WINDOWING_ERROR),
+						errmsg("window function calls cannot be nested")));
+				}
+				else
+				{
+					/* planner messed up */
+					elog(ERROR, "WindowFunc found in non-WindowAgg plan node");
+				}
+				state = (ExprState *) wfstate;
 			}
 			break;
 		case T_ArrayRef:

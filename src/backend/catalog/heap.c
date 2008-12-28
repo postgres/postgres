@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.347 2008/11/29 00:13:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.348 2008/12/28 18:53:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2138,6 +2138,10 @@ cookDefault(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 			 errmsg("cannot use aggregate function in default expression")));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+			 errmsg("cannot use window function in default expression")));
 
 	/*
 	 * Coerce the expression to the correct type and typmod, if given. This
@@ -2211,6 +2215,10 @@ cookConstraint(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("cannot use aggregate function in check constraint")));
+	if (pstate->p_hasWindowFuncs)
+		ereport(ERROR,
+				(errcode(ERRCODE_WINDOWING_ERROR),
+				 errmsg("cannot use window function in check constraint")));
 
 	return expr;
 }

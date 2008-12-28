@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.83 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.84 2008/12/28 18:53:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1480,6 +1480,14 @@ find_expr_references_walker(Node *node,
 						   context->addrs);
 		/* fall through to examine arguments */
 	}
+	else if (IsA(node, WindowFunc))
+	{
+		WindowFunc *wfunc = (WindowFunc *) node;
+
+		add_object_address(OCLASS_PROC, wfunc->winfnoid, 0,
+						   context->addrs);
+		/* fall through to examine arguments */
+	}
 	else if (IsA(node, SubPlan))
 	{
 		/* Extra work needed here if we ever need this case */
@@ -1602,6 +1610,7 @@ find_expr_references_walker(Node *node,
 		/* query_tree_walker ignores ORDER BY etc, but we need those opers */
 		find_expr_references_walker((Node *) query->sortClause, context);
 		find_expr_references_walker((Node *) query->groupClause, context);
+		find_expr_references_walker((Node *) query->windowClause, context);
 		find_expr_references_walker((Node *) query->distinctClause, context);
 
 		/* Examine substructure of query */

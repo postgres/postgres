@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.172 2008/12/14 19:45:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.173 2008/12/28 18:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -746,6 +746,7 @@ build_coercion_expression(Node *node,
 		/* Assert(targetTypeId == procstruct->prorettype); */
 		Assert(!procstruct->proretset);
 		Assert(!procstruct->proisagg);
+		Assert(!procstruct->proiswindow);
 		nargs = procstruct->pronargs;
 		Assert(nargs >= 1 && nargs <= 3);
 		/* Assert(procstruct->proargtypes.values[0] == exprType(node)); */

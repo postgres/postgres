@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.50 2008/10/14 00:41:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.51 2008/12/28 18:53:54 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -948,6 +948,57 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
     clause restricts the output to groups with total gross sales over
     5000.  Note that the aggregate expressions do not necessarily need
     to be the same in all parts of the query.
+   </para>
+
+   <para>
+    If a query contains aggregate function calls, but no <literal>GROUP BY</>
+    clause, grouping still occurs: the result is a single group row (or
+    perhaps no rows at all, if the single row is then eliminated by
+    <literal>HAVING</>).
+    The same is true if it contains a <literal>HAVING</> clause, even
+    without any aggregate function calls or <literal>GROUP BY</> clause.
+   </para>
+  </sect2>
+
+  <sect2 id="queries-window">
+   <title>Window Function Processing</>
+
+   <indexterm zone="queries-window">
+    <primary>window function</primary>
+    <secondary>order of execution</>
+   </indexterm>
+
+   <para>
+    If the query contains any window functions (see
+    <xref linkend="tutorial-window"> and
+    <xref linkend="syntax-window-functions">), these functions are evaluated
+    after any grouping, aggregation, and <literal>HAVING</> filtering is
+    performed.  That is, if the query uses any aggregates, <literal>GROUP
+    BY</>, or <literal>HAVING</>, then the rows seen by the window functions
+    are the group rows instead of the original table rows from
+    <literal>FROM</>/<literal>WHERE</>.
+   </para>
+
+   <para>
+    When multiple window functions are used, all the window functions having
+    syntactically equivalent <literal>PARTITION BY</> and <literal>ORDER BY</>
+    clauses in their window definitions are guaranteed to be evaluated in a
+    single pass over the data. Therefore they will see the same sort ordering,
+    even if the <literal>ORDER BY</> does not uniquely determine an ordering.
+    However, no guarantees are made about the evaluation of functions having
+    different <literal>PARTITION BY</> or <literal>ORDER BY</> specifications.
+    (In such cases a sort step is typically required between the passes of
+    window function evaluations, and the sort is not guaranteed to preserve
+    ordering of rows that its <literal>ORDER BY</> sees as equivalent.)
+   </para>
+
+   <para>
+    Currently, use of window functions always forces sorting, and so the
+    query output will be ordered according to one or another of the window
+    functions' <literal>PARTITION BY</>/<literal>ORDER BY</> clauses.
+    It is not recommendable to rely on this, however.  Use an explicit
+    top-level <literal>ORDER BY</> clause if you want to be sure the
+    results are sorted in a particular way.
    </para>
   </sect2>
  </sect1>

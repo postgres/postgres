@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.647 2008/12/20 16:02:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.648 2008/12/28 18:53:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -158,6 +158,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	DefElem				*defelt;
 	OptionDefElem		*optdef;
 	SortBy				*sortby;
+	WindowDef			*windef;
 	JoinExpr			*jexpr;
 	IndexElem			*ielem;
 	Alias				*alias;
@@ -402,6 +403,10 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <with> 	with_clause
 %type <list>	cte_list
 
+%type <list>	window_clause window_definition_list opt_partition_clause
+%type <windef>	window_definition over_clause window_specification
+%type <str>		opt_existing_window_name
+
 
 /*
  * If you make any token changes, update the keyword table in
@@ -431,8 +436,8 @@ static TypeName *TableFuncTypeName(List *columns);
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DESC
 	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
-	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT EXCLUDING
-	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
+	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT
+	EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
 	FREEZE FROM FULL FUNCTION
@@ -461,9 +466,9 @@ static TypeName *TableFuncTypeName(List *columns);
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
-	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
+	ORDER OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
 
-	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
+	PARSER PARTIAL PARTITION PASSWORD PLACING PLANS POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
@@ -489,7 +494,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
 	VERBOSE VERSION_P VIEW VOLATILE
 
-	WHEN WHERE WHITESPACE_P WITH WITHOUT WORK WRAPPER WRITE
+	WHEN WHERE WHITESPACE_P WINDOW WITH WITHOUT WORK WRAPPER WRITE
 
 	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
@@ -523,7 +528,15 @@ static TypeName *TableFuncTypeName(List *columns);
 %nonassoc	BETWEEN
 %nonassoc	IN_P
 %left		POSTFIXOP		/* dummy for postfix Op rules */
-%nonassoc	IDENT			/* to support target_el without AS */
+/*
+ * To support target_el without AS, we must give IDENT an explicit priority
+ * between POSTFIXOP and Op.  We can safely assign the same priority to
+ * various unreserved keywords as needed to resolve ambiguities (this can't
+ * have any bad effects since obviously the keywords will still behave the
+ * same as if they weren't keywords).  We need to do this for PARTITION
+ * to support opt_existing_window_name.
+ */
+%nonassoc	IDENT PARTITION
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
@@ -1259,7 +1272,7 @@ opt_boolean:
  * - an integer or floating point number
  * - a time interval per SQL99
  * ColId gives reduce/reduce errors against ConstInterval and LOCAL,
- * so use IDENT and reject anything which is a reserved word.
+ * so use IDENT (meaning we reject anything that is a key word).
  */
 zone_value:
 			Sconst
@@ -3466,6 +3479,11 @@ old_aggr_list: old_aggr_elem						{ $$ = list_make1($1); }
 			| old_aggr_list ',' old_aggr_elem		{ $$ = lappend($1, $3); }
 		;
 
+/*
+ * Must use IDENT here to avoid reduce/reduce conflicts; fortunately none of
+ * the item names needed in old aggregate definitions are likely to become
+ * SQL keywords.
+ */
 old_aggr_elem:  IDENT '=' def_arg
 				{
 					$$ = makeDefElem($1, (Node *)$3);
@@ -6825,7 +6843,7 @@ select_clause:
 simple_select:
 			SELECT opt_distinct target_list
 			into_clause from_clause where_clause
-			group_clause having_clause
+			group_clause having_clause window_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
@@ -6835,6 +6853,7 @@ simple_select:
 					n->whereClause = $6;
 					n->groupClause = $7;
 					n->havingClause = $8;
+					n->windowClause = $9;
 					$$ = (Node *)n;
 				}
 			| values_clause							{ $$ = $1; }
@@ -8076,6 +8095,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @2;
 					$$ = (Node *) n;
 				}
@@ -8135,6 +8155,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @4;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n, @2);
 				}
@@ -8148,6 +8169,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n, @2);
 				}
@@ -8161,6 +8183,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @4;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n, @2);
 				}
@@ -8174,6 +8197,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n, @2);
 				}
@@ -8186,6 +8210,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
@@ -8197,6 +8222,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
@@ -8208,6 +8234,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @5;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
@@ -8219,6 +8246,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @6;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
@@ -8622,7 +8650,7 @@ c_expr:		columnref								{ $$ = $1; }
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */
-func_expr:	func_name '(' ')'
+func_expr:	func_name '(' ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -8630,10 +8658,11 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = $4;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' expr_list ')'
+			| func_name '(' expr_list ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -8641,10 +8670,11 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = $5;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' VARIADIC a_expr ')'
+			| func_name '(' VARIADIC a_expr ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -8652,10 +8682,11 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = TRUE;
+					n->over = $6;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' expr_list ',' VARIADIC a_expr ')'
+			| func_name '(' expr_list ',' VARIADIC a_expr ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -8663,10 +8694,11 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = TRUE;
+					n->over = $8;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' ALL expr_list ')'
+			| func_name '(' ALL expr_list ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -8678,10 +8710,11 @@ func_expr:	func_name '(' ')'
 					 * for that in FuncCall at the moment.
 					 */
 					n->func_variadic = FALSE;
+					n->over = $6;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' DISTINCT expr_list ')'
+			| func_name '(' DISTINCT expr_list ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -8689,10 +8722,11 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = TRUE;
 					n->func_variadic = FALSE;
+					n->over = $6;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' '*' ')'
+			| func_name '(' '*' ')' over_clause
 				{
 					/*
 					 * We consider AGGREGATE(*) to invoke a parameterless
@@ -8710,6 +8744,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = $5;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8769,6 +8804,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8839,6 +8875,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8850,6 +8887,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8861,6 +8899,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8872,6 +8911,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8883,6 +8923,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8894,6 +8935,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8907,6 +8949,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8923,6 +8966,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8935,6 +8979,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8949,6 +8994,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8969,6 +9015,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8983,6 +9030,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -8994,6 +9042,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -9005,6 +9054,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -9016,6 +9066,7 @@ func_expr:	func_name '(' ')'
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -9154,6 +9205,77 @@ document_or_content: DOCUMENT_P						{ $$ = XMLOPTION_DOCUMENT; }
 xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = TRUE; }
 			| STRIP_P WHITESPACE_P					{ $$ = FALSE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+/*
+ * Window Definitions
+ */
+window_clause:
+			WINDOW window_definition_list			{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
+window_definition_list:
+			window_definition						{ $$ = list_make1($1); }
+			| window_definition_list ',' window_definition
+													{ $$ = lappend($1, $3); }
+		;
+
+window_definition:
+			ColId AS window_specification
+				{
+					WindowDef *n = $3;
+					n->name = $1;
+					$$ = n;
+				}
+		;
+
+over_clause: OVER window_specification
+				{ $$ = $2; }
+			| OVER ColId
+				{
+					WindowDef *n = makeNode(WindowDef);
+					n->name = NULL;
+					n->refname = $2;
+					n->partitionClause = NIL;
+					n->orderClause = NIL;
+					n->location = @2;
+					$$ = n;
+				}
+			| /*EMPTY*/
+				{ $$ = NULL; }
+		;
+
+window_specification: '(' opt_existing_window_name opt_partition_clause
+						opt_sort_clause ')'
+				{
+					WindowDef *n = makeNode(WindowDef);
+					n->name = NULL;
+					n->refname = $2;
+					n->partitionClause = $3;
+					n->orderClause = $4;
+					n->location = @1;
+					$$ = n;
+				}
+		;
+
+/*
+ * If we see PARTITION, RANGE, or ROWS as the first token after the '('
+ * of a window_specification, we want the assumption to be that there is
+ * no existing_window_name; but those keywords are unreserved and so could
+ * be ColIds.  We fix this by making them have the same precedence as IDENT
+ * and giving the empty production here a slightly higher precedence, so
+ * that the shift/reduce conflict is resolved in favor of reducing the rule.
+ * These keywords are thus precluded from being an existing_window_name but
+ * are not reserved for any other purpose.
+ * (RANGE/ROWS are not an issue as of 8.4 for lack of frame_clause support.)
+ */
+opt_existing_window_name: ColId						{ $$ = $1; }
+			| /*EMPTY*/				%prec Op		{ $$ = NULL; }
+		;
+
+opt_partition_clause: PARTITION BY expr_list		{ $$ = $3; }
+			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 /*
@@ -9961,6 +10083,7 @@ unreserved_keyword:
 			| OWNER
 			| PARSER
 			| PARTIAL
+			| PARTITION
 			| PASSWORD
 			| PLANS
 			| PREPARE
@@ -10139,6 +10262,7 @@ type_func_name_keyword:
 			| NATURAL
 			| NOTNULL
 			| OUTER_P
+			| OVER
 			| OVERLAPS
 			| RIGHT
 			| SIMILAR
@@ -10229,6 +10353,7 @@ reserved_keyword:
 			| VARIADIC
 			| WHEN
 			| WHERE
+			| WINDOW
 			| WITH
 		;
 
@@ -10451,6 +10576,7 @@ makeOverlaps(List *largs, List *rargs, int location)
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
 	n->func_variadic = FALSE;
+	n->over = NULL;
 	n->location = location;
 	return n;
 }

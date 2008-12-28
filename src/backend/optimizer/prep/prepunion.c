@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.162 2008/11/15 19:43:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.163 2008/12/28 18:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	Assert(parse->jointree->quals == NULL);
 	Assert(parse->groupClause == NIL);
 	Assert(parse->havingQual == NULL);
+	Assert(parse->windowClause == NIL);
 	Assert(parse->distinctClause == NIL);
 
 	/*

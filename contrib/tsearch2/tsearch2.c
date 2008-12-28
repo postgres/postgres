@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.6 2008/03/25 22:42:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.7 2008/12/28 18:53:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,15 @@ tsa_rewrite_accum(PG_FUNCTION_ARGS)
 	MemoryContext aggcontext;
 	MemoryContext oldcontext;
 
-	aggcontext = ((AggState *) fcinfo->context)->aggcontext;
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+		aggcontext = ((AggState *) fcinfo->context)->aggcontext;
+	else if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
+		aggcontext = ((WindowAggState *) fcinfo->context)->wincontext;
+	else
+	{
+		elog(ERROR, "tsa_rewrite_accum called in non-aggregate context");
+		aggcontext = NULL;		/* keep compiler quiet */
+	}
 
 	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
 	{

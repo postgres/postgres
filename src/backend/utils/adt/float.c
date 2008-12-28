@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.157 2008/05/09 21:31:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.158 2008/12/28 18:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1765,7 +1765,9 @@ float8_accum(PG_FUNCTION_ARGS)
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
 	 * new array with the updated transition data and return it.
 	 */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 	{
 		transvalues[0] = N;
 		transvalues[1] = sumX;
@@ -1818,7 +1820,9 @@ float4_accum(PG_FUNCTION_ARGS)
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
 	 * new array with the updated transition data and return it.
 	 */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 	{
 		transvalues[0] = N;
 		transvalues[1] = sumX;
@@ -2035,7 +2039,9 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
 	 * new array with the updated transition data and return it.
 	 */
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	if (fcinfo->context &&
+		(IsA(fcinfo->context, AggState) ||
+		 IsA(fcinfo->context, WindowAggState)))
 	{
 		transvalues[0] = N;
 		transvalues[1] = sumX;

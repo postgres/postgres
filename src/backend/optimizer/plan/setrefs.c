@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.146 2008/10/21 20:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.147 2008/12/28 18:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,6 +415,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
+		case T_WindowAgg:
 		case T_Group:
 			set_upper_references(glob, plan, rtoffset);
 			break;
@@ -678,6 +679,11 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 	{
 		record_plan_function_dependency(glob,
 										((Aggref *) node)->aggfnoid);
+	}
+	else if (IsA(node, WindowFunc))
+	{
+		record_plan_function_dependency(glob,
+										((WindowFunc *) node)->winfnoid);
 	}
 	else if (IsA(node, FuncExpr))
 	{
