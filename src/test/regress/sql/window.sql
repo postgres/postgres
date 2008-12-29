@@ -54,9 +54,9 @@ SELECT percent_rank() OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk
 
 SELECT cume_dist() OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
 
-SELECT ntile(3) OVER (ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
+SELECT ntile(3) OVER (ORDER BY ten, four), ten, four FROM tenk1 WHERE unique2 < 10;
 
-SELECT ntile(NULL) OVER (ORDER BY ten), ten, four FROM tenk1 LIMIT 1;
+SELECT ntile(NULL) OVER (ORDER BY ten, four), ten, four FROM tenk1 LIMIT 2;
 
 SELECT lag(ten) OVER (PARTITION BY four ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
 
