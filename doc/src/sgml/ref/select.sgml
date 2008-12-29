@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.113 2008/12/28 18:53:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.114 2008/12/29 18:23:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1458,7 +1458,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     in window definitions.  <productname>PostgreSQL</productname> does
     not yet implement framing clauses, and always follows the
     default framing behavior, which is equivalent to the framing clause
-    <literal>ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</>.
+    <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</>.
    </para>
   </refsect2>
 
