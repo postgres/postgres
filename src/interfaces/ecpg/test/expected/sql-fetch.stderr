@@ -2,37 +2,37 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 19: query: create  table My_Table ( Item1 int   , Item2 text    )    ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 19: query: create table My_Table ( Item1 int , Item2 text ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 19: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 19: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 21: query: insert into My_Table values ( 1 , 'text1' ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 21: query: insert into My_Table values ( 1 , 'text1' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 21: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 21: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 22: query: insert into My_Table values ( 2 , 'text2' ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 22: query: insert into My_Table values ( 2 , 'text2' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 22: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 22: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 23: query: insert into My_Table values ( 3 , 'text3' ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 23: query: insert into My_Table values ( 3 , 'text3' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 23: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 23: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 24: query: insert into My_Table values ( 4 , 'text4' ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 24: query: insert into My_Table values ( 4 , 'text4' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 28: query: declare C  cursor  for select  *  from My_Table   ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 28: query: declare C cursor for select * from My_Table; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -102,7 +102,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 39: RESULT: text4 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 44: query: declare D  cursor  for select  *  from My_Table where Item1 = $1   ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 44: query: declare D cursor for select * from My_Table where Item1 = $1; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 44: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -134,7 +134,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 51: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: query: drop table My_Table ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 53: query: drop table My_Table; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000

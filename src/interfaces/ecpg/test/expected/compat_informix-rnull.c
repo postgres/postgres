@@ -34,91 +34,91 @@ int main(void)
 {
 	
 #line 15 "rnull.pgc"
- char  c  []  = "abc" ;
+ char c [] = "abc" ;
 
 #line 15 "rnull.pgc"
 
 	
 #line 16 "rnull.pgc"
- short  s   = 17 ;
+ short s = 17 ;
 
 #line 16 "rnull.pgc"
 
 	
 #line 17 "rnull.pgc"
- int  i   = - 74874 ;
+ int i = - 74874 ;
 
 #line 17 "rnull.pgc"
 
 	
 #line 18 "rnull.pgc"
- bool  b   = 1 ;
+ bool b = 1 ;
 
 #line 18 "rnull.pgc"
 
 	
 #line 19 "rnull.pgc"
- float  f   = 3.71 ;
+ float f = 3.71 ;
 
 #line 19 "rnull.pgc"
 
 	
 #line 20 "rnull.pgc"
- long  l   = 487444 ;
+ long l = 487444 ;
 
 #line 20 "rnull.pgc"
 
 	
 #line 21 "rnull.pgc"
- double  dbl   = 404.404 ;
+ double dbl = 404.404 ;
 
 #line 21 "rnull.pgc"
 
 	
 #line 22 "rnull.pgc"
- decimal  dec    ;
+ decimal dec ;
 
 #line 22 "rnull.pgc"
 
 	
 #line 23 "rnull.pgc"
- date  dat    ;
+ date dat ;
 
 #line 23 "rnull.pgc"
 
 	
 #line 24 "rnull.pgc"
- timestamp  tmp    ;
+ timestamp tmp ;
 
 #line 24 "rnull.pgc"
 
 
 	ECPGdebug(1, stderr);
-	/* exec sql whenever sqlerror  do sqlprint (  ) ; */
+	/* exec sql whenever sqlerror  do sqlprint ( ) ; */
 #line 27 "rnull.pgc"
 
 
 	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
 #line 29 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 29 "rnull.pgc"
 
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool    , f float    , l bigint   , dbl double precision   , dec decimal    , dat date    , tmp timestamptz    )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "create table test ( id int , c char ( 10 ) , s smallint , i int , b bool , f float , l bigint , dbl double precision , dec decimal , dat date , tmp timestamptz )", ECPGt_EOIT, ECPGt_EORT);
 #line 33 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 33 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 34 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 34 "rnull.pgc"
 
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  ) values ( 1 ,  $1  ,  $2  ,  $3  ,  $4  ,  $5  ,  $6  ,  $7  ) ", 
+	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "insert into test ( id , c , s , i , b , f , l , dbl ) values ( 1 , $1  , $2  , $3  , $4  , $5  , $6  , $7  )", 
 	ECPGt_char,(c),(long)sizeof("abc"),(long)1,(sizeof("abc"))*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
@@ -135,13 +135,13 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 38 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 38 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 39 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 39 "rnull.pgc"
 
 
@@ -156,7 +156,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	rsetnull(CDATETYPE, (char *) &dat);
 	rsetnull(CDTIMETYPE, (char *) &tmp);
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  , dec  , dat  , tmp  ) values ( 2 ,  $1  ,  $2  ,  $3  ,  $4  ,  $5  ,  $6  ,  $7  ,  $8  ,  $9  ,  $10  ) ", 
+	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "insert into test ( id , c , s , i , b , f , l , dbl , dec , dat , tmp ) values ( 2 , $1  , $2  , $3  , $4  , $5  , $6  , $7  , $8  , $9  , $10  )", 
 	ECPGt_char,(c),(long)sizeof("abc"),(long)1,(sizeof("abc"))*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
@@ -179,19 +179,19 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 54 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 54 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 55 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 55 "rnull.pgc"
 
 
 	printf("first select\n");
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 1  ", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "select c , s , i , b , f , l , dbl , dec , dat , tmp from test where id = 1", ECPGt_EOIT, 
 	ECPGt_char,(c),(long)sizeof("abc"),(long)1,(sizeof("abc"))*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
@@ -214,7 +214,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 61 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 61 "rnull.pgc"
 
 
@@ -231,7 +231,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
 	printf("second select\n");
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 2  ", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "select c , s , i , b , f , l , dbl , dec , dat , tmp from test where id = 2", ECPGt_EOIT, 
 	ECPGt_char,(c),(long)sizeof("abc"),(long)1,(sizeof("abc"))*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
@@ -254,7 +254,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 78 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 78 "rnull.pgc"
 
 
@@ -269,23 +269,23 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	test_null(CDATETYPE, (char *) &dat);
 	test_null(CDTIMETYPE, (char *) &tmp);
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 0, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
 #line 91 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 91 "rnull.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 92 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 92 "rnull.pgc"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
 #line 94 "rnull.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 94 "rnull.pgc"
 
 

@@ -33,115 +33,115 @@ int main(void)
 {
 	
 #line 14 "test_informix.pgc"
- int  i   = 14 ;
+ int i = 14 ;
 
 #line 14 "test_informix.pgc"
  
 	
 #line 15 "test_informix.pgc"
- decimal  j    ,  m    ,  n    ;
+ decimal j , m , n ;
 
 #line 15 "test_informix.pgc"
 
 
 	ECPGdebug(1, stderr);
-	/* exec sql whenever sqlerror  do dosqlprint (  ) ; */
+	/* exec sql whenever sqlerror  do dosqlprint ( ) ; */
 #line 18 "test_informix.pgc"
 
 
 	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
 #line 20 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 20 "test_informix.pgc"
 
 	if (sqlca.sqlcode != 0) exit(1);
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "create  table test ( i int   primary key   , j int   )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "create table test ( i int primary key , j int )", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 23 "test_informix.pgc"
 
 
 	/* this INSERT works */
 	rsetnull(CDECIMALTYPE, (char *)&j);
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into test ( i  , j  ) values ( 7 ,  $1  ) ", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into test ( i , j ) values ( 7 , $1  )", 
 	ECPGt_decimal,&(j),(long)1,(long)1,sizeof(decimal), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 27 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 27 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 28 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 28 "test_informix.pgc"
 
 
 	/* this INSERT should fail because i is a unique column */
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into test ( i  , j  ) values ( 7 , 12 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into test ( i , j ) values ( 7 , 12 )", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 31 "test_informix.pgc"
 
 	printf("INSERT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback ");
+	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback");
 #line 33 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 33 "test_informix.pgc"
 
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into test ( i  , j  ) values (  $1  , 1 ) ", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "insert into test ( i , j ) values ( $1  , 1 )", 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 35 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 35 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 36 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 36 "test_informix.pgc"
 
 
 	/* this will fail (more than one row in subquery) */
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select  i  from test where j = ( select  j  from test    )  ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select i from test where j = ( select j from test )", ECPGt_EOIT, ECPGt_EORT);
 #line 39 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 39 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "rollback ");
+	{ ECPGtrans(__LINE__, NULL, "rollback");
 #line 40 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 40 "test_informix.pgc"
 
 
 	/* this however should be ok */
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select  i  from test where j = ( select  j  from test    order by i   limit 1  )  ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select i from test where j = ( select j from test order by i limit 1 )", ECPGt_EOIT, ECPGt_EORT);
 #line 43 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 43 "test_informix.pgc"
 
 	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback ");
+	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback");
 #line 45 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 45 "test_informix.pgc"
 
 
-	 ECPG_informix_set_var( 0, &( i ), __LINE__);\
-  /* declare c  cursor  for select  *  from test where i <=  $1    */
+	ECPG_informix_set_var( 0, &( i ), __LINE__);\
+ /* declare c cursor for select * from test where i <= $1  */
 #line 47 "test_informix.pgc"
 
 	openit();
@@ -157,7 +157,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 54 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 54 "test_informix.pgc"
 
 		if (sqlca.sqlcode == 100) break;
@@ -177,55 +177,55 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 	deccvint(7, &j);
 	deccvint(14, &m);
 	decadd(&j, &m, &n);
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "delete from test  where i =  $1  :: decimal   ", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "delete from test where i = $1  :: decimal", 
 	ECPGt_decimal,&(n),(long)1,(long)1,sizeof(decimal), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 72 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 72 "test_informix.pgc"
 
 	printf("DELETE: %ld\n", sqlca.sqlcode);
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select  1  from test where i = 14  ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select 1 from test where i = 14", ECPGt_EOIT, ECPGt_EORT);
 #line 75 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 75 "test_informix.pgc"
 
 	printf("Exists: %ld\n", sqlca.sqlcode);
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select  1  from test where i = 147  ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "select 1 from test where i = 147", ECPGt_EOIT, ECPGt_EORT);
 #line 78 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 78 "test_informix.pgc"
 
 	printf("Does not exist: %ld\n", sqlca.sqlcode);
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 81 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 81 "test_informix.pgc"
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
 #line 82 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 82 "test_informix.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 83 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 83 "test_informix.pgc"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
 #line 85 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 85 "test_informix.pgc"
 
 
@@ -234,12 +234,12 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 
 static void openit(void)
 {
-	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare c  cursor  for select  *  from test where i <=  $1   ", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare c cursor for select * from test where i <= $1 ", 
 	ECPGt_int,&(*( int  *)(ECPG_informix_get_var( 0))),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 92 "test_informix.pgc"
 
-if (sqlca.sqlcode < 0) dosqlprint (  );}
+if (sqlca.sqlcode < 0) dosqlprint ( );}
 #line 92 "test_informix.pgc"
 
 }

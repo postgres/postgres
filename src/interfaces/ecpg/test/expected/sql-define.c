@@ -99,44 +99,44 @@ int main(void)
       
    
 #line 10 "define.pgc"
- int  i    ;
+ int i ;
  
 #line 11 "define.pgc"
- char  s  [ 200 ]   ;
+ char s [ 200 ] ;
 /* exec sql end declare section */
 #line 12 "define.pgc"
 
 
    ECPGdebug(1, stderr);
 
-   /* exec sql whenever sqlerror  do sqlprint (  ) ; */
+   /* exec sql whenever sqlerror  do sqlprint ( ) ; */
 #line 16 "define.pgc"
 
    { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 17 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 17 "define.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( a int , b text )", ECPGt_EOIT, ECPGt_EORT);
 #line 19 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 19 "define.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'abcdef' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'abcdef' )", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 20 "define.pgc"
 
 
    
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'defined' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'defined' )", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 23 "define.pgc"
 
    
@@ -146,24 +146,24 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
    
            
    
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'someothervar not defined' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( null , 'someothervar not defined' )", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 31 "define.pgc"
 
    
 
    
 
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  1 , 29 :: text   || '-' || 'abcdef'     ", ECPGt_EOIT, 
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select 1 , 29 :: text || '-' || 'abcdef'", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(s),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 36 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 36 "define.pgc"
 
 
@@ -171,10 +171,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
    
    
-   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'no string' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test values ( 29 , 'no string' )", ECPGt_EOIT, ECPGt_EORT);
 #line 42 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 42 "define.pgc"
 
    
@@ -190,7 +190,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set TIMEZONE to 'UTC'", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 53 "define.pgc"
 
    
@@ -198,7 +198,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
    { ECPGdisconnect(__LINE__, "CURRENT");
 #line 56 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 56 "define.pgc"
 
    return 0;

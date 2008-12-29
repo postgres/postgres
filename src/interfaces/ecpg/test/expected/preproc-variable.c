@@ -25,28 +25,28 @@
 #line 6 "variable.pgc"
 
 
-/* exec sql type c is char  reference */
+/* exec sql type c is char reference */
 #line 8 "variable.pgc"
 
 typedef char* c;
 
 /* exec sql type ind is union { 
 #line 11 "variable.pgc"
- int  integer    ;
+ int integer ;
  
 #line 11 "variable.pgc"
- short  smallint    ;
- }   */
+ short smallint ;
+ } */
 #line 11 "variable.pgc"
 
 typedef union { int integer; short smallint; } ind;
 
 #define BUFFERSIZ 8
-/* exec sql type str is   [ BUFFERSIZ ]  */
+/* exec sql type str is [ BUFFERSIZ ] */
 #line 15 "variable.pgc"
 
 
-/* declare cur  cursor  for select  name , born , age , married , children  from family    */
+/* declare cur cursor for select name , born , age , married , children from family */
 #line 18 "variable.pgc"
 
 
@@ -55,10 +55,10 @@ main (void)
 {
 	struct birthinfo { 
 #line 23 "variable.pgc"
- long  born    ;
+ long born ;
  
 #line 23 "variable.pgc"
- short  age    ;
+ short age ;
  } ;
 #line 23 "variable.pgc"
 
@@ -74,42 +74,42 @@ main (void)
 #line 27 "variable.pgc"
  struct personal_struct { 
 #line 25 "variable.pgc"
-   struct varchar_name_25  { int len; char arr[ BUFFERSIZ ]; }  name    ;
+  struct varchar_name_25  { int len; char arr[ BUFFERSIZ ]; }  name ;
  
 #line 26 "variable.pgc"
- struct birthinfo  birth    ;
- }  personal    , * p    ;
+ struct birthinfo birth ;
+ } personal , * p ;
  
 #line 30 "variable.pgc"
  struct personal_indicator { 
 #line 28 "variable.pgc"
- int  ind_name    ;
+ int ind_name ;
  
 #line 29 "variable.pgc"
- struct birthinfo  ind_birth    ;
- }  ind_personal    , * i    ;
+ struct birthinfo ind_birth ;
+ } ind_personal , * i ;
  
 #line 31 "variable.pgc"
- ind  ind_children    ;
+ ind ind_children ;
 /* exec sql end declare section */
 #line 32 "variable.pgc"
 
 
 	
 #line 34 "variable.pgc"
- char * married   = NULL ;
+ char * married = NULL ;
 
 #line 34 "variable.pgc"
 
 	
 #line 35 "variable.pgc"
- long  ind_married    ;
+ long ind_married ;
 
 #line 35 "variable.pgc"
 
 	
 #line 36 "variable.pgc"
- ind  children    ;
+ ind children ;
 
 #line 36 "variable.pgc"
 
@@ -135,7 +135,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "create");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date    , children integer   )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table family ( name char ( 8 ) , born integer , age smallint , married date , children integer )", ECPGt_EOIT, ECPGt_EORT);
 #line 49 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -143,31 +143,31 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "insert");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name  , married  , children  ) values ( 'Mum' , '19870714' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name , married , children ) values ( 'Mum' , '19870714' , 3 )", ECPGt_EOIT, ECPGt_EORT);
 #line 52 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
 #line 52 "variable.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name  , born  , married  , children  ) values ( 'Dad' , '19610721' , '19870714' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name , born , married , children ) values ( 'Dad' , '19610721' , '19870714' , 3 )", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
 #line 53 "variable.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name  , age  ) values ( 'Child 1' , 16 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name , age ) values ( 'Child 1' , 16 )", ECPGt_EOIT, ECPGt_EORT);
 #line 54 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
 #line 54 "variable.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name  , age  ) values ( 'Child 2' , 14 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name , age ) values ( 'Child 2' , 14 )", ECPGt_EOIT, ECPGt_EORT);
 #line 55 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
 #line 55 "variable.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name  , age  ) values ( 'Child 3' , 9 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into family ( name , age ) values ( 'Child 3' , 9 )", ECPGt_EOIT, ECPGt_EORT);
 #line 56 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -175,7 +175,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "commit");
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 59 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -183,7 +183,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "open");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare cur  cursor  for select  name , born , age , married , children  from family   ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare cur cursor for select name , born , age , married , children from family", ECPGt_EOIT, ECPGt_EORT);
 #line 62 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -242,7 +242,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "drop");
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table family ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table family", ECPGt_EOIT, ECPGt_EORT);
 #line 91 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -250,7 +250,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "commit");
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 94 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

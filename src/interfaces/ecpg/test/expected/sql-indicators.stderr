@@ -4,7 +4,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGsetcommit on line 17: action "off"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 19: query: create  table indicator_test ( "id" int   primary key   , "str" text    not null , val int   null )    ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 19: query: create table indicator_test ( "id" int primary key , "str" text not null , val int null ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 19: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -12,13 +12,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 23: action "commit work"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 25: query: insert into indicator_test ( id  , str  , val  ) values ( 1 , 'Hello' , 0 ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 25: query: insert into indicator_test ( id , str , val ) values ( 1 , 'Hello' , 0 ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 28: query: insert into indicator_test ( id  , str  , val  ) values ( 2 , 'Hi there' ,  $1  ) ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 28: query: insert into indicator_test ( id , str , val ) values ( 2 , 'Hi there' , $1  ); with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 30: query: insert into indicator_test ( id  , str  , val  ) values ( 3 , 'Good evening' ,  $1  ) ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 30: query: insert into indicator_test ( id , str , val ) values ( 3 , 'Good evening' , $1  ); with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 30: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,7 +36,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 31: action "commit work"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 34: query: select  val  from indicator_test where id = 1  ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 34: query: select val from indicator_test where id = 1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 34: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -44,7 +44,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 34: RESULT: 0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: query: select  val  from indicator_test where id = 2  ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 35: query: select val from indicator_test where id = 2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -52,7 +52,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 35: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 37: query: select  val  from indicator_test where id = 3  ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 37: query: select val from indicator_test where id = 3; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -60,7 +60,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 37: RESULT: 5 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 42: query: update indicator_test set val  =  $1   where id = 1 ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 42: query: update indicator_test set val = $1  where id = 1; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 42: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -68,7 +68,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 42: OK: UPDATE 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 43: query: select  val  from indicator_test where id = 1  ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 43: query: select val from indicator_test where id = 1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 43: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -76,7 +76,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 43: RESULT:  offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 46: query: drop table indicator_test ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 46: query: drop table indicator_test; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000

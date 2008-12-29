@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   	   
   
 #line 10 "parser.pgc"
- int  item  [ 3 ]   ,  ind  [ 3 ]   ,  i    ;
+ int item [ 3 ] , ind [ 3 ] , i ;
 /* exec sql end declare section */
 #line 11 "parser.pgc"
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 #line 18 "parser.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table T ( Item1 int   , Item2 int   )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table T ( Item1 int , Item2 int )", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -58,7 +58,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "parser.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , null ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , null )", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -67,7 +67,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "parser.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 1 ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 1 )", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -76,7 +76,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 23 "parser.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 2 ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into T values ( 1 , 2 )", ECPGt_EOIT, ECPGt_EORT);
 #line 24 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -86,7 +86,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "parser.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  Item2  from T    order by Item2  nulls last", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select Item2 from T order by Item2 nulls last", ECPGt_EOIT, 
 	ECPGt_int,(item),(long)1,(long)3,sizeof(int), 
 	ECPGt_int,(ind),(long)1,(long)3,sizeof(int), ECPGt_EORT);
 #line 26 "parser.pgc"
@@ -101,7 +101,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   for (i=0; i<3; i++)
   	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter  Item1  type bigint  ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter Item1 type bigint", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -110,7 +110,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 31 "parser.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter column Item2 set data type smallint  ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter column Item2 set data type smallint", ECPGt_EOIT, ECPGt_EORT);
 #line 32 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -120,7 +120,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 32 "parser.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table T ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table T", ECPGt_EOIT, ECPGt_EORT);
 #line 34 "parser.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

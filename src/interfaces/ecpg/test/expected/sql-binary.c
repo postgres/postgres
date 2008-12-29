@@ -31,16 +31,16 @@
 
 struct TBempl { 
 #line 9 "binary.pgc"
- long  idnum    ;
+ long idnum ;
  
 #line 10 "binary.pgc"
- char  name  [ 21 ]   ;
+ char name [ 21 ] ;
  
 #line 11 "binary.pgc"
- short  accs    ;
+ short accs ;
  
 #line 12 "binary.pgc"
- char  byte  [ 20 ]   ;
+ char byte [ 20 ] ;
  } ;/* exec sql end declare section */
 #line 14 "binary.pgc"
 
@@ -53,10 +53,10 @@ main (void)
      
   
 #line 20 "binary.pgc"
- struct TBempl  empl    ;
+ struct TBempl empl ;
  
 #line 21 "binary.pgc"
- char * data   = "\\001\\155\\000\\212" ;
+ char * data = "\\001\\155\\000\\212" ;
 /* exec sql end declare section */
 #line 22 "binary.pgc"
 
@@ -74,7 +74,7 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table empl ( idnum integer   , name char  ( 20 )    , accs smallint   , byte bytea    )    ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table empl ( idnum integer , name char ( 20 ) , accs smallint , byte bytea )", ECPGt_EOIT, ECPGt_EORT);}
 #line 36 "binary.pgc"
 
   if (sqlca.sqlcode)
@@ -83,7 +83,7 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into empl values ( 1 , 'first user' , 320 ,  $1  ) ", 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into empl values ( 1 , 'first user' , 320 , $1  )", 
 	ECPGt_char,&(data),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
 #line 43 "binary.pgc"
@@ -94,10 +94,10 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  /* declare C  cursor  for select  name , accs , byte  from empl where idnum =  $1    */
+  /* declare C cursor for select name , accs , byte from empl where idnum = $1  */
 #line 50 "binary.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C  cursor  for select  name , accs , byte  from empl where idnum =  $1   ", 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
 #line 51 "binary.pgc"
@@ -121,10 +121,10 @@ main (void)
 
   memset(empl.name, 0, 21L);
   memset(empl.byte, '#', 20L);
-  /* declare B  binary cursor  for select  name , accs , byte  from empl where idnum =  $1    */
+  /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
 #line 63 "binary.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B  binary cursor  for select  name , accs , byte  from empl where idnum =  $1   ", 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B binary cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
 #line 64 "binary.pgc"

@@ -2,19 +2,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 50: query: create  table empl ( idnum integer   , name char  ( 20 )    , accs smallint   , string1 char  ( 10 )    , string2 char  ( 10 )    , string3 char  ( 10 )    )    ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 50: query: create table empl ( idnum integer , name char ( 20 ) , accs smallint , string1 char ( 10 ) , string2 char ( 10 ) , string3 char ( 10 ) ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 50: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 50: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 58: query: insert into empl values ( 1 , 'user name' , 320 , 'first str' , 'second str' , 'third str' ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 58: query: insert into empl values ( 1 , 'user name' , 320 , 'first str' , 'second str' , 'third str' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 58: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 58: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 65: query: select  idnum , name , accs , string1 , string2 , string3  from empl where idnum =  $1   ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 65: query: select idnum , name , accs , string1 , string2 , string3 from empl where idnum = $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 65: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000

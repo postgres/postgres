@@ -38,19 +38,19 @@ main(void)
 	 
 
 #line 14 "execute.pgc"
- int  amount  [ 8 ]   ;
+ int amount [ 8 ] ;
  
 #line 15 "execute.pgc"
- int  increment   = 100 ;
+ int increment = 100 ;
  
 #line 16 "execute.pgc"
- char  name  [ 8 ] [ 8 ]   ;
+ char name [ 8 ] [ 8 ] ;
  
 #line 17 "execute.pgc"
- char  letter  [ 8 ] [ 1 ]   ;
+ char letter [ 8 ] [ 1 ] ;
  
 #line 18 "execute.pgc"
- char  command  [ 128 ]   ;
+ char command [ 128 ] ;
 /* exec sql end declare section */
 #line 19 "execute.pgc"
 
@@ -64,13 +64,13 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "execute.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test ( name char ( 8 ) , amount int , letter char ( 1 ) )", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 25 "execute.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 26 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -121,7 +121,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("Inserted %ld tuples via prepared execute\n", sqlca.sqlerrd[2]);
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 45 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -136,11 +136,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 49 "execute.pgc"
 
-	/* declare CUR  cursor  for $1 */
+	/* declare CUR cursor for $1 */
 #line 50 "execute.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR  cursor  for $1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "execute.pgc"
@@ -168,10 +168,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 58 "execute.pgc"
- char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+ char n [ 8 ] , l = letter [ i ] [ 0 ] ;
  
 #line 59 "execute.pgc"
- int  a   = amount [ i ] ;
+ int a = amount [ i ] ;
 /* exec sql end declare section */
 #line 60 "execute.pgc"
 
@@ -201,11 +201,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 71 "execute.pgc"
 
-	/* declare CUR2  cursor  for $1 */
+	/* declare CUR2 cursor for $1 */
 #line 72 "execute.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR2  cursor  for $1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR2 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
@@ -235,10 +235,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 80 "execute.pgc"
- char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+ char n [ 8 ] , l = letter [ i ] [ 0 ] ;
  
 #line 81 "execute.pgc"
- int  a   = amount [ i ] ;
+ int a = amount [ i ] ;
 /* exec sql end declare section */
 #line 82 "execute.pgc"
 
@@ -290,10 +290,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		   
 		
 #line 99 "execute.pgc"
- char  n  [ 8 ]   ,  l   = letter [ i ] [ 0 ] ;
+ char n [ 8 ] , l = letter [ i ] [ 0 ] ;
  
 #line 100 "execute.pgc"
- int  a   = amount [ i ] ;
+ int a = amount [ i ] ;
 /* exec sql end declare section */
 #line 101 "execute.pgc"
 
@@ -308,13 +308,13 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 107 "execute.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
 #line 108 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 108 "execute.pgc"
 
-	{ ECPGtrans(__LINE__, NULL, "commit ");
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 109 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

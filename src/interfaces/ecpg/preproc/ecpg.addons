@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.1 2008/11/14 10:03:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.2 2008/12/29 17:07:05 meskes Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{
@@ -207,7 +207,7 @@ ECPG: ConstraintAttributeSpecConstraintTimeSpecConstraintDeferrabilitySpec addon
 				mmerror(PARSE_ERROR, ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE\n");
 ECPG: var_valueNumericOnly addon
 ECPG: fetch_directionSignedIconst addon
-		if ($1[1] == '$')
+		if ($1[0] == '$')
 		{
 			free($1);
 			$1 = make_str("$0");
@@ -216,7 +216,7 @@ ECPG: fetch_directionABSOLUTE_PSignedIconst addon
 ECPG: fetch_directionRELATIVE_PSignedIconst addon
 ECPG: fetch_directionFORWARDSignedIconst addon
 ECPG: fetch_directionBACKWARDSignedIconst addon
-		if ($2[1] == '$')
+		if ($2[0] == '$')
 		{
 			free($2);
 			$2 = make_str("$0");

@@ -74,19 +74,19 @@ main(void)
 		 
 	
 #line 52 "dt_test2.pgc"
- date  date1    ;
+ date date1 ;
  
 #line 53 "dt_test2.pgc"
- timestamp  ts1    ,  ts2    ;
+ timestamp ts1 , ts2 ;
  
 #line 54 "dt_test2.pgc"
- char * text    ;
+ char * text ;
  
 #line 55 "dt_test2.pgc"
- interval * i1    ;
+ interval * i1 ;
  
 #line 56 "dt_test2.pgc"
- date * dc    ;
+ date * dc ;
 /* exec sql end declare section */
 #line 57 "dt_test2.pgc"
 

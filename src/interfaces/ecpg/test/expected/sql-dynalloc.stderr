@@ -8,25 +8,25 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 37: query: create  table test ( a serial    , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz    , g boolean   , h box    , i inet    )    ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 37: query: create table test ( a serial , b numeric ( 12 , 3 ) , c varchar , d varchar ( 3 ) , e char ( 4 ) , f timestamptz , g boolean , h box , i inet ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 38: query: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 38: query: insert into test ( b , c , d , e , f , g , h , i ) values ( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 38: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 38: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 39: query: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values ( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null ) ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 39: query: insert into test ( b , c , d , e , f , g , h , i ) values ( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 42: query: select  a , b , c , d , e , f , g , h , i  from test    order by a  ; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 42: query: select a , b , c , d , e , f , g , h , i from test order by a; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 42: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000

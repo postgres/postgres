@@ -133,13 +133,13 @@ static void* fn(void* arg)
 	   
 	
 #line 39 "alloc.pgc"
- int  value    ;
+ int value ;
  
 #line 40 "alloc.pgc"
- char  name  [ 100 ]   ;
+ char name [ 100 ] ;
  
 #line 41 "alloc.pgc"
- char ** r   = NULL ;
+ char ** r = NULL ;
 /* exec sql end declare section */
 #line 42 "alloc.pgc"
 
@@ -161,7 +161,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	for (i = 1; i <= REPEATS; ++i)
 	{
-		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  relname  from pg_class where relname = 'pg_class'  ", ECPGt_EOIT, 
+		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select relname from pg_class where relname = 'pg_class'", ECPGt_EOIT, 
 	ECPGt_char,&(r),(long)0,(long)0,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 51 "alloc.pgc"

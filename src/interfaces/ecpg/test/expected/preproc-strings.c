@@ -24,7 +24,7 @@
       
 
 #line 6 "strings.pgc"
- char * s1    , * s2    , * s3    , * s4    , * s5    , * s6    ;
+ char * s1 , * s2 , * s3 , * s4 , * s5 , * s6 ;
 /* exec sql end declare section */
 #line 7 "strings.pgc"
 
@@ -37,7 +37,7 @@ int main(void)
 #line 13 "strings.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  'abcdef' , N'abcdef' as foo , E'abc\\bdef' as \"foo\" , U&'d\\0061t\\0061' as U&\"foo\" , U&'d!+000061t!+000061' uescape '!' , $foo$abc$def$foo$     ", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select 'abcdef' , N'abcdef' as foo , E'abc\\bdef' as \"foo\" , U&'d\\0061t\\0061' as U&\"foo\" , U&'d!+000061t!+000061' uescape '!' , $foo$abc$def$foo$", ECPGt_EOIT, 
 	ECPGt_char,&(s1),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,&(s2),(long)0,(long)1,(1)*sizeof(char), 

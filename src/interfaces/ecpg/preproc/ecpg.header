@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.3 2008/11/26 08:45:12 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.4 2008/12/29 17:07:05 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -111,7 +111,8 @@ cat2_str(char *str1, char *str2)
 	char * res_str	= (char *)mm_alloc(strlen(str1) + strlen(str2) + 2);
 
 	strcpy(res_str, str1);
-	strcat(res_str, " ");
+	if (strlen(str1) != 0 && strlen(str2) != 0)
+		strcat(res_str, " ");
 	strcat(res_str, str2);
 	free(str1);
 	free(str2);
