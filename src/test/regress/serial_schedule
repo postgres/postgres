@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.49 2008/12/28 18:54:01 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.50 2008/12/30 17:11:26 tgl Exp $
 # This should probably be in an order similar to parallel_schedule.
 test: boolean
 test: char
@@ -97,6 +97,9 @@ test: guc
 test: bitmapops
 test: combocid
 test: tsearch
+test: tsdicts
+test: foreign_data
+test: window
 test: plancache
 test: limit
 test: plpgsql
@@ -107,8 +110,6 @@ test: rangefuncs
 test: prepare
 test: without_oid
 test: conversion
-test: tsdicts
-test: foreign_data
 test: truncate
 test: alter_table
 test: sequence
@@ -116,7 +117,6 @@ test: polymorphism
 test: rowtypes
 test: returning
 test: largeobject
-test: window
 test: with
 test: xml
 test: stats
