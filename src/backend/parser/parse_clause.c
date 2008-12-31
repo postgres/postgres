@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.183 2008/12/31 00:08:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.184 2008/12/31 23:42:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1554,7 +1554,10 @@ transformWindowDefinitions(ParseState *pstate,
 		 * Per spec, a windowdef that references a previous one copies the
 		 * previous partition clause (and mustn't specify its own).  It can
 		 * specify its own ordering clause. but only if the previous one
-		 * had none.  It always specifies its own framing clause.
+		 * had none.  It always specifies its own frame clause, and the
+		 * previous one must not have a frame clause.  (Yeah, it's bizarre
+		 * that each of these cases works differently, but SQL:2008 says so;
+		 * see 7.11 <window clause> syntax rule 10 and general rule 1.)
 		 */
 		if (refwc)
 		{
@@ -1592,6 +1595,12 @@ transformWindowDefinitions(ParseState *pstate,
 			wc->orderClause = orderClause;
 			wc->copiedOrder = false;
 		}
+		if (refwc && refwc->frameOptions != FRAMEOPTION_DEFAULTS)
+			ereport(ERROR,
+					(errcode(ERRCODE_WINDOWING_ERROR),
+					 errmsg("cannot override frame clause of window \"%s\"",
+							windef->refname),
+					 parser_errposition(pstate, windef->location)));
 		wc->frameOptions = windef->frameOptions;
 		wc->winref = winref;
 

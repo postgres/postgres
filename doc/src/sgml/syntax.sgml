@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.128 2008/12/31 00:08:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.129 2008/12/31 23:42:56 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1588,12 +1588,12 @@ sqrt(2)
     where <replaceable class="parameter">window_definition</replaceable>
     has the syntax
 <synopsis>
-[ <replaceable class="parameter">window_name</replaceable> ]
+[ <replaceable class="parameter">existing_window_name</replaceable> ]
 [ PARTITION BY <replaceable class="parameter">expression</replaceable> [, ...] ]
 [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
-[ <replaceable class="parameter">framing_clause</replaceable> ]
+[ <replaceable class="parameter">frame_clause</replaceable> ]
 </synopsis>
-    and the optional <replaceable class="parameter">framing_clause</replaceable>
+    and the optional <replaceable class="parameter">frame_clause</replaceable>
     can be one of
 <synopsis>
 RANGE UNBOUNDED PRECEDING
@@ -1614,7 +1614,8 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
     Named window specifications are usually referenced with just
     <literal>OVER</> <replaceable>window_name</replaceable>, but it is
     also possible to write a window name inside the parentheses and then
-    optionally override its ordering clause and/or framing clause.
+    optionally supply an ordering clause and/or frame clause (the referenced
+    window must lack these clauses, if they are supplied here).
     This latter syntax follows the same rules as modifying an existing
     window name within the <literal>WINDOW</literal> clause; see the
     <xref linkend="sql-select" endterm="sql-select-title"> reference
@@ -1622,6 +1623,9 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
    </para>
 
    <para>
+    The <replaceable class="parameter">frame_clause</replaceable> specifies
+    the set of rows constituting the <firstterm>window frame</>, for those
+    window functions that act on the frame instead of the whole partition.
     The default framing option is <literal>RANGE UNBOUNDED PRECEDING</>,
     which is the same as <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND
     CURRENT ROW</>; it selects rows up through the current row's last
@@ -1639,8 +1643,9 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 
    <para>
     The built-in window functions are described in <xref
-    linkend="functions-window-table">.  Also, any built-in or
-    user-defined aggregate function can be used as a window function.
+    linkend="functions-window-table">.  Other window functions can be added by
+    the user.  Also, any built-in or user-defined aggregate function can be
+    used as a window function.
    </para>
 
    <para>

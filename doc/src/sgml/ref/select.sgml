@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.115 2008/12/31 00:08:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.116 2008/12/31 23:42:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -583,7 +583,7 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
 [ <replaceable class="parameter">existing_window_name</replaceable> ]
 [ PARTITION BY <replaceable class="parameter">expression</replaceable> [, ...] ]
 [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
-[ <replaceable class="parameter">framing_clause</replaceable> ]
+[ <replaceable class="parameter">frame_clause</replaceable> ]
 </synopsis>
    </para>
 
@@ -594,7 +594,8 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
     as well as its ordering clause if any.  In this case the new window cannot
     specify its own <literal>PARTITION BY</> clause, and it can specify
     <literal>ORDER BY</> only if the copied window does not have one.
-    The framing clause is never copied from the existing window.
+    The new window always uses its own frame clause; the copied window
+    must not specify a frame clause.
    </para>
 
    <para>
@@ -611,7 +612,7 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
    </para>
 
    <para>
-    The optional <replaceable class="parameter">framing_clause</> defines
+    The optional <replaceable class="parameter">frame_clause</> defines
     the <firstterm>window frame</> for window functions that depend on the
     frame (not all do).  It can be one of
 <synopsis>
@@ -1486,7 +1487,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
 
    <para>
     The SQL standard provides additional options for the window
-    <replaceable class="parameter">framing_clause</>.
+    <replaceable class="parameter">frame_clause</>.
     <productname>PostgreSQL</productname> currently supports only the
     options listed above.
    </para>
