@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.190 2008/12/19 16:25:18 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.191 2008/12/31 18:07:47 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -37,6 +37,7 @@ static bool listTSConfigsVerbose(const char *pattern);
 static bool describeOneTSConfig(const char *oid, const char *nspname,
 					const char *cfgname,
 					const char *pnspname, const char *prsname);
+static void printACLColumn(PQExpBuffer buf, const char *colname);
 
 
 /*----------------
@@ -142,9 +143,11 @@ describeTablespaces(const char *pattern, bool verbose)
 					  gettext_noop("Location"));
 
 	if (verbose)
-		appendPQExpBuffer(&buf,
-						  ",\n  spcacl AS \"%s\"",
-						  gettext_noop("Access privileges"));
+	{
+		appendPQExpBuffer(&buf, ",\n  ");
+		printACLColumn(&buf, "spcacl");
+	}
+
 	if (verbose && pset.sversion >= 80200)
 		appendPQExpBuffer(&buf,
                           ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
@@ -464,9 +467,8 @@ listAllDbs(bool verbose)
 						  "       d.datctype as \"%s\",\n",
 						  gettext_noop("Collation"),
 						  gettext_noop("Ctype"));
-	appendPQExpBuffer(&buf,
-					  "       d.datacl as \"%s\"",
-					  gettext_noop("Access Privileges"));
+	appendPQExpBuffer(&buf, "       ");
+	printACLColumn(&buf, "d.datacl");
 	if (verbose && pset.sversion >= 80200)
 		appendPQExpBuffer(&buf,
 						  ",\n       CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')\n"
@@ -524,20 +526,14 @@ permissionsList(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  c.relname as \"%s\",\n"
-					  "  CASE c.relkind WHEN 'r' THEN '%s' WHEN 'v' THEN '%s' WHEN 'S' THEN '%s' END as \"%s\",\n",
+					  "  CASE c.relkind WHEN 'r' THEN '%s' WHEN 'v' THEN '%s' WHEN 'S' THEN '%s' END as \"%s\",\n"
+					  "  ",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
 					  gettext_noop("table"), gettext_noop("view"), gettext_noop("sequence"),
 					  gettext_noop("Type"));
-
-    if (pset.sversion >= 80100)
-	    appendPQExpBuffer(&buf, "  pg_catalog.array_to_string(c.relacl, E'\\n') as \"%s\"\n",
-					  gettext_noop("Access privileges"));
-    else
-	    appendPQExpBuffer(&buf, "  pg_catalog.array_to_string(c.relacl, '\\n') as \"%s\"\n",
-					  gettext_noop("Access privileges"));
-
-	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_class c\n"
+	printACLColumn(&buf, "c.relacl");
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_class c\n"
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					  "WHERE c.relkind IN ('r', 'v', 'S')\n");
 
@@ -2188,11 +2184,13 @@ listSchemas(const char *pattern, bool verbose)
 					  gettext_noop("Owner"));
 
 	if (verbose)
+	{
+		appendPQExpBuffer(&buf, ",\n  ");
+		printACLColumn(&buf, "n.nspacl");
 		appendPQExpBuffer(&buf,
-						  ",\n  n.nspacl as \"%s\","
-			 "  pg_catalog.obj_description(n.oid, 'pg_namespace') as \"%s\"",
-						  gettext_noop("Access privileges"),
+			",\n  pg_catalog.obj_description(n.oid, 'pg_namespace') AS \"%s\"",
 						  gettext_noop("Description"));
+	}
 
 	appendPQExpBuffer(&buf,
 			  "\nFROM pg_catalog.pg_namespace n\n"
@@ -2803,21 +2801,23 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	printfPQExpBuffer(&buf,
 					  "SELECT fdwname AS \"%s\",\n"
 					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n"
-					  "  fdwlibrary AS \"%s\"\n",
+					  "  fdwlibrary AS \"%s\"",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
 					  gettext_noop("Library"));
 
 	if (verbose)
+	{
+		appendPQExpBuffer(&buf, ",\n  ");
+		printACLColumn(&buf, "fdwacl");
 		appendPQExpBuffer(&buf,
-						  ",\n  fdwacl AS \"%s\","
-						  "  fdwoptions AS \"%s\"",
-						  gettext_noop("Access privileges"),
+						  ",\n  fdwoptions AS \"%s\"",
 						  gettext_noop("Options"));
+	}
 
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper WHERE 1=1\n");
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_data_wrapper\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "fdwname", NULL, NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
@@ -2840,7 +2840,7 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 /*
  * \des
  *
- * Describes servers.
+ * Describes foreign-data servers.
  */
 bool
 listForeignServers(const char *pattern, bool verbose)
@@ -2853,27 +2853,30 @@ listForeignServers(const char *pattern, bool verbose)
 	printfPQExpBuffer(&buf,
 					  "SELECT s.srvname AS \"%s\",\n"
 					  "  pg_catalog.pg_get_userbyid(s.srvowner) AS \"%s\",\n"
-					  "  f.fdwname AS \"%s\"\n",
+					  "  f.fdwname AS \"%s\"",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
 					  gettext_noop("Foreign-data wrapper"));
 
 	if (verbose)
+	{
+		appendPQExpBuffer(&buf, ",\n  ");
+		printACLColumn(&buf, "s.srvacl");
 		appendPQExpBuffer(&buf,
-						  ",\n  s.srvacl AS \"%s\","
-						  "  s.srvtype AS \"%s\","
-						  "  s.srvversion AS \"%s\","
+						  ",\n"
+						  "  s.srvtype AS \"%s\",\n"
+						  "  s.srvversion AS \"%s\",\n"
 						  "  s.srvoptions AS \"%s\"",
-						  gettext_noop("Access privileges"),
 						  gettext_noop("Type"),
 						  gettext_noop("Version"),
 						  gettext_noop("Options"));
+	}
 
 	appendPQExpBuffer(&buf,
-			  		  "\nFROM pg_foreign_server s\n"
-					  "JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\n");
+			  		  "\nFROM pg_catalog.pg_foreign_server s\n"
+					  "     JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "s.srvname", NULL, NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
@@ -2917,9 +2920,9 @@ listUserMappings(const char *pattern, bool verbose)
 						  ",\n  um.umoptions AS \"%s\"",
 						  gettext_noop("Options"));
 
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_user_mappings um WHERE 1=1\n");
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_user_mappings um\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "um.srvname", "um.usename", NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
@@ -2937,4 +2940,24 @@ listUserMappings(const char *pattern, bool verbose)
 
 	PQclear(res);
 	return true;
+}
+
+/*
+ * printACLColumn
+ *
+ * Helper function for consistently formatting ACL (privilege) columns.
+ * The proper targetlist entry is appended to buf.  Note lack of any
+ * whitespace or comma decoration.
+ */
+static void
+printACLColumn(PQExpBuffer buf, const char *colname)
+{
+	if (pset.sversion >= 80100)
+		appendPQExpBuffer(buf,
+						  "pg_catalog.array_to_string(%s, E'\\n') AS \"%s\"",
+						  colname, gettext_noop("Access privileges"));
+	else
+		appendPQExpBuffer(buf,
+						  "pg_catalog.array_to_string(%s, '\\n') AS \"%s\"",
+						  colname, gettext_noop("Access privileges"));
 }

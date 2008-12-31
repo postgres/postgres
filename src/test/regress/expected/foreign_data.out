@@ -370,20 +370,22 @@ ALTER SERVER s3 OPTIONS (tnsname 'orcl', port '1521');
 GRANT USAGE ON FOREIGN SERVER s1 TO regress_test_role;
 GRANT USAGE ON FOREIGN SERVER s6 TO regress_test_role2 WITH GRANT OPTION;
 \des+
-                                                                               List of foreign servers
- Name |       Owner       | Foreign-data wrapper |                                Access privileges                                |  Type  | Version |           Options            
-------+-------------------+----------------------+---------------------------------------------------------------------------------+--------+---------+------------------------------
- S6   | foreign_data_user | foo                  |                                                                                 |        |         | {mixed_case_names=true}
- s1   | foreign_data_user | foo                  | {foreign_data_user=U/foreign_data_user,regress_test_role=U/foreign_data_user}   |        | 1.0     | {servername=s1}
- s2   | foreign_data_user | foo                  |                                                                                 |        | 1.1     | {host=a,dbname=b}
- s3   | foreign_data_user | foo                  |                                                                                 | oracle |         | {tnsname=orcl,port=1521}
- s4   | foreign_data_user | foo                  |                                                                                 | oracle |         | {host=a,dbname=b}
- s5   | foreign_data_user | foo                  |                                                                                 |        | 15.0    | 
- s6   | foreign_data_user | foo                  | {foreign_data_user=U/foreign_data_user,regress_test_role2=U*/foreign_data_user} |        | 16.0    | {host=a,dbname=b}
- s7   | foreign_data_user | foo                  |                                                                                 | oracle | 17.0    | {host=a,dbname=b}
- s8   | foreign_data_user | postgresql           |                                                                                 |        |         | {host=localhost,dbname=s8db}
- st1  | regress_test_role | foo                  |                                                                                 |        |         | 
- st2  | regress_test_role | foo                  |                                                                                 |        |         | 
+                                                           List of foreign servers
+ Name |       Owner       | Foreign-data wrapper |            Access privileges            |  Type  | Version |           Options            
+------+-------------------+----------------------+-----------------------------------------+--------+---------+------------------------------
+ S6   | foreign_data_user | foo                  |                                         |        |         | {mixed_case_names=true}
+ s1   | foreign_data_user | foo                  | foreign_data_user=U/foreign_data_user   |        | 1.0     | {servername=s1}
+                                                 : regress_test_role=U/foreign_data_user                        
+ s2   | foreign_data_user | foo                  |                                         |        | 1.1     | {host=a,dbname=b}
+ s3   | foreign_data_user | foo                  |                                         | oracle |         | {tnsname=orcl,port=1521}
+ s4   | foreign_data_user | foo                  |                                         | oracle |         | {host=a,dbname=b}
+ s5   | foreign_data_user | foo                  |                                         |        | 15.0    | 
+ s6   | foreign_data_user | foo                  | foreign_data_user=U/foreign_data_user   |        | 16.0    | {host=a,dbname=b}
+                                                 : regress_test_role2=U*/foreign_data_user                      
+ s7   | foreign_data_user | foo                  |                                         | oracle | 17.0    | {host=a,dbname=b}
+ s8   | foreign_data_user | postgresql           |                                         |        |         | {host=localhost,dbname=s8db}
+ st1  | regress_test_role | foo                  |                                         |        |         | 
+ st2  | regress_test_role | foo                  |                                         |        |         | 
 (11 rows)
 
 SET ROLE regress_test_role;
@@ -420,20 +422,22 @@ ERROR:  role "regress_test_indirect" cannot be dropped because some objects depe
 DETAIL:  owner of server s1
 access to foreign-data wrapper foo
 \des+
-                                                                                  List of foreign servers
- Name |         Owner         | Foreign-data wrapper |                                Access privileges                                |  Type  | Version |             Options             
-------+-----------------------+----------------------+---------------------------------------------------------------------------------+--------+---------+---------------------------------
- S6   | foreign_data_user     | foo                  |                                                                                 |        |         | {mixed_case_names=true}
- s1   | regress_test_indirect | foo                  | {foreign_data_user=U/foreign_data_user,regress_test_role=U/foreign_data_user}   |        | 1.1     | {servername=s1}
- s2   | foreign_data_user     | foo                  |                                                                                 |        | 1.1     | {host=a,dbname=b}
- s3   | foreign_data_user     | foo                  |                                                                                 | oracle |         | {tnsname=orcl,port=1521}
- s4   | foreign_data_user     | foo                  |                                                                                 | oracle |         | {host=a,dbname=b}
- s5   | foreign_data_user     | foo                  |                                                                                 |        | 15.0    | 
- s6   | foreign_data_user     | foo                  | {foreign_data_user=U/foreign_data_user,regress_test_role2=U*/foreign_data_user} |        | 16.0    | {host=a,dbname=b}
- s7   | foreign_data_user     | foo                  |                                                                                 | oracle | 17.0    | {host=a,dbname=b}
- s8   | foreign_data_user     | postgresql           |                                                                                 |        |         | {dbname=db1,connect_timeout=30}
- st1  | regress_test_role     | foo                  |                                                                                 |        |         | 
- st2  | regress_test_role     | foo                  |                                                                                 |        |         | 
+                                                              List of foreign servers
+ Name |         Owner         | Foreign-data wrapper |            Access privileges            |  Type  | Version |             Options             
+------+-----------------------+----------------------+-----------------------------------------+--------+---------+---------------------------------
+ S6   | foreign_data_user     | foo                  |                                         |        |         | {mixed_case_names=true}
+ s1   | regress_test_indirect | foo                  | foreign_data_user=U/foreign_data_user   |        | 1.1     | {servername=s1}
+                                                     : regress_test_role=U/foreign_data_user                        
+ s2   | foreign_data_user     | foo                  |                                         |        | 1.1     | {host=a,dbname=b}
+ s3   | foreign_data_user     | foo                  |                                         | oracle |         | {tnsname=orcl,port=1521}
+ s4   | foreign_data_user     | foo                  |                                         | oracle |         | {host=a,dbname=b}
+ s5   | foreign_data_user     | foo                  |                                         |        | 15.0    | 
+ s6   | foreign_data_user     | foo                  | foreign_data_user=U/foreign_data_user   |        | 16.0    | {host=a,dbname=b}
+                                                     : regress_test_role2=U*/foreign_data_user                      
+ s7   | foreign_data_user     | foo                  |                                         | oracle | 17.0    | {host=a,dbname=b}
+ s8   | foreign_data_user     | postgresql           |                                         |        |         | {dbname=db1,connect_timeout=30}
+ st1  | regress_test_role     | foo                  |                                         |        |         | 
+ st2  | regress_test_role     | foo                  |                                         |        |         | 
 (11 rows)
 
 -- DROP SERVER
