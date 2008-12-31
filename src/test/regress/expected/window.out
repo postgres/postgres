@@ -587,29 +587,152 @@ SELECT empno, depname, salary, bonus, depadj, MIN(bonus) OVER (ORDER BY empno), 
     11 | develop   |   5200 |   500 |    200 |  500 | 200
 (10 rows)
 
+-- test non-default frame specifications
+SELECT four, ten,
+	sum(ten) over (partition by four order by ten),
+	last_value(ten) over (partition by four order by ten)
+FROM (select distinct ten, four from tenk1) ss;
+ four | ten | sum | last_value 
+------+-----+-----+------------
+    0 |   0 |   0 |          0
+    0 |   2 |   2 |          2
+    0 |   4 |   6 |          4
+    0 |   6 |  12 |          6
+    0 |   8 |  20 |          8
+    1 |   1 |   1 |          1
+    1 |   3 |   4 |          3
+    1 |   5 |   9 |          5
+    1 |   7 |  16 |          7
+    1 |   9 |  25 |          9
+    2 |   0 |   0 |          0
+    2 |   2 |   2 |          2
+    2 |   4 |   6 |          4
+    2 |   6 |  12 |          6
+    2 |   8 |  20 |          8
+    3 |   1 |   1 |          1
+    3 |   3 |   4 |          3
+    3 |   5 |   9 |          5
+    3 |   7 |  16 |          7
+    3 |   9 |  25 |          9
+(20 rows)
+
+SELECT four, ten,
+	sum(ten) over (partition by four order by ten range between unbounded preceding and current row),
+	last_value(ten) over (partition by four order by ten range between unbounded preceding and current row)
+FROM (select distinct ten, four from tenk1) ss;
+ four | ten | sum | last_value 
+------+-----+-----+------------
+    0 |   0 |   0 |          0
+    0 |   2 |   2 |          2
+    0 |   4 |   6 |          4
+    0 |   6 |  12 |          6
+    0 |   8 |  20 |          8
+    1 |   1 |   1 |          1
+    1 |   3 |   4 |          3
+    1 |   5 |   9 |          5
+    1 |   7 |  16 |          7
+    1 |   9 |  25 |          9
+    2 |   0 |   0 |          0
+    2 |   2 |   2 |          2
+    2 |   4 |   6 |          4
+    2 |   6 |  12 |          6
+    2 |   8 |  20 |          8
+    3 |   1 |   1 |          1
+    3 |   3 |   4 |          3
+    3 |   5 |   9 |          5
+    3 |   7 |  16 |          7
+    3 |   9 |  25 |          9
+(20 rows)
+
+SELECT four, ten,
+	sum(ten) over (partition by four order by ten range between unbounded preceding and unbounded following),
+	last_value(ten) over (partition by four order by ten range between unbounded preceding and unbounded following)
+FROM (select distinct ten, four from tenk1) ss;
+ four | ten | sum | last_value 
+------+-----+-----+------------
+    0 |   0 |  20 |          8
+    0 |   2 |  20 |          8
+    0 |   4 |  20 |          8
+    0 |   6 |  20 |          8
+    0 |   8 |  20 |          8
+    1 |   1 |  25 |          9
+    1 |   3 |  25 |          9
+    1 |   5 |  25 |          9
+    1 |   7 |  25 |          9
+    1 |   9 |  25 |          9
+    2 |   0 |  20 |          8
+    2 |   2 |  20 |          8
+    2 |   4 |  20 |          8
+    2 |   6 |  20 |          8
+    2 |   8 |  20 |          8
+    3 |   1 |  25 |          9
+    3 |   3 |  25 |          9
+    3 |   5 |  25 |          9
+    3 |   7 |  25 |          9
+    3 |   9 |  25 |          9
+(20 rows)
+
+SELECT four, ten/4 as two,
+	sum(ten/4) over (partition by four order by ten/4 range between unbounded preceding and current row),
+	last_value(ten/4) over (partition by four order by ten/4 range between unbounded preceding and current row)
+FROM (select distinct ten, four from tenk1) ss;
+ four | two | sum | last_value 
+------+-----+-----+------------
+    0 |   0 |   0 |          0
+    0 |   0 |   0 |          0
+    0 |   1 |   2 |          1
+    0 |   1 |   2 |          1
+    0 |   2 |   4 |          2
+    1 |   0 |   0 |          0
+    1 |   0 |   0 |          0
+    1 |   1 |   2 |          1
+    1 |   1 |   2 |          1
+    1 |   2 |   4 |          2
+    2 |   0 |   0 |          0
+    2 |   0 |   0 |          0
+    2 |   1 |   2 |          1
+    2 |   1 |   2 |          1
+    2 |   2 |   4 |          2
+    3 |   0 |   0 |          0
+    3 |   0 |   0 |          0
+    3 |   1 |   2 |          1
+    3 |   1 |   2 |          1
+    3 |   2 |   4 |          2
+(20 rows)
+
+SELECT four, ten/4 as two,
+	sum(ten/4) over (partition by four order by ten/4 rows between unbounded preceding and current row),
+	last_value(ten/4) over (partition by four order by ten/4 rows between unbounded preceding and current row)
+FROM (select distinct ten, four from tenk1) ss;
+ four | two | sum | last_value 
+------+-----+-----+------------
+    0 |   0 |   0 |          0
+    0 |   0 |   0 |          0
+    0 |   1 |   1 |          1
+    0 |   1 |   2 |          1
+    0 |   2 |   4 |          2
+    1 |   0 |   0 |          0
+    1 |   0 |   0 |          0
+    1 |   1 |   1 |          1
+    1 |   1 |   2 |          1
+    1 |   2 |   4 |          2
+    2 |   0 |   0 |          0
+    2 |   0 |   0 |          0
+    2 |   1 |   1 |          1
+    2 |   1 |   2 |          1
+    2 |   2 |   4 |          2
+    3 |   0 |   0 |          0
+    3 |   0 |   0 |          0
+    3 |   1 |   1 |          1
+    3 |   1 |   2 |          1
+    3 |   2 |   4 |          2
+(20 rows)
+
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
  count 
 -------
 (0 rows)
-
--- via a VIEW
-CREATE TEMPORARY VIEW vsumsalary AS
-SELECT SUM(salary) OVER (PARTITION BY depname) FROM empsalary;
-SELECT * FROM vsumsalary;
-  sum  
--------
- 25100
- 25100
- 25100
- 25100
- 25100
-  7400
-  7400
- 14600
- 14600
- 14600
-(10 rows)
 
 -- ordering by a non-integer constant is allowed
 SELECT rank() OVER (ORDER BY length('abc'));
@@ -669,5 +792,4 @@ ERROR:  argument of ntile must be greater than zero
 SELECT nth_value(four, 0) OVER (ORDER BY ten), ten, four FROM tenk1;
 ERROR:  argument of nth_value must be greater than zero
 -- cleanup
-DROP VIEW vsumsalary;
 DROP TABLE empsalary;

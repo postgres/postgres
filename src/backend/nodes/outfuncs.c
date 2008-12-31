@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.347 2008/12/28 18:53:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.348 2008/12/31 00:08:36 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -575,6 +575,7 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 
 	_outPlanInfo(str, (Plan *) node);
 
+	WRITE_UINT_FIELD(winref);
 	WRITE_INT_FIELD(partNumCols);
 
 	appendStringInfo(str, " :partColIdx");
@@ -594,6 +595,8 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 	appendStringInfo(str, " :ordOperations");
 	for (i = 0; i < node->ordNumCols; i++)
 		appendStringInfo(str, " %u", node->ordOperators[i]);
+
+	WRITE_INT_FIELD(frameOptions);
 }
 
 static void
@@ -1953,6 +1956,7 @@ _outWindowClause(StringInfo str, WindowClause *node)
 	WRITE_STRING_FIELD(refname);
 	WRITE_NODE_FIELD(partitionClause);
 	WRITE_NODE_FIELD(orderClause);
+	WRITE_INT_FIELD(frameOptions);
 	WRITE_UINT_FIELD(winref);
 	WRITE_BOOL_FIELD(copiedOrder);
 }
@@ -2242,6 +2246,7 @@ _outWindowDef(StringInfo str, WindowDef *node)
 	WRITE_STRING_FIELD(refname);
 	WRITE_NODE_FIELD(partitionClause);
 	WRITE_NODE_FIELD(orderClause);
+	WRITE_INT_FIELD(frameOptions);
 	WRITE_LOCATION_FIELD(location);
 }
 

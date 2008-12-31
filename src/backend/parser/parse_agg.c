@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.85 2008/12/28 18:53:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.86 2008/12/31 00:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,25 +123,27 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 									locate_windowfunc((Node *) wfunc->args))));
 
 	/*
-	 * If the OVER clause just specifies a reference name, find that
+	 * If the OVER clause just specifies a window name, find that
 	 * WINDOW clause (which had better be present).  Otherwise, try to
 	 * match all the properties of the OVER clause, and make a new entry
 	 * in the p_windowdefs list if no luck.
 	 */
-	Assert(!windef->name);
-	if (windef->refname &&
-		windef->partitionClause == NIL &&
-		windef->orderClause == NIL)
+	if (windef->name)
 	{
 		Index		winref = 0;
 		ListCell   *lc;
+
+		Assert(windef->refname == NULL &&
+			   windef->partitionClause == NIL &&
+			   windef->orderClause == NIL &&
+			   windef->frameOptions == FRAMEOPTION_DEFAULTS);
 
 		foreach(lc, pstate->p_windowdefs)
 		{
 			WindowDef *refwin = (WindowDef *) lfirst(lc);
 
 			winref++;
-			if (refwin->name && strcmp(refwin->name, windef->refname) == 0)
+			if (refwin->name && strcmp(refwin->name, windef->name) == 0)
 			{
 				wfunc->winref = winref;
 				break;
@@ -150,7 +152,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 		if (lc == NULL)			/* didn't find it? */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("window \"%s\" does not exist", windef->refname),
+					 errmsg("window \"%s\" does not exist", windef->name),
 					 parser_errposition(pstate, windef->location)));
 	}
 	else
@@ -164,14 +166,15 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 
 			winref++;
 			if (refwin->refname && windef->refname &&
-				strcmp(refwin->name, windef->refname) == 0)
+				strcmp(refwin->refname, windef->refname) == 0)
 				/* matched on refname */ ;
 			else if (!refwin->refname && !windef->refname)
 				/* matched, no refname */ ;
 			else
 				continue;
 			if (equal(refwin->partitionClause, windef->partitionClause) &&
-				equal(refwin->orderClause, windef->orderClause))
+				equal(refwin->orderClause, windef->orderClause) &&
+				refwin->frameOptions == windef->frameOptions)
 			{
 				/* found a duplicate window specification */
 				wfunc->winref = winref;

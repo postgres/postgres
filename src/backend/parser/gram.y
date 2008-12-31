@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.648 2008/12/28 18:53:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.649 2008/12/31 00:08:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -406,6 +406,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <list>	window_clause window_definition_list opt_partition_clause
 %type <windef>	window_definition over_clause window_specification
 %type <str>		opt_existing_window_name
+%type <ival>	opt_frame_clause frame_extent frame_bound
 
 
 /*
@@ -439,7 +440,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT
 	EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
-	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
+	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOLLOWING FOR FORCE FOREIGN FORWARD
 	FREEZE FROM FULL FUNCTION
 
 	GLOBAL GRANT GRANTED GREATEST GROUP_P
@@ -469,14 +470,14 @@ static TypeName *TableFuncTypeName(List *columns);
 	ORDER OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
 
 	PARSER PARTIAL PARTITION PASSWORD PLACING PLANS POSITION
-	PRECISION PRESERVE PREPARE PREPARED PRIMARY
+	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	QUOTE
 
-	READ REAL REASSIGN RECHECK RECURSIVE REFERENCES REINDEX RELATIVE_P RELEASE
-	RENAME REPEATABLE REPLACE REPLICA RESET RESTART RESTRICT RETURNING RETURNS
-	REVOKE RIGHT ROLE ROLLBACK ROW ROWS RULE
+	RANGE READ REAL REASSIGN RECHECK RECURSIVE REFERENCES REINDEX
+	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA RESET RESTART
+	RESTRICT RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETOF SHARE
@@ -488,7 +489,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P
 
-	UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
+	UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
 	UPDATE USER USING
 
 	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
@@ -533,10 +534,12 @@ static TypeName *TableFuncTypeName(List *columns);
  * between POSTFIXOP and Op.  We can safely assign the same priority to
  * various unreserved keywords as needed to resolve ambiguities (this can't
  * have any bad effects since obviously the keywords will still behave the
- * same as if they weren't keywords).  We need to do this for PARTITION
- * to support opt_existing_window_name.
+ * same as if they weren't keywords).  We need to do this for PARTITION,
+ * RANGE, ROWS to support opt_existing_window_name; and for RANGE, ROWS
+ * so that they can follow a_expr without creating
+ * postfix-operator problems.
  */
-%nonassoc	IDENT PARTITION
+%nonassoc	IDENT PARTITION RANGE ROWS
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
@@ -9235,10 +9238,11 @@ over_clause: OVER window_specification
 			| OVER ColId
 				{
 					WindowDef *n = makeNode(WindowDef);
-					n->name = NULL;
-					n->refname = $2;
+					n->name = $2;
+					n->refname = NULL;
 					n->partitionClause = NIL;
 					n->orderClause = NIL;
+					n->frameOptions = FRAMEOPTION_DEFAULTS;
 					n->location = @2;
 					$$ = n;
 				}
@@ -9247,13 +9251,14 @@ over_clause: OVER window_specification
 		;
 
 window_specification: '(' opt_existing_window_name opt_partition_clause
-						opt_sort_clause ')'
+						opt_sort_clause opt_frame_clause ')'
 				{
 					WindowDef *n = makeNode(WindowDef);
 					n->name = NULL;
 					n->refname = $2;
 					n->partitionClause = $3;
 					n->orderClause = $4;
+					n->frameOptions = $5;
 					n->location = @1;
 					$$ = n;
 				}
@@ -9268,7 +9273,6 @@ window_specification: '(' opt_existing_window_name opt_partition_clause
  * that the shift/reduce conflict is resolved in favor of reducing the rule.
  * These keywords are thus precluded from being an existing_window_name but
  * are not reserved for any other purpose.
- * (RANGE/ROWS are not an issue as of 8.4 for lack of frame_clause support.)
  */
 opt_existing_window_name: ColId						{ $$ = $1; }
 			| /*EMPTY*/				%prec Op		{ $$ = NULL; }
@@ -9277,6 +9281,83 @@ opt_existing_window_name: ColId						{ $$ = $1; }
 opt_partition_clause: PARTITION BY expr_list		{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
+
+/*
+ * This is only a subset of the full SQL:2008 frame_clause grammar.
+ * We don't support <expression> PRECEDING, <expression> FOLLOWING,
+ * nor <window frame exclusion> yet.
+ */
+opt_frame_clause:
+			RANGE frame_extent
+				{
+					$$ = FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE | $2;
+				}
+			| ROWS frame_extent
+				{
+					$$ = FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS | $2;
+				}
+			| /*EMPTY*/
+				{ $$ = FRAMEOPTION_DEFAULTS; }
+		;
+
+frame_extent: frame_bound
+				{
+					/* reject invalid cases */
+					if ($1 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
+						ereport(ERROR,
+								(errcode(ERRCODE_WINDOWING_ERROR),
+								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
+								 scanner_errposition(@1)));
+					if ($1 & FRAMEOPTION_START_CURRENT_ROW)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("frame start at CURRENT ROW is not implemented"),
+								 scanner_errposition(@1)));
+					$$ = $1 | FRAMEOPTION_END_CURRENT_ROW;
+				}
+			| BETWEEN frame_bound AND frame_bound
+				{
+					/* reject invalid cases */
+					if ($2 & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
+						ereport(ERROR,
+								(errcode(ERRCODE_WINDOWING_ERROR),
+								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
+								 scanner_errposition(@2)));
+					if ($2 & FRAMEOPTION_START_CURRENT_ROW)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("frame start at CURRENT ROW is not implemented"),
+								 scanner_errposition(@2)));
+					if ($4 & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+						ereport(ERROR,
+								(errcode(ERRCODE_WINDOWING_ERROR),
+								 errmsg("frame end cannot be UNBOUNDED PRECEDING"),
+								 scanner_errposition(@4)));
+					/* shift converts START_ options to END_ options */
+					$$ = FRAMEOPTION_BETWEEN | $2 | ($4 << 1);
+				}
+		;
+
+/*
+ * This is used for both frame start and frame end, with output set up on
+ * the assumption it's frame start; the frame_extent productions must reject
+ * invalid cases.
+ */
+frame_bound:
+			UNBOUNDED PRECEDING
+				{
+					$$ = FRAMEOPTION_START_UNBOUNDED_PRECEDING;
+				}
+			| UNBOUNDED FOLLOWING
+				{
+					$$ = FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
+				}
+			| CURRENT_P ROW
+				{
+					$$ = FRAMEOPTION_START_CURRENT_ROW;
+				}
+		;
+
 
 /*
  * Supporting nonterminals for expressions.
@@ -10012,6 +10093,7 @@ unreserved_keyword:
 			| EXTERNAL
 			| FAMILY
 			| FIRST_P
+			| FOLLOWING
 			| FORCE
 			| FORWARD
 			| FUNCTION
@@ -10086,6 +10168,7 @@ unreserved_keyword:
 			| PARTITION
 			| PASSWORD
 			| PLANS
+			| PRECEDING
 			| PREPARE
 			| PREPARED
 			| PRESERVE
@@ -10094,6 +10177,7 @@ unreserved_keyword:
 			| PROCEDURAL
 			| PROCEDURE
 			| QUOTE
+			| RANGE
 			| READ
 			| REASSIGN
 			| RECHECK
@@ -10151,6 +10235,7 @@ unreserved_keyword:
 			| TRUNCATE
 			| TRUSTED
 			| TYPE_P
+			| UNBOUNDED
 			| UNCOMMITTED
 			| UNENCRYPTED
 			| UNKNOWN

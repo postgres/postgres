@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.55 2008/12/28 18:53:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.56 2008/12/31 00:08:32 tgl Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -429,27 +429,27 @@ SELECT depname, empno, salary, rank() OVER (PARTITION BY depname ORDER BY salary
    <para>
     We already saw that <literal>ORDER BY</> can be omitted if the ordering
     of rows is not important.  It is also possible to omit <literal>PARTITION
-    BY</>, in which case the window function is computed over all rows of the
-    virtual table; that is, there is one partition containing all the rows.
+    BY</>, in which case there is just one partition containing all the rows.
    </para>
 
    <para>
     There is another important concept associated with window functions:
     for each row, there is a set of rows within its partition called its
-    <firstterm>window frame</>.  When <literal>ORDER BY</> is omitted the
-    frame is always the same as the partition.  If <literal>ORDER BY</> is
-    supplied, the frame consists of all rows from the start of the partition
-    up to the current row, plus any following rows that are equal to the
-    current row according to the <literal>ORDER BY</> clause.
+    <firstterm>window frame</>.  Many (but not all) window functions act only
+    on the rows of the window frame, rather than of the whole partition.
+    By default, if <literal>ORDER BY</> is supplied then the frame consists of
+    all rows from the start of the partition up through the current row, plus
+    any following rows that are equal to the current row according to the
+    <literal>ORDER BY</> clause.  When <literal>ORDER BY</> is omitted the
+    default frame consists of all rows in the partition.
      <footnote>
       <para>
-       The SQL standard includes options to define the window frame in
-       other ways, but this definition is the only one currently supported
-       by <productname>PostgreSQL</productname>.
+       There are options to define the window frame in other ways, but
+       this tutorial does not cover them.  See
+       <xref linkend="syntax-window-functions"> for details.
       </para>
      </footnote>
-    Many window functions act only on the rows of the window frame, rather
-    than of the whole partition.  Here is an example using <function>sum</>:
+    Here is an example using <function>sum</>:
    </para>
 
 <programlisting>
@@ -549,6 +549,13 @@ SELECT sum(salary) OVER w, avg(salary) OVER w
   FROM empsalary
   WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
 </programlisting>
+   </para>
+
+   <para>
+    More details about window functions can be found in
+    <xref linkend="syntax-window-functions">,
+    <xref linkend="queries-window">, and the
+    <xref linkend="sql-select" endterm="sql-select-title"> reference page.
    </para>
   </sect1>
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.385 2008/12/28 18:54:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.386 2008/12/31 00:08:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,16 +382,45 @@ typedef struct SortBy
 
 /*
  * WindowDef - raw representation of WINDOW and OVER clauses
+ *
+ * For entries in a WINDOW list, "name" is the window name being defined.
+ * For OVER clauses, we use "name" for the "OVER window" syntax, or "refname"
+ * for the "OVER (window)" syntax, which is subtly different --- the latter
+ * implies overriding the window frame clause.
  */
 typedef struct WindowDef
 {
 	NodeTag		type;
-	char	   *name;				/* window name (NULL in an OVER clause) */
+	char	   *name;				/* window's own name */
 	char	   *refname;			/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY expression list */
 	List	   *orderClause;		/* ORDER BY (list of SortBy) */
+	int			frameOptions;		/* frame_clause options, see below */
 	int			location;			/* parse location, or -1 if none/unknown */
 } WindowDef;
+
+/*
+ * frameOptions is an OR of these bits.  The NONDEFAULT and BETWEEN bits are
+ * used so that ruleutils.c can tell which properties were specified and
+ * which were defaulted; the correct behavioral bits must be set either way.
+ * The START_foo and END_foo options must come in pairs of adjacent bits for
+ * the convenience of gram.y, even though some of them are useless/invalid.
+ * We will need more bits (and fields) to cover the full SQL:2008 option set.
+ */
+#define FRAMEOPTION_NONDEFAULT					0x00001	/* any specified? */
+#define FRAMEOPTION_RANGE						0x00002	/* RANGE behavior */
+#define FRAMEOPTION_ROWS						0x00004	/* ROWS behavior */
+#define FRAMEOPTION_BETWEEN						0x00008	/* BETWEEN given? */
+#define FRAMEOPTION_START_UNBOUNDED_PRECEDING	0x00010	/* start is U. P. */
+#define FRAMEOPTION_END_UNBOUNDED_PRECEDING		0x00020	/* (disallowed) */
+#define FRAMEOPTION_START_UNBOUNDED_FOLLOWING	0x00040	/* (disallowed) */
+#define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080	/* end is U. F. */
+#define FRAMEOPTION_START_CURRENT_ROW			0x00100	/* start is C. R. */
+#define FRAMEOPTION_END_CURRENT_ROW				0x00200	/* end is C. R. */
+
+#define FRAMEOPTION_DEFAULTS \
+	(FRAMEOPTION_RANGE | FRAMEOPTION_START_UNBOUNDED_PRECEDING | \
+	 FRAMEOPTION_END_CURRENT_ROW)
 
 /*
  * RangeSubselect - subquery appearing in a FROM clause
@@ -744,8 +773,8 @@ typedef struct SortGroupClause
  * winref is an ID number referenced by WindowFunc nodes; it must be unique
  * among the members of a Query's windowClause list.
  * When refname isn't null, the partitionClause is always copied from there;
- * the orderClause might or might not be copied.  (We don't implement
- * framing clauses yet, but if we did, they are never copied, per spec.)
+ * the orderClause might or might not be copied (see copiedOrder); the framing
+ * options are never copied, per spec.
  */
 typedef struct WindowClause
 {
@@ -754,6 +783,7 @@ typedef struct WindowClause
 	char	   *refname;			/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
 	List	   *orderClause;		/* ORDER BY list */
+	int			frameOptions;		/* frame_clause options, see WindowDef */
 	Index		winref;				/* ID referenced by window functions */
 	bool		copiedOrder;		/* did we copy orderClause from refname? */
 } WindowClause;

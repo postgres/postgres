@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.182 2008/12/28 18:53:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.183 2008/12/31 00:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1554,7 +1554,7 @@ transformWindowDefinitions(ParseState *pstate,
 		 * Per spec, a windowdef that references a previous one copies the
 		 * previous partition clause (and mustn't specify its own).  It can
 		 * specify its own ordering clause. but only if the previous one
-		 * had none.
+		 * had none.  It always specifies its own framing clause.
 		 */
 		if (refwc)
 		{
@@ -1592,6 +1592,7 @@ transformWindowDefinitions(ParseState *pstate,
 			wc->orderClause = orderClause;
 			wc->copiedOrder = false;
 		}
+		wc->frameOptions = windef->frameOptions;
 		wc->winref = winref;
 
 		result = lappend(result, wc);

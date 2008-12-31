@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.248 2008/12/28 18:53:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.249 2008/12/31 00:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1398,12 +1398,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 					make_windowagg(root,
 								   (List *) copyObject(window_tlist),
 								   list_length(wflists->windowFuncs[wc->winref]),
+								   wc->winref,
 								   partNumCols,
 								   partColIdx,
 								   partOperators,
 								   ordNumCols,
 								   ordColIdx,
 								   ordOperators,
+								   wc->frameOptions,
 								   result_plan);
 			}
 		}
@@ -2412,6 +2414,7 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 			WindowClause *wc2 = (WindowClause *) lfirst(lc);
 
 			next = lnext(lc);
+			/* framing options are NOT to be compared here! */
 			if (equal(wc->partitionClause, wc2->partitionClause) &&
 				equal(wc->orderClause, wc2->orderClause))
 			{

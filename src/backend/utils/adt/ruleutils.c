@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.291 2008/12/28 18:53:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.292 2008/12/31 00:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2903,7 +2903,7 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 		appendStringInfoString(buf, quote_identifier(wc->refname));
 		needspace = true;
 	}
-	/* partitions are always inherited, so only print if no refname */
+	/* partition clauses are always inherited, so only print if no refname */
 	if (wc->partitionClause && !wc->refname)
 	{
 		if (needspace)
@@ -2921,6 +2921,7 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 		}
 		needspace = true;
 	}
+	/* print ordering clause only if not inherited */
 	if (wc->orderClause && !wc->copiedOrder)
 	{
 		if (needspace)
@@ -2928,6 +2929,38 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 		appendStringInfoString(buf, "ORDER BY ");
 		get_rule_orderby(wc->orderClause, targetList, false, context);
 		needspace = true;
+	}
+	/* framing clause is never inherited, so print unless it's default */
+	if (wc->frameOptions & FRAMEOPTION_NONDEFAULT)
+	{
+		if (needspace)
+			appendStringInfoChar(buf, ' ');
+		if (wc->frameOptions & FRAMEOPTION_RANGE)
+			appendStringInfoString(buf, "RANGE ");
+		else if (wc->frameOptions & FRAMEOPTION_ROWS)
+			appendStringInfoString(buf, "ROWS ");
+		else
+			Assert(false);
+		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
+			appendStringInfoString(buf, "BETWEEN ");
+		if (wc->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+			appendStringInfoString(buf, "UNBOUNDED PRECEDING ");
+		else if (wc->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
+			appendStringInfoString(buf, "CURRENT ROW ");
+		else
+			Assert(false);
+		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
+		{
+			appendStringInfoString(buf, "AND ");
+			if (wc->frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
+				appendStringInfoString(buf, "UNBOUNDED FOLLOWING ");
+			else if (wc->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
+				appendStringInfoString(buf, "CURRENT ROW ");
+			else
+				Assert(false);
+		}
+		/* we will now have a trailing space; remove it */
+		buf->len--;
 	}
 	appendStringInfoChar(buf, ')');
 }

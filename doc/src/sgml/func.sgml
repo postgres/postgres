@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.464 2008/12/28 18:53:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.465 2008/12/31 00:08:33 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10160,9 +10160,8 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   <para>
    <firstterm>Window functions</firstterm> provide the ability to perform
    calculations across sets of rows that are related to the current query
-   row.  For information about this feature see
-   <xref linkend="tutorial-window"> and
-   <xref linkend="syntax-window-functions">.
+   row.  See <xref linkend="tutorial-window"> for an introduction to this
+   feature.
   </para>
 
   <para>
@@ -10392,18 +10391,23 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   <para>
    Note that <function>first_value</>, <function>last_value</>, and
    <function>nth_value</> consider only the rows within the <quote>window
-   frame</>, that is the rows from the start of the partition through the
-   last peer of the current row.  This is particularly likely to give
-   unintuitive results for <function>last_value</>.
+   frame</>, which by default contains the rows from the start of the
+   partition through the last peer of the current row.  This is
+   likely to give unhelpful results for <function>nth_value</> and
+   particularly <function>last_value</>.  You can redefine the frame as
+   being the whole partition by adding <literal>ROWS BETWEEN UNBOUNDED
+   PRECEDING AND UNBOUNDED FOLLOWING</> to the <literal>OVER</> clause.
+   See <xref linkend="syntax-window-functions"> for more information.
   </para>
 
   <para>
    When an aggregate function is used as a window function, it aggregates
    over the rows within the current row's window frame.  To obtain
-   aggregation over the whole partition, be sure to omit <literal>ORDER BY</>
-   from the window definition.  An aggregate used with <literal>ORDER BY</>
-   produces a <quote>running sum</> type of behavior, which may or may not
-   be what's wanted.
+   aggregation over the whole partition, omit <literal>ORDER BY</> or use
+   <literal>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</>.
+   An aggregate used with <literal>ORDER BY</> and the default window frame
+   definition produces a <quote>running sum</> type of behavior, which may or
+   may not be what's wanted.
   </para>
 
   <note>
@@ -10416,7 +10420,9 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
     same as the standard's default, namely <literal>RESPECT NULLS</>.
     Likewise, the standard's <literal>FROM FIRST</> or <literal>FROM LAST</>
     option for <function>nth_value</> is not implemented: only the
-    default <literal>FROM FIRST</> behavior is supported.
+    default <literal>FROM FIRST</> behavior is supported.  (You can achieve
+    the result of <literal>FROM LAST</> by reversing the <literal>ORDER BY</>
+    ordering.)
    </para>
   </note>
 

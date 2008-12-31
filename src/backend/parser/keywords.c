@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.207 2008/12/28 18:53:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.208 2008/12/31 00:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"fetch", FETCH, RESERVED_KEYWORD},
 	{"first", FIRST_P, UNRESERVED_KEYWORD},
 	{"float", FLOAT_P, COL_NAME_KEYWORD},
+	{"following", FOLLOWING, UNRESERVED_KEYWORD},
 	{"for", FOR, RESERVED_KEYWORD},
 	{"force", FORCE, UNRESERVED_KEYWORD},
 	{"foreign", FOREIGN, RESERVED_KEYWORD},
@@ -299,6 +300,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"placing", PLACING, RESERVED_KEYWORD},
 	{"plans", PLANS, UNRESERVED_KEYWORD},
 	{"position", POSITION, COL_NAME_KEYWORD},
+	{"preceding", PRECEDING, UNRESERVED_KEYWORD},
 	{"precision", PRECISION, COL_NAME_KEYWORD},
 	{"prepare", PREPARE, UNRESERVED_KEYWORD},
 	{"prepared", PREPARED, UNRESERVED_KEYWORD},
@@ -309,6 +311,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"procedural", PROCEDURAL, UNRESERVED_KEYWORD},
 	{"procedure", PROCEDURE, UNRESERVED_KEYWORD},
 	{"quote", QUOTE, UNRESERVED_KEYWORD},
+	{"range", RANGE, UNRESERVED_KEYWORD},
 	{"read", READ, UNRESERVED_KEYWORD},
 	{"real", REAL, COL_NAME_KEYWORD},
 	{"reassign", REASSIGN, UNRESERVED_KEYWORD},
@@ -388,6 +391,7 @@ const ScanKeyword ScanKeywords[] = {
 	{"truncate", TRUNCATE, UNRESERVED_KEYWORD},
 	{"trusted", TRUSTED, UNRESERVED_KEYWORD},
 	{"type", TYPE_P, UNRESERVED_KEYWORD},
+	{"unbounded", UNBOUNDED, UNRESERVED_KEYWORD},
 	{"uncommitted", UNCOMMITTED, UNRESERVED_KEYWORD},
 	{"unencrypted", UNENCRYPTED, UNRESERVED_KEYWORD},
 	{"union", UNION, RESERVED_KEYWORD},

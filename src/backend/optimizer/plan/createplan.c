@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.253 2008/12/28 18:53:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.254 2008/12/31 00:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3261,22 +3261,25 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 }
 
 WindowAgg *
-make_windowagg(PlannerInfo *root, List *tlist, int numWindowFuncs,
+make_windowagg(PlannerInfo *root, List *tlist,
+			   int numWindowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-			   Plan *lefttree)
+			   int frameOptions, Plan *lefttree)
 {
 	WindowAgg  *node = makeNode(WindowAgg);
 	Plan	   *plan = &node->plan;
 	Path		windowagg_path;		/* dummy for result of cost_windowagg */
 	QualCost	qual_cost;
 
+	node->winref = winref;
 	node->partNumCols = partNumCols;
 	node->partColIdx = partColIdx;
 	node->partOperators = partOperators;
 	node->ordNumCols = ordNumCols;
 	node->ordColIdx = ordColIdx;
 	node->ordOperators = ordOperators;
+	node->frameOptions = frameOptions;
 
 	copy_plan_costsize(plan, lefttree);	/* only care about copying size */
 	cost_windowagg(&windowagg_path, root,

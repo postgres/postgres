@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.417 2008/12/28 18:53:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.418 2008/12/31 00:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -678,6 +678,7 @@ _copyWindowAgg(WindowAgg *from)
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
+	COPY_SCALAR_FIELD(winref);
 	COPY_SCALAR_FIELD(partNumCols);
 	if (from->partNumCols > 0)
 	{
@@ -690,6 +691,7 @@ _copyWindowAgg(WindowAgg *from)
 		COPY_POINTER_FIELD(ordColIdx, from->ordNumCols * sizeof(AttrNumber));
 		COPY_POINTER_FIELD(ordOperators, from->ordNumCols * sizeof(Oid));
 	}
+	COPY_SCALAR_FIELD(frameOptions);
 
 	return newnode;
 }
@@ -1783,6 +1785,7 @@ _copyWindowClause(WindowClause *from)
 	COPY_STRING_FIELD(refname);
 	COPY_NODE_FIELD(partitionClause);
 	COPY_NODE_FIELD(orderClause);
+	COPY_SCALAR_FIELD(frameOptions);
 	COPY_SCALAR_FIELD(winref);
 	COPY_SCALAR_FIELD(copiedOrder);
 
@@ -2010,6 +2013,7 @@ _copyWindowDef(WindowDef *from)
 	COPY_STRING_FIELD(refname);
 	COPY_NODE_FIELD(partitionClause);
 	COPY_NODE_FIELD(orderClause);
+	COPY_SCALAR_FIELD(frameOptions);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;

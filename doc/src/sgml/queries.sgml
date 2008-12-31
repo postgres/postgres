@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.51 2008/12/28 18:53:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.52 2008/12/31 00:08:35 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -993,7 +993,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
    </para>
 
    <para>
-    Currently, use of window functions always forces sorting, and so the
+    Currently, window functions always require presorted data, and so the
     query output will be ordered according to one or another of the window
     functions' <literal>PARTITION BY</>/<literal>ORDER BY</> clauses.
     It is not recommendable to rely on this, however.  Use an explicit

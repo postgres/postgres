@@ -135,13 +135,34 @@ SELECT empno, depname, salary, bonus, depadj, MIN(bonus) OVER (ORDER BY empno), 
 		THEN 200 END AS depadj FROM empsalary
 )s;
 
+-- test non-default frame specifications
+SELECT four, ten,
+	sum(ten) over (partition by four order by ten),
+	last_value(ten) over (partition by four order by ten)
+FROM (select distinct ten, four from tenk1) ss;
+
+SELECT four, ten,
+	sum(ten) over (partition by four order by ten range between unbounded preceding and current row),
+	last_value(ten) over (partition by four order by ten range between unbounded preceding and current row)
+FROM (select distinct ten, four from tenk1) ss;
+
+SELECT four, ten,
+	sum(ten) over (partition by four order by ten range between unbounded preceding and unbounded following),
+	last_value(ten) over (partition by four order by ten range between unbounded preceding and unbounded following)
+FROM (select distinct ten, four from tenk1) ss;
+
+SELECT four, ten/4 as two,
+	sum(ten/4) over (partition by four order by ten/4 range between unbounded preceding and current row),
+	last_value(ten/4) over (partition by four order by ten/4 range between unbounded preceding and current row)
+FROM (select distinct ten, four from tenk1) ss;
+
+SELECT four, ten/4 as two,
+	sum(ten/4) over (partition by four order by ten/4 rows between unbounded preceding and current row),
+	last_value(ten/4) over (partition by four order by ten/4 rows between unbounded preceding and current row)
+FROM (select distinct ten, four from tenk1) ss;
+
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
-
--- via a VIEW
-CREATE TEMPORARY VIEW vsumsalary AS
-SELECT SUM(salary) OVER (PARTITION BY depname) FROM empsalary;
-SELECT * FROM vsumsalary;
 
 -- ordering by a non-integer constant is allowed
 SELECT rank() OVER (ORDER BY length('abc'));
@@ -175,5 +196,4 @@ SELECT ntile(0) OVER (ORDER BY ten), ten, four FROM tenk1;
 SELECT nth_value(four, 0) OVER (ORDER BY ten), ten, four FROM tenk1;
 
 -- cleanup
-DROP VIEW vsumsalary;
 DROP TABLE empsalary;
