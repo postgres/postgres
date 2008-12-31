@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.191 2008/12/31 18:07:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.192 2008/12/31 18:33:03 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -2797,6 +2797,13 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
+	if (pset.sversion < 80400)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support foreign-data wrappers.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT fdwname AS \"%s\",\n"
@@ -2848,6 +2855,13 @@ listForeignServers(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+
+	if (pset.sversion < 80400)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support foreign-data servers.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
@@ -2907,6 +2921,13 @@ listUserMappings(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+
+	if (pset.sversion < 80400)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support foreign-data user mappings.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
 
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
