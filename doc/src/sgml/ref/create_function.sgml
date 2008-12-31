@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.83 2008/12/18 18:20:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.84 2008/12/31 02:25:03 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -25,6 +25,7 @@ CREATE [ OR REPLACE ] FUNCTION
     [ RETURNS <replaceable class="parameter">rettype</replaceable>
       | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
+    | WINDOW
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
@@ -237,6 +238,20 @@ CREATE [ OR REPLACE ] FUNCTION
        <literal>internal</literal>, or the name of a user-defined
        procedural language.  For backward compatibility,
        the name can be enclosed by single quotes.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>WINDOW</literal></term>
+
+     <listitem>
+      <para>
+       <literal>WINDOW</literal> indicates that the function is a
+       <firstterm>window function</> rather than a plain function.
+       This is currently only useful for functions written in C.
+       The <literal>WINDOW</> attribute cannot be changed when
+       replacing an existing function definition.
       </para>
      </listitem>
     </varlistentry>

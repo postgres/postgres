@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.99 2008/12/18 18:20:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.100 2008/12/31 02:25:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,6 +217,7 @@ AggregateCreate(const char *aggName,
 							  "aggregate_dummy",		/* placeholder proc */
 							  NULL,		/* probin */
 							  true,		/* isAgg */
+							  false,	/* isWindowFunc */
 							  false,	/* security invoker (currently not
 										 * definable for agg) */
 							  false,	/* isStrict (not needed for agg) */

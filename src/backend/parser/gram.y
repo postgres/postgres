@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.649 2008/12/31 00:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.650 2008/12/31 02:25:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4800,6 +4800,10 @@ createfunc_opt_item:
 			| LANGUAGE ColId_or_Sconst
 				{
 					$$ = makeDefElem("language", (Node *)makeString($2));
+				}
+			| WINDOW
+				{
+					$$ = makeDefElem("window", (Node *)makeInteger(TRUE));
 				}
 			| common_func_opt_item
 				{

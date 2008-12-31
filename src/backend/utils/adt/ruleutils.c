@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.292 2008/12/31 00:08:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.293 2008/12/31 02:25:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1466,6 +1466,8 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	/* Emit some miscellaneous options on one line */
 	oldlen = buf.len;
 
+	if (proc->proiswindow)
+		appendStringInfoString(&buf, " WINDOW");
 	switch (proc->provolatile)
 	{
 		case PROVOLATILE_IMMUTABLE:
