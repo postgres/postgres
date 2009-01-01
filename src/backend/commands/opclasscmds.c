@@ -4,12 +4,12 @@
  *
  *	  Routines for opclass (and opfamily) manipulation commands
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.63 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.64 2009/01/01 17:23:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

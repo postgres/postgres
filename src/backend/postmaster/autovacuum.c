@@ -50,12 +50,12 @@
  * there is a window (caused by pgstat delay) on which a worker may choose a
  * table that was already vacuumed; this is a bug in the current design.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.90 2008/12/09 15:59:39 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.91 2009/01/01 17:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

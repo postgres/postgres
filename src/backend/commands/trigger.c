@@ -3,11 +3,11 @@
  * trigger.c
  *	  PostgreSQL TRIGGERs support code.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.242 2008/12/13 02:00:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.243 2009/01/01 17:23:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

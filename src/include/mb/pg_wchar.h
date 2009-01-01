@@ -3,10 +3,10 @@
  * pg_wchar.h
  *	  multibyte-character support
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.80 2008/10/29 08:04:53 petere Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.81 2009/01/01 17:23:59 momjian Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be

@@ -3,12 +3,12 @@
  * bool.c
  *	  Functions for the built-in type "bool".
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.44 2008/10/05 17:33:16 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.45 2009/01/01 17:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

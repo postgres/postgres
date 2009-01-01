@@ -3,12 +3,12 @@
  * hashovfl.c
  *	  Overflow page management code for the Postgres hash access method
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.65 2008/09/15 18:43:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.66 2009/01/01 17:23:35 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.

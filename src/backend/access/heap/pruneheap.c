@@ -3,12 +3,12 @@
  * pruneheap.c
  *	  heap page pruning and HOT-chain management code
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.16 2008/07/13 20:45:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.17 2009/01/01 17:23:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -16,10 +16,10 @@
  * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
  * MATCH_LOWER - define iff using to_lower on text chars
  *
- * Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.23 2008/09/27 16:53:54 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.24 2009/01/01 17:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

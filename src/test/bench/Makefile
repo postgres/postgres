@@ -3,12 +3,12 @@
 # Makefile--
 #    Makefile for the Wisconsin Benchmark
 #
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994-5, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/bench/Makefile,v 1.16 2008/03/18 16:24:50 petere Exp $
+#    $PostgreSQL: pgsql/src/test/bench/Makefile,v 1.17 2009/01/01 17:24:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -3,12 +3,12 @@
  * fastpath.c
  *	  routines to handle function requests from the frontend
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.100 2008/05/12 20:02:01 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.101 2009/01/01 17:23:48 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.

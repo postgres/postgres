@@ -2,9 +2,9 @@
 #
 # Makefile for src/backend/utils/mb/Unicode
 #
-# Copyright (c) 2001-2008, PostgreSQL Global Development Group
+# Copyright (c) 2001-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.14 2008/01/01 19:45:53 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.15 2009/01/01 17:23:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

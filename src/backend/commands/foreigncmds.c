@@ -3,11 +3,11 @@
  * foreigncmds.c
  *	  foreign-data wrapper/server creation/manipulation commands
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.3 2008/12/20 15:51:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.4 2009/01/01 17:23:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

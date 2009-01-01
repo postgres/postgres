@@ -4,10 +4,10 @@
  *	  Virtual file descriptor definitions.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.62 2008/03/10 20:06:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.63 2009/01/01 17:24:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

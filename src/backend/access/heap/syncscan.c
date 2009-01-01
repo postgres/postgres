@@ -36,11 +36,11 @@
  *		ss_report_location	- update current scan location
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.5 2008/05/12 00:00:45 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/syncscan.c,v 1.6 2009/01/01 17:23:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

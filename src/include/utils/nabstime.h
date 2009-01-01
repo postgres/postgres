@@ -4,10 +4,10 @@
  *	  Definitions for the "new" abstime code.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/nabstime.h,v 1.51 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/nabstime.h,v 1.52 2009/01/01 17:24:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

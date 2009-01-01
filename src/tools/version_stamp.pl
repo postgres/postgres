@@ -3,9 +3,9 @@
 #################################################################
 # version_stamp.pl -- update version stamps throughout the source tree
 #
-# Copyright (c) 2008, PostgreSQL Global Development Group
+# Copyright (c) 2008-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.1 2008/06/10 18:08:48 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.2 2009/01/01 17:24:04 momjian Exp $
 #################################################################
 
 #

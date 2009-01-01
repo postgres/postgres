@@ -17,10 +17,10 @@
  * any database access.
  *
  *
- * Copyright (c) 2006-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.8 2008/09/09 18:58:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.9 2009/01/01 17:23:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

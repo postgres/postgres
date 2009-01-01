@@ -3,10 +3,10 @@
  * auto_explain.c
  *
  *
- * Copyright (c) 2008, PostgreSQL Global Development Group
+ * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.1 2008/11/19 02:59:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.2 2009/01/01 17:23:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

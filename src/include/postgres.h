@@ -7,10 +7,10 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.91 2008/04/21 00:26:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.92 2009/01/01 17:23:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

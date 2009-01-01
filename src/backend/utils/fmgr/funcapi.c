@@ -4,10 +4,10 @@
  *	  Utility and convenience functions for fmgr functions that return
  *	  sets and/or composite types.
  *
- * Copyright (c) 2002-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.43 2008/11/30 18:49:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.44 2009/01/01 17:23:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

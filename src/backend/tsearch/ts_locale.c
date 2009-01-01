@@ -3,11 +3,11 @@
  * ts_locale.c
  *		locale compatibility layer for tsearch
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.11 2008/11/10 15:18:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.12 2009/01/01 17:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

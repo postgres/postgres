@@ -3,10 +3,10 @@
  * execCurrent.c
  *	  executor support for WHERE CURRENT OF cursor
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.8 2008/11/16 17:34:28 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.9 2009/01/01 17:23:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

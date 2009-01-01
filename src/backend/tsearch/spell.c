@@ -3,11 +3,11 @@
  * spell.c
  *		Normalizing word with ISpell
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.13 2008/06/19 16:52:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.14 2009/01/01 17:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

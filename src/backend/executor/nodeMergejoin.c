@@ -3,12 +3,12 @@
  * nodeMergejoin.c
  *	  routines supporting merge joins
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.93 2008/08/15 19:20:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.94 2009/01/01 17:23:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

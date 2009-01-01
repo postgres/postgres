@@ -23,11 +23,11 @@
  * aggregate function over all rows in the current row's window frame.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.2 2008/12/31 00:08:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.3 2009/01/01 17:23:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

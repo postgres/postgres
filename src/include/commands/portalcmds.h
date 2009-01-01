@@ -4,10 +4,10 @@
  *	  prototypes for portalcmds.c.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/portalcmds.h,v 1.26 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/portalcmds.h,v 1.27 2009/01/01 17:23:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

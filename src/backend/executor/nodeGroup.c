@@ -3,7 +3,7 @@
  * nodeGroup.c
  *	  Routines to handle group nodes (used for queries with GROUP BY clause).
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.72 2008/10/23 15:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.73 2009/01/01 17:23:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

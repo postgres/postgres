@@ -3,12 +3,12 @@
  * view.c
  *	  use rewrite rules to construct views
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.110 2008/12/16 00:56:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.111 2009/01/01 17:23:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

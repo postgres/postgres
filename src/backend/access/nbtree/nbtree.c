@@ -8,11 +8,11 @@
  *	  This file contains only the public interface routines.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.166 2008/11/19 10:34:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.167 2009/01/01 17:23:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

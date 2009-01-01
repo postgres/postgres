@@ -2,9 +2,9 @@
 #
 # Makefile for src/tools/findoidjoins
 #
-# Copyright (c) 2003-2008, PostgreSQL Global Development Group
+# Copyright (c) 2003-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/findoidjoins/Makefile,v 1.5 2008/01/01 19:46:01 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/findoidjoins/Makefile,v 1.6 2009/01/01 17:24:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

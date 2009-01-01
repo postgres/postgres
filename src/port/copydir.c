@@ -3,7 +3,7 @@
  * copydir.c
  *	  copies a directory
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	While "xcopy /e /i /q" works fine for copying directories, on Windows XP
@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.22 2008/03/31 01:31:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.23 2009/01/01 17:24:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

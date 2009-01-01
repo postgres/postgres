@@ -3,12 +3,12 @@
  * parse_cte.c
  *	  handle CTEs (common table expressions) in parser
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.4 2008/10/08 01:14:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.5 2009/01/01 17:23:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

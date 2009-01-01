@@ -4,12 +4,12 @@
  *	  Post-processing of a completed plan tree: fix references to subplan
  *	  vars, compute regproc values for operators, etc
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.147 2008/12/28 18:53:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.148 2009/01/01 17:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

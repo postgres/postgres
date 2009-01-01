@@ -6,12 +6,12 @@
  *	  message integrity and endpoint authentication.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.88 2008/12/14 19:39:37 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.89 2009/01/01 17:23:42 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database

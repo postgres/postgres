@@ -3,10 +3,10 @@
  * geqo_pool.c
  *	  Genetic Algorithm (GA) pool stuff
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.32 2008/01/01 19:45:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.33 2009/01/01 17:23:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

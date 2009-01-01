@@ -3,12 +3,12 @@
  * execUtils.c
  *	  miscellaneous executor utility routines
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.156 2008/07/26 19:15:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.157 2009/01/01 17:23:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

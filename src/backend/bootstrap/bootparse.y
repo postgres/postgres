@@ -4,12 +4,12 @@
  * bootparse.y
  *	  yacc grammar for the "bootstrap" mode (BKI file format)
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.95 2008/11/26 08:45:11 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.96 2009/01/01 17:23:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

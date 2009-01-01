@@ -3,12 +3,12 @@
  * miscinit.c
  *	  miscellaneous initialization support stuff
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.169 2008/12/11 07:34:07 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.170 2009/01/01 17:23:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,11 +3,11 @@
  * dict.c
  *		Standard interface to dictionary
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict.c,v 1.5 2008/03/25 22:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict.c,v 1.6 2009/01/01 17:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

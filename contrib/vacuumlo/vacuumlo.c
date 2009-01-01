@@ -3,12 +3,12 @@
  * vacuumlo.c
  *	  This removes orphaned large objects from a database.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.36 2008/01/01 19:45:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.37 2009/01/01 17:23:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

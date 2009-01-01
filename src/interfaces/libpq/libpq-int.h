@@ -9,10 +9,10 @@
  *	  more likely to break across PostgreSQL releases than code that uses
  *	  only the official API.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.138 2008/12/15 10:28:22 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.139 2009/01/01 17:24:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

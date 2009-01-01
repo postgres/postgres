@@ -8,10 +8,10 @@
  * --- ie, rule names are only unique among the rules of a given table.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_rewrite.h,v 1.30 2008/03/27 03:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_rewrite.h,v 1.31 2009/01/01 17:23:58 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

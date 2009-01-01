@@ -19,10 +19,10 @@
  * some don't pay attention to non-default functions at all.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.74 2008/10/13 16:25:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.75 2009/01/01 17:23:56 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

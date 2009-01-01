@@ -3,12 +3,12 @@
  * tablecmds.c
  *	  Commands for creating and altering table structures and settings
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.275 2008/12/28 18:53:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.276 2009/01/01 17:23:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * nodeCtescan.c
  *	  routines to handle CteScan nodes.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.2 2008/10/23 15:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.3 2009/01/01 17:23:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

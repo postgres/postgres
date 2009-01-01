@@ -3,12 +3,12 @@
  * visibilitymap.c
  *	  bitmap for tracking visibility of heap tuples
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.2 2008/12/06 17:31:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.3 2009/01/01 17:23:35 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear	- clear a bit in the visibility map

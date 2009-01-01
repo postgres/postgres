@@ -3,12 +3,12 @@
  * pl_comp.c		- Compiler part of the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.132 2008/11/05 00:07:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.133 2009/01/01 17:24:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

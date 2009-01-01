@@ -3,12 +3,12 @@
  * hash.c
  *	  Implementation of Margo Seltzer's Hashing package for postgres.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.107 2008/11/13 17:42:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.108 2009/01/01 17:23:35 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.

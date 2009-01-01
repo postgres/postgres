@@ -3,12 +3,12 @@
  * postinit.c
  *	  postgres initialization utilities
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.186 2008/09/23 09:20:36 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.187 2009/01/01 17:23:51 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------

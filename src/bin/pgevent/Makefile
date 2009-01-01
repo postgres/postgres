@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/pgevent
 #
-# Copyright (c) 1996-2008, PostgreSQL Global Development Group
+# Copyright (c) 1996-2009, PostgreSQL Global Development Group
 #
 #-------------------------------------------------------------------------
 

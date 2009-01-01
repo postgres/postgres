@@ -1,9 +1,9 @@
 /*
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/openbsd.c,v 1.22 2008/01/01 19:45:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/openbsd.c,v 1.23 2009/01/01 17:23:46 momjian Exp $
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -3,12 +3,12 @@
  * assert.c
  *	  Assert code.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.35 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.36 2009/01/01 17:23:51 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog()

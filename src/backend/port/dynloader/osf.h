@@ -4,10 +4,10 @@
  *	  prototypes for OSF/1-specific routines
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/osf.h,v 1.16 2008/01/01 19:45:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/osf.h,v 1.17 2009/01/01 17:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -38,11 +38,11 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.165 2008/12/11 07:34:07 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.166 2009/01/01 17:23:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,10 +2,10 @@
 #
 # Makefile for src/interfaces/libpq library
 #
-# Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.171 2008/12/07 08:36:22 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.172 2009/01/01 17:24:03 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

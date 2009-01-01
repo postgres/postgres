@@ -29,10 +29,10 @@
  * and a non-lossy page.
  *
  *
- * Copyright (c) 2003-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.15 2008/04/10 22:25:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.16 2009/01/01 17:23:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

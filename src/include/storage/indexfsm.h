@@ -4,10 +4,10 @@
  *	  POSTGRES free space map for quickly finding an unused page in index
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/indexfsm.h,v 1.4 2008/12/12 22:56:00 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/indexfsm.h,v 1.5 2009/01/01 17:24:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

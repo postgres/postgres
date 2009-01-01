@@ -9,11 +9,11 @@
  * and implementing search-path-controlled searches.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.115 2008/12/18 18:20:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.116 2009/01/01 17:23:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

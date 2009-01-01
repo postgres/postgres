@@ -4,10 +4,10 @@
  *		Tablespace management commands (create/drop tablespace).
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.19 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.20 2009/01/01 17:23:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

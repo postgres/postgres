@@ -3,12 +3,12 @@
  * scankey.c
  *	  scan key support code
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/scankey.c,v 1.31 2008/01/01 19:45:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/scankey.c,v 1.32 2009/01/01 17:23:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

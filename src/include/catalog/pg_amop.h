@@ -26,10 +26,10 @@
  * intentional denormalization of the catalogs to buy lookup speed.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.88 2008/10/13 16:25:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.89 2009/01/01 17:23:56 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki

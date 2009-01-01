@@ -7,10 +7,10 @@
  * for debug printouts, because that's more flexible than printf().
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.33 2008/09/17 13:15:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.34 2009/01/01 17:23:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

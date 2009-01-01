@@ -3,12 +3,12 @@
  * pg_largeobject.c
  *	  routines to support manipulation of the pg_largeobject relation
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.31 2008/11/02 01:45:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.32 2009/01/01 17:23:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

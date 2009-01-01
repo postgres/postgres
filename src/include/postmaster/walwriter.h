@@ -3,9 +3,9 @@
  * walwriter.h
  *	  Exports from postmaster/walwriter.c.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/postmaster/walwriter.h,v 1.2 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/walwriter.h,v 1.3 2009/01/01 17:24:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

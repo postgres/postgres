@@ -3,12 +3,12 @@
  * fe-protocol3.c
  *	  functions that are specific to frontend/backend protocol version 3
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.36 2008/10/27 09:42:31 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.37 2009/01/01 17:24:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

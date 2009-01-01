@@ -2,9 +2,9 @@
 /*
  * Scanner for the configuration file
  *
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.57 2008/09/10 18:09:19 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.58 2009/01/01 17:23:53 momjian Exp $
  */
 
 %{

@@ -4,10 +4,10 @@
  *    Builtin functions for useful trigger support.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/trigfuncs.c,v 1.5 2008/11/05 20:17:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/trigfuncs.c,v 1.6 2009/01/01 17:23:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

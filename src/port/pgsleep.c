@@ -4,9 +4,9 @@
  *	   Portable delay handling.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/pgsleep.c,v 1.11 2008/01/01 19:46:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/pgsleep.c,v 1.12 2009/01/01 17:24:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

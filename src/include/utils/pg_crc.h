@@ -14,10 +14,10 @@
  * code for possible future use.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.20 2008/11/14 20:21:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.21 2009/01/01 17:24:02 momjian Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H

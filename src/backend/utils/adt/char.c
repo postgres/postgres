@@ -4,12 +4,12 @@
  *	  Functions for the built-in type "char" (not to be confused with
  *	  bpchar, which is the SQL CHAR(n) type).
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/char.c,v 1.48 2008/01/01 19:45:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/char.c,v 1.49 2009/01/01 17:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

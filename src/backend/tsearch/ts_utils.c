@@ -3,11 +3,11 @@
  * ts_utils.c
  *		various support functions
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.12 2008/06/19 16:52:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.13 2009/01/01 17:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,11 +2,11 @@
  *
  *	  EUC_CN <--> UTF8
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_cn/utf8_and_euc_cn.c,v 1.19 2008/01/01 19:45:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_cn/utf8_and_euc_cn.c,v 1.20 2009/01/01 17:23:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

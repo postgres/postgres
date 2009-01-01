@@ -4,11 +4,11 @@
  *	  Display type names "nicely".
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.50 2008/03/25 22:42:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.51 2009/01/01 17:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

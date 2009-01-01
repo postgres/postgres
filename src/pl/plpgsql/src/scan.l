@@ -4,12 +4,12 @@
  * scan.l		- Scanner for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.64 2008/05/15 22:39:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.65 2009/01/01 17:24:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

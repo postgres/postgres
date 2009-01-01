@@ -3,12 +3,12 @@
  * geo_ops.c
  *	  2D geometric operations
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.100 2008/04/11 22:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.101 2009/01/01 17:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

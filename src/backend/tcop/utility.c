@@ -5,12 +5,12 @@
  *	  commands.  At one time acted as an interface between the Lisp and C
  *	  systems.
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.303 2008/12/19 16:25:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.304 2009/01/01 17:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

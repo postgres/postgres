@@ -4,10 +4,10 @@
  *	  internal functions for free space map
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fsm_internals.h,v 1.1 2008/09/30 10:52:14 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fsm_internals.h,v 1.2 2009/01/01 17:24:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

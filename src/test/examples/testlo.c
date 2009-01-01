@@ -3,12 +3,12 @@
  * testlo.c
  *	  test using large objects with libpq
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/test/examples/testlo.c,v 1.30 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/test/examples/testlo.c,v 1.31 2009/01/01 17:24:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

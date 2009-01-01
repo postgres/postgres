@@ -4,10 +4,10 @@
  *	  header file for postgres hash access method implementation
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.91 2008/10/17 23:50:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.92 2009/01/01 17:23:55 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.

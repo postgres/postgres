@@ -155,7 +155,7 @@ PostgreSQLは古くからのBSDライセンスの下で配布されています。それは基本的には、利
 
 PostgreSQL Data Base Management System
 
-Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group Portions
+Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group Portions
 Copyright (c) 1994-1996 Regents of the University of California
 
 Permission to use, copy, modify, and distribute this software and its

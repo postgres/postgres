@@ -1,9 +1,9 @@
 /* ----------
  *	DTrace probes for PostgreSQL backend
  *
- *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.5 2008/12/24 20:41:29 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.6 2009/01/01 17:23:48 momjian Exp $
  * ----------
  */
 

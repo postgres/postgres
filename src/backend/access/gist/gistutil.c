@@ -4,11 +4,11 @@
  *	  utilities routines for the postgres GiST index access method.
  *
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.31 2008/09/30 10:52:10 heikki Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.32 2009/01/01 17:23:35 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"

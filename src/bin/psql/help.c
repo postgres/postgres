@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.132 2008/12/19 16:25:18 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.133 2009/01/01 17:23:55 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -437,7 +437,7 @@ print_copyright(void)
 {
 	puts(
 		 "PostgreSQL Data Base Management System\n\n"
-		 "Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group\n\n"
+		 "Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
 	"Portions Copyright(c) 1994, Regents of the University of California\n\n"

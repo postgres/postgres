@@ -3,11 +3,11 @@
  * tsearch2.c
  *		Backwards-compatibility package for old contrib/tsearch2 API
  *
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.7 2008/12/28 18:53:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.8 2009/01/01 17:23:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

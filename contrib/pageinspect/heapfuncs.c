@@ -15,10 +15,10 @@
  * there's hardly any use case for using these without superuser-rights
  * anyway.
  *
- * Copyright (c) 2007-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.5 2008/03/25 22:42:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.6 2009/01/01 17:23:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

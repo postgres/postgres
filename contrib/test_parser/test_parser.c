@@ -3,10 +3,10 @@
  * test_parser.c
  *	  Simple example of a text search parser
  *
- * Copyright (c) 2007-2008, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/test_parser/test_parser.c,v 1.4 2008/01/01 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/test_parser/test_parser.c,v 1.5 2009/01/01 17:23:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
