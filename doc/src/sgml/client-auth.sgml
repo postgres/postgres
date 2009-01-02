@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.114 2008/11/28 14:26:58 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.115 2009/01/02 11:51:53 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -961,7 +961,7 @@ omicron       bryanh            guest1
    </para>
 
    <para>
-    The following configuration options are supported for <productname>GSSAPI</productname>:
+    The following configuration options are supported for <productname>ident</productname>:
     <variablelist>
      <varlistentry>
       <term>map</term>
