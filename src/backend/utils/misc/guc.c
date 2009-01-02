@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.486 2009/01/02 02:02:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.487 2009/01/02 10:33:20 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1144,7 +1144,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"krb_caseins_users", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+		{"krb_caseins_users", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Sets whether Kerberos and GSSAPI user names should be treated as case-insensitive."),
 			NULL
 		},
@@ -2123,7 +2123,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"krb_realm", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+		{"krb_realm", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Sets realm to match Kerberos and GSSAPI users against."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -2133,7 +2133,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"krb_server_keyfile", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+		{"krb_server_keyfile", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the location of the Kerberos server key file."),
 			NULL,
 			GUC_SUPERUSER_ONLY
@@ -2143,7 +2143,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"krb_srvname", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+		{"krb_srvname", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the name of the Kerberos service."),
 			NULL
 		},
@@ -2152,7 +2152,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"krb_server_hostname", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+		{"krb_server_hostname", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the hostname of the Kerberos server."),
 			NULL
 		},
