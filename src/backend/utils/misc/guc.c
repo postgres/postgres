@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.485 2009/01/02 01:16:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.486 2009/01/02 02:02:10 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -6677,19 +6677,82 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 #ifdef EXEC_BACKEND
 
 /*
- *	This routine dumps out all non-default GUC options into a binary
+ *	These routines dump out all non-default GUC options into a binary
  *	file that is read by all exec'ed backends.  The format is:
  *
  *		variable name, string, null terminated
  *		variable value, string, null terminated
  *		variable source, integer
  */
+static void
+write_one_nondefault_variable(FILE *fp, struct config_generic *gconf)
+{
+	if (gconf->source == PGC_S_DEFAULT)
+		return;
+
+	fprintf(fp, "%s", gconf->name);
+	fputc(0, fp);
+
+	switch (gconf->vartype)
+	{
+		case PGC_BOOL:
+		{
+			struct config_bool *conf = (struct config_bool *) gconf;
+
+			if (*conf->variable)
+				fprintf(fp, "true");
+			else
+				fprintf(fp, "false");
+		}
+		break;
+
+		case PGC_INT:
+		{
+			struct config_int *conf = (struct config_int *) gconf;
+
+			fprintf(fp, "%d", *conf->variable);
+		}
+		break;
+
+		case PGC_REAL:
+		{
+			struct config_real *conf = (struct config_real *) gconf;
+
+			/* Could lose precision here? */
+			fprintf(fp, "%f", *conf->variable);
+		}
+		break;
+
+		case PGC_STRING:
+		{
+			struct config_string *conf = (struct config_string *) gconf;
+
+			fprintf(fp, "%s", *conf->variable);
+		}
+		break;
+
+		case PGC_ENUM:
+		{
+			struct config_enum *conf = (struct config_enum *) gconf;
+						
+			fprintf(fp, "%s",
+					config_enum_lookup_by_value(conf, *conf->variable));
+		}
+		break;
+	}
+
+	fputc(0, fp);
+
+	fwrite(&gconf->source, sizeof(gconf->source), 1, fp);
+}
+
 void
 write_nondefault_variables(GucContext context)
 {
-	int			i;
 	int			elevel;
 	FILE	   *fp;
+	struct config_generic *cvc_conf;
+	int			i;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 
@@ -6708,66 +6771,20 @@ write_nondefault_variables(GucContext context)
 		return;
 	}
 
+	/*
+	 * custom_variable_classes must be written out first; otherwise we might
+	 * reject custom variable values while reading the file.
+	 */
+	cvc_conf = find_option("custom_variable_classes", false, ERROR);
+	if (cvc_conf)
+		write_one_nondefault_variable(fp, cvc_conf);
+
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
 
-		if (gconf->source != PGC_S_DEFAULT)
-		{
-			fprintf(fp, "%s", gconf->name);
-			fputc(0, fp);
-
-			switch (gconf->vartype)
-			{
-				case PGC_BOOL:
-					{
-						struct config_bool *conf = (struct config_bool *) gconf;
-
-						if (*conf->variable == 0)
-							fprintf(fp, "false");
-						else
-							fprintf(fp, "true");
-					}
-					break;
-
-				case PGC_INT:
-					{
-						struct config_int *conf = (struct config_int *) gconf;
-
-						fprintf(fp, "%d", *conf->variable);
-					}
-					break;
-
-				case PGC_REAL:
-					{
-						struct config_real *conf = (struct config_real *) gconf;
-
-						/* Could lose precision here? */
-						fprintf(fp, "%f", *conf->variable);
-					}
-					break;
-
-				case PGC_STRING:
-					{
-						struct config_string *conf = (struct config_string *) gconf;
-
-						fprintf(fp, "%s", *conf->variable);
-					}
-					break;
-
-				case PGC_ENUM:
-					{
-						struct config_enum *conf = (struct config_enum *) gconf;
-						
-						fprintf(fp, "%s", config_enum_lookup_by_value(conf, *conf->variable));
-					}
-					break;
-			}
-
-			fputc(0, fp);
-
-			fwrite(&gconf->source, sizeof(gconf->source), 1, fp);
-		}
+		if (gconf != cvc_conf)
+			write_one_nondefault_variable(fp, gconf);
 	}
 
 	if (FreeFile(fp))
