@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.2 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.3 2009/01/02 01:16:02 tgl Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -38,20 +38,20 @@ LOAD 'auto_explain';
   There are several configuration parameters that control the behavior of
   <filename>auto_explain</filename>.  Note that the default behavior is
   to do nothing, so you must set at least
-  <varname>explain.log_min_duration</varname> if you want any results.
+  <varname>auto_explain.log_min_duration</varname> if you want any results.
  </para>
 
   <variablelist>
    <varlistentry>
     <term>
-     <varname>explain.log_min_duration</varname> (<type>integer</type>)
+     <varname>auto_explain.log_min_duration</varname> (<type>integer</type>)
     </term>
     <indexterm>
-     <primary><varname>explain.log_min_duration</> configuration parameter</primary>
+     <primary><varname>auto_explain.log_min_duration</> configuration parameter</primary>
     </indexterm>
     <listitem>
      <para>
-      <varname>explain.log_min_duration</varname> is the minimum statement
+      <varname>auto_explain.log_min_duration</varname> is the minimum statement
       execution time, in milliseconds, that will cause the statement's plan to
       be logged. Setting this to zero logs all plans. Minus-one (the default)
       disables logging of plans.  For example, if you set it to
@@ -63,14 +63,14 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
-     <varname>explain.log_analyze</varname> (<type>boolean</type>)
+     <varname>auto_explain.log_analyze</varname> (<type>boolean</type>)
     </term>
     <indexterm>
-     <primary><varname>explain.log_analyze</> configuration parameter</primary>
+     <primary><varname>auto_explain.log_analyze</> configuration parameter</primary>
     </indexterm>
     <listitem>
      <para>
-      <varname>explain.log_analyze</varname> causes <command>EXPLAIN ANALYZE</>
+      <varname>auto_explain.log_analyze</varname> causes <command>EXPLAIN ANALYZE</>
       output, rather than just <command>EXPLAIN</> output, to be printed
       when an execution plan is logged. This parameter is off by default.
       Only superusers can change this setting.
@@ -87,14 +87,14 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
-     <varname>explain.log_verbose</varname> (<type>boolean</type>)
+     <varname>auto_explain.log_verbose</varname> (<type>boolean</type>)
     </term>
     <indexterm>
-     <primary><varname>explain.log_verbose</> configuration parameter</primary>
+     <primary><varname>auto_explain.log_verbose</> configuration parameter</primary>
     </indexterm>
     <listitem>
      <para>
-      <varname>explain.log_verbose</varname> causes <command>EXPLAIN VERBOSE</>
+      <varname>auto_explain.log_verbose</varname> causes <command>EXPLAIN VERBOSE</>
       output, rather than just <command>EXPLAIN</> output, to be printed
       when an execution plan is logged. This parameter is off by default.
       Only superusers can change this setting.
@@ -104,14 +104,14 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
-     <varname>explain.log_nested_statements</varname> (<type>boolean</type>)
+     <varname>auto_explain.log_nested_statements</varname> (<type>boolean</type>)
     </term>
     <indexterm>
-     <primary><varname>explain.log_nested_statements</> configuration parameter</primary>
+     <primary><varname>auto_explain.log_nested_statements</> configuration parameter</primary>
     </indexterm>
     <listitem>
      <para>
-      <varname>explain.log_nested_statements</varname> causes nested
+      <varname>auto_explain.log_nested_statements</varname> causes nested
       statements (statements executed inside a function) to be considered
       for logging.  When it is off, only top-level query plans are logged. This
       parameter is off by default. Only superusers can change this setting.
@@ -122,16 +122,16 @@ LOAD 'auto_explain';
 
   <para>
    In order to set these parameters in your <filename>postgresql.conf</> file,
-   you will need to add <literal>explain</> in
-   <varname>custom_variable_classes</>.  Typical usage might be:
+   you will need to add <literal>auto_explain</> to
+   <xref linkend="guc-custom-variable-classes">.  Typical usage might be:
   </para>
 
   <programlisting>
 # postgresql.conf
 shared_preload_libraries = 'auto_explain'
 
-custom_variable_classes = 'explain'
-explain.log_min_duration = '3s'
+custom_variable_classes = 'auto_explain'
+auto_explain.log_min_duration = '3s'
   </programlisting>
  </sect2>
 
@@ -140,7 +140,7 @@ explain.log_min_duration = '3s'
 
   <programlisting>
   postgres=# LOAD 'auto_explain';
-  postgres=# SET explain.log_min_duration = 0;
+  postgres=# SET auto_explain.log_min_duration = 0;
   postgres=# SELECT count(*)
                FROM pg_class, pg_index
               WHERE oid = indrelid AND indisunique;

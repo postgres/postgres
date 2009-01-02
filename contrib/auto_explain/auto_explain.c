@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.2 2009/01/01 17:23:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.3 2009/01/02 01:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,13 +18,11 @@
 
 PG_MODULE_MAGIC;
 
-#define GUCNAME(name)		("explain." name)
-
 /* GUC variables */
-static int	explain_log_min_duration = -1;	/* msec or -1 */
-static bool explain_log_analyze = false;
-static bool explain_log_verbose = false;
-static bool explain_log_nested = false;
+static int	auto_explain_log_min_duration = -1;		/* msec or -1 */
+static bool auto_explain_log_analyze = false;
+static bool auto_explain_log_verbose = false;
+static bool auto_explain_log_nested_statements = false;
 
 /* Current nesting depth of ExecutorRun calls */
 static int	nesting_level = 0;
@@ -35,8 +33,8 @@ static ExecutorRun_hook_type	prev_ExecutorRun = NULL;
 static ExecutorEnd_hook_type	prev_ExecutorEnd = NULL;
 
 #define auto_explain_enabled() \
-	(explain_log_min_duration >= 0 && \
-	 (nesting_level == 0 || explain_log_nested))
+	(auto_explain_log_min_duration >= 0 && \
+	 (nesting_level == 0 || auto_explain_log_nested_statements))
 
 void	_PG_init(void);
 void	_PG_fini(void);
@@ -55,10 +53,10 @@ void
 _PG_init(void)
 {
 	/* Define custom GUC variables. */
-	DefineCustomIntVariable(GUCNAME("log_min_duration"),
+	DefineCustomIntVariable("auto_explain.log_min_duration",
 							"Sets the minimum execution time above which plans will be logged.",
 							"Zero prints all plans. -1 turns this feature off.",
-							&explain_log_min_duration,
+							&auto_explain_log_min_duration,
 							-1,
 							-1, INT_MAX / 1000,
 							PGC_SUSET,
@@ -66,30 +64,30 @@ _PG_init(void)
 							NULL,
 							NULL);
 
-	DefineCustomBoolVariable(GUCNAME("log_analyze"),
+	DefineCustomBoolVariable("auto_explain.log_analyze",
 							 "Use EXPLAIN ANALYZE for plan logging.",
 							 NULL,
-							 &explain_log_analyze,
+							 &auto_explain_log_analyze,
 							 false,
 							 PGC_SUSET,
 							 0,
 							 NULL,
 							 NULL);
 
-	DefineCustomBoolVariable(GUCNAME("log_verbose"),
+	DefineCustomBoolVariable("auto_explain.log_verbose",
 							 "Use EXPLAIN VERBOSE for plan logging.",
 							 NULL,
-							 &explain_log_verbose,
+							 &auto_explain_log_verbose,
 							 false,
 							 PGC_SUSET,
 							 0,
 							 NULL,
 							 NULL);
 
-	DefineCustomBoolVariable(GUCNAME("log_nested_statements"),
+	DefineCustomBoolVariable("auto_explain.log_nested_statements",
 							 "Log nested statements.",
 							 NULL,
-							 &explain_log_nested,
+							 &auto_explain_log_nested_statements,
 							 false,
 							 PGC_SUSET,
 							 0,
@@ -126,7 +124,7 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	if (auto_explain_enabled())
 	{
 		/* Enable per-node instrumentation iff log_analyze is required. */
-		if (explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
+		if (auto_explain_log_analyze && (eflags & EXEC_FLAG_EXPLAIN_ONLY) == 0)
 			queryDesc->doInstrument = true;
 	}
 
@@ -194,14 +192,14 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 
 		/* Log plan if duration is exceeded. */
 		msec = queryDesc->totaltime->total * 1000.0;
-		if (msec >= explain_log_min_duration)
+		if (msec >= auto_explain_log_min_duration)
 		{
 			StringInfoData	buf;
 
 			initStringInfo(&buf);
 			ExplainPrintPlan(&buf, queryDesc,
-							 queryDesc->doInstrument && explain_log_analyze,
-							 explain_log_verbose);
+							 queryDesc->doInstrument && auto_explain_log_analyze,
+							 auto_explain_log_verbose);
 
 			/* Remove last line break */
 			if (buf.len > 0 && buf.data[buf.len - 1] == '\n')
