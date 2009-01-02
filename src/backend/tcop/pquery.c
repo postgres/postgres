@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.128 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.129 2009/01/02 20:42:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ Portal		ActivePortal = NULL;
 
 
 static void ProcessQuery(PlannedStmt *plan,
+			 const char *sourceText,
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag);
@@ -61,6 +62,7 @@ static void DoPortalRewind(Portal portal);
  */
 QueryDesc *
 CreateQueryDesc(PlannedStmt *plannedstmt,
+				const char *sourceText,
 				Snapshot snapshot,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
@@ -72,6 +74,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;		/* plan */
 	qd->utilitystmt = plannedstmt->utilityStmt; /* in case DECLARE CURSOR */
+	qd->sourceText = sourceText;		/* query text */
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	/* RI check snapshot */
 	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
@@ -93,6 +96,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
  */
 QueryDesc *
 CreateUtilityQueryDesc(Node *utilitystmt,
+					   const char *sourceText,
 					   Snapshot snapshot,
 					   DestReceiver *dest,
 					   ParamListInfo params)
@@ -102,6 +106,7 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->operation = CMD_UTILITY;	/* operation */
 	qd->plannedstmt = NULL;
 	qd->utilitystmt = utilitystmt;		/* utility command */
+	qd->sourceText = sourceText;		/* query text */
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
@@ -141,6 +146,7 @@ FreeQueryDesc(QueryDesc *qdesc)
  *		or PORTAL_ONE_RETURNING portal
  *
  *	plan: the plan tree for the query
+ *	sourceText: the source text of the query
  *	params: any parameters needed
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
@@ -153,6 +159,7 @@ FreeQueryDesc(QueryDesc *qdesc)
  */
 static void
 ProcessQuery(PlannedStmt *plan,
+			 const char *sourceText,
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag)
@@ -169,7 +176,7 @@ ProcessQuery(PlannedStmt *plan,
 	/*
 	 * Create the QueryDesc object
 	 */
-	queryDesc = CreateQueryDesc(plan,
+	queryDesc = CreateQueryDesc(plan, sourceText,
 								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, false);
 
@@ -503,6 +510,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				 * the destination to DestNone.
 				 */
 				queryDesc = CreateQueryDesc((PlannedStmt *) linitial(portal->stmts),
+											portal->sourceText,
 											GetActiveSnapshot(),
 											InvalidSnapshot,
 											None_Receiver,
@@ -1258,6 +1266,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			{
 				/* statement can set tag string */
 				ProcessQuery(pstmt,
+							 portal->sourceText,
 							 portal->portalParams,
 							 dest, completionTag);
 			}
@@ -1265,6 +1274,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 			{
 				/* stmt added by rewrite cannot set tag */
 				ProcessQuery(pstmt,
+							 portal->sourceText,
 							 portal->portalParams,
 							 altdest, NULL);
 			}

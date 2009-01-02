@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.95 2009/01/01 17:23:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.96 2009/01/02 20:42:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,6 +636,9 @@ DropAllPreparedStatements(void)
 
 /*
  * Implements the 'EXPLAIN EXECUTE' utility statement.
+ *
+ * Note: the passed-in queryString is that of the EXPLAIN EXECUTE,
+ * not the original PREPARE; we get the latter string from the plancache.
  */
 void
 ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
@@ -643,6 +646,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 					ParamListInfo params, TupOutputState *tstate)
 {
 	PreparedStatement *entry;
+	const char *query_string;
 	CachedPlan *cplan;
 	List	   *plan_list;
 	ListCell   *p;
@@ -658,6 +662,8 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 	/* Shouldn't get any non-fixed-result cached plan, either */
 	if (!entry->plansource->fixed_result)
 		elog(ERROR, "EXPLAIN EXECUTE does not support variable-result cached plans");
+
+	query_string = entry->plansource->query_string;
 
 	/* Replan if needed, and acquire a transient refcount */
 	cplan = RevalidateCachedPlan(entry->plansource, true);
@@ -701,11 +707,12 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				pstmt->intoClause = execstmt->into;
 			}
 
-			ExplainOnePlan(pstmt, paramLI, stmt, tstate);
+			ExplainOnePlan(pstmt, stmt, query_string,
+						   paramLI, tstate);
 		}
 		else
 		{
-			ExplainOneUtility((Node *) pstmt, stmt, queryString,
+			ExplainOneUtility((Node *) pstmt, stmt, query_string,
 							  params, tstate);
 		}
 
