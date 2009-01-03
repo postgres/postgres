@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.487 2009/01/02 10:33:20 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.488 2009/01/03 20:03:08 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5625,6 +5625,17 @@ init_custom_variable(const char *name,
 {
 	struct config_generic *gen;
 
+	/*
+	 * Only allow custom PGC_POSTMASTER variables to be created during
+	 * shared library preload; any later than that, we can't ensure that
+	 * the value doesn't change after startup.  This is a fatal elog if it
+	 * happens; just erroring out isn't safe because we don't know what
+	 * the calling loadable module might already have hooked into.
+	 */
+	if (context == PGC_POSTMASTER &&
+		!process_shared_preload_libraries_in_progress)
+		elog(FATAL, "cannot create PGC_POSTMASTER variables after startup");
+
 	gen = (struct config_generic *) guc_malloc(ERROR, sz);
 	memset(gen, 0, sz);
 
@@ -5707,7 +5718,15 @@ define_custom_variable(struct config_generic * variable)
 		case PGC_S_ENV_VAR:
 		case PGC_S_FILE:
 		case PGC_S_ARGV:
-			phcontext = PGC_SIGHUP;
+			/*
+			 * If we got past the check in init_custom_variable, we can
+			 * safely assume that any existing value for a PGC_POSTMASTER
+			 * variable was set in postmaster context.
+			 */
+			if (variable->context == PGC_POSTMASTER)
+				phcontext = PGC_POSTMASTER;
+			else
+				phcontext = PGC_SIGHUP;
 			break;
 		case PGC_S_DATABASE:
 		case PGC_S_USER:

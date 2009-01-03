@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.207 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.208 2009/01/03 20:03:08 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -328,6 +328,7 @@ extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
 extern bool IgnoreSystemIndexes;
+extern PGDLLIMPORT bool process_shared_preload_libraries_in_progress;
 extern char *shared_preload_libraries_string;
 extern char *local_preload_libraries_string;
 
