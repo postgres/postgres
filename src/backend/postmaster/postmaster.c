@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.568 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.569 2009/01/03 17:08:38 tgl Exp $
  *
  * NOTES
  *
@@ -3668,6 +3668,14 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
 
+	/*
+	 * Reload any libraries that were preloaded by the postmaster.  Since
+	 * we exec'd this process, those libraries didn't come along with us;
+	 * but we should load them into all child processes to be consistent
+	 * with the non-EXEC_BACKEND behavior.
+	 */
+	process_shared_preload_libraries();
+
 	/* Run backend or appropriate child */
 	if (strcmp(argv[1], "--forkbackend") == 0)
 	{
@@ -3680,20 +3688,14 @@ SubPostmasterMain(int argc, char *argv[])
 		 * Need to reinitialize the SSL library in the backend, since the
 		 * context structures contain function pointers and cannot be passed
 		 * through the parameter file.
+		 *
+		 * XXX should we do this in all child processes?  For the moment it's
+		 * enough to do it in backend children.
 		 */
 #ifdef USE_SSL
 		if (EnableSSL)
 			secure_initialize();
 #endif
-
-		/*
-		 * process any libraries that should be preloaded at postmaster start
-		 *
-		 * NOTE: we have to re-load the shared_preload_libraries here because
-		 * this backend is not fork()ed so we can't inherit any shared
-		 * libraries / DLL's from our parent (the postmaster).
-		 */
-		process_shared_preload_libraries();
 
 		/*
 		 * Perform additional initialization and client authentication.

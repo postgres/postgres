@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.98 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.99 2009/01/03 17:08:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,8 @@
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 
+
+shmem_startup_hook_type shmem_startup_hook = NULL;
 
 static Size total_addin_request = 0;
 static bool addin_request_allowed = true;
@@ -222,4 +224,10 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	if (!IsUnderPostmaster)
 		ShmemBackendArrayAllocation();
 #endif
+
+	/*
+	 * Now give loadable modules a chance to set up their shmem allocations
+	 */
+	if (shmem_startup_hook)
+		shmem_startup_hook();
 }
