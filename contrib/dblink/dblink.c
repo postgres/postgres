@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.1 2008/11/30 23:24:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.69.2.2 2009/01/03 19:57:54 joe Exp $
  * Copyright (c) 2001-2008, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -809,7 +809,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 			{
 				/* text,bool */
 				DBLINK_GET_CONN;
-				fail = PG_GETARG_BOOL(2);
+				fail = PG_GETARG_BOOL(1);
 			}
 			else if (PG_NARGS() == 1)
 			{
