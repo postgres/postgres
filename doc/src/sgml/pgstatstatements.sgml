@@ -1,0 +1,265 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.1 2009/01/04 22:19:59 tgl Exp $ -->
+
+<sect1 id="pgstatstatements">
+ <title>pg_stat_statements</title>
+
+ <indexterm zone="pgstatstatements">
+  <primary>pg_stat_statements</primary>
+ </indexterm>
+
+ <para>
+  The <filename>pg_stat_statements</filename> module provides a means for
+  tracking execution statistics of all SQL statements executed by a server.
+ </para>
+
+ <para>
+  The module must be loaded by adding <literal>pg_stat_statements</> to
+  <xref linkend="guc-shared-preload-libraries"> in
+  <filename>postgresql.conf</>, because it requires additional shared memory.
+  This means that a server restart is needed to add or remove the module.
+ </para>
+
+ <sect2>
+  <title>The <structname>pg_stat_statements</structname> view</title>
+
+  <para>
+   The statistics gathered by the module are made available via a system view
+   named <structname>pg_stat_statements</>.  This view contains one row for
+   each distinct query text, database ID, and user ID (up to the maximum
+   number of distinct statements that the module can track).  The columns
+   of the view are:
+  </para>
+
+  <table>
+   <title><structname>pg_stat_statements</> columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>userid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>OID of user who executed the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>dbid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
+      <entry>OID of database in which the statement was executed</entry>
+     </row>
+
+    <row>
+      <entry><structfield>query</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Text of the statement (up to <xref linkend="guc-track-activity-query-size"> bytes)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>calls</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Number of times executed</entry>
+     </row>
+
+     <row>
+      <entry><structfield>total_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Total time spent in the statement, in seconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rows</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of rows retrieved or affected by the statement</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   This view, and the function <function>pg_stat_statements_reset</>,
+   are available only in databases they have been specifically installed into
+   by running the <filename>pg_stat_statements.sql</> install script.
+   However, statistics are tracked across all databases of the server
+   whenever the <filename>pg_stat_statements</filename> module is loaded
+   into the server, regardless of presence of the view.
+  </para>
+
+  <para>
+   For security reasons, non-superusers are not allowed to see the text of
+   queries executed by other users.  They can see the statistics, however,
+   if the view has been installed in their database.
+  </para>
+
+  <para>
+   Note that statements are considered the same if they have the same text,
+   regardless of the values of any out-of-line parameters used in the
+   statement.  Using out-of-line parameters will help to group statements
+   together and may make the statistics more useful.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Functions</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <function>pg_stat_statements_reset() returns void</function>
+    </term>
+
+    <listitem>
+     <para>
+      <function>pg_stat_statements_reset</function> discards all statistics
+      gathered so far by <filename>pg_stat_statements</>.
+      By default, this function can only be executed by superusers.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </sect2>
+
+ <sect2>
+  <title>Configuration parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <varname>pg_stat_statements.max</varname> (<type>integer</type>)
+    </term>
+
+    <listitem>
+     <para>
+      <varname>pg_stat_statements.max</varname> is the maximum number of
+      statements tracked by the module (i.e., the maximum number of rows
+      in the <structname>pg_stat_statements</> view).  If more distinct
+      statements than that are observed, information about the least-executed
+      statements is discarded.
+      The default value is 1000.
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>pg_stat_statements.track</varname> (<type>enum</type>)
+    </term>
+
+    <listitem>
+     <para>
+      <varname>pg_stat_statements.track</varname> controls which statements
+      are counted by the module.
+      Specify <literal>top</> to track top-level statements (those issued
+      directly by clients), <literal>all</> to also track nested statements
+      (such as statements invoked within functions), or <literal>none</> to
+      disable.
+      The default value is <literal>top</>.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>pg_stat_statements.save</varname> (<type>boolean</type>)
+    </term>
+
+    <listitem>
+     <para>
+      <varname>pg_stat_statements.save</varname> specifies whether to
+      save statement statistics across server shutdowns.
+      If it is <literal>off</> then statistics are not saved at
+      shutdown nor reloaded at server start.
+      The default value is <literal>on</>.
+      This parameter can only be set in the <filename>postgresql.conf</>
+      file or on the server command line.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   The module requires additional shared memory amounting to about
+   <varname>pg_stat_statements.max</varname> <literal>*</>
+   <xref linkend="guc-track-activity-query-size"> bytes.  Note that this
+   memory is consumed whenever the module is loaded, even if
+   <varname>pg_stat_statements.track</> is set to <literal>none</>.
+  </para>
+
+  <para>
+   In order to set any of these parameters in your
+   <filename>postgresql.conf</> file,
+   you will need to add <literal>pg_stat_statements</> to
+   <xref linkend="guc-custom-variable-classes">.  Typical usage might be:
+  </para>
+
+  <programlisting>
+# postgresql.conf
+shared_preload_libraries = 'pg_stat_statements'
+
+custom_variable_classes = 'pg_stat_statements'
+pg_stat_statements.max = 10000
+pg_stat_statements.track = all
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Sample output</title>
+
+  <programlisting>
+$ pgbench -i bench
+
+postgres=# SELECT pg_stat_statements_reset();
+
+$ pgbench -c10 -t300 -M prepared bench
+
+postgres=# \x
+postgres=# SELECT * FROM pg_stat_statements ORDER BY total_time DESC LIMIT 3;
+-[ RECORD 1 ]------------------------------------------------------------
+userid     | 10
+dbid       | 63781
+query      | UPDATE branches SET bbalance = bbalance + $1 WHERE bid = $2;
+calls      | 3000
+total_time | 20.716706
+rows       | 3000
+-[ RECORD 2 ]------------------------------------------------------------
+userid     | 10
+dbid       | 63781
+query      | UPDATE tellers SET tbalance = tbalance + $1 WHERE tid = $2;
+calls      | 3000
+total_time | 17.1107649999999
+rows       | 3000
+-[ RECORD 3 ]------------------------------------------------------------
+userid     | 10
+dbid       | 63781
+query      | UPDATE accounts SET abalance = abalance + $1 WHERE aid = $2;
+calls      | 3000
+total_time | 0.645601
+rows       | 3000
+  </programlisting>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   Takahiro Itagaki <email>itagaki.takahiro@oss.ntt.co.jp</email>
+  </para>
+ </sect2>
+
+</sect1>

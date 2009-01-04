@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.81 2009/01/01 17:23:55 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.82 2009/01/04 22:19:59 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -592,7 +592,7 @@ typedef struct PgStat_FunctionCallUsage
 extern bool pgstat_track_activities;
 extern bool pgstat_track_counts;
 extern int	pgstat_track_functions;
-extern int	pgstat_track_activity_query_size;
+extern PGDLLIMPORT int	pgstat_track_activity_query_size;
 extern char *pgstat_stat_tmpname;
 extern char *pgstat_stat_filename;
 

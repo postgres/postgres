@@ -112,6 +112,10 @@ pg_standby -
 	Sample archive_command for warm standby operation
 	by Simon Riggs <simon@2ndquadrant.com>
 
+pg_stat_statements -
+	Track statement execution times across a whole database cluster
+	by Takahiro Itagaki <itagaki.takahiro@oss.ntt.co.jp>
+
 pg_trgm -
 	Functions for determining the similarity of text based on trigram
 	matching.
