@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.3 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.4 2009/01/04 14:59:22 heikki Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -106,7 +106,7 @@ RelationCreateStorage(RelFileNode rnode, bool istemp)
 	srel = smgropen(rnode);
 	smgrcreate(srel, MAIN_FORKNUM, false);
 
-	if (istemp)
+	if (!istemp)
 	{
 		/*
 		 * Make an XLOG entry showing the file creation.  If we abort, the file
@@ -203,7 +203,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * harmless failure to truncate, that could spell trouble at WAL replay,
 	 * into a certain PANIC.
 	 */
-	if (rel->rd_istemp)
+	if (!rel->rd_istemp)
 	{
 		/*
 		 * Make an XLOG entry showing the file truncation.
