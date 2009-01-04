@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.75 2008/11/11 03:01:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.76 2009/01/04 18:37:35 tgl Exp $
  */
 #include "postgres.h"
 
@@ -710,14 +710,14 @@ pg_encoding_mb2wchar_with_len(int encoding,
 	return (*pg_wchar_table[encoding].mb2wchar_with_len) ((const unsigned char *) from, to, len);
 }
 
-/* returns the byte length of a multibyte word */
+/* returns the byte length of a multibyte character */
 int
 pg_mblen(const char *mbstr)
 {
 	return ((*pg_wchar_table[DatabaseEncoding->encoding].mblen) ((const unsigned char *) mbstr));
 }
 
-/* returns the display length of a multibyte word */
+/* returns the display length of a multibyte character */
 int
 pg_dsplen(const char *mbstr)
 {
@@ -767,23 +767,37 @@ pg_mbstrlen_with_len(const char *mbstr, int limit)
 
 /*
  * returns the byte length of a multibyte string
- * (not necessarily  NULL terminated)
+ * (not necessarily NULL terminated)
  * that is no longer than limit.
- * this function does not break multibyte word boundary.
+ * this function does not break multibyte character boundary.
  */
 int
 pg_mbcliplen(const char *mbstr, int len, int limit)
 {
+	return pg_encoding_mbcliplen(DatabaseEncoding->encoding, mbstr,
+								 len, limit);
+}
+
+/*
+ * pg_mbcliplen with specified encoding
+ */
+int
+pg_encoding_mbcliplen(int encoding, const char *mbstr,
+					  int len, int limit)
+{
+	mblen_converter mblen_fn;
 	int			clen = 0;
 	int			l;
 
 	/* optimization for single byte encoding */
-	if (pg_database_encoding_max_length() == 1)
+	if (pg_encoding_max_length(encoding) == 1)
 		return cliplen(mbstr, len, limit);
+
+	mblen_fn = pg_wchar_table[encoding].mblen;
 
 	while (len > 0 && *mbstr)
 	{
-		l = pg_mblen(mbstr);
+		l = (*mblen_fn) ((const unsigned char *) mbstr);
 		if ((clen + l) > limit)
 			break;
 		clen += l;
@@ -797,7 +811,8 @@ pg_mbcliplen(const char *mbstr, int len, int limit)
 
 /*
  * Similar to pg_mbcliplen except the limit parameter specifies the
- * character length, not the byte length.  */
+ * character length, not the byte length.
+ */
 int
 pg_mbcharcliplen(const char *mbstr, int len, int limit)
 {
@@ -820,6 +835,18 @@ pg_mbcharcliplen(const char *mbstr, int len, int limit)
 		mbstr += l;
 	}
 	return clen;
+}
+
+/* mbcliplen for any single-byte encoding */
+static int
+cliplen(const char *str, int len, int limit)
+{
+	int			l = 0;
+
+	len = Min(len, limit);
+	while (l < len && str[l])
+		l++;
+	return l;
 }
 
 void
@@ -883,18 +910,4 @@ pg_client_encoding(PG_FUNCTION_ARGS)
 {
 	Assert(ClientEncoding);
 	return DirectFunctionCall1(namein, CStringGetDatum(ClientEncoding->name));
-}
-
-static int
-cliplen(const char *str, int len, int limit)
-{
-	int			l = 0;
-	const char *s;
-
-	for (s = str; *s; s++, l++)
-	{
-		if (l >= len || l >= limit)
-			return l;
-	}
-	return (s - str);
 }
