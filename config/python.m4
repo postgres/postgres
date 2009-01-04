@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.14 2006/10/16 17:24:54 petere Exp $
+# $PostgreSQL: pgsql/config/python.m4,v 1.15 2009/01/04 00:54:15 petere Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -30,9 +30,9 @@ else
     AC_MSG_ERROR([distutils module not found])
 fi
 AC_MSG_CHECKING([Python configuration directory])
-python_version=`${PYTHON} -c "import sys; print sys.version[[:3]]"`
-python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
-python_includespec=`${PYTHON} -c "import distutils.sysconfig; print '-I'+distutils.sysconfig.get_python_inc()"`
+python_version=`${PYTHON} -c "import sys; print(sys.version[[:3]])"`
+python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print(os.path.join(f(plat_specific=1,standard_lib=1),'config'))"`
+python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
 
 AC_SUBST(python_version)[]dnl
 AC_SUBST(python_configdir)[]dnl
@@ -54,9 +54,9 @@ AC_DEFUN([PGAC_CHECK_PYTHON_EMBED_SETUP],
 [AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
 AC_MSG_CHECKING([how to link an embedded Python application])
 
-python_libdir=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR')))"`
-python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY')))"`
-python_so=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('SO')))"`
+python_libdir=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
+python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
+python_so=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('SO'))))"`
 ldlibrary=`echo "${python_ldlibrary}" | sed "s/${python_so}$//"`
 
 if test x"${python_libdir}" != x"" -a x"${python_ldlibrary}" != x"" -a x"${python_ldlibrary}" != x"${ldlibrary}"
@@ -70,7 +70,7 @@ else
 	python_libspec="-L${python_libdir} -lpython${python_version}"
 fi
 
-python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
+python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS'))))"`
 
 AC_MSG_RESULT([${python_libspec} ${python_additional_libs}])
 
@@ -80,7 +80,7 @@ AC_SUBST(python_additional_libs)[]dnl
 
 # threaded python is not supported on bsd's
 AC_MSG_CHECKING(whether Python is compiled with thread support)
-pythreads=`${PYTHON} -c "import sys; print int('thread' in sys.builtin_module_names)"`
+pythreads=`${PYTHON} -c "import sys; print(int('thread' in sys.builtin_module_names))"`
 if test "$pythreads" = "1"; then
   AC_MSG_RESULT(yes)
   case $host_os in

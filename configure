@@ -6899,9 +6899,9 @@ echo "$as_me: error: distutils module not found" >&2;}
 fi
 { echo "$as_me:$LINENO: checking Python configuration directory" >&5
 echo $ECHO_N "checking Python configuration directory... $ECHO_C" >&6; }
-python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
-python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
-python_includespec=`${PYTHON} -c "import distutils.sysconfig; print '-I'+distutils.sysconfig.get_python_inc()"`
+python_version=`${PYTHON} -c "import sys; print(sys.version[:3])"`
+python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print(os.path.join(f(plat_specific=1,standard_lib=1),'config'))"`
+python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
 
 # This should be enough of a message.
 { echo "$as_me:$LINENO: result: $python_configdir" >&5
@@ -6911,9 +6911,9 @@ echo "${ECHO_T}$python_configdir" >&6; }
 { echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5
 echo $ECHO_N "checking how to link an embedded Python application... $ECHO_C" >&6; }
 
-python_libdir=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR')))"`
-python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY')))"`
-python_so=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('SO')))"`
+python_libdir=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
+python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
+python_so=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('SO'))))"`
 ldlibrary=`echo "${python_ldlibrary}" | sed "s/${python_so}$//"`
 
 if test x"${python_libdir}" != x"" -a x"${python_ldlibrary}" != x"" -a x"${python_ldlibrary}" != x"${ldlibrary}"
@@ -6927,7 +6927,7 @@ else
 	python_libspec="-L${python_libdir} -lpython${python_version}"
 fi
 
-python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
+python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS'))))"`
 
 { echo "$as_me:$LINENO: result: ${python_libspec} ${python_additional_libs}" >&5
 echo "${ECHO_T}${python_libspec} ${python_additional_libs}" >&6; }
@@ -6936,7 +6936,7 @@ echo "${ECHO_T}${python_libspec} ${python_additional_libs}" >&6; }
 # threaded python is not supported on bsd's
 { echo "$as_me:$LINENO: checking whether Python is compiled with thread support" >&5
 echo $ECHO_N "checking whether Python is compiled with thread support... $ECHO_C" >&6; }
-pythreads=`${PYTHON} -c "import sys; print int('thread' in sys.builtin_module_names)"`
+pythreads=`${PYTHON} -c "import sys; print(int('thread' in sys.builtin_module_names))"`
 if test "$pythreads" = "1"; then
   { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
