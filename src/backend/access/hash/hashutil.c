@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.58 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.59 2009/01/05 17:14:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,9 +224,8 @@ hashoptions(PG_FUNCTION_ARGS)
 	bool		validate = PG_GETARG_BOOL(1);
 	bytea	   *result;
 
-	result = default_reloptions(reloptions, validate,
-								HASH_MIN_FILLFACTOR,
-								HASH_DEFAULT_FILLFACTOR);
+	result = default_reloptions(reloptions, validate, RELOPT_KIND_HASH);
+
 	if (result)
 		PG_RETURN_BYTEA_P(result);
 	PG_RETURN_NULL();

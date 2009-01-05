@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.92 2009/01/01 17:23:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.93 2009/01/05 17:14:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1402,9 +1402,7 @@ btoptions(PG_FUNCTION_ARGS)
 	bool		validate = PG_GETARG_BOOL(1);
 	bytea	   *result;
 
-	result = default_reloptions(reloptions, validate,
-								BTREE_MIN_FILLFACTOR,
-								BTREE_DEFAULT_FILLFACTOR);
+	result = default_reloptions(reloptions, validate, RELOPT_KIND_BTREE);
 	if (result)
 		PG_RETURN_BYTEA_P(result);
 	PG_RETURN_NULL();

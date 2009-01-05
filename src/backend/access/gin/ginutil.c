@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.19 2009/01/01 17:23:34 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.20 2009/01/05 17:14:28 alvherre Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -317,16 +317,7 @@ ginoptions(PG_FUNCTION_ARGS)
 	bool		validate = PG_GETARG_BOOL(1);
 	bytea	   *result;
 
-	/*
-	 * It's not clear that fillfactor is useful for GIN, but for the moment
-	 * we'll accept it anyway.  (It won't do anything...)
-	 */
-#define GIN_MIN_FILLFACTOR			10
-#define GIN_DEFAULT_FILLFACTOR		100
-
-	result = default_reloptions(reloptions, validate,
-								GIN_MIN_FILLFACTOR,
-								GIN_DEFAULT_FILLFACTOR);
+	result = default_reloptions(reloptions, validate, RELOPT_KIND_GIN);
 	if (result)
 		PG_RETURN_BYTEA_P(result);
 	PG_RETURN_NULL();
