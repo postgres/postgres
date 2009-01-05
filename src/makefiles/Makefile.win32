@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.12 2008/12/07 08:36:22 petere Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.13 2009/01/05 09:27:20 petere Exp $
 
 # Use replacement include files for those missing on Win32
 override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
@@ -67,4 +67,4 @@ win32ver.rc: $(top_srcdir)/src/port/win32ver.rc
 	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $< >$@
 
 win32ver.o: win32ver.rc
-	$(WINDRES) -i $< -o $@ --include-dir=$(top_builddir)/src/include
+	$(WINDRES) -i $< -o $@ --include-dir=$(top_builddir)/src/include --include-dir=$(srcdir)
