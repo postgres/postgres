@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.249 2008/12/11 07:34:07 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.250 2009/01/05 09:54:12 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -321,6 +321,8 @@ WANTED_LANGUAGES = @WANTED_LANGUAGES@
 
 # Name of the "template"
 PORTNAME= @PORTNAME@
+
+build_os = @build_os@
 
 host_tuple = @host@
 host_os = @host_os@

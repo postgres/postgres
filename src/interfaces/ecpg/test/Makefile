@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.75 2008/12/01 11:37:37 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.76 2009/01/05 09:54:13 petere Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -16,7 +16,7 @@ ifdef NO_LOCALE
 NOLOCALE += --no-locale
 endif
 
-ifneq ($(PORTNAME),win32)
+ifneq ($(build_os),mingw32)
 abs_builddir := $(shell pwd)
 else
 abs_builddir := $(shell pwd -W)
