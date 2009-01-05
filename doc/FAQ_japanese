@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Tue Sep 23 16:19:49 EDT 2008
+原文最終更新日: Thu Jan 01 14:01:00 EDT 2009
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at postgresql.jp)
@@ -177,7 +177,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
         POSTGRESQL データベース管理システム
 
-        部分的著作権 (c) 1996-2008, PostgreSQL国際開発チーム
+        部分的著作権 (c) 1996-2009, PostgreSQL国際開発グループ
         部分的著作権 (c) 1994-1996 カリフォルニア大学本校
 
 
@@ -235,7 +235,7 @@ ftp://ftp.postgresql.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
-PostgreSQL の最新版はバージョン 8.3.4 です。
+PostgreSQL の最新版はバージョン 8.3.5 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -321,7 +321,6 @@ PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
         インプレスから、
 
         PostgreSQLオフィシャルマニュアルとして出版されています。
-
     ]
 
 
@@ -358,6 +357,12 @@ Community_Generated_Articles%2C_Guides%2C_and_Documentation にあります。
 と利用可能なコマンドが表示されます。
 
 我々の Web サイトには、さらに沢山の文書があります。
+
+    [訳注:
+        2008年11月18日、PostgreSQL普及のために一般向けの情報を扱う
+        「Let's Postgres」というポータルサイトがオープンしました。http://lets.postgresql.jp/
+    ]
+
 
 1.11) SQL はどうすれば学べますか？
 
