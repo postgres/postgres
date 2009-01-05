@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.578 2009/01/01 17:23:31 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.579 2009/01/05 10:25:59 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -843,6 +843,16 @@ fi
 if test "$with_python" = yes; then
   PGAC_PATH_PYTHON
   PGAC_CHECK_PYTHON_EMBED_SETUP
+fi
+
+if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
+  AC_PATH_PROG(ZIC, zic)
+  if test -z "$ZIC"; then
+    AC_MSG_ERROR([
+When cross-compiling, either use the option --with-system-tzdata to use
+existing time-zone data, or set the environment variable ZIC to a zic
+program to use during the build.])
+  fi
 fi
 
 # Supply a numeric version string for use by 3rd party add-ons

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.250 2009/01/05 09:54:12 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.251 2009/01/05 10:25:59 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -224,6 +224,7 @@ FLEX = @FLEX@
 FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
 DTRACE = @DTRACE@
 DTRACEFLAGS = @DTRACEFLAGS@
+ZIC = @ZIC@
 
 # Linking
 

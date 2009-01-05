@@ -744,6 +744,7 @@ python_includespec
 python_libdir
 python_libspec
 python_additional_libs
+ZIC
 OSSP_UUID_LIBS
 HAVE_IPV6
 LIBOBJS
@@ -6953,6 +6954,60 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
+fi
+
+if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
+  # Extract the first word of "zic", so it can be a program name with args.
+set dummy zic; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_ZIC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ZIC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ZIC="$ZIC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_ZIC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ZIC=$ac_cv_path_ZIC
+if test -n "$ZIC"; then
+  { echo "$as_me:$LINENO: result: $ZIC" >&5
+echo "${ECHO_T}$ZIC" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+  if test -z "$ZIC"; then
+    { { echo "$as_me:$LINENO: error:
+When cross-compiling, either use the option --with-system-tzdata to use
+existing time-zone data, or set the environment variable ZIC to a zic
+program to use during the build." >&5
+echo "$as_me: error:
+When cross-compiling, either use the option --with-system-tzdata to use
+existing time-zone data, or set the environment variable ZIC to a zic
+program to use during the build." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 fi
 
 # Supply a numeric version string for use by 3rd party add-ons
@@ -27320,6 +27375,7 @@ python_includespec!$python_includespec$ac_delim
 python_libdir!$python_libdir$ac_delim
 python_libspec!$python_libspec$ac_delim
 python_additional_libs!$python_additional_libs$ac_delim
+ZIC!$ZIC$ac_delim
 OSSP_UUID_LIBS!$OSSP_UUID_LIBS$ac_delim
 HAVE_IPV6!$HAVE_IPV6$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
@@ -27352,7 +27408,7 @@ vpath_build!$vpath_build$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 59; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 60; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.29 2008/02/19 15:29:58 petere Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.30 2009/01/05 10:25:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ zic: $(ZICOBJS)
 
 install: all installdirs
 ifeq (,$(with_system_tzdata))
-	./zic -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
+	$(if $(ZIC),$(ZIC),./zic) -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
 endif
 	$(MAKE) -C tznames $@
 
