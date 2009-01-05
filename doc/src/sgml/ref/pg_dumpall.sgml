@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.73 2008/08/29 17:28:43 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.74 2009/01/05 16:54:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -129,7 +129,7 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
- 
+
      <varlistentry>
       <term><option>-f <replaceable class="parameter">filename</replaceable></option></term>
       <term><option>--file=<replaceable class="parameter">filename</replaceable></option></term>
@@ -183,7 +183,7 @@ PostgreSQL documentation
         Do not output commands to set
         ownership of objects to match the original database.
         By default, <application>pg_dumpall</application> issues
-        <command>ALTER OWNER</> or 
+        <command>ALTER OWNER</> or
         <command>SET SESSION AUTHORIZATION</command>
         statements to set ownership of created schema elements.
         These statements
@@ -342,8 +342,8 @@ PostgreSQL documentation
 
    <variablelist>
      <varlistentry>
-      <term>-h <replaceable>host</replaceable></term>
-      <term>--host=<replaceable>host</replaceable></term>
+      <term><option>-h <replaceable>host</replaceable></option></term>
+      <term><option>--host=<replaceable>host</replaceable></option></term>
       <listitem>
        <para>
         Specifies the host name of the machine on which the database
@@ -354,10 +354,10 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
- 
+
      <varlistentry>
-      <term>-l <replaceable>dbname</replaceable></term>
-      <term>--database=<replaceable>dbname</replaceable></term>
+      <term><option>-l <replaceable>dbname</replaceable></option></term>
+      <term><option>--database=<replaceable>dbname</replaceable></option></term>
       <listitem>
        <para>
          Specifies the name of the database to connect to to dump global
@@ -369,8 +369,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable>port</replaceable></term>
-      <term>--port=<replaceable>port</replaceable></term>
+      <term><option>-p <replaceable>port</replaceable></option></term>
+      <term><option>--port=<replaceable>port</replaceable></option></term>
       <listitem>
        <para>
         Specifies the TCP port or local Unix domain socket file
@@ -382,8 +382,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-U <replaceable>username</replaceable></term>
-      <term>--username=<replaceable>username</replaceable></term>
+      <term><option>-U <replaceable>username</replaceable></option></term>
+      <term><option>--username=<replaceable>username</replaceable></option></term>
       <listitem>
        <para>
         User name to connect as.
@@ -392,12 +392,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W</term>
-      <term>--password</term>
+      <term><option>-W</option></term>
+      <term><option>--password</option></term>
       <listitem>
        <para>
         Force <application>pg_dumpall</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>
@@ -414,6 +414,23 @@ PostgreSQL documentation
         Note that the password prompt will occur again for each database
         to be dumped.  Usually, it's better to set up a
         <filename>~/.pgpass</> file than to rely on manual password entry.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--role=<replaceable class="parameter">rolename</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies a role name to be used to create the dump.
+        This option causes <application>pg_dumpall</> to issue a
+        <command>SET ROLE</> <replaceable class="parameter">rolename</>
+        command after connecting to the database. It is useful when the
+        authenticated user (specified by <option>-U</>) lacks privileges
+        needed by <application>pg_dumpall</>, but can switch to a role with
+        the required rights.  Some installations have a policy against
+        logging in directly as a superuser, and use of this option allows
+        dumps to be made without violating the policy.
        </para>
       </listitem>
      </varlistentry>
@@ -503,6 +520,6 @@ PostgreSQL documentation
     Check <xref linkend="app-pgdump"> for details on possible
     error conditions.
   </para>
- </refsect1>   
+ </refsect1>
 
 </refentry>

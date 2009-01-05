@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.110 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.111 2009/01/05 16:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 					   const char *type, const char *name);
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(char *msg);
+static void doShellQuoting(PQExpBuffer buf, const char *str);
 
 static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
@@ -77,6 +78,7 @@ main(int argc, char *argv[])
 	char	   *pgport = NULL;
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
+	char	   *use_role = NULL;
 	bool		force_password = false;
 	bool		data_only = false;
 	bool		globals_only = false;
@@ -118,9 +120,10 @@ main(int argc, char *argv[])
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
-		{"no-tablespaces", no_argument, &no_tablespaces, 1},
-		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
+		{"no-tablespaces", no_argument, &no_tablespaces, 1},
+		{"role", required_argument, NULL, 3},
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -191,12 +194,8 @@ main(int argc, char *argv[])
 
 			case 'f':
 				filename = optarg;
-#ifndef WIN32
-				appendPQExpBuffer(pgdumpopts, " -f '%s'", filename);
-#else
-				appendPQExpBuffer(pgdumpopts, " -f \"%s\"", filename);
-#endif
-
+				appendPQExpBuffer(pgdumpopts, " -f ");
+				doShellQuoting(pgdumpopts, filename);
 				break;
 
 			case 'g':
@@ -205,12 +204,8 @@ main(int argc, char *argv[])
 
 			case 'h':
 				pghost = optarg;
-#ifndef WIN32
-				appendPQExpBuffer(pgdumpopts, " -h '%s'", pghost);
-#else
-				appendPQExpBuffer(pgdumpopts, " -h \"%s\"", pghost);
-#endif
-
+				appendPQExpBuffer(pgdumpopts, " -h ");
+				doShellQuoting(pgdumpopts, pghost);
 				break;
 
 			case 'i':
@@ -231,11 +226,8 @@ main(int argc, char *argv[])
 
 			case 'p':
 				pgport = optarg;
-#ifndef WIN32
-				appendPQExpBuffer(pgdumpopts, " -p '%s'", pgport);
-#else
-				appendPQExpBuffer(pgdumpopts, " -p \"%s\"", pgport);
-#endif
+				appendPQExpBuffer(pgdumpopts, " -p ");
+				doShellQuoting(pgdumpopts, pgport);
 				break;
 
 			case 'r':
@@ -248,11 +240,8 @@ main(int argc, char *argv[])
 				break;
 
 			case 'S':
-#ifndef WIN32
-				appendPQExpBuffer(pgdumpopts, " -S '%s'", optarg);
-#else
-				appendPQExpBuffer(pgdumpopts, " -S \"%s\"", optarg);
-#endif
+				appendPQExpBuffer(pgdumpopts, " -S ");
+				doShellQuoting(pgdumpopts, optarg);
 				break;
 
 			case 't':
@@ -261,11 +250,8 @@ main(int argc, char *argv[])
 
 			case 'U':
 				pguser = optarg;
-#ifndef WIN32
-				appendPQExpBuffer(pgdumpopts, " -U '%s'", pguser);
-#else
-				appendPQExpBuffer(pgdumpopts, " -U \"%s\"", pguser);
-#endif
+				appendPQExpBuffer(pgdumpopts, " -U ");
+				doShellQuoting(pgdumpopts, pguser);
 				break;
 
 			case 'v':
@@ -307,8 +293,14 @@ main(int argc, char *argv[])
 				break;
 
 			case 2:
-				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout=");
-				appendPQExpBuffer(pgdumpopts, "%s", optarg);
+				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout ");
+				doShellQuoting(pgdumpopts, optarg);
+				break;
+
+			case 3:
+				use_role = optarg;
+				appendPQExpBuffer(pgdumpopts, " --role ");
+				doShellQuoting(pgdumpopts, use_role);
 				break;
 
 			default:
@@ -426,6 +418,16 @@ main(int argc, char *argv[])
 	if (!std_strings)
 		std_strings = "off";
 
+	/* Set the role if requested */
+	if (use_role && server_version >= 80100)
+	{
+		PQExpBuffer query = createPQExpBuffer();
+
+		appendPQExpBuffer(query, "SET ROLE %s", fmtId(use_role));
+		executeCommand(conn, query->data);
+		destroyPQExpBuffer(query);
+	}
+
 	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)
 		dumpTimestamp("Started on");
@@ -513,6 +515,7 @@ help(void)
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
+	printf(_("  --role=ROLENAME          do SET ROLE before dump\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
@@ -1271,56 +1274,21 @@ static int
 runPgDump(const char *dbname)
 {
 	PQExpBuffer cmd = createPQExpBuffer();
-	const char *p;
 	int			ret;
 
+	appendPQExpBuffer(cmd, SYSTEMQUOTE "\"%s\" %s", pg_dump_bin,
+					  pgdumpopts->data);
+
 	/*
-	 * Win32 has to use double-quotes for args, rather than single quotes.
-	 * Strangely enough, this is the only place we pass a database name on the
-	 * command line, except "postgres" which doesn't need quoting.
-	 *
 	 * If we have a filename, use the undocumented plain-append pg_dump
 	 * format.
 	 */
 	if (filename)
-	{
-#ifndef WIN32
-		appendPQExpBuffer(cmd, SYSTEMQUOTE"\"%s\" %s -Fa '", pg_dump_bin,
-#else
-		appendPQExpBuffer(cmd, SYSTEMQUOTE"\"%s\" %s -Fa \"", pg_dump_bin,
-#endif
-						  pgdumpopts->data);
-	}
+		appendPQExpBuffer(cmd, " -Fa ");
 	else
-	{
-#ifndef WIN32
-		appendPQExpBuffer(cmd, SYSTEMQUOTE "\"%s\" %s -Fp '", pg_dump_bin,
-#else
-		appendPQExpBuffer(cmd, SYSTEMQUOTE "\"%s\" %s -Fp \"", pg_dump_bin,
-#endif
-						  pgdumpopts->data);
-	}
+		appendPQExpBuffer(cmd, " -Fp ");
 
-
-	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
-	for (p = dbname; *p; p++)
-	{
-#ifndef WIN32
-		if (*p == '\'')
-			appendPQExpBuffer(cmd, "'\"'\"'");
-#else
-		if (*p == '"')
-			appendPQExpBuffer(cmd, "\\\"");
-#endif
-		else
-			appendPQExpBufferChar(cmd, *p);
-	}
-
-#ifndef WIN32
-	appendPQExpBufferChar(cmd, '\'');
-#else
-	appendPQExpBufferChar(cmd, '"');
-#endif
+	doShellQuoting(cmd, dbname);
 
 	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
 
@@ -1336,7 +1304,6 @@ runPgDump(const char *dbname)
 
 	return ret;
 }
-
 
 
 /*
@@ -1526,4 +1493,39 @@ dumpTimestamp(char *msg)
 #endif
 				 localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
+}
+
+
+/*
+ * Append the given string to the shell command being built in the buffer,
+ * with suitable shell-style quoting.
+ */
+static void
+doShellQuoting(PQExpBuffer buf, const char *str)
+{
+	const char *p;
+
+#ifndef WIN32
+	appendPQExpBufferChar(buf, '\'');
+	for (p = str; *p; p++)
+	{
+		if (*p == '\'')
+			appendPQExpBuffer(buf, "'\"'\"'");
+		else
+			appendPQExpBufferChar(buf, *p);
+	}
+	appendPQExpBufferChar(buf, '\'');
+
+#else /* WIN32 */
+
+	appendPQExpBufferChar(buf, '"');
+	for (p = str; *p; p++)
+	{
+		if (*p == '"')
+			appendPQExpBuffer(buf, "\\\"");
+		else
+			appendPQExpBufferChar(buf, *p);
+	}
+	appendPQExpBufferChar(buf, '"');
+#endif /* WIN32 */
 }

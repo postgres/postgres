@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.105 2008/08/26 00:03:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.106 2009/01/05 16:54:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -695,6 +695,23 @@ PostgreSQL documentation
         connection attempt finding out that the server wants a password.
         In some cases it is worth typing <option>-W</> to avoid the extra
         connection attempt.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--role=<replaceable class="parameter">rolename</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies a role name to be used to create the dump.
+        This option causes <application>pg_dump</> to issue a
+        <command>SET ROLE</> <replaceable class="parameter">rolename</>
+        command after connecting to the database. It is useful when the
+        authenticated user (specified by <option>-U</>) lacks privileges
+        needed by <application>pg_dump</>, but can switch to a role with
+        the required rights.  Some installations have a policy against
+        logging in directly as a superuser, and use of this option allows
+        dumps to be made without violating the policy.
        </para>
       </listitem>
      </varlistentry>

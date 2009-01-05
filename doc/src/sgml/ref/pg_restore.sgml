@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.76 2008/09/07 19:12:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.77 2009/01/05 16:54:36 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -135,7 +135,7 @@
       <listitem>
        <para>
         Exit if an error is encountered while sending SQL commands to
-        the database. The default is to continue and to display a count of 
+        the database. The default is to continue and to display a count of
         errors at the end of the restoration.
        </para>
       </listitem>
@@ -261,7 +261,7 @@
         Do not output commands to set
         ownership of objects to match the original database.
         By default, <application>pg_restore</application> issues
-        <command>ALTER OWNER</> or 
+        <command>ALTER OWNER</> or
         <command>SET SESSION AUTHORIZATION</command>
         statements to set ownership of created schema elements.
         These statements will fail unless the initial connection to the
@@ -429,6 +429,20 @@
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-1</option></term>
+      <term><option>--single-transaction</option></term>
+      <listitem>
+       <para>
+        Execute the restore as a single transaction (that is, wrap the
+        emitted commands in <command>BEGIN</>/<command>COMMIT</>).  This
+        ensures that either all the commands complete successfully, or no
+        changes are applied. This option implies
+        <option>--exit-on-error</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 
@@ -480,7 +494,7 @@
       <listitem>
        <para>
         Force <application>pg_restore</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>
@@ -496,15 +510,18 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-1</option></term>
-      <term><option>--single-transaction</option></term>
+      <term><option>--role=<replaceable class="parameter">rolename</replaceable></option></term>
       <listitem>
        <para>
-        Execute the restore as a single transaction (that is, wrap the
-        emitted commands in <command>BEGIN</>/<command>COMMIT</>).  This
-        ensures that either all the commands complete successfully, or no
-        changes are applied. This option implies
-        <option>--exit-on-error</>.
+        Specifies a role name to be used to perform the restore.
+        This option causes <application>pg_restore</> to issue a
+        <command>SET ROLE</> <replaceable class="parameter">rolename</>
+        command after connecting to the database. It is useful when the
+        authenticated user (specified by <option>-U</>) lacks privileges
+        needed by <application>pg_restore</>, but can switch to a role with
+        the required rights.  Some installations have a policy against
+        logging in directly as a superuser, and use of this option allows
+        restores to be performed without violating the policy.
        </para>
       </listitem>
      </varlistentry>
