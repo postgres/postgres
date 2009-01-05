@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.208 2009/01/03 20:03:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.209 2009/01/05 02:27:45 alvherre Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -123,7 +123,7 @@ do { \
  */
 extern pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
-extern bool IsUnderPostmaster;
+extern PGDLLIMPORT bool IsUnderPostmaster;
 
 extern bool ExitOnAnyError;
 
