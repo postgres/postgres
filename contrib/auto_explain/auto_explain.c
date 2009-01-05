@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.3 2009/01/02 01:16:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.4 2009/01/05 13:35:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,8 @@ _PG_init(void)
 							 0,
 							 NULL,
 							 NULL);
+
+	EmitWarningsOnPlaceholders("auto_explain");
 
 	/* Install hooks. */
 	prev_ExecutorStart = ExecutorStart_hook;

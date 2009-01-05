@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.1 2009/01/04 22:19:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.2 2009/01/05 13:35:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,6 +221,8 @@ _PG_init(void)
 							 0,
 							 NULL,
 							 NULL);
+
+	EmitWarningsOnPlaceholders("pg_stat_statements");
 
 	/*
 	 * Request additional shared resources.  (These are no-ops if we're not in
