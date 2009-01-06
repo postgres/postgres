@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.106 2009/01/01 17:23:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.107 2009/01/06 02:01:27 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -311,7 +311,15 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						 errmsg("cannot use table references in parameter default value")));
 
 			/*
+			 * It can't return a set either --- but coerce_to_specific_type
+			 * already checked that for us.
+			 *
 			 * No subplans or aggregates, either...
+			 *
+			 * Note: the point of these restrictions is to ensure that an
+			 * expression that, on its face, hasn't got subplans, aggregates,
+			 * etc cannot suddenly have them after function default arguments
+			 * are inserted.
 			 */
 			if (pstate->p_hasSubLinks)
 				ereport(ERROR,
