@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.53 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.54 2009/01/06 16:39:52 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -603,13 +603,13 @@ trigf(PG_FUNCTION_ARGS)
 
     /* connect to SPI manager */
     if ((ret = SPI_connect()) < 0)
-        elog(INFO, "trigf (fired %s): SPI_connect returned %d", when, ret);
+        elog(ERROR, "trigf (fired %s): SPI_connect returned %d", when, ret);
 
     /* get number of rows in table */
     ret = SPI_exec("SELECT count(*) FROM ttest", 0);
 
     if (ret < 0)
-        elog(NOTICE, "trigf (fired %s): SPI_exec returned %d", when, ret);
+        elog(ERROR, "trigf (fired %s): SPI_exec returned %d", when, ret);
 
     /* count(*) returns int8, so be careful to convert */
     i = DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
