@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.273 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.274 2009/01/06 01:23:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -98,7 +98,8 @@ static Expr *simplify_function(Oid funcid,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
 static List *add_function_defaults(List *args, Oid result_type,
-								   HeapTuple func_tuple);
+								   HeapTuple func_tuple,
+								   eval_const_expressions_context *context);
 static Expr *evaluate_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List *args,
 				  HeapTuple func_tuple,
@@ -3279,7 +3280,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 
 	/* While we have the tuple, check if we need to add defaults */
 	if (((Form_pg_proc) GETSTRUCT(func_tuple))->pronargs > list_length(*args))
-		*args = add_function_defaults(*args, result_type, func_tuple);
+		*args = add_function_defaults(*args, result_type, func_tuple, context);
 
 	newexpr = evaluate_function(funcid, result_type, result_typmod, *args,
 								func_tuple, context);
@@ -3302,9 +3303,11 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
  * just like the parser did.
  */
 static List *
-add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
+add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple,
+					  eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	int			nargsprovided = list_length(args);
 	Datum		proargdefaults;
 	bool		isnull;
 	char	   *str;
@@ -3327,7 +3330,7 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
 	Assert(IsA(defaults, List));
 	pfree(str);
 	/* Delete any unused defaults from the list */
-	ndelete = list_length(args) + list_length(defaults) - funcform->pronargs;
+	ndelete = nargsprovided + list_length(defaults) - funcform->pronargs;
 	if (ndelete < 0)
 		elog(ERROR, "not enough default arguments");
 	while (ndelete-- > 0)
@@ -3337,8 +3340,8 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
 	Assert(list_length(args) == funcform->pronargs);
 
 	/*
-	 * The rest of this should be a no-op if there are no polymorphic
-	 * arguments, but we do it anyway to be sure.
+	 * The next part should be a no-op if there are no polymorphic arguments,
+	 * but we do it anyway to be sure.
 	 */
 	if (list_length(args) > FUNC_MAX_ARGS)
 		elog(ERROR, "too many function arguments");
@@ -3360,6 +3363,20 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple)
 
 	/* perform any necessary typecasting of arguments */
 	make_fn_arguments(NULL, args, actual_arg_types, declared_arg_types);
+
+	/*
+	 * Lastly, we have to recursively simplify the arguments we just added
+	 * (but don't recurse on the ones passed in, as we already did those).
+	 * This isn't merely an optimization, it's *necessary* since there could
+	 * be functions with defaulted arguments down in there.
+	 */
+	foreach(lc, args)
+	{
+		if (nargsprovided-- > 0)
+			continue;			/* skip original arg positions */
+		lfirst(lc) = eval_const_expressions_mutator((Node *) lfirst(lc),
+													context);
+	}
 
 	return args;
 }
