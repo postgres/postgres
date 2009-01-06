@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.16 2008/12/15 22:13:02 momjian Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.17 2009/01/06 17:27:06 tgl Exp $ 
  *
  *
  * pg_standby.c
@@ -91,7 +91,7 @@ struct stat stat_buf;
  *	accessible directory. If you want to make other assumptions,
  *	such as using a vendor-specific archive and access API, these
  *	routines are the ones you'll need to change. You're
- *	enouraged to submit any changes to pgsql-patches@postgresql.org
+ *	enouraged to submit any changes to pgsql-hackers@postgresql.org
  *	or personally to the current maintainer. Those changes may be
  *	folded in to later versions of this program.
  */

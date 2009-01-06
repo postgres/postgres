@@ -2081,7 +2081,7 @@ PostgreSQL has apparently not been ported to your platform yet.
 To try a manual configuration, look into the src/template directory
 for a similar platform and use the '--with-template=' option.
 
-Please also contact <pgsql-ports@postgresql.org> to see about
+Please also contact <pgsql-bugs@postgresql.org> to see about
 rectifying this.  Include the above 'checking host system type...'
 line.
 *******************************************************************
@@ -2092,7 +2092,7 @@ PostgreSQL has apparently not been ported to your platform yet.
 To try a manual configuration, look into the src/template directory
 for a similar platform and use the '--with-template=' option.
 
-Please also contact <pgsql-ports@postgresql.org> to see about
+Please also contact <pgsql-bugs@postgresql.org> to see about
 rectifying this.  Include the above 'checking host system type...'
 line.
 *******************************************************************
