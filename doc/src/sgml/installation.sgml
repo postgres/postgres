@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.316 2008/12/01 08:24:19 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.317 2009/01/06 19:42:57 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2386,6 +2386,12 @@ hosts=local4,bind4
        The <command>su</command> command is not supported; use ssh to
        simulate su on Windows NT, 2000, or XP. Otherwise, skip this
        step.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       OpenSSL is not supported.
       </para>
      </listitem>
 
