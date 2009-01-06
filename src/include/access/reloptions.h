@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.7 2009/01/05 17:14:28 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.8 2009/01/06 14:47:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,11 +106,16 @@ typedef struct relopt_string
  * Most of the time there's no need to call HAVE_RELOPTION manually, but it's
  * possible that an amoptions routine needs to walk the array with a different
  * purpose (say, to compute the size of a struct to allocate beforehand.)
+ *
+ * The last argument in the HANDLE_*_RELOPTION macros allows the caller to
+ * determine whether the option was set (true), or its value acquired from
+ * defaults (false); it can be passed as (char *) NULL if the caller does not
+ * need this information.
  */
 #define HAVE_RELOPTION(optname, option) \
 	(pg_strncasecmp(option.gen->name, optname, option.gen->namelen) == 0)
 
-#define HANDLE_INT_RELOPTION(optname, var, option) 					\
+#define HANDLE_INT_RELOPTION(optname, var, option, wasset)			\
 	do {															\
 		if (HAVE_RELOPTION(optname, option))						\
 		{															\
@@ -118,11 +123,12 @@ typedef struct relopt_string
 				var = option.values.int_val; 						\
 			else													\
 				var = ((relopt_int *) option.gen)->default_val; 	\
+			(wasset) != NULL ? *(wasset) = option.isset : (dummyret)NULL; \
 			continue;												\
 		}															\
 	} while (0)
 
-#define HANDLE_BOOL_RELOPTION(optname, var, option) 				\
+#define HANDLE_BOOL_RELOPTION(optname, var, option, wasset)			\
 	do {															\
 		if (HAVE_RELOPTION(optname, option))						\
 		{															\
@@ -130,11 +136,12 @@ typedef struct relopt_string
 				var = option.values.bool_val; 						\
 			else													\
 				var = ((relopt_bool *) option.gen)->default_val;	\
+			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
 			continue;												\
 		}															\
 	} while (0)
 
-#define HANDLE_REAL_RELOPTION(optname, var, option) 				\
+#define HANDLE_REAL_RELOPTION(optname, var, option, wasset) 			\
 	do {															\
 		if (HAVE_RELOPTION(optname, option))						\
 		{															\
@@ -142,22 +149,43 @@ typedef struct relopt_string
 				var = option.values.real_val; 						\
 			else													\
 				var = ((relopt_real *) option.gen)->default_val;	\
+			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
 			continue;												\
 		}															\
 	} while (0)
 
-/* Note that this assumes that the variable is already allocated! */
-#define HANDLE_STRING_RELOPTION(optname, var, option) 				\
+/*
+ * Note that this assumes that the variable is already allocated at the tail of
+ * reloptions structure (StdRdOptions or other).
+ *
+ * "base" is a pointer to the reloptions structure, and "offset" is an integer
+ * variable that must be initialized to sizeof(reloptions structure).  This
+ * struct must have been allocated with enough space to hold any string option
+ * present, including terminating \0 for every option.  SET_VARSIZE() must be
+ * called on the struct with this offset as the second argument, after all the
+ * string options have been processed.
+ */
+#define HANDLE_STRING_RELOPTION(optname, var, option, base, offset, wasset)	\
 	do {															\
 		if (HAVE_RELOPTION(optname, option))						\
 		{															\
 			relopt_string *optstring = (relopt_string *) option.gen;\
-			if (optstring->default_isnull)							\
-				var[0] = '\0';										\
+			char *string_val = NULL;								\
+																	\
+			if (option.isset)										\
+				string_val = option.values.string_val;				\
+			else if (!optstring->default_isnull)					\
+				string_val = optstring->default_val;				\
+			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
+																	\
+			if (!string_val)										\
+				var = 0;											\
 			else													\
-				strcpy(var,											\
-					   option.isset ? option.values.string_val : 	\
-					   optstring->default_val);						\
+			{														\
+				strcpy((char *)(base) + (offset), string_val);		\
+				var = (offset);										\
+				(offset) += strlen(string_val) + 1;					\
+			}														\
 			continue;												\
 		}															\
 	} while (0)
