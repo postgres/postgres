@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.111 2009/01/05 16:54:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.112 2009/01/06 18:01:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,7 +500,7 @@ help(void)
 			 "                           fail after waiting TIMEOUT for a table lock\n"));
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
-	printf(_("  -c, --clean              clean (drop) databases prior to create\n"));
+	printf(_("  -c, --clean              clean (drop) databases before recreating\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));

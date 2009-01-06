@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.512 2009/01/05 16:54:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.513 2009/01/06 18:01:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -803,7 +803,7 @@ help(const char *progname)
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
 	printf(_("  -b, --blobs                 include large objects in dump\n"));
-	printf(_("  -c, --clean                 clean (drop) schema prior to create\n"));
+	printf(_("  -c, --clean                 clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                include commands to create database in dump\n"));
 	printf(_("  -d, --inserts               dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  -D, --column-inserts        dump data as INSERT commands with column names\n"));
