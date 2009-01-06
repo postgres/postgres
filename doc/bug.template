@@ -1,16 +1,12 @@
-If PostgreSQL failed to compile on your computer or you found a bug that
-is likely to be specific to one platform, then please fill out this form
-and e-mail it to pgsql-ports@postgresql.org.
-
-To report non-porting-related bugs, fill out the form below and e-mail it to
-pgsql-bugs@postgresql.org.
+If PostgreSQL failed to compile on your computer or you found a bug,
+please fill out this form and e-mail it to pgsql-bugs@postgresql.org.
 
 If your bug report has security implications and you'd prefer that it not
 become immediately visible in public archives, don't send it to pgsql-bugs.
 Security issues can be reported privately to security@postgresql.org.
 
 If you not only found the problem but solved it and generated a patch
-then e-mail it to pgsql-patches@postgresql.org instead.  Please use the
+then e-mail it to pgsql-hackers@postgresql.org instead.  Please use the
 command "diff -c" to generate the patch.
 
 You may also enter a bug report at http://www.postgresql.org/ instead of
