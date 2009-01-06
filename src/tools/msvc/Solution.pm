@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.46 2008/12/16 15:42:21 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.47 2009/01/06 18:37:50 mha Exp $
 #
 use Carp;
 use strict;
@@ -122,7 +122,8 @@ sub GenerateFiles
         {
             s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}"};
             s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
-s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER)};
+            # XXX: When we support 64-bit, need to remove this hardcoding
+s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", 32-bit"};
             print O;
         }
 		print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
