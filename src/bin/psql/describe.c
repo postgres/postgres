@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.193 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.194 2009/01/06 21:10:30 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -53,7 +53,7 @@ static void printACLColumn(PQExpBuffer buf, const char *colname);
  * Takes an optional regexp to select particular aggregates
  */
 bool
-describeAggregates(const char *pattern, bool verbose)
+describeAggregates(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -76,7 +76,7 @@ describeAggregates(const char *pattern, bool verbose)
 					  "    ELSE\n"
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
-				 "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
+					  "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
@@ -93,6 +93,9 @@ describeAggregates(const char *pattern, bool verbose)
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
 					  "WHERE p.proisagg\n",
 					  gettext_noop("Description"));
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
@@ -182,7 +185,7 @@ describeTablespaces(const char *pattern, bool verbose)
  * Takes an optional regexp to select particular functions
  */
 bool
-describeFunctions(const char *pattern, bool verbose)
+describeFunctions(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -278,6 +281,9 @@ describeFunctions(const char *pattern, bool verbose)
 					  "      AND p.proargtypes[0] IS DISTINCT FROM 'pg_catalog.cstring'::pg_catalog.regtype\n"
 					  "      AND NOT p.proisagg\n");
 
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
 						  "pg_catalog.pg_function_is_visible(p.oid)");
@@ -306,7 +312,7 @@ describeFunctions(const char *pattern, bool verbose)
  * describe types
  */
 bool
-describeTypes(const char *pattern, bool verbose)
+describeTypes(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -366,6 +372,9 @@ describeTypes(const char *pattern, bool verbose)
 	else
 		appendPQExpBuffer(&buf, "  AND t.typname !~ '^_'\n");
 
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	/* Match name pattern against either internal or external name */
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "t.typname",
@@ -393,7 +402,7 @@ describeTypes(const char *pattern, bool verbose)
 /* \do
  */
 bool
-describeOperators(const char *pattern)
+describeOperators(const char *pattern, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -418,7 +427,10 @@ describeOperators(const char *pattern)
 					  gettext_noop("Result type"),
 					  gettext_noop("Description"));
 
-	processSQLNamePattern(pset.db, &buf, pattern, false, true,
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, !showSystem, true,
 						  "n.nspname", "o.oprname", NULL,
 						  "pg_catalog.pg_operator_is_visible(o.oid)");
 
@@ -580,7 +592,7 @@ permissionsList(const char *pattern)
  * lists of things, there are other \d? commands.
  */
 bool
-objectDescription(const char *pattern)
+objectDescription(const char *pattern, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -607,6 +619,10 @@ objectDescription(const char *pattern)
 	 "       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
 					  "  WHERE p.proisagg\n",
 					  gettext_noop("aggregate"));
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
 						  "pg_catalog.pg_function_is_visible(p.oid)");
@@ -626,6 +642,10 @@ objectDescription(const char *pattern)
 					  "      OR   p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype)\n"
 					  "      AND NOT p.proisagg\n",
 					  gettext_noop("function"));
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
 						  "pg_catalog.pg_function_is_visible(p.oid)");
@@ -640,7 +660,11 @@ objectDescription(const char *pattern)
 					  "  FROM pg_catalog.pg_operator o\n"
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace\n",
 					  gettext_noop("operator"));
-	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+ 
+	processSQLNamePattern(pset.db, &buf, pattern, !showSystem, false,
 						  "n.nspname", "o.oprname", NULL,
 						  "pg_catalog.pg_operator_is_visible(o.oid)");
 
@@ -654,7 +678,11 @@ objectDescription(const char *pattern)
 					  "  FROM pg_catalog.pg_type t\n"
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n",
 					  gettext_noop("data type"));
-	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, !showSystem, false,
 						  "n.nspname", "pg_catalog.format_type(t.oid, NULL)",
 						  NULL,
 						  "pg_catalog.pg_type_is_visible(t.oid)");
@@ -675,6 +703,9 @@ objectDescription(const char *pattern)
 					  gettext_noop("view"),
 					  gettext_noop("index"),
 					  gettext_noop("sequence"));
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
 						  "pg_catalog.pg_table_is_visible(c.oid)");
@@ -691,6 +722,10 @@ objectDescription(const char *pattern)
 	 "       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					  "  WHERE r.rulename != '_RETURN'\n",
 					  gettext_noop("rule"));
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	/* XXX not sure what to do about visibility rule here? */
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "r.rulename", NULL,
@@ -707,8 +742,11 @@ objectDescription(const char *pattern)
 				   "       JOIN pg_catalog.pg_class c ON c.oid = t.tgrelid\n"
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n",
 					  gettext_noop("trigger"));
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+
 	/* XXX not sure what to do about visibility rule here? */
-	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+	processSQLNamePattern(pset.db, &buf, pattern, !showSystem, false,
 						  "n.nspname", "t.tgname", NULL,
 						  "pg_catalog.pg_table_is_visible(c.oid)");
 
@@ -1856,13 +1894,12 @@ add_role_attribute(PQExpBuffer buf, const char *const str)
  * (any order of the above is fine)
  */
 bool
-listTables(const char *tabtypes, const char *pattern, bool verbose)
+listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSystem)
 {
 	bool		showTables = strchr(tabtypes, 't') != NULL;
 	bool		showIndexes = strchr(tabtypes, 'i') != NULL;
 	bool		showViews = strchr(tabtypes, 'v') != NULL;
 	bool		showSeq = strchr(tabtypes, 's') != NULL;
-	bool		showSystem = strchr(tabtypes, 'S') != NULL;
 
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -1981,7 +2018,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
  * Describes domains.
  */
 bool
-listDomains(const char *pattern)
+listDomains(const char *pattern, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -2008,6 +2045,9 @@ listDomains(const char *pattern)
 					  gettext_noop("Type"),
 					  gettext_noop("Modifier"),
 					  gettext_noop("Check"));
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "t.typname", NULL,
@@ -2036,7 +2076,7 @@ listDomains(const char *pattern)
  * Describes conversions.
  */
 bool
-listConversions(const char *pattern)
+listConversions(const char *pattern, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -2060,6 +2100,9 @@ listConversions(const char *pattern)
 					  gettext_noop("Destination"),
 					  gettext_noop("yes"), gettext_noop("no"),
 					  gettext_noop("Default?"));
+
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.conname", NULL,

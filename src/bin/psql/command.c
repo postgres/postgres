@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.200 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.201 2009/01/06 21:10:30 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -327,13 +327,14 @@ exec_command(const char *cmd,
 	else if (cmd[0] == 'd')
 	{
 		char	   *pattern;
-		bool		show_verbose;
+		bool		show_verbose, show_system;
 
 		/* We don't do SQLID reduction on the pattern yet */
 		pattern = psql_scan_slash_option(scan_state,
 										 OT_NORMAL, NULL, true);
 
 		show_verbose = strchr(cmd, '+') ? true : false;
+		show_system = strchr(cmd, 'S') ? true: false;
 
 		switch (cmd[1])
 		{
@@ -343,28 +344,28 @@ exec_command(const char *cmd,
 					success = describeTableDetails(pattern, show_verbose);
 				else
 					/* standard listing of interesting things */
-					success = listTables("tvs", NULL, show_verbose);
+					success = listTables("tvs", NULL, show_verbose, show_system);
 				break;
 			case 'a':
-				success = describeAggregates(pattern, show_verbose);
+				success = describeAggregates(pattern, show_verbose, show_system);
 				break;
 			case 'b':
 				success = describeTablespaces(pattern, show_verbose);
 				break;
 			case 'c':
-				success = listConversions(pattern);
+				success = listConversions(pattern, show_system);
 				break;
 			case 'C':
 				success = listCasts(pattern);
 				break;
 			case 'd':
-				success = objectDescription(pattern);
+				success = objectDescription(pattern, show_system);
 				break;
 			case 'D':
-				success = listDomains(pattern);
+				success = listDomains(pattern, show_system);
 				break;
 			case 'f':
-				success = describeFunctions(pattern, show_verbose);
+				success = describeFunctions(pattern, show_verbose, show_system);
 				break;
 			case 'g':
 				/* no longer distinct from \du */
@@ -377,20 +378,20 @@ exec_command(const char *cmd,
 				success = listSchemas(pattern, show_verbose);
 				break;
 			case 'o':
-				success = describeOperators(pattern);
+				success = describeOperators(pattern, show_system);
 				break;
 			case 'p':
 				success = permissionsList(pattern);
 				break;
 			case 'T':
-				success = describeTypes(pattern, show_verbose);
+				success = describeTypes(pattern, show_verbose, show_system);
 				break;
 			case 't':
 			case 'v':
 			case 'i':
 			case 's':
 			case 'S':
-				success = listTables(&cmd[1], pattern, show_verbose);
+				success = listTables(&cmd[1], pattern, show_verbose, show_system);
 				break;
 			case 'u':
 				success = describeRoles(pattern, show_verbose);
