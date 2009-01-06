@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.14 2009/01/06 02:44:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.15 2009/01/06 03:15:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,7 +667,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 {
 	char	   *value;
 	int			value_len;
-	bool		parsed = true;  /* quiet compiler */
+	bool		parsed;
 	bool		nofree = false;
 
 	if (option->isset && validate)
@@ -736,6 +736,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 			break;
 		default:
 			elog(ERROR, "unsupported reloption type %d", option->gen->type);
+			parsed = true; /* quiet compiler */
 			break;
 	}
 
