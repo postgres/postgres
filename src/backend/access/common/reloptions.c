@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.13 2009/01/05 17:14:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.14 2009/01/06 02:44:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,7 +667,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 {
 	char	   *value;
 	int			value_len;
-	bool		parsed;
+	bool		parsed = true;  /* quiet compiler */
 	bool		nofree = false;
 
 	if (option->isset && validate)
