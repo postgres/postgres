@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.81.2.4 2007/09/24 03:53:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.81.2.5 2009/01/06 14:55:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,8 +181,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	 * number of pages.  Otherwise, the time taken isn't worth it.
 	 */
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
-	if (possibly_freeable >= REL_TRUNCATE_MINIMUM ||
-		possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
+	if (possibly_freeable > 0 &&
+		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
+		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION))
 		lazy_truncate_heap(onerel, vacrelstats);
 
 	/* Update shared free space map with final free space info */
