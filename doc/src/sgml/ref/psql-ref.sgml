@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.214 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.215 2009/01/06 23:01:57 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -815,8 +815,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\d [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\d+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\d[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -834,6 +833,8 @@ testdb=&gt;
         more information is displayed: any comments associated with the
         columns of the table are shown, as is the presence of OIDs in the
         table.
+        The letter <literal>S</literal> restricts the listing to system objects; without
+        <literal>S</literal>, only non-system objects are shown.
         </para>
 
         <note>
@@ -849,7 +850,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\da [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\da[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -857,14 +858,16 @@ testdb=&gt;
         return type and the data types they operate on. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only aggregates whose names match the pattern are shown.
+        The letter <literal>S</literal> restricts the listing
+        to system objects; without <literal>S</literal>, only
+        non-system objects are shown.
         </para>
         </listitem>
       </varlistentry>
 
 
       <varlistentry>
-        <term><literal>\db [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\db+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\db[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -879,13 +882,15 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dc [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dc[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all available conversions between character-set encodings.
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only conversions whose names match the pattern are
         listed.
+        The letter <literal>S</literal> restricts the listing to system objects; without
+        <literal>S</literal>, only non-system objects are shown.
         </para>
         </listitem>
       </varlistentry>
@@ -905,13 +910,15 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dd [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dd[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Shows the descriptions of objects matching the <replaceable
         class="parameter">pattern</replaceable>, or of all visible objects if
         no argument is given.  But in either case, only objects that have
         a description are listed.
+        The letter <literal>S</literal> restricts the listing to system objects; without
+        <literal>S</literal>, only non-system objects are shown.
         (<quote>Object</quote> covers aggregates, functions, operators,
         types, relations (tables, views, indexes, sequences, large
         objects), rules, and triggers.) For example:
@@ -935,20 +942,21 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dD [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dD[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all available domains. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only matching domains are shown.
+        The letter <literal>S</literal> restricts the listing to system objects; without
+        <literal>S</literal>, only non-system objects are shown.
         </para>
         </listitem>
       </varlistentry>
 
 
       <varlistentry>
-        <term><literal>\des [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\des+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\des[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all foreign servers (mnemonic: <quote>external
@@ -964,8 +972,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\deu [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\deu+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\deu[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all user mappings (mnemonic: <quote>external
@@ -988,8 +995,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dew [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dew+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dew[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all foreign-data wrappers (mnemonic: <quote>external
@@ -1005,8 +1011,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\df [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\df+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\df[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1016,6 +1021,8 @@ testdb=&gt;
         is specified, only functions whose names match the pattern are shown.
         If the form <literal>\df+</literal> is used, additional information about
         each function, including volatility, language, source code and description, is shown.
+        The letter <literal>S</literal> restricts the listing to system objects; without
+        <literal>S</literal>, only non-system objects are shown.
         </para>
 
         <note>
@@ -1037,8 +1044,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dF [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dF+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dF[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
          Lists available text search configurations.
@@ -1052,8 +1058,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\dFd [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dFd+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dFd[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
          Lists available text search dictionaries.
@@ -1067,8 +1072,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\dFp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dFp+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dFp[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
          Lists available text search parsers.
@@ -1082,8 +1086,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\dFt [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dFt+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dFt[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
          Lists available text search templates.
@@ -1110,7 +1113,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\distvS [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\distv[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1120,11 +1123,12 @@ testdb=&gt;
         <literal>S</literal> stand for index, sequence, table, view,
         and system table, respectively. You can specify any or all of
         these letters, in any order, to obtain a listing of all the
-        matching objects.  The letter <literal>S</literal> restricts
-        the listing to system objects; without <literal>S</literal>,
-        only non-system objects are shown.  If <literal>+</literal> is
+        matching objects.  If <literal>+</literal> is
         appended to the command name, each object is listed with its
         physical size on disk and its associated description, if any.
+        The letter <literal>S</literal> restricts the listing
+        to system objects; without <literal>S</literal>, only
+        non-system objects are shown.
         </para>
 
         <para>
@@ -1147,8 +1151,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dn [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dn+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dn[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
@@ -1164,12 +1167,15 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\do [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\do[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists available operators with their operand and return types.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only operators whose names match the pattern are listed.
+        The letter <literal>S</literal> restricts the listing
+        to system objects; without <literal>S</literal>, only
+        non-system objects are shown.
         </para>
         </listitem>
       </varlistentry>
@@ -1195,14 +1201,15 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dT [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\dT+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dT[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all data types or only those that match <replaceable
         class="parameter">pattern</replaceable>. The command form
         <literal>\dT+</literal> shows extra information, namely the type's internal name, size, and
         allowed values for <type>enum</> types.
+        The letter <literal>S</literal> restricts the listing to system objects; without
+        <literal>S</literal>, only non-system objects are shown.
         </para>
         </listitem>
       </varlistentry>

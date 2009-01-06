@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.134 2009/01/06 21:10:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.135 2009/01/06 23:01:57 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -194,37 +194,37 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
- 	fprintf(output, _("  Modifiers: S = show system objects  + = Additional detail\n"));
- 	fprintf(output, _("  \\l[+]             list all databases\n"));
- 	fprintf(output, _("  \\d[S]             list tables, views, and sequences\n"));
- 	fprintf(output, _("  \\d[S] NAME        describe table, view, sequence, or index\n"));
- 	fprintf(output, _("  \\dt[S+] [PATTERN] list tables\n"));
- 	fprintf(output, _("  \\dv[S+] [PATTERN] list views\n"));
- 	fprintf(output, _("  \\ds[S+] [PATTERN] list sequences\n"));
- 	fprintf(output, _("  \\di[S+] [PATTERN] list indexes\n"));
- 	fprintf(output, _("  \\df[S+] [PATTERN] list functions\n"));
- 	fprintf(output, _("  \\dT[S+] [PATTERN] list data types\n"));
- 	fprintf(output, _("  \\dd[S] [PATTERN]  list comments on objects\n"));
- 	fprintf(output, _("  \\dD[S] [PATTERN]  list domains\n"));
-	fprintf(output, _("  \\des[+] [PATTERN] list foreign servers\n"));
-	fprintf(output, _("  \\deu[+] [PATTERN] list user mappings\n"));
-	fprintf(output, _("  \\dew[+] [PATTERN] list foreign-data wrappers\n"));
- 	fprintf(output, _("  \\do[S] [PATTERN]  list operators\n"));
- 	fprintf(output, _("  \\da[S] [PATTERN]  list aggregate functions\n"));
- 	fprintf(output, _("  \\dc[S] [PATTERN]  list conversions\n"));
- 	fprintf(output, _("  \\db[+] [PATTERN]  list tablespaces\n"));
- 	fprintf(output, _("  \\dn[+] [PATTERN]  list schemas\n"));
-	fprintf(output, _("  \\dC               list casts\n"));
-	fprintf(output, _("  \\dd [PATTERN]     show comment for object\n"));
-	fprintf(output, _("  \\dF[+] [PATTERN]  list text search configurations\n"));
-	fprintf(output, _("  \\dFd[+] [PATTERN] list text search dictionaries\n"));
-	fprintf(output, _("  \\dFt [PATTERN]    list text search templates\n"));
-	fprintf(output, _("  \\dFp[+] [PATTERN] list text search parsers\n"));
-	fprintf(output, _("  \\dg [PATTERN]     list roles (groups)\n"));
-	fprintf(output, _("  \\dl               list large objects, same as \\lo_list\n"));
-	fprintf(output, _("  \\du [PATTERN]     list roles (users)\n"));
-	fprintf(output, _("  \\dp [PATTERN]     list table, view, and sequence access privileges\n"));
-	fprintf(output, _("  \\z [PATTERN]      same as \\dp\n"));
+	fprintf(output, _("  Modifiers: S = show system objects  + = Additional detail\n"));
+	fprintf(output, _("  \\l[+]                list all databases\n"));
+	fprintf(output, _("  \\d[S+]               list tables, views, and sequences\n"));
+	fprintf(output, _("  \\d[S+] NAME          describe table, view, sequence, or index\n"));
+	fprintf(output, _("  \\da[S] [PATTERN]     list aggregate functions\n"));
+	fprintf(output, _("  \\db[+] [PATTERN]     list tablespaces\n"));
+	fprintf(output, _("  \\dc[S] [PATTERN]     list conversions\n"));
+	fprintf(output, _("  \\dC [PATTERN]        list casts\n"));
+	fprintf(output, _("  \\dd [PATTERN]        show comment for object\n"));
+	fprintf(output, _("  \\dd[S] [PATTERN]     list comments on objects\n"));
+	fprintf(output, _("  \\dD[S] [PATTERN]     list domains\n"));
+	fprintf(output, _("  \\des[+] [PATTERN]    list foreign servers\n"));
+	fprintf(output, _("  \\deu[+] [PATTERN]    list user mappings\n"));
+	fprintf(output, _("  \\dew[+] [PATTERN]    list foreign-data wrappers\n"));
+	fprintf(output, _("  \\df[S+] [PATTERN]    list functions\n"));
+	fprintf(output, _("  \\dF[+] [PATTERN]     list text search configurations\n"));
+	fprintf(output, _("  \\dFd[+] [PATTERN]    list text search dictionaries\n"));
+	fprintf(output, _("  \\dFp[+] [PATTERN]    list text search parsers\n"));
+	fprintf(output, _("  \\dFt[+] [PATTERN]    list text search templates\n"));
+	fprintf(output, _("  \\dg [PATTERN]        list roles (groups)\n"));
+	fprintf(output, _("  \\di[S+] [PATTERN]    list indexes\n"));
+	fprintf(output, _("  \\dl                  list large objects, same as \\lo_list\n"));
+	fprintf(output, _("  \\dn[+] [PATTERN]     list schemas\n"));
+	fprintf(output, _("  \\do[S] [PATTERN]     list operators\n"));
+	fprintf(output, _("  \\dp [PATTERN]        list table, view, and sequence access privileges\n"));
+	fprintf(output, _("    \\z [PATTERN]       same as \\dp\n"));
+	fprintf(output, _("  \\ds[S+] [PATTERN]    list sequences\n"));
+	fprintf(output, _("  \\dt[S+] [PATTERN]    list tables\n"));
+	fprintf(output, _("  \\dT[S+] [PATTERN]    list data types\n"));
+	fprintf(output, _("  \\du [PATTERN]        list roles (users)\n"));
+	fprintf(output, _("  \\dv[S+] [PATTERN]    list views\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Formatting\n"));
