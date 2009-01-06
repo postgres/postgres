@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.579 2009/01/05 10:25:59 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.580 2009/01/06 03:05:23 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -496,8 +496,10 @@ if test x"$GCC" = x"yes" ; then
 else
   cc_string=$CC
 fi
+AC_CHECK_SIZEOF([void *])
+
 AC_DEFINE_UNQUOTED(PG_VERSION_STR,
-                   ["PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string"],
+                   ["PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"],
                    [A string containing the version number, platform, and C compiler])
 
 

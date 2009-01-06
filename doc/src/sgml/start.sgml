@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.47 2008/05/16 17:17:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.48 2009/01/06 03:05:23 momjian Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -362,9 +362,9 @@ mydb=#
     <indexterm><primary>version</primary></indexterm>
 <screen>
 <prompt>mydb=&gt;</prompt> <userinput>SELECT version();</userinput>
-                            version
-----------------------------------------------------------------
- PostgreSQL &version; on i586-pc-linux-gnu, compiled by GCC 2.96
+                               version
+ -----------------------------------------------------------------------
+ PostgreSQL &version; on i586-pc-linux-gnu, compiled by GCC 2.96, 32-bit
 (1 row)
 
 <prompt>mydb=&gt;</prompt> <userinput>SELECT current_date;</userinput>
