@@ -88,7 +88,7 @@ struct stat stat_buf;
  *	accessible directory. If you want to make other assumptions,
  *	such as using a vendor-specific archive and access API, these
  *	routines are the ones you'll need to change. You're
- *	enouraged to submit any changes to pgsql-patches@postgresql.org
+ *	enouraged to submit any changes to pgsql-hackers@postgresql.org
  *	or personally to the current maintainer. Those changes may be
  *	folded in to later versions of this program.
  */
