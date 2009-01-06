@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.24 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.24.2.1 2009/01/06 17:27:50 tgl Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -343,10 +343,10 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.24 2005/04/09 03:52:43 momjian
    Please be specific about what part of the documentation you are unhappy
    with.
   </para>
- 
+
   <para>
    If your bug is a portability problem on a non-supported platform,
-   send mail to <email>pgsql-ports@postgresql.org</email>,
+   send mail to <email>pgsql-hackers@postgresql.org</email>,
    so we (and you) can work on
    porting <productname>PostgreSQL</productname> to your platform.
   </para>

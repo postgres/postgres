@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.249 2005/11/05 00:04:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.249.2.1 2009/01/06 17:27:50 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1495,9 +1495,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <note>
    <para>
     If you are having problems with the installation on a supported
-    platform, please write to <email>pgsql-bugs@postgresql.org</email>
-    or <email>pgsql-ports@postgresql.org</email>, not to the people
-    listed here.
+    platform, please write to <email>pgsql-bugs@postgresql.org</email>,
+    not to the people listed here.
    </para>
   </note>
 
