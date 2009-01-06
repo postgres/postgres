@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.30 2009/01/05 10:25:59 petere Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.31 2009/01/06 02:25:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,12 +38,20 @@ ifeq (,$(with_system_tzdata))
 all: submake-libpgport zic
 endif
 
+# We could do this test in the action section:
+#	$(if $(ZIC),$(ZIC),./zic)
+# but gmake versions <= 3.78.1 or perhaps later have a bug
+# that causes a segfault;  gmake 3.81 or later fixes this.
+ifeq (,$(ZIC))
+ZIC= ./zic
+endif
+
 zic: $(ZICOBJS)
 	$(CC) $(CFLAGS) $(ZICOBJS) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 install: all installdirs
 ifeq (,$(with_system_tzdata))
-	$(if $(ZIC),$(ZIC),./zic) -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
+	$(ZIC) -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
 endif
 	$(MAKE) -C tznames $@
 
