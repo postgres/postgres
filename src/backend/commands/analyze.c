@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.131 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.132 2009/01/06 23:46:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2149,7 +2149,9 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * least 2 instances in the sample.  Also, we won't suppress values
 		 * that have a frequency of at least 1/K where K is the intended
 		 * number of histogram bins; such values might otherwise cause us to
-		 * emit duplicate histogram bin boundaries.
+		 * emit duplicate histogram bin boundaries.  (We might end up with
+		 * duplicate histogram entries anyway, if the distribution is skewed;
+		 * but we prefer to treat such values as MCVs if at all possible.)
 		 */
 		if (track_cnt == ndistinct && toowide_cnt == 0 &&
 			stats->stadistinct > 0 &&
