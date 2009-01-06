@@ -166,7 +166,7 @@
  *
  * Copyright (c) 1999-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.32 2009/01/01 17:23:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.33 2009/01/06 15:51:38 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -211,7 +211,7 @@ typedef struct PGLZ_HistEntry
  */
 static const PGLZ_Strategy strategy_default_data = {
 	32,				/* Data chunks less than 32 bytes are not compressed */
-	1024 * 1024,	/* Data chunks over 1MB are not compressed either */
+	INT_MAX,		/* No upper limit on what we'll try to compress */
 	25,				/* Require 25% compression rate, or not worth it */
 	1024,			/* Give up if no compression in the first 1KB */
 	128,			/* Stop history lookup if a match of 128 bytes is found */
