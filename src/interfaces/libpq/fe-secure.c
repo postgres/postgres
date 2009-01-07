@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.115 2009/01/01 17:24:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.116 2009/01/07 12:02:46 mha Exp $
  *
  * NOTES
  *
@@ -560,11 +560,18 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
 	char		sebuf[256];
 
-	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+	/*
+	 * If conn->sslcert  or conn->sslkey is not set, we don't need the home
+	 * directory to find the required files.
+	 */
+	if (!conn->sslcert || !conn->sslkey)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not get user information\n"));
-		return 0;
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("cannot find home directory to locate client certificate files"));
+			return 0;
+		}
 	}
 
 	/* read the user certificate */
@@ -964,76 +971,85 @@ initialize_SSL(PGconn *conn)
 	 * If sslverify is set to anything other than "none", perform certificate
 	 * verification. If set to "cn" we will also do further verifications after
 	 * the connection has been completed.
+	 *
+	 * If we are going to look for either root certificate or CRL in the home directory,
+	 * we need pqGetHomeDirectory() to succeed. In other cases, we don't need to
+	 * get the home directory explicitly.
 	 */
-
-	/* Set up to verify server cert, if root.crt is present */
-	if (pqGetHomeDirectory(homedir, sizeof(homedir)))
+	if (!conn->sslrootcert || !conn->sslcrl)
 	{
-		if (conn->sslrootcert)
-			strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
-		else
-			snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
-
-		if (stat(fnbuf, &buf) == 0)
-		{
-			X509_STORE *cvstore;
-
-			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
-			{
-				char	   *err = SSLerrmessage();
-
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
-								  fnbuf, err);
-				SSLerrfree(err);
-				return -1;
-			}
-
-			if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
-			{
-				if (conn->sslcrl)
-					strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
-				else
-					snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
-
-				/* setting the flags to check against the complete CRL chain */
-				if (X509_STORE_load_locations(cvstore, fnbuf, NULL) != 0)
-/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
-#ifdef X509_V_FLAG_CRL_CHECK
-					X509_STORE_set_flags(cvstore,
-						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-				/* if not found, silently ignore;  we do not require CRL */
-#else
-				{
-					char	   *err = SSLerrmessage();
-
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("SSL library does not support CRL certificates (file \"%s\")\n"),
-									  fnbuf);
-					SSLerrfree(err);
-					return -1;
-				}
-#endif
-			}
-
-			SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
-		}
-		else
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 		{
 			if (strcmp(conn->sslverify, "none") != 0)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("root certificate file (%s) not found"), fnbuf);
+								  libpq_gettext("cannot find home directory to locate root certificate file"));
 				return -1;
 			}
 		}
 	}
 	else
 	{
+		homedir[0] = '\0';
+	}
+
+
+
+	if (conn->sslrootcert)
+		strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
+	else
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
+
+	if (stat(fnbuf, &buf) == 0)
+	{
+		X509_STORE *cvstore;
+
+		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
+		{
+			char	   *err = SSLerrmessage();
+
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
+							  fnbuf, err);
+			SSLerrfree(err);
+			return -1;
+		}
+
+		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
+		{
+			if (conn->sslcrl)
+				strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
+			else
+				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
+
+			/* setting the flags to check against the complete CRL chain */
+			if (X509_STORE_load_locations(cvstore, fnbuf, NULL) != 0)
+/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
+#ifdef X509_V_FLAG_CRL_CHECK
+				X509_STORE_set_flags(cvstore,
+					  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+			/* if not found, silently ignore;  we do not require CRL */
+#else
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("SSL library does not support CRL certificates (file \"%s\")\n"),
+								  fnbuf);
+				SSLerrfree(err);
+				return -1;
+			}
+#endif
+		}
+
+		SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
+	} /* root certificate exists */
+	else
+	{
 		if (strcmp(conn->sslverify, "none") != 0)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("cannot find home directory to locate root certificate file"));
+							  libpq_gettext("root certificate file (%s) not found"), fnbuf);
 			return -1;
 		}
 	}
