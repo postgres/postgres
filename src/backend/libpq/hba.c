@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.179 2009/01/07 12:38:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.180 2009/01/07 13:09:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1052,6 +1052,17 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					parsedline->auth_method != uaSSPI)
 					INVALID_AUTH_OPTION("krb_realm", "krb5, gssapi and sspi");
 				parsedline->krb_realm = pstrdup(c);
+			}
+			else if (strcmp(token, "include_realm") == 0)
+			{
+				if (parsedline->auth_method != uaKrb5 &&
+					parsedline->auth_method != uaGSS &&
+					parsedline->auth_method != uaSSPI)
+					INVALID_AUTH_OPTION("include_realm", "krb5, gssapi and sspi");
+				if (strcmp(c, "1") == 0)
+					parsedline->include_realm = true;
+				else
+					parsedline->include_realm = false;
 			}
 			else
 			{

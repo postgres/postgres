@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.116 2009/01/07 12:38:10 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.117 2009/01/07 13:09:21 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -786,6 +786,18 @@ omicron       bryanh            guest1
      </varlistentry>
 
      <varlistentry>
+      <term>include_realm</term>
+      <listitem>
+       <para>
+        Include the realm name from the authenticated user principal. This is useful
+        in combination with Username maps (See <xref linkend="auth-username-maps">
+        for details), especially with regular expressions, to map users from
+        multiple realms.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>krb_realm</term>
       <listitem>
        <para>
@@ -842,6 +854,18 @@ omicron       bryanh            guest1
        <para>
         Allows for mapping between system and database usernames. See
         <xref linkend="auth-username-maps"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>include_realm</term>
+      <listitem>
+       <para>
+        Include the realm name from the authenticated user principal. This is useful
+        in combination with Username maps (See <xref linkend="auth-username-maps">
+        for details), especially with regular expressions, to map users from
+        multiple realms.
        </para>
       </listitem>
      </varlistentry>

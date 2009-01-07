@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.176 2009/01/07 12:38:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.177 2009/01/07 13:09:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -748,7 +748,13 @@ pg_krb5_recvauth(Port *port)
 	cp = strchr(kusername, '@');
 	if (cp)
 	{
-		*cp = '\0';
+		/*
+		 * If we are not going to include the realm in the username that is passed
+		 * to the ident map, destructively modify it here to remove the realm. Then
+		 * advance past the separator to check the realm.
+		 */
+		if (!port->hba->include_realm)
+			*cp = '\0';
 		cp++;
 
 		if (realmmatch != NULL && strlen(realmmatch))
@@ -1040,7 +1046,13 @@ pg_GSS_recvauth(Port *port)
 	{
 		char	   *cp = strchr(gbuf.value, '@');
 
-		*cp = '\0';
+		/*
+		 * If we are not going to include the realm in the username that is passed
+		 * to the ident map, destructively modify it here to remove the realm. Then
+		 * advance past the separator to check the realm.
+		 */
+		if (!port->hba->include_realm)
+			*cp = '\0';
 		cp++;
 
 		if (realmmatch != NULL && strlen(realmmatch))
@@ -1361,8 +1373,22 @@ pg_SSPI_recvauth(Port *port)
 	/*
 	 * We have the username (without domain/realm) in accountname, compare to
 	 * the supplied value. In SSPI, always compare case insensitive.
+	 *
+	 * If set to include realm, append it in <username>@<realm> format.
 	 */
-	return check_usermap(port->hba->usermap, port->user_name, accountname, true);
+	if (port->hba->include_realm)
+	{
+		char   *namebuf;
+		int		retval;
+
+		namebuf = palloc(strlen(accountname) + strlen(domainname) + 2);
+		sprintf(namebuf, "%s@%s", accountname, domainname);
+		retval = check_usermap(port->hba->usermap, port->user_name, namebuf, true);
+		pfree(namebuf);
+		return retval;
+	}
+	else
+		return check_usermap(port->hba->usermap, port->user_name, accountname, true);
 }
 #endif   /* ENABLE_SSPI */
 
