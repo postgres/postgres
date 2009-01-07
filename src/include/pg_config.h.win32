@@ -128,7 +128,7 @@
 /* #undef HAVE_FP_CLASS_H */
 
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
-/* #undef HAVE_FSEEKO */
+#define HAVE_FSEEKO 1
 
 /* Define to 1 if your compiler understands __func__. */
 //#define HAVE_FUNCNAME__FUNC 1
