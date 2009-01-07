@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.143 2008/12/11 07:34:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.144 2009/01/07 13:44:37 tgl Exp $
  *
  **********************************************************************/
 
@@ -16,6 +16,10 @@
 #include <locale.h>
 
 /* postgreSQL stuff */
+#include "access/xact.h"
+#include "catalog/pg_language.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
@@ -23,12 +27,14 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
-#include "utils/hsearch.h"
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.294 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.295 2009/01/07 13:44:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,12 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
+#include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablespace.h"
 #include "executor/spi.h"
@@ -44,9 +47,12 @@
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/tqual.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
 

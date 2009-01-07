@@ -1,10 +1,13 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/autoinc.c,v 1.15 2008/05/17 01:28:22 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/spi/autoinc.c,v 1.16 2009/01/07 13:44:36 tgl Exp $ 
  */
+#include "postgres.h"
 
-#include "executor/spi.h"		/* this is what you need to work with SPI */
-#include "commands/trigger.h"	/* -"- and triggers */
-#include "commands/sequence.h"	/* for nextval() */
+#include "catalog/pg_type.h"
+#include "commands/sequence.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.c,v 1.58 2009/01/01 17:23:32 momjian Exp $ 
+ * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.c,v 1.59 2009/01/07 13:44:36 tgl Exp $ 
  *
  *
  * tablefunc
@@ -34,6 +34,7 @@
 
 #include <math.h>
 
+#include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "executor/spi.h"

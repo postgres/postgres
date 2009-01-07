@@ -7,17 +7,19 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.13 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.14 2009/01/07 13:44:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "executor/spi.h"
+#include "miscadmin.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
-#include "miscadmin.h"
+#include "utils/builtins.h"
 
 
 static int

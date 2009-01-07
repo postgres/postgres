@@ -1,14 +1,17 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.13 2008/05/17 01:28:22 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.14 2009/01/07 13:44:36 tgl Exp $ 
  *
- * XSLT processing functions (requiring libxslt) */
-/* John Gray, for Torchbox 2003-04-01 */
-
+ * XSLT processing functions (requiring libxslt)
+ *
+ * John Gray, for Torchbox 2003-04-01
+ */
 #include "postgres.h"
-#include "fmgr.h"
+
 #include "executor/spi.h"
+#include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
 
 /* libxml includes */
 

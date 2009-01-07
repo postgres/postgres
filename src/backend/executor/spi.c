@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.204 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.205 2009/01/07 13:44:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,20 @@
 
 #include "access/printtup.h"
 #include "access/sysattr.h"
+#include "access/xact.h"
 #include "catalog/heap.h"
+#include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "executor/executor.h"
 #include "executor/spi_priv.h"
+#include "tcop/pquery.h"
+#include "tcop/utility.h"
+#include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 
 

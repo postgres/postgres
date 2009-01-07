@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.107 2009/01/01 17:24:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.108 2009/01/07 13:44:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "commands/trigger.h"

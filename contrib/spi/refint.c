@@ -1,16 +1,17 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/refint.c,v 1.33 2008/05/17 01:28:22 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/spi/refint.c,v 1.34 2009/01/07 13:44:36 tgl Exp $ 
  *
  *
  * refint.c --	set of functions to define referential integrity
  *		constraints using general triggers.
  */
+#include "postgres.h"
 
-#include "executor/spi.h"		/* this is what you need to work with SPI */
-
-#include "commands/trigger.h"	/* -"- and triggers */
 #include <ctype.h>
 
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 

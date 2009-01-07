@@ -9,13 +9,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.118 2009/01/01 17:24:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.119 2009/01/07 13:44:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "plpgsql.h"
 
+#include "catalog/pg_type.h"
 #include "parser/parser.h"
 
 

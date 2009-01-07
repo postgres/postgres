@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.62 2008/04/01 03:09:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.63 2009/01/07 13:44:36 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -3617,7 +3617,10 @@ INSERT INTO a SELECT * FROM a;
   </para>
 
 <programlisting>
+#include "postgres.h"
+
 #include "executor/spi.h"
+#include "utils/builtins.h"
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;

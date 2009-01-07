@@ -1,15 +1,17 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.21 2008/10/29 00:00:38 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.22 2009/01/07 13:44:36 tgl Exp $
  *
  * Parser interface for DOM-based parser (libxml) rather than
-   stream-based SAX-type parser */
-
+ * stream-based SAX-type parser
+ */
 #include "postgres.h"
-#include "fmgr.h"
+
 #include "executor/spi.h"
+#include "fmgr.h"
 #include "funcapi.h"
-#include "miscadmin.h"
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
 
 /* libxml includes */
 
