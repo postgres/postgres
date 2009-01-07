@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.178 2009/01/02 11:34:03 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.179 2009/01/07 12:38:11 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1040,6 +1040,19 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				REQUIRE_AUTH_OPTION(uaLDAP, "ldapsuffix", "ldap");
 				parsedline->ldapsuffix = pstrdup(c);
 			}
+			else if (strcmp(token, "krb_server_hostname") == 0)
+			{
+				REQUIRE_AUTH_OPTION(uaKrb5, "krb_server_hostname", "krb5");
+				parsedline->krb_server_hostname = pstrdup(c);
+			}
+			else if (strcmp(token, "krb_realm") == 0)
+			{
+				if (parsedline->auth_method != uaKrb5 &&
+					parsedline->auth_method != uaGSS &&
+					parsedline->auth_method != uaSSPI)
+					INVALID_AUTH_OPTION("krb_realm", "krb5, gssapi and sspi");
+				parsedline->krb_realm = pstrdup(c);
+			}
 			else
 			{
 				ereport(LOG,
@@ -1242,6 +1255,10 @@ free_hba_record(HbaLine *record)
 		pfree(record->ldapprefix);
 	if (record->ldapsuffix)
 		pfree(record->ldapsuffix);
+	if (record->krb_server_hostname)
+		pfree(record->krb_server_hostname);
+	if (record->krb_realm)
+		pfree(record->krb_realm);
 }
 
 /*
