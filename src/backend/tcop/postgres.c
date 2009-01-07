@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.564 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.565 2009/01/07 19:35:43 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -79,7 +79,7 @@ extern char *optarg;
  *		global variables
  * ----------------
  */
-const char *debug_query_string; /* for pgmonitor and log_min_error_statement */
+const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = DestDebug;
