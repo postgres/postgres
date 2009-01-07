@@ -211,7 +211,7 @@
 # - Other Planner Options -
 
 #default_statistics_target = 100	# range 1-10000
-#constraint_exclusion = off
+#constraint_exclusion = partition	# on, off, or partition
 #cursor_tuple_fraction = 0.1		# range 0.0-1.0
 #from_collapse_limit = 8
 #join_collapse_limit = 8		# 1 disables collapsing of explicit 

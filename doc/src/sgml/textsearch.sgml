@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.46 2008/10/17 18:05:19 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.47 2009/01/07 22:40:49 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -3254,8 +3254,8 @@ SELECT plainto_tsquery('supernovae stars');
   <para>
    Partitioning of big collections and the proper use of GiST and GIN indexes
    allows the implementation of very fast searches with online update.
-   Partitioning can be done at the database level using table inheritance
-   and <varname>constraint_exclusion</>, or by distributing documents over
+   Partitioning can be done at the database level using table inheritance,
+   or by distributing documents over
    servers and collecting search results using the <filename>contrib/dblink</>
    extension module. The latter is possible because ranking functions use
    only local information.

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.490 2009/01/06 16:39:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.491 2009/01/07 22:40:49 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -308,6 +308,23 @@ static const struct config_enum_entry backslash_quote_options[] = {
 	{"no", BACKSLASH_QUOTE_OFF, true},
 	{"1", BACKSLASH_QUOTE_ON, true},
 	{"0", BACKSLASH_QUOTE_OFF, true},
+	{NULL, 0, false}
+};
+
+/*
+ * Although only "on", "off", and "partition" are documented, we
+ * accept all the likely variants of "on" and "off".
+ */
+static const struct config_enum_entry constraint_exclusion_options[] = {
+	{"partition", CONSTRAINT_EXCLUSION_PARTITION, false},
+	{"on", CONSTRAINT_EXCLUSION_ON, false},
+	{"off", CONSTRAINT_EXCLUSION_OFF, false},
+	{"true", CONSTRAINT_EXCLUSION_ON, true},
+	{"false", CONSTRAINT_EXCLUSION_OFF, true},
+	{"yes", CONSTRAINT_EXCLUSION_ON, true},
+	{"no", CONSTRAINT_EXCLUSION_OFF, true},
+	{"1", CONSTRAINT_EXCLUSION_ON, true},
+	{"0", CONSTRAINT_EXCLUSION_OFF, true},
 	{NULL, 0, false}
 };
 
@@ -634,15 +651,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&enable_hashjoin,
 		true, NULL, NULL
-	},
-	{
-		{"constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
-			gettext_noop("Enables the planner to use constraints to optimize queries."),
-			gettext_noop("Child table scans will be skipped if their "
-					   "constraints guarantee that no rows match the query.")
-		},
-		&constraint_exclusion,
-		false, NULL, NULL
 	},
 	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
@@ -2519,6 +2527,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&client_min_messages,
 		NOTICE, client_message_level_options, NULL, NULL
+	},
+
+	{
+		{"constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Enables the planner to use constraints to optimize queries."),
+			gettext_noop("Table scans will be skipped if their constraints"
+						 " guarantee that no rows match the query.")
+		},
+		&constraint_exclusion,
+		CONSTRAINT_EXCLUSION_PARTITION, constraint_exclusion_options,
+		NULL, NULL
 	},
 
 	{

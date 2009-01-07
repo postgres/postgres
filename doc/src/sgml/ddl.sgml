@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.83 2008/09/08 00:47:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.84 2009/01/07 22:40:49 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2135,7 +2135,7 @@ VALUES ('New York', NULL, NULL, 'NY');
    an existing inheritance hierarchy, be careful to grant all the needed
    permissions on it.
   </para>
- 
+
   <para>
    A serious limitation of the inheritance feature is that indexes (including
    unique constraints) and foreign key constraints only apply to single
@@ -2394,9 +2394,9 @@ CHECK ( outletID BETWEEN 200 AND 300 )
       <listitem>
        <para>
         Ensure that the <xref linkend="guc-constraint-exclusion">
-        configuration
-        parameter is enabled in <filename>postgresql.conf</>.  Without
-        this, queries will not be optimized as desired.
+        configuration parameter is not disabled in
+        <filename>postgresql.conf</>.
+        If it is, queries will not be optimized as desired.
        </para>
       </listitem>
 
@@ -2698,7 +2698,7 @@ SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <para>
     You can use the <command>EXPLAIN</> command to show the difference
     between a plan with <varname>constraint_exclusion</> on and a plan
-    with it off.  A typical default plan for this type of table setup is:
+    with it off.  A typical unoptimized plan for this type of table setup is:
 
 <programlisting>
 SET constraint_exclusion = off;
@@ -2725,7 +2725,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     full-table sequential scans, but the point here is that there
     is no need to scan the older partitions at all to answer this query.
     When we enable constraint exclusion, we get a significantly
-    reduced plan that will deliver the same answer:
+    cheaper plan that will deliver the same answer:
 
 <programlisting>
 SET constraint_exclusion = on;
@@ -2749,6 +2749,17 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     expect that queries that scan the partition will generally scan
     a large part of the partition or just a small part.  An index will
     be helpful in the latter case but not the former.
+   </para>
+
+   <para>
+    The default (and recommended) setting of
+    <xref linkend="guc-constraint-exclusion"> is actually neither
+    <literal>on</> nor <literal>off</>, but an intermediate setting
+    called <literal>partition</>, which causes the technique to be
+    applied only to queries that are likely to be working on partitioned
+    tables.  The <literal>on</> setting causes the planner to examine
+    <literal>CHECK</> constraints in all queries, even simple ones that
+    are unlikely to benefit.
    </para>
 
    </sect2>
@@ -2817,7 +2828,7 @@ UNION ALL SELECT * FROM measurement_y2008m01;
 
    <sect2 id="ddl-partitioning-caveats">
    <title>Caveats</title>
- 
+
    <para>
     The following caveats apply to partitioned tables:
    <itemizedlist>

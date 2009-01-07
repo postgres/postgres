@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.95 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.96 2009/01/07 22:40:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,13 @@
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
 
 #define DEFAULT_EFFECTIVE_CACHE_SIZE  16384		/* measured in pages */
+
+typedef enum
+{
+	CONSTRAINT_EXCLUSION_OFF,			/* do not use c_e */
+	CONSTRAINT_EXCLUSION_ON,			/* apply c_e to all rels */
+	CONSTRAINT_EXCLUSION_PARTITION		/* apply c_e to otherrels only */
+} ConstraintExclusionType;
 
 
 /*
@@ -52,7 +59,7 @@ extern bool enable_hashagg;
 extern bool enable_nestloop;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;
-extern bool constraint_exclusion;
+extern int	constraint_exclusion;
 
 extern double clamp_row_est(double nrows);
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,

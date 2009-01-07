@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.153 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.154 2009/01/07 22:40:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 #include "optimizer/predtest.h"
 #include "optimizer/prep.h"
@@ -43,7 +44,7 @@
 
 
 /* GUC parameter */
-bool		constraint_exclusion = false;
+int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 
 /* Hook for plugins to get control in get_relation_info() */
 get_relation_info_hook_type get_relation_info_hook = NULL;
@@ -561,8 +562,9 @@ get_relation_constraints(PlannerInfo *root,
  * self-inconsistent restrictions, or restrictions inconsistent with the
  * relation's CHECK constraints.
  *
- * Note: this examines only rel->relid and rel->baserestrictinfo; therefore
- * it can be called before filling in other fields of the RelOptInfo.
+ * Note: this examines only rel->relid, rel->reloptkind, and
+ * rel->baserestrictinfo; therefore it can be called before filling in
+ * other fields of the RelOptInfo.
  */
 bool
 relation_excluded_by_constraints(PlannerInfo *root,
@@ -573,8 +575,10 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	List	   *safe_constraints;
 	ListCell   *lc;
 
-	/* Skip the test if constraint exclusion is disabled */
-	if (!constraint_exclusion)
+	/* Skip the test if constraint exclusion is disabled for the rel */
+	if (constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
+		(constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
+		 rel->reloptkind != RELOPT_OTHER_MEMBER_REL))
 		return false;
 
 	/*
