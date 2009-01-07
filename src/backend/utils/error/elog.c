@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.210 2009/01/01 17:23:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.211 2009/01/07 04:26:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1693,7 +1693,7 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'v':
 				/* keep VXID format in sync with lockfuncs.c */
-				if (MyProc != NULL)
+				if (MyProc != NULL && MyProc->backendId != InvalidBackendId)
 					appendStringInfo(buf, "%d/%u",
 									 MyProc->backendId, MyProc->lxid);
 				break;
