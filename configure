@@ -18999,7 +18999,8 @@ done
 
 case $host_os in
 	# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
-	bsdi*|netbsd*)
+	# Mingw uses macros to access Win32 API calls
+	bsdi*|netbsd*|mingw*)
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_FSEEKO 1

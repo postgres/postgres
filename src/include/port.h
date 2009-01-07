@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.123 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.124 2009/01/07 03:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,9 +341,13 @@ extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
 extern char *crypt(const char *key, const char *setting);
 #endif
 
+/* WIN32 handled in port/win32.h */
+#ifndef WIN32
+#define pgoff_t off_t
 #if defined(bsdi) || defined(netbsd)
 extern int	fseeko(FILE *stream, off_t offset, int whence);
 extern off_t ftello(FILE *stream);
+#endif
 #endif
 
 #ifndef HAVE_FSEEKO

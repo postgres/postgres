@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.84 2008/02/17 02:09:31 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.85 2009/01/07 03:39:33 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -190,6 +190,18 @@ struct itimerval
 
 int			setitimer(int which, const struct itimerval * value, struct itimerval * ovalue);
 
+/*
+ * WIN32 does not provide 64-bit off_t, but does provide the functions operating
+ * with 64-bit offsets.
+ */
+#define pgoff_t __int64
+#ifdef WIN32_ONLY_COMPILER
+#define fseeko(stream, offset, origin) _fseeki64(stream, offset, origin)
+#define ftello(stream) _ftelli64(stream)
+#else
+#define fseeko(stream, offset, origin) fseeko64(stream, offset, origin)
+#define ftello(stream) ftello64(stream)
+#endif
 
 /*
  * Supplement to <sys/types.h>.
