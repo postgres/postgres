@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.201 2009/01/02 10:33:19 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.202 2009/01/07 12:21:47 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -621,7 +621,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the realm to match Kerberos, GSSAPI and SSPI user names against.
         See <xref linkend="kerberos-auth">, <xref linkend="gssapi-auth"> or
-        <xref linkend="sspi-auth"> for details.
+        <xref linkend="sspi-auth"> for details. This parameter can only be 
+        set in the <filename>postgresql.conf</> file or on the server 
+        command line.
        </para>
       </listitem>
      </varlistentry>
@@ -635,7 +637,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the location of the Kerberos server key file. See
         <xref linkend="kerberos-auth"> or <xref linkend="gssapi-auth"> 
-        for details.
+        for details. This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -648,7 +651,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the Kerberos service name. See <xref linkend="kerberos-auth">
-        for details.
+        for details. This parameter can only be set in the
+        <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -665,7 +669,8 @@ SET ENABLE_SEQSCAN TO OFF;
         the complete service principal, that is
         <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
         If not set, the default is the server host name.  See <xref linkend="kerberos-auth">
-        for details.
+        for details. This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -679,7 +684,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets whether Kerberos and GSSAPI user names should be treated
         case-insensitively.
-        The default is <literal>off</> (case sensitive).
+        The default is <literal>off</> (case sensitive). This parameter can only be 
+        set in the <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
