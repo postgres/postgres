@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.651 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.652 2009/01/07 22:54:45 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -8361,6 +8361,11 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6, @2);
 				}
+			/*
+			 *	Ideally we would not use hard-wired operators below but instead use
+			 *	opclasses.  However, mixed data types and other issues make this
+			 *	difficult:  http://archives.postgresql.org/pgsql-hackers/2008-08/msg01142.php
+			 */			
 			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,
