@@ -26921,6 +26921,8 @@ echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
   cc_string="GCC `${CC} --version | sed q`"
+elif test x"$SUN_STUDIO_CC" = x"yes" ; then
+  cc_string=`${CC} -V 2>&1 | sed q`
 else
   cc_string=$CC
 fi

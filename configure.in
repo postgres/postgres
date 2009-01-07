@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.583 2009/01/07 03:39:33 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.584 2009/01/07 10:38:44 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1771,6 +1771,8 @@ AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
   cc_string="GCC `${CC} --version | sed q`"
+elif test x"$SUN_STUDIO_CC" = x"yes" ; then
+  cc_string=`${CC} -V 2>&1 | sed q`
 else
   cc_string=$CC
 fi
