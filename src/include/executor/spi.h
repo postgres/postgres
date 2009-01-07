@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65.2.1 2008/09/15 23:37:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.65.2.2 2009/01/07 20:39:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,8 @@ extern int	SPI_connect(void);
 extern int	SPI_finish(void);
 extern void SPI_push(void);
 extern void SPI_pop(void);
+extern bool SPI_push_conditional(void);
+extern void SPI_pop_conditional(bool pushed);
 extern void SPI_restore_connection(void);
 extern int	SPI_execute(const char *src, bool read_only, long tcount);
 extern int SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,

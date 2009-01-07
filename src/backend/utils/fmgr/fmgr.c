@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.113 2008/01/03 21:23:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.113.2.1 2009/01/07 20:39:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"
+#include "executor/spi.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "utils/builtins.h"
@@ -1818,15 +1819,24 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
  * the caller should assume the result is NULL, but we'll call the input
  * function anyway if it's not strict.  So this is almost but not quite
  * the same as FunctionCall3.
+ *
+ * One important difference from the bare function call is that we will
+ * push any active SPI context, allowing SPI-using I/O functions to be
+ * called from other SPI functions without extra notation.  This is a hack,
+ * but the alternative of expecting all SPI functions to do SPI_push/SPI_pop
+ * around I/O calls seems worse.
  */
 Datum
 InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
+	bool		pushed;
 
 	if (str == NULL && flinfo->fn_strict)
 		return (Datum) 0;		/* just return null result */
+
+	pushed = SPI_push_conditional();
 
 	InitFunctionCallInfoData(fcinfo, flinfo, 3, NULL, NULL);
 
@@ -1853,6 +1863,8 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 				 fcinfo.flinfo->fn_oid);
 	}
 
+	SPI_pop_conditional(pushed);
+
 	return result;
 }
 
@@ -1861,13 +1873,22 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
  *
  * Do not call this on NULL datums.
  *
- * This is mere window dressing for FunctionCall1, but its use is recommended
- * anyway so that code invoking output functions can be identified easily.
+ * This is almost just window dressing for FunctionCall1, but it includes
+ * SPI context pushing for the same reasons as InputFunctionCall.
  */
 char *
 OutputFunctionCall(FmgrInfo *flinfo, Datum val)
 {
-	return DatumGetCString(FunctionCall1(flinfo, val));
+	char	   *result;
+	bool		pushed;
+
+	pushed = SPI_push_conditional();
+
+	result = DatumGetCString(FunctionCall1(flinfo, val));
+
+	SPI_pop_conditional(pushed);
+
+	return result;
 }
 
 /*
@@ -1876,7 +1897,8 @@ OutputFunctionCall(FmgrInfo *flinfo, Datum val)
  * "buf" may be NULL to indicate we are reading a NULL.  In this case
  * the caller should assume the result is NULL, but we'll call the receive
  * function anyway if it's not strict.  So this is almost but not quite
- * the same as FunctionCall3.
+ * the same as FunctionCall3.  Also, this includes SPI context pushing for
+ * the same reasons as InputFunctionCall.
  */
 Datum
 ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
@@ -1884,9 +1906,12 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
+	bool		pushed;
 
 	if (buf == NULL && flinfo->fn_strict)
 		return (Datum) 0;		/* just return null result */
+
+	pushed = SPI_push_conditional();
 
 	InitFunctionCallInfoData(fcinfo, flinfo, 3, NULL, NULL);
 
@@ -1913,6 +1938,8 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
 				 fcinfo.flinfo->fn_oid);
 	}
 
+	SPI_pop_conditional(pushed);
+
 	return result;
 }
 
@@ -1921,14 +1948,24 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
  *
  * Do not call this on NULL datums.
  *
- * This is little more than window dressing for FunctionCall1, but its use is
- * recommended anyway so that code invoking output functions can be identified
- * easily.	Note however that it does guarantee a non-toasted result.
+ * This is little more than window dressing for FunctionCall1, but it does
+ * guarantee a non-toasted result, which strictly speaking the underlying
+ * function doesn't.  Also, this includes SPI context pushing for the same
+ * reasons as InputFunctionCall.
  */
 bytea *
 SendFunctionCall(FmgrInfo *flinfo, Datum val)
 {
-	return DatumGetByteaP(FunctionCall1(flinfo, val));
+	bytea	   *result;
+	bool		pushed;
+
+	pushed = SPI_push_conditional();
+
+	result = DatumGetByteaP(FunctionCall1(flinfo, val));
+
+	SPI_pop_conditional(pushed);
+
+	return result;
 }
 
 /*
