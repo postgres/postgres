@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.56 2009/01/01 17:24:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.57 2009/01/08 20:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1134,7 +1134,11 @@ get_alternative_expectfile(const char *expectfile, int i)
 	strcpy(tmp, expectfile);
 	last_dot = strrchr(tmp, '.');
 	if (!last_dot)
+	{
+		free(tmp);
+		free(s);
 		return NULL;
+	}
 	*last_dot = '\0';
 	snprintf(s, ssize, "%s_%d.%s", tmp, i, last_dot + 1);
 	free(tmp);
