@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.16 2009/01/06 14:47:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.17 2009/01/08 19:34:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,9 +336,15 @@ add_real_reloption(int kind, char *name, char *desc, double default_val,
 /*
  * add_string_reloption
  *		Add a new string reloption
+ *
+ * "validator" is an optional function pointer that can be used to test the
+ * validity of the values.  It must elog(ERROR) when the argument string is
+ * not acceptable for the variable.  Note that the default value must pass
+ * the validation.
  */
 void
-add_string_reloption(int kind, char *name, char *desc, char *default_val)
+add_string_reloption(int kind, char *name, char *desc, char *default_val,
+					 validate_string_relopt validator)
 {
 	MemoryContext	oldcxt;
 	relopt_string  *newoption;
@@ -359,6 +365,7 @@ add_string_reloption(int kind, char *name, char *desc, char *default_val)
 	newoption->gen.kind = kind;
 	newoption->gen.namelen = strlen(name);
 	newoption->gen.type = RELOPT_TYPE_STRING;
+	newoption->validate_cb = validator;
 	if (default_val)
 	{
 		strcpy(newoption->default_val, default_val);
@@ -371,6 +378,10 @@ add_string_reloption(int kind, char *name, char *desc, char *default_val)
 		newoption->default_len = 0;
 		newoption->default_isnull = true;
 	}
+
+	/* make sure the validator/default combination is sane */
+	if (newoption->validate_cb)
+		(newoption->validate_cb) (newoption->default_val, true);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -729,10 +740,15 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 			}
 			break;
 		case RELOPT_TYPE_STRING:
-			option->values.string_val = value;
-			nofree = true;
-			parsed = true;
-			/* no validation possible */
+			{
+				relopt_string   *optstring = (relopt_string *) option->gen;
+
+				option->values.string_val = value;
+				nofree = true;
+				if (optstring->validate_cb)
+					(optstring->validate_cb) (value, validate);
+				parsed = true;
+			}
 			break;
 		default:
 			elog(ERROR, "unsupported reloption type %d", option->gen->type);

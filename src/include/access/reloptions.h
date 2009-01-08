@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.8 2009/01/06 14:47:37 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.9 2009/01/08 19:34:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,11 +90,14 @@ typedef struct relopt_real
 	double		max;
 } relopt_real;
 
+typedef void (*validate_string_relopt) (char *value, bool validate);
+
 typedef struct relopt_string
 {
 	relopt_gen	gen;
 	int			default_len;
 	bool		default_isnull;
+	validate_string_relopt	validate_cb;
 	char		default_val[1];	/* variable length */
 } relopt_string;
 
@@ -113,7 +116,7 @@ typedef struct relopt_string
  * need this information.
  */
 #define HAVE_RELOPTION(optname, option) \
-	(pg_strncasecmp(option.gen->name, optname, option.gen->namelen) == 0)
+	(pg_strncasecmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
 
 #define HANDLE_INT_RELOPTION(optname, var, option, wasset)			\
 	do {															\
@@ -141,7 +144,7 @@ typedef struct relopt_string
 		}															\
 	} while (0)
 
-#define HANDLE_REAL_RELOPTION(optname, var, option, wasset) 			\
+#define HANDLE_REAL_RELOPTION(optname, var, option, wasset) 		\
 	do {															\
 		if (HAVE_RELOPTION(optname, option))						\
 		{															\
@@ -166,29 +169,47 @@ typedef struct relopt_string
  * string options have been processed.
  */
 #define HANDLE_STRING_RELOPTION(optname, var, option, base, offset, wasset)	\
-	do {															\
+	do {														\
 		if (HAVE_RELOPTION(optname, option))						\
 		{															\
 			relopt_string *optstring = (relopt_string *) option.gen;\
-			char *string_val = NULL;								\
-																	\
+			char *string_val;										\
 			if (option.isset)										\
 				string_val = option.values.string_val;				\
 			else if (!optstring->default_isnull)					\
 				string_val = optstring->default_val;				\
+			else													\
+				string_val = NULL;									\
 			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-																	\
-			if (!string_val)										\
+			if (string_val == NULL)									\
 				var = 0;											\
 			else													\
 			{														\
-				strcpy((char *)(base) + (offset), string_val);		\
+				strcpy(((char *)(base)) + (offset), string_val);	\
 				var = (offset);										\
 				(offset) += strlen(string_val) + 1;					\
 			}														\
 			continue;												\
 		}															\
 	} while (0)
+
+/*
+ * For use during amoptions: get the strlen of a string option
+ * (either default or the user defined value)
+ */
+#define GET_STRING_RELOPTION_LEN(option) \
+	((option).isset ? strlen((option).values.string_val) : \
+	 ((relopt_string *) (option).gen)->default_len)
+
+/*
+ * For use by code reading options already parsed: get a pointer to the string
+ * value itself.  "optstruct" is the StdRdOption struct or equivalent, "member"
+ * is the struct member corresponding to the string option
+ */
+#define GET_STRING_RELOPTION(optstruct, member) \
+	((optstruct)->member == 0 ? NULL : \
+	 (char *)(optstruct) + (optstruct)->member)                       
+
 
 extern int add_reloption_kind(void);
 extern void add_bool_reloption(int kind, char *name, char *desc,
@@ -198,7 +219,7 @@ extern void add_int_reloption(int kind, char *name, char *desc,
 extern void add_real_reloption(int kind, char *name, char *desc,
 				   double default_val, double min_val, double max_val);
 extern void add_string_reloption(int kind, char *name, char *desc,
-					 char *default_val);
+					 char *default_val, validate_string_relopt validator);
 			
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
 					bool ignoreOids, bool isReset);
