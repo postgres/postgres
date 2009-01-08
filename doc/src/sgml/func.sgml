@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.466 2009/01/07 21:48:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.467 2009/01/08 00:13:21 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11343,8 +11343,7 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
       <row>
        <entry><literal><function>current_query</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>text of the currently executing query (might match
-         client-supplied query or be internal query string)</entry>
+       <entry>text of the currently executing query (might contain more than one statement)</entry>
       </row>  
 
       <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.69 2009/01/07 21:48:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.70 2009/01/08 00:13:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
-#include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
@@ -56,11 +55,16 @@ current_database(PG_FUNCTION_ARGS)
 /*
  * current_query()
  *  Expose the current query to the user (useful in stored procedures)
+ *  We might want to use ActivePortal->sourceText someday. 
  */
 Datum
 current_query(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P(cstring_to_text(ActivePortal->sourceText));
+	/* there is no easy way to access the more concise 'query_string' */
+	if (debug_query_string)
+		PG_RETURN_TEXT_P(cstring_to_text(debug_query_string));
+	else
+		PG_RETURN_NULL();
 }
 
 /*
