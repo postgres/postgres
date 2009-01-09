@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.44 2009/01/09 13:03:55 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.45 2009/01/09 14:07:00 mha Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -476,7 +476,7 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 
 	encoding = GetDatabaseEncoding();
 
-	len = wcsftime(wbuf, sizeof(wbuf), format, tm);
+	len = wcsftime(wbuf, MAX_L10N_DATA, format, tm);
 	if (len == 0)
 		/* strftime call failed - return 0 with the contents of dst unspecified */
 		return 0;
@@ -492,7 +492,7 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 		char *convstr = pg_do_encoding_conversion(dst, len, PG_UTF8, encoding);
 		if (dst != convstr)
 		{
-			StrNCpy(dst, convstr, dstlen);
+			strlcpy(dst, convstr, dstlen);
 			len = strlen(dst);
 		}
 	}
