@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.55 2008/10/30 22:23:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.56 2009/01/09 01:46:35 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -47,7 +47,7 @@ do it for earlier branch release files.
 
   <para>
    A complete list of changes for each release can be obtained by
-   viewing the CVS logs for each release.
+   viewing the <link linkend="cvs">CVS</link> logs for each release.
    The <ulink
    url="http://archives.postgresql.org/pgsql-committers/">pgsql-committers
    email list</ulink> contains all source code changes as well.  There is also
@@ -83,7 +83,8 @@ do it for earlier branch release files.
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see the release notes for 8.1.2.  If you were running a previous
+    8.1.X release, REINDEX all GiST indexes after the upgrade.
    </para>
 
   </sect2>
