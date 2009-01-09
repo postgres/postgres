@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.216 2009/01/07 04:51:34 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.217 2009/01/09 19:27:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1120,13 +1120,14 @@ testdb=&gt;
 
         <listitem>
         <para>
-        For the above commands, the letters
+        In this group of commands, the letters
         <literal>i</literal>, <literal>s</literal>,
-        <literal>t</literal>, <literal>v</literal>,
-        <literal>S</literal> stand for index, sequence, table, view,
-        and system table, respectively. You can specify any or all of
+        <literal>t</literal>, and <literal>v</literal>
+        stand for index, sequence, table, and view, respectively.
+        You can specify any or all of
         these letters, in any order, to obtain a listing of all the
-        matching objects.  If <literal>+</literal> is
+        matching objects.  For example, <literal>\dit</> lists indexes
+        and tables.  If <literal>+</literal> is
         appended to the command name, each object is listed with its
         physical size on disk and its associated description, if any.
         The letter <literal>S</literal> restricts the listing
