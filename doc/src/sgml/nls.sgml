@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.16 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.17 2009/01/09 10:54:07 petere Exp $ -->
 
 <chapter id="nls">
  <chapterinfo>
@@ -200,9 +200,8 @@ gmake update-po
     which will create a new blank message catalog file (the pot file
     you started with) and will merge it with the existing PO files.
     If the merge algorithm is not sure about a particular message it
-    marks it <quote>fuzzy</quote> as explained above.  For the case
-    where something went really wrong, the old PO file is saved with a
-    <filename>.po.old</filename> extension.
+    marks it <quote>fuzzy</quote> as explained above.  The new PO file
+    is saved with a <filename>.po.new</filename> extension.
    </para>
   </sect2>
 

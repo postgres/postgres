@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.16 2009/01/02 15:15:42 petere Exp $
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.17 2009/01/09 10:54:08 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -80,7 +80,7 @@ uninstall-po:
 
 clean-po:
 	$(if $(MO_FILES),rm -f $(MO_FILES))
-	@$(if $(PO_FILES),rm -f $(addsuffix .old, $(PO_FILES)))
+	@$(if $(wildcard po/*.po.new),rm -f po/*.po.new)
 	rm -f po/$(CATALOG_NAME).pot
 
 
@@ -93,25 +93,30 @@ maintainer-check-po: $(PO_FILES)
 init-po: po/$(CATALOG_NAME).pot
 
 
-define merge-lang
-@printf 'merging $(1) '
-@if $(MSGMERGE) $(srcdir)/po/$(1).po $< -o po/$(1).po.new $(addprefix --compendium=,$(shell find $(top_srcdir) -name $(1).po -printf '%p ')); \
-then \
-    mv $(srcdir)/po/$(1).po po/$(1).po.old; \
-    mv po/$(1).po.new $(srcdir)/po/$(1).po; \
-else \
-    echo "msgmerge for $(1) failed"; \
-    rm -f po/$(1).po.new; \
-fi
-
-endef
-
-update-po: po/$(CATALOG_NAME).pot
-ifdef MSGMERGE
-	$(foreach lang,$(LANGUAGES),$(call merge-lang,$(lang)))
+# For performance reasons, only calculate these when the user actually
+# requested update-po or a specific file.
+ifneq (,$(filter update-po %.po.new,$(MAKECMDGOALS)))
+ALL_LANGUAGES := $(shell find $(top_srcdir) -name '*.po' -printf '%f\n' | sort -u | sed 's/\.po$$//')
+all_compendia := $(shell find $(top_srcdir) -name '*.po' -printf '%p ')
 else
-	@echo "You don't have 'msgmerge'." ; exit 1
+ALL_LANGUAGES = $(AVAIL_LANGUAGES)
+all_compendia = FORCE
+FORCE:
 endif
+
+ifdef WANTED_LANGUAGES
+ALL_LANGUAGES := $(filter $(WANTED_LANGUAGES), $(ALL_LANGUAGES))
+endif
+
+update-po: $(ALL_LANGUAGES:%=po/%.po.new)
+
+$(AVAIL_LANGUAGES:%=po/%.po.new): po/%.po.new: po/%.po po/$(CATALOG_NAME).pot $(all_compendia)
+	$(MSGMERGE) $(word 1, $^) $(word 2,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 3,$(words $^),$^)))
+
+# For languages not yet available, merge against empty file, to pick
+# up translations from the compendia.
+po/%.po.new: po/$(CATALOG_NAME).pot $(all_compendia)
+	$(MSGMERGE) /dev/null $(word 1,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 2,$(words $^),$^)))
 
 
 all: all-po
