@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.240 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.241 2009/01/09 15:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -4794,10 +4794,11 @@ ExecInitExpr(Expr *node, PlanState *parent)
  * Plan tree context.
  *
  * This differs from ExecInitExpr in that we don't assume the caller is
- * already running in the EState's per-query context.  Also, we apply
- * fix_opfuncids() to the passed expression tree to be sure it is ready
- * to run.	(In ordinary Plan trees the planner will have fixed opfuncids,
- * but callers outside the executor will not have done this.)
+ * already running in the EState's per-query context.  Also, we run the
+ * passed expression tree through expression_planner() to prepare it for
+ * execution.  (In ordinary Plan trees the regular planning process will have
+ * made the appropriate transformations on expressions, but for standalone
+ * expressions this won't have happened.)
  */
 ExprState *
 ExecPrepareExpr(Expr *node, EState *estate)
@@ -4805,9 +4806,9 @@ ExecPrepareExpr(Expr *node, EState *estate)
 	ExprState  *result;
 	MemoryContext oldcontext;
 
-	fix_opfuncids((Node *) node);
-
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	node = expression_planner(node);
 
 	result = ExecInitExpr(node, NULL);
 

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.7 2008/03/21 13:23:28 momjian Exp $
+$PostgreSQL: pgsql/src/backend/executor/README,v 1.8 2009/01/09 15:46:10 tgl Exp $
 
 The Postgres Executor
 =====================
@@ -124,7 +124,8 @@ be hidden inside function calls).  This case has a flow of control like
 		creates per-tuple context
 
 	ExecPrepareExpr
-		switch to per-query context to run ExecInitExpr
+		temporarily switch to per-query context
+		run the expression through expression_planner
 		ExecInitExpr
 
 	Repeatedly do:

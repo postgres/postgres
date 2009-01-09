@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.250 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.251 2009/01/09 15:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2575,4 +2575,40 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
 		if (scidx != numSortCols)
 			elog(ERROR, "failed to deconstruct sort operators into partitioning/ordering operators");
 	}
+}
+
+
+/*
+ * expression_planner
+ *		Perform planner's transformations on a standalone expression.
+ *
+ * Various utility commands need to evaluate expressions that are not part
+ * of a plannable query.  They can do so using the executor's regular
+ * expression-execution machinery, but first the expression has to be fed
+ * through here to transform it from parser output to something executable.
+ *
+ * Currently, we disallow sublinks in standalone expressions, so there's no
+ * real "planning" involved here.  (That might not always be true though.)
+ * What we must do is run eval_const_expressions to ensure that any function
+ * default arguments get inserted.  The fact that constant subexpressions
+ * get simplified is a side-effect that is useful when the expression will
+ * get evaluated more than once.  Also, we must fix operator function IDs.
+ *
+ * Note: this must not make any damaging changes to the passed-in expression
+ * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
+ * we first do an expression_tree_mutator-based walk, what is returned will
+ * be a new node tree.)
+ */
+Expr *
+expression_planner(Expr *expr)
+{
+	Node	   *result;
+
+	/* Insert default arguments and simplify constant subexprs */
+	result = eval_const_expressions(NULL, (Node *) expr);
+
+	/* Fill in opfuncid values if missing */
+	fix_opfuncids(result);
+
+	return (Expr *) result;
 }
