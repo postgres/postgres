@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.187 2009/01/09 01:53:10 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.188 2009/01/09 15:02:22 momjian Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1910,12 +1910,12 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key update action code:
-	    <literal>a</> = no action,
-	    <literal>r</> = restrict,
-	    <literal>c</> = cascade,
-	    <literal>n</> = set null,
-	    <literal>d</> = set default
-	  </entry>
+            <literal>a</> = no action,
+            <literal>r</> = restrict,
+            <literal>c</> = cascade,
+            <literal>n</> = set null,
+            <literal>d</> = set default
+          </entry>
      </row>
 
      <row>
@@ -1923,12 +1923,12 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key deletion action code:
-	    <literal>a</> = no action,
-	    <literal>r</> = restrict,
-	    <literal>c</> = cascade,
-	    <literal>n</> = set null,
-	    <literal>d</> = set default
-	  </entry>
+            <literal>a</> = no action,
+            <literal>r</> = restrict,
+            <literal>c</> = cascade,
+            <literal>n</> = set null,
+            <literal>d</> = set default
+          </entry>
      </row>
 
      <row>
@@ -1936,10 +1936,10 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key match type:
-	    <literal>f</> = full,
-	    <literal>p</> = partial,
-	    <literal>u</> = simple (unspecified)
-	  </entry>
+            <literal>f</> = full,
+            <literal>p</> = partial,
+            <literal>u</> = simple (unspecified)
+          </entry>
      </row>
 
      <row>
