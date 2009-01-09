@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.43 2009/01/01 17:23:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.44 2009/01/09 13:03:55 mha Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 #include <time.h>
 
 #include "catalog/pg_control.h"
+#include "mb/pg_wchar.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 
@@ -452,6 +453,57 @@ PGLC_localeconv(void)
 	return &CurrentLocaleConv;
 }
 
+#ifdef WIN32
+/*
+ * On win32, strftime() returns the encoding in CP_ACP, which is likely
+ * different from SERVER_ENCODING. This is especially important in Japanese
+ * versions of Windows which will use SJIS encoding, which we don't support
+ * as a server encoding.
+ *
+ * Replace strftime() with a version that gets the string in UTF16 and then
+ * converts it to the appropriate encoding as necessary.
+ *
+ * Note that this only affects the calls to strftime() in this file, which are
+ * used to get the locale-aware strings. Other parts of the backend use
+ * pg_strftime(), which isn't locale-aware and does not need to be replaced.
+ */
+static size_t
+strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm *tm)
+{
+	size_t	len;
+	wchar_t	wbuf[MAX_L10N_DATA];
+	int		encoding;
+
+	encoding = GetDatabaseEncoding();
+
+	len = wcsftime(wbuf, sizeof(wbuf), format, tm);
+	if (len == 0)
+		/* strftime call failed - return 0 with the contents of dst unspecified */
+		return 0;
+
+	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen, NULL, NULL);
+	if (len == 0)
+		elog(ERROR,
+			"could not convert string to UTF-8:error %lu", GetLastError());
+
+	dst[len] = '\0';
+	if (encoding != PG_UTF8)
+	{
+		char *convstr = pg_do_encoding_conversion(dst, len, PG_UTF8, encoding);
+		if (dst != convstr)
+		{
+			StrNCpy(dst, convstr, dstlen);
+			len = strlen(dst);
+		}
+	}
+
+	return len;
+}
+
+#define strftime(a,b,c,d) strftime_win32(a,b,L##c,d)
+
+#endif /* WIN32 */
+
 
 /*
  * Update the lc_time localization cache variables if needed.
@@ -465,12 +517,24 @@ cache_locale_time(void)
 	char		buf[MAX_L10N_DATA];
 	char	   *ptr;
 	int			i;
+#ifdef WIN32
+	char	   *save_lc_ctype;
+#endif
 
 	/* did we do this already? */
 	if (CurrentLCTimeValid)
 		return;
 
 	elog(DEBUG3, "cache_locale_time() executed; locale: \"%s\"", locale_time);
+
+#ifdef WIN32
+	/* set user's value of ctype locale */
+	save_lc_ctype = setlocale(LC_CTYPE, NULL);
+	if (save_lc_ctype)
+		save_lc_ctype = pstrdup(save_lc_ctype);
+
+	setlocale(LC_CTYPE, locale_time);
+#endif
 
 	/* set user's value of time locale */
 	save_lc_time = setlocale(LC_TIME, NULL);
@@ -523,6 +587,15 @@ cache_locale_time(void)
 		setlocale(LC_TIME, save_lc_time);
 		pfree(save_lc_time);
 	}
+
+#ifdef WIN32
+	/* try to restore internal ctype settings */
+	if (save_lc_ctype)
+	{
+		setlocale(LC_CTYPE, save_lc_ctype);
+		pfree(save_lc_ctype);
+	}
+#endif
 
 	CurrentLCTimeValid = true;
 }
