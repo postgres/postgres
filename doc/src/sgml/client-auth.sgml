@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.117 2009/01/07 13:09:21 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.118 2009/01/09 10:13:18 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -801,18 +801,8 @@ omicron       bryanh            guest1
       <term>krb_realm</term>
       <listitem>
        <para>
-        Overrides the <xref linkend="guc-krb-realm"> parameter, setting which realm
-        to verify the authenticated user principal against.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>krb_server_hostname</term>
-      <listitem>
-       <para>
-        Overrides the <xref linkend="guc-krb-server-hostname"> parameter, setting which
-        hostname will be used for the server principal when using Kerberos.
+        Sets the realm to match user principal names against. If this parameter
+        is not set, the realm of the user will be ignored.
        </para>
       </listitem>
      </varlistentry>
@@ -874,8 +864,8 @@ omicron       bryanh            guest1
       <term>krb_realm</term>
       <listitem>
        <para>
-        Overrides the <xref linkend="guc-krb-realm"> parameter, setting which realm
-        to verify the authenticated user principal against.
+        Sets the realm to match user principal names against. If this parameter
+        is not set, the realm of the user will be ignored.
        </para>
       </listitem>
      </varlistentry>
@@ -953,7 +943,7 @@ omicron       bryanh            guest1
     <literal>pgusername@realm</>. By default, the realm of the client is
     not checked by <productname>PostgreSQL</>. If you have cross-realm
     authentication enabled and need to verify the realm, use the
-    <xref linkend="guc-krb-realm"> parameter.
+    krb_realm parameter in <filename>pg_hba.conf</>.
    </para>
 
    <para>
@@ -996,6 +986,55 @@ omicron       bryanh            guest1
     database access over the web, no extra passwords required.
    </para>
 
+   <para>
+    The following configuration options are supported for <productname>Kerberos</productname>:
+    <variablelist>
+     <varlistentry>
+      <term>map</term>
+      <listitem>
+       <para>
+        Allows for mapping between system and database usernames. See
+        <xref linkend="auth-username-maps"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>include_realm</term>
+      <listitem>
+       <para>
+        Include the realm name from the authenticated user principal. This is useful
+        in combination with Username maps (See <xref linkend="auth-username-maps">
+        for details), especially with regular expressions, to map users from
+        multiple realms.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>krb_realm</term>
+      <listitem>
+       <para>
+        Sets the realm to match user principal names against. If this parameter
+        is not set, the realm of the user will be ignored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>krb_server_hostname</term>
+      <listitem>
+       <para>
+        Sets the host name part of the service principal.
+        This, combined with <varname>krb_srvname</>, is used to generate
+        the complete service principal, that is
+        <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
+        If not set, the default is the server host name.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </sect2>
 
   <sect2 id="auth-ident">

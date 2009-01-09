@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.203 2009/01/07 22:40:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.204 2009/01/09 10:13:18 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -612,22 +612,6 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-krb-realm" xreflabel="krb_realm">
-      <term><varname>krb_realm</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>krb_realm</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the realm to match Kerberos, GSSAPI and SSPI user names against.
-        See <xref linkend="kerberos-auth">, <xref linkend="gssapi-auth"> or
-        <xref linkend="sspi-auth"> for details. This parameter can only be 
-        set in the <filename>postgresql.conf</> file or on the server 
-        command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)</term>
       <indexterm>
@@ -653,24 +637,6 @@ SET ENABLE_SEQSCAN TO OFF;
         Sets the Kerberos service name. See <xref linkend="kerberos-auth">
         for details. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-krb-server-hostname" xreflabel="krb_server_hostname">
-      <term><varname>krb_server_hostname</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>krb_server_hostname</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the host name part of the service principal.
-        This, combined with <varname>krb_srvname</>, is used to generate
-        the complete service principal, that is
-        <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
-        If not set, the default is the server host name.  See <xref linkend="kerberos-auth">
-        for details. This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
