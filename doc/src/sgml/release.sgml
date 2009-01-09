@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.587 2008/10/30 22:22:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.588 2009/01/09 01:47:02 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -83,7 +83,9 @@ do it for earlier branch release files.
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.1,
-    see the release notes for 8.3.1.
+    see the release notes for 8.3.1.  If you were running a previous
+    8.3.X release, REINDEX all GiST indexes after the upgrade.
+
    </para>
 
   </sect2>
@@ -4042,7 +4044,8 @@ current_date &lt; 2017-11-17
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.7,
-    see the release notes for 8.2.7.
+    see the release notes for 8.2.7.  If you were running a previous
+    8.2.X release, REINDEX all GiST indexes after the upgrade.
    </para>
 
   </sect2>
@@ -8494,7 +8497,8 @@ current_date &lt; 2017-11-17
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see the release notes for 8.1.2.  If you were running a previous
+    8.1.X release, REINDEX all GiST indexes after the upgrade.
    </para>
 
   </sect2>
