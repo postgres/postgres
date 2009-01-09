@@ -1,7 +1,7 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.424 2008/12/18 17:03:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.425 2009/01/09 13:37:18 petere Exp $ -->
 
 <chapter Id="runtime">
- <title>Operating System Environment</title>
+ <title>Server Setup and Operation</title>
 
  <para>
   This chapter discusses how to set up and run the database server

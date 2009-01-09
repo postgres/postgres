@@ -1,8 +1,8 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.317 2009/01/06 19:42:57 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.318 2009/01/09 13:37:18 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
-  Installation Instructions</title>
+  Installation from Source Code</title>
 
  <indexterm zone="installation">
   <primary>installation</primary>
