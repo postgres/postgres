@@ -1,0 +1,34 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/README.links,v 1.1 2009/01/10 04:40:08 momjian Exp $ -->
+
+Linking within SGML documents can be confusing, so here is a summary:
+
+
+Intra-document Linking
+----------------------
+<xref>
+	used to link to a section without supplying text for the link;
+	text comes from the link target;  has no close tag
+	http://www.oasis-open.org/docbook/documentation/reference/html/xref.html
+
+<link>
+	allows link text to be supplied, requires </link>
+	http://www.oasis-open.org/docbook/documentation/reference/html/link.html
+
+
+linkend=
+	controls the target of the link/xref
+
+endterm=
+        allows the text of the link/xref to be taken from a different 
+	link target; endterm in a <link> overrides the supplied text
+
+
+External Linking
+----------------
+<ulink>
+	like <link>, but uses a URL (not a document target);  requires
+	</ulink>; if no text is specified, the URL appears as the link text
+	http://www.oasis-open.org/docbook/documentation/reference/html/ulink.html
+
+url=
+	used by <ulink> to specify the URL
