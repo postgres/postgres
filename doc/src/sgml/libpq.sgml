@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.274 2008/12/15 10:28:21 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.275 2009/01/10 20:14:30 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -101,7 +101,7 @@
        The currently recognized parameter key words are:
 
        <variablelist>
-        <varlistentry>
+        <varlistentry id="libpq-connect-host" xreflabel="host">
          <term><literal>host</literal></term>
          <listitem>
           <para>
@@ -119,7 +119,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-hostaddr" xreflabel="hostaddr">
          <term><literal>hostaddr</literal></term>
          <listitem>
           <para>
@@ -160,7 +160,7 @@
           </listitem>
          </varlistentry>
 
-         <varlistentry>
+         <varlistentry id="libpq-connect-port" xreflabel="port">
           <term><literal>port</literal></term>
           <listitem>
           <para>
@@ -171,7 +171,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-dbname" xreflabel="dbname">
          <term><literal>dbname</literal></term>
          <listitem>
          <para>
@@ -180,7 +180,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-user" xreflabel="user">
          <term><literal>user</literal></term>
          <listitem>
          <para>
@@ -191,7 +191,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-password" xreflabel="password">
          <term><literal>password</literal></term>
          <listitem>
          <para>
@@ -200,7 +200,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-connect-timeout" xreflabel="connect_timeout">
          <term><literal>connect_timeout</literal></term>
          <listitem>
          <para>
@@ -211,16 +211,20 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-options" xreflabel="options">
          <term><literal>options</literal></term>
          <listitem>
           <para>
-           Command-line options to be sent to the server.
+           Adds command-line options to send to the server at run-time.
+           For example, setting this to <literal>-c geqo=off</> sets the
+           session's value of the <varname>geqo</> parameter to
+           <literal>off</>.  For a detailed discussion of the available
+           options, consult <xref linkend="runtime-config">.
           </para>
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-tty" xreflabel="tty">
          <term><literal>tty</literal></term>
          <listitem>
          <para>
@@ -229,7 +233,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-sslmode" xreflabel="sslmode">
          <term><literal>sslmode</literal></term>
          <listitem>
           <para>
@@ -259,7 +263,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-sslverify" xreflabel="sslverify">
          <term><literal>sslverify</literal></term>
          <listitem>
           <para>
@@ -295,7 +299,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-requiressl" xreflabel="requiressl">
          <term><literal>requiressl</literal></term>
          <listitem>
           <para>
@@ -317,7 +321,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-sslcert" xreflabel="sslcert">
          <term><literal>sslcert</literal></term>
          <listitem>
           <para>
@@ -327,7 +331,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-sslkey" xreflabel="sslkey">
          <term><literal>sslkey</literal></term>
          <listitem>
           <para>
@@ -342,7 +346,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-sslrootcert" xreflabel="sslrootcert">
          <term><literal>sslrootcert</literal></term>
          <listitem>
           <para>
@@ -351,7 +355,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-sslcrl" xreflabel="sslcrl">
          <term><literal>sslcrl</literal></term>
          <listitem>
           <para>
@@ -361,7 +365,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-krbsrvname" xreflabel="krbsrvname">
          <term><literal>krbsrvname</literal></term>
          <listitem>
           <para>
@@ -374,7 +378,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-gsslib" xreflabel="gsslib">
          <term><literal>gsslib</literal></term>
          <listitem>
           <para>
@@ -385,7 +389,7 @@
          </listitem>
         </varlistentry>
 
-        <varlistentry>
+        <varlistentry id="libpq-connect-service" xreflabel="service">
          <term><literal>service</literal></term>
          <listitem>
           <para>
@@ -5627,11 +5631,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGHOST</envar></primary>
       </indexterm>
-      <envar>PGHOST</envar> sets the database server name.
-      If this begins with a slash, it specifies Unix-domain communication
-      rather than TCP/IP communication; the value is then the name of the
-      directory in which the socket file is stored (in a default installation
-      setup this would be <filename>/tmp</filename>).
+      <envar>PGHOST</envar> behaves the same as <xref
+      linkend="libpq-connect-host"> connection parameter.
      </para>
     </listitem>
 
@@ -5640,17 +5641,10 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGHOSTADDR</envar></primary>
       </indexterm>
-      <envar>PGHOSTADDR</envar> specifies the numeric IP address of the database
-      server.  This can be set instead of or in addition to <envar>PGHOST</envar>
-      to avoid DNS lookup overhead. See the documentation of
-      these parameters, under <function>PQconnectdb</function> above, for details
-      on their interaction.
-     </para>
-     <para>
-      When neither <envar>PGHOST</envar> nor <envar>PGHOSTADDR</envar> is set,
-      the default behavior is to connect using a local Unix-domain socket; or on
-      machines without Unix-domain sockets, <application>libpq</application> will
-      attempt to connect to <literal>localhost</>.
+      <envar>PGHOSTADDR</envar> behaves the same as <xref
+      linkend="libpq-connect-hostaddr"> connection parameter.
+      This can be set instead of or in addition to <envar>PGHOST</envar>
+      to avoid DNS lookup overhead.
      </para>
     </listitem>
 
@@ -5659,9 +5653,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGPORT</envar></primary>
       </indexterm>
-      <envar>PGPORT</envar> sets the TCP port number or Unix-domain socket
-      file extension for communicating with the
-      <productname>PostgreSQL</productname> server.
+      <envar>PGPORT</envar> behaves the same as <xref
+      linkend="libpq-connect-port"> connection parameter.
      </para>
     </listitem>
 
@@ -5670,9 +5663,9 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGDATABASE</envar></primary>
       </indexterm>
-      <envar>PGDATABASE</envar>  sets the
-      <productname>PostgreSQL</productname> database name.
-     </para>
+      <envar>PGDATABASE</envar> behaves the same as <xref
+      linkend="libpq-connect-dbname"> connection parameter.
+      </para>
     </listitem>
 
     <listitem>
@@ -5680,7 +5673,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGUSER</envar></primary>
       </indexterm>
-      <envar>PGUSER</envar> sets the user name used to connect to the
+      <envar>PGUSER</envar> behaves the same as <xref
+      linkend="libpq-connect-user"> connection parameter.
       database.
      </para>
     </listitem>
@@ -5690,11 +5684,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGPASSWORD</envar></primary>
       </indexterm>
-      <envar>PGPASSWORD</envar> sets the password used if the server
-      demands password authentication.  Use of this environment variable
+      <envar>PGPASSWORD</envar> behaves the same as <xref
+      linkend="libpq-connect-password"> connection parameter.
+      Use of this environment variable
       is not recommended for security reasons (some operating systems
       allow non-root users to see process environment variables via
-      <application>ps</>); instead consider using  the
+      <application>ps</>); instead consider using the
       <filename>~/.pgpass</> file (see <xref linkend="libpq-pgpass">).
      </para>
     </listitem>
@@ -5715,10 +5710,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSERVICE</envar></primary>
       </indexterm>
-      <envar>PGSERVICE</envar>
-      sets the service name to be looked up in
-      <filename>pg_service.conf</filename>.  This offers a shorthand way
-      of setting all the parameters.
+      <envar>PGSERVICE</envar> behaves the same as <xref
+      linkend="libpq-connect-service"> connection parameter.
      </para>
     </listitem>
 
@@ -5727,12 +5720,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGREALM</envar></primary>
       </indexterm>
-      <envar>PGREALM</envar> sets the Kerberos realm to  use  with
+      <envar>PGREALM</envar> sets the Kerberos realm to use with
       <productname>PostgreSQL</productname>, if  it is different from the
       local realm.  If <envar>PGREALM</envar> is set,
-      <application>libpq</application> applications  will  attempt
+      <application>libpq</application> applications will attempt
       authentication  with  servers for this realm and use separate ticket
-      files to avoid conflicts with  local ticket  files.   This
+      files to avoid conflicts with local ticket files.   This
       environment  variable is only used if Kerberos authentication is
       selected by the server.
      </para>
@@ -5743,12 +5736,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGOPTIONS</envar></primary>
       </indexterm>
-      <envar>PGOPTIONS</envar> sets additional run-time options for the
-      <productname>PostgreSQL</productname> server.  For example, setting
-      <envar>PGOPTIONS</envar> to <literal>-c geqo=off</> sets the session's
-      value of the <varname>geqo</> parameter to <literal>off</>.
-      For a detailed discussion of the available options consult <xref
-      linkend="runtime-config">.
+      <envar>PGOPTIONS</envar> behaves the same as <xref
+      linkend="libpq-connect-options"> connection parameter.
      </para>
     </listitem>
 
@@ -5757,20 +5746,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLMODE</envar></primary>
       </indexterm>
-      <envar>PGSSLMODE</envar> determines whether and with what priority
-      an <acronym>SSL</> connection will be negotiated with the server.
-      There are four modes: <literal>disable</> will attempt only an
-      unencrypted <acronym>SSL</> connection; <literal>allow</> will
-      negotiate, trying first a non-<acronym>SSL</> connection, then if
-      that fails, trying an <acronym>SSL</> connection; <literal>prefer</>
-      (the default) will negotiate, trying first an <acronym>SSL</>
-      connection, then if that fails, trying a regular non-<acronym>SSL</>
-      connection; <literal>require</> will try only an <acronym>SSL</>
-      connection. If <productname>PostgreSQL</> is compiled without SSL
-      support, using option <literal>require</> will cause an error, while
-      options <literal>allow</> and <literal>prefer</> will be accepted
-      but <application>libpq</> will not in fact attempt an <acronym>SSL</>
-      connection.
+      <envar>PGSSLMODE</envar> behaves the same as <xref
+      linkend="libpq-connect-sslmode"> connection parameter.
      </para>
     </listitem>
 
@@ -5779,14 +5756,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLVERIFY</envar></primary>
       </indexterm>
-      <envar>PGSSLVERIFY</envar> controls how libpq verifies the certificate on the
-       server when performing an <acronym>SSL</> connection. There are
-       three options: <literal>none</> disables verification completely
-       (not recommended!); <literal>cert</> enables verification that
-       the certificate chains to a known CA only; <literal>cn</> will
-       both verify that the certificate chains to a known CA and that
-       the <literal>cn</> attribute of the certificate matches the
-       hostname the connection is being made to (default).
+      <envar>PGSSLVERIFY</envar> behaves the same as <xref
+      linkend="libpq-connect-sslverify"> connection parameter.
      </para>
     </listitem>
 
@@ -5795,13 +5766,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGREQUIRESSL</envar></primary>
       </indexterm>
-      <envar>PGREQUIRESSL</envar> sets whether or not the connection must
-      be made over <acronym>SSL</acronym>. If set to <quote>1</quote>,
-      <application>libpq</> will refuse to connect if the server does not
-      accept an <acronym>SSL</acronym> connection (equivalent to
-      <literal>sslmode</> <literal>prefer</>).  This option is deprecated
-      in favor of the <literal>sslmode</> setting, and is only available
-      if <productname>PostgreSQL</> is compiled with SSL support.
+      <envar>PGREQUIRESSL</envar> behaves the same as <xref
+      linkend="libpq-connect-requiressl"> connection parameter.
      </para>
     </listitem>
 
@@ -5810,8 +5776,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLCERT</envar></primary>
       </indexterm>
-      <envar>PGSSLCERT</envar> specifies the location for the client
-      certificate to use if the server requests one.
+      <envar>PGSSLCERT</envar> behaves the same as <xref
+      linkend="libpq-connect-sslcert"> connection parameter.
      </para>
     </listitem>
 
@@ -5820,13 +5786,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLKEY</envar></primary>
       </indexterm>
-      <envar>PGSSLKEY</envar> specifies the location for the secret key
-      used for the client certificate. It can either specify a filename
-      that will be used instead of the default
-      <filename>~/.postgresql/postgresql.key</>, or can specify an external
-      engine (engines are <productname>OpenSSL</> loadable modules). The
-      external engine specification should consist of a colon-separated
-      engine name and an engine-specific key identifier.
+      <envar>PGSSLKEY</envar> behaves the same as <xref
+      linkend="libpq-connect-sslkey"> connection parameter.
      </para>
     </listitem>
 
@@ -5835,8 +5796,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLROOTCERT</envar></primary>
       </indexterm>
-      <envar>PGSSLROOTCERT</envar> specifies the file name where the SSL
-      root certificate is stored.
+      <envar>PGSSLROOTCERT</envar>  behaves the same as <xref
+      linkend="libpq-connect-sslrootcert"> connection parameter.
      </para>
     </listitem>
 
@@ -5845,8 +5806,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSSLCRL</envar></primary>
       </indexterm>
-      <envar>PGSSLCRL</envar> specifies the file name where the SSL certificate
-      revocation list is stored.
+      <envar>PGSSLCRL</envar>  behaves the same as <xref
+      linkend="libpq-connect-sslcrl"> connection parameter.
      </para>
     </listitem>
 
@@ -5855,8 +5816,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGKRBSRVNAME</envar></primary>
       </indexterm>
-      <envar>PGKRBSRVNAME</envar> sets the Kerberos service name to use
-      when authenticating with Kerberos 5 or GSSAPI.
+      <envar>PGKRBSRVNAME</envar>  behaves the same as <xref
+      linkend="libpq-connect-krbsrvname"> connection parameter.
      </para>
     </listitem>
 
@@ -5865,8 +5826,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGGSSLIB</envar></primary>
       </indexterm>
-      <envar>PGGSSLIB</envar> sets the GSS library to use for GSSAPI
-      authentication.
+      <envar>PGGSSLIB</envar> behaves the same as <xref
+      linkend="libpq-connect-gsslib"> connection parameter.
      </para>
     </listitem>
 
@@ -5875,12 +5836,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGCONNECT_TIMEOUT</envar></primary>
       </indexterm>
-      <envar>PGCONNECT_TIMEOUT</envar> sets the maximum number of seconds
-      that <application>libpq</application> will wait when attempting to
-      connect to the <productname>PostgreSQL</productname> server.  If
-      unset or set to zero, <application>libpq</application> will wait
-      indefinitely.  It is not recommended to set the timeout to less than
-      2 seconds.
+      <envar>PGCONNECT_TIMEOUT</envar>  behaves the same as <xref
+      linkend="libpq-connect-connect-timeout"> connection parameter.
      </para>
     </listitem>
    </itemizedlist>
