@@ -1,10 +1,11 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/README.links,v 1.1 2009/01/10 04:40:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/README.links,v 1.2 2009/01/10 16:03:15 momjian Exp $ -->
 
 Linking within SGML documents can be confusing, so here is a summary:
 
 
 Intra-document Linking
 ----------------------
+
 <xref>
 	used to link to a section without supplying text for the link;
 	text comes from the link target;  has no close tag
@@ -23,8 +24,10 @@ endterm=
 	link target; endterm in a <link> overrides the supplied text
 
 
+
 External Linking
 ----------------
+
 <ulink>
 	like <link>, but uses a URL (not a document target);  requires
 	</ulink>; if no text is specified, the URL appears as the link text
@@ -32,3 +35,11 @@ External Linking
 
 url=
 	used by <ulink> to specify the URL
+
+
+Guidelines
+----------
+
+o  Do not use endterm with <link> because the supplied text is ignored;  use
+   <xref>
+o  Do not use text with <ulink> so the URL appears in printed output
