@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/README.links,v 1.2 2009/01/10 16:03:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/README.links,v 1.3 2009/01/10 16:58:39 momjian Exp $ -->
 
 Linking within SGML documents can be confusing, so here is a summary:
 
@@ -7,22 +7,20 @@ Intra-document Linking
 ----------------------
 
 <xref>
-	used to link to a section without supplying text for the link;
-	text comes from the link target;  has no close tag
+	use to get link text from the title of the target link; has no
+	close tag
 	http://www.oasis-open.org/docbook/documentation/reference/html/xref.html
 
 <link>
-	allows link text to be supplied, requires </link>
+	use to supply text for the link, requires </link>
 	http://www.oasis-open.org/docbook/documentation/reference/html/link.html
 
-
 linkend=
-	controls the target of the link/xref
+	controls the target of the link/xref, required
 
 endterm=
-        allows the text of the link/xref to be taken from a different 
-	link target; endterm in a <link> overrides the supplied text
-
+	for <xref>, allows the text of the link/xref to be taken from a
+	different link target title
 
 
 External Linking
@@ -34,12 +32,12 @@ External Linking
 	http://www.oasis-open.org/docbook/documentation/reference/html/ulink.html
 
 url=
-	used by <ulink> to specify the URL
+	used by <ulink> to specify the URL, required
 
 
 Guidelines
 ----------
 
-o  Do not use endterm with <link> because the supplied text is ignored;  use
-   <xref>
+o  If you want to supply text, use <link>, else <xref>
 o  Do not use text with <ulink> so the URL appears in printed output
+o  You can supply text at the target location with 'xreflabel'
