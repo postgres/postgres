@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.27 2009/01/01 17:23:55 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.28 2009/01/10 21:08:36 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -380,6 +380,7 @@ typedef struct GinScanEntryData
 	/* partial match support */
 	bool		isPartialMatch;
 	TIDBitmap  *partialMatch;
+	TBMIterator *partialMatchIterator;
 	TBMIterateResult *partialMatchResult;
 	StrategyNumber strategy;
 

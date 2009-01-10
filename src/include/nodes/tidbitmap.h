@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.8 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.9 2009/01/10 21:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,9 @@
  * do IsA(x, TIDBitmap) on it, but nothing else.
  */
 typedef struct TIDBitmap TIDBitmap;
+
+/* Likewise, TBMIterator is private */
+typedef struct TBMIterator TBMIterator;
 
 /* Result structure for tbm_iterate */
 typedef struct
@@ -55,7 +58,8 @@ extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);
 
 extern bool tbm_is_empty(const TIDBitmap *tbm);
 
-extern void tbm_begin_iterate(TIDBitmap *tbm);
-extern TBMIterateResult *tbm_iterate(TIDBitmap *tbm);
+extern TBMIterator *tbm_begin_iterate(TIDBitmap *tbm);
+extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
+extern void tbm_end_iterate(TBMIterator *iterator);
 
 #endif   /* TIDBITMAP_H */

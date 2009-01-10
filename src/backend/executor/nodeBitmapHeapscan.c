@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.31 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.32 2009/01/10 21:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	HeapScanDesc scan;
 	Index		scanrelid;
 	TIDBitmap  *tbm;
+	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
@@ -78,6 +79,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	scan = node->ss.ss_currentScanDesc;
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
+	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
 
 	/*
@@ -111,7 +113,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and
-	 * prepare the bitmap to be iterated over.
+	 * begin the iteration over the bitmap.
 	 */
 	if (tbm == NULL)
 	{
@@ -121,9 +123,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			elog(ERROR, "unrecognized result from subplan");
 
 		node->tbm = tbm;
+		node->tbmiterator = tbmiterator = tbm_begin_iterate(tbm);
 		node->tbmres = tbmres = NULL;
-
-		tbm_begin_iterate(tbm);
 	}
 
 	for (;;)
@@ -136,7 +137,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 */
 		if (tbmres == NULL)
 		{
-			node->tbmres = tbmres = tbm_iterate(tbm);
+			node->tbmres = tbmres = tbm_iterate(tbmiterator);
 			if (tbmres == NULL)
 			{
 				/* no more entries in the bitmap */
@@ -376,9 +377,12 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	/* rescan to release any page pin */
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);
 
+	if (node->tbmiterator)
+		tbm_end_iterate(node->tbmiterator);
 	if (node->tbm)
 		tbm_free(node->tbm);
 	node->tbm = NULL;
+	node->tbmiterator = NULL;
 	node->tbmres = NULL;
 
 	/*
@@ -423,6 +427,8 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	/*
 	 * release bitmap if any
 	 */
+	if (node->tbmiterator)
+		tbm_end_iterate(node->tbmiterator);
 	if (node->tbm)
 		tbm_free(node->tbm);
 
@@ -466,6 +472,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate->ss.ps.state = estate;
 
 	scanstate->tbm = NULL;
+	scanstate->tbmiterator = NULL;
 	scanstate->tbmres = NULL;
 
 	/*

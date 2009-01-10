@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.21 2009/01/01 17:23:34 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.22 2009/01/10 21:08:36 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -290,6 +290,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 	entry->list = NULL;
 	entry->nlist = 0;
 	entry->partialMatch = NULL;
+	entry->partialMatchIterator = NULL;
 	entry->partialMatchResult = NULL;
 	entry->reduceResult = FALSE;
 	entry->predictNumberResult = 0;
@@ -311,6 +312,9 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 			 */
 			if ( entry->partialMatch )
 			{
+				if (entry->partialMatchIterator)
+					tbm_end_iterate(entry->partialMatchIterator);
+				entry->partialMatchIterator = NULL;
 				tbm_free( entry->partialMatch );
 				entry->partialMatch = NULL;
 			}
@@ -323,7 +327,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry)
 
 		if ( entry->partialMatch && !tbm_is_empty(entry->partialMatch) )
 		{
-			tbm_begin_iterate(entry->partialMatch);
+			entry->partialMatchIterator = tbm_begin_iterate(entry->partialMatch);
 			entry->isFinished = FALSE;
 		}
 	}
@@ -534,11 +538,13 @@ entryGetItem(Relation index, GinScanEntry entry)
 		{
 			if ( entry->partialMatchResult == NULL || entry->offset >= entry->partialMatchResult->ntuples )
 			{
-				entry->partialMatchResult = tbm_iterate( entry->partialMatch );
+				entry->partialMatchResult = tbm_iterate( entry->partialMatchIterator );
 
 				if ( entry->partialMatchResult == NULL )
 				{
 					ItemPointerSet(&entry->curItem, InvalidBlockNumber, InvalidOffsetNumber);
+					tbm_end_iterate(entry->partialMatchIterator);
+					entry->partialMatchIterator = NULL;
 					entry->isFinished = TRUE;
 					break;
 				}

@@ -32,7 +32,7 @@
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.16 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.17 2009/01/10 21:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,9 +136,20 @@ struct TIDBitmap
 	int			nchunks;		/* number of lossy entries in pagetable */
 	bool		iterating;		/* tbm_begin_iterate called? */
 	PagetableEntry entry1;		/* used when status == TBM_ONE_PAGE */
-	/* the remaining fields are used while producing sorted output: */
+	/* these are valid when iterating is true: */
 	PagetableEntry **spages;	/* sorted exact-page list, or NULL */
 	PagetableEntry **schunks;	/* sorted lossy-chunk list, or NULL */
+};
+
+/*
+ * When iterating over a bitmap in sorted order, a TBMIterator is used to
+ * track our progress.  There can be several iterators scanning the same
+ * bitmap concurrently.  Note that the bitmap becomes read-only as soon as
+ * any iterator is created.
+ */
+struct TBMIterator
+{
+	TIDBitmap  *tbm;			/* TIDBitmap we're iterating over */
 	int			spageptr;		/* next spages index */
 	int			schunkptr;		/* next schunks index */
 	int			schunkbit;		/* next bit to check in current schunk */
@@ -172,16 +183,9 @@ tbm_create(long maxbytes)
 	TIDBitmap  *tbm;
 	long		nbuckets;
 
-	/*
-	 * Create the TIDBitmap struct, with enough trailing space to serve the
-	 * needs of the TBMIterateResult sub-struct.
-	 */
-	tbm = (TIDBitmap *) palloc(sizeof(TIDBitmap) +
-							   MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
-	/* Zero all the fixed fields */
-	MemSetAligned(tbm, 0, sizeof(TIDBitmap));
+	/* Create the TIDBitmap struct and zero all its fields */
+	tbm = makeNode(TIDBitmap);
 
-	tbm->type = T_TIDBitmap;	/* Set NodeTag */
 	tbm->mcxt = CurrentMemoryContext;
 	tbm->status = TBM_EMPTY;
 
@@ -533,60 +537,80 @@ tbm_is_empty(const TIDBitmap *tbm)
 /*
  * tbm_begin_iterate - prepare to iterate through a TIDBitmap
  *
+ * The TBMIterator struct is created in the caller's memory context.
+ * For a clean shutdown of the iteration, call tbm_end_iterate; but it's
+ * okay to just allow the memory context to be released, too.  It is caller's
+ * responsibility not to touch the TBMIterator anymore once the TIDBitmap
+ * is freed.
+ *
  * NB: after this is called, it is no longer allowed to modify the contents
  * of the bitmap.  However, you can call this multiple times to scan the
- * contents repeatedly.
+ * contents repeatedly, including parallel scans.
  */
-void
+TBMIterator *
 tbm_begin_iterate(TIDBitmap *tbm)
 {
-	HASH_SEQ_STATUS status;
-	PagetableEntry *page;
-	int			npages;
-	int			nchunks;
+	TBMIterator *iterator;
+
+	/*
+	 * Create the TBMIterator struct, with enough trailing space to serve the
+	 * needs of the TBMIterateResult sub-struct.
+	 */
+	iterator = (TBMIterator *) palloc(sizeof(TBMIterator) +
+									  MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+	iterator->tbm = tbm;
+
+	/*
+	 * Initialize iteration pointers.
+	 */
+	iterator->spageptr = 0;
+	iterator->schunkptr = 0;
+	iterator->schunkbit = 0;
+
+	/*
+	 * If we have a hashtable, create and fill the sorted page lists,
+	 * unless we already did that for a previous iterator.  Note that the
+	 * lists are attached to the bitmap not the iterator, so they can be
+	 * used by more than one iterator.
+	 */
+	if (tbm->status == TBM_HASH && !tbm->iterating)
+	{
+		HASH_SEQ_STATUS status;
+		PagetableEntry *page;
+		int			npages;
+		int			nchunks;
+
+		if (!tbm->spages && tbm->npages > 0)
+			tbm->spages = (PagetableEntry **)
+				MemoryContextAlloc(tbm->mcxt,
+								   tbm->npages * sizeof(PagetableEntry *));
+		if (!tbm->schunks && tbm->nchunks > 0)
+			tbm->schunks = (PagetableEntry **)
+				MemoryContextAlloc(tbm->mcxt,
+								   tbm->nchunks * sizeof(PagetableEntry *));
+
+		hash_seq_init(&status, tbm->pagetable);
+		npages = nchunks = 0;
+		while ((page = (PagetableEntry *) hash_seq_search(&status)) != NULL)
+		{
+			if (page->ischunk)
+				tbm->schunks[nchunks++] = page;
+			else
+				tbm->spages[npages++] = page;
+		}
+		Assert(npages == tbm->npages);
+		Assert(nchunks == tbm->nchunks);
+		if (npages > 1)
+			qsort(tbm->spages, npages, sizeof(PagetableEntry *),
+				  tbm_comparator);
+		if (nchunks > 1)
+			qsort(tbm->schunks, nchunks, sizeof(PagetableEntry *),
+				  tbm_comparator);
+	}
 
 	tbm->iterating = true;
 
-	/*
-	 * Reset iteration pointers.
-	 */
-	tbm->spageptr = 0;
-	tbm->schunkptr = 0;
-	tbm->schunkbit = 0;
-
-	/*
-	 * Nothing else to do if no entries, nor if we don't have a hashtable.
-	 */
-	if (tbm->nentries == 0 || tbm->status != TBM_HASH)
-		return;
-
-	/*
-	 * Create and fill the sorted page lists if we didn't already.
-	 */
-	if (!tbm->spages && tbm->npages > 0)
-		tbm->spages = (PagetableEntry **)
-			MemoryContextAlloc(tbm->mcxt,
-							   tbm->npages * sizeof(PagetableEntry *));
-	if (!tbm->schunks && tbm->nchunks > 0)
-		tbm->schunks = (PagetableEntry **)
-			MemoryContextAlloc(tbm->mcxt,
-							   tbm->nchunks * sizeof(PagetableEntry *));
-
-	hash_seq_init(&status, tbm->pagetable);
-	npages = nchunks = 0;
-	while ((page = (PagetableEntry *) hash_seq_search(&status)) != NULL)
-	{
-		if (page->ischunk)
-			tbm->schunks[nchunks++] = page;
-		else
-			tbm->spages[npages++] = page;
-	}
-	Assert(npages == tbm->npages);
-	Assert(nchunks == tbm->nchunks);
-	if (npages > 1)
-		qsort(tbm->spages, npages, sizeof(PagetableEntry *), tbm_comparator);
-	if (nchunks > 1)
-		qsort(tbm->schunks, nchunks, sizeof(PagetableEntry *), tbm_comparator);
+	return iterator;
 }
 
 /*
@@ -602,9 +626,10 @@ tbm_begin_iterate(TIDBitmap *tbm)
  * testing, recheck is always set true when ntuples < 0.)
  */
 TBMIterateResult *
-tbm_iterate(TIDBitmap *tbm)
+tbm_iterate(TBMIterator *iterator)
 {
-	TBMIterateResult *output = &(tbm->output);
+	TIDBitmap *tbm = iterator->tbm;
+	TBMIterateResult *output = &(iterator->output);
 
 	Assert(tbm->iterating);
 
@@ -612,10 +637,10 @@ tbm_iterate(TIDBitmap *tbm)
 	 * If lossy chunk pages remain, make sure we've advanced schunkptr/
 	 * schunkbit to the next set bit.
 	 */
-	while (tbm->schunkptr < tbm->nchunks)
+	while (iterator->schunkptr < tbm->nchunks)
 	{
-		PagetableEntry *chunk = tbm->schunks[tbm->schunkptr];
-		int			schunkbit = tbm->schunkbit;
+		PagetableEntry *chunk = tbm->schunks[iterator->schunkptr];
+		int			schunkbit = iterator->schunkbit;
 
 		while (schunkbit < PAGES_PER_CHUNK)
 		{
@@ -628,37 +653,37 @@ tbm_iterate(TIDBitmap *tbm)
 		}
 		if (schunkbit < PAGES_PER_CHUNK)
 		{
-			tbm->schunkbit = schunkbit;
+			iterator->schunkbit = schunkbit;
 			break;
 		}
 		/* advance to next chunk */
-		tbm->schunkptr++;
-		tbm->schunkbit = 0;
+		iterator->schunkptr++;
+		iterator->schunkbit = 0;
 	}
 
 	/*
 	 * If both chunk and per-page data remain, must output the numerically
 	 * earlier page.
 	 */
-	if (tbm->schunkptr < tbm->nchunks)
+	if (iterator->schunkptr < tbm->nchunks)
 	{
-		PagetableEntry *chunk = tbm->schunks[tbm->schunkptr];
+		PagetableEntry *chunk = tbm->schunks[iterator->schunkptr];
 		BlockNumber chunk_blockno;
 
-		chunk_blockno = chunk->blockno + tbm->schunkbit;
-		if (tbm->spageptr >= tbm->npages ||
-			chunk_blockno < tbm->spages[tbm->spageptr]->blockno)
+		chunk_blockno = chunk->blockno + iterator->schunkbit;
+		if (iterator->spageptr >= tbm->npages ||
+			chunk_blockno < tbm->spages[iterator->spageptr]->blockno)
 		{
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
 			output->ntuples = -1;
 			output->recheck = true;
-			tbm->schunkbit++;
+			iterator->schunkbit++;
 			return output;
 		}
 	}
 
-	if (tbm->spageptr < tbm->npages)
+	if (iterator->spageptr < tbm->npages)
 	{
 		PagetableEntry *page;
 		int			ntuples;
@@ -668,7 +693,7 @@ tbm_iterate(TIDBitmap *tbm)
 		if (tbm->status == TBM_ONE_PAGE)
 			page = &tbm->entry1;
 		else
-			page = tbm->spages[tbm->spageptr];
+			page = tbm->spages[iterator->spageptr];
 
 		/* scan bitmap to extract individual offset numbers */
 		ntuples = 0;
@@ -692,12 +717,25 @@ tbm_iterate(TIDBitmap *tbm)
 		output->blockno = page->blockno;
 		output->ntuples = ntuples;
 		output->recheck = page->recheck;
-		tbm->spageptr++;
+		iterator->spageptr++;
 		return output;
 	}
 
 	/* Nothing more in the bitmap */
 	return NULL;
+}
+
+/*
+ * tbm_end_iterate - finish an iteration over a TIDBitmap
+ *
+ * Currently this is just a pfree, but it might do more someday.  (For
+ * instance, it could be useful to count open iterators and allow the
+ * bitmap to return to read/write status when there are no more iterators.)
+ */
+void
+tbm_end_iterate(TBMIterator *iterator)
+{
+	pfree(iterator);
 }
 
 /*
