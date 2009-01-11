@@ -336,6 +336,9 @@
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
 
+/* Define to 1 if you have the `posix_fadvise' function. */
+#undef HAVE_POSIX_FADVISE
+
 /* Define to 1 if you have the POSIX signal interface. */
 #undef HAVE_POSIX_SIGNALS
 

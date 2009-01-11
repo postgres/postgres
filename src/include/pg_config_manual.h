@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.35 2008/07/12 02:28:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.36 2009/01/11 18:02:17 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -112,7 +112,7 @@
 #define ALIGNOF_BUFFER	32
 
 /*
- * Disable UNIX sockets for those operating system.
+ * Disable UNIX sockets for certain operating systems.
  */
 #if defined(WIN32)
 #undef HAVE_UNIX_SOCKETS
@@ -123,6 +123,16 @@
  */
 #if !defined(WIN32) && !defined(__CYGWIN__)
 #define HAVE_WORKING_LINK 1
+#endif
+
+/*
+ * USE_POSIX_FADVISE controls whether Postgres will attempt to use the
+ * posix_fadvise() kernel call.  Usually the automatic configure tests are
+ * sufficient, but some older Linux distributions had broken versions of
+ * posix_fadvise().  If necessary you can remove the #define here.
+ */
+#if HAVE_DECL_POSIX_FADVISE && defined(HAVE_POSIX_FADVISE)
+#define USE_POSIX_FADVISE
 #endif
 
 /*

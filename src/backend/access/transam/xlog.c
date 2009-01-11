@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.326 2009/01/01 17:23:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.327 2009/01/11 18:02:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -2436,29 +2437,17 @@ XLogFileClose(void)
 	Assert(openLogFile >= 0);
 
 	/*
-	 * posix_fadvise is problematic on many platforms: on older x86 Linux it
-	 * just dumps core, and there are reports of problems on PPC platforms as
-	 * well.  The following is therefore disabled for the time being. We could
-	 * consider some kind of configure test to see if it's safe to use, but
-	 * since we lack hard evidence that there's any useful performance gain to
-	 * be had, spending time on that seems unprofitable for now.
-	 */
-#ifdef NOT_USED
-
-	/*
 	 * WAL segment files will not be re-read in normal operation, so we advise
-	 * OS to release any cached pages.	But do not do so if WAL archiving is
-	 * active, because archiver process could use the cache to read the WAL
-	 * segment.
-	 *
-	 * While O_DIRECT works for O_SYNC, posix_fadvise() works for fsync() and
-	 * O_SYNC, and some platforms only have posix_fadvise().
+	 * the OS to release any cached pages.  But do not do so if WAL archiving
+	 * is active, because archiver process could use the cache to read the WAL
+	 * segment.  Also, don't bother with it if we are using O_DIRECT, since
+	 * the kernel is presumably not caching in that case.
 	 */
-#if defined(HAVE_DECL_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
-	if (!XLogArchivingActive())
-		posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED);
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+	if (!XLogArchivingActive() &&
+		(get_sync_bit(sync_method) & PG_O_DIRECT) == 0)
+		(void) posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED);
 #endif
-#endif   /* NOT_USED */
 
 	if (close(openLogFile))
 		ereport(PANIC,
