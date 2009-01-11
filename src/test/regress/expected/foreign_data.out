@@ -667,25 +667,25 @@ SELECT * FROM information_schema.foreign_server_options ORDER BY 1, 2, 3;
  regression             | s8                  | dbname          | db1
 (6 rows)
 
-SELECT * FROM information_schema.user_mappings ORDER BY 1, 2, 3;
+SELECT * FROM information_schema.user_mappings ORDER BY lower(authorization_identifier), 2, 3;
  authorization_identifier | foreign_server_catalog | foreign_server_name 
 --------------------------+------------------------+---------------------
+ foreign_data_user        | regression             | s4
+ foreign_data_user        | regression             | s8
  PUBLIC                   | regression             | s4
  PUBLIC                   | regression             | s8
  PUBLIC                   | regression             | st1
- foreign_data_user        | regression             | s4
- foreign_data_user        | regression             | s8
  regress_test_role        | regression             | s5
  regress_test_role        | regression             | s6
  regress_test_role        | regression             | st1
 (8 rows)
 
-SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
+SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorization_identifier), 2, 3, 4;
  authorization_identifier | foreign_server_catalog | foreign_server_name | option_name | option_value 
 --------------------------+------------------------+---------------------+-------------+--------------
+ foreign_data_user        | regression             | s8                  | password    | public
  PUBLIC                   | regression             | s4                  | mapping     | is public
  PUBLIC                   | regression             | st1                 | modified    | 1
- foreign_data_user        | regression             | s8                  | password    | public
  regress_test_role        | regression             | s5                  | modified    | 1
  regress_test_role        | regression             | s6                  | username    | test
  regress_test_role        | regression             | st1                 | password    | boo
