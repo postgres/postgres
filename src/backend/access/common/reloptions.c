@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.17 2009/01/08 19:34:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.18 2009/01/12 21:02:14 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,11 +33,12 @@
  *
  * To add an option:
  *
- * (i) decide on a class (integer, real, bool, string), name, default value,
- * upper and lower bounds (if applicable).
- * (ii) add a record below.
- * (iii) add it to StdRdOptions if appropriate
- * (iv) add a block to the appropriate handling routine (probably
+ * (i) decide on a type (integer, real, bool, string), name, default value,
+ * upper and lower bounds (if applicable); for strings, consider a validation
+ * routine.
+ * (ii) add a record below (or use add_<type>_reloption).
+ * (iii) add it to the appropriate options struct (perhaps StdRdOptions)
+ * (iv) add it to the appropriate handling routine (perhaps
  * default_reloptions)
  * (v) don't forget to document the option
  *
@@ -381,7 +382,7 @@ add_string_reloption(int kind, char *name, char *desc, char *default_val,
 
 	/* make sure the validator/default combination is sane */
 	if (newoption->validate_cb)
-		(newoption->validate_cb) (newoption->default_val, true);
+		(newoption->validate_cb) (newoption->default_val);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -745,8 +746,8 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 
 				option->values.string_val = value;
 				nofree = true;
-				if (optstring->validate_cb)
-					(optstring->validate_cb) (value, validate);
+				if (validate && optstring->validate_cb)
+					(optstring->validate_cb) (value);
 				parsed = true;
 			}
 			break;
@@ -763,6 +764,110 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 }
 
 /*
+ * Given the result from parseRelOptions, allocate a struct that's of the
+ * specified base size plus any extra space that's needed for string variables.
+ *
+ * "base" should be sizeof(struct) of the reloptions struct (StdRdOptions or
+ * equivalent).
+ */
+void *
+allocateReloptStruct(Size base, relopt_value *options, int numoptions)
+{
+	Size	size = base;
+	int		i;
+
+	for (i = 0; i < numoptions; i++)
+		if (options[i].gen->type == RELOPT_TYPE_STRING)
+			size += GET_STRING_RELOPTION_LEN(options[i]) + 1;
+
+	return palloc0(size);
+}
+
+/*
+ * Given the result of parseRelOptions and a parsing table, fill in the
+ * struct (previously allocated with allocateReloptStruct) with the parsed
+ * values.
+ *
+ * rdopts is the pointer to the allocated struct to be filled; basesize is
+ * the sizeof(struct) that was passed to allocateReloptStruct.  options and
+ * numoptions are parseRelOptions' output.  elems and numelems is the array
+ * of elements to be parsed.  Note that when validate is true, it is expected
+ * that all options are also in elems.
+ */
+void
+fillRelOptions(void *rdopts, Size basesize, relopt_value *options,
+			   int numoptions, bool validate, relopt_parse_elt *elems,
+			   int numelems)
+{
+	int		i;
+	int		offset = basesize;
+
+	for (i = 0; i < numoptions; i++)
+	{
+		int		j;
+		bool	found = false;
+
+		for (j = 0; j < numelems; j++)
+		{
+			if (pg_strcasecmp(options[i].gen->name, elems[j].optname) == 0)
+			{
+				relopt_string *optstring;
+				char   *itempos = ((char *) rdopts) + elems[j].offset;
+				char   *string_val;
+
+				switch (options[i].gen->type)
+				{
+					case RELOPT_TYPE_BOOL:
+						*(bool *) itempos = options[i].isset ?
+							options[i].values.bool_val :
+							((relopt_bool *) options[i].gen)->default_val;
+						break;
+					case RELOPT_TYPE_INT:
+						*(int *) itempos = options[i].isset ?
+							options[i].values.int_val :
+							((relopt_int *) options[i].gen)->default_val;
+						break;
+					case RELOPT_TYPE_REAL:
+						*(double *) itempos = options[i].isset ?
+							options[i].values.real_val :
+							((relopt_real *) options[i].gen)->default_val;
+						break;
+					case RELOPT_TYPE_STRING:
+						optstring = (relopt_string *) options[i].gen;
+						if (options[i].isset)
+							string_val = options[i].values.string_val;
+						else if (!optstring->default_isnull)
+							string_val = optstring->default_val;
+						else
+							string_val = NULL;
+
+						if (string_val == NULL)
+							*(int *) itempos = 0;
+						else
+						{
+							strcpy((char *) rdopts + offset, string_val);
+							*(int *) itempos = offset;
+							offset += strlen(string_val) + 1;
+						}
+						break;
+					default:
+						elog(ERROR, "unrecognized reloption type %c",
+							 options[i].gen->type);
+						break;
+				}
+				found = true;
+				break;
+			}
+		}
+		if (validate && !found)
+			elog(ERROR, "storate parameter \"%s\" not found in parse table",
+				 options[i].gen->name);
+	}
+	SET_VARSIZE(rdopts, offset);
+}
+
+
+/*
  * Option parser for anything that uses StdRdOptions (i.e. fillfactor only)
  */
 bytea *
@@ -770,10 +875,10 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 {
 	relopt_value   *options;
 	StdRdOptions   *rdopts;
-	StdRdOptions	lopts;
 	int				numoptions;
-	int				len;
-	int				i;
+	relopt_parse_elt tab[] = {
+		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)}
+	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
 
@@ -781,20 +886,12 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 	if (numoptions == 0)
 		return NULL;
 
-	MemSet(&lopts, 0, sizeof(StdRdOptions));
+	rdopts = allocateReloptStruct(sizeof(StdRdOptions), options, numoptions);
 
-	for (i = 0; i < numoptions; i++)
-	{
-		HANDLE_INT_RELOPTION("fillfactor", lopts.fillfactor, options[i],
-							 (char *) NULL);
-	}
+	fillRelOptions((void *) rdopts, sizeof(StdRdOptions), options, numoptions,
+				   validate, tab, lengthof(tab));
 
 	pfree(options);
-
-	len = sizeof(StdRdOptions);
-	rdopts = palloc(len);
-	memcpy(rdopts, &lopts, len);
-	SET_VARSIZE(rdopts, len);
 
 	return (bytea *) rdopts;
 }

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.9 2009/01/08 19:34:41 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.10 2009/01/12 21:02:15 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ typedef struct relopt_bool
 	relopt_gen	gen;
 	bool		default_val;
 } relopt_bool;
-	
+
 typedef struct relopt_int
 {
 	relopt_gen	gen;
@@ -90,7 +90,8 @@ typedef struct relopt_real
 	double		max;
 } relopt_real;
 
-typedef void (*validate_string_relopt) (char *value, bool validate);
+/* validation routines for strings */
+typedef void (*validate_string_relopt) (char *value);
 
 typedef struct relopt_string
 {
@@ -98,68 +99,88 @@ typedef struct relopt_string
 	int			default_len;
 	bool		default_isnull;
 	validate_string_relopt	validate_cb;
-	char		default_val[1];	/* variable length */
+	char		default_val[1];	/* variable length, zero-terminated */
 } relopt_string;
 
+/* This is the input type for fillRelOptions */
+typedef struct
+{
+	char   *optname;
+	relopt_type	opttype;
+	int		offset;
+} relopt_parse_elt;
+
+
 /*
- * These macros exist for the convenience of amoptions writers.  See
- * default_reloptions for an example of the intended usage.  Beware of
- * multiple evaluation of arguments!
- *
- * Most of the time there's no need to call HAVE_RELOPTION manually, but it's
- * possible that an amoptions routine needs to walk the array with a different
- * purpose (say, to compute the size of a struct to allocate beforehand.)
+ * These macros exist for the convenience of amoptions writers (but consider
+ * using fillRelOptions, which is a lot simpler).  Beware of multiple
+ * evaluation of arguments!
  *
  * The last argument in the HANDLE_*_RELOPTION macros allows the caller to
  * determine whether the option was set (true), or its value acquired from
  * defaults (false); it can be passed as (char *) NULL if the caller does not
  * need this information.
+ *
+ * optname is the option name (a string), var is the variable
+ * on which the value should be stored (e.g. StdRdOptions->fillfactor), and
+ * option is a relopt_value pointer.
+ *
+ * The normal way to use this is to loop on the relopt_value array returned by
+ * parseRelOptions:
+ * for (i = 0; options[i].gen->name; i++)
+ * {
+ * 		if (HAVE_RELOPTION("fillfactor", options[i])
+ * 		{
+ * 			HANDLE_INT_RELOPTION("fillfactor", rdopts->fillfactor, options[i], &isset);
+ * 			continue;
+ * 		}
+ * 		if (HAVE_RELOPTION("default_row_acl", options[i])
+ * 		{
+ * 			...
+ * 		}
+ * 		...
+ * 		if (validate)
+ * 			ereport(ERROR,
+ * 					(errmsg("unknown option")));
+ * 	}
+ *
+ * 	Note that this is more or less the same that fillRelOptions does, so only
+ * 	use this if you need to do something non-standard within some options'
+ * 	block.
  */
 #define HAVE_RELOPTION(optname, option) \
 	(pg_strncasecmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
 
-#define HANDLE_INT_RELOPTION(optname, var, option, wasset)			\
-	do {															\
-		if (HAVE_RELOPTION(optname, option))						\
-		{															\
-			if (option.isset)										\
-				var = option.values.int_val; 						\
-			else													\
-				var = ((relopt_int *) option.gen)->default_val; 	\
-			(wasset) != NULL ? *(wasset) = option.isset : (dummyret)NULL; \
-			continue;												\
-		}															\
+#define HANDLE_INT_RELOPTION(optname, var, option, wasset)		\
+	do {														\
+		if (option.isset)										\
+			var = option.values.int_val; 						\
+		else													\
+			var = ((relopt_int *) option.gen)->default_val; 	\
+		(wasset) != NULL ? *(wasset) = option.isset : (dummyret)NULL; \
 	} while (0)
 
 #define HANDLE_BOOL_RELOPTION(optname, var, option, wasset)			\
 	do {															\
-		if (HAVE_RELOPTION(optname, option))						\
-		{															\
-			if (option.isset)										\
-				var = option.values.bool_val; 						\
-			else													\
-				var = ((relopt_bool *) option.gen)->default_val;	\
-			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-			continue;												\
-		}															\
+		if (option.isset)										\
+			var = option.values.bool_val; 						\
+		else													\
+			var = ((relopt_bool *) option.gen)->default_val;	\
+		(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
 	} while (0)
 
-#define HANDLE_REAL_RELOPTION(optname, var, option, wasset) 		\
-	do {															\
-		if (HAVE_RELOPTION(optname, option))						\
-		{															\
-			if (option.isset)										\
-				var = option.values.real_val; 						\
-			else													\
-				var = ((relopt_real *) option.gen)->default_val;	\
-			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-			continue;												\
-		}															\
+#define HANDLE_REAL_RELOPTION(optname, var, option, wasset) 	\
+	do {														\
+		if (option.isset)										\
+			var = option.values.real_val; 						\
+		else													\
+			var = ((relopt_real *) option.gen)->default_val;	\
+		(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
 	} while (0)
 
 /*
  * Note that this assumes that the variable is already allocated at the tail of
- * reloptions structure (StdRdOptions or other).
+ * reloptions structure (StdRdOptions or equivalent).
  *
  * "base" is a pointer to the reloptions structure, and "offset" is an integer
  * variable that must be initialized to sizeof(reloptions structure).  This
@@ -170,27 +191,23 @@ typedef struct relopt_string
  */
 #define HANDLE_STRING_RELOPTION(optname, var, option, base, offset, wasset)	\
 	do {														\
-		if (HAVE_RELOPTION(optname, option))						\
-		{															\
-			relopt_string *optstring = (relopt_string *) option.gen;\
-			char *string_val;										\
-			if (option.isset)										\
-				string_val = option.values.string_val;				\
-			else if (!optstring->default_isnull)					\
-				string_val = optstring->default_val;				\
-			else													\
-				string_val = NULL;									\
-			(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-			if (string_val == NULL)									\
-				var = 0;											\
-			else													\
-			{														\
-				strcpy(((char *)(base)) + (offset), string_val);	\
-				var = (offset);										\
-				(offset) += strlen(string_val) + 1;					\
-			}														\
-			continue;												\
-		}															\
+		relopt_string *optstring = (relopt_string *) option.gen;\
+		char *string_val;										\
+		if (option.isset)										\
+			string_val = option.values.string_val;				\
+		else if (!optstring->default_isnull)					\
+			string_val = optstring->default_val;				\
+		else													\
+			string_val = NULL;									\
+		(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
+		if (string_val == NULL)									\
+			var = 0;											\
+		else													\
+		{														\
+			strcpy(((char *)(base)) + (offset), string_val);	\
+			var = (offset);										\
+			(offset) += strlen(string_val) + 1;					\
+		}														\
 	} while (0)
 
 /*
@@ -208,7 +225,7 @@ typedef struct relopt_string
  */
 #define GET_STRING_RELOPTION(optstruct, member) \
 	((optstruct)->member == 0 ? NULL : \
-	 (char *)(optstruct) + (optstruct)->member)                       
+	 (char *)(optstruct) + (optstruct)->member)
 
 
 extern int add_reloption_kind(void);
@@ -220,12 +237,17 @@ extern void add_real_reloption(int kind, char *name, char *desc,
 				   double default_val, double min_val, double max_val);
 extern void add_string_reloption(int kind, char *name, char *desc,
 					 char *default_val, validate_string_relopt validator);
-			
+
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
 					bool ignoreOids, bool isReset);
 extern List *untransformRelOptions(Datum options);
 extern relopt_value *parseRelOptions(Datum options, bool validate,
 				relopt_kind kind, int *numrelopts);
+extern void *allocateReloptStruct(Size base, relopt_value *options,
+					 int numoptions);
+extern void fillRelOptions(void *rdopts, Size basesize, relopt_value *options,
+			   int numoptions, bool validate, relopt_parse_elt *elems,
+			   int nelems);
 
 extern bytea *default_reloptions(Datum reloptions, bool validate,
 				   relopt_kind kind);
