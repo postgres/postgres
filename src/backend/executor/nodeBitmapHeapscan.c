@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.33 2009/01/12 05:10:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.34 2009/01/12 16:00:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,10 +236,22 @@ BitmapHeapNext(BitmapHeapScanState *node)
 #endif /* USE_PREFETCH */
 		}
 
+		/*
+		 * Out of range?  If so, nothing more to look at on this page
+		 */
+		if (scan->rs_cindex < 0 || scan->rs_cindex >= scan->rs_ntuples)
+		{
+			node->tbmres = tbmres = NULL;
+			continue;
+		}
+
 #ifdef USE_PREFETCH
 		/*
 		 * We issue prefetch requests *after* fetching the current page
 		 * to try to avoid having prefetching interfere with the main I/O.
+		 * Also, this should happen only when we have determined there is
+		 * still something to do on the current page, else we may uselessly
+		 * prefetch the same page we are just about to request for real.
 		 */
 		if (prefetch_iterator)
 		{
@@ -259,15 +271,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			}
 		}
 #endif /* USE_PREFETCH */
-
-		/*
-		 * Out of range?  If so, nothing more to look at on this page
-		 */
-		if (scan->rs_cindex < 0 || scan->rs_cindex >= scan->rs_ntuples)
-		{
-			node->tbmres = tbmres = NULL;
-			continue;
-		}
 
 		/*
 		 * Okay to fetch the tuple
