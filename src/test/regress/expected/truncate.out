@@ -141,6 +141,150 @@ SELECT * FROM trunc_e;
 (0 rows)
 
 DROP TABLE truncate_a,trunc_c,trunc_b,trunc_d,trunc_e CASCADE;
+-- Test TRUNCATE with inheritance
+CREATE TABLE trunc_f (col1 integer primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "trunc_f_pkey" for table "trunc_f"
+INSERT INTO trunc_f VALUES (1);
+INSERT INTO trunc_f VALUES (2);
+CREATE TABLE trunc_fa (col2a text) INHERITS (trunc_f);
+INSERT INTO trunc_fa VALUES (3, 'three');
+CREATE TABLE trunc_fb (col2b int) INHERITS (trunc_f);
+INSERT INTO trunc_fb VALUES (4, 444);
+CREATE TABLE trunc_faa (col3 text) INHERITS (trunc_fa);
+INSERT INTO trunc_faa VALUES (5, 'five', 'FIVE');
+BEGIN;
+SELECT * FROM trunc_f;
+ col1 
+------
+    1
+    2
+    3
+    4
+    5
+(5 rows)
+
+TRUNCATE trunc_f;
+SELECT * FROM trunc_f;
+ col1 
+------
+(0 rows)
+
+ROLLBACK;
+BEGIN;
+SELECT * FROM trunc_f;
+ col1 
+------
+    1
+    2
+    3
+    4
+    5
+(5 rows)
+
+TRUNCATE ONLY trunc_f;
+SELECT * FROM trunc_f;
+ col1 
+------
+    3
+    4
+    5
+(3 rows)
+
+ROLLBACK;
+BEGIN;
+SELECT * FROM trunc_f;
+ col1 
+------
+    1
+    2
+    3
+    4
+    5
+(5 rows)
+
+SELECT * FROM trunc_fa;
+ col1 | col2a 
+------+-------
+    3 | three
+    5 | five
+(2 rows)
+
+SELECT * FROM trunc_faa;
+ col1 | col2a | col3 
+------+-------+------
+    5 | five  | FIVE
+(1 row)
+
+TRUNCATE ONLY trunc_fb, ONLY trunc_fa;
+SELECT * FROM trunc_f;
+ col1 
+------
+    1
+    2
+    5
+(3 rows)
+
+SELECT * FROM trunc_fa;
+ col1 | col2a 
+------+-------
+    5 | five
+(1 row)
+
+SELECT * FROM trunc_faa;
+ col1 | col2a | col3 
+------+-------+------
+    5 | five  | FIVE
+(1 row)
+
+ROLLBACK;
+BEGIN;
+SELECT * FROM trunc_f;
+ col1 
+------
+    1
+    2
+    3
+    4
+    5
+(5 rows)
+
+SELECT * FROM trunc_fa;
+ col1 | col2a 
+------+-------
+    3 | three
+    5 | five
+(2 rows)
+
+SELECT * FROM trunc_faa;
+ col1 | col2a | col3 
+------+-------+------
+    5 | five  | FIVE
+(1 row)
+
+TRUNCATE ONLY trunc_fb, trunc_fa;
+SELECT * FROM trunc_f;
+ col1 
+------
+    1
+    2
+(2 rows)
+
+SELECT * FROM trunc_fa;
+ col1 | col2a 
+------+-------
+(0 rows)
+
+SELECT * FROM trunc_faa;
+ col1 | col2a | col3 
+------+-------+------
+(0 rows)
+
+ROLLBACK;
+DROP TABLE trunc_f CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table trunc_fa
+drop cascades to table trunc_faa
+drop cascades to table trunc_fb
 -- Test ON TRUNCATE triggers
 CREATE TABLE trunc_trigger_test (f1 int, f2 text, f3 text);
 CREATE TABLE trunc_trigger_log (tgop text, tglevel text, tgwhen text,

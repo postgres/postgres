@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.20 2009/01/01 17:23:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.21 2009/01/12 08:54:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
 #include "catalog/namespace.h"
 #include "commands/lockcmds.h"
 #include "miscadmin.h"
+#include "optimizer/prep.h"
+#include "parser/parse_clause.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -40,38 +42,48 @@ LockTableCommand(LockStmt *lockstmt)
 	{
 		RangeVar   *relation = lfirst(p);
 		Oid			reloid;
-		AclResult	aclresult;
-		Relation	rel;
+		bool		recurse = interpretInhOption(relation->inhOpt);
+		List	   *children_and_self;
+		ListCell   *child;
 
-		/*
-		 * We don't want to open the relation until we've checked privilege.
-		 * So, manually get the relation OID.
-		 */
 		reloid = RangeVarGetRelid(relation, false);
 
-		if (lockstmt->mode == AccessShareLock)
-			aclresult = pg_class_aclcheck(reloid, GetUserId(),
-										  ACL_SELECT);
+		if (recurse)
+			children_and_self = find_all_inheritors(reloid);
 		else
-			aclresult = pg_class_aclcheck(reloid, GetUserId(),
-										  ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE);
+			children_and_self = list_make1_oid(reloid);
 
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_CLASS,
-						   get_rel_name(reloid));
+		foreach(child, children_and_self)
+		{
+			Oid			childreloid = lfirst_oid(child);
+			Relation	rel;
+			AclResult	aclresult;
 
-		if (lockstmt->nowait)
-			rel = relation_open_nowait(reloid, lockstmt->mode);
-		else
-			rel = relation_open(reloid, lockstmt->mode);
+			/* We don't want to open the relation until we've checked privilege. */
+			if (lockstmt->mode == AccessShareLock)
+				aclresult = pg_class_aclcheck(childreloid, GetUserId(),
+											  ACL_SELECT);
+			else
+				aclresult = pg_class_aclcheck(childreloid, GetUserId(),
+											  ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE);
 
-		/* Currently, we only allow plain tables to be locked */
-		if (rel->rd_rel->relkind != RELKIND_RELATION)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table",
-							relation->relname)));
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_CLASS,
+							   get_rel_name(childreloid));
 
-		relation_close(rel, NoLock);	/* close rel, keep lock */
+			if (lockstmt->nowait)
+				rel = relation_open_nowait(childreloid, lockstmt->mode);
+			else
+				rel = relation_open(childreloid, lockstmt->mode);
+
+			/* Currently, we only allow plain tables to be locked */
+			if (rel->rd_rel->relkind != RELKIND_RELATION)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a table",
+								get_rel_name(childreloid))));
+
+			relation_close(rel, NoLock);	/* close rel, keep lock */
+		}
 	}
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.51 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.52 2009/01/12 08:54:25 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
+LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
 
 where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 
@@ -109,7 +109,9 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table to
-      lock.
+      lock.  If <literal>ONLY</> is specified, only that table is
+      locked.  If <literal>ONLY</> is not specified, the table and all
+      its descendant tables (if any) are locked.
      </para>
 
      <para>
