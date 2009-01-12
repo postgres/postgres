@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.116 2008/12/31 23:42:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.117 2009/01/12 14:06:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1454,6 +1454,19 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     be omitted before an alias that is an unreserved keyword.  But
     this is impractical for output column names, because of syntactic
     ambiguities.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>ONLY</literal> and Parentheses</title>
+
+   <para>
+    The SQL standard requires parentheses around the table name
+    after <literal>ONLY</literal>, as in <literal>SELECT * FROM ONLY
+    (tab1), ONLY (tab2) WHERE ...</literal>.  PostgreSQL supports that
+    as well, but the parentheses are optional.  (This point applies
+    equally to all SQL commands supporting the <literal>ONLY</literal>
+    option.)
    </para>
   </refsect2>
 
