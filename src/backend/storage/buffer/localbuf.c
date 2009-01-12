@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.85 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.86 2009/01/12 05:10:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,43 @@ static HTAB *LocalBufHash = NULL;
 
 static void InitLocalBuffers(void);
 static Block GetLocalBufferStorage(void);
+
+
+/*
+ * LocalPrefetchBuffer -
+ *	  initiate asynchronous read of a block of a relation
+ *
+ * Do PrefetchBuffer's work for temporary relations.
+ * No-op if prefetching isn't compiled in.
+ */
+void
+LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
+					BlockNumber blockNum)
+{
+#ifdef USE_PREFETCH
+	BufferTag	newTag;			/* identity of requested block */
+	LocalBufferLookupEnt *hresult;
+
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, forkNum, blockNum);
+
+	/* Initialize local buffers if first request in this session */
+	if (LocalBufHash == NULL)
+		InitLocalBuffers();
+
+	/* See if the desired buffer already exists */
+	hresult = (LocalBufferLookupEnt *)
+		hash_search(LocalBufHash, (void *) &newTag, HASH_FIND, NULL);
+
+	if (hresult)
+	{
+		/* Yes, so nothing to do */
+		return;
+	}
+
+	/* Not in buffers, so initiate prefetch */
+	smgrprefetch(smgr, forkNum, blockNum);
+#endif /* USE_PREFETCH */
+}
 
 
 /*

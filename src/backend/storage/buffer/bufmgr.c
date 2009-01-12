@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.244 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.245 2009/01/12 05:10:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,13 @@ bool		zero_damaged_pages = false;
 int			bgwriter_lru_maxpages = 100;
 double		bgwriter_lru_multiplier = 2.0;
 
+/*
+ * How many buffers PrefetchBuffer callers should try to stay ahead of their
+ * ReadBuffer calls by.  This is maintained by the assign hook for
+ * effective_io_concurrency.  Zero means "never prefetch".
+ */
+int			target_prefetch_pages = 0;
+
 /* local state for StartBufferIO and related functions */
 static volatile BufferDesc *InProgressBuf = NULL;
 static bool IsForInput;
@@ -93,6 +100,56 @@ static volatile BufferDesc *BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
+
+
+/*
+ * PrefetchBuffer -- initiate asynchronous read of a block of a relation
+ *
+ * This is named by analogy to ReadBuffer but doesn't actually allocate a
+ * buffer.  Instead it tries to ensure that a future ReadBuffer for the given
+ * block will not be delayed by the I/O.  Prefetching is optional.
+ * No-op if prefetching isn't compiled in.
+ */
+void
+PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
+{
+#ifdef USE_PREFETCH
+	Assert(RelationIsValid(reln));
+	Assert(BlockNumberIsValid(blockNum));
+
+	/* Open it at the smgr level if not already done */
+	RelationOpenSmgr(reln);
+
+	if (reln->rd_istemp)
+	{
+		/* pass it off to localbuf.c */
+		LocalPrefetchBuffer(reln->rd_smgr, forkNum, blockNum);
+	}
+	else
+	{
+		BufferTag	newTag;			/* identity of requested block */
+		uint32		newHash;		/* hash value for newTag */
+		LWLockId	newPartitionLock;		/* buffer partition lock for it */
+		int			buf_id;
+
+		/* create a tag so we can lookup the buffer */
+		INIT_BUFFERTAG(newTag, reln->rd_smgr->smgr_rnode, forkNum, blockNum);
+
+		/* determine its hash code and partition lock ID */
+		newHash = BufTableHashCode(&newTag);
+		newPartitionLock = BufMappingPartitionLock(newHash);
+
+		/* see if the block is in the buffer pool already */
+		LWLockAcquire(newPartitionLock, LW_SHARED);
+		buf_id = BufTableLookup(&newTag, newHash);
+		LWLockRelease(newPartitionLock);
+
+		/* If not in buffers, initiate prefetch */
+		if (buf_id < 0)
+			smgrprefetch(reln->rd_smgr, forkNum, blockNum);
+	}
+#endif /* USE_PREFETCH */
+}
 
 
 /*

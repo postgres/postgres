@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.143 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.144 2009/01/12 05:10:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,6 +549,26 @@ mdclose(SMgrRelation reln, ForkNumber forknum)
 		pfree(ov);
 	}
 }
+
+/*
+ *	mdprefetch() -- Initiate asynchronous read of the specified block of a relation
+ */
+void
+mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
+{
+#ifdef USE_PREFETCH
+	off_t		seekpos;
+	MdfdVec    *v;
+
+	v = _mdfd_getseg(reln, forknum, blocknum, false, EXTENSION_FAIL);
+
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+
+	(void) FilePrefetch(v->mdfd_vfd, seekpos, BLCKSZ);
+#endif /* USE_PREFETCH */
+}
+
 
 /*
  *	mdread() -- Read the specified block from a relation.

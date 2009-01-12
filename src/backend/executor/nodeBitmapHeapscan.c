@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.32 2009/01/10 21:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.33 2009/01/12 05:10:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
+	TBMIterator *prefetch_iterator;
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
 
@@ -81,6 +82,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
+	prefetch_iterator = node->prefetch_iterator;
 
 	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
@@ -114,6 +116,15 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and
 	 * begin the iteration over the bitmap.
+	 *
+	 * For prefetching, we use *two* iterators, one for the pages we are
+	 * actually scanning and another that runs ahead of the first for
+	 * prefetching.  node->prefetch_pages tracks exactly how many pages
+	 * ahead the prefetch iterator is.  Also, node->prefetch_target tracks
+	 * the desired prefetch distance, which starts small and increases up
+	 * to the GUC-controlled maximum, target_prefetch_pages.  This is to
+	 * avoid doing a lot of prefetching in a scan that stops after a few
+	 * tuples because of a LIMIT.
 	 */
 	if (tbm == NULL)
 	{
@@ -125,6 +136,15 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		node->tbm = tbm;
 		node->tbmiterator = tbmiterator = tbm_begin_iterate(tbm);
 		node->tbmres = tbmres = NULL;
+
+#ifdef USE_PREFETCH
+		if (target_prefetch_pages > 0)
+		{
+			node->prefetch_iterator = prefetch_iterator = tbm_begin_iterate(tbm);
+			node->prefetch_pages = 0;
+			node->prefetch_target = -1;
+		}
+#endif /* USE_PREFETCH */
 	}
 
 	for (;;)
@@ -143,6 +163,22 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				/* no more entries in the bitmap */
 				break;
 			}
+
+#ifdef USE_PREFETCH
+			if (node->prefetch_pages > 0)
+			{
+				/* The main iterator has closed the distance by one page */
+				node->prefetch_pages--;
+			}
+			else if (prefetch_iterator)
+			{
+				/* Do not let the prefetch iterator get behind the main one */
+				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+
+				if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
+					elog(ERROR, "prefetch and main iterators are out of sync");
+			}
+#endif /* USE_PREFETCH */
 
 			/*
 			 * Ignore any claimed entries past what we think is the end of the
@@ -165,6 +201,23 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 * Set rs_cindex to first slot to examine
 			 */
 			scan->rs_cindex = 0;
+
+#ifdef USE_PREFETCH
+			/*
+			 * Increase prefetch target if it's not yet at the max.  Note
+			 * that we will increase it to zero after fetching the very
+			 * first page/tuple, then to one after the second tuple is
+			 * fetched, then it doubles as later pages are fetched.
+			 */
+			if (node->prefetch_target >= target_prefetch_pages)
+				/* don't increase any further */ ;
+			else if (node->prefetch_target >= target_prefetch_pages / 2)
+				node->prefetch_target = target_prefetch_pages;
+			else if (node->prefetch_target > 0)
+				node->prefetch_target *= 2;
+			else
+				node->prefetch_target++;
+#endif /* USE_PREFETCH */
 		}
 		else
 		{
@@ -172,7 +225,40 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 * Continuing in previously obtained page; advance rs_cindex
 			 */
 			scan->rs_cindex++;
+
+#ifdef USE_PREFETCH
+			/*
+			 * Try to prefetch at least a few pages even before we get to the
+			 * second page if we don't stop reading after the first tuple.
+			 */
+			if (node->prefetch_target < target_prefetch_pages)
+				node->prefetch_target++;
+#endif /* USE_PREFETCH */
 		}
+
+#ifdef USE_PREFETCH
+		/*
+		 * We issue prefetch requests *after* fetching the current page
+		 * to try to avoid having prefetching interfere with the main I/O.
+		 */
+		if (prefetch_iterator)
+		{
+			while (node->prefetch_pages < node->prefetch_target)
+			{
+				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+
+				if (tbmpre == NULL)
+				{
+					/* No more pages to prefetch */
+					tbm_end_iterate(prefetch_iterator);
+					node->prefetch_iterator = prefetch_iterator = NULL;
+					break;
+				}
+				node->prefetch_pages++;
+				PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
+			}
+		}
+#endif /* USE_PREFETCH */
 
 		/*
 		 * Out of range?  If so, nothing more to look at on this page
@@ -379,11 +465,14 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 
 	if (node->tbmiterator)
 		tbm_end_iterate(node->tbmiterator);
+	if (node->prefetch_iterator)
+		tbm_end_iterate(node->prefetch_iterator);
 	if (node->tbm)
 		tbm_free(node->tbm);
 	node->tbm = NULL;
 	node->tbmiterator = NULL;
 	node->tbmres = NULL;
+	node->prefetch_iterator = NULL;
 
 	/*
 	 * Always rescan the input immediately, to ensure we can pass down any
@@ -429,6 +518,8 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	 */
 	if (node->tbmiterator)
 		tbm_end_iterate(node->tbmiterator);
+	if (node->prefetch_iterator)
+		tbm_end_iterate(node->prefetch_iterator);
 	if (node->tbm)
 		tbm_free(node->tbm);
 
@@ -474,6 +565,9 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate->tbm = NULL;
 	scanstate->tbmiterator = NULL;
 	scanstate->tbmres = NULL;
+	scanstate->prefetch_iterator = NULL;
+	scanstate->prefetch_pages = 0;
+	scanstate->prefetch_target = 0;
 
 	/*
 	 * Miscellaneous initialization

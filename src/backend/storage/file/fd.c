@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.146 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.147 2009/01/12 05:10:44 tgl Exp $
  *
  * NOTES:
  *
@@ -1027,6 +1027,42 @@ FileClose(File file)
 	 * Return the Vfd slot to the free list
 	 */
 	FreeVfd(file);
+}
+
+/*
+ * FilePrefetch - initiate asynchronous read of a given range of the file.
+ * The logical seek position is unaffected.
+ *
+ * Currently the only implementation of this function is using posix_fadvise
+ * which is the simplest standardized interface that accomplishes this.
+ * We could add an implementation using libaio in the future; but note that
+ * this API is inappropriate for libaio, which wants to have a buffer provided
+ * to read into.
+ */
+int
+FilePrefetch(File file, off_t offset, int amount)
+{
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_WILLNEED)
+	int			returnCode;
+
+	Assert(FileIsValid(file));
+	
+	DO_DB(elog(LOG, "FilePrefetch: %d (%s) " INT64_FORMAT " %d",
+			   file, VfdCache[file].fileName,
+			   (int64) offset, amount));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
+	returnCode = posix_fadvise(VfdCache[file].fd, offset, amount,
+							   POSIX_FADV_WILLNEED);
+
+	return returnCode;
+#else
+	Assert(FileIsValid(file));
+	return 0;
+#endif
 }
 
 int

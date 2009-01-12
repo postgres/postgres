@@ -131,6 +131,10 @@
 #bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
 #bgwriter_lru_multiplier = 2.0		# 0-10.0 multipler on buffers scanned/round
 
+# - Asynchronous Behavior -
+
+#effective_io_concurrency = 1		# 1-1000, or 0 to disable prefetching
+
 
 #------------------------------------------------------------------------------
 # WRITE AHEAD LOG

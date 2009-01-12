@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.36 2009/01/11 18:02:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.37 2009/01/12 05:10:45 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -133,6 +133,15 @@
  */
 #if HAVE_DECL_POSIX_FADVISE && defined(HAVE_POSIX_FADVISE)
 #define USE_POSIX_FADVISE
+#endif
+
+/*
+ * USE_PREFETCH code should be compiled only if we have a way to implement
+ * prefetching.  (This is decoupled from USE_POSIX_FADVISE because there
+ * might in future be support for alternative low-level prefetch APIs.)
+ */
+#ifdef USE_POSIX_FADVISE
+#define USE_PREFETCH
 #endif
 
 /*

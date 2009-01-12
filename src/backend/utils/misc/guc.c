@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.492 2009/01/09 10:13:18 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.493 2009/01/12 05:10:44 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 #include <float.h>
+#include <math.h>
 #include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -163,8 +164,9 @@ static bool assign_tcp_keepalives_count(int newval, bool doit, GucSource source)
 static const char *show_tcp_keepalives_idle(void);
 static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
-static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
 static bool assign_maxconnections(int newval, bool doit, GucSource source);
+static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
+static bool assign_effective_io_concurrency(int newval, bool doit, GucSource source);
 static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
 
 static char *config_enum_get_options(struct config_enum *record, 
@@ -413,6 +415,7 @@ static int	segment_size;
 static int	wal_block_size;
 static int	wal_segment_size;
 static bool integer_datetimes;
+static int	effective_io_concurrency;
 
 /* should be static, but commands/variable.c needs to get at these */
 char	   *role_string;
@@ -1698,6 +1701,20 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&bgwriter_lru_maxpages,
 		100, 0, 1000, NULL, NULL
+	},
+
+	{
+		{"effective_io_concurrency", PGC_USERSET, RESOURCES,
+			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
+			gettext_noop("For RAID arrays, this should be approximately the number of drive spindles in the array.")
+		},
+		&effective_io_concurrency,
+#ifdef USE_PREFETCH
+		1, 0, 1000,
+#else
+		0, 0, 0,
+#endif
+		assign_effective_io_concurrency, NULL
 	},
 
 	{
@@ -7585,6 +7602,61 @@ assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
 		MaxBackends = newval + MaxConnections;
 
 	return true;
+}
+
+static bool
+assign_effective_io_concurrency(int newval, bool doit, GucSource source)
+{
+#ifdef USE_PREFETCH
+	double		new_prefetch_pages = 0.0;
+	int			i;
+
+	/*----------
+	 * The user-visible GUC parameter is the number of drives (spindles),
+	 * which we need to translate to a number-of-pages-to-prefetch target.
+	 *
+	 * The expected number of prefetch pages needed to keep N drives busy is:
+	 *
+	 * drives |   I/O requests
+	 * -------+----------------
+	 *      1 |   1
+	 *      2 |   2/1 + 2/2 = 3
+	 *      3 |   3/1 + 3/2 + 3/3 = 5 1/2
+	 *      4 |   4/1 + 4/2 + 4/3 + 4/4 = 8 1/3
+	 *      n |   n * H(n)
+	 *
+	 * This is called the "coupon collector problem" and H(n) is called the
+	 * harmonic series.  This could be approximated by n * ln(n), but for
+	 * reasonable numbers of drives we might as well just compute the series.
+	 *
+	 * Alternatively we could set the target to the number of pages necessary
+	 * so that the expected number of active spindles is some arbitrary
+	 * percentage of the total.  This sounds the same but is actually slightly
+	 * different.  The result ends up being ln(1-P)/ln((n-1)/n) where P is
+	 * that desired fraction.
+	 *
+	 * Experimental results show that both of these formulas aren't aggressive
+	 * enough, but we don't really have any better proposals.
+	 *
+	 * Note that if newval = 0 (disabled), we must set target = 0.
+	 *----------
+	 */
+
+	for (i = 1; i <= newval; i++)
+		new_prefetch_pages += (double) newval / (double) i;
+
+	/* This range check shouldn't fail, but let's be paranoid */
+	if (new_prefetch_pages >= 0.0 && new_prefetch_pages < (double) INT_MAX)
+	{
+		if (doit)
+			target_prefetch_pages = (int) rint(new_prefetch_pages);
+		return true;
+	}
+	else
+		return false;
+#else
+	return true;
+#endif /* USE_PREFETCH */
 }
 
 static const char *
