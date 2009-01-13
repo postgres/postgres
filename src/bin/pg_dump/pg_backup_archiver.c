@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.160 2009/01/05 16:54:36 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.161 2009/01/13 11:44:56 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	if (ropt->create && ropt->dropSchema)
 		die_horribly(AH, modulename, "-C and -c are incompatible options\n");
+	/*
+	 * -1 is not compatible with -C, because we can't create a database
+	 *  inside a transaction block.
+	 */
+	if (ropt->create && ropt->single_txn)
+		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
 
 	/*
 	 * If we're using a DB connection, then connect it.
