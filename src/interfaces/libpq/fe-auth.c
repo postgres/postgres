@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.139 2009/01/01 17:24:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.140 2009/01/13 10:43:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,28 +187,6 @@ pg_krb5_destroy(struct krb5_info * info)
 	krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
 	krb5_free_unparsed_name(info->pg_krb5_context, info->pg_krb5_name);
 	krb5_free_context(info->pg_krb5_context);
-}
-
-
-
-/*
- * pg_krb5_authname -- returns a copy of whatever name the user
- *					   has authenticated to the system, or NULL
- */
-static char *
-pg_krb5_authname(PQExpBuffer errorMessage)
-{
-	char	   *tmp_name;
-	struct krb5_info info;
-
-	info.pg_krb5_initialised = 0;
-
-	if (pg_krb5_init(errorMessage, &info) != STATUS_OK)
-		return NULL;
-	tmp_name = strdup(info.pg_krb5_name);
-	pg_krb5_destroy(&info);
-
-	return tmp_name;
 }
 
 
@@ -972,9 +950,6 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 char *
 pg_fe_getauthname(PQExpBuffer errorMessage)
 {
-#ifdef KRB5
-	char	   *krb5_name = NULL;
-#endif
 	const char *name = NULL;
 	char	   *authn;
 
@@ -988,8 +963,7 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 #endif
 
 	/*
-	 * pglock_thread() really only needs to be called around
-	 * pg_krb5_authname(), but some users are using configure
+	 * Some users are using configure
 	 * --enable-thread-safety-force, so we might as well do the locking within
 	 * our library to protect pqGetpwuid(). In fact, application developers
 	 * can use getpwuid() in their application if they use the locking call we
@@ -997,17 +971,6 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 	 * PQregisterThreadLock().
 	 */
 	pglock_thread();
-
-#ifdef KRB5
-
-	/*
-	 * pg_krb5_authname gives us a strdup'd value that we need to free later,
-	 * however, we don't want to free 'name' directly in case it's *not* a
-	 * Kerberos login and we fall through to name = pw->pw_name;
-	 */
-	krb5_name = pg_krb5_authname(errorMessage);
-	name = krb5_name;
-#endif
 
 	if (!name)
 	{
@@ -1021,12 +984,6 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 	}
 
 	authn = name ? strdup(name) : NULL;
-
-#ifdef KRB5
-	/* Free the strdup'd string from pg_krb5_authname, if we got one */
-	if (krb5_name)
-		free(krb5_name);
-#endif
 
 	pgunlock_thread();
 
