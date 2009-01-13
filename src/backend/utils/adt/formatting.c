@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.69.2.2 2007/06/29 01:52:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.69.2.3 2009/01/13 15:28:42 alvherre Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -1444,7 +1444,9 @@ get_th(char *num, int type)
 static char *
 str_numth(char *dest, char *num, int type)
 {
-	sprintf(dest, "%s%s", num, get_th(num, type));
+	if (dest != num)
+		strcpy(dest, num);
+	strcat(dest, get_th(num, type));
 	return dest;
 }
 
@@ -2097,7 +2099,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 	switch (arg)
 	{
-
 		case DCH_A_D:
 		case DCH_B_C:
 			if (flag == TO_CHAR)
