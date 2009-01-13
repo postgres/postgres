@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.121 2008/11/09 17:51:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.122 2009/01/13 00:54:11 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1336,6 +1336,23 @@ tar -rf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
       then added to the backup so that both base backup and all required
       WAL files are part of the same <application>tar</> file.
       Please remember to add error handling to your backup scripts.
+     </para>
+
+     <para>
+      If archive storage size is a concern, use <application>pg_compresslog</>,
+      <ulink url="http://pglesslog.projects.postgresql.org"></ulink>, to
+      remove unnecessary <xref linkend="guc-full-page-writes"> and trailing
+      space from the WAL files.  You can then use
+      <application>gzip</application> to further compress the output of
+      <application>pg_compresslog</>:
+<programlisting>
+archive_command = 'pg_compresslog %p - | gzip &gt; /var/lib/pgsql/archive/%f'
+</programlisting>
+      You will then need to use <application>gunzip</> and
+      <application>pg_decompresslog</> during recovery:
+<programlisting>
+restore_command = 'gunzip &lt; /mnt/server/archivedir/%f | pg_decompresslog - %p'
+</programlisting>
      </para>
     </sect3>
 
