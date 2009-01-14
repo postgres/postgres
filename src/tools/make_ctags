@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/make_ctags,v 1.11 2006/03/11 04:38:41 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/make_ctags,v 1.12 2009/01/14 21:59:19 momjian Exp $
 
 trap "rm -f /tmp/$$" 0 1 2 3 15
 rm -f ./tags
@@ -12,8 +12,9 @@ then	FLAGS="-dt"
 else	FLAGS="--c-types=+dfmstuv"
 fi
 
-find `pwd`/ \( -name _deadcode -a -prune \) -o \
-	-type f -name '*.[chyl]' -print|xargs ctags "$FLAGS" -a -f tags
+find `pwd`/ \( -name _deadcode -prune \) -o \
+		-type f -name '*.[chyl]' -print |
+	xargs ctags "$FLAGS" -a -f tags
 
 if [ -z "$cv" ]
 then
@@ -22,7 +23,7 @@ then
 	sort tags >/tmp/$$ && mv /tmp/$$ tags
 fi
 
-find . -name  'CVS' -prune -o -type d -print  |while read DIR
-do
-	[ "$DIR" != "." ] && ln -f -s `echo "$DIR" | sed 's;/[^/]*;/..;g'`/tags $DIR/tags
+find . \( -name 'CVS' -prune \) -o \( -name .git -prune \) -o -type d -print |
+while read DIR
+do	[ "$DIR" != "." ] && ln -f -s `echo "$DIR" | sed 's;/[^/]*;/..;g'`/tags "$DIR"/tags
 done
