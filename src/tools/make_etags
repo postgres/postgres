@@ -1,12 +1,12 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/make_etags,v 1.4 2009/01/13 19:32:29 petere Exp $
+# $PostgreSQL: pgsql/src/tools/make_etags,v 1.5 2009/01/14 21:28:32 petere Exp $
 
 rm -f ./TAGS
 find `pwd`/ -type f -name '*.[chyl]' -print | \
   xargs etags --append -o TAGS
 
-find . -type d -print | \
+find . -type d \( -name CVS -o -name .git -prune -o -print \) | \
 while read DIR; do
   [ "$DIR" != "." ] && ln -f -s `pwd`/TAGS $DIR
 done
