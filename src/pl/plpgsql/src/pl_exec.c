@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.2 2009/01/07 20:39:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.202.2.3 2009/01/14 09:53:54 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2546,13 +2546,19 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/*
 	 * Check for error, and set FOUND if appropriate (for historical reasons
-	 * we set FOUND only for certain query types).	Also Assert that we
-	 * identified the statement type the same as SPI did.
+	 * we set FOUND only for certain query types).
+	 *
+	 * Note: the command type indicated by return code might not match
+	 * mod_stmt, if there is an INSTEAD OF rule rewriting an UPDATE into an
+	 * INSERT, for example. In that case, the INSERT doesn't have canSetTag
+	 * set, mod_stmt is false, and SPI_execute_plan sets SPI_processed to
+	 * zero. We'll set FOUND to false here in that case. If the statement is
+	 * rewritten into a utility statement, however, FOUND is left unchanged.
+	 * Arguably that's a bug, but changing it now could break applications.
 	 */
 	switch (rc)
 	{
 		case SPI_OK_SELECT:
-			Assert(!stmt->mod_stmt);
 			exec_set_found(estate, (SPI_processed != 0));
 			break;
 
@@ -2562,13 +2568,11 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
-			Assert(stmt->mod_stmt);
 			exec_set_found(estate, (SPI_processed != 0));
 			break;
 
 		case SPI_OK_SELINTO:
 		case SPI_OK_UTILITY:
-			Assert(!stmt->mod_stmt);
 			break;
 
 		default:
