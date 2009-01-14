@@ -7744,9 +7744,8 @@ if test "$ac_res" != no; then
 fi
 
 # Required for thread_test.c on Solaris 2.5:
-case $host_os in
-     solaris*)
-	{ echo "$as_me:$LINENO: checking for library containing gethostbyname_r" >&5
+# Other ports use it too (HP-UX) so test unconditionally
+{ echo "$as_me:$LINENO: checking for library containing gethostbyname_r" >&5
 echo $ECHO_N "checking for library containing gethostbyname_r... $ECHO_C" >&6; }
 if test "${ac_cv_search_gethostbyname_r+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -7829,8 +7828,6 @@ if test "$ac_res" != no; then
 
 fi
 
-	;;
-esac
 # Cygwin:
 { echo "$as_me:$LINENO: checking for library containing shmget" >&5
 echo $ECHO_N "checking for library containing shmget... $ECHO_C" >&6; }
