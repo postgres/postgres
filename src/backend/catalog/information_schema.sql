@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.48 2009/01/01 17:23:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.49 2009/01/14 21:12:09 petere Exp $
  */
 
 /*
@@ -655,6 +655,9 @@ CREATE VIEW columns AS
            CAST(null AS character_data) AS generation_expression,
 
            CAST(CASE WHEN c.relkind = 'r'
+                          OR (c.relkind = 'v'
+                              AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '2' AND is_instead)
+                              AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '4' AND is_instead))
                 THEN 'YES' ELSE 'NO' END AS character_data) AS is_updatable
 
     FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum),
@@ -1882,7 +1885,10 @@ CREATE VIEW tables AS
            CAST(null AS sql_identifier) AS user_defined_type_name,
 
            CAST(CASE WHEN c.relkind = 'r'
+                          OR (c.relkind = 'v'
+                              AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '3' AND is_instead))
                 THEN 'YES' ELSE 'NO' END AS character_data) AS is_insertable_into,
+
            CAST('NO' AS character_data) AS is_typed,
            CAST(
              CASE WHEN nc.oid = pg_my_temp_schema() THEN 'PRESERVE' -- FIXME
