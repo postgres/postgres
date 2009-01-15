@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.18 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.19 2009/01/15 16:33:28 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1921,6 +1921,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 	}
 	pfree(covers);
 }
+
 static void
 mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight, 
 		int shortword, int min_words, int max_words)
@@ -1981,12 +1982,14 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, int highlight,
 				if (curlen < min_words && i >= prs->curwords)
 				{				/* got end of text and our cover is shoter
 								 * than min_words */
-					for (i = p; i >= 0; i--)
+					for (i = p - 1; i >= 0; i--)
 					{
 						if (!NONWORDTOKEN(prs->words[i].type))
 							curlen++;
 						if (prs->words[i].item && !prs->words[i].repeated)
 							poslen++;
+						if ( curlen >= max_words )
+							break;
 						if (NOENDTOKEN(prs->words[i].type) || prs->words[i].len <= shortword)
 							continue;
 						if (curlen >= min_words)
