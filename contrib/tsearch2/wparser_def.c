@@ -72,11 +72,11 @@ prsd_end(PG_FUNCTION_ARGS)
 #define COMPLEXTOKEN(x) ( (x)==5 || (x)==15 || (x)==16 || (x)==17 )
 #define ENDPUNCTOKEN(x) ( (x)==12 )
 
-
 #define TS_IDIGNORE(x) ( (x)==13 || (x)==14 || (x)==12 || (x)==23 )
-#define HLIDIGNORE(x) ( (x)==5 || (x)==13 || (x)==15 || (x)==16 || (x)==17 )
+#define HLIDREPLACE(x)  ( (x)==13 )
+#define HLIDSKIP(x)     ( (x)==5 || (x)==15 || (x)==16 || (x)==17 )
 #define HTMLHLIDIGNORE(x) ( (x)==5 || (x)==15 || (x)==16 || (x)==17 )
-#define NONWORDTOKEN(x) ( (x)==12 || HLIDIGNORE(x) )
+#define NONWORDTOKEN(x) ( (x)==12 || HLIDREPLACE(x) || HLIDSKIP(x) )
 #define NOENDTOKEN(x)	( NONWORDTOKEN(x) || (x)==7 || (x)==8 || (x)==20 || (x)==21 || (x)==22 || TS_IDIGNORE(x) )
 
 typedef struct
@@ -366,13 +366,15 @@ prsd_headline(PG_FUNCTION_ARGS)
 			prs->words[i].selected = 1;
 		if (highlight == 0)
 		{
-			if (HLIDIGNORE(prs->words[i].type))
+			if (HLIDREPLACE(prs->words[i].type))
 				prs->words[i].replace = 1;
+			else if (HLIDSKIP(prs->words[i].type))
+				prs->words[i].skip = 1;
 		}
 		else
 		{
 			if (HTMLHLIDIGNORE(prs->words[i].type))
-				prs->words[i].replace = 1;
+				prs->words[i].skip = 1;
 		}
 
 		prs->words[i].in = (prs->words[i].repeated) ? 0 : 1;
