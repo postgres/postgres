@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.57 2008/12/18 22:34:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.58 2009/01/15 00:34:25 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -543,7 +543,8 @@
    then the checkpoint record; then it performs the REDO operation by
    scanning forward from the log position indicated in the checkpoint
    record.  Because the entire content of data pages is saved in the
-   log on the first page modification after a checkpoint, all pages
+   log on the first page modification after a checkpoint (assuming
+   <xref linkend="guc-full-page-writes"> is not disabled), all pages
    changed since the checkpoint will be restored to a consistent
    state.
   </para>
