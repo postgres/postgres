@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.49 2008/12/04 07:02:56 petere Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.50 2009/01/15 01:53:49 momjian Exp $
 #
 
 subdir =
@@ -117,7 +117,7 @@ postgresql-test-$(VERSION).tar: distdir
 
 distdir:
 	rm -rf $(distdir)* $(dummy)
-	for x in `cd $(top_srcdir) && find . -name CVS -prune -o -print`; do \
+	for x in `cd $(top_srcdir) && find . \( -name CVS -prune \) -o \( -name .git -prune \) -o -print`; do \
 	  file=`expr X$$x : 'X\./\(.*\)'`; \
 	  if test -d "$(top_srcdir)/$$file" ; then \
 	    mkdir "$(distdir)/$$file" && chmod 777 "$(distdir)/$$file";	\
