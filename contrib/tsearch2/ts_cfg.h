@@ -51,7 +51,8 @@ typedef struct
 				in:1,
 				replace:1,
 				repeated:1,
-				unused:4,
+				skip:1,
+				unused:3,
 				type:8,
 				len:16;
 	char	   *word;

@@ -519,7 +519,7 @@ genhl(HLPRSTEXT * prs)
 				*ptr = ' ';
 				ptr++;
 			}
-			else
+			else if (!wrd->skip)
 			{
 				if (wrd->selected)
 				{
