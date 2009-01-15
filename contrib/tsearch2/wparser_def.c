@@ -77,8 +77,9 @@ prsd_end(PG_FUNCTION_ARGS)
 
 
 #define IDIGNORE(x) ( (x)==13 || (x)==14 || (x)==12 || (x)==23 )
-#define HLIDIGNORE(x) ( (x)==5 || (x)==13 || (x)==15 || (x)==16 || (x)==17 )
-#define NONWORDTOKEN(x) ( (x)==12 || HLIDIGNORE(x) )
+#define HLIDREPLACE(x)  ( (x)==13 )
+#define HLIDSKIP(x)     ( (x)==5 || (x)==15 || (x)==16 || (x)==17 )
+#define NONWORDTOKEN(x) ( (x)==12 || HLIDREPLACE(x) || HLIDSKIP(x) )
 #define NOENDTOKEN(x)	( NONWORDTOKEN(x) || (x)==7 || (x)==8 || (x)==20 || (x)==21 || (x)==22 || IDIGNORE(x) )
 
 typedef struct
@@ -342,8 +343,10 @@ prsd_headline(PG_FUNCTION_ARGS)
 			prs->words[i].selected = 1;
 		if (prs->words[i].repeated)
 			prs->words[i].skip = 1;
-		if (HLIDIGNORE(prs->words[i].type))
+		if (HLIDREPLACE(prs->words[i].type))
 			prs->words[i].replace = 1;
+		if (HLIDSKIP(prs->words[i].type))
+			prs->words[i].skip = 1;
 
 		prs->words[i].in = 1;
 	}
