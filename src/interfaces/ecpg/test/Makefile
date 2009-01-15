@@ -1,8 +1,17 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.76 2009/01/05 09:54:13 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.77 2009/01/15 09:30:20 petere Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
+
+override CPPFLAGS := \
+	-I$(top_builddir)/src/port \
+	-I$(top_srcdir)/src/test/regress \
+	'-DHOST_TUPLE="$(host_tuple)"' \
+	'-DMAKEPROG="$(MAKE)"' \
+	'-DSHELLPROG="$(SHELL)"' \
+	'-DDLSUFFIX="$(DLSUFFIX)"' \
+	$(CPPFLAGS)
 
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)
@@ -21,15 +30,6 @@ abs_builddir := $(shell pwd)
 else
 abs_builddir := $(shell pwd -W)
 endif
-
-# stuff to pass into build of pg_regress
-EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
-	'-DMAKEPROG="$(MAKE)"' \
-	'-DSHELLPROG="$(SHELL)"' \
-	'-DDLSUFFIX="$(DLSUFFIX)"'
-
-REGRESSINCLUDES = "-I$(top_srcdir)/src/test/regress"
-REGRESSDRIVER = "$(top_builddir)/src/test/regress/pg_regress.o"
 
 all install installdirs uninstall distprep:
 	$(MAKE) -C connect $@
@@ -53,12 +53,14 @@ clean distclean maintainer-clean:
 
 all: pg_regress$(X)
 
-pg_regress$(X): pg_regress_ecpg.o
-	$(CC) $(CFLAGS) $^ $(REGRESSDRIVER) $(REGRESSINCLUDES) $(LDFLAGS) $(LIBS) -o $@
+pg_regress$(X): pg_regress_ecpg.o $(top_builddir)/src/test/regress/pg_regress.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(top_builddir)/src/test/regress/pg_regress.o:
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 # dependencies ensure that path changes propagate
 pg_regress_ecpg.o: pg_regress_ecpg.c $(top_builddir)/src/port/pg_config_paths.h
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(top_builddir)/src/port $(REGRESSINCLUDES) $(EXTRADEFS) -c -o $@ $<
 
 $(top_builddir)/src/port/pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
