@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.18 2009/01/09 12:37:37 petere Exp $
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.19 2009/01/15 09:01:24 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -47,10 +47,10 @@ all-po: $(MO_FILES)
 
 ifdef XGETTEXT
 ifeq ($(word 1,$(GETTEXT_FILES)),+)
-po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES))
+po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES)) $(MAKEFILE_LIST)
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) -f $<
 else
-po/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
+po/$(CATALOG_NAME).pot: $(GETTEXT_FILES) $(MAKEFILE_LIST)
 # Change to srcdir explicitly, don't rely on $^.  That way we get
 # consistent #: file references in the po files.
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
