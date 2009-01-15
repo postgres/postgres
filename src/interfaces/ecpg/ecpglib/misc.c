@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.47 2009/01/02 13:26:54 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.48 2009/01/15 11:52:55 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -110,7 +110,7 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 	if (con == NULL)
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
-				   connection_name ? connection_name : _("NULL"));
+				   connection_name ? connection_name : ecpg_gettext("NULL"));
 		return (false);
 	}
 
@@ -179,7 +179,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
-	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : _("null"));
+	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : "null");
 
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)

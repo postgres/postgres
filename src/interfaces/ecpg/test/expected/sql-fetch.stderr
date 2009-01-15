@@ -142,6 +142,6 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlstate 55006 (sqlcode -400) on line 53: cannot drop "my_table" because it is being used by active queries in this session on line 53
 [NO_PID]: sqlca: code: -400, state: 55006
-sql error: cannot drop "my_table" because it is being used by active queries in this session on line 53
+SQL error: cannot drop "my_table" because it is being used by active queries in this session on line 53
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

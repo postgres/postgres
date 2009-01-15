@@ -50,7 +50,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode -402 on line 56: could not connect to database "connectdb" on line 56
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: raising sqlcode -220 on line 57: no such connection main on line 57
+[NO_PID]: raising sqlcode -220 on line 57: connection "main" does not exist on line 57
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port <DEFAULT>  for user connectdb
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -62,5 +62,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 on line 68: no such connection nonexistant on line 68
+[NO_PID]: raising sqlcode -220 on line 68: connection "nonexistant" does not exist on line 68
 [NO_PID]: sqlca: code: -220, state: 08003

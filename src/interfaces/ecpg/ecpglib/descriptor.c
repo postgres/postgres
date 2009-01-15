@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.30 2008/05/16 15:20:03 petere Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.31 2009/01/15 11:52:55 petere Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -724,6 +724,6 @@ ecpg_find_desc(int line, const char *name)
 bool
 ECPGdescribe(int line, bool input, const char *statement,...)
 {
-	ecpg_log("ECPGdescribe called on line %d for %s: %s\n", line, (input) ? _("input") : _("output"), statement);
+	ecpg_log("ECPGdescribe called on line %d for %s: %s\n", line, input ? "input" : "output", statement);
 	return false;
 }

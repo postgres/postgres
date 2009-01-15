@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.41 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.42 2009/01/15 11:52:55 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -60,7 +60,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	else
 		log_offset = offset;
 
-	ecpg_log("ecpg_get_data on line %d: RESULT: %s offset: %ld; array: %s\n", lineno, pval ? (binary ? _("BINARY") : pval) : _("EMPTY"), log_offset, isarray ? _("yes") : _("no"));
+	ecpg_log("ecpg_get_data on line %d: RESULT: %s offset: %ld; array: %s\n", lineno, pval ? (binary ? "BINARY" : pval) : "EMPTY", log_offset, isarray ? "yes" : "no");
 
 	/* We will have to decode the value */
 
@@ -360,7 +360,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							else
 								ecpg_raise(lineno, ECPG_CONVERT_BOOL,
 										   ECPG_SQLSTATE_DATATYPE_MISMATCH,
-										   _("different size"));
+										   NULL);
 							break;
 						}
 						else if (pval[0] == 't' && pval[1] == '\0')
@@ -372,7 +372,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							else
 								ecpg_raise(lineno, ECPG_CONVERT_BOOL,
 										   ECPG_SQLSTATE_DATATYPE_MISMATCH,
-										   _("different size"));
+										   NULL);
 							break;
 						}
 						else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))

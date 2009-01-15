@@ -2,5 +2,5 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT>  
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 on line 17: no such connection DEFAULT on line 17
+[NO_PID]: raising sqlcode -220 on line 17: connection "DEFAULT" does not exist on line 17
 [NO_PID]: sqlca: code: -220, state: 08003

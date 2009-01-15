@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.78 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.79 2009/01/15 11:52:55 petere Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -301,7 +301,7 @@ ecpg_is_type_an_array(int type, const struct statement * stmt, const struct vari
 		return (ECPG_ARRAY_ERROR);
 
 	ecpg_type_infocache_push(&(stmt->connection->cache_head), type, isarray, stmt->lineno);
-	ecpg_log("ecpg_is_type_an_array on line %d: type (%d); C (%d); array (%s)\n", stmt->lineno, type, var->type, isarray ? _("yes") : _("no"));
+	ecpg_log("ecpg_is_type_an_array on line %d: type (%d); C (%d); array (%s)\n", stmt->lineno, type, var->type, isarray ? "yes" : "no");
 	return isarray;
 }
 
@@ -729,7 +729,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
 					else
-						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, _("different size"));
+						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
@@ -740,7 +740,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					else if (var->offset == sizeof(int))
 						sprintf(mallocedval, "%c", (*((int *) var->value)) ? 't' : 'f');
 					else
-						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, _("different size"));
+						ecpg_raise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
 				}
 
 				*tobeinserted_p = mallocedval;
@@ -1042,7 +1042,7 @@ free_params(const char **paramValues, int nParams, bool print, int lineno)
 	for (n = 0; n < nParams; n++)
 	{
 		if (print)
-			ecpg_log("free_params on line %d: parameter %d = %s\n", lineno, n + 1, paramValues[n] ? paramValues[n] : _("null"));
+			ecpg_log("free_params on line %d: parameter %d = %s\n", lineno, n + 1, paramValues[n] ? paramValues[n] : "null");
 		ecpg_free((void *) (paramValues[n]));
 	}
 	ecpg_free(paramValues);
@@ -1625,7 +1625,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	if (con == NULL || con->connection == NULL)
 	{
 		free_statement(stmt);
-		ecpg_raise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (con) ? con->name : _("<empty>"));
+		ecpg_raise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (con) ? con->name : ecpg_gettext("<empty>"));
 		setlocale(LC_NUMERIC, oldlocale);
 		ecpg_free(oldlocale);
 		return false;
