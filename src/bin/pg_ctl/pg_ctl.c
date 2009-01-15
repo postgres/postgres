@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.106 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.107 2009/01/15 22:33:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,7 +756,7 @@ do_stop(void)
 	{
 		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
 		{
-			print_msg(_("WARNING: online backup mode is active.\n"
+			print_msg(_("WARNING: online backup mode is active\n"
 						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
 		}
 
@@ -833,7 +833,7 @@ do_restart(void)
 
 		if ((shutdown_mode == SMART_MODE) && (stat(backup_file, &statbuf) == 0))
 		{
-			print_msg(_("WARNING: online backup mode is active.\n"
+			print_msg(_("WARNING: online backup mode is active\n"
 						"Shutdown will not complete until pg_stop_backup() is called.\n\n"));
 		}
 
