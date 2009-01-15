@@ -190,8 +190,7 @@ SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
 (1 row)
 
 SELECT test_void_func2(); -- should fail
-ERROR:  invalid return value from plpython function
-DETAIL:  Functions returning type "void" must return None.
+ERROR:  PL/Python function with return type "void" did not return None
 SELECT test_return_none(), test_return_none() IS NULL AS "is null";
  test_return_none | is null 
 ------------------+---------
@@ -547,7 +546,7 @@ SELECT * FROM test_in_out_params('test_in');
 
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
-ERROR:  plpython functions cannot return type record
+ERROR:  PL/Python functions cannot return type record
 SELECT * FROM test_inout_params('test_in');
      first     
 ---------------

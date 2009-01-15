@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.31 2008/10/02 08:11:11 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.32 2009/01/15 13:49:56 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -54,7 +54,7 @@ python${pytverstr}.def: $(WD)/system32/python${pytverstr}.dll
 endif
 
 
-SHLIB_LINK = $(python_libspec) $(python_additional_libs)
+SHLIB_LINK = $(python_libspec) $(python_additional_libs) $(filter -lintl,$(LIBS))
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu
 REGRESS = plpython_schema plpython_populate plpython_function plpython_test plpython_error plpython_drop
