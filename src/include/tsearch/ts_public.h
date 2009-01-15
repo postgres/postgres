@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2008, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.8 2008/01/01 19:45:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.8.2.1 2009/01/15 17:06:03 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,8 @@ typedef struct
 				in:1,
 				replace:1,
 				repeated:1,
-				unused:4,
+				skip:1,
+				unused:3,
 				type:8,
 				len:16;
 	char	   *word;
