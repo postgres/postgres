@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.469 2009/01/08 14:46:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.470 2009/01/15 18:19:58 heikki Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12849,10 +12849,10 @@ postgres=# select pg_start_backup('label_goes_here');
    <para>
     <function>pg_switch_xlog</> moves to the next transaction log file, allowing the 
     current file to be archived (assuming you are using continuous archiving).
-    The result is the ending transaction log location within the just-completed transaction log file.
+    The result is the ending transaction log location + 1 within the just-completed transaction log file.
     If there has been no transaction log activity since the last transaction log switch,
-    <function>pg_switch_xlog</> does nothing and returns the end location
-    of the previous transaction log file.
+    <function>pg_switch_xlog</> does nothing and returns the start location
+    of the transaction log file currently in use.
    </para>
 
    <para>
