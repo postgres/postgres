@@ -678,8 +678,8 @@ get_covers(PG_FUNCTION_ARGS)
 	char	   *cptr;
 	DocRepresentation *doc;
 	int			pos = 0,
-				p,
-				q,
+				p = 0,
+				q = 0,
 				olddwpos = 0;
 	int			ncover = 1;
 
