@@ -2,16 +2,16 @@
 -- the trigger handler once. the errors and subsequent core dump were
 -- interesting.
 SELECT invalid_type_uncaught('rick');
-WARNING:  plpython: in function invalid_type_uncaught:
-DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+WARNING:  PL/Python: in PL/Python function "invalid_type_uncaught"
+DETAIL:  plpy.SPIError: unrecognized error in PLy_spi_prepare
 ERROR:  type "test" does not exist
 SELECT invalid_type_caught('rick');
-WARNING:  plpython: in function invalid_type_caught:
-DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+WARNING:  PL/Python: in PL/Python function "invalid_type_caught"
+DETAIL:  plpy.SPIError: unrecognized error in PLy_spi_prepare
 ERROR:  type "test" does not exist
 SELECT invalid_type_reraised('rick');
-WARNING:  plpython: in function invalid_type_reraised:
-DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+WARNING:  PL/Python: in PL/Python function "invalid_type_reraised"
+DETAIL:  plpy.SPIError: unrecognized error in PLy_spi_prepare
 ERROR:  type "test" does not exist
 SELECT valid_type('rick');
  valid_type 
@@ -23,16 +23,16 @@ SELECT valid_type('rick');
 -- Test Unicode error handling.
 --
 SELECT unicode_return_error();
-ERROR:  plpython: function "unicode_return_error" could not create return value
+ERROR:  PL/Python: could not create string representation of Python object in PL/Python function "unicode_return_error" while creating return value
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character '\u80' in position 0: ordinal not in range(128)
 INSERT INTO unicode_test (testvalue) VALUES ('test');
-ERROR:  plpython: function "unicode_trigger_error" could not modify tuple
+ERROR:  PL/Python: could not compute string representation of Python object in PL/Python function "unicode_trigger_error" while modifying trigger row
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character '\u80' in position 0: ordinal not in range(128)
 SELECT unicode_plan_error1();
-WARNING:  plpython: in function unicode_plan_error1:
-DETAIL:  plpy.Error: Unknown error in PLy_spi_execute_plan
-ERROR:  plpython: function "unicode_plan_error1" could not execute plan
+WARNING:  PL/Python: in PL/Python function "unicode_plan_error1"
+DETAIL:  plpy.Error: unrecognized error in PLy_spi_execute_plan
+ERROR:  PL/Python: PL/Python function "unicode_plan_error1" could not execute plan
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character '\u80' in position 0: ordinal not in range(128)
 SELECT unicode_plan_error2();
-ERROR:  plpython: function "unicode_plan_error2" could not execute plan
+ERROR:  PL/Python: PL/Python function "unicode_plan_error2" could not execute plan
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character '\u80' in position 0: ordinal not in range(128)
