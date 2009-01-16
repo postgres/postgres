@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.88 2008/12/11 18:16:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.89 2009/01/16 13:27:23 heikki Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -367,10 +367,14 @@
    </para>
 
    <para>
-    <command>VACUUM</>'s behavior is controlled by the configuration parameter
-    <xref linkend="guc-vacuum-freeze-min-age">: any XID older than
-    <varname>vacuum_freeze_min_age</> transactions is replaced by
-    <literal>FrozenXID</>.  Larger values of <varname>vacuum_freeze_min_age</>
+    <command>VACUUM</>'s behavior is controlled by the two configuration
+    parameters: <xref linkend="guc-vacuum-freeze-min-age"> and
+    <xref linkend="guc-vacuum-freeze-table-age">.
+    <varname>vacuum_freeze_table_age</> controls when <command>VACUUM</>
+    performs a full sweep of the table, in order to replace old XID values 
+    with <literal>FrozenXID</>.  <varname>vacuum_freeze_min_age</> 
+    controls how old an XID value has to be before it's replaced with
+    <literal>FrozenXID</>.  Larger values of these settings
     preserve transactional information longer, while smaller values increase
     the number of transactions that can elapse before the table must be
     vacuumed again.
@@ -379,7 +383,8 @@
    <para>
     The maximum time that a table can go unvacuumed is two billion
     transactions minus the <varname>vacuum_freeze_min_age</> that was used
-    when it was last vacuumed.  If it were to go unvacuumed for longer than
+    when <command>VACUUM</> last scanned the whole table.  If it were to go
+    unvacuumed for longer than
     that, data loss could result.  To ensure that this does not happen,
     autovacuum is invoked on any table that might contain XIDs older than the
     age specified by the configuration parameter <xref
@@ -403,7 +408,8 @@
    </para>
 
    <para>
-    The sole disadvantage of increasing <varname>autovacuum_freeze_max_age</>
+    The sole disadvantage of increasing <varname>vacuum_freeze_table_age</>
+    and <varname>autovacuum_freeze_max_age</>
     is that the <filename>pg_clog</> subdirectory of the database cluster
     will take more space, because it must store the commit status for all
     transactions back to the <varname>autovacuum_freeze_max_age</> horizon.
@@ -411,8 +417,9 @@
     <varname>autovacuum_freeze_max_age</> has its maximum allowed value of
     a little less than two billion, <filename>pg_clog</> can be expected to
     grow to about half a gigabyte.  If this is trivial compared to your
-    total database size, setting <varname>autovacuum_freeze_max_age</> to
-    its maximum allowed value is recommended.  Otherwise, set it depending
+    total database size, setting <varname>autovacuum_freeze_max_age</> and
+    <varname>vacuum_freeze_table_age</varname> to their maximum allowed values
+    is recommended.  Otherwise, set them depending
     on what you are willing to allow for <filename>pg_clog</> storage.
     (The default, 200 million transactions, translates to about 50MB of
     <filename>pg_clog</> storage.)
@@ -455,13 +462,24 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 </programlisting>
 
     The <literal>age</> column measures the number of transactions from the
-    cutoff XID to the current transaction's XID.  Immediately after a
-    <command>VACUUM</>, <literal>age(relfrozenxid)</> should be a little
-    more than the <varname>vacuum_freeze_min_age</> setting that was used
-    (more by the number of transactions started since the <command>VACUUM</>
-    started).  If <literal>age(relfrozenxid)</> exceeds
-    <varname>autovacuum_freeze_max_age</>, an autovacuum will soon be forced
-    for the table.
+    cutoff XID to the current transaction's XID.  When <command>VACUUM</>
+    scans the whole table, after it's finished <literal>age(relfrozenxid)</>
+    should be a little more than the <varname>vacuum_freeze_min_age</> setting
+    that was used (more by the number of transactions started since the
+    <command>VACUUM</> started).
+   </para>
+
+   <para>
+    <command>VACUUM</> normally only scans pages that have been modified
+    since last vacuum, but <structfield>relfrozenxid</> can only be advanced
+    when the whole table is scanned. The whole table is scanned when
+    <structfield>relfrozenxid</> is more than
+    <varname>vacuum_freeze_table_age</> transactions old, if
+    <command>VACUUM FREEZE</> command is used, or if all pages happen to
+    require vacuuming to remove dead row versions. If no whole-table-scanning
+    <command>VACUUM</> is issued on the table until
+    <varname>autovacuum_freeze_max_age</> is reached, an autovacuum will soon
+    be forced for the table.
    </para>
 
    <para>

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.654 2009/01/12 09:38:30 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.655 2009/01/16 13:27:23 heikki Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6263,7 +6263,7 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 					n->analyze = false;
 					n->full = $2;
 					n->freeze_min_age = $3 ? 0 : -1;
-					n->scan_all = $2 || $3;
+					n->freeze_table_age = $3 ? 0 : -1;
 					n->verbose = $4;
 					n->relation = NULL;
 					n->va_cols = NIL;
@@ -6276,7 +6276,7 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 					n->analyze = false;
 					n->full = $2;
 					n->freeze_min_age = $3 ? 0 : -1;
-					n->scan_all = $2 || $3;
+					n->freeze_table_age = $3 ? 0 : -1;
 					n->verbose = $4;
 					n->relation = $5;
 					n->va_cols = NIL;
@@ -6288,7 +6288,7 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 					n->vacuum = true;
 					n->full = $2;
 					n->freeze_min_age = $3 ? 0 : -1;
-					n->scan_all = $2 || $3;
+					n->freeze_table_age = $3 ? 0 : -1;
 					n->verbose |= $4;
 					$$ = (Node *)n;
 				}
@@ -6302,6 +6302,7 @@ AnalyzeStmt:
 					n->analyze = true;
 					n->full = false;
 					n->freeze_min_age = -1;
+					n->freeze_table_age = -1;
 					n->verbose = $2;
 					n->relation = NULL;
 					n->va_cols = NIL;
@@ -6314,6 +6315,7 @@ AnalyzeStmt:
 					n->analyze = true;
 					n->full = false;
 					n->freeze_min_age = -1;
+					n->freeze_table_age = -1;
 					n->verbose = $2;
 					n->relation = $3;
 					n->va_cols = $4;

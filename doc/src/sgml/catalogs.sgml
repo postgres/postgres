@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.188 2009/01/09 15:02:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.189 2009/01/16 13:27:23 heikki Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1360,6 +1360,13 @@
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>Custom <varname>autovacuum_freeze_max_age</> parameter</entry>
+     </row>
+
+     <row>
+      <entry><structfield>freeze_table_age</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Custom <varname>vacuum_freeze_table_age</> parameter</entry>
      </row>
     </tbody>
    </tgroup>

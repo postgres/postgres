@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.180 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.181 2009/01/16 13:27:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,8 +789,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than a
 	 * plain VACUUM would.
 	 */
-	vacuum_set_xid_limits(-1, OldHeap->rd_rel->relisshared,
-						  &OldestXmin, &FreezeXid);
+	vacuum_set_xid_limits(-1, -1, OldHeap->rd_rel->relisshared,
+						  &OldestXmin, &FreezeXid, NULL);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't

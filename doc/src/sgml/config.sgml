@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.205 2009/01/12 05:10:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.206 2009/01/16 13:27:23 heikki Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3950,6 +3950,27 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-vacuum-freeze-table-age" xreflabel="vacuum_freeze_table_age">
+      <term><varname>vacuum_freeze_table_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>vacuum_freeze_table_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        <command>VACUUM</> performs a whole-table scan if the table's
+        <structname>pg_class</>.<structfield>relfrozenxid</> field has reached
+        the age specified by this setting.  The default is 150 million
+        transactions.  Although users can set this value anywhere from zero to
+        one billion, <command>VACUUM</> will silently limit the effective value
+        to 95% of <xref linkend="guc-autovacuum-freeze-max-age">, so that a
+        periodical manual <command>VACUUM</> has a chance to run before an
+        anti-wraparound autovacuum is launched for the table. For more
+        information see
+        <xref linkend="vacuum-for-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-vacuum-freeze-min-age" xreflabel="vacuum_freeze_min_age">
       <term><varname>vacuum_freeze_min_age</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -3960,7 +3981,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Specifies the cutoff age (in transactions) that <command>VACUUM</>
         should use to decide whether to replace transaction IDs with
         <literal>FrozenXID</> while scanning a table.
-        The default is 100 million transactions.  Although
+        The default is 50 million transactions.  Although
         users can set this value anywhere from zero to one billion,
         <command>VACUUM</> will silently limit the effective value to half
         the value of <xref linkend="guc-autovacuum-freeze-max-age">, so

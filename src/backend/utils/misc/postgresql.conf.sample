@@ -413,7 +413,8 @@
 #default_transaction_read_only = off
 #session_replication_role = 'origin'
 #statement_timeout = 0			# 0 is disabled
-#vacuum_freeze_min_age = 100000000
+#vacuum_freeze_min_age = 50000000
+#vacuum_freeze_table_age = 150000000
 #xmlbinary = 'base64'
 #xmloption = 'content'
 

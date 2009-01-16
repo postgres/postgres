@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.91 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.92 2009/01/16 13:27:24 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,8 +136,9 @@ static volatile sig_atomic_t got_SIGTERM = false;
 /* Comparison point for determining whether freeze_max_age is exceeded */
 static TransactionId recentXid;
 
-/* Default freeze_min_age to use for autovacuum (varies by database) */
+/* Default freeze ages to use for autovacuum (varies by database) */
 static int	default_freeze_min_age;
+static int	default_freeze_table_age;
 
 /* Memory context for long-lived data */
 static MemoryContext AutovacMemCxt;
@@ -174,6 +175,7 @@ typedef struct autovac_table
 	bool		at_dovacuum;
 	bool		at_doanalyze;
 	int			at_freeze_min_age;
+	int			at_freeze_table_age;
 	int			at_vacuum_cost_delay;
 	int			at_vacuum_cost_limit;
 	bool		at_wraparound;
@@ -1857,7 +1859,7 @@ do_autovacuum(void)
 	pgstat_vacuum_stat();
 
 	/*
-	 * Find the pg_database entry and select the default freeze_min_age. We
+	 * Find the pg_database entry and select the default freeze ages. We
 	 * use zero in template and nonconnectable databases, else the system-wide
 	 * default.
 	 */
@@ -1869,9 +1871,15 @@ do_autovacuum(void)
 	dbForm = (Form_pg_database) GETSTRUCT(tuple);
 
 	if (dbForm->datistemplate || !dbForm->datallowconn)
+	{
 		default_freeze_min_age = 0;
+		default_freeze_table_age = 0;
+	}
 	else
+	{
 		default_freeze_min_age = vacuum_freeze_min_age;
+		default_freeze_table_age = vacuum_freeze_table_age;
+	}
 
 	ReleaseSysCache(tuple);
 
@@ -2418,6 +2426,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 	if (doanalyze || dovacuum)
 	{
 		int			freeze_min_age;
+		int			freeze_table_age;
 		int			vac_cost_limit;
 		int			vac_cost_delay;
 
@@ -2443,6 +2452,9 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 
 			freeze_min_age = (avForm->freeze_min_age >= 0) ?
 				avForm->freeze_min_age : default_freeze_min_age;
+
+			freeze_table_age = (avForm->freeze_table_age >= 0) ?
+				avForm->freeze_table_age : default_freeze_table_age;
 		}
 		else
 		{
@@ -2453,6 +2465,8 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 				autovacuum_vac_cost_delay : VacuumCostDelay;
 
 			freeze_min_age = default_freeze_min_age;
+
+			freeze_table_age = default_freeze_table_age;
 		}
 
 		tab = palloc(sizeof(autovac_table));
@@ -2460,6 +2474,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 		tab->at_dovacuum = dovacuum;
 		tab->at_doanalyze = doanalyze;
 		tab->at_freeze_min_age = freeze_min_age;
+		tab->at_freeze_table_age = freeze_table_age;
 		tab->at_vacuum_cost_limit = vac_cost_limit;
 		tab->at_vacuum_cost_delay = vac_cost_delay;
 		tab->at_wraparound = wraparound;
@@ -2649,7 +2664,7 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 	vacstmt.full = false;
 	vacstmt.analyze = tab->at_doanalyze;
 	vacstmt.freeze_min_age = tab->at_freeze_min_age;
-	vacstmt.scan_all = tab->at_wraparound;
+	vacstmt.freeze_table_age = tab->at_freeze_table_age;
 	vacstmt.verbose = false;
 	vacstmt.relation = NULL;	/* not used since we pass a relid */
 	vacstmt.va_cols = NIL;

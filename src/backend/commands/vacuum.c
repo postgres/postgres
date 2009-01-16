@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.384 2009/01/01 17:23:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.385 2009/01/16 13:27:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@
  * GUC parameters
  */
 int			vacuum_freeze_min_age;
+int			vacuum_freeze_table_age;
 
 /*
  * VacPage structures keep track of each page on which we find useful
@@ -590,9 +591,12 @@ get_rel_oids(Oid relid, const RangeVar *vacrel, const char *stmttype)
  * vacuum_set_xid_limits() -- compute oldest-Xmin and freeze cutoff points
  */
 void
-vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
+vacuum_set_xid_limits(int freeze_min_age,
+					  int freeze_table_age,
+					  bool sharedRel,
 					  TransactionId *oldestXmin,
-					  TransactionId *freezeLimit)
+					  TransactionId *freezeLimit,
+					  TransactionId *freezeTableLimit)
 {
 	int			freezemin;
 	TransactionId limit;
@@ -648,6 +652,34 @@ vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
 	}
 
 	*freezeLimit = limit;
+
+	if (freezeTableLimit != NULL)
+	{
+		int freezetable;
+
+		/*
+		 * Determine the table freeze age to use: as specified by the caller,
+		 * or vacuum_freeze_table_age, but in any case not more than
+		 * autovacuum_freeze_max_age * 0.95, so that if you have e.g nightly
+		 * VACUUM schedule, the nightly VACUUM gets a chance to freeze tuples
+		 * before anti-wraparound autovacuum is launched.
+		 */
+		freezetable = freeze_min_age;
+		if (freezetable < 0)
+			freezetable = vacuum_freeze_table_age;
+		freezetable = Min(freezetable, autovacuum_freeze_max_age * 0.95);
+		Assert(freezetable >= 0);
+
+		/*
+		 * Compute the cutoff XID, being careful not to generate a
+		 * "permanent" XID.
+		 */
+		limit = ReadNewTransactionId() - freezetable;
+		if (!TransactionIdIsNormal(limit))
+			limit = FirstNormalTransactionId;
+
+		*freezeTableLimit = limit;
+	}
 }
 
 
@@ -1219,8 +1251,9 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 				i;
 	VRelStats  *vacrelstats;
 
-	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
-						  &OldestXmin, &FreezeLimit);
+	vacuum_set_xid_limits(vacstmt->freeze_min_age, vacstmt->freeze_table_age,
+						  onerel->rd_rel->relisshared,
+						  &OldestXmin, &FreezeLimit, NULL);
 
 	/*
 	 * Flush any previous async-commit transactions.  This does not guarantee

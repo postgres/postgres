@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.116 2009/01/06 14:55:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.117 2009/01/16 13:27:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
+	bool		scan_all;
+	TransactionId freezeTableLimit;
 
 	pg_rusage_init(&ru0);
 
@@ -158,8 +160,11 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vac_strategy = bstrategy;
 
-	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
-						  &OldestXmin, &FreezeLimit);
+	vacuum_set_xid_limits(vacstmt->freeze_min_age, vacstmt->freeze_table_age,
+						  onerel->rd_rel->relisshared,
+						  &OldestXmin, &FreezeLimit, &freezeTableLimit);
+	scan_all = TransactionIdPrecedesOrEquals(onerel->rd_rel->relfrozenxid,
+											 freezeTableLimit);
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
@@ -171,7 +176,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vacrelstats->hasindex = (nindexes > 0);
  
 	/* Do the vacuuming */
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, vacstmt->scan_all);
+	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);

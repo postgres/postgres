@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.10 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.11 2009/01/16 13:27:24 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ CATALOG(pg_autovacuum,1248) BKI_WITHOUT_OIDS
 	int4		vac_cost_limit; /* vacuum cost limit */
 	int4		freeze_min_age; /* vacuum min freeze age */
 	int4		freeze_max_age; /* max age before forcing vacuum */
+	int4		freeze_table_age; /* age at which vacuum scans whole table */
 } FormData_pg_autovacuum;
 
 /* ----------------
@@ -58,6 +59,7 @@ typedef FormData_pg_autovacuum *Form_pg_autovacuum;
 #define Anum_pg_autovacuum_vac_cost_limit			8
 #define Anum_pg_autovacuum_freeze_min_age			9
 #define Anum_pg_autovacuum_freeze_max_age			10
+#define Anum_pg_autovacuum_freeze_table_age			11
 
 /* There are no preloaded tuples in pg_autovacuum.h */
 
