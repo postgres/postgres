@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.2 2009/01/17 04:24:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,7 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">username</replaceable> 
      <para>
       This clause specifies the options of the user mapping.  The
       options typically define the actual user name and password of
-      the mapping.  Option names must be unque.  The allowed option
+      the mapping.  Option names must be unique.  The allowed option
       names and values are specific to the server's foreign-data wrapper.
      </para>
     </listitem>
