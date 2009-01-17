@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.2 2009/01/17 04:29:00 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -35,7 +35,7 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
   </para>
 
   <para>
-   The server name must be unique within database.
+   The server name must be unique within the database.
   </para>
 
   <para>
