@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.23 2009/01/01 17:23:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.24 2009/01/18 20:44:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,9 @@ static const char *modulename = gettext_noop("sorter");
  * Sort priority for object types when dumping a pre-7.3 database.
  * Objects are sorted by priority levels, and within an equal priority level
  * by OID.	(This is a relatively crude hack to provide semi-reasonable
- * behavior for old databases without full dependency info.)
+ * behavior for old databases without full dependency info.)  Note: text
+ * search and foreign-data objects can't really happen here, so the rather
+ * bogus priorities for them don't matter.
  */
 static const int oldObjectTypePriority[] =
 {
@@ -45,7 +47,7 @@ static const int oldObjectTypePriority[] =
 	2,							/* DO_PROCLANG */
 	2,							/* DO_CAST */
 	9,							/* DO_TABLE_DATA */
-	7,							/* DO_TABLE_TYPE */
+	7,							/* DO_DUMMY_TYPE */
 	3,							/* DO_TSPARSER */
 	4,							/* DO_TSDICT */
 	3,							/* DO_TSTEMPLATE */
@@ -71,25 +73,25 @@ static const int newObjectTypePriority[] =
 	7,							/* DO_OPCLASS */
 	7,							/* DO_OPFAMILY */
 	9,							/* DO_CONVERSION */
-	10,							/* DO_TABLE */
-	12,							/* DO_ATTRDEF */
-	17,							/* DO_INDEX */
-	18,							/* DO_RULE */
-	19,							/* DO_TRIGGER */
-	16,							/* DO_CONSTRAINT */
-	20,							/* DO_FK_CONSTRAINT */
+	16,							/* DO_TABLE */
+	18,							/* DO_ATTRDEF */
+	23,							/* DO_INDEX */
+	24,							/* DO_RULE */
+	25,							/* DO_TRIGGER */
+	22,							/* DO_CONSTRAINT */
+	26,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	8,							/* DO_CAST */
-	13,							/* DO_TABLE_DATA */
-	11,							/* DO_TABLE_TYPE */
-	5,							/* DO_TSPARSER */
-	6,							/* DO_TSDICT */
-	5,							/* DO_TSTEMPLATE */
-	7,							/* DO_TSCONFIG */
-	3,							/* DO_FDW */
-	4,							/* DO_FOREIGN_SERVER */
-	14,							/* DO_BLOBS */
-	15							/* DO_BLOB_COMMENTS */
+	19,							/* DO_TABLE_DATA */
+	17,							/* DO_DUMMY_TYPE */
+	10,							/* DO_TSPARSER */
+	12,							/* DO_TSDICT */
+	11,							/* DO_TSTEMPLATE */
+	13,							/* DO_TSCONFIG */
+	14,							/* DO_FDW */
+	15,							/* DO_FOREIGN_SERVER */
+	20,							/* DO_BLOBS */
+	21							/* DO_BLOB_COMMENTS */
 };
 
 
@@ -1102,9 +1104,9 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "TABLE DATA %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
-		case DO_TABLE_TYPE:
+		case DO_DUMMY_TYPE:
 			snprintf(buf, bufsize,
-					 "TABLE TYPE %s  (ID %d OID %u)",
+					 "DUMMY TYPE %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_TSPARSER:
