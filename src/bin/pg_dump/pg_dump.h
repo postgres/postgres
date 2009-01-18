@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.139 2008/01/01 19:45:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.139.2.1 2009/01/18 20:44:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ typedef enum
 	DO_PROCLANG,
 	DO_CAST,
 	DO_TABLE_DATA,
-	DO_TABLE_TYPE,
+	DO_DUMMY_TYPE,
 	DO_TSPARSER,
 	DO_TSDICT,
 	DO_TSTEMPLATE,
