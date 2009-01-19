@@ -403,9 +403,9 @@ select * from rtest_admin;
 --
 -- Rule qualification test
 --
-insert into rtest_emp values ('wiech', '5000.00');
+insert into rtest_emp values ('wiecc', '5000.00');
 insert into rtest_emp values ('gates', '80000.00');
-update rtest_emp set ename = 'wiecx' where ename = 'wiech';
+update rtest_emp set ename = 'wiecx' where ename = 'wiecc';
 update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
 update rtest_emp set salary = '7000.00' where ename = 'wieck';
 delete from rtest_emp where ename = 'gates';
@@ -414,7 +414,7 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
 ----------------------+--------------+------------+------------+------------
  gates                | t            | fired      |      $0.00 | $80,000.00
  gates                | t            | hired      | $80,000.00 |      $0.00
- wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wiecc                | t            | hired      |  $5,000.00 |      $0.00
  wieck                | t            | honored    |  $6,000.00 |  $5,000.00
  wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (5 rows)
@@ -431,7 +431,7 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  maier                | t            | hired      |  $5,000.00 |      $0.00
  mayr                 | t            | hired      |  $6,000.00 |      $0.00
  meyer                | t            | hired      |  $4,000.00 |      $0.00
- wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wiecc                | t            | hired      |  $5,000.00 |      $0.00
  wieck                | t            | honored    |  $6,000.00 |  $5,000.00
  wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (8 rows)
@@ -449,7 +449,7 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  mayr                 | t            | honored    |  $7,000.00 |  $6,000.00
  meyer                | t            | hired      |  $4,000.00 |      $0.00
  meyer                | t            | honored    |  $5,000.00 |  $4,000.00
- wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wiecc                | t            | hired      |  $5,000.00 |      $0.00
  wieck                | t            | honored    |  $6,000.00 |  $5,000.00
  wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (11 rows)
@@ -469,7 +469,7 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  meyer                | t            | fired      |      $0.00 |  $5,000.00
  meyer                | t            | hired      |  $4,000.00 |      $0.00
  meyer                | t            | honored    |  $5,000.00 |  $4,000.00
- wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wiecc                | t            | hired      |  $5,000.00 |      $0.00
  wieck                | t            | honored    |  $6,000.00 |  $5,000.00
  wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (14 rows)

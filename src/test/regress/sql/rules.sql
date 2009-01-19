@@ -273,9 +273,9 @@ select * from rtest_admin;
 --
 -- Rule qualification test
 --
-insert into rtest_emp values ('wiech', '5000.00');
+insert into rtest_emp values ('wiecc', '5000.00');
 insert into rtest_emp values ('gates', '80000.00');
-update rtest_emp set ename = 'wiecx' where ename = 'wiech';
+update rtest_emp set ename = 'wiecx' where ename = 'wiecc';
 update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
 update rtest_emp set salary = '7000.00' where ename = 'wieck';
 delete from rtest_emp where ename = 'gates';
