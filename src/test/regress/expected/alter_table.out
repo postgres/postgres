@@ -1262,11 +1262,11 @@ NOTICE:  drop cascades to table c1
 -- its datatype
 create domain mytype as text;
 create temp table foo (f1 text, f2 mytype, f3 text);
-insert into foo values('aa','bb','cc');
+insert into foo values('bb','cc','dd');
 select * from foo;
  f1 | f2 | f3 
 ----+----+----
- aa | bb | cc
+ bb | cc | dd
 (1 row)
 
 drop domain mytype cascade;
@@ -1274,14 +1274,14 @@ NOTICE:  drop cascades to table foo column f2
 select * from foo;
  f1 | f3 
 ----+----
- aa | cc
+ bb | dd
 (1 row)
 
 insert into foo values('qq','rr');
 select * from foo;
  f1 | f3 
 ----+----
- aa | cc
+ bb | dd
  qq | rr
 (2 rows)
 
@@ -1289,7 +1289,7 @@ update foo set f3 = 'zz';
 select * from foo;
  f1 | f3 
 ----+----
- aa | zz
+ bb | zz
  qq | zz
 (2 rows)
 

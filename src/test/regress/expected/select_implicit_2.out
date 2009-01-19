@@ -8,8 +8,8 @@
 -- load test data
 CREATE TABLE test_missing_target (a int, b int, c char(8), d char);
 INSERT INTO test_missing_target VALUES (0, 1, 'XXXX', 'A');
-INSERT INTO test_missing_target VALUES (1, 2, 'AAAA', 'b');
-INSERT INTO test_missing_target VALUES (2, 2, 'AAAA', 'c');
+INSERT INTO test_missing_target VALUES (1, 2, 'ABAB', 'b');
+INSERT INTO test_missing_target VALUES (2, 2, 'ABAB', 'c');
 INSERT INTO test_missing_target VALUES (3, 3, 'BBBB', 'D');
 INSERT INTO test_missing_target VALUES (4, 3, 'BBBB', 'e');
 INSERT INTO test_missing_target VALUES (5, 3, 'bbbb', 'F');
@@ -21,7 +21,7 @@ INSERT INTO test_missing_target VALUES (9, 4, 'CCCC', 'j');
 SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER BY c;
     c     | count 
 ----------+-------
- AAAA     |     2
+ ABAB     |     2
  bbbb     |     1
  BBBB     |     2
  cccc     |     2
@@ -73,8 +73,8 @@ SELECT c FROM test_missing_target ORDER BY a;
     c     
 ----------
  XXXX    
- AAAA    
- AAAA    
+ ABAB    
+ ABAB    
  BBBB    
  BBBB    
  bbbb    
@@ -105,7 +105,7 @@ SELECT count(*) FROM test_missing_target ORDER BY 1 desc;
 SELECT c, count(*) FROM test_missing_target GROUP BY 1 ORDER BY 1;
     c     | count 
 ----------+-------
- AAAA     |     2
+ ABAB     |     2
  bbbb     |     1
  BBBB     |     2
  cccc     |     2
@@ -258,7 +258,7 @@ SELECT lower(test_missing_target.c), count(c)
   FROM test_missing_target GROUP BY lower(c) ORDER BY lower(c);
  lower | count 
 -------+-------
- aaaa  |     2
+ abab  |     2
  bbbb  |     3
  cccc  |     4
  xxxx  |     1

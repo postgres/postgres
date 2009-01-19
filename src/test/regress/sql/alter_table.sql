@@ -977,7 +977,7 @@ drop table p1 cascade;
 create domain mytype as text;
 create temp table foo (f1 text, f2 mytype, f3 text);
 
-insert into foo values('aa','bb','cc');
+insert into foo values('bb','cc','dd');
 select * from foo;
 
 drop domain mytype cascade;

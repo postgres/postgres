@@ -1854,20 +1854,20 @@ SELECT '' AS "xxx", *
 CREATE TABLE t1 (name TEXT, n INTEGER);
 CREATE TABLE t2 (name TEXT, n INTEGER);
 CREATE TABLE t3 (name TEXT, n INTEGER);
-INSERT INTO t1 VALUES ( 'aa', 11 );
-INSERT INTO t2 VALUES ( 'aa', 12 );
-INSERT INTO t2 VALUES ( 'bb', 22 );
-INSERT INTO t2 VALUES ( 'dd', 42 );
-INSERT INTO t3 VALUES ( 'aa', 13 );
-INSERT INTO t3 VALUES ( 'bb', 23 );
-INSERT INTO t3 VALUES ( 'cc', 33 );
+INSERT INTO t1 VALUES ( 'bb', 11 );
+INSERT INTO t2 VALUES ( 'bb', 12 );
+INSERT INTO t2 VALUES ( 'cc', 22 );
+INSERT INTO t2 VALUES ( 'ee', 42 );
+INSERT INTO t3 VALUES ( 'bb', 13 );
+INSERT INTO t3 VALUES ( 'cc', 23 );
+INSERT INTO t3 VALUES ( 'dd', 33 );
 SELECT * FROM t1 FULL JOIN t2 USING (name) FULL JOIN t3 USING (name);
  name | n  | n  | n  
 ------+----+----+----
- aa   | 11 | 12 | 13
- bb   |    | 22 | 23
- cc   |    |    | 33
- dd   |    | 42 |   
+ bb   | 11 | 12 | 13
+ cc   |    | 22 | 23
+ dd   |    |    | 33
+ ee   |    | 42 |   
 (4 rows)
 
 --
@@ -1881,8 +1881,8 @@ INNER JOIN
 USING (name);
  name | n  | n  
 ------+----+----
- aa   | 12 | 13
- bb   | 22 | 23
+ bb   | 12 | 13
+ cc   | 22 | 23
 (2 rows)
 
 SELECT * FROM
@@ -1892,9 +1892,9 @@ LEFT JOIN
 USING (name);
  name | n  | n  
 ------+----+----
- aa   | 12 | 13
- bb   | 22 | 23
- dd   | 42 |   
+ bb   | 12 | 13
+ cc   | 22 | 23
+ ee   | 42 |   
 (3 rows)
 
 SELECT * FROM
@@ -1904,10 +1904,10 @@ FULL JOIN
 USING (name);
  name | n  | n  
 ------+----+----
- aa   | 12 | 13
- bb   | 22 | 23
- cc   |    | 33
- dd   | 42 |   
+ bb   | 12 | 13
+ cc   | 22 | 23
+ dd   |    | 33
+ ee   | 42 |   
 (4 rows)
 
 -- Cases with non-nullable expressions in subquery results;
@@ -1918,8 +1918,8 @@ NATURAL INNER JOIN
 (SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
  name | s2_n | s2_2 | s3_n | s3_2 
 ------+------+------+------+------
- aa   |   12 |    2 |   13 |    3
- bb   |   22 |    2 |   23 |    3
+ bb   |   12 |    2 |   13 |    3
+ cc   |   22 |    2 |   23 |    3
 (2 rows)
 
 SELECT * FROM
@@ -1928,9 +1928,9 @@ NATURAL LEFT JOIN
 (SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
  name | s2_n | s2_2 | s3_n | s3_2 
 ------+------+------+------+------
- aa   |   12 |    2 |   13 |    3
- bb   |   22 |    2 |   23 |    3
- dd   |   42 |    2 |      |     
+ bb   |   12 |    2 |   13 |    3
+ cc   |   22 |    2 |   23 |    3
+ ee   |   42 |    2 |      |     
 (3 rows)
 
 SELECT * FROM
@@ -1939,10 +1939,10 @@ NATURAL FULL JOIN
 (SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
  name | s2_n | s2_2 | s3_n | s3_2 
 ------+------+------+------+------
- aa   |   12 |    2 |   13 |    3
- bb   |   22 |    2 |   23 |    3
- cc   |      |      |   33 |    3
- dd   |   42 |    2 |      |     
+ bb   |   12 |    2 |   13 |    3
+ cc   |   22 |    2 |   23 |    3
+ dd   |      |      |   33 |    3
+ ee   |   42 |    2 |      |     
 (4 rows)
 
 SELECT * FROM
@@ -1953,7 +1953,7 @@ NATURAL INNER JOIN
 (SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
  name | s1_n | s1_1 | s2_n | s2_2 | s3_n | s3_2 
 ------+------+------+------+------+------+------
- aa   |   11 |    1 |   12 |    2 |   13 |    3
+ bb   |   11 |    1 |   12 |    2 |   13 |    3
 (1 row)
 
 SELECT * FROM
@@ -1964,10 +1964,10 @@ NATURAL FULL JOIN
 (SELECT name, n as s3_n, 3 as s3_2 FROM t3) s3;
  name | s1_n | s1_1 | s2_n | s2_2 | s3_n | s3_2 
 ------+------+------+------+------+------+------
- aa   |   11 |    1 |   12 |    2 |   13 |    3
- bb   |      |      |   22 |    2 |   23 |    3
- cc   |      |      |      |      |   33 |    3
- dd   |      |      |   42 |    2 |      |     
+ bb   |   11 |    1 |   12 |    2 |   13 |    3
+ cc   |      |      |   22 |    2 |   23 |    3
+ dd   |      |      |      |      |   33 |    3
+ ee   |      |      |   42 |    2 |      |     
 (4 rows)
 
 SELECT * FROM
@@ -1980,10 +1980,10 @@ NATURAL FULL JOIN
   ) ss2;
  name | s1_n | s2_n | s3_n 
 ------+------+------+------
- aa   |   11 |   12 |   13
- bb   |      |   22 |   23
- cc   |      |      |   33
- dd   |      |   42 |     
+ bb   |   11 |   12 |   13
+ cc   |      |   22 |   23
+ dd   |      |      |   33
+ ee   |      |   42 |     
 (4 rows)
 
 SELECT * FROM
@@ -1996,10 +1996,10 @@ NATURAL FULL JOIN
   ) ss2;
  name | s1_n | s2_n | s2_2 | s3_n 
 ------+------+------+------+------
- aa   |   11 |   12 |    2 |   13
- bb   |      |   22 |    2 |   23
- cc   |      |      |      |   33
- dd   |      |   42 |    2 |     
+ bb   |   11 |   12 |    2 |   13
+ cc   |      |   22 |    2 |   23
+ dd   |      |      |      |   33
+ ee   |      |   42 |    2 |     
 (4 rows)
 
 -- Test for propagation of nullability constraints into sub-joins
