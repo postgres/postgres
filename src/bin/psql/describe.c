@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.195 2009/01/06 23:01:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.196 2009/01/19 18:44:32 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -1962,7 +1962,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (showSeq)
 		appendPQExpBuffer(&buf, "'S',");
 	if (showSystem && showTables)
-		appendPQExpBuffer(&buf, "'s',");
+		appendPQExpBuffer(&buf, "'s',");	/* was RELKIND_SPECIAL in <= 8.1.X */
 	appendPQExpBuffer(&buf, "''");		/* dummy */
 	appendPQExpBuffer(&buf, ")\n");
 
