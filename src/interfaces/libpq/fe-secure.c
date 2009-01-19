@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.116 2009/01/07 12:02:46 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.117 2009/01/19 08:59:13 petere Exp $
  *
  * NOTES
  *
@@ -508,7 +508,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	if (conn->pghostaddr)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("verified SSL connections are only supported when connecting to a hostname"));
+						  libpq_gettext("verified SSL connections are only supported when connecting to a host name"));
 		return false;
 	}
 	else
@@ -527,7 +527,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("server common name '%s' does not match hostname '%s'"),
+							  libpq_gettext("server common name \"%s\" does not match host name \"%s\""),
 							  conn->peer_cn, conn->pghost);
 			return false;
 		}
@@ -569,7 +569,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("cannot find home directory to locate client certificate files"));
+							  libpq_gettext("could not get home directory to locate client certificate files"));
 			return 0;
 		}
 	}
@@ -983,7 +983,7 @@ initialize_SSL(PGconn *conn)
 			if (strcmp(conn->sslverify, "none") != 0)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("cannot find home directory to locate root certificate file"));
+								  libpq_gettext("could not get home directory to locate root certificate file"));
 				return -1;
 			}
 		}
@@ -1049,7 +1049,7 @@ initialize_SSL(PGconn *conn)
 		if (strcmp(conn->sslverify, "none") != 0)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("root certificate file (%s) not found"), fnbuf);
+							  libpq_gettext("root certificate file »%s« does not exist"), fnbuf);
 			return -1;
 		}
 	}
