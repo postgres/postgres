@@ -356,7 +356,7 @@ SELECT p.name, p.age FROM person* p;
  pamela  |  48
  sandy   |  38
  trisha  |  88
- vera    |  78
+ uma     |  78
  velma   |  68
  sharon  |  25
  sam     |  30
@@ -391,7 +391,7 @@ SELECT p.name, p.age FROM person* p ORDER BY age using >, name;
  chris   |  78
  sharon  |  78
  susan   |  78
- vera    |  78
+ uma     |  78
  wendy   |  78
  julie   |  68
  leah    |  68
