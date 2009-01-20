@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.196 2009/01/19 18:44:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.197 2009/01/20 02:13:42 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -782,7 +782,7 @@ objectDescription(const char *pattern, bool showSystem)
  * verbose: if true, this is \d+
  */
 bool
-describeTableDetails(const char *pattern, bool verbose)
+describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -797,7 +797,10 @@ describeTableDetails(const char *pattern, bool verbose)
 					  "FROM pg_catalog.pg_class c\n"
 	 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+ 	if (!showSystem)
+ 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, !showSystem, false,
 						  "n.nspname", "c.relname", NULL,
 						  "pg_catalog.pg_table_is_visible(c.oid)");
 
@@ -1961,20 +1964,13 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 		appendPQExpBuffer(&buf, "'i',");
 	if (showSeq)
 		appendPQExpBuffer(&buf, "'S',");
-	if (showSystem && showTables)
+	if (showSystem)
 		appendPQExpBuffer(&buf, "'s',");	/* was RELKIND_SPECIAL in <= 8.1.X */
 	appendPQExpBuffer(&buf, "''");		/* dummy */
 	appendPQExpBuffer(&buf, ")\n");
 
-	/*
-	 * If showSystem is specified, show only system objects (those in
-	 * pg_catalog).  Otherwise, suppress system objects, including those in
-	 * pg_catalog and pg_toast.  (We don't want to hide temp tables though.)
-	 */
-	if (showSystem)
-		appendPQExpBuffer(&buf,
-						  "  AND n.nspname = 'pg_catalog'\n");
-	else
+	if (!showSystem)
+		/* Exclude system and pg_toast objects, but show temp tables */
 		appendPQExpBuffer(&buf,
 						  "  AND n.nspname <> 'pg_catalog'\n"
 						  "  AND n.nspname !~ '^pg_toast'\n");

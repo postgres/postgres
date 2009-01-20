@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.38 2009/01/06 21:10:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.39 2009/01/20 02:13:42 momjian Exp $
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -34,7 +34,7 @@ extern bool permissionsList(const char *pattern);
 extern bool objectDescription(const char *pattern, bool showSystem);
 
 /* \d foo */
-extern bool describeTableDetails(const char *pattern, bool verbose);
+extern bool describeTableDetails(const char *pattern, bool verbose, bool showSystem);
 
 /* \dF */
 extern bool listTSConfigs(const char *pattern, bool verbose);

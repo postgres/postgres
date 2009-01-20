@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.201 2009/01/06 21:10:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.202 2009/01/20 02:13:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -334,14 +334,15 @@ exec_command(const char *cmd,
 										 OT_NORMAL, NULL, true);
 
 		show_verbose = strchr(cmd, '+') ? true : false;
-		show_system = strchr(cmd, 'S') ? true: false;
+		show_system = strchr(cmd, 'S') ? true : false;
 
 		switch (cmd[1])
 		{
 			case '\0':
 			case '+':
+			case 'S':
 				if (pattern)
-					success = describeTableDetails(pattern, show_verbose);
+					success = describeTableDetails(pattern, show_verbose, show_system);
 				else
 					/* standard listing of interesting things */
 					success = listTables("tvs", NULL, show_verbose, show_system);
@@ -390,7 +391,6 @@ exec_command(const char *cmd,
 			case 'v':
 			case 'i':
 			case 's':
-			case 'S':
 				success = listTables(&cmd[1], pattern, show_verbose, show_system);
 				break;
 			case 'u':
