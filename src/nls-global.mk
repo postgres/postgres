@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/nls-global.mk,v 1.19 2009/01/15 09:01:24 petere Exp $
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.20 2009/01/20 09:58:50 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -113,10 +113,12 @@ update-po: $(ALL_LANGUAGES:%=po/%.po.new)
 $(AVAIL_LANGUAGES:%=po/%.po.new): po/%.po.new: po/%.po po/$(CATALOG_NAME).pot $(all_compendia)
 	$(MSGMERGE) $(word 1, $^) $(word 2,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 3,$(words $^),$^)))
 
-# For languages not yet available, merge against empty file, to pick
-# up translations from the compendia.
+# For languages not yet available, merge against oneself, to pick
+# up translations from the compendia.  (Merging against /dev/null
+# doesn't work so well; it inserts the headers from the first-named
+# compendium.)
 po/%.po.new: po/$(CATALOG_NAME).pot $(all_compendia)
-	$(MSGMERGE) /dev/null $(word 1,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 2,$(words $^),$^)))
+	$(MSGMERGE) $(word 1,$^) $(word 1,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 2,$(words $^),$^)))
 
 
 all: all-po
