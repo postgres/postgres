@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.51 2009/01/01 17:23:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.52 2009/01/20 18:59:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,6 +683,9 @@ void
 clog_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	/* Backup blocks are not used in clog records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	if (info == CLOG_ZEROPAGE)
 	{

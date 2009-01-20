@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.16 2009/01/01 17:23:34 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.17 2009/01/20 18:59:36 heikki Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -437,6 +437,8 @@ void
 gin_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	RestoreBkpBlocks(lsn, record, false);
 
 	topCtx = MemoryContextSwitchTo(opCtx);
 	switch (info)

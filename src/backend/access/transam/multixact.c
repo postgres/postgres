@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.29 2009/01/01 17:23:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.30 2009/01/20 18:59:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1869,6 +1869,9 @@ void
 multixact_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	/* Backup blocks are not used in multixact records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	if (info == XLOG_MULTIXACT_ZERO_OFF_PAGE)
 	{

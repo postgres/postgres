@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.66 2009/01/01 17:23:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.67 2009/01/20 18:59:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,8 +217,19 @@ XLogCheckInvalidPages(void)
 
 /*
  * XLogReadBuffer
- *		A shorthand of XLogReadBufferExtended(), for reading from the main
- *		fork.
+ *		Read a page during XLOG replay.
+ *
+ * This is a shorthand of XLogReadBufferExtended() followed by
+ * LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE), for reading from the main
+ * fork.
+ *
+ * (Getting the lock is not really necessary, since we expect that this is
+ * only used during single-process XLOG replay, but some subroutines such
+ * as MarkBufferDirty will complain if we don't. And hopefully we'll get
+ * hot standby support in the future, where there will be backends running
+ * read-only queries during XLOG replay.)
+ *
+ * The returned buffer is exclusively-locked.
  *
  * For historical reasons, instead of a ReadBufferMode argument, this only
  * supports RBM_ZERO (init == true) and RBM_NORMAL (init == false) modes.
@@ -226,22 +237,21 @@ XLogCheckInvalidPages(void)
 Buffer
 XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
 {
-	return XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
-								  init ? RBM_ZERO : RBM_NORMAL);
+	Buffer buf;
+	buf = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
+								 init ? RBM_ZERO : RBM_NORMAL);
+	if (BufferIsValid(buf))
+		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+
+	return buf;
 }
 
 /*
  * XLogReadBufferExtended
  *		Read a page during XLOG replay
  *
- * This is functionally comparable to ReadBuffer followed by
- * LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE): you get back a pinned
- * and locked buffer.  (Getting the lock is not really necessary, since we
- * expect that this is only used during single-process XLOG replay, but
- * some subroutines such as MarkBufferDirty will complain if we don't.)
- *
- * There's some differences in the behavior wrt. the "mode" argument,
- * compared to ReadBufferExtended:
+ * This is functionally comparable to ReadBufferExtended. There's some
+ * differences in the behavior wrt. the "mode" argument:
  *
  * In RBM_NORMAL mode, if the page doesn't exist, or contains all-zeroes, we
  * return InvalidBuffer. In this case the caller should silently skip the
@@ -306,16 +316,19 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 		Assert(BufferGetBlockNumber(buffer) == blkno);
 	}
 
-	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
 	if (mode == RBM_NORMAL)
 	{
 		/* check that page has been initialized */
 		Page		page = (Page) BufferGetPage(buffer);
 
+		/*
+		 * We assume that PageIsNew is safe without a lock. During recovery,
+		 * there should be no other backends that could modify the buffer at
+		 * the same time.
+		 */
 		if (PageIsNew(page))
 		{
-			UnlockReleaseBuffer(buffer);
+			ReleaseBuffer(buffer);
 			log_invalid_page(rnode, forknum, blkno, true);
 			return InvalidBuffer;
 		}

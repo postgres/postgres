@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.4 2009/01/04 14:59:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.5 2009/01/20 18:59:37 heikki Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -400,6 +400,9 @@ void
 smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	/* Backup blocks are not used in smgr records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	if (info == XLOG_SMGR_CREATE)
 	{

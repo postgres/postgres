@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.327 2009/01/11 18:02:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.328 2009/01/20 18:59:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2922,9 +2922,15 @@ CleanupBackupHistory(void)
  * page might not be.  This will force us to replay all subsequent
  * modifications of the page that appear in XLOG, rather than possibly
  * ignoring them as already applied, but that's not a huge drawback.
+ *
+ * If 'cleanup' is true, a cleanup lock is used when restoring blocks.
+ * Otherwise, a normal exclusive lock is used.  At the moment, that's just
+ * pro forma, because there can't be any regular backends in the system
+ * during recovery.  The 'cleanup' argument applies to all backup blocks
+ * in the WAL record, that suffices for now.
  */
-static void
-RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
+void
+RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup)
 {
 	Buffer		buffer;
 	Page		page;
@@ -2944,6 +2950,11 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 		buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
 										RBM_ZERO);
 		Assert(BufferIsValid(buffer));
+		if (cleanup)
+			LockBufferForCleanup(buffer);
+		else
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+
 		page = (Page) BufferGetPage(buffer);
 
 		if (bkpb.hole_length == 0)
@@ -5199,9 +5210,6 @@ StartupXLOG(void)
 					TransactionIdAdvance(ShmemVariableCache->nextXid);
 				}
 
-				if (record->xl_info & XLR_BKP_BLOCK_MASK)
-					RestoreBkpBlocks(record, EndRecPtr);
-
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 
 				/* Pop the error context stack */
@@ -6232,6 +6240,9 @@ void
 xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+
+	/* Backup blocks are not used in xlog records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	if (info == XLOG_NEXTOID)
 	{
