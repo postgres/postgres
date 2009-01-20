@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.29.2.1 2008/01/17 23:47:04 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.29.2.2 2009/01/20 12:17:23 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -883,13 +883,12 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 						  int freeze_min_age)
 {
 	VacuumStmt *vacstmt;
-	MemoryContext old_cxt;
 
 	/*
 	 * The node must survive transaction boundaries, so make sure we create it
 	 * in a long-lived context
 	 */
-	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
+	MemoryContextSwitchTo(AutovacMemCxt);
 
 	vacstmt = makeNode(VacuumStmt);
 
@@ -915,7 +914,9 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	vacuum(vacstmt, list_make1_oid(relid));
 
 	pfree(vacstmt);
-	MemoryContextSwitchTo(old_cxt);
+
+	/* Make sure we end up pointing to the long-lived context at exit */
+	MemoryContextSwitchTo(AutovacMemCxt);
 }
 
 /*
