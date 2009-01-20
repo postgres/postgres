@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.4 2009/01/01 17:23:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.5 2009/01/20 09:10:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -829,6 +829,33 @@ RemoveForeignServerById(Oid srvId)
 
 
 /*
+ * Common routine to check permission for user-mapping-related DDL
+ * commands.  We allow server owners to operate on any mapping, and
+ * users to operate on their own mapping.
+ */
+static void
+user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
+{
+	Oid			curuserid = GetUserId();
+
+	if (!pg_foreign_server_ownercheck(serverid, curuserid))
+	{
+		if (umuserid == curuserid)
+		{
+			AclResult			aclresult;
+
+			aclresult = pg_foreign_server_aclcheck(serverid, curuserid, ACL_USAGE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_FOREIGN_SERVER, servername);
+		}
+		else
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+						   servername);
+	}
+}
+
+
+/*
  * Create user mapping
  */
 void
@@ -841,24 +868,17 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	HeapTuple			tuple;
 	Oid					useId;
 	Oid					umId;
-	Oid					ownerId;
 	ObjectAddress 		myself;
 	ObjectAddress		referenced;
 	ForeignServer	   *srv;
 	ForeignDataWrapper *fdw;
 
-	ownerId = GetUserId();
-
 	useId = GetUserOidFromMapping(stmt->username, false);
 
-	/*
-	 * Check that the server exists and that the we own it.
-	 */
+	/* Check that the server exists. */
 	srv = GetForeignServerByName(stmt->servername, false);
 
-	if (!pg_foreign_server_ownercheck(srv->serverid, ownerId))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
-					   stmt->servername);
+	user_mapping_ddl_aclcheck(useId, srv->serverid, stmt->servername);
 
 	/*
 	 * Check that the user mapping is unique within server.
@@ -951,12 +971,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 				errmsg("user mapping \"%s\" does not exist for the server",
 					MappingUserName(useId))));
 
-	/*
-	 * Must be owner of the server to alter user mapping.
-	 */
-	if (!pg_foreign_server_ownercheck(srv->serverid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
-					   stmt->servername);
+	user_mapping_ddl_aclcheck(useId, srv->serverid, stmt->servername);
 
 	tp = SearchSysCacheCopy(USERMAPPINGOID,
 							ObjectIdGetDatum(umId),
@@ -1071,14 +1086,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		return;
 	}
 
-	/*
-	 * Only allow DROP if we own the server.
-	 */
-	if (!pg_foreign_server_ownercheck(srv->serverid, GetUserId()))
-	{
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
-					   srv->servername);
-	}
+	user_mapping_ddl_aclcheck(useId, srv->serverid, srv->servername);
 
 	/*
 	 * Do the deletion

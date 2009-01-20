@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.49 2009/01/14 21:12:09 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.50 2009/01/20 09:10:20 petere Exp $
  */
 
 /*
@@ -2465,12 +2465,12 @@ CREATE VIEW _pg_foreign_servers AS
            s.srvoptions,
            CAST(current_database() AS sql_identifier) AS foreign_server_catalog,
            CAST(srvname AS sql_identifier) AS foreign_server_name,
-           w.foreign_data_wrapper_catalog,
-           w.foreign_data_wrapper_name,
+           CAST(current_database() AS sql_identifier) AS foreign_data_wrapper_catalog,
+           CAST(w.fdwname AS sql_identifier) AS foreign_data_wrapper_name,
            CAST(srvtype AS character_data) AS foreign_server_type,
            CAST(srvversion AS character_data) AS foreign_server_version,
            CAST(u.rolname AS sql_identifier) AS authorization_identifier
-    FROM pg_foreign_server s, _pg_foreign_data_wrappers w, pg_authid u
+    FROM pg_foreign_server s, pg_foreign_data_wrapper w, pg_authid u
     WHERE w.oid = s.srvfdw
           AND u.oid = s.srvowner
           AND (pg_has_role(s.srvowner, 'USAGE')
@@ -2512,9 +2512,11 @@ GRANT SELECT ON foreign_servers TO PUBLIC;
 CREATE VIEW _pg_user_mappings AS
     SELECT um.oid,
            um.umoptions,
+           um.umuser,
            CAST(COALESCE(u.rolname,'PUBLIC') AS sql_identifier ) AS authorization_identifier,
            s.foreign_server_catalog,
-           s.foreign_server_name
+           s.foreign_server_name,
+           s.authorization_identifier AS srvowner
     FROM pg_user_mapping um LEFT JOIN pg_authid u ON (u.oid = um.umuser),
          _pg_foreign_servers s
     WHERE s.oid = um.umserver;
@@ -2529,7 +2531,10 @@ CREATE VIEW user_mapping_options AS
            foreign_server_catalog,
            foreign_server_name,
            CAST((pg_options_to_table(um.umoptions)).option_name AS sql_identifier) AS option_name,
-           CAST((pg_options_to_table(um.umoptions)).option_value AS character_data) AS option_value
+           CAST(CASE WHEN (umuser <> 0 AND authorization_identifier = current_user)
+                       OR (umuser = 0 AND pg_has_role(srvowner, 'USAGE'))
+                       OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user) THEN (pg_options_to_table(um.umoptions)).option_value
+                     ELSE NULL END AS character_data) AS option_value
     FROM _pg_user_mappings um;
 
 GRANT SELECT ON user_mapping_options TO PUBLIC;

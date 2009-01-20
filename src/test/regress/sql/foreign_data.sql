@@ -273,6 +273,8 @@ SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
 SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
 DROP USER MAPPING FOR current_user SERVER st1;
+SET ROLE regress_test_role2;
+SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
 RESET ROLE;
 
 
@@ -365,7 +367,7 @@ GRANT USAGE ON FOREIGN SERVER s9 TO unprivileged_role;
 SET ROLE unprivileged_role;
 ALTER SERVER s9 VERSION '1.2';                                  -- ERROR
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;          -- WARNING
-CREATE USER MAPPING FOR current_user SERVER s9;                 -- ERROR
+CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;                                         -- ERROR
 RESET ROLE;
 

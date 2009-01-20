@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.2 2009/01/20 09:10:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -31,10 +31,15 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> |
 
   <para>
    <command>ALTER USER MAPPING</command> changes the definition of a
-   user mapping.  Only the owner of the server can change the user
-   mappings of that server.
+   user mapping.
   </para>
 
+  <para>
+   The owner of a foreign server can alter user mappings for that
+   server for any user.  Also, a user can alter a user mapping for
+   his own user name if <literal>USAGE</> privilege on the server has
+   been granted to the user.
+  </para>
  </refsect1>
 
  <refsect1>

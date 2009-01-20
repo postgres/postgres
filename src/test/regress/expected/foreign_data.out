@@ -545,7 +545,7 @@ SET ROLE regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s5;
 CREATE USER MAPPING FOR current_user SERVER s6 OPTIONS (username 'test');
 CREATE USER MAPPING FOR current_user SERVER s7;             -- ERROR
-ERROR:  must be owner of foreign server s7
+ERROR:  permission denied for foreign server s7
 CREATE USER MAPPING FOR public SERVER s8;                   -- ERROR
 ERROR:  must be owner of foreign server s8
 RESET ROLE;
@@ -736,6 +736,13 @@ SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREI
 (2 rows)
 
 DROP USER MAPPING FOR current_user SERVER st1;
+SET ROLE regress_test_role2;
+SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
+ authorization_identifier | foreign_server_catalog | foreign_server_name | option_name | option_value 
+--------------------------+------------------------+---------------------+-------------+--------------
+ regress_test_role        | regression             | s6                  | username    | 
+(1 row)
+
 RESET ROLE;
 -- has_foreign_data_wrapper_privilege
 SELECT has_foreign_data_wrapper_privilege('regress_test_role',
@@ -932,8 +939,7 @@ ALTER SERVER s9 VERSION '1.2';                                  -- ERROR
 ERROR:  must be owner of foreign server s9
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;          -- WARNING
 WARNING:  no privileges were granted for "s9"
-CREATE USER MAPPING FOR current_user SERVER s9;                 -- ERROR
-ERROR:  must be owner of foreign server s9
+CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;                                         -- ERROR
 ERROR:  must be owner of foreign server s9
 RESET ROLE;
@@ -953,11 +959,12 @@ NOTICE:  drop cascades to user mapping for public
 DROP SERVER st2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
-NOTICE:  drop cascades to 4 other objects
+NOTICE:  drop cascades to 5 other objects
 DETAIL:  drop cascades to server s4
 drop cascades to user mapping for foreign_data_user
 drop cascades to server s6
 drop cascades to server s9
+drop cascades to user mapping for unprivileged_role
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to user mapping for foreign_data_user

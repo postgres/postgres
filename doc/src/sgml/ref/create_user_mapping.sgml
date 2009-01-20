@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.2 2009/01/17 04:24:41 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.3 2009/01/20 09:10:20 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -31,10 +31,15 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">username</replaceable> 
 
   <para>
    <command>CREATE USER MAPPING</command> defines a mapping of a user
-   to a foreign server.  You must be the owner of the server to define
-   user mappings for it.
+   to a foreign server.
   </para>
 
+  <para>
+   The owner of a foreign server can create user mappings for that
+   server for any user.  Also, a user can create a user mapping for
+   his own user name if <literal>USAGE</> privilege on the server has
+   been granted to the user.
+  </para>
  </refsect1>
 
  <refsect1>
