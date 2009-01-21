@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.243 2009/01/01 17:23:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.244 2009/01/21 09:28:26 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,7 +614,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		ereport(NOTICE,
 		(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
 				constr_name, buf.data),
-		 errdetail("%s", funcdescr[funcnum])));
+		 errdetail("%s", _(funcdescr[funcnum]))));
 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		info = (OldTriggerInfo *) palloc0(sizeof(OldTriggerInfo));
 		info->args = copyObject(stmt->args);
@@ -630,7 +630,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		ereport(NOTICE,
 		(errmsg("ignoring incomplete trigger group for constraint \"%s\" %s",
 				constr_name, buf.data),
-		 errdetail("%s", funcdescr[funcnum])));
+		 errdetail("%s", _(funcdescr[funcnum]))));
 	}
 	else
 	{
@@ -642,7 +642,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		ereport(NOTICE,
 				(errmsg("converting trigger group into constraint \"%s\" %s",
 						constr_name, buf.data),
-				 errdetail("%s", funcdescr[funcnum])));
+				 errdetail("%s", _(funcdescr[funcnum]))));
 		if (funcnum == 2)
 		{
 			/* This trigger is on the FK table */
