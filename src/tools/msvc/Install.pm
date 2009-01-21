@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.31 2008/09/17 04:31:08 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.32 2009/01/21 09:25:11 mha Exp $
 #
 use strict;
 use warnings;
@@ -52,7 +52,8 @@ sub Install
         $conf = "release";
     }
     die "Could not find debug or release binaries" if ($conf eq "");
-    print "Installing for $conf in $target\n";
+    my $majorver = DetermineMajorVersion();
+    print "Installing version $majorver for $conf in $target\n";
 
     EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
         'doc/contrib', 'symbols', 'share/tsearch_data');
@@ -101,7 +102,7 @@ sub Install
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
-    GenerateNLSFiles($target,$config->{nls}) if ($config->{nls});
+    GenerateNLSFiles($target,$config->{nls},$majorver) if ($config->{nls});
 
     print "Installation complete.\n";
 }
@@ -457,6 +458,7 @@ sub GenerateNLSFiles
 {
     my $target = shift;
     my $nlspath = shift;
+    my $majorver = shift;
 
     print "Installing NLS files...";
     EnsureDirectories($target, "share/locale");
@@ -481,13 +483,20 @@ sub GenerateNLSFiles
 
             EnsureDirectories($target, "share/locale/$lang", "share/locale/$lang/LC_MESSAGES");
             system(
-"\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm.mo\" $_"
+"\"$nlspath\\bin\\msgfmt\" -o \"$target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm-$majorver.mo\" $_"
               )
               && croak("Could not run msgfmt on $dir\\$_");
             print ".";
         }
     }
     print "\n";
+}
+
+sub DetermineMajorVersion
+{
+    my $f = read_file('src/include/pg_config.h') || croak 'Could not open pg_config.h';
+    $f =~ /^#define\s+PG_MAJORVERSION\s+"([^"]+)"/m || croak 'Could not determine major version';
+    return $1;
 }
 
 sub read_file
