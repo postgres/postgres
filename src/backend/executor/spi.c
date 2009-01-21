@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.206 2009/01/07 20:38:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.207 2009/01/21 11:02:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1490,6 +1490,8 @@ SPI_result_code_string(int code)
 			return "SPI_OK_DELETE_RETURNING";
 		case SPI_OK_UPDATE_RETURNING:
 			return "SPI_OK_UPDATE_RETURNING";
+		case SPI_OK_REWRITTEN:
+			return "SPI_OK_REWRITTEN";
 	}
 	/* Unrecognized code ... return something useful ... */
 	sprintf(buf, "Unrecognized SPI code %d", code);
@@ -1910,11 +1912,12 @@ fail:
 	_SPI_current->tuptable = NULL;
 
 	/*
-	 * If none of the queries had canSetTag, we return the last query's result
-	 * code, but not its auxiliary results (for backwards compatibility).
+	 * If none of the queries had canSetTag, return SPI_OK_REWRITTEN. Prior
+	 * to 8.4, we used return the last query's result code, but not its
+	 * auxiliary results, but that's confusing.
 	 */
 	if (my_res == 0)
-		my_res = res;
+		my_res = SPI_OK_REWRITTEN;
 
 	return my_res;
 }

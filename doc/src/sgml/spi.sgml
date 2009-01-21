@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.63 2009/01/07 13:44:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.64 2009/01/21 11:02:40 heikki Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -524,6 +524,16 @@ typedef struct
       <para>
        if a utility command (e.g., <command>CREATE TABLE</command>)
        was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_OK_REWRITTEN</symbol></term>
+     <listitem>
+      <para>
+       if the command was rewritten into another kind of command (e.g.,
+       <command>UPDATE</command> became an <command>INSERT</command>) by a <link linkend="rules">rule</link>.
       </para>
      </listitem>
     </varlistentry>
