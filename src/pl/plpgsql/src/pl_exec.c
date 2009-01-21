@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.230 2009/01/21 11:02:40 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.231 2009/01/21 11:13:14 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2949,6 +2949,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
 		case SPI_OK_UTILITY:
+		case SPI_OK_REWRITTEN:
 			break;
 
 		case 0:
