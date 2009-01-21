@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.45 2009/01/09 14:07:00 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.46 2009/01/21 10:30:02 mha Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -55,6 +55,9 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 
+#ifdef WIN32
+#include <shlwapi.h>
+#endif
 
 #define		MAX_L10N_DATA		80
 
@@ -88,6 +91,10 @@ static char lc_messages_envbuf[LC_ENV_BUFSIZE];
 static char lc_monetary_envbuf[LC_ENV_BUFSIZE];
 static char lc_numeric_envbuf[LC_ENV_BUFSIZE];
 static char lc_time_envbuf[LC_ENV_BUFSIZE];
+
+#ifdef WIN32
+static char *IsoLocaleName(const char *); /* MSVC specific */
+#endif
 
 
 /*
@@ -148,8 +155,13 @@ pg_perm_setlocale(int category, const char *locale)
 		case LC_MESSAGES:
 			envvar = "LC_MESSAGES";
 			envbuf = lc_messages_envbuf;
+#ifdef WIN32
+			result = IsoLocaleName(locale);
+			if (result == NULL)
+				result = locale;
+#endif /* WIN32 */
 			break;
-#endif
+#endif /* LC_MESSAGES */
 		case LC_MONETARY:
 			envvar = "LC_MONETARY";
 			envbuf = lc_monetary_envbuf;
@@ -166,25 +178,13 @@ pg_perm_setlocale(int category, const char *locale)
 			elog(FATAL, "unrecognized LC category: %d", category);
 			envvar = NULL;		/* keep compiler quiet */
 			envbuf = NULL;
-			break;
+			return NULL;
 	}
 
 	snprintf(envbuf, LC_ENV_BUFSIZE - 1, "%s=%s", envvar, result);
 
-#ifndef WIN32
 	if (putenv(envbuf))
 		return NULL;
-#else
-
-	/*
-	 * On Windows, we need to modify both the process environment and the
-	 * cached version in msvcrt
-	 */
-	if (!SetEnvironmentVariable(envvar, result))
-		return NULL;
-	if (_putenv(envbuf))
-		return NULL;
-#endif
 
 	return result;
 }
@@ -599,3 +599,53 @@ cache_locale_time(void)
 
 	CurrentLCTimeValid = true;
 }
+
+
+#ifdef WIN32
+/*
+ *	Convert Windows locale name to the ISO formatted one
+ *	if possible.
+ *
+ *	This function returns NULL if conversion is impossible,
+ *	otherwise returns the pointer to a static area which
+ *	contains the iso formatted locale name.
+ */
+static
+char *IsoLocaleName(const char *winlocname)
+{
+#if (_MSC_VER >= 1400) /* VC8.0 or later */
+	static char	iso_lc_messages[32];
+	_locale_t	loct = NULL;
+
+	if (pg_strcasecmp("c", winlocname) == 0 ||
+		pg_strcasecmp("posix", winlocname) == 0)
+	{
+		strcpy(iso_lc_messages, "C");
+		return iso_lc_messages;
+	}
+
+	loct = _create_locale(LC_CTYPE, winlocname);
+	if (loct != NULL)
+	{
+		char	isolang[32], isocrty[32];
+		LCID	lcid;
+
+		lcid = loct->locinfo->lc_handle[LC_CTYPE];
+		if (lcid == 0)
+			lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+		_free_locale(loct);
+
+		if (!GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME, isolang, sizeof(isolang)))
+			return NULL;
+		if (!GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME, isocrty, sizeof(isocrty)))'
+			return NULL;
+		snprintf(iso_lc_messages, sizeof(iso_lc_messages) - 1, "%s_%s", isolang, isocrty);
+		return iso_lc_messages;
+	}
+	return NULL;
+#else
+	return NULL; /* Not supported on this version of msvc/mingw */
+#endif /* _MSC_VER >= 1400 */
+}
+#endif /* WIN32 */
+

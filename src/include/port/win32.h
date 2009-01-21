@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.85 2009/01/07 03:39:33 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.86 2009/01/21 10:30:02 mha Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -291,6 +291,11 @@ extern int	pgwin32_is_service(void);
 /* in port/win32error.c */
 extern void _dosmaperr(unsigned long);
 
+/* in port/win32env.c */
+extern int pgwin32_putenv(const char *);
+extern void pgwin32_unsetenv(const char *);
+#define putenv(x) pgwin32_putenv(x)
+#define unsetenv(x) pgwin32_unsetenv(x)
 
 /* Things that exist in MingW headers, but need to be added to MSVC */
 #ifdef WIN32_ONLY_COMPILER
