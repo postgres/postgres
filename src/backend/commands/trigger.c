@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.244 2009/01/21 09:28:26 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.245 2009/01/22 19:16:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -992,12 +992,14 @@ renametrig(Oid relid,
 /*
  * EnableDisableTrigger()
  *
- *	Called by ALTER TABLE ENABLE/DISABLE TRIGGER
+ *	Called by ALTER TABLE ENABLE/DISABLE [ REPLICA | ALWAYS ] TRIGGER
  *	to change 'tgenabled' field for the specified trigger(s)
  *
  * rel: relation to process (caller must hold suitable lock on it)
  * tgname: trigger to process, or NULL to scan all triggers
- * enable: new value for tgenabled field
+ * fires_when: new value for tgenabled field. In addition to generic
+ *			   enablement/disablement, this also defines when the trigger
+ *			   should be fired in session replication roles.
  * skip_system: if true, skip "system" triggers (constraint triggers)
  *
  * Caller should have checked permissions for the table; here we also
