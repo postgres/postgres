@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.111 2009/01/01 17:23:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.112 2009/01/22 17:27:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,9 @@
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
+#include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
+#include "rewrite/viewUpdate.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -308,13 +310,28 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
 					   viewOid,
 					   NULL,
 					   CMD_SELECT,
-					   true,
+					   true, /* is_instead */
+					   true, /* is_auto */
 					   replace,
 					   list_make1(viewParse));
 
 	/*
-	 * Someday: automatic ON INSERT, etc
+	 * Delete all implicit rules on replace.  CreateViewUpdateRules()
+	 * below will re-create them if appropriate for the new view
+	 * definition.
 	 */
+	if (replace)
+	{
+		Relation rel = heap_open(viewOid, AccessExclusiveLock);
+		RemoveAutomaticRulesOnEvent(rel, CMD_INSERT);
+		RemoveAutomaticRulesOnEvent(rel, CMD_DELETE);
+		RemoveAutomaticRulesOnEvent(rel, CMD_UPDATE);
+		heap_close(rel, NoLock);
+	}
+
+	CommandCounterIncrement();
+
+	CreateViewUpdateRules(viewOid, viewParse);
 }
 
 /*---------------------------------------------------------------

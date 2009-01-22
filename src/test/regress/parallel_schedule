@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.53 2008/12/30 17:11:26 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.54 2009/01/22 17:27:55 petere Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -78,6 +78,8 @@ test: misc
 # Another group of parallel tests
 # ----------
 test: select_views portals_p2 rules foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window
+
+test: view_update
 
 # ----------
 # Another group of parallel tests

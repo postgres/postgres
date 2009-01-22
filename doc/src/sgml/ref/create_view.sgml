@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.39 2008/12/15 21:35:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.40 2009/01/22 17:27:54 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -115,11 +115,99 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
   <title>Notes</title>
 
    <para>
-    Currently, views are read only: the system will not allow an insert,
-    update, or delete on a view.  You can get the effect of an updatable
-    view by creating rules that rewrite inserts, etc. on the view into
-    appropriate actions on other tables.  For more information see
-    <xref linkend="sql-createrule" endterm="sql-createrule-title">.
+    Some views are updatable, which means that the
+    commands <command>INSERT</command>, <command>UPDATE</command>,
+    and <command>DELETE</command> can be used on the view as if it
+    were a regular table.  A view is updatable if it
+    does <emphasis>not</emphasis> contain:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       more than one underlying table (joins) or no underlying table at all
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       underlying tables/views that are themselves not updatable,
+       including table value constructors and table functions
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       subqueries in the <literal>FROM</literal> list
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       items in the select list that are not direct references to a
+       column of the underlying table, such as literals or any
+       nontrivial value expression
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       references to system columns in the select list
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       more than one reference to the same column in the select list
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>aggregate function calls</para>
+     </listitem>
+
+     <listitem>
+      <para>window function calls</para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>WITH</literal> or <literal>WITH RECURSIVE</literal> clauses
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>DISTINCT</literal>, <literal>GROUP BY</literal>, or
+       <literal>HAVING</literal> clauses
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>UNION</literal>, <literal>INTERSECT</literal>, or
+       <literal>EXCEPT</literal> clauses
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>LIMIT</literal> or <literal>OFFSET</literal> clauses
+       (or other equivalent spellings thereof)
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    The updatable views implementation is based on the rule system.
+    Because of this, you can also make more complex views updatable or
+    insertable by creating your own rules that rewrite
+    the <command>INSERT</command>,
+    <command>UPDATE</command>, and <command>DELETE</command> actions
+    on the view into appropriate actions on other tables.  You can
+    also replace the automatically generated rules by your own rules.
+    For more information on the rule system, refer
+    to <xref linkend="sql-createrule" endterm="sql-createrule-title">.
    </para>
 
    <para>

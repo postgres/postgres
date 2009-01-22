@@ -189,9 +189,12 @@ DELETE FROM atest3; -- ok
 -- views
 SET SESSION AUTHORIZATION regressuser3;
 CREATE VIEW atestv1 AS SELECT * FROM atest1; -- ok
+NOTICE:  CREATE VIEW has created automatic view update rules
 /* The next *should* fail, but it's not implemented that way yet. */
 CREATE VIEW atestv2 AS SELECT * FROM atest2;
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW atestv3 AS SELECT * FROM atest3; -- ok
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT * FROM atestv1; -- ok
  a |  b  
 ---+-----
@@ -219,6 +222,7 @@ SELECT * FROM atestv3; -- ok
 (0 rows)
 
 CREATE VIEW atestv4 AS SELECT * FROM atestv3; -- nested view
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT * FROM atestv4; -- ok
  one | two | three 
 -----+-----+-------

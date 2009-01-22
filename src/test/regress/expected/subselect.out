@@ -349,6 +349,7 @@ create temp table shipped (
 );
 create temp view shipped_view as
     select * from shipped where ttype = 'wt';
+NOTICE:  CREATE VIEW has created automatic view update rules
 create rule shipped_view_insert as on insert to shipped_view do instead
     insert into shipped values('wt', new.ordnum, new.partnum, new.value);
 insert into parts (partnum, cost) values (1, 1234.56);

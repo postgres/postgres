@@ -27,8 +27,10 @@ CREATE TABLE viewtest_tbl (a int, b int);
 COPY viewtest_tbl FROM stdin;
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT * FROM viewtest_tbl;
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT * FROM viewtest_tbl WHERE a > 10;
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT * FROM viewtest;
  a  | b  
 ----+----
@@ -38,6 +40,7 @@ SELECT * FROM viewtest;
 
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT * FROM viewtest;
  a  | b  
 ----+----
@@ -71,13 +74,17 @@ SET search_path TO temp_view_test, public;
 CREATE TEMPORARY TABLE temp_table (a int, id int);
 -- should be created in temp_view_test schema
 CREATE VIEW v1 AS SELECT * FROM base_table;
+NOTICE:  CREATE VIEW has created automatic view update rules
 -- should be created in temp object schema
 CREATE VIEW v1_temp AS SELECT * FROM temp_table;
 NOTICE:  view "v1_temp" will be a temporary view
+NOTICE:  CREATE VIEW has created automatic view update rules
 -- should be created in temp object schema
 CREATE TEMP VIEW v2_temp AS SELECT * FROM base_table;
+NOTICE:  CREATE VIEW has created automatic view update rules
 -- should be created in temp_views schema
 CREATE VIEW temp_view_test.v2 AS SELECT * FROM base_table;
+NOTICE:  CREATE VIEW has created automatic view update rules
 -- should fail
 CREATE VIEW temp_view_test.v3_temp AS SELECT * FROM temp_table;
 NOTICE:  view "v3_temp" will be a temporary view
@@ -107,18 +114,25 @@ CREATE VIEW v5_temp AS
 NOTICE:  view "v5_temp" will be a temporary view
 -- subqueries
 CREATE VIEW v4 AS SELECT * FROM base_table WHERE id IN (SELECT id FROM base_table2);
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v5 AS SELECT t1.id, t2.a FROM base_table t1, (SELECT * FROM base_table2) t2;
 CREATE VIEW v6 AS SELECT * FROM base_table WHERE EXISTS (SELECT 1 FROM base_table2);
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v7 AS SELECT * FROM base_table WHERE NOT EXISTS (SELECT 1 FROM base_table2);
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v8 AS SELECT * FROM base_table WHERE EXISTS (SELECT 1);
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v6_temp AS SELECT * FROM base_table WHERE id IN (SELECT id FROM temp_table);
 NOTICE:  view "v6_temp" will be a temporary view
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v7_temp AS SELECT t1.id, t2.a FROM base_table t1, (SELECT * FROM temp_table) t2;
 NOTICE:  view "v7_temp" will be a temporary view
 CREATE VIEW v8_temp AS SELECT * FROM base_table WHERE EXISTS (SELECT 1 FROM temp_table);
 NOTICE:  view "v8_temp" will be a temporary view
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v9_temp AS SELECT * FROM base_table WHERE NOT EXISTS (SELECT 1 FROM temp_table);
 NOTICE:  view "v9_temp" will be a temporary view
+NOTICE:  CREATE VIEW has created automatic view update rules
 -- a view should also be temporary if it references a temporary view
 CREATE VIEW v10_temp AS SELECT * FROM v7_temp;
 NOTICE:  view "v10_temp" will be a temporary view
@@ -130,8 +144,10 @@ NOTICE:  view "v12_temp" will be a temporary view
 CREATE SEQUENCE seq1;
 CREATE TEMPORARY SEQUENCE seq1_temp;
 CREATE VIEW v9 AS SELECT seq1.is_called FROM seq1;
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE VIEW v13_temp AS SELECT seq1_temp.is_called FROM seq1_temp;
 NOTICE:  view "v13_temp" will be a temporary view
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT relname FROM pg_class
     WHERE relname LIKE 'v_'  
     AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'temp_view_test')
@@ -219,6 +235,7 @@ CREATE TEMP TABLE tmptbl (i int, j int);
 CREATE   VIEW  pubview AS SELECT * FROM tbl1 WHERE tbl1.a
 BETWEEN (SELECT d FROM tbl2 WHERE c = 1) AND (SELECT e FROM tbl3 WHERE f = 2)
 AND EXISTS (SELECT g FROM tbl4 LEFT JOIN tbl3 ON tbl4.h = tbl3.f);
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT count(*) FROM pg_class where relname = 'pubview'
 AND relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname = 'testviewschm2');
  count 
@@ -232,6 +249,7 @@ BETWEEN (SELECT d FROM tbl2 WHERE c = 1) AND (SELECT e FROM tbl3 WHERE f = 2)
 AND EXISTS (SELECT g FROM tbl4 LEFT JOIN tbl3 ON tbl4.h = tbl3.f)
 AND NOT EXISTS (SELECT g FROM tbl4 LEFT JOIN tmptbl ON tbl4.h = tmptbl.j);
 NOTICE:  view "mytempview" will be a temporary view
+NOTICE:  CREATE VIEW has created automatic view update rules
 SELECT count(*) FROM pg_class where relname LIKE 'mytempview'
 And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%');
  count 

@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.134 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.135 2009/01/22 17:27:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -25,6 +26,7 @@
 #include "parser/parse_utilcmd.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
+#include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -39,6 +41,7 @@ static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
 					bool isSelect);
 static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
+static const char *rule_event_string(CmdType evtype);
 
 
 /*
@@ -52,6 +55,7 @@ InsertRule(char *rulname,
 		   Oid eventrel_oid,
 		   AttrNumber evslot_index,
 		   bool evinstead,
+		   bool is_auto,
 		   Node *event_qual,
 		   List *action,
 		   bool replace)
@@ -84,6 +88,7 @@ InsertRule(char *rulname,
 	values[i++] = CharGetDatum(evtype + '0');	/* ev_type */
 	values[i++] = CharGetDatum(RULE_FIRES_ON_ORIGIN);	/* ev_enabled */
 	values[i++] = BoolGetDatum(evinstead);		/* is_instead */
+	values[i++] = BoolGetDatum(is_auto);		/* is_auto */
 	values[i++] = CStringGetTextDatum(evqual);	/* ev_qual */
 	values[i++] = CStringGetTextDatum(actiontree);		/* ev_action */
 
@@ -102,7 +107,11 @@ InsertRule(char *rulname,
 
 	if (HeapTupleIsValid(oldtup))
 	{
-		if (!replace)
+		/*
+		 * If REPLACE was not used we still check if the old rule is
+		 * automatic: Then we replace it anyway.
+		 */
+		if (!replace && !((Form_pg_rewrite) GETSTRUCT(oldtup))->is_auto)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("rule \"%s\" for relation \"%s\" already exists",
@@ -115,6 +124,7 @@ InsertRule(char *rulname,
 		replaces[Anum_pg_rewrite_ev_attr - 1] = true;
 		replaces[Anum_pg_rewrite_ev_type - 1] = true;
 		replaces[Anum_pg_rewrite_is_instead - 1] = true;
+		replaces[Anum_pg_rewrite_is_auto - 1] = true;
 		replaces[Anum_pg_rewrite_ev_qual - 1] = true;
 		replaces[Anum_pg_rewrite_ev_action - 1] = true;
 
@@ -205,6 +215,7 @@ DefineRule(RuleStmt *stmt, const char *queryString)
 					   whereClause,
 					   stmt->event,
 					   stmt->instead,
+					   false, /* not is_auto */
 					   stmt->replace,
 					   actions);
 }
@@ -223,6 +234,7 @@ DefineQueryRewrite(char *rulename,
 				   Node *event_qual,
 				   CmdType event_type,
 				   bool is_instead,
+				   bool is_auto,
 				   bool replace,
 				   List *action)
 {
@@ -446,6 +458,42 @@ DefineQueryRewrite(char *rulename,
 								RelationGetDescr(event_relation),
 								false);
 		}
+
+		/*
+		 * If defining a non-automatic DO INSTEAD rule, drop all
+		 * automatic rules on the same event.
+		 */
+		if (!is_auto && is_instead)
+		{
+			RemoveAutomaticRulesOnEvent(event_relation, event_type);
+			CommandCounterIncrement();
+		}
+
+		/*
+		 * If defining an automatic rule and there is a manual rule on
+		 * the same event, warn and don't do it.
+		 */
+		if (is_auto && event_relation->rd_rules != NULL)
+		{
+			int			i;
+
+			for (i = 0; i < event_relation->rd_rules->numLocks; i++)
+			{
+				RewriteRule *rule = event_relation->rd_rules->rules[i];
+
+				if (rule->event == event_type && !rule->is_auto && rule->isInstead == is_instead)
+				{
+					ereport(WARNING,
+							(errmsg("automatic %s rule not created because manually created %s rule exists",
+									rule_event_string(event_type), rule_event_string(event_type)),
+							 errhint("If you prefer to have the automatic rule, drop the manually created rule and run CREATE OR REPLACE VIEW again.")));
+
+					heap_close(event_relation, NoLock);
+					return;
+				}
+			}
+		}
+
 	}
 
 	/*
@@ -461,6 +509,7 @@ DefineQueryRewrite(char *rulename,
 							event_relid,
 							event_attno,
 							is_instead,
+							is_auto,
 							event_qual,
 							action,
 							replace);
@@ -754,3 +803,16 @@ RenameRewriteRule(Oid owningRel, const char *oldName,
 }
 
 #endif
+
+
+static const char *
+rule_event_string(CmdType type)
+{
+	if (type == CMD_INSERT)
+		return "INSERT";
+	if (type == CMD_UPDATE)
+		return "UPDATE";
+	if (type == CMD_DELETE)
+		return "DELETE";
+	return "???";
+}

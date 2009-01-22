@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.189 2009/01/16 13:27:23 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.190 2009/01/22 17:27:54 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4142,6 +4142,13 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if the rule is an <literal>INSTEAD</literal> rule</entry>
+     </row>
+
+     <row>
+      <entry><structfield>is_auto</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if the rule was automatically generated</entry>
      </row>
 
      <row>

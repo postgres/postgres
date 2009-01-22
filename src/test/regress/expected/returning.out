@@ -195,6 +195,7 @@ SELECT * FROM foochild;
 DROP TABLE foochild;
 -- Rules and views
 CREATE TEMP VIEW voo AS SELECT f1, f2 FROM foo;
+NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE RULE voo_i AS ON INSERT TO voo DO INSTEAD
   INSERT INTO foo VALUES(new.*, 57);
 INSERT INTO voo VALUES(11,'zit');

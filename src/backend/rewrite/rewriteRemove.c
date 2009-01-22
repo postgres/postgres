@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.75 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.76 2009/01/22 17:27:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,39 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior,
 	performDeletion(&object, behavior);
 }
 
+/*
+ * RemoveAutomaticRulesOnEvent
+ *
+ * This will delete automatic rules, if any exist, on the event in the
+ * relation.
+ */
+void
+RemoveAutomaticRulesOnEvent(Relation rel, CmdType event_type)
+{
+	RuleLock   *rulelocks = rel->rd_rules;
+	int			i;
+
+	/* If there are no rules on the relation, waste no more time. */
+	if (rulelocks == NULL)
+		return;
+
+	/*
+	 * Look at all rules looking for the ones that are on the event
+	 * and are automatic.
+	 */
+	for (i = 0; i < rulelocks->numLocks; i++)
+	{
+		RewriteRule *oneLock = rulelocks->rules[i];
+
+		if (oneLock->event == event_type && oneLock->is_auto)
+		{
+			RemoveRewriteRuleById(oneLock->ruleId);
+			elog(DEBUG1, "removing automatic rule with OID %u\n",
+				 oneLock->ruleId);
+			deleteDependencyRecordsFor(RewriteRelationId, oneLock->ruleId);
+		}
+	}
+}
 
 /*
  * Guts of rule deletion.

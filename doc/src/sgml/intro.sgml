@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.32 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.33 2009/01/22 17:27:54 petere Exp $ -->
 
 <preface id="preface">
  <title>Preface</title>
@@ -110,7 +110,7 @@
      <simpara>triggers</simpara>
     </listitem>
     <listitem>
-     <simpara>views</simpara>
+     <simpara>updatable views</simpara>
     </listitem>
     <listitem>
      <simpara>transactional integrity</simpara>
