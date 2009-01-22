@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.588 2009/01/21 10:30:02 mha Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.589 2009/01/22 22:27:12 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1841,7 +1841,8 @@ AC_CONFIG_HEADERS([src/include/pg_config.h],
 echo >src/include/stamp-h
 ])
 
-AC_CONFIG_HEADERS([src/interfaces/ecpg/include/ecpg_config.h])
+AC_CONFIG_HEADERS([src/interfaces/ecpg/include/ecpg_config.h],
+                  [echo >src/interfaces/ecpg/include/stamp-h])
 
 AC_OUTPUT
 

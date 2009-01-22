@@ -28349,6 +28349,7 @@ echo "$as_me: WARNING: *** link for $FILE -- please fix by hand" >&2;}
 # Update timestamp for pg_config.h (see Makefile.global)
 echo >src/include/stamp-h
  ;;
+    "src/interfaces/ecpg/include/ecpg_config.h":H) echo >src/interfaces/ecpg/include/stamp-h ;;
 
   esac
 done # for ac_tag

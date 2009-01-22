@@ -31,5 +31,4 @@ uninstall:
 	rm -f '$(DESTDIR)$(includedir)'/$(notdir $(ecpg_config_h))
 
 distclean maintainer-clean:
-	rm -f ecpg_config.h
-
+	rm -f ecpg_config.h stamp-h
