@@ -13,13 +13,14 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.388 2009/01/16 13:27:24 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.389 2009/01/22 20:16:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSENODES_H
 #define PARSENODES_H
 
+#include "nodes/bitmapset.h"
 #include "nodes/primnodes.h"
 #include "nodes/value.h"
 
@@ -622,6 +623,15 @@ typedef struct XmlSerialize
  *	  then do the permissions checks using the access rights of that user,
  *	  not the current effective user ID.  (This allows rules to act as
  *	  setuid gateways.)
+ *
+ *	  For SELECT/INSERT/UPDATE permissions, if the user doesn't have
+ *	  table-wide permissions then it is sufficient to have the permissions
+ *	  on all columns identified in selectedCols (for SELECT) and/or
+ *	  modifiedCols (for INSERT/UPDATE; we can tell which from the query type).
+ *	  selectedCols and modifiedCols are bitmapsets, which cannot have negative
+ *	  integer members, so we subtract FirstLowInvalidHeapAttributeNumber from
+ *	  column numbers before storing them in these fields.  A whole-row Var
+ *	  reference is represented by setting the bit for InvalidAttrNumber.
  *--------------------
  */
 typedef enum RTEKind
@@ -644,7 +654,7 @@ typedef struct RangeTblEntry
 	/*
 	 * XXX the fields applicable to only some rte kinds should be merged into
 	 * a union.  I didn't do this yet because the diffs would impact a lot of
-	 * code that is being actively worked on.  FIXME later.
+	 * code that is being actively worked on.  FIXME someday.
 	 */
 
 	/*
@@ -705,6 +715,8 @@ typedef struct RangeTblEntry
 	bool		inFromCl;		/* present in FROM clause? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
 	Oid			checkAsUser;	/* if valid, check access as this role */
+	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
+	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
 } RangeTblEntry;
 
 /*
@@ -1168,6 +1180,7 @@ typedef struct AlterDomainStmt
  */
 typedef enum GrantObjectType
 {
+	ACL_OBJECT_COLUMN,			/* column */
 	ACL_OBJECT_RELATION,		/* table, view */
 	ACL_OBJECT_SEQUENCE,		/* sequence */
 	ACL_OBJECT_DATABASE,		/* database */
@@ -1186,8 +1199,8 @@ typedef struct GrantStmt
 	GrantObjectType objtype;	/* kind of object being operated on */
 	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
 								 * or plain names (as Value strings) */
-	List	   *privileges;		/* list of privilege names (as Strings) */
-	/* privileges == NIL denotes "all privileges" */
+	List	   *privileges;		/* list of AccessPriv nodes */
+	/* privileges == NIL denotes ALL PRIVILEGES */
 	List	   *grantees;		/* list of PrivGrantee nodes */
 	bool		grant_option;	/* grant or revoke grant option */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */
@@ -1211,18 +1224,27 @@ typedef struct FuncWithArgs
 	List	   *funcargs;		/* list of Typename nodes */
 } FuncWithArgs;
 
-/* This is only used internally in gram.y. */
-typedef struct PrivTarget
+/*
+ * An access privilege, with optional list of column names
+ * priv_name == NULL denotes ALL PRIVILEGES (only used with a column list)
+ * cols == NIL denotes "all columns"
+ * Note that simple "ALL PRIVILEGES" is represented as a NIL list, not
+ * an AccessPriv with both fields null.
+ */
+typedef struct AccessPriv
 {
 	NodeTag		type;
-	GrantObjectType objtype;
-	List	   *objs;
-} PrivTarget;
+	char	   *priv_name;		/* string name of privilege */
+	List	   *cols;			/* list of Value strings */
+} AccessPriv;
 
 /* ----------------------
  *		Grant/Revoke Role Statement
  *
- * Note: the lists of roles are lists of names, as Value strings
+ * Note: because of the parsing ambiguity with the GRANT <privileges>
+ * statement, granted_roles is a list of AccessPriv; the execution code
+ * should complain if any column lists appear.  grantee_roles is a list
+ * of role names, as Value strings.
  * ----------------------
  */
 typedef struct GrantRoleStmt

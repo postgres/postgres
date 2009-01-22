@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.145 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.146 2009/01/22 20:16:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,6 +367,47 @@ allocacl(int n)
 }
 
 /*
+ * Copy an ACL
+ */
+Acl *
+aclcopy(const Acl *orig_acl)
+{
+	Acl *result_acl;
+
+	result_acl = allocacl(ACL_NUM(orig_acl));
+
+	memcpy(ACL_DAT(result_acl),
+		   ACL_DAT(orig_acl),
+		   ACL_NUM(orig_acl) * sizeof(AclItem));
+
+	return result_acl;
+}
+
+/*
+ * Concatenate two ACLs
+ *
+ * This is a bit cheesy, since we may produce an ACL with redundant entries.
+ * Be careful what the result is used for!
+ */
+Acl *
+aclconcat(const Acl *left_acl, const Acl *right_acl)
+{
+	Acl *result_acl;
+
+	result_acl = allocacl(ACL_NUM(left_acl) + ACL_NUM(right_acl));
+
+	memcpy(ACL_DAT(result_acl),
+		   ACL_DAT(left_acl),
+		   ACL_NUM(left_acl) * sizeof(AclItem));
+
+	memcpy(ACL_DAT(result_acl) + ACL_NUM(left_acl),
+		   ACL_DAT(right_acl),
+		   ACL_NUM(right_acl) * sizeof(AclItem));
+
+	return result_acl;
+}
+
+/*
  * Verify that an ACL array is acceptable (one-dimensional and has no nulls)
  */
 static void
@@ -542,11 +583,17 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 {
 	AclMode		world_default;
 	AclMode		owner_default;
+	int			nacl;
 	Acl		   *acl;
 	AclItem    *aip;
 
 	switch (objtype)
 	{
+		case ACL_OBJECT_COLUMN:
+			/* by default, columns have no extra privileges */
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_NO_RIGHTS;
+			break;
 		case ACL_OBJECT_RELATION:
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_RELATION;
@@ -593,7 +640,13 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 			break;
 	}
 
-	acl = allocacl((world_default != ACL_NO_RIGHTS) ? 2 : 1);
+	nacl = 0;
+	if (world_default != ACL_NO_RIGHTS)
+		nacl++;
+	if (owner_default != ACL_NO_RIGHTS)
+		nacl++;
+
+	acl = allocacl(nacl);
 	aip = ACL_DAT(acl);
 
 	if (world_default != ACL_NO_RIGHTS)
@@ -614,9 +667,12 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 	 * "_SYSTEM"-like ACL entry, by internally special-casing the owner
 	 * whereever we are testing grant options.
 	 */
-	aip->ai_grantee = ownerId;
-	aip->ai_grantor = ownerId;
-	ACLITEM_SET_PRIVS_GOPTIONS(*aip, owner_default, ACL_NO_RIGHTS);
+	if (owner_default != ACL_NO_RIGHTS)
+	{
+		aip->ai_grantee = ownerId;
+		aip->ai_grantor = ownerId;
+		ACLITEM_SET_PRIVS_GOPTIONS(*aip, owner_default, ACL_NO_RIGHTS);
+	}
 
 	return acl;
 }

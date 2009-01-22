@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.43 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.44 2009/01/22 20:16:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,13 @@
 
 #define supports_grant_options(version) ((version) >= 70400)
 
-static bool parseAclItem(const char *item, const char *type, const char *name,
-			 int remoteVersion, PQExpBuffer grantee, PQExpBuffer grantor,
+static bool parseAclItem(const char *item, const char *type,
+			 const char *name, const char *subname, int remoteVersion,
+			 PQExpBuffer grantee, PQExpBuffer grantor,
 			 PQExpBuffer privs, PQExpBuffer privswgo);
 static char *copyAclUserName(PQExpBuffer output, char *input);
-static void AddAcl(PQExpBuffer aclbuf, const char *keyword);
+static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
+				   const char *subname);
 
 
 /*
@@ -384,6 +386,7 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  * Build GRANT/REVOKE command(s) for an object.
  *
  *	name: the object name, in the form to use in the commands (already quoted)
+ *	subname: the sub-object name, if any (already quoted); NULL if none
  *	type: the object type (as seen in GRANT command: must be one of
  *		TABLE, SEQUENCE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE)
  *	acls: the ACL string fetched from the database
@@ -394,12 +397,12 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  * Returns TRUE if okay, FALSE if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
  *
- * Note: beware of passing fmtId() result as 'name', since this routine
- * uses fmtId() internally.
+ * Note: beware of passing a fmtId() result directly as 'name' or 'subname',
+ * since this routine uses fmtId() internally.
  */
 bool
-buildACLCommands(const char *name, const char *type,
-				 const char *acls, const char *owner,
+buildACLCommands(const char *name, const char *subname,
+				 const char *type, const char *acls, const char *owner,
 				 int remoteVersion,
 				 PQExpBuffer sql)
 {
@@ -448,8 +451,10 @@ buildACLCommands(const char *name, const char *type,
 	 * wire-in knowledge about the default public privileges for different
 	 * kinds of objects.
 	 */
-	appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
-					  type, name);
+	appendPQExpBuffer(firstsql, "REVOKE ALL");
+	if (subname)
+		appendPQExpBuffer(firstsql, "(%s)", subname);
+	appendPQExpBuffer(firstsql, " ON %s %s FROM PUBLIC;\n", type, name);
 
 	/*
 	 * We still need some hacking though to cover the case where new default
@@ -468,7 +473,7 @@ buildACLCommands(const char *name, const char *type,
 	/* Scan individual ACL items */
 	for (i = 0; i < naclitems; i++)
 	{
-		if (!parseAclItem(aclitems[i], type, name, remoteVersion,
+		if (!parseAclItem(aclitems[i], type, name, subname, remoteVersion,
 						  grantee, grantor, privs, privswgo))
 			return false;
 
@@ -491,15 +496,19 @@ buildACLCommands(const char *name, const char *type,
 					? strcmp(privswgo->data, "ALL") != 0
 					: strcmp(privs->data, "ALL") != 0)
 				{
-					appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM %s;\n",
-									  type, name,
-									  fmtId(grantee->data));
+					appendPQExpBuffer(firstsql, "REVOKE ALL");
+					if (subname)
+						appendPQExpBuffer(firstsql, "(%s)", subname);
+					appendPQExpBuffer(firstsql, " ON %s %s FROM %s;\n",
+									  type, name, fmtId(grantee->data));
 					if (privs->len > 0)
-						appendPQExpBuffer(firstsql, "GRANT %s ON %s %s TO %s;\n",
+						appendPQExpBuffer(firstsql,
+										  "GRANT %s ON %s %s TO %s;\n",
 										  privs->data, type, name,
 										  fmtId(grantee->data));
 					if (privswgo->len > 0)
-						appendPQExpBuffer(firstsql, "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+						appendPQExpBuffer(firstsql,
+							"GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
 										  privswgo->data, type, name,
 										  fmtId(grantee->data));
 				}
@@ -553,8 +562,13 @@ buildACLCommands(const char *name, const char *type,
 	 * If we didn't find any owner privs, the owner must have revoked 'em all
 	 */
 	if (!found_owner_privs && owner)
-		appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM %s;\n",
+	{
+		appendPQExpBuffer(firstsql, "REVOKE ALL");
+		if (subname)
+			appendPQExpBuffer(firstsql, "(%s)", subname);
+		appendPQExpBuffer(firstsql, " ON %s %s FROM %s;\n",
 						  type, name, fmtId(owner));
+	}
 
 	destroyPQExpBuffer(grantee);
 	destroyPQExpBuffer(grantor);
@@ -587,8 +601,9 @@ buildACLCommands(const char *name, const char *type,
  * appropriate.
  */
 static bool
-parseAclItem(const char *item, const char *type, const char *name,
-			 int remoteVersion, PQExpBuffer grantee, PQExpBuffer grantor,
+parseAclItem(const char *item, const char *type,
+			 const char *name, const char *subname, int remoteVersion,
+			 PQExpBuffer grantee, PQExpBuffer grantor,
 			 PQExpBuffer privs, PQExpBuffer privswgo)
 {
 	char	   *buf;
@@ -626,12 +641,12 @@ do { \
 	{ \
 		if (*(pos + 1) == '*') \
 		{ \
-			AddAcl(privswgo, keywd); \
+			AddAcl(privswgo, keywd, subname); \
 			all_without_go = false; \
 		} \
 		else \
 		{ \
-			AddAcl(privs, keywd); \
+			AddAcl(privs, keywd, subname); \
 			all_with_go = false; \
 		} \
 	} \
@@ -654,13 +669,18 @@ do { \
 			/* table only */
 			CONVERT_PRIV('a', "INSERT");
 			if (remoteVersion >= 70200)
-			{
-				CONVERT_PRIV('d', "DELETE");
 				CONVERT_PRIV('x', "REFERENCES");
-				CONVERT_PRIV('t', "TRIGGER");
+			/* rest are not applicable to columns */
+			if (subname == NULL)
+			{
+				if (remoteVersion >= 70200)
+				{
+					CONVERT_PRIV('d', "DELETE");
+					CONVERT_PRIV('t', "TRIGGER");
+				}
+				if (remoteVersion >= 80400)
+					CONVERT_PRIV('D', "TRUNCATE");
 			}
-			if (remoteVersion >= 80400)
-				CONVERT_PRIV('D', "TRUNCATE");
 		}
 
 		/* UPDATE */
@@ -700,11 +720,15 @@ do { \
 	{
 		resetPQExpBuffer(privs);
 		printfPQExpBuffer(privswgo, "ALL");
+		if (subname)
+			appendPQExpBuffer(privswgo, "(%s)", subname);
 	}
 	else if (all_without_go)
 	{
 		resetPQExpBuffer(privswgo);
 		printfPQExpBuffer(privs, "ALL");
+		if (subname)
+			appendPQExpBuffer(privs, "(%s)", subname);
 	}
 
 	free(buf);
@@ -757,11 +781,13 @@ copyAclUserName(PQExpBuffer output, char *input)
  * Append a privilege keyword to a keyword list, inserting comma if needed.
  */
 static void
-AddAcl(PQExpBuffer aclbuf, const char *keyword)
+AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
 {
 	if (aclbuf->len > 0)
 		appendPQExpBufferChar(aclbuf, ',');
 	appendPQExpBuffer(aclbuf, "%s", keyword);
+	if (subname)
+		appendPQExpBuffer(aclbuf, "(%s)", subname);
 }
 
 

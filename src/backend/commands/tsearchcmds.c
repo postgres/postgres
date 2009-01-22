@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.15 2009/01/01 17:23:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.16 2009/01/22 20:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1255,7 +1255,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 	if (removeOld)
 	{
 		deleteDependencyRecordsFor(myself.classId, myself.objectId);
-		deleteSharedDependencyRecordsFor(myself.classId, myself.objectId);
+		deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 	}
 
 	/*

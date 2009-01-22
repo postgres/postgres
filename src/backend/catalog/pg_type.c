@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.123 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.124 2009/01/22 20:16:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,7 +482,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	if (rebuild)
 	{
 		deleteDependencyRecordsFor(TypeRelationId, typeObjectId);
-		deleteSharedDependencyRecordsFor(TypeRelationId, typeObjectId);
+		deleteSharedDependencyRecordsFor(TypeRelationId, typeObjectId, 0);
 	}
 
 	myself.classId = TypeRelationId;

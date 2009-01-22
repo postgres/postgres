@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.38 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.39 2009/01/22 20:16:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ typedef struct ObjectAddress
 {
 	Oid			classId;		/* Class Id from pg_class */
 	Oid			objectId;		/* OID of the object */
-	int32		objectSubId;	/* Subitem within the object (column of table) */
+	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
 } ObjectAddress;
 
 /* expansible list of ObjectAddresses (private in dependency.c) */
@@ -221,14 +221,15 @@ extern void recordSharedDependencyOn(ObjectAddress *depender,
 						 ObjectAddress *referenced,
 						 SharedDependencyType deptype);
 
-extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId);
+extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId,
+											 int32 objectSubId);
 
 extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
 
 extern void changeDependencyOnOwner(Oid classId, Oid objectId,
 						Oid newOwnerId);
 
-extern void updateAclDependencies(Oid classId, Oid objectId,
+extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
 					  Oid ownerId, bool isGrant,
 					  int noldmembers, Oid *oldmembers,
 					  int nnewmembers, Oid *newmembers);

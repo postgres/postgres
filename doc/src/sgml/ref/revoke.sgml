@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.50 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.51 2009/01/22 20:15:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,6 +24,13 @@ PostgreSQL documentation
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
+    ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
+    FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column</replaceable> [, ...] )
+    [,...] | ALL [ PRIVILEGES ] ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
     FROM { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
@@ -132,6 +139,11 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
 
   <para>
+   When revoking privileges on a table, the corresponding column privileges
+   (if any) are automatically revoked on each column of the table, as well.
+  </para>
+
+  <para>
    When revoking membership in a role, <literal>GRANT OPTION</> is instead
    called <literal>ADMIN OPTION</>, but the behavior is similar.
    Note also that this form of the command does not
@@ -143,9 +155,11 @@ REVOKE [ ADMIN OPTION FOR ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="app-psql">'s <command>\z</command> command to
-   display the privileges granted on existing objects.  See <xref
-   linkend="sql-grant" endterm="sql-grant-title"> for information about the format.
+   Use <xref linkend="app-psql">'s <command>\dp</command> command to
+   display the privileges granted on existing tables and columns.  See <xref
+   linkend="sql-grant" endterm="sql-grant-title"> for information about the
+   format.  For non-table objects there are other <command>\d</> commands
+   that can display their privileges.
   </para>
 
   <para>

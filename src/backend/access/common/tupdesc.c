@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.124 2009/01/01 17:23:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.125 2009/01/22 20:16:00 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -53,10 +53,14 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	 * struct pointer alignment requirement, and hence we don't need to insert
 	 * alignment padding between the struct and the array of attribute row
 	 * pointers.
+	 *
+	 * Note: Only the fixed part of pg_attribute rows is included in tuple
+	 * descriptors, so we only need ATTRIBUTE_FIXED_PART_SIZE space
+	 * per attr.  That might need alignment padding, however.
 	 */
 	attroffset = sizeof(struct tupleDesc) + natts * sizeof(Form_pg_attribute);
 	attroffset = MAXALIGN(attroffset);
-	stg = palloc(attroffset + natts * MAXALIGN(ATTRIBUTE_TUPLE_SIZE));
+	stg = palloc(attroffset + natts * MAXALIGN(ATTRIBUTE_FIXED_PART_SIZE));
 	desc = (TupleDesc) stg;
 
 	if (natts > 0)
@@ -70,7 +74,7 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 		for (i = 0; i < natts; i++)
 		{
 			attrs[i] = (Form_pg_attribute) stg;
-			stg += MAXALIGN(ATTRIBUTE_TUPLE_SIZE);
+			stg += MAXALIGN(ATTRIBUTE_FIXED_PART_SIZE);
 		}
 	}
 	else
@@ -139,7 +143,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 	for (i = 0; i < desc->natts; i++)
 	{
-		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
+		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		desc->attrs[i]->attnotnull = false;
 		desc->attrs[i]->atthasdef = false;
 	}
@@ -166,7 +170,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 	for (i = 0; i < desc->natts; i++)
 	{
-		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_TUPLE_SIZE);
+		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 	}
 
 	if (constr)
@@ -356,6 +360,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attinhcount != attr2->attinhcount)
 			return false;
+		/* attacl is ignored, since it's not even present... */
 	}
 
 	if (tupdesc1->constr != NULL)
@@ -471,6 +476,7 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attisdropped = false;
 	att->attislocal = true;
 	att->attinhcount = 0;
+	/* attacl is not set because it's not present in tupledescs */
 
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(oidtypeid),

@@ -171,6 +171,93 @@ SELECT * FROM atestv4; -- ok (even though regressuser2 cannot access underlying 
 SELECT * FROM atest2; -- ok
 SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying atest2)
 
+-- Test column level permissions
+
+SET SESSION AUTHORIZATION regressuser1;
+CREATE TABLE atest5 (one int, two int, three int);
+CREATE TABLE atest6 (one int, two int, blue int);
+GRANT SELECT (one), INSERT (two), UPDATE (three) ON atest5 TO regressuser4;
+GRANT ALL (one) ON atest5 TO regressuser3;
+
+INSERT INTO atest5 VALUES (1,2,3);
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT * FROM atest5; -- fail
+SELECT one FROM atest5; -- ok
+SELECT two FROM atest5; -- fail
+SELECT atest5 FROM atest5; -- fail
+SELECT 1 FROM atest5; -- ok
+SELECT 1 FROM atest5 a JOIN atest5 b USING (one); -- ok
+SELECT 1 FROM atest5 a JOIN atest5 b USING (two); -- fail
+SELECT 1 FROM atest5 a NATURAL JOIN atest5 b; -- fail
+SELECT (j.*) IS NULL FROM (atest5 a JOIN atest5 b USING (one)) j; -- fail
+SELECT 1 FROM atest5 WHERE two = 2; -- fail
+SELECT * FROM atest1, atest5; -- fail
+SELECT atest1.* FROM atest1, atest5; -- ok
+SELECT atest1.*,atest5.one FROM atest1, atest5; -- ok
+SELECT atest1.*,atest5.one FROM atest1 JOIN atest5 ON (atest1.a = atest5.two); -- fail
+SELECT atest1.*,atest5.one FROM atest1 JOIN atest5 ON (atest1.a = atest5.one); -- ok
+SELECT one, two FROM atest5; -- fail
+
+SET SESSION AUTHORIZATION regressuser1;
+GRANT SELECT (one,two) ON atest6 TO regressuser4;
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT one, two FROM atest5 NATURAL JOIN atest6; -- fail still
+
+SET SESSION AUTHORIZATION regressuser1;
+GRANT SELECT (two) ON atest5 TO regressuser4;
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT one, two FROM atest5 NATURAL JOIN atest6; -- ok now
+
+-- test column-level privileges for INSERT and UPDATE
+INSERT INTO atest5 (two) VALUES (3); -- ok
+INSERT INTO atest5 (three) VALUES (4); -- fail
+INSERT INTO atest5 VALUES (5,5,5); -- fail
+UPDATE atest5 SET three = 10; -- ok
+UPDATE atest5 SET one = 8; -- fail
+UPDATE atest5 SET three = 5, one = 2; -- fail
+
+SET SESSION AUTHORIZATION regressuser1;
+REVOKE ALL (one) ON atest5 FROM regressuser4;
+GRANT SELECT (one,two,blue) ON atest6 TO regressuser4;
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT one FROM atest5; -- fail
+UPDATE atest5 SET one = 1; -- fail
+SELECT atest6 FROM atest6; -- ok
+
+-- test column-level privileges when involved with DELETE
+SET SESSION AUTHORIZATION regressuser1;
+ALTER TABLE atest6 ADD COLUMN three integer;
+GRANT DELETE ON atest5 TO regressuser3;
+GRANT SELECT (two) ON atest5 TO regressuser3;
+REVOKE ALL (one) ON atest5 FROM regressuser3;
+GRANT SELECT (one) ON atest5 TO regressuser4;
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT atest6 FROM atest6; -- fail
+SELECT one FROM atest5 NATURAL JOIN atest6; -- fail
+
+SET SESSION AUTHORIZATION regressuser1;
+ALTER TABLE atest6 DROP COLUMN three;
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT atest6 FROM atest6; -- ok
+SELECT one FROM atest5 NATURAL JOIN atest6; -- ok
+
+SET SESSION AUTHORIZATION regressuser1;
+ALTER TABLE atest6 DROP COLUMN two;
+REVOKE SELECT (one,blue) ON atest6 FROM regressuser4;
+
+SET SESSION AUTHORIZATION regressuser4;
+SELECT * FROM atest6; -- fail
+SELECT 1 FROM atest6; -- fail
+
+SET SESSION AUTHORIZATION regressuser3;
+DELETE FROM atest5 WHERE one = 1; -- fail
+DELETE FROM atest5 WHERE two = 2; -- ok
 
 -- privileges on functions, languages
 
@@ -369,6 +456,8 @@ DROP TABLE atest1;
 DROP TABLE atest2;
 DROP TABLE atest3;
 DROP TABLE atest4;
+DROP TABLE atest5;
+DROP TABLE atest6;
 
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.515 2009/01/22 17:27:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.516 2009/01/22 20:16:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ static void dumpUserMappings(Archive *fout, const char *target,
 			const char *owner, CatalogId catalogId, DumpId dumpId);
 
 static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
-		const char *type, const char *name,
+		const char *type, const char *name, const char *subname,
 		const char *tag, const char *nspname, const char *owner,
 		const char *acls);
 
@@ -5929,7 +5929,7 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 				nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId);
 
 	dumpACL(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId, "SCHEMA",
-			qnspname, nspinfo->dobj.name, NULL,
+			qnspname, NULL, nspinfo->dobj.name, NULL,
 			nspinfo->rolname, nspinfo->nspacl);
 
 	free(qnspname);
@@ -6786,7 +6786,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 
 	if (plang->lanpltrusted)
 		dumpACL(fout, plang->dobj.catId, plang->dobj.dumpId, "LANGUAGE",
-				qlanname, plang->dobj.name,
+				qlanname, NULL, plang->dobj.name,
 				lanschema,
 				plang->lanowner, plang->lanacl);
 
@@ -7342,7 +7342,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 				finfo->dobj.catId, 0, finfo->dobj.dumpId);
 
 	dumpACL(fout, finfo->dobj.catId, finfo->dobj.dumpId, "FUNCTION",
-			funcsig, funcsig_tag,
+			funcsig, NULL, funcsig_tag,
 			finfo->dobj.namespace->dobj.name,
 			finfo->rolname, finfo->proacl);
 
@@ -8828,7 +8828,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	dumpACL(fout, agginfo->aggfn.dobj.catId, agginfo->aggfn.dobj.dumpId,
 			"FUNCTION",
-			aggsig, aggsig_tag,
+			aggsig, NULL, aggsig_tag,
 			agginfo->aggfn.dobj.namespace->dobj.name,
 			agginfo->aggfn.rolname, agginfo->aggfn.proacl);
 
@@ -9227,7 +9227,7 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 	namecopy = strdup(fmtId(fdwinfo->dobj.name));
 	dumpACL(fout, fdwinfo->dobj.catId, fdwinfo->dobj.dumpId,
 			"FOREIGN DATA WRAPPER",
-			namecopy, fdwinfo->dobj.name,
+			namecopy, NULL, fdwinfo->dobj.name,
 			NULL, fdwinfo->rolname,
 			fdwinfo->fdwacl);
 	free(namecopy);
@@ -9305,7 +9305,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	namecopy = strdup(fmtId(srvinfo->dobj.name));
 	dumpACL(fout, srvinfo->dobj.catId, srvinfo->dobj.dumpId,
 			"SERVER",
-			namecopy, srvinfo->dobj.name,
+			namecopy, NULL, srvinfo->dobj.name,
 			NULL, srvinfo->rolname,
 			srvinfo->srvacl);
 	free(namecopy);
@@ -9412,6 +9412,7 @@ dumpUserMappings(Archive *fout, const char *target,
  * 'objDumpId' is the dump ID of the underlying object.
  * 'type' must be TABLE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE.
  * 'name' is the formatted name of the object.	Must be quoted etc. already.
+ * 'subname' is the formatted name of the sub-object, if any.  Must be quoted.
  * 'tag' is the tag for the archive entry (typ. unquoted name of object).
  * 'nspname' is the namespace the object is in (NULL if none).
  * 'owner' is the owner, NULL if there is no owner (for languages).
@@ -9421,7 +9422,7 @@ dumpUserMappings(Archive *fout, const char *target,
  */
 static void
 dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
-		const char *type, const char *name,
+		const char *type, const char *name, const char *subname,
 		const char *tag, const char *nspname, const char *owner,
 		const char *acls)
 {
@@ -9433,7 +9434,7 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 
 	sql = createPQExpBuffer();
 
-	if (!buildACLCommands(name, type, acls, owner, fout->remoteVersion, sql))
+	if (!buildACLCommands(name, subname, type, acls, owner, fout->remoteVersion, sql))
 	{
 		write_msg(NULL, "could not parse ACL list (%s) for object \"%s\" (%s)\n",
 				  acls, name, type);
@@ -9459,10 +9460,10 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 static void
 dumpTable(Archive *fout, TableInfo *tbinfo)
 {
-	char	   *namecopy;
-
 	if (tbinfo->dobj.dump)
 	{
+		char   *namecopy;
+
 		if (tbinfo->relkind == RELKIND_SEQUENCE)
 			dumpSequence(fout, tbinfo);
 		else if (!dataOnly)
@@ -9472,9 +9473,51 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 		namecopy = strdup(fmtId(tbinfo->dobj.name));
 		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 				(tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" : "TABLE",
-				namecopy, tbinfo->dobj.name,
+				namecopy, NULL, tbinfo->dobj.name,
 				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 				tbinfo->relacl);
+
+		/*
+		 * Handle column ACLs, if any.  Note: we pull these with a separate
+		 * query rather than trying to fetch them during getTableAttrs, so
+		 * that we won't miss ACLs on system columns.
+		 */
+		if (g_fout->remoteVersion >= 80400)
+		{
+			PQExpBuffer query = createPQExpBuffer();
+			PGresult *res;
+			int		i;
+
+			appendPQExpBuffer(query,
+							  "SELECT attname, attacl FROM pg_catalog.pg_attribute "
+							  "WHERE attrelid = '%u' AND NOT attisdropped AND attacl IS NOT NULL "
+							  "ORDER BY attnum",
+							  tbinfo->dobj.catId.oid);
+			res = PQexec(g_conn, query->data);
+			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+			for (i = 0; i < PQntuples(res); i++)
+			{
+				char   *attname = PQgetvalue(res, i, 0);
+				char   *attacl = PQgetvalue(res, i, 1);
+				char   *attnamecopy;
+				char   *acltag;
+
+				attnamecopy = strdup(fmtId(attname));
+				acltag = malloc(strlen(tbinfo->dobj.name) + strlen(attname) + 2);
+				sprintf(acltag, "%s.%s", tbinfo->dobj.name, attname);
+				/* Column's GRANT type is always TABLE */
+				dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId, "TABLE",
+						namecopy, attnamecopy, acltag,
+						tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
+						attacl);
+				free(attnamecopy);
+				free(acltag);
+			}
+			PQclear(res);
+			destroyPQExpBuffer(query);
+		}
+
 		free(namecopy);
 	}
 }

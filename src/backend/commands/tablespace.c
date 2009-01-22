@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.60 2009/01/20 18:59:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.61 2009/01/22 20:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,7 +455,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	/*
 	 * Remove dependency on owner.
 	 */
-	deleteSharedDependencyRecordsFor(TableSpaceRelationId, tablespaceoid);
+	deleteSharedDependencyRecordsFor(TableSpaceRelationId, tablespaceoid, 0);
 
 	/*
 	 * Acquire TablespaceCreateLock to ensure that no TablespaceCreateDbspace

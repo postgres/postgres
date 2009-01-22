@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.185 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.186 2009/01/22 20:16:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ static void extractRemainingColumns(List *common_colnames,
 						List *src_colnames, List *src_colvars,
 						List **res_colnames, List **res_colvars);
 static Node *transformJoinUsingClause(ParseState *pstate,
+						 RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
 						 List *leftVars, List *rightVars);
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 					  RangeTblEntry *l_rte,
@@ -194,8 +195,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 *
 	 * If we find an explicit reference to the rel later during parse
 	 * analysis, we will add the ACL_SELECT bit back again; see
-	 * scanRTEForColumn (for simple field references), ExpandColumnRefStar
-	 * (for foo.*) and ExpandAllTables (for *).
+	 * markVarForSelectPriv and its callers.
 	 */
 	rte->requiredPerms = requiredPerms;
 
@@ -305,7 +305,9 @@ extractRemainingColumns(List *common_colnames,
  *	  Result is a transformed qualification expression.
  */
 static Node *
-transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
+transformJoinUsingClause(ParseState *pstate,
+						 RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
+						 List *leftVars, List *rightVars)
 {
 	Node	   *result = NULL;
 	ListCell   *lvars,
@@ -315,17 +317,25 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 * We cheat a little bit here by building an untransformed operator tree
 	 * whose leaves are the already-transformed Vars.  This is OK because
 	 * transformExpr() won't complain about already-transformed subnodes.
+	 * However, this does mean that we have to mark the columns as requiring
+	 * SELECT privilege for ourselves; transformExpr() won't do it.
 	 */
 	forboth(lvars, leftVars, rvars, rightVars)
 	{
-		Node	   *lvar = (Node *) lfirst(lvars);
-		Node	   *rvar = (Node *) lfirst(rvars);
+		Var		   *lvar = (Var *) lfirst(lvars);
+		Var		   *rvar = (Var *) lfirst(rvars);
 		A_Expr	   *e;
 
+		/* Require read access to the join variables */
+		markVarForSelectPriv(pstate, lvar, leftRTE);
+		markVarForSelectPriv(pstate, rvar, rightRTE);
+
+		/* Now create the lvar = rvar join condition */
 		e = makeSimpleA_Expr(AEXPR_OP, "=",
 							 copyObject(lvar), copyObject(rvar),
 							 -1);
 
+		/* And combine into an AND clause, if multiple join columns */
 		if (result == NULL)
 			result = (Node *) e;
 		else
@@ -728,6 +738,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				   *r_colvars,
 				   *res_colvars;
 		RangeTblEntry *rte;
+		int			k;
 
 		/*
 		 * Recursively process the left and right subtrees
@@ -912,6 +923,8 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			}
 
 			j->quals = transformJoinUsingClause(pstate,
+												l_rte,
+												r_rte,
 												l_usingvars,
 												r_usingvars);
 		}
@@ -971,6 +984,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 		*top_rte = rte;
 		*top_rti = j->rtindex;
+
+		/* make a matching link to the JoinExpr for later use */
+		for (k = list_length(pstate->p_joinexprs) + 1; k < j->rtindex; k++)
+			pstate->p_joinexprs = lappend(pstate->p_joinexprs, NULL);
+		pstate->p_joinexprs = lappend(pstate->p_joinexprs, j);
+		Assert(list_length(pstate->p_joinexprs) == j->rtindex);
 
 		/*
 		 * Prepare returned namespace list.  If the JOIN has an alias then it

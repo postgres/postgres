@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.311 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.312 2009/01/22 20:16:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -178,7 +178,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * now that we've determined the "from", let's copy the tuple desc
 			 * data...
 			 */
-			memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
+			memcpy(to, from, ATTRIBUTE_FIXED_PART_SIZE);
 
 			/*
 			 * Fix the stuff that should not be the same as the underlying
@@ -198,7 +198,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			/* Expressional index */
 			Node	   *indexkey;
 
-			MemSet(to, 0, ATTRIBUTE_TUPLE_SIZE);
+			MemSet(to, 0, ATTRIBUTE_FIXED_PART_SIZE);
 
 			if (indexpr_item == NULL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");

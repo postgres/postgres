@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.148 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.149 2009/01/22 20:16:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,8 @@ set_plan_references(PlannerGlobal *glob, Plan *plan, List *rtable)
 	 * In the flat rangetable, we zero out substructure pointers that are not
 	 * needed by the executor; this reduces the storage space and copying cost
 	 * for cached plans.  We keep only the alias and eref Alias fields, which
-	 * are needed by EXPLAIN.
+	 * are needed by EXPLAIN, and the selectedCols and modifiedCols bitmaps,
+	 * which are needed for executor-startup permissions checking.
 	 */
 	foreach(lc, rtable)
 	{

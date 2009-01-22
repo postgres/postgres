@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.184 2009/01/01 17:23:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.185 2009/01/22 20:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1123,9 +1123,17 @@ GrantRole(GrantRoleStmt *stmt)
 	 */
 	foreach(item, stmt->granted_roles)
 	{
-		char	   *rolename = strVal(lfirst(item));
-		Oid			roleid = get_roleid_checked(rolename);
+		AccessPriv *priv = (AccessPriv *) lfirst(item);
+		char	   *rolename = priv->priv_name;
+		Oid			roleid;
 
+		/* Must reject priv(columns) and ALL PRIVILEGES(columns) */
+		if (rolename == NULL || priv->cols != NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
+
+		roleid = get_roleid_checked(rolename);
 		if (stmt->is_grant)
 			AddRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,

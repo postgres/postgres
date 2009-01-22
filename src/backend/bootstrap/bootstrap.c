@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.248 2009/01/01 17:23:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.249 2009/01/22 20:16:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -633,7 +633,7 @@ boot_openrel(char *relname)
 		closerel(NULL);
 
 	elog(DEBUG4, "open relation %s, attrsize %d",
-		 relname, (int) ATTRIBUTE_TUPLE_SIZE);
+		 relname, (int) ATTRIBUTE_FIXED_PART_SIZE);
 
 	boot_reldesc = heap_openrv(makeRangeVar(NULL, relname, -1), NoLock);
 	numattr = boot_reldesc->rd_rel->relnatts;
@@ -643,7 +643,7 @@ boot_openrel(char *relname)
 			attrtypes[i] = AllocateAttribute();
 		memmove((char *) attrtypes[i],
 				(char *) boot_reldesc->rd_att->attrs[i],
-				ATTRIBUTE_TUPLE_SIZE);
+				ATTRIBUTE_FIXED_PART_SIZE);
 
 		{
 			Form_pg_attribute at = attrtypes[i];
@@ -709,7 +709,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	if (attrtypes[attnum] == NULL)
 		attrtypes[attnum] = AllocateAttribute();
-	MemSet(attrtypes[attnum], 0, ATTRIBUTE_TUPLE_SIZE);
+	MemSet(attrtypes[attnum], 0, ATTRIBUTE_FIXED_PART_SIZE);
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
 	elog(DEBUG4, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
@@ -1017,16 +1017,19 @@ boot_get_type_io_data(Oid typid,
 
 /* ----------------
  *		AllocateAttribute
+ *
+ * Note: bootstrap never sets any per-column ACLs, so we only need
+ * ATTRIBUTE_FIXED_PART_SIZE space per attribute.
  * ----------------
  */
 static Form_pg_attribute
 AllocateAttribute(void)
 {
-	Form_pg_attribute attribute = (Form_pg_attribute) malloc(ATTRIBUTE_TUPLE_SIZE);
+	Form_pg_attribute attribute = (Form_pg_attribute) malloc(ATTRIBUTE_FIXED_PART_SIZE);
 
 	if (!PointerIsValid(attribute))
 		elog(FATAL, "out of memory");
-	MemSet(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
+	MemSet(attribute, 0, ATTRIBUTE_FIXED_PART_SIZE);
 
 	return attribute;
 }

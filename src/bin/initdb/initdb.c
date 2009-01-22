@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.166 2009/01/01 17:23:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.167 2009/01/22 20:16:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1601,7 +1601,7 @@ setup_depend(void)
 		" FROM pg_ts_template;\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_ts_config;\n",
-		"INSERT INTO pg_shdepend SELECT 0, 0, 0, tableoid, oid, 'p' "
+		"INSERT INTO pg_shdepend SELECT 0,0,0,0, tableoid,oid, 'p' "
 		" FROM pg_authid;\n",
 		NULL
 	};

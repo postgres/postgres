@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.107 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.108 2009/01/22 20:16:01 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -774,7 +774,7 @@ makeOperatorDependencies(HeapTuple tuple)
 
 	/* In case we are updating a shell, delete any existing entries */
 	deleteDependencyRecordsFor(myself.classId, myself.objectId);
-	deleteSharedDependencyRecordsFor(myself.classId, myself.objectId);
+	deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 
 	/* Dependency on namespace */
 	if (OidIsValid(oper->oprnamespace))

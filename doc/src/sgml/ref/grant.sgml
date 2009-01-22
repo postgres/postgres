@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.73 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.74 2009/01/22 20:15:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,6 +23,11 @@ PostgreSQL documentation
 <synopsis>
 GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
+    ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
+    TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column</replaceable> [, ...] )
+    [,...] | ALL [ PRIVILEGES ] ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -68,7 +73,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
 
   <para>
    The <command>GRANT</command> command has two basic variants: one
-   that grants privileges on a database object (table, view, sequence,
+   that grants privileges on a database object (table, column, view, sequence,
    database, foreign-data wrapper, foreign server, function,
    procedural language, schema, or tablespace), and one that grants
    membership in a role.  These variants are similar in many ways, but
@@ -125,7 +130,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
   <para>
    Depending on the type of object, the initial default privileges might
    include granting some privileges to <literal>PUBLIC</literal>.
-   The default is no public access for tables, schemas, and tablespaces;
+   The default is no public access for tables, columns, schemas, and
+   tablespaces;
    <literal>CONNECT</> privilege and <literal>TEMP</> table creation privilege
    for databases;
    <literal>EXECUTE</> privilege for functions; and
@@ -145,7 +151,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <listitem>
       <para>
        Allows <xref linkend="sql-select" endterm="sql-select-title"> from
-       any column of the specified table, view, or sequence.
+       any column, or the specific columns listed, of the specified table,
+       view, or sequence.
        Also allows the use of
        <xref linkend="sql-copy" endterm="sql-copy-title"> TO.
        This privilege is also needed to reference existing column values in
@@ -162,7 +169,9 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <listitem>
       <para>
        Allows <xref linkend="sql-insert" endterm="sql-insert-title"> of a new
-       row into the specified table.
+       row into the specified table.  If specific columns are listed,
+       only those columns may be assigned to in the <command>INSERT</>
+       command (other columns will therefore receive default values).
        Also allows <xref linkend="sql-copy" endterm="sql-copy-title"> FROM.
       </para>
      </listitem>
@@ -173,14 +182,14 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
      <listitem>
       <para>
        Allows <xref linkend="sql-update" endterm="sql-update-title"> of any
-       column of the specified table.
+       column, or the specific columns listed, of the specified table.
        (In practice, any nontrivial <command>UPDATE</> command will require
        <literal>SELECT</> privilege as well, since it must reference table
        columns to determine which rows to update, and/or to compute new
        values for columns.)
        <literal>SELECT ... FOR UPDATE</literal>
        and <literal>SELECT ... FOR SHARE</literal>
-       also require this privilege, in addition to the
+       also require this privilege on at least one column, in addition to the
        <literal>SELECT</literal> privilege.  For sequences, this
        privilege allows the use of the <function>nextval</function> and
        <function>setval</function> functions.
@@ -217,7 +226,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
       <para>
        To create a foreign key constraint, it is
        necessary to have this privilege on both the referencing and
-       referenced tables.
+       referenced columns.  The privilege may be granted for all columns
+       of a table, or just specific columns.
       </para>
      </listitem>
     </varlistentry>
@@ -374,6 +384,14 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
    </para>
 
    <para>
+    A user may perform <command>SELECT</>, <command>INSERT</>, etc. on a
+    column if he holds that privilege for either the specific column or
+    its whole table.  Granting the privilege at the table level and then
+    revoking it for one column will not do what you might wish: the
+    table-level grant is unaffected by a column-level operation.
+   </para>
+
+   <para>
     When a non-owner of an object attempts to <command>GRANT</> privileges
     on the object, the command will fail outright if the user has no
     privileges whatsoever on the object.  As long as some privilege is
@@ -428,33 +446,27 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
    </para>
 
    <para>
-    Granting permission on a table does not automatically extend 
-    permissions to any sequences used by the table, including 
-    sequences tied to <type>SERIAL</> columns.  Permissions on 
-    sequence must be set separately.
+    Granting permission on a table does not automatically extend
+    permissions to any sequences used by the table, including
+    sequences tied to <type>SERIAL</> columns.  Permissions on
+    sequences must be set separately.
    </para>
 
    <para>
-    Currently, <productname>PostgreSQL</productname> does not support
-    granting or revoking privileges for individual columns of a table.
-    One possible workaround is to create a view having just the desired
-    columns and then grant privileges to that view.
-   </para>
-
-   <para>
-    Use <xref linkend="app-psql">'s <command>\z</command> command
-    to obtain information about existing privileges, for example:
+    Use <xref linkend="app-psql">'s <command>\dp</command> command
+    to obtain information about existing privileges for tables and
+    columns.  For example:
 <programlisting>
-=&gt; \z mytable
-                Access privileges
- Schema |  Name   | Type  |  Access privileges   
---------+---------+-------+-----------------------
- public | mytable | table | miriam=arwdDxt/miriam
-                          : =r/miriam
-                          : admin=arw/miriam
+=&gt; \dp mytable
+                              Access privileges
+ Schema |  Name   | Type  |   Access privileges   | Column access privileges 
+--------+---------+-------+-----------------------+--------------------------
+ public | mytable | table | miriam=arwdDxt/miriam | col1:
+                          : =r/miriam             :   miriam_rw=rw/miriam
+                          : admin=arw/miriam        
 (1 row)
 </programlisting>
-    The entries shown by <command>\z</command> are interpreted thus:
+    The entries shown by <command>\dp</command> are interpreted thus:
 <programlisting>
       rolename=xxxx -- privileges granted to a role
               =xxxx -- privileges granted to PUBLIC
@@ -471,7 +483,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
                   C -- CREATE
                   c -- CONNECT
                   T -- TEMPORARY
-            arwdDxt -- ALL PRIVILEGES (for tables)
+            arwdDxt -- ALL PRIVILEGES (for tables, varies for other objects)
                   * -- grant option for preceding privilege
 
               /yyyy -- role that granted this privilege
@@ -483,7 +495,13 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
 <programlisting>
 GRANT SELECT ON mytable TO PUBLIC;
 GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
+GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
 </programlisting>
+   </para>
+
+   <para>
+    For non-table objects there are other <command>\d</> commands
+    that can display their privileges.
    </para>
 
    <para>
@@ -495,7 +513,8 @@ GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
     <command>REVOKE</> on an object
     will instantiate the default privileges (producing, for example,
     <literal>{miriam=arwdDxt/miriam}</>) and then modify them per the
-    specified request.
+    specified request.  Entries are shown in <quote>Column access
+    privileges</> only for columns with nondefault privileges.
    </para>
 
    <para>
@@ -560,11 +579,6 @@ GRANT admins TO joe;
     can revoke them too.  In the SQL standard, the owner's privileges are
     granted by an assumed entity <quote>_SYSTEM</>.  Not being
     <quote>_SYSTEM</>, the owner cannot revoke these rights.
-   </para>
-
-   <para>
-    <productname>PostgreSQL</productname> does not support the SQL-standard 
-    functionality of setting privileges for individual columns.
    </para>
 
    <para>

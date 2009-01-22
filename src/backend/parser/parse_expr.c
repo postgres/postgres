@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.239 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.240 2009/01/22 20:16:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1976,6 +1976,9 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 
 	/* location is not filled in by makeVar */
 	result->location = location;
+
+	/* mark relation as requiring whole-row SELECT access */
+	markVarForSelectPriv(pstate, result, rte);
 
 	return (Node *) result;
 }

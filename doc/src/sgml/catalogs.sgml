@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.190 2009/01/22 17:27:54 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.191 2009/01/22 20:15:59 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1025,6 +1025,16 @@
       <entry>
        The number of direct ancestors this column has.  A column with a
        nonzero number of ancestors cannot be dropped nor renamed
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>attacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       Column-level access privileges, if any have been granted specifically
+       on this column
       </entry>
      </row>
 
@@ -4248,6 +4258,17 @@
       <entry><type>oid</type></entry>
       <entry>any OID column</entry>
       <entry>The OID of the specific dependent object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>objsubid</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       For a table column, this is the column number (the
+       <structfield>objid</> and <structfield>classid</> refer to the
+       table itself).  For all other object types, this column is zero
+      </entry>
      </row>
 
      <row>

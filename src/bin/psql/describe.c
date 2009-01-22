@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.197 2009/01/20 02:13:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.198 2009/01/22 20:16:08 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -519,7 +519,7 @@ listAllDbs(bool verbose)
 
 
 /*
- * List Tables Grant/Revoke Permissions
+ * List Tables' Grant/Revoke Permissions
  * \z (now also \dp -- perhaps more mnemonic)
  */
 bool
@@ -528,7 +528,7 @@ permissionsList(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, true, false};
+	static const bool translate_columns[] = {false, false, true, false, false};
 
 	initPQExpBuffer(&buf);
 
@@ -544,7 +544,18 @@ permissionsList(const char *pattern)
 					  gettext_noop("Name"),
 					  gettext_noop("table"), gettext_noop("view"), gettext_noop("sequence"),
 					  gettext_noop("Type"));
+
 	printACLColumn(&buf, "c.relacl");
+
+	if (pset.sversion >= 80400)
+		appendPQExpBuffer(&buf,
+						  ",\n  pg_catalog.array_to_string(ARRAY(\n"
+						  "    SELECT attname || E':\\n  ' || pg_catalog.array_to_string(attacl, E'\\n  ')\n"
+						  "    FROM pg_catalog.pg_attribute a\n"
+						  "    WHERE attrelid = c.oid AND NOT attisdropped AND attacl IS NOT NULL\n"
+						  "  ), E'\\n') AS \"%s\"",
+						  gettext_noop("Column access privileges"));
+
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_class c\n"
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					  "WHERE c.relkind IN ('r', 'v', 'S')\n");
@@ -1907,7 +1918,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, true, false, false, false};
+	static const bool translate_columns[] = {false, false, true, false, false, false, false};
 
 	if (!(showTables || showIndexes || showViews || showSeq))
 		showTables = showViews = showSeq = true;
@@ -1965,7 +1976,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (showSeq)
 		appendPQExpBuffer(&buf, "'S',");
 	if (showSystem)
-		appendPQExpBuffer(&buf, "'s',");	/* was RELKIND_SPECIAL in <= 8.1.X */
+		appendPQExpBuffer(&buf, "'s',");	/* was RELKIND_SPECIAL in <= 8.1 */
 	appendPQExpBuffer(&buf, "''");		/* dummy */
 	appendPQExpBuffer(&buf, ")\n");
 

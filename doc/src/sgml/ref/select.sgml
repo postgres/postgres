@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.117 2009/01/12 14:06:20 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.118 2009/01/22 20:15:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -186,10 +186,11 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
   </para>
 
   <para>
-   You must have <literal>SELECT</literal> privilege on a table to
-   read its values.  The use of <literal>FOR UPDATE</literal> or
-   <literal>FOR SHARE</literal> requires
-   <literal>UPDATE</literal> privilege as well.
+   You must have <literal>SELECT</literal> privilege on each column used
+   in a <command>SELECT</> command.  The use of <literal>FOR UPDATE</literal>
+   or <literal>FOR SHARE</literal> requires
+   <literal>UPDATE</literal> privilege as well (for at least one column
+   of each table so selected).
   </para>
  </refsect1>
 

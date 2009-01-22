@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.349 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.350 2009/01/22 20:16:04 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -180,8 +180,6 @@ _outList(StringInfo str, List *node)
  *	   converts a bitmap set of integers
  *
  * Note: the output format is "(b int int ...)", similar to an integer List.
- * Currently bitmapsets do not appear in any node type that is stored in
- * rules, so there is no support in readfuncs.c for reading this format.
  */
 static void
 _outBitmapset(StringInfo str, Bitmapset *bms)
@@ -2060,6 +2058,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	WRITE_BOOL_FIELD(inFromCl);
 	WRITE_UINT_FIELD(requiredPerms);
 	WRITE_OID_FIELD(checkAsUser);
+	WRITE_BITMAPSET_FIELD(selectedCols);
+	WRITE_BITMAPSET_FIELD(modifiedCols);
 }
 
 static void

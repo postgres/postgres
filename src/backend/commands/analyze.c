@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.132 2009/01/06 23:46:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.133 2009/01/22 20:16:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -705,11 +705,12 @@ examine_attribute(Relation onerel, int attnum)
 		return NULL;
 
 	/*
-	 * Create the VacAttrStats struct.
+	 * Create the VacAttrStats struct.  Note that we only have a copy of
+	 * the fixed fields of the pg_attribute tuple.
 	 */
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
-	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-	memcpy(stats->attr, attr, ATTRIBUTE_TUPLE_SIZE);
+	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
+	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
 	typtuple = SearchSysCache(TYPEOID,
 							  ObjectIdGetDatum(attr->atttypid),
 							  0, 0, 0);

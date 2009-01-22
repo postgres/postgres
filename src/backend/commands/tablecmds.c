@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.277 2009/01/12 08:54:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.278 2009/01/22 20:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,6 +246,7 @@ static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 static Oid transformFkeyCheckAttrs(Relation pkrel,
 						int numattrs, int16 *attnums,
 						Oid *opclasses);
+static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel, Oid constraintOid);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
@@ -3589,6 +3590,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	attribute.attisdropped = false;
 	attribute.attislocal = colDef->is_local;
 	attribute.attinhcount = colDef->inhcount;
+	/* attribute.attacl is handled by InsertPgAttributeTuple */
 
 	ReleaseSysCache(typeTuple);
 
@@ -4473,15 +4475,14 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
  * Add a foreign-key constraint to a single table
  *
  * Subroutine for ATExecAddConstraint.	Must already hold exclusive
- * lock on the rel, and have done appropriate validity/permissions checks
- * for it.
+ * lock on the rel, and have done appropriate validity checks for it.
+ * We do permissions checks here, however.
  */
 static void
 ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						  FkConstraint *fkconstraint)
 {
 	Relation	pkrel;
-	AclResult	aclresult;
 	int16		pkattnum[INDEX_MAX_KEYS];
 	int16		fkattnum[INDEX_MAX_KEYS];
 	Oid			pktypoid[INDEX_MAX_KEYS];
@@ -4506,10 +4507,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	pkrel = heap_openrv(fkconstraint->pktable, AccessExclusiveLock);
 
 	/*
-	 * Validity and permissions checks
-	 *
-	 * Note: REFERENCES permissions checks are redundant with CREATE TRIGGER,
-	 * but we may as well error out sooner instead of later.
+	 * Validity checks (permission checks wait till we have the column numbers)
 	 */
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -4517,23 +4515,11 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 				 errmsg("referenced relation \"%s\" is not a table",
 						RelationGetRelationName(pkrel))));
 
-	aclresult = pg_class_aclcheck(RelationGetRelid(pkrel), GetUserId(),
-								  ACL_REFERENCES);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
-					   RelationGetRelationName(pkrel));
-
 	if (!allowSystemTableMods && IsSystemRelation(pkrel))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(pkrel))));
-
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  ACL_REFERENCES);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
 
 	/*
 	 * Disallow reference from permanent table to temp table or vice versa.
@@ -4597,6 +4583,12 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		indexOid = transformFkeyCheckAttrs(pkrel, numpks, pkattnum,
 										   opclasses);
 	}
+
+	/*
+	 * Now we can check permissions.
+	 */
+	checkFkeyPermissions(pkrel, pkattnum, numpks);
+	checkFkeyPermissions(rel, fkattnum, numfks);
 
 	/*
 	 * Look up the equality operators to use in the constraint.
@@ -5016,6 +5008,30 @@ transformFkeyCheckAttrs(Relation pkrel,
 	return indexoid;
 }
 
+/* Permissions checks for ADD FOREIGN KEY */
+static void
+checkFkeyPermissions(Relation rel, int16 *attnums, int natts)
+{
+	Oid			roleid = GetUserId();
+	AclResult	aclresult;
+	int			i;
+
+	/* Okay if we have relation-level REFERENCES permission */
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), roleid,
+								  ACL_REFERENCES);
+	if (aclresult == ACLCHECK_OK)
+		return;
+	/* Else we must have REFERENCES on each column */
+	for (i = 0; i < natts; i++)
+	{
+		aclresult = pg_attribute_aclcheck(RelationGetRelid(rel), attnums[i],
+										  roleid, ACL_REFERENCES);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
+	}
+}
+
 /*
  * Scan the existing rows in a table to verify they meet a proposed FK
  * constraint.
@@ -5123,7 +5139,7 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid);
+	(void) CreateTrigger(fk_trigger, constraintOid, false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5204,7 +5220,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid);
+	(void) CreateTrigger(fk_trigger, constraintOid, false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5256,7 +5272,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid);
+	(void) CreateTrigger(fk_trigger, constraintOid, false);
 }
 
 /*

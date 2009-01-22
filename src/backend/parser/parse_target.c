@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.169 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.170 2009/01/22 20:16:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,6 +850,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
  * in a SELECT target list (where we want TargetEntry nodes in the result)
  * and foo.* in a ROW() or VALUES() construct (where we want just bare
  * expressions).
+ *
+ * The referenced columns are marked as requiring SELECT access.
  */
 static List *
 ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
@@ -929,20 +931,37 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 								 makeRangeVar(schemaname, relname,
 											  cref->location));
 
-		/* Require read access --- see comments in setTargetTable() */
-		rte->requiredPerms |= ACL_SELECT;
-
 		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 		if (targetlist)
+		{
+			/* expandRelAttrs handles permissions marking */
 			return expandRelAttrs(pstate, rte, rtindex, sublevels_up,
 								  cref->location);
+		}
 		else
 		{
 			List	   *vars;
+			ListCell   *l;
 
 			expandRTE(rte, rtindex, sublevels_up, cref->location, false,
 					  NULL, &vars);
+
+			/*
+			 * Require read access to the table.  This is normally redundant
+			 * with the markVarForSelectPriv calls below, but not if the table
+			 * has zero columns.
+			 */
+			rte->requiredPerms |= ACL_SELECT;
+
+			/* Require read access to each column */
+			foreach(l, vars)
+			{
+				Var	   *var = (Var *) lfirst(l);
+
+				markVarForSelectPriv(pstate, var, rte);
+			}
+
 			return vars;
 		}
 	}
@@ -956,6 +975,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
  * varnamespace.  We do not consider relnamespace because that would include
  * input tables of aliasless JOINs, NEW/OLD pseudo-entries, implicit RTEs,
  * etc.
+ *
+ * The referenced relations/columns are marked as requiring SELECT access.
  */
 static List *
 ExpandAllTables(ParseState *pstate, int location)
@@ -974,9 +995,6 @@ ExpandAllTables(ParseState *pstate, int location)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
-
-		/* Require read access --- see comments in setTargetTable() */
-		rte->requiredPerms |= ACL_SELECT;
 
 		target = list_concat(target,
 							 expandRelAttrs(pstate, rte, rtindex, 0,

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.655 2009/01/16 13:27:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.656 2009/01/22 20:16:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -94,6 +94,13 @@ extern List *parsetree;			/* final parse result is delivered here */
 
 static bool QueryIsRule = FALSE;
 
+/* Private struct for the result of privilege_target production */
+typedef struct PrivTarget
+{
+	GrantObjectType objtype;
+	List	   *objs;
+} PrivTarget;
+
 /*
  * If you need access to certain yacc-generated variables and find that
  * they're static by default, uncomment the next line.  (this is not a
@@ -167,7 +174,8 @@ static TypeName *TableFuncTypeName(List *columns);
 	WithClause			*with;
 	A_Indices			*aind;
 	ResTarget			*target;
-	PrivTarget			*privtarget;
+	struct PrivTarget	*privtarget;
+	AccessPriv			*accesspriv;
 
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
@@ -254,7 +262,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <str>		iso_level opt_encoding
 %type <node>	grantee
 %type <list>	grantee_list
-%type <str>		privilege
+%type <accesspriv> privilege
 %type <list>	privileges privilege_list
 %type <privtarget> privilege_target
 %type <funwithargs> function_with_argtypes
@@ -4210,12 +4218,11 @@ RevokeStmt:
 
 
 /*
- * A privilege list is represented as a list of strings; the validity of
- * the privilege names gets checked at execution.  This is a bit annoying
- * but we have little choice because of the syntactic conflict with lists
- * of role names in GRANT/REVOKE.  What's more, we have to call out in
- * the "privilege" production any reserved keywords that need to be usable
- * as privilege names.
+ * Privilege names are represented as strings; the validity of the privilege
+ * names gets checked at execution.  This is a bit annoying but we have little
+ * choice because of the syntactic conflict with lists of role names in
+ * GRANT/REVOKE.  What's more, we have to call out in the "privilege"
+ * production any reserved keywords that need to be usable as privilege names.
  */
 
 /* either ALL [PRIVILEGES] or a list of individual privileges */
@@ -4225,18 +4232,54 @@ privileges: privilege_list
 				{ $$ = NIL; }
 			| ALL PRIVILEGES
 				{ $$ = NIL; }
+			| ALL '(' columnList ')'
+				{
+					AccessPriv *n = makeNode(AccessPriv);
+					n->priv_name = NULL;
+					n->cols = $3;
+					$$ = list_make1(n);
+				}
+			| ALL PRIVILEGES '(' columnList ')'
+				{
+					AccessPriv *n = makeNode(AccessPriv);
+					n->priv_name = NULL;
+					n->cols = $4;
+					$$ = list_make1(n);
+				}
 		;
 
-privilege_list:	privilege
-					{ $$ = list_make1(makeString($1)); }
-			| privilege_list ',' privilege
-					{ $$ = lappend($1, makeString($3)); }
+privilege_list:	privilege							{ $$ = list_make1($1); }
+			| privilege_list ',' privilege			{ $$ = lappend($1, $3); }
 		;
 
-privilege:	SELECT									{ $$ = pstrdup($1); }
-			| REFERENCES							{ $$ = pstrdup($1); }
-			| CREATE								{ $$ = pstrdup($1); }
-			| ColId									{ $$ = $1; }
+privilege:	SELECT opt_column_list
+			{
+				AccessPriv *n = makeNode(AccessPriv);
+				n->priv_name = pstrdup($1);
+				n->cols = $2;
+				$$ = n;
+			}
+		| REFERENCES opt_column_list
+			{
+				AccessPriv *n = makeNode(AccessPriv);
+				n->priv_name = pstrdup($1);
+				n->cols = $2;
+				$$ = n;
+			}
+		| CREATE opt_column_list
+			{
+				AccessPriv *n = makeNode(AccessPriv);
+				n->priv_name = pstrdup($1);
+				n->cols = $2;
+				$$ = n;
+			}
+		| ColId opt_column_list
+			{
+				AccessPriv *n = makeNode(AccessPriv);
+				n->priv_name = $1;
+				n->cols = $2;
+				$$ = n;
+			}
 		;
 
 
@@ -4246,70 +4289,70 @@ privilege:	SELECT									{ $$ = pstrdup($1); }
 privilege_target:
 			qualified_name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_RELATION;
 					n->objs = $1;
 					$$ = n;
 				}
 			| TABLE qualified_name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_RELATION;
 					n->objs = $2;
 					$$ = n;
 				}
 			| SEQUENCE qualified_name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_SEQUENCE;
 					n->objs = $2;
 					$$ = n;
 				}
 			| FOREIGN DATA_P WRAPPER name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_FDW;
 					n->objs = $4;
 					$$ = n;
 				}
 			| FOREIGN SERVER name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_FOREIGN_SERVER;
 					n->objs = $3;
 					$$ = n;
 				}
 			| FUNCTION function_with_argtypes_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_FUNCTION;
 					n->objs = $2;
 					$$ = n;
 				}
 			| DATABASE name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_DATABASE;
 					n->objs = $2;
 					$$ = n;
 				}
 			| LANGUAGE name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_LANGUAGE;
 					n->objs = $2;
 					$$ = n;
 				}
 			| SCHEMA name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_NAMESPACE;
 					n->objs = $2;
 					$$ = n;
 				}
 			| TABLESPACE name_list
 				{
-					PrivTarget *n = makeNode(PrivTarget);
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->objtype = ACL_OBJECT_TABLESPACE;
 					n->objs = $2;
 					$$ = n;

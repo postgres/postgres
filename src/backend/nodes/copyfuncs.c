@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.420 2009/01/16 13:27:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.421 2009/01/22 20:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1740,6 +1740,8 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	COPY_SCALAR_FIELD(inFromCl);
 	COPY_SCALAR_FIELD(requiredPerms);
 	COPY_SCALAR_FIELD(checkAsUser);
+	COPY_BITMAPSET_FIELD(selectedCols);
+	COPY_BITMAPSET_FIELD(modifiedCols);
 
 	return newnode;
 }
@@ -2338,6 +2340,17 @@ _copyFuncWithArgs(FuncWithArgs *from)
 
 	COPY_NODE_FIELD(funcname);
 	COPY_NODE_FIELD(funcargs);
+
+	return newnode;
+}
+
+static AccessPriv *
+_copyAccessPriv(AccessPriv *from)
+{
+	AccessPriv *newnode = makeNode(AccessPriv);
+
+	COPY_STRING_FIELD(priv_name);
+	COPY_NODE_FIELD(cols);
 
 	return newnode;
 }
@@ -4095,6 +4108,9 @@ copyObject(void *from)
 			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
+			break;
+		case T_AccessPriv:
+			retval = _copyAccessPriv(from);
 			break;
 		case T_XmlSerialize:
 			retval = _copyXmlSerialize(from);

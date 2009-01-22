@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.245 2009/01/22 19:16:31 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.246 2009/01/22 20:16:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,11 +74,16 @@ static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
  * be made to link the trigger to that constraint.	constraintOid is zero when
  * executing a user-entered CREATE TRIGGER command.
  *
+ * If checkPermissions is true we require ACL_TRIGGER permissions on the
+ * relation.  If not, the caller already checked permissions.  (This is
+ * currently redundant with constraintOid being zero, but it's clearer to
+ * have a separate argument.)
+ *
  * Note: can return InvalidOid if we decided to not create a trigger at all,
  * but a foreign-key constraint.  This is a kluge for backwards compatibility.
  */
 Oid
-CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
+CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
 {
 	int16		tgtype;
 	int2vector *tgattr;
@@ -117,36 +122,26 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
+	if (stmt->isconstraint && stmt->constrrel != NULL)
+		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
+
 	/* permission checks */
-
-	if (stmt->isconstraint)
+	if (checkPermissions)
 	{
-		/* constraint trigger */
-		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-									  ACL_REFERENCES);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_CLASS,
-						   RelationGetRelationName(rel));
-
-		if (stmt->constrrel != NULL)
-		{
-			constrrelid = RangeVarGetRelid(stmt->constrrel, false);
-
-			aclresult = pg_class_aclcheck(constrrelid, GetUserId(),
-										  ACL_REFERENCES);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_CLASS,
-							   get_rel_name(constrrelid));
-		}
-	}
-	else
-	{
-		/* regular trigger */
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_TRIGGER);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
+
+		if (OidIsValid(constrrelid))
+		{
+			aclresult = pg_class_aclcheck(constrrelid, GetUserId(),
+										  ACL_TRIGGER);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_CLASS,
+							   get_rel_name(constrrelid));
+		}
 	}
 
 	/* Compute tgtype */

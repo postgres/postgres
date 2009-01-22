@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.281 2009/01/22 17:27:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.282 2009/01/22 20:16:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,7 +480,7 @@ RelationBuildTupleDesc(Relation relation)
 
 		memcpy(relation->rd_att->attrs[attp->attnum - 1],
 			   attp,
-			   ATTRIBUTE_TUPLE_SIZE);
+			   ATTRIBUTE_FIXED_PART_SIZE);
 
 		/* Update constraint/default info */
 		if (attp->attnotnull)
@@ -1449,7 +1449,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	{
 		memcpy(relation->rd_att->attrs[i],
 			   &att[i],
-			   ATTRIBUTE_TUPLE_SIZE);
+			   ATTRIBUTE_FIXED_PART_SIZE);
 		has_not_null |= att[i].attnotnull;
 		/* make sure attcacheoff is valid */
 		relation->rd_att->attrs[i]->attcacheoff = -1;
@@ -2714,7 +2714,7 @@ BuildHardcodedDescriptor(int natts, Form_pg_attribute attrs, bool hasoids)
 
 	for (i = 0; i < natts; i++)
 	{
-		memcpy(result->attrs[i], &attrs[i], ATTRIBUTE_TUPLE_SIZE);
+		memcpy(result->attrs[i], &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		/* make sure attcacheoff is valid */
 		result->attrs[i]->attcacheoff = -1;
 	}
@@ -3441,7 +3441,7 @@ load_relcache_init_file(void)
 		{
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
 				goto read_failed;
-			if (len != ATTRIBUTE_TUPLE_SIZE)
+			if (len != ATTRIBUTE_FIXED_PART_SIZE)
 				goto read_failed;
 			if ((nread = fread(rel->rd_att->attrs[i], 1, len, fp)) != len)
 				goto read_failed;
@@ -3751,7 +3751,7 @@ write_relcache_init_file(void)
 		/* next, do all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			write_item(rel->rd_att->attrs[i], ATTRIBUTE_TUPLE_SIZE, fp);
+			write_item(rel->rd_att->attrs[i], ATTRIBUTE_FIXED_PART_SIZE, fp);
 		}
 
 		/* next, do the access method specific field */
