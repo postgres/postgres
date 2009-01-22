@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.117 2009/01/16 13:27:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.118 2009/01/22 19:25:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,12 @@
  * tables.
  */
 #define LAZY_ALLOC_TUPLES		MaxHeapTuplesPerPage
+
+/*
+ * Before we consider skipping a page that's marked as clean in
+ * visibility map, we must've seen at least this many clean pages.
+ */
+#define SKIP_PAGES_THRESHOLD	32
 
 typedef struct LVRelStats
 {
@@ -271,6 +277,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	int			i;
 	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
+	BlockNumber	all_visible_streak;
 
 	pg_rusage_init(&ru0);
 
@@ -292,6 +299,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	lazy_space_alloc(vacrelstats, nblocks);
 
+	all_visible_streak = 0;
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		Buffer		buf;
@@ -309,7 +317,14 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 		/*
 		 * Skip pages that don't require vacuuming according to the
-		 * visibility map.
+		 * visibility map. But only if we've seen a streak of at least
+		 * SKIP_PAGES_THRESHOLD pages marked as clean. Since we're reading
+		 * sequentially, the OS should be doing readahead for us and there's
+		 * no gain in skipping a page now and then. You need a longer run of
+		 * consecutive skipped pages before it's worthwhile. Also, skipping
+		 * even a single page means that we can't update relfrozenxid or
+		 * reltuples, so we only want to do it if there's a good chance to
+		 * skip a goodly number of pages.
 		 */
 		if (!scan_all)
 		{
@@ -317,9 +332,15 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				visibilitymap_test(onerel, blkno, &vmbuffer);
 			if (all_visible_according_to_vm)
 			{
-				vacrelstats->scanned_all = false;
-				continue;
+				all_visible_streak++;
+				if (all_visible_streak >= SKIP_PAGES_THRESHOLD)
+				{
+					vacrelstats->scanned_all = false;
+					continue;
+				}
 			}
+			else
+				all_visible_streak = 0;
 		}
 
 		vacuum_delay_point();
