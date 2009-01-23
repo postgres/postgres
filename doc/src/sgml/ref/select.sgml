@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.118 2009/01/22 20:15:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.119 2009/01/23 14:05:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1163,14 +1163,29 @@ ROLLBACK TO s;
   <caution>
    <para>
     It is possible for a <command>SELECT</> command using both
-    <literal>LIMIT</literal> and  <literal>FOR UPDATE/SHARE</literal>
+    <literal>LIMIT</literal> and <literal>FOR UPDATE/SHARE</literal>
     clauses to return fewer rows than specified by <literal>LIMIT</literal>.
     This is because <literal>LIMIT</> is applied first.  The command
     selects the specified number of rows,
-    but might then block trying to obtain lock on one or more of them.
+    but might then block trying to obtain a lock on one or more of them.
     Once the <literal>SELECT</> unblocks, the row might have been deleted
     or updated so that it does not meet the query <literal>WHERE</> condition
     anymore, in which case it will not be returned.
+   </para>
+  </caution>
+
+  <caution>
+   <para>
+    Similarly, it is possible for a <command>SELECT</> command
+    using <literal>ORDER BY</literal> and <literal>FOR
+    UPDATE/SHARE</literal> to return rows out of order.  This is
+    because <literal>ORDER BY</> is applied first.  The command
+    orders the result, but might then block trying to obtain a lock
+    on one or more of the rows.  Once the <literal>SELECT</>
+    unblocks, one of the ordered columns might have been modified
+    and be returned out of order.  A workaround is to perform
+    <command>SELECT ... FOR UPDATE/SHARE</> and then <command>SELECT
+    ... ORDER BY</>.
    </para>
   </caution>
   </refsect2>
