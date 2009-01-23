@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.4 2008/12/29 17:07:05 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.5 2009/01/23 12:43:32 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -308,7 +308,7 @@ add_additional_variables(char *name, bool insert)
 
 	if (ptr == NULL)
 	{
-		mmerror(PARSE_ERROR, ET_ERROR, "trying to access an undeclared cursor \"%s\"\n", name);
+		mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" does not exist", name);
 		return NULL;
 	}
 
@@ -336,14 +336,14 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	if ((type_enum == ECPGt_struct ||
 	     type_enum == ECPGt_union) &&
 	    initializer == 1)
-		mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in typedef command");
+		mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in type definition");
 	else
 	{
 		for (ptr = types; ptr != NULL; ptr = ptr->next)
 		{
 			if (strcmp(name, ptr->name) == 0)
 				/* re-definition is a bug */
-				mmerror(PARSE_ERROR, ET_ERROR, "type %s already defined", name);
+				mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" is already defined", name);
 		}
 		adjust_array(type_enum, &dimension, &length, type_dimension, type_index, array, true);
 
@@ -366,7 +366,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 			type_enum != ECPGt_char &&
 			type_enum != ECPGt_unsigned_char &&
 			atoi(this->type->type_index) >= 0)
-			mmerror(PARSE_ERROR, ET_ERROR, "no multidimensional array support for simple data types");
+			mmerror(PARSE_ERROR, ET_ERROR, "multidimensional arrays for simple data types are not supported");
 
 		types = this;
 	}

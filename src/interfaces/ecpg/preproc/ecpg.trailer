@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.3 2008/12/12 12:14:43 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.4 2009/01/23 12:43:32 petere Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -22,7 +22,7 @@ statement: ecpgstart at stmt ';'        { connection = NULL; }
 CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
 		{
 			if (FoundInto == 1)
-				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE / AS SELECT cannot specify INTO\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO\n");
 
 			$$ = cat_str(6, make_str("create"), $2, make_str("table"), $4, make_str("as"), $7);
 		}
@@ -89,7 +89,7 @@ connection_target: opt_database_name opt_server opt_port
 			if (strncmp($1, "unix", strlen("unix")) == 0 &&
 				strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on \"localhost\" but not on \"%s\"", $3 + strlen("//"));
+				mmerror(PARSE_ERROR, ET_ERROR, "Unix-domain sockets only work on \"localhost\" but not on \"%s\"", $3 + strlen("//"));
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
 		}
@@ -118,7 +118,7 @@ db_prefix: ecpg_ident cvariable
 				mmerror(PARSE_ERROR, ET_ERROR, "expected \"postgresql\", found \"%s\"", $2);
 
 			if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "illegal connection type %s", $1);
+				mmerror(PARSE_ERROR, ET_ERROR, "invalid connection type: %s", $1);
 
 			$$ = make3_str($1, make_str(":"), $2);
 		}
@@ -202,7 +202,7 @@ char_variable: cvariable
 
 			/* If we have just one character this is not a string */
 			if (atol(p->type->size) == 1)
-					mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
+					mmerror(PARSE_ERROR, ET_ERROR, "invalid data type");
 			else
 			{
 				/* if array see what's inside */
@@ -219,7 +219,7 @@ char_variable: cvariable
 						$$ = make2_str($1, make_str(".arr"));
 						break;
 					default:
-						mmerror(PARSE_ERROR, ET_ERROR, "invalid datatype");
+						mmerror(PARSE_ERROR, ET_ERROR, "invalid data type");
 						$$ = $1;
 						break;
 				}
@@ -1000,21 +1000,21 @@ UsingConst: Iconst			{ $$ = $1; }
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
 		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "1, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
 		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
 		const char *con = connection ? connection : "NULL";
-		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement\n");
+		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported DESCRIBE statement");
 		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
 		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}

@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.27 2008/05/16 15:20:04 petere Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.28 2009/01/23 12:43:32 petere Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -61,7 +61,7 @@ ECPGnumeric_lvalue(char *name)
 			fputs(name, yyout);
 			break;
 		default:
-			mmerror(PARSE_ERROR, ET_ERROR, "variable %s: numeric type needed", name);
+			mmerror(PARSE_ERROR, ET_ERROR, "variable \"%s\" must have a numeric type", name);
 			break;
 	}
 }
@@ -121,7 +121,7 @@ drop_descriptor(char *name, char *connection)
 			}
 		}
 	}
-	mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor %s", name);
+	mmerror(PARSE_ERROR, ET_WARNING, "descriptor \"%s\" does not exist", name);
 }
 
 struct descriptor
@@ -143,7 +143,7 @@ lookup_descriptor(char *name, char *connection)
 				return i;
 		}
 	}
-	mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor %s", name);
+	mmerror(PARSE_ERROR, ET_WARNING, "descriptor \"%s\" does not exist", name);
 	return NULL;
 }
 
@@ -158,7 +158,7 @@ output_get_descr_header(char *desc_name)
 		if (results->value == ECPGd_count)
 			ECPGnumeric_lvalue(results->variable);
 		else
-			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item \"%d\"", results->value);
+			mmerror(PARSE_ERROR, ET_WARNING, "descriptor header item \"%d\" does not exist", results->value);
 	}
 
 	drop_assignments();
@@ -207,7 +207,7 @@ output_set_descr_header(char *desc_name)
 		if (results->value == ECPGd_count)
 			ECPGnumeric_lvalue(results->variable);
 		else
-			mmerror(PARSE_ERROR, ET_WARNING, "unknown descriptor header item \"%d\"", results->value);
+			mmerror(PARSE_ERROR, ET_WARNING, "descriptor header item \"%d\" does not exist", results->value);
 	}
 
 	drop_assignments();
@@ -274,7 +274,7 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_di_precision:
 			case ECPGd_precision:
 			case ECPGd_scale:
-				mmerror(PARSE_ERROR, ET_FATAL, "descriptor item %s is not implemented",
+				mmerror(PARSE_ERROR, ET_FATAL, "descriptor item \"%s\" is not implemented",
 						descriptor_item_name(results->value));
 				break;
 
@@ -284,7 +284,7 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_octet:
 			case ECPGd_ret_length:
 			case ECPGd_ret_octet:
-				mmerror(PARSE_ERROR, ET_FATAL, "descriptor item %s cannot be set",
+				mmerror(PARSE_ERROR, ET_FATAL, "descriptor item \"%s\" cannot be set",
 						descriptor_item_name(results->value));
 				break;
 

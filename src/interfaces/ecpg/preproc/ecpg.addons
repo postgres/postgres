@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.2 2008/12/29 17:07:05 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.3 2009/01/23 12:43:32 petere Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{
@@ -7,7 +7,7 @@ ECPG: stmtClosePortalStmt block
 			if (pg_strcasecmp($1+strlen("close "), "database") == 0)
 			{
 				if (connection)
-					mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement\n");
+					mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in CLOSE DATABASE statement");
 
 				fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
 				whenever_action(2);
@@ -21,7 +21,7 @@ ECPG: stmtClosePortalStmt block
 ECPG: stmtDeallocateStmt block
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in DEALLOCATE statement");
 
 		output_deallocate_prepare_statement($1);
 	}
@@ -59,7 +59,7 @@ ECPG: stmtViewStmt rule
 	| ECPGConnect
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for connect statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in CONNECT statement");
 
 		fprintf(yyout, "{ ECPGconnect(__LINE__, %d, %s, %d); ", compat, $1, autocommit);
 		reset_variables();
@@ -73,7 +73,7 @@ ECPG: stmtViewStmt rule
 	| ECPGDeallocateDescr
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in DEALLOCATE statement");
 		fprintf(yyout,"ECPGdeallocate_desc(__LINE__, %s);",$1);
 		whenever_action(0);
 		free($1);
@@ -95,7 +95,7 @@ ECPG: stmtViewStmt rule
 	| ECPGDisconnect
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for disconnect statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in DISCONNECT statement");
 
 		fprintf(yyout, "{ ECPGdisconnect(__LINE__, %s);",
 				$1 ? $1 : "\"CURRENT\"");
@@ -147,7 +147,7 @@ ECPG: stmtViewStmt rule
 	| ECPGSetConnection
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for set connection statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in SET CONNECTION statement");
 
 		fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
 		whenever_action(2);
@@ -169,7 +169,7 @@ ECPG: stmtViewStmt rule
 	| ECPGTypedef
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for typedef statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in TYPE statement");
 
 		fprintf(yyout, "%s", $1);
 		free($1);
@@ -178,33 +178,33 @@ ECPG: stmtViewStmt rule
 	| ECPGVar
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for var statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in VAR statement");
 
 		output_simple_statement($1);
 	}
 	| ECPGWhenever
 	{
 		if (connection)
-			mmerror(PARSE_ERROR, ET_ERROR, "no at option for whenever statement\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in WHENEVER statement");
 
 		output_simple_statement($1);
 	}
 ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromcopy_file_namecopy_delimiteropt_withcopy_opt_list addon
 			if (strcmp($6, "to") == 0 && strcmp($7, "stdin") == 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
 			else if (strcmp($6, "from") == 0 && strcmp($7, "stdout") == 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "copy from stdout not possible\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "COPY FROM STDOUT is not possible");
 			else if (strcmp($6, "from") == 0 && strcmp($7, "stdin") == 0)
-				mmerror(PARSE_ERROR, ET_WARNING, "copy from stdin not implemented\n");
+				mmerror(PARSE_ERROR, ET_WARNING, "COPY FROM STDIN is not implemented");
 ECPG: CopyStmtCOPYselect_with_parensTOcopy_file_nameopt_withcopy_opt_list addon
 			if (strcmp($4, "stdin") == 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
 ECPG: ConstraintAttributeSpecConstraintDeferrabilitySpecConstraintTimeSpec addon
 			if (strcmp($1, "deferrable") != 0 && strcmp($2, "initially deferrable") == 0 )
-				mmerror(PARSE_ERROR, ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "constraint declared INITIALLY DEFERRED must be DEFERRABLE");
 ECPG: ConstraintAttributeSpecConstraintTimeSpecConstraintDeferrabilitySpec addon
 			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
-				mmerror(PARSE_ERROR, ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "constraint declared INITIALLY DEFERRED must be DEFERRABLE");
 ECPG: var_valueNumericOnly addon
 ECPG: fetch_directionSignedIconst addon
 		if ($1[0] == '$')
@@ -242,7 +242,7 @@ ECPG: DeclareCursorStmtDECLAREnamecursor_optionsCURSORopt_holdFORSelectStmt bloc
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
 		{
 			if (strcmp($2, ptr->name) == 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" already defined\n", $2);
+				mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
 		}
 
 		this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -276,7 +276,7 @@ ECPG: into_clauseINTOOptTempTableName block
 					}
 	| ecpg_into                     { $$ = EMPTY; }
 ECPG: table_refselect_with_parens addon
-		mmerror(PARSE_ERROR, ET_ERROR, "sub-SELECT in FROM must have an alias\n");
+		mmerror(PARSE_ERROR, ET_ERROR, "subquery in FROM must have an alias");
 ECPG: TypenameSimpleTypenameopt_array_bounds block
 	{	$$ = cat2_str($1, $2.str); }
 ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block
@@ -323,7 +323,7 @@ ECPG: type_function_nametype_func_name_keyword rule
 	| ECPGCKeywords                         { $$ = $1; }
 ECPG: VariableShowStmtSHOWALL block
 	{
-		mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL not implemented\n");
+		mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL is not implemented");
 		$$ = EMPTY;
 	}
 ECPG: FetchStmtFETCHfetch_directionfrom_inname block 
@@ -369,13 +369,13 @@ ECPG: FetchStmtMOVEname rule
 		}
 ECPG: SpecialRuleRelationOLD addon
 		if (!QueryIsRule)
-			mmerror(PARSE_ERROR, ET_ERROR, "OLD used in non-rule query\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "OLD used in a query that is not in a rule");
 ECPG: SpecialRuleRelationNEW addon
 		if (!QueryIsRule)
-			mmerror(PARSE_ERROR, ET_ERROR, "NEW used in non-rule query\n");
+			mmerror(PARSE_ERROR, ET_ERROR, "NEW used in a query that is not in a rule");
 ECPG: select_limitLIMITselect_limit_value','select_offset_value block
         {
-                mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to backend");
+                mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
                 $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4);
         }
 ECPG: SignedIconstIconst rule

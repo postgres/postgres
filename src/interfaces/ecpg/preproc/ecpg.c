@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.106 2008/12/11 07:34:09 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.107 2009/01/23 12:43:32 petere Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -40,9 +40,9 @@ help(const char *progname)
 		   progname);
 	printf(_("Options:\n"));
 	printf(_("  -c             automatically generate C code from embedded SQL code;\n"
-		   "                 currently this works for EXEC SQL TYPE\n"));
-	printf(_("  -C MODE        set compatibility mode;\n"
-	  "                 MODE can be one of \"INFORMIX\", \"INFORMIX_SE\"\n"));
+			 "                 this affects EXEC SQL TYPE\n"));
+	printf(_("  -C MODE        set compatibility mode; MODE can be one of\n"
+			 "                 \"INFORMIX\", \"INFORMIX_SE\"\n"));
 #ifdef YYDEBUG
 	printf(_("  -d             generate parser debug output\n"));
 #endif
@@ -51,11 +51,8 @@ help(const char *progname)
 	printf(_("  -i             parse system include files as well\n"));
 	printf(_("  -I DIRECTORY   search DIRECTORY for include files\n"));
 	printf(_("  -o OUTFILE     write result to OUTFILE\n"));
-	printf(_("  -r OPTION      specify runtime behaviour;\n"
-		   "                 OPTION can be:\n"
-		   "                  \"no_indicator\"\n"
-		   "                  \"prepare\"\n"
-		   "                  \"questionmarks\"\n"));
+	printf(_("  -r OPTION      specify run-time behavior; OPTION can be:\n"
+			 "                  \"no_indicator\", \"prepare\", \"questionmarks\"\n"));
 	printf(_("  -t             turn on autocommit of transactions\n"));
 	printf(_("  --help         show this help, then exit\n"));
 	printf(_("  --regression   run in regression testing mode\n"));
@@ -266,7 +263,7 @@ main(int argc, char *const argv[])
 	{
 		fprintf(stderr, _("%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"),
 				progname, MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-		fprintf(stderr, _("exec sql include ... search starts here:\n"));
+		fprintf(stderr, _("EXEC SQL INCLUDE ... search starts here:\n"));
 		for (ip = include_paths; ip != NULL; ip = ip->next)
 			fprintf(stderr, " %s\n", ip->path);
 		fprintf(stderr, _("end of search list\n"));
@@ -458,22 +455,14 @@ main(int argc, char *const argv[])
 				/* and parse the source */
 				base_yyparse();
 
-				/* check if all cursors were indeed opened */
-				for (ptr = cur; ptr != NULL;)
-				{
-					char		errortext[128];
-
+				/* 
+				 * Check whether all cursors were indeed opened.  It
+				 * does not really make sense to declare a cursor but
+				 * not open it.
+				 */
+				for (ptr = cur; ptr != NULL; ptr = ptr->next)
 					if (!(ptr->opened))
-					{
-						/*
-						 * Does not really make sense to declare a cursor but
-						 * not open it
-						 */
-						snprintf(errortext, sizeof(errortext), _("cursor \"%s\" has been declared but not opened\n"), ptr->name);
-						mmerror(PARSE_ERROR, ET_WARNING, errortext);
-					}
-					ptr = ptr->next;
-				}
+						mmerror(PARSE_ERROR, ET_WARNING, "cursor \"%s\" has been declared but not opened", ptr->name);
 
 				if (yyin != NULL && yyin != stdin)
 					fclose(yyin);
