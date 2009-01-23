@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.328 2009/01/20 18:59:37 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.329 2009/01/23 11:19:34 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2937,6 +2937,9 @@ RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup)
 	BkpBlock	bkpb;
 	char	   *blk;
 	int			i;
+
+	if (!(record->xl_info & XLR_BKP_BLOCK_MASK))
+		return;
 
 	blk = (char *) XLogRecGetData(record) + record->xl_len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
