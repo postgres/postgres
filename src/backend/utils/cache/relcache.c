@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.282 2009/01/22 20:16:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.283 2009/01/26 19:41:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,8 +351,6 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 static void
 RelationParseRelOptions(Relation relation, HeapTuple tuple)
 {
-	Datum		datum;
-	bool		isnull;
 	bytea	   *options;
 
 	relation->rd_options = NULL;
@@ -374,31 +372,10 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 * we might not have any other for pg_class yet (consider executing this
 	 * code for pg_class itself)
 	 */
-	datum = fastgetattr(tuple,
-						Anum_pg_class_reloptions,
-						GetPgClassDescriptor(),
-						&isnull);
-	if (isnull)
-		return;
-
-	/* Parse into appropriate format; don't error out here */
-	switch (relation->rd_rel->relkind)
-	{
-		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
-		case RELKIND_UNCATALOGED:
-			options = heap_reloptions(relation->rd_rel->relkind, datum,
-									  false);
-			break;
-		case RELKIND_INDEX:
-			options = index_reloptions(relation->rd_am->amoptions, datum,
-									   false);
-			break;
-		default:
-			Assert(false);		/* can't get here */
-			options = NULL;		/* keep compiler quiet */
-			break;
-	}
+	options = extractRelOptions(tuple,
+								GetPgClassDescriptor(),
+								relation->rd_rel->relkind == RELKIND_INDEX ?
+								relation->rd_am->amoptions : InvalidOid);
 
 	/* Copy parsed data into CacheMemoryContext */
 	if (options)

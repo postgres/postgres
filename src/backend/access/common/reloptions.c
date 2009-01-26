@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.18 2009/01/12 21:02:14 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.19 2009/01/26 19:41:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,6 +558,53 @@ untransformRelOptions(Datum options)
 	return result;
 }
 
+/*
+ * Extract and parse reloptions from a pg_class tuple.
+ *
+ * This is a low-level routine, expected to be used by relcache code and
+ * callers that do not have a table's relcache entry (e.g. autovacuum).  For
+ * other uses, consider grabbing the rd_options pointer from the relcache entry
+ * instead.
+ *
+ * tupdesc is pg_class' tuple descriptor.  amoptions is the amoptions regproc
+ * in the case of the tuple corresponding to an index, or InvalidOid otherwise.
+ */
+bytea *
+extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
+{
+	bytea  *options;
+	bool	isnull;
+	Datum	datum;
+	Form_pg_class	classForm;
+
+	datum = fastgetattr(tuple,
+						Anum_pg_class_reloptions,
+						tupdesc,
+						&isnull);
+	if (isnull)
+		return NULL;
+
+	classForm = (Form_pg_class) GETSTRUCT(tuple);
+
+	/* Parse into appropriate format; don't error out here */
+	switch (classForm->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+		case RELKIND_UNCATALOGED:
+			options = heap_reloptions(classForm->relkind, datum, false);
+			break;
+		case RELKIND_INDEX:
+			options = index_reloptions(amoptions, datum, false);
+			break;
+		default:
+			Assert(false);		/* can't get here */
+			options = NULL;		/* keep compiler quiet */
+			break;
+	}
+	
+	return options;
+}
 
 /*
  * Interpret reloptions that are given in text-array format.

@@ -11,13 +11,14 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.10 2009/01/12 21:02:15 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.11 2009/01/26 19:41:06 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELOPTIONS_H
 #define RELOPTIONS_H
 
+#include "access/htup.h"
 #include "nodes/pg_list.h"
 
 /* types supported by reloptions */
@@ -241,6 +242,8 @@ extern void add_string_reloption(int kind, char *name, char *desc,
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
 					bool ignoreOids, bool isReset);
 extern List *untransformRelOptions(Datum options);
+extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
+				  Oid amoptions);
 extern relopt_value *parseRelOptions(Datum options, bool validate,
 				relopt_kind kind, int *numrelopts);
 extern void *allocateReloptStruct(Size base, relopt_value *options,
