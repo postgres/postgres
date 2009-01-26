@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.4 2009/01/23 12:43:32 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.5 2009/01/26 10:19:44 petere Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -22,7 +22,7 @@ statement: ecpgstart at stmt ';'        { connection = NULL; }
 CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
 		{
 			if (FoundInto == 1)
-				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
 
 			$$ = cat_str(6, make_str("create"), $2, make_str("table"), $4, make_str("as"), $7);
 		}
@@ -294,7 +294,7 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			{
 				if (strcmp($2, ptr->name) == 0)
 					/* re-definition is a bug */
-					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" already defined", $2);
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -497,7 +497,7 @@ var_type:	simple_type
 			}
 			else
 			{
-				mmerror(PARSE_ERROR, ET_ERROR, "only numeric/decimal have precision/scale argument");
+				mmerror(PARSE_ERROR, ET_ERROR, "only data types numeric and decimal have precision/scale argument");
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = make_str("numeric");
 			}
@@ -678,7 +678,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			{
 					if (strcmp(su_type.type_str, ptr->name) == 0)
 							/* re-definition is a bug */
-							mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" already defined", su_type.type_str);
+							mmerror(PARSE_ERROR, ET_ERROR, "type \"%s\" is already defined", su_type.type_str);
 			}
 
 			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
@@ -836,7 +836,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 							sprintf(dim, "[%s]", dimension);
 					/* cannot check for atoi <= 0 because a defined constant will yield 0 here as well */
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
-						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
+						mmerror(PARSE_ERROR, ET_ERROR, "pointers to varchar are not implemented");
 
 					/* make sure varchar struct name is unique by adding linenumer of its definition */
 					vcn = (char *) mm_alloc(strlen($2) + sizeof(int) * CHAR_BIT * 10 / 3);

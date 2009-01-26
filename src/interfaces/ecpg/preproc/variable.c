@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.46 2009/01/23 12:43:32 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.47 2009/01/26 10:19:44 petere Exp $ */
 
 #include "postgres_fe.h"
 
@@ -226,7 +226,7 @@ find_variable(char *name)
 				*next = '\0';
 				p = find_simple(name);
 				if (p == NULL)
-					mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not declared", name);
+					mmerror(PARSE_ERROR, ET_FATAL, "variable \"%s\" is not declared", name);
 
 				*next = c;
 				switch (p->type->u.element->type)
@@ -248,7 +248,7 @@ find_variable(char *name)
 		p = find_simple(name);
 
 	if (p == NULL)
-		mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not declared", name);
+		mmerror(PARSE_ERROR, ET_FATAL, "variable \"%s\" is not declared", name);
 
 	return (p);
 }
