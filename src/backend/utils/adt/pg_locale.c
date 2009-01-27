@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.47 2009/01/21 12:45:06 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.48 2009/01/27 12:45:09 mha Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ static char lc_monetary_envbuf[LC_ENV_BUFSIZE];
 static char lc_numeric_envbuf[LC_ENV_BUFSIZE];
 static char lc_time_envbuf[LC_ENV_BUFSIZE];
 
-#ifdef WIN32
+#if defined(WIN32) && defined(LC_MESSAGES)
 static char *IsoLocaleName(const char *); /* MSVC specific */
 #endif
 
@@ -158,7 +158,7 @@ pg_perm_setlocale(int category, const char *locale)
 #ifdef WIN32
 			result = IsoLocaleName(locale);
 			if (result == NULL)
-				result = locale;
+				result = (char *) locale;
 #endif /* WIN32 */
 			break;
 #endif /* LC_MESSAGES */
@@ -601,7 +601,7 @@ cache_locale_time(void)
 }
 
 
-#ifdef WIN32
+#if defined(WIN32) && defined(LC_MESSAGES)
 /*
  *	Convert Windows locale name to the ISO formatted one
  *	if possible.
@@ -647,5 +647,5 @@ char *IsoLocaleName(const char *winlocname)
 	return NULL; /* Not supported on this version of msvc/mingw */
 #endif /* _MSC_VER >= 1400 */
 }
-#endif /* WIN32 */
+#endif /* WIN32 && LC_MESSAGES */
 
