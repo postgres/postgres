@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.57 2009/01/08 20:09:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.58 2009/01/27 12:46:16 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1364,7 +1364,7 @@ wait_for_tests(PID_TYPE *pids, int *statuses, char **names, int num_tests)
 			if (p == pids[i])
 			{
 #ifdef WIN32
-				GetExitCodeProcess(pids[i], &exit_status);
+				GetExitCodeProcess(pids[i], (LPDWORD) &exit_status);
 				CloseHandle(pids[i]);
 #endif
 				pids[i] = INVALID_PID;
