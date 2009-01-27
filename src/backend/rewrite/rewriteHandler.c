@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.184 2009/01/22 20:16:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.185 2009/01/27 12:40:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1899,20 +1899,20 @@ QueryRewrite(Query *parsetree)
 				{
 					case CMD_INSERT:
 						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("view is not updatable"),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot insert into a view"),
 								 errhint("You need an unconditional ON INSERT DO INSTEAD rule.")));
 						break;
 					case CMD_UPDATE:
 						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("view is not updatable"),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot update a view"),
 								 errhint("You need an unconditional ON UPDATE DO INSTEAD rule.")));
 						break;
 					case CMD_DELETE:
 						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("view is not updatable"),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot delete from a view"),
 								 errhint("You need an unconditional ON DELETE DO INSTEAD rule.")));
 						break;
 					default:

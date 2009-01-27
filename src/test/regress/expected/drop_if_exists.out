@@ -13,7 +13,6 @@ ERROR:  view "test_view_exists" does not exist
 DROP VIEW IF EXISTS test_view_exists;
 NOTICE:  view "test_view_exists" does not exist, skipping
 CREATE VIEW test_view_exists AS select * from test_exists;
-NOTICE:  CREATE VIEW has created automatic view update rules
 DROP VIEW IF EXISTS test_view_exists;
 DROP VIEW test_view_exists;
 ERROR:  view "test_view_exists" does not exist

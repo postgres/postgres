@@ -10,7 +10,6 @@ create table rtest_t1 (a int4, b int4);
 create table rtest_t2 (a int4, b int4);
 create table rtest_t3 (a int4, b int4);
 create view rtest_v1 as select * from rtest_t1;
-NOTICE:  CREATE VIEW has created automatic view update rules
 create rule rtest_v1_ins as on insert to rtest_v1 do instead
 	insert into rtest_t1 values (new.a, new.b);
 create rule rtest_v1_upd as on update to rtest_v1 do instead
@@ -756,12 +755,9 @@ create table rtest_view3 (a int4, b text);
 create table rtest_view4 (a int4, b text, c int4);
 create view rtest_vview1 as select a, b from rtest_view1 X 
 	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
-NOTICE:  CREATE VIEW has created automatic view update rules
 create view rtest_vview2 as select a, b from rtest_view1 where v;
-NOTICE:  CREATE VIEW has created automatic view update rules
 create view rtest_vview3 as select a, b from rtest_vview2 X
 	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
-NOTICE:  CREATE VIEW has created automatic view update rules
 create view rtest_vview4 as select X.a, X.b, count(Y.a) as refcount
 	from rtest_view1 X, rtest_view2 Y
 	where X.a = Y.a
@@ -1337,8 +1333,8 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
 
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;
-   tablename   |    rulename     |                                                                                                                                             definition                                                                                                                                              
----------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   tablename   |    rulename     |                                                                                                                                  definition                                                                                                                                   
+---------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  pg_settings   | pg_settings_n   | CREATE RULE pg_settings_n AS ON UPDATE TO pg_settings DO INSTEAD NOTHING;
  pg_settings   | pg_settings_u   | CREATE RULE pg_settings_u AS ON UPDATE TO pg_settings WHERE (new.name = old.name) DO SELECT set_config(old.name, new.setting, false) AS set_config;
  rtest_emp     | rtest_emp_del   | CREATE RULE rtest_emp_del AS ON DELETE TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal) VALUES (old.ename, "current_user"(), 'fired'::bpchar, '$0.00'::money, old.salary);
@@ -1363,21 +1359,12 @@ SELECT tablename, rulename, definition FROM pg_rules
  rtest_v1      | rtest_v1_del    | CREATE RULE rtest_v1_del AS ON DELETE TO rtest_v1 DO INSTEAD DELETE FROM rtest_t1 WHERE (rtest_t1.a = old.a);
  rtest_v1      | rtest_v1_ins    | CREATE RULE rtest_v1_ins AS ON INSERT TO rtest_v1 DO INSTEAD INSERT INTO rtest_t1 (a, b) VALUES (new.a, new.b);
  rtest_v1      | rtest_v1_upd    | CREATE RULE rtest_v1_upd AS ON UPDATE TO rtest_v1 DO INSTEAD UPDATE rtest_t1 SET a = new.a, b = new.b WHERE (rtest_t1.a = old.a);
- rtest_vview1  | _DELETE         | CREATE RULE "_DELETE" AS ON DELETE TO rtest_vview1 DO INSTEAD DELETE FROM rtest_view1 x WHERE ((((old.a IS NULL) AND (x.a IS NULL)) OR (old.a = x.a)) AND (((old.b IS NULL) AND (x.b IS NULL)) OR (old.b = x.b))) RETURNING old.a, old.b;
- rtest_vview1  | _INSERT         | CREATE RULE "_INSERT" AS ON INSERT TO rtest_vview1 DO INSTEAD INSERT INTO rtest_view1 (a, b) VALUES (new.a, new.b) RETURNING new.a, new.b;
- rtest_vview1  | _UPDATE         | CREATE RULE "_UPDATE" AS ON UPDATE TO rtest_vview1 DO INSTEAD UPDATE rtest_view1 x SET a = new.a, b = new.b WHERE ((((old.a IS NULL) AND (x.a IS NULL)) OR (old.a = x.a)) AND (((old.b IS NULL) AND (x.b IS NULL)) OR (old.b = x.b))) RETURNING new.a, new.b;
- rtest_vview2  | _DELETE         | CREATE RULE "_DELETE" AS ON DELETE TO rtest_vview2 DO INSTEAD DELETE FROM rtest_view1 WHERE ((((old.a IS NULL) AND (rtest_view1.a IS NULL)) OR (old.a = rtest_view1.a)) AND (((old.b IS NULL) AND (rtest_view1.b IS NULL)) OR (old.b = rtest_view1.b))) RETURNING old.a, old.b;
- rtest_vview2  | _INSERT         | CREATE RULE "_INSERT" AS ON INSERT TO rtest_vview2 DO INSTEAD INSERT INTO rtest_view1 (a, b) VALUES (new.a, new.b) RETURNING new.a, new.b;
- rtest_vview2  | _UPDATE         | CREATE RULE "_UPDATE" AS ON UPDATE TO rtest_vview2 DO INSTEAD UPDATE rtest_view1 SET a = new.a, b = new.b WHERE ((((old.a IS NULL) AND (rtest_view1.a IS NULL)) OR (old.a = rtest_view1.a)) AND (((old.b IS NULL) AND (rtest_view1.b IS NULL)) OR (old.b = rtest_view1.b))) RETURNING new.a, new.b;
- rtest_vview3  | _DELETE         | CREATE RULE "_DELETE" AS ON DELETE TO rtest_vview3 DO INSTEAD DELETE FROM rtest_vview2 x WHERE ((((old.a IS NULL) AND (x.a IS NULL)) OR (old.a = x.a)) AND (((old.b IS NULL) AND (x.b IS NULL)) OR (old.b = x.b))) RETURNING old.a, old.b;
- rtest_vview3  | _INSERT         | CREATE RULE "_INSERT" AS ON INSERT TO rtest_vview3 DO INSTEAD INSERT INTO rtest_vview2 (a, b) VALUES (new.a, new.b) RETURNING new.a, new.b;
- rtest_vview3  | _UPDATE         | CREATE RULE "_UPDATE" AS ON UPDATE TO rtest_vview3 DO INSTEAD UPDATE rtest_vview2 x SET a = new.a, b = new.b WHERE ((((old.a IS NULL) AND (x.a IS NULL)) OR (old.a = x.a)) AND (((old.b IS NULL) AND (x.b IS NULL)) OR (old.b = x.b))) RETURNING new.a, new.b;
  shoelace      | shoelace_del    | CREATE RULE shoelace_del AS ON DELETE TO shoelace DO INSTEAD DELETE FROM shoelace_data WHERE (shoelace_data.sl_name = old.sl_name);
  shoelace      | shoelace_ins    | CREATE RULE shoelace_ins AS ON INSERT TO shoelace DO INSTEAD INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit) VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);
  shoelace      | shoelace_upd    | CREATE RULE shoelace_upd AS ON UPDATE TO shoelace DO INSTEAD UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit WHERE (shoelace_data.sl_name = old.sl_name);
  shoelace_data | log_shoelace    | CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data WHERE (new.sl_avail <> old.sl_avail) DO INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, 'Thu Jan 01 00:00:00 1970'::timestamp without time zone);
  shoelace_ok   | shoelace_ok_ins | CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok DO INSTEAD UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant) WHERE (shoelace.sl_name = new.ok_name);
-(38 rows)
+(29 rows)
 
 --
 -- CREATE OR REPLACE RULE
@@ -1479,7 +1466,6 @@ insert into test_2 (name) values ('Test 4');
 insert into test_3 (name) values ('Test 5');
 insert into test_3 (name) values ('Test 6');
 create view id_ordered as select * from id order by id;
-NOTICE:  CREATE VIEW has created automatic view update rules
 create rule update_id_ordered as on update to id_ordered
 	do instead update id set name = new.name where id = old.id;
 select * from id_ordered;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.283 2009/01/26 19:41:06 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.284 2009/01/27 12:40:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,7 +639,6 @@ RelationBuildRuleLock(Relation relation)
 		rule->attrno = rewrite_form->ev_attr;
 		rule->enabled = rewrite_form->ev_enabled;
 		rule->isInstead = rewrite_form->is_instead;
-		rule->is_auto = rewrite_form->is_auto;
 
 		/*
 		 * Must use heap_getattr to fetch ev_action and ev_qual.  Also, the
@@ -762,8 +761,6 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 			if (!equal(rule1->qual, rule2->qual))
 				return false;
 			if (!equal(rule1->actions, rule2->actions))
-				return false;
-			if(rule1->is_auto != rule2->is_auto)
 				return false;
 		}
 	}

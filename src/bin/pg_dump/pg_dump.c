@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.516 2009/01/22 20:16:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.517 2009/01/27 12:40:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4003,17 +4003,7 @@ getRules(int *numRules)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	if (g_fout->remoteVersion >= 80400)
-	{
-		appendPQExpBuffer(query, "SELECT "
-						  "tableoid, oid, rulename, "
-						  "ev_class as ruletable, ev_type, is_instead, "
-						  "ev_enabled "
-						  "FROM pg_rewrite "
-						  "WHERE NOT is_auto "
-						  "ORDER BY oid");
-	}
-	else if (g_fout->remoteVersion >= 80300)
+	if (g_fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT "
 						  "tableoid, oid, rulename, "

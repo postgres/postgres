@@ -79,7 +79,6 @@ EXECUTE prepstmt2(123);
 -- but should trigger invalidation anyway
 CREATE TEMP VIEW pcacheview AS
   SELECT * FROM pcachetest;
-NOTICE:  CREATE VIEW has created automatic view update rules
 PREPARE vprep AS SELECT * FROM pcacheview;
 EXECUTE vprep;
         q1        |        q2         
@@ -237,9 +236,6 @@ select cachebug();
 NOTICE:  table "temptable" does not exist, skipping
 CONTEXT:  SQL statement "drop table if exists temptable cascade"
 PL/pgSQL function "cachebug" line 3 at SQL statement
-NOTICE:  CREATE VIEW has created automatic view update rules
-CONTEXT:  SQL statement "create temp view vv as select * from temptable"
-PL/pgSQL function "cachebug" line 5 at SQL statement
 NOTICE:  1
 NOTICE:  2
 NOTICE:  3
@@ -252,9 +248,6 @@ select cachebug();
 NOTICE:  drop cascades to view vv
 CONTEXT:  SQL statement "drop table if exists temptable cascade"
 PL/pgSQL function "cachebug" line 3 at SQL statement
-NOTICE:  CREATE VIEW has created automatic view update rules
-CONTEXT:  SQL statement "create temp view vv as select * from temptable"
-PL/pgSQL function "cachebug" line 5 at SQL statement
 NOTICE:  1
 NOTICE:  2
 NOTICE:  3

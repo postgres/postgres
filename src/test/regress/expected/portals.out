@@ -1229,7 +1229,6 @@ ROLLBACK;
 -- WHERE CURRENT OF may someday work with views, but today is not that day.
 -- For now, just make sure it errors out cleanly.
 CREATE TEMP VIEW ucview AS SELECT * FROM uctest;
-NOTICE:  CREATE VIEW has created automatic view update rules
 CREATE RULE ucrule AS ON DELETE TO ucview DO INSTEAD
   DELETE FROM uctest WHERE f1 = OLD.f1;
 BEGIN;

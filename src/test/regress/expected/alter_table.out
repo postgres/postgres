@@ -132,7 +132,6 @@ ALTER INDEX onek_unique1 RENAME TO tmp_onek_unique1;
 ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
 CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
-NOTICE:  CREATE VIEW has created automatic view update rules
 ALTER TABLE tmp_view RENAME TO tmp_view_new;
 -- hack to ensure we get an indexscan here
 ANALYZE tenk1;
@@ -593,7 +592,6 @@ alter table atacc1 alter oid drop not null;
 ERROR:  cannot alter system column "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
-NOTICE:  CREATE VIEW has created automatic view update rules
 alter table myview alter column test drop not null;
 ERROR:  "myview" is not a table
 alter table myview alter column test set not null;
@@ -661,7 +659,6 @@ ERROR:  column "c3" of relation "def_test" does not exist
 -- to allow insertions into it, and then alter the view to add
 -- a default
 create view def_view_test as select * from def_test;
-NOTICE:  CREATE VIEW has created automatic view update rules
 create rule def_view_test_ins as
 	on insert to def_view_test
 	do instead insert into def_test select new.*;
@@ -845,7 +842,6 @@ alter table atacc1 drop xmin;
 ERROR:  cannot drop system column "xmin"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
-NOTICE:  CREATE VIEW has created automatic view update rules
 select * from myview;
  b | c | d 
 ---+---+---
@@ -1440,7 +1436,6 @@ create table alter1.t1(f1 serial primary key, f2 int check (f2 > 0));
 NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t1_pkey" for table "t1"
 create view alter1.v1 as select * from alter1.t1;
-NOTICE:  CREATE VIEW has created automatic view update rules
 create function alter1.plus1(int) returns int as 'select $1+1' language sql;
 create domain alter1.posint integer check (value > 0);
 create type alter1.ctype as (f1 int, f2 text);
