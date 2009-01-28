@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.107 2009/01/15 22:33:19 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.108 2009/01/28 11:19:37 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ static void pgwin32_SetServiceStatus(DWORD);
 static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
-static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo);
+static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_service);
 
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
@@ -385,7 +385,7 @@ start_postmaster(void)
 		snprintf(cmd, MAXPGPATH, "CMD /C " SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1" SYSTEMQUOTE,
 				 postgres_path, pgdata_opt, post_opts, DEVNULL);
 
-	if (!CreateRestrictedProcess(cmd, &pi))
+	if (!CreateRestrictedProcess(cmd, &pi, false))
 		return GetLastError();
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
@@ -1210,7 +1210,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 
 	/* Start the postmaster */
 	pgwin32_SetServiceStatus(SERVICE_START_PENDING);
-	if (!CreateRestrictedProcess(pgwin32_CommandLine(false), &pi))
+	if (!CreateRestrictedProcess(pgwin32_CommandLine(false), &pi, true))
 	{
 		pgwin32_SetServiceStatus(SERVICE_STOPPED);
 		return;
@@ -1313,7 +1313,7 @@ typedef		BOOL(WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS,
  * automatically destroyed when pg_ctl exits.
  */
 static int
-CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
+CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_service)
 {
 	int			r;
 	BOOL		b;
@@ -1449,6 +1449,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 					JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
 					JOBOBJECT_BASIC_UI_RESTRICTIONS uiRestrictions;
 					JOBOBJECT_SECURITY_LIMIT_INFORMATION securityLimit;
+					OSVERSIONINFO osv;
 
 					ZeroMemory(&basicLimit, sizeof(basicLimit));
 					ZeroMemory(&uiRestrictions, sizeof(uiRestrictions));
@@ -1459,8 +1460,23 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 					_SetInformationJobObject(job, JobObjectBasicLimitInformation, &basicLimit, sizeof(basicLimit));
 
 					uiRestrictions.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
-						JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_HANDLES | JOB_OBJECT_UILIMIT_READCLIPBOARD |
+						JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_READCLIPBOARD |
 						JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS | JOB_OBJECT_UILIMIT_WRITECLIPBOARD;
+
+					if (as_service)
+					{
+						osv.dwOSVersionInfoSize = sizeof(osv);
+						if (!GetVersionEx(&osv) ||
+							osv.dwMajorVersion < 6 ||
+							(osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
+						{
+							/*
+							 * On Windows 7 (and presumably later), JOB_OBJECT_UILIMIT_HANDLES prevents us from
+							 * starting as a service. So we only enable it on Vista and earlier (version <= 6.0)
+							 */
+							uiRestrictions.UIRestrictionsClass |= JOB_OBJECT_UILIMIT_HANDLES;
+						}
+					}
 					_SetInformationJobObject(job, JobObjectBasicUIRestrictions, &uiRestrictions, sizeof(uiRestrictions));
 
 					securityLimit.SecurityLimitFlags = JOB_OBJECT_SECURITY_NO_ADMIN | JOB_OBJECT_SECURITY_ONLY_TOKEN;
