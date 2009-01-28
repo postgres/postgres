@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.5 2008/01/01 19:45:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/tsearch2/tsearch2.c,v 1.5.2.1 2009/01/28 18:32:55 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,8 +372,10 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata;
 	Trigger    *trigger;
-	char	  **tgargs;
+	char	  **tgargs, 
+			  **tgargs_old;
 	int			i;
+	Datum		res;
 
 	/* Check call context */
 	if (!CALLED_AS_TRIGGER(fcinfo))		/* internal error */
@@ -393,10 +395,20 @@ tsa_tsearch2(PG_FUNCTION_ARGS)
 
 	tgargs[1] = pstrdup(GetConfigOptionByName("default_text_search_config",
 											  NULL));
+	tgargs_old = trigger->tgargs;
 	trigger->tgargs = tgargs;
 	trigger->tgnargs++;
 
-	return tsvector_update_trigger_byid(fcinfo);
+	res = tsvector_update_trigger_byid(fcinfo);
+
+	/* restore old trigger data */
+	trigger->tgargs = tgargs_old;
+	trigger->tgnargs--;
+
+	pfree(tgargs[1]);
+	pfree(tgargs);
+
+	return res;
 }
 
 
