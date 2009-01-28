@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.74.2.2 2007/05/18 01:20:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.74.2.3 2009/01/28 15:06:54 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -718,9 +718,9 @@ initialize_SSL(void)
 		/*
 		 * Load and verify certificate and private key
 		 */
-		if (!SSL_CTX_use_certificate_file(SSL_context,
+		if (SSL_CTX_use_certificate_file(SSL_context,
 										  SERVER_CERT_FILE,
-										  SSL_FILETYPE_PEM))
+										  SSL_FILETYPE_PEM) != 1)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("could not load server certificate file \"%s\": %s",
@@ -750,14 +750,14 @@ initialize_SSL(void)
 					 errdetail("File must be owned by the database user and must have no permissions for \"group\" or \"other\".")));
 #endif
 
-		if (!SSL_CTX_use_PrivateKey_file(SSL_context,
+		if (SSL_CTX_use_PrivateKey_file(SSL_context,
 										 SERVER_PRIVATE_KEY_FILE,
-										 SSL_FILETYPE_PEM))
+										 SSL_FILETYPE_PEM) != 1)
 			ereport(FATAL,
 					(errmsg("could not load private key file \"%s\": %s",
 							SERVER_PRIVATE_KEY_FILE, SSLerrmessage())));
 
-		if (!SSL_CTX_check_private_key(SSL_context))
+		if (SSL_CTX_check_private_key(SSL_context) != 1)
 			ereport(FATAL,
 					(errmsg("check of private key failed: %s",
 							SSLerrmessage())));
@@ -774,7 +774,7 @@ initialize_SSL(void)
 	/*
 	 * Require and check client certificates only if we have a root.crt file.
 	 */
-	if (!SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL))
+	if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1)
 	{
 		/* Not fatal - we do not require client certificates */
 		ereport(LOG,
@@ -794,7 +794,7 @@ initialize_SSL(void)
 		if (cvstore)
 		{
 			/* Set the flags to check against the complete CRL chain */
-			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) != 0)
+			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) == 1)
 /* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
