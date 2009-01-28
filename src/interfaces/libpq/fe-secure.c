@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.73.2.1 2006/01/24 16:38:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.73.2.2 2009/01/28 15:06:53 mha Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -861,7 +861,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	fclose(fp);
 
 	/* verify that the cert and key go together */
-	if (!X509_check_private_key(*x509, *pkey))
+	if (X509_check_private_key(*x509, *pkey) != 1)
 	{
 		char	   *err = SSLerrmessage();
 
@@ -986,7 +986,7 @@ initialize_SSL(PGconn *conn)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOTCERTFILE);
 		if (stat(fnbuf, &buf) == 0)
 		{
-			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
+			if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
 			{
 				char	   *err = SSLerrmessage();
 
