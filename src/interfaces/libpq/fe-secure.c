@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.32.2.1 2003/12/18 22:49:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.32.2.2 2009/01/28 15:06:48 mha Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -788,7 +788,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	fclose(fp);
 
 	/* verify that the cert and key go together */
-	if (!X509_check_private_key(*x509, *pkey))
+	if (X509_check_private_key(*x509, *pkey) != 1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("certificate/private key mismatch (%s): %s\n"),
@@ -848,7 +848,7 @@ initialize_SSL(PGconn *conn)
 			return -1;
 #endif
 		}
-		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
+		if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0) != 1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not read root certificate list (%s): %s\n"),
