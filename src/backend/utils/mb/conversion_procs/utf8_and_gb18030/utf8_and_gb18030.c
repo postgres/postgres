@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gb18030/utf8_and_gb18030.c,v 1.9.4.1 2006/05/21 20:06:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gb18030/utf8_and_gb18030.c,v 1.9.4.2 2009/01/29 19:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,7 @@ gb18030_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_GB18030);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_GB18030, PG_UTF8);
 
 	LocalToUtf(src, dest, LUmapGB18030,
 		sizeof(LUmapGB18030) / sizeof(pg_local_to_utf), PG_GB18030, len);
@@ -57,9 +55,7 @@ utf8_to_gb18030(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_GB18030);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_GB18030);
 
 	UtfToLocal(src, dest, ULmapGB18030,
 			   sizeof(ULmapGB18030) / sizeof(pg_utf_to_local), PG_GB18030, len);

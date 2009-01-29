@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.9.4.1 2006/05/21 20:06:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.9.4.2 2009/01/29 19:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,7 @@ latin1_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_LATIN1);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN1, PG_MULE_INTERNAL);
 
 	latin12mic(src, dest, len);
 
@@ -70,9 +68,7 @@ mic_to_latin1(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_LATIN1);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_LATIN1);
 
 	mic2latin1(src, dest, len);
 
@@ -86,9 +82,7 @@ latin3_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_LATIN3);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN3, PG_MULE_INTERNAL);
 
 	latin32mic(src, dest, len);
 
@@ -102,9 +96,7 @@ mic_to_latin3(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_LATIN3);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_LATIN3);
 
 	mic2latin3(src, dest, len);
 
@@ -118,9 +110,7 @@ latin4_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_LATIN4);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN4, PG_MULE_INTERNAL);
 
 	latin42mic(src, dest, len);
 
@@ -134,9 +124,7 @@ mic_to_latin4(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_LATIN4);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_LATIN4);
 
 	mic2latin4(src, dest, len);
 
