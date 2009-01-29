@@ -1,16 +1,16 @@
 # German message translation file for initdb.
-# Peter Eisentraut <peter_e@gmx.net>, 2003 - 2007.
+# Peter Eisentraut <peter_e@gmx.net>, 2003 - 2009.
 #
 # Use these quotes: »%s«
 #
-# pgtranslation Id: initdb.po,v 1.11 2008/09/19 13:06:04 petere Exp $
+# pgtranslation Id: initdb.po,v 1.11.2.2 2009/01/16 08:08:19 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-05-06 13:19-0300\n"
-"PO-Revision-Date: 2008-09-18 18:17+0300\n"
+"POT-Creation-Date: 2009-01-15 19:15+0000\n"
+"PO-Revision-Date: 2009-01-16 01:14+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -109,7 +109,7 @@ msgstr ""
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: »%s« ist keine gültige Serverkodierung\n"
 
-#: initdb.c:913 initdb.c:3022
+#: initdb.c:913 initdb.c:3027
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: konnte Verzeichnis »%s« nicht erzeugen: %s\n"
@@ -640,22 +640,22 @@ msgstr ""
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Die Standardtextsuchekonfiguration wird auf »%s« gesetzt.\n"
 
-#: initdb.c:2954 initdb.c:3016
+#: initdb.c:2954 initdb.c:3021
 #, c-format
 msgid "creating directory %s ... "
 msgstr "erzeuge Verzeichnis %s ... "
 
-#: initdb.c:2968 initdb.c:3035
+#: initdb.c:2968 initdb.c:3038
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "berichtige Zugriffsrechte des bestehenden Verzeichnisses %s ... "
 
-#: initdb.c:2974 initdb.c:3041
+#: initdb.c:2974 initdb.c:3044
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: konnte Rechte des Verzeichnisses »%s« nicht ändern: %s\n"
 
-#: initdb.c:2987 initdb.c:3053
+#: initdb.c:2987 initdb.c:3056
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: Verzeichnis »%s« existiert aber ist nicht leer\n"
@@ -671,12 +671,17 @@ msgstr ""
 "Sie das Verzeichnis »%s« or führen Sie %s\n"
 "mit einem anderen Argument als »%s« aus.\n"
 
-#: initdb.c:2998 initdb.c:3063
+#: initdb.c:2998 initdb.c:3066
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: konnte nicht auf Verzeichnis »%s« zugreifen: %s\n"
 
-#: initdb.c:3056
+#: initdb.c:3012
+#, c-format
+msgid "%s: transaction log directory location must be an absolute path\n"
+msgstr "%s: Transaktionslogverzeichnis muss absoluten Pfad haben\n"
+
+#: initdb.c:3059
 #, c-format
 msgid ""
 "If you want to store the transaction log there, either\n"
@@ -685,23 +690,23 @@ msgstr ""
 "Wenn Sie dort den Transaktionslog ablegen wollen, entfernen oder leeren\n"
 "Sie das Verzeichnis »%s«.\n"
 
-#: initdb.c:3071
+#: initdb.c:3078
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: konnte symbolische Verknüpfung »%s« nicht erzeugen: %s\n"
 
-#: initdb.c:3076
+#: initdb.c:3083
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
 msgstr ""
 "%s: symbolische Verknüpfungen werden auf dieser Plattform nicht unterstützt"
 
-#: initdb.c:3082
+#: initdb.c:3089
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "erzeuge Unterverzeichnisse ... "
 
-#: initdb.c:3144
+#: initdb.c:3151
 #, c-format
 msgid ""
 "\n"

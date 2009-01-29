@@ -1,15 +1,15 @@
 # Dutch message translation file for postgres.
 # Gevik Babakhani <pgdev@xs4all.nl>, 2007.
 #
-# pgtranslation Id: postgres.po,v 1.4 2008/02/14 23:25:01 gevik Exp $
+# pgtranslation Id: postgres.po,v 1.4.2.2 2009/01/16 08:08:20 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-28 10:00-0400\n"
-"PO-Revision-Date: 2008-02-15 00:23+0100\n"
-"Last-Translator: Gevik Babakhani <pgdev@xs4all.nl>\n"
+"PO-Revision-Date: 2008-03-13 11:11+0100\n"
+"Last-Translator: Bram Van Steenlandt <bram@diomedia.be>\n"
 "Language-Team: Gevik Babakhani <pgdev@xs4all.nl>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -23,14 +23,14 @@ msgstr "Het aantal index kolommen (%d) overschrijden limiet (%d)"
 #: access/common/indextuple.c:168
 #, c-format
 msgid "index row requires %lu bytes, maximum size is %lu"
-msgstr ""
+msgstr "index rij vereist %lu bytes, maximum grootte is %lu"
 
 #: access/common/heaptuple.c:872
 #: access/common/heaptuple.c:983
 #: access/common/heaptuple.c:1810
 #, c-format
 msgid "number of columns (%d) exceeds limit (%d)"
-msgstr ""
+msgstr "aantal kolommen (%d) overschijd limiet (%d)"
 
 #: access/common/reloptions.c:113
 msgid "RESET must not include values for parameters"
@@ -39,17 +39,17 @@ msgstr ""
 #: access/common/reloptions.c:254
 #, c-format
 msgid "parameter \"%s\" specified more than once"
-msgstr ""
+msgstr "parameter \"%s\" meerdele malen opgegeven"
 
 #: access/common/reloptions.c:275
 #, c-format
 msgid "unrecognized parameter \"%s\""
-msgstr ""
+msgstr "onbekende parameter \"%s\""
 
 #: access/common/reloptions.c:309
 #, c-format
 msgid "fillfactor=%d is out of range (should be between %d and 100)"
-msgstr ""
+msgstr "fillfactor=%d is buiten bereik (zou tussen %d en 100 moeten liggen)"
 
 #: access/common/printtup.c:266
 #: tcop/fastpath.c:179
@@ -57,7 +57,7 @@ msgstr ""
 #: tcop/postgres.c:1557
 #, c-format
 msgid "unsupported format code: %d"
-msgstr ""
+msgstr "niet ondersteunde format code: %d"
 
 #: access/common/tupdesc.c:543
 #: parser/parse_relation.c:902
@@ -67,7 +67,7 @@ msgstr ""
 
 #: access/gin/ginarrayproc.c:30
 msgid "array must not contain null values"
-msgstr ""
+msgstr "array mag geen null waardes bevatten"
 
 #: access/gin/ginscan.c:146
 msgid "GIN indexes do not support whole-index scans"
@@ -143,18 +143,18 @@ msgstr ""
 #: access/hash/hashutil.c:198
 #, c-format
 msgid "index \"%s\" is not a hash index"
-msgstr ""
+msgstr "index \"%s\" is geen hash index"
 
 #: access/hash/hashutil.c:204
 #, c-format
 msgid "index \"%s\" has wrong hash version"
-msgstr ""
+msgstr "index \"%s\" heeft een foute hash versie"
 
 #: access/heap/rewriteheap.c:587
 #: access/heap/hio.c:124
 #, c-format
 msgid "row is too big: size %lu, maximum size %lu"
-msgstr ""
+msgstr "rij is te groot: grootte %lu, maximum grootte %lu"
 
 #: access/heap/heapam.c:922
 #, c-format
@@ -171,7 +171,7 @@ msgstr ""
 #: catalog/aclchk.c:573
 #, c-format
 msgid "\"%s\" is an index"
-msgstr ""
+msgstr "\"%s\" is een index"
 
 #: access/heap/heapam.c:1023
 #: access/heap/heapam.c:1051
@@ -180,7 +180,7 @@ msgstr ""
 #: commands/tablecmds.c:6520
 #, c-format
 msgid "\"%s\" is a composite type"
-msgstr ""
+msgstr "\"%s\" is een composite type"
 
 #: access/heap/heapam.c:2988
 #: access/heap/heapam.c:3019
@@ -196,12 +196,12 @@ msgstr ""
 #: tcop/utility.c:97
 #, c-format
 msgid "\"%s\" is not an index"
-msgstr ""
+msgstr "\"%s\" is geen index"
 
 #: access/nbtree/nbtinsert.c:297
 #, c-format
 msgid "duplicate key value violates unique constraint \"%s\""
-msgstr ""
+msgstr "dubbele key waarde overtreed unieke beperking \"%s\""
 
 #: access/nbtree/nbtinsert.c:418
 #: access/nbtree/nbtsort.c:477
@@ -220,7 +220,7 @@ msgstr ""
 #: access/nbtree/nbtpage.c:361
 #, c-format
 msgid "index \"%s\" is not a btree"
-msgstr ""
+msgstr "index \"%s\" is geen btree"
 
 #: access/nbtree/nbtpage.c:163
 #: access/nbtree/nbtpage.c:367
@@ -246,7 +246,7 @@ msgstr ""
 #: access/transam/slru.c:845
 #, c-format
 msgid "Could not open file \"%s\": %m."
-msgstr ""
+msgstr "Kon bestand \"%s\" niet openen : %m."
 
 #: access/transam/slru.c:851
 #, c-format
@@ -281,52 +281,52 @@ msgstr ""
 #: access/transam/slru.c:1187
 #, c-format
 msgid "removing file \"%s\""
-msgstr ""
+msgstr "bestand aan het verwijderen \"%s\""
 
 #: access/transam/twophase.c:224
 #, c-format
 msgid "transaction identifier \"%s\" is too long"
-msgstr ""
+msgstr "transactie identifier \"%s\" is te lang"
 
 #: access/transam/twophase.c:258
 #, c-format
 msgid "transaction identifier \"%s\" is already in use"
-msgstr ""
+msgstr "transactie identifier \"%s\" is al in gebruik"
 
 #: access/transam/twophase.c:267
 msgid "maximum number of prepared transactions reached"
-msgstr ""
+msgstr "maximum aantal of voorbereide transacties bereikt"
 
 #: access/transam/twophase.c:268
 #, c-format
 msgid "Increase max_prepared_transactions (currently %d)."
-msgstr ""
+msgstr "Verhoog max_prepared_transactions (nu %d)."
 
 #: access/transam/twophase.c:388
 #, c-format
 msgid "prepared transaction with identifier \"%s\" is busy"
-msgstr ""
+msgstr "voorbereide transactie met identifier \"%s\" is bezig"
 
 #: access/transam/twophase.c:396
 msgid "permission denied to finish prepared transaction"
-msgstr ""
+msgstr "toegang geweigerd om voorbereide transactie te beeindigen."
 
 #: access/transam/twophase.c:397
 msgid "Must be superuser or the user that prepared the transaction."
-msgstr ""
+msgstr "Moet super user of de user die de transactie voorbereide zijn."
 
 #: access/transam/twophase.c:408
 msgid "prepared transaction belongs to another database"
-msgstr ""
+msgstr "voorbereide transactie behoort aan een andere database"
 
 #: access/transam/twophase.c:409
 msgid "Connect to the database where the transaction was prepared to finish it."
-msgstr ""
+msgstr "Verbind met de database waar de transactie voorbereid was om ze te beeindigen."
 
 #: access/transam/twophase.c:423
 #, c-format
 msgid "prepared transaction with identifier \"%s\" does not exist"
-msgstr ""
+msgstr "voorbereide transactie met indentifier \"%s\" bestaat niet"
 
 #: access/transam/twophase.c:885
 #, c-format
@@ -419,7 +419,7 @@ msgstr ""
 #: access/transam/twophase.c:1609
 #, c-format
 msgid "recovering prepared transaction %u"
-msgstr ""
+msgstr "herstellen voorbereidde transactie %u"
 
 #: access/transam/varsup.c:87
 #, c-format
@@ -435,7 +435,7 @@ msgstr ""
 #: access/transam/varsup.c:299
 #, c-format
 msgid "database \"%s\" must be vacuumed within %u transactions"
-msgstr ""
+msgstr "database \"%s\" moet ge-vacuumed worden binnen %u transacties"
 
 #: access/transam/varsup.c:96
 #: access/transam/varsup.c:302
@@ -456,13 +456,13 @@ msgstr ""
 #: access/transam/xact.c:2550
 #, c-format
 msgid "%s cannot run inside a transaction block"
-msgstr ""
+msgstr "%s kan niet gebruikt worden binnen een transactie blok"
 
 #. translator: %s represents an SQL statement name
 #: access/transam/xact.c:2560
 #, c-format
 msgid "%s cannot run inside a subtransaction"
-msgstr ""
+msgstr "%s kan niet gebruikt worden binnen een subtransactie"
 
 #. translator: %s represents an SQL statement name
 #: access/transam/xact.c:2570
@@ -474,16 +474,16 @@ msgstr ""
 #: access/transam/xact.c:2621
 #, c-format
 msgid "%s can only be used in transaction blocks"
-msgstr ""
+msgstr "%s kan enkel gebruikt worden in een transactie blok"
 
 #: access/transam/xact.c:2803
 msgid "there is already a transaction in progress"
-msgstr ""
+msgstr "er is reeds een transactie bezig"
 
 #: access/transam/xact.c:2970
 #: access/transam/xact.c:3062
 msgid "there is no transaction in progress"
-msgstr ""
+msgstr "er is geen transactie bezig"
 
 #: access/transam/xact.c:3156
 #: access/transam/xact.c:3206
@@ -496,17 +496,17 @@ msgstr ""
 
 #: access/transam/xact.c:3954
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
-msgstr ""
+msgstr "kan niet meer dan 2^32-1 subtransacties in een transactie hebben"
 
 #: access/transam/xlog.c:1087
 #, c-format
 msgid "could not create archive status file \"%s\": %m"
-msgstr ""
+msgstr "kon archief bestand \"%s\" niet maken:%m"
 
 #: access/transam/xlog.c:1095
 #, c-format
 msgid "could not write archive status file \"%s\": %m"
-msgstr ""
+msgstr "kan niet schrijven naar arcief bestand \"%s\": %m"
 
 #: access/transam/xlog.c:1504
 #: access/transam/xlog.c:3037
@@ -537,7 +537,7 @@ msgstr ""
 #: ../port/copydir.c:126
 #, c-format
 msgid "could not create file \"%s\": %m"
-msgstr ""
+msgstr "kon bestand \"%s\" niet maken : %m"
 
 #: access/transam/xlog.c:2009
 #: access/transam/xlog.c:2138
@@ -555,7 +555,7 @@ msgstr ""
 #: ../port/copydir.c:148
 #, c-format
 msgid "could not write to file \"%s\": %m"
-msgstr ""
+msgstr "kon niet naar bestand \"%s\" schrijven: %m"
 
 #: access/transam/xlog.c:2017
 #: access/transam/xlog.c:2145
@@ -571,7 +571,7 @@ msgstr ""
 #: ../port/copydir.c:163
 #, c-format
 msgid "could not close file \"%s\": %m"
-msgstr ""
+msgstr "kon bestand \"%s\" niet sluiten: %m"
 
 #: access/transam/xlog.c:2091
 #: access/transam/xlog.c:3448
@@ -587,7 +587,7 @@ msgstr ""
 #: ../port/copydir.c:119
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr ""
+msgstr "kon bestand niet openen \"%s\":%m"
 
 #: access/transam/xlog.c:2119
 #: access/transam/xlog.c:3648
@@ -600,12 +600,12 @@ msgstr ""
 #: ../port/copydir.c:137
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr ""
+msgstr "kon bestand niet lezen \"%s\": %m"
 
 #: access/transam/xlog.c:2122
 #, c-format
 msgid "not enough data in file \"%s\""
-msgstr ""
+msgstr "niet genoeg data in bestand \"%s\""
 
 #: access/transam/xlog.c:2239
 #, c-format
@@ -639,7 +639,7 @@ msgstr ""
 #: commands/tablespace.c:628
 #, c-format
 msgid "could not remove file \"%s\": %m"
-msgstr ""
+msgstr "kon bestand niet verwijderen \"%s\":%m"
 
 #: access/transam/xlog.c:2566
 #, c-format
@@ -766,7 +766,7 @@ msgstr ""
 #: access/transam/xlog.c:3352
 #: access/transam/xlog.c:3359
 msgid "WAL file is from different system"
-msgstr ""
+msgstr "WAL bestand is van een ander systeem"
 
 #: access/transam/xlog.c:3345
 #, c-format
@@ -799,34 +799,34 @@ msgstr ""
 #: access/transam/xlog.c:3477
 #, c-format
 msgid "syntax error in history file: %s"
-msgstr ""
+msgstr "syntax error in history bestand: %s"
 
 #: access/transam/xlog.c:3478
 msgid "Expected a numeric timeline ID."
-msgstr ""
+msgstr "Verwachtte een numerieke timeline ID"
 
 #: access/transam/xlog.c:3483
 #, c-format
 msgid "invalid data in history file: %s"
-msgstr ""
+msgstr "ongeldige data in history bestand: %s"
 
 #: access/transam/xlog.c:3484
 msgid "Timeline IDs must be in increasing sequence."
-msgstr ""
+msgstr "Timeline IDs moeten in stijgende volgorde zijn."
 
 #: access/transam/xlog.c:3497
 #, c-format
 msgid "invalid data in history file \"%s\""
-msgstr ""
+msgstr "ongeldige data in history bestand \"%s\""
 
 #: access/transam/xlog.c:3498
 msgid "Timeline IDs must be less than child timeline's ID."
-msgstr ""
+msgstr "Timeline IDs moeten kleiner zijn dan child timeline's ID."
 
 #: access/transam/xlog.c:3735
 #, c-format
 msgid "could not link file \"%s\" to \"%s\": %m"
-msgstr ""
+msgstr "kon bestand \"%s\" niet linken aan \"%s\": %m"
 
 #: access/transam/xlog.c:3742
 #: access/transam/xlog.c:4571
@@ -837,26 +837,26 @@ msgstr ""
 #: utils/init/flatfiles.c:667
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
-msgstr ""
+msgstr "kon bestande \"%s\" niet hernoemen naar \"%s\": %m"
 
 #: access/transam/xlog.c:3801
 msgid "invalid LC_COLLATE setting"
-msgstr ""
+msgstr "ongeldige LC_COLLATE instelling"
 
 #: access/transam/xlog.c:3806
 msgid "invalid LC_CTYPE setting"
-msgstr ""
+msgstr "ongeldige LC_CTYPE instelling"
 
 #: access/transam/xlog.c:3835
 #, c-format
 msgid "could not create control file \"%s\": %m"
-msgstr ""
+msgstr "kon control file \"%s\" niet maken : %m"
 
 #: access/transam/xlog.c:3846
 #: access/transam/xlog.c:4062
 #, c-format
 msgid "could not write to control file: %m"
-msgstr ""
+msgstr "kon niet schrijven naar control bestand: %m"
 
 #: access/transam/xlog.c:3852
 #: access/transam/xlog.c:4068
@@ -868,18 +868,18 @@ msgstr ""
 #: access/transam/xlog.c:4073
 #, c-format
 msgid "could not close control file: %m"
-msgstr ""
+msgstr "kon control bestand niet sluiten: %m"
 
 #: access/transam/xlog.c:3875
 #: access/transam/xlog.c:4051
 #, c-format
 msgid "could not open control file \"%s\": %m"
-msgstr ""
+msgstr "kon control bestand \"%s\" niet openen:%m"
 
 #: access/transam/xlog.c:3881
 #, c-format
 msgid "could not read from control file: %m"
-msgstr ""
+msgstr "kon niet lezen van control bestand: %m"
 
 #: access/transam/xlog.c:3893
 #: access/transam/xlog.c:3922
@@ -897,7 +897,7 @@ msgstr ""
 #: access/transam/xlog.c:4007
 #: utils/init/miscinit.c:1094
 msgid "database files are incompatible with server"
-msgstr ""
+msgstr "database bestanden zijn incompatibel met server."
 
 #: access/transam/xlog.c:3894
 #, c-format
@@ -909,11 +909,11 @@ msgstr ""
 #: access/transam/xlog.c:3933
 #: access/transam/xlog.c:3938
 msgid "It looks like you need to initdb."
-msgstr ""
+msgstr "Het lijkt erop dat u initdb moet uitvoeren."
 
 #: access/transam/xlog.c:3907
 msgid "incorrect checksum in control file"
-msgstr ""
+msgstr "onjuiste checksum in control bestand"
 
 #: access/transam/xlog.c:3923
 #, c-format
@@ -945,7 +945,7 @@ msgstr ""
 #: access/transam/xlog.c:4002
 #: access/transam/xlog.c:4011
 msgid "It looks like you need to recompile or initdb."
-msgstr ""
+msgstr "Het lijkt erop dat u moet hercompileren of initdb moet uitvoeren."
 
 #: access/transam/xlog.c:3949
 #, c-format
@@ -993,7 +993,7 @@ msgstr ""
 #: access/transam/xlog.c:4014
 #: access/transam/xlog.c:4021
 msgid "database files are incompatible with operating system"
-msgstr ""
+msgstr "database bestanden zijn incompatibel met besturingssysteem"
 
 #: access/transam/xlog.c:4015
 #, c-format
@@ -1003,7 +1003,7 @@ msgstr ""
 #: access/transam/xlog.c:4018
 #: access/transam/xlog.c:4025
 msgid "It looks like you need to initdb or install locale support."
-msgstr ""
+msgstr "Het lijkt erop dat u initdb moet uitvoeren of locale support installeren."
 
 #: access/transam/xlog.c:4022
 #, c-format
@@ -1032,7 +1032,7 @@ msgstr ""
 
 #: access/transam/xlog.c:4335
 msgid "starting archive recovery"
-msgstr ""
+msgstr "starten archief herstelling"
 
 #: access/transam/xlog.c:4380
 #, c-format
@@ -1104,7 +1104,7 @@ msgstr ""
 
 #: access/transam/xlog.c:4616
 msgid "archive recovery complete"
-msgstr ""
+msgstr "archief herstelling gereed"
 
 #: access/transam/xlog.c:4703
 #, c-format
@@ -1128,40 +1128,40 @@ msgstr ""
 
 #: access/transam/xlog.c:4764
 msgid "control file contains invalid data"
-msgstr ""
+msgstr "control bestand bevat ongeldige data"
 
 #: access/transam/xlog.c:4768
 #, c-format
 msgid "database system was shut down at %s"
-msgstr ""
+msgstr "database systeen werd afgesloten om %s"
 
 #: access/transam/xlog.c:4772
 #, c-format
 msgid "database system shutdown was interrupted; last known up at %s"
-msgstr ""
+msgstr "database afsluiten werd onderbroken; laatst gekende up te %s"
 
 #: access/transam/xlog.c:4776
 #, c-format
 msgid "database system was interrupted while in recovery at %s"
-msgstr ""
+msgstr "database systeem werd onderbroken tijdens herstelling te %s"
 
 #: access/transam/xlog.c:4778
 msgid "This probably means that some data is corrupted and you will have to use the last backup for recovery."
-msgstr ""
+msgstr "Dit betekend waarschijnlijk dat sommige data corrupt is en dat u de laatste backup zult moeten gebruiken om te herstellen"
 
 #: access/transam/xlog.c:4782
 #, c-format
 msgid "database system was interrupted while in recovery at log time %s"
-msgstr ""
+msgstr "database systeem werd onderbroken tijdens herstelling om log tijd %s"
 
 #: access/transam/xlog.c:4784
 msgid "If this has occurred more than once some data might be corrupted and you might need to choose an earlier recovery target."
-msgstr ""
+msgstr "Als het meer dan 1 keer gebeurde zou het kunnen dat sommige data corrupts is en dat u misschien een eerder herstellings doel moet kiezen."
 
 #: access/transam/xlog.c:4788
 #, c-format
 msgid "database system was interrupted; last known up at %s"
-msgstr ""
+msgstr "database systeem was onderbroken; laatst gekende up te %s"
 
 #: access/transam/xlog.c:4820
 #, c-format
@@ -1176,12 +1176,12 @@ msgstr ""
 
 #: access/transam/xlog.c:4841
 msgid "could not locate required checkpoint record"
-msgstr ""
+msgstr "kon vereiste checkpoint record niet vinden"
 
 #: access/transam/xlog.c:4842
 #, c-format
 msgid "If you are not restoring from a backup, try removing the file \"%s/backup_label\"."
-msgstr ""
+msgstr "Als u aan het herstellen bent van een backup, probeer bestand \"%s/backup_label\" te verwijderen."
 
 #: access/transam/xlog.c:4868
 #, c-format
@@ -1190,7 +1190,7 @@ msgstr ""
 
 #: access/transam/xlog.c:4874
 msgid "could not locate a valid checkpoint record"
-msgstr ""
+msgstr "kon geen geldig checkpoint record vinden"
 
 #: access/transam/xlog.c:4883
 #, c-format
@@ -1200,16 +1200,16 @@ msgstr ""
 #: access/transam/xlog.c:4887
 #, c-format
 msgid "next transaction ID: %u/%u; next OID: %u"
-msgstr ""
+msgstr "volgende transactie ID: %u/%u; volgende OID: %u"
 
 #: access/transam/xlog.c:4891
 #, c-format
 msgid "next MultiXactId: %u; next MultiXactOffset: %u"
-msgstr ""
+msgstr "volgende MultiXactId: %u; volgende MultiXactOffset: %u"
 
 #: access/transam/xlog.c:4895
 msgid "invalid next transaction ID"
-msgstr ""
+msgstr "volgende transactie ID is ongeldig"
 
 #: access/transam/xlog.c:4913
 msgid "invalid redo in checkpoint record"
@@ -1221,11 +1221,11 @@ msgstr ""
 
 #: access/transam/xlog.c:4949
 msgid "automatic recovery in progress"
-msgstr ""
+msgstr "automatisch herstel is bezig"
 
 #: access/transam/xlog.c:4955
 msgid "database system was not properly shut down; automatic recovery in progress"
-msgstr ""
+msgstr "database systeem was niet correct afgesloten; automatisch herstel is bezig"
 
 #: access/transam/xlog.c:5017
 #, c-format
@@ -1322,11 +1322,11 @@ msgstr ""
 
 #: access/transam/xlog.c:5548
 msgid "shutting down"
-msgstr ""
+msgstr "bezig met afsluiten"
 
 #: access/transam/xlog.c:5556
 msgid "database system is shut down"
-msgstr ""
+msgstr "database syteem is afgesloten"
 
 #: access/transam/xlog.c:5866
 msgid "concurrent transaction log activity while database system is shutting down"
@@ -1366,12 +1366,12 @@ msgstr ""
 #: access/transam/xlog.c:6390
 #: access/transam/xlog.c:6560
 msgid "must be superuser to run a backup"
-msgstr ""
+msgstr "moet de super user zijn om een backup te maken"
 
 #: access/transam/xlog.c:6395
 #: access/transam/xlog.c:6401
 msgid "WAL archiving is not active"
-msgstr ""
+msgstr "WAL archivereing is niet actief"
 
 #: access/transam/xlog.c:6396
 msgid "archive_mode must be enabled at server start."
@@ -1384,26 +1384,26 @@ msgstr ""
 #: access/transam/xlog.c:6431
 #: access/transam/xlog.c:6485
 msgid "a backup is already in progress"
-msgstr ""
+msgstr "er is reeds een backup bezig"
 
 #: access/transam/xlog.c:6432
 msgid "Run pg_stop_backup() and try again."
-msgstr ""
+msgstr "doe pg_stop_backup() an probeer opnieuw."
 
 #: access/transam/xlog.c:6486
 #, c-format
 msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
-msgstr ""
+msgstr "Als u zeker bent dat er geen backup bezig is verwijder dan bestand \"%s\" en probeer opnieuw."
 
 #: access/transam/xlog.c:6507
 #: access/transam/xlog.c:6635
 #, c-format
 msgid "could not write file \"%s\": %m"
-msgstr ""
+msgstr "kon niet schrijven naar bestand \"%s\": %m"
 
 #: access/transam/xlog.c:6598
 msgid "a backup is not in progress"
-msgstr ""
+msgstr "er is geen backup bezig"
 
 #: access/transam/xlog.c:6610
 #: access/transam/xlog.c:6934
@@ -1412,7 +1412,7 @@ msgstr ""
 #: access/transam/xlog.c:6977
 #, c-format
 msgid "invalid data in file \"%s\""
-msgstr ""
+msgstr "ongeldige data in bestand \"%s\""
 
 #: access/transam/xlog.c:6682
 msgid "must be superuser to switch transaction log files"
@@ -1434,36 +1434,36 @@ msgstr ""
 #: tcop/postgres.c:3024
 #, c-format
 msgid "--%s requires a value"
-msgstr ""
+msgstr "--%s vereist een waarde"
 
 #: bootstrap/bootstrap.c:298
 #: postmaster/postmaster.c:635
 #: tcop/postgres.c:3029
 #, c-format
 msgid "-c %s requires a value"
-msgstr ""
+msgstr "-c %s vereist een waarde"
 
 #: bootstrap/bootstrap.c:309
 #: postmaster/postmaster.c:647
 #: postmaster/postmaster.c:660
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr ""
+msgstr "Probeer \"%s --help\" voor meer informatie.\n"
 
 #: bootstrap/bootstrap.c:318
 #, c-format
 msgid "%s: invalid command-line arguments\n"
-msgstr ""
+msgstr "%s: ongeldig command-line argument\n"
 
 #: y.tab.c:626
 #: y.tab.c:13679
 msgid "syntax error: cannot back up"
-msgstr ""
+msgstr "syntax error: kan niet backuppen"
 
 #: y.tab.c:1547
 #: y.tab.c:24939
 msgid "syntax error; also virtual memory exhausted"
-msgstr ""
+msgstr "syntax error; virtueel geheugen ook opgebruikt"
 
 #: y.tab.c:1551
 #: y.tab.c:24943
@@ -1523,7 +1523,7 @@ msgstr ""
 #: catalog/dependency.c:857
 #, c-format
 msgid "%s depends on %s"
-msgstr ""
+msgstr "%s heeft %s nodig"
 
 #: catalog/dependency.c:699
 #: catalog/dependency.c:864
@@ -1534,17 +1534,17 @@ msgstr ""
 #: catalog/dependency.c:1799
 #, c-format
 msgid " column %s"
-msgstr ""
+msgstr "kolom %s"
 
 #: catalog/dependency.c:1805
 #, c-format
 msgid "function %s"
-msgstr ""
+msgstr "functie %s"
 
 #: catalog/dependency.c:1810
 #, c-format
 msgid "type %s"
-msgstr ""
+msgstr "type %s"
 
 #: catalog/dependency.c:1840
 #, c-format
@@ -1554,12 +1554,12 @@ msgstr ""
 #: catalog/dependency.c:1864
 #, c-format
 msgid "constraint %s on "
-msgstr ""
+msgstr "beperking %s op"
 
 #: catalog/dependency.c:1870
 #, c-format
 msgid "constraint %s"
-msgstr ""
+msgstr "beperking %s"
 
 #: catalog/dependency.c:1888
 #, c-format
@@ -1569,12 +1569,12 @@ msgstr ""
 #: catalog/dependency.c:1925
 #, c-format
 msgid "default for %s"
-msgstr ""
+msgstr "standaard voor %s"
 
 #: catalog/dependency.c:1943
 #, c-format
 msgid "language %s"
-msgstr ""
+msgstr "taal %s"
 
 #: catalog/dependency.c:1950
 #, c-format
@@ -1634,7 +1634,7 @@ msgstr ""
 #: catalog/dependency.c:2220
 #, c-format
 msgid "role %s"
-msgstr ""
+msgstr "rol %s"
 
 #: catalog/dependency.c:2233
 #, c-format
@@ -1840,12 +1840,12 @@ msgstr ""
 #: catalog/aclchk.c:1352
 #, c-format
 msgid "unrecognized privilege type \"%s\""
-msgstr ""
+msgstr "onbekend privilege type \"%s\""
 
 #: catalog/aclchk.c:1399
 #, c-format
 msgid "permission denied for relation %s"
-msgstr ""
+msgstr "toegang geweigerd voor relatie %s"
 
 #: catalog/aclchk.c:1401
 #: commands/sequence.c:442
@@ -1854,122 +1854,122 @@ msgstr ""
 #: commands/sequence.c:717
 #, c-format
 msgid "permission denied for sequence %s"
-msgstr ""
+msgstr "toegang geweigerd voor sequence %s"
 
 #: catalog/aclchk.c:1403
 #, c-format
 msgid "permission denied for database %s"
-msgstr ""
+msgstr "toegang geweigerd voor database %s"
 
 #: catalog/aclchk.c:1405
 #, c-format
 msgid "permission denied for function %s"
-msgstr ""
+msgstr "toeganf geweigerd voor functie %s"
 
 #: catalog/aclchk.c:1407
 #, c-format
 msgid "permission denied for operator %s"
-msgstr ""
+msgstr "toegang geweigerd voor operator %s"
 
 #: catalog/aclchk.c:1409
 #, c-format
 msgid "permission denied for type %s"
-msgstr ""
+msgstr "toegang geweigerd voor type %s"
 
 #: catalog/aclchk.c:1411
 #, c-format
 msgid "permission denied for language %s"
-msgstr ""
+msgstr "toegang geweigerd voor language %s"
 
 #: catalog/aclchk.c:1413
 #, c-format
 msgid "permission denied for schema %s"
-msgstr ""
+msgstr "toegang geweigerd voor schema %s"
 
 #: catalog/aclchk.c:1415
 #, c-format
 msgid "permission denied for operator class %s"
-msgstr ""
+msgstr "toegang geweigerd voor operator class %s"
 
 #: catalog/aclchk.c:1417
 #, c-format
 msgid "permission denied for operator family %s"
-msgstr ""
+msgstr "toegang geweigerd voor operator family %s"
 
 #: catalog/aclchk.c:1419
 #, c-format
 msgid "permission denied for conversion %s"
-msgstr ""
+msgstr "toegang geweigerd voor conversion %s"
 
 #: catalog/aclchk.c:1421
 #, c-format
 msgid "permission denied for tablespace %s"
-msgstr ""
+msgstr "toegang geweigerd voor tablespace %s"
 
 #: catalog/aclchk.c:1423
 #, c-format
 msgid "permission denied for text search dictionary %s"
-msgstr ""
+msgstr "toegang geweigerd voor text search dictionary %s"
 
 #: catalog/aclchk.c:1425
 #, c-format
 msgid "permission denied for text search configuration %s"
-msgstr ""
+msgstr "toegang geweigerd voor text search configuratie %s"
 
 #: catalog/aclchk.c:1431
 #, c-format
 msgid "must be owner of relation %s"
-msgstr ""
+msgstr "moet eigenaar zijn van relatie %s"
 
 #: catalog/aclchk.c:1433
 #, c-format
 msgid "must be owner of sequence %s"
-msgstr ""
+msgstr "moet eigenaar zijn van sequence %s"
 
 #: catalog/aclchk.c:1435
 #, c-format
 msgid "must be owner of database %s"
-msgstr ""
+msgstr "moet eigenaar zijn van database %s"
 
 #: catalog/aclchk.c:1437
 #, c-format
 msgid "must be owner of function %s"
-msgstr ""
+msgstr "moet eigenaar zijn van functie %s"
 
 #: catalog/aclchk.c:1439
 #, c-format
 msgid "must be owner of operator %s"
-msgstr ""
+msgstr "moet eigenaar zijn van operator %s"
 
 #: catalog/aclchk.c:1441
 #, c-format
 msgid "must be owner of type %s"
-msgstr ""
+msgstr "moet eigenaar zijn van type %s"
 
 #: catalog/aclchk.c:1443
 #, c-format
 msgid "must be owner of language %s"
-msgstr ""
+msgstr "moet eigenaar zijn van language %s"
 
 #: catalog/aclchk.c:1445
 #, c-format
 msgid "must be owner of schema %s"
-msgstr ""
+msgstr "moet eigenaar zijn van schema %s"
 
 #: catalog/aclchk.c:1447
 #, c-format
 msgid "must be owner of operator class %s"
-msgstr ""
+msgstr "moet eigenaar zijn van operator class %s"
 
 #: catalog/aclchk.c:1449
 #, c-format
 msgid "must be owner of operator family %s"
-msgstr ""
+msgstr "moet eigenaar zijn van operator family %s"
 
 #: catalog/aclchk.c:1451
 #, c-format
 msgid "must be owner of conversion %s"
-msgstr ""
+msgstr "moet eigenaar zijn van conversion %s"
 
 #: catalog/aclchk.c:1453
 #, c-format
@@ -1979,80 +1979,80 @@ msgstr ""
 #: catalog/aclchk.c:1455
 #, c-format
 msgid "must be owner of text search dictionary %s"
-msgstr ""
+msgstr "moet eigenaar zijn van text search dictionary %s"
 
 #: catalog/aclchk.c:1457
 #, c-format
 msgid "must be owner of text search configuration %s"
-msgstr ""
+msgstr "moet eigenaar zijn van text search configuration %s"
 
 #: catalog/aclchk.c:1500
 #, c-format
 msgid "role with OID %u does not exist"
-msgstr ""
+msgstr "role met OID %u bestaat niet"
 
 #: catalog/aclchk.c:1570
 #: catalog/aclchk.c:2056
 #, c-format
 msgid "relation with OID %u does not exist"
-msgstr ""
+msgstr "relation met OID %u bestaat niet"
 
 #: catalog/aclchk.c:1666
 #: catalog/aclchk.c:2381
 #: utils/adt/dbsize.c:122
 #, c-format
 msgid "database with OID %u does not exist"
-msgstr ""
+msgstr "database met OID %u bestaat niet"
 
 #: catalog/aclchk.c:1722
 #: catalog/aclchk.c:2140
 #: tcop/fastpath.c:222
 #, c-format
 msgid "function with OID %u does not exist"
-msgstr ""
+msgstr "function met OID %u bestaat niet"
 
 #: catalog/aclchk.c:1778
 #: catalog/aclchk.c:2168
 #, c-format
 msgid "language with OID %u does not exist"
-msgstr ""
+msgstr "language met OID %u bestaat niet"
 
 #: catalog/aclchk.c:1862
 #: catalog/aclchk.c:2196
 #, c-format
 msgid "schema with OID %u does not exist"
-msgstr ""
+msgstr "schema met OID %u bestaat niet"
 
 #: catalog/aclchk.c:1928
 #: catalog/aclchk.c:2235
 #, c-format
 msgid "tablespace with OID %u does not exist"
-msgstr ""
+msgstr "tablespace met OID %u bestaat niet"
 
 #: catalog/aclchk.c:2084
 #, c-format
 msgid "type with OID %u does not exist"
-msgstr ""
+msgstr "type met OID %u bestaat niet"
 
 #: catalog/aclchk.c:2112
 #, c-format
 msgid "operator with OID %u does not exist"
-msgstr ""
+msgstr "operator met OID %u bestaat niet"
 
 #: catalog/aclchk.c:2264
 #, c-format
 msgid "operator class with OID %u does not exist"
-msgstr ""
+msgstr "operator class met OID %u bestaat niet"
 
 #: catalog/aclchk.c:2293
 #, c-format
 msgid "operator family with OID %u does not exist"
-msgstr ""
+msgstr "operator family met OID %u bestaat niet"
 
 #: catalog/aclchk.c:2322
 #, c-format
 msgid "text search dictionary with OID %u does not exist"
-msgstr ""
+msgstr "text search dictionary met OID %u bestaat niet"
 
 #: catalog/aclchk.c:2351
 #, c-format
@@ -2062,11 +2062,11 @@ msgstr ""
 #: catalog/aclchk.c:2409
 #, c-format
 msgid "conversion with OID %u does not exist"
-msgstr ""
+msgstr "conversion met OID %u bestaat niet"
 
 #: catalog/pg_aggregate.c:97
 msgid "cannot determine transition data type"
-msgstr ""
+msgstr "kan transition data type niet achterhalen"
 
 #: catalog/pg_aggregate.c:98
 msgid "An aggregate using a polymorphic transition type must have at least one polymorphic argument."
@@ -2085,7 +2085,7 @@ msgstr ""
 #: catalog/pg_proc.c:190
 #: executor/functions.c:1078
 msgid "cannot determine result data type"
-msgstr ""
+msgstr "kan resulterend data type niet achterhalen"
 
 #: catalog/pg_aggregate.c:175
 msgid "An aggregate returning a polymorphic type must have at least one polymorphic argument."
@@ -2107,7 +2107,7 @@ msgstr ""
 #: parser/parse_func.c:1202
 #, c-format
 msgid "function %s does not exist"
-msgstr ""
+msgstr "function %s bestaat niet"
 
 #: catalog/pg_aggregate.c:321
 #, c-format
@@ -2122,7 +2122,7 @@ msgstr ""
 #: catalog/heap.c:227
 #, c-format
 msgid "permission denied to create \"%s.%s\""
-msgstr ""
+msgstr "toegang geweigerd om \"%s.%s\" te maken"
 
 #: catalog/heap.c:229
 msgid "System catalog modifications are currently disallowed."
@@ -2134,7 +2134,7 @@ msgstr ""
 #: commands/tablecmds.c:3071
 #, c-format
 msgid "tables can have at most %d columns"
-msgstr ""
+msgstr "tabellen kunnen maximum %d kolommen hebben"
 
 #: catalog/heap.c:363
 #, c-format
@@ -2300,13 +2300,13 @@ msgstr ""
 #: catalog/namespace.c:267
 #, c-format
 msgid "relation \"%s.%s\" does not exist"
-msgstr ""
+msgstr "relation \"%s.%s\" bestaat niet"
 
 #: catalog/namespace.c:272
 #: utils/adt/regproc.c:815
 #, c-format
 msgid "relation \"%s\" does not exist"
-msgstr ""
+msgstr "relation \"%s\" bestaat niet"
 
 #: catalog/namespace.c:353
 #: catalog/namespace.c:2049
@@ -2317,26 +2317,26 @@ msgstr ""
 #: commands/tsearchcmds.c:290
 #, c-format
 msgid "text search parser \"%s\" does not exist"
-msgstr ""
+msgstr "text search parser \"%s\" bestaat niet"
 
 #: catalog/namespace.c:1522
 #: commands/tsearchcmds.c:629
 #, c-format
 msgid "text search dictionary \"%s\" does not exist"
-msgstr ""
+msgstr "text search dictionary \"%s\" bestaat niet"
 
 #: catalog/namespace.c:1651
 #: commands/tsearchcmds.c:1105
 #, c-format
 msgid "text search template \"%s\" does not exist"
-msgstr ""
+msgstr "text search template \"%s\" bestaat niet"
 
 #: catalog/namespace.c:1779
 #: commands/tsearchcmds.c:1491
 #: commands/tsearchcmds.c:1646
 #, c-format
 msgid "text search configuration \"%s\" does not exist"
-msgstr ""
+msgstr "text search configuration \"%s\" bestaat niet"
 
 #: catalog/namespace.c:1895
 #: parser/parse_expr.c:500
@@ -2362,7 +2362,7 @@ msgstr ""
 #: catalog/namespace.c:2614
 #, c-format
 msgid "permission denied to create temporary tables in database \"%s\""
-msgstr ""
+msgstr "toegenag geweigerd om temporary table te maken in database \"%s\""
 
 #: catalog/pg_depend.c:207
 #, c-format
@@ -2375,34 +2375,34 @@ msgstr ""
 #: storage/large_object/inv_api.c:362
 #, c-format
 msgid "large object %u does not exist"
-msgstr ""
+msgstr "large object %u bestaat niet"
 
 #: catalog/pg_conversion.c:64
 #, c-format
 msgid "conversion \"%s\" already exists"
-msgstr ""
+msgstr "conversion \"%s\" bestaat al"
 
 #: catalog/pg_conversion.c:77
 #, c-format
 msgid "default conversion for %s to %s already exists"
-msgstr ""
+msgstr "default conversion voor %s naar %s bestaat al"
 
 #: catalog/pg_enum.c:90
 #, c-format
 msgid "invalid enum label \"%s\", must be %d characters or less"
-msgstr ""
+msgstr "ongeldig enum label \"%s\", moet %d of minder tekens zijn"
 
 #: catalog/pg_namespace.c:51
 #: commands/schemacmds.c:256
 #, c-format
 msgid "schema \"%s\" already exists"
-msgstr ""
+msgstr "schema \"%s\" bestaat al"
 
 #: catalog/pg_operator.c:219
 #: catalog/pg_operator.c:394
 #, c-format
 msgid "\"%s\" is not a valid operator name"
-msgstr ""
+msgstr "\"%s\" is geen geldige operator name"
 
 #: catalog/pg_operator.c:400
 msgid "at least one of leftarg or rightarg must be specified"
@@ -2427,7 +2427,7 @@ msgstr ""
 #: catalog/pg_operator.c:432
 #, c-format
 msgid "operator %s already exists"
-msgstr ""
+msgstr "operator %s bestaat al"
 
 #: catalog/pg_operator.c:660
 msgid "operator cannot be its own negator or sort operator"
@@ -2438,7 +2438,7 @@ msgstr ""
 #: parser/parse_func.c:1284
 #, c-format
 msgid "functions cannot have more than %d arguments"
-msgstr ""
+msgstr "functions kunnen niet meer dan %d argumenten hebben"
 
 #: catalog/pg_proc.c:191
 #: executor/functions.c:1079
@@ -2447,7 +2447,7 @@ msgstr ""
 
 #: catalog/pg_proc.c:196
 msgid "unsafe use of pseudo-type \"internal\""
-msgstr ""
+msgstr "onveillig gebruik van pseudo-type \"internal\""
 
 #: catalog/pg_proc.c:197
 msgid "A function returning \"internal\" must have at least one \"internal\" argument."
@@ -2668,7 +2668,7 @@ msgstr ""
 #: utils/adt/ruleutils.c:1309
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
-msgstr ""
+msgstr "colume \"%s\" van relation \"%s\" bestaat niet"
 
 #: commands/analyze.c:487
 #, c-format
@@ -2739,17 +2739,17 @@ msgstr ""
 #: commands/cluster.c:448
 #, c-format
 msgid "\"%s\" is a system catalog"
-msgstr ""
+msgstr "\"%s\" is een system catalog"
 
 #: commands/conversioncmds.c:66
 #, c-format
 msgid "source encoding \"%s\" does not exist"
-msgstr ""
+msgstr "source encoding \"%s\" bestaat niet"
 
 #: commands/conversioncmds.c:73
 #, c-format
 msgid "destination encoding \"%s\" does not exist"
-msgstr ""
+msgstr "destination encoding \"%s\" bestaat niet"
 
 #: commands/conversioncmds.c:112
 #: commands/conversioncmds.c:146
@@ -2757,7 +2757,7 @@ msgstr ""
 #: commands/comment.c:1154
 #, c-format
 msgid "conversion \"%s\" does not exist"
-msgstr ""
+msgstr "conversion \"%s\" bestaat niet"
 
 #: commands/conversioncmds.c:118
 #, c-format
@@ -2775,7 +2775,7 @@ msgstr ""
 #: tcop/utility.c:91
 #, c-format
 msgid "\"%s\" is not a view"
-msgstr ""
+msgstr "\"%s\" is geen view"
 
 #: commands/comment.c:607
 msgid "database name cannot be qualified"
@@ -2802,12 +2802,12 @@ msgstr ""
 #: commands/comment.c:802
 #, c-format
 msgid "rule \"%s\" does not exist"
-msgstr ""
+msgstr "rule \"%s\" bestaat niet"
 
 #: commands/comment.c:810
 #, c-format
 msgid "there are multiple rules named \"%s\""
-msgstr ""
+msgstr "er zijn meerdere rules genaamd \"%s\""
 
 #: commands/comment.c:811
 msgid "Specify a relation name as well as a rule name."
@@ -2963,7 +2963,7 @@ msgstr ""
 
 #: commands/dbcommands.c:151
 msgid "LOCATION is not supported anymore"
-msgstr ""
+msgstr "LOCATION is niet meer ondersteund"
 
 #: commands/dbcommands.c:152
 msgid "Consider using tablespaces instead."
@@ -3028,7 +3028,7 @@ msgstr ""
 #: commands/dbcommands.c:773
 #, c-format
 msgid "database \"%s\" already exists"
-msgstr ""
+msgstr "database \"%s\" bestaat al"
 
 #: commands/dbcommands.c:378
 #, c-format
@@ -3254,7 +3254,7 @@ msgstr ""
 #: commands/copy.c:1723
 #, c-format
 msgid "\"%s\" is a directory"
-msgstr ""
+msgstr "\"%s\" is een map"
 
 #: commands/copy.c:1514
 #, c-format
@@ -3474,7 +3474,7 @@ msgstr ""
 #: commands/functioncmds.c:214
 #, c-format
 msgid "type %s does not exist"
-msgstr ""
+msgstr "type %s bestaat niet"
 
 #: commands/functioncmds.c:222
 msgid "functions cannot accept set arguments"
@@ -3648,7 +3648,7 @@ msgstr ""
 #: commands/define.c:273
 #, c-format
 msgid "%s requires a parameter"
-msgstr ""
+msgstr "%s vereist een parameter"
 
 #: commands/define.c:106
 #: commands/define.c:117
@@ -3656,12 +3656,12 @@ msgstr ""
 #: commands/define.c:198
 #, c-format
 msgid "%s requires a numeric value"
-msgstr ""
+msgstr "%s vereist een numeric value"
 
 #: commands/define.c:166
 #, c-format
 msgid "%s requires a Boolean value"
-msgstr ""
+msgstr "%s vereist een Boolean value"
 
 #: commands/define.c:227
 #, c-format
@@ -3823,7 +3823,7 @@ msgstr ""
 #: commands/proclang.c:508
 #, c-format
 msgid "language \"%s\" already exists"
-msgstr ""
+msgstr "language \"%s\" bestaat al"
 
 #: commands/proclang.c:93
 msgid "using pg_pltemplate information instead of CREATE LANGUAGE parameters"
@@ -4017,7 +4017,7 @@ msgstr ""
 #: utils/adt/xml.c:2166
 #, c-format
 msgid "cursor \"%s\" does not exist"
-msgstr ""
+msgstr "cursor \"%s\" bestaat niet"
 
 #: commands/portalcmds.c:325
 #: tcop/pquery.c:733
@@ -4380,7 +4380,7 @@ msgstr ""
 #: commands/tablecmds.c:2698
 #, c-format
 msgid "\"%s\" is not a table or view"
-msgstr ""
+msgstr "\"%s\" is geen a table of view"
 
 #: commands/tablecmds.c:2734
 #: commands/tablecmds.c:3443
@@ -4504,7 +4504,7 @@ msgstr ""
 #: commands/trigger.c:3418
 #, c-format
 msgid "constraint \"%s\" does not exist"
-msgstr ""
+msgstr "constraint \"%s\" bestaat niet"
 
 #: commands/tablecmds.c:4726
 #, c-format
@@ -5173,7 +5173,7 @@ msgstr ""
 #: commands/typecmds.c:2387
 #: commands/typecmds.c:2623
 msgid "Use ALTER TABLE instead."
-msgstr ""
+msgstr "Gebruik ALTER TABLE."
 
 #: commands/typecmds.c:2394
 #: commands/typecmds.c:2535
@@ -5219,7 +5219,7 @@ msgstr ""
 #: commands/user.c:1022
 #, c-format
 msgid "role \"%s\" already exists"
-msgstr ""
+msgstr "role \"%s\" bestaat al"
 
 #: commands/user.c:552
 #: commands/user.c:734
@@ -5231,7 +5231,7 @@ msgstr ""
 #: utils/init/miscinit.c:382
 #, c-format
 msgid "role \"%s\" does not exist"
-msgstr ""
+msgstr "role \"%s\" bestaat niet"
 
 #: commands/user.c:565
 #: commands/user.c:745
@@ -5243,11 +5243,11 @@ msgstr ""
 #: commands/user.c:580
 #: commands/user.c:753
 msgid "permission denied"
-msgstr ""
+msgstr "toegenag geweigerd"
 
 #: commands/user.c:815
 msgid "permission denied to drop role"
-msgstr ""
+msgstr "toegeang geweigerd on role te verwijderen"
 
 #: commands/user.c:848
 #, c-format
@@ -5257,7 +5257,7 @@ msgstr ""
 #: commands/user.c:860
 #: commands/user.c:864
 msgid "current user cannot be dropped"
-msgstr ""
+msgstr "huiduge gebruiken kan niet verwijderd worden"
 
 #: commands/user.c:868
 msgid "session user cannot be dropped"
@@ -5566,7 +5566,7 @@ msgstr ""
 
 #: commands/view.c:138
 msgid "view must have at least one column"
-msgstr ""
+msgstr "view moet minstens 1 kolom hebben"
 
 #: commands/view.c:226
 #: commands/view.c:238
@@ -6102,56 +6102,56 @@ msgstr ""
 #: libpq/auth.c:919
 #, c-format
 msgid "authentication failed for user \"%s\": host rejected"
-msgstr ""
+msgstr "inloggen mislukt voor gebruiker \"%s\": host rejected"
 
 #: libpq/auth.c:922
 #, c-format
 msgid "Kerberos 5 authentication failed for user \"%s\""
-msgstr ""
+msgstr "Kerberos 5 inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:925
 #, c-format
 msgid "GSSAPI authentication failed for user \"%s\""
-msgstr ""
+msgstr "GSSAPI inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:928
 #, c-format
 msgid "SSPI authentication failed for user \"%s\""
-msgstr ""
+msgstr "SSPI inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:931
 #, c-format
 msgid "\"trust\" authentication failed for user \"%s\""
-msgstr ""
+msgstr "\"trust\" inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:934
 #, c-format
 msgid "Ident authentication failed for user \"%s\""
-msgstr ""
+msgstr "Ident inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:939
 #, c-format
 msgid "password authentication failed for user \"%s\""
-msgstr ""
+msgstr "password inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:943
 #, c-format
 msgid "PAM authentication failed for user \"%s\""
-msgstr ""
+msgstr "PAM inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:948
 #, c-format
 msgid "LDAP authentication failed for user \"%s\""
-msgstr ""
+msgstr "LDAP inloggen mislukt voor gebruiker \"%s\""
 
 #: libpq/auth.c:952
 #, c-format
 msgid "authentication failed for user \"%s\": invalid authentication method"
-msgstr ""
+msgstr "inloggen mislukt voor gebruiker \"%s\": ongeldige inlog methode"
 
 #: libpq/auth.c:981
 msgid "missing or erroneous pg_hba.conf file"
-msgstr ""
+msgstr "ph_hba.conf mankeert of er staan fouten in"
 
 #: libpq/auth.c:982
 msgid "See server log for details."
@@ -6168,12 +6168,12 @@ msgstr ""
 #: libpq/auth.c:1008
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s"
-msgstr ""
+msgstr "geen pg_hba.conf lijn voor host \"%s\", gebruiker \"%s\", database \"%s\", %s"
 
 #: libpq/auth.c:1014
 #, c-format
 msgid "no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\""
-msgstr ""
+msgstr "geen pg_hba.conf lijn voor host \"%s\", gebruiker \"%s\", database \"%s\""
 
 #: libpq/auth.c:1058
 #, c-format
@@ -6587,7 +6587,7 @@ msgstr ""
 #: libpq/pqcomm.c:532
 #, c-format
 msgid "group \"%s\" does not exist"
-msgstr ""
+msgstr "group \"%s\" bestaat niet"
 
 #: libpq/pqcomm.c:542
 #, c-format
@@ -7383,7 +7383,7 @@ msgstr ""
 #: parser/parse_coerce.c:1082
 #, c-format
 msgid "%s could not convert type %s to %s"
-msgstr ""
+msgstr "%s kon type %s niet naar %s converteren"
 
 #: parser/parse_coerce.c:1303
 msgid "arguments declared \"anyelement\" are not all alike"
@@ -9011,7 +9011,7 @@ msgstr ""
 
 #: rewrite/rewriteHandler.c:1811
 msgid "cannot insert into a view"
-msgstr ""
+msgstr "kan niet inserten in een view"
 
 #: rewrite/rewriteHandler.c:1812
 msgid "You need an unconditional ON INSERT DO INSTEAD rule."
@@ -9019,7 +9019,7 @@ msgstr ""
 
 #: rewrite/rewriteHandler.c:1817
 msgid "cannot update a view"
-msgstr ""
+msgstr "kan een view niet updaten"
 
 #: rewrite/rewriteHandler.c:1818
 msgid "You need an unconditional ON UPDATE DO INSTEAD rule."
@@ -9027,7 +9027,7 @@ msgstr ""
 
 #: rewrite/rewriteHandler.c:1823
 msgid "cannot delete from a view"
-msgstr ""
+msgstr "kan niet deleten uit een view"
 
 #: rewrite/rewriteHandler.c:1824
 msgid "You need an unconditional ON DELETE DO INSTEAD rule."
@@ -10322,12 +10322,12 @@ msgstr ""
 #: utils/adt/bool.c:95
 #, c-format
 msgid "invalid input syntax for type boolean: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type boolean:\"%s\""
 
 #: utils/adt/cash.c:250
 #, c-format
 msgid "invalid input syntax for type money: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type money:\"%s\""
 
 #: utils/adt/cash.c:543
 #: utils/adt/cash.c:594
@@ -10370,28 +10370,28 @@ msgstr ""
 #: utils/adt/date.c:70
 #, c-format
 msgid "TIME(%d)%s precision must not be negative"
-msgstr ""
+msgstr "TIME(%d)%s precisie mag niet negatief zijn"
 
 #: utils/adt/date.c:76
 #, c-format
 msgid "TIME(%d)%s precision reduced to maximum allowed, %d"
-msgstr ""
+msgstr "TIME(%d)%s precisie verminderd naar maximum toegestaan, %d"
 
 #: utils/adt/date.c:141
 #: utils/adt/datetime.c:1055
 #: utils/adt/datetime.c:1846
 msgid "date/time value \"current\" is no longer supported"
-msgstr ""
+msgstr "date/time value \"current\" is niet langer ondersteund"
 
 #: utils/adt/date.c:158
 #, c-format
 msgid "date out of range: \"%s\""
-msgstr ""
+msgstr "datum uit bereik : \"%s\""
 
 #: utils/adt/date.c:352
 #: utils/adt/date.c:383
 msgid "date out of range for timestamp"
-msgstr ""
+msgstr "datum uiy berik voor timestamp"
 
 #: utils/adt/date.c:806
 #: utils/adt/date.c:849
@@ -10442,7 +10442,7 @@ msgstr ""
 #: utils/adt/xml.c:1752
 #: utils/adt/xml.c:1758
 msgid "timestamp out of range"
-msgstr ""
+msgstr "timestamp uit bereik"
 
 #: utils/adt/date.c:876
 msgid "cannot convert reserved abstime value to date"
@@ -10452,13 +10452,13 @@ msgstr ""
 #: utils/adt/date.c:1685
 #, c-format
 msgid "\"time\" units \"%s\" not recognized"
-msgstr ""
+msgstr "\"time\" units \"%s\" niet herkend"
 
 #: utils/adt/date.c:2413
 #: utils/adt/date.c:2432
 #, c-format
 msgid "\"time with time zone\" units \"%s\" not recognized"
-msgstr ""
+msgstr "\"time with time zone\" units \"%s\" niet herkend"
 
 #: utils/adt/date.c:2493
 #: utils/adt/datetime.c:797
@@ -10467,12 +10467,12 @@ msgstr ""
 #: utils/adt/timestamp.c:4653
 #, c-format
 msgid "time zone \"%s\" not recognized"
-msgstr ""
+msgstr "time zone \"%s\" niet herkend"
 
 #: utils/adt/date.c:2533
 #, c-format
 msgid "\"interval\" time zone \"%s\" not valid"
-msgstr ""
+msgstr "\"interval\" time zone \"%s\" ongeldig"
 
 #: utils/adt/datetime.c:1247
 #: utils/adt/datetime.c:2167
@@ -10485,16 +10485,16 @@ msgstr ""
 #: utils/adt/datetime.c:3116
 #, c-format
 msgid "date/time field value out of range: \"%s\""
-msgstr ""
+msgstr "date/time veld waarde buiten bereik: \"%s\""
 
 #: utils/adt/datetime.c:3118
 msgid "Perhaps you need a different \"datestyle\" setting."
-msgstr ""
+msgstr "Mogelijks heeft u een andere \"datestyle\" setting nodig."
 
 #: utils/adt/datetime.c:3123
 #, c-format
 msgid "interval field value out of range: \"%s\""
-msgstr ""
+msgstr "interval veld waarde buiten bereik: \"%s\""
 
 #: utils/adt/datetime.c:3129
 #, c-format
@@ -10506,7 +10506,7 @@ msgstr ""
 #: utils/adt/network.c:107
 #, c-format
 msgid "invalid input syntax for type %s: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type %s:\"%s\""
 
 #: utils/adt/datum.c:80
 #: utils/adt/datum.c:92
@@ -10528,7 +10528,7 @@ msgstr ""
 #: utils/adt/encode.c:91
 #, c-format
 msgid "unrecognized encoding: \"%s\""
-msgstr ""
+msgstr "ongekende encoding: \"%s\""
 
 #: utils/adt/encode.c:150
 #, c-format
@@ -10556,7 +10556,7 @@ msgstr ""
 #: utils/adt/varlena.c:121
 #: utils/adt/varlena.c:160
 msgid "invalid input syntax for type bytea"
-msgstr ""
+msgstr "ongeldige invoersyntax voor type bytea"
 
 #: utils/adt/enum.c:44
 #: utils/adt/enum.c:55
@@ -10564,20 +10564,20 @@ msgstr ""
 #: utils/adt/enum.c:119
 #, c-format
 msgid "invalid input value for enum %s: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor waarde enum %s:\"%s\""
 
 #: utils/adt/enum.c:80
 #: utils/adt/enum.c:146
 #, c-format
 msgid "invalid internal value for enum: %u"
-msgstr ""
+msgstr "ongeldige interne waarde voor enum:%u"
 
 #: utils/adt/enum.c:266
 #: utils/adt/enum.c:307
 #: utils/adt/enum.c:356
 #: utils/adt/enum.c:376
 msgid "could not determine actual enum type"
-msgstr ""
+msgstr "kon eigenlijk enum type niet achterhalen"
 
 #: utils/adt/float.c:54
 msgid "value out of range: overflow"
@@ -10592,12 +10592,12 @@ msgstr ""
 #: utils/adt/float.c:288
 #, c-format
 msgid "invalid input syntax for type real: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type real:\"%s\""
 
 #: utils/adt/float.c:232
 #, c-format
 msgid "\"%s\" is out of range for type real"
-msgstr ""
+msgstr "\"%s\" is buiten bereik voor type real"
 
 #: utils/adt/float.c:389
 #: utils/adt/float.c:430
@@ -10606,12 +10606,12 @@ msgstr ""
 #: utils/adt/numeric.c:3561
 #, c-format
 msgid "invalid input syntax for type double precision: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type double precision:\"%s\""
 
 #: utils/adt/float.c:425
 #, c-format
 msgid "\"%s\" is out of range for type double precision"
-msgstr ""
+msgstr "\"%s\" is buiten bereik voor type double precision"
 
 #: utils/adt/float.c:1114
 #: utils/adt/float.c:1172
@@ -10626,12 +10626,12 @@ msgstr ""
 #: utils/adt/numeric.c:2035
 #: utils/adt/numeric.c:2046
 msgid "smallint out of range"
-msgstr ""
+msgstr "smallint buiten bereik"
 
 #: utils/adt/float.c:1298
 #: utils/adt/numeric.c:4477
 msgid "cannot take square root of a negative number"
-msgstr ""
+msgstr "kan de vierkantwortel van een negatief getal niet berekenen"
 
 #: utils/adt/float.c:1340
 #: utils/adt/numeric.c:1853
@@ -10703,7 +10703,7 @@ msgstr ""
 #: utils/adt/formatting.c:1095
 #: utils/adt/formatting.c:1199
 msgid "cannot use \"V\" and decimal point together"
-msgstr ""
+msgstr "kan \"V\" en het decimaal punt niet tegelijk gebruiken"
 
 #: utils/adt/formatting.c:1110
 msgid "not unique \"S\""
@@ -10753,67 +10753,67 @@ msgstr ""
 
 #: utils/adt/formatting.c:3011
 msgid "January"
-msgstr "januari"
+msgstr "Januari"
 
 #: utils/adt/formatting.c:3014
 msgid "February"
-msgstr "februari"
+msgstr "Februari"
 
 #: utils/adt/formatting.c:3017
 msgid "March"
-msgstr "maart"
+msgstr "Maart"
 
 #: utils/adt/formatting.c:3020
 msgid "April"
-msgstr "april"
+msgstr "April"
 
 #: utils/adt/formatting.c:3023
 msgid "May"
-msgstr "mei"
+msgstr "Mei"
 
 #: utils/adt/formatting.c:3026
 msgid "June"
-msgstr "juni"
+msgstr "Juni"
 
 #: utils/adt/formatting.c:3029
 msgid "July"
-msgstr "juli"
+msgstr "Juli"
 
 #: utils/adt/formatting.c:3032
 msgid "August"
-msgstr "augustus"
+msgstr "Augustus"
 
 #: utils/adt/formatting.c:3035
 msgid "September"
-msgstr "september"
+msgstr "September"
 
 #: utils/adt/formatting.c:3038
 msgid "October"
-msgstr "oktober"
+msgstr "Oktober"
 
 #: utils/adt/formatting.c:3041
 msgid "November"
-msgstr "november"
+msgstr "November"
 
 #: utils/adt/formatting.c:3044
 msgid "December"
-msgstr "december"
+msgstr "December"
 
 #: utils/adt/formatting.c:3059
 msgid "Jan"
-msgstr "jan."
+msgstr ""
 
 #: utils/adt/formatting.c:3062
 msgid "Feb"
-msgstr "feb."
+msgstr ""
 
 #: utils/adt/formatting.c:3065
 msgid "Mar"
-msgstr "mrt."
+msgstr ""
 
 #: utils/adt/formatting.c:3068
 msgid "Apr"
-msgstr "arp."
+msgstr ""
 
 #. translator: Translate this as the abbreviation of "May".
 #. In English, it is both the full month name and the
@@ -10822,63 +10822,63 @@ msgstr "arp."
 #. which will be stripped at run time.
 #: utils/adt/formatting.c:3077
 msgid "S:May"
-msgstr "S:mei."
+msgstr ""
 
 #: utils/adt/formatting.c:3080
 msgid "Jun"
-msgstr "jun."
+msgstr ""
 
 #: utils/adt/formatting.c:3083
 msgid "Jul"
-msgstr "jul."
+msgstr ""
 
 #: utils/adt/formatting.c:3086
 msgid "Aug"
-msgstr "aug."
+msgstr ""
 
 #: utils/adt/formatting.c:3089
 msgid "Sep"
-msgstr "sep."
+msgstr ""
 
 #: utils/adt/formatting.c:3092
 msgid "Oct"
-msgstr "okt."
+msgstr ""
 
 #: utils/adt/formatting.c:3095
 msgid "Nov"
-msgstr "nov."
+msgstr ""
 
 #: utils/adt/formatting.c:3098
 msgid "Dec"
-msgstr "dec."
+msgstr ""
 
 #: utils/adt/formatting.c:3113
 msgid "Sunday"
-msgstr "zondag"
+msgstr "Zondag"
 
 #: utils/adt/formatting.c:3116
 msgid "Monday"
-msgstr "maandag"
+msgstr "Maandag"
 
 #: utils/adt/formatting.c:3119
 msgid "Tuesday"
-msgstr "dinsdag"
+msgstr "Dinsdag"
 
 #: utils/adt/formatting.c:3122
 msgid "Wednesday"
-msgstr "woensdag"
+msgstr "Woensdag"
 
 #: utils/adt/formatting.c:3125
 msgid "Thursday"
-msgstr "donderdag"
+msgstr "Donderdag"
 
 #: utils/adt/formatting.c:3128
 msgid "Friday"
-msgstr "vrijdag"
+msgstr "Vrijdag"
 
 #: utils/adt/formatting.c:3131
 msgid "Saturday"
-msgstr "zaterdag"
+msgstr "Zaterdag"
 
 #: utils/adt/formatting.c:3146
 msgid "Sun"
@@ -10886,7 +10886,7 @@ msgstr "Zo"
 
 #: utils/adt/formatting.c:3149
 msgid "Mon"
-msgstr "Ma"
+msgstr "Za"
 
 #: utils/adt/formatting.c:3152
 msgid "Tue"
@@ -10910,7 +10910,7 @@ msgstr "Za"
 
 #: utils/adt/formatting.c:3458
 msgid "AM/PM hour must be between 1 and 12"
-msgstr ""
+msgstr "AM/PM uur moet tussen 1 en 12 zijn"
 
 #: utils/adt/formatting.c:3589
 msgid "cannot calculate day of year without year information"
@@ -10970,12 +10970,12 @@ msgstr ""
 #: utils/adt/geo_ops.c:390
 #, c-format
 msgid "invalid input syntax for type box: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type box:\"%s\""
 
 #: utils/adt/geo_ops.c:954
 #, c-format
 msgid "invalid input syntax for type line: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type line:\"%s\""
 
 #: utils/adt/geo_ops.c:961
 #: utils/adt/geo_ops.c:1028
@@ -10988,21 +10988,21 @@ msgstr ""
 #: utils/adt/geo_ops.c:1425
 #, c-format
 msgid "invalid input syntax for type path: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type path:\"%s\""
 
 #: utils/adt/geo_ops.c:1462
 msgid "invalid number of points in external \"path\" value"
-msgstr ""
+msgstr "ongeldig aantal punten in externe \"path\" waarde"
 
 #: utils/adt/geo_ops.c:1803
 #, c-format
 msgid "invalid input syntax for type point: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type punt: \"%s\""
 
 #: utils/adt/geo_ops.c:2031
 #, c-format
 msgid "invalid input syntax for type lseg: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type lseg:\"%s\""
 
 #: utils/adt/geo_ops.c:2622
 msgid "function \"dist_lb\" not implemented"
@@ -11020,11 +11020,11 @@ msgstr ""
 #: utils/adt/geo_ops.c:3450
 #, c-format
 msgid "invalid input syntax for type polygon: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type polygon:\"%s\""
 
 #: utils/adt/geo_ops.c:3490
 msgid "invalid number of points in external \"polygon\" value"
-msgstr ""
+msgstr "ongeldig aantal punten in externe \"polygon\" waarde"
 
 #: utils/adt/geo_ops.c:3876
 msgid "function \"poly_distance\" not implemented"
@@ -11044,7 +11044,7 @@ msgstr ""
 #: utils/adt/geo_ops.c:4403
 #, c-format
 msgid "invalid input syntax for type circle: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type circle:\"%s\""
 
 #: utils/adt/geo_ops.c:4425
 #: utils/adt/geo_ops.c:4433
@@ -11088,7 +11088,7 @@ msgstr ""
 #: utils/adt/numutils.c:105
 #, c-format
 msgid "invalid input syntax for integer: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type integer:\"%s\""
 
 #: utils/adt/int8.c:117
 #, c-format
@@ -11134,12 +11134,12 @@ msgstr ""
 #: utils/adt/mac.c:65
 #, c-format
 msgid "invalid input syntax for type macaddr: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type macaddr:\"%s\""
 
 #: utils/adt/mac.c:72
 #, c-format
 msgid "invalid octet value in \"macaddr\" value: \"%s\""
-msgstr ""
+msgstr "ongeldige octet waarde in \"macaddr\" waarde:\"%s\""
 
 #: utils/adt/misc.c:83
 msgid "must be superuser to signal other server processes"
@@ -11179,7 +11179,7 @@ msgstr ""
 #: utils/adt/nabstime.c:164
 #, c-format
 msgid "invalid time zone name: \"%s\""
-msgstr ""
+msgstr "invalid tijd zone naam: \"%s\""
 
 #: utils/adt/nabstime.c:510
 #: utils/adt/nabstime.c:583
@@ -11197,12 +11197,12 @@ msgstr ""
 #: utils/adt/nabstime.c:1564
 #, c-format
 msgid "invalid input syntax for type tinterval: \"%s\""
-msgstr ""
+msgstr "ongeldige invoer syntax voor type tinterval:\"%s\""
 
 #: utils/adt/network.c:118
 #, c-format
 msgid "invalid cidr value: \"%s\""
-msgstr ""
+msgstr "ongeldige cidr waarde:\"%s\""
 
 #: utils/adt/network.c:119
 #: utils/adt/network.c:249
@@ -11215,7 +11215,7 @@ msgstr ""
 #: utils/adt/network.c:677
 #, c-format
 msgid "could not format inet value: %m"
-msgstr ""
+msgstr "kon inet waarde niet converteren: %m"
 
 #. translator: %s is inet or cidr
 #: utils/adt/network.c:217
@@ -11301,15 +11301,15 @@ msgstr ""
 
 #: utils/adt/numeric.c:1910
 msgid "cannot convert NaN to integer"
-msgstr ""
+msgstr "kan NaN niet naar integer converteren"
 
 #: utils/adt/numeric.c:1978
 msgid "cannot convert NaN to bigint"
-msgstr ""
+msgstr "kan Nan Niet naar bigint converteren"
 
 #: utils/adt/numeric.c:2026
 msgid "cannot convert NaN to smallint"
-msgstr ""
+msgstr "kan Nan niet naar smallint converteren"
 
 #: utils/adt/numeric.c:2954
 #: utils/adt/numeric.c:2977
@@ -11318,7 +11318,7 @@ msgstr ""
 #: utils/adt/numeric.c:3022
 #, c-format
 msgid "invalid input syntax for type numeric: \"%s\""
-msgstr ""
+msgstr "ongeldige invoer synax voor type numeric:\"%s\""
 
 #: utils/adt/numeric.c:3390
 msgid "numeric field overflow"
@@ -11340,17 +11340,17 @@ msgstr ""
 #: utils/adt/numutils.c:77
 #, c-format
 msgid "value \"%s\" is out of range for type integer"
-msgstr ""
+msgstr "waarde \"%s\" is buiten bereik voor type integer"
 
 #: utils/adt/numutils.c:83
 #, c-format
 msgid "value \"%s\" is out of range for type smallint"
-msgstr ""
+msgstr "waarde \"%s\" is buiten bereik voor type smallint"
 
 #: utils/adt/numutils.c:89
 #, c-format
 msgid "value \"%s\" is out of range for 8-bit integer"
-msgstr ""
+msgstr "waarde \"%s\" is buiten bereik voor 8-bit integer"
 
 #: utils/adt/oid.c:43
 #: utils/adt/oid.c:57
@@ -11358,7 +11358,7 @@ msgstr ""
 #: utils/adt/oid.c:84
 #, c-format
 msgid "invalid input syntax for type oid: \"%s\""
-msgstr ""
+msgstr "ongeldige invoer syntax voor type oid:\"%s\""
 
 #: utils/adt/oid.c:69
 #: utils/adt/oid.c:107
@@ -11630,7 +11630,7 @@ msgstr ""
 
 #: utils/adt/rowtypes.c:157
 msgid "Too few columns."
-msgstr ""
+msgstr "Te weinig kolommen"
 
 #: utils/adt/rowtypes.c:181
 #: utils/adt/rowtypes.c:189
@@ -11639,7 +11639,7 @@ msgstr ""
 
 #: utils/adt/rowtypes.c:240
 msgid "Too many columns."
-msgstr ""
+msgstr "Te veel kolommen"
 
 #: utils/adt/rowtypes.c:248
 msgid "Junk after right parenthesis."
@@ -11680,7 +11680,7 @@ msgstr ""
 #: utils/adt/tid.c:83
 #, c-format
 msgid "invalid input syntax for type tid: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type tid:\"%s\""
 
 #: utils/adt/timestamp.c:81
 #, c-format
@@ -11927,13 +11927,13 @@ msgstr ""
 #: utils/adt/varchar.c:48
 #, c-format
 msgid "length for type %s must be at least 1"
-msgstr ""
+msgstr "lengte voor type %s moet minstens 1 zijn"
 
 #: utils/adt/varbit.c:54
 #: utils/adt/varchar.c:52
 #, c-format
 msgid "length for type %s cannot exceed %d"
-msgstr ""
+msgstr "lengte voor type %s mag %d niet overschrijden"
 
 #: utils/adt/varbit.c:157
 #: utils/adt/varbit.c:297
@@ -11981,7 +11981,7 @@ msgstr ""
 #: utils/adt/uuid.c:136
 #, c-format
 msgid "invalid input syntax for uuid: \"%s\""
-msgstr ""
+msgstr "ongeldige invoersyntax voor type uuid:\"%s\""
 
 #: utils/adt/varchar.c:152
 #: utils/adt/varchar.c:310
@@ -12530,12 +12530,12 @@ msgstr ""
 #: utils/init/postinit.c:223
 #, c-format
 msgid "too many connections for database \"%s\""
-msgstr ""
+msgstr "teveel verbindingen met de database \"%s\""
 
 #: utils/init/postinit.c:376
 #, c-format
 msgid "database %u does not exist"
-msgstr ""
+msgstr "database %u bestaat niet"
 
 #: utils/init/postinit.c:502
 msgid "It seems to have just been dropped or renamed."
@@ -13725,7 +13725,7 @@ msgstr "Bepaalt de directory waar in de Unix-domain socker wordt aangemakt."
 
 #: utils/misc/guc.c:2336
 msgid "Sets the host name or IP address(es) to listen to."
-msgstr "Bepaalt de hostnaam of IP adres om aan te luiteren."
+msgstr "Bepaalt de hostnaam of IP adres om aan te luisteren."
 
 #: utils/misc/guc.c:2346
 msgid "Selects the method used for forcing WAL updates to disk."

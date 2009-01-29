@@ -1,7 +1,7 @@
 # German message translation file for psql
-# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2007.
+# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: psql.po,v 1.21 2008/10/30 10:22:46 petere Exp $
+# pgtranslation Id: psql.po,v 1.21.2.2 2009/01/16 08:08:20 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-05-06 13:19-0300\n"
-"PO-Revision-Date: 2008-10-30 12:15+0200\n"
+"POT-Creation-Date: 2009-01-15 19:15+0000\n"
+"PO-Revision-Date: 2009-01-16 01:09+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -864,8 +864,8 @@ msgid ""
 "  \\dF [PATTERN]  list text search configurations (add \"+\" for more "
 "detail)\n"
 msgstr ""
-"  \\dF [MUSTER]   Textsuchekonfigurationen auflisten (»+« hinzufügen für "
-"mehr Detail)\n"
+"  \\dF [MUSTER]   Textsuchekonfigurationen auflisten (»+« hinzufügen für mehr "
+"Detail)\n"
 
 #: help.c:224
 #, c-format
@@ -885,8 +885,7 @@ msgstr "  \\dFt [MUSTER]  Textsuchevorlagen auflisten\n"
 msgid ""
 "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
 msgstr ""
-"  \\dFp [MUSTER]  Textsucheparser auflisten (»+« für mehr Detail "
-"hinzufügen)\n"
+"  \\dFp [MUSTER]  Textsucheparser auflisten (»+« für mehr Detail hinzufügen)\n"
 
 #: help.c:227
 #, c-format
@@ -2540,7 +2539,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2565,7 +2563,6 @@ msgstr ""
 "    TO { 'dateiname' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'trennzeichen' ]\n"
 "          [ NULL [ AS ] 'null-zeichenkette' ]\n"

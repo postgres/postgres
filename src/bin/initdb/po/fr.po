@@ -1,7 +1,7 @@
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.14.2.2 2008/10/30 21:30:20 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.14.2.3 2009/01/29 22:07:52 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-83-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-09-20 13:13-0300\n"
+"POT-Creation-Date: 2008-10-31 00:52-0300\n"
 "PO-Revision-Date: 2008-09-17 22:51+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
@@ -704,7 +704,7 @@ msgstr "%s : n'a pas pu accéder au répertoire « %s » : %s\n"
 
 #: initdb.c:3012
 #, c-format
-msgid "%s: xlog directory location must be an absolute path\n"
+msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr ""
 "%s : l'emplacement du répertoire des journaux de transactions doit être\n"
 "indiqué avec un chemin absolu\n"
