@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.14 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.15 2009/01/29 16:22:10 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,7 +521,7 @@ addFlagValue(IspellDict *Conf, char *s, uint32 val)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("multibyte flag character is not allowed")));
 
-	Conf->flagval[(unsigned int) *s] = (unsigned char) val;
+	Conf->flagval[*(unsigned char*) s] = (unsigned char) val;
 	Conf->usecompound = true;
 }
 
@@ -654,7 +654,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 				ptr = repl + (ptr - prepl) + 1;
 				while (*ptr)
 				{
-					aflg |= Conf->flagval[(unsigned int) *ptr];
+					aflg |= Conf->flagval[*(unsigned char*) ptr];
 					ptr++;
 				}
 			}
@@ -735,7 +735,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 
 				if (*s && pg_mblen(s) == 1)
 				{
-					Conf->flagval[(unsigned int) *s] = FF_COMPOUNDFLAG;
+					Conf->flagval[*(unsigned char*) s] = FF_COMPOUNDFLAG;
 					Conf->usecompound = true;
 				}
 				oldformat = true;
@@ -791,7 +791,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("multibyte flag character is not allowed")));
 
-			flag = (unsigned char) *s;
+			flag = *(unsigned char*) s;
 			goto nextline;
 		}
 		if (STRNCMP(recoded, "COMPOUNDFLAG") == 0 || STRNCMP(recoded, "COMPOUNDMIN") == 0 ||
@@ -851,7 +851,7 @@ makeCompoundFlags(IspellDict *Conf, int affix)
 
 	while (str && *str)
 	{
-		flag |= Conf->flagval[(unsigned int) *str];
+		flag |= Conf->flagval[*(unsigned char*) str];
 		str++;
 	}
 
