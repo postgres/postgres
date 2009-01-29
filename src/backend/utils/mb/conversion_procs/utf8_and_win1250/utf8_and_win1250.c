@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1250/utf8_and_win1250.c,v 1.13.2.1 2006/05/21 20:05:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1250/utf8_and_win1250.c,v 1.13.2.2 2009/01/29 19:24:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,7 @@ utf8_to_win1250(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_WIN1250);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_WIN1250);
 
 	UtfToLocal(src, dest, ULmapWIN1250,
 			   sizeof(ULmapWIN1250) / sizeof(pg_utf_to_local), PG_WIN1250, len);
@@ -58,9 +56,7 @@ win1250_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_WIN1250);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1250, PG_UTF8);
 
 	LocalToUtf(src, dest, LUmapWIN1250,
 			sizeof(LUmapWIN1250) / sizeof(pg_local_to_utf), PG_WIN1250, len);

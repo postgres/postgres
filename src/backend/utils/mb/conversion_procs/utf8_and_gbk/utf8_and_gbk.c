@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.c,v 1.11.2.1 2006/05/21 20:05:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.c,v 1.11.2.2 2009/01/29 19:24:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,7 @@ gbk_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_GBK);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_GBK, PG_UTF8);
 
 	LocalToUtf(src, dest, LUmapGBK,
 			   sizeof(LUmapGBK) / sizeof(pg_local_to_utf), PG_GBK, len);
@@ -57,9 +55,7 @@ utf8_to_gbk(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_GBK);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_GBK);
 
 	UtfToLocal(src, dest, ULmapGBK,
 			   sizeof(ULmapGBK) / sizeof(pg_utf_to_local), PG_GBK, len);
