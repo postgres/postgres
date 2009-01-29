@@ -1,7 +1,7 @@
 # German message translation file for psql
-# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2006.
+# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: psql.po,v 1.8.2.1 2007/11/15 19:02:43 petere Exp $
+# pgtranslation Id: psql.po,v 1.8.2.3 2009/01/16 08:05:44 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-15 01:10-0400\n"
-"PO-Revision-Date: 2006-11-16 15:14+0100\n"
+"POT-Creation-Date: 2009-01-15 19:25+0000\n"
+"PO-Revision-Date: 2009-01-16 00:48+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -110,7 +110,7 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:878 command.c:898 command.c:1289 command.c:1296 command.c:1305
 #: command.c:1315 command.c:1324 command.c:1338 command.c:1352 command.c:1385
-#: common.c:160 copy.c:553 copy.c:605
+#: common.c:160 copy.c:549 copy.c:613
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -120,7 +120,7 @@ msgid "Password: "
 msgstr "Passwort: "
 
 #: command.c:1076 common.c:206 common.c:483 common.c:548 common.c:834
-#: common.c:859 common.c:932 copy.c:676 copy.c:721 copy.c:850
+#: common.c:859 common.c:932 copy.c:684 copy.c:729 copy.c:858
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -373,36 +373,36 @@ msgstr "\\copy: Parse-Fehler bei »%s«\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: Parse-Fehler am Zeilenende\n"
 
-#: copy.c:564
+#: copy.c:560
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: ein Verzeichnis kann nicht kopiert werden\n"
 
-#: copy.c:590
+#: copy.c:586
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:594
+#: copy.c:590 copy.c:604
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: unerwartete Antwort (%d)\n"
 
-#: copy.c:651 copy.c:661
+#: copy.c:659 copy.c:669
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "konnte COPY-Daten nicht schreiben: %s\n"
 
-#: copy.c:668
+#: copy.c:676
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "Datentransfer mit COPY fehlgeschlagen: %s"
 
-#: copy.c:716
+#: copy.c:724
 msgid "canceled by user"
 msgstr "vom Benutzer abgebrochen"
 
-#: copy.c:731
+#: copy.c:739
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -410,7 +410,7 @@ msgstr ""
 "Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
 "Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
 
-#: copy.c:843
+#: copy.c:851
 msgid "aborted because of read failure"
 msgstr "abgebrochen wegen Lesenfehlers"
 
@@ -2170,7 +2170,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2195,7 +2194,6 @@ msgstr ""
 "    TO { 'dateiname' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'trennzeichen' ]\n"
 "          [ NULL [ AS ] 'null-zeichenkette' ]\n"
@@ -3699,7 +3697,8 @@ msgid ""
 "[, ...] ) ] ]"
 msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabelle ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabelle [ (spalte [, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabelle [ (spalte "
+"[, ...] ) ] ]"
 
 #: sql_help.h:469
 msgid "compute a set of rows"
@@ -3717,47 +3716,47 @@ msgstr ""
 "    [ LIMIT { anzahl | ALL } ]\n"
 "    [ OFFSET start ]"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ungültige Programmdatei »%s«"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "konnte Programmdatei »%s« nicht lesen"
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "konnte kein »%s« zum Ausführen finden"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "konnte symbolischen Link »%s« nicht lesen"
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:585
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:588
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"

@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2007.
 #
-# pgtranslation Id: postgres.po,v 1.18.2.6 2008/03/14 04:49:49 petere Exp $
+# pgtranslation Id: postgres.po,v 1.18.2.11 2009/01/23 08:55:22 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -1609,7 +1609,7 @@ msgstr "Regel %s für "
 #: catalog/dependency.c:1951
 #, c-format
 msgid "trigger %s on "
-msgstr "Triger %s für "
+msgstr "Trigger %s für "
 
 #: catalog/dependency.c:1968
 #, c-format
@@ -7175,7 +7175,7 @@ msgstr ""
 
 #: scan.l:359
 msgid "unterminated /* comment"
-msgstr "/*-Kommentar nicht abgechlossen"
+msgstr "/*-Kommentar nicht abgeschlossen"
 
 #: scan.l:388
 msgid "unterminated bit string literal"
