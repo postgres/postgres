@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.48.4.1 2006/05/21 20:06:45 tgl Exp $ */
+/* $Id: pg_wchar.h,v 1.48.4.2 2009/01/29 19:25:14 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -285,6 +285,19 @@ typedef struct
 	unsigned int utf;			/* UTF-8 */
 } pg_local_to_utf;
 
+/*
+ * Support macro for encoding conversion functions to validate their
+ * arguments.  (This could be made more compact if we included fmgr.h
+ * here, but we don't want to do that because this header file is also
+ * used by frontends.)
+ */
+#define CHECK_ENCODING_CONVERSION_ARGS(srcencoding,destencoding) \
+	check_encoding_conversion_args(PG_GETARG_INT32(0), \
+								   PG_GETARG_INT32(1), \
+								   PG_GETARG_INT32(4), \
+								   (srcencoding), \
+								   (destencoding))
+
 extern int	pg_mb2wchar(const unsigned char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len);
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
@@ -336,6 +349,12 @@ extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
 							bool noError);
+
+extern void check_encoding_conversion_args(int src_encoding,
+										   int dest_encoding,
+										   int len,
+										   int expected_src_encoding,
+										   int expected_dest_encoding);
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,

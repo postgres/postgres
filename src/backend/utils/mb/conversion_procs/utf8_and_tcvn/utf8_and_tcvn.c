@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_tcvn/Attic/utf8_and_tcvn.c,v 1.6.4.1 2006/05/21 20:06:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_tcvn/Attic/utf8_and_tcvn.c,v 1.6.4.2 2009/01/29 19:25:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,7 @@ tcvn_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_TCVN);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_TCVN, PG_UTF8);
 
 	LocalToUtf(src, dest, LUmapTCVN,
 			   sizeof(LUmapTCVN) / sizeof(pg_local_to_utf), PG_TCVN, len);
@@ -57,9 +55,7 @@ utf8_to_tcvn(PG_FUNCTION_ARGS)
 	unsigned char *dest = PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_TCVN);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_TCVN);
 
 	UtfToLocal(src, dest, ULmapTCVN,
 			   sizeof(ULmapTCVN) / sizeof(pg_utf_to_local), PG_TCVN, len);
