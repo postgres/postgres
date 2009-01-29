@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.82 2009/01/04 18:37:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.83 2009/01/29 19:23:42 tgl Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -325,6 +325,19 @@ typedef struct
 	uint32		utf2;			/* UTF-8 code 2 */
 } pg_local_to_utf_combined;
 
+/*
+ * Support macro for encoding conversion functions to validate their
+ * arguments.  (This could be made more compact if we included fmgr.h
+ * here, but we don't want to do that because this header file is also
+ * used by frontends.)
+ */
+#define CHECK_ENCODING_CONVERSION_ARGS(srcencoding,destencoding) \
+	check_encoding_conversion_args(PG_GETARG_INT32(0), \
+								   PG_GETARG_INT32(1), \
+								   PG_GETARG_INT32(4), \
+								   (srcencoding), \
+								   (destencoding))
+
 
 /*
  * These functions are considered part of libpq's exported API and
@@ -407,6 +420,12 @@ extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
 				bool noError);
 extern int pg_verify_mbstr_len(int encoding, const char *mbstr, int len,
 					bool noError);
+
+extern void check_encoding_conversion_args(int src_encoding,
+										   int dest_encoding,
+										   int len,
+										   int expected_src_encoding,
+										   int expected_dest_encoding);
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,

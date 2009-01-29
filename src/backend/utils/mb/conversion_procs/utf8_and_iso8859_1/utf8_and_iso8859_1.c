@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.21 2009/01/01 17:23:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.22 2009/01/29 19:23:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,7 @@ iso8859_1_to_utf8(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	unsigned short c;
 
-	Assert(PG_GETARG_INT32(0) == PG_LATIN1);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN1, PG_UTF8);
 
 	while (len > 0)
 	{
@@ -75,9 +73,7 @@ utf8_to_iso8859_1(PG_FUNCTION_ARGS)
 	unsigned short c,
 				c1;
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_LATIN1);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_LATIN1);
 
 	while (len > 0)
 	{

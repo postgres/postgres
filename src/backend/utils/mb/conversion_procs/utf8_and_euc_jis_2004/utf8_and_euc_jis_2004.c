@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jis_2004/utf8_and_euc_jis_2004.c,v 1.4 2009/01/01 17:23:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jis_2004/utf8_and_euc_jis_2004.c,v 1.5 2009/01/29 19:23:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,7 @@ euc_jis_2004_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_EUC_JIS_2004);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JIS_2004, PG_UTF8);
 
 	LocalToUtf(src, dest, LUmapEUC_JIS_2004, LUmapEUC_JIS_2004_combined,
 			   sizeof(LUmapEUC_JIS_2004) / sizeof(pg_local_to_utf),
@@ -63,9 +61,7 @@ utf8_to_euc_jis_2004(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_EUC_JIS_2004);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_JIS_2004);
 
 	UtfToLocal(src, dest, ULmapEUC_JIS_2004, ULmapEUC_JIS_2004_combined,
 			   sizeof(ULmapEUC_JIS_2004) / sizeof(pg_utf_to_local),

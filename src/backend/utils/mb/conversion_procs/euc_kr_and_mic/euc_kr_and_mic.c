@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_kr_and_mic/euc_kr_and_mic.c,v 1.18 2009/01/01 17:23:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_kr_and_mic/euc_kr_and_mic.c,v 1.19 2009/01/29 19:23:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,7 @@ euc_kr_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_EUC_KR);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_KR, PG_MULE_INTERNAL);
 
 	euc_kr2mic(src, dest, len);
 
@@ -60,9 +58,7 @@ mic_to_euc_kr(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_EUC_KR);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_KR);
 
 	mic2euc_kr(src, dest, len);
 

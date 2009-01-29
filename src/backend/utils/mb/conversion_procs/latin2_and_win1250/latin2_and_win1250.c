@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.16 2009/01/01 17:23:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.17 2009/01/29 19:23:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,7 @@ latin2_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_LATIN2);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN2, PG_MULE_INTERNAL);
 
 	latin22mic(src, dest, len);
 
@@ -72,9 +70,7 @@ mic_to_latin2(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_LATIN2);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_LATIN2);
 
 	mic2latin2(src, dest, len);
 
@@ -88,9 +84,7 @@ win1250_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_WIN1250);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1250, PG_MULE_INTERNAL);
 
 	win12502mic(src, dest, len);
 
@@ -104,9 +98,7 @@ mic_to_win1250(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_WIN1250);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_WIN1250);
 
 	mic2win1250(src, dest, len);
 
@@ -121,9 +113,7 @@ latin2_to_win1250(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
-	Assert(PG_GETARG_INT32(0) == PG_LATIN2);
-	Assert(PG_GETARG_INT32(1) == PG_WIN1250);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN2, PG_WIN1250);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	latin22mic(src, buf, len);
@@ -141,9 +131,7 @@ win1250_to_latin2(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
-	Assert(PG_GETARG_INT32(0) == PG_WIN1250);
-	Assert(PG_GETARG_INT32(1) == PG_LATIN2);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1250, PG_LATIN2);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win12502mic(src, buf, len);

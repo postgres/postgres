@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.13 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.14 2009/01/29 19:23:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,7 @@ win_to_utf8(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	int			i;
 
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(-1, PG_UTF8);
 
 	for (i = 0; i < sizeof(maps) / sizeof(pg_conv_map); i++)
 	{
@@ -138,8 +137,7 @@ utf8_to_win(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	int			i;
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, -1);
 
 	for (i = 0; i < sizeof(maps) / sizeof(pg_conv_map); i++)
 	{

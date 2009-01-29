@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.19 2009/01/01 17:23:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.20 2009/01/29 19:23:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,7 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
-	Assert(PG_GETARG_INT32(0) == PG_EUC_TW);
-	Assert(PG_GETARG_INT32(1) == PG_BIG5);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_BIG5);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	euc_tw2mic(src, buf, len);
@@ -77,9 +75,7 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
-	Assert(PG_GETARG_INT32(0) == PG_BIG5);
-	Assert(PG_GETARG_INT32(1) == PG_EUC_TW);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_EUC_TW);
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	big52mic(src, buf, len);
@@ -96,9 +92,7 @@ euc_tw_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_EUC_TW);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_MULE_INTERNAL);
 
 	euc_tw2mic(src, dest, len);
 
@@ -112,9 +106,7 @@ mic_to_euc_tw(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_EUC_TW);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_EUC_TW);
 
 	mic2euc_tw(src, dest, len);
 
@@ -128,9 +120,7 @@ big5_to_mic(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_BIG5);
-	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_MULE_INTERNAL);
 
 	big52mic(src, dest, len);
 
@@ -144,9 +134,7 @@ mic_to_big5(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
-	Assert(PG_GETARG_INT32(1) == PG_BIG5);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_MULE_INTERNAL, PG_BIG5);
 
 	mic2big5(src, dest, len);
 

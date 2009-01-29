@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_johab/utf8_and_johab.c,v 1.20 2009/01/01 17:23:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_johab/utf8_and_johab.c,v 1.21 2009/01/29 19:23:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,7 @@ johab_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_JOHAB);
-	Assert(PG_GETARG_INT32(1) == PG_UTF8);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_JOHAB, PG_UTF8);
 
 	LocalToUtf(src, dest, LUmapJOHAB, NULL,
 			 sizeof(LUmapJOHAB) / sizeof(pg_local_to_utf), 0, PG_JOHAB, len);
@@ -59,9 +57,7 @@ utf8_to_johab(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
-	Assert(PG_GETARG_INT32(0) == PG_UTF8);
-	Assert(PG_GETARG_INT32(1) == PG_JOHAB);
-	Assert(len >= 0);
+	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_JOHAB);
 
 	UtfToLocal(src, dest, ULmapJOHAB, NULL,
 			 sizeof(ULmapJOHAB) / sizeof(pg_utf_to_local), 0, PG_JOHAB, len);
