@@ -1,4 +1,4 @@
-# @(#)backward	8.6
+# @(#)backward	8.7
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
@@ -24,6 +24,7 @@ Link	America/St_Thomas	America/Virgin
 Link	Asia/Ashgabat		Asia/Ashkhabad
 Link	Asia/Chongqing		Asia/Chungking
 Link	Asia/Dhaka		Asia/Dacca
+Link	Asia/Kathmandu		Asia/Katmandu
 Link	Asia/Kolkata		Asia/Calcutta
 Link	Asia/Macau		Asia/Macao
 Link	Asia/Jerusalem		Asia/Tel_Aviv
