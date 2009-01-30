@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.588 2009/01/09 01:47:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.589 2009/01/30 00:37:29 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -63,6 +63,300 @@ do it for earlier branch release files.
    review, so each item is truly a community effort.
   </para>
 
+ <sect1 id="release-8-3-6">
+  <title>Release 8.3.6</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-02-02</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.5.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.6</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.5,
+    see the release notes for 8.3.5.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Make <command>DISCARD ALL</> release advisory locks, in addition
+      to everything it already did (Tom)
+     </para>
+
+     <para>
+      This was decided to be the most appropriate behavior.  This could
+      affect existing applications, however.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix whole-index GiST scans to work correctly (Teodor)
+     </para>
+
+     <para>
+      This error could cause rows to be lost if a table is clustered
+      on a GiST index.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash of <literal>xmlconcat(NULL)</> (Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash in <literal>ispell</> dictionary if high-bit-set
+      characters are used as flags (Teodor)
+     </para>
+
+     <para>
+      This is known to be done by one widely available Norwegian dictionary,
+      and the same condition may exist in others.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misordering of <application>pg_dump</> output for composite types
+      (Tom)
+     </para>
+
+     <para>
+      The most likely problem was for user-defined operator classes to
+      be dumped after indexes or views that needed them.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of URLs in <function>headline()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of overlength headlines in <function>headline()</>
+      function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible Assert failure or misconversion if an encoding
+      conversion is created with the wrong conversion function for the
+      specified pair of encodings (Tom, Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible Assert failure if a statement executed in PL/pgSQL is
+      rewritten into another kind of statement, for example if an
+      <command>INSERT</> is rewritten into an <command>UPDATE</> (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that a snapshot is available to datatype input functions (Tom)
+     </para>
+
+     <para>
+      This primarily affects domains that are declared with <literal>CHECK</>
+      constraints involving user-defined stable or immutable functions.  Such
+      functions typically fail if no snapshot has been set.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make it safer for SPI-using functions to be used within datatype I/O;
+      in particular, to be used in domain check constraints (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary locking of small tables in <command>VACUUM</>
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a problem that sometimes kept <command>ALTER TABLE ENABLE/DISABLE
+      RULE</> from being recognized by active sessions (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a problem that made <literal>UPDATE RETURNING tableoid</>
+      return zero instead of the correct OID (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow functions declared as taking <type>ANYARRAY</> to work on
+      the <structname>pg_statistic</> columns of that type (Tom)
+     </para>
+
+     <para>
+      This used to work, but was unintentionally broken in 8.3.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner misestimation of selectivity when transitive equality
+      is applied to an outer-join clause (Tom)
+     </para>
+
+     <para>
+      This could result in bad plans for queries like
+      <literal>... from a left join b on a.a1 = b.b1 where a.a1 = 42 ...</>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve optimizer's handling of long <literal>IN</> lists (Tom)
+     </para>
+
+     <para>
+      This change avoids wasting large amounts of time on such lists
+      when constraint exclusion is enabled.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent synchronous scan during GIN index build (Tom)
+     </para>
+
+     <para>
+      Because GIN is optimized for inserting tuples in increasing TID order,
+      choosing to use a synchronous scan could slow the build by a factor of
+      three or more.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that the contents of a holdable cursor don't depend on the
+      contents of TOAST tables (Tom)
+     </para>
+
+     <para>
+      Previously, large field values in a cursor result might be represented
+      as TOAST pointers, which would fail if the referenced table got dropped
+      before the cursor is read, or if the large value is deleted and then
+      vacuumed away.  This cannot happen with an ordinary cursor,
+      but it could with a cursor that is held past its creating transaction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak when a set-returning function is terminated without
+      reading its whole result (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix encoding conversion problems in XML functions when the database
+      encoding isn't UTF-8 (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</>'s
+      <function>dblink_get_result(text,bool)</> function (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible garbage output from <filename>contrib/sslinfo</> functions
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect behavior of <filename>contrib/tsearch2</> compatibility
+      trigger when it's fired more than once in a command (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible mis-signaling in autovacuum (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support running as a service on Windows 7 beta (Dave and Magnus)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s handling of varchar structs (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>configure</> script to properly report failure when
+      unable to obtain linkage information for PL/Perl (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make all documentation reference <literal>pgsql-bugs</> and/or
+      <literal>pgsql-hackers</> as appropriate, instead of the
+      now-decommissioned <literal>pgsql-ports</> and <literal>pgsql-patches</>
+      mailing lists (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009a (for
+      Kathmandu and historical DST corrections in Switzerland, Cuba)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-3-5">
   <title>Release 8.3.5</title>
 
@@ -83,9 +377,9 @@ do it for earlier branch release files.
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.1,
-    see the release notes for 8.3.1.  If you were running a previous
-    8.3.X release, REINDEX all GiST indexes after the upgrade.
-
+    see the release notes for 8.3.1.  Also, if you were running a previous
+    8.3.X release, it is recommended to <command>REINDEX</> all GiST
+    indexes after the upgrade.
    </para>
 
   </sect2>
@@ -103,7 +397,8 @@ do it for earlier branch release files.
 
      <para>
       This would result in index searches failing to find rows they
-      should have found.
+      should have found.  Corrupted indexes can be fixed with
+      <command>REINDEX</>.
      </para>
     </listitem>
 
@@ -4024,6 +4319,185 @@ current_date &lt; 2017-11-17
   </sect2>
  </sect1>
 
+ <sect1 id="release-8-2-12">
+  <title>Release 8.2.12</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-02-02</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.11.
+   For information about new features in the 8.2 major release, see
+   <xref linkend="release-8-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.12</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+    However, if you are upgrading from a version earlier than 8.2.11,
+    see the release notes for 8.2.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve handling of URLs in <function>headline()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of overlength headlines in <function>headline()</>
+      function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible Assert failure or misconversion if an encoding
+      conversion is created with the wrong conversion function for the
+      specified pair of encodings (Tom, Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible Assert failure if a statement executed in PL/pgSQL is
+      rewritten into another kind of statement, for example if an
+      <command>INSERT</> is rewritten into an <command>UPDATE</> (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that a snapshot is available to datatype input functions (Tom)
+     </para>
+
+     <para>
+      This primarily affects domains that are declared with <literal>CHECK</>
+      constraints involving user-defined stable or immutable functions.  Such
+      functions typically fail if no snapshot has been set.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make it safer for SPI-using functions to be used within datatype I/O;
+      in particular, to be used in domain check constraints (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary locking of small tables in <command>VACUUM</>
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a problem that made <literal>UPDATE RETURNING tableoid</>
+      return zero instead of the correct OID (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner misestimation of selectivity when transitive equality
+      is applied to an outer-join clause (Tom)
+     </para>
+
+     <para>
+      This could result in bad plans for queries like
+      <literal>... from a left join b on a.a1 = b.b1 where a.a1 = 42 ...</>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve optimizer's handling of long <literal>IN</> lists (Tom)
+     </para>
+
+     <para>
+      This change avoids wasting large amounts of time on such lists
+      when constraint exclusion is enabled.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that the contents of a holdable cursor don't depend on the
+      contents of TOAST tables (Tom)
+     </para>
+
+     <para>
+      Previously, large field values in a cursor result might be represented
+      as TOAST pointers, which would fail if the referenced table got dropped
+      before the cursor is read, or if the large value is deleted and then
+      vacuumed away.  This cannot happen with an ordinary cursor,
+      but it could with a cursor that is held past its creating transaction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak when a set-returning function is terminated without
+      reading its whole result (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</>'s
+      <function>dblink_get_result(text,bool)</> function (Joe)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible garbage output from <filename>contrib/sslinfo</> functions
+      (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>configure</> script to properly report failure when
+      unable to obtain linkage information for PL/Perl (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make all documentation reference <literal>pgsql-bugs</> and/or
+      <literal>pgsql-hackers</> as appropriate, instead of the
+      now-decommissioned <literal>pgsql-ports</> and <literal>pgsql-patches</>
+      mailing lists (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009a (for
+      Kathmandu and historical DST corrections in Switzerland, Cuba)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-2-11">
   <title>Release 8.2.11</title>
 
@@ -4044,8 +4518,9 @@ current_date &lt; 2017-11-17
    <para>
     A dump/restore is not required for those running 8.2.X.
     However, if you are upgrading from a version earlier than 8.2.7,
-    see the release notes for 8.2.7.  If you were running a previous
-    8.2.X release, REINDEX all GiST indexes after the upgrade.
+    see the release notes for 8.2.7.  Also, if you were running a previous
+    8.2.X release, it is recommended to <command>REINDEX</> all GiST
+    indexes after the upgrade.
    </para>
 
   </sect2>
@@ -4063,7 +4538,8 @@ current_date &lt; 2017-11-17
 
      <para>
       This would result in index searches failing to find rows they
-      should have found.
+      should have found.  Corrupted indexes can be fixed with
+      <command>REINDEX</>.
      </para>
     </listitem>
 
@@ -8477,6 +8953,126 @@ current_date &lt; 2017-11-17
   </sect2>
  </sect1>
 
+ <sect1 id="release-8-1-16">
+  <title>Release 8.1.16</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-02-02</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.15.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.16</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.15,
+    see the release notes for 8.1.15.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix crash in autovacuum (Alvaro)
+     </para>
+
+     <para>
+      The crash occurs only after vacuuming a whole database for
+      anti-transaction-wraparound purposes, which means that it occurs
+      infrequently and is hard to track down.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of URLs in <function>headline()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of overlength headlines in <function>headline()</>
+      function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible Assert failure or misconversion if an encoding
+      conversion is created with the wrong conversion function for the
+      specified pair of encodings (Tom, Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary locking of small tables in <command>VACUUM</>
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that the contents of a holdable cursor don't depend on the
+      contents of TOAST tables (Tom)
+     </para>
+
+     <para>
+      Previously, large field values in a cursor result might be represented
+      as TOAST pointers, which would fail if the referenced table got dropped
+      before the cursor is read, or if the large value is deleted and then
+      vacuumed away.  This cannot happen with an ordinary cursor,
+      but it could with a cursor that is held past its creating transaction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix uninitialized variables in <filename>contrib/tsearch2</>'s
+      <function>get_covers()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>configure</> script to properly report failure when
+      unable to obtain linkage information for PL/Perl (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make all documentation reference <literal>pgsql-bugs</> and/or
+      <literal>pgsql-hackers</> as appropriate, instead of the
+      now-decommissioned <literal>pgsql-ports</> and <literal>pgsql-patches</>
+      mailing lists (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009a (for
+      Kathmandu and historical DST corrections in Switzerland, Cuba)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-1-15">
   <title>Release 8.1.15</title>
 
@@ -8497,8 +9093,9 @@ current_date &lt; 2017-11-17
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.  If you were running a previous
-    8.1.X release, REINDEX all GiST indexes after the upgrade.
+    see the release notes for 8.1.2.  Also, if you were running a previous
+    8.1.X release, it is recommended to <command>REINDEX</> all GiST
+    indexes after the upgrade.
    </para>
 
   </sect2>
@@ -8516,7 +9113,8 @@ current_date &lt; 2017-11-17
 
      <para>
       This would result in index searches failing to find rows they
-      should have found.
+      should have found.  Corrupted indexes can be fixed with
+      <command>REINDEX</>.
      </para>
     </listitem>
 
@@ -12544,6 +13142,92 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-0-20">
+  <title>Release 8.0.20</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-02-02</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.19.
+   For information about new features in the 8.0 major release, see
+   <xref linkend="release-8-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.20</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.
+    However, if you are upgrading from a version earlier than 8.0.6,
+    see the release notes for 8.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve handling of URLs in <function>headline()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of overlength headlines in <function>headline()</>
+      function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible Assert failure or misconversion if an encoding
+      conversion is created with the wrong conversion function for the
+      specified pair of encodings (Tom, Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary locking of small tables in <command>VACUUM</>
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix uninitialized variables in <filename>contrib/tsearch2</>'s
+      <function>get_covers()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make all documentation reference <literal>pgsql-bugs</> and/or
+      <literal>pgsql-hackers</> as appropriate, instead of the
+      now-decommissioned <literal>pgsql-ports</> and <literal>pgsql-patches</>
+      mailing lists (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009a (for
+      Kathmandu and historical DST corrections in Switzerland, Cuba)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
@@ -16937,6 +17621,92 @@ typedefs (Michael)</para></listitem>
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-7-4-24">
+  <title>Release 7.4.24</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-02-02</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.23.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.24</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve handling of URLs in <function>headline()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of overlength headlines in <function>headline()</>
+      function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible Assert failure or misconversion if an encoding
+      conversion is created with the wrong conversion function for the
+      specified pair of encodings (Tom, Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary locking of small tables in <command>VACUUM</>
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix uninitialized variables in <filename>contrib/tsearch2</>'s
+      <function>get_covers()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in <function>to_char()</>'s handling of <literal>TH</>
+      format codes (Andreas Scherbaum)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make all documentation reference <literal>pgsql-bugs</> and/or
+      <literal>pgsql-hackers</> as appropriate, instead of the
+      now-decommissioned <literal>pgsql-ports</> and <literal>pgsql-patches</>
+      mailing lists (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
