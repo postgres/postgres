@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.5 2009/01/26 10:19:44 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.6 2009/01/30 12:53:43 petere Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -1277,7 +1277,7 @@ ECPGVar: SQL_VAR
 
 					default:
 						if (atoi(length) >= 0)
-							mmerror(PARSE_ERROR, ET_ERROR, "no multidimensional array support for simple data types");
+							mmerror(PARSE_ERROR, ET_ERROR, "multidimensional arrays for simple data types are not supported");
 
 						if (atoi(dimension) < 0)
 							type = ECPGmake_simple_type($5.type_enum, make_str("1"), 0);
@@ -1791,7 +1791,7 @@ cvariable:	CVARIABLE
 				{
 					case '[':
 							if (brace)
-								mmerror(PARSE_ERROR, ET_FATAL, "no multidimensional array support for simple data types");
+								mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays for simple data types are not supported");
 							brace_open++;
 							break;
 					case ']':

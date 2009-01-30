@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.3 2009/01/23 12:43:32 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.4 2009/01/30 12:53:43 petere Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{
@@ -369,10 +369,10 @@ ECPG: FetchStmtMOVEname rule
 		}
 ECPG: SpecialRuleRelationOLD addon
 		if (!QueryIsRule)
-			mmerror(PARSE_ERROR, ET_ERROR, "OLD used in a query that is not in a rule");
+			mmerror(PARSE_ERROR, ET_ERROR, "OLD used in query that is not in a rule");
 ECPG: SpecialRuleRelationNEW addon
 		if (!QueryIsRule)
-			mmerror(PARSE_ERROR, ET_ERROR, "NEW used in a query that is not in a rule");
+			mmerror(PARSE_ERROR, ET_ERROR, "NEW used in query that is not in a rule");
 ECPG: select_limitLIMITselect_limit_value','select_offset_value block
         {
                 mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
