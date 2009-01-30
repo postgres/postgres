@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.65 2008/10/30 22:23:39 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.66 2009/01/30 00:38:26 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,92 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-7-4-24">
+  <title>Release 7.4.24</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-02-02</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.23.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.24</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve handling of URLs in <function>headline()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve handling of overlength headlines in <function>headline()</>
+      function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible Assert failure or misconversion if an encoding
+      conversion is created with the wrong conversion function for the
+      specified pair of encodings (Tom, Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid unnecessary locking of small tables in <command>VACUUM</>
+      (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix uninitialized variables in <filename>contrib/tsearch2</>'s
+      <function>get_covers()</> function (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in <function>to_char()</>'s handling of <literal>TH</>
+      format codes (Andreas Scherbaum)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make all documentation reference <literal>pgsql-bugs</> and/or
+      <literal>pgsql-hackers</> as appropriate, instead of the
+      now-decommissioned <literal>pgsql-ports</> and <literal>pgsql-patches</>
+      mailing lists (Tom)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-23">
   <title>Release 7.4.23</title>
