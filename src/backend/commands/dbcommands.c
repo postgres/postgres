@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.218 2009/01/20 18:59:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.219 2009/01/30 17:24:47 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,13 @@ createdb(const CreatedbStmt *stmt)
 		dbctype = strVal(dctype->arg);
 
 	if (dconnlimit && dconnlimit->arg)
+	{
 		dbconnlimit = intVal(dconnlimit->arg);
+		if (dbconnlimit < -1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid connection limit: %d", dbconnlimit)));
+	}
 
 	/* obtain OID of proposed owner */
 	if (dbowner)
@@ -1319,7 +1325,13 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	}
 
 	if (dconnlimit)
+	{
 		connlimit = intVal(dconnlimit->arg);
+		if (connlimit < -1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid connection limit: %d", connlimit)));
+	}
 
 	/*
 	 * Get the old tuple.  We don't need a lock on the database per se,
