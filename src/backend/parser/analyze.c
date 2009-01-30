@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.371.2.1 2008/12/13 02:00:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.371.2.2 2009/01/30 16:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,12 +232,16 @@ transformStmt(ParseState *pstate, Node *parseTree)
  *		Returns true if a snapshot must be set before doing parse analysis
  *		on the given raw parse tree.
  *
- * Classification here should match transformStmt().
+ * Classification here should match transformStmt(); but we also have to
+ * allow a NULL input (for Parse/Bind of an empty query string).
  */
 bool
 analyze_requires_snapshot(Node *parseTree)
 {
 	bool		result;
+
+	if (parseTree == NULL)
+		return false;
 
 	switch (nodeTag(parseTree))
 	{
