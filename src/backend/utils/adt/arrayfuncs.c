@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.152 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.153 2009/01/30 21:21:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4665,7 +4665,7 @@ array_unnest(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		ArrayType  *arr = PG_GETARG_ARRAYTYPE_P(0);
+		ArrayType  *arr;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -4675,13 +4675,19 @@ array_unnest(PG_FUNCTION_ARGS)
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
+		/*
+		 * Get the array value and detoast if needed.  We can't do this
+		 * earlier because if we have to detoast, we want the detoasted
+		 * copy to be in multi_call_memory_ctx, so it will go away when
+		 * we're done and not before.  (If no detoast happens, we assume
+		 * the originally passed array will stick around till then.)
+		 */
+		arr = PG_GETARG_ARRAYTYPE_P(0);
+
 		/* allocate memory for user context */
 		fctx = (array_unnest_fctx *) palloc(sizeof(array_unnest_fctx));
 
-		/*
-		 * Initialize state.  Note we assume that the originally passed
-		 * array will stick around for the whole call series.
-		 */
+		/* initialize state */
 		fctx->arr = arr;
 		fctx->nextelem = 0;
 		fctx->numelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
