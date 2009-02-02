@@ -51,14 +51,18 @@ main (void)
   /* exec sql begin declare section */
     
      
+     
   
 #line 20 "binary.pgc"
  struct TBempl empl ;
  
 #line 21 "binary.pgc"
+ char * pointer = NULL ;
+ 
+#line 22 "binary.pgc"
  char * data = "\\001\\155\\000\\212" ;
 /* exec sql end declare section */
-#line 22 "binary.pgc"
+#line 23 "binary.pgc"
 
   int i;
 
@@ -66,7 +70,7 @@ main (void)
 
   empl.idnum = 1;
   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
-#line 28 "binary.pgc"
+#line 29 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -75,7 +79,7 @@ main (void)
     }
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table empl ( idnum integer , name char ( 20 ) , accs smallint , byte bytea )", ECPGt_EOIT, ECPGt_EORT);}
-#line 36 "binary.pgc"
+#line 37 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -86,7 +90,7 @@ main (void)
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into empl values ( 1 , 'first user' , 320 , $1  )", 
 	ECPGt_char,&(data),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 43 "binary.pgc"
+#line 44 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -95,12 +99,12 @@ main (void)
     }
 
   /* declare C cursor for select name , accs , byte from empl where idnum = $1  */
-#line 50 "binary.pgc"
+#line 51 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 51 "binary.pgc"
+#line 52 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 
 	ECPGt_char,(empl.name),(long)21,(long)1,(21)*sizeof(char), 
@@ -109,7 +113,7 @@ main (void)
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(empl.byte),(long)20,(long)1,(20)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 52 "binary.pgc"
+#line 53 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -119,15 +123,13 @@ main (void)
 
   printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
-  memset(empl.name, 0, 21L);
-  memset(empl.byte, '#', 20L);
   /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
-#line 63 "binary.pgc"
+#line 62 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B binary cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 64 "binary.pgc"
+#line 63 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch B", ECPGt_EOIT, 
 	ECPGt_char,(empl.name),(long)21,(long)1,(21)*sizeof(char), 
@@ -136,7 +138,7 @@ main (void)
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(empl.byte),(long)20,(long)1,(20)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 65 "binary.pgc"
+#line 64 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -145,20 +147,46 @@ main (void)
     }
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close B", ECPGt_EOIT, ECPGt_EORT);}
-#line 72 "binary.pgc"
+#line 71 "binary.pgc"
 
 
   /* do not print a.accs because big/little endian will have different outputs here */
   printf ("name=%s, byte=", empl.name);
-  for (i=0; i<20; i++)
-  {
-	if (empl.byte[i] == '#')
-		break;
+  for (i=0; i<4; i++)
 	printf("(%o)", (unsigned char)empl.byte[i]);
-  }
   printf("\n");
+
+  /* declare A binary cursor for select byte from empl where idnum = $1  */
+#line 79 "binary.pgc"
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare A binary cursor for select byte from empl where idnum = $1 ", 
+	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
+#line 80 "binary.pgc"
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch A", ECPGt_EOIT, 
+	ECPGt_char,&(pointer),(long)0,(long)1,(1)*sizeof(char), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
+#line 81 "binary.pgc"
+
+  if (sqlca.sqlcode)
+    {
+      printf ("fetch error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close A", ECPGt_EOIT, ECPGt_EORT);}
+#line 88 "binary.pgc"
+
+
+  printf ("pointer=");
+  for (i=0; i<4; i++)
+	printf("(%o)", (unsigned char)pointer[i]);
+  printf("\n");
+  free(pointer);
+
   { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 83 "binary.pgc"
+#line 96 "binary.pgc"
 
   exit (0);
 }

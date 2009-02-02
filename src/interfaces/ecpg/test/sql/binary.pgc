@@ -18,6 +18,7 @@ main (void)
 {
   EXEC SQL BEGIN DECLARE SECTION;
   struct TBempl empl;
+  char *pointer = NULL;
   char *data = "\\001\\155\\000\\212";
   EXEC SQL END DECLARE SECTION;
   int i;
@@ -58,8 +59,6 @@ main (void)
 
   printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
-  memset(empl.name, 0, 21L);
-  memset(empl.byte, '#', 20L);
   EXEC SQL DECLARE B BINARY CURSOR FOR select name, accs, byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN B;
   EXEC SQL FETCH B INTO :empl.name,:empl.accs,:empl.byte;
@@ -73,13 +72,27 @@ main (void)
 
   /* do not print a.accs because big/little endian will have different outputs here */
   printf ("name=%s, byte=", empl.name);
-  for (i=0; i<20; i++)
-  {
-	if (empl.byte[i] == '#')
-		break;
+  for (i=0; i<4; i++)
 	printf("(%o)", (unsigned char)empl.byte[i]);
-  }
   printf("\n");
+
+  EXEC SQL DECLARE A BINARY CURSOR FOR select byte from empl where idnum =:empl.idnum;
+  EXEC SQL OPEN A;
+  EXEC SQL FETCH A INTO :pointer;
+  if (sqlca.sqlcode)
+    {
+      printf ("fetch error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
+  EXEC SQL CLOSE A;
+
+  printf ("pointer=");
+  for (i=0; i<4; i++)
+	printf("(%o)", (unsigned char)pointer[i]);
+  printf("\n");
+  free(pointer);
+
   EXEC SQL disconnect;
   exit (0);
 }

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.79 2009/01/15 11:52:55 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.80 2009/02/02 16:14:06 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -353,40 +353,45 @@ ecpg_store_result(const PGresult *results, int act_field,
 	{
 		int			len = 0;
 
-		switch (var->type)
+		if (!PQfformat(results, act_field)) 
 		{
-			case ECPGt_char:
-			case ECPGt_unsigned_char:
-				if (!var->varcharsize && !var->arrsize)
-				{
-					/* special mode for handling char**foo=0 */
-					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-						len += strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-					len *= var->offset; /* should be 1, but YMNK */
-					len += (ntuples + 1) * sizeof(char *);
-				}
-				else
-				{
-					var->varcharsize = 0;
-					/* check strlen for each tuple */
-					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+			switch (var->type)
+			{
+				case ECPGt_char:
+				case ECPGt_unsigned_char:
+					if (!var->varcharsize && !var->arrsize)
 					{
-						int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-
-						if (len > var->varcharsize)
-							var->varcharsize = len;
+						/* special mode for handling char**foo=0 */
+						for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+							len += strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+						len *= var->offset; /* should be 1, but YMNK */
+						len += (ntuples + 1) * sizeof(char *);
 					}
-					var->offset *= var->varcharsize;
+					else
+					{
+						var->varcharsize = 0;
+						/* check strlen for each tuple */
+						for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+						{
+							int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+
+							if (len > var->varcharsize)
+								var->varcharsize = len;
+						}
+						var->offset *= var->varcharsize;
+						len = var->offset * ntuples;
+					}
+					break;
+				case ECPGt_varchar:
+					len = ntuples * (var->varcharsize + sizeof(int));
+					break;
+				default:
 					len = var->offset * ntuples;
-				}
-				break;
-			case ECPGt_varchar:
-				len = ntuples * (var->varcharsize + sizeof(int));
-				break;
-			default:
-				len = var->offset * ntuples;
-				break;
+					break;
+			}
 		}
+		else
+			len = PQgetlength(results, act_tuple, act_field);
 		ecpg_log("ecpg_store_result on line %d: allocating memory for %d tuples\n", stmt->lineno, ntuples);
 		var->value = (char *) ecpg_alloc(len, stmt->lineno);
 		if (!var->value)

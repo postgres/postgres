@@ -2409,6 +2409,7 @@ Wed, 17 Dec 2008 17:49:11 +0100
 Mon, 02 Feb 2009 16:34:53 +0100
 
 	- Fixed bug in handling of "%s" pattern in PGTYPEStimestamp_defmt_asc().
+	- Fixed auto allocation for binary data types.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.
