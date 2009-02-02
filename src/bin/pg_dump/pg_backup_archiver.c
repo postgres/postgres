@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.161 2009/01/13 11:44:56 mha Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.162 2009/02/02 20:07:36 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,9 @@
 #include "dumputils.h"
 
 #include <ctype.h>
-
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #ifdef WIN32
 #include <io.h>
@@ -33,6 +34,44 @@
 
 #include "libpq/libpq-fs.h"
 
+/*
+ * Special exit values from worker children.  We reserve 0 for normal
+ * success; 1 and other small values should be interpreted as crashes.
+ */
+#define WORKER_CREATE_DONE		10
+#define WORKER_INHIBIT_DATA		11
+#define WORKER_IGNORED_ERRORS	12
+
+/*
+ * Unix uses exit to return result from worker child, so function is void.
+ * Windows thread result comes via function return.
+ */
+#ifndef WIN32
+#define parallel_restore_result void
+#else
+#define parallel_restore_result DWORD
+#endif
+
+/* IDs for worker children are either PIDs or thread handles */
+#ifndef WIN32
+#define thandle pid_t
+#else
+#define thandle HANDLE
+#endif
+
+typedef struct _restore_args
+{
+	ArchiveHandle *AH;
+	TocEntry      *te;
+} RestoreArgs;
+
+typedef struct _parallel_slot
+{
+	thandle		child_id;
+	RestoreArgs *args;
+} ParallelSlot;
+
+#define NO_SLOT (-1)
 
 const char *progname;
 
@@ -70,6 +109,30 @@ static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
 static OutputContext SetOutput(ArchiveHandle *AH, char *filename, int compression);
 static void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
+
+static int restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
+							 RestoreOptions *ropt, bool is_parallel);
+static void restore_toc_entries_parallel(ArchiveHandle *AH);
+static thandle spawn_restore(RestoreArgs *args);
+static thandle reap_child(ParallelSlot *slots, int n_slots, int *work_status);
+static bool work_in_progress(ParallelSlot *slots, int n_slots);
+static int get_next_slot(ParallelSlot *slots, int n_slots);
+static TocEntry *get_next_work_item(ArchiveHandle *AH,
+									TocEntry **first_unprocessed,
+									ParallelSlot *slots, int n_slots);
+static parallel_restore_result parallel_restore(RestoreArgs *args);
+static void mark_work_done(ArchiveHandle *AH, thandle worker, int status,
+						   ParallelSlot *slots, int n_slots);
+static void fix_dependencies(ArchiveHandle *AH);
+static void repoint_table_dependencies(ArchiveHandle *AH,
+									   DumpId tableId, DumpId tableDataId);
+static void identify_locking_dependencies(TocEntry *te,
+										  TocEntry **tocsByDumpId);
+static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te);
+static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
+static void inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te);
+static ArchiveHandle *CloneArchive(ArchiveHandle *AH);
+static void DeCloneArchive(ArchiveHandle *AH);
 
 
 /*
@@ -131,7 +194,6 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	TocEntry   *te;
 	teReqs		reqs;
 	OutputContext sav;
-	bool		defnDumped;
 
 	AH->ropt = ropt;
 	AH->stage = STAGE_INITIALIZING;
@@ -146,12 +208,28 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	if (ropt->create && ropt->dropSchema)
 		die_horribly(AH, modulename, "-C and -c are incompatible options\n");
+
 	/*
 	 * -1 is not compatible with -C, because we can't create a database
 	 *  inside a transaction block.
 	 */
 	if (ropt->create && ropt->single_txn)
 		die_horribly(AH, modulename, "-C and -1 are incompatible options\n");
+
+	/*
+	 * Make sure we won't need (de)compression we haven't got
+	 */
+#ifndef HAVE_LIBZ
+	if (AH->compression != 0 && AH->PrintTocDataPtr != NULL)
+	{
+		for (te = AH->toc->next; te != AH->toc; te = te->next)
+		{
+			reqs = _tocEntryRequired(te, ropt, false);
+			if (te->hadDumper && (reqs & REQ_DATA) != 0)
+				die_horribly(AH, modulename, "cannot restore from compressed archive (compression not supported in this installation)\n");
+		}
+	}
+#endif
 
 	/*
 	 * If we're using a DB connection, then connect it.
@@ -268,148 +346,21 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		 */
 		if (AH->currSchema)
 			free(AH->currSchema);
-		AH->currSchema = strdup("");
+		AH->currSchema = NULL;
 	}
 
 	/*
-	 * Now process each non-ACL TOC entry
+	 * In serial mode, we now process each non-ACL TOC entry.
+	 *
+	 * In parallel mode, turn control over to the parallel-restore logic.
 	 */
-	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	if (ropt->number_of_threads > 1 && ropt->useDB)
+		restore_toc_entries_parallel(AH);
+	else
 	{
-		AH->currentTE = te;
-
-		/* Work out what, if anything, we want from this entry */
-		reqs = _tocEntryRequired(te, ropt, false);
-
-		/* Dump any relevant dump warnings to stderr */
-		if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
-		{
-			if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0)
-				write_msg(modulename, "warning from original dump file: %s\n", te->defn);
-			else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
-				write_msg(modulename, "warning from original dump file: %s\n", te->copyStmt);
-		}
-
-		defnDumped = false;
-
-		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
-		{
-			ahlog(AH, 1, "creating %s %s\n", te->desc, te->tag);
-
-			_printTocEntry(AH, te, ropt, false, false);
-			defnDumped = true;
-
-			/*
-			 * If we could not create a table and --no-data-for-failed-tables
-			 * was given, ignore the corresponding TABLE DATA
-			 */
-			if (ropt->noDataForFailedTables &&
-				AH->lastErrorTE == te &&
-				strcmp(te->desc, "TABLE") == 0)
-			{
-				TocEntry   *tes;
-
-				ahlog(AH, 1, "table \"%s\" could not be created, will not restore its data\n",
-					  te->tag);
-
-				for (tes = te->next; tes != AH->toc; tes = tes->next)
-				{
-					if (strcmp(tes->desc, "TABLE DATA") == 0 &&
-						strcmp(tes->tag, te->tag) == 0 &&
-						strcmp(tes->namespace ? tes->namespace : "",
-							   te->namespace ? te->namespace : "") == 0)
-					{
-						/* mark it unwanted */
-						ropt->idWanted[tes->dumpId - 1] = false;
-						break;
-					}
-				}
-			}
-
-			/* If we created a DB, connect to it... */
-			if (strcmp(te->desc, "DATABASE") == 0)
-			{
-				ahlog(AH, 1, "connecting to new database \"%s\"\n", te->tag);
-				_reconnectToDB(AH, te->tag);
-			}
-		}
-
-		/*
-		 * If we have a data component, then process it
-		 */
-		if ((reqs & REQ_DATA) != 0)
-		{
-			/*
-			 * hadDumper will be set if there is genuine data component for
-			 * this node. Otherwise, we need to check the defn field for
-			 * statements that need to be executed in data-only restores.
-			 */
-			if (te->hadDumper)
-			{
-				/*
-				 * If we can output the data, then restore it.
-				 */
-				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
-				{
-#ifndef HAVE_LIBZ
-					if (AH->compression != 0)
-						die_horribly(AH, modulename, "cannot restore from compressed archive (compression not supported in this installation)\n");
-#endif
-
-					_printTocEntry(AH, te, ropt, true, false);
-
-					if (strcmp(te->desc, "BLOBS") == 0 ||
-						strcmp(te->desc, "BLOB COMMENTS") == 0)
-					{
-						ahlog(AH, 1, "restoring %s\n", te->desc);
-
-						_selectOutputSchema(AH, "pg_catalog");
-
-						(*AH->PrintTocDataPtr) (AH, te, ropt);
-					}
-					else
-					{
-						_disableTriggersIfNecessary(AH, te, ropt);
-
-						/* Select owner and schema as necessary */
-						_becomeOwner(AH, te);
-						_selectOutputSchema(AH, te->namespace);
-
-						ahlog(AH, 1, "restoring data for table \"%s\"\n",
-							  te->tag);
-
-						/*
-						 * If we have a copy statement, use it. As of V1.3,
-						 * these are separate to allow easy import from
-						 * withing a database connection. Pre 1.3 archives can
-						 * not use DB connections and are sent to output only.
-						 *
-						 * For V1.3+, the table data MUST have a copy
-						 * statement so that we can go into appropriate mode
-						 * with libpq.
-						 */
-						if (te->copyStmt && strlen(te->copyStmt) > 0)
-						{
-							ahprintf(AH, "%s", te->copyStmt);
-							AH->writingCopyData = true;
-						}
-
-						(*AH->PrintTocDataPtr) (AH, te, ropt);
-
-						AH->writingCopyData = false;
-
-						_enableTriggersIfNecessary(AH, te, ropt);
-					}
-				}
-			}
-			else if (!defnDumped)
-			{
-				/* If we haven't already dumped the defn part, do so now */
-				ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
-				_printTocEntry(AH, te, ropt, false, false);
-			}
-		}
-	}							/* end loop over TOC entries */
+		for (te = AH->toc->next; te != AH->toc; te = te->next)
+			(void) restore_toc_entry(AH, te, ropt, false);
+	}
 
 	/*
 	 * Scan TOC again to output ownership commands and ACLs
@@ -455,6 +406,193 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		PQfinish(AH->connection);
 		AH->connection = NULL;
 	}
+}
+
+/*
+ * Restore a single TOC item.  Used in both parallel and non-parallel restore;
+ * is_parallel is true if we are in a worker child process.
+ *
+ * Returns 0 normally, but WORKER_CREATE_DONE or WORKER_INHIBIT_DATA if
+ * the parallel parent has to make the corresponding status update.
+ */
+static int
+restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
+				  RestoreOptions *ropt, bool is_parallel)
+{
+	int         retval = 0;
+	teReqs		reqs;
+	bool		defnDumped;
+
+	AH->currentTE = te;
+
+	/* Work out what, if anything, we want from this entry */
+	reqs = _tocEntryRequired(te, ropt, false);
+
+	/* Dump any relevant dump warnings to stderr */
+	if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
+	{
+		if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0)
+			write_msg(modulename, "warning from original dump file: %s\n", te->defn);
+		else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
+			write_msg(modulename, "warning from original dump file: %s\n", te->copyStmt);
+	}
+
+	defnDumped = false;
+
+	if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
+	{
+		ahlog(AH, 1, "creating %s %s\n", te->desc, te->tag);
+
+		_printTocEntry(AH, te, ropt, false, false);
+		defnDumped = true;
+
+		if (strcmp(te->desc, "TABLE") == 0)
+		{
+			if (AH->lastErrorTE == te)
+			{
+				/*
+				 * We failed to create the table.
+				 * If --no-data-for-failed-tables was given,
+				 * mark the corresponding TABLE DATA to be ignored.
+				 *
+				 * In the parallel case this must be done in the parent,
+				 * so we just set the return value.
+				 */
+				if (ropt->noDataForFailedTables)
+				{
+					if (is_parallel)
+						retval = WORKER_INHIBIT_DATA;
+					else
+						inhibit_data_for_failed_table(AH, te);
+				}
+			}
+			else
+			{
+				/*
+				 * We created the table successfully.  Mark the
+				 * corresponding TABLE DATA for possible truncation.
+				 *
+				 * In the parallel case this must be done in the parent,
+				 * so we just set the return value.
+				 */
+				if (is_parallel)
+					retval = WORKER_CREATE_DONE;
+				else
+					mark_create_done(AH, te);
+			}
+		}
+
+		/* If we created a DB, connect to it... */
+		if (strcmp(te->desc, "DATABASE") == 0)
+		{
+			ahlog(AH, 1, "connecting to new database \"%s\"\n", te->tag);
+			_reconnectToDB(AH, te->tag);
+		}
+	}
+
+	/*
+	 * If we have a data component, then process it
+	 */
+	if ((reqs & REQ_DATA) != 0)
+	{
+		/*
+		 * hadDumper will be set if there is genuine data component for
+		 * this node. Otherwise, we need to check the defn field for
+		 * statements that need to be executed in data-only restores.
+		 */
+		if (te->hadDumper)
+		{
+			/*
+			 * If we can output the data, then restore it.
+			 */
+			if (AH->PrintTocDataPtr != NULL && (reqs & REQ_DATA) != 0)
+			{
+				_printTocEntry(AH, te, ropt, true, false);
+
+				if (strcmp(te->desc, "BLOBS") == 0 ||
+					strcmp(te->desc, "BLOB COMMENTS") == 0)
+				{
+					ahlog(AH, 1, "restoring %s\n", te->desc);
+
+					_selectOutputSchema(AH, "pg_catalog");
+
+					(*AH->PrintTocDataPtr) (AH, te, ropt);
+				}
+				else
+				{
+					_disableTriggersIfNecessary(AH, te, ropt);
+
+					/* Select owner and schema as necessary */
+					_becomeOwner(AH, te);
+					_selectOutputSchema(AH, te->namespace);
+
+					ahlog(AH, 1, "restoring data for table \"%s\"\n",
+						  te->tag);
+
+					/*
+					 * In parallel restore, if we created the table earlier
+					 * in the run then we wrap the COPY in a transaction and
+					 * precede it with a TRUNCATE.  If archiving is not on
+					 * this prevents WAL-logging the COPY.  This obtains a
+					 * speedup similar to that from using single_txn mode
+					 * in non-parallel restores.
+					 */
+					if (is_parallel && te->created)
+					{
+						/*
+						 * Parallel restore is always talking directly to a
+						 * server, so no need to see if we should issue BEGIN.
+						 */
+						StartTransaction(AH);
+
+						/*
+						 * If the server version is >= 8.4, make sure we issue
+						 * TRUNCATE with ONLY so that child tables are not
+						 * wiped.
+						 */
+						ahprintf(AH, "TRUNCATE TABLE %s%s;\n\n",
+								 (PQserverVersion(AH->connection) >= 80400 ?
+								  "ONLY " : ""),
+								 fmtId(te->tag));
+					}
+
+					/*
+					 * If we have a copy statement, use it. As of V1.3,
+					 * these are separate to allow easy import from
+					 * withing a database connection. Pre 1.3 archives can
+					 * not use DB connections and are sent to output only.
+					 *
+					 * For V1.3+, the table data MUST have a copy
+					 * statement so that we can go into appropriate mode
+					 * with libpq.
+					 */
+					if (te->copyStmt && strlen(te->copyStmt) > 0)
+					{
+						ahprintf(AH, "%s", te->copyStmt);
+						AH->writingCopyData = true;
+					}
+
+					(*AH->PrintTocDataPtr) (AH, te, ropt);
+
+					AH->writingCopyData = false;
+
+					/* close out the transaction started above */
+					if (is_parallel && te->created)
+						CommitTransaction(AH);
+
+					_enableTriggersIfNecessary(AH, te, ropt);
+				}
+			}
+		}
+		else if (!defnDumped)
+		{
+			/* If we haven't already dumped the defn part, do so now */
+			ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
+			_printTocEntry(AH, te, ropt, false, false);
+		}
+	}
+
+	return retval;
 }
 
 /*
@@ -555,7 +693,8 @@ ArchiveEntry(Archive *AHX,
 			 const char *namespace,
 			 const char *tablespace,
 			 const char *owner, bool withOids,
-			 const char *desc, const char *defn,
+			 const char *desc, teSection section,
+			 const char *defn,
 			 const char *dropStmt, const char *copyStmt,
 			 const DumpId *deps, int nDeps,
 			 DataDumperPtr dumpFn, void *dumpArg)
@@ -578,6 +717,7 @@ ArchiveEntry(Archive *AHX,
 
 	newToc->catalogId = catalogId;
 	newToc->dumpId = dumpId;
+	newToc->section = section;
 
 	newToc->tag = strdup(tag);
 	newToc->namespace = namespace ? strdup(namespace) : NULL;
@@ -616,7 +756,7 @@ void
 PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	TocEntry   *te = AH->toc->next;
+	TocEntry   *te;
 	OutputContext sav;
 	char	   *fmtName;
 
@@ -655,14 +795,22 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 
 	ahprintf(AH, ";\n;\n; Selected TOC Entries:\n;\n");
 
-	while (te != AH->toc)
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		if (_tocEntryRequired(te, ropt, true) != 0)
+		if (ropt->verbose || _tocEntryRequired(te, ropt, true) != 0)
 			ahprintf(AH, "%d; %u %u %s %s %s %s\n", te->dumpId,
 					 te->catalogId.tableoid, te->catalogId.oid,
 					 te->desc, te->namespace ? te->namespace : "-",
 					 te->tag, te->owner);
-		te = te->next;
+		if (ropt->verbose && te->nDeps > 0)
+		{
+			int		i;
+
+			ahprintf(AH, ";\tdepends on:");
+			for (i = 0; i < te->nDeps; i++)
+				ahprintf(AH, " %d", te->dependencies[i]);
+			ahprintf(AH, "\n");
+		}
 	}
 
 	if (ropt->filename)
@@ -1316,12 +1464,10 @@ getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
 {
 	TocEntry   *te;
 
-	te = AH->toc->next;
-	while (te != AH->toc)
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		if (te->dumpId == id)
 			return te;
-		te = te->next;
 	}
 	return NULL;
 }
@@ -1696,9 +1842,9 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	else
 		AH->fSpec = NULL;
 
-	AH->currUser = strdup("");	/* So it's valid, but we can free() it later
-								 * if necessary */
-	AH->currSchema = strdup("");	/* ditto */
+	AH->currUser = NULL;		/* unknown */
+	AH->currSchema = NULL;		/* ditto */
+	AH->currTablespace = NULL;	/* ditto */
 	AH->currWithOids = -1;		/* force SET */
 
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
@@ -1732,10 +1878,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		else
 			setmode(fileno(stdin), O_BINARY);
 	}
-#endif
-
-#if 0
-	write_msg(modulename, "archive format is %d\n", fmt);
 #endif
 
 	if (fmt == archUnknown)
@@ -1772,11 +1914,11 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 void
 WriteDataChunks(ArchiveHandle *AH)
 {
-	TocEntry   *te = AH->toc->next;
+	TocEntry   *te;
 	StartDataPtr startPtr;
 	EndDataPtr	endPtr;
 
-	while (te != AH->toc)
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		if (te->dataDumper != NULL)
 		{
@@ -1811,7 +1953,6 @@ WriteDataChunks(ArchiveHandle *AH)
 				(*endPtr) (AH, te);
 			AH->currToc = NULL;
 		}
-		te = te->next;
 	}
 }
 
@@ -1839,6 +1980,7 @@ WriteToc(ArchiveHandle *AH)
 
 		WriteStr(AH, te->tag);
 		WriteStr(AH, te->desc);
+		WriteInt(AH, te->section);
 		WriteStr(AH, te->defn);
 		WriteStr(AH, te->dropStmt);
 		WriteStr(AH, te->copyStmt);
@@ -1868,8 +2010,7 @@ ReadToc(ArchiveHandle *AH)
 	DumpId	   *deps;
 	int			depIdx;
 	int			depSize;
-
-	TocEntry   *te = AH->toc->next;
+	TocEntry   *te;
 
 	AH->tocCount = ReadInt(AH);
 	AH->maxDumpId = 0;
@@ -1904,6 +2045,35 @@ ReadToc(ArchiveHandle *AH)
 
 		te->tag = ReadStr(AH);
 		te->desc = ReadStr(AH);
+
+		if (AH->version >= K_VERS_1_11)
+		{
+			te->section = ReadInt(AH);
+		}
+		else
+		{
+			/*
+			 * rules for pre-8.4 archives wherein pg_dump hasn't classified
+			 * the entries into sections
+			 */
+			if (strcmp(te->desc, "COMMENT") == 0 ||
+				strcmp(te->desc, "ACL") == 0)
+				te->section = SECTION_NONE;
+			else if (strcmp(te->desc, "TABLE DATA") == 0 ||
+					 strcmp(te->desc, "BLOBS") == 0 ||
+					 strcmp(te->desc, "BLOB COMMENTS") == 0)
+				te->section = SECTION_DATA;
+			else if (strcmp(te->desc, "CONSTRAINT") == 0 ||
+					 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
+					 strcmp(te->desc, "FK CONSTRAINT") == 0 ||
+					 strcmp(te->desc, "INDEX") == 0 ||
+					 strcmp(te->desc, "RULE") == 0 ||
+					 strcmp(te->desc, "TRIGGER") == 0)
+				te->section = SECTION_POST_DATA;
+			else
+				te->section = SECTION_PRE_DATA;
+		}
+
 		te->defn = ReadStr(AH);
 		te->dropStmt = ReadStr(AH);
 
@@ -2269,13 +2439,15 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname)
 	 */
 	if (AH->currUser)
 		free(AH->currUser);
+	AH->currUser = NULL;
 
-	AH->currUser = strdup("");
-
-	/* don't assume we still know the output schema */
+	/* don't assume we still know the output schema, tablespace, etc either */
 	if (AH->currSchema)
 		free(AH->currSchema);
-	AH->currSchema = strdup("");
+	AH->currSchema = NULL;
+	if (AH->currTablespace)
+		free(AH->currTablespace);
+	AH->currTablespace = NULL;
 	AH->currWithOids = -1;
 
 	/* re-establish fixed state */
@@ -2304,7 +2476,6 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 	 */
 	if (AH->currUser)
 		free(AH->currUser);
-
 	AH->currUser = strdup(user);
 }
 
@@ -2824,15 +2995,13 @@ ReadHead(ArchiveHandle *AH)
  * checkSeek
  *	  check to see if fseek can be performed.
  */
-
 bool
 checkSeek(FILE *fp)
 {
-
 	if (fseeko(fp, 0, SEEK_CUR) != 0)
 		return false;
 	else if (sizeof(pgoff_t) > sizeof(long))
-
+	{
 		/*
 		 * At this point, pgoff_t is too large for long, so we return based on
 		 * whether an pgoff_t version of fseek is available.
@@ -2842,6 +3011,7 @@ checkSeek(FILE *fp)
 #else
 		return false;
 #endif
+	}
 	else
 		return true;
 }
@@ -2869,4 +3039,856 @@ dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim)
 #endif
 				 localtime(&tim)) != 0)
 		ahprintf(AH, "-- %s %s\n\n", msg, buf);
+}
+
+
+/*
+ * Main engine for parallel restore.
+ *
+ * Work is done in three phases.
+ * First we process tocEntries until we come to one that is marked
+ * SECTION_DATA or SECTION_POST_DATA, in a single connection, just as for a
+ * standard restore.  Second we process the remaining non-ACL steps in
+ * parallel worker children (threads on Windows, processes on Unix), each of
+ * which connects separately to the database.  Finally we process all the ACL
+ * entries in a single connection (that happens back in RestoreArchive).
+ */
+static void
+restore_toc_entries_parallel(ArchiveHandle *AH)
+{
+	RestoreOptions *ropt = AH->ropt;
+	int			n_slots = ropt->number_of_threads;
+	ParallelSlot *slots;
+	int			work_status;
+	int			next_slot;
+	TocEntry   *first_unprocessed = AH->toc->next;
+	TocEntry   *next_work_item;
+	thandle		ret_child;
+	TocEntry   *te;
+
+	ahlog(AH,2,"entering restore_toc_entries_parallel\n");
+
+	/* we haven't got round to making this work for all archive formats */
+	if (AH->ClonePtr == NULL || AH->ReopenPtr == NULL)
+		die_horribly(AH, modulename, "parallel restore is not supported with this archive file format\n");
+
+	slots = (ParallelSlot *) calloc(sizeof(ParallelSlot), n_slots);
+
+	/* Adjust dependency information */
+	fix_dependencies(AH);
+
+	/*
+	 * Do all the early stuff in a single connection in the parent.
+	 * There's no great point in running it in parallel, in fact it will
+	 * actually run faster in a single connection because we avoid all the
+	 * connection and setup overhead.
+	 */
+	while ((next_work_item = get_next_work_item(AH, &first_unprocessed,
+												NULL, 0)) != NULL)
+	{
+		if (next_work_item->section == SECTION_DATA ||
+			next_work_item->section == SECTION_POST_DATA)
+			break;
+
+		ahlog(AH, 1, "processing item %d %s %s\n",
+			  next_work_item->dumpId,
+			  next_work_item->desc, next_work_item->tag);
+
+		(void) restore_toc_entry(AH, next_work_item, ropt, false);
+
+		next_work_item->restored = true;
+		reduce_dependencies(AH, next_work_item);
+	}
+
+	/*
+	 * Now close parent connection in prep for parallel steps.  We do this
+	 * mainly to ensure that we don't exceed the specified number of parallel
+	 * connections.
+	 */
+	PQfinish(AH->connection);
+	AH->connection = NULL;
+
+	/* blow away any transient state from the old connection */
+	if (AH->currUser)
+		free(AH->currUser);
+	AH->currUser = NULL;
+	if (AH->currSchema)
+		free(AH->currSchema);
+	AH->currSchema = NULL;
+	if (AH->currTablespace)
+		free(AH->currTablespace);
+	AH->currTablespace = NULL;
+	AH->currWithOids = -1;
+
+	/*
+	 * main parent loop
+	 *
+	 * Keep going until there is no worker still running AND there is no work
+	 * left to be done.
+	 */
+
+	ahlog(AH,1,"entering main parallel loop\n");
+
+	while ((next_work_item = get_next_work_item(AH, &first_unprocessed,
+												slots, n_slots)) != NULL ||
+		   work_in_progress(slots, n_slots))
+	{
+		if (next_work_item != NULL)
+		{
+			teReqs    reqs;
+
+			/* If not to be dumped, don't waste time launching a worker */
+			reqs = _tocEntryRequired(next_work_item, AH->ropt, false);
+			if ((reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
+			{
+				ahlog(AH, 1, "skipping item %d %s %s\n",
+					  next_work_item->dumpId,
+					  next_work_item->desc, next_work_item->tag);
+
+				next_work_item->restored = true;
+				reduce_dependencies(AH, next_work_item);
+
+				continue;
+			}
+
+			if ((next_slot = get_next_slot(slots, n_slots)) != NO_SLOT)
+			{
+				/* There is work still to do and a worker slot available */
+				thandle child;
+				RestoreArgs *args;
+
+				ahlog(AH, 1, "launching item %d %s %s\n",
+					  next_work_item->dumpId,
+					  next_work_item->desc, next_work_item->tag);
+
+				next_work_item->restored = true;
+
+				/* this memory is dealloced in mark_work_done() */
+				args = malloc(sizeof(RestoreArgs));
+				args->AH = CloneArchive(AH);
+				args->te = next_work_item;
+
+				/* run the step in a worker child */
+				child = spawn_restore(args);
+
+				slots[next_slot].child_id = child;
+				slots[next_slot].args = args;
+
+				continue;
+			}
+		}
+
+		/*
+		 * If we get here there must be work being done.  Either there is no
+		 * work available to schedule (and work_in_progress returned true) or
+		 * there are no slots available.  So we wait for a worker to finish,
+		 * and process the result.
+		 */
+		ret_child = reap_child(slots, n_slots, &work_status);
+
+		if (WIFEXITED(work_status))
+		{
+			mark_work_done(AH, ret_child, WEXITSTATUS(work_status),
+						   slots, n_slots);
+		}
+		else
+		{
+			die_horribly(AH, modulename, "worker process crashed: status %d\n",
+						 work_status);
+		}
+	}
+
+	ahlog(AH,1,"finished main parallel loop\n");
+
+	/*
+	 * Now reconnect the single parent connection.
+	 */
+	ConnectDatabase((Archive *) AH, ropt->dbname,
+					ropt->pghost, ropt->pgport, ropt->username,
+					ropt->requirePassword);
+
+	_doSetFixedOutputState(AH);
+
+	/*
+	 * Make sure there is no non-ACL work left due to, say,
+	 * circular dependencies, or some other pathological condition.
+	 * If so, do it in the single parent connection.
+	 */
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		if (!te->restored)
+		{
+			ahlog(AH, 1, "processing missed item %d %s %s\n",
+				  te->dumpId, te->desc, te->tag);
+			(void) restore_toc_entry(AH, te, ropt, false);
+		}
+	}
+
+	/* The ACLs will be handled back in RestoreArchive. */
+}
+
+/*
+ * create a worker child to perform a restore step in parallel
+ */
+static thandle
+spawn_restore(RestoreArgs *args)
+{
+	thandle child;
+
+	/* Ensure stdio state is quiesced before forking */
+	fflush(NULL);
+
+#ifndef WIN32
+	child = fork();
+	if (child == 0)
+	{
+		/* in child process */
+		parallel_restore(args);
+		die_horribly(args->AH, modulename,
+					 "parallel_restore should not return\n");
+	}
+	else if (child < 0)
+	{
+		/* fork failed */
+		die_horribly(args->AH, modulename,
+					 "could not create worker process: %s\n",
+					 strerror(errno));
+	}
+#else
+	child = (HANDLE) _beginthreadex(NULL, 0, (void *) parallel_restore,
+									args, 0, NULL);
+	if (child == 0)
+		die_horribly(args->AH, modulename,
+					 "could not create worker thread: %s\n",
+					 strerror(errno));
+#endif
+
+	return child;
+}
+
+/*
+ *  collect status from a completed worker child
+ */
+static thandle
+reap_child(ParallelSlot *slots, int n_slots, int *work_status)
+{
+#ifndef WIN32
+	/* Unix is so much easier ... */
+	return wait(work_status);
+#else
+	static HANDLE *handles = NULL;
+	int hindex, snum, tnum;
+	thandle ret_child;
+	DWORD res;
+
+	/* first time around only, make space for handles to listen on */
+	if (handles == NULL)
+		handles = (HANDLE *) calloc(sizeof(HANDLE),n_slots);
+
+	/* set up list of handles to listen to */
+	for (snum=0, tnum=0; snum < n_slots; snum++)
+		if (slots[snum].child_id != 0)
+			handles[tnum++] = slots[snum].child_id;
+
+	/* wait for one to finish */
+	hindex = WaitForMultipleObjects(tnum, handles, false, INFINITE);
+
+	/* get handle of finished thread */
+	ret_child = handles[hindex - WAIT_OBJECT_0];
+
+	/* get the result */
+	GetExitCodeThread(ret_child,&res);
+	*work_status = res;
+
+	/* dispose of handle to stop leaks */
+	CloseHandle(ret_child);
+
+	return ret_child;
+#endif
+}
+
+/*
+ * are we doing anything now?
+ */
+static bool
+work_in_progress(ParallelSlot *slots, int n_slots)
+{
+	int i;
+
+	for (i = 0; i < n_slots; i++)
+	{
+		if (slots[i].child_id != 0)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * find the first free parallel slot (if any).
+ */
+static int
+get_next_slot(ParallelSlot *slots, int n_slots)
+{
+	int i;
+
+	for (i = 0; i < n_slots; i++)
+	{
+		if (slots[i].child_id == 0)
+			return i;
+	}
+	return NO_SLOT;
+}
+
+/*
+ * Find the next work item (if any) that is capable of being run now.
+ *
+ * To qualify, the item must have no remaining dependencies
+ * and no requirement for locks that is incompatible with
+ * items currently running.
+ *
+ * first_unprocessed is state data that tracks the location of the first
+ * TocEntry that's not marked 'restored'.  This avoids O(N^2) search time
+ * with long TOC lists.  (Even though the constant is pretty small, it'd
+ * get us eventually.)
+ *
+ * pref_non_data is for an alternative selection algorithm that gives
+ * preference to non-data items if there is already a data load running.
+ * It is currently disabled.
+ */
+static TocEntry *
+get_next_work_item(ArchiveHandle *AH, TocEntry **first_unprocessed,
+				   ParallelSlot *slots, int n_slots)
+{
+	bool      pref_non_data = false; /* or get from AH->ropt */
+	TocEntry *data_te = NULL;
+	TocEntry *te;
+	int       i,j,k;
+
+	/*
+	 * Bogus heuristics for pref_non_data
+	 */
+	if (pref_non_data)
+	{
+		int count = 0;
+
+		for (k=0; k < n_slots; k++)
+			if (slots[k].args->te != NULL &&
+				slots[k].args->te->section == SECTION_DATA)
+				count++;
+		if (n_slots == 0 || count * 4 < n_slots)
+			pref_non_data = false;
+	}
+
+	/*
+	 * Advance first_unprocessed if possible.
+	 */
+	for (te = *first_unprocessed; te != AH->toc; te = te->next)
+	{
+		if (!te->restored)
+			break;
+	}
+	*first_unprocessed = te;
+
+	/*
+	 * Search from first_unprocessed until we find an available item.
+	 */
+	for (; te != AH->toc; te = te->next)
+	{
+		bool conflicts = false;
+
+		/* Ignore if already done or still waiting on dependencies */
+		if (te->restored || te->depCount > 0)
+			continue;
+
+		/*
+		 * Check to see if the item would need exclusive lock on something
+		 * that a currently running item also needs lock on.  If so, we
+		 * don't want to schedule them together.
+		 */
+		for (i = 0; i < n_slots && !conflicts; i++)
+		{
+			TocEntry *running_te;
+
+			if (slots[i].args == NULL)
+				continue;
+			running_te = slots[i].args->te;
+			for (j = 0; j < te->nLockDeps && !conflicts; j++)
+			{
+				for (k = 0; k < running_te->nLockDeps; k++)
+				{
+					if (te->lockDeps[j] == running_te->lockDeps[k])
+					{
+						conflicts = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (conflicts)
+			continue;
+
+		if (pref_non_data && te->section == SECTION_DATA)
+		{
+			if (data_te == NULL)
+				data_te = te;
+			continue;
+		}
+
+		/* passed all tests, so this item can run */
+		return te;
+	}
+
+	if (data_te != NULL)
+		return data_te;
+
+	ahlog(AH,2,"no item ready\n");
+	return NULL;
+}
+
+
+/*
+ * Restore a single TOC item in parallel with others
+ *
+ * this is the procedure run as a thread (Windows) or a
+ * separate process (everything else).
+ */
+static parallel_restore_result
+parallel_restore(RestoreArgs *args)
+{
+	ArchiveHandle *AH = args->AH;
+	TocEntry *te = args->te;
+	RestoreOptions *ropt = AH->ropt;
+	int retval;
+
+	/*
+	 * Close and reopen the input file so we have a private file pointer
+	 * that doesn't stomp on anyone else's file pointer.
+	 *
+	 * Note: on Windows, since we are using threads not processes, this
+	 * *doesn't* close the original file pointer but just open a new one.
+	 */
+	(AH->ReopenPtr) (AH);
+
+	/*
+	 * We need our own database connection, too
+	 */
+	ConnectDatabase((Archive *) AH, ropt->dbname,
+					ropt->pghost, ropt->pgport, ropt->username,
+					ropt->requirePassword);
+
+	_doSetFixedOutputState(AH);
+
+	/* Restore the TOC item */
+	retval = restore_toc_entry(AH, te, ropt, true);
+
+	/* And clean up */
+	PQfinish(AH->connection);
+	AH->connection = NULL;
+
+	(AH->ClosePtr) (AH);
+
+	if (retval == 0 && AH->public.n_errors)
+		retval = WORKER_IGNORED_ERRORS;
+
+#ifndef WIN32
+	exit(retval);
+#else
+	return retval;
+#endif
+}
+
+
+/*
+ * Housekeeping to be done after a step has been parallel restored.
+ *
+ * Clear the appropriate slot, free all the extra memory we allocated,
+ * update status, and reduce the dependency count of any dependent items.
+ */
+static void
+mark_work_done(ArchiveHandle *AH, thandle worker, int status,
+			   ParallelSlot *slots, int n_slots)
+{
+	TocEntry *te = NULL;
+	int i;
+
+	for (i = 0; i < n_slots; i++)
+	{
+		if (slots[i].child_id == worker)
+		{
+			slots[i].child_id = 0;
+			te = slots[i].args->te;
+			DeCloneArchive(slots[i].args->AH);
+			free(slots[i].args);
+			slots[i].args = NULL;
+
+			break;
+		}
+	}
+
+	if (te == NULL)
+		die_horribly(AH, modulename, "failed to find slot for finished worker\n");
+
+	ahlog(AH, 1, "finished item %d %s %s\n",
+		  te->dumpId, te->desc, te->tag);
+
+	if (status == WORKER_CREATE_DONE)
+		mark_create_done(AH, te);
+	else if (status == WORKER_INHIBIT_DATA)
+	{
+		inhibit_data_for_failed_table(AH, te);
+		AH->public.n_errors++;
+	}
+	else if (status == WORKER_IGNORED_ERRORS)
+		AH->public.n_errors++;
+	else if (status != 0)
+		die_horribly(AH, modulename, "worker process failed: exit code %d\n",
+					 status);
+
+	reduce_dependencies(AH, te);
+}
+
+
+/*
+ * Process the dependency information into a form useful for parallel restore.
+ *
+ * We set up depCount fields that are the number of as-yet-unprocessed
+ * dependencies for each TOC entry.
+ *
+ * We also identify locking dependencies so that we can avoid trying to
+ * schedule conflicting items at the same time.
+ */
+static void
+fix_dependencies(ArchiveHandle *AH)
+{
+	TocEntry  **tocsByDumpId;
+	TocEntry   *te;
+	int i;
+
+	/*
+	 * For some of the steps here, it is convenient to have an array that
+	 * indexes the TOC entries by dump ID, rather than searching the TOC
+	 * list repeatedly.  Entries for dump IDs not present in the TOC will
+	 * be NULL.
+	 *
+	 * Also, initialize the depCount fields.
+	 */
+	tocsByDumpId = (TocEntry **) calloc(AH->maxDumpId, sizeof(TocEntry *));
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		tocsByDumpId[te->dumpId - 1] = te;
+		te->depCount = te->nDeps;
+	}
+
+	/*
+	 * POST_DATA items that are shown as depending on a table need to be
+	 * re-pointed to depend on that table's data, instead.  This ensures they
+	 * won't get scheduled until the data has been loaded.  We handle this by
+	 * first finding TABLE/TABLE DATA pairs and then scanning all the
+	 * dependencies.
+	 *
+	 * Note: currently, a TABLE DATA should always have exactly one
+	 * dependency, on its TABLE item.  So we don't bother to search,
+	 * but look just at the first dependency.  We do trouble to make sure
+	 * that it's a TABLE, if possible.  However, if the dependency isn't
+	 * in the archive then just assume it was a TABLE; this is to cover
+	 * cases where the table was suppressed but we have the data and some
+	 * dependent post-data items.
+	 */
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		if (strcmp(te->desc, "TABLE DATA") == 0 && te->nDeps > 0)
+		{
+			DumpId	tableId = te->dependencies[0];
+
+			if (tocsByDumpId[tableId - 1] == NULL ||
+				strcmp(tocsByDumpId[tableId - 1]->desc, "TABLE") == 0)
+			{
+				repoint_table_dependencies(AH, tableId, te->dumpId);
+			}
+		}
+	}
+
+	/*
+	 * Pre-8.4 versions of pg_dump neglected to set up a dependency from
+	 * BLOB COMMENTS to BLOBS.  Cope.  (We assume there's only one BLOBS
+	 * and only one BLOB COMMENTS in such files.)
+	 */
+	if (AH->version < K_VERS_1_11)
+	{
+		for (te = AH->toc->next; te != AH->toc; te = te->next)
+		{
+			if (strcmp(te->desc, "BLOB COMMENTS") == 0 && te->nDeps == 0)
+			{
+				TocEntry   *te2;
+
+				for (te2 = AH->toc->next; te2 != AH->toc; te2 = te2->next)
+				{
+					if (strcmp(te2->desc, "BLOBS") == 0)
+					{
+						te->dependencies = (DumpId *) malloc(sizeof(DumpId));
+						te->dependencies[0] = te2->dumpId;
+						te->nDeps++;
+						te->depCount++;
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	/*
+	 * It is possible that the dependencies list items that are not in the
+	 * archive at all.  Subtract such items from the depCounts.
+	 */
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		for (i = 0; i < te->nDeps; i++)
+		{
+			if (tocsByDumpId[te->dependencies[i] - 1] == NULL)
+				te->depCount--;
+		}
+	}
+
+	/*
+	 * Lastly, work out the locking dependencies.
+	 */
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		te->lockDeps = NULL;
+		te->nLockDeps = 0;
+		identify_locking_dependencies(te, tocsByDumpId);
+	}
+
+	free(tocsByDumpId);
+}
+
+/*
+ * Change dependencies on tableId to depend on tableDataId instead,
+ * but only in POST_DATA items.
+ */
+static void
+repoint_table_dependencies(ArchiveHandle *AH,
+						   DumpId tableId, DumpId tableDataId)
+{
+	TocEntry   *te;
+	int i;
+
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		if (te->section != SECTION_POST_DATA)
+			continue;
+		for (i = 0; i < te->nDeps; i++)
+		{
+			if (te->dependencies[i] == tableId)
+			{
+				te->dependencies[i] = tableDataId;
+				ahlog(AH, 2, "transferring dependency %d -> %d to %d\n",
+					  te->dumpId, tableId, tableDataId);
+			}
+		}
+	}
+}
+
+/*
+ * Identify which objects we'll need exclusive lock on in order to restore
+ * the given TOC entry (*other* than the one identified by the TOC entry
+ * itself).  Record their dump IDs in the entry's lockDeps[] array.
+ * tocsByDumpId[] is a convenience array to avoid searching the TOC
+ * for each dependency.
+ */
+static void
+identify_locking_dependencies(TocEntry *te, TocEntry **tocsByDumpId)
+{
+	DumpId	   *lockids;
+	int			nlockids;
+	int			i;
+
+	/* Quick exit if no dependencies at all */
+	if (te->nDeps == 0)
+		return;
+
+	/* Exit if this entry doesn't need exclusive lock on other objects */
+	if (!(strcmp(te->desc, "CONSTRAINT") == 0 ||
+		  strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
+		  strcmp(te->desc, "FK CONSTRAINT") == 0 ||
+		  strcmp(te->desc, "RULE") == 0 ||
+		  strcmp(te->desc, "TRIGGER") == 0))
+		return;
+
+	/*
+	 * We assume the item requires exclusive lock on each TABLE item
+	 * listed among its dependencies.
+	 */
+	lockids = (DumpId *) malloc(te->nDeps * sizeof(DumpId));
+	nlockids = 0;
+	for (i = 0; i < te->nDeps; i++)
+	{
+		DumpId	depid = te->dependencies[i];
+
+		if (tocsByDumpId[depid - 1] &&
+			strcmp(tocsByDumpId[depid - 1]->desc, "TABLE") == 0)
+			lockids[nlockids++] = depid;
+	}
+
+	if (nlockids == 0)
+	{
+		free(lockids);
+		return;
+	}
+
+	te->lockDeps = realloc(lockids, nlockids * sizeof(DumpId));
+	te->nLockDeps = nlockids;
+}
+
+/*
+ * Remove the specified TOC entry from the depCounts of items that depend on
+ * it, thereby possibly making them ready-to-run.
+ */
+static void
+reduce_dependencies(ArchiveHandle *AH, TocEntry *te)
+{
+	DumpId target = te->dumpId;
+	int i;
+
+	ahlog(AH,2,"reducing dependencies for %d\n",target);
+
+	/*
+	 * We must examine all entries, not only the ones after the target item,
+	 * because if the user used a -L switch then the original dependency-
+	 * respecting order has been destroyed by SortTocFromFile.
+	 */
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		for (i = 0; i < te->nDeps; i++)
+		{
+			if (te->dependencies[i] == target)
+				te->depCount--;
+		}
+	}
+}
+
+/*
+ * Set the created flag on the DATA member corresponding to the given
+ * TABLE member
+ */
+static void
+mark_create_done(ArchiveHandle *AH, TocEntry *te)
+{
+	TocEntry   *tes;
+
+	for (tes = AH->toc->next; tes != AH->toc; tes = tes->next)
+	{
+		if (strcmp(tes->desc, "TABLE DATA") == 0 &&
+			strcmp(tes->tag, te->tag) == 0 &&
+			strcmp(tes->namespace ? tes->namespace : "",
+				   te->namespace ? te->namespace : "") == 0)
+		{
+			tes->created = true;
+			break;
+		}
+	}
+}
+
+/*
+ * Mark the DATA member corresponding to the given TABLE member
+ * as not wanted
+ */
+static void
+inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te)
+{
+	RestoreOptions *ropt = AH->ropt;
+	TocEntry   *tes;
+
+	ahlog(AH, 1, "table \"%s\" could not be created, will not restore its data\n",
+		  te->tag);
+
+	for (tes = AH->toc->next; tes != AH->toc; tes = tes->next)
+	{
+		if (strcmp(tes->desc, "TABLE DATA") == 0 &&
+			strcmp(tes->tag, te->tag) == 0 &&
+			strcmp(tes->namespace ? tes->namespace : "",
+				   te->namespace ? te->namespace : "") == 0)
+		{
+			/* mark it unwanted; we assume idWanted array already exists */
+			ropt->idWanted[tes->dumpId - 1] = false;
+			break;
+		}
+	}
+}
+
+
+/*
+ * Clone and de-clone routines used in parallel restoration.
+ *
+ * Enough of the structure is cloned to ensure that there is no
+ * conflict between different threads each with their own clone.
+ *
+ * These could be public, but no need at present.
+ */
+static ArchiveHandle *
+CloneArchive(ArchiveHandle *AH)
+{
+	ArchiveHandle *clone;
+
+	/* Make a "flat" copy */
+	clone = (ArchiveHandle *) malloc(sizeof(ArchiveHandle)); 
+	if (clone == NULL)
+		die_horribly(AH, modulename, "out of memory\n");
+	memcpy(clone, AH, sizeof(ArchiveHandle));
+
+	/* Handle format-independent fields */
+	clone->pgCopyBuf = createPQExpBuffer();
+	clone->sqlBuf = createPQExpBuffer();
+	clone->sqlparse.tagBuf = NULL;
+
+	/* The clone will have its own connection, so disregard connection state */
+	clone->connection = NULL;
+	clone->currUser = NULL;
+	clone->currSchema = NULL;
+	clone->currTablespace = NULL;
+	clone->currWithOids = -1;
+
+	/* savedPassword must be local in case we change it while connecting */
+	if (clone->savedPassword)
+		clone->savedPassword = strdup(clone->savedPassword);
+
+	/* clone has its own error count, too */
+	clone->public.n_errors = 0;
+
+	/* Let the format-specific code have a chance too */
+	(clone->ClonePtr) (clone);
+
+	return clone;
+}
+
+/*
+ * Release clone-local storage.
+ *
+ * Note: we assume any clone-local connection was already closed.
+ */
+static void
+DeCloneArchive(ArchiveHandle *AH)
+{
+	/* Clear format-specific state */
+	(AH->DeClonePtr) (AH);
+
+	/* Clear state allocated by CloneArchive */
+	destroyPQExpBuffer(AH->pgCopyBuf);
+	destroyPQExpBuffer(AH->sqlBuf);
+	if (AH->sqlparse.tagBuf)
+		destroyPQExpBuffer(AH->sqlparse.tagBuf);
+
+	/* Clear any connection-local state */
+	if (AH->currUser)
+		free(AH->currUser);
+	if (AH->currSchema)
+		free(AH->currSchema);
+	if (AH->currTablespace)
+		free(AH->currTablespace);
+	if (AH->savedPassword)
+		free(AH->savedPassword);
+
+	free(AH);
 }

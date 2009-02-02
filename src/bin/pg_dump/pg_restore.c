@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.91 2009/01/06 17:18:11 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.92 2009/02/02 20:07:37 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ main(int argc, char **argv)
 		{"ignore-version", 0, NULL, 'i'},
 		{"index", 1, NULL, 'I'},
 		{"list", 0, NULL, 'l'},
+		{"multi-thread", 1, NULL, 'm'},
 		{"no-privileges", 0, NULL, 'x'},
 		{"no-acl", 0, NULL, 'x'},
 		{"no-owner", 0, NULL, 'O'},
@@ -141,7 +142,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:n:Op:P:RsS:t:T:U:vWxX:1",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:m:n:Op:P:RsS:t:T:U:vWxX:1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -182,6 +183,10 @@ main(int argc, char **argv)
 
 			case 'L':			/* input TOC summary file name */
 				opts->tocFile = strdup(optarg);
+				break;
+
+			case 'm':			/* number of restore threads */
+				opts->number_of_threads = atoi(optarg);
 				break;
 
 			case 'n':			/* Dump data for this schema only */
@@ -269,7 +274,10 @@ main(int argc, char **argv)
 				break;
 
 			case 0:
-				/* This covers the long options equivalent to -X xxx. */
+				/* 
+				 * This covers the long options without a short equivalent, 
+				 * including those equivalent to -X xxx. 
+				 */
 				break;
 
 			case 2:				/* SET ROLE */
@@ -301,6 +309,14 @@ main(int argc, char **argv)
 		opts->useDB = 1;
 	}
 
+	/* Can't do single-txn mode with multiple connections */
+	if (opts->single_txn && opts->number_of_threads > 1)
+	{
+		fprintf(stderr, _("%s: cannot specify both --single-transaction and multiple threads\n"),
+				progname);
+		exit(1);
+	}
+
 	opts->disable_triggers = disable_triggers;
 	opts->noDataForFailedTables = no_data_for_failed_tables;
 	opts->noTablespace = outputNoTablespaces;
@@ -308,10 +324,8 @@ main(int argc, char **argv)
 
 	if (opts->formatName)
 	{
-
 		switch (opts->formatName[0])
 		{
-
 			case 'c':
 			case 'C':
 				opts->format = archCustom;
@@ -396,6 +410,7 @@ usage(const char *progname)
 	printf(_("  -I, --index=NAME         restore named index\n"));
 	printf(_("  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 			 "                           output from this file\n"));
+	printf(_("  -m, --multi-thread=NUM   use this many parallel connections to restore\n"));
 	printf(_("  -n, --schema=NAME        restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"

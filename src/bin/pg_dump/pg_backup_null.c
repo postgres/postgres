@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.19 2006/07/14 14:52:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.20 2009/02/02 20:07:37 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +54,15 @@ InitArchiveFmt_Null(ArchiveHandle *AH)
 	AH->WriteBytePtr = _WriteByte;
 	AH->WriteBufPtr = _WriteBuf;
 	AH->ClosePtr = _CloseArchive;
+	AH->ReopenPtr = NULL;
 	AH->PrintTocDataPtr = _PrintTocData;
 
 	AH->StartBlobsPtr = _StartBlobs;
 	AH->StartBlobPtr = _StartBlob;
 	AH->EndBlobPtr = _EndBlob;
 	AH->EndBlobsPtr = _EndBlobs;
+	AH->ClonePtr = NULL;
+	AH->DeClonePtr = NULL;
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;

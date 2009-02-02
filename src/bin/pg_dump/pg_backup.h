@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.48 2009/01/05 16:54:36 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.49 2009/02/02 20:07:36 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,14 @@ typedef enum _archiveMode
 	archModeWrite,
 	archModeRead
 } ArchiveMode;
+
+typedef enum _teSection
+{
+	SECTION_NONE = 1,			/* COMMENTs, ACLs, etc; can be anywhere */
+	SECTION_PRE_DATA,			/* stuff to be processed before data */
+	SECTION_DATA,				/* TABLE DATA, BLOBS, BLOB COMMENTS */
+	SECTION_POST_DATA			/* stuff to be processed after data */
+} teSection;
 
 /*
  *	We may want to have some more user-readable data, but in the mean
@@ -124,6 +132,7 @@ typedef struct _restoreOptions
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
 										 * to stderr */
 	bool		single_txn;
+	int			number_of_threads;
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
 } RestoreOptions;
@@ -152,7 +161,8 @@ extern void ArchiveEntry(Archive *AHX,
 			 const char *tag,
 			 const char *namespace, const char *tablespace,
 			 const char *owner, bool withOids,
-			 const char *desc, const char *defn,
+			 const char *desc, teSection section,
+			 const char *defn,
 			 const char *dropStmt, const char *copyStmt,
 			 const DumpId *deps, int nDeps,
 			 DataDumperPtr dumpFn, void *dumpArg);

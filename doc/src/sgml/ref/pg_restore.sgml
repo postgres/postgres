@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.77 2009/01/05 16:54:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.78 2009/02/02 20:07:36 adunstan Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -237,6 +237,28 @@
         order they appear in the file. Lines can be moved and can also
         be commented out by placing a <literal>;</literal> at the
         start of the line.  (See below for examples.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-m <replaceable class="parameter">number-of-threads</replaceable></option></term>
+      <term><option>--multi-thread=<replaceable class="parameter">number-of-threads</replaceable></option></term>
+      <listitem>
+       <para>
+        Run the most time-consuming parts of <application>pg_restore</>
+        &mdash; those which load data, create indexes, or create
+        constraints &mdash; using multiple concurrent connections to the
+        database. This option can dramatically reduce the time to restore a
+        large database to a server running on a multi-processor machine.
+       </para>
+
+       <para>
+        This option is ignored when emitting a script rather than connecting
+        directly to a database server.  Multiple threads cannot be used
+        together with <option>--single-transaction</option>.  Also, the input
+        must be a plain file (not, for example, a pipe), and at present only
+        the custom archive format is supported.
        </para>
       </listitem>
      </varlistentry>
