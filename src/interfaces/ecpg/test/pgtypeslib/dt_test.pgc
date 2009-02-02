@@ -348,6 +348,13 @@ main(void)
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
 	free(text);
 
+	in = "1234567890";
+	fmt = "%s";
+	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
+	text = PGTYPEStimestamp_to_asc(ts1);
+	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
+
 	exec sql rollback;
         exec sql disconnect;
 

@@ -2405,6 +2405,10 @@ Wed, 17 Dec 2008 17:49:11 +0100
 
 	- Applied patch by ITAGAKI Takahiro <itagaki.takahiro@oss.ntt.co.jp> to
 	  fix segfault on non-glibc systems.
+
+Mon, 02 Feb 2009 16:34:53 +0100
+
+	- Fixed bug in handling of "%s" pattern in PGTYPEStimestamp_defmt_asc().
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
 	- Set ecpg library version to 6.2.

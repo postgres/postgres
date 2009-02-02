@@ -422,17 +422,24 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
 	free(text);
 
+	in = "1234567890";
+	fmt = "%s";
+	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
+	text = PGTYPEStimestamp_to_asc(ts1);
+	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
+
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 351 "dt_test.pgc"
+#line 358 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 351 "dt_test.pgc"
+#line 358 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 352 "dt_test.pgc"
+#line 359 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 352 "dt_test.pgc"
+#line 359 "dt_test.pgc"
 
 
 	return (0);
