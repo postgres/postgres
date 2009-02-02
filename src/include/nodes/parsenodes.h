@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.389 2009/01/22 20:16:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.390 2009/02/02 19:31:40 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,6 +531,17 @@ typedef struct OptionDefElem
 	AlterOptionOp	alter_op;		/* Alter operation: ADD/SET/DROP */
 	DefElem		   *def;			/* The actual definition */
 } OptionDefElem;
+
+/*
+ * Reloption definition.  As DefElem, with optional option namespace.
+ */
+typedef struct ReloptElem
+{
+	NodeTag		type;
+	char	   *nmspc;
+	char	   *optname;
+	Node	   *arg;
+} ReloptElem;
 
 /*
  * LockingClause - raw representation of FOR UPDATE/SHARE options

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.102 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.103 2009/02/02 19:31:38 alvherre Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -55,24 +55,20 @@ case_translate_language_name(const char *input)
 }
 
 
-/*
- * Extract a string value (otherwise uninterpreted) from a DefElem.
- */
-char *
-defGetString(DefElem *def)
+static char *
+nodeGetString(Node *value, char *name)
 {
-	if (def->arg == NULL)
+	if (value == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s requires a parameter",
-						def->defname)));
-	switch (nodeTag(def->arg))
+				 errmsg("%s requires a parameter", name)));
+	switch (nodeTag(value))
 	{
 		case T_Integer:
 			{
 				char	   *str = palloc(32);
 
-				snprintf(str, 32, "%ld", (long) intVal(def->arg));
+				snprintf(str, 32, "%ld", (long) intVal(value));
 				return str;
 			}
 		case T_Float:
@@ -81,17 +77,26 @@ defGetString(DefElem *def)
 			 * T_Float values are kept in string form, so this type cheat
 			 * works (and doesn't risk losing precision)
 			 */
-			return strVal(def->arg);
+			return strVal(value);
 		case T_String:
-			return strVal(def->arg);
+			return strVal(value);
 		case T_TypeName:
-			return TypeNameToString((TypeName *) def->arg);
+			return TypeNameToString((TypeName *) value);
 		case T_List:
-			return NameListToString((List *) def->arg);
+			return NameListToString((List *) value);
 		default:
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(value));
 	}
 	return NULL;				/* keep compiler quiet */
+}
+
+/*
+ * Extract a string value (otherwise uninterpreted) from a DefElem.
+ */
+char *
+defGetString(DefElem *def)
+{
+	return nodeGetString(def->arg, def->defname);
 }
 
 /*
@@ -120,25 +125,22 @@ defGetNumeric(DefElem *def)
 	return 0;					/* keep compiler quiet */
 }
 
-/*
- * Extract a boolean value from a DefElem.
- */
-bool
-defGetBoolean(DefElem *def)
+static bool
+nodeGetBoolean(Node *value, char *name)
 {
 	/*
 	 * If no parameter given, assume "true" is meant.
 	 */
-	if (def->arg == NULL)
+	if (value == NULL)
 		return true;
 
 	/*
 	 * Allow 0, 1, "true", "false"
 	 */
-	switch (nodeTag(def->arg))
+	switch (nodeTag(value))
 	{
 		case T_Integer:
-			switch (intVal(def->arg))
+			switch (intVal(value))
 			{
 				case 0:
 					return false;
@@ -151,7 +153,7 @@ defGetBoolean(DefElem *def)
 			break;
 		default:
 			{
-				char	   *sval = defGetString(def);
+				char	   *sval = nodeGetString(value, name);
 
 				if (pg_strcasecmp(sval, "true") == 0)
 					return true;
@@ -163,9 +165,17 @@ defGetBoolean(DefElem *def)
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s requires a Boolean value",
-					def->defname)));
+			 errmsg("%s requires a Boolean value", name)));
 	return false;				/* keep compiler quiet */
+}
+
+/*
+ * Extract a boolean value from a DefElem.
+ */
+bool
+defGetBoolean(DefElem *def)
+{
+	return nodeGetBoolean(def->arg, def->defname);
 }
 
 /*
@@ -305,15 +315,35 @@ defGetTypeLength(DefElem *def)
 	return 0;					/* keep compiler quiet */
 }
 
-/*
- * Create a DefElem setting "oids" to the specified value.
- */
-DefElem *
-defWithOids(bool value)
-{
-	DefElem    *f = makeNode(DefElem);
 
-	f->defname = "oids";
+/*
+ * Extract a string value (otherwise uninterpreted) from a ReloptElem.
+ */
+char *
+reloptGetString(ReloptElem *relopt)
+{
+	return nodeGetString(relopt->arg, relopt->optname);
+}
+
+/*
+ * Extract a boolean value from a ReloptElem.
+ */
+bool
+reloptGetBoolean(ReloptElem *relopt)
+{
+	return nodeGetBoolean(relopt->arg, relopt->optname);
+}
+
+/*
+ * Create a ReloptElem setting "oids" to the specified value.
+ */
+ReloptElem *
+reloptWithOids(bool value)
+{
+	ReloptElem    *f = makeNode(ReloptElem);
+
+	f->optname = "oids";
+	f->nmspc = NULL;
 	f->arg = (Node *) makeInteger(value);
 	return f;
 }

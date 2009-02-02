@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.69 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.70 2009/02/02 19:31:38 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -231,7 +231,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
       <listitem>
        <para>
         The name of an index-method-specific storage parameter.  See
-        below for details.
+        <xref linkend="sql-createindex-storage-parameters" endterm="sql-createindex-storage-parameters-title">
+        for details.
        </para>
       </listitem>
      </varlistentry>
@@ -265,7 +266,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
    <para>
     The <literal>WITH</> clause can specify <firstterm>storage parameters</>
     for indexes.  Each index method can have its own set of allowed storage
-    parameters.  The built-in index methods all accept a single parameter:
+    parameters.  The <literal>B-tree</literal>, <literal>hash</literal> and
+    <literal>GiST</literal> built-in index methods all accept a single parameter:
    </para>
 
    <variablelist>

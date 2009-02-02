@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.19 2009/01/26 19:41:06 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.20 2009/02/02 19:31:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,8 +390,10 @@ add_string_reloption(int kind, char *name, char *desc, char *default_val,
 }
 
 /*
- * Transform a relation options list (list of DefElem) into the text array
- * format that is kept in pg_class.reloptions.
+ * Transform a relation options list (list of ReloptElem) into the text array
+ * format that is kept in pg_class.reloptions, including only those options
+ * that are in the passed namespace.  The output values do not include the
+ * namespace.
  *
  * This is used for three cases: CREATE TABLE/INDEX, ALTER TABLE SET, and
  * ALTER TABLE RESET.  In the ALTER cases, oldOptions is the existing
@@ -402,14 +404,17 @@ add_string_reloption(int kind, char *name, char *desc, char *default_val,
  * in the list (it will be or has been handled by interpretOidsOption()).
  *
  * Note that this is not responsible for determining whether the options
- * are valid.
+ * are valid, but it does check that namespaces for all the options given are
+ * listed in validnsps.  The NULL namespace is always valid and needs not be
+ * explicitely listed.  Passing a NULL pointer means that only the NULL
+ * namespace is valid.
  *
  * Both oldOptions and the result are text arrays (or NULL for "default"),
  * but we declare them as Datums to avoid including array.h in reloptions.h.
  */
 Datum
-transformRelOptions(Datum oldOptions, List *defList,
-					bool ignoreOids, bool isReset)
+transformRelOptions(Datum oldOptions, List *defList, char *namspace,
+					char *validnsps[], bool ignoreOids, bool isReset)
 {
 	Datum		result;
 	ArrayBuildState *astate;
@@ -444,11 +449,23 @@ transformRelOptions(Datum oldOptions, List *defList,
 			/* Search for a match in defList */
 			foreach(cell, defList)
 			{
-				DefElem    *def = lfirst(cell);
-				int			kw_len = strlen(def->defname);
+				ReloptElem *def = lfirst(cell);
+				int			kw_len;
 
+				/* ignore if not in the same namespace */
+				if (namspace == NULL)
+				{
+					if (def->nmspc != NULL)
+						continue;
+				}
+				else if (def->nmspc == NULL)
+					continue;
+				else if (pg_strcasecmp(def->nmspc, namspace) != 0)
+					continue;
+
+				kw_len = strlen(def->optname);
 				if (text_len > kw_len && text_str[kw_len] == '=' &&
-					pg_strncasecmp(text_str, def->defname, kw_len) == 0)
+					pg_strncasecmp(text_str, def->optname, kw_len) == 0)
 					break;
 			}
 			if (!cell)
@@ -468,7 +485,8 @@ transformRelOptions(Datum oldOptions, List *defList,
 	 */
 	foreach(cell, defList)
 	{
-		DefElem    *def = lfirst(cell);
+		ReloptElem    *def = lfirst(cell);
+
 
 		if (isReset)
 		{
@@ -483,22 +501,62 @@ transformRelOptions(Datum oldOptions, List *defList,
 			const char *value;
 			Size		len;
 
-			if (ignoreOids && pg_strcasecmp(def->defname, "oids") == 0)
+			/*
+			 * Error out if the namespace is not valid.  A NULL namespace
+			 * is always valid.
+			 */
+			if (def->nmspc != NULL)
+			{
+				bool	valid = false;
+				int		i;
+
+				if (validnsps)
+				{
+					for (i = 0; validnsps[i]; i++)
+					{
+						if (pg_strcasecmp(def->nmspc, validnsps[i]) == 0)
+						{
+							valid = true;
+							break;
+						}
+					}
+				}
+
+				if (!valid)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("unrecognized parameter namespace \"%s\"",
+									def->nmspc)));
+			}
+
+			if (ignoreOids && pg_strcasecmp(def->optname, "oids") == 0)
+				continue;
+
+			/* ignore if not in the same namespace */
+			if (namspace == NULL)
+			{
+				if (def->nmspc != NULL)
+					continue;
+			}
+			else if (def->nmspc == NULL)
+				continue;
+			else if (pg_strcasecmp(def->nmspc, namspace) != 0)
 				continue;
 
 			/*
-			 * Flatten the DefElem into a text string like "name=arg". If we
-			 * have just "name", assume "name=true" is meant.
+			 * Flatten the ReloptElem into a text string like "name=arg". If we
+			 * have just "name", assume "name=true" is meant.  Note: the
+			 * namespace is not output.
 			 */
 			if (def->arg != NULL)
-				value = defGetString(def);
+				value = reloptGetString(def);
 			else
 				value = "true";
-			len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
+			len = VARHDRSZ + strlen(def->optname) + 1 + strlen(value);
 			/* +1 leaves room for sprintf's trailing null */
 			t = (text *) palloc(len + 1);
 			SET_VARSIZE(t, len);
-			sprintf(VARDATA(t), "%s=%s", def->defname, value);
+			sprintf(VARDATA(t), "%s=%s", def->optname, value);
 
 			astate = accumArrayResult(astate, PointerGetDatum(t),
 									  false, TEXTOID,
@@ -944,7 +1002,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 }
 
 /*
- * Parse options for heaps (and perhaps someday toast tables).
+ * Parse options for heaps and toast tables.
  */
 bytea *
 heap_reloptions(char relkind, Datum reloptions, bool validate)

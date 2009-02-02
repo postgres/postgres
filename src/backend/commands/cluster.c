@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.181 2009/01/16 13:27:23 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.182 2009/02/02 19:31:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -668,6 +668,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	TupleDesc	OldHeapDesc,
 				tupdesc;
 	Oid			OIDNewHeap;
+	Oid			toastid;
 	Relation	OldHeap;
 	HeapTuple	tuple;
 	Datum		reloptions;
@@ -726,7 +727,24 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so that
 	 * the TOAST table will be visible for insertion.
 	 */
-	AlterTableCreateToastTable(OIDNewHeap);
+	toastid = OldHeap->rd_rel->reltoastrelid;
+	reloptions = (Datum) 0;
+	if (OidIsValid(toastid))
+	{
+		tuple = SearchSysCache(RELOID,
+							   ObjectIdGetDatum(toastid),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for relation %u", toastid);
+		reloptions = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions,
+									 &isNull);
+		if (isNull)
+			reloptions = (Datum) 0;
+	}
+	AlterTableCreateToastTable(OIDNewHeap, reloptions);
+
+	if (OidIsValid(toastid))
+		ReleaseSysCache(tuple);
 
 	heap_close(OldHeap, NoLock);
 

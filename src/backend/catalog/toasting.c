@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.12 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.13 2009/02/02 19:31:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,8 @@
 #include "utils/syscache.h"
 
 
-static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid);
+static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
+				   Datum reloptions);
 static bool needs_toast_table(Relation rel);
 
 
@@ -46,7 +47,7 @@ static bool needs_toast_table(Relation rel);
  * to end with CommandCounterIncrement if it makes any changes.
  */
 void
-AlterTableCreateToastTable(Oid relOid)
+AlterTableCreateToastTable(Oid relOid, Datum reloptions)
 {
 	Relation	rel;
 
@@ -58,7 +59,7 @@ AlterTableCreateToastTable(Oid relOid)
 	rel = heap_open(relOid, AccessExclusiveLock);
 
 	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, InvalidOid, InvalidOid);
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions);
 
 	heap_close(rel, NoLock);
 }
@@ -84,7 +85,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
-	if (!create_toast_table(rel, toastOid, toastIndexOid))
+	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -100,7 +101,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
 static bool
-create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid)
+create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;
@@ -183,10 +184,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid)
 	else
 		namespaceid = PG_TOAST_NAMESPACE;
 
-	/*
-	 * XXX would it make sense to apply the master's reloptions to the toast
-	 * table?  Or maybe some toast-specific reloptions?
-	 */
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
@@ -199,7 +196,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid)
 										   true,
 										   0,
 										   ONCOMMIT_NOOP,
-										   (Datum) 0,
+										   reloptions,
 										   true);
 
 	/* make the toast relation visible, else index creation will fail */

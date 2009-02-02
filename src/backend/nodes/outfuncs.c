@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.350 2009/01/22 20:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.351 2009/02/02 19:31:39 alvherre Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1805,6 +1805,16 @@ _outDefElem(StringInfo str, DefElem *node)
 }
 
 static void
+_outReloptElem(StringInfo str, ReloptElem *node)
+{
+	WRITE_NODE_TYPE("RELOPTELEM");
+
+	WRITE_STRING_FIELD(nmspc);
+	WRITE_STRING_FIELD(optname);
+	WRITE_NODE_FIELD(arg);
+}
+
+static void
 _outLockingClause(StringInfo str, LockingClause *node)
 {
 	WRITE_NODE_TYPE("LOCKINGCLAUSE");
@@ -2769,6 +2779,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DefElem:
 				_outDefElem(str, obj);
+				break;
+			case T_ReloptElem:
+				_outReloptElem(str, obj);
 				break;
 			case T_LockingClause:
 				_outLockingClause(str, obj);

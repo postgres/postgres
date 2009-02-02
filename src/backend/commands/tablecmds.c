@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.278 2009/01/22 20:16:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.279 2009/02/02 19:31:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,6 +351,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	Datum		reloptions;
 	ListCell   *listptr;
 	AttrNumber	attnum;
+	static char	   *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -418,7 +419,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	/*
 	 * Parse and validate reloptions, if any.
 	 */
-	reloptions = transformRelOptions((Datum) 0, stmt->options, true, false);
+	reloptions = transformRelOptions((Datum) 0, stmt->options, NULL, validnsps,
+									 true, false);
 
 	(void) heap_reloptions(relkind, reloptions, true);
 
@@ -2572,7 +2574,7 @@ ATRewriteCatalogs(List **wqueue)
 			(tab->subcmds[AT_PASS_ADD_COL] ||
 			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
 			 tab->subcmds[AT_PASS_COL_ATTRS]))
-			AlterTableCreateToastTable(tab->relid);
+			AlterTableCreateToastTable(tab->relid, (Datum) 0);
 	}
 }
 
@@ -6457,6 +6459,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	Datum		repl_val[Natts_pg_class];
 	bool		repl_null[Natts_pg_class];
 	bool		repl_repl[Natts_pg_class];
+	static char	   *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	if (defList == NIL)
 		return;					/* nothing to do */
@@ -6475,7 +6478,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 
 	/* Generate new proposed reloptions (text array) */
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
-									 defList, false, isReset);
+									 defList, NULL, validnsps, false, isReset);
 
 	/* Validate */
 	switch (rel->rd_rel->relkind)
@@ -6520,6 +6523,53 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	heap_freetuple(newtuple);
 
 	ReleaseSysCache(tuple);
+
+	/* repeat the whole exercise for the toast table, if there's one */
+	if (OidIsValid(rel->rd_rel->reltoastrelid))
+	{
+		Relation	toastrel;
+		Oid			toastid = rel->rd_rel->reltoastrelid;
+
+		toastrel = heap_open(toastid, AccessExclusiveLock);
+
+		/* Get the old reloptions */
+		tuple = SearchSysCache(RELOID,
+							   ObjectIdGetDatum(toastid),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for relation %u", toastid);
+
+		datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+
+		newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
+										 defList, "toast", validnsps, false, isReset);
+
+		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true);
+
+		memset(repl_val, 0, sizeof(repl_val));
+		memset(repl_null, false, sizeof(repl_null));
+		memset(repl_repl, false, sizeof(repl_repl));
+
+		if (newOptions != (Datum) 0)
+			repl_val[Anum_pg_class_reloptions - 1] = newOptions;
+		else
+			repl_null[Anum_pg_class_reloptions - 1] = true;
+
+		repl_repl[Anum_pg_class_reloptions - 1] = true;
+
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(pgclass),
+									 repl_val, repl_null, repl_repl);
+
+		simple_heap_update(pgclass, &newtuple->t_self, newtuple);
+
+		CatalogUpdateIndexes(pgclass, newtuple);
+
+		heap_freetuple(newtuple);
+
+		ReleaseSysCache(tuple);
+
+		heap_close(toastrel, NoLock);
+	}
 
 	heap_close(pgclass, RowExclusiveLock);
 }

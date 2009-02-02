@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.11 2009/01/26 19:41:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.12 2009/02/02 19:31:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,9 @@ typedef enum relopt_kind
 	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_GIST,
 	RELOPT_KIND_MAX = 255
 } relopt_kind;
+
+/* reloption namespaces allowed for heaps -- currently only TOAST */
+#define HEAP_RELOPT_NAMESPACES { "toast", NULL }
 
 /* generic struct to hold shared data */
 typedef struct relopt_gen
@@ -240,6 +243,7 @@ extern void add_string_reloption(int kind, char *name, char *desc,
 					 char *default_val, validate_string_relopt validator);
 
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
+					char *namspace, char *validnsps[],
 					bool ignoreOids, bool isReset);
 extern List *untransformRelOptions(Datum options);
 extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,

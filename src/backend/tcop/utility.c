@@ -10,12 +10,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.305 2009/01/22 20:16:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.306 2009/02/02 19:31:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/reloptions.h"
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -422,6 +423,9 @@ ProcessUtility(Node *parsetree,
 
 					if (IsA(stmt, CreateStmt))
 					{
+						Datum	toast_options;
+						static char   *validnsps[] = HEAP_RELOPT_NAMESPACES;
+
 						/* Create the table itself */
 						relOid = DefineRelation((CreateStmt *) stmt,
 												RELKIND_RELATION);
@@ -431,7 +435,17 @@ ProcessUtility(Node *parsetree,
 						 * needs a secondary relation too.
 						 */
 						CommandCounterIncrement();
-						AlterTableCreateToastTable(relOid);
+
+						/* parse and validate reloptions for the toast table */
+						toast_options = transformRelOptions((Datum) 0,
+															((CreateStmt *)stmt)->options,
+															"toast",
+															validnsps,
+															true, false);
+						(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options,
+											   true);
+
+						AlterTableCreateToastTable(relOid, toast_options);
 					}
 					else
 					{

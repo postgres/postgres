@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.111 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.112 2009/02/02 19:31:38 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -690,8 +690,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     for tables, and for indexes associated with a <literal>UNIQUE</literal> or
     <literal>PRIMARY KEY</literal> constraint.  Storage parameters for
     indexes are documented in <xref linkend="SQL-CREATEINDEX"
-    endterm="sql-createindex-title">.  The only storage parameter currently
-    available for tables is:
+    endterm="sql-createindex-title">.  The storage parameters currently
+    available for tables are:
    </para>
 
    <variablelist>
@@ -710,6 +710,16 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       For a table whose entries are never updated, complete packing is the
       best choice, but in heavily updated tables smaller fillfactors are
       appropriate.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>TOAST.FILLFACTOR</literal></term>
+    <listitem>
+     <para>
+      Same as above, for the supplementary storage table, if any; see
+      <xref linkend="storage-toast">.
      </para>
     </listitem>
    </varlistentry>

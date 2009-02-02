@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.656 2009/01/22 20:16:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.657 2009/02/02 19:31:39 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -164,6 +164,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	FuncWithArgs		*funwithargs;
 	DefElem				*defelt;
 	OptionDefElem		*optdef;
+	ReloptElem			*reloptel;
 	SortBy				*sortby;
 	WindowDef			*windef;
 	JoinExpr			*jexpr;
@@ -271,6 +272,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
+				reloptions opt_reloptions
 				OptWith opt_distinct opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
 				func_as createfunc_opt_list alterfunc_opt_list
@@ -284,7 +286,7 @@ static TypeName *TableFuncTypeName(List *columns);
 				target_list insert_column_list set_target_list
 				set_clause_list set_clause multiple_set_clause
 				ctext_expr_list ctext_row def_list indirection opt_indirection
-				group_clause TriggerFuncArgs select_limit
+				reloption_list group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list opclass_drop_list
 				opt_opfamily transaction_mode_list_or_empty
 				TableFuncElementList opt_type_modifiers
@@ -342,6 +344,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
 %type <defelt>	def_elem old_aggr_elem
+%type <reloptel> reloption_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr func_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
@@ -1781,7 +1784,7 @@ alter_table_cmd:
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> SET (...) */
-			| SET definition
+			| SET reloptions
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetRelOptions;
@@ -1789,7 +1792,7 @@ alter_table_cmd:
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> RESET (...) */
-			| RESET definition
+			| RESET reloptions
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ResetRelOptions;
@@ -1814,6 +1817,37 @@ alter_using:
 			| /* EMPTY */				{ $$ = NULL; }
 		;
 
+reloptions:
+		  	'(' reloption_list ')'					{ $$ = $2; }
+		;
+
+opt_reloptions:		WITH reloptions					{ $$ = $2; }
+			 |		/* EMPTY */						{ $$ = NIL; }
+		;
+
+reloption_list:
+			reloption_elem							{ $$ = list_make1($1); }
+			| reloption_list ',' reloption_elem		{ $$ = lappend($1, $3); }
+		;
+
+reloption_elem:	
+			ColLabel '=' def_arg
+				{
+					$$ = makeReloptElem($1, NULL, (Node *) $3);
+				}
+			| ColLabel
+				{
+					$$ = makeReloptElem($1, NULL, NULL);
+				}
+			| ColLabel '.' ColLabel '=' def_arg
+				{
+					$$ = makeReloptElem($3, $1, (Node *) $5);
+				}
+			| ColLabel '.' ColLabel
+				{
+					$$ = makeReloptElem($3, $1, NULL);
+				}
+		;
 
 
 /*****************************************************************************
@@ -2440,9 +2474,9 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 
 /* WITH (options) is preferred, WITH OIDS and WITHOUT OIDS are legacy forms */
 OptWith:
-			WITH definition				{ $$ = $2; }
-			| WITH OIDS					{ $$ = list_make1(defWithOids(true)); }
-			| WITHOUT OIDS				{ $$ = list_make1(defWithOids(false)); }
+			WITH reloptions				{ $$ = $2; }
+			| WITH OIDS					{ $$ = list_make1(reloptWithOids(true)); }
+			| WITHOUT OIDS				{ $$ = list_make1(reloptWithOids(false)); }
 			| /*EMPTY*/					{ $$ = NIL; }
 		;
 
@@ -4473,7 +4507,7 @@ opt_granted_by: GRANTED BY RoleId						{ $$ = $3; }
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name
 			ON qualified_name access_method_clause '(' index_params ')'
-			opt_definition OptTableSpace where_clause
+			opt_reloptions OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -4489,7 +4523,7 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name
 				}
 			| CREATE index_opt_unique INDEX CONCURRENTLY index_name
 			ON qualified_name access_method_clause '(' index_params ')'
-			opt_definition OptTableSpace where_clause
+			opt_reloptions OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;

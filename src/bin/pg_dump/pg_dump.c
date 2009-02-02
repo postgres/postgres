@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.517 2009/01/27 12:40:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.518 2009/02/02 19:31:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3100,6 +3100,7 @@ getTables(int *numTables)
 	int			i_owning_col;
 	int			i_reltablespace;
 	int			i_reloptions;
+	int			i_toastreloptions;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -3131,22 +3132,24 @@ getTables(int *numTables)
 		 * owning column, if any (note this dependency is AUTO as of 8.2)
 		 */
 		appendPQExpBuffer(query,
-						  "SELECT c.tableoid, c.oid, relname, "
-						  "relacl, relkind, relnamespace, "
-						  "(%s relowner) as rolname, "
-						  "relchecks, relhastriggers, "
-						  "relhasindex, relhasrules, relhasoids, "
+						  "SELECT c.tableoid, c.oid, c.relname, "
+						  "c.relacl, c.relkind, c.relnamespace, "
+						  "(%s c.relowner) as rolname, "
+						  "c.relchecks, c.relhastriggers, "
+						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_to_string(c.reloptions, ', ') as reloptions "
+						  "array_to_string(c.reloptions, ', ') as reloptions, "
+						  "array_to_string(array(select 'toast.' || x from unnest(tc.reloptions) x), ', ') as toast_reloptions "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
 						  "d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
 						  "d.refclassid = c.tableoid and d.deptype = 'a') "
-						  "where relkind in ('%c', '%c', '%c', '%c') "
+						  "left join pg_class tc on (c.reltoastrelid = tc.oid) "
+						  "where c.relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
@@ -3168,7 +3171,8 @@ getTables(int *numTables)
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "array_to_string(c.reloptions, ', ') as reloptions "
+						  "array_to_string(c.reloptions, ', ') as reloptions, "
+						  "NULL as toast_reloptions "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
@@ -3197,7 +3201,8 @@ getTables(int *numTables)
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
-						  "NULL as reloptions "
+						  "NULL as reloptions, "
+						  "NULL as toast_reloptions "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
@@ -3226,7 +3231,8 @@ getTables(int *numTables)
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
 						  "NULL as reltablespace, "
-						  "NULL as reloptions "
+						  "NULL as reloptions, "
+						  "NULL as toast_reloptions "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
@@ -3251,7 +3257,8 @@ getTables(int *numTables)
 						  "NULL::oid as owning_tab, "
 						  "NULL::int4 as owning_col, "
 						  "NULL as reltablespace, "
-						  "NULL as reloptions "
+						  "NULL as reloptions, "
+						  "NULL as toast_reloptions "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -3271,7 +3278,8 @@ getTables(int *numTables)
 						  "NULL::oid as owning_tab, "
 						  "NULL::int4 as owning_col, "
 						  "NULL as reltablespace, "
-						  "NULL as reloptions "
+						  "NULL as reloptions, "
+						  "NULL as toast_reloptions "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -3301,7 +3309,8 @@ getTables(int *numTables)
 						  "NULL::oid as owning_tab, "
 						  "NULL::int4 as owning_col, "
 						  "NULL as reltablespace, "
-						  "NULL as reloptions "
+						  "NULL as reloptions, "
+						  "NULL as toast_reloptions "
 						  "from pg_class c "
 						  "where relkind in ('%c', '%c') "
 						  "order by oid",
@@ -3344,6 +3353,7 @@ getTables(int *numTables)
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
 	i_reloptions = PQfnumber(res, "reloptions");
+	i_toastreloptions = PQfnumber(res, "toast_reloptions");
 
 	if (lockWaitTimeout && g_fout->remoteVersion >= 70300)
 	{
@@ -3389,6 +3399,7 @@ getTables(int *numTables)
 		}
 		tblinfo[i].reltablespace = strdup(PQgetvalue(res, i, i_reltablespace));
 		tblinfo[i].reloptions = strdup(PQgetvalue(res, i, i_reloptions));
+		tblinfo[i].toast_reloptions = strdup(PQgetvalue(res, i, i_toastreloptions));
 
 		/* other fields were zeroed above */
 
@@ -9700,8 +9711,24 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
-		if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
-			appendPQExpBuffer(q, "\nWITH (%s)", tbinfo->reloptions);
+		if ((tbinfo->reloptions && strlen(tbinfo->reloptions) > 0) ||
+			(tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0))
+		{
+			bool	addcomma = false;
+
+			appendPQExpBuffer(q, "\nWITH (");
+			if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
+			{
+				addcomma = true;
+				appendPQExpBuffer(q, "%s", tbinfo->reloptions);
+			}
+			if (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0)
+			{
+				appendPQExpBuffer(q, "%s%s", addcomma ? ", " : "",
+								  tbinfo->toast_reloptions);
+			}
+			appendPQExpBuffer(q, ")");
+		}
 
 		appendPQExpBuffer(q, ";\n");
 
