@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.192 2009/01/27 12:40:14 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.193 2009/02/02 09:49:29 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2756,65 +2756,6 @@
       <entry></entry>
       <entry>
        Foreign server specific options, as <quote>keyword=value</> strings.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
- </sect1>
-
-
- <sect1 id="catalog-pg-user-mapping">
-  <title><structname>pg_user_mapping</structname></title>
-
-  <indexterm zone="catalog-pg-user-mapping">
-   <primary>pg_user_mapping</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_user_mapping</structname> stores
-   the mappings from local user to remote.  Access to this catalog is
-   restricted from normal users, use the view
-   <link linkend="view-pg-user-mappings"><structname>pg_user_mappings</structname></link>
-   instead.
-  </para>
-
-  <table>
-   <title><structname>pg_user_mapping</> Columns</title>
-
-   <tgroup cols=4>
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>umuser</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>OID of the local role being mapped, 0 if the user mapping is public</entry>
-     </row>
-
-     <row>
-      <entry><structfield>umserver</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.oid</literal></entry>
-      <entry>
-       The OID of the foreign server that contains this mapping
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>umoptions</structfield></entry>
-      <entry><type>text[]</type></entry>
-      <entry></entry>
-      <entry>
-       User mapping specific options, as <quote>keyword=value</> strings.
       </entry>
      </row>
     </tbody>
@@ -5647,6 +5588,66 @@
   </table>
 
  </sect1>
+
+
+ <sect1 id="catalog-pg-user-mapping">
+  <title><structname>pg_user_mapping</structname></title>
+
+  <indexterm zone="catalog-pg-user-mapping">
+   <primary>pg_user_mapping</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_user_mapping</structname> stores
+   the mappings from local user to remote.  Access to this catalog is
+   restricted from normal users, use the view
+   <link linkend="view-pg-user-mappings"><structname>pg_user_mappings</structname></link>
+   instead.
+  </para>
+
+  <table>
+   <title><structname>pg_user_mapping</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>umuser</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>OID of the local role being mapped, 0 if the user mapping is public</entry>
+     </row>
+
+     <row>
+      <entry><structfield>umserver</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the foreign server that contains this mapping
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>umoptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       User mapping specific options, as <quote>keyword=value</> strings.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
 
  <sect1 id="views-overview">
   <title>System Views</title>
