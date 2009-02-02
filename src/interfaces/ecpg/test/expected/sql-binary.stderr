@@ -36,55 +36,55 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 53: RESULT: \001m\000\212 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 63: query: declare B binary cursor for select name , accs , byte from empl where idnum = $1 ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 64: query: declare B binary cursor for select name , accs , byte from empl where idnum = $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 63: using PQexecParams
+[NO_PID]: ecpg_execute on line 64: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 63: parameter 1 = 1
+[NO_PID]: free_params on line 64: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 63: OK: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 64: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 64: query: fetch B; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 65: query: fetch B; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 64: using PQexec
+[NO_PID]: ecpg_execute on line 65: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 64: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_execute on line 65: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: BINARY offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: BINARY offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: BINARY offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: BINARY offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 64: RESULT: BINARY offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 65: RESULT: BINARY offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 71: query: close B; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 72: query: close B; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 71: using PQexec
+[NO_PID]: ecpg_execute on line 72: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 71: OK: CLOSE CURSOR
+[NO_PID]: ecpg_execute on line 72: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 80: query: declare A binary cursor for select byte from empl where idnum = $1 ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 81: query: declare A binary cursor for select byte from empl where idnum = $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 80: using PQexecParams
+[NO_PID]: ecpg_execute on line 81: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 80: parameter 1 = 1
+[NO_PID]: free_params on line 81: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 80: OK: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 81: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 81: query: fetch A; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 82: query: fetch A; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 81: using PQexec
+[NO_PID]: ecpg_execute on line 82: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 81: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 82: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_store_result on line 81: allocating memory for 1 tuples
+[NO_PID]: ecpg_store_result on line 82: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 81: RESULT: BINARY offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 82: RESULT: BINARY offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 88: query: close A; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 89: query: close A; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 88: using PQexec
+[NO_PID]: ecpg_execute on line 89: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 88: OK: CLOSE CURSOR
+[NO_PID]: ecpg_execute on line 89: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

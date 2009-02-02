@@ -123,13 +123,14 @@ main (void)
 
   printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
+  memset(empl.name, 0, 21L);
   /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
-#line 62 "binary.pgc"
+#line 63 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B binary cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 63 "binary.pgc"
+#line 64 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch B", ECPGt_EOIT, 
 	ECPGt_char,(empl.name),(long)21,(long)1,(21)*sizeof(char), 
@@ -138,7 +139,7 @@ main (void)
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(empl.byte),(long)20,(long)1,(20)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 64 "binary.pgc"
+#line 65 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -147,7 +148,7 @@ main (void)
     }
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close B", ECPGt_EOIT, ECPGt_EORT);}
-#line 71 "binary.pgc"
+#line 72 "binary.pgc"
 
 
   /* do not print a.accs because big/little endian will have different outputs here */
@@ -157,17 +158,17 @@ main (void)
   printf("\n");
 
   /* declare A binary cursor for select byte from empl where idnum = $1  */
-#line 79 "binary.pgc"
+#line 80 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare A binary cursor for select byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 80 "binary.pgc"
+#line 81 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch A", ECPGt_EOIT, 
 	ECPGt_char,&(pointer),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 81 "binary.pgc"
+#line 82 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -176,7 +177,7 @@ main (void)
     }
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close A", ECPGt_EOIT, ECPGt_EORT);}
-#line 88 "binary.pgc"
+#line 89 "binary.pgc"
 
 
   printf ("pointer=");
@@ -186,7 +187,7 @@ main (void)
   free(pointer);
 
   { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 96 "binary.pgc"
+#line 97 "binary.pgc"
 
   exit (0);
 }
