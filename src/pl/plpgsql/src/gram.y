@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.108 2008/01/01 19:46:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.108.2.1 2009/02/02 20:25:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ static	void			 check_labels(const char *start_label,
 %type <loop_body>	loop_body
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
-%type <stmt>	stmt_return stmt_raise stmt_execsql stmt_execsql_insert
+%type <stmt>	stmt_return stmt_raise stmt_execsql
 %type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
 
@@ -624,8 +624,6 @@ proc_stmt		: pl_block ';'
 				| stmt_raise
 						{ $$ = $1; }
 				| stmt_execsql
-						{ $$ = $1; }
-				| stmt_execsql_insert
 						{ $$ = $1; }
 				| stmt_dynexecute
 						{ $$ = $1; }
@@ -1280,25 +1278,13 @@ stmt_execsql	: execsql_start lno
 					}
 				;
 
-/* this matches any otherwise-unrecognized starting keyword */
-execsql_start	: T_WORD
+/* T_WORD+T_ERROR match any otherwise-unrecognized starting keyword */
+execsql_start	: K_INSERT
+					{ $$ = pstrdup(yytext); }
+				| T_WORD
 					{ $$ = pstrdup(yytext); }
 				| T_ERROR
 					{ $$ = pstrdup(yytext); }
-				;
-
-stmt_execsql_insert : K_INSERT lno K_INTO
-					{
-						/*
-						 * We have to special-case INSERT so that its INTO
-						 * won't be treated as an INTO-variables clause.
-						 *
-						 * Fortunately, this is the only valid use of INTO
-						 * in a pl/pgsql SQL command, and INTO is already
-						 * a fully reserved word in the main grammar.
-						 */
-						$$ = make_execsql_stmt("INSERT INTO", $2);
-					}
 				;
 
 stmt_dynexecute : K_EXECUTE lno
@@ -1942,20 +1928,36 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 	PLpgSQL_row			*row = NULL;
 	PLpgSQL_rec			*rec = NULL;
 	int					tok;
+	int					prev_tok;
 	bool				have_into = false;
 	bool				have_strict = false;
 
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, sqlstart);
 
+	/*
+	 * We have to special-case the sequence INSERT INTO, because we don't want
+	 * that to be taken as an INTO-variables clause.  Fortunately, this is the
+	 * only valid use of INTO in a pl/pgsql SQL command, and INTO is already a
+	 * fully reserved word in the main grammar.  We have to treat it that way
+	 * anywhere in the string, not only at the start; consider CREATE RULE
+	 * containing an INSERT statement.
+	 */
+	if (pg_strcasecmp(sqlstart, "insert") == 0)
+		tok = K_INSERT;
+	else
+		tok = 0;
+
 	for (;;)
 	{
+		prev_tok = tok;
 		tok = yylex();
 		if (tok == ';')
 			break;
 		if (tok == 0)
 			yyerror("unexpected end of function definition");
-		if (tok == K_INTO)
+
+		if (tok == K_INTO && prev_tok != K_INSERT)
 		{
 			if (have_into)
 				yyerror("INTO specified more than once");
