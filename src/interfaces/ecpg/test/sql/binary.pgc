@@ -59,6 +59,7 @@ main (void)
 
   printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
+  memset(empl.name, 0, 21L);
   EXEC SQL DECLARE B BINARY CURSOR FOR select name, accs, byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN B;
   EXEC SQL FETCH B INTO :empl.name,:empl.accs,:empl.byte;
