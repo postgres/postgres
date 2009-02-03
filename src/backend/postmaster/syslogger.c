@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.47 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.48 2009/02/03 00:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,11 +267,9 @@ SysLoggerMain(int argc, char *argv[])
 	/* Fire up separate data transfer thread */
 	InitializeCriticalSection(&sysfileSection);
 
-	{
-		unsigned int tid;
-
-		threadHandle = (HANDLE) _beginthreadex(0, 0, pipeThread, 0, 0, &tid);
-	}
+	threadHandle = (HANDLE) _beginthreadex(NULL, 0, pipeThread, NULL, 0, NULL);
+	if (threadHandle == 0)
+		elog(FATAL, "could not create syslogger data transfer thread: %m");
 #endif   /* WIN32 */
 
 	/* remember active logfile parameters */
