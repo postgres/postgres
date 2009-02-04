@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.69 2007/02/18 01:21:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.70 2009/02/04 16:05:50 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -239,19 +239,19 @@
    </indexterm>
 
    <para>
-    <firstterm>Read Committed</firstterm>
-    is the default isolation level in <productname>PostgreSQL</productname>. 
-    When a transaction runs on this isolation level,
-    a <command>SELECT</command> query sees only data committed before the
-    query began; it never sees either uncommitted data or changes committed
-    during query execution by concurrent transactions.  (However, the
-    <command>SELECT</command> does see the effects of previous updates
-    executed within its own transaction, even though they are not yet
-    committed.)  In effect, a <command>SELECT</command> query
-    sees a snapshot of the database as of the instant that that query
-    begins to run.  Notice that two successive <command>SELECT</command> commands can
-    see different data, even though they are within a single transaction, if
-    other transactions 
+    <firstterm>Read Committed</firstterm> is the default isolation
+    level in <productname>PostgreSQL</productname>.  When a transaction
+    uses this isolation level, a <command>SELECT</command> query
+    (without a <literal>FOR UPDATE/SHARE</> clause) sees only data
+    committed before the query began; it never sees either uncommitted
+    data or changes committed during query execution by concurrent
+    transactions.  In effect, a <command>SELECT</command> query sees
+    a snapshot of the database as of the instant the query begins to
+    run.   However, <command>SELECT</command> does see the effects
+    of previous updates executed within its own transaction, even
+    though they are not yet committed.  Also note that two successive
+    <command>SELECT</command> commands can see different data, even
+    though they are within a single transaction, if other transactions
     commit changes during execution of the first <command>SELECT</command>.
    </para>
 
@@ -271,22 +271,22 @@
     otherwise it will attempt to apply its operation to the updated version of
     the row.  The search condition of the command (the <literal>WHERE</> clause) is
     re-evaluated to see if the updated version of the row still matches the
-    search condition.  If so, the second updater proceeds with its operation,
-    starting from the updated version of the row.  (In the case of
+    search condition.  If so, the second updater proceeds with its operation
+    using the updated version of the row.  In the case of
     <command>SELECT FOR UPDATE</command> and <command>SELECT FOR
-    SHARE</command>, that means it is the updated version of the row that is
-    locked and returned to the client.)
+    SHARE</command>, this means it is the updated version of the row that is
+    locked and returned to the client.
    </para>
 
    <para>
     Because of the above rule, it is possible for an updating command to see an
     inconsistent snapshot: it can see the effects of concurrent updating
-    commands that affected the same rows it is trying to update, but it
+    commands on the same rows it is trying to update, but it
     does not see effects of those commands on other rows in the database.
     This behavior makes Read Committed mode unsuitable for commands that
-    involve complex search conditions.  However, it is just right for simpler
+    involve complex search conditions; however, it is just right for simpler
     cases.  For example, consider updating bank balances with transactions
-    like
+    like:
 
 <screen>
 BEGIN;
@@ -303,20 +303,45 @@ COMMIT;
    </para>
 
    <para>
-    Since in Read Committed mode each new command starts with a new snapshot
-    that includes all transactions committed up to that instant, subsequent
-    commands in the same transaction will see the effects of the committed
-    concurrent transaction in any case.  The point at issue here is whether
-    or not within a <emphasis>single</> command we see an absolutely consistent
-    view of the database.
+    More complex usage can produce undesirable results in Read Committed
+    mode.  For example, consider a <command>DELETE</command> command
+    operating on data that is being both added and removed from its
+    restriction criteria by another command, e.g. assume
+    <literal>website</literal> is a two-row table with
+    <literal>website.hits</literal> equaling <literal>9</literal> and
+    <literal>10</literal>:
+
+<screen>
+BEGIN;
+UPDATE website SET hits = hits + 1;
+-- run from another session:  DELETE FROM website WHERE hits = 10;
+COMMIT;
+</screen>
+
+    The <command>DELETE</command> will have no effect even though
+    there is a <literal>website.hits = 10</literal> row before and
+    after the <command>UPDATE</command>. This occurs because the
+    pre-update row value <literal>9</> is skipped, and when the
+    <command>UPDATE</command> completes and <command>DELETE</command>
+    obtains a lock, the new row value is no longer <literal>10</> but
+    <literal>11</>, which no longer matches the criteria.
    </para>
 
    <para>
-    The partial transaction isolation provided by Read Committed mode is
-    adequate for many applications, and this mode is fast and simple to use.
-    However, for applications that do complex queries and updates, it might
-    be necessary to guarantee a more rigorously consistent view of the
-    database than the Read Committed mode provides.
+    Because Read Committed mode starts each command with a new snapshot
+    that includes all transactions committed up to that instant,
+    subsequent commands in the same transaction will see the effects
+    of the committed concurrent transaction in any case.  The point
+    at issue above is whether or not a <emphasis>single</> command
+    sees an absolutely consistent view of the database.
+   </para>
+
+   <para>
+    The partial transaction isolation provided by Read Committed mode
+    is adequate for many applications, and this mode is fast and simple
+    to use;  however, it is not sufficient for all cases.  Applications
+    that do complex queries and updates might require a more rigorously
+    consistent view of the database than Read Committed mode provides.
    </para>
   </sect2>
 
