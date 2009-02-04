@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.136 2008/11/16 17:34:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.137 2009/02/04 21:30:41 alvherre Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1088,7 +1088,7 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
      to SQL-injection attacks since there is no need for quoting or escaping.
      An example is:
 <programlisting>
-EXECUTE 'SELECT count(*) FROM mytable WHERE inserted_by = $1 AND inserted <= $2'
+EXECUTE 'SELECT count(*) FROM mytable WHERE inserted_by = $1 AND inserted &lt;= $2'
    INTO c
    USING checked_user, checked_date;
 </programlisting>
@@ -1101,7 +1101,7 @@ EXECUTE 'SELECT count(*) FROM mytable WHERE inserted_by = $1 AND inserted <= $2'
 <programlisting>
 EXECUTE 'SELECT count(*) FROM '
     || tabname::regclass
-    || ' WHERE inserted_by = $1 AND inserted <= $2'
+    || ' WHERE inserted_by = $1 AND inserted &lt;= $2'
    INTO c
    USING checked_user, checked_date;
 </programlisting>
@@ -4012,7 +4012,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
    <productname>PostgreSQL</>'s <application>PL/pgSQL</application>
    language and Oracle's <application>PL/SQL</application> language,
    to help developers who port applications from
-   <trademark class=registered>Oracle</> to <productname>PostgreSQL</>.
+   <trademark class="registered">Oracle</> to <productname>PostgreSQL</>.
   </para>
 
   <para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.56 2008/12/31 00:08:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.57 2009/02/04 21:30:41 alvherre Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -529,7 +529,7 @@ FROM
           rank() OVER (PARTITION BY depname ORDER BY salary DESC, empno) AS pos
      FROM empsalary
   ) AS ss
-WHERE pos < 3;
+WHERE pos &lt; 3;
 </programlisting>
 
     The above query only shows the rows from the inner query having

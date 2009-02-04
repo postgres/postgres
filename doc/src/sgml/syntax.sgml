@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.129 2008/12/31 23:42:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.130 2009/02/04 21:30:41 alvherre Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -194,11 +194,11 @@ UPDATE "my_table" SET "a" = 5;
     identifiers</secondary></indexterm> A variant of quoted
     identifiers allows including escaped Unicode characters identified
     by their code points.  This variant starts
-    with <literal>U&</literal> (upper or lower case U followed by
+    with <literal>U&amp;</literal> (upper or lower case U followed by
     ampersand) immediately before the opening double quote, without
-    any spaces in between, for example <literal>U&"foo"</literal>.
+    any spaces in between, for example <literal>U&amp;"foo"</literal>.
     (Note that this creates an ambiguity with the
-    operator <literal>&</literal>.  Use spaces around the operator to
+    operator <literal>&amp;</literal>.  Use spaces around the operator to
     avoid this problem.)  Inside the quotes, Unicode characters can be
     specified in escaped form by writing a backslash followed by the
     four-digit hexadecimal code point number or alternatively a
@@ -206,12 +206,12 @@ UPDATE "my_table" SET "a" = 5;
     hexadecimal code point number.  For example, the
     identifier <literal>"data"</literal> could be written as
 <programlisting>
-U&"d\0061t\+000061"
+U&amp;"d\0061t\+000061"
 </programlisting>
     The following less trivial example writes the Russian
     word <quote>slon</quote> (elephant) in Cyrillic letters:
 <programlisting>
-U&"\0441\043B\043E\043D"
+U&amp;"\0441\043B\043E\043D"
 </programlisting>
    </para>
 
@@ -221,7 +221,7 @@ U&"\0441\043B\043E\043D"
     the <literal>UESCAPE</literal><indexterm><primary>UESCAPE</primary></indexterm>
     clause after the string, for example:
 <programlisting>
-U&"d!0061t!+000061" UESCAPE '!'
+U&amp;"d!0061t!+000061" UESCAPE '!'
 </programlisting>
     The escape character can be any single character other than a
     hexadecimal digit, the plus sign, a single quote, a double quote,
@@ -458,11 +458,11 @@ SELECT 'foo'      'bar';
      <productname>PostgreSQL</productname> also supports another type
      of escape syntax for strings that allows specifying arbitrary
      Unicode characters by code point.  A Unicode escape string
-     constant starts with <literal>U&</literal> (upper or lower case
+     constant starts with <literal>U&amp;</literal> (upper or lower case
      letter U followed by ampersand) immediately before the opening
      quote, without any spaces in between, for
-     example <literal>U&'foo'</literal>.  (Note that this creates an
-     ambiguity with the operator <literal>&</literal>.  Use spaces
+     example <literal>U&amp;'foo'</literal>.  (Note that this creates an
+     ambiguity with the operator <literal>&amp;</literal>.  Use spaces
      around the operator to avoid this problem.)  Inside the quotes,
      Unicode characters can be specified in escaped form by writing a
      backslash followed by the four-digit hexadecimal code point
@@ -470,12 +470,12 @@ SELECT 'foo'      'bar';
      followed by a six-digit hexadecimal code point number.  For
      example, the string <literal>'data'</literal> could be written as
 <programlisting>
-U&'d\0061t\+000061'
+U&amp;'d\0061t\+000061'
 </programlisting>
      The following less trivial example writes the Russian
      word <quote>slon</quote> (elephant) in Cyrillic letters:
 <programlisting>
-U&'\0441\043B\043E\043D'
+U&amp;'\0441\043B\043E\043D'
 </programlisting>
     </para>
 
@@ -485,7 +485,7 @@ U&'\0441\043B\043E\043D'
      the <literal>UESCAPE</literal><indexterm><primary>UESCAPE</primary></indexterm>
      clause after the string, for example:
 <programlisting>
-U&'d!0061t!+000061' UESCAPE '!'
+U&amp;'d!0061t!+000061' UESCAPE '!'
 </programlisting>
      The escape character can be any single character other than a
      hexadecimal digit, the plus sign, a single quote, a double quote,

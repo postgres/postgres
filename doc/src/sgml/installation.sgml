@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.318 2009/01/09 13:37:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.319 2009/02/04 21:30:41 alvherre Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2399,7 +2399,7 @@ hosts=local4,bind4
       <para>
        Start <command>cygserver</command> for shared memory support.
        To do this, enter the command <literal>/usr/sbin/cygserver
-       &</literal>.  This program needs to be running anytime you
+       &amp;</literal>.  This program needs to be running anytime you
        start the PostgreSQL server or initialize a database cluster
        (<command>initdb</command>).  The
        default <command>cygserver</command> configuration may need to
