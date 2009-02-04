@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.45 2009/02/02 15:35:28 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.46 2009/02/04 08:51:09 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -982,7 +982,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 	return TRUE;
 }	/* EncodeDateTime() */
 
-void
+int
 GetEpochTime(struct tm * tm)
 {
 	struct tm  *t0;
@@ -990,14 +990,19 @@ GetEpochTime(struct tm * tm)
 
 	t0 = gmtime(&epoch);
 
-	tm->tm_year = t0->tm_year + 1900;
-	tm->tm_mon = t0->tm_mon + 1;
-	tm->tm_mday = t0->tm_mday;
-	tm->tm_hour = t0->tm_hour;
-	tm->tm_min = t0->tm_min;
-	tm->tm_sec = t0->tm_sec;
+	if (t0)
+	{
+		tm->tm_year = t0->tm_year + 1900;
+		tm->tm_mon = t0->tm_mon + 1;
+		tm->tm_mday = t0->tm_mday;
+		tm->tm_hour = t0->tm_hour;
+		tm->tm_min = t0->tm_min;
+		tm->tm_sec = t0->tm_sec;
 
-	return;
+		return 0;
+	}
+
+	return -1;
 }	/* GetEpochTime() */
 
 static void
@@ -1006,10 +1011,17 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 	time_t		time = (time_t) _time;
 	struct tm  *tx;
 
+	errno = 0;
 	if (tzp != NULL)
 		tx = localtime((time_t *) &time);
 	else
 		tx = gmtime((time_t *) &time);
+
+	if (!tx)
+	{
+		errno = PGTYPES_TS_BAD_TIMESTAMP;
+		return;
+	}
 
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
@@ -2852,12 +2864,18 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 					time_t		et = (time_t) scan_val.luint_val;
 
 					tms = gmtime(&et);
-					*year = tms->tm_year + 1900;
-					*month = tms->tm_mon + 1;
-					*day = tms->tm_mday;
-					*hour = tms->tm_hour;
-					*minute = tms->tm_min;
-					*second = tms->tm_sec;
+
+					if (tms)
+					{
+						*year = tms->tm_year + 1900;
+						*month = tms->tm_mon + 1;
+						*day = tms->tm_mday;
+						*hour = tms->tm_hour;
+						*minute = tms->tm_min;
+						*second = tms->tm_sec;
+					}
+					else
+						err = 1;
 				}
 				break;
 			case 'S':

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.42 2008/05/17 01:28:25 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.43 2009/02/04 08:51:10 meskes Exp $ 
  */
 #include "postgres_fe.h"
 
@@ -91,11 +91,18 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 static timestamp
 SetEpochTimestamp(void)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		noresult = 0;
+#else
+	double		noresult = 0.0;
+#endif
 	timestamp	dt;
 	struct tm	tt,
 			   *tm = &tt;
 
-	GetEpochTime(tm);
+	if (GetEpochTime(tm) < 0)
+		return noresult;
+
 	tm2timestamp(tm, 0, NULL, &dt);
 	return dt;
 }	/* SetEpochTimestamp() */
@@ -372,7 +379,8 @@ PGTYPEStimestamp_current(timestamp * ts)
 	struct tm	tm;
 
 	GetCurrentDateTime(&tm);
-	tm2timestamp(&tm, 0, NULL, ts);
+	if (errno == 0)
+		tm2timestamp(&tm, 0, NULL, ts);
 	return;
 }
 
