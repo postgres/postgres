@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.231 2009/01/21 11:13:14 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.232 2009/02/05 15:25:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2286,6 +2286,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 					   PLpgSQL_stmt_return_query *stmt)
 {
 	Portal		portal;
+	uint32			processed = 0;
 
 	if (!estate->retisset)
 		ereport(ERROR,
@@ -2327,6 +2328,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 			HeapTuple	tuple = SPI_tuptable->vals[i];
 
 			tuplestore_puttuple(estate->tuple_store, tuple);
+			processed++;
 		}
 		MemoryContextSwitchTo(old_cxt);
 
@@ -2335,6 +2337,9 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 
 	SPI_freetuptable(SPI_tuptable);
 	SPI_cursor_close(portal);
+
+	estate->eval_processed = processed;
+	exec_set_found(estate, processed != 0);
 
 	return PLPGSQL_RC_OK;
 }
