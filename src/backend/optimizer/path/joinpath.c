@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.120 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.121 2009/02/05 01:24:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,19 +593,44 @@ match_unsorted_outer(PlannerInfo *root,
 		 * Look for presorted inner paths that satisfy the innersortkey list
 		 * --- or any truncation thereof, if we are allowed to build a
 		 * mergejoin using a subset of the merge clauses.  Here, we consider
-		 * both cheap startup cost and cheap total cost.  We can ignore
-		 * inner_cheapest_total on the first iteration, since we already made
-		 * a path with it --- but not on later iterations with shorter sort
-		 * keys, because then we are considering a different situation, viz
-		 * using a simpler mergejoin to avoid a sort of the inner rel.
+		 * both cheap startup cost and cheap total cost.
+		 *
+		 * As we shorten the sortkey list, we should consider only paths that
+		 * are strictly cheaper than (in particular, not the same as) any path
+		 * found in an earlier iteration.  Otherwise we'd be intentionally
+		 * using fewer merge keys than a given path allows (treating the rest
+		 * as plain joinquals), which is unlikely to be a good idea.  Also,
+		 * eliminating paths here on the basis of compare_path_costs is a lot
+		 * cheaper than building the mergejoin path only to throw it away.
+		 *
+		 * If inner_cheapest_total is well enough sorted to have not required
+		 * a sort in the path made above, we shouldn't make a duplicate path
+		 * with it, either.  We handle that case with the same logic that
+		 * handles the previous consideration, by initializing the variables
+		 * that track cheapest-so-far properly.  Note that we do NOT reject
+		 * inner_cheapest_total if we find it matches some shorter set of
+		 * pathkeys.  That case corresponds to using fewer mergekeys to avoid
+		 * sorting inner_cheapest_total, whereas we did sort it above, so the
+		 * plans being considered are different.
 		 */
+		if (pathkeys_contained_in(innersortkeys,
+								  inner_cheapest_total->pathkeys))
+		{
+			/* inner_cheapest_total didn't require a sort */
+			cheapest_startup_inner = inner_cheapest_total;
+			cheapest_total_inner = inner_cheapest_total;
+		}
+		else
+		{
+			/* it did require a sort, at least for the full set of keys */
+			cheapest_startup_inner = NULL;
+			cheapest_total_inner = NULL;
+		}
 		num_sortkeys = list_length(innersortkeys);
 		if (num_sortkeys > 1 && !useallclauses)
 			trialsortkeys = list_copy(innersortkeys);	/* need modifiable copy */
 		else
 			trialsortkeys = innersortkeys;		/* won't really truncate */
-		cheapest_startup_inner = NULL;
-		cheapest_total_inner = NULL;
 
 		for (sortkeycnt = num_sortkeys; sortkeycnt > 0; sortkeycnt--)
 		{
@@ -622,8 +647,6 @@ match_unsorted_outer(PlannerInfo *root,
 													   trialsortkeys,
 													   TOTAL_COST);
 			if (innerpath != NULL &&
-				(innerpath != inner_cheapest_total ||
-				 sortkeycnt < num_sortkeys) &&
 				(cheapest_total_inner == NULL ||
 				 compare_path_costs(innerpath, cheapest_total_inner,
 									TOTAL_COST) < 0))
@@ -660,8 +683,6 @@ match_unsorted_outer(PlannerInfo *root,
 													   trialsortkeys,
 													   STARTUP_COST);
 			if (innerpath != NULL &&
-				(innerpath != inner_cheapest_total ||
-				 sortkeycnt < num_sortkeys) &&
 				(cheapest_startup_inner == NULL ||
 				 compare_path_costs(innerpath, cheapest_startup_inner,
 									STARTUP_COST) < 0))
