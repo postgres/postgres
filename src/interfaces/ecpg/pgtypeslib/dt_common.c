@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.46 2009/02/04 08:51:09 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.47 2009/02/05 08:28:47 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -2550,7 +2550,7 @@ pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, cha
 			while (**pstr == ' ')
 				(*pstr)++;
 			errno = 0;
-			scan_val->uint_val = (unsigned long int) strtol(*pstr, &strtol_end, 10);
+			scan_val->luint_val = (unsigned long int) strtol(*pstr, &strtol_end, 10);
 			if (errno)
 				err = 1;
 			break;
