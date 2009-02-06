@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.164 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.165 2009/02/06 23:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1662,7 +1662,8 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 		 * different values when considering the child relation.
 		 */
 		newinfo->eval_cost.startup = -1;
-		newinfo->this_selec = -1;
+		newinfo->norm_selec = -1;
+		newinfo->outer_selec = -1;
 		newinfo->left_ec = NULL;
 		newinfo->right_ec = NULL;
 		newinfo->left_em = NULL;

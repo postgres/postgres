@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.56 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.57 2009/02/06 23:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,8 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->parent_ec = NULL;
 
 	restrictinfo->eval_cost.startup = -1;
-	restrictinfo->this_selec = -1;
+	restrictinfo->norm_selec = -1;
+	restrictinfo->outer_selec = -1;
 
 	restrictinfo->mergeopfamilies = NIL;
 

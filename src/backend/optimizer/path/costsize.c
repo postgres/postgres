@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.203 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.204 2009/02/06 23:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   PathKey *pathkey);
 static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
-								 List *quals, SpecialJoinInfo *sjinfo);
+								 List *quals);
 static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
@@ -1507,11 +1507,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Get approx # tuples passing the mergequals.  We use approx_tuple_count
-	 * here for speed --- in most cases, any errors won't affect the result
-	 * much.
+	 * here because we need an estimate done with JOIN_INNER semantics.
 	 */
-	mergejointuples = approx_tuple_count(root, &path->jpath,
-										 mergeclauses, sjinfo);
+	mergejointuples = approx_tuple_count(root, &path->jpath, mergeclauses);
 
 	/*
 	 * When there are equal merge keys in the outer relation, the mergejoin
@@ -1539,16 +1537,10 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * when we should not.	Can we do better without expensive selectivity
 	 * computations?
 	 *
-	 * For SEMI and ANTI joins, only one inner tuple need be rescanned for
-	 * each group of same-keyed outer tuples (assuming that all joinquals
-	 * are merge quals).  This makes the effect small enough to ignore,
-	 * so we just set rescannedtuples = 0.  Likewise, the whole issue is
-	 * moot if we are working from a unique-ified outer input.
+	 * The whole issue is moot if we are working from a unique-ified outer
+	 * input.
 	 */
-	if (sjinfo->jointype == JOIN_SEMI ||
-		sjinfo->jointype == JOIN_ANTI)
-		rescannedtuples = 0;
-	else if (IsA(outer_path, UniquePath))
+	if (IsA(outer_path, UniquePath))
 		rescannedtuples = 0;
 	else
 	{
@@ -1847,11 +1839,9 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Get approx # tuples passing the hashquals.  We use approx_tuple_count
-	 * here for speed --- in most cases, any errors won't affect the result
-	 * much.
+	 * here because we need an estimate done with JOIN_INNER semantics.
 	 */
-	hashjointuples = approx_tuple_count(root, &path->jpath,
-										hashclauses, sjinfo);
+	hashjointuples = approx_tuple_count(root, &path->jpath, hashclauses);
 
 	/* cost of source data */
 	startup_cost += outer_path->startup_cost;
@@ -2324,6 +2314,11 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
  * The quals can be either an implicitly-ANDed list of boolean expressions,
  * or a list of RestrictInfo nodes (typically the latter).
  *
+ * We intentionally compute the selectivity under JOIN_INNER rules, even
+ * if it's some type of outer join.  This is appropriate because we are
+ * trying to figure out how many tuples pass the initial merge or hash
+ * join step.
+ *
  * This is quick-and-dirty because we bypass clauselist_selectivity, and
  * simply multiply the independent clause selectivities together.  Now
  * clauselist_selectivity often can't do any better than that anyhow, but
@@ -2336,14 +2331,28 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
  * seems OK to live with the approximation.
  */
 static double
-approx_tuple_count(PlannerInfo *root, JoinPath *path,
-				   List *quals, SpecialJoinInfo *sjinfo)
+approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 {
 	double		tuples;
 	double		outer_tuples = path->outerjoinpath->parent->rows;
 	double		inner_tuples = path->innerjoinpath->parent->rows;
+	SpecialJoinInfo sjinfo;
 	Selectivity selec = 1.0;
 	ListCell   *l;
+
+	/*
+	 * Make up a SpecialJoinInfo for JOIN_INNER semantics.
+	 */
+	sjinfo.type = T_SpecialJoinInfo;
+	sjinfo.min_lefthand = path->outerjoinpath->parent->relids;
+	sjinfo.min_righthand = path->innerjoinpath->parent->relids;
+	sjinfo.syn_lefthand = path->outerjoinpath->parent->relids;
+	sjinfo.syn_righthand = path->innerjoinpath->parent->relids;
+	sjinfo.jointype = JOIN_INNER;
+	/* we don't bother trying to make the remaining fields valid */
+	sjinfo.lhs_strict = false;
+	sjinfo.delay_upper_joins = false;
+	sjinfo.join_quals = NIL;
 
 	/* Get the approximate selectivity */
 	foreach(l, quals)
@@ -2351,16 +2360,11 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path,
 		Node	   *qual = (Node *) lfirst(l);
 
 		/* Note that clause_selectivity will be able to cache its result */
-		selec *= clause_selectivity(root, qual, 0, sjinfo->jointype, sjinfo);
+		selec *= clause_selectivity(root, qual, 0, JOIN_INNER, &sjinfo);
 	}
 
-	/* Apply it correctly using the input relation sizes */
-	if (sjinfo->jointype == JOIN_SEMI)
-		tuples = selec * outer_tuples;
-	else if (sjinfo->jointype == JOIN_ANTI)
-		tuples = (1.0 - selec) * outer_tuples;
-	else
-		tuples = selec * outer_tuples * inner_tuples;
+	/* Apply it to the input relation sizes */
+	tuples = selec * outer_tuples * inner_tuples;
 
 	return clamp_row_est(tuples);
 }

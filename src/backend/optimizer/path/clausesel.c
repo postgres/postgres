@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.96 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.97 2009/02/06 23:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,21 +516,34 @@ clause_selectivity(PlannerInfo *root,
 		/*
 		 * If the clause is marked redundant, always return 1.0.
 		 */
-		if (rinfo->this_selec > 1)
+		if (rinfo->norm_selec > 1)
 			return (Selectivity) 1.0;
 
 		/*
 		 * If possible, cache the result of the selectivity calculation for
 		 * the clause.	We can cache if varRelid is zero or the clause
 		 * contains only vars of that relid --- otherwise varRelid will affect
-		 * the result, so mustn't cache.
+		 * the result, so mustn't cache.  Outer join quals might be examined
+		 * with either their join's actual jointype or JOIN_INNER, so we need
+		 * two cache variables to remember both cases.  Note: we assume the
+		 * result won't change if we are switching the input relations or
+		 * considering a unique-ified case, so we only need one cache variable
+		 * for all non-JOIN_INNER cases.
 		 */
 		if (varRelid == 0 ||
 			bms_is_subset_singleton(rinfo->clause_relids, varRelid))
 		{
 			/* Cacheable --- do we already have the result? */
-			if (rinfo->this_selec >= 0)
-				return rinfo->this_selec;
+			if (jointype == JOIN_INNER)
+			{
+				if (rinfo->norm_selec >= 0)
+					return rinfo->norm_selec;
+			}
+			else
+			{
+				if (rinfo->outer_selec >= 0)
+					return rinfo->outer_selec;
+			}
 			cacheable = true;
 		}
 
@@ -753,7 +766,12 @@ clause_selectivity(PlannerInfo *root,
 
 	/* Cache the result if possible */
 	if (cacheable)
-		rinfo->this_selec = s1;
+	{
+		if (jointype == JOIN_INNER)
+			rinfo->norm_selec = s1;
+		else
+			rinfo->outer_selec = s1;
+	}
 
 #ifdef SELECTIVITY_DEBUG
 	elog(DEBUG4, "clause_selectivity: s1 %f", s1);
