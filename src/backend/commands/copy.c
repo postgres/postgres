@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.304 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.305 2009/02/06 21:15:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ CopyLoadRawBuf(CopyState cstate)
  * or write to a file.
  *
  * Do not allow the copy if user doesn't have proper permission to access
- * the table.
+ * the table or the specifically requested columns.
  */
 uint64
 DoCopy(const CopyStmt *stmt, const char *queryString)
@@ -723,7 +723,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	List	   *force_quote = NIL;
 	List	   *force_notnull = NIL;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
-	AclResult	aclresult;
+	AclMode		relPerms;
+	AclMode		remainingPerms;
 	ListCell   *option;
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
@@ -973,13 +974,31 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		cstate->rel = heap_openrv(stmt->relation,
 							 (is_from ? RowExclusiveLock : AccessShareLock));
 
+		tupDesc = RelationGetDescr(cstate->rel);
+
 		/* Check relation permissions. */
-		aclresult = pg_class_aclcheck(RelationGetRelid(cstate->rel),
-									  GetUserId(),
-									  required_access);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_CLASS,
-						   RelationGetRelationName(cstate->rel));
+		relPerms = pg_class_aclmask(RelationGetRelid(cstate->rel), GetUserId(),
+									required_access, ACLMASK_ALL);
+		remainingPerms = required_access & ~relPerms;
+		if (remainingPerms != 0)
+		{
+			/* We don't have table permissions, check per-column permissions */
+			List	   *attnums;
+			ListCell   *cur;
+
+			attnums = CopyGetAttnums(tupDesc, cstate->rel, attnamelist);
+			foreach(cur, attnums)
+			{
+				int			attnum = lfirst_int(cur);
+
+				if (pg_attribute_aclcheck(RelationGetRelid(cstate->rel),
+										  attnum,
+										  GetUserId(),
+										  remainingPerms) != ACLCHECK_OK)
+					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+								   RelationGetRelationName(cstate->rel));
+			}
+		}
 
 		/* check read-only transaction */
 		if (XactReadOnly && is_from &&
@@ -994,8 +1013,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("table \"%s\" does not have OIDs",
 							RelationGetRelationName(cstate->rel))));
-
-		tupDesc = RelationGetDescr(cstate->rel);
 	}
 	else
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.330 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.331 2009/02/06 21:15:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,24 @@
  */
 
 /* acl.c */
+extern Datum has_any_column_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_any_column_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_any_column_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_any_column_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_any_column_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_any_column_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_name_name_name(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_name_name_attnum(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_name_id_name(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_name_id_attnum(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_id_name_name(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_id_name_attnum(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_id_id_name(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_id_id_attnum(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_name_attnum(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_column_privilege_id_attnum(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_name_name(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_name_id(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_id_name(PG_FUNCTION_ARGS);

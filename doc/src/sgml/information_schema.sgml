@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.37 2009/01/20 09:10:20 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.38 2009/02/06 21:15:11 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -686,18 +686,11 @@
   </para>
 
   <para>
-   In <productname>PostgreSQL</productname>, you can only grant
-   privileges on entire tables, not individual columns.  Therefore,
-   this view contains the same information as
-   <literal>table_privileges</literal>, just represented through one
-   row for each column in each appropriate table, but it only covers
+   If a privilege has been granted on an entire table, it will show up in
+   this view as a grant for each column, but only for the
    privilege types where column granularity is possible:
    <literal>SELECT</literal>, <literal>INSERT</literal>,
-   <literal>UPDATE</literal>, <literal>REFERENCES</literal>.  If you
-   want to make your applications fit for possible future
-   developments, it is generally the right choice to use this view
-   instead of <literal>table_privileges</literal> if one of those
-   privilege types is concerned.
+   <literal>UPDATE</literal>, <literal>REFERENCES</literal>.
   </para>
 
   <table>
@@ -2727,8 +2720,10 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>referential_constraints</literal> contains all
-   referential (foreign key) constraints in the current database that
-   belong to a table owned by a currently enabled role.
+   referential (foreign key) constraints in the current database.
+   Only those constraints are shown for which the current user has
+   write access to the referencing table (by way of being the
+   owner or having some privilege other than SELECT).
   </para>
 
   <table>
@@ -3157,8 +3152,8 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>routine_privileges</literal> identifies all
-   privileges granted to a currently enabled role or by a currently
-   enabled role.  There is one row for each combination of function,
+   privileges granted on functions to a currently enabled role or by a
+   currently enabled role.  There is one row for each combination of function,
    grantor, and grantee.
   </para>
 
@@ -4500,7 +4495,7 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>table_constraints</literal> contains all
    constraints belonging to tables that the current user owns or has
-   some privilege on.
+   some non-SELECT privilege on.
   </para>
 
   <table>
@@ -4777,7 +4772,7 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>triggers</literal> contains all triggers defined
    in the current database on tables that the current user owns or has
-   some privilege on.
+   some non-SELECT privilege on.
   </para>
 
   <table>

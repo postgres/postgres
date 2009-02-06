@@ -184,8 +184,11 @@ INSERT INTO atest5 VALUES (1,2,3);
 SET SESSION AUTHORIZATION regressuser4;
 SELECT * FROM atest5; -- fail
 SELECT one FROM atest5; -- ok
+COPY atest5 (one) TO stdout; -- ok
 SELECT two FROM atest5; -- fail
+COPY atest5 (two) TO stdout; -- fail
 SELECT atest5 FROM atest5; -- fail
+COPY atest5 (one,two) TO stdout; -- fail
 SELECT 1 FROM atest5; -- ok
 SELECT 1 FROM atest5 a JOIN atest5 b USING (one); -- ok
 SELECT 1 FROM atest5 a JOIN atest5 b USING (two); -- fail
@@ -213,6 +216,10 @@ SELECT one, two FROM atest5 NATURAL JOIN atest6; -- ok now
 
 -- test column-level privileges for INSERT and UPDATE
 INSERT INTO atest5 (two) VALUES (3); -- ok
+COPY atest5 FROM stdin; -- fail
+COPY atest5 (two) FROM stdin; -- ok
+1
+\.
 INSERT INTO atest5 (three) VALUES (4); -- fail
 INSERT INTO atest5 VALUES (5,5,5); -- fail
 UPDATE atest5 SET three = 10; -- ok
@@ -227,6 +234,7 @@ SET SESSION AUTHORIZATION regressuser4;
 SELECT one FROM atest5; -- fail
 UPDATE atest5 SET one = 1; -- fail
 SELECT atest6 FROM atest6; -- ok
+COPY atest6 TO stdout; -- ok
 
 -- test column-level privileges when involved with DELETE
 SET SESSION AUTHORIZATION regressuser1;

@@ -695,8 +695,8 @@ SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorizati
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
       grantor      |        grantee        | object_catalog | object_schema | object_name |     object_type      | privilege_type | is_grantable 
 -------------------+-----------------------+----------------+---------------+-------------+----------------------+----------------+--------------
- foreign_data_user | foreign_data_user     | regression     |               | foo         | FOREIGN DATA WRAPPER | USAGE          | NO
- foreign_data_user | foreign_data_user     | regression     |               | s6          | FOREIGN SERVER       | USAGE          | NO
+ foreign_data_user | foreign_data_user     | regression     |               | foo         | FOREIGN DATA WRAPPER | USAGE          | YES
+ foreign_data_user | foreign_data_user     | regression     |               | s6          | FOREIGN SERVER       | USAGE          | YES
  foreign_data_user | regress_test_indirect | regression     |               | foo         | FOREIGN DATA WRAPPER | USAGE          | NO
  foreign_data_user | regress_test_role2    | regression     |               | s6          | FOREIGN SERVER       | USAGE          | YES
 (4 rows)
@@ -704,8 +704,8 @@ SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIG
 SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
       grantor      |        grantee        | object_catalog | object_schema | object_name |     object_type      | privilege_type | is_grantable 
 -------------------+-----------------------+----------------+---------------+-------------+----------------------+----------------+--------------
- foreign_data_user | foreign_data_user     | regression     |               | foo         | FOREIGN DATA WRAPPER | USAGE          | NO
- foreign_data_user | foreign_data_user     | regression     |               | s6          | FOREIGN SERVER       | USAGE          | NO
+ foreign_data_user | foreign_data_user     | regression     |               | foo         | FOREIGN DATA WRAPPER | USAGE          | YES
+ foreign_data_user | foreign_data_user     | regression     |               | s6          | FOREIGN SERVER       | USAGE          | YES
  foreign_data_user | regress_test_indirect | regression     |               | foo         | FOREIGN DATA WRAPPER | USAGE          | NO
  foreign_data_user | regress_test_role2    | regression     |               | s6          | FOREIGN SERVER       | USAGE          | YES
 (4 rows)

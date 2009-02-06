@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.58 2009/01/01 17:23:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.59 2009/02/06 21:15:11 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -137,7 +137,7 @@ CREATE VIEW pg_stats AS
     FROM pg_statistic s JOIN pg_class c ON (c.oid = s.starelid) 
          JOIN pg_attribute a ON (c.oid = attrelid AND attnum = s.staattnum) 
          LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace) 
-    WHERE has_table_privilege(c.oid, 'select');
+    WHERE NOT attisdropped AND has_column_privilege(c.oid, a.attnum, 'select');
 
 REVOKE ALL on pg_statistic FROM public;
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.50 2009/01/20 09:10:20 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.51 2009/02/06 21:15:11 tgl Exp $
  */
 
 /*
@@ -494,8 +494,13 @@ CREATE VIEW column_privileges AS
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, c.relowner, 'USAGE')
+                  OR aclcontains(c.relacl,
+                                 makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
+                  OR aclcontains(a.attacl,
+                                 makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_attribute a,
@@ -507,18 +512,20 @@ CREATE VIEW column_privileges AS
            UNION ALL
            SELECT 0::oid, 'PUBLIC'
          ) AS grantee (oid, rolname),
-         (SELECT 'SELECT' UNION ALL
-          SELECT 'INSERT' UNION ALL
-          SELECT 'UPDATE' UNION ALL
-          SELECT 'REFERENCES') AS pr (type)
+         (VALUES ('SELECT'),
+                 ('INSERT'),
+                 ('UPDATE'),
+                 ('REFERENCES')) AS pr (type)
 
     WHERE a.attrelid = c.oid
           AND c.relnamespace = nc.oid
           AND a.attnum > 0
           AND NOT a.attisdropped
           AND c.relkind IN ('r', 'v')
-          AND aclcontains(c.relacl,
-                          makeaclitem(grantee.oid, u_grantor.oid, pr.type, false))
+          AND (aclcontains(c.relacl,
+                           makeaclitem(grantee.oid, u_grantor.oid, pr.type, false))
+               OR aclcontains(a.attacl,
+                              makeaclitem(grantee.oid, u_grantor.oid, pr.type, false)))
           AND (pg_has_role(u_grantor.oid, 'USAGE')
                OR pg_has_role(grantee.oid, 'USAGE')
                OR grantee.rolname = 'PUBLIC');
@@ -674,10 +681,8 @@ CREATE VIEW columns AS
           AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
 
           AND (pg_has_role(c.relowner, 'USAGE')
-               OR has_table_privilege(c.oid, 'SELECT')
-               OR has_table_privilege(c.oid, 'INSERT')
-               OR has_table_privilege(c.oid, 'UPDATE')
-               OR has_table_privilege(c.oid, 'REFERENCES') );
+               OR has_column_privilege(c.oid, a.attnum,
+                                       'SELECT, INSERT, UPDATE, REFERENCES'));
 
 GRANT SELECT ON columns TO PUBLIC;
 
@@ -954,8 +959,8 @@ CREATE VIEW key_column_usage AS
                 END AS cardinal_number)
              AS position_in_unique_constraint
     FROM pg_attribute a,
-         (SELECT r.oid AS roid, r.relname, nc.nspname AS nc_nspname,
-                 nr.nspname AS nr_nspname,
+         (SELECT r.oid AS roid, r.relname, r.relowner,
+                 nc.nspname AS nc_nspname, nr.nspname AS nr_nspname,
                  c.oid AS coid, c.conname, c.contype, c.confkey, c.confrelid,
                  _pg_expandarray(c.conkey) AS x
           FROM pg_namespace nr, pg_class r, pg_namespace nc,
@@ -965,15 +970,13 @@ CREATE VIEW key_column_usage AS
                 AND nc.oid = c.connamespace
                 AND c.contype IN ('p', 'u', 'f')
                 AND r.relkind = 'r'
-                AND (NOT pg_is_other_temp_schema(nr.oid))
-                AND (pg_has_role(r.relowner, 'USAGE')
-                     OR has_table_privilege(r.oid, 'SELECT')
-                     OR has_table_privilege(r.oid, 'INSERT')
-                     OR has_table_privilege(r.oid, 'UPDATE')
-                     OR has_table_privilege(r.oid, 'REFERENCES')) ) AS ss
+                AND (NOT pg_is_other_temp_schema(nr.oid)) ) AS ss
     WHERE ss.roid = a.attrelid
           AND a.attnum = (ss.x).x
-          AND NOT a.attisdropped;
+          AND NOT a.attisdropped
+          AND (pg_has_role(relowner, 'USAGE')
+               OR has_column_privilege(roid, a.attnum,
+                                       'SELECT, INSERT, UPDATE, REFERENCES'));
 
 GRANT SELECT ON key_column_usage TO PUBLIC;
 
@@ -1114,7 +1117,10 @@ CREATE VIEW referential_constraints AS
     WHERE c.relkind = 'r'
           AND con.contype = 'f'
           AND (pkc.contype IN ('p', 'u') OR pkc.contype IS NULL)
-          AND pg_has_role(c.relowner, 'USAGE');
+          AND (pg_has_role(c.relowner, 'USAGE')
+               -- SELECT privilege omitted, per SQL standard
+               OR has_table_privilege(c.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(c.oid, 'INSERT, UPDATE, REFERENCES') );
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
 
@@ -1133,8 +1139,13 @@ CREATE VIEW role_column_grants AS
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(g_grantee.oid, c.relowner, 'USAGE')
+                  OR aclcontains(c.relacl,
+                                 makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
+                  OR aclcontains(a.attacl,
+                                 makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_attribute a,
@@ -1142,18 +1153,20 @@ CREATE VIEW role_column_grants AS
          pg_namespace nc,
          pg_authid u_grantor,
          pg_authid g_grantee,
-         (SELECT 'SELECT' UNION ALL
-          SELECT 'INSERT' UNION ALL
-          SELECT 'UPDATE' UNION ALL
-          SELECT 'REFERENCES') AS pr (type)
+         (VALUES ('SELECT'),
+                 ('INSERT'),
+                 ('UPDATE'),
+                 ('REFERENCES')) AS pr (type)
 
     WHERE a.attrelid = c.oid
           AND c.relnamespace = nc.oid
           AND a.attnum > 0
           AND NOT a.attisdropped
           AND c.relkind IN ('r', 'v')
-          AND aclcontains(c.relacl,
-                          makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false))
+          AND (aclcontains(c.relacl,
+                           makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false))
+               OR aclcontains(a.attacl,
+                              makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false)))
           AND (u_grantor.rolname IN (SELECT role_name FROM enabled_roles)
                OR g_grantee.rolname IN (SELECT role_name FROM enabled_roles));
 
@@ -1176,8 +1189,11 @@ CREATE VIEW role_routine_grants AS
            CAST(p.proname AS sql_identifier) AS routine_name,
            CAST('EXECUTE' AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(p.proacl,
-                                   makeaclitem(g_grantee.oid, u_grantor.oid, 'EXECUTE', true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(g_grantee.oid, p.proowner, 'USAGE')
+                  OR aclcontains(p.proacl,
+                                 makeaclitem(g_grantee.oid, u_grantor.oid, 'EXECUTE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_proc p,
@@ -1207,8 +1223,11 @@ CREATE VIEW role_table_grants AS
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(g_grantee.oid, c.relowner, 'USAGE')
+                  OR aclcontains(c.relacl,
+                                 makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable,
            CAST('NO' AS character_data) AS with_hierarchy
 
@@ -1216,13 +1235,13 @@ CREATE VIEW role_table_grants AS
          pg_namespace nc,
          pg_authid u_grantor,
          pg_authid g_grantee,
-         (SELECT 'SELECT' UNION ALL
-          SELECT 'INSERT' UNION ALL
-          SELECT 'UPDATE' UNION ALL
-          SELECT 'DELETE' UNION ALL
-          SELECT 'TRUNCATE' UNION ALL
-          SELECT 'REFERENCES' UNION ALL
-          SELECT 'TRIGGER') AS pr (type)
+         (VALUES ('SELECT'),
+                 ('INSERT'),
+                 ('UPDATE'),
+                 ('DELETE'),
+                 ('TRUNCATE'),
+                 ('REFERENCES'),
+                 ('TRIGGER')) AS pr (type)
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
@@ -1258,8 +1277,11 @@ CREATE VIEW role_usage_grants AS
            CAST('FOREIGN DATA WRAPPER' AS character_data) AS object_type,
            CAST('USAGE' AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(fdw.fdwacl,
-                                   makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(g_grantee.oid, fdw.fdwowner, 'USAGE')
+                  OR aclcontains(fdw.fdwacl,
+                                 makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_foreign_data_wrapper fdw,
@@ -1282,8 +1304,11 @@ CREATE VIEW role_usage_grants AS
            CAST('FOREIGN SERVER' AS character_data) AS object_type,
            CAST('USAGE' AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(srv.srvacl,
-                                   makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(g_grantee.oid, srv.srvowner, 'USAGE')
+                  OR aclcontains(srv.srvacl,
+                                 makeaclitem(g_grantee.oid, u_grantor.oid, 'USAGE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_foreign_server srv,
@@ -1330,8 +1355,11 @@ CREATE VIEW routine_privileges AS
            CAST(p.proname AS sql_identifier) AS routine_name,
            CAST('EXECUTE' AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(p.proacl,
-                                   makeaclitem(grantee.oid, u_grantor.oid, 'EXECUTE', true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, p.proowner, 'USAGE')
+                  OR aclcontains(p.proacl,
+                                 makeaclitem(grantee.oid, u_grantor.oid, 'EXECUTE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_proc p,
@@ -1531,8 +1559,7 @@ CREATE VIEW sequences AS
           AND c.relkind = 'S'
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
-               OR has_table_privilege(c.oid, 'SELECT')
-               OR has_table_privilege(c.oid, 'UPDATE') );
+               OR has_table_privilege(c.oid, 'SELECT, UPDATE') );
 
 GRANT SELECT ON sequences TO PUBLIC;
 
@@ -1763,12 +1790,8 @@ CREATE VIEW table_constraints AS
           AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                -- SELECT privilege omitted, per SQL standard
-               OR has_table_privilege(r.oid, 'INSERT')
-               OR has_table_privilege(r.oid, 'UPDATE')
-               OR has_table_privilege(r.oid, 'DELETE')
-               OR has_table_privilege(r.oid, 'TRUNCATE')
-               OR has_table_privilege(r.oid, 'REFERENCES')
-               OR has_table_privilege(r.oid, 'TRIGGER') )
+               OR has_table_privilege(r.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(r.oid, 'INSERT, UPDATE, REFERENCES') )
 
     UNION
 
@@ -1796,13 +1819,9 @@ CREATE VIEW table_constraints AS
           AND r.relkind = 'r'
           AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
-               OR has_table_privilege(r.oid, 'SELECT')
-               OR has_table_privilege(r.oid, 'INSERT')
-               OR has_table_privilege(r.oid, 'UPDATE')
-               OR has_table_privilege(r.oid, 'DELETE')
-               OR has_table_privilege(r.oid, 'TRUNCATE')
-               OR has_table_privilege(r.oid, 'REFERENCES')
-               OR has_table_privilege(r.oid, 'TRIGGER') );
+               -- SELECT privilege omitted, per SQL standard
+               OR has_table_privilege(r.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(r.oid, 'INSERT, UPDATE, REFERENCES') );
 
 GRANT SELECT ON table_constraints TO PUBLIC;
 
@@ -1828,8 +1847,11 @@ CREATE VIEW table_privileges AS
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, c.relowner, 'USAGE')
+                  OR aclcontains(c.relacl,
+                                 makeaclitem(grantee.oid, u_grantor.oid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable,
            CAST('NO' AS character_data) AS with_hierarchy
 
@@ -1841,13 +1863,13 @@ CREATE VIEW table_privileges AS
            UNION ALL
            SELECT 0::oid, 'PUBLIC'
          ) AS grantee (oid, rolname),
-         (SELECT 'SELECT' UNION ALL
-          SELECT 'INSERT' UNION ALL
-          SELECT 'UPDATE' UNION ALL
-          SELECT 'DELETE' UNION ALL
-          SELECT 'TRUNCATE' UNION ALL
-          SELECT 'REFERENCES' UNION ALL
-          SELECT 'TRIGGER') AS pr (type)
+         (VALUES ('SELECT'),
+                 ('INSERT'),
+                 ('UPDATE'),
+                 ('DELETE'),
+                 ('TRUNCATE'),
+                 ('REFERENCES'),
+                 ('TRIGGER')) AS pr (type)
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
@@ -1901,13 +1923,8 @@ CREATE VIEW tables AS
           AND c.relkind IN ('r', 'v')
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
-               OR has_table_privilege(c.oid, 'SELECT')
-               OR has_table_privilege(c.oid, 'INSERT')
-               OR has_table_privilege(c.oid, 'UPDATE')
-               OR has_table_privilege(c.oid, 'DELETE')
-               OR has_table_privilege(c.oid, 'TRUNCATE')
-               OR has_table_privilege(c.oid, 'REFERENCES')
-               OR has_table_privilege(c.oid, 'TRIGGER') );
+               OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
 
 GRANT SELECT ON tables TO PUBLIC;
 
@@ -2013,9 +2030,9 @@ CREATE VIEW triggers AS
            CAST(null AS time_stamp) AS created
 
     FROM pg_namespace n, pg_class c, pg_trigger t,
-         (SELECT 4, 'INSERT' UNION ALL
-          SELECT 8, 'DELETE' UNION ALL
-          SELECT 16, 'UPDATE') AS em (num, text)
+         (VALUES (4, 'INSERT'),
+                 (8, 'DELETE'),
+                 (16, 'UPDATE')) AS em (num, text)
 
     WHERE n.oid = c.relnamespace
           AND c.oid = t.tgrelid
@@ -2024,12 +2041,8 @@ CREATE VIEW triggers AS
           AND (NOT pg_is_other_temp_schema(n.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                -- SELECT privilege omitted, per SQL standard
-               OR has_table_privilege(c.oid, 'INSERT')
-               OR has_table_privilege(c.oid, 'UPDATE')
-               OR has_table_privilege(c.oid, 'DELETE')
-               OR has_table_privilege(c.oid, 'TRUNCATE')
-               OR has_table_privilege(c.oid, 'REFERENCES')
-               OR has_table_privilege(c.oid, 'TRIGGER') );
+               OR has_table_privilege(c.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(c.oid, 'INSERT, UPDATE, REFERENCES') );
 
 GRANT SELECT ON triggers TO PUBLIC;
 
@@ -2079,8 +2092,11 @@ CREATE VIEW usage_privileges AS
            CAST('FOREIGN DATA WRAPPER' AS character_data) AS object_type,
            CAST('USAGE' AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(fdw.fdwacl,
-                                   makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, fdw.fdwowner, 'USAGE')
+                  OR aclcontains(fdw.fdwacl,
+                                 makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_foreign_data_wrapper fdw,
@@ -2108,8 +2124,11 @@ CREATE VIEW usage_privileges AS
            CAST('FOREIGN SERVER' AS character_data) AS object_type,
            CAST('USAGE' AS character_data) AS privilege_type,
            CAST(
-             CASE WHEN aclcontains(srv.srvacl,
-                                   makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', true))
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, srv.srvowner, 'USAGE')
+                  OR aclcontains(srv.srvacl,
+                                 makeaclitem(grantee.oid, u_grantor.oid, 'USAGE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_foreign_server srv,
@@ -2279,13 +2298,8 @@ CREATE VIEW views AS
           AND c.relkind = 'v'
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
-               OR has_table_privilege(c.oid, 'SELECT')
-               OR has_table_privilege(c.oid, 'INSERT')
-               OR has_table_privilege(c.oid, 'UPDATE')
-               OR has_table_privilege(c.oid, 'DELETE')
-               OR has_table_privilege(c.oid, 'TRUNCATE')
-               OR has_table_privilege(c.oid, 'REFERENCES')
-               OR has_table_privilege(c.oid, 'TRIGGER') );
+               OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
 
 GRANT SELECT ON views TO PUBLIC;
 

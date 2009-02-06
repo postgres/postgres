@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.470 2009/01/15 18:19:58 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.471 2009/02/06 21:15:11 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11600,6 +11600,38 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 
      <tbody>
       <row>
+       <entry><literal><function>has_any_column_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>table</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for any column of table</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_any_column_privilege</function>(<parameter>table</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for any column of table</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_column_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>table</parameter>,
+                                  <parameter>column</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for column</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_column_privilege</function>(<parameter>table</parameter>,
+                                  <parameter>column</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for column</entry>
+      </row>
+      <row>
        <entry><literal><function>has_database_privilege</function>(<parameter>user</parameter>,
                                   <parameter>database</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -11739,6 +11771,12 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </table>
 
    <indexterm>
+    <primary>has_any_column_privilege</primary>
+   </indexterm>
+   <indexterm>
+    <primary>has_column_privilege</primary>
+   </indexterm>
+   <indexterm>
     <primary>has_database_privilege</primary>
    </indexterm>
    <indexterm>
@@ -11767,10 +11805,70 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
 
    <para>
+    <function>has_table_privilege</function> checks whether a user
+    can access a table in a particular way.  The user can be
+    specified by name or by OID
+    (<literal>pg_authid.oid</literal>), or if the argument is
+    omitted
+    <function>current_user</function> is assumed.  The table can be specified
+    by name or by OID.  (Thus, there are actually six variants of
+    <function>has_table_privilege</function>, which can be distinguished by
+    the number and types of their arguments.)  When specifying by name,
+    the name can be schema-qualified if necessary.
+    The desired access privilege type
+    is specified by a text string, which must evaluate to one of the
+    values <literal>SELECT</literal>, <literal>INSERT</literal>,
+    <literal>UPDATE</literal>, <literal>DELETE</literal>, <literal>TRUNCATE</>,
+    <literal>REFERENCES</literal>, or <literal>TRIGGER</literal>.  Optionally,
+    <literal>WITH GRANT OPTION</> can be added to a privilege type to test
+    whether the privilege is held with grant option.  Also, multiple privilege
+    types can be listed separated by commas, in which case the result will
+    be <literal>true</> if any of the listed privileges is held.
+    (Case of the privilege string is not significant, and extra whitespace
+    is allowed between but not within privilege names.)
+    Some examples:
+<programlisting>
+SELECT has_table_privilege('myschema.mytable', 'select');
+SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION');
+</programlisting>
+   </para>
+
+   <para>
+    <function>has_any_column_privilege</function> checks whether a user can
+    access any column of a table in a particular way.  The possibilities for
+    its arguments are the same as for <function>has_table_privilege</>,
+    except that the desired access privilege type must evaluate to some
+    combination of
+    <literal>SELECT</literal>,
+    <literal>INSERT</literal>,
+    <literal>UPDATE</literal>, or
+    <literal>REFERENCES</literal>.  Note that having any of these privileges
+    at the table level implicitly grants it for each column of the table,
+    so <function>has_any_column_privilege</function> will always return
+    <literal>true</> if <function>has_table_privilege</> does for the same
+    arguments.  But <function>has_any_column_privilege</> also succeeds if
+    there is a column-level grant of the privilege for at least one column.
+   </para>
+
+   <para>
+    <function>has_column_privilege</function> checks whether a user
+    can access a column in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>,
+    with the addition that the column can be specified either by name
+    or attribute number.
+    The desired access privilege type must evaluate to some combination of
+    <literal>SELECT</literal>,
+    <literal>INSERT</literal>,
+    <literal>UPDATE</literal>, or
+    <literal>REFERENCES</literal>.  Note that having any of these privileges
+    at the table level implicitly grants it for each column of the table.
+   </para>
+
+   <para>
     <function>has_database_privilege</function> checks whether a user
     can access a database in a particular way.  The possibilities for its
     arguments are analogous to <function>has_table_privilege</function>.
-    The desired access privilege type must evaluate to
+    The desired access privilege type must evaluate to some combination of
     <literal>CREATE</literal>,
     <literal>CONNECT</literal>,
     <literal>TEMPORARY</literal>, or
@@ -11813,7 +11911,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     <function>has_schema_privilege</function> checks whether a user
     can access a schema in a particular way.  The possibilities for its
     arguments are analogous to <function>has_table_privilege</function>.
-    The desired access privilege type must evaluate to
+    The desired access privilege type must evaluate to some combination of
     <literal>CREATE</literal> or
     <literal>USAGE</literal>.
    </para>
@@ -11824,29 +11922,6 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     arguments are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
-   </para>
-
-   <para>
-    <function>has_table_privilege</function> checks whether a user
-    can access a table in a particular way.  The user can be
-    specified by name or by OID
-    (<literal>pg_authid.oid</literal>), or if the argument is
-    omitted
-    <function>current_user</function> is assumed.  The table can be specified
-    by name or by OID.  (Thus, there are actually six variants of
-    <function>has_table_privilege</function>, which can be distinguished by
-    the number and types of their arguments.)  When specifying by name,
-    the name can be schema-qualified if necessary.
-    The desired access privilege type
-    is specified by a text string, which must evaluate to one of the
-    values <literal>SELECT</literal>, <literal>INSERT</literal>,
-    <literal>UPDATE</literal>, <literal>DELETE</literal>, <literal>TRUNCATE</>,
-    <literal>REFERENCES</literal>, or <literal>TRIGGER</literal>.
-    (Case of the string is not significant, however.)
-    An example is:
-<programlisting>
-SELECT has_table_privilege('myschema.mytable', 'select');
-</programlisting>
    </para>
 
    <para>
@@ -11861,7 +11936,7 @@ SELECT has_table_privilege('myschema.mytable', 'select');
     <function>pg_has_role</function> checks whether a user
     can access a role in a particular way.  The possibilities for its
     arguments are analogous to <function>has_table_privilege</function>.
-    The desired access privilege type must evaluate to
+    The desired access privilege type must evaluate to some combination of
     <literal>MEMBER</literal> or
     <literal>USAGE</literal>.
     <literal>MEMBER</literal> denotes direct or indirect membership in
@@ -11869,12 +11944,6 @@ SELECT has_table_privilege('myschema.mytable', 'select');
     <literal>USAGE</literal> denotes whether the privileges of the role
     are immediately available without doing <command>SET ROLE</>.
    </para>
-
-  <para>
-   To test whether a user holds a grant option on the privilege,
-   append <literal>WITH GRANT OPTION</literal> to the privilege key
-   word; for example <literal>'UPDATE WITH GRANT OPTION'</literal>.
-  </para>
 
   <para>
    <xref linkend="functions-info-schema-table"> shows functions that

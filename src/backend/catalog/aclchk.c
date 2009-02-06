@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.152 2009/01/22 20:16:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.153 2009/02/06 21:15:11 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -2292,22 +2292,7 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 	Oid			ownerId;
 
 	/*
-	 * Must get the relation's tuple from pg_class (only needed for ownerId)
-	 */
-	classTuple = SearchSysCache(RELOID,
-								ObjectIdGetDatum(table_oid),
-								0, 0, 0);
-	if (!HeapTupleIsValid(classTuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist",
-						table_oid)));
-	classForm = (Form_pg_class) GETSTRUCT(classTuple);
-
-	ownerId = classForm->relowner;
-
-	/*
-	 * Next, get the column's ACL from pg_attribute
+	 * First, get the column's ACL from its pg_attribute entry
 	 */
 	attTuple = SearchSysCache(ATTNUM,
 							  ObjectIdGetDatum(table_oid),
@@ -2330,17 +2315,41 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 	aclDatum = SysCacheGetAttr(ATTNUM, attTuple, Anum_pg_attribute_attacl,
 							   &isNull);
 
+	/*
+	 * Here we hard-wire knowledge that the default ACL for a column
+	 * grants no privileges, so that we can fall out quickly in the
+	 * very common case where attacl is null.
+	 */
 	if (isNull)
 	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_COLUMN, ownerId);
-		aclDatum = (Datum) 0;
+		ReleaseSysCache(attTuple);
+		return 0;
 	}
-	else
+
+	/*
+	 * Must get the relation's ownerId from pg_class.  Since we already found
+	 * a pg_attribute entry, the only likely reason for this to fail is that
+	 * a concurrent DROP of the relation committed since then (which could
+	 * only happen if we don't have lock on the relation).  We prefer to
+	 * report "no privileges" rather than failing in such a case, so as to
+	 * avoid unwanted failures in has_column_privilege() tests.
+	 */
+	classTuple = SearchSysCache(RELOID,
+								ObjectIdGetDatum(table_oid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(classTuple))
 	{
-		/* detoast column's ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
+		ReleaseSysCache(attTuple);
+		return 0;
 	}
+	classForm = (Form_pg_class) GETSTRUCT(classTuple);
+
+	ownerId = classForm->relowner;
+
+	ReleaseSysCache(classTuple);
+
+	/* detoast column's ACL if necessary */
+	acl = DatumGetAclP(aclDatum);
 
 	result = aclmask(acl, roleid, ownerId, mask, how);
 
@@ -2349,7 +2358,6 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 		pfree(acl);
 
 	ReleaseSysCache(attTuple);
-	ReleaseSysCache(classTuple);
 
 	return result;
 }
@@ -2922,7 +2930,7 @@ pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
  * ACLCHECK_NO_PRIV).
  *
  * If 'how' is ACLMASK_ALL, then returns ACLCHECK_OK if user has any of the
- * privileges identified by 'mode' on all non-dropped columns in the relation
+ * privileges identified by 'mode' on each non-dropped column in the relation
  * (and there must be at least one such column); otherwise returns a suitable
  * error code (in practice, always ACLCHECK_NO_PRIV).
  *
@@ -2942,15 +2950,16 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 	AttrNumber		nattrs;
 	AttrNumber		curr_att;
 
-	/* Must fetch pg_class row to check number of attributes */
+	/*
+	 * Must fetch pg_class row to check number of attributes.  As in
+	 * pg_attribute_aclmask, we prefer to return "no privileges" instead
+	 * of throwing an error if we get any unexpected lookup errors.
+	 */
 	classTuple = SearchSysCache(RELOID,
 								ObjectIdGetDatum(table_oid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(classTuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist",
-						table_oid)));
+		return ACLCHECK_NO_PRIV;
 	classForm = (Form_pg_class) GETSTRUCT(classTuple);
 
 	nattrs = classForm->relnatts;
@@ -2966,26 +2975,36 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 	for (curr_att = 1; curr_att <= nattrs; curr_att++)
 	{
 		HeapTuple	attTuple;
-		bool		isdropped;
+		AclMode		attmask;
 
 		attTuple = SearchSysCache(ATTNUM,
 								  ObjectIdGetDatum(table_oid),
 								  Int16GetDatum(curr_att),
 								  0, 0);
 		if (!HeapTupleIsValid(attTuple))
-			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-				 curr_att, table_oid);
+			continue;
 
-		isdropped = ((Form_pg_attribute) GETSTRUCT(attTuple))->attisdropped;
+		/* ignore dropped columns */
+		if (((Form_pg_attribute) GETSTRUCT(attTuple))->attisdropped)
+		{
+			ReleaseSysCache(attTuple);
+			continue;
+		}
+
+		/*
+		 * Here we hard-wire knowledge that the default ACL for a column
+		 * grants no privileges, so that we can fall out quickly in the
+		 * very common case where attacl is null.
+		 */
+		if (heap_attisnull(attTuple, Anum_pg_attribute_attacl))
+			attmask = 0;
+		else
+			attmask = pg_attribute_aclmask(table_oid, curr_att, roleid,
+										   mode, ACLMASK_ANY);
 
 		ReleaseSysCache(attTuple);
 
-		/* ignore dropped columns */
-		if (isdropped)
-			continue;
-
-		if (pg_attribute_aclmask(table_oid, curr_att, roleid,
-								 mode, ACLMASK_ANY) != 0)
+		if (attmask != 0)
 		{
 			result = ACLCHECK_OK;
 			if (how == ACLMASK_ANY)

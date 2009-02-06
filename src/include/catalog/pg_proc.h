@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.535 2009/01/01 17:23:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.536 2009/02/06 21:15:11 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2913,6 +2913,43 @@ DESCR("current user privilege on relation by rel name");
 DATA(insert OID = 1927 (  has_table_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_table_privilege_id _null_ _null_ _null_ ));
 DESCR("current user privilege on relation by rel oid");
 
+DATA(insert OID = 3012 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "19 25 25 25" _null_ _null_ _null_ _null_	has_column_privilege_name_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on column by username, rel name, col name");
+DATA(insert OID = 3013 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "19 25 21 25" _null_ _null_ _null_ _null_	has_column_privilege_name_name_attnum _null_ _null_ _null_ ));
+DESCR("user privilege on column by username, rel name, col attnum");
+DATA(insert OID = 3014 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "19 26 25 25" _null_ _null_ _null_ _null_	has_column_privilege_name_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on column by username, rel oid, col name");
+DATA(insert OID = 3015 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "19 26 21 25" _null_ _null_ _null_ _null_	has_column_privilege_name_id_attnum _null_ _null_ _null_ ));
+DESCR("user privilege on column by username, rel oid, col attnum");
+DATA(insert OID = 3016 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "26 25 25 25" _null_ _null_ _null_ _null_	has_column_privilege_id_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on column by user oid, rel name, col name");
+DATA(insert OID = 3017 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "26 25 21 25" _null_ _null_ _null_ _null_	has_column_privilege_id_name_attnum _null_ _null_ _null_ ));
+DESCR("user privilege on column by user oid, rel name, col attnum");
+DATA(insert OID = 3018 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "26 26 25 25" _null_ _null_ _null_ _null_	has_column_privilege_id_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on column by user oid, rel oid, col name");
+DATA(insert OID = 3019 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "26 26 21 25" _null_ _null_ _null_ _null_	has_column_privilege_id_id_attnum _null_ _null_ _null_ ));
+DESCR("user privilege on column by user oid, rel oid, col attnum");
+DATA(insert OID = 3020 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "25 25 25" _null_ _null_ _null_ _null_ has_column_privilege_name_name _null_ _null_ _null_ ));
+DESCR("current user privilege on column by rel name, col name");
+DATA(insert OID = 3021 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "25 21 25" _null_ _null_ _null_ _null_ has_column_privilege_name_attnum _null_ _null_ _null_ ));
+DESCR("current user privilege on column by rel name, col attnum");
+DATA(insert OID = 3022 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "26 25 25" _null_ _null_ _null_ _null_ has_column_privilege_id_name _null_ _null_ _null_ ));
+DESCR("current user privilege on column by rel oid, col name");
+DATA(insert OID = 3023 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "26 21 25" _null_ _null_ _null_ _null_ has_column_privilege_id_attnum _null_ _null_ _null_ ));
+DESCR("current user privilege on column by rel oid, col attnum");
+
+DATA(insert OID = 3024 (  has_any_column_privilege	   PGNSP PGUID 12 10 0 0 f f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_any_column_privilege_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on any column by username, rel name");
+DATA(insert OID = 3025 (  has_any_column_privilege	   PGNSP PGUID 12 10 0 0 f f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	has_any_column_privilege_name_id _null_ _null_ _null_ ));
+DESCR("user privilege on any column by username, rel oid");
+DATA(insert OID = 3026 (  has_any_column_privilege	   PGNSP PGUID 12 10 0 0 f f f t f s 3 0 16 "26 25 25" _null_ _null_ _null_ _null_	has_any_column_privilege_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on any column by user oid, rel name");
+DATA(insert OID = 3027 (  has_any_column_privilege	   PGNSP PGUID 12 10 0 0 f f f t f s 3 0 16 "26 26 25" _null_ _null_ _null_ _null_	has_any_column_privilege_id_id _null_ _null_ _null_ ));
+DESCR("user privilege on any column by user oid, rel oid");
+DATA(insert OID = 3028 (  has_any_column_privilege	   PGNSP PGUID 12 10 0 0 f f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ has_any_column_privilege_name _null_ _null_ _null_ ));
+DESCR("current user privilege on any column by rel name");
+DATA(insert OID = 3029 (  has_any_column_privilege	   PGNSP PGUID 12 10 0 0 f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_any_column_privilege_id _null_ _null_ _null_ ));
+DESCR("current user privilege on any column by rel oid");
 
 DATA(insert OID = 1928 (  pg_stat_get_numscans			PGNSP PGUID 12 1 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_numscans _null_ _null_ _null_ ));
 DESCR("statistics: number of scans done for table/index");

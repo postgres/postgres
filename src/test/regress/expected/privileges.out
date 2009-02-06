@@ -258,9 +258,15 @@ SELECT one FROM atest5; -- ok
    1
 (1 row)
 
+COPY atest5 (one) TO stdout; -- ok
+1
 SELECT two FROM atest5; -- fail
 ERROR:  permission denied for relation atest5
+COPY atest5 (two) TO stdout; -- fail
+ERROR:  permission denied for relation atest5
 SELECT atest5 FROM atest5; -- fail
+ERROR:  permission denied for relation atest5
+COPY atest5 (one,two) TO stdout; -- fail
 ERROR:  permission denied for relation atest5
 SELECT 1 FROM atest5; -- ok
  ?column? 
@@ -324,6 +330,9 @@ SELECT one, two FROM atest5 NATURAL JOIN atest6; -- ok now
 
 -- test column-level privileges for INSERT and UPDATE
 INSERT INTO atest5 (two) VALUES (3); -- ok
+COPY atest5 FROM stdin; -- fail
+ERROR:  permission denied for relation atest5
+COPY atest5 (two) FROM stdin; -- ok
 INSERT INTO atest5 (three) VALUES (4); -- fail
 ERROR:  permission denied for relation atest5
 INSERT INTO atest5 VALUES (5,5,5); -- fail
@@ -346,6 +355,7 @@ SELECT atest6 FROM atest6; -- ok
 --------
 (0 rows)
 
+COPY atest6 TO stdout; -- ok
 -- test column-level privileges when involved with DELETE
 SET SESSION AUTHORIZATION regressuser1;
 ALTER TABLE atest6 ADD COLUMN three integer;
