@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.84 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.85 2009/02/06 21:22:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -304,7 +304,8 @@ COPY <replaceable class="parameter">count</replaceable>
     You must have select privilege on the table
     whose values are read by <command>COPY TO</command>, and
     insert privilege on the table into which values
-    are inserted by <command>COPY FROM</command>.
+    are inserted by <command>COPY FROM</command>.  It is sufficient
+    to have column privileges on the column(s) listed in the command.
    </para>
 
    <para>
