@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.276 2009/02/06 18:18:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.277 2009/02/06 19:24:12 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -67,7 +67,7 @@
    <note>
     <para>
      On Windows, there is a way to improve performance if a single
-     database connection is repeated started and shutdown.  Internally,
+     database connection is repeatedly started and shutdown.  Internally,
      libpq calls WSAStartup() and WSACleanup() for connection startup
      and shutdown, respectively.  WSAStartup() increments an internal
      Windows library reference count which is decremented by WSACleanup().
