@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.275 2009/01/10 20:14:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.276 2009/02/06 18:18:54 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -63,6 +63,21 @@
    The <function>PQstatus</> function should be called to check
    whether a connection was successfully made before queries are sent
    via the connection object.
+  
+   <note>
+    <para>
+     On Windows, there is a way to improve performance if a single
+     database connection is repeated started and shutdown.  Internally,
+     libpq calls WSAStartup() and WSACleanup() for connection startup
+     and shutdown, respectively.  WSAStartup() increments an internal
+     Windows library reference count which is decremented by WSACleanup().
+     When the reference count is just one, calling WSACleanup() frees
+     all resources and all DLLs are unloaded.  This is an expensive
+     operation.  To avoid this, an application can manually call
+     WSAStartup() so resources will not be freed when the last database
+     connection is closed.
+    </para>
+   </note>
 
    <variablelist>
     <varlistentry>
