@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.78 2009/02/02 20:07:36 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.79 2009/02/07 14:31:30 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -559,6 +559,7 @@
   <variablelist>
    <varlistentry>
     <term><envar>PGHOST</envar></term>
+    <term><envar>PGOPTIONS</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>
 

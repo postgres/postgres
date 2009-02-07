@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.74 2009/01/05 16:54:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.75 2009/02/07 14:31:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -445,6 +445,7 @@ PostgreSQL documentation
   <variablelist>
    <varlistentry>
     <term><envar>PGHOST</envar></term>
+    <term><envar>PGOPTIONS</envar></term>
     <term><envar>PGPORT</envar></term>
     <term><envar>PGUSER</envar></term>
 
