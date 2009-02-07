@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.75 2008/09/23 09:20:34 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.76 2009/02/07 20:05:44 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -190,13 +190,10 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
   <note>
    <para>
-    Testing has shown <productname>PostgreSQL</productname>'s hash
-    indexes to perform no better than B-tree indexes, and the
-    index size and build time for hash indexes is much worse.
-    Furthermore, hash index operations are not presently WAL-logged,
+    Hash index operations are not presently WAL-logged,
     so hash indexes might need to be rebuilt with <command>REINDEX</>
     after a database crash.
-    For these reasons, hash index use is presently discouraged.
+    For this reason, hash index use is presently discouraged.
    </para>
   </note>
 
