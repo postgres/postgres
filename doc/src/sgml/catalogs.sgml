@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.194 2009/02/04 21:30:41 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.195 2009/02/07 15:00:27 momjian Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1983,7 +1983,7 @@
       <entry><structfield>conkey</structfield></entry>
       <entry><type>int2[]</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
-      <entry>If a table constraint, list of columns which the constraint constrains</entry>
+      <entry>If a table constraint (including a foreign key), list of the constrained columns</entry>
      </row>
 
      <row>
