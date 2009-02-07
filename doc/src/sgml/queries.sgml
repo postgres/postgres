@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.52 2008/12/31 00:08:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.53 2009/02/07 20:11:16 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1402,8 +1402,9 @@ SELECT <replaceable>select_list</replaceable>
 
   <para>
    <literal>OFFSET</> says to skip that many rows before beginning to
-   return rows.  <literal>OFFSET 0</> is the same as
-   omitting the <literal>OFFSET</> clause.  If both <literal>OFFSET</>
+   return rows.  <literal>OFFSET 0</> is the same as omitting the
+   <literal>OFFSET</> clause, and <literal>LIMIT NULL</> is the same
+   as omitting the <literal>LIMIT</> clause.  If both <literal>OFFSET</>
    and <literal>LIMIT</> appear, then <literal>OFFSET</> rows are
    skipped before starting to count the <literal>LIMIT</> rows that
    are returned.
