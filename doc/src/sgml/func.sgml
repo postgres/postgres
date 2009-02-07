@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.471 2009/02/06 21:15:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.472 2009/02/07 14:16:45 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -4867,14 +4867,14 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry>seconds past midnight (0-86399)</entry>
        </row>
        <row>
-        <entry><literal>AM</literal> or <literal>A.M.</literal> or
-        <literal>PM</literal> or <literal>P.M.</literal></entry>
-        <entry>meridian indicator (uppercase)</entry>
+        <entry><literal>AM</literal>, <literal>am</literal>,
+        <literal>PM</literal> or <literal>pm</literal></entry>
+        <entry>meridiem indicator (without periods)</entry>
        </row>
        <row>
-        <entry><literal>am</literal> or <literal>a.m.</literal> or
-        <literal>pm</literal> or <literal>p.m.</literal></entry>
-        <entry>meridian indicator (lowercase)</entry>
+        <entry><literal>A.M.</literal>, <literal>a.m.</literal>,
+        <literal>P.M.</literal> or <literal>p.m.</literal></entry>
+        <entry>meridiem indicator (with periods)</entry>
        </row>
        <row>
         <entry><literal>Y,YYY</literal></entry>
@@ -4913,14 +4913,14 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry>last digit of ISO year</entry>
        </row>
        <row>
-        <entry><literal>BC</literal> or <literal>B.C.</literal> or
-        <literal>AD</literal> or <literal>A.D.</literal></entry>
-        <entry>era indicator (uppercase)</entry>
+        <entry><literal>BC</literal>, <literal>bc</literal>,
+        <literal>AD</literal> or <literal>ad</literal></entry>
+        <entry>era indicator (without periods)</entry>
        </row>
        <row>
-        <entry><literal>bc</literal> or <literal>b.c.</literal> or
-        <literal>ad</literal> or <literal>a.d.</literal></entry>
-        <entry>era indicator (lowercase)</entry>
+        <entry><literal>B.C.</literal>, <literal>b.c.</literal>,
+        <literal>A.D.</literal> or <literal>a.d.</literal></entry>
+        <entry>era indicator (with periods)</entry>
        </row>
        <row>
         <entry><literal>MONTH</literal></entry>

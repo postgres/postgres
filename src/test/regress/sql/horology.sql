@@ -391,9 +391,9 @@ SELECT '' AS to_timestamp_4, to_timestamp('My birthday-> Year: 1976, Month: May,
 SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 
 SELECT '' AS to_timestamp_6, to_timestamp('15 "text between quote marks" 98 54 45',
-                                          E'HH "\\text between quote marks\\"" YY MI SS');
+                                          E'HH24 "\\text between quote marks\\"" YY MI SS');
 
-SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHHMISSYYYY');
+SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHH24MISSYYYY');
 
 SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');
 

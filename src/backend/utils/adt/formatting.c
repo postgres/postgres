@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.153 2009/01/01 17:23:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.154 2009/02/07 14:16:45 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2009, PostgreSQL Global Development Group
@@ -59,14 +59,9 @@
  * -----------------------------------------------------------------------
  */
 
-/* ----------
- * UnComment me for DEBUG
- * ----------
- */
-/***
-#define DEBUG_TO_FROM_CHAR
+#ifdef DEBUG_TO_FROM_CHAR
 #define DEBUG_elog_output	DEBUG3
-***/
+#endif
 
 #include "postgres.h"
 
@@ -184,6 +179,9 @@ struct FormatNode
 #define SUFFTYPE_PREFIX		1
 #define SUFFTYPE_POSTFIX	2
 
+#define CLOCK_24_HOUR		0
+#define CLOCK_12_HOUR		1
+
 
 /* ----------
  * Full months
@@ -206,7 +204,6 @@ static char *days_short[] = {
  *	years up one.  For interval years, we just return the year.
  */
 #define ADJUST_YEAR(year, is_interval)	((is_interval) ? (year) : ((year) <= 0 ? -((year) - 1) : (year)))
-#define BC_STR_ORIG " BC"
 
 #define A_D_STR		"A.D."
 #define a_d_STR		"a.d."
@@ -218,6 +215,18 @@ static char *days_short[] = {
 #define BC_STR		"BC"
 #define bc_STR		"bc"
 
+/*
+ * AD / BC strings for seq_search.
+ *
+ * These are given in two variants, a long form with periods and a standard
+ * form without.
+ *
+ * The array is laid out such that matches for AD have an even index, and
+ * matches for BC have an odd index.  So the boolean value for BC is given by
+ * taking the array index of the match, modulo 2.
+ */
+static char *adbc_strings[] = {ad_STR, bc_STR, AD_STR, BC_STR, NULL};
+static char *adbc_strings_long[] = {a_d_STR, b_c_STR, A_D_STR, B_C_STR, NULL};
 
 /* ----------
  * AM / PM
@@ -233,6 +242,18 @@ static char *days_short[] = {
 #define PM_STR		"PM"
 #define pm_STR		"pm"
 
+/*
+ * AM / PM strings for seq_search.
+ *
+ * These are given in two variants, a long form with periods and a standard
+ * form without.
+ *
+ * The array is laid out such that matches for AM have an even index, and
+ * matches for PM have an odd index.  So the boolean value for PM is given by
+ * taking the array index of the match, modulo 2.
+ */
+static char *ampm_strings[] = {am_STR, pm_STR, AM_STR, PM_STR, NULL};
+static char *ampm_strings_long[] = {a_m_STR, p_m_STR, A_M_STR, P_M_STR, NULL};
 
 /* ----------
  * Months in roman-numeral
@@ -265,17 +286,20 @@ static char *numth[] = {"st", "nd", "rd", "th", NULL};
  * Flags & Options:
  * ----------
  */
-#define ONE_UPPER	1			/* Name */
-#define ALL_UPPER	2			/* NAME */
-#define ALL_LOWER	3			/* name */
+#define ONE_UPPER		1	/* Name */
+#define ALL_UPPER		2	/* NAME */
+#define ALL_LOWER		3	/* name */
 
-#define FULL_SIZ	0
+#define FULL_SIZ		0
 
-#define MAX_MON_LEN 3
-#define MAX_DY_LEN	3
+#define MAX_MONTH_LEN	9
+#define MAX_MON_LEN		3
+#define MAX_DAY_LEN		9
+#define MAX_DY_LEN		3
+#define MAX_RM_LEN		4
 
-#define TH_UPPER	1
-#define TH_LOWER	2
+#define TH_UPPER		1
+#define TH_LOWER		2
 
 /* ----------
  * Number description struct
@@ -383,7 +407,6 @@ typedef struct
 {
 	FromCharDateMode mode;
 	int			hh,
-				am,
 				pm,
 				mi,
 				ss,
@@ -400,7 +423,8 @@ typedef struct
 				cc,
 				j,
 				us,
-				yysz;			/* is it YY or YYYY ? */
+				yysz,		/* is it YY or YYYY ? */
+				clock;		/* 12 or 24 hour clock? */
 } TmFromChar;
 
 #define ZERO_tmfc(_X) memset(_X, 0, sizeof(TmFromChar))
@@ -411,11 +435,11 @@ typedef struct
  */
 #ifdef DEBUG_TO_FROM_CHAR
 #define DEBUG_TMFC(_X) \
-		elog(DEBUG_elog_output, "TMFC:\nmode %d\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\nww %d\nw %d\ncc %d\nj %d\nus: %d\nyysz: %d", \
-			(_X)->mode, (_X)->hh, (_X)->am, (_X)->pm, (_X)->mi, (_X)->ss, \
-			(_X)->ssss, (_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, \
-			(_X)->year, (_X)->bc, (_X)->ww, (_X)->w, (_X)->cc, (_X)->j, \
-			(_X)->us, (_X)->yysz);
+		elog(DEBUG_elog_output, "TMFC:\nmode %d\nhh %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\nww %d\nw %d\ncc %d\nj %d\nus: %d\nyysz: %d\nclock: %d", \
+			(_X)->mode, (_X)->hh, (_X)->pm, (_X)->mi, (_X)->ss, (_X)->ssss, \
+			(_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, (_X)->year, \
+			(_X)->bc, (_X)->ww, (_X)->w, (_X)->cc, (_X)->j, (_X)->us, \
+			(_X)->yysz, (_X)->clock);
 #define DEBUG_TM(_X) \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
 			(_X)->tm_sec, (_X)->tm_year,\
@@ -1749,10 +1773,6 @@ strdigits_len(char *str)
 	return len;
 }
 
-#define AMPM_ERROR	ereport(ERROR, \
-							(errcode(ERRCODE_INVALID_DATETIME_FORMAT), \
-							 errmsg("invalid AM/PM string")));
-
 /*
  * Set the date mode of a from-char conversion.
  *
@@ -1818,7 +1838,12 @@ static int
 from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 {
 	long		result;
+	char		copy[DCH_MAX_ITEM_SIZ + 1];
 	char	   *init = *src;
+	int			used;
+
+	Assert(len <= DCH_MAX_ITEM_SIZ);
+	used = (int) strlcpy(copy, *src, len + 1);
 
 	if (S_FM(node->suffix) || is_next_separator(node))
 	{
@@ -1836,34 +1861,28 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 		 * We need to pull exactly the number of characters given in 'len' out
 		 * of the string, and convert those.
 		 */
-		char first[DCH_MAX_ITEM_SIZ + 1];
 		char *last;
-		int used;
 
-		Assert(len <= DCH_MAX_ITEM_SIZ);
-		strncpy(first, init, len);
-		first[len] = '\0';
-
-		if (strlen(first) < len)
+		if (used < len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("source string too short for \"%s\" formatting field",
 						    node->key->name),
 					 errdetail("Field requires %d characters, but only %d "
 							   "remain.",
-							   len, (int) strlen(first)),
+							   len, used),
 					 errhint("If your source string is not fixed-width, try "
 							 "using the \"FM\" modifier.")));
 
 		errno = 0;
-		result = strtol(first, &last, 10);
-		used = last - first;
+		result = strtol(copy, &last, 10);
+		used = last - copy;
 
 		if (used > 0 && used < len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("invalid value for \"%s\" in source string", 
-						 	node->key->name),
+					 errmsg("invalid value \"%s\" for \"%s\"", 
+						 	copy, node->key->name),
 					 errdetail("Field requires %d characters, but only %d "
 						 	   "could be parsed.", len, used),
 					 errhint("If your source string is not fixed-width, try "
@@ -1875,8 +1894,8 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 	if (*src == init)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid value for \"%s\" in source string",
-					    node->key->name),
+				 errmsg("invalid value \"%s\" for \"%s\"",
+					    copy, node->key->name),
 				 errdetail("Value must be an integer.")));
 
 	if (errno == ERANGE || result < INT_MIN || result > INT_MAX)
@@ -1968,11 +1987,8 @@ seq_search(char *name, char **array, int type, int max, int *len)
 			}
 
 #ifdef DEBUG_TO_FROM_CHAR
-
-			/*
-			 * elog(DEBUG_elog_output, "N: %c, P: %c, A: %s (%s)", *n, *p, *a,
-			 * name);
-			 */
+			elog(DEBUG_elog_output, "N: %c, P: %c, A: %s (%s)",
+				 *n, *p, *a, name);
 #endif
 			if (*n != *p)
 				break;
@@ -1996,18 +2012,23 @@ static int
 from_char_seq_search(int *dest, char **src, char **array, int type, int max, 
 					 FormatNode *node)
 {
-	int result;
 	int len;
 
-	result = seq_search(*src, array, type, max, &len);
+	*dest = seq_search(*src, array, type, max, &len);
 	if (len <= 0)
+	{
+		char copy[DCH_MAX_ITEM_SIZ + 1];
+
+		Assert(max <= DCH_MAX_ITEM_SIZ);
+		strlcpy(copy, *src, max + 1);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid value for \"%s\" in source string",
-					    node->key->name),
+				 errmsg("invalid value \"%s\" for \"%s\"",
+					    copy, node->key->name),
 				 errdetail("The given value did not match any of the allowed "
 					 	   "values for this field.")));
-	from_char_set_int(dest, result, node);
+	}
 	*src += len;
 	return len;
 }
@@ -2476,7 +2497,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 {
 	FormatNode *n;
 	char	   *s;
-	int			len;
+	int			len,
+				value;
 	bool		fx_mode = false;
 
 	for (n = node, s = in; n->type != NODE_TYPE_END && *s != '\0'; n++)
@@ -2502,46 +2524,28 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				break;
 			case DCH_A_M:
 			case DCH_P_M:
-				if (strncmp(s, P_M_STR, n->key->len) == 0)
-					out->pm = TRUE;
-				else if (strncmp(s, A_M_STR, n->key->len) == 0)
-					out->am = TRUE;
-				else
-					AMPM_ERROR;
-				s += strlen(P_M_STR);
+			case DCH_a_m:
+			case DCH_p_m:
+				from_char_seq_search(&value, &s, ampm_strings_long,
+									 ALL_UPPER, n->key->len, n);
+				from_char_set_int(&out->pm, value % 2, n);
+				out->clock = CLOCK_12_HOUR;
 				break;
 			case DCH_AM:
 			case DCH_PM:
-				if (strncmp(s, PM_STR, n->key->len) == 0)
-					out->pm = TRUE;
-				else if (strncmp(s, AM_STR, n->key->len) == 0)
-					out->am = TRUE;
-				else
-					AMPM_ERROR;
-				s += strlen(PM_STR);
-				break;
-			case DCH_a_m:
-			case DCH_p_m:
-				if (strncmp(s, p_m_STR, n->key->len) == 0)
-					out->pm = TRUE;
-				else if (strncmp(s, a_m_STR, n->key->len) == 0)
-					out->am = TRUE;
-				else
-					AMPM_ERROR;
-				s += strlen(p_m_STR);
-				break;
 			case DCH_am:
 			case DCH_pm:
-				if (strncmp(s, pm_STR, n->key->len) == 0)
-					out->pm = TRUE;
-				else if (strncmp(s, am_STR, n->key->len) == 0)
-					out->am = TRUE;
-				else
-					AMPM_ERROR;
-				s += strlen(pm_STR);
+				from_char_seq_search(&value, &s, ampm_strings,
+									 ALL_UPPER, n->key->len, n);
+				from_char_set_int(&out->pm, value % 2, n);
+				out->clock = CLOCK_12_HOUR;
 				break;
 			case DCH_HH:
 			case DCH_HH12:
+				from_char_parse_int_len(&out->hh, &s, 2, n);
+				out->clock = CLOCK_12_HOUR;
+				s += SKIP_THth(n->suffix);
+				break;
 			case DCH_HH24:
 				from_char_parse_int_len(&out->hh, &s, 2, n);
 				s += SKIP_THth(n->suffix);
@@ -2587,41 +2591,33 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 						 errmsg("\"TZ\"/\"tz\" format patterns are not supported in to_date")));
 			case DCH_A_D:
 			case DCH_B_C:
-				if (strncmp(s, B_C_STR, n->key->len) == 0)
-					out->bc = TRUE;
-				s += n->key->len;
+			case DCH_a_d:
+			case DCH_b_c:
+				from_char_seq_search(&value, &s, adbc_strings_long,
+									 ALL_UPPER, n->key->len, n);
+				from_char_set_int(&out->bc, value % 2, n);
 				break;
 			case DCH_AD:
 			case DCH_BC:
-				if (strncmp(s, BC_STR, n->key->len) == 0)
-					out->bc = TRUE;
-				s += n->key->len;
-				break;
-			case DCH_a_d:
-			case DCH_b_c:
-				if (strncmp(s, b_c_STR, n->key->len) == 0)
-					out->bc = TRUE;
-				s += n->key->len;
-				break;
 			case DCH_ad:
 			case DCH_bc:
-				if (strncmp(s, bc_STR, n->key->len) == 0)
-					out->bc = TRUE;
-				s += n->key->len;
+				from_char_seq_search(&value, &s, adbc_strings,
+									 ALL_UPPER, n->key->len, n);
+				from_char_set_int(&out->bc, value % 2, n);
 				break;
 			case DCH_MONTH:
 			case DCH_Month:
 			case DCH_month:
-				from_char_seq_search(&out->mm, &s, months_full, ONE_UPPER, 
-									 FULL_SIZ, n);
-				out->mm++;
+				from_char_seq_search(&value, &s, months_full, ONE_UPPER,
+									 MAX_MONTH_LEN, n);
+				from_char_set_int(&out->mm, value + 1, n);
 				break;
 			case DCH_MON:
 			case DCH_Mon:
 			case DCH_mon:
-				from_char_seq_search(&out->mm, &s, months, ONE_UPPER, 
+				from_char_seq_search(&value, &s, months, ONE_UPPER,
 									 MAX_MON_LEN, n);
-				out->mm++;
+				from_char_set_int(&out->mm, value + 1, n);
 				break;
 			case DCH_MM:
 				from_char_parse_int(&out->mm, &s, n);
@@ -2630,14 +2626,16 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			case DCH_DAY:
 			case DCH_Day:
 			case DCH_day:
-				from_char_seq_search(&out->d, &s, days, ONE_UPPER, 
-									 FULL_SIZ, n);
+				from_char_seq_search(&value, &s, days, ONE_UPPER,
+									 MAX_DAY_LEN, n);
+				from_char_set_int(&out->d, value, n);
 				break;
 			case DCH_DY:
 			case DCH_Dy:
 			case DCH_dy:
-				from_char_seq_search(&out->d, &s, days, ONE_UPPER, 
+				from_char_seq_search(&value, &s, days, ONE_UPPER,
 									 MAX_DY_LEN, n);
+				from_char_set_int(&out->d, value, n);
 				break;
 			case DCH_DDD:
 				from_char_parse_int(&out->ddd, &s, n);
@@ -2743,14 +2741,14 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 				s += SKIP_THth(n->suffix);
 				break;
 			case DCH_RM:
-				from_char_seq_search(&out->mm, &s, rm_months_upper, 
-									 ALL_UPPER, FULL_SIZ, n);
-				out->mm = 12 - out->mm;
+				from_char_seq_search(&value, &s, rm_months_upper, 
+									 ALL_UPPER, MAX_RM_LEN, n);
+				from_char_set_int(&out->mm, 12 - value, n);
 				break;
 			case DCH_rm:
-				from_char_seq_search(&out->mm, &s, rm_months_lower, 
-									 ALL_LOWER, FULL_SIZ, n);
-				out->mm = 12 - out->mm;
+				from_char_seq_search(&value, &s, rm_months_lower, 
+									 ALL_LOWER, MAX_RM_LEN, n);
+				from_char_set_int(&out->mm, 12 - value, n);
 				break;
 			case DCH_W:
 				from_char_parse_int(&out->w, &s, n);
@@ -3202,17 +3200,18 @@ do_to_timestamp(text *date_txt, text *fmt,
 	if (tmfc.hh)
 		tm->tm_hour = tmfc.hh;
 
-	if (tmfc.pm || tmfc.am)
+	if (tmfc.clock == CLOCK_12_HOUR)
 	{
 		if (tm->tm_hour < 1 || tm->tm_hour > 12)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("AM/PM hour must be between 1 and 12")));
+					 errmsg("hour \"%d\" is invalid for the 12-hour clock",
+							tm->tm_hour),
+					 errhint("Use the 24-hour clock, or give an hour between 1 and 12.")));
 
 		if (tmfc.pm && tm->tm_hour < 12)
 			tm->tm_hour += 12;
-
-		else if (tmfc.am && tm->tm_hour == 12)
+		else if (!tmfc.pm && tm->tm_hour == 12)
 			tm->tm_hour = 0;
 	}
 

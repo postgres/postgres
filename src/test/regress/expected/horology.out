@@ -2740,13 +2740,13 @@ SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 (1 row)
 
 SELECT '' AS to_timestamp_6, to_timestamp('15 "text between quote marks" 98 54 45',
-                                          E'HH "\\text between quote marks\\"" YY MI SS');
+                                          E'HH24 "\\text between quote marks\\"" YY MI SS');
  to_timestamp_6 |         to_timestamp         
 ----------------+------------------------------
                 | Thu Jan 01 15:54:45 1998 PST
 (1 row)
 
-SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHHMISSYYYY');
+SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHH24MISSYYYY');
  to_timestamp_7 |         to_timestamp         
 ----------------+------------------------------
                 | Fri May 12 14:45:48 2000 PDT
@@ -2759,7 +2759,7 @@ SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDF
 (1 row)
 
 SELECT '' AS to_timestamp_9, to_timestamp('97/Feb/16', 'YYMonDD');
-ERROR:  invalid value for "Mon" in source string
+ERROR:  invalid value "/Fe" for "Mon"
 DETAIL:  The given value did not match any of the allowed values for this field.
 SELECT '' AS to_timestamp_10, to_timestamp('19971116', 'YYYYMMDD');
  to_timestamp_10 |         to_timestamp         
@@ -2847,7 +2847,7 @@ DETAIL:  Field requires 2 characters, but only 1 remain.
 HINT:  If your source string is not fixed-width, try using the "FM" modifier.
 -- Insufficient digit characters for a single node:
 SELECT '' AS to_timestamp_24, to_timestamp('19971)24', 'YYYYMMDD');
-ERROR:  invalid value for "MM" in source string
+ERROR:  invalid value "1)" for "MM"
 DETAIL:  Field requires 2 characters, but only 1 could be parsed.
 HINT:  If your source string is not fixed-width, try using the "FM" modifier.
 -- Value clobbering:
@@ -2856,7 +2856,7 @@ ERROR:  conflicting values for "Mon" field in formatting string
 DETAIL:  This value contradicts a previous setting for the same field type.
 -- Non-numeric input:
 SELECT '' AS to_timestamp_26, to_timestamp('199711xy', 'YYYYMMDD');
-ERROR:  invalid value for "DD" in source string
+ERROR:  invalid value "xy" for "DD"
 DETAIL:  Value must be an integer.
 -- Input that doesn't fit in an int:
 SELECT '' AS to_timestamp_27, to_timestamp('10000000000', 'FMYYYY');
