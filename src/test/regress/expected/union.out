@@ -263,16 +263,16 @@ ORDER BY 1;
 SELECT q2 FROM int8_tbl INTERSECT SELECT q1 FROM int8_tbl;
         q2        
 ------------------
-              123
  4567890123456789
+              123
 (2 rows)
 
 SELECT q2 FROM int8_tbl INTERSECT ALL SELECT q1 FROM int8_tbl;
         q2        
 ------------------
+ 4567890123456789
+ 4567890123456789
               123
- 4567890123456789
- 4567890123456789
 (3 rows)
 
 SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl ORDER BY 1;
@@ -305,16 +305,16 @@ SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl;
 SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q2 FROM int8_tbl;
         q1        
 ------------------
-              123
  4567890123456789
+              123
 (2 rows)
 
 SELECT q1 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q2 FROM int8_tbl;
         q1        
 ------------------
+ 4567890123456789
+ 4567890123456789
               123
- 4567890123456789
- 4567890123456789
 (3 rows)
 
 --
@@ -341,8 +341,8 @@ SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl ORDER BY 1;
 SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl;
         q1         
 -------------------
-               123
   4567890123456789
+               123
                456
   4567890123456789
                123
@@ -353,15 +353,15 @@ SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FR
 SELECT q1 FROM int8_tbl INTERSECT (((SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl)));
         q1        
 ------------------
-              123
  4567890123456789
+              123
 (2 rows)
 
 (((SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl))) UNION ALL SELECT q2 FROM int8_tbl;
         q1         
 -------------------
-               123
   4567890123456789
+               123
                456
   4567890123456789
                123
@@ -416,8 +416,8 @@ LINE 1: ... int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1...
 SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)));
         q1        
 ------------------
-              123
  4567890123456789
+              123
 (2 rows)
 
 --

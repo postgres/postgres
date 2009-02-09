@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.57 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.58 2009/02/09 21:18:28 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -200,39 +200,95 @@ hashvarlena(PG_FUNCTION_ARGS)
  * hash function, see http://burtleburtle.net/bob/hash/doobs.html,
  * or Bob's article in Dr. Dobb's Journal, Sept. 1997.
  *
- * In the current code, we have adopted an idea from Bob's 2006 update
- * of his hash function, which is to fetch the data a word at a time when
- * it is suitably aligned.  This makes for a useful speedup, at the cost
- * of having to maintain four code paths (aligned vs unaligned, and
- * little-endian vs big-endian).  Note that we have NOT adopted his newer
- * mix() function, which is faster but may sacrifice some randomness.
+ * In the current code, we have adopted Bob's 2006 update of his hash
+ * function to fetch the data a word at a time when it is suitably aligned.
+ * This makes for a useful speedup, at the cost of having to maintain
+ * four code paths (aligned vs unaligned, and little-endian vs big-endian).
+ * It also uses two separate mixing functions mix() and final(), instead
+ * of a slower multi-purpose function.
  */
 
 /* Get a bit mask of the bits set in non-uint32 aligned addresses */
 #define UINT32_ALIGN_MASK (sizeof(uint32) - 1)
 
+/* Rotate a uint32 value left by k bits - note multiple evaluation! */
+#define rot(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
+
 /*----------
  * mix -- mix 3 32-bit values reversibly.
- * For every delta with one or two bits set, and the deltas of all three
- * high bits or all three low bits, whether the original value of a,b,c
- * is almost all zero or is uniformly distributed,
- * - If mix() is run forward or backward, at least 32 bits in a,b,c
- *	 have at least 1/4 probability of changing.
- * - If mix() is run forward, every bit of c will change between 1/3 and
- *	 2/3 of the time.  (Well, 22/100 and 78/100 for some 2-bit deltas.)
+ *
+ * This is reversible, so any information in (a,b,c) before mix() is
+ * still in (a,b,c) after mix().
+ *
+ * If four pairs of (a,b,c) inputs are run through mix(), or through
+ * mix() in reverse, there are at least 32 bits of the output that
+ * are sometimes the same for one pair and different for another pair.
+ * This was tested for:
+ * * pairs that differed by one bit, by two bits, in any combination
+ *   of top bits of (a,b,c), or in any combination of bottom bits of
+ *   (a,b,c).
+ * * "differ" is defined as +, -, ^, or ~^.  For + and -, I transformed
+ *   the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
+ *   is commonly produced by subtraction) look like a single 1-bit
+ *   difference.
+ * * the base values were pseudorandom, all zero but one bit set, or
+ *   all zero plus a counter that starts at zero.
+ * 
+ * This does not achieve avalanche.  There are input bits of (a,b,c)
+ * that fail to affect some output bits of (a,b,c), especially of a.  The
+ * most thoroughly mixed value is c, but it doesn't really even achieve
+ * avalanche in c. 
+ * 
+ * This allows some parallelism.  Read-after-writes are good at doubling
+ * the number of bits affected, so the goal of mixing pulls in the opposite
+ * direction from the goal of parallelism.  I did what I could.  Rotates
+ * seem to cost as much as shifts on every machine I could lay my hands on,
+ * and rotates are much kinder to the top and bottom bits, so I used rotates.
  *----------
  */
 #define mix(a,b,c) \
 { \
-  a -= b; a -= c; a ^= ((c)>>13); \
-  b -= c; b -= a; b ^= ((a)<<8); \
-  c -= a; c -= b; c ^= ((b)>>13); \
-  a -= b; a -= c; a ^= ((c)>>12);  \
-  b -= c; b -= a; b ^= ((a)<<16); \
-  c -= a; c -= b; c ^= ((b)>>5); \
-  a -= b; a -= c; a ^= ((c)>>3);	\
-  b -= c; b -= a; b ^= ((a)<<10); \
-  c -= a; c -= b; c ^= ((b)>>15); \
+  a -= c;  a ^= rot(c, 4);  c += b; \
+  b -= a;  b ^= rot(a, 6);  a += c; \
+  c -= b;  c ^= rot(b, 8);  b += a; \
+  a -= c;  a ^= rot(c,16);  c += b; \
+  b -= a;  b ^= rot(a,19);  a += c; \
+  c -= b;  c ^= rot(b, 4);  b += a; \
+}
+
+/*----------
+ * final -- final mixing of 3 32-bit values (a,b,c) into c
+ *
+ * Pairs of (a,b,c) values differing in only a few bits will usually
+ * produce values of c that look totally different.  This was tested for
+ * * pairs that differed by one bit, by two bits, in any combination
+ *   of top bits of (a,b,c), or in any combination of bottom bits of
+ *   (a,b,c).
+ * * "differ" is defined as +, -, ^, or ~^.  For + and -, I transformed
+ *   the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
+ *   is commonly produced by subtraction) look like a single 1-bit
+ *   difference.
+ * * the base values were pseudorandom, all zero but one bit set, or
+ *   all zero plus a counter that starts at zero.
+ *     
+ * The use of separate functions for mix() and final() allow for a
+ * substantial performance increase since final() does not need to
+ * do well in reverse, but is does need to affect all output bits.
+ * mix(), on the other hand, does not need to affect all output
+ * bits (affecting 32 bits is enough).  The original hash function had
+ * a single mixing operation that had to satisfy both sets of requirements
+ * and was slower as a result.
+ *----------
+ */
+#define final(a,b,c) \
+{ \
+  c ^= b; c -= rot(b,14); \
+  a ^= c; a -= rot(c,11); \
+  b ^= a; b -= rot(a,25); \
+  c ^= b; c -= rot(b,16); \
+  a ^= c; a -= rot(c, 4); \
+  b ^= a; b -= rot(a,14); \
+  c ^= b; c -= rot(b,24); \
 }
 
 /*
@@ -260,8 +316,7 @@ hash_any(register const unsigned char *k, register int keylen)
 
 	/* Set up the internal state */
 	len = keylen;
-	a = b = 0x9e3779b9;			/* the golden ratio; an arbitrary value */
-	c = 3923095;				/* initialize with an arbitrary value */
+	a = b = c = 0x9e3779b9 + len + 3923095;
 
 	/* If the source pointer is word-aligned, we use word-wide fetches */
 	if (((long) k & UINT32_ALIGN_MASK) == 0)
@@ -282,7 +337,6 @@ hash_any(register const unsigned char *k, register int keylen)
 
 		/* handle the last 11 bytes */
 		k = (const unsigned char *) ka;
-		c += keylen;
 #ifdef WORDS_BIGENDIAN
 		switch (len)
 		{
@@ -385,7 +439,6 @@ hash_any(register const unsigned char *k, register int keylen)
 		}
 
 		/* handle the last 11 bytes */
-		c += keylen;
 #ifdef WORDS_BIGENDIAN
 		switch (len)			/* all the case statements fall through */
 		{
@@ -445,7 +498,7 @@ hash_any(register const unsigned char *k, register int keylen)
 #endif /* WORDS_BIGENDIAN */
 	}
 
-	mix(a, b, c);
+	final(a, b, c);
 
 	/* report the result */
 	return UInt32GetDatum(c);
@@ -465,11 +518,10 @@ hash_uint32(uint32 k)
 				b,
 				c;
 
-	a = 0x9e3779b9 + k;
-	b = 0x9e3779b9;
-	c = 3923095 + (uint32) sizeof(uint32);
+	a = b = c = 0x9e3779b9 + (uint32) sizeof(uint32) + 3923095;
+	a += k;
 
-	mix(a, b, c);
+	final(a, b, c);
 
 	/* report the result */
 	return UInt32GetDatum(c);
