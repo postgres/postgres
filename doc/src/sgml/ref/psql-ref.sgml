@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.218 2009/01/20 02:38:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.219 2009/02/09 14:09:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1746,7 +1746,7 @@ lo_import 152801
           You can specify an optional second argument, if it is provided it
           may be either <literal>on</literal> or <literal>off</literal>
           which will enable or disable display of a locale-aware character
-          to seperate groups of digits to the left of the decimal marker.  If
+          to separate groups of digits to the left of the decimal marker.  If
           the second argument is not provided then we will toggle between
           on and off.
           </para>
