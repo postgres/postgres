@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.206 2009/01/16 13:27:23 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.207 2009/02/09 20:57:59 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3547,8 +3547,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        This setting can be overridden for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        This setting can be overridden for individual tables by
+        changing storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -3565,8 +3565,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        This setting can be overridden for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        This setting can be overridden for individual tables by
+        changing storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -3584,8 +3584,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The default is 0.2 (20% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        This setting can be overridden for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        This setting can be overridden for individual tables by
+        changing storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -3603,8 +3603,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The default is 0.1 (10% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        This setting can be overridden for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        This setting can be overridden for individual tables by
+        changing storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -3624,8 +3624,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         autovacuum is otherwise disabled.
         The default is 200 million transactions.
         This parameter can only be set at server start, but the setting
-        can be reduced for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        can be reduced for individual tables by
+        changing storage parameters.
         For more information see <xref linkend="vacuum-for-wraparound">.
        </para>
       </listitem>
@@ -3645,8 +3645,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         The default value is 20 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        This setting can be overridden for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        This setting can be overridden for individual tables by
+        changing storage parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -3667,8 +3667,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         each worker never exceeds the limit on this variable.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
-        This setting can be overridden for individual tables by entries in
-        <structname>pg_autovacuum</>.
+        This setting can be overridden for individual tables by
+        changing storage parameters.
        </para>
       </listitem>
      </varlistentry>

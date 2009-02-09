@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.102 2008/12/13 19:13:44 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.103 2009/02/09 20:57:59 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -286,7 +286,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <listitem>
      <para>
       This form changes one or more storage parameters for the table.  See
-      <xref linkend="SQL-CREATETABLE" endterm="sql-createtable-title">
+      <xref linkend="SQL-CREATETABLE-storage-parameters"
+      endterm="sql-createtable-storage-parameters-title">
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.111 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.112 2009/02/09 20:57:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,10 +214,26 @@ typedef struct RelationData
  * be applied to relations that use this format or a superset for
  * private options data.
  */
+ /* autovacuum-related reloptions. */
+typedef struct AutoVacOpts
+{
+	bool    enabled;
+	int     vacuum_threshold;
+	int     analyze_threshold;
+	int     vacuum_cost_delay;
+	int     vacuum_cost_limit;
+	int     freeze_min_age;
+	int     freeze_max_age;
+	int		freeze_table_age;
+	float8  vacuum_scale_factor;
+	float8  analyze_scale_factor;
+} AutoVacOpts;
+
 typedef struct StdRdOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
+	AutoVacOpts autovacuum;     /* autovacuum-related options */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

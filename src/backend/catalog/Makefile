@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.68 2008/12/19 16:25:16 petere Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.69 2009/02/09 20:57:59 alvherre Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ all: $(BKIFILES)
 # indexing.h had better be last, and toasting.h just before it.
 
 POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
-	pg_proc.h pg_type.h pg_attribute.h pg_class.h pg_autovacuum.h \
+	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \

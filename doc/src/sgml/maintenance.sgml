@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.89 2009/01/16 13:27:23 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.90 2009/02/09 20:57:59 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -573,7 +573,9 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
    <para>
     Tables whose <structfield>relfrozenxid</> value is more than
     <varname>autovacuum_freeze_max_age</> transactions old are always
-    vacuumed.  Otherwise, if the number of tuples obsoleted since the last
+    vacuumed (this also applies to those tables whose freeze max age has
+    been modified via storage parameters; see below).  Otherwise, if the
+    number of tuples obsoleted since the last
     <command>VACUUM</command> exceeds the <quote>vacuum threshold</quote>, the
     table is vacuumed.  The vacuum threshold is defined as:
 <programlisting>
@@ -604,64 +606,38 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <para>
     The default thresholds and scale factors are taken from
     <filename>postgresql.conf</filename>, but it is possible to override them
-    on a table-by-table basis by making entries in the system catalog
-    <link
-    linkend="catalog-pg-autovacuum"><structname>pg_autovacuum</></link>.
-    If a <structname>pg_autovacuum</structname> row exists for a particular
-    table, the settings it specifies are applied; otherwise the global
-    settings are used.  See <xref linkend="runtime-config-autovacuum"> for
+    on a table-by-table basis; see 
+    <xref linkend="sql-createtable-storage-parameters"
+    endterm="sql-createtable-storage-parameters-title"> for more information.
+    If a setting
+    has been changed via storage parameters, that value is used; otherwise the
+    global settings are used. See <xref linkend="runtime-config-autovacuum"> for
     more details on the global settings.
    </para>
 
    <para>
-    Besides the base threshold values and scale factors, there are five
-    more parameters that can be set for each table in
-    <structname>pg_autovacuum</structname>.
-    The first, <structname>pg_autovacuum</>.<structfield>enabled</>,
+    Besides the base threshold values and scale factors, there are six
+    more autovacuum parameters that can be set for each table via
+    storage parameters.
+    The first parameter, <literal>autovacuum_enabled</>,
     can be set to <literal>false</literal> to instruct the autovacuum daemon
     to skip that particular table entirely.  In this case
     autovacuum will only touch the table if it must do so
     to prevent transaction ID wraparound.
-    The next two parameters, the vacuum cost delay
-    (<structname>pg_autovacuum</structname>.<structfield>vac_cost_delay</structfield>)
-    and the vacuum cost limit
-    (<structname>pg_autovacuum</structname>.<structfield>vac_cost_limit</structfield>),
-    are used to set table-specific values for the
-    <xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title">
+    Another two parameters,
+    <literal>autovacuum_vacuum_cost_delay</literal> and
+    <literal>autovacuum_vacuum_cost_limit</literal>, are used to set
+    table-specific values for the
+    <xref linkend="runtime-config-resource-vacuum-cost"
+    endterm="runtime-config-resource-vacuum-cost-title">
     feature.
-    The last two parameters,
-    (<structname>pg_autovacuum</structname>.<structfield>freeze_min_age</structfield>)
-    and
-    (<structname>pg_autovacuum</structname>.<structfield>freeze_max_age</structfield>),
-    are used to set table-specific values for
-    <xref linkend="guc-vacuum-freeze-min-age"> and
-    <xref linkend="guc-autovacuum-freeze-max-age"> respectively.
+    <literal>autovacuum_freeze_min_age</literal>,
+    <literal>autovacuum_freeze_max_age</literal> and
+    <literal>autovacuum_freeze_table_age</literal> are used to set
+    values for <xref linkend="guc-vacuum-freeze-min-age">,
+    <xref linkend="guc-autovacuum-freeze-max-age"> and
+    <xref linkend="guc-vacuum-freeze-table-age"> respectively.
    </para>
-
-   <para>
-    If any of the values in <structname>pg_autovacuum</structname>
-    are set to a negative number, or if a row is not present at all in
-    <structname>pg_autovacuum</structname> for any particular table, the
-    corresponding values from <filename>postgresql.conf</filename> are used.
-   </para>
-
-   <para>
-    There is not currently any support for making
-    <structname>pg_autovacuum</structname> entries, except by doing
-    manual <command>INSERT</>s into the catalog.  This feature will be
-    improved in future releases, and it is likely that the catalog
-    definition will change.
-   </para>
-
-   <caution>
-    <para>
-     The contents of the <structname>pg_autovacuum</structname> system
-     catalog are currently not saved in database dumps created by the
-     tools <application>pg_dump</> and <application>pg_dumpall</>.  If
-     you want to preserve them across a dump/reload cycle, make sure
-     you dump the catalog manually.
-    </para>
-   </caution>
 
    <para>
     When multiple workers are running, the cost limit is

@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.92 2009/01/16 13:27:24 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.93 2009/02/09 20:57:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,12 +69,12 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/reloptions.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_autovacuum.h"
 #include "catalog/pg_database.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
@@ -165,13 +165,15 @@ typedef struct av_relation
 {
 	Oid			ar_toastrelid;	/* hash key - must be first */
 	Oid			ar_relid;
+	bool		ar_hasrelopts;
+	AutoVacOpts	ar_reloptions;	/* copy of AutoVacOpts from the main table's
+								   reloptions, or NULL if none */
 } av_relation;
 
 /* struct to keep track of tables to vacuum and/or analyze, after rechecking */
 typedef struct autovac_table
 {
 	Oid			at_relid;
-	Oid			at_toastrelid;
 	bool		at_dovacuum;
 	bool		at_doanalyze;
 	int			at_freeze_min_age;
@@ -282,16 +284,17 @@ static void autovac_balance_cost(void);
 static void do_autovacuum(void);
 static void FreeWorkerInfo(int code, Datum arg);
 
-static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map);
-static void relation_needs_vacanalyze(Oid relid, Form_pg_autovacuum avForm,
+static autovac_table *table_recheck_autovac(Oid relid, HTAB *table_toast_map,
+					  TupleDesc pg_class_desc);
+static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 						  Form_pg_class classForm,
-						  PgStat_StatTabEntry *tabentry, bool *dovacuum,
-						  bool *doanalyze, bool *wraparound);
+						  PgStat_StatTabEntry *tabentry,
+						  bool *dovacuum, bool *doanalyze, bool *wraparound);
 
 static void autovacuum_do_vac_analyze(autovac_table *tab,
 						  BufferAccessStrategy bstrategy);
-static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid,
-											   HTAB *table_toast_map);
+static AutoVacOpts *extract_autovac_opts(HeapTuple tup,
+					 TupleDesc pg_class_desc);
 static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
 						  PgStat_StatDBEntry *dbentry);
@@ -1816,8 +1819,7 @@ get_database_list(void)
 static void
 do_autovacuum(void)
 {
-	Relation	classRel,
-				avRel;
+	Relation	classRel;
 	HeapTuple	tuple;
 	HeapScanDesc relScan;
 	Form_pg_database dbForm;
@@ -1829,6 +1831,7 @@ do_autovacuum(void)
 	PgStat_StatDBEntry *dbentry;
 	BufferAccessStrategy bstrategy;
 	ScanKeyData	key;
+	TupleDesc	pg_class_desc;
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -1890,12 +1893,14 @@ do_autovacuum(void)
 	shared = pgstat_fetch_stat_dbentry(InvalidOid);
 
 	classRel = heap_open(RelationRelationId, AccessShareLock);
-	avRel = heap_open(AutovacuumRelationId, AccessShareLock);
+
+	/* create a copy so we can use it after closing pg_class */
+	pg_class_desc = CreateTupleDescCopy(RelationGetDescr(classRel));
 
 	/* create hash table for toast <-> main relid mapping */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(Oid) * 2;
+	ctl.entrysize = sizeof(av_relation);
 	ctl.hash = oid_hash;
 
 	table_toast_map = hash_create("TOAST to main relid map",
@@ -1909,9 +1914,9 @@ do_autovacuum(void)
 	 * We do this in two passes: on the first one we collect the list of
 	 * plain relations, and on the second one we collect TOAST tables.
 	 * The reason for doing the second pass is that during it we want to use
-	 * the main relation's pg_autovacuum entry if the TOAST table does not have
-	 * any, and we cannot obtain it unless we know beforehand what's the main
-	 * table OID.
+	 * the main relation's pg_class.reloptions entry if the TOAST table does
+	 * not have any, and we cannot obtain it unless we know beforehand what's
+	 * the main table OID.
 	 *
 	 * We need to check TOAST tables separately because in cases with short,
 	 * wide tables there might be proportionally much more activity in the
@@ -1931,9 +1936,8 @@ do_autovacuum(void)
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-		Form_pg_autovacuum avForm = NULL;
 		PgStat_StatTabEntry *tabentry;
-		HeapTuple	avTup;
+		AutoVacOpts *relopts;
 		Oid			relid;
 		bool		dovacuum;
 		bool		doanalyze;
@@ -1942,17 +1946,13 @@ do_autovacuum(void)
 
 		relid = HeapTupleGetOid(tuple);
 
-		/* Fetch the pg_autovacuum tuple for the relation, if any */
-		avTup = get_pg_autovacuum_tuple_relid(avRel, relid, NULL);
-		if (HeapTupleIsValid(avTup))
-			avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
-
-		/* Fetch the pgstat entry for this table */
+		/* Fetch reloptions and the pgstat entry for this table */
+		relopts = extract_autovac_opts(tuple, pg_class_desc);
 		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
 											 shared, dbentry);
 
 		/* Check if it needs vacuum or analyze */
-		relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
+		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
 								  &dovacuum, &doanalyze, &wraparound);
 
 		/*
@@ -1998,7 +1998,7 @@ do_autovacuum(void)
 		}
 		else
 		{
-			/* Plain relations that need work are added to table_oids */
+			/* relations that need work are added to table_oids */
 			if (dovacuum || doanalyze)
 				table_oids = lappend_oid(table_oids, relid);
 
@@ -2020,12 +2020,16 @@ do_autovacuum(void)
 				{
 					/* hash_search already filled in the key */
 					hentry->ar_relid = relid;
+					hentry->ar_hasrelopts = false;
+					if (relopts != NULL)
+					{
+						hentry->ar_hasrelopts = true;
+						memcpy(&hentry->ar_reloptions, relopts,
+							   sizeof(AutoVacOpts));
+					}
 				}
 			}
 		}
-
-		if (HeapTupleIsValid(avTup))
-			heap_freetuple(avTup);
 	}
 
 	heap_endscan(relScan);
@@ -2040,10 +2044,9 @@ do_autovacuum(void)
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-		Form_pg_autovacuum avForm = NULL;
 		PgStat_StatTabEntry *tabentry;
-		HeapTuple   avTup;
 		Oid         relid;
+		AutoVacOpts *relopts = NULL;
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
@@ -2057,17 +2060,26 @@ do_autovacuum(void)
 
 		relid = HeapTupleGetOid(tuple);
 
-		/* Fetch the pg_autovacuum tuple for this rel */
-		avTup = get_pg_autovacuum_tuple_relid(avRel, relid, table_toast_map);
+		/*
+		 * fetch reloptions -- if this toast table does not have them,
+		 * try the main rel
+		 */
+		relopts = extract_autovac_opts(tuple, pg_class_desc);
+		if (relopts == NULL)
+		{
+			av_relation		*hentry;
+			bool			found;
 
-		if (HeapTupleIsValid(avTup))
-			avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
+			hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
+			if (found && hentry->ar_hasrelopts)
+				relopts = &hentry->ar_reloptions;
+		}
 
 		/* Fetch the pgstat entry for this table */
 		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
 											 shared, dbentry);
 
-		relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
+		relation_needs_vacanalyze(relid, relopts, classForm, tabentry,
 								  &dovacuum, &doanalyze, &wraparound);
 
 		/* ignore analyze for toast tables */
@@ -2076,7 +2088,6 @@ do_autovacuum(void)
 	}
 
 	heap_endscan(relScan);
-	heap_close(avRel, AccessShareLock);
 	heap_close(classRel, AccessShareLock);
 
 	/*
@@ -2163,10 +2174,10 @@ do_autovacuum(void)
 		 * condition is not closed but it is very small.
 		 */
 		MemoryContextSwitchTo(AutovacMemCxt);
-		tab = table_recheck_autovac(relid, table_toast_map);
+		tab = table_recheck_autovac(relid, table_toast_map, pg_class_desc);
 		if (tab == NULL)
 		{
-			/* someone else vacuumed the table */
+			/* someone else vacuumed the table, or it went away */
 			LWLockRelease(AutovacuumScheduleLock);
 			continue;
 		}
@@ -2292,49 +2303,29 @@ deleted:
 }
 
 /*
- * Returns a copy of the pg_autovacuum tuple for the given relid, or NULL if
- * there isn't any.  avRel is pg_autovacuum, already open and suitably locked.
+ * extract_autovac_opts
  *
- * If table_toast_map is not null, use it to find an alternative OID with which
- * to search a pg_autovacuum entry, if the passed relid does not yield one
- * directly.
+ * Given a relation's pg_class tuple, return the AutoVacOpts portion of
+ * reloptions, if set; otherwise, return NULL.
  */
-static HeapTuple
-get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid,
-							  HTAB *table_toast_map)
+AutoVacOpts *
+extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 {
-	ScanKeyData entry[1];
-	SysScanDesc avScan;
-	HeapTuple	avTup;
+	bytea	   *relopts;
+	AutoVacOpts *av;
 
-	ScanKeyInit(&entry[0],
-				Anum_pg_autovacuum_vacrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
+	Assert(((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_RELATION ||
+		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_TOASTVALUE);
 
-	avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
-								SnapshotNow, 1, entry);
+	relopts = extractRelOptions(tup, pg_class_desc, InvalidOid);
+	if (relopts == NULL)
+		return NULL;
+	
+	av = palloc(sizeof(AutoVacOpts));
+	memcpy(av, &(((StdRdOptions *) relopts)->autovacuum), sizeof(AutoVacOpts));
+	pfree(relopts);
 
-	avTup = systable_getnext(avScan);
-
-	if (HeapTupleIsValid(avTup))
-		avTup = heap_copytuple(avTup);
-
-	systable_endscan(avScan);
-
-	if (!HeapTupleIsValid(avTup) && table_toast_map != NULL)
-	{
-		av_relation		*hentry;
-		bool		found;
-
-		hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
-		if (found)
-			/* avoid second recursion */
-			avTup = get_pg_autovacuum_tuple_relid(avRel, hentry->ar_relid,
-												  NULL);
-	}
-
-	return avTup;
+	return av;
 }
 
 /*
@@ -2370,13 +2361,11 @@ get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
  * Note that the returned autovac_table does not have the name fields set.
  */
 static autovac_table *
-table_recheck_autovac(Oid relid, HTAB *table_toast_map)
+table_recheck_autovac(Oid relid, HTAB *table_toast_map,
+					  TupleDesc pg_class_desc)
 {
-	Form_pg_autovacuum avForm = NULL;
 	Form_pg_class classForm;
 	HeapTuple	classTup;
-	HeapTuple	avTup;
-	Relation	avRel;
 	bool		dovacuum;
 	bool		doanalyze;
 	autovac_table *tab = NULL;
@@ -2384,6 +2373,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
 	bool		wraparound;
+	AutoVacOpts	*avopts;
 
 	/* use fresh stats */
 	autovac_refresh_stats();
@@ -2399,23 +2389,27 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 		return NULL;
 	classForm = (Form_pg_class) GETSTRUCT(classTup);
 
-	/*
-	 * Fetch the pg_autovacuum entry, if any.  For a toast table, also try the
-	 * main rel's pg_autovacuum entry if there isn't one for the TOAST table
-	 * itself.
+	/* 
+	 * Get the applicable reloptions.  If it is a TOAST table, try to get the
+	 * main table reloptions if the toast table itself doesn't have.
 	 */
-	avRel = heap_open(AutovacuumRelationId, AccessShareLock);
-	avTup = get_pg_autovacuum_tuple_relid(avRel, relid,
-			classForm->relkind == RELKIND_TOASTVALUE ? table_toast_map : NULL);
+	avopts = extract_autovac_opts(classTup, pg_class_desc);
+	if (classForm->relkind == RELKIND_TOASTVALUE && 
+		avopts == NULL && table_toast_map != NULL)
+	{
+		av_relation		*hentry;
+		bool			found;
 
-	if (HeapTupleIsValid(avTup))
-		avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
+		hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
+		if (found && hentry->ar_hasrelopts)
+			avopts = &hentry->ar_reloptions;
+	}
 
 	/* fetch the pgstat table entry */
 	tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
 										 shared, dbentry);
 
-	relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
+	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
 							  &dovacuum, &doanalyze, &wraparound);
 
 	/* ignore ANALYZE for toast tables */
@@ -2431,41 +2425,28 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 		int			vac_cost_delay;
 
 		/*
-		 * Calculate the vacuum cost parameters and the minimum freeze age. If
-		 * there is a tuple in pg_autovacuum, use it; else, use the GUC
-		 * defaults.  Note that the fields may contain "-1" (or indeed any
-		 * negative value), which means use the GUC defaults for each setting.
-		 * In cost_limit, the value 0 also means to use the value from
-		 * elsewhere.
+		 * Calculate the vacuum cost parameters and the freeze ages.  If there
+		 * are options set in pg_class.reloptions, use them; in the case of a
+		 * toast table, try the main table too.  Otherwise use the GUC
+		 * defaults, autovacuum's own first and plain vacuum second.
 		 */
-		if (avForm != NULL)
+		if (avopts)
 		{
-			vac_cost_limit = (avForm->vac_cost_limit > 0) ?
-				avForm->vac_cost_limit :
-				((autovacuum_vac_cost_limit > 0) ?
-				 autovacuum_vac_cost_limit : VacuumCostLimit);
-
-			vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
-				avForm->vac_cost_delay :
-				((autovacuum_vac_cost_delay >= 0) ?
-				 autovacuum_vac_cost_delay : VacuumCostDelay);
-
-			freeze_min_age = (avForm->freeze_min_age >= 0) ?
-				avForm->freeze_min_age : default_freeze_min_age;
-
-			freeze_table_age = (avForm->freeze_table_age >= 0) ?
-				avForm->freeze_table_age : default_freeze_table_age;
+			vac_cost_delay = avopts->vacuum_cost_delay;
+			vac_cost_limit = avopts->vacuum_cost_limit;
+			freeze_min_age = avopts->freeze_min_age;
+			freeze_table_age = avopts->freeze_table_age;
 		}
 		else
 		{
-			vac_cost_limit = (autovacuum_vac_cost_limit > 0) ?
-				autovacuum_vac_cost_limit : VacuumCostLimit;
-
-			vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?
+			/* -1 in autovac setting means use plain vacuum_cost_delay */
+			vac_cost_delay = autovacuum_vac_cost_delay >= 0 ?
 				autovacuum_vac_cost_delay : VacuumCostDelay;
-
+			/* 0 or -1 in autovac setting means use plain vacuum_cost_limit */
+			vac_cost_limit = autovacuum_vac_cost_limit > 0 ?
+				autovacuum_vac_cost_limit : VacuumCostLimit;
+			/* these do not have autovacuum-specific settings */
 			freeze_min_age = default_freeze_min_age;
-
 			freeze_table_age = default_freeze_table_age;
 		}
 
@@ -2483,9 +2464,6 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
 		tab->at_datname = NULL;
 	}
 
-	heap_close(avRel, AccessShareLock);
-	if (HeapTupleIsValid(avTup))
-		heap_freetuple(avTup);
 	heap_freetuple(classTup);
 
 	return tab;
@@ -2496,8 +2474,12 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
  *
  * Check whether a relation needs to be vacuumed or analyzed; return each into
  * "dovacuum" and "doanalyze", respectively.  Also return whether the vacuum is
- * being forced because of Xid wraparound.	avForm and tabentry can be NULL,
- * classForm shouldn't.
+ * being forced because of Xid wraparound.
+ *
+ * relopts is a pointer to the AutoVacOpts options (either for itself in the
+ * case of a plain table, or for either itself or its parent table in the case
+ * of a TOAST table), NULL if none; tabentry is the pgstats entry, which can be
+ * NULL.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
  * threshold.  This threshold is calculated as
@@ -2513,19 +2495,19 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map)
  * We also force vacuum if the table's relfrozenxid is more than freeze_max_age
  * transactions back.
  *
- * A table whose pg_autovacuum.enabled value is false, is automatically
- * skipped (unless we have to vacuum it due to freeze_max_age).  Thus
- * autovacuum can be disabled for specific tables.	Also, when the stats
+ * A table whose autovacuum_enabled option is false is
+ * automatically skipped (unless we have to vacuum it due to freeze_max_age).
+ * Thus autovacuum can be disabled for specific tables.	Also, when the stats
  * collector does not have data about a table, it will be skipped.
  *
- * A table whose vac_base_thresh value is <0 takes the base value from the
+ * A table whose vac_base_thresh value is < 0 takes the base value from the
  * autovacuum_vacuum_threshold GUC variable.  Similarly, a vac_scale_factor
- * value <0 is substituted with the value of
+ * value < 0 is substituted with the value of
  * autovacuum_vacuum_scale_factor GUC variable.  Ditto for analyze.
  */
 static void
 relation_needs_vacanalyze(Oid relid,
-						  Form_pg_autovacuum avForm,
+						  AutoVacOpts *relopts,
 						  Form_pg_class classForm,
 						  PgStat_StatTabEntry *tabentry,
  /* output params below */
@@ -2534,9 +2516,10 @@ relation_needs_vacanalyze(Oid relid,
 						  bool *wraparound)
 {
 	bool		force_vacuum;
+	bool		av_enabled;
 	float4		reltuples;		/* pg_class.reltuples */
 
-	/* constants from pg_autovacuum or GUC variables */
+	/* constants from reloptions or GUC variables */
 	int			vac_base_thresh,
 				anl_base_thresh;
 	float4		vac_scale_factor,
@@ -2558,36 +2541,28 @@ relation_needs_vacanalyze(Oid relid,
 	AssertArg(OidIsValid(relid));
 
 	/*
-	 * Determine vacuum/analyze equation parameters.  If there is a tuple in
-	 * pg_autovacuum, use it; else, use the GUC defaults.  Note that the
-	 * fields may contain "-1" (or indeed any negative value), which means use
-	 * the GUC defaults for each setting.
+	 * Determine vacuum/analyze equation parameters.  We have two possible
+	 * sources: the passed reloptions (which could be a main table or a toast
+	 * table), or the autovacuum GUC variables.
 	 */
-	if (avForm != NULL)
+	if (relopts)
 	{
-		vac_scale_factor = (avForm->vac_scale_factor >= 0) ?
-			avForm->vac_scale_factor : autovacuum_vac_scale;
-		vac_base_thresh = (avForm->vac_base_thresh >= 0) ?
-			avForm->vac_base_thresh : autovacuum_vac_thresh;
-
-		anl_scale_factor = (avForm->anl_scale_factor >= 0) ?
-			avForm->anl_scale_factor : autovacuum_anl_scale;
-		anl_base_thresh = (avForm->anl_base_thresh >= 0) ?
-			avForm->anl_base_thresh : autovacuum_anl_thresh;
-
-		freeze_max_age = (avForm->freeze_max_age >= 0) ?
-			Min(avForm->freeze_max_age, autovacuum_freeze_max_age) :
-			autovacuum_freeze_max_age;
+		vac_scale_factor = relopts->vacuum_scale_factor;
+		vac_base_thresh = relopts->vacuum_threshold;
+		anl_scale_factor = relopts->analyze_scale_factor;
+		anl_base_thresh = relopts->analyze_threshold;
+		freeze_max_age = Min(relopts->freeze_max_age,
+							 autovacuum_freeze_max_age);
+		av_enabled = relopts->enabled;
 	}
 	else
 	{
 		vac_scale_factor = autovacuum_vac_scale;
 		vac_base_thresh = autovacuum_vac_thresh;
-
 		anl_scale_factor = autovacuum_anl_scale;
 		anl_base_thresh = autovacuum_anl_thresh;
-
 		freeze_max_age = autovacuum_freeze_max_age;
+		av_enabled = true;
 	}
 
 	/* Force vacuum if table is at risk of wraparound */
@@ -2599,8 +2574,8 @@ relation_needs_vacanalyze(Oid relid,
 										  xidForceLimit));
 	*wraparound = force_vacuum;
 
-	/* User disabled it in pg_autovacuum?  (But ignore if at risk) */
-	if (avForm && !avForm->enabled && !force_vacuum)
+	/* User disabled it in pg_class.reloptions?  (But ignore if at risk) */
+	if (!force_vacuum && !av_enabled)
 	{
 		*doanalyze = false;
 		*dovacuum = false;

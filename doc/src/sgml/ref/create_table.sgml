@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.112 2009/02/02 19:31:38 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.113 2009/02/09 20:57:59 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -685,19 +685,29 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   <refsect2 id="SQL-CREATETABLE-storage-parameters">
    <title id="SQL-CREATETABLE-storage-parameters-title">Storage Parameters</title>
 
+ <indexterm zone="sql-createtable-storage-parameters">
+  <primary>storage parameters</primary>
+ </indexterm>
+
    <para>
     The <literal>WITH</> clause can specify <firstterm>storage parameters</>
     for tables, and for indexes associated with a <literal>UNIQUE</literal> or
     <literal>PRIMARY KEY</literal> constraint.  Storage parameters for
     indexes are documented in <xref linkend="SQL-CREATEINDEX"
     endterm="sql-createindex-title">.  The storage parameters currently
-    available for tables are:
+    available for tables are listed below.  For each parameter, there is an
+    additional, identically named parameter, prefixed with
+	<literal>toast.</literal> which can be used to control the behavior of the
+    supplementary storage table, if any; see <xref linkend="storage-toast">.
+	Note that the supplementary storage table inherits the
+    <literal>autovacuum</literal> values from its parent table, if there are
+    no <literal>toast.autovacuum_*</literal> settings set.
    </para>
 
    <variablelist>
 
    <varlistentry>
-    <term><literal>FILLFACTOR</></term>
+    <term><literal>fillfactor</>, <literal>toast.fillfactor</literal> (<type>integer</>)</term>
     <listitem>
      <para>
       The fillfactor for a table is a percentage between 10 and 100.
@@ -715,11 +725,118 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>TOAST.FILLFACTOR</literal></term>
+    <term><literal>autovacuum_enabled</>, <literal>toast.autovacuum_enabled</literal> (<type>boolean</>)</term>
     <listitem>
      <para>
-      Same as above, for the supplementary storage table, if any; see
-      <xref linkend="storage-toast">.
+     Enables or disables the autovacuum daemon on a particular table.
+     If true, the autovacuum daemon will initiate a <command>VACUUM</> operation
+     on a particular table when the number of updated or deleted tuples exceeds 
+     <literal>autovacuum_vacuum_threshold</> plus 
+     <literal>autovacuum_vacuum_scale_factor</> times the number of live tuples 
+     currently estimated to be in the relation.
+     Similarly, it will initiate an <command>ANALYZE</> operation when the
+     number of inserted, updated or deleted tuples exceeds
+     <literal>autovacuum_analyze_threshold</> plus 
+     <literal>autovacuum_analyze_scale_factor</> times the number of live tuples 
+     currently estimated to be in the relation.
+     If false, this table will not be autovacuumed, except to prevent
+     transaction Id wraparound. See <xref linkend="vacuum-for-wraparound"> for
+     more about wraparound prevention.
+     Observe that this variable inherits its value from the <xref
+     linkend="guc-autovacuum"> setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_vacuum_threshold</>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</>)</term>
+    <listitem>
+     <para>
+     Minimum number of updated or deleted tuples before initiate a
+     <command>VACUUM</> operation on a particular table. 
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_vacuum_scale_factor</>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</>)</term>
+    <listitem>
+     <para>
+     Multiplier for <structfield>reltuples</> to add to
+     <literal>autovacuum_vacuum_threshold</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_analyze_threshold</>, <literal>toast.autovacuum_analyze_threshold</literal> (<type>integer</>)</term>
+    <listitem>
+     <para>
+     Minimum number of inserted, updated, or deleted tuples before initiate an
+     <command>ANALYZE</> operation on a particular table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_analyze_scale_factor</>, <literal>toast.autovacuum_analyze_scale_factor</literal> (<type>float4</>)</term>
+    <listitem>
+     <para>
+     Multiplier for <structfield>reltuples</> to add to
+     <literal>autovacuum_analyze_threshold</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_vacuum_cost_delay</>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>integer</>)</term>
+    <listitem>
+     <para>
+     Custom <xref linkend="guc-autovacuum-vacuum-cost-delay"> parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_vacuum_cost_limit</>, <literal>toast.autovacuum_vacuum_cost_limit</literal> (<type>integer</>)</term>
+    <listitem>
+     <para>
+     Custom <xref linkend="guc-autovacuum-vacuum-cost-limit"> parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_freeze_min_age</>, <literal>toast.autovacuum_freeze_min_age</literal> (<type>integer</>)</term>
+    <listitem>
+     <para>
+     Custom <xref linkend="guc-vacuum-freeze-min-age"> parameter. Note that
+     autovacuum will ignore attempts to set a per-table
+     <literal>autovacuum_freeze_min_age</> larger than the half system-wide 
+     <xref linkend="guc-autovacuum-freeze-max-age"> setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_freeze_max_age</>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</>)</term>
+    <listitem>
+     <para>
+     Custom <xref linkend="guc-autovacuum-freeze-max-age"> parameter. Note that
+     autovacuum will ignore attempts to set a per-table
+     <literal>autovacuum_freeze_max_age</> larger than the system-wide setting
+     (it can only be set smaller). Note that while you can set
+     <literal>autovacuum_freeze_max_age</> very small, or even zero, this is
+     usually unwise since it will force frequent vacuuming.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_freeze_table_age</literal> (<type>integer</type>)</term>
+    <listitem>
+     <para>
+      Custom <xref linkend="guc-vacuum-freeze-table-age"> parameter.
      </para>
     </listitem>
    </varlistentry>

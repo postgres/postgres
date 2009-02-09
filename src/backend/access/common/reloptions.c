@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.20 2009/02/02 19:31:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.21 2009/02/09 20:57:59 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,14 @@
 
 static relopt_bool boolRelOpts[] =
 {
+	{
+		{
+			"autovacuum_enabled",
+			"Enables autovacuum in this relation",
+			RELOPT_KIND_HEAP
+		},
+		true
+	},
 	/* list terminator */
 	{ { NULL } }
 };
@@ -86,12 +94,83 @@ static relopt_int intRelOpts[] =
 		},
 		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
 	},
+	{
+		{
+			"autovacuum_vacuum_threshold",
+			"Minimum number of tuple updates or deletes prior to vacuum",
+			RELOPT_KIND_HEAP
+		},
+		50, 0, INT_MAX
+	},
+	{
+		{
+			"autovacuum_analyze_threshold",
+			"Minimum number of tuple inserts, updates or deletes prior to analyze",
+			RELOPT_KIND_HEAP
+		},
+		50, 0, INT_MAX
+	},
+	{
+		{
+			"autovacuum_vacuum_cost_delay",
+			"Vacuum cost delay in milliseconds, for autovacuum",
+			RELOPT_KIND_HEAP
+		},
+		20, 0, 1000
+	},
+	{
+		{
+			"autovacuum_vacuum_cost_limit",
+			"Vacuum cost amount available before napping, for autovacuum",
+			RELOPT_KIND_HEAP
+		},
+		200, 1, 10000
+	},
+	{
+		{
+			"autovacuum_freeze_min_age",
+			"Minimum age at which VACUUM should freeze a table row, for autovacuum",
+			RELOPT_KIND_HEAP
+		},
+		100000000, 0, 1000000000
+	},
+	{
+		{
+			"autovacuum_freeze_max_age",
+			"Age at which to autovacuum a table to prevent transaction ID wraparound",
+			RELOPT_KIND_HEAP
+		},
+		200000000, 100000000, 2000000000
+	},
+	{
+		{
+			"autovacuum_freeze_table_age",
+			"Age at which VACUUM should perform a full table sweep to replace old Xid values with FrozenXID",
+			RELOPT_KIND_HEAP
+		}, 150000000, 0, 2000000000
+	},
 	/* list terminator */
 	{ { NULL } }
 };
 
 static relopt_real realRelOpts[] =
 {
+	{
+		{
+			"autovacuum_vacuum_scale_factor",
+			"Number of tuple updates or deletes prior to vacuum as a fraction of reltuples",
+			RELOPT_KIND_HEAP
+		},
+		0.2, 0.0, 100.0
+	},
+	{
+		{
+			"autovacuum_analyze_scale_factor",
+			"Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples",
+			RELOPT_KIND_HEAP
+		},
+		0.1, 0.0, 100.0
+	},
 	/* list terminator */
 	{ { NULL } }
 };
@@ -973,7 +1052,8 @@ fillRelOptions(void *rdopts, Size basesize, relopt_value *options,
 
 
 /*
- * Option parser for anything that uses StdRdOptions (i.e. fillfactor only)
+ * Option parser for anything that uses StdRdOptions (i.e. fillfactor and
+ * autovacuum)
  */
 bytea *
 default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
@@ -982,7 +1062,27 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 	StdRdOptions   *rdopts;
 	int				numoptions;
 	relopt_parse_elt tab[] = {
-		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)}
+		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
+		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
+		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
+		{"autovacuum_analyze_threshold", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_threshold)},
+		{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
+		{"autovacuum_vacuum_cost_limit", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_limit)},
+		{"autovacuum_freeze_min_age", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_min_age)},
+		{"autovacuum_freeze_max_age", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_max_age)},
+		{"autovacuum_freeze_table_age", RELOPT_TYPE_INT,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_table_age)},
+		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_scale_factor)},
+		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
+			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_scale_factor)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
