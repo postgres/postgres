@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.108 2009/02/07 15:25:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.109 2009/02/10 00:55:21 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -759,15 +759,14 @@ PostgreSQL documentation
    variables used by the <application>libpq</application> front-end
    library will apply.
   </para>
+
   <para>
    The database activity of <application>pg_dump</application> is
    normally collected by the statistics collector.  If this is
-   undesirable, you can set parameters <literal>stats_block_level</literal>
-   and <literal>stats_row_level</literal> to false via the
-   <application>libpq</> <envar>PGOPTIONS</envar> environment variable,
-   or via <literal>ALTER USER</literal>.
+   undesirable, you can set parameter <literal>track_counts</literal>
+   to false via <envar>PGOPTIONS</envar> or the <literal>ALTER
+   USER</literal> command.
   </para>
-
 
  </refsect1>
 
