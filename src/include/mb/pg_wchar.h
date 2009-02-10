@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.83 2009/01/29 19:23:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.84 2009/02/10 19:29:39 petere Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -202,6 +202,7 @@ typedef enum pg_enc
 	PG_WIN1254,					/* windows-1254 */
 	PG_WIN1255,					/* windows-1255 */
 	PG_WIN1257,					/* windows-1257 */
+	PG_KOI8U,					/* KOI8-U */
 	/* PG_ENCODING_BE_LAST points to the above entry */
 
 	/* followings are for client encoding only */
@@ -216,7 +217,7 @@ typedef enum pg_enc
 
 } pg_enc;
 
-#define PG_ENCODING_BE_LAST PG_WIN1257
+#define PG_ENCODING_BE_LAST PG_KOI8U
 
 /*
  * Please use these tests before access to pg_encconv_tbl[]

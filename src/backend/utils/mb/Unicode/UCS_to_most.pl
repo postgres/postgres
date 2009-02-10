@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_most.pl,v 1.6 2009/02/10 16:36:55 petere Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_most.pl,v 1.7 2009/02/10 19:29:39 petere Exp $
 #
 # Generate UTF-8 <--> character code conversion tables from
 # map files provided by Unicode organization.
@@ -43,6 +43,7 @@ require "ucs2utf.pl";
 	'ISO8859_15' => '8859-15.TXT',
 	'ISO8859_16' => '8859-16.TXT',
 	'KOI8R' => 'KOI8-R.TXT',
+	'KOI8U' => 'KOI8-U.TXT',
 	'GBK' => 'CP936.TXT',
 	'UHC' => 'CP949.TXT',
 	'JOHAB' => 'JOHAB.TXT',

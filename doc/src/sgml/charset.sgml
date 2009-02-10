@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.90 2008/09/24 16:30:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.91 2009/02/10 19:29:39 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -457,12 +457,20 @@ initdb --locale=sv_SE
          <entry></entry>
         </row>
         <row>
-         <entry><literal>KOI8</literal></entry>
-         <entry><acronym>KOI</acronym>8-R(U)</entry>
-         <entry>Cyrillic</entry>
+         <entry><literal>KOI8R</literal></entry>
+         <entry><acronym>KOI</acronym>8-R</entry>
+         <entry>Cyrillic (Russian)</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>KOI8R</></entry>
+         <entry><literal>KOI8</></entry>
+        </row>
+        <row>
+         <entry><literal>KOI8U</literal></entry>
+         <entry><acronym>KOI</acronym>8-U</entry>
+         <entry>Cyrillic (Ukrainian)</entry>
+         <entry>Yes</entry>
+         <entry>1</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>LATIN1</literal></entry>

@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.20 2008/08/23 20:31:37 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.21 2009/02/10 19:29:39 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -84,6 +84,8 @@ CONVERSIONS = \
 		utf8_to_big5 UTF8 BIG5 utf8_to_big5 utf8_and_big5 \
 		utf8_to_koi8_r	UTF8 KOI8R utf8_to_koi8r utf8_and_cyrillic \
 		koi8_r_to_utf8	KOI8R UTF8 koi8r_to_utf8 utf8_and_cyrillic \
+		utf8_to_koi8_u	UTF8 KOI8U utf8_to_koi8u utf8_and_cyrillic \
+		koi8_u_to_utf8	KOI8U UTF8 koi8u_to_utf8 utf8_and_cyrillic \
 		utf8_to_windows_866 UTF8 WIN866 utf8_to_win utf8_and_win \
 		windows_866_to_utf8 WIN866 UTF8 win_to_utf8 utf8_and_win \
 		utf8_to_windows_874 UTF8 WIN874 utf8_to_win utf8_and_win \
