@@ -3833,7 +3833,7 @@ unset CFLAGS
 # else:  If the template file set something, that is used.
 # else:  If coverage was enabled, don't set anything.
 # else:  If the compiler is GCC, then we use -O2.
-# else:  If the compiler is something else, then we use -O.
+# else:  If the compiler is something else, then we use -O, unless debugging.
 
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
@@ -3852,7 +3852,8 @@ fi
 
 # Some versions of GCC support some additional useful warning flags.
 # Check whether they are supported, and add them to CFLAGS if so.
-# ICC pretends to be GCC but it's lying; it doesn't support these options.
+# ICC pretends to be GCC but it's lying; it doesn't support these flags,
+# but has its own.  Also check other compiler-specific flags here.
 
 if test "$GCC" = yes -a "$ICC" = no; then
   CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
@@ -4157,8 +4158,8 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-elif test x"${CC}" = x"xlc"; then
-  # AIX xlc has to have strict aliasing turned off too
+elif test "$PORTNAME" = "aix"; then
+  # AIX's xlc has to have strict aliasing turned off too
   { echo "$as_me:$LINENO: checking if $CC supports -qnoansialias" >&5
 echo $ECHO_N "checking if $CC supports -qnoansialias... $ECHO_C" >&6; }
 pgac_save_CFLAGS=$CFLAGS

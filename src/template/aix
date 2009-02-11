@@ -1,3 +1,6 @@
+# Set appropriate default compiler options if using xlc
+# Note: configure will add -qnoansialias if the compiler accepts it,
+# even if user specifies a non-default CFLAGS setting.
 if test "$GCC" != yes ; then
   case $host_os in
     aix3.2.5 | aix4.1*)
