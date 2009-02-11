@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.59 2009/01/28 15:32:21 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.60 2009/02/11 14:03:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,22 +686,25 @@ initialize_environment(void)
 {
 	char	   *tmp;
 
-	/*
-	 * Clear out any non-C locale settings
-	 */
-	unsetenv("LC_COLLATE");
-	unsetenv("LC_CTYPE");
-	unsetenv("LC_MONETARY");
-	unsetenv("LC_MESSAGES");
-	unsetenv("LC_NUMERIC");
-	unsetenv("LC_TIME");
-	unsetenv("LC_ALL");
-	unsetenv("LANG");
-	unsetenv("LANGUAGE");
-	/* On Windows the default locale cannot be English, so force it */
+	if (nolocale)
+	{
+		/*
+		 * Clear out any non-C locale settings
+		 */
+		unsetenv("LC_COLLATE");
+		unsetenv("LC_CTYPE");
+		unsetenv("LC_MONETARY");
+		unsetenv("LC_MESSAGES");
+		unsetenv("LC_NUMERIC");
+		unsetenv("LC_TIME");
+		unsetenv("LC_ALL");
+		unsetenv("LANG");
+		unsetenv("LANGUAGE");
+		/* On Windows the default locale cannot be English, so force it */
 #if defined(WIN32) || defined(__CYGWIN__)
-	putenv("LANG=en");
+		putenv("LANG=en");
 #endif
+	}
 
 	/*
 	 * Set multibyte as requested

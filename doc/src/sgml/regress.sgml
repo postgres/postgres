@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.60 2008/09/05 12:11:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.61 2009/02/11 14:03:41 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -204,12 +204,42 @@ gmake installcheck
     <title>Locale differences</title>
 
     <para>
-     If you run the tests against an already-installed server that was
+     If you run the tests against a server that was
      initialized with a collation-order locale other than C, then
      there might be differences due to sort order and follow-up
      failures.  The regression test suite is set up to handle this
      problem by providing alternative result files that together are
      known to handle a large number of locales.
+    </para>
+
+    <para>
+     To run the tests in a different locale when using the
+     temporary-installation method, pass the appropriate
+     locale-related environment variables on
+     the <command>make</command> command line, for example:
+<programlisting>
+gmake check LC_ALL=de_DE.utf8
+</programlisting>
+     or analogously to use no locale:
+<programlisting>
+gmake check LC_ALL=C
+</programlisting>
+     When running the tests against an existing installation, the
+     locale setup is determined by the existing installation.  To
+     change it, initialize the database cluster with a different
+     locale by passing the appropriate options
+     to <command>initdb</command>.
+    </para>
+
+    <para>
+     In general, it is nevertheless advisable to try to run the
+     regression tests in the locale setup that is wanted for
+     production use, as this will exercise the locale- and
+     encoding-related code portions that will actually be used in
+     production.  Depending on the operating system environment, you
+     might get failures, but then you will at least know what
+     locale-specific behaviors to expect when running real
+     applications.
     </para>
    </sect2>
     
