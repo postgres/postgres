@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.198 2009/01/22 20:16:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.199 2009/02/11 19:12:04 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -909,16 +909,51 @@ describeOneTableDetails(const char *schemaname,
 	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
-	printfPQExpBuffer(&buf,
-	   "SELECT relchecks, relkind, relhasindex, relhasrules, %s, "
-					  "relhasoids"
-					 "%s%s\n"
-					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
-					  (pset.sversion >= 80400 ? "relhastriggers" : "reltriggers <> 0"),
-					  (pset.sversion >= 80200 && verbose ?
-					   ", pg_catalog.array_to_string(reloptions, E', ')" : ",''"),
-					  (pset.sversion >= 80000 ? ", reltablespace" : ""),
-					  oid);
+	if (pset.sversion >= 80400)
+	{
+		printfPQExpBuffer(&buf,
+						  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
+						  "c.relhastriggers, c.relhasoids, "
+						  "%s, c.reltablespace\n"
+						  "FROM pg_catalog.pg_class c\n "
+						  "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
+						  "WHERE c.oid = '%s'\n",
+						  (verbose ?
+						  "pg_catalog.array_to_string(c.reloptions || "
+						  "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
+						  : "''"),
+						  oid);
+	}
+	else if (pset.sversion >= 80200)
+	{
+		printfPQExpBuffer(&buf,
+						  "SELECT relchecks, relkind, relhasindex, relhasrules, "
+						  "reltriggers <> 0, relhasoids, "
+						  "%s, reltablespace\n"
+						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+						  (verbose ?
+						   "pg_catalog.array_to_string(reloptions, E', ')" : ",''"),
+						  oid);
+	}
+	else if (pset.sversion >= 80000)
+	{
+		printfPQExpBuffer(&buf,
+						  "SELECT relchecks, relkind, relhasindex, relhasrules, "
+						  "reltriggers <> 0, relhasoids, "
+						  "'', reltablespace\n"
+						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+						  oid);
+	}
+	else
+	{
+		printfPQExpBuffer(&buf,
+						  "SELECT relchecks, relkind, relhasindex, relhasrules, "
+						  "reltriggers <> 0, relhasoids, "
+						  "'', ''\n"
+						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+						  oid);
+	}
+
 	res = PSQLexec(buf.data, false);
 	if (!res)
 		goto error_return;
