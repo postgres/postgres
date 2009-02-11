@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.277 2009/02/06 19:24:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.278 2009/02/11 04:08:47 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6169,10 +6169,10 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
 
   <para>
    If you are using <acronym>SSL</> inside your application (in addition
-   to inside <application>libpq</application>), you can use
-   <function>PQinitSSL(int)</> to tell <application>libpq</application>
-   that the <acronym>SSL</> library has already been initialized by your
-   application.
+   to inside <application>libpq</application>), you can call
+   <function>PQinitSSL(int)</> with <literal>0</> to tell
+   <application>libpq</application> that the <acronym>SSL</> library
+   has already been initialized by your application.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    See <ulink
    url="http://h71000.www7.hp.com/doc/83final/BA554_90007/ch04.html"></ulink>
