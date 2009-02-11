@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.279 2009/02/02 19:31:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.280 2009/02/11 21:11:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,7 @@ typedef struct AlteredTableInfo
 	List	   *constraints;	/* List of NewConstraint */
 	List	   *newvals;		/* List of NewColumnValue */
 	bool		new_notnull;	/* T if we added new NOT NULL constraints */
+	bool		new_changeoids;	/* T if we added/dropped the OID column */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
 	/* Objects to rebuild after completing ALTER TYPE operations */
 	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
@@ -269,8 +270,10 @@ static void ATOneLevelRecursion(List **wqueue, Relation rel,
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 				AlterTableCmd *cmd);
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
-				ColumnDef *colDef);
+				ColumnDef *colDef, bool isOid);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
+static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
+				AlterTableCmd *cmd);
 static void ATExecDropNotNull(Relation rel, const char *colName);
 static void ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName);
@@ -282,7 +285,7 @@ static void ATExecSetStatistics(Relation rel, const char *colName,
 					Node *newValue);
 static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue);
-static void ATExecDropColumn(Relation rel, const char *colName,
+static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
 				 bool recurse, bool recursing);
 static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
@@ -2452,6 +2455,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
+		case AT_AddOids:		/* SET WITH OIDS */
+			ATSimplePermissions(rel, false);
+			/* Performs own recursion */
+			if (!rel->rd_rel->relhasoids || recursing)
+				ATPrepAddOids(wqueue, rel, recurse, cmd);
+			pass = AT_PASS_ADD_COL;
+			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
 			ATSimplePermissions(rel, false);
 			/* Performs own recursion */
@@ -2589,7 +2599,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
 		case AT_AddColumnToView: /* add column via CREATE OR REPLACE VIEW */
-			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def);
+			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def, false);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 			ATExecColumnDefault(rel, cmd->name, cmd->def);
@@ -2607,10 +2617,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecSetStorage(rel, cmd->name, cmd->def);
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
-			ATExecDropColumn(rel, cmd->name, cmd->behavior, false, false);
+			ATExecDropColumn(wqueue, rel, cmd->name,
+							 cmd->behavior, false, false);
 			break;
 		case AT_DropColumnRecurse:		/* DROP COLUMN with recursion */
-			ATExecDropColumn(rel, cmd->name, cmd->behavior, true, false);
+			ATExecDropColumn(wqueue, rel, cmd->name,
+							 cmd->behavior, true, false);
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
 			ATExecAddIndex(tab, rel, (IndexStmt *) cmd->def, false);
@@ -2643,6 +2655,11 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_DropCluster:	/* SET WITHOUT CLUSTER */
 			ATExecDropCluster(rel);
+			break;
+		case AT_AddOids:		/* SET WITH OIDS */
+			/* Use the ADD COLUMN code, unless prep decided to do nothing */
+			if (cmd->def != NULL)
+				ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def, true);
 			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
 
@@ -2748,9 +2765,9 @@ ATRewriteTables(List **wqueue)
 
 		/*
 		 * We only need to rewrite the table if at least one column needs to
-		 * be recomputed.
+		 * be recomputed, or we are adding/removing the OID column.
 		 */
-		if (tab->newvals != NIL)
+		if (tab->newvals != NIL || tab->new_changeoids)
 		{
 			/* Build a temporary relation and copy data */
 			Oid			OIDNewHeap;
@@ -2976,8 +2993,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	{
 		NewColumnValue *ex = lfirst(l);
 
-		needscan = true;
-
 		ex->exprstate = ExecPrepareExpr((Expr *) ex->expr, estate);
 	}
 
@@ -3000,7 +3015,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 			needscan = true;
 	}
 
-	if (needscan)
+	if (newrel || needscan)
 	{
 		ExprContext *econtext;
 		Datum	   *values;
@@ -3479,7 +3494,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 
 static void
 ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
-				ColumnDef *colDef)
+				ColumnDef *colDef, bool isOid)
 {
 	Oid			myrelid = RelationGetRelid(rel);
 	Relation	pgclass,
@@ -3512,13 +3527,20 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			Oid			ctypeId;
 			int32		ctypmod;
 
-			/* Okay if child matches by type */
+			/* Child column must match by type */
 			ctypeId = typenameTypeId(NULL, colDef->typename, &ctypmod);
 			if (ctypeId != childatt->atttypid ||
 				ctypmod != childatt->atttypmod)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("child table \"%s\" has different type for column \"%s\"",
+							RelationGetRelationName(rel), colDef->colname)));
+
+			/* If it's OID, child column must actually be OID */
+			if (isOid && childatt->attnum != ObjectIdAttributeNumber)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("child table \"%s\" has a conflicting \"%s\" column",
 							RelationGetRelationName(rel), colDef->colname)));
 
 			/* Bump the existing child att's inhcount */
@@ -3560,12 +3582,18 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				 errmsg("column \"%s\" of relation \"%s\" already exists",
 						colDef->colname, RelationGetRelationName(rel))));
 
-	newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
-	if (newattnum > MaxHeapAttributeNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_COLUMNS),
-				 errmsg("tables can have at most %d columns",
-						MaxHeapAttributeNumber)));
+	/* Determine the new attribute's number */
+	if (isOid)
+		newattnum = ObjectIdAttributeNumber;
+	else
+	{
+		newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
+		if (newattnum > MaxHeapAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_COLUMNS),
+					 errmsg("tables can have at most %d columns",
+							MaxHeapAttributeNumber)));
+	}
 
 	typeTuple = typenameType(NULL, colDef->typename, &typmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
@@ -3578,7 +3606,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	attribute.attrelid = myrelid;
 	namestrcpy(&(attribute.attname), colDef->colname);
 	attribute.atttypid = typeOid;
-	attribute.attstattarget = -1;
+	attribute.attstattarget = (newattnum > 0) ? -1 : 0;
 	attribute.attlen = tform->typlen;
 	attribute.attcacheoff = -1;
 	attribute.atttypmod = typmod;
@@ -3601,9 +3629,12 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	heap_close(attrdesc, RowExclusiveLock);
 
 	/*
-	 * Update number of attributes in pg_class tuple
+	 * Update pg_class tuple as appropriate
 	 */
-	((Form_pg_class) GETSTRUCT(reltup))->relnatts = newattnum;
+	if (isOid)
+		((Form_pg_class) GETSTRUCT(reltup))->relhasoids = true;
+	else
+		((Form_pg_class) GETSTRUCT(reltup))->relnatts = newattnum;
 
 	simple_heap_update(pgclass, &reltup->t_self, reltup);
 
@@ -3665,7 +3696,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * defaults, not even for domain-typed columns.  And in any case we mustn't
 	 * invoke Phase 3 on a view, since it has no storage.
 	 */
-	if (relkind != RELKIND_VIEW)
+	if (relkind != RELKIND_VIEW && attribute.attnum > 0)
 	{
 		defval = (Expr *) build_column_default(rel, attribute.attnum);
 
@@ -3702,9 +3733,19 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 
 		/*
 		 * If the new column is NOT NULL, tell Phase 3 it needs to test that.
+		 * (Note we don't do this for an OID column.  OID will be marked not
+		 * null, but since it's filled specially, there's no need to test
+		 * anything.)
 		 */
 		tab->new_notnull |= colDef->is_not_null;
 	}
+
+	/*
+	 * If we are adding an OID column, we have to tell Phase 3 to rewrite
+	 * the table to fix that.
+	 */
+	if (isOid)
+		tab->new_changeoids = true;
 
 	/*
 	 * Add needed dependency entries for the new column.
@@ -3728,6 +3769,30 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 	referenced.objectId = typid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+}
+
+/*
+ * ALTER TABLE SET WITH OIDS
+ *
+ * Basically this is an ADD COLUMN for the special OID column.  We have
+ * to cons up a ColumnDef node because the ADD COLUMN code needs one.
+ */
+static void
+ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd)
+{
+	/* If we're recursing to a child table, the ColumnDef is already set up */
+	if (cmd->def == NULL)
+	{
+		ColumnDef  *cdef = makeNode(ColumnDef);
+
+		cdef->colname = pstrdup("oid");
+		cdef->typename = makeTypeNameFromOid(OIDOID, -1);
+		cdef->inhcount = 0;
+		cdef->is_local = true;
+		cdef->is_not_null = true;
+		cmd->def = (Node *) cdef;
+	}
+	ATPrepAddColumn(wqueue, rel, recurse, cmd);
 }
 
 /*
@@ -4088,12 +4153,10 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue)
  * because we have to decide at runtime whether to recurse or not depending
  * on whether attinhcount goes to zero or not.	(We can't check this in a
  * static pre-pass because it won't handle multiple inheritance situations
- * correctly.)	Since DROP COLUMN doesn't need to create any work queue
- * entries for Phase 3, it's okay to recurse internally in this routine
- * without considering the work queue.
+ * correctly.)
  */
 static void
-ATExecDropColumn(Relation rel, const char *colName,
+ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
 				 bool recurse, bool recursing)
 {
@@ -4178,7 +4241,8 @@ ATExecDropColumn(Relation rel, const char *colName,
 				if (childatt->attinhcount == 1 && !childatt->attislocal)
 				{
 					/* Time to delete this child column, too */
-					ATExecDropColumn(childrel, colName, behavior, true, true);
+					ATExecDropColumn(wqueue, childrel, colName,
+									 behavior, true, true);
 				}
 				else
 				{
@@ -4230,12 +4294,14 @@ ATExecDropColumn(Relation rel, const char *colName,
 	performDeletion(&object, behavior);
 
 	/*
-	 * If we dropped the OID column, must adjust pg_class.relhasoids
+	 * If we dropped the OID column, must adjust pg_class.relhasoids and
+	 * tell Phase 3 to physically get rid of the column.
 	 */
 	if (attnum == ObjectIdAttributeNumber)
 	{
 		Relation	class_rel;
 		Form_pg_class tuple_class;
+		AlteredTableInfo *tab;
 
 		class_rel = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -4254,6 +4320,12 @@ ATExecDropColumn(Relation rel, const char *colName,
 		CatalogUpdateIndexes(class_rel, tuple);
 
 		heap_close(class_rel, RowExclusiveLock);
+
+		/* Find or create work queue entry for this table */
+		tab = ATGetQueueEntry(wqueue, rel);
+
+		/* Tell Phase 3 to physically remove the OID column */
+		tab->new_changeoids = true;
 	}
 }
 

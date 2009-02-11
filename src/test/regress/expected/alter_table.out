@@ -1171,7 +1171,7 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table c1
 drop cascades to table gc1
 --
--- Test the ALTER TABLE WITHOUT OIDS command
+-- Test the ALTER TABLE SET WITH/WITHOUT OIDS command
 --
 create table altstartwith (col integer) with oids;
 insert into altstartwith values (1);
@@ -1192,9 +1192,17 @@ select * from altstartwith;
    1
 (1 row)
 
--- Run inheritance tests
+alter table altstartwith set with oids;
+select oid > 0, * from altstartwith;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+drop table altstartwith;
+-- Check inheritance cases
 create table altwithoid (col integer) with oids;
--- Inherits parents oid column
+-- Inherits parents oid column anyway
 create table altinhoid () inherits (altwithoid) without oids;
 insert into altinhoid values (1);
 select oid > 0, * from altwithoid;
@@ -1210,7 +1218,6 @@ select oid > 0, * from altinhoid;
 (1 row)
 
 alter table altwithoid set without oids;
-alter table altinhoid set without oids;
 select oid > 0, * from altwithoid; -- fails
 ERROR:  column "oid" does not exist
 LINE 1: select oid > 0, * from altwithoid;
@@ -1231,6 +1238,63 @@ select * from altinhoid;
    1
 (1 row)
 
+alter table altwithoid set with oids;
+select oid > 0, * from altwithoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+select oid > 0, * from altinhoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+drop table altwithoid cascade;
+NOTICE:  drop cascades to table altinhoid
+create table altwithoid (col integer) without oids;
+-- child can have local oid column
+create table altinhoid () inherits (altwithoid) with oids;
+insert into altinhoid values (1);
+select oid > 0, * from altwithoid; -- fails
+ERROR:  column "oid" does not exist
+LINE 1: select oid > 0, * from altwithoid;
+               ^
+select oid > 0, * from altinhoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+alter table altwithoid set with oids;
+NOTICE:  merging definition of column "oid" for child "altinhoid"
+select oid > 0, * from altwithoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+select oid > 0, * from altinhoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+-- the child's local definition should remain
+alter table altwithoid set without oids;
+select oid > 0, * from altwithoid; -- fails
+ERROR:  column "oid" does not exist
+LINE 1: select oid > 0, * from altwithoid;
+               ^
+select oid > 0, * from altinhoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+drop table altwithoid cascade;
+NOTICE:  drop cascades to table altinhoid
 -- test renumbering of child-table columns in inherited operations
 create table p1 (f1 int);
 create table c1 (f2 text, f3 int) inherits (p1);

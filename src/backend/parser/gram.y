@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.657 2009/02/02 19:31:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.658 2009/02/11 21:11:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1634,6 +1634,13 @@ alter_table_cmd:
 					n->subtype = AT_DropConstraint;
 					n->name = $3;
 					n->behavior = $4;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> SET WITH OIDS  */
+			| SET WITH OIDS
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_AddOids;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> SET WITHOUT OIDS  */
