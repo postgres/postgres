@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.113 2009/02/09 20:57:59 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.114 2009/02/12 13:25:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -697,9 +697,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     endterm="sql-createindex-title">.  The storage parameters currently
     available for tables are listed below.  For each parameter, there is an
     additional, identically named parameter, prefixed with
-	<literal>toast.</literal> which can be used to control the behavior of the
+    <literal>toast.</literal> which can be used to control the behavior of the
     supplementary storage table, if any; see <xref linkend="storage-toast">.
-	Note that the supplementary storage table inherits the
+    Note that the supplementary storage table inherits the
     <literal>autovacuum</literal> values from its parent table, if there are
     no <literal>toast.autovacuum_*</literal> settings set.
    </para>
