@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.1 2009/01/21 10:30:02 mha Exp $
+ *	  $PostgreSQL: pgsql/src/port/win32env.c,v 1.2 2009/02/12 12:53:34 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,12 +64,18 @@ pgwin32_putenv(const char *envval)
 		return -1;
 	*cp = '\0';
 	cp++;
-	if (strlen(cp) == 0)
-		cp = NULL;
-	if (!SetEnvironmentVariable(envcpy, cp))
+	if (strlen(cp))
 	{
-		free(envcpy);
-		return -1;
+		/*
+		 * Only call SetEnvironmentVariable() when we are adding a variable,
+		 * not when removing it. Calling it on both crashes on at least certain
+		 * versions of MingW.
+		 */
+		if (!SetEnvironmentVariable(envcpy, cp))
+		{
+			free(envcpy);
+			return -1;
+		}
 	}
 	free(envcpy);
 
