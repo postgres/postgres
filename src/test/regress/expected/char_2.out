@@ -1,0 +1,122 @@
+--
+-- CHAR
+--
+-- fixed-length by value
+-- internally passed by value if <= 4 bytes in storage
+SELECT char 'c' = char 'c' AS true;
+ true 
+------
+ t
+(1 row)
+
+--
+-- Build a table for testing
+--
+CREATE TABLE CHAR_TBL(f1 char);
+INSERT INTO CHAR_TBL (f1) VALUES ('a');
+INSERT INTO CHAR_TBL (f1) VALUES ('A');
+-- any of the following three input formats are acceptable 
+INSERT INTO CHAR_TBL (f1) VALUES ('1');
+INSERT INTO CHAR_TBL (f1) VALUES (2);
+INSERT INTO CHAR_TBL (f1) VALUES ('3');
+-- zero-length char 
+INSERT INTO CHAR_TBL (f1) VALUES ('');
+-- try char's of greater than 1 length 
+INSERT INTO CHAR_TBL (f1) VALUES ('cd');
+ERROR:  value too long for type character(1)
+INSERT INTO CHAR_TBL (f1) VALUES ('c     ');
+SELECT '' AS seven, * FROM CHAR_TBL;
+ seven | f1 
+-------+----
+       | a
+       | A
+       | 1
+       | 2
+       | 3
+       |  
+       | c
+(7 rows)
+
+SELECT '' AS six, c.*
+   FROM CHAR_TBL c
+   WHERE c.f1 <> 'a';
+ six | f1 
+-----+----
+     | A
+     | 1
+     | 2
+     | 3
+     |  
+     | c
+(6 rows)
+
+SELECT '' AS one, c.*
+   FROM CHAR_TBL c
+   WHERE c.f1 = 'a';
+ one | f1 
+-----+----
+     | a
+(1 row)
+
+SELECT '' AS five, c.*
+   FROM CHAR_TBL c
+   WHERE c.f1 < 'a';
+ five | f1 
+------+----
+      |  
+(1 row)
+
+SELECT '' AS six, c.*
+   FROM CHAR_TBL c
+   WHERE c.f1 <= 'a';
+ six | f1 
+-----+----
+     | a
+     |  
+(2 rows)
+
+SELECT '' AS one, c.*
+   FROM CHAR_TBL c
+   WHERE c.f1 > 'a';
+ one | f1 
+-----+----
+     | A
+     | 1
+     | 2
+     | 3
+     | c
+(5 rows)
+
+SELECT '' AS two, c.*
+   FROM CHAR_TBL c
+   WHERE c.f1 >= 'a';
+ two | f1 
+-----+----
+     | a
+     | A
+     | 1
+     | 2
+     | 3
+     | c
+(6 rows)
+
+DROP TABLE CHAR_TBL;
+--
+-- Now test longer arrays of char
+--
+CREATE TABLE CHAR_TBL(f1 char(4));
+INSERT INTO CHAR_TBL (f1) VALUES ('a');
+INSERT INTO CHAR_TBL (f1) VALUES ('ab');
+INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
+INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
+ERROR:  value too long for type character(4)
+INSERT INTO CHAR_TBL (f1) VALUES ('abcd    ');
+SELECT '' AS four, * FROM CHAR_TBL;
+ four |  f1  
+------+------
+      | a   
+      | ab  
+      | abcd
+      | abcd
+(4 rows)
+

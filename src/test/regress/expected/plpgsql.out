@@ -1113,31 +1113,31 @@ insert into PSlot values ('PS.base.tb3', 'PF0_X', '', '');
 insert into PSlot values ('PS.base.tb4', 'PF0_X', '', '');
 insert into PSlot values ('PS.base.tb5', 'PF0_X', '', '');
 insert into PSlot values ('PS.base.tb6', 'PF0_X', '', '');
-insert into PField values ('PF1_1', 'Wallslots 1st floor');
-insert into PSlot values ('PS.1st.a1', 'PF1_1', '', 'WS.101.1a');
-insert into PSlot values ('PS.1st.a2', 'PF1_1', '', 'WS.101.1b');
-insert into PSlot values ('PS.1st.a3', 'PF1_1', '', 'WS.101.2a');
-insert into PSlot values ('PS.1st.a4', 'PF1_1', '', 'WS.101.2b');
-insert into PSlot values ('PS.1st.a5', 'PF1_1', '', 'WS.101.3a');
-insert into PSlot values ('PS.1st.a6', 'PF1_1', '', 'WS.101.3b');
-insert into PSlot values ('PS.1st.b1', 'PF1_1', '', 'WS.102.1a');
-insert into PSlot values ('PS.1st.b2', 'PF1_1', '', 'WS.102.1b');
-insert into PSlot values ('PS.1st.b3', 'PF1_1', '', 'WS.102.2a');
-insert into PSlot values ('PS.1st.b4', 'PF1_1', '', 'WS.102.2b');
-insert into PSlot values ('PS.1st.b5', 'PF1_1', '', 'WS.102.3a');
-insert into PSlot values ('PS.1st.b6', 'PF1_1', '', 'WS.102.3b');
-insert into PSlot values ('PS.1st.c1', 'PF1_1', '', 'WS.105.1a');
-insert into PSlot values ('PS.1st.c2', 'PF1_1', '', 'WS.105.1b');
-insert into PSlot values ('PS.1st.c3', 'PF1_1', '', 'WS.105.2a');
-insert into PSlot values ('PS.1st.c4', 'PF1_1', '', 'WS.105.2b');
-insert into PSlot values ('PS.1st.c5', 'PF1_1', '', 'WS.105.3a');
-insert into PSlot values ('PS.1st.c6', 'PF1_1', '', 'WS.105.3b');
-insert into PSlot values ('PS.1st.d1', 'PF1_1', '', 'WS.106.1a');
-insert into PSlot values ('PS.1st.d2', 'PF1_1', '', 'WS.106.1b');
-insert into PSlot values ('PS.1st.d3', 'PF1_1', '', 'WS.106.2a');
-insert into PSlot values ('PS.1st.d4', 'PF1_1', '', 'WS.106.2b');
-insert into PSlot values ('PS.1st.d5', 'PF1_1', '', 'WS.106.3a');
-insert into PSlot values ('PS.1st.d6', 'PF1_1', '', 'WS.106.3b');
+insert into PField values ('PF1_1', 'Wallslots first floor');
+insert into PSlot values ('PS.first.a1', 'PF1_1', '', 'WS.101.1a');
+insert into PSlot values ('PS.first.a2', 'PF1_1', '', 'WS.101.1b');
+insert into PSlot values ('PS.first.a3', 'PF1_1', '', 'WS.101.2a');
+insert into PSlot values ('PS.first.a4', 'PF1_1', '', 'WS.101.2b');
+insert into PSlot values ('PS.first.a5', 'PF1_1', '', 'WS.101.3a');
+insert into PSlot values ('PS.first.a6', 'PF1_1', '', 'WS.101.3b');
+insert into PSlot values ('PS.first.b1', 'PF1_1', '', 'WS.102.1a');
+insert into PSlot values ('PS.first.b2', 'PF1_1', '', 'WS.102.1b');
+insert into PSlot values ('PS.first.b3', 'PF1_1', '', 'WS.102.2a');
+insert into PSlot values ('PS.first.b4', 'PF1_1', '', 'WS.102.2b');
+insert into PSlot values ('PS.first.b5', 'PF1_1', '', 'WS.102.3a');
+insert into PSlot values ('PS.first.b6', 'PF1_1', '', 'WS.102.3b');
+insert into PSlot values ('PS.first.c1', 'PF1_1', '', 'WS.105.1a');
+insert into PSlot values ('PS.first.c2', 'PF1_1', '', 'WS.105.1b');
+insert into PSlot values ('PS.first.c3', 'PF1_1', '', 'WS.105.2a');
+insert into PSlot values ('PS.first.c4', 'PF1_1', '', 'WS.105.2b');
+insert into PSlot values ('PS.first.c5', 'PF1_1', '', 'WS.105.3a');
+insert into PSlot values ('PS.first.c6', 'PF1_1', '', 'WS.105.3b');
+insert into PSlot values ('PS.first.d1', 'PF1_1', '', 'WS.106.1a');
+insert into PSlot values ('PS.first.d2', 'PF1_1', '', 'WS.106.1b');
+insert into PSlot values ('PS.first.d3', 'PF1_1', '', 'WS.106.2a');
+insert into PSlot values ('PS.first.d4', 'PF1_1', '', 'WS.106.2b');
+insert into PSlot values ('PS.first.d5', 'PF1_1', '', 'WS.106.3a');
+insert into PSlot values ('PS.first.d6', 'PF1_1', '', 'WS.106.3b');
 --
 -- Now we wire the wall connectors 1a-2a in room 001 to the
 -- patchfield. In the second update we make an error, and
@@ -1288,19 +1288,19 @@ select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
  PS.base.a6           | PF0_1  |                      | WS.001.3b           
 (6 rows)
 
-insert into PField values ('PF1_2', 'Phonelines 1st floor');
-insert into PSlot values ('PS.1st.ta1', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta2', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta3', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta4', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta5', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta6', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb1', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb2', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb3', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb4', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb5', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb6', 'PF1_2', '', '');
+insert into PField values ('PF1_2', 'Phonelines first floor');
+insert into PSlot values ('PS.first.ta1', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta2', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta3', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta4', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta5', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta6', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb1', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb2', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb3', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb4', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb5', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb6', 'PF1_2', '', '');
 --
 -- Fix the wrong name for patchfield PF0_2
 --
@@ -1308,42 +1308,6 @@ update PField set name = 'PF0_2' where name = 'PF0_X';
 select * from PSlot order by slotname;
        slotname       | pfname |       slotlink       |       backlink       
 ----------------------+--------+----------------------+----------------------
- PS.1st.a1            | PF1_1  |                      | WS.101.1a           
- PS.1st.a2            | PF1_1  |                      | WS.101.1b           
- PS.1st.a3            | PF1_1  |                      | WS.101.2a           
- PS.1st.a4            | PF1_1  |                      | WS.101.2b           
- PS.1st.a5            | PF1_1  |                      | WS.101.3a           
- PS.1st.a6            | PF1_1  |                      | WS.101.3b           
- PS.1st.b1            | PF1_1  |                      | WS.102.1a           
- PS.1st.b2            | PF1_1  |                      | WS.102.1b           
- PS.1st.b3            | PF1_1  |                      | WS.102.2a           
- PS.1st.b4            | PF1_1  |                      | WS.102.2b           
- PS.1st.b5            | PF1_1  |                      | WS.102.3a           
- PS.1st.b6            | PF1_1  |                      | WS.102.3b           
- PS.1st.c1            | PF1_1  |                      | WS.105.1a           
- PS.1st.c2            | PF1_1  |                      | WS.105.1b           
- PS.1st.c3            | PF1_1  |                      | WS.105.2a           
- PS.1st.c4            | PF1_1  |                      | WS.105.2b           
- PS.1st.c5            | PF1_1  |                      | WS.105.3a           
- PS.1st.c6            | PF1_1  |                      | WS.105.3b           
- PS.1st.d1            | PF1_1  |                      | WS.106.1a           
- PS.1st.d2            | PF1_1  |                      | WS.106.1b           
- PS.1st.d3            | PF1_1  |                      | WS.106.2a           
- PS.1st.d4            | PF1_1  |                      | WS.106.2b           
- PS.1st.d5            | PF1_1  |                      | WS.106.3a           
- PS.1st.d6            | PF1_1  |                      | WS.106.3b           
- PS.1st.ta1           | PF1_2  |                      |                     
- PS.1st.ta2           | PF1_2  |                      |                     
- PS.1st.ta3           | PF1_2  |                      |                     
- PS.1st.ta4           | PF1_2  |                      |                     
- PS.1st.ta5           | PF1_2  |                      |                     
- PS.1st.ta6           | PF1_2  |                      |                     
- PS.1st.tb1           | PF1_2  |                      |                     
- PS.1st.tb2           | PF1_2  |                      |                     
- PS.1st.tb3           | PF1_2  |                      |                     
- PS.1st.tb4           | PF1_2  |                      |                     
- PS.1st.tb5           | PF1_2  |                      |                     
- PS.1st.tb6           | PF1_2  |                      |                     
  PS.base.a1           | PF0_1  |                      | WS.001.1a           
  PS.base.a2           | PF0_1  |                      | WS.001.1b           
  PS.base.a3           | PF0_1  |                      | WS.001.2a           
@@ -1374,6 +1338,42 @@ select * from PSlot order by slotname;
  PS.base.tb4          | PF0_2  |                      |                     
  PS.base.tb5          | PF0_2  |                      |                     
  PS.base.tb6          | PF0_2  |                      |                     
+ PS.first.a1          | PF1_1  |                      | WS.101.1a           
+ PS.first.a2          | PF1_1  |                      | WS.101.1b           
+ PS.first.a3          | PF1_1  |                      | WS.101.2a           
+ PS.first.a4          | PF1_1  |                      | WS.101.2b           
+ PS.first.a5          | PF1_1  |                      | WS.101.3a           
+ PS.first.a6          | PF1_1  |                      | WS.101.3b           
+ PS.first.b1          | PF1_1  |                      | WS.102.1a           
+ PS.first.b2          | PF1_1  |                      | WS.102.1b           
+ PS.first.b3          | PF1_1  |                      | WS.102.2a           
+ PS.first.b4          | PF1_1  |                      | WS.102.2b           
+ PS.first.b5          | PF1_1  |                      | WS.102.3a           
+ PS.first.b6          | PF1_1  |                      | WS.102.3b           
+ PS.first.c1          | PF1_1  |                      | WS.105.1a           
+ PS.first.c2          | PF1_1  |                      | WS.105.1b           
+ PS.first.c3          | PF1_1  |                      | WS.105.2a           
+ PS.first.c4          | PF1_1  |                      | WS.105.2b           
+ PS.first.c5          | PF1_1  |                      | WS.105.3a           
+ PS.first.c6          | PF1_1  |                      | WS.105.3b           
+ PS.first.d1          | PF1_1  |                      | WS.106.1a           
+ PS.first.d2          | PF1_1  |                      | WS.106.1b           
+ PS.first.d3          | PF1_1  |                      | WS.106.2a           
+ PS.first.d4          | PF1_1  |                      | WS.106.2b           
+ PS.first.d5          | PF1_1  |                      | WS.106.3a           
+ PS.first.d6          | PF1_1  |                      | WS.106.3b           
+ PS.first.ta1         | PF1_2  |                      |                     
+ PS.first.ta2         | PF1_2  |                      |                     
+ PS.first.ta3         | PF1_2  |                      |                     
+ PS.first.ta4         | PF1_2  |                      |                     
+ PS.first.ta5         | PF1_2  |                      |                     
+ PS.first.ta6         | PF1_2  |                      |                     
+ PS.first.tb1         | PF1_2  |                      |                     
+ PS.first.tb2         | PF1_2  |                      |                     
+ PS.first.tb3         | PF1_2  |                      |                     
+ PS.first.tb4         | PF1_2  |                      |                     
+ PS.first.tb5         | PF1_2  |                      |                     
+ PS.first.tb6         | PF1_2  |                      |                     
 (66 rows)
 
 select * from WSlot order by slotname;
@@ -1397,30 +1397,30 @@ select * from WSlot order by slotname;
  WS.003.2b            | 003      |                      | PS.base.c4          
  WS.003.3a            | 003      |                      | PS.base.c5          
  WS.003.3b            | 003      |                      | PS.base.c6          
- WS.101.1a            | 101      |                      | PS.1st.a1           
- WS.101.1b            | 101      |                      | PS.1st.a2           
- WS.101.2a            | 101      |                      | PS.1st.a3           
- WS.101.2b            | 101      |                      | PS.1st.a4           
- WS.101.3a            | 101      |                      | PS.1st.a5           
- WS.101.3b            | 101      |                      | PS.1st.a6           
- WS.102.1a            | 102      |                      | PS.1st.b1           
- WS.102.1b            | 102      |                      | PS.1st.b2           
- WS.102.2a            | 102      |                      | PS.1st.b3           
- WS.102.2b            | 102      |                      | PS.1st.b4           
- WS.102.3a            | 102      |                      | PS.1st.b5           
- WS.102.3b            | 102      |                      | PS.1st.b6           
- WS.105.1a            | 105      |                      | PS.1st.c1           
- WS.105.1b            | 105      |                      | PS.1st.c2           
- WS.105.2a            | 105      |                      | PS.1st.c3           
- WS.105.2b            | 105      |                      | PS.1st.c4           
- WS.105.3a            | 105      |                      | PS.1st.c5           
- WS.105.3b            | 105      |                      | PS.1st.c6           
- WS.106.1a            | 106      |                      | PS.1st.d1           
- WS.106.1b            | 106      |                      | PS.1st.d2           
- WS.106.2a            | 106      |                      | PS.1st.d3           
- WS.106.2b            | 106      |                      | PS.1st.d4           
- WS.106.3a            | 106      |                      | PS.1st.d5           
- WS.106.3b            | 106      |                      | PS.1st.d6           
+ WS.101.1a            | 101      |                      | PS.first.a1         
+ WS.101.1b            | 101      |                      | PS.first.a2         
+ WS.101.2a            | 101      |                      | PS.first.a3         
+ WS.101.2b            | 101      |                      | PS.first.a4         
+ WS.101.3a            | 101      |                      | PS.first.a5         
+ WS.101.3b            | 101      |                      | PS.first.a6         
+ WS.102.1a            | 102      |                      | PS.first.b1         
+ WS.102.1b            | 102      |                      | PS.first.b2         
+ WS.102.2a            | 102      |                      | PS.first.b3         
+ WS.102.2b            | 102      |                      | PS.first.b4         
+ WS.102.3a            | 102      |                      | PS.first.b5         
+ WS.102.3b            | 102      |                      | PS.first.b6         
+ WS.105.1a            | 105      |                      | PS.first.c1         
+ WS.105.1b            | 105      |                      | PS.first.c2         
+ WS.105.2a            | 105      |                      | PS.first.c3         
+ WS.105.2b            | 105      |                      | PS.first.c4         
+ WS.105.3a            | 105      |                      | PS.first.c5         
+ WS.105.3b            | 105      |                      | PS.first.c6         
+ WS.106.1a            | 106      |                      | PS.first.d1         
+ WS.106.1b            | 106      |                      | PS.first.d2         
+ WS.106.2a            | 106      |                      | PS.first.d3         
+ WS.106.2b            | 106      |                      | PS.first.d4         
+ WS.106.3a            | 106      |                      | PS.first.d5         
+ WS.106.3b            | 106      |                      | PS.first.d6         
 (42 rows)
 
 --
@@ -1439,16 +1439,16 @@ insert into PLine values ('PL.007', '-108', '', 'PS.base.tb3');
 insert into PLine values ('PL.008', '-109', '', 'PS.base.tb4');
 insert into PLine values ('PL.009', '-121', '', 'PS.base.tb5');
 insert into PLine values ('PL.010', '-122', '', 'PS.base.tb6');
-insert into PLine values ('PL.015', '-134', '', 'PS.1st.ta1');
-insert into PLine values ('PL.016', '-137', '', 'PS.1st.ta3');
-insert into PLine values ('PL.017', '-139', '', 'PS.1st.ta4');
-insert into PLine values ('PL.018', '-362', '', 'PS.1st.tb1');
-insert into PLine values ('PL.019', '-363', '', 'PS.1st.tb2');
-insert into PLine values ('PL.020', '-364', '', 'PS.1st.tb3');
-insert into PLine values ('PL.021', '-365', '', 'PS.1st.tb5');
-insert into PLine values ('PL.022', '-367', '', 'PS.1st.tb6');
+insert into PLine values ('PL.015', '-134', '', 'PS.first.ta1');
+insert into PLine values ('PL.016', '-137', '', 'PS.first.ta3');
+insert into PLine values ('PL.017', '-139', '', 'PS.first.ta4');
+insert into PLine values ('PL.018', '-362', '', 'PS.first.tb1');
+insert into PLine values ('PL.019', '-363', '', 'PS.first.tb2');
+insert into PLine values ('PL.020', '-364', '', 'PS.first.tb3');
+insert into PLine values ('PL.021', '-365', '', 'PS.first.tb5');
+insert into PLine values ('PL.022', '-367', '', 'PS.first.tb6');
 insert into PLine values ('PL.028', '-501', 'Fax entrance', 'PS.base.ta2');
-insert into PLine values ('PL.029', '-502', 'Fax 1st floor', 'PS.1st.ta1');
+insert into PLine values ('PL.029', '-502', 'Fax first floor', 'PS.first.ta1');
 --
 -- Buy some phones, plug them into the wall and patch the
 -- phone lines to the corresponding patchfield slots.

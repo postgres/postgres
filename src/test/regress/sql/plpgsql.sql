@@ -1264,35 +1264,35 @@ insert into PSlot values ('PS.base.tb4', 'PF0_X', '', '');
 insert into PSlot values ('PS.base.tb5', 'PF0_X', '', '');
 insert into PSlot values ('PS.base.tb6', 'PF0_X', '', '');
 
-insert into PField values ('PF1_1', 'Wallslots 1st floor');
+insert into PField values ('PF1_1', 'Wallslots first floor');
 
-insert into PSlot values ('PS.1st.a1', 'PF1_1', '', 'WS.101.1a');
-insert into PSlot values ('PS.1st.a2', 'PF1_1', '', 'WS.101.1b');
-insert into PSlot values ('PS.1st.a3', 'PF1_1', '', 'WS.101.2a');
-insert into PSlot values ('PS.1st.a4', 'PF1_1', '', 'WS.101.2b');
-insert into PSlot values ('PS.1st.a5', 'PF1_1', '', 'WS.101.3a');
-insert into PSlot values ('PS.1st.a6', 'PF1_1', '', 'WS.101.3b');
+insert into PSlot values ('PS.first.a1', 'PF1_1', '', 'WS.101.1a');
+insert into PSlot values ('PS.first.a2', 'PF1_1', '', 'WS.101.1b');
+insert into PSlot values ('PS.first.a3', 'PF1_1', '', 'WS.101.2a');
+insert into PSlot values ('PS.first.a4', 'PF1_1', '', 'WS.101.2b');
+insert into PSlot values ('PS.first.a5', 'PF1_1', '', 'WS.101.3a');
+insert into PSlot values ('PS.first.a6', 'PF1_1', '', 'WS.101.3b');
 
-insert into PSlot values ('PS.1st.b1', 'PF1_1', '', 'WS.102.1a');
-insert into PSlot values ('PS.1st.b2', 'PF1_1', '', 'WS.102.1b');
-insert into PSlot values ('PS.1st.b3', 'PF1_1', '', 'WS.102.2a');
-insert into PSlot values ('PS.1st.b4', 'PF1_1', '', 'WS.102.2b');
-insert into PSlot values ('PS.1st.b5', 'PF1_1', '', 'WS.102.3a');
-insert into PSlot values ('PS.1st.b6', 'PF1_1', '', 'WS.102.3b');
+insert into PSlot values ('PS.first.b1', 'PF1_1', '', 'WS.102.1a');
+insert into PSlot values ('PS.first.b2', 'PF1_1', '', 'WS.102.1b');
+insert into PSlot values ('PS.first.b3', 'PF1_1', '', 'WS.102.2a');
+insert into PSlot values ('PS.first.b4', 'PF1_1', '', 'WS.102.2b');
+insert into PSlot values ('PS.first.b5', 'PF1_1', '', 'WS.102.3a');
+insert into PSlot values ('PS.first.b6', 'PF1_1', '', 'WS.102.3b');
 
-insert into PSlot values ('PS.1st.c1', 'PF1_1', '', 'WS.105.1a');
-insert into PSlot values ('PS.1st.c2', 'PF1_1', '', 'WS.105.1b');
-insert into PSlot values ('PS.1st.c3', 'PF1_1', '', 'WS.105.2a');
-insert into PSlot values ('PS.1st.c4', 'PF1_1', '', 'WS.105.2b');
-insert into PSlot values ('PS.1st.c5', 'PF1_1', '', 'WS.105.3a');
-insert into PSlot values ('PS.1st.c6', 'PF1_1', '', 'WS.105.3b');
+insert into PSlot values ('PS.first.c1', 'PF1_1', '', 'WS.105.1a');
+insert into PSlot values ('PS.first.c2', 'PF1_1', '', 'WS.105.1b');
+insert into PSlot values ('PS.first.c3', 'PF1_1', '', 'WS.105.2a');
+insert into PSlot values ('PS.first.c4', 'PF1_1', '', 'WS.105.2b');
+insert into PSlot values ('PS.first.c5', 'PF1_1', '', 'WS.105.3a');
+insert into PSlot values ('PS.first.c6', 'PF1_1', '', 'WS.105.3b');
 
-insert into PSlot values ('PS.1st.d1', 'PF1_1', '', 'WS.106.1a');
-insert into PSlot values ('PS.1st.d2', 'PF1_1', '', 'WS.106.1b');
-insert into PSlot values ('PS.1st.d3', 'PF1_1', '', 'WS.106.2a');
-insert into PSlot values ('PS.1st.d4', 'PF1_1', '', 'WS.106.2b');
-insert into PSlot values ('PS.1st.d5', 'PF1_1', '', 'WS.106.3a');
-insert into PSlot values ('PS.1st.d6', 'PF1_1', '', 'WS.106.3b');
+insert into PSlot values ('PS.first.d1', 'PF1_1', '', 'WS.106.1a');
+insert into PSlot values ('PS.first.d2', 'PF1_1', '', 'WS.106.1b');
+insert into PSlot values ('PS.first.d3', 'PF1_1', '', 'WS.106.2a');
+insert into PSlot values ('PS.first.d4', 'PF1_1', '', 'WS.106.2b');
+insert into PSlot values ('PS.first.d5', 'PF1_1', '', 'WS.106.3a');
+insert into PSlot values ('PS.first.d6', 'PF1_1', '', 'WS.106.3b');
 
 --
 -- Now we wire the wall connectors 1a-2a in room 001 to the
@@ -1326,21 +1326,21 @@ update WSlot set backlink = 'PS.base.a5' where slotname = 'WS.001.3a';
 select * from WSlot where roomno = '001' order by slotname;
 select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
 
-insert into PField values ('PF1_2', 'Phonelines 1st floor');
+insert into PField values ('PF1_2', 'Phonelines first floor');
 
-insert into PSlot values ('PS.1st.ta1', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta2', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta3', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta4', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta5', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.ta6', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta1', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta2', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta3', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta4', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta5', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.ta6', 'PF1_2', '', '');
 
-insert into PSlot values ('PS.1st.tb1', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb2', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb3', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb4', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb5', 'PF1_2', '', '');
-insert into PSlot values ('PS.1st.tb6', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb1', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb2', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb3', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb4', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb5', 'PF1_2', '', '');
+insert into PSlot values ('PS.first.tb6', 'PF1_2', '', '');
 
 --
 -- Fix the wrong name for patchfield PF0_2
@@ -1366,16 +1366,16 @@ insert into PLine values ('PL.007', '-108', '', 'PS.base.tb3');
 insert into PLine values ('PL.008', '-109', '', 'PS.base.tb4');
 insert into PLine values ('PL.009', '-121', '', 'PS.base.tb5');
 insert into PLine values ('PL.010', '-122', '', 'PS.base.tb6');
-insert into PLine values ('PL.015', '-134', '', 'PS.1st.ta1');
-insert into PLine values ('PL.016', '-137', '', 'PS.1st.ta3');
-insert into PLine values ('PL.017', '-139', '', 'PS.1st.ta4');
-insert into PLine values ('PL.018', '-362', '', 'PS.1st.tb1');
-insert into PLine values ('PL.019', '-363', '', 'PS.1st.tb2');
-insert into PLine values ('PL.020', '-364', '', 'PS.1st.tb3');
-insert into PLine values ('PL.021', '-365', '', 'PS.1st.tb5');
-insert into PLine values ('PL.022', '-367', '', 'PS.1st.tb6');
+insert into PLine values ('PL.015', '-134', '', 'PS.first.ta1');
+insert into PLine values ('PL.016', '-137', '', 'PS.first.ta3');
+insert into PLine values ('PL.017', '-139', '', 'PS.first.ta4');
+insert into PLine values ('PL.018', '-362', '', 'PS.first.tb1');
+insert into PLine values ('PL.019', '-363', '', 'PS.first.tb2');
+insert into PLine values ('PL.020', '-364', '', 'PS.first.tb3');
+insert into PLine values ('PL.021', '-365', '', 'PS.first.tb5');
+insert into PLine values ('PL.022', '-367', '', 'PS.first.tb6');
 insert into PLine values ('PL.028', '-501', 'Fax entrance', 'PS.base.ta2');
-insert into PLine values ('PL.029', '-502', 'Fax 1st floor', 'PS.1st.ta1');
+insert into PLine values ('PL.029', '-502', 'Fax first floor', 'PS.first.ta1');
 
 --
 -- Buy some phones, plug them into the wall and patch the
