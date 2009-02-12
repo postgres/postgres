@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.61 2009/02/11 14:03:41 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.62 2009/02/12 13:26:03 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -218,11 +218,15 @@ gmake installcheck
      locale-related environment variables on
      the <command>make</command> command line, for example:
 <programlisting>
-gmake check LC_ALL=de_DE.utf8
+gmake check LANG=de_DE.utf8
 </programlisting>
-     or analogously to use no locale:
+     (The regression test driver unsets <envar>LC_ALL</envar>, so it
+     does not work to choose the locale using that variable.)  To use
+     no locale, either unset all locale-related environment variables
+     (or set them to <literal>C</literal>) or use the following
+     special invocation:
 <programlisting>
-gmake check LC_ALL=C
+gmake check NO_LOCALE=1
 </programlisting>
      When running the tests against an existing installation, the
      locale setup is determined by the existing installation.  To
