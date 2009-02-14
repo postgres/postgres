@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.51 2009/02/06 21:15:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.52 2009/02/14 20:48:36 tgl Exp $
  */
 
 /*
@@ -40,17 +40,9 @@ CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
                                         pg_catalog.array_upper($1,1),
                                         1) as g(s)';
 
-CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE sql
-    IMMUTABLE
-    RETURNS NULL ON NULL INPUT
-    AS 'select $1[1] is null or ($1[1] = any ($2) and coalesce(information_schema._pg_keyissubset($1[2:pg_catalog.array_upper($1,1)], $2), true))';
-
 CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE sql
-    IMMUTABLE
-    RETURNS NULL ON NULL INPUT
-    AS 'select information_schema._pg_keyissubset($1, $2) and information_schema._pg_keyissubset($2, $1)';
+    LANGUAGE sql IMMUTABLE  -- intentionally not STRICT, to allow inlining
+    AS 'select $1 <@ $2 and $2 <@ $1';
 
 /* Get the OID of the unique index that an FK constraint depends on */
 CREATE FUNCTION _pg_underlying_index(oid) RETURNS oid
@@ -1793,7 +1785,7 @@ CREATE VIEW table_constraints AS
                OR has_table_privilege(r.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(r.oid, 'INSERT, UPDATE, REFERENCES') )
 
-    UNION
+    UNION ALL
 
     -- not-null constraints
 
