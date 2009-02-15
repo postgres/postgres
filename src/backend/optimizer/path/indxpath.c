@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.235 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.236 2009/02/15 20:16:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1367,8 +1367,12 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 
 /*
  * check_partial_indexes
- *		Check each partial index of the relation, and mark it predOK or not
- *		depending on whether the predicate is satisfied for this query.
+ *		Check each partial index of the relation, and mark it predOK if
+ *		the index's predicate is satisfied for this query.
+ *
+ * Note: it is possible for this to get re-run after adding more restrictions
+ * to the rel; so we might be able to prove more indexes OK.  We assume that
+ * adding more restrictions can't make an index not OK.
  */
 void
 check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
@@ -1382,6 +1386,9 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 
 		if (index->indpred == NIL)
 			continue;			/* ignore non-partial indexes */
+
+		if (index->predOK)
+			continue;			/* don't repeat work if already proven OK */
 
 		index->predOK = predicate_implied_by(index->indpred,
 											 restrictinfo_list);

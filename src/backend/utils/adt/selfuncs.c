@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.258 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.259 2009/02/15 20:16:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,6 +234,15 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	if (constisnull)
 		return 0.0;
 
+	/*
+	 * If we matched the var to a unique index, assume there is exactly one
+	 * match regardless of anything else.  (This is slightly bogus, since
+	 * the index's equality operator might be different from ours, but it's
+	 * more likely to be right than ignoring the information.)
+	 */
+	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
+		return 1.0 / vardata->rel->tuples;
+
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
 		Form_pg_statistic stats;
@@ -356,6 +365,15 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 				 bool varonleft)
 {
 	double		selec;
+
+	/*
+	 * If we matched the var to a unique index, assume there is exactly one
+	 * match regardless of anything else.  (This is slightly bogus, since
+	 * the index's equality operator might be different from ours, but it's
+	 * more likely to be right than ignoring the information.)
+	 */
+	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
+		return 1.0 / vardata->rel->tuples;
 
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
@@ -3969,6 +3987,8 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
  *	atttype, atttypmod: type data to pass to get_attstatsslot().  This is
  *		commonly the same as the exposed type of the variable argument,
  *		but can be different in binary-compatible-type cases.
+ *	isunique: TRUE if we were able to match the var to a unique index,
+ *		implying its values are unique for this query.
  *
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
  */
@@ -4005,6 +4025,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
+		vardata->isunique = has_unique_index(vardata->rel, var->varattno);
 
 		rte = root->simple_rte_array[var->varno];
 
@@ -4121,13 +4142,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			if (indexpr_item == NULL)
 				continue;		/* no expressions here... */
 
-			/*
-			 * Ignore partial indexes since they probably don't reflect
-			 * whole-relation statistics.  Possibly reconsider this later.
-			 */
-			if (index->indpred)
-				continue;
-
 			for (pos = 0; pos < index->ncolumns; pos++)
 			{
 				if (index->indexkeys[pos] == 0)
@@ -4147,9 +4161,19 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						 */
 						if (index->unique &&
 							index->ncolumns == 1 &&
-							index->indpred == NIL)
+							(index->indpred == NIL || index->predOK))
 							vardata->isunique = true;
-						/* Has it got stats? */
+
+						/*
+						 * Has it got stats?  We only consider stats for
+						 * non-partial indexes, since partial indexes
+						 * probably don't reflect whole-relation statistics;
+						 * the above check for uniqueness is the only info
+						 * we take from a partial index.
+						 *
+						 * An index stats hook, however, must make its own
+						 * decisions about what to do with partial indexes.
+						 */
 						if (get_index_stats_hook &&
 							(*get_index_stats_hook) (root, index->indexoid,
 													 pos + 1, vardata))
@@ -4163,7 +4187,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 								!vardata->freefunc)
 								elog(ERROR, "no function provided to release variable stats with");
 						}
-						else
+						else if (index->indpred == NIL)
 						{
 							vardata->statsTuple =
 								SearchSysCache(STATRELATT,
@@ -4254,19 +4278,12 @@ get_variable_numdistinct(VariableStatData *vardata)
 
 	/*
 	 * If there is a unique index for the variable, assume it is unique no
-	 * matter what pg_statistic says (the statistics could be out of date).
-	 * Can skip search if we already think it's unique.
+	 * matter what pg_statistic says; the statistics could be out of date,
+	 * or we might have found a partial unique index that proves the var
+	 * is unique for this query.
 	 */
-	if (stadistinct != -1.0)
-	{
-		if (vardata->isunique)
-			stadistinct = -1.0;
-		else if (vardata->var && IsA(vardata->var, Var) &&
-				 vardata->rel &&
-				 has_unique_index(vardata->rel,
-								  ((Var *) vardata->var)->varattno))
-			stadistinct = -1.0;
-	}
+	if (vardata->isunique)
+		stadistinct = -1.0;
 
 	/*
 	 * If we had an absolute estimate, use that.

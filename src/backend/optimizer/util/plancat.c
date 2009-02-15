@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.154 2009/01/07 22:40:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.155 2009/02/15 20:16:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,15 +939,16 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 
 		/*
 		 * Note: ignore partial indexes, since they don't allow us to conclude
-		 * that all attr values are distinct.  We don't take any interest in
-		 * expressional indexes either. Also, a multicolumn unique index
-		 * doesn't allow us to conclude that just the specified attr is
-		 * unique.
+		 * that all attr values are distinct, *unless* they are marked predOK
+		 * which means we know the index's predicate is satisfied by the query.
+		 * We don't take any interest in expressional indexes either. Also, a
+		 * multicolumn unique index doesn't allow us to conclude that just the
+		 * specified attr is unique.
 		 */
 		if (index->unique &&
 			index->ncolumns == 1 &&
 			index->indexkeys[0] == attno &&
-			index->indpred == NIL)
+			(index->indpred == NIL || index->predOK))
 			return true;
 	}
 	return false;
