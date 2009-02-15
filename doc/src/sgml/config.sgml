@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.207 2009/02/09 20:57:59 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.208 2009/02/15 18:28:48 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3132,7 +3132,7 @@ local0.*    /var/log/postgresql
          query protocol, this setting likewise does not log statements that
          fail before the Execute phase (i.e., during parse analysis or
          planning).  Set <varname>log_min_error_statement</> to
-         <literal>ERROR</> (or lower) to log such statements.      
+         <literal>ERROR</> (or lower) to log such statements.
         </para>
        </note>
       </listitem>
@@ -3145,13 +3145,14 @@ local0.*    /var/log/postgresql
       </indexterm>
       <listitem>
        <para>
-        Controls whether temporary files are logged when deleted.
+        Controls logging of use of temporary files.
         Temporary files can be
         created for sorts, hashes, and temporary query results.
-        A value of zero logs all temporary files, and positive
-        values log only files whose size is equal or greater than
+        A log entry is made for each temporary file when it is deleted.
+        A value of zero logs all temporary files, while positive
+        values log only files whose size is greater than or equal to
         the specified number of kilobytes.  The
-        default is <literal>-1</>, which disables this logging.
+        default setting is <literal>-1</>, which disables such logging.
         Only superusers can change this setting.
        </para>
       </listitem>
