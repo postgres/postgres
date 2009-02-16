@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.520 2009/02/16 22:50:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.521 2009/02/16 23:06:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4652,8 +4652,10 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		if (g_fout->remoteVersion >= 70300)
 		{
 			/* need left join here to not fail on dropped columns ... */
-			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, a.attstattarget, a.attstorage, t.typstorage, "
-				  "a.attnotnull, a.atthasdef, a.attisdropped, a.attislocal, "
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
+								 "a.attstattarget, a.attstorage, t.typstorage, "
+				  				 "a.attnotnull, a.atthasdef, a.attisdropped, "
+								 "a.attislocal, "
 				   "pg_catalog.format_type(t.oid,a.atttypmod) AS atttypname "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
@@ -4669,8 +4671,10 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * we don't dump it because we can't tell whether it's been
 			 * explicitly set or was just a default.
 			 */
-			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, -1 AS attstattarget, a.attstorage, t.typstorage, "
-							  "a.attnotnull, a.atthasdef, false AS attisdropped, false AS attislocal, "
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, "
+							  "a.atttypmod, -1 AS attstattarget, a.attstorage, "
+							  "t.typstorage, a.attnotnull, a.atthasdef, "
+							  "false AS attisdropped, false AS attislocal, "
 							  "format_type(t.oid,a.atttypmod) AS atttypname "
 							  "FROM pg_attribute a LEFT JOIN pg_type t "
 							  "ON a.atttypid = t.oid "
@@ -4682,8 +4686,11 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		else
 		{
 			/* format_type not available before 7.1 */
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 AS attstattarget, attstorage, attstorage AS typstorage, "
-							  "attnotnull, atthasdef, false AS attisdropped, false AS attislocal, "
+			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, "
+							  "-1 AS attstattarget, attstorage, "
+							  "attstorage AS typstorage, "
+							  "attnotnull, atthasdef, false AS attisdropped, "
+							  "false AS attislocal, "
 							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname "
 							  "FROM pg_attribute a "
 							  "WHERE attrelid = '%u'::oid "
