@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.232 2009/02/05 15:25:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.233 2009/02/17 12:51:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,8 +387,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 				case TYPEFUNC_COMPOSITE:
 					/* got the expected result rowtype, now check it */
 					validate_tupdesc_compat(tupdesc, estate.rettupdesc,
-											gettext_noop("returned record type does "
-														 "not match expected record type"));
+											"returned record type does not match expected record type");
 					break;
 				case TYPEFUNC_RECORD:
 
@@ -707,8 +706,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	{
 		validate_tupdesc_compat(trigdata->tg_relation->rd_att,
 								estate.rettupdesc,
-								gettext_noop("returned tuple structure does "
-											 "not match table of trigger event"));
+								"returned tuple structure does not match table of trigger event");
 		/* Copy tuple to upper executor memory */
 		rettup = SPI_copytuple((HeapTuple) DatumGetPointer(estate.retval));
 	}
@@ -2201,8 +2199,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 						   errdetail("The tuple structure of a not-yet-assigned"
 									 " record is indeterminate.")));
 					validate_tupdesc_compat(tupdesc, rec->tupdesc,
-						                    gettext_noop("wrong record type supplied "
-														 "in RETURN NEXT"));
+						                    "wrong record type supplied in RETURN NEXT");
 					tuple = rec->tup;
 				}
 				break;
@@ -2310,8 +2307,7 @@ exec_stmt_return_query(PLpgSQL_execstate *estate,
 	}
 
 	validate_tupdesc_compat(estate->rettupdesc, portal->tupDesc,
-							gettext_noop("structure of query does not match "
-										 "function result type"));
+							"structure of query does not match function result type");
 
 	while (true)
 	{
