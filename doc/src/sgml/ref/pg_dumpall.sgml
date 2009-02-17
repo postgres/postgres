@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.75 2009/02/07 14:31:30 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.76 2009/02/17 15:41:50 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -487,6 +487,11 @@ PostgreSQL documentation
    tablespace directories to exist before the restore or
    database creation will fail for databases in non-default
    locations.
+  </para>
+
+  <para>
+   <application>pg_dump</application> also supports a
+   <literal>--binary-upgrade</> option for upgrade utility usage.
   </para>
 
  </refsect1>
