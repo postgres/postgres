@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.522 2009/02/17 15:41:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.523 2009/02/17 22:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -9853,7 +9853,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 										 "(SELECT oid FROM pg_namespace "
 										 "WHERE nspname = CURRENT_SCHEMA)\n"
 										 "			AND relname = '%s'\n"
-										 "	);",
+										 "	);\n",
 										 tbinfo->attlen[j],
 										 tbinfo->attalign[j],
 										 tbinfo->attnames[j],
