@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.42 2007/12/11 19:57:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.43 2009/02/18 12:11:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -26,6 +26,7 @@ PostgreSQL documentation
    <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
+   <group><arg>--freeze</arg><arg>-F</arg></group>
    <arg>--table | -t <replaceable>table</replaceable>
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>
    </arg>
@@ -37,6 +38,7 @@ PostgreSQL documentation
    <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
+   <group><arg>--freeze</arg><arg>-F</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
  
@@ -158,6 +160,16 @@ PostgreSQL documentation
       <listitem>
        <para>
         Calculate statistics for use by the optimizer.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-F</option></term>
+      <term><option>--freeze</option></term>
+      <listitem>
+       <para>
+        Aggressively <quote>freeze</quote> tuples.
        </para>
       </listitem>
      </varlistentry>

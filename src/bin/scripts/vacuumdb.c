@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.22 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.23 2009/02/18 12:11:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,11 @@
 
 
 static void vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
-					const char *table,
+					bool freeze, const char *table,
 					const char *host, const char *port,
 					const char *username, bool password,
 					const char *progname, bool echo);
-static void vacuum_all_databases(bool full, bool verbose, bool analyze,
+static void vacuum_all_databases(bool full, bool verbose, bool analyze, bool freeze,
 					 const char *host, const char *port,
 					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet);
@@ -39,6 +39,7 @@ main(int argc, char *argv[])
 		{"quiet", no_argument, NULL, 'q'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"analyze", no_argument, NULL, 'z'},
+		{"freeze", no_argument, NULL, 'F'},
 		{"all", no_argument, NULL, 'a'},
 		{"table", required_argument, NULL, 't'},
 		{"full", no_argument, NULL, 'f'},
@@ -58,6 +59,7 @@ main(int argc, char *argv[])
 	bool		echo = false;
 	bool		quiet = false;
 	bool		analyze = false;
+	bool		freeze = false;
 	bool		alldb = false;
 	char	   *table = NULL;
 	bool		full = false;
@@ -68,7 +70,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:Weqd:zat:fv", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:Weqd:zaFt:fv", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -95,6 +97,9 @@ main(int argc, char *argv[])
 				break;
 			case 'z':
 				analyze = true;
+				break;
+			case 'F':
+				freeze = true;
 				break;
 			case 'a':
 				alldb = true;
@@ -145,7 +150,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		vacuum_all_databases(full, verbose, analyze,
+		vacuum_all_databases(full, verbose, analyze, freeze,
 							 host, port, username, password,
 							 progname, echo, quiet);
 	}
@@ -161,7 +166,7 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
-		vacuum_one_database(dbname, full, verbose, analyze, table,
+		vacuum_one_database(dbname, full, verbose, analyze, freeze, table,
 							host, port, username, password,
 							progname, echo);
 	}
@@ -172,7 +177,7 @@ main(int argc, char *argv[])
 
 static void
 vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
-					const char *table,
+					bool freeze, const char *table,
 					const char *host, const char *port,
 					const char *username, bool password,
 					const char *progname, bool echo)
@@ -190,6 +195,8 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 		appendPQExpBuffer(&sql, " VERBOSE");
 	if (analyze)
 		appendPQExpBuffer(&sql, " ANALYZE");
+	if (freeze)
+		appendPQExpBuffer(&sql, " FREEZE");
 	if (table)
 		appendPQExpBuffer(&sql, " %s", table);
 	appendPQExpBuffer(&sql, ";\n");
@@ -212,7 +219,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 
 
 static void
-vacuum_all_databases(bool full, bool verbose, bool analyze,
+vacuum_all_databases(bool full, bool verbose, bool analyze, bool freeze,
 					 const char *host, const char *port,
 					 const char *username, bool password,
 					 const char *progname, bool echo, bool quiet)
@@ -235,7 +242,7 @@ vacuum_all_databases(bool full, bool verbose, bool analyze,
 			fflush(stdout);
 		}
 
-		vacuum_one_database(dbname, full, verbose, analyze, NULL,
+		vacuum_one_database(dbname, full, verbose, analyze, freeze, NULL,
 							host, port, username, password,
 							progname, echo);
 	}
@@ -256,6 +263,7 @@ help(const char *progname)
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"));
 	printf(_("  -f, --full                      do full vacuuming\n"));
 	printf(_("  -z, --analyze                   update optimizer hints\n"));
+	printf(_("  -F, --freeze                    freeze row transaction information\n"));
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
