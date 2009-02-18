@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.114 2009/02/17 15:41:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.115 2009/02/18 12:07:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ int			optreset;
 #endif
 
 #include "dumputils.h"
-
+#include "pg_backup.h"
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
@@ -71,6 +71,8 @@ static int	server_version;
 static FILE *OPF;
 static char *filename = NULL;
 
+static int	binary_upgrade = 0;
+
 int
 main(int argc, char *argv[])
 {
@@ -90,7 +92,6 @@ main(int argc, char *argv[])
 	const char *std_strings;
 	int			c,
 				ret;
-	int			binary_upgrade = 0;
 
 	struct option long_options[] = {
 		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
@@ -937,7 +938,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datcollate, datctype, "
+						   "datcollate, datctype, datfrozenxid, "
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
@@ -947,7 +948,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, "
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
@@ -957,7 +958,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
@@ -967,7 +968,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
+						   "null::text AS datcollate, null::text AS datctype, datfrozenxid, "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
@@ -979,7 +980,7 @@ dumpCreateDB(PGconn *conn)
 					"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
+						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid"
 						   "datistemplate, '' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
@@ -994,7 +995,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 					"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, "
+						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid"
 						   "'f' as datistemplate, "
 						   "'' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
@@ -1009,10 +1010,11 @@ dumpCreateDB(PGconn *conn)
 		char	   *dbencoding = PQgetvalue(res, i, 2);
 		char	   *dbcollate = PQgetvalue(res, i, 3);
 		char	   *dbctype = PQgetvalue(res, i, 4);
-		char	   *dbistemplate = PQgetvalue(res, i, 5);
-		char	   *dbacl = PQgetvalue(res, i, 6);
-		char	   *dbconnlimit = PQgetvalue(res, i, 7);
-		char	   *dbtablespace = PQgetvalue(res, i, 8);
+		uint32	   dbfrozenxid = atooid(PQgetvalue(res, i, 5));
+		char	   *dbistemplate = PQgetvalue(res, i, 6);
+		char	   *dbacl = PQgetvalue(res, i, 7);
+		char	   *dbconnlimit = PQgetvalue(res, i, 8);
+		char	   *dbtablespace = PQgetvalue(res, i, 9);
 		char	   *fdbname;
 
 		fdbname = strdup(fmtId(dbname));
@@ -1075,6 +1077,15 @@ dumpCreateDB(PGconn *conn)
 				appendPQExpBuffer(buf, "UPDATE pg_database SET datistemplate = 't' WHERE datname = ");
 				appendStringLiteralConn(buf, dbname, conn);
 				appendPQExpBuffer(buf, ";\n");
+			}
+
+			if (binary_upgrade)
+			{
+				appendPQExpBuffer(buf, "\n-- For binary upgrade, set datfrozenxid.\n");
+				appendPQExpBuffer(buf, "UPDATE pg_database\n"
+									 "SET datfrozenxid = '%u'\n"
+									 "WHERE	datname = '%s';\n",
+									 dbfrozenxid, fdbname);
 			}
 		}
 

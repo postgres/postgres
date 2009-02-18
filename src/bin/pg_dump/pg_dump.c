@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.523 2009/02/17 22:32:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.524 2009/02/18 12:07:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1585,6 +1585,7 @@ dumpDatabase(Archive *AH)
 				i_encoding,
 				i_collate,
 				i_ctype,
+				i_frozenxid,
 				i_tablespace;
 	CatalogId	dbCatId;
 	DumpId		dbDumpId;
@@ -1594,6 +1595,7 @@ dumpDatabase(Archive *AH)
 			   *collate,
 			   *ctype,
 			   *tablespace;
+	uint32		frozenxid;
 
 	datname = PQdb(g_conn);
 
@@ -1609,7 +1611,7 @@ dumpDatabase(Archive *AH)
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
-						  "datcollate, datctype, "
+						  "datcollate, datctype, datfrozenxid, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 					  "shobj_description(oid, 'pg_database') AS description "
 
@@ -1623,7 +1625,7 @@ dumpDatabase(Archive *AH)
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
-						  "NULL AS datcollate, NULL AS datctype, "
+						  "NULL AS datcollate, NULL AS datctype, datfrozenxid, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace, "
 					  "shobj_description(oid, 'pg_database') AS description "
 
@@ -1637,7 +1639,7 @@ dumpDatabase(Archive *AH)
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
-						  "NULL AS datcollate, NULL AS datctype, "
+						  "NULL AS datcollate, NULL AS datctype, datfrozenxid, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) AS tablespace "
 						  "FROM pg_database "
 						  "WHERE datname = ",
@@ -1650,6 +1652,7 @@ dumpDatabase(Archive *AH)
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
 						  "NULL AS datcollate, NULL AS datctype, "
+						  "0 AS datfrozenxid, "
 						  "NULL AS tablespace "
 						  "FROM pg_database "
 						  "WHERE datname = ",
@@ -1664,6 +1667,7 @@ dumpDatabase(Archive *AH)
 						  "(%s datdba) AS dba, "
 						  "pg_encoding_to_char(encoding) AS encoding, "
 						  "NULL AS datcollate, NULL AS datctype, "
+						  "0 AS datfrozenxid, "
 						  "NULL AS tablespace "
 						  "FROM pg_database "
 						  "WHERE datname = ",
@@ -1696,6 +1700,7 @@ dumpDatabase(Archive *AH)
 	i_encoding = PQfnumber(res, "encoding");
 	i_collate = PQfnumber(res, "datcollate");
 	i_ctype = PQfnumber(res, "datctype");
+	i_frozenxid = PQfnumber(res, "datfrozenxid");
 	i_tablespace = PQfnumber(res, "tablespace");
 
 	dbCatId.tableoid = atooid(PQgetvalue(res, 0, i_tableoid));
@@ -1704,6 +1709,7 @@ dumpDatabase(Archive *AH)
 	encoding = PQgetvalue(res, 0, i_encoding);
 	collate = PQgetvalue(res, 0, i_collate);
 	ctype = PQgetvalue(res, 0, i_ctype);
+	frozenxid = atooid(PQgetvalue(res, 0, i_frozenxid));
 	tablespace = PQgetvalue(res, 0, i_tablespace);
 
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
@@ -1728,6 +1734,15 @@ dumpDatabase(Archive *AH)
 						  fmtId(tablespace));
 	appendPQExpBuffer(creaQry, ";\n");
 
+	if (binary_upgrade)
+	{
+		appendPQExpBuffer(creaQry, "\n-- For binary upgrade, set datfrozenxid.\n");
+		appendPQExpBuffer(creaQry, "UPDATE pg_database\n"
+							 "SET datfrozenxid = '%u'\n"
+							 "WHERE	datname = '%s';\n",
+							 frozenxid, datname);
+	}
+	
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
 					  fmtId(datname));
 
@@ -3114,6 +3129,7 @@ getTables(int *numTables)
 	int			i_relhasindex;
 	int			i_relhasrules;
 	int			i_relhasoids;
+	int			i_relfrozenxid;
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
@@ -3155,6 +3171,7 @@ getTables(int *numTables)
 						  "(%s c.relowner) AS rolname, "
 						  "c.relchecks, c.relhastriggers, "
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "c.relfrozenxid, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
@@ -3186,6 +3203,7 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "relfrozenxid, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
@@ -3216,6 +3234,7 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "0 AS relfrozenxid, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
@@ -3246,6 +3265,7 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "0 AS relfrozenxid, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3272,6 +3292,7 @@ getTables(int *numTables)
 						  "(%s relowner) AS rolname, "
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
+						  "0 AS relfrozenxid, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3293,6 +3314,7 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
+						  "0 AS relfrozenxid, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3324,6 +3346,7 @@ getTables(int *numTables)
 						  "relchecks, (reltriggers <> 0) AS relhastriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool AS relhasoids, "
+						  "0 as relfrozenxid, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
 						  "NULL AS reltablespace, "
@@ -3367,6 +3390,7 @@ getTables(int *numTables)
 	i_relhasindex = PQfnumber(res, "relhasindex");
 	i_relhasrules = PQfnumber(res, "relhasrules");
 	i_relhasoids = PQfnumber(res, "relhasoids");
+	i_relfrozenxid = PQfnumber(res, "relfrozenxid");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
@@ -3404,6 +3428,7 @@ getTables(int *numTables)
 		tblinfo[i].hasrules = (strcmp(PQgetvalue(res, i, i_relhasrules), "t") == 0);
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
+		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		if (PQgetisnull(res, i, i_owning_tab))
 		{
@@ -9860,6 +9885,15 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 										 tbinfo->dobj.name);
 				}
 			}
+			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid.\n");
+			appendPQExpBuffer(q, "UPDATE pg_class\n"
+								 "SET relfrozenxid = '%u'\n"
+								 "WHERE	relname = '%s'\n"
+								 "	AND relnamespace = "
+								 "(SELECT oid FROM pg_namespace "
+								 "WHERE nspname = CURRENT_SCHEMA);\n",
+								 tbinfo->frozenxid,
+								 tbinfo->dobj.name);
 		}
 	
 		/* Loop dumping statistics and storage statements */
