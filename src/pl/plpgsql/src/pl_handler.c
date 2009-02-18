@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.43 2009/01/01 17:24:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.44 2009/02/18 11:33:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 				 !IsPolymorphicType(proc->prorettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("plpgsql functions cannot return type %s",
+					 errmsg("PL/pgSQL functions cannot return type %s",
 							format_type_be(proc->prorettype))));
 	}
 
@@ -174,7 +174,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 			if (!IsPolymorphicType(argtypes[i]))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("plpgsql functions cannot take type %s",
+						 errmsg("PL/pgSQL functions cannot accept type %s",
 								format_type_be(argtypes[i]))));
 		}
 	}

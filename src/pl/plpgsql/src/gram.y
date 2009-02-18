@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.120 2009/02/02 20:25:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.121 2009/02/18 11:33:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1043,7 +1043,7 @@ for_control		:
 							if ($2.scalar && $2.row)
 								ereport(ERROR,
 										(errcode(ERRCODE_SYNTAX_ERROR),
-										 errmsg("cursor FOR loop must have just one target variable")));
+										 errmsg("cursor FOR loop must have only one target variable")));
 
 							/* create loop's private RECORD variable */
 							plpgsql_convert_ident($2.name, &varname, 1);
@@ -1131,7 +1131,7 @@ for_control		:
 								if ($2.scalar && $2.row)
 									ereport(ERROR,
 											(errcode(ERRCODE_SYNTAX_ERROR),
-											 errmsg("integer FOR loop must have just one target variable")));
+											 errmsg("integer FOR loop must have only one target variable")));
 
 								/* create loop's private variable */
 								plpgsql_convert_ident($2.name, &varname, 1);
@@ -1570,7 +1570,7 @@ stmt_open		: K_OPEN lno cursor_variable
 										(errcode(ERRCODE_SYNTAX_ERROR),
 										 errmsg("syntax error at \"%s\"",
 												yytext),
-										 errdetail("Expected FOR to open a reference cursor.")));
+										 errdetail("Expected \"FOR\", to open a reference cursor.")));
 							}
 
 							tok = yylex();
@@ -1664,7 +1664,7 @@ cursor_variable	: T_SCALAR
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("\"%s\" must be of type cursor or refcursor",
+									 errmsg("variable \"%s\" must be of type cursor or refcursor",
 											((PLpgSQL_var *) yylval.scalar)->refname)));
 						}
 						$$ = (PLpgSQL_var *) yylval.scalar;
@@ -2094,7 +2094,7 @@ read_datatype(int tok)
 			if (parenlevel != 0)
 				yyerror("mismatched parentheses");
 			else
-				yyerror("incomplete datatype declaration");
+				yyerror("incomplete data type declaration");
 		}
 		/* Possible followers for datatype in a declaration */
 		if (tok == K_NOT || tok == K_ASSIGN || tok == K_DEFAULT)
@@ -2119,7 +2119,7 @@ read_datatype(int tok)
 	type_name = plpgsql_dstring_get(&ds);
 
 	if (type_name[0] == '\0')
-		yyerror("missing datatype declaration");
+		yyerror("missing data type declaration");
 
 	plpgsql_error_lineno = lno;	/* in case of error in parse_datatype */
 
@@ -2375,11 +2375,11 @@ make_return_stmt(int lineno)
 				break;
 
 			default:
-				yyerror("RETURN must specify a record or row variable in function returning tuple");
+				yyerror("RETURN must specify a record or row variable in function returning row");
 				break;
 		}
 		if (yylex() != ';')
-			yyerror("RETURN must specify a record or row variable in function returning tuple");
+			yyerror("RETURN must specify a record or row variable in function returning row");
 	}
 	else
 	{
@@ -2428,11 +2428,11 @@ make_return_next_stmt(int lineno)
 				break;
 
 			default:
-				yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
+				yyerror("RETURN NEXT must specify a record or row variable in function returning row");
 				break;
 		}
 		if (yylex() != ';')
-			yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
+			yyerror("RETURN NEXT must specify a record or row variable in function returning row");
 	}
 	else
 		new->expr = plpgsql_read_expression(';', ";");
@@ -2745,7 +2745,7 @@ check_label(const char *yytxt)
 
 	plpgsql_convert_ident(yytxt, &label_name, 1);
 	if (plpgsql_ns_lookup_label(label_name) == NULL)
-		yyerror("no such label");
+		yyerror("label does not exist");
 	return label_name;
 }
 

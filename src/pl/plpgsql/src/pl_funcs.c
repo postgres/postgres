@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.75 2009/01/01 17:24:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.76 2009/02/18 11:33:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,7 @@ plpgsql_ns_rename(char *oldname, char *newname)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("there is no variable \"%s\" in the current block",
+			 errmsg("variable \"%s\" does not exist in the current block",
 					oldname)));
 }
 
@@ -412,7 +412,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 			if (*s != '"')		/* should not happen if lexer checked */
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("unterminated \" in name: %s", sstart)));
+						 errmsg("unterminated \" in identifier: %s", sstart)));
 			s++;
 			*cp = '\0';
 			/* Truncate to NAMEDATALEN */

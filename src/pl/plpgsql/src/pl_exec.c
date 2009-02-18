@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.233 2009/02/17 12:51:59 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.234 2009/02/18 11:33:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,7 +706,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	{
 		validate_tupdesc_compat(trigdata->tg_relation->rd_att,
 								estate.rettupdesc,
-								"returned tuple structure does not match table of trigger event");
+								"returned row structure does not match the structure of the triggering table");
 		/* Copy tuple to upper executor memory */
 		rettup = SPI_copytuple((HeapTuple) DatumGetPointer(estate.retval));
 	}
@@ -765,24 +765,18 @@ plpgsql_exec_error_callback(void *arg)
 		 */
 		if (estate->err_stmt != NULL)
 		{
-			/*
-			 * translator: last %s is a phrase such as "during statement block
-			 * local variable initialization"
-			 */
+			/* translator: last %s is a phrase such as "during statement block local variable initialization" */
 			errcontext("PL/pgSQL function \"%s\" line %d %s",
 					   estate->err_func->fn_name,
 					   estate->err_stmt->lineno,
-					   gettext(estate->err_text));
+					   _(estate->err_text));
 		}
 		else
 		{
-			/*
-			 * translator: last %s is a phrase such as "while storing call
-			 * arguments into local variables"
-			 */
+			/* translator: last %s is a phrase such as "while storing call arguments into local variables" */
 			errcontext("PL/pgSQL function \"%s\" %s",
 					   estate->err_func->fn_name,
-					   gettext(estate->err_text));
+					   _(estate->err_text));
 		}
 	}
 	else if (estate->err_stmt != NULL)
@@ -1677,7 +1671,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("lower bound of FOR loop cannot be NULL")));
+				 errmsg("lower bound of FOR loop cannot be null")));
 	loop_value = DatumGetInt32(value);
 	exec_eval_cleanup(estate);
 
@@ -1692,7 +1686,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("upper bound of FOR loop cannot be NULL")));
+				 errmsg("upper bound of FOR loop cannot be null")));
 	end_value = DatumGetInt32(value);
 	exec_eval_cleanup(estate);
 
@@ -1709,7 +1703,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("BY value of FOR loop cannot be NULL")));
+					 errmsg("BY value of FOR loop cannot be null")));
 		step_value = DatumGetInt32(value);
 		exec_eval_cleanup(estate);
 		if (step_value <= 0)
@@ -2470,7 +2464,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 		if (optionisnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("RAISE statement option cannot be NULL")));
+					 errmsg("RAISE statement option cannot be null")));
 
 		extval = convert_value_to_string(optionvalue, optiontypeid);
 
@@ -2916,7 +2910,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("cannot EXECUTE a null querystring")));
+				 errmsg("query string argument of EXECUTE is null")));
 
 	/* Get the C-String representation */
 	querystr = convert_value_to_string(query, restype);
@@ -2981,7 +2975,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 				if (*ptr == 'S' || *ptr == 's')
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("EXECUTE of SELECT ... INTO is not implemented yet")));
+							 errmsg("EXECUTE of SELECT ... INTO is not implemented")));
 				break;
 			}
 
@@ -3166,7 +3160,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("cannot EXECUTE a null querystring")));
+					 errmsg("query string argument of EXECUTE is null")));
 
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(queryD, restype);
@@ -3300,7 +3294,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 	if (curvar->isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("cursor variable \"%s\" is NULL", curvar->refname)));
+				 errmsg("cursor variable \"%s\" is null", curvar->refname)));
 	curname = TextDatumGetCString(curvar->value);
 
 	portal = SPI_cursor_find(curname);
@@ -3321,7 +3315,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("relative or absolute cursor position is NULL")));
+					 errmsg("relative or absolute cursor position is null")));
 
 		exec_eval_cleanup(estate);
 	}
@@ -3396,7 +3390,7 @@ exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 	if (curvar->isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("cursor variable \"%s\" is NULL", curvar->refname)));
+				 errmsg("cursor variable \"%s\" is null", curvar->refname)));
 	curname = TextDatumGetCString(curvar->value);
 
 	portal = SPI_cursor_find(curname);
@@ -3463,7 +3457,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				if (*isNull && var->notnull)
 					ereport(ERROR,
 							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							 errmsg("NULL cannot be assigned to variable \"%s\" declared NOT NULL",
+							 errmsg("null value cannot be assigned to variable \"%s\" declared NOT NULL",
 									var->refname)));
 
 				/*
@@ -3720,8 +3714,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					if (nsubscripts >= MAXDIM)
 						ereport(ERROR,
 								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-								 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-										MAXDIM)));
+								 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+										nsubscripts, MAXDIM)));
 					subscripts[nsubscripts++] = arrayelem->subscript;
 					target = estate->datums[arrayelem->arrayparentno];
 				} while (target->dtype == PLPGSQL_DTYPE_ARRAYELEM);
@@ -3757,7 +3751,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					if (subisnull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-								 errmsg("array subscript in assignment must not be NULL")));
+								 errmsg("array subscript in assignment must not be null")));
 				}
 
 				/* Coerce source value to match array element type. */
@@ -5129,7 +5123,7 @@ static void
 validate_tupdesc_compat(TupleDesc expected, TupleDesc returned, const char *msg)
 {
 	int		   i;
-	const char *dropped_column_type = gettext_noop("n/a (dropped column)");
+	const char *dropped_column_type = gettext_noop("N/A (dropped column)");
 
 	if (!expected || !returned)
 		ereport(ERROR,
@@ -5402,7 +5396,7 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate, PLpgSQL_expr *dynquery,
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("cannot EXECUTE a null querystring")));
+				 errmsg("query string argument of EXECUTE is null")));
 
 	/* Get the C-String representation */
 	querystr = convert_value_to_string(query, restype);

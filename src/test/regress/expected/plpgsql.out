@@ -2700,7 +2700,7 @@ begin
   end loop flbl1;
 end;
 $$ language plpgsql;
-ERROR:  no such label at or near "flbl1"
+ERROR:  label does not exist at or near "flbl1"
 LINE 5:   end loop flbl1;
                    ^
 -- should fail: end label does not match start label
@@ -2714,7 +2714,7 @@ begin
 end;
 $$ language plpgsql;
 ERROR:  end label "outer_label" differs from block's label "inner_label"
-CONTEXT:  compile of PL/pgSQL function "end_label3" near line 6
+CONTEXT:  compilation of PL/pgSQL function "end_label3" near line 6
 -- should fail: end label on a block without a start label
 create function end_label4() returns void as $$
 <<outer_label>>
@@ -2725,7 +2725,7 @@ begin
 end;
 $$ language plpgsql;
 ERROR:  end label "outer_label" specified for unlabelled block
-CONTEXT:  compile of PL/pgSQL function "end_label4" near line 5
+CONTEXT:  compilation of PL/pgSQL function "end_label4" near line 5
 -- using list of scalars in fori and fore stmts
 create function for_vect() returns void as $proc$
 <<lbl>>declare a integer; b varchar; c varchar; r record;
@@ -3266,7 +3266,7 @@ begin
 end;
 $$ language plpgsql;
 ERROR:  cursor FOR loop must use a bound cursor variable
-CONTEXT:  compile of PL/pgSQL function "forc_bad" near line 4
+CONTEXT:  compilation of PL/pgSQL function "forc_bad" near line 4
 -- test RETURN QUERY EXECUTE
 create or replace function return_dquery()
 returns setof int as $$
