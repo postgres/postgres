@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.15 2008/11/06 20:51:14 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.16 2009/02/18 15:58:41 heikki Exp $
 
 Notes About Shared Buffer Access Rules
 ======================================
@@ -268,3 +268,8 @@ out (and anyone else who flushes buffer contents to disk must do so too).
 This ensures that the page image transferred to disk is reasonably consistent.
 We might miss a hint-bit update or two but that isn't a problem, for the same
 reasons mentioned under buffer access rules.
+
+As of 8.4, background writer starts during recovery mode when there is
+some form of potentially extended recovery to perform. It performs an
+identical service to normal processing, except that checkpoints it
+writes are technically restartpoints.

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.570 2009/01/04 22:19:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.571 2009/02/18 15:58:41 heikki Exp $
  *
  * NOTES
  *
@@ -225,10 +225,37 @@ static pid_t StartupPID = 0,
 static int	Shutdown = NoShutdown;
 
 static bool FatalError = false; /* T if recovering from backend crash */
+static bool RecoveryError = false; /* T if recovery failed */
+
+/* State of WAL redo */
+#define			NoRecovery			0
+#define			RecoveryStarted		1
+#define			RecoveryConsistent	2
+#define			RecoveryCompleted	3
+
+static int	RecoveryStatus = NoRecovery;
 
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
+ *
+ * After doing all the postmaster initialization work, we enter PM_STARTUP
+ * state and the startup process is launched. The startup process begins by
+ * reading the control file and other preliminary initialization steps. When
+ * it's ready to start WAL redo, it signals postmaster, and we switch to
+ * PM_RECOVERY phase. The background writer is launched, while the startup
+ * process continues applying WAL. 
+ * 
+ * After reaching a consistent point in WAL redo, startup process signals
+ * us again, and we switch to PM_RECOVERY_CONSISTENT phase. There's currently
+ * no difference between PM_RECOVERY and PM_RECOVERY_CONSISTENT, but we
+ * could start accepting connections to perform read-only queries at this
+ * point, if we had the infrastructure to do that.
+ *
+ * When the WAL redo is finished, the startup process signals us the third
+ * time, and we switch to PM_RUN state. The startup process can also skip the
+ * recovery and consistent recovery phases altogether, as it will during
+ * normal startup when there's no recovery to be done, for example.
  *
  * Normal child backends can only be launched when we are in PM_RUN state.
  * (We also allow it in PM_WAIT_BACKUP state, but only for superusers.)
@@ -245,15 +272,19 @@ static bool FatalError = false; /* T if recovering from backend crash */
  *
  * Notice that this state variable does not distinguish *why* we entered
  * states later than PM_RUN --- Shutdown and FatalError must be consulted
- * to find that out.  FatalError is never true in PM_RUN state, nor in
- * PM_SHUTDOWN states (because we don't enter those states when trying to
- * recover from a crash).  It can be true in PM_STARTUP state, because we
- * don't clear it until we've successfully recovered.
+ * to find that out.  FatalError is never true in PM_RECOVERY_* or PM_RUN
+ * states, nor in PM_SHUTDOWN states (because we don't enter those states
+ * when trying to recover from a crash).  It can be true in PM_STARTUP state,
+ * because we don't clear it until we've successfully started WAL redo.
+ * Similarly, RecoveryError means that we have crashed during recovery, and
+ * should not try to restart.
  */
 typedef enum
 {
 	PM_INIT,					/* postmaster starting */
 	PM_STARTUP,					/* waiting for startup subprocess */
+	PM_RECOVERY,				/* in recovery mode */
+	PM_RECOVERY_CONSISTENT,		/* consistent recovery mode */
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
@@ -307,6 +338,7 @@ static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
+static void CheckRecoverySignals(void);
 static void CleanupBackend(int pid, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
@@ -1302,7 +1334,9 @@ ServerLoop(void)
 		 * state that prevents it, start one.  It doesn't matter if this
 		 * fails, we'll just try again later.
 		 */
-		if (BgWriterPID == 0 && pmState == PM_RUN)
+		if (BgWriterPID == 0 &&
+			(pmState == PM_RUN || pmState == PM_RECOVERY || 
+			 pmState == PM_RECOVERY_CONSISTENT))
 			BgWriterPID = StartBackgroundWriter();
 
 		/*
@@ -1752,7 +1786,10 @@ canAcceptConnections(void)
 			return CAC_WAITBACKUP;	/* allow superusers only */
 		if (Shutdown > NoShutdown)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
-		if (pmState == PM_STARTUP && !FatalError)
+		if (!FatalError &&
+			(pmState == PM_STARTUP ||
+			 pmState == PM_RECOVERY ||
+			 pmState == PM_RECOVERY_CONSISTENT))
 			return CAC_STARTUP; /* normal startup */
 		return CAC_RECOVERY;	/* else must be crash recovery */
 	}
@@ -1982,7 +2019,7 @@ pmdie(SIGNAL_ARGS)
 			ereport(LOG,
 					(errmsg("received smart shutdown request")));
 
-			if (pmState == PM_RUN)
+			if (pmState == PM_RUN || pmState == PM_RECOVERY || pmState == PM_RECOVERY_CONSISTENT)
 			{
 				/* autovacuum workers are told to shut down immediately */
 				SignalAutovacWorkers(SIGTERM);
@@ -2019,7 +2056,14 @@ pmdie(SIGNAL_ARGS)
 
 			if (StartupPID != 0)
 				signal_child(StartupPID, SIGTERM);
-			if (pmState == PM_RUN || pmState == PM_WAIT_BACKUP)
+			if (pmState == PM_RECOVERY)
+			{
+				/* only bgwriter is active in this state */
+				pmState = PM_WAIT_BACKENDS;
+			}
+			if (pmState == PM_RUN ||
+				pmState == PM_WAIT_BACKUP ||
+				pmState == PM_RECOVERY_CONSISTENT)
 			{
 				ereport(LOG,
 						(errmsg("aborting any active transactions")));
@@ -2116,10 +2160,22 @@ reaper(SIGNAL_ARGS)
 		if (pid == StartupPID)
 		{
 			StartupPID = 0;
-			Assert(pmState == PM_STARTUP);
 
-			/* FATAL exit of startup is treated as catastrophic */
-			if (!EXIT_STATUS_0(exitstatus))
+			/*
+			 * Check if we've received a signal from the startup process
+			 * first. This can change pmState. If the startup process sends
+			 * a signal and exits immediately after that, we might not have
+			 * processed the signal yet. We need to know if it completed
+			 * recovery before it exited.
+			 */
+			CheckRecoverySignals();
+
+			/*
+			 * Unexpected exit of startup process (including FATAL exit)
+			 * during PM_STARTUP is treated as catastrophic. There is no
+			 * other processes running yet.
+			 */
+			if (pmState == PM_STARTUP)
 			{
 				LogChildExit(LOG, _("startup process"),
 							 pid, exitstatus);
@@ -2127,60 +2183,30 @@ reaper(SIGNAL_ARGS)
 				(errmsg("aborting startup due to startup process failure")));
 				ExitPostmaster(1);
 			}
-
 			/*
-			 * Startup succeeded - we are done with system startup or
-			 * recovery.
+			 * Any unexpected exit (including FATAL exit) of the startup
+			 * process is treated as a crash, except that we don't want
+			 * to reinitialize.
 			 */
-			FatalError = false;
-
-			/*
-			 * Go to shutdown mode if a shutdown request was pending.
-			 */
-			if (Shutdown > NoShutdown)
+			if (!EXIT_STATUS_0(exitstatus))
 			{
-				pmState = PM_WAIT_BACKENDS;
-				/* PostmasterStateMachine logic does the rest */
+				RecoveryError = true;
+				HandleChildCrash(pid, exitstatus,
+								 _("startup process"));
 				continue;
 			}
-
 			/*
-			 * Otherwise, commence normal operations.
+			 * Startup process exited normally, but didn't finish recovery.
+			 * This can happen if someone else than postmaster kills the
+			 * startup process with SIGTERM. Treat it like a crash.
 			 */
-			pmState = PM_RUN;
-
-			/*
-			 * Load the flat authorization file into postmaster's cache. The
-			 * startup process has recomputed this from the database contents,
-			 * so we wait till it finishes before loading it.
-			 */
-			load_role();
-
-			/*
-			 * Crank up the background writer.	It doesn't matter if this
-			 * fails, we'll just try again later.
-			 */
-			Assert(BgWriterPID == 0);
-			BgWriterPID = StartBackgroundWriter();
-
-			/*
-			 * Likewise, start other special children as needed.  In a restart
-			 * situation, some of them may be alive already.
-			 */
-			if (WalWriterPID == 0)
-				WalWriterPID = StartWalWriter();
-			if (AutoVacuumingActive() && AutoVacPID == 0)
-				AutoVacPID = StartAutoVacLauncher();
-			if (XLogArchivingActive() && PgArchPID == 0)
-				PgArchPID = pgarch_start();
-			if (PgStatPID == 0)
-				PgStatPID = pgstat_start();
-
-			/* at this point we are really open for business */
-			ereport(LOG,
-				 (errmsg("database system is ready to accept connections")));
-
-			continue;
+			if (pmState == PM_RECOVERY || pmState == PM_RECOVERY_CONSISTENT)
+			{
+				RecoveryError = true;
+				HandleChildCrash(pid, exitstatus,
+								 _("startup process"));
+				continue;
+			}
 		}
 
 		/*
@@ -2443,6 +2469,18 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		}
 	}
 
+	/* Take care of the startup process too */
+	if (pid == StartupPID)
+		StartupPID = 0;
+	else if (StartupPID != 0 && !FatalError)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("sending %s to process %d",
+								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
+								 (int) StartupPID)));
+		signal_child(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
+	}
+
 	/* Take care of the bgwriter too */
 	if (pid == BgWriterPID)
 		BgWriterPID = 0;
@@ -2514,7 +2552,9 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 
 	FatalError = true;
 	/* We now transit into a state of waiting for children to die */
-	if (pmState == PM_RUN ||
+	if (pmState == PM_RECOVERY ||
+		pmState == PM_RECOVERY_CONSISTENT ||
+		pmState == PM_RUN ||
 		pmState == PM_WAIT_BACKUP ||
 		pmState == PM_SHUTDOWN)
 		pmState = PM_WAIT_BACKENDS;
@@ -2582,6 +2622,127 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 static void
 PostmasterStateMachine(void)
 {
+	/* Startup states */
+
+	if (pmState == PM_STARTUP && RecoveryStatus > NoRecovery)
+	{
+		/* WAL redo has started. We're out of reinitialization. */
+		FatalError = false;
+
+		/*
+		 * Go to shutdown mode if a shutdown request was pending.
+		 */
+		if (Shutdown > NoShutdown)
+		{
+			pmState = PM_WAIT_BACKENDS;
+			/* PostmasterStateMachine logic does the rest */
+		}
+		else
+		{
+			/*
+			 * Crank up the background writer.	It doesn't matter if this
+			 * fails, we'll just try again later.
+			 */
+			Assert(BgWriterPID == 0);
+			BgWriterPID = StartBackgroundWriter();
+
+			pmState = PM_RECOVERY;
+		}
+	}
+	if (pmState == PM_RECOVERY && RecoveryStatus >= RecoveryConsistent)
+	{
+		/*
+		 * Go to shutdown mode if a shutdown request was pending.
+		 */
+		if (Shutdown > NoShutdown)
+		{
+			pmState = PM_WAIT_BACKENDS;
+			/* PostmasterStateMachine logic does the rest */
+		}
+		else
+		{
+			/*
+			 * Startup process has entered recovery. We consider that good
+			 * enough to reset FatalError.
+			 */
+			pmState = PM_RECOVERY_CONSISTENT;
+
+			/*
+			 * Load the flat authorization file into postmaster's cache. The
+			 * startup process won't have recomputed this from the database yet,
+			 * so we it may change following recovery. 
+			 */
+			load_role();
+
+			/*
+			 * Likewise, start other special children as needed.
+			 */
+			Assert(PgStatPID == 0);
+			PgStatPID = pgstat_start();
+
+			/* XXX at this point we could accept read-only connections */
+			ereport(DEBUG1,
+				 (errmsg("database system is in consistent recovery mode")));
+		}
+	}
+	if ((pmState == PM_RECOVERY || 
+		 pmState == PM_RECOVERY_CONSISTENT ||
+		 pmState == PM_STARTUP) &&
+		RecoveryStatus == RecoveryCompleted)
+	{
+		/*
+		 * Startup succeeded.
+		 *
+		 * Go to shutdown mode if a shutdown request was pending.
+		 */
+		if (Shutdown > NoShutdown)
+		{
+			pmState = PM_WAIT_BACKENDS;
+			/* PostmasterStateMachine logic does the rest */
+		}
+		else
+		{
+			/*
+			 * Otherwise, commence normal operations.
+			 */
+			pmState = PM_RUN;
+
+			/*
+			 * Load the flat authorization file into postmaster's cache. The
+			 * startup process has recomputed this from the database contents,
+			 * so we wait till it finishes before loading it.
+			 */
+			load_role();
+
+			/*
+			 * Crank up the background writer, if we didn't do that already
+			 * when we entered consistent recovery phase.  It doesn't matter
+			 * if this fails, we'll just try again later.
+			 */
+			if (BgWriterPID == 0)
+				BgWriterPID = StartBackgroundWriter();
+
+			/*
+			 * Likewise, start other special children as needed.  In a restart
+			 * situation, some of them may be alive already.
+			 */
+			if (WalWriterPID == 0)
+				WalWriterPID = StartWalWriter();
+			if (AutoVacuumingActive() && AutoVacPID == 0)
+				AutoVacPID = StartAutoVacLauncher();
+			if (XLogArchivingActive() && PgArchPID == 0)
+				PgArchPID = pgarch_start();
+			if (PgStatPID == 0)
+				PgStatPID = pgstat_start();
+
+			/* at this point we are really open for business */
+			ereport(LOG,
+				(errmsg("database system is ready to accept connections")));
+		}
+	}
+
+	/* Shutdown states */
+
 	if (pmState == PM_WAIT_BACKUP)
 	{
 		/*
@@ -2723,6 +2884,15 @@ PostmasterStateMachine(void)
 	}
 
 	/*
+	 * If recovery failed, wait for all non-syslogger children to exit,
+	 * and then exit postmaster. We don't try to reinitialize when recovery
+	 * fails, because more than likely it will just fail again and we will
+	 * keep trying forever.
+	 */
+	if (RecoveryError && pmState == PM_NO_CHILDREN)
+		ExitPostmaster(1);		
+
+	/*
 	 * If we need to recover from a crash, wait for all non-syslogger
 	 * children to exit, then reset shmem and StartupDataBase.
 	 */
@@ -2733,6 +2903,8 @@ PostmasterStateMachine(void)
 
 		shmem_exit(1);
 		reset_shared(PostPortNumber);
+
+		RecoveryStatus = NoRecovery;
 
 		StartupPID = StartupDataBase();
 		Assert(StartupPID != 0);
@@ -3838,6 +4010,37 @@ ExitPostmaster(int status)
 }
 
 /*
+ * common code used in sigusr1_handler() and reaper() to handle
+ * recovery-related signals from startup process
+ */
+static void
+CheckRecoverySignals(void)
+{
+	bool changed = false;
+
+	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_STARTED))
+	{
+		Assert(pmState == PM_STARTUP);
+
+		RecoveryStatus = RecoveryStarted;
+		changed = true;
+	}
+	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT))
+	{
+		RecoveryStatus = RecoveryConsistent;
+		changed = true;
+	}
+	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_COMPLETED))
+	{
+		RecoveryStatus = RecoveryCompleted;
+		changed = true;
+	}
+
+	if (changed)
+		PostmasterStateMachine();
+}
+
+/*
  * sigusr1_handler - handle signal conditions from child processes
  */
 static void
@@ -3846,6 +4049,8 @@ sigusr1_handler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	PG_SETMASK(&BlockSig);
+
+	CheckRecoverySignals();
 
 	if (CheckPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE))
 	{

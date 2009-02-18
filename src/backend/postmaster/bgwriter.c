@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.55 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.56 2009/02/18 15:58:41 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include <unistd.h>
 
 #include "access/xlog_internal.h"
+#include "catalog/pg_control.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -423,8 +424,18 @@ BackgroundWriterMain(void)
 		 */
 		if (do_checkpoint)
 		{
+			bool	ckpt_performed = false;
+			bool	do_restartpoint;
+
 			/* use volatile pointer to prevent code rearrangement */
 			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+
+			/*
+			 * Check if we should perform a checkpoint or a restartpoint.
+			 * As a side-effect, RecoveryInProgress() initializes
+			 * TimeLineID if it's not set yet.
+			 */
+			do_restartpoint = RecoveryInProgress();
 
 			/*
 			 * Atomically fetch the request flags to figure out what kind of a
@@ -444,7 +455,8 @@ BackgroundWriterMain(void)
 			 * implementation will not generate warnings caused by
 			 * CheckPointTimeout < CheckPointWarning.
 			 */
-			if ((flags & CHECKPOINT_CAUSE_XLOG) &&
+			if (!do_restartpoint &&
+				(flags & CHECKPOINT_CAUSE_XLOG) &&
 				elapsed_secs < CheckPointWarning)
 				ereport(LOG,
 						(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
@@ -455,14 +467,21 @@ BackgroundWriterMain(void)
 			 * Initialize bgwriter-private variables used during checkpoint.
 			 */
 			ckpt_active = true;
-			ckpt_start_recptr = GetInsertRecPtr();
+			if (!do_restartpoint)
+				ckpt_start_recptr = GetInsertRecPtr();
 			ckpt_start_time = now;
 			ckpt_cached_elapsed = 0;
 
 			/*
 			 * Do the checkpoint.
 			 */
-			CreateCheckPoint(flags);
+			if (!do_restartpoint)
+			{
+				CreateCheckPoint(flags);
+				ckpt_performed = true;
+			}
+			else
+				ckpt_performed = CreateRestartPoint(flags);
 
 			/*
 			 * After any checkpoint, close all smgr files.	This is so we
@@ -477,14 +496,27 @@ BackgroundWriterMain(void)
 			bgs->ckpt_done = bgs->ckpt_started;
 			SpinLockRelease(&bgs->ckpt_lck);
 
-			ckpt_active = false;
+			if (ckpt_performed)
+			{
+				/*
+				 * Note we record the checkpoint start time not end time as
+				 * last_checkpoint_time.  This is so that time-driven
+				 * checkpoints happen at a predictable spacing.
+				 */
+				last_checkpoint_time = now;
+			}
+			else
+			{
+				/*
+				 * We were not able to perform the restartpoint (checkpoints
+				 * throw an ERROR in case of error).  Most likely because we
+				 * have not received any new checkpoint WAL records since the
+				 * last restartpoint. Try again in 15 s.
+				 */
+				last_checkpoint_time = now - CheckPointTimeout + 15;
+			}
 
-			/*
-			 * Note we record the checkpoint start time not end time as
-			 * last_checkpoint_time.  This is so that time-driven checkpoints
-			 * happen at a predictable spacing.
-			 */
-			last_checkpoint_time = now;
+			ckpt_active = false;
 		}
 		else
 			BgBufferSync();
@@ -507,7 +539,7 @@ CheckArchiveTimeout(void)
 	pg_time_t	now;
 	pg_time_t	last_time;
 
-	if (XLogArchiveTimeout <= 0)
+	if (XLogArchiveTimeout <= 0 || RecoveryInProgress())
 		return;
 
 	now = (pg_time_t) time(NULL);
@@ -714,16 +746,19 @@ IsCheckpointOnSchedule(double progress)
 	 * However, it's good enough for our purposes, we're only calculating an
 	 * estimate anyway.
 	 */
-	recptr = GetInsertRecPtr();
-	elapsed_xlogs =
-		(((double) (int32) (recptr.xlogid - ckpt_start_recptr.xlogid)) * XLogSegsPerFile +
-		 ((double) recptr.xrecoff - (double) ckpt_start_recptr.xrecoff) / XLogSegSize) /
-		CheckPointSegments;
-
-	if (progress < elapsed_xlogs)
+	if (!RecoveryInProgress())
 	{
-		ckpt_cached_elapsed = elapsed_xlogs;
-		return false;
+		recptr = GetInsertRecPtr();
+		elapsed_xlogs =
+			(((double) (int32) (recptr.xlogid - ckpt_start_recptr.xlogid)) * XLogSegsPerFile +
+			 ((double) recptr.xrecoff - (double) ckpt_start_recptr.xrecoff) / XLogSegSize) /
+			CheckPointSegments;
+
+		if (progress < elapsed_xlogs)
+		{
+			ckpt_cached_elapsed = elapsed_xlogs;
+			return false;
+		}
 	}
 
 	/*
