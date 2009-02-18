@@ -92,7 +92,7 @@ SELECT f1 AS two, max(f3) AS max_float, min(f3) as min_float
   ORDER BY two, max_float, min_float;
  two |      max_float       |       min_float       
 -----+----------------------+-----------------------
-   1 | 1.2345678901234e+200 |                    -0
+   1 | 1.2345678901234e+200 |                     0
    2 |                    0 | -1.2345678901234e+200
 (2 rows)
 
@@ -104,7 +104,7 @@ SELECT f1 AS two, max(f3) AS max_float, min(f3) AS min_float
   ORDER BY two, max_float, min_float;
  two |      max_float       |       min_float       
 -----+----------------------+-----------------------
-   1 | 1.2345678901234e+200 |                    -0
+   1 | 1.2345678901234e+200 |                     0
    2 |                    0 | -1.2345678901234e+200
 (2 rows)
 
