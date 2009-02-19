@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.97 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.98 2009/02/19 20:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,9 +424,27 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				 create_unique_path(root, rel2, rel2->cheapest_total_path,
 									sjinfo) != NULL)
 		{
-			/*
+			/*----------
 			 * For a semijoin, we can join the RHS to anything else by
 			 * unique-ifying the RHS (if the RHS can be unique-ified).
+			 * We will only get here if we have the full RHS but less
+			 * than min_lefthand on the LHS.
+			 *
+			 * The reason to consider such a join path is exemplified by
+			 *	SELECT ... FROM a,b WHERE (a.x,b.y) IN (SELECT c1,c2 FROM c)
+			 * If we insist on doing this as a semijoin we will first have
+			 * to form the cartesian product of A*B.  But if we unique-ify
+			 * C then the semijoin becomes a plain innerjoin and we can join
+			 * in any order, eg C to A and then to B.  When C is much smaller
+			 * than A and B this can be a huge win.  So we allow C to be
+			 * joined to just A or just B here, and then make_join_rel has
+			 * to handle the case properly.
+			 *
+			 * Note that actually we'll allow unique-ified C to be joined to
+			 * some other relation D here, too.  That is legal, if usually not
+			 * very sane, and this routine is only concerned with legality not
+			 * with whether the join is good strategy.
+			 *----------
 			 */
 			if (match_sjinfo)
 				return false;	/* invalid join path */
@@ -648,8 +666,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			break;
 		case JOIN_SEMI:
 			/*
-			 * Do these steps only if we actually have a regular semijoin,
-			 * as opposed to a case where we should unique-ify the RHS.
+			 * We might have a normal semijoin, or a case where we don't have
+			 * enough rels to do the semijoin but can unique-ify the RHS and
+			 * then do an innerjoin (see comments in join_is_legal).  In the
+			 * latter case we can't apply JOIN_SEMI joining.
 			 */
 			if (bms_is_subset(sjinfo->min_lefthand, rel1->relids) &&
 				bms_is_subset(sjinfo->min_righthand, rel2->relids))
