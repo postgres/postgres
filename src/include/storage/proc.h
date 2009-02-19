@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.110 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.111 2009/02/19 08:02:32 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,8 +138,12 @@ typedef struct PROC_HDR
 /*
  * We set aside some extra PGPROC structures for auxiliary processes,
  * ie things that aren't full-fledged backends but need shmem access.
+ * 
+ * Background writer, WAL writer, and autovacuum launcher run during
+ * normal operation. When recovery has just finished, the startup
+ * process can co-exist with them for a brief period before it exits.
  */
-#define NUM_AUXILIARY_PROCS		3
+#define NUM_AUXILIARY_PROCS		4
 
 
 /* configurable options */
