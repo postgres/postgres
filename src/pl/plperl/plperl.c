@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.144 2009/01/07 13:44:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.145 2009/02/19 10:33:17 petere Exp $
  *
  **********************************************************************/
 
@@ -199,7 +199,7 @@ _PG_init(void)
 	pg_bindtextdomain(TEXTDOMAIN);
 
 	DefineCustomBoolVariable("plperl.use_strict",
-	  gettext_noop("If true, will compile trusted and untrusted perl code in strict mode"),
+	  gettext_noop("If true, trusted and untrusted Perl code will be compiled in strict mode."),
 							 NULL,
 							 &plperl_use_strict,
 							 false,
@@ -913,7 +913,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 				 proc->prorettype != VOIDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("plperl functions cannot return type %s",
+					 errmsg("PL/Perl functions cannot return type %s",
 							format_type_be(proc->prorettype))));
 	}
 
@@ -925,7 +925,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("plperl functions cannot take type %s",
+					 errmsg("PL/Perl functions cannot accept type %s",
 							format_type_be(argtypes[i]))));
 	}
 
@@ -1280,7 +1280,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("set-returning Perl function must return "
+					 errmsg("set-returning PL/Perl function must return "
 							"reference to array or use return_next")));
 		}
 
@@ -1313,7 +1313,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("composite-returning Perl function "
+					 errmsg("composite-returning PL/Perl function "
 							"must return reference to hash")));
 		}
 
@@ -1438,7 +1438,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					   errmsg("ignoring modified tuple in DELETE trigger")));
+					   errmsg("ignoring modified row in DELETE trigger")));
 				trv = NULL;
 			}
 		}
@@ -1447,7 +1447,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 					 errmsg("result of Perl trigger function must be undef, "
-							"\"SKIP\" or \"MODIFY\"")));
+							"\"SKIP\", or \"MODIFY\"")));
 			trv = NULL;
 		}
 		retval = PointerGetDatum(trv);
@@ -1612,7 +1612,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("plperl functions cannot return type %s",
+							 errmsg("PL/Perl functions cannot return type %s",
 									format_type_be(procStruct->prorettype))));
 				}
 			}
@@ -1659,7 +1659,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("plperl functions cannot take type %s",
+							 errmsg("PL/Perl functions cannot accept type %s",
 						format_type_be(procStruct->proargtypes.values[i]))));
 				}
 
@@ -1902,7 +1902,7 @@ plperl_return_next(SV *sv)
 		!(SvOK(sv) && SvTYPE(sv) == SVt_RV && SvTYPE(SvRV(sv)) == SVt_PVHV))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("setof-composite-returning Perl function "
+				 errmsg("SETOF-composite-returning PL/Perl function "
 						"must call return_next with reference to hash")));
 
 	if (!current_call_data->ret_tdesc)
