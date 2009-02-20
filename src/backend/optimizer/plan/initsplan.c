@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.146 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.147 2009/02/20 00:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -725,6 +725,9 @@ make_outerjoininfo(PlannerInfo *root,
  * 'qualscope' identifies what level of JOIN the qual came from syntactically.
  * 'ojscope' is needed if we decide to force the qual up to the outer-join
  * level, which will be ojscope not necessarily qualscope.
+ *
+ * At the time this is called, root->join_info_list must contain entries for
+ * all and only those special joins that are syntactically below this qual.
  */
 static void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
@@ -1209,7 +1212,6 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
 {
 	Var		   *forced_null_var;
 	Index		forced_null_rel;
-	SpecialJoinInfo *match_sjinfo = NULL;
 	ListCell   *lc;
 
 	/* Check for IS NULL, and identify the Var forced to NULL */
@@ -1219,47 +1221,19 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
 	forced_null_rel = forced_null_var->varno;
 
 	/*
-	 * Search to see if there's a matching antijoin that is not masked by
-	 * a higher outer join.  Because we have to scan the join info bottom-up,
-	 * we have to continue looking after finding a match to check for masking
-	 * joins.  This logic should agree with reduce_outer_joins's code
-	 * to detect antijoins on the basis of IS NULL clauses.  (It's tempting
-	 * to consider adding some data structures to avoid redundant work,
-	 * but in practice this code shouldn't get executed often enough to
-	 * make it worth the trouble.)
+	 * If the Var comes from the nullable side of a lower antijoin, the
+	 * IS NULL condition is necessarily true.
 	 */
 	foreach(lc, root->join_info_list)
 	{
 		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
 
-		/* Check for match ... */
 		if (sjinfo->jointype == JOIN_ANTI &&
 			bms_is_member(forced_null_rel, sjinfo->syn_righthand))
-		{
-			List   *nonnullable_vars;
-
-			nonnullable_vars = find_nonnullable_vars((Node *) sjinfo->join_quals);
-			if (list_member(nonnullable_vars, forced_null_var))
-			{
-				match_sjinfo = sjinfo;
-				continue;
-			}
-		}
-		/*
-		 * Else, if we had a lower match, check to see if the target var is
-		 * from the nullable side of this OJ.  If so, this OJ masks the
-		 * lower one and we can no longer consider the IS NULL as redundant
-		 * with the lower antijoin.
-		 */
-		if (!match_sjinfo)
-			continue;
-		if (bms_is_member(forced_null_rel, sjinfo->syn_righthand) ||
-			(sjinfo->jointype == JOIN_FULL &&
-			 bms_is_member(forced_null_rel, sjinfo->syn_lefthand)))
-			match_sjinfo = NULL;
+			return true;
 	}
 
-	return (match_sjinfo != NULL);
+	return false;
 }
 
 /*
