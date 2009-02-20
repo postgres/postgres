@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.145 2009/02/19 10:33:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.146 2009/02/20 10:39:19 petere Exp $
  *
  **********************************************************************/
 
@@ -1446,7 +1446,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("result of Perl trigger function must be undef, "
+					 errmsg("result of PL/Perl trigger function must be undef, "
 							"\"SKIP\", or \"MODIFY\"")));
 			trv = NULL;
 		}
