@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.162 2009/02/02 20:07:36 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.163 2009/02/20 02:57:21 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,6 +487,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 		{
 			ahlog(AH, 1, "connecting to new database \"%s\"\n", te->tag);
 			_reconnectToDB(AH, te->tag);
+			ropt->dbname = strdup(te->tag);
 		}
 	}
 
