@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.331 2009/02/18 15:58:40 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.332 2009/02/23 09:28:49 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,7 +432,7 @@ static bool InRedo = false;
 static volatile sig_atomic_t shutdown_requested = false;
 /*
  * Flag set when executing a restore command, to tell SIGTERM signal handler
- * that it's safe to just proc_exit(0).
+ * that it's safe to just proc_exit.
  */
 static volatile sig_atomic_t in_restore_command = false;
 
@@ -2752,7 +2752,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 */
 	in_restore_command = true;
 	if (shutdown_requested)
-		proc_exit(0);
+		proc_exit(1);
 
 	/*
 	 * Copy xlog from archival storage to XLOGDIR
@@ -2818,7 +2818,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * On SIGTERM, assume we have received a fast shutdown request, and exit
 	 * cleanly. It's pure chance whether we receive the SIGTERM first, or the
 	 * child process. If we receive it first, the signal handler will call
-	 * proc_exit(0), otherwise we do it here. If we or the child process
+	 * proc_exit, otherwise we do it here. If we or the child process
 	 * received SIGTERM for any other reason than a fast shutdown request,
 	 * postmaster will perform an immediate shutdown when it sees us exiting
 	 * unexpectedly.
@@ -2829,7 +2829,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * too.
 	 */
 	if (WTERMSIG(rc) == SIGTERM)
-		proc_exit(0);
+		proc_exit(1);
 
 	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
 
@@ -5367,7 +5367,7 @@ StartupXLOG(void)
 				 * recovery.
 				 */
 				if (shutdown_requested)
-					proc_exit(0);
+					proc_exit(1);
 
 				/*
 				 * Have we reached our safe starting point? If so, we can
@@ -7646,7 +7646,7 @@ static void
 StartupProcShutdownHandler(SIGNAL_ARGS)
 {
 	if (in_restore_command)
-		proc_exit(0);
+		proc_exit(1);
 	else
 		shutdown_requested = true;
 }
@@ -7694,9 +7694,9 @@ StartupProcessMain(void)
 
 	BuildFlatFiles(false);
 
-	/* Let postmaster know that startup is finished */
-	SendPostmasterSignal(PMSIGNAL_RECOVERY_COMPLETED);
-
-	/* exit normally */
+	/*
+	 * Exit normally. Exit code 0 tells postmaster that we completed
+	 * recovery successfully.
+	 */
 	proc_exit(0);
 }

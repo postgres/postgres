@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.22 2009/02/18 15:58:41 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.23 2009/02/23 09:28:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@ typedef enum
 {
 	PMSIGNAL_RECOVERY_STARTED,	/* recovery has started */
 	PMSIGNAL_RECOVERY_CONSISTENT, /* recovery has reached consistent state */
-	PMSIGNAL_RECOVERY_COMPLETED, /* recovery has completed */
 	PMSIGNAL_PASSWORD_CHANGE,	/* pg_auth file has changed */
 	PMSIGNAL_WAKEN_ARCHIVER,	/* send a NOTIFY signal to xlog archiver */
 	PMSIGNAL_ROTATE_LOGFILE,	/* send SIGUSR1 to syslogger to rotate logfile */
