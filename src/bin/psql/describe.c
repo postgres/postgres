@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.199 2009/02/11 19:12:04 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.200 2009/02/23 15:59:55 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -2077,10 +2077,11 @@ listDomains(const char *pattern, bool showSystem)
 					  "            WHEN NOT t.typnotnull AND t.typdefault IS NOT NULL THEN 'default '||t.typdefault\n"
 					  "            ELSE ''\n"
 					  "       END as \"%s\",\n"
-			"       pg_catalog.pg_get_constraintdef(r.oid, true) as \"%s\"\n"
+					  "       pg_catalog.array_to_string(ARRAY(\n"
+					  "         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n"
+					  "       ), ' ') as \"%s\"\n"
 					  "FROM pg_catalog.pg_type t\n"
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n"
-		  "     LEFT JOIN pg_catalog.pg_constraint r ON t.oid = r.contypid\n"
 					  "WHERE t.typtype = 'd'\n",
 					  gettext_noop("Schema"),
 					  gettext_noop("Name"),
@@ -2089,7 +2090,7 @@ listDomains(const char *pattern, bool showSystem)
 					  gettext_noop("Check"));
 
  	if (!showSystem)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "  AND n.nspname <> 'pg_catalog'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "t.typname", NULL,
