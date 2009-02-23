@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.234 2009/02/18 11:33:04 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.235 2009/02/23 10:03:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5144,7 +5144,7 @@ validate_tupdesc_compat(TupleDesc expected, TupleDesc returned, const char *msg)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("%s", _(msg)),
 					 errdetail("Returned type %s does not match expected type "
-							   "%s in column %s.",
+							   "%s in column \"%s\".",
 							   OidIsValid(returned->attrs[i]->atttypid) ?
 							   format_type_be(returned->attrs[i]->atttypid) :
 							   _(dropped_column_type),
