@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.113 2008/01/01 19:45:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.113.2.1 2009/02/24 01:38:49 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -160,7 +160,7 @@ DefineType(List *names, List *parameters)
 	 */
 	if (!OidIsValid(typoid))
 	{
-		typoid = TypeShellMake(typeName, typeNamespace);
+		typoid = TypeShellMake(typeName, typeNamespace, GetUserId());
 		/* Make new shell type visible for modification below */
 		CommandCounterIncrement();
 
@@ -417,6 +417,7 @@ DefineType(List *names, List *parameters)
 				   typeNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
+				   GetUserId(),	/* owner's ID */
 				   internalLength,		/* internal size */
 				   TYPTYPE_BASE,	/* type-type (base type) */
 				   delimiter,	/* array element delimiter */
@@ -453,6 +454,7 @@ DefineType(List *names, List *parameters)
 			   typeNamespace,	/* namespace */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,				/* relation kind (ditto) */
+			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
@@ -864,6 +866,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   domainNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
+				   GetUserId(),	/* owner's ID */
 				   internalLength,		/* internal size */
 				   TYPTYPE_DOMAIN,		/* type-type (domain type) */
 				   delimiter,	/* array element delimiter */
@@ -1044,6 +1047,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   enumNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
+				   GetUserId(),	/* owner's ID */
 				   sizeof(Oid), /* internal size */
 				   TYPTYPE_ENUM,	/* type-type (enum type) */
 				   DEFAULT_TYPDELIM,	/* array element delimiter */
@@ -1080,6 +1084,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   enumNamespace,	/* namespace */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,				/* relation kind (ditto) */
+			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */

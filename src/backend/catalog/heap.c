@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.327 2008/01/01 19:45:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.327.2.1 2009/02/24 01:38:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -72,6 +72,7 @@ static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
+				   Oid ownerid,
 				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
@@ -740,6 +741,7 @@ AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
+				   Oid ownerid,
 				   Oid new_array_type)
 {
 	return
@@ -748,6 +750,7 @@ AddNewRelationType(const char *typeName,
 				   typeNamespace,		/* type namespace */
 				   new_rel_oid, /* relation oid */
 				   new_rel_kind,	/* relation kind */
+				   ownerid,		/* owner's ID */
 				   -1,			/* internal size (varlena) */
 				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */
@@ -908,6 +911,7 @@ heap_create_with_catalog(const char *relname,
 									  relnamespace,
 									  relid,
 									  relkind,
+									  ownerid,
 									  new_array_oid);
 
 	/*
@@ -924,6 +928,7 @@ heap_create_with_catalog(const char *relname,
 				   relnamespace,	/* Same namespace as parent */
 				   InvalidOid,	/* Not composite, no relationOid */
 				   0,			/* relkind, also N/A here */
+				   ownerid,		/* owner's ID */
 				   -1,			/* Internal size (varlena) */
 				   TYPTYPE_BASE,	/* Not composite - typelem is */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */

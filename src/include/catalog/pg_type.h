@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.191 2008/01/01 19:45:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.191.2.1 2009/02/24 01:38:49 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -634,13 +634,16 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 0 anyenum_in any
 /*
  * prototypes for functions in pg_type.c
  */
-extern Oid	TypeShellMake(const char *typeName, Oid typeNamespace);
+extern Oid	TypeShellMake(const char *typeName,
+						  Oid typeNamespace,
+						  Oid ownerId);
 
 extern Oid TypeCreate(Oid newTypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,
 		   char relationKind,
+		   Oid ownerId,
 		   int16 internalSize,
 		   char typeType,
 		   char typDelim,
