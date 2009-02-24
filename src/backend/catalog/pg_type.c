@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.108 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.108.2.1 2009/02/24 01:39:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
  * ----------------------------------------------------------------
  */
 Oid
-TypeShellMake(const char *typeName, Oid typeNamespace)
+TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 {
 	Relation	pg_type_desc;
 	TupleDesc	tupDesc;
@@ -82,7 +82,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
+	values[i++] = ObjectIdGetDatum(ownerId);	/* typowner */
 	values[i++] = Int16GetDatum(sizeof(int4));	/* typlen */
 	values[i++] = BoolGetDatum(true);	/* typbyval */
 	values[i++] = CharGetDatum('p');	/* typtype */
@@ -124,7 +124,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 								 typoid,
 								 InvalidOid,
 								 0,
-								 GetUserId(),
+								 ownerId,
 								 F_SHELL_IN,
 								 F_SHELL_OUT,
 								 InvalidOid,
@@ -157,6 +157,7 @@ TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,		/* only for 'c'atalog types */
 		   char relationKind,	/* ditto */
+		   Oid ownerId,
 		   int16 internalSize,
 		   char typeType,
 		   char typDelim,
@@ -231,7 +232,7 @@ TypeCreate(const char *typeName,
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
+	values[i++] = ObjectIdGetDatum(ownerId);	/* typowner */
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
@@ -298,7 +299,7 @@ TypeCreate(const char *typeName,
 		/*
 		 * shell type must have been created by same owner
 		 */
-		if (((Form_pg_type) GETSTRUCT(tup))->typowner != GetUserId())
+		if (((Form_pg_type) GETSTRUCT(tup))->typowner != ownerId)
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE, typeName);
 
 		/*
@@ -336,7 +337,7 @@ TypeCreate(const char *typeName,
 								 typeObjectId,
 								 relationOid,
 								 relationKind,
-								 GetUserId(),
+								 ownerId,
 								 inputProcedure,
 								 outputProcedure,
 								 receiveProcedure,

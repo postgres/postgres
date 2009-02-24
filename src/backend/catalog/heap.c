@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.314 2006/11/05 22:42:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.314.2.1 2009/02/24 01:39:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -69,7 +69,8 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
-				   char new_rel_kind);
+				   char new_rel_kind,
+				   Oid ownerid);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
@@ -710,13 +711,15 @@ static Oid
 AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
-				   char new_rel_kind)
+				   char new_rel_kind,
+				   Oid ownerid)
 {
 	return
 		TypeCreate(typeName,	/* type name */
 				   typeNamespace,		/* type namespace */
 				   new_rel_oid, /* relation oid */
 				   new_rel_kind,	/* relation kind */
+				   ownerid,		/* owner's ID */
 				   -1,			/* internal size (varlena) */
 				   'c',			/* type-type (complex) */
 				   ',',			/* default array delimiter */
@@ -812,7 +815,8 @@ heap_create_with_catalog(const char *relname,
 	new_type_oid = AddNewRelationType(relname,
 									  relnamespace,
 									  relid,
-									  relkind);
+									  relkind,
+									  ownerid);
 
 	/*
 	 * now create an entry in pg_class for the relation.
