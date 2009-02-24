@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.48 2009/02/03 00:59:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.49 2009/02/24 12:09:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1191,18 +1191,9 @@ logfile_getname(pg_time_t timestamp, char *suffix)
 
 	len = strlen(filename);
 
-	if (strchr(Log_filename, '%'))
-	{
-		/* treat it as a strftime pattern */
-		pg_strftime(filename + len, MAXPGPATH - len, Log_filename,
-					pg_localtime(&timestamp, log_timezone));
-	}
-	else
-	{
-		/* no strftime escapes, so append timestamp to new filename */
-		snprintf(filename + len, MAXPGPATH - len, "%s.%lu",
-				 Log_filename, (unsigned long) timestamp);
-	}
+	/* treat it as a strftime pattern */
+	pg_strftime(filename + len, MAXPGPATH - len, Log_filename,
+		pg_localtime(&timestamp, log_timezone));
 
 	if (suffix != NULL)
 	{

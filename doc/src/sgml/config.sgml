@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.209 2009/02/22 23:50:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.210 2009/02/24 12:09:08 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2398,15 +2398,19 @@ local0.*    /var/log/postgresql
         so <literal>%</literal>-escapes can be used to specify time-varying
         file names.  (Note that if there are
         any time-zone-dependent <literal>%</literal>-escapes, the computation
-        is done in the zone specified by <xref linkend="guc-log-timezone">.)
-        If no <literal>%</literal>-escapes are present,
-        <productname>PostgreSQL</productname> will append the epoch of the new
-        log file's creation time.  For example, if
-        <varname>log_filename</varname> were <literal>server_log</literal>,
-        then the chosen file name would be <literal>server_log.1093827753</>
-        for a log starting at Sun Aug 29 19:02:33 2004 MST.
+        is done in the zone specified
+        by <xref linkend="guc-log-timezone">.)
         Note that the system's <systemitem>strftime</systemitem> is not used
         directly, so platform-specific (nonstandard) extensions do not work.
+       </para>
+       <para>
+        If you specify a file name without escapes, you should plan to
+        use a log rotation utility to avoid eventually filling the
+        entire disk.  In releases prior to 8.4, if
+        no <literal>%</literal> escapes were
+        present, <productname>PostgreSQL</productname> would append
+        the epoch of the new log file's creation time, but this is no
+        longer the case.
        </para>
        <para>
         If CSV-format output is enabled in <varname>log_destination</>,
