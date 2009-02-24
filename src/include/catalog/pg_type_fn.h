@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type_fn.h,v 1.3 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type_fn.h,v 1.4 2009/02/24 01:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,16 @@
 #include "nodes/nodes.h"
 
 
-extern Oid	TypeShellMake(const char *typeName, Oid typeNamespace);
+extern Oid	TypeShellMake(const char *typeName,
+						  Oid typeNamespace,
+						  Oid ownerId);
 
 extern Oid TypeCreate(Oid newTypeOid,
 		   const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,
 		   char relationKind,
+		   Oid ownerId,
 		   int16 internalSize,
 		   char typeType,
 		   char typeCategory,
