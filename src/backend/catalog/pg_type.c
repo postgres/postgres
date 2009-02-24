@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.104 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.104.2.1 2009/02/24 01:39:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
  * ----------------------------------------------------------------
  */
 Oid
-TypeShellMake(const char *typeName, Oid typeNamespace)
+TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 {
 	Relation	pg_type_desc;
 	TupleDesc	tupDesc;
@@ -75,7 +75,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
+	values[i++] = ObjectIdGetDatum(ownerId);		/* typowner */
 	values[i++] = Int16GetDatum(0);		/* typlen */
 	values[i++] = BoolGetDatum(false);	/* typbyval */
 	values[i++] = CharGetDatum(0);		/* typtype */
@@ -117,7 +117,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 								 typoid,
 								 InvalidOid,
 								 0,
-								 GetUserId(),
+								 ownerId,
 								 InvalidOid,
 								 InvalidOid,
 								 InvalidOid,
@@ -150,6 +150,7 @@ TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid relationOid,		/* only for 'c'atalog types */
 		   char relationKind,	/* ditto */
+		   Oid ownerId,
 		   int16 internalSize,
 		   char typeType,
 		   char typDelim,
@@ -224,7 +225,7 @@ TypeCreate(const char *typeName,
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
+	values[i++] = ObjectIdGetDatum(ownerId);	/* typowner */
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
@@ -323,7 +324,7 @@ TypeCreate(const char *typeName,
 								 typeObjectId,
 								 relationOid,
 								 relationKind,
-								 GetUserId(),
+								 ownerId,
 								 inputProcedure,
 								 outputProcedure,
 								 receiveProcedure,
