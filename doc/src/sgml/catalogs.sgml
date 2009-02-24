@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.197 2009/02/09 20:57:59 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.198 2009/02/24 10:06:31 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2466,10 +2466,16 @@
      </row>
 
      <row>
-      <entry><structfield>fdwlibrary</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>File name of the library implementing this foreign-data wrapper</entry>
+      <entry><structfield>fdwvalidator</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>
+       References a validator function that is responsible for
+       checking the validity of the generic options given to the
+       foreign-data wrapper, as well as to foreign servers and user
+       mappings using the foreign-data wrapper.  Zero if no validator
+       is provided.
+      </entry>
      </row>
 
      <row>

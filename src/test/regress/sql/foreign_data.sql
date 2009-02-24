@@ -20,44 +20,40 @@ CREATE ROLE regress_test_role_super SUPERUSER;
 CREATE ROLE regress_test_indirect;
 CREATE ROLE unprivileged_role;
 
-CREATE FOREIGN DATA WRAPPER dummy LIBRARY 'dummy_fdw' LANGUAGE C;
-CREATE FOREIGN DATA WRAPPER postgresql LIBRARY 'postgresql_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER dummy;
+CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
 
 -- At this point we should have 2 built-in wrappers and no servers.
-SELECT fdwname, fdwlibrary, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
+SELECT fdwname, fdwvalidator::regproc, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
 SELECT srvname, srvoptions FROM pg_foreign_server;
 SELECT * FROM pg_user_mapping;
 
 -- CREATE FOREIGN DATA WRAPPER
-CREATE FOREIGN DATA WRAPPER foo LIBRARY '' LANGUAGE C;            -- ERROR
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'plpgsql' LANGUAGE C;
-DROP FOREIGN DATA WRAPPER foo;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER foo VALIDATOR bar;            -- ERROR
+CREATE FOREIGN DATA WRAPPER foo;
 \dew
 
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C; -- duplicate
-CREATE FOREIGN DATA WRAPPER "Foo" LIBRARY 'dummy_fdw' LANGUAGE C;
-DROP FOREIGN DATA WRAPPER "Foo";
+CREATE FOREIGN DATA WRAPPER foo; -- duplicate
 DROP FOREIGN DATA WRAPPER foo;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (testing '1');
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1');
 \dew+
 
 DROP FOREIGN DATA WRAPPER foo;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (testing '1', testing '2');   -- ERROR
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (testing '1', another '2');
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1', testing '2');   -- ERROR
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1', another '2');
 \dew+
 
 DROP FOREIGN DATA WRAPPER foo;
 SET ROLE regress_test_role;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C; -- ERROR
+CREATE FOREIGN DATA WRAPPER foo; -- ERROR
 RESET ROLE;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'postgresql_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 \dew+
 
 -- ALTER FOREIGN DATA WRAPPER
-ALTER FOREIGN DATA WRAPPER foo LIBRARY '';                  -- ERROR
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'plpgsql';
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw';
+ALTER FOREIGN DATA WRAPPER foo;                             -- ERROR
+ALTER FOREIGN DATA WRAPPER foo VALIDATOR bar;               -- ERROR
+ALTER FOREIGN DATA WRAPPER foo NO VALIDATOR;
 \dew+
 
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (a '1', b '2');
@@ -101,7 +97,7 @@ DROP FOREIGN DATA WRAPPER foo;
 DROP ROLE regress_test_role_super;
 \dew+
 
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR current_user SERVER s1;
 \dew+
@@ -118,7 +114,7 @@ DROP FOREIGN DATA WRAPPER foo CASCADE;
 
 -- exercise CREATE SERVER
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (test_wrapper 'true');
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (test_wrapper 'true');
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
 CREATE SERVER s2 FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
@@ -313,12 +309,11 @@ GRANT USAGE ON FOREIGN SERVER s4 TO regress_test_role;
 DROP USER MAPPING FOR public SERVER s4;
 ALTER SERVER s6 OPTIONS (DROP host, DROP dbname);
 ALTER USER MAPPING FOR regress_test_role SERVER s6 OPTIONS (DROP username);
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'plpgsql';
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'default_fdw';
+ALTER FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 
 -- Privileges
 SET ROLE unprivileged_role;
-CREATE FOREIGN DATA WRAPPER foobar LIBRARY 'dummy_fdw' LANGUAGE C; -- ERROR
+CREATE FOREIGN DATA WRAPPER foobar;                             -- ERROR
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
 ALTER FOREIGN DATA WRAPPER foo OWNER TO unprivileged_role;      -- ERROR
 DROP FOREIGN DATA WRAPPER foo;                                  -- ERROR
@@ -336,7 +331,7 @@ RESET ROLE;
 GRANT USAGE ON FOREIGN DATA WRAPPER postgresql TO unprivileged_role;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO unprivileged_role WITH GRANT OPTION;
 SET ROLE unprivileged_role;
-CREATE FOREIGN DATA WRAPPER foobar LIBRARY 'dummy_fdw' LANGUAGE C; -- ERROR
+CREATE FOREIGN DATA WRAPPER foobar;                             -- ERROR
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
 DROP FOREIGN DATA WRAPPER foo;                                  -- ERROR
 GRANT USAGE ON FOREIGN DATA WRAPPER postgresql TO regress_test_role; -- WARNING
@@ -391,6 +386,6 @@ DROP FOREIGN DATA WRAPPER dummy CASCADE;
 DROP ROLE foreign_data_user;
 
 -- At this point we should have no wrappers, no servers, and no mappings.
-SELECT fdwname, fdwlibrary, fdwoptions FROM pg_foreign_data_wrapper;
+SELECT fdwname, fdwvalidator, fdwoptions FROM pg_foreign_data_wrapper;
 SELECT srvname, srvoptions FROM pg_foreign_server;
 SELECT * FROM pg_user_mapping;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.536 2009/02/06 21:15:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.537 2009/02/24 10:06:34 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3681,6 +3681,8 @@ DATA(insert OID = 2286 ( pg_total_relation_size		PGNSP PGUID 12 1 0 0 f f f t f 
 DESCR("total disk space usage for the specified table and associated indexes and toast tables");
 DATA(insert OID = 2288 ( pg_size_pretty			PGNSP PGUID 12 1 0 0 f f f t f v 1 0 25 "20" _null_ _null_ _null_ _null_ pg_size_pretty _null_ _null_ _null_ ));
 DESCR("convert a long int to a human readable text using size units");
+
+DATA(insert OID = 2316 ( postgresql_fdw_validator PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "1009 26" _null_ _null_ _null_ _null_ postgresql_fdw_validator _null_ _null_ _null_));
 
 DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 1 0 0 f f f t f v 3 0 2249 "2275 26 23" _null_ _null_ _null_ _null_	record_in _null_ _null_ _null_ ));
 DESCR("I/O");

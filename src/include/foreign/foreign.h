@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/foreign/foreign.h,v 1.2 2009/01/01 17:23:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/foreign/foreign.h,v 1.3 2009/02/24 10:06:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,17 +33,13 @@ typedef enum {
 	FdwOpt = 4,					/* options for FOREIGN DATA WRAPPER */
 } GenericOptionFlags;
 
-typedef struct ForeignDataWrapperLibrary ForeignDataWrapperLibrary;
-
 typedef struct ForeignDataWrapper
 {
 	Oid		fdwid;				/* FDW Oid */
 	Oid		owner;				/* FDW owner user Oid */
 	char   *fdwname;			/* Name of the FDW */
-	char   *fdwlibrary;			/* Library name */
+	Oid		fdwvalidator;
 	List   *options;			/* fdwoptions as DefElem list */
-
-	ForeignDataWrapperLibrary *lib;	/* interface to the FDW functions */
 } ForeignDataWrapper;
 
 typedef struct ForeignServer
@@ -65,25 +61,6 @@ typedef struct UserMapping
 } UserMapping;
 
 
-/*
- * Foreign-data wrapper library function types.
- */
-typedef void (*OptionListValidatorFunc)(ForeignDataWrapper *,
-										GenericOptionFlags,
-										List *);
-
-/*
- * Interface functions to the foreign-data wrapper. This is decoupled
- * from the FDW as there maybe several FDW-s accessing the same library.
- */
-struct ForeignDataWrapperLibrary
-{
-	char 	   *libname;		/* name of the library file */
-
-	OptionListValidatorFunc	validateOptionList;
-};
-
-
 extern ForeignServer *GetForeignServer(Oid serverid);
 extern ForeignServer *GetForeignServerByName(const char *name, bool missing_ok);
 extern Oid GetForeignServerOidByName(const char *name, bool missing_ok);
@@ -92,7 +69,6 @@ extern ForeignDataWrapper *GetForeignDataWrapper(Oid fdwid);
 extern ForeignDataWrapper *GetForeignDataWrapperByName(const char *name,
 													   bool missing_ok);
 extern Oid GetForeignDataWrapperOidByName(const char *name, bool missing_ok);
-extern ForeignDataWrapperLibrary *GetForeignDataWrapperLibrary(const char *libname);
 
 /* Foreign data wrapper interface functions */
 extern void _pg_validateOptionList(ForeignDataWrapper *fdw,

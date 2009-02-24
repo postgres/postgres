@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.2 2009/02/24 10:06:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
-    LIBRARY '<replaceable class="parameter">libraryname</replaceable>'
-    LANGUAGE C
+    [ VALIDATOR <replaceable class="parameter">valfunction</replaceable> | NO VALIDATOR ]
     [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -59,25 +58,25 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">libraryname</replaceable></term>
+    <term><literal>VALIDATOR <replaceable class="parameter">valfunction</replaceable></literal></term>
     <listitem>
      <para>
-      The name of the shared library implementing the foreign-data
-      wrapper.  The file name is specified in the same way as for
-      shared library names in <xref linkend="sql-createfunction"
-      endterm="sql-createfunction-title">; in particular, one can rely
-      on a search path and automatic addition of the system's standard
-      shared library file name extension.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>LANGUAGE C</literal></term>
-    <listitem>
-     <para>
-      Currently, only the C programming language is supported for
-      implementing foreign-data wrappers.
+      <replaceable class="parameter">valfunction</replaceable> is the
+      name of a previously registered function that will be called to
+      check the generic options given to the foreign-data wrapper, as
+      well as to foreign servers and user mappings using the
+      foreign-data wrapper.  If no validator function or <literal>NO
+      VALIDATOR</literal> is specified, then options will not be
+      checked at creation time.  (Foreign-data wrappers will possibly
+      ignore or reject invalid option specifications at run time,
+      depending on the implementation.)  The validator function must
+      take two arguments: one of type <type>text[]</type>, which will
+      contain the array of options as stored in the system catalogs,
+      and one of type <type>oid</type>, which will be the OID of the
+      system catalog containing the options, or zero if the context is
+      not known.  The return type is ignored; the function should
+      indicate invalid options using
+      the <function>ereport()</function> function.
      </para>
     </listitem>
    </varlistentry>
@@ -109,18 +108,11 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   The C language API for foreign-data wrappers is currently not
-   documented, stable, or complete.  Would-be authors of functionality
-   interfacing with the SQL/MED functionality are advised to contact
-   the PostgreSQL developers.
-  </para>
-
-  <para>
-   There are currently two foreign-data wrapper libraries
-   provided: <filename>dummy_fdw</filename>, which does nothing and
-   could be useful for testing,
-   and <filename>postgresql_fdw</filename>, which accepts options
-   corresponding to <application>libpq</> connection parameters.
+   There is currently one foreign-data wrapper validator function
+   provided:
+   <filename>postgresql_fdw_validator</filename>, which accepts
+   options corresponding to <application>libpq</> connection
+   parameters.
   </para>
  </refsect1>
 
@@ -128,28 +120,25 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a foreign-data wrapper <literal>dummy</> with
-   library <literal>dummy_fdw</>:
+   Create a foreign-data wrapper <literal>dummy</>:
 <programlisting>
-CREATE FOREIGN DATA WRAPPER dummy LIBRARY 'dummy_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER dummy;
 </programlisting>
   </para>
 
   <para>
    Create a foreign-data wrapper <literal>postgresql</> with
-   library <literal>postgresql_fdw</>:
+   validator function <literal>postgresql_fdw_validator</>:
 <programlisting>
-CREATE FOREIGN DATA WRAPPER postgresql LIBRARY 'postgresql_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
 </programlisting>
   </para>
 
   <para>
-   Create a foreign-data wrapper <literal>mywrapper</> with library
-   <literal>/home/bob/mywrapper.so</> and some options:
+   Create a foreign-data wrapper <literal>mywrapper</> with some
+   options:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER mywrapper
-    LIBRARY '/home/bob/mywrapper.so'
-    LANGUAGE C
     OPTIONS (debug 'true');
 </programlisting>
   </para>
@@ -161,8 +150,9 @@ CREATE FOREIGN DATA WRAPPER mywrapper
   <para>
    <command>CREATE FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
    9075-9 (SQL/MED), with the exception that
-   the <literal>LIBRARY</literal> clause is not optional in
-   PostgreSQL.
+   the <literal>VALIDATOR</literal> clause is an extension and the
+   clauses <literal>LIBRARY</literal> and <literal>LANGUAGE</literal>
+   are not yet implemented in PostgreSQL.
   </para>
 
   <para>

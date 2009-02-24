@@ -13,14 +13,14 @@ CREATE ROLE regress_test_role2;
 CREATE ROLE regress_test_role_super SUPERUSER;
 CREATE ROLE regress_test_indirect;
 CREATE ROLE unprivileged_role;
-CREATE FOREIGN DATA WRAPPER dummy LIBRARY 'dummy_fdw' LANGUAGE C;
-CREATE FOREIGN DATA WRAPPER postgresql LIBRARY 'postgresql_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER dummy;
+CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
 -- At this point we should have 2 built-in wrappers and no servers.
-SELECT fdwname, fdwlibrary, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
-  fdwname   |   fdwlibrary   | fdwoptions 
-------------+----------------+------------
- dummy      | dummy_fdw      | 
- postgresql | postgresql_fdw | 
+SELECT fdwname, fdwvalidator::regproc, fdwoptions FROM pg_foreign_data_wrapper ORDER BY 1, 2, 3;
+  fdwname   |       fdwvalidator       | fdwoptions 
+------------+--------------------------+------------
+ dummy      | -                        | 
+ postgresql | postgresql_fdw_validator | 
 (2 rows)
 
 SELECT srvname, srvoptions FROM pg_foreign_server;
@@ -34,78 +34,75 @@ SELECT * FROM pg_user_mapping;
 (0 rows)
 
 -- CREATE FOREIGN DATA WRAPPER
-CREATE FOREIGN DATA WRAPPER foo LIBRARY '' LANGUAGE C;            -- ERROR
-ERROR:  could not access file "": No such file or directory
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'plpgsql' LANGUAGE C;
-DROP FOREIGN DATA WRAPPER foo;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER foo VALIDATOR bar;            -- ERROR
+ERROR:  function bar(text[], oid) does not exist
+CREATE FOREIGN DATA WRAPPER foo;
 \dew
-          List of foreign-data wrappers
-    Name    |       Owner       |    Library     
-------------+-------------------+----------------
- dummy      | foreign_data_user | dummy_fdw
- foo        | foreign_data_user | dummy_fdw
- postgresql | foreign_data_user | postgresql_fdw
+               List of foreign-data wrappers
+    Name    |       Owner       |        Validator         
+------------+-------------------+--------------------------
+ dummy      | foreign_data_user | -
+ foo        | foreign_data_user | -
+ postgresql | foreign_data_user | postgresql_fdw_validator
 (3 rows)
 
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C; -- duplicate
+CREATE FOREIGN DATA WRAPPER foo; -- duplicate
 ERROR:  foreign-data wrapper "foo" already exists
-CREATE FOREIGN DATA WRAPPER "Foo" LIBRARY 'dummy_fdw' LANGUAGE C;
-DROP FOREIGN DATA WRAPPER "Foo";
 DROP FOREIGN DATA WRAPPER foo;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (testing '1');
-\dew+
-                           List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges |   Options   
-------------+-------------------+----------------+-------------------+-------------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | {testing=1}
- postgresql | foreign_data_user | postgresql_fdw |                   | 
-(3 rows)
-
-DROP FOREIGN DATA WRAPPER foo;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (testing '1', testing '2');   -- ERROR
-ERROR:  option "testing" provided more than once
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (testing '1', another '2');
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1');
 \dew+
                                 List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges |        Options        
-------------+-------------------+----------------+-------------------+-----------------------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | {testing=1,another=2}
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+    Name    |       Owner       |        Validator         | Access privileges |   Options   
+------------+-------------------+--------------------------+-------------------+-------------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | {testing=1}
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
+(3 rows)
+
+DROP FOREIGN DATA WRAPPER foo;
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1', testing '2');   -- ERROR
+ERROR:  option "testing" provided more than once
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (testing '1', another '2');
+\dew+
+                                     List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges |        Options        
+------------+-------------------+--------------------------+-------------------+-----------------------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | {testing=1,another=2}
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 DROP FOREIGN DATA WRAPPER foo;
 SET ROLE regress_test_role;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C; -- ERROR
+CREATE FOREIGN DATA WRAPPER foo; -- ERROR
 ERROR:  permission denied to create foreign-data wrapper "foo"
 HINT:  Must be superuser to create a foreign-data wrapper.
 RESET ROLE;
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'postgresql_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 \dew+
-                         List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges | Options 
-------------+-------------------+----------------+-------------------+---------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | postgresql_fdw |                   | 
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                              List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges | Options 
+------------+-------------------+--------------------------+-------------------+---------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | postgresql_fdw_validator |                   | 
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 -- ALTER FOREIGN DATA WRAPPER
-ALTER FOREIGN DATA WRAPPER foo LIBRARY '';                  -- ERROR
-ERROR:  could not access file "": No such file or directory
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'plpgsql';
-WARNING:  changing the foreign-data wrapper library can cause the options for dependent objects to become invalid
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw';
-WARNING:  changing the foreign-data wrapper library can cause the options for dependent objects to become invalid
+ALTER FOREIGN DATA WRAPPER foo;                             -- ERROR
+ERROR:  syntax error at or near ";"
+LINE 1: ALTER FOREIGN DATA WRAPPER foo;
+                                      ^
+ALTER FOREIGN DATA WRAPPER foo VALIDATOR bar;               -- ERROR
+ERROR:  function bar(text[], oid) does not exist
+ALTER FOREIGN DATA WRAPPER foo NO VALIDATOR;
 \dew+
-                         List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges | Options 
-------------+-------------------+----------------+-------------------+---------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | 
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                              List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges | Options 
+------------+-------------------+--------------------------+-------------------+---------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | 
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (a '1', b '2');
@@ -115,34 +112,34 @@ ALTER FOREIGN DATA WRAPPER foo OPTIONS (DROP c);            -- ERROR
 ERROR:  option "c" not found
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (ADD x '1', DROP x);
 \dew+
-                          List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges |  Options  
-------------+-------------------+----------------+-------------------+-----------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | {a=1,b=2}
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                               List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges |  Options  
+------------+-------------------+--------------------------+-------------------+-----------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | {a=1,b=2}
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (DROP a, SET b '3', ADD c '4');
 \dew+
-                          List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges |  Options  
-------------+-------------------+----------------+-------------------+-----------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | {b=3,c=4}
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                               List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges |  Options  
+------------+-------------------+--------------------------+-------------------+-----------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | {b=3,c=4}
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (a '2');
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (b '4');             -- ERROR
 ERROR:  option "b" provided more than once
 \dew+
-                            List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges |    Options    
-------------+-------------------+----------------+-------------------+---------------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | {b=3,c=4,a=2}
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                                 List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges |    Options    
+------------+-------------------+--------------------------+-------------------+---------------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | {b=3,c=4,a=2}
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 SET ROLE regress_test_role;
@@ -152,12 +149,12 @@ HINT:  Must be superuser to alter a foreign-data wrapper.
 SET ROLE regress_test_role_super;
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (ADD d '5');
 \dew+
-                              List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges |      Options      
-------------+-------------------+----------------+-------------------+-------------------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | {b=3,c=4,a=2,d=5}
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                                   List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges |      Options      
+------------+-------------------+--------------------------+-------------------+-------------------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | {b=3,c=4,a=2,d=5}
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 ALTER FOREIGN DATA WRAPPER foo OWNER TO regress_test_role;  -- ERROR
@@ -171,12 +168,12 @@ ERROR:  permission denied to alter foreign-data wrapper "foo"
 HINT:  Must be superuser to alter a foreign-data wrapper.
 RESET ROLE;
 \dew+
-                                 List of foreign-data wrappers
-    Name    |          Owner          |    Library     | Access privileges |      Options      
-------------+-------------------------+----------------+-------------------+-------------------
- dummy      | foreign_data_user       | dummy_fdw      |                   | 
- foo        | regress_test_role_super | dummy_fdw      |                   | {b=3,c=4,a=2,d=5}
- postgresql | foreign_data_user       | postgresql_fdw |                   | 
+                                      List of foreign-data wrappers
+    Name    |          Owner          |        Validator         | Access privileges |      Options      
+------------+-------------------------+--------------------------+-------------------+-------------------
+ dummy      | foreign_data_user       | -                        |                   | 
+ foo        | regress_test_role_super | -                        |                   | {b=3,c=4,a=2,d=5}
+ postgresql | foreign_data_user       | postgresql_fdw_validator |                   | 
 (3 rows)
 
 -- DROP FOREIGN DATA WRAPPER
@@ -185,12 +182,12 @@ ERROR:  foreign-data wrapper "nonexistent" does not exist
 DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
 NOTICE:  foreign-data wrapper "nonexistent" does not exist, skipping
 \dew+
-                                 List of foreign-data wrappers
-    Name    |          Owner          |    Library     | Access privileges |      Options      
-------------+-------------------------+----------------+-------------------+-------------------
- dummy      | foreign_data_user       | dummy_fdw      |                   | 
- foo        | regress_test_role_super | dummy_fdw      |                   | {b=3,c=4,a=2,d=5}
- postgresql | foreign_data_user       | postgresql_fdw |                   | 
+                                      List of foreign-data wrappers
+    Name    |          Owner          |        Validator         | Access privileges |      Options      
+------------+-------------------------+--------------------------+-------------------+-------------------
+ dummy      | foreign_data_user       | -                        |                   | 
+ foo        | regress_test_role_super | -                        |                   | {b=3,c=4,a=2,d=5}
+ postgresql | foreign_data_user       | postgresql_fdw_validator |                   | 
 (3 rows)
 
 DROP ROLE regress_test_role_super;                          -- ERROR
@@ -205,23 +202,23 @@ ALTER ROLE regress_test_role_super SUPERUSER;
 DROP FOREIGN DATA WRAPPER foo;
 DROP ROLE regress_test_role_super;
 \dew+
-                         List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges | Options 
-------------+-------------------+----------------+-------------------+---------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                              List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges | Options 
+------------+-------------------+--------------------------+-------------------+---------
+ dummy      | foreign_data_user | -                        |                   | 
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (2 rows)
 
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C;
+CREATE FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR current_user SERVER s1;
 \dew+
-                         List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges | Options 
-------------+-------------------+----------------+-------------------+---------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- foo        | foreign_data_user | dummy_fdw      |                   | 
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                              List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges | Options 
+------------+-------------------+--------------------------+-------------------+---------
+ dummy      | foreign_data_user | -                        |                   | 
+ foo        | foreign_data_user | -                        |                   | 
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (3 rows)
 
 \des+
@@ -253,11 +250,11 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to server s1
 drop cascades to user mapping for foreign_data_user
 \dew+
-                         List of foreign-data wrappers
-    Name    |       Owner       |    Library     | Access privileges | Options 
-------------+-------------------+----------------+-------------------+---------
- dummy      | foreign_data_user | dummy_fdw      |                   | 
- postgresql | foreign_data_user | postgresql_fdw |                   | 
+                              List of foreign-data wrappers
+    Name    |       Owner       |        Validator         | Access privileges | Options 
+------------+-------------------+--------------------------+-------------------+---------
+ dummy      | foreign_data_user | -                        |                   | 
+ postgresql | foreign_data_user | postgresql_fdw_validator |                   | 
 (2 rows)
 
 \des+
@@ -275,7 +272,7 @@ drop cascades to user mapping for foreign_data_user
 -- exercise CREATE SERVER
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
 ERROR:  foreign-data wrapper "foo" does not exist
-CREATE FOREIGN DATA WRAPPER foo LIBRARY 'dummy_fdw' LANGUAGE C OPTIONS (test_wrapper 'true');
+CREATE FOREIGN DATA WRAPPER foo OPTIONS (test_wrapper 'true');
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
 ERROR:  server "s1" already exists
@@ -286,8 +283,8 @@ CREATE SERVER s5 VERSION '15.0' FOREIGN DATA WRAPPER foo;
 CREATE SERVER s6 VERSION '16.0' FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
 CREATE SERVER s7 TYPE 'oracle' VERSION '17.0' FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
 CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (foo '1'); -- ERROR
-ERROR:  invalid option "foo" to server
-HINT:  valid server options are: authtype, service, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
+ERROR:  invalid option "foo"
+HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
 CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (host 'localhost', dbname 's8db');
 \des+
                                                 List of foreign servers
@@ -397,8 +394,8 @@ ALTER SERVER s1 OWNER TO regress_test_role2;                -- ERROR
 ERROR:  permission denied for foreign-data wrapper foo
 RESET ROLE;
 ALTER SERVER s8 OPTIONS (foo '1');                          -- ERROR option validation
-ERROR:  invalid option "foo" to server
-HINT:  valid server options are: authtype, service, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
+ERROR:  invalid option "foo"
+HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
 ALTER SERVER s8 OPTIONS (connect_timeout '30', SET dbname 'db1', DROP host);
 SET ROLE regress_test_role;
 ALTER SERVER s1 OWNER TO regress_test_indirect;             -- ERROR
@@ -536,8 +533,8 @@ CREATE USER MAPPING FOR user SERVER s4;                     -- ERROR duplicate
 ERROR:  user mapping "foreign_data_user" already exists for server s4
 CREATE USER MAPPING FOR public SERVER s4 OPTIONS (mapping 'is public');
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (username 'test', password 'secret');    -- ERROR
-ERROR:  invalid option "username" to user mapping
-HINT:  valid user mapping options are: user, password
+ERROR:  invalid option "username"
+HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
 CREATE USER MAPPING FOR user SERVER s8 OPTIONS (user 'test', password 'secret');
 ALTER SERVER s5 OWNER TO regress_test_role;
 ALTER SERVER s6 OWNER TO regress_test_indirect;
@@ -575,8 +572,8 @@ ERROR:  server "ss4" does not exist
 ALTER USER MAPPING FOR public SERVER s5 OPTIONS (gotcha 'true');            -- ERROR
 ERROR:  user mapping "public" does not exist for the server
 ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (username 'test');    -- ERROR
-ERROR:  invalid option "username" to user mapping
-HINT:  valid user mapping options are: user, password
+ERROR:  invalid option "username"
+HINT:  Valid options in this context are: authtype, service, user, password, connect_timeout, dbname, host, hostaddr, port, tty, options, requiressl, sslmode, gsslib
 ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (DROP user, SET password 'public');
 SET ROLE regress_test_role;
 ALTER USER MAPPING FOR current_user SERVER s5 OPTIONS (ADD modified '1');
@@ -632,11 +629,11 @@ DROP SERVER s7;
 
 -- Information schema
 SELECT * FROM information_schema.foreign_data_wrappers ORDER BY 1, 2;
- foreign_data_wrapper_catalog | foreign_data_wrapper_name | authorization_identifier |  library_name  | foreign_data_wrapper_language 
-------------------------------+---------------------------+--------------------------+----------------+-------------------------------
- regression                   | dummy                     | foreign_data_user        | dummy_fdw      | c
- regression                   | foo                       | foreign_data_user        | dummy_fdw      | c
- regression                   | postgresql                | foreign_data_user        | postgresql_fdw | c
+ foreign_data_wrapper_catalog | foreign_data_wrapper_name | authorization_identifier | library_name | foreign_data_wrapper_language 
+------------------------------+---------------------------+--------------------------+--------------+-------------------------------
+ regression                   | dummy                     | foreign_data_user        |              | c
+ regression                   | foo                       | foreign_data_user        |              | c
+ regression                   | postgresql                | foreign_data_user        |              | c
 (3 rows)
 
 SELECT * FROM information_schema.foreign_data_wrapper_options ORDER BY 1, 2, 3;
@@ -847,13 +844,11 @@ GRANT USAGE ON FOREIGN SERVER s4 TO regress_test_role;
 DROP USER MAPPING FOR public SERVER s4;
 ALTER SERVER s6 OPTIONS (DROP host, DROP dbname);
 ALTER USER MAPPING FOR regress_test_role SERVER s6 OPTIONS (DROP username);
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'plpgsql';
-WARNING:  changing the foreign-data wrapper library can cause the options for dependent objects to become invalid
-ALTER FOREIGN DATA WRAPPER foo LIBRARY 'default_fdw';
-ERROR:  could not access file "default_fdw": No such file or directory
+ALTER FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
+WARNING:  changing the foreign-data wrapper validator can cause the options for dependent objects to become invalid
 -- Privileges
 SET ROLE unprivileged_role;
-CREATE FOREIGN DATA WRAPPER foobar LIBRARY 'dummy_fdw' LANGUAGE C; -- ERROR
+CREATE FOREIGN DATA WRAPPER foobar;                             -- ERROR
 ERROR:  permission denied to create foreign-data wrapper "foobar"
 HINT:  Must be superuser to create a foreign-data wrapper.
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
@@ -887,7 +882,7 @@ RESET ROLE;
 GRANT USAGE ON FOREIGN DATA WRAPPER postgresql TO unprivileged_role;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO unprivileged_role WITH GRANT OPTION;
 SET ROLE unprivileged_role;
-CREATE FOREIGN DATA WRAPPER foobar LIBRARY 'dummy_fdw' LANGUAGE C; -- ERROR
+CREATE FOREIGN DATA WRAPPER foobar;                             -- ERROR
 ERROR:  permission denied to create foreign-data wrapper "foobar"
 HINT:  Must be superuser to create a foreign-data wrapper.
 ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
@@ -982,9 +977,9 @@ DROP FOREIGN DATA WRAPPER dummy CASCADE;
 \c
 DROP ROLE foreign_data_user;
 -- At this point we should have no wrappers, no servers, and no mappings.
-SELECT fdwname, fdwlibrary, fdwoptions FROM pg_foreign_data_wrapper;
- fdwname | fdwlibrary | fdwoptions 
----------+------------+------------
+SELECT fdwname, fdwvalidator, fdwoptions FROM pg_foreign_data_wrapper;
+ fdwname | fdwvalidator | fdwoptions 
+---------+--------------+------------
 (0 rows)
 
 SELECT srvname, srvoptions FROM pg_foreign_server;

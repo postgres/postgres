@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.5 2009/01/20 09:10:20 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.6 2009/02/24 10:06:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,13 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
+#include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -90,10 +92,11 @@ transformGenericOptions(Datum oldOptions,
 						List *optionDefList,
 						GenericOptionFlags flags,
 						ForeignDataWrapper *fdw,
-						OptionListValidatorFunc validateOptionList)
+						Oid fdwvalidator)
 {
 	List	 *resultOptions = untransformRelOptions(oldOptions);
 	ListCell *optcell;
+	Datum	  result;
 
 	foreach(optcell, optionDefList)
 	{
@@ -157,10 +160,12 @@ transformGenericOptions(Datum oldOptions,
 		}
 	}
 
-	if (validateOptionList)
-		validateOptionList(fdw, flags, resultOptions);
+	result = optionListToArray(resultOptions);
 
-	return optionListToArray(resultOptions);
+	if (fdwvalidator)
+		OidFunctionCall2(fdwvalidator, result, 0);
+
+	return result;
 }
 
 
@@ -310,6 +315,21 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 
 
 /*
+ * Convert a validator function name passed from the parser to an Oid.
+ */
+static Oid
+lookup_fdw_validator_func(List *validator)
+{
+	Oid			funcargtypes[2];
+
+	funcargtypes[0] = TEXTARRAYOID;
+	funcargtypes[1] = OIDOID;
+	return LookupFuncName(validator, 2, funcargtypes, false);
+	/* return value is ignored, so we don't check the type */
+}
+
+
+/*
  * Create a foreign-data wrapper
  */
 void
@@ -320,9 +340,9 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	bool			nulls[Natts_pg_foreign_data_wrapper];
 	HeapTuple		tuple;
 	Oid				fdwId;
+	Oid				fdwvalidator;
 	Datum			fdwoptions;
 	Oid				ownerId;
-	ForeignDataWrapperLibrary  *fdwlib;
 
 	/* Must be super user */
 	if (!superuser())
@@ -355,18 +375,19 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	values[Anum_pg_foreign_data_wrapper_fdwname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->fdwname));
 	values[Anum_pg_foreign_data_wrapper_fdwowner - 1] = ObjectIdGetDatum(ownerId);
-	values[Anum_pg_foreign_data_wrapper_fdwlibrary - 1] = CStringGetTextDatum(stmt->library);
-	nulls[Anum_pg_foreign_data_wrapper_fdwacl - 1] = true;
 
-	/*
-	 * See if the FDW library loads at all. We also might want to use it
-	 * later for validating the options.
-	 */
-	fdwlib = GetForeignDataWrapperLibrary(stmt->library);
+	if (stmt->validator)
+		fdwvalidator = lookup_fdw_validator_func(stmt->validator);
+	else
+		fdwvalidator = InvalidOid;
+
+	values[Anum_pg_foreign_data_wrapper_fdwvalidator - 1] = fdwvalidator;
+
+	nulls[Anum_pg_foreign_data_wrapper_fdwacl - 1] = true;
 
 	fdwoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
 										 FdwOpt, NULL,
-										 fdwlib->validateOptionList);
+										 fdwvalidator);
 
 	if (PointerIsValid(DatumGetPointer(fdwoptions)))
 		values[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = fdwoptions;
@@ -379,6 +400,21 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	CatalogUpdateIndexes(rel, tuple);
 
 	heap_freetuple(tuple);
+
+	if (fdwvalidator)
+	{
+		ObjectAddress myself;
+		ObjectAddress referenced;
+
+		myself.classId = ForeignDataWrapperRelationId;
+		myself.objectId = fdwId;
+		myself.objectSubId = 0;
+
+		referenced.classId = ProcedureRelationId;
+		referenced.objectId = fdwvalidator;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	recordDependencyOnOwner(ForeignDataWrapperRelationId, fdwId, ownerId);
 
@@ -400,7 +436,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	Oid			fdwId;
 	bool		isnull;
 	Datum		datum;
-	ForeignDataWrapperLibrary *fdwlib;
+	Oid			fdwvalidator;
 
 	/* Must be super user */
 	if (!superuser())
@@ -425,36 +461,33 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
 
-	if (stmt->library)
+	if (stmt->change_validator)
 	{
-		/*
-		 * New library specified -- load to see if valid.
-		 */
-		fdwlib = GetForeignDataWrapperLibrary(stmt->library);
-
-		repl_val[Anum_pg_foreign_data_wrapper_fdwlibrary - 1] = CStringGetTextDatum(stmt->library);
-		repl_repl[Anum_pg_foreign_data_wrapper_fdwlibrary - 1] = true;
+		fdwvalidator = stmt->validator ? lookup_fdw_validator_func(stmt->validator) : InvalidOid;
+		repl_val[Anum_pg_foreign_data_wrapper_fdwvalidator - 1] = ObjectIdGetDatum(fdwvalidator);
+		repl_repl[Anum_pg_foreign_data_wrapper_fdwvalidator - 1] = true;
 
 		/*
 		 * It could be that the options for the FDW, SERVER and USER MAPPING
-		 * are no longer valid with the new library.  Warn about this.
+		 * are no longer valid with the new validator.  Warn about this.
 		 */
-		ereport(WARNING,
-				(errmsg("changing the foreign-data wrapper library can cause "
-						"the options for dependent objects to become invalid")));
+		if (stmt->validator)
+			ereport(WARNING,
+					(errmsg("changing the foreign-data wrapper validator can cause "
+							"the options for dependent objects to become invalid")));
 	}
 	else
 	{
 		/*
-		 * No LIBRARY clause specified, but we need to load it for validating
+		 * Validator is not changed, but we need it for validating
 		 * options.
 		 */
 		datum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID,
 								tp,
-								Anum_pg_foreign_data_wrapper_fdwlibrary,
+								Anum_pg_foreign_data_wrapper_fdwvalidator,
 								&isnull);
 		Assert(!isnull);
-		fdwlib = GetForeignDataWrapperLibrary(TextDatumGetCString(datum));
+		fdwvalidator = DatumGetObjectId(datum);
 	}
 
 	/*
@@ -472,7 +505,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 
 		/* Transform the options */
 		datum = transformGenericOptions(datum, stmt->options, FdwOpt,
-										NULL, fdwlib->validateOptionList);
+										NULL, fdwvalidator);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = datum;
@@ -640,7 +673,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	/* Add server options */
 	srvoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
 										 ServerOpt, fdw,
-										 fdw->lib->validateOptionList);
+										 fdw->fdwvalidator);
 
 	if (PointerIsValid(DatumGetPointer(srvoptions)))
 		values[Anum_pg_foreign_server_srvoptions - 1] = srvoptions;
@@ -738,7 +771,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 
 		/* Prepare the options array */
 		datum = transformGenericOptions(datum, stmt->options, ServerOpt,
-										fdw, fdw->lib->validateOptionList);
+										fdw, fdw->fdwvalidator);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_foreign_server_srvoptions - 1] = datum;
@@ -910,7 +943,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	/* Add user options */
 	useoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
 										 UserMappingOpt,
-										 fdw, fdw->lib->validateOptionList);
+										 fdw, fdw->fdwvalidator);
 
 	if (PointerIsValid(DatumGetPointer(useoptions)))
 		values[Anum_pg_user_mapping_umoptions - 1] = useoptions;
@@ -1005,7 +1038,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 		/* Prepare the options array */
 		datum = transformGenericOptions(datum, stmt->options, UserMappingOpt,
-										fdw, fdw->lib->validateOptionList);
+										fdw, fdw->fdwvalidator);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_user_mapping_umoptions - 1] = datum;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *        $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.2 2009/01/01 17:23:42 momjian Exp $
+ *        $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.3 2009/02/24 10:06:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,66 +31,12 @@
 
 
 extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
+extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
-
-/* list of currently loaded foreign-data wrapper interfaces */
-static List *loaded_fdw_interfaces = NIL;
-
-
-/*
- * GetForeignDataWrapperLibrary - return the named FDW library.  If it
- * is already loaded, use that.  Otherwise allocate, initialize, and
- * store in cache.
- */
-ForeignDataWrapperLibrary *
-GetForeignDataWrapperLibrary(const char *libname)
-{
-	MemoryContext					oldcontext;
-	void		   				   *libhandle = NULL;
-	ForeignDataWrapperLibrary	   *fdwl = NULL;
-	ListCell		   			   *cell;
-
-	/* See if we have the FDW library is already loaded */
-	foreach (cell, loaded_fdw_interfaces)
-	{
-		fdwl = lfirst(cell);
-		if (strcmp(fdwl->libname, libname) == 0)
-			return fdwl;
-	}
-
-	/*
-	 * We don't have it yet, so load and add.  Attempt a load_file()
-	 * first to filter out any missing or unloadable libraries.
-	 */
-	load_file(libname, false);
-
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
-	fdwl = palloc(sizeof(*fdwl));
-	fdwl->libname = pstrdup(libname);
-	loaded_fdw_interfaces = lappend(loaded_fdw_interfaces, fdwl);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * Now look up the foreign data wrapper functions.
-	 */
-#define LOOKUP_FUNCTION(name) \
-	(void *)(libhandle ? \
-		lookup_external_function(libhandle, name) \
-		: load_external_function(fdwl->libname, name, false, &libhandle))
-
-	fdwl->validateOptionList = LOOKUP_FUNCTION("_pg_validateOptionList");
-
-	return fdwl;
-}
 
 
 /*
  * GetForeignDataWrapper -  look up the foreign-data wrapper by OID.
- *
- * Here we also deal with loading the FDW library and looking up the
- * actual functions.
  */
 ForeignDataWrapper *
 GetForeignDataWrapper(Oid fdwid)
@@ -114,15 +60,7 @@ GetForeignDataWrapper(Oid fdwid)
 	fdw->fdwid = fdwid;
 	fdw->owner = fdwform->fdwowner;
 	fdw->fdwname = pstrdup(NameStr(fdwform->fdwname));
-
-	/* Extract library name */
-	datum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID,
-							tp,
-							Anum_pg_foreign_data_wrapper_fdwlibrary,
-							&isnull);
-	fdw->fdwlibrary = pstrdup(TextDatumGetCString(datum));
-
-	fdw->lib = GetForeignDataWrapperLibrary(fdw->fdwlibrary);
+	fdw->fdwvalidator = fdwform->fdwvalidator;
 
 	/* Extract the options */
 	datum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID,
@@ -386,4 +324,101 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 	deflist_to_tuplestore((ReturnSetInfo *) fcinfo->resultinfo, untransformRelOptions(array));
 
 	return (Datum) 0;
+}
+
+
+/*
+ * Describes the valid options for postgresql FDW, server, and user mapping.
+ */
+struct ConnectionOption {
+	const char	   *optname;
+	Oid				optcontext;		/* Oid of catalog in which option may appear */
+};
+
+/*
+ * Copied from fe-connect.c PQconninfoOptions.
+ *
+ * The list is small - don't bother with bsearch if it stays so.
+ */
+static struct ConnectionOption libpq_conninfo_options[] = {
+	{ "authtype",			ForeignServerRelationId		},
+	{ "service",			ForeignServerRelationId		},
+	{ "user",				UserMappingRelationId		},
+	{ "password",			UserMappingRelationId		},
+	{ "connect_timeout", 	ForeignServerRelationId		},
+	{ "dbname",				ForeignServerRelationId		},
+	{ "host",				ForeignServerRelationId		},
+	{ "hostaddr",			ForeignServerRelationId		},
+	{ "port",				ForeignServerRelationId		},
+	{ "tty",				ForeignServerRelationId		},
+	{ "options",			ForeignServerRelationId		},
+	{ "requiressl",			ForeignServerRelationId		},
+	{ "sslmode",			ForeignServerRelationId		},
+	{ "gsslib",				ForeignServerRelationId		},
+	{ NULL,					InvalidOid					}
+};
+
+
+/*
+ * Check if the provided option is one of libpq conninfo options.
+ * context is the Oid of the catalog the option came from, or 0 if we
+ * don't care.
+ */
+static bool
+is_conninfo_option(const char *option, Oid context)
+{
+	struct ConnectionOption *opt;
+
+	for (opt = libpq_conninfo_options; opt->optname; opt++)
+		if ((context == opt->optcontext || context == InvalidOid) && strcmp(opt->optname, option) == 0)
+			return true;
+	return false;
+}
+
+
+/*
+ * Validate the generic option given to SERVER or USER MAPPING.
+ * Raise an ERROR if the option or its value is considered
+ * invalid.
+ *
+ * Valid server options are all libpq conninfo options except
+ * user and password -- these may only appear in USER MAPPING options.
+ */
+Datum
+postgresql_fdw_validator(PG_FUNCTION_ARGS)
+{
+	List* options_list = untransformRelOptions(PG_GETARG_DATUM(0));
+	Oid catalog = PG_GETARG_OID(1);
+
+	ListCell *cell;
+
+	foreach (cell, options_list)
+	{
+		DefElem    *def = lfirst(cell);
+
+		if (!is_conninfo_option(def->defname, catalog))
+		{
+			struct ConnectionOption  *opt;
+			StringInfoData		buf;
+
+			/*
+			 * Unknown option specified, complain about it. Provide a hint
+			 * with list of valid options for the object.
+			 */
+			initStringInfo(&buf);
+			for (opt = libpq_conninfo_options; opt->optname; opt++)
+				if (catalog == InvalidOid || catalog == opt->optcontext)
+					appendStringInfo(&buf, "%s%s", (buf.len > 0) ? ", " : "",
+									 opt->optname);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid option \"%s\"", def->defname),
+					 errhint("Valid options in this context are: %s", buf.data)));
+
+			PG_RETURN_BOOL(false);
+		}
+	}
+
+	PG_RETURN_BOOL(true);
 }

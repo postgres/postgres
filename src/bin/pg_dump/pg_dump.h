@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.152 2009/02/18 12:07:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.153 2009/02/24 10:06:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,7 +409,7 @@ typedef struct _fdwInfo
 {
 	DumpableObject dobj;
 	char	   *rolname;
-	char	   *fdwlibrary;
+	char	   *fdwvalidator;
 	char	   *fdwoptions;
 	char	   *fdwacl;
 } FdwInfo;

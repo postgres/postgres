@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.658 2009/02/11 21:11:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.659 2009/02/24 10:06:33 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -254,7 +254,7 @@ static TypeName *TableFuncTypeName(List *columns);
 				index_name name file_name cluster_index_specification
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
-				opt_class opt_validator
+				opt_class opt_validator validator_clause
 
 %type <range>	qualified_name OptConstrFromTable
 
@@ -469,7 +469,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	KEY
 
 	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
-	LIBRARY LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOGIN_P
 
 	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -2724,8 +2724,13 @@ handler_name:
 			| name attrs				{ $$ = lcons(makeString($1), $2); }
 		;
 
-opt_validator:
+validator_clause:
 			VALIDATOR handler_name					{ $$ = $2; }
+			| NO VALIDATOR							{ $$ = NIL; }
+		;
+
+opt_validator:
+			validator_clause						{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -2808,23 +2813,17 @@ DropTableSpaceStmt: DROP TABLESPACE name
 /*****************************************************************************
  *
  * 		QUERY:
- *             CREATE FOREIGN DATA WRAPPER name LIBRARY 'library_name' LANGUAGE C
+ *             CREATE FOREIGN DATA WRAPPER name [ VALIDATOR name ]
  *
  *****************************************************************************/
 
-CreateFdwStmt: CREATE FOREIGN DATA_P WRAPPER name LIBRARY Sconst LANGUAGE ColId create_generic_options
+CreateFdwStmt: CREATE FOREIGN DATA_P WRAPPER name opt_validator create_generic_options
 				{
 					CreateFdwStmt *n = makeNode(CreateFdwStmt);
 					n->fdwname = $5;
-					n->library = $7;
-					n->options = $10;
+					n->validator = $6;
+					n->options = $7;
 					$$ = (Node *) n;
-
-					if (pg_strcasecmp($9, "C") != 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("language for foreign-data wrapper must be C"),
-								 scanner_errposition(@9)));
 				}
 		;
 
@@ -2860,19 +2859,21 @@ DropFdwStmt: DROP FOREIGN DATA_P WRAPPER name opt_drop_behavior
  *
  ****************************************************************************/
 
-AlterFdwStmt: ALTER FOREIGN DATA_P WRAPPER name LIBRARY Sconst alter_generic_options
+AlterFdwStmt: ALTER FOREIGN DATA_P WRAPPER name validator_clause alter_generic_options
 				{
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
 					n->fdwname = $5;
-					n->library = $7;
-					n->options = $8;
+					n->validator = $6;
+					n->change_validator = true;
+					n->options = $7;
 					$$ = (Node *) n;
 				}
-			| ALTER FOREIGN DATA_P WRAPPER name LIBRARY Sconst
+			| ALTER FOREIGN DATA_P WRAPPER name validator_clause
 				{
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
 					n->fdwname = $5;
-					n->library = $7;
+					n->validator = $6;
+					n->change_validator = true;
 					$$ = (Node *) n;
 				}
 			| ALTER FOREIGN DATA_P WRAPPER name alter_generic_options
@@ -10231,7 +10232,6 @@ unreserved_keyword:
 			| INVOKER
 			| ISOLATION
 			| KEY
-			| LIBRARY
 			| LANCOMPILER
 			| LANGUAGE
 			| LARGE_P

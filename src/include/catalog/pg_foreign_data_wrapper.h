@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_foreign_data_wrapper.h,v 1.2 2009/01/01 17:23:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_foreign_data_wrapper.h,v 1.3 2009/02/24 10:06:34 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,10 +32,10 @@ CATALOG(pg_foreign_data_wrapper,2328)
 {
 	NameData	fdwname;		/* foreign-data wrapper name */
 	Oid			fdwowner;		/* FDW owner */
+	Oid			fdwvalidator;	/* optional validation function */
 
 	/* VARIABLE LENGTH FIELDS start here. */
 
-	text		fdwlibrary;		/* FDW shared library location */
 	aclitem		fdwacl[1];		/* access permissions */
 	text		fdwoptions[1];	/* FDW options */
 } FormData_pg_foreign_data_wrapper;
@@ -55,7 +55,7 @@ typedef FormData_pg_foreign_data_wrapper *Form_pg_foreign_data_wrapper;
 #define Natts_pg_foreign_data_wrapper				5
 #define Anum_pg_foreign_data_wrapper_fdwname		1
 #define Anum_pg_foreign_data_wrapper_fdwowner		2
-#define Anum_pg_foreign_data_wrapper_fdwlibrary		3
+#define Anum_pg_foreign_data_wrapper_fdwvalidator	3
 #define Anum_pg_foreign_data_wrapper_fdwacl			4
 #define Anum_pg_foreign_data_wrapper_fdwoptions		5
 

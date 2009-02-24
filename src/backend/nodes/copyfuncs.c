@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.423 2009/02/06 23:43:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.424 2009/02/24 10:06:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2994,7 +2994,7 @@ _copyCreateFdwStmt(CreateFdwStmt *from)
 	CreateFdwStmt *newnode = makeNode(CreateFdwStmt);
 
 	COPY_STRING_FIELD(fdwname);
-	COPY_STRING_FIELD(library);
+	COPY_NODE_FIELD(validator);
 	COPY_NODE_FIELD(options);
 
 	return newnode;
@@ -3006,7 +3006,8 @@ _copyAlterFdwStmt(AlterFdwStmt *from)
 	AlterFdwStmt *newnode = makeNode(AlterFdwStmt);
 
 	COPY_STRING_FIELD(fdwname);
-	COPY_STRING_FIELD(library);
+	COPY_NODE_FIELD(validator);
+	COPY_SCALAR_FIELD(change_validator);
 	COPY_NODE_FIELD(options);
 
 	return newnode;

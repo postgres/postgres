@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.52 2009/02/14 20:48:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.53 2009/02/24 10:06:32 petere Exp $
  */
 
 /*
@@ -2428,7 +2428,6 @@ CREATE VIEW _pg_foreign_data_wrappers AS
            CAST(current_database() AS sql_identifier) AS foreign_data_wrapper_catalog,
            CAST(fdwname AS sql_identifier) AS foreign_data_wrapper_name,
            CAST(u.rolname AS sql_identifier) AS authorization_identifier,
-           CAST(fdwlibrary AS character_data) AS library_name,
            CAST('c' AS character_data) AS foreign_data_wrapper_language
     FROM pg_foreign_data_wrapper w, pg_authid u
     WHERE u.oid = w.fdwowner
@@ -2458,7 +2457,7 @@ CREATE VIEW foreign_data_wrappers AS
     SELECT foreign_data_wrapper_catalog,
            foreign_data_wrapper_name,
            authorization_identifier,
-           library_name,
+           CAST(NULL AS character_data) AS library_name,
            foreign_data_wrapper_language
     FROM _pg_foreign_data_wrappers w;
 

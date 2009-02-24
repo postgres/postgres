@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_foreign_data_wrapper.sgml,v 1.1 2008/12/19 16:25:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_foreign_data_wrapper.sgml,v 1.2 2009/02/24 10:06:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
-    [ LIBRARY '<replaceable class="parameter">libraryname</replaceable>' ]
+    [ VALIDATOR <replaceable class="parameter">valfunction</replaceable> | NO VALIDATOR ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ]) ]
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
@@ -58,18 +58,28 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWN
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">libraryname</replaceable></term>
+    <term><literal>VALIDATOR <replaceable class="parameter">valfunction</replaceable></literal></term>
     <listitem>
      <para>
-      New name of the foreign-data wrapper library.
+      Specifies a new foreign-data wrapper validator function.
      </para>
 
      <para>
-      Note that it is possible that after changing the library, the
+      Note that it is possible that after changing the validator the
       options to the foreign-data wrapper, servers, and user mappings
       have become invalid.   It is up to the user to make sure that
       these options are correct before using the foreign-data
       wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NO VALIDATOR</literal></term>
+    <listitem>
+     <para>
+      This is used to specify that the foreign-data wrapper should no
+      longer have a validator function.
      </para>
     </listitem>
    </varlistentry>
@@ -102,10 +112,10 @@ ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP 'bar');
   </para>
 
   <para>
-   Change the foreign-data wrapper <literal>dbi</> library
-   to <literal>/home/bob/mylibrary.so</>:
+   Change the foreign-data wrapper <literal>dbi</> validator
+   to <literal>bob.myvalidator</>:
 <programlisting>
-ALTER FOREIGN DATA WRAPPER dbi LIBRARY '/home/bob/mylibrary.so';
+ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
 </programlisting>
   </para>
  </refsect1>
@@ -115,8 +125,9 @@ ALTER FOREIGN DATA WRAPPER dbi LIBRARY '/home/bob/mylibrary.so';
 
   <para>
    <command>ALTER FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
-   9075-9 (SQL/MED).  The standard does not specify the <literal>OWNER
-   TO</> variant of the command.
+   9075-9 (SQL/MED).  The standard does not specify the <literal>
+   VALIDATOR</literal> and <literal>OWNER TO</> variants of the
+   command.
   </para>
  </refsect1>
 

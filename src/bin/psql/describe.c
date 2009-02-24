@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.200 2009/02/23 15:59:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.201 2009/02/24 10:06:34 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -2894,10 +2894,10 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	printfPQExpBuffer(&buf,
 					  "SELECT fdwname AS \"%s\",\n"
 					  "  pg_catalog.pg_get_userbyid(fdwowner) AS \"%s\",\n"
-					  "  fdwlibrary AS \"%s\"",
+					  "  fdwvalidator::pg_catalog.regproc AS \"%s\"",
 					  gettext_noop("Name"),
 					  gettext_noop("Owner"),
-					  gettext_noop("Library"));
+					  gettext_noop("Validator"));
 
 	if (verbose)
 	{

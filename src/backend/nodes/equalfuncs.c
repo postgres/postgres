@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.347 2009/02/02 19:31:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.348 2009/02/24 10:06:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1548,7 +1548,7 @@ static bool
 _equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
-	COMPARE_STRING_FIELD(library);
+	COMPARE_NODE_FIELD(validator);
 	COMPARE_NODE_FIELD(options);
 
 	return true;
@@ -1558,7 +1558,8 @@ static bool
 _equalAlterFdwStmt(AlterFdwStmt *a, AlterFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
-	COMPARE_STRING_FIELD(library);
+	COMPARE_NODE_FIELD(validator);
+	COMPARE_SCALAR_FIELD(change_validator);
 	COMPARE_NODE_FIELD(options);
 
 	return true;
