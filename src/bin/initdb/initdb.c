@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.167 2009/01/22 20:16:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.168 2009/02/25 13:03:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2420,29 +2420,29 @@ usage(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
+	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
-	printf(_("  --locale=LOCALE           set default locale for new databases\n"));
-	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
-			 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-			 "                            set default locale in the respective\n"
-			 "                            category for new databases (default\n"
-			 "                            taken from environment)\n"));
-	printf(_("  --no-locale               equivalent to --locale=C\n"));
+	printf(_("      --locale=LOCALE       set default locale for new databases\n"));
+	printf(_("      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
+		 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
+		 "                            set default locale in the respective category for\n"
+		 "                            new databases (default taken from environment)\n"));
+	printf(_("      --no-locale           equivalent to --locale=C\n"));
+	printf(_("      --pwfile=FILE         read password for the new superuser from file\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
 		 "                            default text search configuration\n"));
-	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
-	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
-	printf(_("  --pwfile=FILE             read password for the new superuser from file\n"));
-	printf(_("  -?, --help                show this help, then exit\n"));
-	printf(_("  -V, --version             output version information, then exit\n"));
+	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
-	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
 	printf(_("  -n, --noclean             do not clean up after errors\n"));
+	printf(_("  -s, --show                show internal settings\n"));
+	printf(_("\nOther options:\n"));
+	printf(_("  -?, --help                show this help, then exit\n"));
+	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"
 			 "is used.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.138 2009/01/07 03:05:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.139 2009/02/25 13:03:07 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -94,13 +94,13 @@ usage(void)
 	env = getenv("PGDATABASE");
 	if (!env)
 		env = user;
-	printf(_("  -d DBNAME       specify database name to connect to (default: \"%s\")\n"), env);
 	puts(_("  -c COMMAND      run only single command (SQL or internal) and exit"));
+	printf(_("  -d DBNAME       database name to connect to (default: \"%s\")\n"), env);
 	puts(_("  -f FILENAME     execute commands from file, then exit"));
-	puts(_("  -1 (\"one\")      execute command file as a single transaction"));
 	puts(_("  -l              list available databases, then exit"));
 	puts(_("  -v NAME=VALUE   set psql variable NAME to VALUE"));
 	puts(_("  -X              do not read startup file (~/.psqlrc)"));
+	puts(_("  -1 (\"one\")      execute command file as a single transaction"));
 	puts(_("  --help          show this help, then exit"));
 	puts(_("  --version       output version information, then exit"));
 
@@ -108,23 +108,23 @@ usage(void)
 	puts(_("  -a              echo all input from script"));
 	puts(_("  -e              echo commands sent to server"));
 	puts(_("  -E              display queries that internal commands generate"));
-	puts(_("  -q              run quietly (no messages, only query output)"));
-	puts(_("  -o FILENAME     send query results to file (or |pipe)"));
+	puts(_("  -L FILENAME     send session log to file"));
 	puts(_("  -n              disable enhanced command line editing (readline)"));
+	puts(_("  -o FILENAME     send query results to file (or |pipe)"));
+	puts(_("  -q              run quietly (no messages, only query output)"));
 	puts(_("  -s              single-step mode (confirm each query)"));
 	puts(_("  -S              single-line mode (end of line terminates SQL command)"));
-	puts(_("  -L FILENAME     send session log to file"));
 
 	puts(_("\nOutput format options:"));
 	puts(_("  -A              unaligned table output mode (-P format=unaligned)"));
+	printf(_("  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"),
+		   DEFAULT_FIELD_SEP);
 	puts(_("  -H              HTML table output mode (-P format=html)"));
+	puts(_("  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"));
+	puts(_("  -R STRING       set record separator (default: newline) (-P recordsep=)"));
 	puts(_("  -t              print rows only (-P tuples_only)"));
 	puts(_("  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"));
 	puts(_("  -x              turn on expanded table output (-P expanded)"));
-	puts(_("  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"));
-	printf(_("  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"),
-		   DEFAULT_FIELD_SEP);
-	puts(_("  -R STRING       set record separator (default: newline) (-P recordsep=)"));
 
 	puts(_("\nConnection options:"));
 	/* Display default host */

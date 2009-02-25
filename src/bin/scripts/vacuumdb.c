@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.23 2009/02/18 12:11:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.24 2009/02/25 13:03:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,13 +260,13 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -a, --all                       vacuum all databases\n"));
 	printf(_("  -d, --dbname=DBNAME             database to vacuum\n"));
-	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"));
-	printf(_("  -f, --full                      do full vacuuming\n"));
-	printf(_("  -z, --analyze                   update optimizer hints\n"));
-	printf(_("  -F, --freeze                    freeze row transaction information\n"));
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
+	printf(_("  -f, --full                      do full vacuuming\n"));
+	printf(_("  -F, --freeze                    freeze row transaction information\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
+	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
+	printf(_("  -z, --analyze                   update optimizer hints\n"));
 	printf(_("  --help                          show this help, then exit\n"));
 	printf(_("  --version                       output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));

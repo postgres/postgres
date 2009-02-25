@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.115 2009/02/18 12:07:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.116 2009/02/25 13:03:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,41 +498,40 @@ help(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
-	printf(_("  -f, --file=FILENAME      output file name\n"));
-	printf(_("  --help                   show this help, then exit\n"));
-	printf(_("  --version                output version information, then exit\n"));
-	printf(_("  --lock-wait-timeout=TIMEOUT\n"
-			 "                           fail after waiting TIMEOUT for a table lock\n"));
+	printf(_("  -f, --file=FILENAME         output file name\n"));
+	printf(_("  --lock-wait-timeout=TIMEOUT fail after waiting TIMEOUT for a table lock\n"));
+	printf(_("  --help                      show this help, then exit\n"));
+	printf(_("  --version                   output version information, then exit\n"));
 	printf(_("\nOptions controlling the output content:\n"));
-	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
-	printf(_("  -c, --clean              clean (drop) databases before recreating\n"));
-	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
-	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
-	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
-	printf(_("  -o, --oids               include OIDs in dump\n"));
-	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
-	printf(_("  -r, --roles-only         dump only roles, no databases or tablespaces\n"));
-	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
-	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
-	printf(_("  -t, --tablespaces-only   dump only tablespaces, no databases or roles\n"));
-	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
-	printf(_("  --disable-dollar-quoting\n"
-			 "                           disable dollar quoting, use SQL standard quoting\n"));
-	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
-	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
-	printf(_("  --role=ROLENAME          do SET ROLE before dump\n"));
+	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
+	printf(_("  -c, --clean                 clean (drop) databases before recreating\n"));
+	printf(_("  -d, --inserts               dump data as INSERT commands, rather than COPY\n"));
+	printf(_("  -D, --column-inserts        dump data as INSERT commands with column names\n"));
+	printf(_("  -g, --globals-only          dump only global objects, no databases\n"));
+	printf(_("  -o, --oids                  include OIDs in dump\n"));
+	printf(_("  -O, --no-owner              skip restoration of object ownership\n"));
+	printf(_("  -r, --roles-only            dump only roles, no databases or tablespaces\n"));
+	printf(_("  -s, --schema-only           dump only the schema, no data\n"));
+	printf(_("  -S, --superuser=NAME        superuser user name to use in the dump\n"));
+	printf(_("  -t, --tablespaces-only      dump only tablespaces, no databases or roles\n"));
+	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
+	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
+	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
+	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
+	printf(_("  --role=ROLENAME             do SET ROLE before dump\n"));
 	printf(_("  --use-set-session-authorization\n"
-			 "                           use SESSION AUTHORIZATION commands instead of\n"
-			 "                           OWNER TO commands\n"));
+		 "                              use SET SESSION AUTHORIZATION commands instead of\n"
+		 "                              ALTER OWNER commands to set ownership\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
-	printf(_("  -l, --database=DBNAME    specify an alternative default database\n"));
+	printf(_("  -l, --database=DBNAME    alternative default database\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
 
-	printf(_("\nThe SQL script will be written to the standard output.\n\n"));
+	printf(_("\nIf -f/--file is not used, then the SQL script will be written to the standard\n"
+		"output.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 

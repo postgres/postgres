@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.108 2009/01/30 12:53:12 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.109 2009/02/25 13:03:07 petere Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -53,9 +53,9 @@ help(const char *progname)
 	printf(_("  -o OUTFILE     write result to OUTFILE\n"));
 	printf(_("  -r OPTION      specify run-time behavior; OPTION can be:\n"
 			 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"));
+	printf(_("  --regression   run in regression testing mode\n"));
 	printf(_("  -t             turn on autocommit of transactions\n"));
 	printf(_("  --help         show this help, then exit\n"));
-	printf(_("  --regression   run in regression testing mode\n"));
 	printf(_("  --version      output version information, then exit\n"));
 	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
 		   "input file name, after stripping off .pgc if present.\n"));

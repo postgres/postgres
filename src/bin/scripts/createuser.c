@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.40 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.41 2009/02/25 13:03:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,22 +307,22 @@ help(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -s, --superuser           role will be superuser\n"));
-	printf(_("  -S, --no-superuser        role will not be superuser\n"));
+	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -d, --createdb            role can create new databases\n"));
 	printf(_("  -D, --no-createdb         role cannot create databases\n"));
-	printf(_("  -r, --createrole          role can create new roles\n"));
-	printf(_("  -R, --no-createrole       role cannot create roles\n"));
-	printf(_("  -l, --login               role can login (default)\n"));
-	printf(_("  -L, --no-login            role cannot login\n"));
+	printf(_("  -e, --echo                show the commands being sent to the server\n"));
+	printf(_("  -E, --encrypted           encrypt stored password\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
 			 "                            member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
-	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
-	printf(_("  -P, --pwprompt            assign a password to new role\n"));
-	printf(_("  -E, --encrypted           encrypt stored password\n"));
+	printf(_("  -l, --login               role can login (default)\n"));
+	printf(_("  -L, --no-login            role cannot login\n"));
 	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
-	printf(_("  -e, --echo                show the commands being sent to the server\n"));
+	printf(_("  -P, --pwprompt            assign a password to new role\n"));
+	printf(_("  -r, --createrole          role can create new roles\n"));
+	printf(_("  -R, --no-createrole       role cannot create roles\n"));
+	printf(_("  -s, --superuser           role will be superuser\n"));
+	printf(_("  -S, --no-superuser        role will not be superuser\n"));
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
@@ -330,7 +330,7 @@ help(const char *progname)
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
 	printf(_("  -W, --password            force password prompt\n"));
-	printf(_("\nIf one of -s, -S, -d, -D, -r, -R and ROLENAME is not specified, you will\n"
+	printf(_("\nIf one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
 			 "be prompted interactively.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

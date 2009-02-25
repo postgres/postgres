@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.108 2009/01/28 11:19:37 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.109 2009/02/25 13:03:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1546,15 +1546,15 @@ do_help(void)
 	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n"));
 
 	printf(_("\nOptions for start or restart:\n"));
-	printf(_("  -l, --log FILENAME     write (or append) server log to FILENAME\n"));
-	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
-			 "                         (PostgreSQL server executable)\n"));
-	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 	printf(_("  -c, --core-files       allow postgres to produce core files\n"));
 #else
 	printf(_("  -c, --core-files       not applicable on this platform\n"));
 #endif
+	printf(_("  -l, --log FILENAME     write (or append) server log to FILENAME\n"));
+	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
+			 "                         (PostgreSQL server executable)\n"));
+	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
 	printf(_("\nOptions for stop or restart:\n"));
 	printf(_("  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"));
 

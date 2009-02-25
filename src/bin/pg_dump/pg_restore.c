@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.92 2009/02/02 20:07:37 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.93 2009/02/25 13:03:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,7 +397,7 @@ usage(const char *progname)
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -d, --dbname=NAME        connect to database name\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
-	printf(_("  -F, --format=c|t         specify backup file format\n"));
+	printf(_("  -F, --format=c|t         backup file format (should be automatic)\n"));
 	printf(_("  -l, --list               print summarized TOC of the archive\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  --help                   show this help, then exit\n"));
@@ -407,17 +407,17 @@ usage(const char *progname)
 	printf(_("  -a, --data-only          restore only the data, no schema\n"));
 	printf(_("  -c, --clean              clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create             create the target database\n"));
+	printf(_("  -e, --exit-on-error      exit on error, default is to continue\n"));
 	printf(_("  -I, --index=NAME         restore named index\n"));
-	printf(_("  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
-			 "                           output from this file\n"));
+	printf(_("  -L, --use-list=FILENAME  use table of contents from this file for\n"
+		 "                           selecting/ordering output\n"));
 	printf(_("  -m, --multi-thread=NUM   use this many parallel connections to restore\n"));
 	printf(_("  -n, --schema=NAME        restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"
 			 "                           restore named function\n"));
 	printf(_("  -s, --schema-only        restore only the schema, no data\n"));
-	printf(_("  -S, --superuser=NAME     specify the superuser user name to use for\n"
-			 "                           disabling triggers\n"));
+	printf(_("  -S, --superuser=NAME     superuser user name to use for disabling triggers\n"));
 	printf(_("  -t, --table=NAME         restore named table\n"));
 	printf(_("  -T, --trigger=NAME       restore named trigger\n"));
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
@@ -428,8 +428,8 @@ usage(const char *progname)
 	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
 	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
 	printf(_("  --use-set-session-authorization\n"
-			 "                           use SESSION AUTHORIZATION commands instead of\n"
-			 "                           OWNER TO commands\n"));
+		 "                           use SET SESSION AUTHORIZATION commands instead of\n"
+		 "                           ALTER OWNER commands to set ownership\n"));
 	printf(_("  -1, --single-transaction\n"
 			 "                           restore as a single transaction\n"));
 
@@ -438,7 +438,6 @@ usage(const char *progname)
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-	printf(_("  -e, --exit-on-error      exit on error, default is to continue\n"));
 
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
