@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.165 2009/02/06 23:43:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.166 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1586,23 +1586,6 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 		if (j->rtindex == context->parent_relid)
 			j->rtindex = context->child_relid;
 		return (Node *) j;
-	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		/* Copy the FlattenedSubLink node with correct mutation of subnodes */
-		FlattenedSubLink *fslink;
-
-		fslink = (FlattenedSubLink *) expression_tree_mutator(node,
-											  adjust_appendrel_attrs_mutator,
-															 (void *) context);
-		/* now fix FlattenedSubLink's relid sets */
-		fslink->lefthand = adjust_relid_set(fslink->lefthand,
-											context->parent_relid,
-											context->child_relid);
-		fslink->righthand = adjust_relid_set(fslink->righthand,
-											 context->parent_relid,
-											 context->child_relid);
-		return (Node *) fslink;
 	}
 	if (IsA(node, PlaceHolderVar))
 	{

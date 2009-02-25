@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.37 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.38 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1309,14 +1309,6 @@ expression_tree_walker(Node *node,
 				/* groupClauses are deemed uninteresting */
 			}
 			break;
-		case T_FlattenedSubLink:
-			{
-				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-
-				if (walker(fslink->quals, context))
-					return true;
-			}
-			break;
 		case T_PlaceHolderVar:
 			return walker(((PlaceHolderVar *) node)->phexpr, context);
 		case T_AppendRelInfo:
@@ -1969,17 +1961,6 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->larg, setop->larg, Node *);
 				MUTATE(newnode->rarg, setop->rarg, Node *);
 				/* We do not mutate groupClauses by default */
-				return (Node *) newnode;
-			}
-			break;
-		case T_FlattenedSubLink:
-			{
-				FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-				FlattenedSubLink *newnode;
-
-				FLATCOPY(newnode, fslink, FlattenedSubLink);
-				/* Assume we need not copy the relids bitmapsets */
-				MUTATE(newnode->quals, fslink->quals, Expr *);
 				return (Node *) newnode;
 			}
 			break;

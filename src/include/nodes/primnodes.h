@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.145 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.146 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1137,7 +1137,9 @@ typedef struct RangeTblRef
  *
  * During parse analysis, an RTE is created for the Join, and its index
  * is filled into rtindex.	This RTE is present mainly so that Vars can
- * be created that refer to the outputs of the join.
+ * be created that refer to the outputs of the join.  The planner sometimes
+ * generates JoinExprs internally; these can have rtindex = 0 if there are
+ * no join alias variables referencing such joins.
  *----------
  */
 typedef struct JoinExpr
@@ -1150,7 +1152,7 @@ typedef struct JoinExpr
 	List	   *using;			/* USING clause, if any (list of String) */
 	Node	   *quals;			/* qualifiers on join, if any */
 	Alias	   *alias;			/* user-written alias clause, if any */
-	int			rtindex;		/* RT index assigned for join */
+	int			rtindex;		/* RT index assigned for join, or 0 */
 } JoinExpr;
 
 /*----------

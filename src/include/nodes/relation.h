@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.168 2009/02/06 23:43:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.169 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1076,30 +1076,6 @@ typedef struct InnerIndexscanInfo
 } InnerIndexscanInfo;
 
 /*
- * "Flattened SubLinks"
- *
- * When we pull an IN or EXISTS SubLink up into the parent query, the
- * join conditions extracted from the IN/EXISTS clause need to be specially
- * treated in distribute_qual_to_rels processing.  We handle this by
- * wrapping such expressions in a FlattenedSubLink node that identifies
- * the join they come from.  The FlattenedSubLink node is discarded after
- * distribute_qual_to_rels, having served its purpose.
- *
- * Although the planner treats this as an expression node type, it is not
- * recognized by the parser or executor, so we declare it here rather than
- * in primnodes.h.
- */
-
-typedef struct FlattenedSubLink
-{
-	Expr		xpr;
-	JoinType	jointype;		/* must be JOIN_SEMI or JOIN_ANTI */
-	Relids		lefthand;		/* base relids treated as syntactic LHS */
-	Relids		righthand;		/* base relids syntactically within RHS */
-	Expr	   *quals;			/* join quals (in explicit-AND format) */
-} FlattenedSubLink;
-
-/*
  * Placeholder node for an expression to be evaluated below the top level
  * of a plan tree.  This is used during planning to represent the contained
  * expression.  At the end of the planning process it is replaced by either
@@ -1171,8 +1147,11 @@ typedef struct PlaceHolderVar
  * For purposes of join selectivity estimation, we create transient
  * SpecialJoinInfo structures for regular inner joins; so it is possible
  * to have jointype == JOIN_INNER in such a structure, even though this is
- * not allowed within join_info_list.  Note that lhs_strict, delay_upper_joins,
- * and join_quals are not set meaningfully for such structs.
+ * not allowed within join_info_list.  We also create transient
+ * SpecialJoinInfos with jointype == JOIN_INNER for outer joins, since for
+ * cost estimation purposes it is sometimes useful to know the join size under
+ * plain innerjoin semantics.  Note that lhs_strict, delay_upper_joins, and
+ * join_quals are not set meaningfully within such structs.
  */
 
 typedef struct SpecialJoinInfo

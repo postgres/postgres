@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.120 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.121 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,21 +348,8 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	{
 		JoinExpr   *j = (JoinExpr *) node;
 
-		if (context->sublevels_up == 0)
+		if (j->rtindex && context->sublevels_up == 0)
 			j->rtindex += context->offset;
-		/* fall through to examine children */
-	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-
-		if (context->sublevels_up == 0)
-		{
-			fslink->lefthand = offset_relid_set(fslink->lefthand,
-												context->offset);
-			fslink->righthand = offset_relid_set(fslink->righthand,
-												 context->offset);
-		}
 		/* fall through to examine children */
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -528,21 +515,6 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		if (context->sublevels_up == 0 &&
 			j->rtindex == context->rt_index)
 			j->rtindex = context->new_index;
-		/* fall through to examine children */
-	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-
-		if (context->sublevels_up == 0)
-		{
-			fslink->lefthand = adjust_relid_set(fslink->lefthand,
-												context->rt_index,
-												context->new_index);
-			fslink->righthand = adjust_relid_set(fslink->righthand,
-												 context->rt_index,
-												 context->new_index);
-		}
 		/* fall through to examine children */
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -838,7 +810,6 @@ rangeTableEntry_used_walker(Node *node,
 		/* fall through to examine children */
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
-	Assert(!IsA(node, FlattenedSubLink));
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));

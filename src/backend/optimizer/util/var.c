@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.83 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.84 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,24 +765,6 @@ flatten_join_alias_vars_mutator(Node *node,
 		}
 		/* Recurse in case join input is itself a join */
 		return flatten_join_alias_vars_mutator(newvar, context);
-	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		/* Copy the FlattenedSubLink node with correct mutation of subnodes */
-		FlattenedSubLink *fslink;
-
-		fslink = (FlattenedSubLink *) expression_tree_mutator(node,
-											 flatten_join_alias_vars_mutator,
-															 (void *) context);
-		/* now fix FlattenedSubLink's relid sets */
-		if (context->sublevels_up == 0)
-		{
-			fslink->lefthand = alias_relid_set(context->root,
-											   fslink->lefthand);
-			fslink->righthand = alias_relid_set(context->root,
-												fslink->righthand);
-		}
-		return (Node *) fslink;
 	}
 	if (IsA(node, PlaceHolderVar))
 	{

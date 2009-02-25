@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.275 2009/01/09 15:46:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.276 2009/02/25 03:30:37 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1300,15 +1300,6 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
-	else if (IsA(node, FlattenedSubLink))
-	{
-		/* JOIN_SEMI sublinks preserve strictness, but JOIN_ANTI ones don't */
-		FlattenedSubLink *expr = (FlattenedSubLink *) node;
-
-		if (expr->jointype == JOIN_SEMI)
-			result = find_nonnullable_rels_walker((Node *) expr->quals,
-												  top_level);
-	}
 	else if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
@@ -1510,15 +1501,6 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_FALSE ||
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
-	}
-	else if (IsA(node, FlattenedSubLink))
-	{
-		/* JOIN_SEMI sublinks preserve strictness, but JOIN_ANTI ones don't */
-		FlattenedSubLink *expr = (FlattenedSubLink *) node;
-
-		if (expr->jointype == JOIN_SEMI)
-			result = find_nonnullable_vars_walker((Node *) expr->quals,
-												  top_level);
 	}
 	else if (IsA(node, PlaceHolderVar))
 	{
@@ -2942,24 +2924,6 @@ eval_const_expressions_mutator(Node *node,
 		newbtest->arg = (Expr *) arg;
 		newbtest->booltesttype = btest->booltesttype;
 		return (Node *) newbtest;
-	}
-	if (IsA(node, FlattenedSubLink))
-	{
-		FlattenedSubLink *fslink = (FlattenedSubLink *) node;
-		FlattenedSubLink *newfslink;
-		Expr	   *quals;
-
-		/* Simplify and also canonicalize the arguments */
-		quals = (Expr *) eval_const_expressions_mutator((Node *) fslink->quals,
-														context);
-		quals = canonicalize_qual(quals);
-
-		newfslink = makeNode(FlattenedSubLink);
-		newfslink->jointype = fslink->jointype;
-		newfslink->lefthand = fslink->lefthand;
-		newfslink->righthand = fslink->righthand;
-		newfslink->quals = quals;
-		return (Node *) newfslink;
 	}
 	if (IsA(node, PlaceHolderVar) && context->estimate)
 	{

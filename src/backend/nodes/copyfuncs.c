@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.424 2009/02/24 10:06:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.425 2009/02/25 03:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1620,22 +1620,6 @@ _copyRestrictInfo(RestrictInfo *from)
 	COPY_SCALAR_FIELD(hashjoinoperator);
 	COPY_SCALAR_FIELD(left_bucketsize);
 	COPY_SCALAR_FIELD(right_bucketsize);
-
-	return newnode;
-}
-
-/*
- * _copyFlattenedSubLink
- */
-static FlattenedSubLink *
-_copyFlattenedSubLink(FlattenedSubLink *from)
-{
-	FlattenedSubLink *newnode = makeNode(FlattenedSubLink);
-
-	COPY_SCALAR_FIELD(jointype);
-	COPY_BITMAPSET_FIELD(lefthand);
-	COPY_BITMAPSET_FIELD(righthand);
-	COPY_NODE_FIELD(quals);
 
 	return newnode;
 }
@@ -3709,9 +3693,6 @@ copyObject(void *from)
 			break;
 		case T_RestrictInfo:
 			retval = _copyRestrictInfo(from);
-			break;
-		case T_FlattenedSubLink:
-			retval = _copyFlattenedSubLink(from);
 			break;
 		case T_PlaceHolderVar:
 			retval = _copyPlaceHolderVar(from);

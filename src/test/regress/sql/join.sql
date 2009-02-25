@@ -495,3 +495,13 @@ select a.unique2, a.ten, b.tenthous, b.unique2, b.hundred
 from tenk1 a left join tenk1 b on a.unique2 = b.tenthous
 where a.unique1 = 42 and
       ((b.unique2 is null and a.ten = 2) or b.hundred = 3);
+
+--
+-- test proper positioning of one-time quals in EXISTS (8.4devel bug)
+--
+prepare foo(bool) as
+  select count(*) from tenk1 a left join tenk1 b
+    on (a.unique2 = b.unique1 and exists
+        (select 1 from tenk1 c where c.thousand = b.unique2 and $1));
+execute foo(true);
+execute foo(false);
