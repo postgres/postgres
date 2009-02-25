@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.573 2009/02/23 09:28:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.574 2009/02/25 11:07:43 heikki Exp $
  *
  * NOTES
  *
@@ -2226,7 +2226,9 @@ reaper(SIGNAL_ARGS)
 
 			/* at this point we are really open for business */
 			ereport(LOG,
-				(errmsg("database system is ready to accept connections")));
+				 (errmsg("database system is ready to accept connections")));
+
+			continue;
 		}
 
 		/*
