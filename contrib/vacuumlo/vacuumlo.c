@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.38 2009/02/25 13:24:40 petere Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.39 2009/02/25 13:34:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,15 +301,16 @@ vacuumlo(char *database, struct _param * param)
 void
 usage(void)
 {
-	fprintf(stdout, "vacuumlo removes unreferenced large objects from databases\n\n");
-	fprintf(stdout, "Usage:\n  vacuumlo [options] dbname [dbname ...]\n\n");
-	fprintf(stdout, "Options:\n");
-	fprintf(stdout, "  -v\t\tWrite a lot of progress messages\n");
-	fprintf(stdout, "  -n\t\tDon't remove large objects, just show what would be done\n");
-	fprintf(stdout, "  -U username\tUsername to connect as\n");
-	fprintf(stdout, "  -W\t\tForce password prompt\n");
-	fprintf(stdout, "  -h hostname\tDatabase server host\n");
-	fprintf(stdout, "  -p port\tDatabase server port\n\n");
+	printf("vacuumlo removes unreferenced large objects from databases.\n\n");
+	printf("Usage:\n  vacuumlo [OPTION]... DBNAME...\n\n");
+	printf("Options:\n");
+	printf("  -h HOSTNAME  database server host or socket directory\n");
+	printf("  -n           don't remove large objects, just show what would be done\n");
+	printf("  -p PORT      database server port\n");
+	printf("  -U USERNAME  user name to connect as\n");
+	printf("  -W           force password prompt\n");
+	printf("  -v           write a lot of progress messages\n");
+	printf("\n");
 }
 
 
