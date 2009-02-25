@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.9 2008/06/06 17:59:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.10 2009/02/25 18:00:22 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3556,33 +3556,38 @@ get_rule_expr(Node *node, deparse_context *context,
 					if (caseexpr->arg)
 					{
 						/*
-						 * The parser should have produced WHEN clauses of
-						 * the form "CaseTestExpr = RHS"; we want to show
-						 * just the RHS.  If the user wrote something silly
-						 * like "CASE boolexpr WHEN TRUE THEN ...", then
-						 * the optimizer's simplify_boolean_equality() may
-						 * have reduced this to just "CaseTestExpr" or
-						 * "NOT CaseTestExpr", for which we have to show
-						 * "TRUE" or "FALSE".  Also, depending on context
-						 * the original CaseTestExpr might have been reduced
-						 * to a Const (but we won't see "WHEN Const").
+						 * The parser should have produced WHEN clauses of the
+						 * form "CaseTestExpr = RHS"; we want to show just the
+						 * RHS.  If the user wrote something silly like "CASE
+						 * boolexpr WHEN TRUE THEN ...", then the optimizer's
+						 * simplify_boolean_equality() may have reduced this
+						 * to just "CaseTestExpr" or "NOT CaseTestExpr", for
+						 * which we have to show "TRUE" or "FALSE".  Also,
+						 * depending on context the original CaseTestExpr
+						 * might have been reduced to a Const (but we won't
+						 * see "WHEN Const").  We have also to consider the
+						 * possibility that an implicit coercion was inserted
+						 * between the CaseTestExpr and the operator.
 						 */
 						if (IsA(w, OpExpr))
 						{
+							List	   *args = ((OpExpr *) w)->args;
+							Node	   *lhs;
 							Node	   *rhs;
 
-							Assert(IsA(linitial(((OpExpr *) w)->args),
-									   CaseTestExpr) ||
-								   IsA(linitial(((OpExpr *) w)->args),
-									   Const));
-							rhs = (Node *) lsecond(((OpExpr *) w)->args);
+							Assert(list_length(args) == 2);
+							lhs = strip_implicit_coercions(linitial(args));
+							Assert(IsA(lhs, CaseTestExpr) ||
+								   IsA(lhs, Const));
+							rhs = (Node *) lsecond(args);
 							get_rule_expr(rhs, context, false);
 						}
-						else if (IsA(w, CaseTestExpr))
+						else if (IsA(strip_implicit_coercions(w),
+									 CaseTestExpr))
 							appendStringInfo(buf, "TRUE");
 						else if (not_clause(w))
 						{
-							Assert(IsA(get_notclausearg((Expr *) w),
+							Assert(IsA(strip_implicit_coercions((Node *) get_notclausearg((Expr *) w)),
 									   CaseTestExpr));
 							appendStringInfo(buf, "FALSE");
 						}
