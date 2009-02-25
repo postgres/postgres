@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.37 2009/01/01 17:23:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.38 2009/02/25 13:24:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,7 @@ vacuumlo(char *database, struct _param * param)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL &&
-			!feof(stdin))
+			password == NULL)
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);

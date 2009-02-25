@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.81 2009/02/02 20:07:37 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.82 2009/02/25 13:24:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,8 +241,7 @@ ConnectDatabase(Archive *AHX,
 
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(AH->connection) &&
-			password == NULL &&
-			!feof(stdin))
+			password == NULL)
 		{
 			PQfinish(AH->connection);
 			password = simple_prompt("Password: ", 100, false);

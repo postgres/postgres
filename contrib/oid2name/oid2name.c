@@ -5,7 +5,7 @@
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  *
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.33 2007/12/11 02:31:49 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.34 2009/02/25 13:24:40 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -293,8 +293,7 @@ sql_conn(struct options * my_opts)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL &&
-			!feof(stdin))
+			password == NULL)
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);
