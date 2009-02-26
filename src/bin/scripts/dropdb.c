@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.26 2009/02/26 16:02:39 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.27 2009/02/26 16:20:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@ main(int argc, char *argv[])
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"echo", no_argument, NULL, 'e'},
-		{"quiet", no_argument, NULL, 'q'},
 		{"interactive", no_argument, NULL, 'i'},
 		{NULL, 0, NULL, 0}
 	};
@@ -55,7 +54,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "dropdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqi", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:wWei", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -76,9 +75,6 @@ main(int argc, char *argv[])
 				break;
 			case 'e':
 				echo = true;
-				break;
-			case 'q':
-				/* obsolete; remove in 8.4 */
 				break;
 			case 'i':
 				interactive = true;

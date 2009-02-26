@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.32 2009/02/26 16:02:39 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.33 2009/02/26 16:20:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@ main(int argc, char *argv[])
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"echo", no_argument, NULL, 'e'},
-		{"quiet", no_argument, NULL, 'q'},
 		{"owner", required_argument, NULL, 'O'},
 		{"tablespace", required_argument, NULL, 'D'},
 		{"template", required_argument, NULL, 'T'},
@@ -68,7 +67,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqO:D:T:E:l:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:wWeO:D:T:E:l:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -89,9 +88,6 @@ main(int argc, char *argv[])
 				break;
 			case 'e':
 				echo = true;
-				break;
-			case 'q':
-				/* obsolete; remove in 8.4 */
 				break;
 			case 'O':
 				owner = optarg;
