@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.163 2009/02/20 02:57:21 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.164 2009/02/26 16:02:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		ConnectDatabase(AHX, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->requirePassword);
+						ropt->promptPassword);
 
 		/*
 		 * If we're talking to the DB directly, don't send comments since they
@@ -609,6 +609,7 @@ NewRestoreOptions(void)
 
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
+	opts->promptPassword = TRI_DEFAULT;
 
 	return opts;
 }
@@ -1885,6 +1886,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		AH->format = _discoverArchiveFormat(AH);
 	else
 		AH->format = fmt;
+
+	AH->promptPassword = TRI_DEFAULT;
 
 	switch (AH->format)
 	{
@@ -3206,7 +3209,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 */
 	ConnectDatabase((Archive *) AH, ropt->dbname,
 					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->requirePassword);
+					ropt->promptPassword);
 
 	_doSetFixedOutputState(AH);
 
@@ -3476,7 +3479,7 @@ parallel_restore(RestoreArgs *args)
 	 */
 	ConnectDatabase((Archive *) AH, ropt->dbname,
 					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->requirePassword);
+					ropt->promptPassword);
 
 	_doSetFixedOutputState(AH);
 

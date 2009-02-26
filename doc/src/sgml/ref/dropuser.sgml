@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.39 2007/12/11 19:57:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.40 2009/02/26 16:02:37 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -126,6 +126,21 @@ PostgreSQL documentation
       <listitem>
        <para>
         User name to connect as (not the user name to drop).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-w</></term>
+      <term><option>--no-password</></term>
+      <listitem>
+       <para>
+        Never issue a password prompt.  If the server requires
+        password authentication and a password is not available by
+        other means such as a <filename>.pgpass</filename> file, the
+        connection attempt will fail.  This option can be useful in
+        batch jobs and scripts where no user is present to enter a
+        password.
        </para>
       </listitem>
      </varlistentry>

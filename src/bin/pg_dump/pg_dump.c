@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.526 2009/02/25 13:03:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.527 2009/02/26 16:02:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ main(int argc, char **argv)
 	DumpableObject **dobjs;
 	int			numObjs;
 	int			i;
-	bool		force_password = false;
+	enum trivalue prompt_password = TRI_DEFAULT;
 	int			compressLevel = -1;
 	int			plainText = 0;
 	int			outputClean = 0;
@@ -261,6 +261,7 @@ main(int argc, char **argv)
 		{"superuser", required_argument, NULL, 'S'},
 		{"table", required_argument, NULL, 't'},
 		{"exclude-table", required_argument, NULL, 'T'},
+		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
@@ -315,7 +316,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "abcCdDE:f:F:h:in:N:oOp:RsS:t:T:U:vWxX:Z:",
+	while ((c = getopt_long(argc, argv, "abcCdDE:f:F:h:in:N:oOp:RsS:t:T:U:vwWxX:Z:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -416,8 +417,12 @@ main(int argc, char **argv)
 				g_verbose = true;
 				break;
 
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
+
 			case 'W':
-				force_password = true;
+				prompt_password = TRI_YES;
 				break;
 
 			case 'x':			/* skip ACL dump */
@@ -556,7 +561,7 @@ main(int argc, char **argv)
 	 * death.
 	 */
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport,
-							 username, force_password);
+							 username, prompt_password);
 
 	/* Set the client encoding if requested */
 	if (dumpencoding)

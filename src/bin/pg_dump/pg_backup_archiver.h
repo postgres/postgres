@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.77 2009/02/02 20:07:37 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.78 2009/02/26 16:02:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ typedef struct _archiveHandle
 
 	/* Stuff for direct DB connection */
 	char	   *archdbname;		/* DB name *read* from archive */
-	bool		requirePassword;
+	enum trivalue promptPassword;
 	char       *savedPassword;	/* password for ropt->username, if known */
 	PGconn	   *connection;
 	int			connectToDB;	/* Flag to indicate if direct DB connection is

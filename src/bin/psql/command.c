@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.202 2009/01/20 02:13:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.203 2009/02/26 16:02:38 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1212,7 +1212,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * the postmaster's log.  But libpq offers no API that would let us obtain
 	 * a password and then continue with the first connection attempt.
 	 */
-	if (pset.getPassword)
+	if (pset.getPassword == TRI_YES)
 	{
 		password = prompt_for_password(user);
 	}
@@ -1237,7 +1237,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		 * Connection attempt failed; either retry the connection attempt with
 		 * a new password, or give up.
 		 */
-		if (!password && PQconnectionNeedsPassword(n_conn))
+		if (!password && PQconnectionNeedsPassword(n_conn) && pset.getPassword != TRI_NO)
 		{
 			PQfinish(n_conn);
 			password = prompt_for_password(user);

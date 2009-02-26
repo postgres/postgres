@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.39 2009/02/25 13:34:32 petere Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.40 2009/02/26 16:02:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,17 @@ extern int	optind,
 			opterr,
 			optopt;
 
+enum trivalue
+{
+	TRI_DEFAULT,
+	TRI_NO,
+	TRI_YES
+};
+
 struct _param
 {
 	char	   *pg_user;
-	int			pg_prompt;
+	enum trivalue pg_prompt;
 	char	   *pg_port;
 	char	   *pg_host;
 	int			verbose;
@@ -64,7 +71,7 @@ vacuumlo(char *database, struct _param * param)
 	static char *password = NULL;
 	bool		new_pass;
 
-	if (param->pg_prompt && password == NULL)
+	if (param->pg_prompt == TRI_YES && password == NULL)
 		password = simple_prompt("Password: ", 100, false);
 
 	/*
@@ -91,7 +98,8 @@ vacuumlo(char *database, struct _param * param)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL)
+			password == NULL &&
+			param->pg_prompt != TRI_NO)
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);
@@ -308,6 +316,7 @@ usage(void)
 	printf("  -n           don't remove large objects, just show what would be done\n");
 	printf("  -p PORT      database server port\n");
 	printf("  -U USERNAME  user name to connect as\n");
+	printf("  -w           never prompt for password\n");
 	printf("  -W           force password prompt\n");
 	printf("  -v           write a lot of progress messages\n");
 	printf("\n");
@@ -324,7 +333,7 @@ main(int argc, char **argv)
 
 	/* Parameter handling */
 	param.pg_user = NULL;
-	param.pg_prompt = 0;
+	param.pg_prompt = TRI_DEFAULT;
 	param.pg_host = NULL;
 	param.pg_port = NULL;
 	param.verbose = 0;
@@ -332,7 +341,7 @@ main(int argc, char **argv)
 
 	while (1)
 	{
-		c = getopt(argc, argv, "?h:U:p:vnW");
+		c = getopt(argc, argv, "?h:U:p:vnwW");
 		if (c == -1)
 			break;
 
@@ -357,8 +366,11 @@ main(int argc, char **argv)
 			case 'U':
 				param.pg_user = strdup(optarg);
 				break;
+			case 'w':
+				param.pg_prompt = TRI_NO;
+				break;
 			case 'W':
-				param.pg_prompt = 1;
+				param.pg_prompt = TRI_YES;
 				break;
 			case 'p':
 				port = strtol(optarg, NULL, 10);

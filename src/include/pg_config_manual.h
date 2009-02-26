@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.37 2009/01/12 05:10:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.38 2009/02/26 16:02:39 petere Exp $
  *------------------------------------------------------------------------
  */
 
@@ -57,12 +57,6 @@
  * Number of spare LWLocks to allocate for user-defined add-on code.
  */
 #define NUM_USER_DEFINED_LWLOCKS	4
-
-/*
- * Define this if you want psql to _always_ ask for a username and a
- * password for password authentication.
- */
-/* #define PSQL_ALWAYS_GET_PASSWORDS */
 
 /*
  * Define this if you want to allow the lo_import and lo_export SQL

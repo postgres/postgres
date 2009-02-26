@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.33 2009/02/25 13:03:07 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.34 2009/02/26 16:02:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ main(int argc, char *argv[])
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
+		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"echo", no_argument, NULL, 'e'},
@@ -40,7 +41,7 @@ main(int argc, char *argv[])
 	char	   *host = NULL;
 	char	   *port = NULL;
 	char	   *username = NULL;
-	bool		password = false;
+	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		echo = false;
 	char	   *langname = NULL;
 
@@ -56,7 +57,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createlang", help);
 
-	while ((c = getopt_long(argc, argv, "lh:p:U:Wd:e", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "lh:p:U:wWd:e", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -72,8 +73,11 @@ main(int argc, char *argv[])
 			case 'U':
 				username = optarg;
 				break;
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
 			case 'W':
-				password = true;
+				prompt_password = TRI_YES;
 				break;
 			case 'd':
 				dbname = optarg;
@@ -127,7 +131,7 @@ main(int argc, char *argv[])
 		printQueryOpt popt;
 		static const bool translate_columns[] = {false, true};
 
-		conn = connectDatabase(dbname, host, port, username, password,
+		conn = connectDatabase(dbname, host, port, username, prompt_password,
 							   progname);
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
@@ -164,7 +168,7 @@ main(int argc, char *argv[])
 		if (*p >= 'A' && *p <= 'Z')
 			*p += ('a' - 'A');
 
-	conn = connectDatabase(dbname, host, port, username, password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
 
 	/*
 	 * Make sure the language isn't already installed
@@ -220,6 +224,7 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
+	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

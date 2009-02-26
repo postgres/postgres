@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.34 2009/02/25 13:24:40 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.35 2009/02/26 16:02:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,14 +96,14 @@ handle_help_version_opts(int argc, char *argv[],
  */
 PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, bool require_password,
+				const char *pguser, enum trivalue prompt_password,
 				const char *progname)
 {
 	PGconn	   *conn;
 	char	   *password = NULL;
 	bool		new_pass;
 
-	if (require_password)
+	if (prompt_password == TRI_YES)
 		password = simple_prompt("Password: ", 100, false);
 
 	/*
@@ -124,7 +124,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL)
+			password == NULL &&
+			prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
 			password = simple_prompt("Password: ", 100, false);

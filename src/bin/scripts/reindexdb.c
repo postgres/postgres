@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.16 2009/02/25 13:03:07 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.17 2009/02/26 16:02:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,15 +17,15 @@
 static void reindex_one_database(const char *name, const char *dbname,
 					 const char *type, const char *host,
 					 const char *port, const char *username,
-					 bool password, const char *progname,
+					 enum trivalue prompt_password, const char *progname,
 					 bool echo);
 static void reindex_all_databases(const char *host, const char *port,
-					  const char *username, bool password,
+					  const char *username, enum trivalue prompt_password,
 					  const char *progname, bool echo,
 					  bool quiet);
 static void reindex_system_catalogs(const char *dbname,
 						const char *host, const char *port,
-						const char *username, bool password,
+						const char *username, enum trivalue prompt_password,
 						const char *progname, bool echo);
 static void help(const char *progname);
 
@@ -36,6 +36,7 @@ main(int argc, char *argv[])
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
+		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"echo", no_argument, NULL, 'e'},
 		{"quiet", no_argument, NULL, 'q'},
@@ -55,7 +56,7 @@ main(int argc, char *argv[])
 	const char *host = NULL;
 	const char *port = NULL;
 	const char *username = NULL;
-	bool		password = false;
+	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		syscatalog = false;
 	bool		alldb = false;
 	bool		echo = false;
@@ -69,7 +70,7 @@ main(int argc, char *argv[])
 	handle_help_version_opts(argc, argv, "reindexdb", help);
 
 	/* process command-line options */
-	while ((c = getopt_long(argc, argv, "h:p:U:Weqd:ast:i:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:ast:i:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -82,8 +83,11 @@ main(int argc, char *argv[])
 			case 'U':
 				username = optarg;
 				break;
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
 			case 'W':
-				password = true;
+				prompt_password = TRI_YES;
 				break;
 			case 'e':
 				echo = true;
@@ -150,7 +154,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		reindex_all_databases(host, port, username, password,
+		reindex_all_databases(host, port, username, prompt_password,
 							  progname, echo, quiet);
 	}
 	else if (syscatalog)
@@ -176,7 +180,7 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
-		reindex_system_catalogs(dbname, host, port, username, password,
+		reindex_system_catalogs(dbname, host, port, username, prompt_password,
 								progname, echo);
 	}
 	else
@@ -193,14 +197,14 @@ main(int argc, char *argv[])
 
 		if (index)
 			reindex_one_database(index, dbname, "INDEX", host, port,
-								 username, password, progname, echo);
+								 username, prompt_password, progname, echo);
 		if (table)
 			reindex_one_database(table, dbname, "TABLE", host, port,
-								 username, password, progname, echo);
+								 username, prompt_password, progname, echo);
 		/* reindex database only if index or table is not specified */
 		if (index == NULL && table == NULL)
 			reindex_one_database(dbname, dbname, "DATABASE", host, port,
-								 username, password, progname, echo);
+								 username, prompt_password, progname, echo);
 	}
 
 	exit(0);
@@ -209,7 +213,7 @@ main(int argc, char *argv[])
 static void
 reindex_one_database(const char *name, const char *dbname, const char *type,
 					 const char *host, const char *port, const char *username,
-					 bool password, const char *progname, bool echo)
+					 enum trivalue prompt_password, const char *progname, bool echo)
 {
 	PQExpBufferData sql;
 
@@ -226,7 +230,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(name));
 	appendPQExpBuffer(&sql, ";\n");
 
-	conn = connectDatabase(dbname, host, port, username, password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
@@ -249,14 +253,14 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 static void
 reindex_all_databases(const char *host, const char *port,
-					  const char *username, bool password,
+					  const char *username, enum trivalue prompt_password,
 					  const char *progname, bool echo, bool quiet)
 {
 	PGconn	   *conn;
 	PGresult   *result;
 	int			i;
 
-	conn = connectDatabase("postgres", host, port, username, password, progname);
+	conn = connectDatabase("postgres", host, port, username, prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
@@ -271,7 +275,7 @@ reindex_all_databases(const char *host, const char *port,
 		}
 
 		reindex_one_database(dbname, dbname, "DATABASE", host, port, username,
-							 password, progname, echo);
+							 prompt_password, progname, echo);
 	}
 
 	PQclear(result);
@@ -279,7 +283,7 @@ reindex_all_databases(const char *host, const char *port,
 
 static void
 reindex_system_catalogs(const char *dbname, const char *host, const char *port,
-						const char *username, bool password,
+						const char *username, enum trivalue prompt_password,
 						const char *progname, bool echo)
 {
 	PQExpBufferData sql;
@@ -290,7 +294,7 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 
 	appendPQExpBuffer(&sql, "REINDEX SYSTEM %s;\n", dbname);
 
-	conn = connectDatabase(dbname, host, port, username, password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		fprintf(stderr, _("%s: reindexing of system catalogs failed: %s"),
@@ -322,6 +326,7 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
+	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
 	printf(_("\nRead the description of the SQL command REINDEX for details.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));

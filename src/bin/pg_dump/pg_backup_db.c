@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.82 2009/02/25 13:24:40 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.83 2009/02/26 16:02:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	ahlog(AH, 1, "connecting to database \"%s\" as user \"%s\"\n",
 		  newdb, newuser);
 
-	if (AH->requirePassword && password == NULL)
+	if (AH->promptPassword == TRI_YES && password == NULL)
 	{
 		password = simple_prompt("Password: ", 100, false);
 		if (password == NULL)
@@ -176,7 +176,12 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 			if (password)
 				free(password);
-			password = simple_prompt("Password: ", 100, false);
+
+			if (AH->promptPassword != TRI_NO)
+				password = simple_prompt("Password: ", 100, false);
+			else
+				die_horribly(AH, modulename, "connection needs password\n");
+
 			if (password == NULL)
 				die_horribly(AH, modulename, "out of memory\n");
 			new_pass = true;
@@ -209,7 +214,7 @@ ConnectDatabase(Archive *AHX,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-				int reqPwd)
+				enum trivalue prompt_password)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password = AH->savedPassword;
@@ -218,13 +223,13 @@ ConnectDatabase(Archive *AHX,
 	if (AH->connection)
 		die_horribly(AH, modulename, "already connected to a database\n");
 
-	if (reqPwd && password == NULL)
+	if (prompt_password == TRI_YES && password == NULL)
 	{
 		password = simple_prompt("Password: ", 100, false);
 		if (password == NULL)
 			die_horribly(AH, modulename, "out of memory\n");
 	}
-	AH->requirePassword = reqPwd;
+	AH->promptPassword = prompt_password;
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -241,7 +246,8 @@ ConnectDatabase(Archive *AHX,
 
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(AH->connection) &&
-			password == NULL)
+			password == NULL &&
+			prompt_password != TRI_NO)
 		{
 			PQfinish(AH->connection);
 			password = simple_prompt("Password: ", 100, false);

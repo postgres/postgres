@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.21 2009/01/01 17:23:55 momjian Exp $
+ *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.22 2009/02/26 16:02:39 petere Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -17,6 +17,13 @@
 extern int	optreset;
 #endif
 
+enum trivalue
+{
+	TRI_DEFAULT,
+	TRI_NO,
+	TRI_YES
+};
+
 typedef void (*help_handler) (const char *progname);
 
 extern const char *get_user_name(const char *progname);
@@ -27,7 +34,7 @@ extern void handle_help_version_opts(int argc, char *argv[],
 
 extern PGconn *connectDatabase(const char *dbname, const char *pghost,
 				const char *pgport, const char *pguser,
-				bool require_password, const char *progname);
+				enum trivalue prompt_password, const char *progname);
 
 extern PGresult *executeQuery(PGconn *conn, const char *query,
 			 const char *progname, bool echo);

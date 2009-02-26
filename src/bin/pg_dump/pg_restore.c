@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.93 2009/02/25 13:03:06 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.94 2009/02/26 16:02:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,7 @@ main(int argc, char **argv)
 		{"no-owner", 0, NULL, 'O'},
 		{"no-reconnect", 0, NULL, 'R'},
 		{"port", 1, NULL, 'p'},
+		{"no-password", 0, NULL, 'w'},
 		{"password", 0, NULL, 'W'},
 		{"schema", 1, NULL, 'n'},
 		{"schema-only", 0, NULL, 's'},
@@ -142,7 +143,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:m:n:Op:P:RsS:t:T:U:vWxX:1",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:m:n:Op:P:RsS:t:T:U:vwWxX:1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -240,8 +241,12 @@ main(int argc, char **argv)
 				opts->verbose = 1;
 				break;
 
+			case 'w':
+				opts->promptPassword = TRI_NO;
+				break;
+
 			case 'W':
-				opts->requirePassword = true;
+				opts->promptPassword = TRI_YES;
 				break;
 
 			case 'x':			/* skip ACL dump */
@@ -437,6 +442,7 @@ usage(const char *progname)
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
+	printf(_("  -w, --no-password        never prompt for password\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
 
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));

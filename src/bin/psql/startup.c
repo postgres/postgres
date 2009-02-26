@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.154 2009/02/25 13:24:40 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.155 2009/02/26 16:02:38 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -140,12 +140,7 @@ main(int argc, char *argv[])
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
 
-	/* This is obsolete and should be removed sometime. */
-#ifdef PSQL_ALWAYS_GET_PASSWORDS
-	pset.getPassword = true;
-#else
-	pset.getPassword = false;
-#endif
+	pset.getPassword = TRI_DEFAULT;
 
 	EstablishVariableSpace();
 
@@ -175,7 +170,7 @@ main(int argc, char *argv[])
 				options.username);
 	}
 
-	if (pset.getPassword)
+	if (pset.getPassword == TRI_YES)
 		password = simple_prompt(password_prompt, 100, false);
 
 	/* loop until we have a password if requested by backend */
@@ -189,7 +184,8 @@ main(int argc, char *argv[])
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(pset.db) &&
-			password == NULL)
+			password == NULL &&
+			pset.getPassword != TRI_NO)
 		{
 			PQfinish(pset.db);
 			password = simple_prompt(password_prompt, 100, false);
@@ -340,6 +336,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"set", required_argument, NULL, 'v'},
 		{"variable", required_argument, NULL, 'v'},
 		{"version", no_argument, NULL, 'V'},
+		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"expanded", no_argument, NULL, 'x'},
 		{"no-psqlrc", no_argument, NULL, 'X'},
@@ -354,7 +351,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 	memset(options, 0, sizeof *options);
 
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:U:v:VWxX?1",
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:U:v:VwWxX?1",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -491,8 +488,11 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'V':
 				showVersion();
 				exit(EXIT_SUCCESS);
+			case 'w':
+				pset.getPassword = TRI_NO;
+				break;
 			case 'W':
-				pset.getPassword = true;
+				pset.getPassword = TRI_YES;
 				break;
 			case 'x':
 				pset.popt.topt.expanded = true;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.139 2009/02/25 13:03:07 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.140 2009/02/26 16:02:38 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -140,6 +140,7 @@ usage(void)
 	if (!env)
 		env = user;
 	printf(_("  -U NAME         database user name (default: \"%s\")\n"), env);
+	puts(_("  -w              never prompt for password"));
 	puts(_("  -W              force password prompt (should happen automatically)"));
 
 	puts(_(

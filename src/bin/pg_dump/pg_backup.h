@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.49 2009/02/02 20:07:36 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.50 2009/02/26 16:02:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,13 @@
 #define oidle(x,y) ( (x) <= (y) )
 #define oidge(x,y) ( (x) >= (y) )
 #define oidzero(x) ( (x) == 0 )
+
+enum trivalue
+{
+	TRI_DEFAULT,
+	TRI_NO,
+	TRI_YES
+};
 
 typedef enum _archiveFormat
 {
@@ -126,7 +133,7 @@ typedef struct _restoreOptions
 	char	   *pghost;
 	char	   *username;
 	int			noDataForFailedTables;
-	int			requirePassword;
+	enum trivalue promptPassword;
 	int			exit_on_error;
 	int			compression;
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
@@ -153,7 +160,7 @@ PGconn *ConnectDatabase(Archive *AH,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-				int reqPwd);
+				enum trivalue prompt_password);
 
 /* Called to add a TOC entry */
 extern void ArchiveEntry(Archive *AHX,
