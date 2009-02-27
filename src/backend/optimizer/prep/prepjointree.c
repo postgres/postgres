@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.63 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.64 2009/02/27 23:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,6 +220,15 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		 * The point of the available_rels machinations is to ensure that we
 		 * only pull up quals for which that's okay.
 		 *
+		 * XXX for the moment, we refrain from pulling up IN/EXISTS clauses
+		 * appearing in LEFT or RIGHT join conditions.  Although it is
+		 * semantically valid to do so under the above conditions, we end up
+		 * with a query in which the semijoin or antijoin must be evaluated
+		 * below the outer join, which could perform far worse than leaving
+		 * it as a sublink that is executed only for row pairs that meet the
+		 * other join conditions.  Fixing this seems to require considerable
+		 * restructuring of the executor, but maybe someday it can happen.
+		 *
 		 * We don't expect to see any pre-existing JOIN_SEMI or JOIN_ANTI
 		 * nodes here.
 		 */
@@ -232,17 +241,21 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 														 &jtlink);
 				break;
 			case JOIN_LEFT:
+#ifdef NOT_USED					/* see XXX comment above */
 				j->quals = pull_up_sublinks_qual_recurse(root, j->quals,
 														 rightrelids,
 														 &j->rarg);
+#endif
 				break;
 			case JOIN_FULL:
 				/* can't do anything with full-join quals */
 				break;
 			case JOIN_RIGHT:
+#ifdef NOT_USED					/* see XXX comment above */
 				j->quals = pull_up_sublinks_qual_recurse(root, j->quals,
 														 leftrelids,
 														 &j->larg);
+#endif
 				break;
 			default:
 				elog(ERROR, "unrecognized join type: %d",
