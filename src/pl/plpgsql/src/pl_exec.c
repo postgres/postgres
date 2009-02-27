@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.154.2.7 2008/09/01 22:30:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.154.2.8 2009/02/27 10:27:53 heikki Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -953,8 +953,10 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 					free_var(state_var);
 					state_var->value = (Datum) 0;
+					state_var->isnull = true;
 					free_var(errm_var);
 					errm_var->value = (Datum) 0;
+					errm_var->isnull = true;
 					break;
 				}
 			}
