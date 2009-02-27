@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.2 2009/01/17 04:29:00 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.3 2009/02/27 07:20:00 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -85,7 +85,7 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies the options for the server.  The options

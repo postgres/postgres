@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.2 2009/02/24 10:06:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.3 2009/02/27 07:20:00 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -82,7 +82,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies options for the new foreign-data wrapper.

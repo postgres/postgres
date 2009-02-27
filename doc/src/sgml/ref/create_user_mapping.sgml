@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.3 2009/01/20 09:10:20 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.4 2009/02/27 07:20:00 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,7 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">username</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies the options of the user mapping.  The
