@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.17 2009/01/06 17:27:06 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.18 2009/02/27 09:30:21 petere Exp $ 
  *
  *
  * pg_standby.c
@@ -41,6 +41,8 @@ int			getopt(int argc, char *const argv[], const char *optstring);
 
 extern char *optarg;
 extern int	optind;
+
+const char *progname;
 
 /* Options and defaults */
 int			sleeptime = 5;		/* amount of time to sleep between file checks */
@@ -146,7 +148,7 @@ CustomizableInitialize(void)
 	 */
 	if (stat(archiveLocation, &stat_buf) != 0)
 	{
-		fprintf(stderr, "pg_standby: archiveLocation \"%s\" does not exist\n", archiveLocation);
+		fprintf(stderr, "%s: archiveLocation \"%s\" does not exist\n", progname, archiveLocation);
 		fflush(stderr);
 		exit(2);
 	}
@@ -261,8 +263,8 @@ CustomizableCleanupPriorWALFiles(void)
 					rc = unlink(WALFilePath);
 					if (rc != 0)
 					{
-						fprintf(stderr, "\npg_standby: ERROR failed to remove \"%s\": %s",
-								WALFilePath, strerror(errno));
+						fprintf(stderr, "\n%s: ERROR failed to remove \"%s\": %s",
+								progname, WALFilePath, strerror(errno));
 						break;
 					}
 				}
@@ -271,7 +273,7 @@ CustomizableCleanupPriorWALFiles(void)
 				fprintf(stderr, "\n");
 		}
 		else
-			fprintf(stderr, "pg_standby: archiveLocation \"%s\" open error\n", archiveLocation);
+			fprintf(stderr, "%s: archiveLocation \"%s\" open error\n", progname, archiveLocation);
 
 		closedir(xldir);
 		fflush(stderr);
@@ -430,23 +432,29 @@ RestoreWALFileForRecovery(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "\npg_standby allows Warm Standby servers to be configured\n");
-	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "  pg_standby [OPTION]... ARCHIVELOCATION NEXTWALFILE XLOGFILEPATH [RESTARTWALFILE]\n");
-	fprintf(stderr, "				note space between ARCHIVELOCATION and NEXTWALFILE\n");
-	fprintf(stderr, "with main intended use as a restore_command in the recovery.conf\n");
-	fprintf(stderr, "	 restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n");
-	fprintf(stderr, "e.g. restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p %%r'\n");
-	fprintf(stderr, "\nOptions:\n");
-	fprintf(stderr, "  -c			copies file from archive (default)\n");
-	fprintf(stderr, "  -d			generate lots of debugging output (testing only)\n");
-	fprintf(stderr, "  -k NUMFILESTOKEEP	if RESTARTWALFILE not used, removes files prior to limit (0 keeps all)\n");
-	fprintf(stderr, "  -l			links into archive (leaves file in archive)\n");
-	fprintf(stderr, "  -r MAXRETRIES		max number of times to retry, with progressive wait (default=3)\n");
-	fprintf(stderr, "  -s SLEEPTIME		seconds to wait between file checks (min=1, max=60, default=5)\n");
-	fprintf(stderr, "  -t TRIGGERFILE	defines a trigger file to initiate failover (no default)\n");
-	fprintf(stderr, "  -w MAXWAITTIME	max seconds to wait for a file (0=no limit)(default=0)\n");
-	fflush(stderr);
+	printf("%s allows PostgreSQL warm standby servers to be configured.\n\n", progname);
+	printf("Usage:\n");
+	printf("  %s [OPTION]... ARCHIVELOCATION NEXTWALFILE XLOGFILEPATH [RESTARTWALFILE]\n", progname);
+	printf("\n"
+		   "with main intended use as a restore_command in the recovery.conf:\n"
+		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
+		   "e.g.\n"
+		   "  restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p %%r'\n");
+	printf("\nOptions:\n");
+	printf("  -c                 copies file from archive (default)\n");
+	printf("  -d                 generate lots of debugging output (testing only)\n");
+	printf("  -k NUMFILESTOKEEP  if RESTARTWALFILE not used, removes files prior to limit\n"
+		   "                     (0 keeps all)\n");
+	printf("  -l                 links into archive (leaves file in archive)\n");
+	printf("  -r MAXRETRIES      max number of times to retry, with progressive wait\n"
+		   "                     (default=3)\n");
+	printf("  -s SLEEPTIME       seconds to wait between file checks (min=1, max=60,\n"
+		   "                     default=5)\n");
+	printf("  -t TRIGGERFILE     defines a trigger file to initiate failover (no default)\n");
+	printf("  -w MAXWAITTIME     max seconds to wait for a file (0=no limit) (default=0)\n");
+	printf("  --help             show this help, then exit\n");
+	printf("  --version          output version information, then exit\n");
+	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
 static void
@@ -460,6 +468,22 @@ int
 main(int argc, char **argv)
 {
 	int			c;
+
+	progname = get_progname(argv[0]);
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage();
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("pg_standby (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
 
 	(void) signal(SIGINT, sighandler);
 	(void) signal(SIGQUIT, sighandler);
@@ -478,8 +502,7 @@ main(int argc, char **argv)
 				keepfiles = atoi(optarg);
 				if (keepfiles < 0)
 				{
-					fprintf(stderr, "usage: pg_standby -k keepfiles must be >= 0\n");
-					usage();
+					fprintf(stderr, "%s: -k keepfiles must be >= 0\n", progname);
 					exit(2);
 				}
 				break;
@@ -490,8 +513,7 @@ main(int argc, char **argv)
 				maxretries = atoi(optarg);
 				if (maxretries < 0)
 				{
-					fprintf(stderr, "usage: pg_standby -r maxretries must be >= 0\n");
-					usage();
+					fprintf(stderr, "%s: -r maxretries must be >= 0\n", progname);
 					exit(2);
 				}
 				break;
@@ -499,8 +521,7 @@ main(int argc, char **argv)
 				sleeptime = atoi(optarg);
 				if (sleeptime <= 0 || sleeptime > 60)
 				{
-					fprintf(stderr, "usage: pg_standby -s sleeptime incorrectly set\n");
-					usage();
+					fprintf(stderr, "%s: -s sleeptime incorrectly set\n", progname);
 					exit(2);
 				}
 				break;
@@ -513,13 +534,12 @@ main(int argc, char **argv)
 				maxwaittime = atoi(optarg);
 				if (maxwaittime < 0)
 				{
-					fprintf(stderr, "usage: pg_standby -w maxwaittime incorrectly set\n");
-					usage();
+					fprintf(stderr, "%s: -w maxwaittime incorrectly set\n", progname);
 					exit(2);
 				}
 				break;
 			default:
-				usage();
+				fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 				exit(2);
 				break;
 		}
@@ -530,7 +550,7 @@ main(int argc, char **argv)
 	 */
 	if (argc == 1)
 	{
-		usage();
+		fprintf(stderr, "%s: not enough command-line arguments\n", progname);
 		exit(2);
 	}
 
@@ -547,8 +567,8 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "pg_standby: must specify archiveLocation\n");
-		usage();
+		fprintf(stderr, "%s: must specify archive location\n", progname);
+		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 		exit(2);
 	}
 
@@ -559,8 +579,8 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "pg_standby: use %%f to specify nextWALFileName\n");
-		usage();
+		fprintf(stderr, "%s: use %%f to specify nextWALFileName\n", progname);
+		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 		exit(2);
 	}
 
@@ -571,8 +591,8 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, "pg_standby: use %%p to specify xlogFilePath\n");
-		usage();
+		fprintf(stderr, "%s: use %%p to specify xlogFilePath\n", progname);
+		fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
 		exit(2);
 	}
 

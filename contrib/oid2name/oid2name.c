@@ -5,7 +5,7 @@
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  *
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.34 2009/02/25 13:24:40 petere Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.35 2009/02/27 09:30:21 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -47,6 +47,7 @@ struct options
 };
 
 /* function prototypes */
+static void help(const char *progname);
 void		get_opts(int, char **, struct options *);
 void	   *myalloc(size_t size);
 char	   *mystrdup(const char *str);
@@ -64,6 +65,9 @@ void
 get_opts(int argc, char **argv, struct options * my_opts)
 {
 	int			c;
+	const char *progname;
+
+	progname = get_progname(argv[0]);
 
 	/* set the defaults */
 	my_opts->quiet = false;
@@ -77,8 +81,22 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	my_opts->port = NULL;
 	my_opts->username = NULL;
 
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			help(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("oid2name (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
+
 	/* get opts */
-	while ((c = getopt(argc, argv, "H:p:U:d:t:o:f:qSxish?")) != -1)
+	while ((c = getopt(argc, argv, "H:p:U:d:t:o:f:qSxish")) != -1)
 	{
 		switch (c)
 		{
@@ -142,29 +160,42 @@ get_opts(int argc, char **argv, struct options * my_opts)
 				my_opts->tablespaces = true;
 				break;
 
-				/* help! (ugly in code for easier editing) */
-			case '?':
 			case 'h':
-				fprintf(stderr,
-						"Usage: oid2name [-s|-d database] [-S][-i][-q][-x] [-t table|-o oid|-f file] ...\n"
-					 "        default action        show all database Oids\n"
-					 "        -d database           database to connect to\n"
-						"        -s                    show all tablespaces\n"
-					"        -S                    show system objects too\n"
-						"        -i                    show indexes and sequences too\n"
-						"        -x                    extended (show additional columns)\n"
-				 "        -q                    quiet (don't show headers)\n"
-						"        -t <table>            show info for table named <table>\n"
-						"        -o <oid>              show info for table with Oid <oid>\n"
-						"        -f <filenode>         show info for table with filenode <filenode>\n"
-					 "        -H host               connect to remote host\n"
-					"        -p port               host port to connect to\n"
-				   "        -U username           username to connect with\n"
-					);
-				exit(1);
+				help(progname);
+				exit(0);
 				break;
+
+			default:
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				exit(1);
 		}
 	}
+}
+
+static void
+help(const char *progname)
+{
+	printf("%s helps examining the file structure used by PostgreSQL.\n\n"
+		   "Usage:\n"
+		   "  %s [OPTIONS]...\n"
+		   "\nOptions:\n"
+		   "  -d DBNAME    database to connect to\n"
+		   "  -f FILENODE  show info for table with given file node\n"
+		   "  -H HOSTNAME  database server host or socket directory\n"
+		   "  -i           show indexes and sequences too\n"
+		   "  -o OID       show info for table with given OID\n"
+		   "  -p PORT      database server port number\n"
+		   "  -q           quiet (don't show headers)\n"
+		   "  -s           show all tablespaces\n"
+		   "  -S           show system objects too\n"
+		   "  -t TABLE     show info for named table\n"
+		   "  -U NAME      connect as specified database user\n"
+		   "  -x           extended (show additional columns)\n"
+		   "  --help       show this help, then exit\n"
+		   "  --version    output version information, then exit\n"
+		   "\nThe default action is to show all database OIDs.\n\n"
+		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
+		   progname, progname);
 }
 
 void *

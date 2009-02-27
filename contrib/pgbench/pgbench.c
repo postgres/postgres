@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.84 2009/02/25 13:24:40 petere Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.85 2009/02/27 09:30:21 petere Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -250,10 +250,41 @@ diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
 }
 
 static void
-usage(void)
+usage(const char *progname)
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions | -T duration][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-M querymode][-f filename][-l][-U login][-d][dbname]\n");
-	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-d][dbname]\n");
+	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
+		   "Usage:\n"
+		   "  %s [OPTIONS]... [DBNAME]\n"
+		   "\nInitialization options:\n"
+		   "  -i           invokes initialization mode\n"
+		   "  -F NUM       fill factor\n"
+		   "  -s NUM       scaling factor\n"
+		   "\nBenchmarking options:\n"
+		   "  -c NUM       number of concurrent database clients (default: 1)\n"
+		   "  -C           establish new connection for each transaction\n"
+		   "  -D VARNAME=VALUE\n"
+		   "               define variable for use by custom script\n"
+		   "  -f FILENAME  read transaction script from FILENAME\n"
+		   "  -l           write transaction times to log file\n"
+		   "  -M {simple|extended|prepared}\n"
+		   "               protocol for submitting queries to server (default: simple)\n"
+		   "  -n           do not run VACUUM before tests\n"
+		   "  -N           do not update tables \"tellers\" and \"branches\"\n"
+		   "  -s NUM       report scale factor in output\n"
+		   "  -S           perform SELECT-only transactions\n"
+		   "  -t NUM       number of transactions each client runs (default: 10)\n"
+		   "  -T NUM       duration of benchmark test in seconds\n"
+		   "  -v           vacuum all four standard tables before tests\n"
+		   "\nCommon options:\n"
+		   "  -d           print debugging output\n"
+		   "  -h HOSTNAME  database server host or socket directory\n"
+		   "  -p PORT      database server port number\n"
+		   "  -U USERNAME  connect as specified database user\n"
+		   "  --help       show this help, then exit\n"
+		   "  --version    output version information, then exit\n"
+		   "\n"
+		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
+		   progname, progname);
 }
 
 /* random number generator: uniform distribution from min to max inclusive */
@@ -1499,6 +1530,24 @@ main(int argc, char **argv)
 
 	char		val[64];
 
+	const char *progname;
+
+	progname = get_progname(argv[0]);
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("pgbench (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
+
 #ifdef WIN32
 	/* stderr is buffered on Win32. */
 	setvbuf(stderr, NULL, _IONBF, 0);
@@ -1652,7 +1701,7 @@ main(int argc, char **argv)
 			case 'M':
 				if (num_files > 0)
 				{
-					fprintf(stderr, "querymode(-M) should be specifiled before transaction scripts(-f)\n");
+					fprintf(stderr, "query mode (-M) should be specifiled before transaction scripts (-f)\n");
 					exit(1);
 				}
 				for (querymode = 0; querymode < NUM_QUERYMODE; querymode++)
@@ -1660,12 +1709,12 @@ main(int argc, char **argv)
 						break;
 				if (querymode >= NUM_QUERYMODE)
 				{
-					fprintf(stderr, "invalid querymode(-M): %s\n", optarg);
+					fprintf(stderr, "invalid query mode (-M): %s\n", optarg);
 					exit(1);
 				}
 				break;
 			default:
-				usage();
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 				break;
 		}

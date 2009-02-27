@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.6 2008/12/15 22:08:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.7 2009/02/27 09:30:21 petere Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -199,13 +199,6 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
     </tbody>
    </tgroup>
   </table>
-  <note>
-   <para>
-    <literal>--help</literal> is not supported since
-    <application>pg_standby</application> is not intended for interactive use,
-    except during development and testing.
-   </para>
-  </note>
  </sect2>
 
  <sect2>
