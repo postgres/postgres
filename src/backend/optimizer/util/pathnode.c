@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.149 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.150 2009/02/27 00:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,11 +765,25 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	/*
+	/*----------
 	 * Look to see whether the semijoin's join quals consist of AND'ed
 	 * equality operators, with (only) RHS variables on only one side of
 	 * each one.  If so, we can figure out how to enforce uniqueness for
 	 * the RHS.
+	 *
+	 * Note that the input join_quals list is the list of quals that are
+	 * *syntactically* associated with the semijoin, which in practice means
+	 * the synthesized comparison list for an IN or the WHERE of an EXISTS.
+	 * Particularly in the latter case, it might contain clauses that aren't
+	 * *semantically* associated with the join, but refer to just one side or
+	 * the other.  We can ignore such clauses here, as they will just drop
+	 * down to be processed within one side or the other.  (It is okay to
+	 * consider only the syntactically-associated clauses here because for a
+	 * semijoin, no higher-level quals could refer to the RHS, and so there
+	 * can be no other quals that are semantically associated with this join.
+	 * We do things this way because it is useful to be able to run this test
+	 * before we have extracted the list of quals that are actually
+	 * semantically associated with the particular join.)
 	 *
 	 * Note that the in_operators list consists of the joinqual operators
 	 * themselves (but commuted if needed to put the RHS value on the right).
@@ -778,6 +792,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 * We assume here that that operator will be available from the btree
 	 * or hash opclass when the time comes ... if not, create_unique_plan()
 	 * will fail.
+	 *----------
 	 */
 	in_operators = NIL;
 	uniq_exprs = NIL;
@@ -791,19 +806,52 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		Node	   *right_expr;
 		Relids		left_varnos;
 		Relids		right_varnos;
+		Relids		all_varnos;
 
-		/* must be binary opclause... */
-		if (!IsA(op, OpExpr))
+		/* Is it a binary opclause? */
+		if (!IsA(op, OpExpr) ||
+			list_length(op->args) != 2)
+		{
+			/* No, but does it reference both sides? */
+			all_varnos = pull_varnos((Node *) op);
+			if (!bms_overlap(all_varnos, sjinfo->syn_righthand) ||
+				bms_is_subset(all_varnos, sjinfo->syn_righthand))
+			{
+				/*
+				 * Clause refers to only one rel, so ignore it --- unless it
+				 * contains volatile functions, in which case we'd better
+				 * punt.
+				 */
+				if (contain_volatile_functions((Node *) op))
+					goto no_unique_path;
+				continue;
+			}
+			/* Non-operator clause referencing both sides, must punt */
 			goto no_unique_path;
-		if (list_length(op->args) != 2)
-			goto no_unique_path;
+		}
+
+		/* Extract data from binary opclause */
 		opno = op->opno;
 		left_expr = linitial(op->args);
 		right_expr = lsecond(op->args);
-
-		/* check rel membership of arguments */
 		left_varnos = pull_varnos(left_expr);
 		right_varnos = pull_varnos(right_expr);
+		all_varnos = bms_union(left_varnos, right_varnos);
+
+		/* Does it reference both sides? */
+		if (!bms_overlap(all_varnos, sjinfo->syn_righthand) ||
+			bms_is_subset(all_varnos, sjinfo->syn_righthand))
+		{
+			/*
+			 * Clause refers to only one rel, so ignore it --- unless it
+			 * contains volatile functions, in which case we'd better punt.
+			 */
+			if (contain_volatile_functions((Node *) op))
+				goto no_unique_path;
+			continue;
+		}
+
+		/* check rel membership of arguments */
 		if (!bms_is_empty(right_varnos) &&
 			bms_is_subset(right_varnos, sjinfo->syn_righthand) &&
 			!bms_overlap(left_varnos, sjinfo->syn_righthand))
@@ -844,6 +892,10 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		in_operators = lappend_oid(in_operators, opno);
 		uniq_exprs = lappend(uniq_exprs, copyObject(right_expr));
 	}
+
+	/* Punt if we didn't find at least one column to unique-ify */
+	if (uniq_exprs == NIL)
+		goto no_unique_path;
 
 	/*
 	 * The expressions we'd need to unique-ify mustn't be volatile.
