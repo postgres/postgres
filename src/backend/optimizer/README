@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.48 2008/08/14 18:47:59 tgl Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.49 2009/02/27 22:41:37 tgl Exp $
 
 Optimizer
 =========
@@ -205,8 +205,7 @@ strict, the first form might produce some rows with nonnull C columns
 where the second form would make those entries null.
 
 RIGHT JOIN is equivalent to LEFT JOIN after switching the two input
-tables, so the same identities work for right joins.  Only FULL JOIN
-cannot be re-ordered at all.
+tables, so the same identities work for right joins.
 
 An example of a case that does *not* work is moving an innerjoin into or
 out of the nullable side of an outer join:
@@ -214,11 +213,24 @@ out of the nullable side of an outer join:
 	A leftjoin (B join C on (Pbc)) on (Pab)
 	!= (A leftjoin B on (Pab)) join C on (Pbc)
 
+SEMI joins work a little bit differently.  A semijoin can be reassociated
+into or out of the lefthand side of another semijoin, but not into or out
+of the righthand side.  Likewise, an inner join, left join, or antijoin
+can be reassociated into or out of the lefthand side of a semijoin, but
+not into or out of the righthand side.
+
+ANTI joins work approximately like LEFT joins, except that identity 3
+fails if the join to C is an antijoin (even if Pbc is strict, and in
+both the cases where the other join is a leftjoin and where it is an
+antijoin).  So we can't reorder antijoins into or out of the RHS of a
+leftjoin or antijoin, even if the relevant clause is strict.
+
+The current code does not attempt to re-order FULL JOINs at all.
 FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
-translating the jointree to "joinlist" representation.  LEFT and RIGHT
+translating the jointree to "joinlist" representation.  Other types of
 JOIN nodes are normally collapsed so that they participate fully in the
 join order search.  To avoid generating illegal join orders, the planner
-creates a SpecialJoinInfo node for each outer join, and join_is_legal
+creates a SpecialJoinInfo node for each non-inner join, and join_is_legal
 checks this list to decide if a proposed join is legal.
 
 What we store in SpecialJoinInfo nodes are the minimum sets of Relids
@@ -226,7 +238,7 @@ required on each side of the join to form the outer join.  Note that
 these are minimums; there's no explicit maximum, since joining other
 rels to the OJ's syntactic rels may be legal.  Per identities 1 and 2,
 non-FULL joins can be freely associated into the lefthand side of an
-OJ, but in general they can't be associated into the righthand side.
+OJ, but in some cases they can't be associated into the righthand side.
 So the restriction enforced by join_is_legal is that a proposed join
 can't join a rel within or partly within an RHS boundary to one outside
 the boundary, unless the join validly implements some outer join.

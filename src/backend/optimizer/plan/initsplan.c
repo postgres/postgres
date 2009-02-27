@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.148 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.149 2009/02/27 22:41:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,26 +628,32 @@ make_outerjoininfo(PlannerInfo *root,
 		 * min_lefthand.  (We must use its full syntactic relset, not just its
 		 * min_lefthand + min_righthand.  This is because there might be other
 		 * OJs below this one that this one can commute with, but we cannot
-		 * commute with them if we don't with this one.)
+		 * commute with them if we don't with this one.)  Also, if the
+		 * current join is an antijoin, we must preserve ordering regardless
+		 * of strictness.
 		 *
 		 * Note: I believe we have to insist on being strict for at least one
 		 * rel in the lower OJ's min_righthand, not its whole syn_righthand.
 		 */
-		if (bms_overlap(left_rels, otherinfo->syn_righthand) &&
-			bms_overlap(clause_relids, otherinfo->syn_righthand) &&
-			!bms_overlap(strict_relids, otherinfo->min_righthand))
+		if (bms_overlap(left_rels, otherinfo->syn_righthand))
 		{
-			min_lefthand = bms_add_members(min_lefthand,
-										   otherinfo->syn_lefthand);
-			min_lefthand = bms_add_members(min_lefthand,
-										   otherinfo->syn_righthand);
+			if (bms_overlap(clause_relids, otherinfo->syn_righthand) &&
+				(jointype == JOIN_ANTI ||
+				 !bms_overlap(strict_relids, otherinfo->min_righthand)))
+			{
+				min_lefthand = bms_add_members(min_lefthand,
+											   otherinfo->syn_lefthand);
+				min_lefthand = bms_add_members(min_lefthand,
+											   otherinfo->syn_righthand);
+			}
 		}
 
 		/*
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs; otherwise we must add
-		 * lower OJ's full syntactic relset to min_righthand.
+		 * lower OJ's full syntactic relset to min_righthand.  Here, we must
+		 * preserve ordering anyway if the lower OJ is an antijoin.
 		 *
 		 * Here, we have to consider that "our join condition" includes any
 		 * clauses that syntactically appeared above the lower OJ and below
@@ -663,6 +669,7 @@ make_outerjoininfo(PlannerInfo *root,
 		if (bms_overlap(right_rels, otherinfo->syn_righthand))
 		{
 			if (bms_overlap(clause_relids, otherinfo->syn_righthand) ||
+				otherinfo->jointype == JOIN_ANTI ||
 				!otherinfo->lhs_strict || otherinfo->delay_upper_joins)
 			{
 				min_righthand = bms_add_members(min_righthand,
