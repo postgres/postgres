@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.37 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.38 2009/02/27 16:35:26 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	const char *to_encoding_name = stmt->to_encoding_name;
 	List	   *func_name = stmt->func_name;
 	static Oid	funcargs[] = {INT4OID, INT4OID, CSTRINGOID, INTERNALOID, INT4OID};
+	char		result[1];
 
 	/* Convert list of names to a name and namespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
@@ -94,6 +95,19 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_PROC,
 					   NameListToString(func_name));
+
+	/*
+	 * Check that the conversion function is suitable for the requested
+	 * source and target encodings. We do that by calling the function with
+	 * an empty string; the conversion function should throw an error if it
+	 * can't perform the requested conversion.
+	 */
+	OidFunctionCall5(funcoid,
+					 Int32GetDatum(from_encoding),
+					 Int32GetDatum(to_encoding),
+					 CStringGetDatum(""),
+					 CStringGetDatum(result),
+					 Int32GetDatum(0));
 
 	/*
 	 * All seem ok, go ahead (possible failure would be a duplicate conversion
