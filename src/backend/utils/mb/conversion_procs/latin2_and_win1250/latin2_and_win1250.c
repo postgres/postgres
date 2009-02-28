@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.6.4.2 2009/01/29 19:25:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.6.4.3 2009/02/28 18:50:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ latin2_to_win1250(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_LATIN2, PG_WIN1250);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	latin22mic(src, buf, len);
 	mic2win1250(buf, dest, strlen(buf));
 	pfree(buf);
@@ -131,7 +131,7 @@ win1250_to_latin2(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1250, PG_LATIN2);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win12502mic(src, buf, len);
 	mic2latin2(buf, dest, strlen(buf));
 	pfree(buf);
