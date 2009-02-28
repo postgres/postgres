@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.21 2009/02/09 20:57:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.22 2009/02/28 00:10:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ static relopt_int intRelOpts[] =
 			"Vacuum cost delay in milliseconds, for autovacuum",
 			RELOPT_KIND_HEAP
 		},
-		20, 0, 1000
+		20, 0, 100
 	},
 	{
 		{

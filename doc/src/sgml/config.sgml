@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.210 2009/02/24 12:09:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.211 2009/02/28 00:10:50 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1010,7 +1010,8 @@ SET ENABLE_SEQSCAN TO OFF;
      </para>
 
      <para>
-      This feature is disabled by default. To enable it, set the
+      This feature is disabled by default for manually issued
+      <command>VACUUM</command> commands. To enable it, set the
       <varname>vacuum_cost_delay</varname> variable to a nonzero
       value.
      </para>
@@ -1032,6 +1033,13 @@ SET ENABLE_SEQSCAN TO OFF;
          <varname>vacuum_cost_delay</varname> to a value that is
          not a multiple of 10 might have the same results as setting it
          to the next higher multiple of 10.
+        </para>
+
+        <para>
+         When using cost-based vacuuming, appropriate values for
+         <varname>vacuum_cost_delay</> are usually quite small, perhaps
+         10 or 20 milliseconds.  Adjusting vacuum's resource consumption
+         is best done by changing the other vacuum cost parameters.
         </para>
        </listitem>
       </varlistentry>

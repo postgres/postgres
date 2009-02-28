@@ -3,14 +3,14 @@
 SHOW datestyle;
 
 -- SET to some nondefault value
-SET vacuum_cost_delay TO 400;
+SET vacuum_cost_delay TO 40;
 SET datestyle = 'ISO, YMD';
 SHOW vacuum_cost_delay;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- SET LOCAL has no effect outside of a transaction
-SET LOCAL vacuum_cost_delay TO 500;
+SET LOCAL vacuum_cost_delay TO 50;
 SHOW vacuum_cost_delay;
 SET LOCAL datestyle = 'SQL';
 SHOW datestyle;
@@ -18,7 +18,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- SET LOCAL within a transaction that commits
 BEGIN;
-SET LOCAL vacuum_cost_delay TO 500;
+SET LOCAL vacuum_cost_delay TO 50;
 SHOW vacuum_cost_delay;
 SET LOCAL datestyle = 'SQL';
 SHOW datestyle;
@@ -30,7 +30,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- SET should be reverted after ROLLBACK
 BEGIN;
-SET vacuum_cost_delay TO 600;
+SET vacuum_cost_delay TO 60;
 SHOW vacuum_cost_delay;
 SET datestyle = 'German';
 SHOW datestyle;
@@ -42,12 +42,12 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- Some tests with subtransactions
 BEGIN;
-SET vacuum_cost_delay TO 700;
+SET vacuum_cost_delay TO 70;
 SET datestyle = 'MDY';
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 SAVEPOINT first_sp;
-SET vacuum_cost_delay TO 800;
+SET vacuum_cost_delay TO 80;
 SHOW vacuum_cost_delay;
 SET datestyle = 'German, DMY';
 SHOW datestyle;
@@ -56,12 +56,12 @@ ROLLBACK TO first_sp;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 SAVEPOINT second_sp;
-SET vacuum_cost_delay TO 900;
+SET vacuum_cost_delay TO 90;
 SET datestyle = 'SQL, YMD';
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 SAVEPOINT third_sp;
-SET vacuum_cost_delay TO 1000;
+SET vacuum_cost_delay TO 100;
 SHOW vacuum_cost_delay;
 SET datestyle = 'Postgres, MDY';
 SHOW datestyle;
@@ -85,7 +85,7 @@ SHOW vacuum_cost_delay;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 SAVEPOINT sp;
-SET LOCAL vacuum_cost_delay TO 300;
+SET LOCAL vacuum_cost_delay TO 30;
 SHOW vacuum_cost_delay;
 SET LOCAL datestyle = 'Postgres, MDY';
 SHOW datestyle;
@@ -105,7 +105,7 @@ SHOW vacuum_cost_delay;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 SAVEPOINT sp;
-SET LOCAL vacuum_cost_delay TO 300;
+SET LOCAL vacuum_cost_delay TO 30;
 SHOW vacuum_cost_delay;
 SET LOCAL datestyle = 'Postgres, MDY';
 SHOW datestyle;
@@ -121,8 +121,8 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- SET followed by SET LOCAL
 BEGIN;
-SET vacuum_cost_delay TO 400;
-SET LOCAL vacuum_cost_delay TO 500;
+SET vacuum_cost_delay TO 40;
+SET LOCAL vacuum_cost_delay TO 50;
 SHOW vacuum_cost_delay;
 SET datestyle = 'ISO, DMY';
 SET LOCAL datestyle = 'Postgres, MDY';
