@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.6 2008/11/10 18:02:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.7 2009/02/28 19:13:28 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3320,41 +3320,15 @@ xpath(PG_FUNCTION_ARGS)
 
 	xml_init();
 
-	/*
-	 * To handle both documents and fragments, regardless of the fact whether
-	 * the XML datum has a single root (XML well-formedness), we wrap the XML
-	 * datum in a dummy element (<x>...</x>) and extend the XPath expression
-	 * accordingly.  To do it, throw away the XML prolog, if any.
-	 */
-	if (len >= 5 &&
-		xmlStrncmp((xmlChar *) datastr, (xmlChar *) "<?xml", 5) == 0)
-	{
-		i = 5;
-		while (i < len &&
-			   !(datastr[i - 1] == '?' && datastr[i] == '>'))
-			i++;
-
-		if (i == len)
-			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not parse XML data");
-
-		++i;
-
-		datastr += i;
-		len -= i;
-	}
+	/* These extra chars for string and xpath_expr allow for hacks below */
 
 	string = (xmlChar *) palloc((len + 8) * sizeof(xmlChar));
-	memcpy(string, "<x>", 3);
-	memcpy(string + 3, datastr, len);
-	memcpy(string + 3 + len, "</x>", 5);
-	len += 7;
 
-	xpath_expr = (xmlChar *) palloc((xpath_len + 3) * sizeof(xmlChar));
-	memcpy(xpath_expr, "/x", 2);
-	memcpy(xpath_expr + 2, VARDATA(xpath_expr_text), xpath_len);
-	xpath_expr[xpath_len + 2] = '\0';
-	xpath_len += 2;
+	xpath_expr = (xmlChar *) palloc((xpath_len + 5) * sizeof(xmlChar));
+
+	memcpy (string, datastr, len);
+	string[len] = '\0';
+	
 
 	xmlInitParser();
 
@@ -3367,9 +3341,74 @@ xpath(PG_FUNCTION_ARGS)
 		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
 					"could not allocate parser context");
 	doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
-	if (doc == NULL)
-		xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-					"could not parse XML data");
+
+	if (doc == NULL || xmlDocGetRootElement(doc) == NULL)
+	{
+
+		/*
+		 * In case we have a fragment rather than a well-formed XML document,
+		 * which has a single root (XML well-formedness), we try again after
+		 * transforming the xml by stripping away the XML prolog, if any, and
+		 * wrapping the remainder in a dummy element (<x>...</x>),
+		 * and later extending the XPath expression accordingly. 
+		 */
+		if (len >= 5 &&
+			xmlStrncmp((xmlChar *) datastr, (xmlChar *) "<?xml", 5) == 0)
+		{
+			i = 5;
+			while (i < len &&
+				   !(datastr[i - 1] == '?' && datastr[i] == '>'))
+				i++;
+			
+			if (i == len)
+				xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+							"could not parse XML data");
+			
+			++i;
+			
+			datastr += i;
+			len -= i;
+		}
+
+		memcpy(string, "<x>", 3);
+		memcpy(string + 3, datastr, len);
+		memcpy(string + 3 + len, "</x>", 5);
+		len += 7;
+
+		doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
+
+ 		if (doc == NULL)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not parse XML data");
+
+		/* we already know xpath_len > 0 - see above , so this test is safe */
+
+		if (*VARDATA(xpath_expr_text) == '/')
+		{
+			memcpy(xpath_expr, "/x", 2);
+			memcpy(xpath_expr + 2, VARDATA(xpath_expr_text), xpath_len);
+			xpath_expr[xpath_len + 2] = '\0';
+			xpath_len += 2;
+		}
+		else
+		{
+			memcpy(xpath_expr, "/x//", 4);
+			memcpy(xpath_expr + 4, VARDATA(xpath_expr_text), xpath_len);
+			xpath_expr[xpath_len + 4] = '\0';
+			xpath_len += 4;
+		}
+
+	}
+	else
+	{
+		/* 
+		 * if we didn't need to mangle the XML, we don't need to mangle the
+		 * xpath either.
+		 */
+		memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
+		xpath_expr[xpath_len] = '\0';
+	}
+
 	xpathctx = xmlXPathNewContext(doc);
 	if (xpathctx == NULL)
 		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
