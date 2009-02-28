@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.10.2.2 2009/01/29 19:24:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.10.2.3 2009/02/28 18:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_TW, PG_BIG5);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	euc_tw2mic(src, buf, len);
 	mic2big5(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -75,7 +75,7 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_BIG5, PG_EUC_TW);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	big52mic(src, buf, len);
 	mic2euc_tw(buf, dest, strlen((char *) buf));
 	pfree(buf);

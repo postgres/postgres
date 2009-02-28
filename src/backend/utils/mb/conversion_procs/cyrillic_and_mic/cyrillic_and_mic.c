@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.11.2.3 2009/01/29 19:24:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.11.2.4 2009/02/28 18:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ koi8r_to_win1251(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_WIN1251);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	koi8r2mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -219,7 +219,7 @@ win1251_to_koi8r(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_KOI8R);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win12512mic(src, buf, len);
 	mic2koi8r(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -237,7 +237,7 @@ koi8r_to_win866(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_WIN866);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	koi8r2mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -255,7 +255,7 @@ win866_to_koi8r(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_KOI8R);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win8662mic(src, buf, len);
 	mic2koi8r(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -279,7 +279,7 @@ win866_to_win1251(PG_FUNCTION_ARGS)
 	 * not in KOI8R. As we use MULE_INTERNAL/KOI8R as an intermediary, we
 	 * will fail to convert those characters.
 	 */
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win8662mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -298,7 +298,7 @@ win1251_to_win866(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_WIN866);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win12512mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -316,7 +316,7 @@ iso_to_koi8r(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_KOI8R);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	iso2mic(src, buf, len);
 	mic2koi8r(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -334,7 +334,7 @@ koi8r_to_iso(PG_FUNCTION_ARGS)
 
 	CHECK_ENCODING_CONVERSION_ARGS(PG_KOI8R, PG_ISO_8859_5);
 
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	koi8r2mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -353,7 +353,7 @@ iso_to_win1251(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_WIN1251);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	iso2mic(src, buf, len);
 	mic2win1251(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -372,7 +372,7 @@ win1251_to_iso(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN1251, PG_ISO_8859_5);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win12512mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -391,7 +391,7 @@ iso_to_win866(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_ISO_8859_5, PG_WIN866);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	iso2mic(src, buf, len);
 	mic2win866(buf, dest, strlen((char *) buf));
 	pfree(buf);
@@ -410,7 +410,7 @@ win866_to_iso(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_WIN866, PG_ISO_8859_5);
 
 	/* Use mic/KOI8R as intermediary, see comment in win866_to_win1251() */
-	buf = palloc(len * ENCODING_GROWTH_RATE);
+	buf = palloc(len * ENCODING_GROWTH_RATE + 1);
 	win8662mic(src, buf, len);
 	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);
