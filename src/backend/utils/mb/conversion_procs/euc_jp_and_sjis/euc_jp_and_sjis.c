@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.17.2.1 2009/01/29 19:24:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.17.2.2 2009/02/28 18:50:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,6 @@
  * conversion table between SJIS UDC (IBM kanji) and EUC_JP
  */
 #include "sjis.map"
-
-#define ENCODING_GROWTH_RATE 4
 
 PG_MODULE_MAGIC;
 
