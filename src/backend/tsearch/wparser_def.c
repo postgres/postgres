@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.20 2009/01/15 16:33:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.21 2009/03/02 15:10:09 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,12 +240,12 @@ typedef struct TParser
 	int			lenstr;			/* length of mbstring */
 #ifdef USE_WIDE_UPPER_LOWER
 	wchar_t    *wstr;			/* wide character string */
-	int			lenwstr;		/* length of wsting */
+	pg_wchar   *pgwstr;			/* wide character string for C-locale */
+	bool		usewide;
 #endif
 
 	/* State of parse */
 	int			charmaxlen;
-	bool		usewide;
 	TParserPosition *state;
 	bool		ignore;
 	bool		wanthost;
@@ -299,13 +299,24 @@ TParserInit(char *str, int len)
 	if (prs->charmaxlen > 1)
 	{
 		prs->usewide = true;
-		prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr + 1));
-		prs->lenwstr = char2wchar(prs->wstr, prs->lenstr + 1,
-								  prs->str, prs->lenstr);
+		if ( lc_ctype_is_c() )
+		{
+			/*
+			 * char2wchar doesn't work for C-locale and
+			 * sizeof(pg_wchar) could be not equal to sizeof(wchar_t)
+			 */
+			prs->pgwstr = (pg_wchar*) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
+			pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
+		}
+		else
+		{
+			prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr + 1));
+			char2wchar(prs->wstr, prs->lenstr + 1, prs->str, prs->lenstr);
+		}
 	}
 	else
-#endif
 		prs->usewide = false;
+#endif
 
 	prs->state = newTParserPosition(NULL);
 	prs->state->state = TPS_Base;
@@ -331,6 +342,8 @@ TParserClose(TParser *prs)
 #ifdef USE_WIDE_UPPER_LOWER
 	if (prs->wstr)
 		pfree(prs->wstr);
+	if (prs->pgwstr)
+		pfree(prs->pgwstr);
 #endif
 
 	pfree(prs);
@@ -338,10 +351,12 @@ TParserClose(TParser *prs)
 
 /*
  * Character-type support functions, equivalent to is* macros, but
- * working with any possible encodings and locales. Note,
- * that with multibyte encoding and C-locale isw* function may fail
- * or give wrong result. Note 2: multibyte encoding and C-locale
- * often are used for Asian languages
+ * working with any possible encodings and locales. Notes:
+ *  - with multibyte encoding and C-locale isw* function may fail
+ *    or give wrong result. 
+ *  - multibyte encoding and C-locale often are used for 
+ *    Asian languages.
+ *  - if locale is C the we use pgwstr instead of wstr
  */
 
 #ifdef USE_WIDE_UPPER_LOWER
@@ -352,14 +367,14 @@ p_is##type(TParser *prs) {													\
 	Assert( prs->state );													\
 	if ( prs->usewide )														\
 	{																		\
-		if ( lc_ctype_is_c() )												\
-			return is##type( 0xff & *( prs->wstr + prs->state->poschar) );	\
+		if ( prs->pgwstr )													\
+			return is##type( 0xff & *( prs->pgwstr + prs->state->poschar) );\
 																			\
 		return isw##type( *(wint_t*)( prs->wstr + prs->state->poschar ) );	\
 	}																		\
 																			\
 	return is##type( *(unsigned char*)( prs->str + prs->state->posbyte ) ); \
-}	\
+}																			\
 																			\
 static int																	\
 p_isnot##type(TParser *prs) {												\
@@ -373,9 +388,9 @@ p_isalnum(TParser *prs)
 
 	if (prs->usewide)
 	{
-		if (lc_ctype_is_c())
+		if (prs->pgwstr)
 		{
-			unsigned int c = *(prs->wstr + prs->state->poschar);
+			unsigned int c = *(prs->pgwstr + prs->state->poschar);
 
 			/*
 			 * any non-ascii symbol with multibyte encoding with C-locale is
@@ -405,9 +420,9 @@ p_isalpha(TParser *prs)
 
 	if (prs->usewide)
 	{
-		if (lc_ctype_is_c())
+		if (prs->pgwstr)
 		{
-			unsigned int c = *(prs->wstr + prs->state->poschar);
+			unsigned int c = *(prs->pgwstr + prs->state->poschar);
 
 			/*
 			 * any non-ascii symbol with multibyte encoding with C-locale is
