@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.71 2009/02/10 19:29:39 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.72 2009/03/02 21:18:43 tgl Exp $
  *
  */
 /* can be used in either frontend or backend */
@@ -1636,25 +1636,12 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 	for (j = 0; j < jlimit; j++)
 		p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
 
-	/*
-	 * In an error recursion situation, don't try to translate the message.
-	 * This gets us out of trouble if the problem is failure to convert
-	 * this very message (after translation) to the client encoding.
-	 */
-	if (in_error_recursion_trouble())
-		ereport(ERROR,
-				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				 errmsg_internal("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
-								 buf,
-								 pg_enc2name_tbl[src_encoding].name,
-								 pg_enc2name_tbl[dest_encoding].name)));
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				 errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
-						buf,
-						pg_enc2name_tbl[src_encoding].name,
-						pg_enc2name_tbl[dest_encoding].name)));
+	ereport(ERROR,
+			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+			 errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
+					buf,
+					pg_enc2name_tbl[src_encoding].name,
+					pg_enc2name_tbl[dest_encoding].name)));
 }
 
 #endif

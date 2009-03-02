@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.212 2009/01/19 15:34:23 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.213 2009/03/02 21:18:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,9 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 
+
+#undef _
+#define _(x) err_gettext(x)
 
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
@@ -163,6 +166,25 @@ in_error_recursion_trouble(void)
 	/* Pull the plug if recurse more than once */
 	return (recursion_depth > 2);
 }
+
+/*
+ * One of those fallback steps is to stop trying to localize the error
+ * message, since there's a significant probability that that's exactly
+ * what's causing the recursion.
+ */
+static inline const char *
+err_gettext(const char *str)
+{
+#ifdef ENABLE_NLS
+	if (in_error_recursion_trouble())
+		return str;
+	else
+		return gettext(str);
+#else
+	return str;
+#endif
+}
+
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -631,7 +653,7 @@ errcode_for_socket_access(void)
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
-		if (translateit) \
+		if (translateit && !in_error_recursion_trouble()) \
 			fmt = dgettext(edata->domain, fmt); \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
@@ -2137,7 +2159,7 @@ send_message_to_server_log(ErrorData *edata)
 		}
 		else
 		{
-			char	   *msg = _("Not safe to send CSV data\n");
+			const char *msg = _("Not safe to send CSV data\n");
 
 			write(fileno(stderr), msg, strlen(msg));
 			if (!(Log_destination & LOG_DESTINATION_STDERR) &&
@@ -2190,6 +2212,26 @@ write_pipe_chunks(char *data, int len, int dest)
 
 
 /*
+ * Append a text string to the error report being built for the client.
+ *
+ * This is ordinarily identical to pq_sendstring(), but if we are in
+ * error recursion trouble we skip encoding conversion, because of the
+ * possibility that the problem is a failure in the encoding conversion
+ * subsystem itself.  Code elsewhere should ensure that the passed-in
+ * strings will be plain 7-bit ASCII, and thus not in need of conversion,
+ * in such cases.  (In particular, we disable localization of error messages
+ * to help ensure that's true.)
+ */
+static void
+err_sendstring(StringInfo buf, const char *str)
+{
+	if (in_error_recursion_trouble())
+		pq_send_ascii_string(buf, str);
+	else
+		pq_sendstring(buf, str);
+}
+
+/*
  * Write error report to client
  */
 static void
@@ -2208,7 +2250,7 @@ send_message_to_frontend(ErrorData *edata)
 		int			i;
 
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
-		pq_sendstring(&msgbuf, error_severity(edata->elevel));
+		err_sendstring(&msgbuf, error_severity(edata->elevel));
 
 		/* unpack MAKE_SQLSTATE code */
 		ssval = edata->sqlerrcode;
@@ -2220,19 +2262,19 @@ send_message_to_frontend(ErrorData *edata)
 		tbuf[i] = '\0';
 
 		pq_sendbyte(&msgbuf, PG_DIAG_SQLSTATE);
-		pq_sendstring(&msgbuf, tbuf);
+		err_sendstring(&msgbuf, tbuf);
 
 		/* M field is required per protocol, so always send something */
 		pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_PRIMARY);
 		if (edata->message)
-			pq_sendstring(&msgbuf, edata->message);
+			err_sendstring(&msgbuf, edata->message);
 		else
-			pq_sendstring(&msgbuf, _("missing error text"));
+			err_sendstring(&msgbuf, _("missing error text"));
 
 		if (edata->detail)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_DETAIL);
-			pq_sendstring(&msgbuf, edata->detail);
+			err_sendstring(&msgbuf, edata->detail);
 		}
 
 		/* detail_log is intentionally not used here */
@@ -2240,52 +2282,52 @@ send_message_to_frontend(ErrorData *edata)
 		if (edata->hint)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_HINT);
-			pq_sendstring(&msgbuf, edata->hint);
+			err_sendstring(&msgbuf, edata->hint);
 		}
 
 		if (edata->context)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_CONTEXT);
-			pq_sendstring(&msgbuf, edata->context);
+			err_sendstring(&msgbuf, edata->context);
 		}
 
 		if (edata->cursorpos > 0)
 		{
 			snprintf(tbuf, sizeof(tbuf), "%d", edata->cursorpos);
 			pq_sendbyte(&msgbuf, PG_DIAG_STATEMENT_POSITION);
-			pq_sendstring(&msgbuf, tbuf);
+			err_sendstring(&msgbuf, tbuf);
 		}
 
 		if (edata->internalpos > 0)
 		{
 			snprintf(tbuf, sizeof(tbuf), "%d", edata->internalpos);
 			pq_sendbyte(&msgbuf, PG_DIAG_INTERNAL_POSITION);
-			pq_sendstring(&msgbuf, tbuf);
+			err_sendstring(&msgbuf, tbuf);
 		}
 
 		if (edata->internalquery)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_INTERNAL_QUERY);
-			pq_sendstring(&msgbuf, edata->internalquery);
+			err_sendstring(&msgbuf, edata->internalquery);
 		}
 
 		if (edata->filename)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_FILE);
-			pq_sendstring(&msgbuf, edata->filename);
+			err_sendstring(&msgbuf, edata->filename);
 		}
 
 		if (edata->lineno > 0)
 		{
 			snprintf(tbuf, sizeof(tbuf), "%d", edata->lineno);
 			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_LINE);
-			pq_sendstring(&msgbuf, tbuf);
+			err_sendstring(&msgbuf, tbuf);
 		}
 
 		if (edata->funcname)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_FUNCTION);
-			pq_sendstring(&msgbuf, edata->funcname);
+			err_sendstring(&msgbuf, edata->funcname);
 		}
 
 		pq_sendbyte(&msgbuf, '\0');		/* terminator */
@@ -2316,7 +2358,7 @@ send_message_to_frontend(ErrorData *edata)
 
 		appendStringInfoChar(&buf, '\n');
 
-		pq_sendstring(&msgbuf, buf.data);
+		err_sendstring(&msgbuf, buf.data);
 
 		pfree(buf.data);
 	}
@@ -2430,10 +2472,6 @@ useful_strerror(int errnum)
 
 /*
  * error_severity --- get localized string representing elevel
- *
- * Note: in an error recursion situation, we stop localizing the tags
- * for ERROR and above.  This is necessary because the problem might be
- * failure to convert one of these strings to the client encoding.
  */
 static const char *
 error_severity(int elevel)
@@ -2463,22 +2501,13 @@ error_severity(int elevel)
 			prefix = _("WARNING");
 			break;
 		case ERROR:
-			if (in_error_recursion_trouble())
-				prefix = "ERROR";
-			else
-				prefix = _("ERROR");
+			prefix = _("ERROR");
 			break;
 		case FATAL:
-			if (in_error_recursion_trouble())
-				prefix = "FATAL";
-			else
-				prefix = _("FATAL");
+			prefix = _("FATAL");
 			break;
 		case PANIC:
-			if (in_error_recursion_trouble())
-				prefix = "PANIC";
-			else
-				prefix = _("PANIC");
+			prefix = _("PANIC");
 			break;
 		default:
 			prefix = "???";

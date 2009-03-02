@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/pqformat.h,v 1.27 2009/01/01 17:23:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/pqformat.h,v 1.28 2009/03/02 21:18:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@ extern void pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 				   bool countincludesself);
 extern void pq_sendtext(StringInfo buf, const char *str, int slen);
 extern void pq_sendstring(StringInfo buf, const char *str);
+extern void pq_send_ascii_string(StringInfo buf, const char *str);
 extern void pq_sendint(StringInfo buf, int i, int b);
 extern void pq_sendint64(StringInfo buf, int64 i);
 extern void pq_sendfloat4(StringInfo buf, float4 f);
