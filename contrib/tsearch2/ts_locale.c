@@ -64,15 +64,8 @@ char2wchar(wchar_t *to, const char *from, size_t len)
 	}
 	else 
 #endif /* WIN32 */
-	if ( lc_ctype_is_c() )
-	{
-		/*
-		 * pg_mb2wchar_with_len always adds trailing '\0', so 
-		 * 'to' should be allocated with sufficient space 
-		 */
-		return pg_mb2wchar_with_len(from, (pg_wchar *)to, len);
-	}
 
+	Assert( !lc_ctype_is_c() );
 	return mbstowcs(to, from, len);
 }
 

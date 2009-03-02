@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.11.2.2 2007/03/22 15:59:09 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.11.2.3 2009/03/02 15:13:17 teodor Exp $ */
 
 #include "postgres.h"
 
@@ -46,12 +46,24 @@ TParserInit(char *str, int len)
 	if (prs->charmaxlen > 1)
 	{
 		prs->usewide = true;
-		prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr+1));
-		prs->lenwstr = char2wchar(prs->wstr, prs->str, prs->lenstr);
+		if ( lc_ctype_is_c() )
+		{
+			/*
+			 * char2wchar doesn't work for C-locale and
+			 * sizeof(pg_wchar) could be not equal to sizeof(wchar_t)
+			 */
+			prs->pgwstr = (pg_wchar*) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
+			pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
+		}
+		else
+		{
+			prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr+1));
+			prs->lenwstr = char2wchar(prs->wstr, prs->str, prs->lenstr);
+		}
 	}
 	else
-#endif
 		prs->usewide = false;
+#endif
 
 	prs->state = newTParserPosition(NULL);
 	prs->state->state = TPS_Base;
@@ -73,17 +85,21 @@ TParserClose(TParser * prs)
 #ifdef TS_USE_WIDE
 	if (prs->wstr)
 		pfree(prs->wstr);
+	if (prs->pgwstr)
+		pfree(prs->pgwstr);
 #endif
 
 	pfree(prs);
 }
 
 /*
- * defining support function, equvalent is* macroses, but
- * working with any possible encodings and locales. Note,
- * that with multibyte encoding and C-locale isw* function may fail
- * or give wrong result. Note 2: multibyte encoding and C-locale 
- * often are used for Asian languages.
+ * Character-type support functions, equivalent to is* macros, but
+ * working with any possible encodings and locales. Notes:
+ *  - with multibyte encoding and C-locale isw* function may fail
+ *    or give wrong result. 
+ *  - multibyte encoding and C-locale often are used for 
+ *    Asian languages.
+ *  - if locale is C the we use pgwstr instead of wstr
  */
 
 #ifdef TS_USE_WIDE
@@ -94,8 +110,8 @@ p_is##type(TParser *prs) {													\
 	Assert( prs->state );													\
 	if ( prs->usewide )														\
 	{																		\
-		if ( lc_ctype_is_c() )												\
-			return is##type( 0xff & *( prs->wstr + prs->state->poschar) );	\
+		if ( prs->pgwstr )													\
+			return is##type( 0xff & *( prs->pgwstr + prs->state->poschar) );\
 																			\
 		return isw##type( *(wint_t*)( prs->wstr + prs->state->poschar ) );	\
 	}																		\
@@ -115,9 +131,9 @@ p_isalnum(TParser *prs)
 
 	if (prs->usewide)
 	{
-		if (lc_ctype_is_c())
+		if (prs->pgwstr)
 		{
-			unsigned int c = *(prs->wstr + prs->state->poschar);
+			unsigned int c = *(prs->pgwstr + prs->state->poschar);
 
 			/*
 			 * any non-ascii symbol with multibyte encoding
@@ -148,9 +164,9 @@ p_isalpha(TParser *prs)
 
 	if (prs->usewide)
 	{
-		if (lc_ctype_is_c())
+		if (prs->pgwstr)
 		{
-			unsigned int c = *(prs->wstr + prs->state->poschar);
+			unsigned int c = *(prs->pgwstr + prs->state->poschar);
 
 			/*
 			 * any non-ascii symbol with multibyte encoding
