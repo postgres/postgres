@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.7.2.1 2008/06/18 20:55:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.7.2.2 2009/03/02 15:11:25 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
 	}
 #endif   /* WIN32 */
 
+	Assert( !lc_ctype_is_c() );
 	return wcstombs(to, from, tolen);
 }
 
@@ -99,17 +100,8 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 
 		return r;
 	}
-#endif   /* WIN32 */
-
-	if (lc_ctype_is_c())
-	{
-		/*
-		 * pg_mb2wchar_with_len always adds trailing '\0', so 'to' should be
-		 * allocated with sufficient space
-		 */
-		return pg_mb2wchar_with_len(from, (pg_wchar *) to, fromlen);
-	}
 	else
+#endif   /* WIN32 */
 	{
 		/*
 		 * mbstowcs requires ending '\0'
@@ -117,6 +109,7 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 		char	   *str = pnstrdup(from, fromlen);
 		size_t		result;
 
+		Assert( !lc_ctype_is_c() );
 		result = mbstowcs(to, str, tolen);
 
 		pfree(str);
