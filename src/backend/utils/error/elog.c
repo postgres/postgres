@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.8 2009/03/02 21:19:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.9 2009/03/03 00:17:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,7 +643,7 @@ errcode_for_socket_access(void)
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
 		if (translateit && !in_error_recursion_trouble()) \
-			fmt = _(fmt); \
+			fmt = gettext(fmt); \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
