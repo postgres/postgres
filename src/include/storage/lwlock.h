@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.41 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.42 2009/03/03 08:11:24 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@
  * The extra value MaxDynamicLWLock is there to keep the compiler from
  * deciding that the enum can be represented as char or short ...
  *
- * If you remove a lock, please replace it with a placeholder like was done
- * for FreeSpaceMapLock. This retains the lock numbering, which is helpful for
- * DTrace and other external debugging scripts.
+ * If you remove a lock, please replace it with a placeholder. This retains
+ * the lock numbering, which is helpful for DTrace and other external
+ * debugging scripts.
  */
 typedef enum LWLockId
 {
@@ -49,7 +49,6 @@ typedef enum LWLockId
 	ProcArrayLock,
 	SInvalReadLock,
 	SInvalWriteLock,
-	UnusedLock1,				/* FreeSpaceMapLock used to be here */
 	WALInsertLock,
 	WALWriteLock,
 	ControlFileLock,
