@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.574 2009/02/25 11:07:43 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.575 2009/03/03 10:42:05 heikki Exp $
  *
  * NOTES
  *
@@ -2500,7 +2500,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 				(errmsg_internal("sending %s to process %d",
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 								 (int) StartupPID)));
-		signal_child(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
+		signal_child(StartupPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
 	/* Take care of the bgwriter too */
