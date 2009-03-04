@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.111 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.112 2009/03/04 11:57:00 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -551,6 +551,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--binary-upgrade</option></term>
+      <listitem>
+       <para>
+        This option is for use by in-place upgrade utilities.  Its use
+        for other purposes is not recommended or supported.  The
+        behavior of the option may change in future releases without
+        notice.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--disable-dollar-quoting</></term>
       <listitem>
        <para>
@@ -841,12 +853,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    that can be loaded into older database versions.  To do this, manual
    editing of the dump file might be required.
   </para>
-
-  <para>
-   <application>pg_dump</application> also supports a
-   <literal>--binary-upgrade</> option for upgrade utility usage.
-  </para>
-
  </refsect1>
 
  <refsect1 id="pg-dump-examples">

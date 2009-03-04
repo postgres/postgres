@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.527 2009/02/26 16:02:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.528 2009/03/04 11:57:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,6 +828,7 @@ help(const char *progname)
 	printf(_("  -t, --table=TABLE           dump the named table(s) only\n"));
 	printf(_("  -T, --exclude-table=TABLE   do NOT dump the named table(s)\n"));
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
+	printf(_("  --binary-upgrade            for use by upgrade utilities only\n"));
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));

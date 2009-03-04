@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.118 2009/02/26 16:02:38 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.119 2009/03/04 11:57:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,6 +521,7 @@ help(void)
 	printf(_("  -S, --superuser=NAME        superuser user name to use in the dump\n"));
 	printf(_("  -t, --tablespaces-only      dump only tablespaces, no databases or roles\n"));
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
+	printf(_("  --binary-upgrade            for use by upgrade utilities only\n"));
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));

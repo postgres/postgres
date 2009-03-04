@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.77 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.78 2009/03/04 11:57:00 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -291,6 +291,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--binary-upgrade</option></term>
+      <listitem>
+       <para>
+        This option is for use by in-place upgrade utilities.  Its use
+        for other purposes is not recommended or supported.  The
+        behavior of the option may change in future releases without
+        notice.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--disable-dollar-quoting</></term>
       <listitem>
        <para>
@@ -503,12 +515,6 @@ PostgreSQL documentation
    database creation will fail for databases in non-default
    locations.
   </para>
-
-  <para>
-   <application>pg_dump</application> also supports a
-   <literal>--binary-upgrade</> option for upgrade utility usage.
-  </para>
-
  </refsect1>
 
 
