@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.108 2009/02/24 01:38:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.109 2009/03/04 11:53:53 heikki Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -1470,6 +1470,8 @@ CreateCast(CreateCastStmt *stmt)
 {
 	Oid			sourcetypeid;
 	Oid			targettypeid;
+	char		sourcetyptype;
+	char		targettyptype;
 	Oid			funcid;
 	int			nargs;
 	char		castcontext;
@@ -1483,15 +1485,17 @@ CreateCast(CreateCastStmt *stmt)
 
 	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype, NULL);
 	targettypeid = typenameTypeId(NULL, stmt->targettype, NULL);
+	sourcetyptype = get_typtype(sourcetypeid);
+	targettyptype = get_typtype(targettypeid);
 
 	/* No pseudo-types allowed */
-	if (get_typtype(sourcetypeid) == TYPTYPE_PSEUDO)
+	if (sourcetyptype == TYPTYPE_PSEUDO)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("source data type %s is a pseudo-type",
 						TypeNameToString(stmt->sourcetype))));
 
-	if (get_typtype(targettypeid) == TYPTYPE_PSEUDO)
+	if (targettyptype == TYPTYPE_PSEUDO)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("target data type %s is a pseudo-type",
@@ -1615,6 +1619,33 @@ CreateCast(CreateCastStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("source and target data types are not physically compatible")));
+
+		/*
+		 * We know that composite, enum and array types are never binary-
+		 * compatible with each other.  They all have OIDs embedded in them.
+		 *
+		 * Theoretically you could build a user-defined base type that is
+		 * binary-compatible with a composite, enum, or array type.  But we
+		 * disallow that too, as in practice such a cast is surely a mistake.
+		 * You can always work around that by writing a cast function.
+		 */
+		if (sourcetyptype == TYPTYPE_COMPOSITE ||
+			targettyptype == TYPTYPE_COMPOSITE)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("composite data types are not binary-compatible")));
+
+		if (sourcetyptype == TYPTYPE_ENUM ||
+			targettyptype == TYPTYPE_ENUM)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("enum data types are not binary-compatible")));
+
+		if (OidIsValid(get_element_type(sourcetypeid)) ||
+			OidIsValid(get_element_type(targettypeid)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("array data types are not binary-compatible")));
 	}
 
 	/*
