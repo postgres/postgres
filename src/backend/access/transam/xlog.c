@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.332 2009/02/23 09:28:49 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.333 2009/03/04 13:56:40 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,6 +429,7 @@ static bool InRedo = false;
 /*
  * Flag set by interrupt handlers for later service in the redo loop.
  */
+static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 /*
  * Flag set when executing a restore command, to tell SIGTERM signal handler
@@ -5363,6 +5364,15 @@ StartupXLOG(void)
 #endif
 
 				/*
+				 * Check if we were requested to re-read config file.
+				 */
+				if (got_SIGHUP)
+				{
+					got_SIGHUP = false;
+					ProcessConfigFile(PGC_SIGHUP);
+				}
+
+				/*
 				 * Check if we were requested to exit without finishing
 				 * recovery.
 				 */
@@ -7641,6 +7651,13 @@ startupproc_quickdie(SIGNAL_ARGS)
 }
 
 
+/* SIGHUP: set flag to re-read config file at next convenient time */
+static void
+StartupProcSigHupHandler(SIGNAL_ARGS)
+{
+	got_SIGHUP = true;
+}
+
 /* SIGTERM: set flag to abort redo and exit */
 static void
 StartupProcShutdownHandler(SIGNAL_ARGS)
@@ -7667,8 +7684,8 @@ StartupProcessMain(void)
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
 	 */
-	pqsignal(SIGHUP, SIG_IGN);	/* ignore config file updates */
-	pqsignal(SIGINT, SIG_IGN);		/* ignore query cancel */
+	pqsignal(SIGHUP, StartupProcSigHupHandler);	 /* reload config file */
+	pqsignal(SIGINT, SIG_IGN);					/* ignore query cancel */
 	pqsignal(SIGTERM, StartupProcShutdownHandler); /* request shutdown */
 	pqsignal(SIGQUIT, startupproc_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
