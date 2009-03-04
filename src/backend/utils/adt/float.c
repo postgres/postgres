@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.94 2003/09/25 06:58:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.94.2.1 2009/03/04 22:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,15 @@
 
 
 #ifndef HAVE_CBRT
+/*
+ * Some machines (in particular, some versions of AIX) have an extern
+ * declaration for cbrt() in <math.h> but fail to provide the actual
+ * function, which causes configure to not set HAVE_CBRT.  Furthermore,
+ * their compilers spit up at the mismatch between extern declaration
+ * and static definition.  We work around that here by the expedient
+ * of a #define to make the actual name of the static function different.
+ */
+#define cbrt my_cbrt
 static double cbrt(double x);
 #endif   /* HAVE_CBRT */
 
