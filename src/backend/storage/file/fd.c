@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.147 2009/01/12 05:10:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.148 2009/03/04 09:12:49 petere Exp $
  *
  * NOTES:
  *
@@ -45,6 +45,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>		/* for getrlimit */
+#endif
 
 #include "miscadmin.h"
 #include "access/xact.h"
@@ -361,14 +364,34 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	int			used = 0;
 	int			highestfd = 0;
 	int			j;
+#ifdef HAVE_GETRLIMIT
+	struct rlimit rlim;
+	int			getrlimit_status;
+#endif
 
 	size = 1024;
 	fd = (int *) palloc(size * sizeof(int));
+
+#ifdef HAVE_GETRLIMIT
+# ifdef RLIMIT_NOFILE            /* most platforms use RLIMIT_NOFILE */
+	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
+# else                           /* but BSD doesn't ... */
+	getrlimit_status = getrlimit(RLIMIT_OFILE, &rlim);
+# endif /* RLIMIT_NOFILE */
+	if (getrlimit_status != 0)
+		ereport(WARNING, (errmsg("getrlimit failed: %m")));
+#endif /* HAVE_GETRLIMIT */
 
 	/* dup until failure or probe limit reached */
 	for (;;)
 	{
 		int			thisfd;
+
+#ifdef HAVE_GETRLIMIT
+		/* don't go beyond RLIMIT_NOFILE; causes irritating kernel logs on some platforms */
+		if (getrlimit_status == 0 && highestfd >= rlim.rlim_cur - 1)
+			break;
+#endif
 
 		thisfd = dup(0);
 		if (thisfd < 0)
