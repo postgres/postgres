@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.181 2009/03/04 08:43:15 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.182 2009/03/04 18:43:38 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1308,7 +1308,7 @@ load_hba(void)
 	file = AllocateFile(HbaFileName, "r");
 	if (file == NULL)
 	{
-		ereport(WARNING,
+		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						HbaFileName)));
