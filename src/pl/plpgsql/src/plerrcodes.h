@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.17 2009/01/01 17:24:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.18 2009/03/04 10:55:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,15 +176,19 @@
 },
 
 {
-	"invalid_limit_value", ERRCODE_INVALID_LIMIT_VALUE
-},
-
-{
 	"invalid_parameter_value", ERRCODE_INVALID_PARAMETER_VALUE
 },
 
 {
 	"invalid_regular_expression", ERRCODE_INVALID_REGULAR_EXPRESSION
+},
+
+{
+	"invalid_row_count_in_limit_clause", ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE
+},
+
+{
+	"invalid_row_count_in_result_offset_clause", ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE
 },
 
 {

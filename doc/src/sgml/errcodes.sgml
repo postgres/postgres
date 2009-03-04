@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.26 2008/12/28 18:53:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.27 2009/03/04 10:55:00 petere Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -445,12 +445,6 @@
 </row>
 
 <row>
-<entry><literal>22020</literal></entry>
-<entry>INVALID LIMIT VALUE</entry>
-<entry>invalid_limit_value</entry>
-</row>
-
-<row>
 <entry><literal>22023</literal></entry>
 <entry>INVALID PARAMETER VALUE</entry>
 <entry>invalid_parameter_value</entry>
@@ -460,6 +454,18 @@
 <entry><literal>2201B</literal></entry>
 <entry>INVALID REGULAR EXPRESSION</entry>
 <entry>invalid_regular_expression</entry>
+</row>
+
+<row>
+<entry><literal>2201W</literal></entry>
+<entry>INVALID ROW COUNT IN LIMIT CLAUSE</entry>
+<entry>invalid_row_count_in_limit_clause</entry>
+</row>
+
+<row>
+<entry><literal>2201X</literal></entry>
+<entry>INVALID ROW COUNT IN RESULT OFFSET CLAUSE</entry>
+<entry>invalid_row_count_in_result_offset_clause</entry>
 </row>
 
 <row>

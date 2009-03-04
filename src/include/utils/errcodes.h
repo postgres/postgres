@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.28 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.29 2009/03/04 10:55:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,9 +133,10 @@
 #define ERRCODE_INVALID_ESCAPE_SEQUENCE		MAKE_SQLSTATE('2','2', '0','2','5')
 #define ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER		MAKE_SQLSTATE('2','2', 'P','0','6')
 #define ERRCODE_INVALID_INDICATOR_PARAMETER_VALUE		MAKE_SQLSTATE('2','2', '0','1','0')
-#define ERRCODE_INVALID_LIMIT_VALUE			MAKE_SQLSTATE('2','2', '0','2','0')
 #define ERRCODE_INVALID_PARAMETER_VALUE		MAKE_SQLSTATE('2','2', '0','2','3')
 #define ERRCODE_INVALID_REGULAR_EXPRESSION	MAKE_SQLSTATE('2','2', '0','1','B')
+#define ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE	MAKE_SQLSTATE('2', '2', '0', '1', 'W')
+#define ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE	MAKE_SQLSTATE('2', '2', '0', '1', 'X')
 #define ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE	MAKE_SQLSTATE('2','2', '0','0','9')
 #define ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER		MAKE_SQLSTATE('2','2', '0','0','C')
 #define ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH MAKE_SQLSTATE('2','2', '0','0','G')
