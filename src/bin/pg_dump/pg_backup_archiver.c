@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.164 2009/02/26 16:02:37 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.165 2009/03/05 14:51:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3531,7 +3531,7 @@ mark_work_done(ArchiveHandle *AH, thandle worker, int status,
 	}
 
 	if (te == NULL)
-		die_horribly(AH, modulename, "failed to find slot for finished worker\n");
+		die_horribly(AH, modulename, "could not find slot of finished worker\n");
 
 	ahlog(AH, 1, "finished item %d %s %s\n",
 		  te->dumpId, te->desc, te->tag);
