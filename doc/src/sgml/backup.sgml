@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.122 2009/01/13 00:54:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.123 2009/03/05 19:50:03 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1198,20 +1198,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="log-restartpoints"
-                   xreflabel="log_restartpoints">
-      <term><varname>log_restartpoints</varname>
-        (<type>boolean</type>)
-      </term>
-      <listitem>
-       <para>
-        Specifies whether to log each restart point as it occurs. This
-        can be helpful to track the progress of a long recovery.
-        Default is <literal>false</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
    </variablelist>
 
    </sect3>
@@ -1865,7 +1851,7 @@ if (!triggered)
     backup.  You can do this by running <application>pg_controldata</>
     on the standby server to inspect the control file and determine the
     current checkpoint WAL location, or by using the
-    <varname>log_restartpoints</> option to print values to the server log.
+    <varname>log_checkpoints</> option to print values to the server log.
    </para>
   </sect2>
  </sect1>
