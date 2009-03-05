@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Indian.txt,v 1.2 2006/07/25 13:49:21 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Indian.txt,v 1.3 2009/03/05 14:27:50 heikki Exp $
 #
 
 CCT     23400    # Cocos Islands Time (Indian Ocean)
@@ -26,6 +26,8 @@ EAT     10800    # East Africa Time
 IOT     21600    # British Indian Ocean Territory (Chagos) (there was a timezone change recently in 1996)
                  #     (Indian/Chagos)
 MUT     14400    # Mauritius Island Time
+                 #     (Indian/Mauritius)
+MUST    18000 D  # Mauritius Island Summer Time
                  #     (Indian/Mauritius)
 MVT     18000    # Maldives Island Time
                  #     (Indian/Maldives)
