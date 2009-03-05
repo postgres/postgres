@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.236 2009/02/15 20:16:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.237 2009/03/05 23:06:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,14 @@
 	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
 
 
+/* Whether we are looking for plain indexscan, bitmap scan, or either */
+typedef enum
+{
+	ST_INDEXSCAN,				/* must support amgettuple */
+	ST_BITMAPSCAN,				/* must support amgetbitmap */
+	ST_ANYSCAN					/* either is okay */
+} ScanTypeControl;
+
 /* Per-path data used within choose_bitmap_and() */
 typedef struct
 {
@@ -58,7 +66,7 @@ typedef struct
 static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					List *clauses, List *outer_clauses,
 					bool istoplevel, RelOptInfo *outer_rel,
-					SaOpControl saop_control);
+					SaOpControl saop_control, ScanTypeControl scantype);
 static List *find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 				List *clauses, List *outer_clauses,
 				bool istoplevel, RelOptInfo *outer_rel);
@@ -168,12 +176,16 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	indexpaths = find_usable_indexes(root, rel,
 									 rel->baserestrictinfo, NIL,
-									 true, NULL, SAOP_FORBID);
+									 true, NULL, SAOP_FORBID, ST_ANYSCAN);
 
 	/*
-	 * We can submit them all to add_path.	(This generates access paths for
-	 * plain IndexScan plans.)	However, for the next step we will only want
-	 * the ones that have some selectivity; we must discard anything that was
+	 * Submit all the ones that can form plain IndexScan plans to add_path.
+	 * (A plain IndexPath always represents a plain IndexScan plan; however
+	 * some of the indexes might support only bitmap scans, and those we
+	 * mustn't submit to add_path here.)  Also, pick out the ones that might
+	 * be useful as bitmap scans.  For that, we must discard indexes that
+	 * don't support bitmap scans, and we also are only interested in paths
+	 * that have some selectivity; we should discard anything that was
 	 * generated solely for ordering purposes.
 	 */
 	bitindexpaths = NIL;
@@ -181,9 +193,11 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	{
 		IndexPath  *ipath = (IndexPath *) lfirst(l);
 
-		add_path(rel, (Path *) ipath);
+		if (ipath->indexinfo->amhasgettuple)
+			add_path(rel, (Path *) ipath);
 
-		if (ipath->indexselectivity < 1.0 &&
+		if (ipath->indexinfo->amhasgetbitmap &&
+			ipath->indexselectivity < 1.0 &&
 			!ScanDirectionIsBackward(ipath->indexscandir))
 			bitindexpaths = lappend(bitindexpaths, ipath);
 	}
@@ -254,6 +268,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
  * 'outer_rel' is the outer side of the join if forming an inner indexscan
  *		(so some of the given clauses are join clauses); NULL if not
  * 'saop_control' indicates whether ScalarArrayOpExpr clauses can be used
+ * 'scantype' indicates whether we need plain or bitmap scan support
  *
  * Note: check_partial_indexes() must have been run previously.
  *----------
@@ -262,7 +277,7 @@ static List *
 find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					List *clauses, List *outer_clauses,
 					bool istoplevel, RelOptInfo *outer_rel,
-					SaOpControl saop_control)
+					SaOpControl saop_control, ScanTypeControl scantype)
 {
 	Relids		outer_relids = outer_rel ? outer_rel->relids : NULL;
 	bool		possibly_useful_pathkeys = has_useful_pathkeys(root, rel);
@@ -280,6 +295,24 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		bool		useful_predicate;
 		bool		found_clause;
 		bool		index_is_ordered;
+
+		/*
+		 * Check that index supports the desired scan type(s)
+		 */
+		switch (scantype)
+		{
+			case ST_INDEXSCAN:
+				if (!index->amhasgettuple)
+					continue;
+				break;
+			case ST_BITMAPSCAN:
+				if (!index->amhasgetbitmap)
+					continue;
+				break;
+			case ST_ANYSCAN:
+				/* either or both are OK */
+				break;
+		}
 
 		/*
 		 * Ignore partial indexes that do not match the query.	If a partial
@@ -445,7 +478,7 @@ find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 	return find_usable_indexes(root, rel,
 							   clauses, outer_clauses,
 							   istoplevel, outer_rel,
-							   SAOP_REQUIRE);
+							   SAOP_REQUIRE, ST_BITMAPSCAN);
 }
 
 
@@ -507,7 +540,8 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 											  all_clauses,
 											  false,
 											  outer_rel,
-											  SAOP_ALLOW);
+											  SAOP_ALLOW,
+											  ST_BITMAPSCAN);
 				/* Recurse in case there are sub-ORs */
 				indlist = list_concat(indlist,
 									  generate_bitmap_or_paths(root, rel,
@@ -524,7 +558,8 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 											  all_clauses,
 											  false,
 											  outer_rel,
-											  SAOP_ALLOW);
+											  SAOP_ALLOW,
+											  ST_BITMAPSCAN);
 			}
 
 			/*
@@ -1641,6 +1676,7 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	List	   *clause_list;
 	List	   *indexpaths;
 	List	   *bitindexpaths;
+	List	   *allindexpaths;
 	ListCell   *l;
 	InnerIndexscanInfo *info;
 	MemoryContext oldcontext;
@@ -1736,18 +1772,36 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * Find all the index paths that are usable for this join, except for
 	 * stuff involving OR and ScalarArrayOpExpr clauses.
 	 */
-	indexpaths = find_usable_indexes(root, rel,
-									 clause_list, NIL,
-									 false, outer_rel,
-									 SAOP_FORBID);
+	allindexpaths = find_usable_indexes(root, rel,
+										clause_list, NIL,
+										false, outer_rel,
+										SAOP_FORBID,
+										ST_ANYSCAN);
+
+	/*
+	 * Include the ones that are usable as plain indexscans in indexpaths, and
+	 * include the ones that are usable as bitmap scans in bitindexpaths.
+	 */
+	indexpaths = bitindexpaths = NIL;
+	foreach(l, allindexpaths)
+	{
+		IndexPath  *ipath = (IndexPath *) lfirst(l);
+
+		if (ipath->indexinfo->amhasgettuple)
+			indexpaths = lappend(indexpaths, ipath);
+
+		if (ipath->indexinfo->amhasgetbitmap)
+			bitindexpaths = lappend(bitindexpaths, ipath);
+	}
 
 	/*
 	 * Generate BitmapOrPaths for any suitable OR-clauses present in the
 	 * clause list.
 	 */
-	bitindexpaths = generate_bitmap_or_paths(root, rel,
-											 clause_list, NIL,
-											 outer_rel);
+	bitindexpaths = list_concat(bitindexpaths,
+								generate_bitmap_or_paths(root, rel,
+														 clause_list, NIL,
+														 outer_rel));
 
 	/*
 	 * Likewise, generate paths using ScalarArrayOpExpr clauses; these can't
@@ -1757,11 +1811,6 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 								find_saop_paths(root, rel,
 												clause_list, NIL,
 												false, outer_rel));
-
-	/*
-	 * Include the regular index paths in bitindexpaths.
-	 */
-	bitindexpaths = list_concat(bitindexpaths, list_copy(indexpaths));
 
 	/*
 	 * If we found anything usable, generate a BitmapHeapPath for the most

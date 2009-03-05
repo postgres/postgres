@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.60 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.61 2009/03/05 23:06:45 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -52,8 +52,8 @@ CATALOG(pg_am,2601)
 	Oid			amkeytype;		/* type of data in index, or InvalidOid */
 	regproc		aminsert;		/* "insert this tuple" function */
 	regproc		ambeginscan;	/* "start new scan" function */
-	regproc		amgettuple;		/* "next valid tuple" function */
-	regproc		amgetbitmap;	/* "fetch all valid tuples" function */
+	regproc		amgettuple;		/* "next valid tuple" function, or 0 */
+	regproc		amgetbitmap;	/* "fetch all valid tuples" function, or 0 */
 	regproc		amrescan;		/* "restart this scan" function */
 	regproc		amendscan;		/* "end this scan" function */
 	regproc		ammarkpos;		/* "mark current scan position" function */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.155 2009/02/15 20:16:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.156 2009/03/05 23:06:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,6 +214,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->amcostestimate = indexRelation->rd_am->amcostestimate;
 			info->amoptionalkey = indexRelation->rd_am->amoptionalkey;
 			info->amsearchnulls = indexRelation->rd_am->amsearchnulls;
+			info->amhasgettuple = OidIsValid(indexRelation->rd_am->amgettuple);
+			info->amhasgetbitmap = OidIsValid(indexRelation->rd_am->amgetbitmap);
 
 			/*
 			 * Fetch the ordering operators associated with the index, if any.

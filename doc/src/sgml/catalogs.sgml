@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.198 2009/02/24 10:06:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.199 2009/03/05 23:06:45 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -493,14 +493,14 @@
       <entry><structfield>amgettuple</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Next valid tuple</quote> function</entry>
+      <entry><quote>Next valid tuple</quote> function, or zero if none</entry>
      </row>
 
      <row>
       <entry><structfield>amgetbitmap</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry><quote>Fetch all valid tuples</quote> function</entry>
+      <entry><quote>Fetch all valid tuples</quote> function, or zero if none</entry>
      </row>
 
      <row>

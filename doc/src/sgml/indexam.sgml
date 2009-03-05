@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.28 2008/10/17 22:10:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.29 2009/03/05 23:06:45 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -37,8 +37,10 @@
    extant versions of the same logical row; to an index, each tuple is
    an independent object that needs its own index entry.  Thus, an
    update of a row always creates all-new index entries for the row, even if
-   the key values did not change.  Index entries for dead tuples are
-   reclaimed (by vacuuming) when the dead tuples themselves are reclaimed.
+   the key values did not change.  (HOT tuples are an exception to this
+   statement; but indexes do not deal with those, either.)  Index entries for
+   dead tuples are reclaimed (by vacuuming) when the dead tuples themselves
+   are reclaimed.
   </para>
 
  <sect1 id="index-catalog">
@@ -266,7 +268,7 @@ amoptions (ArrayType *reloptions,
    The function should construct a <type>bytea</> value, which will be copied
    into the <structfield>rd_options</> field of the index's relcache entry.
    The data contents of the <type>bytea</> value are open for the access
-   method to define, but the standard access methods currently all use struct
+   method to define; most of the standard access methods use struct
    <structname>StdRdOptions</>.
    When <parameter>validate</> is true, the function should report a suitable
    error message if any of the options are unrecognized or have invalid
@@ -283,8 +285,9 @@ amoptions (ArrayType *reloptions,
    an indexable <literal>WHERE</> condition, often called a
    <firstterm>qualifier</> or <firstterm>scan key</>.  The semantics of
    index scanning are described more fully in <xref linkend="index-scanning">,
-   below.  The scan-related functions that an index access method must provide
-   are:
+   below.  An index access method can support <quote>plain</> index scans,
+   <quote>bitmap</> index scans, or both.  The scan-related functions that an
+   index access method must or may provide are:
   </para>
 
   <para>
@@ -327,6 +330,13 @@ amgettuple (IndexScanDesc scan,
   </para>
 
   <para>
+   The <function>amgettuple</> function need only be provided if the access
+   method supports <quote>plain</> index scans.  If it doesn't, the
+   <structfield>amgettuple</> field in its <structname>pg_am</> row must
+   be set to zero.
+  </para>
+
+  <para>
 <programlisting>
 int64
 amgetbitmap (IndexScanDesc scan,
@@ -347,6 +357,13 @@ amgetbitmap (IndexScanDesc scan,
    <function>amgettuple</> cannot be used in the same index scan; there
    are other restrictions too when using <function>amgetbitmap</>, as explained
    in <xref linkend="index-scanning">.
+  </para>
+
+  <para>
+   The <function>amgetbitmap</> function need only be provided if the access
+   method supports <quote>bitmap</> index scans.  If it doesn't, the
+   <structfield>amgetbitmap</> field in its <structname>pg_am</> row must
+   be set to zero.
   </para>
 
   <para>
@@ -517,6 +534,12 @@ amrestrpos (IndexScanDesc scan);
    take a <literal>direction</> argument.  Finally, <function>amgetbitmap</>
    does not guarantee any locking of the returned tuples, with implications
    spelled out in <xref linkend="index-locking">.
+  </para>
+
+  <para>
+   Note that it is permitted for an access method to implement only
+   <function>amgetbitmap</> and not <function>amgettuple</>, or vice versa,
+   if its internal implementation is unsuited to one API or the other.
   </para>
 
  </sect1>
