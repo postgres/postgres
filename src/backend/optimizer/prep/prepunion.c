@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.166 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.167 2009/03/05 17:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 
 
 #include "access/heapam.h"
+#include "access/sysattr.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -95,6 +96,8 @@ static void make_inh_translation_list(Relation oldrelation,
 						  Relation newrelation,
 						  Index newvarno,
 						  List **translated_vars);
+static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
+									  List *translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   AppendRelInfo *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
@@ -1296,6 +1299,19 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		appinfos = lappend(appinfos, appinfo);
 
 		/*
+		 * Translate the column permissions bitmaps to the child's attnums
+		 * (we have to build the translated_vars list before we can do this).
+		 * But if this is the parent table, leave copyObject's result alone.
+		 */
+		if (childOID != parentOID)
+		{
+			childrte->selectedCols = translate_col_privs(rte->selectedCols,
+														 appinfo->translated_vars);
+			childrte->modifiedCols = translate_col_privs(rte->modifiedCols,
+														 appinfo->translated_vars);
+		}
+
+		/*
 		 * Build a RowMarkClause if parent is marked FOR UPDATE/SHARE.
 		 */
 		if (oldrc)
@@ -1435,6 +1451,59 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 	}
 
 	*translated_vars = vars;
+}
+
+/*
+ * translate_col_privs
+ *	  Translate a bitmapset representing per-column privileges from the
+ *	  parent rel's attribute numbering to the child's.
+ *
+ * The only surprise here is that we don't translate a parent whole-row
+ * reference into a child whole-row reference.  That would mean requiring
+ * permissions on all child columns, which is overly strict, since the
+ * query is really only going to reference the inherited columns.  Instead
+ * we set the per-column bits for all inherited columns.
+ */
+static Bitmapset *
+translate_col_privs(const Bitmapset *parent_privs,
+					List *translated_vars)
+{
+	Bitmapset  *child_privs = NULL;
+	bool		whole_row;
+	int			attno;
+	ListCell   *lc;
+
+	/* System attributes have the same numbers in all tables */
+	for (attno = FirstLowInvalidHeapAttributeNumber+1; attno < 0; attno++)
+	{
+		if (bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
+						  parent_privs))
+			child_privs = bms_add_member(child_privs,
+										 attno - FirstLowInvalidHeapAttributeNumber);
+	}
+
+	/* Check if parent has whole-row reference */
+	whole_row = bms_is_member(InvalidAttrNumber - FirstLowInvalidHeapAttributeNumber,
+							  parent_privs);
+
+	/* And now translate the regular user attributes, using the vars list */
+	attno = InvalidAttrNumber;
+	foreach(lc, translated_vars)
+	{
+		Var	   *var = (Var *) lfirst(lc);
+
+		attno++;
+		if (var == NULL)		/* ignore dropped columns */
+			continue;
+		Assert(IsA(var, Var));
+		if (whole_row ||
+			bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
+						  parent_privs))
+			child_privs = bms_add_member(child_privs,
+										 var->varattno - FirstLowInvalidHeapAttributeNumber);
+	}
+
+	return child_privs;
 }
 
 /*

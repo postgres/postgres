@@ -267,6 +267,29 @@ SET SESSION AUTHORIZATION regressuser3;
 DELETE FROM atest5 WHERE one = 1; -- fail
 DELETE FROM atest5 WHERE two = 2; -- ok
 
+-- check inheritance cases
+SET SESSION AUTHORIZATION regressuser1;
+CREATE TABLE atestp1 (f1 int, f2 int) WITH OIDS;
+CREATE TABLE atestp2 (fx int, fy int) WITH OIDS;
+CREATE TABLE atestc (fz int) INHERITS (atestp1, atestp2);
+GRANT SELECT(fx,fy,oid) ON atestp2 TO regressuser2;
+GRANT SELECT(fx) ON atestc TO regressuser2;
+
+SET SESSION AUTHORIZATION regressuser2;
+SELECT fx FROM atestp2; -- ok
+SELECT fy FROM atestp2; -- fail, no privilege on atestc.fy
+SELECT atestp2 FROM atestp2; -- fail, no privilege on atestc.fy
+SELECT oid FROM atestp2; -- fail, no privilege on atestc.oid
+
+SET SESSION AUTHORIZATION regressuser1;
+GRANT SELECT(fy,oid) ON atestc TO regressuser2;
+
+SET SESSION AUTHORIZATION regressuser2;
+SELECT fx FROM atestp2; -- still ok
+SELECT fy FROM atestp2; -- ok
+SELECT atestp2 FROM atestp2; -- ok
+SELECT oid FROM atestp2; -- ok
+
 -- privileges on functions, languages
 
 -- switch to superuser
@@ -466,6 +489,9 @@ DROP TABLE atest3;
 DROP TABLE atest4;
 DROP TABLE atest5;
 DROP TABLE atest6;
+DROP TABLE atestc;
+DROP TABLE atestp1;
+DROP TABLE atestp2;
 
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
