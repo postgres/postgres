@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160.2.7 2008/10/02 13:47:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160.2.8 2009/03/05 14:28:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,6 +340,7 @@ static datetkn datetktbl[] = {
 	{"msk", TZ, POS(12)},		/* Moscow Time */
 	{"mst", TZ, NEG(28)},		/* Mountain Standard Time */
 	{"mt", TZ, POS(34)},		/* Moluccas Time */
+	{"must", DTZ, POS(20)},		/* Mauritius Island Summer Time */
 	{"mut", TZ, POS(16)},		/* Mauritius Island Time */
 	{"mvt", TZ, POS(20)},		/* Maldives Island Time */
 	{"myt", TZ, POS(32)},		/* Malaysia Time */
