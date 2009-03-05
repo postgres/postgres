@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.4.2.1 2008/03/02 00:10:28 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.4.2.2 2009/03/05 14:28:04 heikki Exp $
 
 
 #################### AFRICA ####################
@@ -637,6 +637,8 @@ CXT     25200    # Christmas Island Time (Indian Ocean)
 IOT     21600    # British Indian Ocean Territory (Chagos) (there was a timezone change recently in 1996)
                  #     (Indian/Chagos)
 MUT     14400    # Mauritius Island Time
+                 #     (Indian/Mauritius)
+MUST    18000 D  # Mauritius Island Summer Time
                  #     (Indian/Mauritius)
 MVT     18000    # Maldives Island Time
                  #     (Indian/Maldives)
