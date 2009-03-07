@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.182 2009/03/04 18:43:38 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.183 2009/03/07 21:28:00 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1304,6 +1304,7 @@ load_hba(void)
 	List *hba_line_nums = NIL;
 	ListCell   *line, *line_num;
 	List *new_parsed_lines = NIL;
+	bool ok = true;
 
 	file = AllocateFile(HbaFileName, "r");
 	if (file == NULL)
@@ -1332,15 +1333,27 @@ load_hba(void)
 
 		if (!parse_hba_line(lfirst(line), lfirst_int(line_num), newline))
 		{
-			/* Parse error in the file, so bail out */
+			/* Parse error in the file, so indicate there's a problem */
 			free_hba_record(newline);
 			pfree(newline);
-			clean_hba_list(new_parsed_lines);
-			/* Error has already been reported in the parsing function */
-			return false;
+
+			/*
+			 * Keep parsing the rest of the file so we can report errors
+			 * on more than the first row. Error has already been reported
+			 * in the parsing function, so no need to log it here.
+			 */
+			ok = false;
+			continue;
 		}
 
 		new_parsed_lines = lappend(new_parsed_lines, newline);
+	}
+
+	if (!ok)
+	{
+		/* Parsing failed at one or more rows, so bail out */
+		clean_hba_list(new_parsed_lines);
+		return false;
 	}
 
 	/* Loaded new file successfully, replace the one we use */
