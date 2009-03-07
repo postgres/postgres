@@ -9,16 +9,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.211 2009/03/07 00:13:57 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.87 2009/03/07 00:13:58 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
 #include "parser/keywords.h"
-#include "parser/gram.h"
+#include "type.h"
+#include "preproc.h"
 
 #define PG_KEYWORD(a,b,c) {a,b,c},
 

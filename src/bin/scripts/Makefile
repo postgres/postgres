@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.40 2009/01/01 17:23:55 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.41 2009/03/07 00:13:58 alvherre Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,31 +18,31 @@ PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vac
 
 override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
-all: submake-libpq submake-backend $(PROGRAMS)
+all: submake-libpq $(PROGRAMS)
 
 %: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
-createdb: createdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-createlang: createlang.o common.o print.o mbprint.o
-createuser: createuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-dropdb: dropdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-droplang: droplang.o common.o print.o mbprint.o
-dropuser: dropuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-clusterdb: clusterdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
-vacuumdb: vacuumdb.o common.o
-reindexdb: reindexdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
+DUMPUTILSOBJS = dumputils.o kwlookup.o keywords.o
 
-dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
+createdb: createdb.o common.o $(DUMPUTILSOBJS)
+createlang: createlang.o common.o print.o mbprint.o
+createuser: createuser.o common.o $(DUMPUTILSOBJS)
+dropdb: dropdb.o common.o $(DUMPUTILSOBJS)
+droplang: droplang.o common.o print.o mbprint.o
+dropuser: dropuser.o common.o $(DUMPUTILSOBJS)
+clusterdb: clusterdb.o common.o $(DUMPUTILSOBJS)
+vacuumdb: vacuumdb.o common.o
+reindexdb: reindexdb.o common.o $(DUMPUTILSOBJS)
+
+dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
 
 print.c mbprint.c : % : $(top_srcdir)/src/bin/psql/%
 	rm -f $@ && $(LN_S) $< .
 
-.PHONY: submake-backend
-submake-backend:
-	$(MAKE) -C $(top_builddir)/src/backend/parser keywords.o
-
+kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
+	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
 	$(INSTALL_PROGRAM) createdb$(X)   '$(DESTDIR)$(bindir)'/createdb$(X)
@@ -64,5 +64,5 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
-	rm -f common.o dumputils.o print.o mbprint.o $(WIN32RES)
-	rm -f dumputils.c print.c mbprint.c
+	rm -f common.o $(DUMPUTILSOBJS) print.o mbprint.o $(WIN32RES)
+	rm -f dumputils.c print.c mbprint.c kwlookup.c keywords.c
