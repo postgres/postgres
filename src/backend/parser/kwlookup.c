@@ -6,12 +6,15 @@
  * NB - this file is also used by ECPG and several frontend programs in
  * src/bin/ including pg_dump and psql
  *
+ * Note that this file expects that the ScanKeywords array is defined
+ * and that LastScanKeyword points to its element one past the last.
+ *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/kwlookup.c,v 2.1 2009/03/07 00:13:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/kwlookup.c,v 2.2 2009/03/08 16:53:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */

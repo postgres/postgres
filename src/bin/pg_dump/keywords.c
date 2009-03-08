@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/keywords.c,v 1.1 2009/03/07 00:13:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/keywords.c,v 1.2 2009/03/08 16:53:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,5 +27,5 @@ const ScanKeyword ScanKeywords[] = {
 #include "parser/kwlist.h"
 };
 
-/* End of ScanKeywords, for use elsewhere */
+/* End of ScanKeywords, for use in kwlookup.c */
 const ScanKeyword *LastScanKeyword = endof(ScanKeywords);
