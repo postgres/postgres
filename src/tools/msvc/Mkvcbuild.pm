@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.37 2009/02/25 17:42:19 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.38 2009/03/08 19:13:38 mha Exp $
 #
 use Carp;
 use Win32;
@@ -211,16 +211,22 @@ sub mkvcbuild
     $pgdump->AddFile('src\bin\pg_dump\pg_dump.c');
     $pgdump->AddFile('src\bin\pg_dump\common.c');
     $pgdump->AddFile('src\bin\pg_dump\pg_dump_sort.c');
+    $pgdump->AddFile('src\bin\pg_dump\keywords.c');
+    $pgdump->AddFile('src\backend\parser\kwlookup.c');
 
     my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
     $pgdumpall->{name} = 'pg_dumpall';
     $pgdumpall->AddIncludeDir('src\backend');
     $pgdumpall->AddFile('src\bin\pg_dump\pg_dumpall.c');
+    $pgdumpall->AddFile('src\bin\pg_dump\keywords.c');
+    $pgdumpall->AddFile('src\backend\parser\kwlookup.c');
 
     my $pgrestore = AddSimpleFrontend('pg_dump', 1);
     $pgrestore->{name} = 'pg_restore';
     $pgrestore->AddIncludeDir('src\backend');
     $pgrestore->AddFile('src\bin\pg_dump\pg_restore.c');
+    $pgrestore->AddFile('src\bin\pg_dump\keywords.c');
+    $pgrestore->AddFile('src\backend\parser\kwlookup.c');
 
     my $zic = $solution->AddProject('zic','exe','utils');
     $zic->AddFiles('src\timezone','zic.c','ialloc.c','scheck.c','localtime.c');
@@ -322,26 +328,26 @@ sub mkvcbuild
         my @files = split /\s+/,$1;
         foreach my $f (@files)
         {
-            if ($f =~ /\/keywords\.o$/)
+            $f =~ s/\.o$/\.c/;
+            if ($f eq 'keywords.c')
             {
-                $proj->AddFile('src\backend\parser\keywords.c');
-                $proj->AddIncludeDir('src\backend');
+                $proj->AddFile('src\bin\pg_dump\keywords.c');
+            }
+            elsif ($f eq 'kwlookup.c')
+            {
+                $proj->AddFile('src\backend\parser\kwlookup.c');
+            }
+            elsif ($f eq 'dumputils.c')
+            {
+                $proj->AddFile('src\bin\pg_dump\dumputils.c');
+            }
+            elsif ($f =~ /print\.c$/)
+            { # Also catches mbprint.c
+                $proj->AddFile('src\bin\psql\\' . $f);
             }
             else
             {
-                $f =~ s/\.o$/\.c/;
-                if ($f eq 'dumputils.c')
-                {
-                    $proj->AddFile('src\bin\pg_dump\dumputils.c');
-                }
-                elsif ($f =~ /print\.c$/)
-                { # Also catches mbprint.c
-                    $proj->AddFile('src\bin\psql\\' . $f);
-                }
-                else
-                {
-                    $proj->AddFile('src\bin\scripts\\' . $f);
-                }
+                $proj->AddFile('src\bin\scripts\\' . $f);
             }
         }
         $proj->AddIncludeDir('src\interfaces\libpq');
