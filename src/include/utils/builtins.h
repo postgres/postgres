@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.331 2009/02/06 21:15:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.332 2009/03/09 14:34:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,8 @@ extern Datum boolle(PG_FUNCTION_ARGS);
 extern Datum boolge(PG_FUNCTION_ARGS);
 extern Datum booland_statefunc(PG_FUNCTION_ARGS);
 extern Datum boolor_statefunc(PG_FUNCTION_ARGS);
+extern bool parse_bool(const char *value, bool *result);
+extern bool parse_bool_with_len(const char *value, size_t len, bool *result);
 
 /* char.c */
 extern Datum charin(PG_FUNCTION_ARGS);

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.496 2009/02/28 00:10:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.497 2009/03/09 14:34:34 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4085,74 +4085,6 @@ ReportGUCOption(struct config_generic * record)
 		pfree(val);
 	}
 }
-
-
-/*
- * Try to interpret value as boolean value.  Valid values are: true,
- * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
- * If the string parses okay, return true, else false.
- * If okay and result is not NULL, return the value in *result.
- */
-bool
-parse_bool(const char *value, bool *result)
-{
-	size_t		len = strlen(value);
-
-	if (pg_strncasecmp(value, "true", len) == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strncasecmp(value, "false", len) == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	else if (pg_strncasecmp(value, "yes", len) == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strncasecmp(value, "no", len) == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	/* 'o' is not unique enough */
-	else if (pg_strncasecmp(value, "on", (len > 2 ? len : 2)) == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strncasecmp(value, "off", (len > 2 ? len : 2)) == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	else if (pg_strcasecmp(value, "1") == 0)
-	{
-		if (result)
-			*result = true;
-	}
-	else if (pg_strcasecmp(value, "0") == 0)
-	{
-		if (result)
-			*result = false;
-	}
-
-	else
-	{
-		if (result)
-			*result = false;	/* suppress compiler warning */
-		return false;
-	}
-	return true;
-}
-
-
 
 /*
  * Try to parse value as an integer.  The accepted formats are the

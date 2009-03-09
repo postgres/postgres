@@ -40,6 +40,18 @@ SELECT bool 'no' AS false;
 
 SELECT bool 'nay' AS error;
 
+SELECT bool 'on' AS true;
+
+SELECT bool 'off' AS false;
+
+SELECT bool 'of' AS false;
+
+SELECT bool 'o' AS error;
+
+SELECT bool 'on_' AS error;
+
+SELECT bool 'off_' AS error;
+
 SELECT bool '1' AS true;
 
 SELECT bool '11' AS error;

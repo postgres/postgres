@@ -88,6 +88,36 @@ SELECT bool 'nay' AS error;
 ERROR:  invalid input syntax for type boolean: "nay"
 LINE 1: SELECT bool 'nay' AS error;
                     ^
+SELECT bool 'on' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT bool 'off' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT bool 'of' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT bool 'o' AS error;
+ERROR:  invalid input syntax for type boolean: "o"
+LINE 1: SELECT bool 'o' AS error;
+                    ^
+SELECT bool 'on_' AS error;
+ERROR:  invalid input syntax for type boolean: "on_"
+LINE 1: SELECT bool 'on_' AS error;
+                    ^
+SELECT bool 'off_' AS error;
+ERROR:  invalid input syntax for type boolean: "off_"
+LINE 1: SELECT bool 'off_' AS error;
+                    ^
 SELECT bool '1' AS true;
  true 
 ------

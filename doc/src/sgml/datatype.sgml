@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.235 2008/12/19 01:34:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.236 2009/03/09 14:34:34 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2686,6 +2686,7 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
      <member><literal>'true'</literal></member>
      <member><literal>'y'</literal></member>
      <member><literal>'yes'</literal></member>
+     <member><literal>'on'</literal></member>
      <member><literal>'1'</literal></member>
     </simplelist>
     For the <quote>false</quote> state, the following values can be
@@ -2696,6 +2697,7 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
      <member><literal>'false'</literal></member>
      <member><literal>'n'</literal></member>
      <member><literal>'no'</literal></member>
+     <member><literal>'off'</literal></member>
      <member><literal>'0'</literal></member>
     </simplelist>
     Leading and trailing whitespace is ignored. Using the key words
