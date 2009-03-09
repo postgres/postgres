@@ -127,22 +127,22 @@ CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (foo '1'); -- ERROR
 CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (host 'localhost', dbname 's8db');
 \des+
 SET ROLE regress_test_role;
-CREATE SERVER st1 FOREIGN DATA WRAPPER foo;                 -- ERROR: no usage on FDW
+CREATE SERVER t1 FOREIGN DATA WRAPPER foo;                 -- ERROR: no usage on FDW
 RESET ROLE;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_role;
 SET ROLE regress_test_role;
-CREATE SERVER st1 FOREIGN DATA WRAPPER foo;
+CREATE SERVER t1 FOREIGN DATA WRAPPER foo;
 RESET ROLE;
 \des+
 
 REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM regress_test_role;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_indirect;
 SET ROLE regress_test_role;
-CREATE SERVER st2 FOREIGN DATA WRAPPER foo;                 -- ERROR
+CREATE SERVER t2 FOREIGN DATA WRAPPER foo;                 -- ERROR
 RESET ROLE;
 GRANT regress_test_indirect TO regress_test_role;
 SET ROLE regress_test_role;
-CREATE SERVER st2 FOREIGN DATA WRAPPER foo;
+CREATE SERVER t2 FOREIGN DATA WRAPPER foo;
 \des+
 RESET ROLE;
 REVOKE regress_test_indirect FROM regress_test_role;
@@ -220,10 +220,10 @@ CREATE USER MAPPING FOR current_user SERVER s7;             -- ERROR
 CREATE USER MAPPING FOR public SERVER s8;                   -- ERROR
 RESET ROLE;
 
-ALTER SERVER st1 OWNER TO regress_test_indirect;
+ALTER SERVER t1 OWNER TO regress_test_indirect;
 SET ROLE regress_test_role;
-CREATE USER MAPPING FOR current_user SERVER st1 OPTIONS (username 'bob', password 'boo');
-CREATE USER MAPPING FOR public SERVER st1;
+CREATE USER MAPPING FOR current_user SERVER t1 OPTIONS (username 'bob', password 'boo');
+CREATE USER MAPPING FOR public SERVER t1;
 RESET ROLE;
 \deu
 
@@ -236,7 +236,7 @@ ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (DROP user, SET password '
 SET ROLE regress_test_role;
 ALTER USER MAPPING FOR current_user SERVER s5 OPTIONS (ADD modified '1');
 ALTER USER MAPPING FOR public SERVER s4 OPTIONS (ADD modified '1'); -- ERROR
-ALTER USER MAPPING FOR public SERVER st1 OPTIONS (ADD modified '1');
+ALTER USER MAPPING FOR public SERVER t1 OPTIONS (ADD modified '1');
 RESET ROLE;
 \deu+
 
@@ -268,7 +268,7 @@ SET ROLE regress_test_role;
 SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
 SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
-DROP USER MAPPING FOR current_user SERVER st1;
+DROP USER MAPPING FOR current_user SERVER t1;
 SET ROLE regress_test_role2;
 SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
 RESET ROLE;
@@ -369,8 +369,8 @@ RESET ROLE;
 -- Cleanup
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER s5 CASCADE;
-DROP SERVER st1 CASCADE;
-DROP SERVER st2;
+DROP SERVER t1 CASCADE;
+DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 DROP SERVER s8 CASCADE;

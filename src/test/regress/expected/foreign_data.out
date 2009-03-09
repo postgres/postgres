@@ -301,12 +301,12 @@ CREATE SERVER s8 FOREIGN DATA WRAPPER postgresql OPTIONS (host 'localhost', dbna
 (8 rows)
 
 SET ROLE regress_test_role;
-CREATE SERVER st1 FOREIGN DATA WRAPPER foo;                 -- ERROR: no usage on FDW
+CREATE SERVER t1 FOREIGN DATA WRAPPER foo;                 -- ERROR: no usage on FDW
 ERROR:  permission denied for foreign-data wrapper foo
 RESET ROLE;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_role;
 SET ROLE regress_test_role;
-CREATE SERVER st1 FOREIGN DATA WRAPPER foo;
+CREATE SERVER t1 FOREIGN DATA WRAPPER foo;
 RESET ROLE;
 \des+
                                                 List of foreign servers
@@ -320,18 +320,18 @@ RESET ROLE;
  s6   | foreign_data_user | foo                  |                   |        | 16.0    | {host=a,dbname=b}
  s7   | foreign_data_user | foo                  |                   | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user | postgresql           |                   |        |         | {host=localhost,dbname=s8db}
- st1  | regress_test_role | foo                  |                   |        |         | 
+ t1   | regress_test_role | foo                  |                   |        |         | 
 (9 rows)
 
 REVOKE USAGE ON FOREIGN DATA WRAPPER foo FROM regress_test_role;
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_indirect;
 SET ROLE regress_test_role;
-CREATE SERVER st2 FOREIGN DATA WRAPPER foo;                 -- ERROR
+CREATE SERVER t2 FOREIGN DATA WRAPPER foo;                 -- ERROR
 ERROR:  permission denied for foreign-data wrapper foo
 RESET ROLE;
 GRANT regress_test_indirect TO regress_test_role;
 SET ROLE regress_test_role;
-CREATE SERVER st2 FOREIGN DATA WRAPPER foo;
+CREATE SERVER t2 FOREIGN DATA WRAPPER foo;
 \des+
                                                 List of foreign servers
  Name |       Owner       | Foreign-data wrapper | Access privileges |  Type  | Version |           Options            
@@ -344,8 +344,8 @@ CREATE SERVER st2 FOREIGN DATA WRAPPER foo;
  s6   | foreign_data_user | foo                  |                   |        | 16.0    | {host=a,dbname=b}
  s7   | foreign_data_user | foo                  |                   | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user | postgresql           |                   |        |         | {host=localhost,dbname=s8db}
- st1  | regress_test_role | foo                  |                   |        |         | 
- st2  | regress_test_role | foo                  |                   |        |         | 
+ t1   | regress_test_role | foo                  |                   |        |         | 
+ t2   | regress_test_role | foo                  |                   |        |         | 
 (10 rows)
 
 RESET ROLE;
@@ -376,8 +376,8 @@ GRANT USAGE ON FOREIGN SERVER s6 TO regress_test_role2 WITH GRANT OPTION;
                                                  : regress_test_role2=U*/foreign_data_user                      
  s7   | foreign_data_user | foo                  |                                         | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user | postgresql           |                                         |        |         | {host=localhost,dbname=s8db}
- st1  | regress_test_role | foo                  |                                         |        |         | 
- st2  | regress_test_role | foo                  |                                         |        |         | 
+ t1   | regress_test_role | foo                  |                                         |        |         | 
+ t2   | regress_test_role | foo                  |                                         |        |         | 
 (10 rows)
 
 SET ROLE regress_test_role;
@@ -427,8 +427,8 @@ access to foreign-data wrapper foo
                                                      : regress_test_role2=U*/foreign_data_user                      
  s7   | foreign_data_user     | foo                  |                                         | oracle | 17.0    | {host=a,dbname=b}
  s8   | foreign_data_user     | postgresql           |                                         |        |         | {dbname=db1,connect_timeout=30}
- st1  | regress_test_role     | foo                  |                                         |        |         | 
- st2  | regress_test_role     | foo                  |                                         |        |         | 
+ t1   | regress_test_role     | foo                  |                                         |        |         | 
+ t2   | regress_test_role     | foo                  |                                         |        |         | 
 (10 rows)
 
 -- DROP SERVER
@@ -448,8 +448,8 @@ NOTICE:  server "nonexistent" does not exist, skipping
  s6   | foreign_data_user     | foo
  s7   | foreign_data_user     | foo
  s8   | foreign_data_user     | postgresql
- st1  | regress_test_role     | foo
- st2  | regress_test_role     | foo
+ t1   | regress_test_role     | foo
+ t2   | regress_test_role     | foo
 (10 rows)
 
 SET ROLE regress_test_role;
@@ -468,8 +468,8 @@ RESET ROLE;
  s6   | foreign_data_user | foo
  s7   | foreign_data_user | foo
  s8   | foreign_data_user | postgresql
- st1  | regress_test_role | foo
- st2  | regress_test_role | foo
+ t1   | regress_test_role | foo
+ t2   | regress_test_role | foo
 (9 rows)
 
 ALTER SERVER s2 OWNER TO regress_test_role;
@@ -486,8 +486,8 @@ RESET ROLE;
  s6   | foreign_data_user | foo
  s7   | foreign_data_user | foo
  s8   | foreign_data_user | postgresql
- st1  | regress_test_role | foo
- st2  | regress_test_role | foo
+ t1   | regress_test_role | foo
+ t2   | regress_test_role | foo
 (8 rows)
 
 CREATE USER MAPPING FOR current_user SERVER s3;
@@ -513,8 +513,8 @@ NOTICE:  drop cascades to user mapping for foreign_data_user
  s6   | foreign_data_user | foo
  s7   | foreign_data_user | foo
  s8   | foreign_data_user | postgresql
- st1  | regress_test_role | foo
- st2  | regress_test_role | foo
+ t1   | regress_test_role | foo
+ t2   | regress_test_role | foo
 (7 rows)
 
 \deu
@@ -546,10 +546,10 @@ ERROR:  permission denied for foreign server s7
 CREATE USER MAPPING FOR public SERVER s8;                   -- ERROR
 ERROR:  must be owner of foreign server s8
 RESET ROLE;
-ALTER SERVER st1 OWNER TO regress_test_indirect;
+ALTER SERVER t1 OWNER TO regress_test_indirect;
 SET ROLE regress_test_role;
-CREATE USER MAPPING FOR current_user SERVER st1 OPTIONS (username 'bob', password 'boo');
-CREATE USER MAPPING FOR public SERVER st1;
+CREATE USER MAPPING FOR current_user SERVER t1 OPTIONS (username 'bob', password 'boo');
+CREATE USER MAPPING FOR public SERVER t1;
 RESET ROLE;
 \deu
    List of user mappings
@@ -560,8 +560,8 @@ RESET ROLE;
  s5     | regress_test_role
  s6     | regress_test_role
  s8     | foreign_data_user
- st1    | public
- st1    | regress_test_role
+ t1     | public
+ t1     | regress_test_role
 (7 rows)
 
 -- ALTER USER MAPPING
@@ -579,7 +579,7 @@ SET ROLE regress_test_role;
 ALTER USER MAPPING FOR current_user SERVER s5 OPTIONS (ADD modified '1');
 ALTER USER MAPPING FOR public SERVER s4 OPTIONS (ADD modified '1'); -- ERROR
 ERROR:  must be owner of foreign server s4
-ALTER USER MAPPING FOR public SERVER st1 OPTIONS (ADD modified '1');
+ALTER USER MAPPING FOR public SERVER t1 OPTIONS (ADD modified '1');
 RESET ROLE;
 \deu+
                   List of user mappings
@@ -590,8 +590,8 @@ RESET ROLE;
  s5     | regress_test_role | {modified=1}
  s6     | regress_test_role | {username=test}
  s8     | foreign_data_user | {password=public}
- st1    | public            | {modified=1}
- st1    | regress_test_role | {username=bob,password=boo}
+ t1     | public            | {modified=1}
+ t1     | regress_test_role | {username=bob,password=boo}
 (7 rows)
 
 -- DROP USER MAPPING
@@ -623,8 +623,8 @@ DROP SERVER s7;
  s6     | regress_test_role
  s8     | foreign_data_user
  s8     | public
- st1    | public
- st1    | regress_test_role
+ t1     | public
+ t1     | regress_test_role
 (8 rows)
 
 -- Information schema
@@ -649,8 +649,8 @@ SELECT * FROM information_schema.foreign_servers ORDER BY 1, 2;
  regression             | s5                  | regression                   | foo                       |                     | 15.0                   | regress_test_role
  regression             | s6                  | regression                   | foo                       |                     | 16.0                   | regress_test_indirect
  regression             | s8                  | regression                   | postgresql                |                     |                        | foreign_data_user
- regression             | st1                 | regression                   | foo                       |                     |                        | regress_test_indirect
- regression             | st2                 | regression                   | foo                       |                     |                        | regress_test_role
+ regression             | t1                  | regression                   | foo                       |                     |                        | regress_test_indirect
+ regression             | t2                  | regression                   | foo                       |                     |                        | regress_test_role
 (6 rows)
 
 SELECT * FROM information_schema.foreign_server_options ORDER BY 1, 2, 3;
@@ -671,10 +671,10 @@ SELECT * FROM information_schema.user_mappings ORDER BY lower(authorization_iden
  foreign_data_user        | regression             | s8
  PUBLIC                   | regression             | s4
  PUBLIC                   | regression             | s8
- PUBLIC                   | regression             | st1
+ PUBLIC                   | regression             | t1
  regress_test_role        | regression             | s5
  regress_test_role        | regression             | s6
- regress_test_role        | regression             | st1
+ regress_test_role        | regression             | t1
 (8 rows)
 
 SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorization_identifier), 2, 3, 4;
@@ -682,11 +682,11 @@ SELECT * FROM information_schema.user_mapping_options ORDER BY lower(authorizati
 --------------------------+------------------------+---------------------+-------------+--------------
  foreign_data_user        | regression             | s8                  | password    | public
  PUBLIC                   | regression             | s4                  | mapping     | is public
- PUBLIC                   | regression             | st1                 | modified    | 1
+ PUBLIC                   | regression             | t1                  | modified    | 1
  regress_test_role        | regression             | s5                  | modified    | 1
  regress_test_role        | regression             | s6                  | username    | test
- regress_test_role        | regression             | st1                 | password    | boo
- regress_test_role        | regression             | st1                 | username    | bob
+ regress_test_role        | regression             | t1                  | password    | boo
+ regress_test_role        | regression             | t1                  | username    | bob
 (7 rows)
 
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
@@ -711,11 +711,11 @@ SET ROLE regress_test_role;
 SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
  authorization_identifier | foreign_server_catalog | foreign_server_name | option_name | option_value 
 --------------------------+------------------------+---------------------+-------------+--------------
- PUBLIC                   | regression             | st1                 | modified    | 1
+ PUBLIC                   | regression             | t1                  | modified    | 1
  regress_test_role        | regression             | s5                  | modified    | 1
  regress_test_role        | regression             | s6                  | username    | test
- regress_test_role        | regression             | st1                 | password    | boo
- regress_test_role        | regression             | st1                 | username    | bob
+ regress_test_role        | regression             | t1                  | password    | boo
+ regress_test_role        | regression             | t1                  | username    | bob
 (5 rows)
 
 SELECT * FROM information_schema.usage_privileges WHERE object_type LIKE 'FOREIGN%' ORDER BY 1, 2, 3, 4, 5;
@@ -732,7 +732,7 @@ SELECT * FROM information_schema.role_usage_grants WHERE object_type LIKE 'FOREI
  foreign_data_user | regress_test_role2    | regression     |               | s6          | FOREIGN SERVER       | USAGE          | YES
 (2 rows)
 
-DROP USER MAPPING FOR current_user SERVER st1;
+DROP USER MAPPING FOR current_user SERVER t1;
 SET ROLE regress_test_role2;
 SELECT * FROM information_schema.user_mapping_options ORDER BY 1, 2, 3, 4;
  authorization_identifier | foreign_server_catalog | foreign_server_name | option_name | option_value 
@@ -946,12 +946,12 @@ access to foreign-data wrapper foo
 owner of user mapping for regress_test_role
 owner of user mapping for regress_test_role
 owner of server s5
-owner of server st2
+owner of server t2
 DROP SERVER s5 CASCADE;
 NOTICE:  drop cascades to user mapping for regress_test_role
-DROP SERVER st1 CASCADE;
+DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public
-DROP SERVER st2;
+DROP SERVER t2;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 5 other objects
