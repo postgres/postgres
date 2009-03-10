@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.146 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.147 2009/03/10 22:09:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,13 +229,13 @@ SS_assign_worktable_param(PlannerInfo *root)
 /*
  * Get the datatype of the first column of the plan's output.
  *
- * This is stored for ARRAY_SUBLINK and for exprType(), which doesn't have any
- * way to get at the plan associated with a SubPlan node.  We really only need
- * the value for EXPR_SUBLINK and ARRAY_SUBLINK subplans, but for consistency
- * we set it always.
+ * This is stored for ARRAY_SUBLINK execution and for exprType()/exprTypmod(),
+ * which have no way to get at the plan associated with a SubPlan node.
+ * We really only need the info for EXPR_SUBLINK and ARRAY_SUBLINK subplans,
+ * but for consistency we save it always.
  */
-static Oid
-get_first_col_type(Plan *plan)
+static void
+get_first_col_type(Plan *plan, Oid *coltype, int32 *coltypmod)
 {
 	/* In cases such as EXISTS, tlist might be empty; arbitrarily use VOID */
 	if (plan->targetlist)
@@ -244,9 +244,14 @@ get_first_col_type(Plan *plan)
 
 		Assert(IsA(tent, TargetEntry));
 		if (!tent->resjunk)
-			return exprType((Node *) tent->expr);
+		{
+			*coltype = exprType((Node *) tent->expr);
+			*coltypmod = exprTypmod((Node *) tent->expr);
+			return;
+		}
 	}
-	return VOIDOID;
+	*coltype = VOIDOID;
+	*coltypmod = -1;
 }
 
 /*
@@ -414,7 +419,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	splan->subLinkType = subLinkType;
 	splan->testexpr = NULL;
 	splan->paramIds = NIL;
-	splan->firstColType = get_first_col_type(plan);
+	get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod);
 	splan->useHashTable = false;
 	splan->unknownEqFalse = unknownEqFalse;
 	splan->setParam = NIL;
@@ -876,7 +881,7 @@ SS_process_ctes(PlannerInfo *root)
 		splan->subLinkType = CTE_SUBLINK;
 		splan->testexpr = NULL;
 		splan->paramIds = NIL;
-		splan->firstColType = get_first_col_type(plan);
+		get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod);
 		splan->useHashTable = false;
 		splan->unknownEqFalse = false;
 		splan->setParam = NIL;
@@ -2111,7 +2116,7 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	 */
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
-	node->firstColType = get_first_col_type(plan);
+	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod);
 	node->plan_id = list_length(root->glob->subplans);
 
 	root->init_plans = lappend(root->init_plans, node);

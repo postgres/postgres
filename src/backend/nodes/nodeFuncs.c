@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.38 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.39 2009/03/10 22:09:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ static int	leftmostLoc(int loc1, int loc2);
 
 /*
  *	exprType -
- *	  returns the Oid of the type of the expression. (Used for typechecking.)
+ *	  returns the Oid of the type of the expression's result.
  */
 Oid
 exprType(Node *expr)
@@ -117,11 +117,6 @@ exprType(Node *expr)
 			break;
 		case T_SubPlan:
 			{
-				/*
-				 * Although the parser does not ever deal with already-planned
-				 * expression trees, we support SubPlan nodes in this routine
-				 * for the convenience of ruleutils.c.
-				 */
 				SubPlan    *subplan = (SubPlan *) expr;
 
 				if (subplan->subLinkType == EXPR_SUBLINK ||
@@ -148,7 +143,6 @@ exprType(Node *expr)
 			break;
 		case T_AlternativeSubPlan:
 			{
-				/* As above, supported for the convenience of ruleutils.c */
 				AlternativeSubPlan *asplan = (AlternativeSubPlan *) expr;
 
 				/* subplans should all return the same thing */
@@ -236,8 +230,8 @@ exprType(Node *expr)
 
 /*
  *	exprTypmod -
- *	  returns the type-specific attrmod of the expression, if it can be
- *	  determined.  In most cases, it can't and we return -1.
+ *	  returns the type-specific modifier of the expression's result type,
+ *	  if it can be determined.  In many cases, it can't and we return -1.
  */
 int32
 exprTypmod(Node *expr)
@@ -284,6 +278,32 @@ exprTypmod(Node *expr)
 					return exprTypmod((Node *) tent->expr);
 					/* note we don't need to care if it's an array */
 				}
+			}
+			break;
+		case T_SubPlan:
+			{
+				SubPlan    *subplan = (SubPlan *) expr;
+
+				if (subplan->subLinkType == EXPR_SUBLINK ||
+					subplan->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					/* note we don't need to care if it's an array */
+					return subplan->firstColTypmod;
+				}
+				else
+				{
+					/* for all other subplan types, result is boolean */
+					return -1;
+				}
+			}
+			break;
+		case T_AlternativeSubPlan:
+			{
+				AlternativeSubPlan *asplan = (AlternativeSubPlan *) expr;
+
+				/* subplans should all return the same thing */
+				return exprTypmod((Node *) linitial(asplan->subplans));
 			}
 			break;
 		case T_FieldSelect:
