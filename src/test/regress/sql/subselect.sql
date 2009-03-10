@@ -298,3 +298,14 @@ select
   ( select min(tb.id) from tb
     where tb.aval = (select ta.val from ta where ta.id = tc.aid) ) as min_tb_id
 from tc;
+
+--
+-- Test case for 8.3 "failed to locate grouping columns" bug
+--
+
+create temp table t1 (f1 numeric(14,0), f2 varchar(30));
+
+select * from
+  (select distinct f1, f2, (select f2 from t1 x where x.f1 = up.f1) as fs
+   from t1 up) ss
+group by f1,f2,fs;

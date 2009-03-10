@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.168.2.3 2008/11/11 18:13:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.168.2.4 2009/03/10 20:58:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,6 +477,13 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	double		tuple_fraction;
 	PlannerInfo *subroot;
 	List	   *pathkeys;
+
+	/*
+	 * Must copy the Query so that planning doesn't mess up the RTE contents
+	 * (really really need to fix the planner to not scribble on its input,
+	 * someday).
+	 */
+	subquery = copyObject(subquery);
 
 	/* We need a workspace for keeping track of set-op type coercions */
 	differentTypes = (bool *)
