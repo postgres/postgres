@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.63 2008/11/11 20:06:21 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.64 2009/03/10 00:08:28 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -1009,23 +1009,25 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
    <productname>PostgreSQL</productname> provides facilities to support
    dynamic tracing of the database server. This allows an external
    utility to be called at specific points in the code and thereby trace
-   execution.  Currently, this facility is primarily intended for use by
-   database developers, as it requires substantial familiarity with the code.
+   execution.
   </para>
 
   <para>
-   A number of probes or trace points are already inserted
-   into the source code.  By default these probes are not compiled into the
+   A number of probes or trace points are already inserted into the source
+   code. These probes are intended to be used by database developers and
+   administrators. By default the probes are not compiled into the
    binary, and the user needs to explicitly tell the configure script to make
    the probes available in <productname>PostgreSQL</productname>.
   </para>
 
   <para> 
-   Currently, only the DTrace utility is supported, which is available
-   on Solaris Express, Solaris 10, and Mac OS X Leopard. It is expected that
-   DTrace will be available in the future on FreeBSD.
-   Supporting other dynamic tracing utilities is theoretically possible by
-   changing the definitions for the macros in
+   Currently, only the
+   <ulink url="http://opensolaris.org/os/community/dtrace/">DTrace</ulink>
+   utility is supported, which is available
+   on OpenSolaris, Solaris 10, and Mac OS X Leopard. It is expected that
+   DTrace will be available in the future on FreeBSD and possibly other
+   operating systems. Supporting other dynamic tracing utilities is
+   theoretically possible by changing the definitions for the macros in
    <filename>src/include/utils/probes.h</>.
   </para>
 
@@ -1045,93 +1047,387 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
    <title>Built-in Probes</title>
 
   <para>
-   A few standard probes are provided in the source code
-   (of course, more can be added as needed for a particular problem).
-   These are shown in <xref linkend="trace-point-table">.
+   A number of standard probes are provided in the source code, and more 
+   can certainly be added to enhance PostgreSQL's observability. There are two categories
+   of probes, those that are targeted toward database administrators and those for developers.  
+   They are shown in <xref linkend="admin-trace-point-table"> and
+   <xref linkend="dev-trace-point-table">.
   </para>
 
- <table id="trace-point-table">
-  <title>Built-in Probes</title>
+ <table id="admin-trace-point-table">
+  <title>Built-in Probes for Administrators</title>
   <tgroup cols="3">
    <thead>
     <row>
      <entry>Name</entry>
      <entry>Parameters</entry>
-     <entry>Overview</entry>
+     <entry>Description</entry>
     </row>
    </thead>
 
    <tbody>
+
     <row>
      <entry>transaction-start</entry>
-     <entry>(int transactionId)</entry>
-     <entry>The start of a new transaction.</entry>
+     <entry>(LocalTransactionId)</entry>
+     <entry>Probe that fires at the start of a new transaction. arg0 is the transaction id.</entry>
     </row>
     <row>
      <entry>transaction-commit</entry>
-     <entry>(int transactionId)</entry>
-     <entry>The successful completion of a transaction.</entry>
+     <entry>(LocalTransactionId)</entry>
+     <entry>Probe that fires when a transaction completes successfully. arg0 is the transaction id.</entry>
     </row>
     <row>
      <entry>transaction-abort</entry>
-     <entry>(int transactionId)</entry>
-     <entry>The unsuccessful completion of a transaction.</entry>
+     <entry>(LocalTransactionId)</entry>
+     <entry>Probes that fires when a transaction does not complete successfully. arg0 is the transaction id.</entry>
     </row>
+    <row>
+     <entry>query-start</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires when the execution of a statement is started. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>query-done</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires when the execution of a statement is complete. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>query-parse-start</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires when the parsing of a query is started. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>query-parse-done</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires when the parsing of a query is complete. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>query-rewrite-start</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires when the rewriting of a query is started. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>query-rewrite-done</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires when the rewriting of a query is complete. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>query-plan-start</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the planning of a query is started.</entry>
+    </row>
+    <row>
+     <entry>query-plan-done</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the planning of a query is complete.</entry>
+    </row>
+    <row>
+     <entry>query-execute-start</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the execution of a query is started.</entry>
+    </row>
+    <row>
+     <entry>query-execute-done</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the execution of a query is complete.</entry>
+    </row>
+    <row>
+     <entry>statement-status</entry>
+     <entry>(const char *)</entry>
+     <entry>Probe that fires anytime an SQL statement is executed on the server. arg0 is the query string.</entry>
+    </row>
+    <row>
+     <entry>checkpoint-start</entry>
+     <entry>(int)</entry>
+     <entry>Probe that fires when a checkpoint is performed. arg0 holds the bitwise flags used to distinguish different checkpoints such as shutdown, immediate or force.</entry>
+    </row>
+    <row>
+     <entry>checkpoint-done</entry>
+     <entry>(int, int, int, int, int)</entry>
+     <entry>Probe that fires when a checkpoint is complete. arg0 is the number of buffers written. arg1 is the total number of buffers. arg2, arg3 and arg4 contain the number of xlog file(s) added, removed and recycled respectively.</entry>
+    </row>
+    <row>
+     <entry>clog-checkpoint-start</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when the CLOG portion of the checkpoint is started. arg0 is either true or false, true for normal checkpoint, false for postmaster shutdown.</entry>
+    </row>
+    <row>
+     <entry>clog-checkpoint-done</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when the CLOG portion of the checkpoint is complete. arg0 has the same meaning as clog-checkpoint-start.</entry>
+    </row>
+    <row>
+     <entry>subtrans-checkpoint-start</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when the SUBTRANS portion of the checkpoint is started. arg0 is either true or false, true for normal checkpoint, false for postmaster shutdown.</entry>
+    </row>
+    <row>
+     <entry>subtrans-checkpoint-done</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when the SUBTRANS portion of the checkpoint is complete. arg0 has the same meaning as subtrans-checkpoint-done.</entry>
+    </row>
+    <row>
+     <entry>multixact-checkpoint-start</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when the MultiXact portion of the checkpoint is started. arg0 is either true or false, true for normal checkpoint, false for postmaster shutdown.</entry>
+    </row>
+    <row>
+     <entry>multixact-checkpoint-done</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when the MultiXact portion of the checkpoint is complete. arg0 has the same meaning as multixact-checkpoint-start.</entry>
+    </row>
+    <row>
+     <entry>buffer-checkpoint-start</entry>
+     <entry>(int)</entry>
+     <entry>Probe that fires when the shared buffers portion of the checkpoint is started to flush out the buffers, and it's always followed by buffer-sync-start. arg0 holds the bitwise flags used to distinguish different checkpoints such as shutdown, immediate or force</entry>
+    </row>
+    <row>
+     <entry>buffer-checkpoint-sync-start</entry>
+     <entry>()</entry>
+     <entry>Probe that fires to fsync buffers to disk, and it's always preceeded by buffer-checkpoint-start, buffer-sync-start, and buffer-flush-start. The time difference between buffer-checkpoint-start and buffer-checkpoint-sync-start is the write time, and the difference between buffer-checkpoint-sync-start and buffer-checkpoint-done is the sync time.</entry>
+    </row>
+    <row>
+     <entry>buffer-checkpoint-done</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the shared buffers portion of the checkpoint is complete. This probe is fired after buffer-checkpoint-sync-start.</entry>
+    </row>
+    <row>
+     <entry>twophase-checkpoint-start</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the two-phase portion of the checkpoint is started.</entry>
+    </row>
+    <row>
+     <entry>twophase-checkpoint-done</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the two-phase portion of the checkpoint is complete.</entry>
+    </row>
+    <row>
+     <entry>buffer-hit</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when a read request is satisfied from the buffer cache. arg0 is either true or false, true for local buffer, false for shared buffer.</entry>
+    </row>
+    <row>
+     <entry>buffer-miss</entry>
+     <entry>(bool)</entry>
+     <entry>Probe that fires when a read request requires disk access. arg0 is either true or false, true for local buffer, false for shared buffer .</entry>
+    </row>
+    <row>
+     <entry>buffer-read-start</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, bool)</entry>
+     <entry>Probe that fires when a buffer read is started. arg0 and arg1 contain the fork and block numbers. arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs respectively. arg5 is either true or false, true for local buffer, false for shared buffer.</entry>
+    </row>
+    <row>
+     <entry>buffer-read-done</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, bool, bool)</entry>
+     <entry>Probe that fires when a buffer read is complete. arg0 and arg1 contain the fork and block numbers. arg2, arg3, and arg4 contain the tablespace, database, and relation OIDs respectively. arg5 is either true or false, true for local buffer, false for shared buffer. arg6 is true if buffer is found in the pool, false otherwise.</entry>
+    </row>
+    <row>
+     <entry>buffer-sync-start</entry>
+     <entry>(int, int)</entry>
+     <entry>Probe that fires to write out all dirty buffers in the pool at checkpoint time, and it's always preceeded by buffer-checkpoint-start and followed by buffer-flush-start. arg0 is the total number of buffers. arg1 is the number it intends to write.</entry>
+    </row>
+    <row>
+     <entry>buffer-sync-done</entry>
+     <entry>(int, int, int)</entry>
+     <entry>Probe that fires when all dirty buffers have been written. arg0 is the total number of buffers. arg1 is the number actually written. arg2 is the total number to write.</entry>
+    </row>
+    <row>
+     <entry>buffer-sync-written</entry>
+     <entry>(int)</entry>
+     <entry>Probe that fires when the buffer pool syncing is in progress (e.g. buffer-sync-start has fired) and a buffer has been successfully written.</entry>
+    </row>
+    <row>
+     <entry>buffer-flush-start</entry>
+     <entry>(Oid, Oid, Oid)</entry>
+     <entry>Probe that fires when a shared buffer needs to be physically written out to disk, and it's always preceeded by buffer-sync-start. This actually just passes the buffer contents to the kernel; the real write to disk happens later by the kernel. This is okay since the changes have already been written to the WAL. arg0, arg1, and arg2 contain the tablespace, database, and relation OIDs respectively.</entry>
+    </row>
+    <row>
+     <entry>buffer-flush-done</entry>
+     <entry>(Oid, Oid, Oid)</entry>
+     <entry>Probe that fires when the buffer flush is complete, and it's always followed by buffer-checkpoint-sync-start. arg0, arg1, and arg2 have the same meaning as buffer-flush-start.</entry>
+    </row>
+    <row>
+     <entry>buffer-write-dirty-start</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry>Probe that fires when the server starts writting out dirty buffers, indicating that the bgwriter is ineffective or shared_buffers is too small. arg0 refers to a fork in a relation. arg1 is the disk block number. arg2, arg3, arg4 contain the tablespace, database, and relation OIDs respectively.</entry>
+    </row>
+    <row>
+     <entry>buffer-write-dirty-done</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry>Probe that fires when the buffer write is complete. The arguments are the same as buffer-write-dirty-start probe.</entry>
+    </row>
+    <row>
+     <entry>wal-buffer-write-dirty-start</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the server starts writting out dirty WAL buffers, indicating that no more WAL buffer pages are available. Increasing wal_buffers will reduce the writes and may improve performance.</entry>
+    </row>
+    <row>
+     <entry>wal-buffer-write-dirty-done</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when the WAL buffer write is complete.</entry>
+    </row>
+    <row>
+     <entry>xlog-insert</entry>
+     <entry>(unsigned char, unsigned char)</entry>
+     <entry>Probe that fires when data is inserted in the XLog. arg0 is the resource manager (rmid) for the record. arg1 represents the info flags.</entry>
+    </row>
+    <row>
+     <entry>xlog-switch</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when an XLog switch is requested. This is always immediately preceeded by an firing of the xlog-insert probe.</entry>
+    </row>
+    <row>
+     <entry>sort-start</entry>
+     <entry>(int, bool, int, int, bool)</entry>
+     <entry>Probe that fires when sort is performed. arg0 indicates heap, index or datum sort. arg1 is true for unique enforcement. arg2 is the number of keys. arg3 represents workMem. arg3 is true for random access.</entry>
+    </row>
+    <row>
+     <entry>sort-done</entry>
+     <entry>(unsigned long, long)</entry>
+     <entry>Probe that fires when sort is complete. arg0 is either true or false, true for external sort, false for internal sort. arg1 is the number of disk blocks used for external sort or memory used in KB for internal sort.</entry>
+    </row>
+    <row>
+     <entry>smgr-md-read-start</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry>Probes that fires when reading a block from a relation. arg0 and arg1 contain fork and block number. arg2, arg3 and arg4 contain the tablespace, database and relation OIDs.</entry>
+    </row>
+    <row>
+     <entry>smgr-md-read-done</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, const char *, int, int)</entry>
+     <entry>Probes that fires when a block read is complete. arg0 and arg1 contan fork and block number. arg2, arg3, arg4 contain the tablespace, database, and relation OIDs. arg5 is the path to the relation's file. arg6 is the number of bytes read. arg7 is the block size.</entry>
+    </row>
+    <row>
+     <entry>smgr-md-write-start</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid)</entry>
+     <entry>Probes that fires when writing a block to the appropriate relation. arg0 and arg1 contain fork and block number. arg2, arg3 and arg4 contain the tablespace, database and relation OIDs.</entry>
+    </row>
+    <row>
+     <entry>smgr-md-write-done</entry>
+     <entry>(ForkNumber, BlockNumber, Oid, Oid, Oid, const char *, int, int)</entry>
+     <entry>Probes that fires when a block write is complete. arg0 and arg1 contan fork and block number. arg2, arg3, arg4 contain the tablespace, database, and relation OIDs. arg5 is the path to the relation's file. arg6 is number of bytes read. arg7 is the block size.</entry>
+    </row>
+    <row>
+     <entry>deadlock-found</entry>
+     <entry>()</entry>
+     <entry>Probe that fires when a deadlock is found by the deadlock detector.</entry>
+    </row>
+
+
+   </tbody>
+  </tgroup>
+ </table>
+
+
+ <table id="dev-trace-point-table">
+  <title>Built-in Probes for Developers</title>
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Name</entry>
+     <entry>Parameters</entry>
+     <entry>Description</entry>
+    </row>
+   </thead>
+
+   <tbody>
              
     <row>
      <entry>lwlock-acquire</entry>
-     <entry>(int lockid, int mode)</entry>
-     <entry>An LWLock has been acquired.</entry>
+     <entry>(LWLockId, LWLockMode)</entry>
+     <entry>Probe that fires when an LWLock has been acquired. arg0 is a predefined or dynamic ID defined in LWLockId enum. arg1 is a lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry>lwlock-release</entry>
-     <entry>(int lockid, int mode)</entry>
-     <entry>An LWLock has been released.</entry>
+     <entry>(LWLockId)</entry>
+     <entry>Probe that fires when an LWLock has been released. arg0 is a predefined or dynamic ID defined in LWLockId enum.</entry>
     </row>
     <row>
-     <entry>lwlock-startwait</entry>
-     <entry>(int lockid, int mode)</entry>
-     <entry>An LWLock was not immediately available and a backend
-       has begun to wait for the lock to become available.
-     </entry>
+     <entry>lwlock-wait-start</entry>
+     <entry>(LWLockId, LWLockMode)</entry>
+     <entry>Probe that fires when an LWLock was not immediately available and a backend has begun to wait for the lock to become available. arg0 is a predefined or dynamic ID defined in LWLockId enum. arg1 is a lock mode, either exclusive or shared .</entry>
     </row>    
     <row>
-     <entry>lwlock-endwait</entry>
-     <entry>(int lockid, int mode)</entry>
-     <entry>A backend has been released from its wait for an LWLock.
-     </entry>
+     <entry>lwlock-wait-done</entry>
+     <entry>(LWLockId, LWLockMode)</entry>
+     <entry>Probe that fires when a backend has been released from its wait for an LWLock. arg0 is a predefined or dynamic ID defined in LWLockId enum. arg1 is a lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry>lwlock-condacquire</entry>
-     <entry>(int lockid, int mode)</entry>
-     <entry>An LWLock was successfully acquired when the caller specified no
-      waiting.
-     </entry>
+     <entry>(LWLockId, LWLockMode)</entry>
+     <entry>Probe that fires when an LWLock was successfully acquired when the caller specified no waiting. arg0 is a predefined or dynamic ID defined in LWLockId enum. arg1 is a lock mode, either exclusive or shared.</entry>
     </row> 
     <row>
      <entry>lwlock-condacquire-fail</entry>
-     <entry>(int lockid, int mode)</entry>
-     <entry>An LWLock was not successfully acquired when the caller specified
-      no waiting.
+     <entry>(LWLockId, LWLockMode)</entry>
+     <entry>Probe that fires when an LWLock was not successfully acquired when the caller specified no waiting. arg0 is a predefined or dynamic ID defined in LWLockId enum. arg1 is a lock mode, either exclusive or shared.</entry>
+    </row>
+    <row>
+     <entry>lock-wait-start</entry>
+     <entry>(unsigned int, LOCKMODE)</entry>
+     <entry>Probe that fires when a request for a heavyweight lock (lmgr lock) has begun to wait because the lock is not available. arg0 is the unique ID tag defined in LOCKTAG struct. arg1 is an integer indicating a lock type.
      </entry>
     </row>
     <row>
-     <entry>lock-startwait</entry>
-     <entry>(int locktag_field2, int lockmode)</entry>
-     <entry>A request for a heavyweight lock (lmgr lock) has begun to wait
-      because the lock is not available.
-     </entry>
-    </row>
-    <row>
-     <entry>lock-endwait</entry>
-     <entry>(int locktag_field2, int lockmode)</entry>
-     <entry>A request for a heavyweight lock (lmgr lock) has finished waiting
-      (i.e., has acquired the lock).
+     <entry>lock-wait-done</entry>
+     <entry>(unsigned int, LOCKMODE)</entry>
+     <entry>Probe that fires when a request for a heavyweight lock (lmgr lock) has finished waiting (i.e., has acquired the lock). arg0 is the unique ID tag defined in LOCKTAG struct. arg1 is an integer indicating a lock type.
      </entry>
     </row>
    </tbody>
    </tgroup>
   </table>
+
+ <table id="typedefs-table">
+  <title>Defined Types Used in Probe Parameters</title>
+  <tgroup cols="2">
+   <thead>
+    <row>
+     <entry>Type</entry>
+     <entry>Definition</entry>
+    </row>
+   </thead>
+
+   <tbody>
+
+    <row>
+     <entry>LocalTransactionId</entry>
+     <entry>unsigned int</entry>
+    </row>
+    <row>
+     <entry>LWLockId</entry>
+     <entry>int</entry>
+    </row>
+    <row>
+     <entry>LWLockMode</entry>
+     <entry>int</entry>
+    </row>
+    <row>
+     <entry>LOCKMODE</entry>
+     <entry>int</entry>
+    </row>
+    <row>
+     <entry>BlockNumber</entry>
+     <entry>unsigned int</entry>
+    </row>
+    <row>
+     <entry>Oid</entry>
+     <entry>unsigned int</entry>
+    </row>
+    <row>
+     <entry>ForkNumber</entry>
+     <entry>int</entry>
+    </row>
+    <row>
+     <entry>bool</entry>
+     <entry>char</entry>
+    </row>
+
+   </tbody>
+   </tgroup>
+  </table>
+
+
   </sect2>
 
   <sect2 id="using-trace-points">
@@ -1181,6 +1477,10 @@ Total time (ns)                        2312105013
    discussing information found using dynamic tracing, be sure to enclose
    the script used to allow that too to be checked and discussed.
   </para>
+  <para>
+   More example scripts can be found on 
+   <ulink url="http://pgfoundry.org/projects/dtrace/">PgFoundry.</ulink>
+  </para>
   </sect2>
 
   <sect2 id="defining-trace-points">
@@ -1207,7 +1507,7 @@ Total time (ns)                        2312105013
 
    <step>
     <para>
-     Insert a one-line probe macros at the desired locations in the source code
+     Include pg_trace.h if it is not already presence and insert a one-line probe macros at the desired locations in the source code
     </para>
    </step>
  
@@ -1228,18 +1528,18 @@ Total time (ns)                        2312105013
   <procedure>
    <step>
     <para>   
-     Name the probe transaction-start and give it a parameter of type integer (type of transaction ID) 
+     Name the probe transaction-start and give it a parameter of type LocalTransactionId 
     </para>
    </step>
 
    <step>
     <para>
-     Add <quote>probe transaction__start(int);</quote> to
+     Add <quote>probe transaction__start(LocalTransactionId);</quote> to
      <filename>src/backend/utils/probes.d</>, and it should look like the following:
 <programlisting>
 provider postgresql {
       ...
-      probe transaction__start(int);
+      probe transaction__start(LocalTransactionId);
       ...
  };
 </programlisting>
@@ -1248,9 +1548,9 @@ provider postgresql {
     </para>
 
     <para>
-     You should take care that the data types specified for the probe arguments
-     match the data types of the variables used in the macro. Otherwise, you
-     will get compilation errors. 
+     You should take care that the data types specified for the probe
+     parameters match the data types of the variables used in the macro.
+     Otherwise, you will get compilation errors. 
     </para>
    </step>
 
