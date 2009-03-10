@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.11.2.3 2009/03/02 15:13:17 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.11.2.4 2009/03/10 17:44:44 teodor Exp $ */
 
 #include "postgres.h"
 
@@ -369,6 +369,8 @@ p_ishost(TParser * prs)
 {
 	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
 	int			res = 0;
+
+	tmpprs->wanthost = true;
 
 	if (TParserGet(tmpprs) && tmpprs->type == HOST)
 	{
@@ -801,6 +803,7 @@ static TParserStateActionItem actionTPS_InHost[] = {
 };
 
 static TParserStateActionItem actionTPS_InEmail[] = {
+	{p_isstophost, 0, A_POP, TPS_Null, 0, NULL},
 	{p_ishost, 0, A_BINGO | A_CLRALL, TPS_Base, EMAIL, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
