@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.14.2.4 2009/03/02 15:11:25 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.14.2.5 2009/03/10 17:33:53 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,6 +620,8 @@ p_ishost(TParser *prs)
 	TParser    *tmpprs = TParserInit(prs->str + prs->state->posbyte, prs->lenstr - prs->state->posbyte);
 	int			res = 0;
 
+	tmpprs->wanthost = true;
+
 	if (TParserGet(tmpprs) && tmpprs->type == HOST)
 	{
 		prs->state->posbyte += tmpprs->lenbytetoken;
@@ -1070,6 +1072,7 @@ static const TParserStateActionItem actionTPS_InHost[] = {
 };
 
 static const TParserStateActionItem actionTPS_InEmail[] = {
+	{p_isstophost, 0, A_POP, TPS_Null, 0, NULL},
 	{p_ishost, 0, A_BINGO | A_CLRALL, TPS_Base, EMAIL, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
