@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.333 2009/03/04 13:56:40 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.334 2009/03/11 23:19:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6384,10 +6384,11 @@ CreateCheckPoint(int flags)
 	if (log_checkpoints)
 		LogCheckpointEnd(false);
 
-        TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
-                                NBuffers, CheckpointStats.ckpt_segs_added,
-                                CheckpointStats.ckpt_segs_removed,
-                                CheckpointStats.ckpt_segs_recycled);
+	TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
+									 NBuffers,
+									 CheckpointStats.ckpt_segs_added,
+									 CheckpointStats.ckpt_segs_removed,
+									 CheckpointStats.ckpt_segs_recycled);
 
 	LWLockRelease(CheckpointLock);
 }

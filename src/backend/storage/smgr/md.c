@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.144 2009/01/12 05:10:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.145 2009/03/11 23:19:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,7 +581,10 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	int			nbytes;
 	MdfdVec    *v;
 
-	TRACE_POSTGRESQL_SMGR_MD_READ_START(forknum, blocknum, reln->smgr_rnode.spcNode, reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode);
+	TRACE_POSTGRESQL_SMGR_MD_READ_START(forknum, blocknum,
+										reln->smgr_rnode.spcNode,
+										reln->smgr_rnode.dbNode,
+										reln->smgr_rnode.relNode);
 
 	v = _mdfd_getseg(reln, forknum, blocknum, false, EXTENSION_FAIL);
 
@@ -596,7 +599,12 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ);
 
-	TRACE_POSTGRESQL_SMGR_MD_READ_DONE(forknum, blocknum, reln->smgr_rnode.spcNode, reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode, relpath(reln->smgr_rnode, forknum), nbytes, BLCKSZ);
+	TRACE_POSTGRESQL_SMGR_MD_READ_DONE(forknum, blocknum,
+									   reln->smgr_rnode.spcNode,
+									   reln->smgr_rnode.dbNode,
+									   reln->smgr_rnode.relNode,
+									   nbytes,
+									   BLCKSZ);
 
 	if (nbytes != BLCKSZ)
 	{
@@ -645,7 +653,10 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	Assert(blocknum < mdnblocks(reln, forknum));
 #endif
 
-	TRACE_POSTGRESQL_SMGR_MD_WRITE_START(forknum, blocknum, reln->smgr_rnode.spcNode, reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode);
+	TRACE_POSTGRESQL_SMGR_MD_WRITE_START(forknum, blocknum,
+										 reln->smgr_rnode.spcNode,
+										 reln->smgr_rnode.dbNode,
+										 reln->smgr_rnode.relNode);
 
 	v = _mdfd_getseg(reln, forknum, blocknum, isTemp, EXTENSION_FAIL);
 
@@ -660,7 +671,12 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ);
 
-	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum, reln->smgr_rnode.spcNode, reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode, relpath(reln->smgr_rnode, forknum), nbytes, BLCKSZ);
+	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum,
+										reln->smgr_rnode.spcNode,
+										reln->smgr_rnode.dbNode,
+										reln->smgr_rnode.relNode,
+										nbytes,
+										BLCKSZ);
 
 	if (nbytes != BLCKSZ)
 	{

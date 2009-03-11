@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.245 2009/01/12 05:10:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.246 2009/03/11 23:19:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,11 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	if (isExtend)
 		blockNum = smgrnblocks(smgr, forkNum);
 
-	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum, smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode, isLocalBuf);
+	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
+									   smgr->smgr_rnode.spcNode,
+									   smgr->smgr_rnode.dbNode,
+									   smgr->smgr_rnode.relNode,
+									   isLocalBuf);
 
 	if (isLocalBuf)
 	{
@@ -269,11 +273,11 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		if (found)
 		{
 			LocalBufferHitCount++;
-			TRACE_POSTGRESQL_BUFFER_HIT(true); /* true == local buffer */
+			TRACE_POSTGRESQL_BUFFER_HIT(true);		/* true = local buffer */
 		}
 		else
 		{
-			TRACE_POSTGRESQL_BUFFER_MISS(true); /* ditto */
+			TRACE_POSTGRESQL_BUFFER_MISS(true);		/* ditto */
 		}
 	}
 	else
@@ -288,11 +292,11 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		if (found)
 		{
 			BufferHitCount++;
-			TRACE_POSTGRESQL_BUFFER_HIT(false); /* false != local buffer */
+			TRACE_POSTGRESQL_BUFFER_HIT(false);		/* false = shared buffer */
 		}
 		else
 		{
-			TRACE_POSTGRESQL_BUFFER_MISS(false); /* ditto */
+			TRACE_POSTGRESQL_BUFFER_MISS(false);	/* ditto */
 		}
 	}
 
@@ -310,9 +314,11 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				VacuumCostBalance += VacuumCostPageHit;
 
 			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-				smgr->smgr_rnode.spcNode,
-				smgr->smgr_rnode.dbNode,
-				smgr->smgr_rnode.relNode, isLocalBuf, found);
+											  smgr->smgr_rnode.spcNode,
+											  smgr->smgr_rnode.dbNode,
+											  smgr->smgr_rnode.relNode,
+											  isLocalBuf,
+											  found);
 
 			return BufferDescriptorGetBuffer(bufHdr);
 		}
@@ -437,8 +443,11 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		VacuumCostBalance += VacuumCostPageMiss;
 
 	TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-			smgr->smgr_rnode.spcNode, smgr->smgr_rnode.dbNode,
-			smgr->smgr_rnode.relNode, isLocalBuf, found);
+									  smgr->smgr_rnode.spcNode,
+									  smgr->smgr_rnode.dbNode,
+									  smgr->smgr_rnode.relNode,
+									  isLocalBuf,
+									  found);
 
 	return BufferDescriptorGetBuffer(bufHdr);
 }
@@ -582,11 +591,6 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 			 * happens to be trying to split the page the first one got from
 			 * StrategyGetBuffer.)
 			 */
-
-                        TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum,
-			  blockNum, smgr->smgr_rnode.spcNode,
-			  smgr->smgr_rnode.dbNode, smgr->smgr_rnode.relNode);
-
 			if (LWLockConditionalAcquire(buf->content_lock, LW_SHARED))
 			{
 				/*
@@ -607,13 +611,18 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 				}
 
 				/* OK, do the I/O */
+				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
+												  smgr->smgr_rnode.spcNode,
+												  smgr->smgr_rnode.dbNode,
+												  smgr->smgr_rnode.relNode);
+
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
 
-                                TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(
-                                  forkNum, blockNum, smgr->smgr_rnode.spcNode,
-                                  smgr->smgr_rnode.dbNode,
-				  smgr->smgr_rnode.relNode);
+				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
+													 smgr->smgr_rnode.spcNode,
+													 smgr->smgr_rnode.dbNode,
+													 smgr->smgr_rnode.relNode);
 			}
 			else
 			{
@@ -1235,13 +1244,13 @@ BufferSync(int flags)
 			buf_id = 0;
 	}
 
-	TRACE_POSTGRESQL_BUFFER_SYNC_DONE(NBuffers, num_written, num_to_write);
-
 	/*
 	 * Update checkpoint statistics. As noted above, this doesn't include
 	 * buffers written by other backends or bgwriter scan.
 	 */
 	CheckpointStats.ckpt_bufs_written += num_written;
+
+	TRACE_POSTGRESQL_BUFFER_SYNC_DONE(NBuffers, num_written, num_to_write);
 }
 
 /*
@@ -1852,13 +1861,13 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
+	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
+										reln->smgr_rnode.dbNode,
+										reln->smgr_rnode.relNode);
+
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
 		reln = smgropen(buf->tag.rnode);
-
-	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
-		 reln->smgr_rnode.dbNode,
-		 reln->smgr_rnode.relNode);
 
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL
@@ -1887,14 +1896,15 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 	BufferFlushCount++;
 
-	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(reln->smgr_rnode.spcNode,
-		 reln->smgr_rnode.dbNode, reln->smgr_rnode.relNode);
-
 	/*
 	 * Mark the buffer as clean (unless BM_JUST_DIRTIED has become set) and
 	 * end the io_in_progress state.
 	 */
 	TerminateBufferIO(buf, true, 0);
+
+	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(reln->smgr_rnode.spcNode,
+									   reln->smgr_rnode.dbNode,
+									   reln->smgr_rnode.relNode);
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;

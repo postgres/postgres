@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.89 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.90 2009/03/11 23:19:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,14 +117,15 @@
 #include "utils/tuplesort.h"
 
 
+/* sort-type codes for sort__start probes */
+#define HEAP_SORT	0
+#define INDEX_SORT	1
+#define DATUM_SORT	2
+
 /* GUC variables */
 #ifdef TRACE_SORT
 bool		trace_sort = false;
 #endif
-
-#define HEAP_SORT	0
-#define INDEX_SORT	1
-#define DATUM_SORT	2
 
 #ifdef DEBUG_BOUNDED_SORT
 bool		optimize_bounded_sort = true;
@@ -574,9 +575,13 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 			 nkeys, workMem, randomAccess ? 't' : 'f');
 #endif
 
-	TRACE_POSTGRESQL_SORT_START(HEAP_SORT, false, nkeys, workMem, randomAccess);
-
 	state->nKeys = nkeys;
+
+	TRACE_POSTGRESQL_SORT_START(HEAP_SORT,
+								false, /* no unique check */
+								nkeys,
+								workMem,
+								randomAccess);
 
 	state->comparetup = comparetup_heap;
 	state->copytup = copytup_heap;
@@ -642,7 +647,11 @@ tuplesort_begin_index_btree(Relation indexRel,
 
 	state->nKeys = RelationGetNumberOfAttributes(indexRel);
 
-	TRACE_POSTGRESQL_SORT_START(INDEX_SORT, enforceUnique, state->nKeys, workMem, randomAccess);
+	TRACE_POSTGRESQL_SORT_START(INDEX_SORT,
+								enforceUnique,
+								state->nKeys,
+								workMem,
+								randomAccess);
 
 	state->comparetup = comparetup_index_btree;
 	state->copytup = copytup_index;
@@ -715,9 +724,13 @@ tuplesort_begin_datum(Oid datumType,
 			 workMem, randomAccess ? 't' : 'f');
 #endif
 
-	TRACE_POSTGRESQL_SORT_START(DATUM_SORT, false, 1, workMem, randomAccess);
-
 	state->nKeys = 1;			/* always a one-column sort */
+
+	TRACE_POSTGRESQL_SORT_START(DATUM_SORT,
+								false, /* no unique check */
+								1,
+								workMem,
+								randomAccess);
 
 	state->comparetup = comparetup_datum;
 	state->copytup = copytup_datum;
@@ -826,12 +839,16 @@ tuplesort_end(Tuplesortstate *state)
 			elog(LOG, "internal sort ended, %ld KB used: %s",
 				 spaceUsed, pg_rusage_show(&state->ru_start));
 	}
+
+	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, spaceUsed);
+#else
+
+	/*
+	 * If you disabled TRACE_SORT, you can still probe sort__done, but
+	 * you ain't getting space-used stats.
+	 */
+	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, 0L);
 #endif
-
-	TRACE_POSTGRESQL_SORT_DONE(state->tapeset,
-			(state->tapeset ? LogicalTapeSetBlocks(state->tapeset) :
-			(state->allowedMem - state->availMem + 1023) / 1024));
-
 
 	MemoryContextSwitchTo(oldcontext);
 
