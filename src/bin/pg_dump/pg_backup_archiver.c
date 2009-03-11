@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.165 2009/03/05 14:51:10 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.166 2009/03/11 03:33:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3467,12 +3467,20 @@ parallel_restore(RestoreArgs *args)
 
 	/*
 	 * Close and reopen the input file so we have a private file pointer
-	 * that doesn't stomp on anyone else's file pointer.
+	 * that doesn't stomp on anyone else's file pointer, if we're actually 
+	 * going to need to read from the file. Otherwise, just close it
+	 * except on Windows, where it will possibly be needed by other threads.
 	 *
-	 * Note: on Windows, since we are using threads not processes, this
-	 * *doesn't* close the original file pointer but just open a new one.
+	 * Note: on Windows, since we are using threads not processes, the
+	 * reopen call *doesn't* close the original file pointer but just open 
+	 * a new one.
 	 */
-	(AH->ReopenPtr) (AH);
+	if (te->section == SECTION_DATA )
+		(AH->ReopenPtr) (AH);
+#ifndef WIN32
+	else
+		(AH->ClosePtr) (AH);
+#endif
 
 	/*
 	 * We need our own database connection, too
@@ -3490,7 +3498,9 @@ parallel_restore(RestoreArgs *args)
 	PQfinish(AH->connection);
 	AH->connection = NULL;
 
-	(AH->ClosePtr) (AH);
+	/* If we reopened the file, we are done with it, so close it now */
+	if (te->section == SECTION_DATA )
+		(AH->ClosePtr) (AH);
 
 	if (retval == 0 && AH->public.n_errors)
 		retval = WORKER_IGNORED_ERRORS;

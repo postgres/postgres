@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.23 2009/01/22 20:16:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.24 2009/03/11 03:33:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
+extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
 					int encoding, bool std_strings);

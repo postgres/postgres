@@ -34,12 +34,13 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.94 2009/02/26 16:02:38 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.95 2009/03/11 03:33:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pg_backup_archiver.h"
+#include "dumputils.h"
 
 #include <ctype.h>
 
@@ -124,6 +125,8 @@ main(int argc, char **argv)
 	};
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_dump"));
+
+	init_parallel_dump_utils();
 
 	opts = NewRestoreOptions();
 

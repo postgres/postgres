@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.44 2009/01/22 20:16:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.45 2009/03/11 03:33:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,25 +31,72 @@ static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
 				   const char *subname);
 
+#ifdef WIN32
+static bool parallel_init_done = false;
+static DWORD tls_index;
+#endif
+
+void
+init_parallel_dump_utils(void)
+{
+#ifdef WIN32
+	if (! parallel_init_done)
+	{
+		tls_index = TlsAlloc();
+		parallel_init_done = true;
+	}
+#endif
+}
 
 /*
- *	Quotes input string if it's not a legitimate SQL identifier as-is.
+ *  Quotes input string if it's not a legitimate SQL identifier as-is.
  *
- *	Note that the returned string must be used before calling fmtId again,
- *	since we re-use the same return buffer each time.  Non-reentrant but
- *	avoids memory leakage.
+ *  Note that the returned string must be used before calling fmtId again,
+ *  since we re-use the same return buffer each time.  Non-reentrant but
+ *  reduces memory leakage. (On Windows the memory leakage will be one buffer
+ *  per thread, which is at least better than one per call).
  */
 const char *
 fmtId(const char *rawid)
 {
-	static PQExpBuffer id_return = NULL;
+	/* 
+	 * The Tls code goes awry if we use a static var, so we provide for both
+	 * static and auto, and omit any use of the static var when using Tls.
+	 */
+	static PQExpBuffer s_id_return = NULL;
+	PQExpBuffer id_return;
+
 	const char *cp;
 	bool		need_quotes = false;
 
-	if (id_return)				/* first time through? */
-		resetPQExpBuffer(id_return);
+#ifdef WIN32
+	if (parallel_init_done)
+		id_return = (PQExpBuffer) TlsGetValue(tls_index); /* 0 when not set */
 	else
+		id_return = s_id_return;
+#else
+	id_return = s_id_return;
+#endif
+
+	if (id_return)				/* first time through? */
+	{
+		/* same buffer, just wipe contents */
+		resetPQExpBuffer(id_return);
+	}
+	else
+	{
+		/* new buffer */
 		id_return = createPQExpBuffer();
+#ifdef WIN32		
+		if (parallel_init_done)
+			TlsSetValue(tls_index,id_return);
+		else
+			s_id_return = id_return;
+#else
+		s_id_return = id_return;
+#endif
+		
+	}
 
 	/*
 	 * These checks need to match the identifier production in scan.l. Don't
