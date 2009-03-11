@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.237 2009/03/05 23:06:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.238 2009/03/11 03:32:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2138,6 +2138,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 	Const	   *patt;
 	Const	   *prefix = NULL;
 	Const	   *rest = NULL;
+	Pattern_Prefix_Status pstatus = Pattern_Prefix_None;
 
 	/*
 	 * Currently, all known special operators require the indexkey on the
@@ -2163,37 +2164,42 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_BPCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-									  &prefix, &rest) != Pattern_Prefix_None;
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
+										   &prefix, &rest);
+			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_BYTEA_LIKE_OP:
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-									  &prefix, &rest) != Pattern_Prefix_None;
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
+										   &prefix, &rest);
+			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-									  &prefix, &rest) != Pattern_Prefix_None;
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
+										   &prefix, &rest);
+			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-									  &prefix, &rest) != Pattern_Prefix_None;
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+										   &prefix, &rest);
+			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-									  &prefix, &rest) != Pattern_Prefix_None;
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+										   &prefix, &rest);
+			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_INET_SUB_OP:
@@ -2217,9 +2223,17 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 	 * want to apply.  (A hash index, for example, will not support ">=".)
 	 * Currently, only btree supports the operators we need.
 	 *
+	 * Note: actually, in the Pattern_Prefix_Exact case, we only need "="
+	 * so a hash index would work.  Currently it doesn't seem worth checking
+	 * for that, however.
+	 *
 	 * We insist on the opfamily being the specific one we expect, else we'd
 	 * do the wrong thing if someone were to make a reverse-sort opfamily with
 	 * the same operators.
+	 *
+	 * The non-pattern opclasses will not sort the way we need in most non-C
+	 * locales.  We can use such an index anyway for an exact match (simple
+	 * equality), but not for prefix-match cases.
 	 */
 	switch (expr_op)
 	{
@@ -2229,7 +2243,8 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_TEXT_ICREGEXEQ_OP:
 			isIndexable =
 				(opfamily == TEXT_PATTERN_BTREE_FAM_OID) ||
-				(opfamily == TEXT_BTREE_FAM_OID && lc_collate_is_c());
+				(opfamily == TEXT_BTREE_FAM_OID &&
+				 (pstatus == Pattern_Prefix_Exact || lc_collate_is_c()));
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
@@ -2238,7 +2253,8 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_BPCHAR_ICREGEXEQ_OP:
 			isIndexable =
 				(opfamily == BPCHAR_PATTERN_BTREE_FAM_OID) ||
-				(opfamily == BPCHAR_BTREE_FAM_OID && lc_collate_is_c());
+				(opfamily == BPCHAR_BTREE_FAM_OID &&
+				 (pstatus == Pattern_Prefix_Exact || lc_collate_is_c()));
 			break;
 
 		case OID_NAME_LIKE_OP:
