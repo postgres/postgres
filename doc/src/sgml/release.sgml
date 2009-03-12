@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.589 2009/01/30 00:37:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.590 2009/03/12 22:35:48 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -50,8 +50,8 @@ do it for earlier branch release files.
    viewing the <link linkend="cvs">CVS</link> logs for each release.
    The <ulink
    url="http://archives.postgresql.org/pgsql-committers/">pgsql-committers
-   email list</ulink> contains all source code changes as well.  There is also
-   a <ulink url="http://developer.postgresql.org/cvsweb.cgi/pgsql/">web
+   email list</ulink> records all source code changes as well.  There is also
+   a <ulink url="http://anoncvs.postgresql.org/cvsweb.cgi/pgsql/">web
    interface</ulink> that shows changes to specific files.
    <!-- we need a file containing the CVS logs for each release, and something
    like the SVN web interface that groups commits but has branches -->
@@ -62,6 +62,228 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-8-3-7">
+  <title>Release 8.3.7</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.6.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.7</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+    However, if you are upgrading from a version earlier than 8.3.5,
+    see the release notes for 8.3.5.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>xpath()</> to not modify the path expression unless
+      necessary, and to make a saner attempt at it when necessary (Andrew)
+     </para>
+
+     <para>
+      The SQL standard suggests that <function>xpath</> should work on data
+      that is a document fragment, but <application>libxml</> doesn't support
+      that, and indeed it's not clear that this is sensible according to the
+      XPath standard.  <function>xpath</> attempted to work around this
+      mismatch by modifying both the data and the path expression, but the
+      modification was buggy and could cause valid searches to fail.  Now,
+      <function>xpath</> checks whether the data is in fact a well-formed
+      document, and if so invokes <application>libxml</> with no change to the
+      data or path expression.  Otherwise, a different modification method
+      that is somewhat less likely to fail is used.
+     </para>
+
+     <note>
+      <para>
+       The new modification method is still not 100% satisfactory, and it
+       seems likely that no real solution is possible.  This patch should
+       therefore be viewed as a band-aid to keep from breaking existing
+       applications unnecessarily.  It is likely that
+       <productname>PostgreSQL</> 8.4 will simply reject use of
+       <function>xpath</> on data that is not a well-formed document.
+      </para>
+     </note>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure in text search when C locale is used with
+      a multi-byte encoding (Teodor)
+     </para>
+
+     <para>
+      Crashes were possible on platforms where <type>wchar_t</> is narrower
+      than <type>int</>; Windows in particular.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix extreme inefficiency in text search parser's handling of an
+      email-like string containing multiple <literal>@</> characters (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner problem with sub-<command>SELECT</> in the output list
+      of a larger subquery (Tom)
+     </para>
+
+     <para>
+      The known symptom of this bug is a <quote>failed to locate grouping
+      columns</> error that is dependent on the datatype involved;
+      but there could be other issues as well.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix decompilation of <literal>CASE WHEN</> with an implicit coercion
+      (Tom)
+     </para>
+
+     <para>
+      This mistake could lead to Assert failures in an Assert-enabled build,
+      or an <quote>unexpected CASE WHEN clause</> error message in other
+      cases, when trying to examine or dump a view.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible misassignment of the owner of a TOAST table's rowtype (Tom)
+     </para>
+
+     <para>
+      If <command>CLUSTER</> or a rewriting variant of <command>ALTER TABLE</>
+      were executed by someone other than the table owner, the
+      <structname>pg_type</> entry for the table's TOAST table would end up
+      marked as owned by that someone.  This caused no immediate problems,
+      since the permissions on the TOAST rowtype aren't examined by any
+      ordinary database operation.  However, it could lead to unexpected
+      failures if one later tried to drop the role that issued the command
+      (in 8.1 or 8.2), or <quote>owner of data type appears to be invalid</>
+      warnings from <application>pg_dump</> after having done so (in 8.3).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change <command>UNLISTEN</> to exit quickly if the current session has
+      never executed any <command>LISTEN</> command (Tom)
+     </para>
+
+     <para>
+      Most of the time this is not a particularly useful optimization, but
+      since <command>DISCARD ALL</> invokes <command>UNLISTEN</>, the previous
+      coding caused a substantial performance problem for applications that
+      made heavy use of <command>DISCARD ALL</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/pgSQL to not treat <literal>INTO</> after <command>INSERT</> as
+      an INTO-variables clause anywhere in the string, not only at the start;
+      in particular, don't fail for <command>INSERT INTO</> within
+      <command>CREATE RULE</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Clean up PL/pgSQL error status variables fully at block exit
+      (Ashesh Vashi and Dave Page)
+     </para>
+
+     <para>
+      This is not a problem for PL/pgSQL itself, but the omission could cause
+      the PL/pgSQL Debugger to crash while examining the state of a function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Retry failed calls to <function>CallNamedPipe()</> on Windows
+      (Steve Marshall, Magnus)
+     </para>
+
+     <para>
+      It appears that this function can sometimes fail transiently;
+      we previously treated any failure as a hard error, which could
+      confuse <command>LISTEN</>/<command>NOTIFY</> as well as other
+      operations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-3-6">
   <title>Release 8.3.6</title>
@@ -4316,6 +4538,171 @@ current_date &lt; 2017-11-17
     </itemizedlist>
 
    </sect3>
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-2-13">
+  <title>Release 8.2.13</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.12.
+   For information about new features in the 8.2 major release, see
+   <xref linkend="release-8-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.13</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+    However, if you are upgrading from a version earlier than 8.2.11,
+    see the release notes for 8.2.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failure in <filename>contrib/tsearch2</> when C locale is
+      used with a multi-byte encoding (Teodor)
+     </para>
+
+     <para>
+      Crashes were possible on platforms where <type>wchar_t</> is narrower
+      than <type>int</>; Windows in particular.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix extreme inefficiency in <filename>contrib/tsearch2</> parser's
+      handling of an email-like string containing multiple <literal>@</>
+      characters (Heikki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix decompilation of <literal>CASE WHEN</> with an implicit coercion
+      (Tom)
+     </para>
+
+     <para>
+      This mistake could lead to Assert failures in an Assert-enabled build,
+      or an <quote>unexpected CASE WHEN clause</> error message in other
+      cases, when trying to examine or dump a view.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible misassignment of the owner of a TOAST table's rowtype (Tom)
+     </para>
+
+     <para>
+      If <command>CLUSTER</> or a rewriting variant of <command>ALTER TABLE</>
+      were executed by someone other than the table owner, the
+      <structname>pg_type</> entry for the table's TOAST table would end up
+      marked as owned by that someone.  This caused no immediate problems,
+      since the permissions on the TOAST rowtype aren't examined by any
+      ordinary database operation.  However, it could lead to unexpected
+      failures if one later tried to drop the role that issued the command
+      (in 8.1 or 8.2), or <quote>owner of data type appears to be invalid</>
+      warnings from <application>pg_dump</> after having done so (in 8.3).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/pgSQL to not treat <literal>INTO</> after <command>INSERT</> as
+      an INTO-variables clause anywhere in the string, not only at the start;
+      in particular, don't fail for <command>INSERT INTO</> within
+      <command>CREATE RULE</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Clean up PL/pgSQL error status variables fully at block exit
+      (Ashesh Vashi and Dave Page)
+     </para>
+
+     <para>
+      This is not a problem for PL/pgSQL itself, but the omission could cause
+      the PL/pgSQL Debugger to crash while examining the state of a function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Retry failed calls to <function>CallNamedPipe()</> on Windows
+      (Steve Marshall, Magnus)
+     </para>
+
+     <para>
+      It appears that this function can sometimes fail transiently;
+      we previously treated any failure as a hard error, which could
+      confuse <command>LISTEN</>/<command>NOTIFY</> as well as other
+      operations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
   </sect2>
  </sect1>
 
@@ -8953,6 +9340,128 @@ current_date &lt; 2017-11-17
   </sect2>
  </sect1>
 
+ <sect1 id="release-8-1-17">
+  <title>Release 8.1.17</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.16.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.17</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+    However, if you are upgrading from a version earlier than 8.1.15,
+    see the release notes for 8.1.15.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix decompilation of <literal>CASE WHEN</> with an implicit coercion
+      (Tom)
+     </para>
+
+     <para>
+      This mistake could lead to Assert failures in an Assert-enabled build,
+      or an <quote>unexpected CASE WHEN clause</> error message in other
+      cases, when trying to examine or dump a view.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible misassignment of the owner of a TOAST table's rowtype (Tom)
+     </para>
+
+     <para>
+      If <command>CLUSTER</> or a rewriting variant of <command>ALTER TABLE</>
+      were executed by someone other than the table owner, the
+      <structname>pg_type</> entry for the table's TOAST table would end up
+      marked as owned by that someone.  This caused no immediate problems,
+      since the permissions on the TOAST rowtype aren't examined by any
+      ordinary database operation.  However, it could lead to unexpected
+      failures if one later tried to drop the role that issued the command
+      (in 8.1 or 8.2), or <quote>owner of data type appears to be invalid</>
+      warnings from <application>pg_dump</> after having done so (in 8.3).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Clean up PL/pgSQL error status variables fully at block exit
+      (Ashesh Vashi and Dave Page)
+     </para>
+
+     <para>
+      This is not a problem for PL/pgSQL itself, but the omission could cause
+      the PL/pgSQL Debugger to crash while examining the state of a function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-1-16">
   <title>Release 8.1.16</title>
 
@@ -13142,6 +13651,85 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-8-0-21">
+  <title>Release 8.0.21</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.20.
+   For information about new features in the 8.0 major release, see
+   <xref linkend="release-8-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.21</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.
+    However, if you are upgrading from a version earlier than 8.0.6,
+    see the release notes for 8.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
@@ -17621,6 +18209,85 @@ typedefs (Michael)</para></listitem>
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-7-4-25">
+  <title>Release 7.4.25</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.24.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.25</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
