@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.69.2.3 2009/01/13 15:28:42 alvherre Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.69.2.4 2009/03/12 00:54:04 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -347,7 +347,7 @@ static int	DCHCounter = 0;
 
 /* global cache for --- number part */
 static NUMCacheEntry NUMCache[NUM_CACHE_FIELDS + 1];
-static NUMCacheEntry *last_NUMCacheEntry;
+static NUMCacheEntry *last_NUMCacheEntry = NUMCache + 0;
 
 static int	n_NUMCache = 0;		/* number of entries */
 static int	NUMCounter = 0;
