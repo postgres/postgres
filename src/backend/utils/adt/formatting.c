@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.154 2009/02/07 14:16:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.155 2009/03/12 00:53:25 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2009, PostgreSQL Global Development Group
@@ -392,12 +392,10 @@ static int	DCHCounter = 0;
 
 /* global cache for --- number part */
 static NUMCacheEntry NUMCache[NUM_CACHE_FIELDS + 1];
-static NUMCacheEntry *last_NUMCacheEntry;
 
 static int	n_NUMCache = 0;		/* number of entries */
 static int	NUMCounter = 0;
-
-#define MAX_INT32	(2147483600)
+static NUMCacheEntry *last_NUMCacheEntry = NUMCache + 0;
 
 /* ----------
  * For char->date/time conversion
@@ -2765,10 +2763,10 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 static DCHCacheEntry *
 DCH_cache_getnew(char *str)
 {
-	DCHCacheEntry *ent = NULL;
+	DCHCacheEntry *ent;
 
-	/* counter overload check  - paranoia? */
-	if (DCHCounter + DCH_CACHE_FIELDS >= MAX_INT32)
+	/* counter overflow check - paranoia? */
+	if (DCHCounter >= (INT_MAX - DCH_CACHE_FIELDS - 1))
 	{
 		DCHCounter = 0;
 
@@ -2777,7 +2775,7 @@ DCH_cache_getnew(char *str)
 	}
 
 	/*
-	 * Cache is full - needs remove any older entry
+	 * If cache is full, remove oldest entry
 	 */
 	if (n_DCHCache > DCH_CACHE_FIELDS)
 	{
@@ -2786,7 +2784,7 @@ DCH_cache_getnew(char *str)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "cache is full (%d)", n_DCHCache);
 #endif
-		for (ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+		for (ent = DCHCache + 1; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
 		{
 			if (ent->age < old->age)
 				old = ent;
@@ -2811,18 +2809,16 @@ DCH_cache_getnew(char *str)
 		++n_DCHCache;
 		return ent;
 	}
-
-	return NULL;				/* never */
 }
 
 static DCHCacheEntry *
 DCH_cache_search(char *str)
 {
-	int			i = 0;
+	int			i;
 	DCHCacheEntry *ent;
 
-	/* counter overload check  - paranoia? */
-	if (DCHCounter + DCH_CACHE_FIELDS >= MAX_INT32)
+	/* counter overflow check - paranoia? */
+	if (DCHCounter >= (INT_MAX - DCH_CACHE_FIELDS - 1))
 	{
 		DCHCounter = 0;
 
@@ -2830,16 +2826,13 @@ DCH_cache_search(char *str)
 			ent->age = (++DCHCounter);
 	}
 
-	for (ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
+	for (i = 0, ent = DCHCache; i < n_DCHCache; i++, ent++)
 	{
-		if (i == n_DCHCache)
-			break;
 		if (strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++DCHCounter);
 			return ent;
 		}
-		i++;
 	}
 
 	return NULL;
@@ -3371,10 +3364,10 @@ do { \
 static NUMCacheEntry *
 NUM_cache_getnew(char *str)
 {
-	NUMCacheEntry *ent = NULL;
+	NUMCacheEntry *ent;
 
-	/* counter overload check  - paranoia? */
-	if (NUMCounter + NUM_CACHE_FIELDS >= MAX_INT32)
+	/* counter overflow check - paranoia? */
+	if (NUMCounter >= (INT_MAX - NUM_CACHE_FIELDS - 1))
 	{
 		NUMCounter = 0;
 
@@ -3383,7 +3376,7 @@ NUM_cache_getnew(char *str)
 	}
 
 	/*
-	 * Cache is full - needs remove any older entry
+	 * If cache is full, remove oldest entry
 	 */
 	if (n_NUMCache > NUM_CACHE_FIELDS)
 	{
@@ -3392,13 +3385,13 @@ NUM_cache_getnew(char *str)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Cache is full (%d)", n_NUMCache);
 #endif
-
 		for (ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
 		{
 			/*
-			 * entry removed via NUM_cache_remove() can be used here
+			 * entry removed via NUM_cache_remove() can be used here,
+			 * which is why it's worth scanning first entry again
 			 */
-			if (*ent->str == '\0')
+			if (ent->str[0] == '\0')
 			{
 				old = ent;
 				break;
@@ -3412,7 +3405,6 @@ NUM_cache_getnew(char *str)
 		StrNCpy(old->str, str, NUM_CACHE_SIZE + 1);
 		/* old->format fill parser */
 		old->age = (++NUMCounter);
-
 		ent = old;
 	}
 	else
@@ -3430,17 +3422,17 @@ NUM_cache_getnew(char *str)
 	zeroize_NUM(&ent->Num);
 
 	last_NUMCacheEntry = ent;
-	return ent;					/* never */
+	return ent;
 }
 
 static NUMCacheEntry *
 NUM_cache_search(char *str)
 {
-	int			i = 0;
+	int			i;
 	NUMCacheEntry *ent;
 
-	/* counter overload check - paranoia? */
-	if (NUMCounter + NUM_CACHE_FIELDS >= MAX_INT32)
+	/* counter overflow check - paranoia? */
+	if (NUMCounter >= (INT_MAX - NUM_CACHE_FIELDS - 1))
 	{
 		NUMCounter = 0;
 
@@ -3448,17 +3440,14 @@ NUM_cache_search(char *str)
 			ent->age = (++NUMCounter);
 	}
 
-	for (ent = NUMCache; ent <= (NUMCache + NUM_CACHE_FIELDS); ent++)
+	for (i = 0, ent = NUMCache; i < n_NUMCache; i++, ent++)
 	{
-		if (i == n_NUMCache)
-			break;
 		if (strcmp(ent->str, str) == 0)
 		{
 			ent->age = (++NUMCounter);
 			last_NUMCacheEntry = ent;
 			return ent;
 		}
-		i++;
 	}
 
 	return NULL;
@@ -3470,7 +3459,7 @@ NUM_cache_remove(NUMCacheEntry *ent)
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output, "REMOVING ENTRY (%s)", ent->str);
 #endif
-	*ent->str = '\0';
+	ent->str[0] = '\0';
 	ent->age = 0;
 }
 
