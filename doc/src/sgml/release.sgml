@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.48 2009/01/30 00:38:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.49 2009/03/12 22:36:33 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -50,8 +50,8 @@ do it for earlier branch release files.
    viewing the CVS logs for each release.
    The <ulink
    url="http://archives.postgresql.org/pgsql-committers/">pgsql-committers
-   email list</ulink> contains all source code changes as well.  There is also
-   a <ulink url="http://developer.postgresql.org/cvsweb.cgi/pgsql/">web
+   email list</ulink> records all source code changes as well.  There is also
+   a <ulink url="http://anoncvs.postgresql.org/cvsweb.cgi/pgsql/">web
    interface</ulink> that shows changes to specific files.
    <!-- we need a file containing the CVS logs for each release, and something
    like the SVN web interface that groups commits but has branches -->
@@ -62,6 +62,85 @@ do it for earlier branch release files.
    that item.  Of course all changes involve community discussion and patch
    review, so each item is truly a community effort.
   </para>
+
+ <sect1 id="release-8-0-21">
+  <title>Release 8.0.21</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.0.20.
+   For information about new features in the 8.0 major release, see
+   <xref linkend="release-8-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.0.21</title>
+
+   <para>
+    A dump/restore is not required for those running 8.0.X.
+    However, if you are upgrading from a version earlier than 8.0.6,
+    see the release notes for 8.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-0-20">
   <title>Release 8.0.20</title>
@@ -4538,6 +4617,85 @@ typedefs (Michael)</para></listitem>
 
     </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+ <sect1 id="release-7-4-25">
+  <title>Release 7.4.25</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-03-16</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.24.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.25</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+    However, if you are upgrading from a version earlier than 7.4.11,
+    see the release notes for 7.4.11.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent error recursion crashes when encoding conversion fails (Tom)
+     </para>
+
+     <para>
+      This change extends fixes made in the last two minor releases for
+      related failure scenarios.  The previous fixes were narrowly tailored
+      for the original problem reports, but we have now recognized that
+      <emphasis>any</> error thrown by an encoding conversion function could
+      potentially lead to infinite recursion while trying to report the
+      error.  The solution therefore is to disable translation and encoding
+      conversion and report the plain-ASCII form of any error message,
+      if we find we have gotten into a recursive error reporting situation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>CREATE CONVERSION</> with the wrong encodings
+      for the specified conversion function (Heikki)
+     </para>
+
+     <para>
+      This prevents one possible scenario for encoding conversion failure.
+      The previous change is a backstop to guard against other kinds of
+      failures in the same area.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix core dump when <function>to_char()</> is given format codes that
+      are inappropriate for the type of the data argument (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add <literal>MUST</> (Mauritius Island Summer Time) to the default list
+      of known timezone abbreviations (Xavier Bugaud)
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
   </sect2>
  </sect1>
