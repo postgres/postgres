@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.246 2009/03/11 23:19:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.247 2009/03/13 17:46:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1861,13 +1861,13 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
-	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
-										reln->smgr_rnode.dbNode,
-										reln->smgr_rnode.relNode);
-
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
 		reln = smgropen(buf->tag.rnode);
+
+	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
+										reln->smgr_rnode.dbNode,
+										reln->smgr_rnode.relNode);
 
 	/*
 	 * Force XLOG flush up to buffer's LSN.  This implements the basic WAL
