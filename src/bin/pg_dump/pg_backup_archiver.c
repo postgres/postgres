@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.166 2009/03/11 03:33:29 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.167 2009/03/13 22:50:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3732,8 +3732,11 @@ identify_locking_dependencies(TocEntry *te, TocEntry **tocsByDumpId)
 		return;
 
 	/*
-	 * We assume the item requires exclusive lock on each TABLE item
-	 * listed among its dependencies.
+	 * We assume the item requires exclusive lock on each TABLE DATA item
+	 * listed among its dependencies.  (This was originally a dependency
+	 * on the TABLE, but fix_dependencies repointed it to the data item.
+	 * Note that all the entry types we are interested in here are POST_DATA,
+	 * so they will all have been changed this way.)
 	 */
 	lockids = (DumpId *) malloc(te->nDeps * sizeof(DumpId));
 	nlockids = 0;
@@ -3742,7 +3745,7 @@ identify_locking_dependencies(TocEntry *te, TocEntry **tocsByDumpId)
 		DumpId	depid = te->dependencies[i];
 
 		if (tocsByDumpId[depid - 1] &&
-			strcmp(tocsByDumpId[depid - 1]->desc, "TABLE") == 0)
+			strcmp(tocsByDumpId[depid - 1]->desc, "TABLE DATA") == 0)
 			lockids[nlockids++] = depid;
 	}
 
