@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.6 2008/05/12 00:00:42 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.7 2009/03/15 22:05:17 tgl Exp $
  */
 #ifndef __HSTORE_H__
 #define __HSTORE_H__
@@ -15,6 +15,11 @@ typedef struct
 				valisnull:1,
 				pos:31;
 }	HEntry;
+
+/* these are determined by the sizes of the keylen and vallen fields */
+/* in struct HEntry and struct Pairs */
+#define HSTORE_MAX_KEY_LEN 65535
+#define HSTORE_MAX_VALUE_LEN 65535
 
 
 typedef struct
@@ -44,6 +49,9 @@ typedef struct
 
 int			comparePairs(const void *a, const void *b);
 int			uniquePairs(Pairs * a, int4 l, int4 *buflen);
+
+size_t      hstoreCheckKeyLen(size_t len);
+size_t      hstoreCheckValLen(size_t len);
 
 #define HStoreContainsStrategyNumber	7
 #define HStoreExistsStrategyNumber		9

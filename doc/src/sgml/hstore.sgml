@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.2 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/hstore.sgml,v 1.3 2009/03/15 22:05:17 tgl Exp $ -->
 
 <sect1 id="hstore">
  <title>hstore</title>
@@ -12,6 +12,12 @@
   (key,value) pairs within a single <productname>PostgreSQL</> data field.
   This can be useful in various scenarios, such as rows with many attributes
   that are rarely examined, or semi-structured data.
+ </para>
+
+ <para>
+  In the current implementation, neither the key nor the value
+  string can exceed 65535 bytes in length; an error will be thrown if this
+  limit is exceeded. These maximum lengths may change in future releases.
  </para>
 
  <sect2>

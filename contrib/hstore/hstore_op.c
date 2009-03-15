@@ -295,7 +295,7 @@ tconvert(PG_FUNCTION_ARGS)
 	SET_VARSIZE(out, len);
 	out->size = 1;
 
-	ARRPTR(out)->keylen = VARSIZE(key) - VARHDRSZ;
+	ARRPTR(out)->keylen = hstoreCheckKeyLen(VARSIZE(key) - VARHDRSZ);
 	if (PG_ARGISNULL(1))
 	{
 		ARRPTR(out)->vallen = 0;
@@ -303,7 +303,7 @@ tconvert(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		ARRPTR(out)->vallen = VARSIZE(val) - VARHDRSZ;
+		ARRPTR(out)->vallen = hstoreCheckValLen(VARSIZE(val) - VARHDRSZ);
 		ARRPTR(out)->valisnull = false;
 	}
 	ARRPTR(out)->pos = 0;
@@ -540,11 +540,9 @@ hs_contains(PG_FUNCTION_ARGS)
 					res = false;
 			}
 			else if (te->vallen != entry->vallen ||
-					 strncmp(
-							 vv + entry->pos + entry->keylen,
+					 strncmp(vv + entry->pos + entry->keylen,
 							 tv + te->pos + te->keylen,
-							 te->vallen)
-				)
+							 te->vallen))
 				res = false;
 		}
 		else
