@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.196 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.197 2009/03/15 20:31:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3667,11 +3667,6 @@ isoweek2j(int year, int week)
 {
 	int			day0,
 				day4;
-
-	if (!year)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("cannot calculate week number without year information")));
 
 	/* fourth day of current year */
 	day4 = date2j(year, 1, 4);

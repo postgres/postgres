@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.155 2009/03/12 00:53:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.156 2009/03/15 20:31:19 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2009, PostgreSQL Global Development Group
@@ -709,13 +709,13 @@ typedef enum
  */
 static const KeyWord DCH_keywords[] = {
 /*	name, len, id, is_digit, date_mode */
-	{"A.D.", 4, DCH_A_D, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* A */
+	{"A.D.", 4, DCH_A_D, FALSE, FROM_CHAR_DATE_NONE},		/* A */
 	{"A.M.", 4, DCH_A_M, FALSE, FROM_CHAR_DATE_NONE},
-	{"AD", 2, DCH_AD, FALSE, FROM_CHAR_DATE_GREGORIAN},
+	{"AD", 2, DCH_AD, FALSE, FROM_CHAR_DATE_NONE},
 	{"AM", 2, DCH_AM, FALSE, FROM_CHAR_DATE_NONE},
-	{"B.C.", 4, DCH_B_C, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* B */
-	{"BC", 2, DCH_BC, FALSE, FROM_CHAR_DATE_GREGORIAN},
-	{"CC", 2, DCH_CC, TRUE, FROM_CHAR_DATE_GREGORIAN},		/* C */
+	{"B.C.", 4, DCH_B_C, FALSE, FROM_CHAR_DATE_NONE},		/* B */
+	{"BC", 2, DCH_BC, FALSE, FROM_CHAR_DATE_NONE},
+	{"CC", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},			/* C */
 	{"DAY", 3, DCH_DAY, FALSE, FROM_CHAR_DATE_NONE},		/* D */
 	{"DDD", 3, DCH_DDD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"DD", 2, DCH_DD, TRUE, FROM_CHAR_DATE_GREGORIAN},
@@ -757,13 +757,13 @@ static const KeyWord DCH_keywords[] = {
 	{"YYY", 3, DCH_YYY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"YY", 2, DCH_YY, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"Y", 1, DCH_Y, TRUE, FROM_CHAR_DATE_GREGORIAN},
-	{"a.d.", 4, DCH_a_d, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* a */
+	{"a.d.", 4, DCH_a_d, FALSE, FROM_CHAR_DATE_NONE},		/* a */
 	{"a.m.", 4, DCH_a_m, FALSE, FROM_CHAR_DATE_NONE},
-	{"ad", 2, DCH_ad, FALSE, FROM_CHAR_DATE_GREGORIAN},
+	{"ad", 2, DCH_ad, FALSE, FROM_CHAR_DATE_NONE},
 	{"am", 2, DCH_am, FALSE, FROM_CHAR_DATE_NONE},
-	{"b.c.", 4, DCH_b_c, FALSE, FROM_CHAR_DATE_GREGORIAN},	/* b */
-	{"bc", 2, DCH_bc, FALSE, FROM_CHAR_DATE_GREGORIAN},
-	{"cc", 2, DCH_CC, TRUE, FROM_CHAR_DATE_GREGORIAN},		/* c */
+	{"b.c.", 4, DCH_b_c, FALSE, FROM_CHAR_DATE_NONE},		/* b */
+	{"bc", 2, DCH_bc, FALSE, FROM_CHAR_DATE_NONE},
+	{"cc", 2, DCH_CC, TRUE, FROM_CHAR_DATE_NONE},			/* c */
 	{"day", 3, DCH_day, FALSE, FROM_CHAR_DATE_NONE},		/* d */
 	{"ddd", 3, DCH_DDD, TRUE, FROM_CHAR_DATE_GREGORIAN},
 	{"dd", 2, DCH_DD, TRUE, FROM_CHAR_DATE_GREGORIAN},
@@ -3281,41 +3281,41 @@ do_to_timestamp(text *date_txt, text *fmt,
 		 * be interpreted as a Gregorian day-of-year, or an ISO week date
 		 * day-of-year.
 		 */
+
+		if (!tm->tm_year && !tmfc.bc)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("cannot calculate day of year without year information")));
+
 		if (tmfc.mode == FROM_CHAR_DATE_ISOWEEK)
 		{
 			int			j0;		/* zeroth day of the ISO year, in Julian */
 
-			j0 = isoweek2j(tmfc.year, 1) - 1;
+			j0 = isoweek2j(tm->tm_year, 1) - 1;
 
 			j2date(j0 + tmfc.ddd, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 		}
 		else
 		{
-			int		   *y,
-						i;
+			const int  *y;
+			int			i;
 
-			int			ysum[2][13] = {
-				{31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365, 0},
-				{31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0}};
-
-			if (!tm->tm_year)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						 errmsg("cannot calculate day of year without year information")));
+			static const int ysum[2][13] = {
+				{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365},
+				{0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}};
 
 			y = ysum[isleap(tm->tm_year)];
 
-			for (i = 0; i <= 11; i++)
+			for (i = 1; i <= 12; i++)
 			{
-				if (tm->tm_yday < y[i])
+				if (tmfc.ddd < y[i])
 					break;
 			}
 			if (tm->tm_mon <= 1)
-				tm->tm_mon = i + 1;
+				tm->tm_mon = i;
 
 			if (tm->tm_mday <= 1)
-				tm->tm_mday = i == 0 ? tm->tm_yday :
-					tm->tm_yday - y[i - 1];
+				tm->tm_mday = tmfc.ddd - y[i - 1];
 		}
 	}
 
