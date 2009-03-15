@@ -184,3 +184,7 @@ select key, count(*) from (select (each(h)).key from testhstore) as stat group b
  title     |   190
  org       |   189
 ...................
+
+In the current implementation, neither the key nor the value
+string can exceed 65535 bytes in length; an error will be thrown if this
+limit is exceeded. These maximum lengths may change in future releases.

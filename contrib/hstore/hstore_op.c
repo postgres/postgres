@@ -280,8 +280,8 @@ tconvert(PG_FUNCTION_ARGS)
 	out->len = len;
 	out->size = 1;
 
-	ARRPTR(out)->keylen = VARSIZE(key) - VARHDRSZ;
-	ARRPTR(out)->vallen = VARSIZE(val) - VARHDRSZ;
+	ARRPTR(out)->keylen = hstoreCheckKeyLen(VARSIZE(key) - VARHDRSZ);
+	ARRPTR(out)->vallen = hstoreCheckValLen(VARSIZE(val) - VARHDRSZ);
 	ARRPTR(out)->valisnull = false;
 	ARRPTR(out)->pos = 0;
 
