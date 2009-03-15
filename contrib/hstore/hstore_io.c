@@ -182,7 +182,7 @@ parse_hstore(HSParser * state)
 				state->pairs = (Pairs *) repalloc(state->pairs, sizeof(Pairs) * state->plen);
 			}
 			state->pairs[state->pcur].key = state->word;
-			state->pairs[state->pcur].keylen = state->cur - state->word;
+			state->pairs[state->pcur].keylen = hstoreCheckKeyLen(state->cur - state->word);
 			state->pairs[state->pcur].val = NULL;
 			state->word = NULL;
 			st = WEQ;
@@ -222,7 +222,7 @@ parse_hstore(HSParser * state)
 			if (!get_val(state, true, &escaped))
 				elog(ERROR, "Unexpected end of string");
 			state->pairs[state->pcur].val = state->word;
-			state->pairs[state->pcur].vallen = state->cur - state->word;
+			state->pairs[state->pcur].vallen = hstoreCheckValLen(state->cur - state->word);
 			state->pairs[state->pcur].isnull = false;
 			state->pairs[state->pcur].needfree = true;
 			if (state->cur - state->word == 4 && !escaped)
@@ -262,11 +262,9 @@ comparePairs(const void *a, const void *b)
 {
 	if (((Pairs *) a)->keylen == ((Pairs *) b)->keylen)
 	{
-		int			res = strncmp(
-								  ((Pairs *) a)->key,
+		int			res = strncmp(((Pairs *) a)->key,
 								  ((Pairs *) b)->key,
-								  ((Pairs *) a)->keylen
-		);
+								  ((Pairs *) a)->keylen);
 
 		if (res)
 			return res;
@@ -340,6 +338,27 @@ freeHSParse(HSParser * state)
 		}
 	pfree(state->pairs);
 }
+
+size_t
+hstoreCheckKeyLen(size_t len)
+{
+	if (len > HSTORE_MAX_KEY_LEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("string too long for hstore key")));
+	return len;
+}
+
+size_t
+hstoreCheckValLen(size_t len)
+{
+	if (len > HSTORE_MAX_VALUE_LEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("string too long for hstore value")));
+	return len;
+}
+
 
 PG_FUNCTION_INFO_V1(hstore_in);
 Datum		hstore_in(PG_FUNCTION_ARGS);
