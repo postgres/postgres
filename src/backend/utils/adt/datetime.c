@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.201 2009/03/17 18:35:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.202 2009/03/17 18:39:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2264,7 +2264,7 @@ ValidateDate(int fmask, bool is2digits, bool bc, struct pg_tm * tm)
 		}
 		else if (is2digits)
 		{
-			/* allow 2-digit input for 1970-2069 AD; '0' or '00' is allowed */
+			/* process 1 or 2-digit input as 1970-2069 AD, allow '0' and '00' */
 			if (tm->tm_year < 0)				/* just paranoia */
 				return DTERR_FIELD_OVERFLOW;
 			if (tm->tm_year < 70)
