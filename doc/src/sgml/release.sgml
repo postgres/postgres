@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.590 2009/03/12 22:35:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.591 2009/03/17 21:36:21 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -107,6 +107,7 @@ do it for earlier branch release files.
       error.  The solution therefore is to disable translation and encoding
       conversion and report the plain-ASCII form of any error message,
       if we find we have gotten into a recursive error reporting situation.
+      (CVE-2009-0922)
      </para>
     </listitem>
 
@@ -4585,6 +4586,7 @@ current_date &lt; 2017-11-17
       error.  The solution therefore is to disable translation and encoding
       conversion and report the plain-ASCII form of any error message,
       if we find we have gotten into a recursive error reporting situation.
+      (CVE-2009-0922)
      </para>
     </listitem>
 
@@ -9384,6 +9386,7 @@ current_date &lt; 2017-11-17
       error.  The solution therefore is to disable translation and encoding
       conversion and report the plain-ASCII form of any error message,
       if we find we have gotten into a recursive error reporting situation.
+      (CVE-2009-0922)
      </para>
     </listitem>
 
@@ -13699,6 +13702,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       error.  The solution therefore is to disable translation and encoding
       conversion and report the plain-ASCII form of any error message,
       if we find we have gotten into a recursive error reporting situation.
+      (CVE-2009-0922)
      </para>
     </listitem>
 
@@ -18257,6 +18261,7 @@ typedefs (Michael)</para></listitem>
       error.  The solution therefore is to disable translation and encoding
       conversion and report the plain-ASCII form of any error message,
       if we find we have gotten into a recursive error reporting situation.
+      (CVE-2009-0922)
      </para>
     </listitem>
 
