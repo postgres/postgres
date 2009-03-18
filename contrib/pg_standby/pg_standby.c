@@ -451,6 +451,7 @@ sighandler(int sig)
 	signaled = true;
 }
 
+#ifndef WIN32
 /* We don't want SIGQUIT to core dump */
 static void
 sigquit_handler(int sig)
@@ -458,7 +459,7 @@ sigquit_handler(int sig)
 	signal(SIGINT, SIG_DFL);
 	kill(getpid(), SIGINT);
 }
-
+#endif
 
 /*------------ MAIN ----------------------------------------*/
 int
@@ -480,7 +481,9 @@ main(int argc, char **argv)
 	 */
 	(void) signal(SIGUSR1, sighandler);
 	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
+#ifndef WIN32
 	(void) signal(SIGQUIT, sigquit_handler);
+#endif
 
 	while ((c = getopt(argc, argv, "cdk:lr:s:t:w:")) != -1)
 	{
