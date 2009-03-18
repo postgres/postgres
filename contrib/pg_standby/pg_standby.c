@@ -451,14 +451,36 @@ sighandler(int sig)
 	signaled = true;
 }
 
+/* We don't want SIGQUIT to core dump */
+static void
+sigquit_handler(int sig)
+{
+	signal(SIGINT, SIG_DFL);
+	kill(getpid(), SIGINT);
+}
+
+
 /*------------ MAIN ----------------------------------------*/
 int
 main(int argc, char **argv)
 {
 	int			c;
 
-	(void) signal(SIGINT, sighandler);
-	(void) signal(SIGQUIT, sighandler);
+	/*
+	 * You can send SIGUSR1 to trigger failover.
+	 *
+	 * Postmaster uses SIGQUIT to request immediate shutdown. The default
+	 * action is to core dump, but we don't want that, so trap it and
+	 * commit suicide without core dump.
+	 *
+	 * We used to use SIGINT and SIGQUIT to trigger failover, but that
+	 * turned out to be a bad idea because postmaster uses SIGQUIT to
+	 * request immediate shutdown. We still trap SIGINT, but that may
+	 * change in a future release.
+	 */
+	(void) signal(SIGUSR1, sighandler);
+	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
+	(void) signal(SIGQUIT, sigquit_handler);
 
 	while ((c = getopt(argc, argv, "cdk:lr:s:t:w:")) != -1)
 	{
