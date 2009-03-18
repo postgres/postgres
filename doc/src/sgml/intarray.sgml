@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.5 2007/12/10 05:32:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.6 2009/03/18 20:18:18 tgl Exp $ -->
 
 <sect1 id="intarray">
  <title>intarray</title>
@@ -237,9 +237,10 @@
   <para>
    Two GiST index operator classes are provided:
    <literal>gist__int_ops</> (used by default) is suitable for
-   small and medium-size arrays, while
+   small- to medium-size data sets, while
    <literal>gist__intbig_ops</> uses a larger signature and is more
-   suitable for indexing large arrays.
+   suitable for indexing large data sets (i.e., columns containing
+   a large number of distinct array values).
   </para>
 
   <para>
