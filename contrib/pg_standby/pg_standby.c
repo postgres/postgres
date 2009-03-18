@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.19 2009/03/18 19:27:28 heikki Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.20 2009/03/18 20:30:35 heikki Exp $ 
  *
  *
  * pg_standby.c
@@ -463,6 +463,7 @@ sighandler(int sig)
 	signaled = true;
 }
 
+#ifndef WIN32
 /* We don't want SIGQUIT to core dump */
 static void
 sigquit_handler(int sig)
@@ -470,7 +471,7 @@ sigquit_handler(int sig)
 	signal(SIGINT, SIG_DFL);
 	kill(getpid(), SIGINT);
 }
-
+#endif
 
 /*------------ MAIN ----------------------------------------*/
 int
@@ -508,7 +509,9 @@ main(int argc, char **argv)
 	 */
 	(void) signal(SIGUSR1, sighandler);
 	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
+#ifndef WIN32
 	(void) signal(SIGQUIT, sigquit_handler);
+#endif
 
 	while ((c = getopt(argc, argv, "cdk:lr:s:t:w:")) != -1)
 	{
