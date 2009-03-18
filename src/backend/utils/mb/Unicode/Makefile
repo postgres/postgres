@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2001-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.15 2009/01/01 17:23:51 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.16 2009/03/18 16:26:18 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,7 +39,6 @@ WINMAPS = win866_to_utf8.map utf8_to_win866.map \
 	win1258_to_utf8.map utf8_to_win1258.map
 
 GENERICMAPS = $(ISO8859MAPS) $(WINMAPS) \
-	big5_to_utf8.map utf8_to_big5.map \
 	johab_to_utf8.map utf8_to_johab.map \
 	uhc_to_utf8.map utf8_to_uhc.map \
 	gbk_to_utf8.map utf8_to_gbk.map \
@@ -50,7 +49,8 @@ SPECIALMAPS = euc_cn_to_utf8.map utf8_to_euc_cn.map \
 	euc_kr_to_utf8.map utf8_to_euc_kr.map \
 	euc_tw_to_utf8.map utf8_to_euc_tw.map \
 	sjis_to_utf8.map utf8_to_sjis.map \
-	gb18030_to_utf8.map utf8_to_gb18030.map
+	gb18030_to_utf8.map utf8_to_gb18030.map \
+	big5_to_utf8.map utf8_to_big5.map
 
 MAPS = $(GENERICMAPS) $(SPECIALMAPS)
 
@@ -64,7 +64,7 @@ WINTEXTS = CP866.TXT CP874.TXT CP1250.TXT CP1251.TXT \
 	CP1256.TXT CP1257.TXT CP1258.TXT
 
 GENERICTEXTS = $(ISO8859TEXTS) $(WINTEXTS) \
-	KOI8-R.TXT CP936.TXT CP949.TXT JOHAB.TXT BIG5.TXT
+	KOI8-R.TXT CP936.TXT CP949.TXT JOHAB.TXT
 
 all: $(MAPS)
 
@@ -88,6 +88,10 @@ sjis_to_utf8.map utf8_to_sjis.map : CP932.TXT
 
 gb18030_to_utf8.map  utf8_to_gb18030.map : ISO10646-GB18030.TXT
 	$(PERL) $(srcdir)/UCS_to_GB18030.pl
+
+big5_to_utf8.map  utf8_to_big5.map : BIG5.TXT CP950.TXT
+	$(PERL) $(srcdir)/UCS_to_BIG5.pl
+
 clean:
 	rm -f $(MAPS)
 
