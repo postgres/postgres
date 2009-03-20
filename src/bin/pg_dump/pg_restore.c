@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.95 2009/03/11 03:33:29 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.96 2009/03/20 09:21:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,8 +93,8 @@ main(int argc, char **argv)
 		{"host", 1, NULL, 'h'},
 		{"ignore-version", 0, NULL, 'i'},
 		{"index", 1, NULL, 'I'},
+		{"jobs", 1, NULL, 'j'},
 		{"list", 0, NULL, 'l'},
-		{"multi-thread", 1, NULL, 'm'},
 		{"no-privileges", 0, NULL, 'x'},
 		{"no-acl", 0, NULL, 'x'},
 		{"no-owner", 0, NULL, 'O'},
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:m:n:Op:P:RsS:t:T:U:vwWxX:1",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:j:lL:n:Op:P:RsS:t:T:U:vwWxX:1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -181,16 +181,16 @@ main(int argc, char **argv)
 				/* ignored, deprecated option */
 				break;
 
+			case 'j':			/* number of restore jobs */
+				opts->number_of_jobs = atoi(optarg);
+				break;
+
 			case 'l':			/* Dump the TOC summary */
 				opts->tocSummary = 1;
 				break;
 
 			case 'L':			/* input TOC summary file name */
 				opts->tocFile = strdup(optarg);
-				break;
-
-			case 'm':			/* number of restore threads */
-				opts->number_of_threads = atoi(optarg);
 				break;
 
 			case 'n':			/* Dump data for this schema only */
@@ -318,9 +318,9 @@ main(int argc, char **argv)
 	}
 
 	/* Can't do single-txn mode with multiple connections */
-	if (opts->single_txn && opts->number_of_threads > 1)
+	if (opts->single_txn && opts->number_of_jobs > 1)
 	{
-		fprintf(stderr, _("%s: cannot specify both --single-transaction and multiple threads\n"),
+		fprintf(stderr, _("%s: cannot specify both --single-transaction and multiple jobs\n"),
 				progname);
 		exit(1);
 	}
@@ -417,9 +417,9 @@ usage(const char *progname)
 	printf(_("  -C, --create             create the target database\n"));
 	printf(_("  -e, --exit-on-error      exit on error, default is to continue\n"));
 	printf(_("  -I, --index=NAME         restore named index\n"));
+	printf(_("  -j, --jobs=NUM           use this many parallel jobs to restore\n"));
 	printf(_("  -L, --use-list=FILENAME  use table of contents from this file for\n"
 		 "                           selecting/ordering output\n"));
-	printf(_("  -m, --multi-thread=NUM   use this many parallel connections to restore\n"));
 	printf(_("  -n, --schema=NAME        restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"

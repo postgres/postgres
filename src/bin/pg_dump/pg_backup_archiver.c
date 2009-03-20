@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.167 2009/03/13 22:50:44 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.168 2009/03/20 09:21:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,7 +354,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 *
 	 * In parallel mode, turn control over to the parallel-restore logic.
 	 */
-	if (ropt->number_of_threads > 1 && ropt->useDB)
+	if (ropt->number_of_jobs > 1 && ropt->useDB)
 		restore_toc_entries_parallel(AH);
 	else
 	{
@@ -3061,7 +3061,7 @@ static void
 restore_toc_entries_parallel(ArchiveHandle *AH)
 {
 	RestoreOptions *ropt = AH->ropt;
-	int			n_slots = ropt->number_of_threads;
+	int			n_slots = ropt->number_of_jobs;
 	ParallelSlot *slots;
 	int			work_status;
 	int			next_slot;

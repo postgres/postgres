@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.80 2009/02/26 16:02:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.81 2009/03/20 09:21:08 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -216,6 +216,46 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-j <replaceable class="parameter">number-of-jobs</replaceable></option></term>
+      <term><option>--jobs=<replaceable class="parameter">number-of-jobs</replaceable></option></term>
+      <listitem>
+       <para>
+        Run the most time-consuming parts
+        of <application>pg_restore</> &mdash; those which load data,
+        create indexes, or create constraints &mdash; using multiple
+        concurrent jobs.  This option can dramatically reduce the time
+        to restore a large database to a server running on a
+        multi-processor machine.
+       </para>
+
+       <para>
+        Each job is one process or one thread, depending on the
+        operating system, and uses a separate connection to the
+        server.
+       </para>
+
+       <para>
+        The optimal value for this option depends on the hardware
+        setup of the server, of the client, and of the network.
+        Factors include the number of CPU cores and the disk setup.  A
+        good place to start is the number of CPU cores on the server,
+        but values larger than that can also lead to faster restore
+        times in many cases.  Of course, values that are too high will
+        lead to decreasing performance because of thrashing.
+       </para>
+
+       <para>
+        Only the custom archive format is supported with this option.
+        The input file must be a regular file (not, for example, a
+        pipe).  This option is ignored when emitting a script rather
+        than connecting directly to a database server.  Also, multiple
+        jobs cannot be used together with the
+        option <option>--single-transaction</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-l</option></term>
       <term><option>--list</option></term>
       <listitem>
@@ -237,28 +277,6 @@
         order they appear in the file. Lines can be moved and can also
         be commented out by placing a <literal>;</literal> at the
         start of the line.  (See below for examples.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-m <replaceable class="parameter">number-of-threads</replaceable></option></term>
-      <term><option>--multi-thread=<replaceable class="parameter">number-of-threads</replaceable></option></term>
-      <listitem>
-       <para>
-        Run the most time-consuming parts of <application>pg_restore</>
-        &mdash; those which load data, create indexes, or create
-        constraints &mdash; using multiple concurrent connections to the
-        database. This option can dramatically reduce the time to restore a
-        large database to a server running on a multi-processor machine.
-       </para>
-
-       <para>
-        This option is ignored when emitting a script rather than connecting
-        directly to a database server.  Multiple threads cannot be used
-        together with <option>--single-transaction</option>.  Also, the input
-        must be a plain file (not, for example, a pipe), and at present only
-        the custom archive format is supported.
        </para>
       </listitem>
      </varlistentry>
