@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.49 2009/01/01 17:23:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.50 2009/03/21 00:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,36 @@ typedef struct HashJoinTupleData
 #define HJTUPLE_MINTUPLE(hjtup)  \
 	((MinimalTuple) ((char *) (hjtup) + HJTUPLE_OVERHEAD))
 
+/*
+ * If the outer relation's distribution is sufficiently nonuniform, we attempt
+ * to optimize the join by treating the hash values corresponding to the outer
+ * relation's MCVs specially.  Inner relation tuples matching these hash
+ * values go into the "skew" hashtable instead of the main hashtable, and
+ * outer relation tuples with these hash values are matched against that
+ * table instead of the main one.  Thus, tuples with these hash values are
+ * effectively handled as part of the first batch and will never go to disk.
+ * The skew hashtable is limited to SKEW_WORK_MEM_PERCENT of the total memory
+ * allowed for the join; while building the hashtables, we decrease the number
+ * of MCVs being specially treated if needed to stay under this limit.
+ *
+ * Note: you might wonder why we look at the outer relation stats for this,
+ * rather than the inner.  One reason is that the outer relation is typically
+ * bigger, so we get more I/O savings by optimizing for its most common values.
+ * Also, for similarly-sized relations, the planner prefers to put the more
+ * uniformly distributed relation on the inside, so we're more likely to find
+ * interesting skew in the outer relation.
+ */
+typedef struct HashSkewBucket
+{
+	uint32		hashvalue;		/* common hash value */
+	HashJoinTuple tuples;		/* linked list of inner-relation tuples */
+} HashSkewBucket;
+
+#define SKEW_BUCKET_OVERHEAD  MAXALIGN(sizeof(HashSkewBucket))
+#define INVALID_SKEW_BUCKET_NO  (-1)
+#define SKEW_WORK_MEM_PERCENT  2
+#define SKEW_MIN_OUTER_FRACTION  0.01
+
 
 typedef struct HashJoinTableData
 {
@@ -81,6 +111,12 @@ typedef struct HashJoinTableData
 	/* buckets[i] is head of list of tuples in i'th in-memory bucket */
 	struct HashJoinTupleData **buckets;
 	/* buckets array is per-batch storage, as are all the tuples */
+
+	bool		skewEnabled;	/* are we using skew optimization? */
+	HashSkewBucket **skewBucket;	/* hashtable of skew buckets */
+	int			skewBucketLen;	/* size of skewBucket array (a power of 2!) */
+	int			nSkewBuckets;	/* number of active skew buckets */
+	int		   *skewBucketNums;	/* array indexes of active skew buckets */
 
 	int			nbatch;			/* number of batches */
 	int			curbatch;		/* current batch #; 0 during 1st pass */
@@ -113,6 +149,8 @@ typedef struct HashJoinTableData
 
 	Size		spaceUsed;		/* memory space currently used by tuples */
 	Size		spaceAllowed;	/* upper limit for space used */
+	Size		spaceUsedSkew;	/* skew hash table's current space usage */
+	Size		spaceAllowedSkew;	/* upper limit for skew hashtable */
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */

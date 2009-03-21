@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.204 2009/02/06 23:43:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.205 2009/03/21 00:04:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1821,6 +1821,7 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	int			num_hashclauses = list_length(hashclauses);
 	int			numbuckets;
 	int			numbatches;
+	int			num_skew_mcvs;
 	double		virtualbuckets;
 	Selectivity innerbucketsize;
 	ListCell   *hcl;
@@ -1862,11 +1863,22 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		* inner_path_rows;
 	run_cost += cpu_operator_cost * num_hashclauses * outer_path_rows;
 
-	/* Get hash table size that executor would use for inner relation */
+	/*
+	 * Get hash table size that executor would use for inner relation.
+	 *
+	 * XXX for the moment, always assume that skew optimization will be
+	 * performed.  As long as SKEW_WORK_MEM_PERCENT is small, it's not worth
+	 * trying to determine that for sure.
+	 *
+	 * XXX at some point it might be interesting to try to account for skew
+	 * optimization in the cost estimate, but for now, we don't.
+	 */
 	ExecChooseHashTableSize(inner_path_rows,
 							inner_path->parent->width,
+							true,	/* useskew */
 							&numbuckets,
-							&numbatches);
+							&numbatches,
+							&num_skew_mcvs);
 	virtualbuckets = (double) numbuckets *(double) numbatches;
 
 	/*

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.255 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.256 2009/03/21 00:04:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,11 @@ static HashJoin *make_hashjoin(List *tlist,
 			  List *hashclauses,
 			  Plan *lefttree, Plan *righttree,
 			  JoinType jointype);
-static Hash *make_hash(Plan *lefttree);
+static Hash *make_hash(Plan *lefttree,
+					   Oid skewTable,
+					   AttrNumber skewColumn,
+					   Oid skewColType,
+					   int32 skewColTypmod);
 static MergeJoin *make_mergejoin(List *tlist,
 			   List *joinclauses, List *otherclauses,
 			   List *mergeclauses,
@@ -1864,6 +1868,10 @@ create_hashjoin_plan(PlannerInfo *root,
 	List	   *joinclauses;
 	List	   *otherclauses;
 	List	   *hashclauses;
+	Oid			skewTable = InvalidOid;
+	AttrNumber	skewColumn = InvalidAttrNumber;
+	Oid			skewColType = InvalidOid;
+	int32		skewColTypmod = -1;
 	HashJoin   *join_plan;
 	Hash	   *hash_plan;
 
@@ -1903,9 +1911,46 @@ create_hashjoin_plan(PlannerInfo *root,
 	disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
 
 	/*
+	 * If there is a single join clause and we can identify the outer
+	 * variable as a simple column reference, supply its identity for
+	 * possible use in skew optimization.  (Note: in principle we could
+	 * do skew optimization with multiple join clauses, but we'd have to
+	 * be able to determine the most common combinations of outer values,
+	 * which we don't currently have enough stats for.)
+	 */
+	if (list_length(hashclauses) == 1)
+	{
+		OpExpr	   *clause = (OpExpr *) linitial(hashclauses);
+		Node	   *node;
+
+		Assert(is_opclause(clause));
+		node = (Node *) linitial(clause->args);
+		if (IsA(node, RelabelType))
+			node = (Node *) ((RelabelType *) node)->arg;
+		if (IsA(node, Var))
+		{
+			Var	   *var = (Var *) node;
+			RangeTblEntry *rte;
+
+			rte = root->simple_rte_array[var->varno];
+			if (rte->rtekind == RTE_RELATION)
+			{
+				skewTable = rte->relid;
+				skewColumn = var->varattno;
+				skewColType = var->vartype;
+				skewColTypmod = var->vartypmod;
+			}
+		}
+	}
+
+	/*
 	 * Build the hash node and hash join node.
 	 */
-	hash_plan = make_hash(inner_plan);
+	hash_plan = make_hash(inner_plan,
+						  skewTable,
+						  skewColumn,
+						  skewColType,
+						  skewColTypmod);
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,
@@ -2713,7 +2758,11 @@ make_hashjoin(List *tlist,
 }
 
 static Hash *
-make_hash(Plan *lefttree)
+make_hash(Plan *lefttree,
+		  Oid skewTable,
+		  AttrNumber skewColumn,
+		  Oid skewColType,
+		  int32 skewColTypmod)
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
@@ -2729,6 +2778,11 @@ make_hash(Plan *lefttree)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
+
+	node->skewTable = skewTable;
+	node->skewColumn = skewColumn;
+	node->skewColType = skewColType;
+	node->skewColTypmod = skewColTypmod;
 
 	return node;
 }
