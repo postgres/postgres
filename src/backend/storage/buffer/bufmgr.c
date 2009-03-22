@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.247 2009/03/13 17:46:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.248 2009/03/22 22:39:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,15 +256,16 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 
 	isExtend = (blockNum == P_NEW);
 
-	/* Substitute proper block number if caller asked for P_NEW */
-	if (isExtend)
-		blockNum = smgrnblocks(smgr, forkNum);
-
 	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
 									   smgr->smgr_rnode.spcNode,
 									   smgr->smgr_rnode.dbNode,
 									   smgr->smgr_rnode.relNode,
-									   isLocalBuf);
+									   isLocalBuf,
+									   isExtend);
+
+	/* Substitute proper block number if caller asked for P_NEW */
+	if (isExtend)
+		blockNum = smgrnblocks(smgr, forkNum);
 
 	if (isLocalBuf)
 	{
@@ -318,6 +319,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 											  smgr->smgr_rnode.dbNode,
 											  smgr->smgr_rnode.relNode,
 											  isLocalBuf,
+											  isExtend,
 											  found);
 
 			return BufferDescriptorGetBuffer(bufHdr);
@@ -447,6 +449,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 									  smgr->smgr_rnode.dbNode,
 									  smgr->smgr_rnode.relNode,
 									  isLocalBuf,
+									  isExtend,
 									  found);
 
 	return BufferDescriptorGetBuffer(bufHdr);
@@ -1865,7 +1868,9 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	if (reln == NULL)
 		reln = smgropen(buf->tag.rnode);
 
-	TRACE_POSTGRESQL_BUFFER_FLUSH_START(reln->smgr_rnode.spcNode,
+	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
+										buf->tag.blockNum,
+										reln->smgr_rnode.spcNode,
 										reln->smgr_rnode.dbNode,
 										reln->smgr_rnode.relNode);
 
@@ -1902,7 +1907,9 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	 */
 	TerminateBufferIO(buf, true, 0);
 
-	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(reln->smgr_rnode.spcNode,
+	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(buf->tag.forkNum,
+									   buf->tag.blockNum,
+									   reln->smgr_rnode.spcNode,
 									   reln->smgr_rnode.dbNode,
 									   reln->smgr_rnode.relNode);
 
