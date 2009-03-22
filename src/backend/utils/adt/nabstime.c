@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.159 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.160 2009/03/22 01:12:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,6 @@
 
 #define MIN_DAYNUM (-24856)		/* December 13, 1901 */
 #define MAX_DAYNUM 24854		/* January 18, 2038 */
-
-#define INVALID_RELTIME_STR		"Undefined RelTime"
-#define INVALID_RELTIME_STR_LEN (sizeof(INVALID_RELTIME_STR)-1)
-#define RELTIME_LABEL			'@'
-#define RELTIME_PAST			"ago"
-#define DIRMAXLEN				(sizeof(RELTIME_PAST)-1)
 
 /*
  * Unix epoch is Jan  1 00:00:00 1970.

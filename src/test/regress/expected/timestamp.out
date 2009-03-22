@@ -84,20 +84,16 @@ INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
 ERROR:  date/time value "invalid" is no longer supported
 LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
                                           ^
+INSERT INTO TIMESTAMP_TBL VALUES ('undefined');
+ERROR:  date/time value "undefined" is no longer supported
+LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('undefined');
+                                          ^
 INSERT INTO TIMESTAMP_TBL VALUES ('current');
 ERROR:  date/time value "current" is no longer supported
 LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('current');
                                           ^
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
-INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
-ERROR:  date/time value "Invalid Abstime" is no longer supported
-LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
-                                          ^
-INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
-ERROR:  date/time value "Undefined Abstime" is no longer supported
-LINE 1: INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
-                                          ^
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');

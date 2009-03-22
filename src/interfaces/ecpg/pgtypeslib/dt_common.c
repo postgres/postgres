@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.47 2009/02/05 08:28:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.48 2009/03/22 01:12:32 tgl Exp $ */
 
 #include "postgres_fe.h"
 
@@ -26,7 +26,6 @@ typedef long AbsoluteTime;
 static datetkn datetktbl[] = {
 /*	text, token, lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
-	{"abstime", IGNORE_DTF, 0}, /* for pre-v6.1 "Invalid Abstime" */
 	{"acsst", DTZ, POS(42)},	/* Cent. Australia */
 	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre */
 	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre */
@@ -471,7 +470,6 @@ static datetkn deltatktbl[] = {
 	{"msecs", UNITS, DTK_MILLISEC},
 	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
 	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
-	{"reltime", IGNORE_DTF, 0}, /* pre-v6.1 "Undefined Reltime" */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},

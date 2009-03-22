@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.59 2008/02/16 21:51:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.60 2009/03/22 01:12:31 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -309,10 +309,6 @@
       </thead>
       <tbody>
        <row>
-        <entry><literal>ABSTIME</literal></entry>
-        <entry>Ignored</entry>
-       </row>
-       <row>
         <entry><literal>AM</literal></entry>
         <entry>Time is before 12:00</entry>
        </row>
@@ -339,15 +335,6 @@
       </tbody>
      </tgroup>
     </table>
-
-   <para>
-    The key word <literal>ABSTIME</literal> is ignored for historical
-    reasons: In very old releases of
-    <productname>PostgreSQL</productname>, invalid values of type <type>abstime</type>
-    were emitted as <literal>Invalid Abstime</literal>. This is no
-    longer the case however and this key word will likely be dropped in
-    a future release.
-   </para>
   </sect1>
 
   <sect1 id="datetime-config-files">
