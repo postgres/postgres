@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.529 2009/03/17 10:10:13 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.530 2009/03/22 16:44:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,8 +67,6 @@ Archive    *g_fout;				/* the script file */
 PGconn	   *g_conn;				/* the database connection */
 
 /* various user-settable parameters */
-bool		dumpInserts;		/* dump data using proper insert strings */
-bool		attrNames;			/* put attr names into insert strings */
 bool		schemaOnly;
 bool		dataOnly;
 bool		aclsSkip;
@@ -99,8 +97,6 @@ static SimpleOidList table_exclude_oids = {NULL, NULL};
 /* default, if no "inclusion" switches appear, is to dump everything */
 static bool include_everything = true;
 
-static int	binary_upgrade = 0;
-
 char		g_opaque_type[10];	/* name for the opaque type */
 
 /* placeholders for the delimiters for comments */
@@ -113,8 +109,11 @@ static const CatalogId nilCatalogId = {0, 0};
 static NamespaceInfo *g_namespaces;
 static int	g_numNamespaces;
 
-/* flag to turn on/off dollar quoting */
+/* flags for various command-line long options */
+static int	binary_upgrade = 0;
 static int	disable_dollar_quoting = 0;
+static int	dump_inserts = 0;
+static int	column_inserts = 0;
 
 
 static void help(const char *progname);
@@ -239,16 +238,12 @@ main(int argc, char **argv)
 	static int	use_setsessauth = 0;
 
 	struct option long_options[] = {
-		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
 		{"create", no_argument, NULL, 'C'},
 		{"file", required_argument, NULL, 'f'},
 		{"format", required_argument, NULL, 'F'},
-		{"inserts", no_argument, NULL, 'd'},
-		{"attribute-inserts", no_argument, NULL, 'D'},
-		{"column-inserts", no_argument, NULL, 'D'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
 		{"no-reconnect", no_argument, NULL, 'R'},
@@ -275,8 +270,12 @@ main(int argc, char **argv)
 		/*
 		 * the following options don't have an equivalent short option letter
 		 */
+		{"attribute-inserts", no_argument, &column_inserts, 1},
+		{"binary-upgrade", no_argument, &binary_upgrade, 1},
+		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"inserts", no_argument, &dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"role", required_argument, NULL, 3},
@@ -293,7 +292,7 @@ main(int argc, char **argv)
 	g_comment_end[0] = '\0';
 	strcpy(g_opaque_type, "opaque");
 
-	dataOnly = schemaOnly = dumpInserts = attrNames = false;
+	dataOnly = schemaOnly = false;
 	lockWaitTimeout = NULL;
 
 	progname = get_progname(argv[0]);
@@ -316,7 +315,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "abcCdDE:f:F:h:in:N:oOp:RsS:t:T:U:vwWxX:Z:",
+	while ((c = getopt_long(argc, argv, "abcCE:f:F:h:in:N:oOp:RsS:t:T:U:vwWxX:Z:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -335,16 +334,6 @@ main(int argc, char **argv)
 
 			case 'C':			/* Create DB */
 				outputCreate = 1;
-				break;
-
-			case 'd':			/* dump data as proper insert strings */
-				dumpInserts = true;
-				break;
-
-			case 'D':			/* dump data as proper insert strings with
-								 * attr names */
-				dumpInserts = true;
-				attrNames = true;
 				break;
 
 			case 'E':			/* Dump encoding */
@@ -484,6 +473,10 @@ main(int argc, char **argv)
 	if (optind < argc)
 		dbname = argv[optind];
 
+	/* --column-inserts implies --inserts */
+	if (column_inserts)
+		dump_inserts = 1;
+
 	if (dataOnly && schemaOnly)
 	{
 		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
@@ -496,9 +489,9 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (dumpInserts == true && oids == true)
+	if (dump_inserts && oids)
 	{
-		write_msg(NULL, "options -d/-D/--inserts/--column-inserts and -o/--oids cannot be used together\n");
+		write_msg(NULL, "options --inserts/--column-inserts and -o/--oids cannot be used together\n");
 		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
 		exit(1);
 	}
@@ -815,8 +808,6 @@ help(const char *progname)
 	printf(_("  -b, --blobs                 include large objects in dump\n"));
 	printf(_("  -c, --clean                 clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                include commands to create database in dump\n"));
-	printf(_("  -d, --inserts               dump data as INSERT commands, rather than COPY\n"));
-	printf(_("  -D, --column-inserts        dump data as INSERT commands with column names\n"));
 	printf(_("  -E, --encoding=ENCODING     dump the data in encoding ENCODING\n"));
 	printf(_("  -n, --schema=SCHEMA         dump the named schema(s) only\n"));
 	printf(_("  -N, --exclude-schema=SCHEMA do NOT dump the named schema(s)\n"));
@@ -829,6 +820,8 @@ help(const char *progname)
 	printf(_("  -T, --exclude-table=TABLE   do NOT dump the named table(s)\n"));
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
 	printf(_("  --binary-upgrade            for use by upgrade utilities only\n"));
+	printf(_("  --inserts                   dump data as INSERT commands, rather than COPY\n"));
+	printf(_("  --column-inserts            dump data as INSERT commands with column names\n"));
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
@@ -1269,7 +1262,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 				archprintf(fout, "DEFAULT VALUES;\n");
 				continue;
 			}
-			if (attrNames == true)
+			if (column_inserts)
 			{
 				resetPQExpBuffer(q);
 				appendPQExpBuffer(q, "(");
@@ -1376,7 +1369,7 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	DataDumperPtr dumpFn;
 	char	   *copyStmt;
 
-	if (!dumpInserts)
+	if (!dump_inserts)
 	{
 		/* Dump/restore using COPY */
 		dumpFn = dumpTableData_copy;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.112 2009/03/04 11:57:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.113 2009/03/22 16:44:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -171,46 +171,6 @@ PostgreSQL documentation
         This option is only meaningful for the plain-text format.  For
         the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-d</option></term>
-      <term><option>--inserts</option></term>
-      <listitem>
-       <para>
-        Dump data as <command>INSERT</command> commands (rather
-        than <command>COPY</command>).  This will make restoration very slow;
-        it is mainly useful for making dumps that can be loaded into
-        non-<productname>PostgreSQL</productname> databases.
-        Also, since this option generates a separate command for each row,
-        an error in reloading a row causes only that row to be lost rather
-        than the entire table contents.
-        Note that
-        the restore might fail altogether if you have rearranged column order.
-        The <option>-D</option> option is safe against column order changes,
-        though even slower.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-D</option></term>
-      <term><option>--column-inserts</option></term>
-      <term><option>--attribute-inserts</option></term>
-      <listitem>
-       <para>
-        Dump data as <command>INSERT</command> commands with explicit
-        column names (<literal>INSERT INTO
-        <replaceable>table</replaceable>
-        (<replaceable>column</replaceable>, ...) VALUES
-        ...</literal>).  This will make restoration very slow; it is mainly
-        useful for making dumps that can be loaded into
-        non-<productname>PostgreSQL</productname> databases.
-        Also, since this option generates a separate command for each row,
-        an error in reloading a row causes only that row to be lost rather
-        than the entire table contents.
        </para>
       </listitem>
      </varlistentry>
@@ -563,6 +523,44 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--inserts</option></term>
+      <listitem>
+       <para>
+        Dump data as <command>INSERT</command> commands (rather
+        than <command>COPY</command>).  This will make restoration very slow;
+        it is mainly useful for making dumps that can be loaded into
+        non-<productname>PostgreSQL</productname> databases.
+        Also, since this option generates a separate command for each row,
+        an error in reloading a row causes only that row to be lost rather
+        than the entire table contents.
+        Note that
+        the restore might fail altogether if you have rearranged column order.
+        The <option>--column-inserts</option> option is safe against column
+        order changes, though even slower.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--column-inserts</option></term>
+      <term><option>--attribute-inserts</option></term>
+      <listitem>
+       <para>
+        Dump data as <command>INSERT</command> commands with explicit
+        column names (<literal>INSERT INTO
+        <replaceable>table</replaceable>
+        (<replaceable>column</replaceable>, ...) VALUES
+        ...</literal>).  This will make restoration very slow; it is mainly
+        useful for making dumps that can be loaded into
+        non-<productname>PostgreSQL</productname> databases.
+        Also, since this option generates a separate command for each row,
+        an error in reloading a row causes only that row to be lost rather
+        than the entire table contents.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--disable-dollar-quoting</></term>
       <listitem>
        <para>
@@ -814,11 +812,10 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   <application>pg_dump</application> has a limitation; when a
-   data-only dump is chosen and the option <option>--disable-triggers</>
+   When a data-only dump is chosen and the option <option>--disable-triggers</>
    is used, <application>pg_dump</application> emits commands
-   to disable triggers on user tables before inserting the data
-   and commands to re-enable them after the data has been
+   to disable triggers on user tables before inserting the data,
+   and then commands to re-enable them after the data has been
    inserted.  If the restore is stopped in the middle, the system
    catalogs might be left in the wrong state.
   </para>
@@ -846,12 +843,19 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <para>
    Because <application>pg_dump</application> is used to transfer data
    to newer versions of <productname>PostgreSQL</>, the output of
-   <application>pg_dump</application> can be loaded into
-   newer <productname>PostgreSQL</> databases.  It also can read older
-   <productname>PostgreSQL</> databases.  However, it usually cannot
-   read newer <productname>PostgreSQL</> databases or produce dump output
-   that can be loaded into older database versions.  To do this, manual
-   editing of the dump file might be required.
+   <application>pg_dump</application> can be expected to load into
+   <productname>PostgreSQL</> server versions newer than
+   <application>pg_dump</>'s version.  <application>pg_dump</> can also
+   dump from <productname>PostgreSQL</> servers older than its own version.
+   (Currently, servers back to version 7.0 are supported.)
+   However, <application>pg_dump</> cannot dump from
+   <productname>PostgreSQL</> servers newer than its own major version;
+   it will refuse to even try, rather than risk making an invalid dump.
+   Also, it is not guaranteed that <application>pg_dump</>'s output can
+   be loaded into a server of an older major version &mdash; not even if the
+   dump was taken from a server of that version.  Loading a dump file
+   into an older server may require manual editing of the dump file
+   to remove syntax not understood by the older server.
   </para>
  </refsect1>
 
