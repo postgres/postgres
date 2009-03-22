@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.178 2009/01/09 10:13:18 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.179 2009/03/22 18:06:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1084,11 +1084,12 @@ pg_GSS_recvauth(Port *port)
  */
 #ifdef ENABLE_SSPI
 static void
-pg_SSPI_error(int severity, char *errmsg, SECURITY_STATUS r)
+pg_SSPI_error(int severity, const char *errmsg, SECURITY_STATUS r)
 {
 	char		sysmsg[256];
 
-	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
+	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0,
+					  sysmsg, sizeof(sysmsg), NULL) == 0)
 		ereport(severity,
 				(errmsg_internal("%s", errmsg),
 				 errdetail("SSPI error %x", (unsigned int) r)));
@@ -1150,8 +1151,7 @@ pg_SSPI_recvauth(Port *port)
 								 &sspicred,
 								 &expiry);
 	if (r != SEC_E_OK)
-		pg_SSPI_error(ERROR,
-			   gettext_noop("could not acquire SSPI credentials handle"), r);
+		pg_SSPI_error(ERROR, _("could not acquire SSPI credentials"), r);
 
 	/*
 	 * Loop through SSPI message exchange. This exchange can consist of
@@ -1240,7 +1240,7 @@ pg_SSPI_recvauth(Port *port)
 			}
 			FreeCredentialsHandle(&sspicred);
 			pg_SSPI_error(ERROR,
-				  gettext_noop("could not accept SSPI security context"), r);
+						  _("could not accept SSPI security context"), r);
 		}
 
 		if (sspictx == NULL)
@@ -1296,7 +1296,7 @@ pg_SSPI_recvauth(Port *port)
 	{
 		FreeLibrary(secur32);
 		pg_SSPI_error(ERROR,
-			   gettext_noop("could not get security token from context"), r);
+					  _("could not get token from SSPI security context"), r);
 	}
 
 	FreeLibrary(secur32);

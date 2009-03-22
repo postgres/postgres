@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.140 2009/01/13 10:43:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.141 2009/03/22 18:06:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,13 +472,13 @@ pg_GSS_startup(PGconn *conn)
  */
 
 static void
-pg_SSPI_error(PGconn *conn, char *mprefix, SECURITY_STATUS r)
+pg_SSPI_error(PGconn *conn, const char *mprefix, SECURITY_STATUS r)
 {
 	char		sysmsg[256];
 
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0,
 					  sysmsg, sizeof(sysmsg), NULL) == 0)
-		printfPQExpBuffer(&conn->errorMessage, "%s: sspi error %x",
+		printfPQExpBuffer(&conn->errorMessage, "%s: SSPI error %x",
 						  mprefix, (unsigned int) r);
 	else
 		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)",
@@ -623,10 +623,18 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 		return STATUS_ERROR;
 	}
 
-	r = AcquireCredentialsHandle(NULL, use_negotiate ? "negotiate" : "kerberos", SECPKG_CRED_OUTBOUND, NULL, NULL, NULL, NULL, conn->sspicred, &expire);
+	r = AcquireCredentialsHandle(NULL,
+								 use_negotiate ? "negotiate" : "kerberos",
+								 SECPKG_CRED_OUTBOUND,
+								 NULL,
+								 NULL,
+								 NULL,
+								 NULL,
+								 conn->sspicred,
+								 &expire);
 	if (r != SEC_E_OK)
 	{
-		pg_SSPI_error(conn, "acquire credentials failed", r);
+		pg_SSPI_error(conn, libpq_gettext("could not acquire SSPI credentials"), r);
 		free(conn->sspicred);
 		conn->sspicred = NULL;
 		return STATUS_ERROR;
