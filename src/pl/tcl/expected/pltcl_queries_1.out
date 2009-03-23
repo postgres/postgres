@@ -1,0 +1,223 @@
+-- suppress CONTEXT so that function OIDs aren't in output
+\set VERBOSITY terse
+insert into T_pkey1 values (1, 'key1-1', 'test key');
+insert into T_pkey1 values (1, 'key1-2', 'test key');
+insert into T_pkey1 values (1, 'key1-3', 'test key');
+insert into T_pkey1 values (2, 'key2-1', 'test key');
+insert into T_pkey1 values (2, 'key2-2', 'test key');
+insert into T_pkey1 values (2, 'key2-3', 'test key');
+insert into T_pkey2 values (1, 'key1-1', 'test key');
+insert into T_pkey2 values (1, 'key1-2', 'test key');
+insert into T_pkey2 values (1, 'key1-3', 'test key');
+insert into T_pkey2 values (2, 'key2-1', 'test key');
+insert into T_pkey2 values (2, 'key2-2', 'test key');
+insert into T_pkey2 values (2, 'key2-3', 'test key');
+select * from T_pkey1;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
+    1 | key1-3               | test key                                
+    2 | key2-1               | test key                                
+    2 | key2-2               | test key                                
+    2 | key2-3               | test key                                
+(6 rows)
+
+-- key2 in T_pkey2 should have upper case only
+select * from T_pkey2;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-1               | test key                                
+    1 | KEY1-2               | test key                                
+    1 | KEY1-3               | test key                                
+    2 | KEY2-1               | test key                                
+    2 | KEY2-2               | test key                                
+    2 | KEY2-3               | test key                                
+(6 rows)
+
+insert into T_pkey1 values (1, 'KEY1-3', 'should work');
+-- Due to the upper case translation in trigger this must fail
+insert into T_pkey2 values (1, 'KEY1-3', 'should fail');
+ERROR:  duplicate key '1', 'KEY1-3' for T_pkey2
+insert into T_dta1 values ('trec 1', 1, 'key1-1');
+insert into T_dta1 values ('trec 2', 1, 'key1-2');
+insert into T_dta1 values ('trec 3', 1, 'key1-3');
+-- Must fail due to unknown key in T_pkey1
+insert into T_dta1 values ('trec 4', 1, 'key1-4');
+ERROR:  key for t_dta1 not in t_pkey1
+insert into T_dta2 values ('trec 1', 1, 'KEY1-1');
+insert into T_dta2 values ('trec 2', 1, 'KEY1-2');
+insert into T_dta2 values ('trec 3', 1, 'KEY1-3');
+-- Must fail due to unknown key in T_pkey2
+insert into T_dta2 values ('trec 4', 1, 'KEY1-4');
+ERROR:  key for t_dta2 not in t_pkey2
+select * from T_dta1;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 1     |    1 | key1-1              
+ trec 2     |    1 | key1-2              
+ trec 3     |    1 | key1-3              
+(3 rows)
+
+select * from T_dta2;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 1     |    1 | KEY1-1              
+ trec 2     |    1 | KEY1-2              
+ trec 3     |    1 | KEY1-3              
+(3 rows)
+
+update T_pkey1 set key2 = 'key2-9' where key1 = 2 and key2 = 'key2-1';
+update T_pkey1 set key2 = 'key1-9' where key1 = 1 and key2 = 'key1-1';
+ERROR:  key '1', 'key1-1              ' referenced by T_dta1
+delete from T_pkey1 where key1 = 2 and key2 = 'key2-2';
+delete from T_pkey1 where key1 = 1 and key2 = 'key1-2';
+ERROR:  key '1', 'key1-2              ' referenced by T_dta1
+update T_pkey2 set key2 = 'KEY2-9' where key1 = 2 and key2 = 'KEY2-1';
+update T_pkey2 set key2 = 'KEY1-9' where key1 = 1 and key2 = 'KEY1-1';
+NOTICE:  updated 1 entries in T_dta2 for new key in T_pkey2
+delete from T_pkey2 where key1 = 2 and key2 = 'KEY2-2';
+delete from T_pkey2 where key1 = 1 and key2 = 'KEY1-2';
+NOTICE:  deleted 1 entries from T_dta2
+select * from T_pkey1;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
+    1 | key1-3               | test key                                
+    2 | key2-3               | test key                                
+    1 | KEY1-3               | should work                             
+    2 | key2-9               | test key                                
+(6 rows)
+
+select * from T_pkey2;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-3               | test key                                
+    2 | KEY2-3               | test key                                
+    2 | KEY2-9               | test key                                
+    1 | KEY1-9               | test key                                
+(4 rows)
+
+select * from T_dta1;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 1     |    1 | key1-1              
+ trec 2     |    1 | key1-2              
+ trec 3     |    1 | key1-3              
+(3 rows)
+
+select * from T_dta2;
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ trec 3     |    1 | KEY1-3              
+ trec 1     |    1 | KEY1-9              
+(2 rows)
+
+select tcl_avg(key1) from T_pkey1;
+ tcl_avg 
+---------
+       1
+(1 row)
+
+select tcl_sum(key1) from T_pkey1;
+ tcl_sum 
+---------
+       8
+(1 row)
+
+select tcl_avg(key1) from T_pkey2;
+ tcl_avg 
+---------
+       1
+(1 row)
+
+select tcl_sum(key1) from T_pkey2;
+ tcl_sum 
+---------
+       6
+(1 row)
+
+-- The following should return NULL instead of 0
+select tcl_avg(key1) from T_pkey1 where key1 = 99;
+ tcl_avg 
+---------
+        
+(1 row)
+
+select tcl_sum(key1) from T_pkey1 where key1 = 99;
+ tcl_sum 
+---------
+       0
+(1 row)
+
+select 1 @< 2;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 100 @< 4;
+ ?column? 
+----------
+ f
+(1 row)
+
+select * from T_pkey1 order by key1 using @<, key2;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
+    1 | key1-3               | test key                                
+    1 | KEY1-3               | should work                             
+    2 | key2-3               | test key                                
+    2 | key2-9               | test key                                
+(6 rows)
+
+select * from T_pkey2 order by key1 using @<, key2;
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-3               | test key                                
+    1 | KEY1-9               | test key                                
+    2 | KEY2-3               | test key                                
+    2 | KEY2-9               | test key                                
+(4 rows)
+
+-- show dump of trigger data
+insert into trigger_test values(1,'insert');
+NOTICE:  NEW: {i: 1, v: insert}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_trig
+NOTICE:  TG_op: INSERT
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {23 skidoo}
+update trigger_test set v = 'update' where i = 1;
+NOTICE:  NEW: {i: 1, v: update}
+NOTICE:  OLD: {i: 1, v: insert}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_trig
+NOTICE:  TG_op: UPDATE
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {23 skidoo}
+delete from trigger_test;
+NOTICE:  NEW: {}
+NOTICE:  OLD: {i: 1, v: update}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_trig
+NOTICE:  TG_op: DELETE
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {23 skidoo}
+      
