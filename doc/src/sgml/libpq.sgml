@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.278 2009/02/11 04:08:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.279 2009/03/23 01:45:29 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -285,11 +285,12 @@
            This option controls how libpq verifies the certificate on the
            server when performing an <acronym>SSL</> connection. There are
            three options: <literal>none</> disables verification completely
-           (not recommended!); <literal>cert</> enables verification that
-           the certificate chains to a known CA only; <literal>cn</> will
-           both verify that the certificate chains to a known CA and that
-           the <literal>cn</> attribute of the certificate matches the
-           hostname the connection is being made to (default).
+           (not recommended); <literal>cert</> enables verification that
+           the server certificate chains to a known certificate
+           authority (CA); <literal>cn</> will both verify that the
+           certificate chains to a known CA and that the <literal>cn</>
+           attribute of the server certificate matches the server's
+           hostname (default).
           </para>
 
           <para>
