@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.472 2009/02/07 14:16:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.473 2009/03/23 21:00:38 adunstan Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8446,6 +8446,11 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
     <replaceable>xml</replaceable>.  It returns an array of XML values
     corresponding to the node set produced by the XPath expression.
    </para>
+
+  <para>
+    The second argument must be a well formed XML document. In particular,
+    it must have a single root node element.
+  </para>
 
    <para>
     The third argument of the function is an array of namespace
