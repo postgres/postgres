@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.22 2009/02/28 00:10:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.23 2009/03/23 16:36:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ static relopt_real realRelOpts[] =
 	{ { NULL } }
 };
 
-static relopt_string stringRelOpts[] = 
+static relopt_string stringRelOpts[] =
 {
 	/* list terminator */
 	{ { NULL } }
@@ -739,7 +739,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 			options = NULL;		/* keep compiler quiet */
 			break;
 	}
-	
+
 	return options;
 }
 
@@ -972,16 +972,17 @@ allocateReloptStruct(Size base, relopt_value *options, int numoptions)
  * struct (previously allocated with allocateReloptStruct) with the parsed
  * values.
  *
- * rdopts is the pointer to the allocated struct to be filled; basesize is
- * the sizeof(struct) that was passed to allocateReloptStruct.  options and
- * numoptions are parseRelOptions' output.  elems and numelems is the array
- * of elements to be parsed.  Note that when validate is true, it is expected
- * that all options are also in elems.
+ * rdopts is the pointer to the allocated struct to be filled.
+ * basesize is the sizeof(struct) that was passed to allocateReloptStruct.
+ * options, of length numoptions, is parseRelOptions' output.
+ * elems, of length numelems, is the table describing the allowed options.
+ * When validate is true, it is expected that all options appear in elems.
  */
 void
-fillRelOptions(void *rdopts, Size basesize, relopt_value *options,
-			   int numoptions, bool validate, relopt_parse_elt *elems,
-			   int numelems)
+fillRelOptions(void *rdopts, Size basesize,
+			   relopt_value *options, int numoptions,
+			   bool validate,
+			   const relopt_parse_elt *elems, int numelems)
 {
 	int		i;
 	int		offset = basesize;
@@ -1044,7 +1045,7 @@ fillRelOptions(void *rdopts, Size basesize, relopt_value *options,
 			}
 		}
 		if (validate && !found)
-			elog(ERROR, "storate parameter \"%s\" not found in parse table",
+			elog(ERROR, "reloption \"%s\" not found in parse table",
 				 options[i].gen->name);
 	}
 	SET_VARSIZE(rdopts, offset);
@@ -1061,7 +1062,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 	relopt_value   *options;
 	StdRdOptions   *rdopts;
 	int				numoptions;
-	relopt_parse_elt tab[] = {
+	static const relopt_parse_elt tab[] = {
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
 		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
 			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
