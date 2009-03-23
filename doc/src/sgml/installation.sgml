@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.319 2009/02/04 21:30:41 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.320 2009/03/23 01:52:38 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1305,9 +1305,10 @@ su - postgres
          <indexterm>
           <primary>DTrace</primary>
          </indexterm>
-         Compiles with support for the dynamic tracing tool DTrace.
-         Operating system support for DTrace is currently available in
-         Solaris and Mac OS X Leopard.
+         Compiles <productname>PostgreSQL</productname> with support for the
+         dynamic tracing tool DTrace.
+         <![%standalone-ignore[See <xref linkend="dynamic-trace">
+         for more information.]]>
         </para>
 
         <para>
@@ -1315,21 +1316,21 @@ su - postgres
          environment variable <envar>DTRACE</envar> can be set.  This
          will often be necessary because <command>dtrace</command> is
          typically installed under <filename>/usr/sbin</filename>,
-         which might not be in the path.  Additional command-line
-         options for the <command>dtrace</command> program can be
-         specified in the environment variable
-         <envar>DTRACEFLAGS</envar>.
+         which might not be in the path.
         </para>
 
         <para>
-         To include DTrace support in a 64-bit binary, specify
+         Extra command-line options for the <command>dtrace</command> program
+         can be specified in the environment variable
+         <envar>DTRACEFLAGS</envar>.  On Solaris,
+         to include DTrace support in a 64-bit binary, you must specify
          <literal>DTRACEFLAGS="-64"</> to configure.  For example,
          using the GCC compiler:
 <screen>
 ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
-</screen>            
+</screen>
          Using Sun's compiler:
-<screen>            
+<screen>
 ./configure CC='/opt/SUNWspro/bin/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64' ...
 </screen>
         </para>
@@ -2942,7 +2943,7 @@ LIBOBJS = snprintf.o
     <para>
      Yes, using DTrace is possible.  See <![%standalone-include[the
      documentation]]>
-     <![%standalone-ignore[<xref linkend="monitoring">]]> for further
+     <![%standalone-ignore[<xref linkend="dynamic-trace">]]> for further
      information.  You can also find more information in this
      article: <ulink url="http://blogs.sun.com/robertlor/entry/user_level_dtrace_probes_in"></ulink>.
     </para>
