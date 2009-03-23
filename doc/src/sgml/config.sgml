@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.211 2009/02/28 00:10:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.212 2009/03/23 15:14:14 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2177,7 +2177,7 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        Enables or disables the query planner's use of table constraints to
+        Controls the query planner's use of table constraints to
         optimize queries.
         The allowed values of <varname>constraint_exclusion</> are
         <literal>on</> (examine constraints for all tables),
