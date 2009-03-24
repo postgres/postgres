@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.251 2009/01/09 15:46:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.252 2009/03/24 21:12:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2546,8 +2546,8 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
 			if (list_length(new_pathkeys) > list_length(pathkeys))
 			{
 				/* this sort clause is actually significant */
-				*partColIdx[*partNumCols] = sortColIdx[scidx++];
-				*partOperators[*partNumCols] = sgc->eqop;
+				(*partColIdx)[*partNumCols] = sortColIdx[scidx++];
+				(*partOperators)[*partNumCols] = sgc->eqop;
 				(*partNumCols)++;
 				pathkeys = new_pathkeys;
 			}
@@ -2565,8 +2565,8 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
 			if (list_length(new_pathkeys) > list_length(pathkeys))
 			{
 				/* this sort clause is actually significant */
-				*ordColIdx[*ordNumCols] = sortColIdx[scidx++];
-				*ordOperators[*ordNumCols] = sgc->eqop;
+				(*ordColIdx)[*ordNumCols] = sortColIdx[scidx++];
+				(*ordOperators)[*ordNumCols] = sgc->eqop;
 				(*ordNumCols)++;
 				pathkeys = new_pathkeys;
 			}
