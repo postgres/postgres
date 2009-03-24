@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.19 2009/03/24 20:17:11 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.20 2009/03/24 22:06:03 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -245,7 +245,9 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 														&htup->t_self);
 
 	/* If we've maxed out our available memory, dump everything to the index */
-	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L)
+	/* Also dump if the tree seems to be getting too unbalanced */
+	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L ||
+		buildstate->accum.maxdepth > GIN_MAX_TREE_DEPTH)
 	{
 		ItemPointerData *list;
 		Datum		entry;

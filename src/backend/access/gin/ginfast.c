@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.1 2009/03/24 20:17:10 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.2 2009/03/24 22:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,9 +749,10 @@ ginInsertCleanup(Relation index, GinState *ginstate,
 		 * XXX using up maintenance_work_mem here is probably unreasonably
 		 * much, since vacuum might already be using that much.
 		 */
-		if ( GinPageGetOpaque(page)->rightlink == InvalidBlockNumber ||
-			 ( GinPageHasFullRow(page) &&
-			   accum.allocatedMemory > maintenance_work_mem * 1024L ) )
+		if (GinPageGetOpaque(page)->rightlink == InvalidBlockNumber ||
+			(GinPageHasFullRow(page) &&
+			 (accum.allocatedMemory >= maintenance_work_mem * 1024L ||
+			  accum.maxdepth > GIN_MAX_TREE_DEPTH)))
 		{
 			ItemPointerData    *list;
 			uint32      		nlist;
