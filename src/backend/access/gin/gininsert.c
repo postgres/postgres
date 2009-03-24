@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.5.2.1 2007/06/05 12:48:21 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.5.2.2 2009/03/24 22:06:32 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -241,7 +241,8 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 	 * we use only half maintenance_work_mem, because there is some leaks
 	 * during insertion and extract values
 	 */
-	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L / 2L)
+	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L / 2L ||
+		buildstate->accum.maxdepth > GIN_MAX_TREE_DEPTH)
 	{
 		ItemPointerData *list;
 		Datum		entry;
