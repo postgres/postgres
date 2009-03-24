@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.16.2.1 2008/04/22 17:54:19 teodor Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.16.2.2 2009/03/24 22:06:24 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -31,6 +31,14 @@
 #define GIN_EXTRACTQUERY_PROC		   3
 #define GIN_CONSISTENT_PROC			   4
 #define GINNProcs					   4
+
+/*
+ * Max depth allowed in search tree during bulk inserts.  This is to keep from
+ * degenerating to O(N^2) behavior when the tree is unbalanced due to sorted
+ * or nearly-sorted input.  (Perhaps it would be better to use a balanced-tree
+ * algorithm, but in common cases that would only add useless overhead.)
+ */
+#define GIN_MAX_TREE_DEPTH 100
 
 /*
  * Page opaque data in a inverted index page.
@@ -314,12 +322,9 @@ extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
 extern int	compareItemPointers(ItemPointer a, ItemPointer b);
-extern void
-MergeItemPointers(
-				  ItemPointerData *dst,
+extern void MergeItemPointers(ItemPointerData *dst,
 				  ItemPointerData *a, uint32 na,
-				  ItemPointerData *b, uint32 nb
-);
+				  ItemPointerData *b, uint32 nb);
 
 extern void GinDataPageAddItem(Page page, void *data, OffsetNumber offset);
 extern void PageDeletePostingItem(Page page, OffsetNumber offset);
