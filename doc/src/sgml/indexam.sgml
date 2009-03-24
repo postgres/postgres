@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.29 2009/03/05 23:06:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.30 2009/03/24 20:17:08 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -79,7 +79,7 @@
   </para>
 
   <para>
-   An individual index is defined by a 
+   An individual index is defined by a
    <link linkend="catalog-pg-class"><structname>pg_class</structname></link>
    entry that describes it as a physical relation, plus a
    <link linkend="catalog-pg-index"><structname>pg_index</structname></link>
@@ -240,6 +240,16 @@ amvacuumcleanup (IndexVacuumInfo *info,
   </para>
 
   <para>
+   As of <productname>PostgreSQL</productname> 8.4,
+   <function>amvacuumcleanup</> will also be called at completion of an
+   <command>ANALYZE</> operation.  In this case <literal>stats</> is always
+   NULL and any return value will be ignored.  This case can be distinguished
+   by checking <literal>info-&gt;analyze_only</literal>.  It is recommended
+   that the access method do nothing except post-insert cleanup in such a
+   call, and that only in an autovacuum worker process.
+  </para>
+
+  <para>
 <programlisting>
 void
 amcostestimate (PlannerInfo *root,
@@ -344,7 +354,8 @@ amgetbitmap (IndexScanDesc scan,
 </programlisting>
    Fetch all tuples in the given scan and add them to the caller-supplied
    TIDBitmap (that is, OR the set of tuple IDs into whatever set is already
-   in the bitmap).  The number of tuples fetched is returned. 
+   in the bitmap).  The number of tuples fetched is returned (this might be
+   just an approximate count, for instance some AMs do not detect duplicates).
    While inserting tuple IDs into the bitmap, <function>amgetbitmap</> can
    indicate that rechecking of the scan conditions is required for specific
    tuple IDs.  This is analogous to the <literal>xs_recheck</> output parameter
@@ -521,14 +532,14 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   Instead of using <function>amgettuple</>, an index scan can be done with 
+   Instead of using <function>amgettuple</>, an index scan can be done with
    <function>amgetbitmap</> to fetch all tuples in one call.  This can be
    noticeably more efficient than <function>amgettuple</> because it allows
    avoiding lock/unlock cycles within the access method.  In principle
    <function>amgetbitmap</> should have the same effects as repeated
    <function>amgettuple</> calls, but we impose several restrictions to
-   simplify matters.  First of all, <function>amgetbitmap</> returns all 
-   tuples at once and marking or restoring scan positions isn't 
+   simplify matters.  First of all, <function>amgetbitmap</> returns all
+   tuples at once and marking or restoring scan positions isn't
    supported. Secondly, the tuples are returned in a bitmap which doesn't
    have any specific ordering, which is why <function>amgetbitmap</> doesn't
    take a <literal>direction</> argument.  Finally, <function>amgetbitmap</>
@@ -572,7 +583,7 @@ amrestrpos (IndexScanDesc scan);
    Aside from the index's own internal consistency requirements, concurrent
    updates create issues about consistency between the parent table (the
    <firstterm>heap</>) and the index.  Because
-   <productname>PostgreSQL</productname> separates accesses 
+   <productname>PostgreSQL</productname> separates accesses
    and updates of the heap from those of the index, there are windows in
    which the index might be inconsistent with the heap.  We handle this problem
    with the following rules:
@@ -701,7 +712,7 @@ amrestrpos (IndexScanDesc scan);
    no error should be raised.  (This case cannot occur during the
    ordinary scenario of inserting a row that's just been created by
    the current transaction.  It can happen during
-   <command>CREATE UNIQUE INDEX CONCURRENTLY</>, however.) 
+   <command>CREATE UNIQUE INDEX CONCURRENTLY</>, however.)
   </para>
 
   <para>

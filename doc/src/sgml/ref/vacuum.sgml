@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.54 2008/12/11 18:16:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.55 2009/03/24 20:17:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -158,6 +158,13 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
 
    <para>
     <command>VACUUM</> cannot be executed inside a transaction block.
+   </para>
+
+   <para>
+    For tables with <acronym>GIN</> indexes, <command>VACUUM</command> (in
+    any form) also completes any pending index insertions, by moving pending
+    index entries to the appropriate places in the main <acronym>GIN</> index
+    structure.  See <xref linkend="gin-fast-update"> for details.
    </para>
 
    <para>

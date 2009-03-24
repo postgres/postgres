@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.47 2009/01/07 22:40:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.48 2009/03/24 20:17:08 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -3224,12 +3224,14 @@ SELECT plainto_tsquery('supernovae stars');
     </listitem>
     <listitem>
      <para>
-      GIN indexes are about ten times slower to update than GiST
+      GIN indexes are moderately slower to update than GiST indexes, but
+      about 10 times slower if fast-update support was disabled
+      (see <xref linkend="gin-fast-update"> for details)
      </para>
     </listitem>
     <listitem>
      <para>
-      GIN indexes are two-to-three times larger than GiST
+      GIN indexes are two-to-three times larger than GiST indexes
      </para>
     </listitem>
    </itemizedlist>

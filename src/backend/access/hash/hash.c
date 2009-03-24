@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.108 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.109 2009/03/24 20:17:11 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -647,6 +647,7 @@ hashvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber num_pages;
 
 	/* If hashbulkdelete wasn't called, return NULL signifying no change */
+	/* Note: this covers the analyze_only case too */
 	if (stats == NULL)
 		PG_RETURN_POINTER(NULL);
 

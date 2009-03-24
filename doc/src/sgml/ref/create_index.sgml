@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.70 2009/02/02 19:31:38 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.71 2009/03/24 20:17:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -294,6 +294,37 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
 
    </variablelist>
 
+   <para>
+    <literal>GIN</literal> indexes accept a different parameter:
+   </para>
+
+   <variablelist>
+
+   <varlistentry>
+    <term><literal>FASTUPDATE</></term>
+    <listitem>
+    <para>
+     This setting controls usage of the fast update technique described in
+     <xref linkend="gin-fast-update">.  It is a Boolean parameter:
+     <literal>ON</> enables fast update, <literal>OFF</> disables it.
+     (Alternative spellings of <literal>ON</> and <literal>OFF</> are
+     allowed as described in <xref linkend="config-setting">.)  The
+     default is <literal>ON</>.
+    </para>
+
+    <note>
+     <para>
+      Turning <literal>FASTUPDATE</> off via <command>ALTER INDEX</> prevents
+      future insertions from going into the list of pending index entries,
+      but does not in itself flush previous entries.  You might want to
+      <command>VACUUM</> the table afterward to ensure the pending list is
+      emptied.
+     </para>
+    </note>
+    </listitem>
+   </varlistentry>
+
+   </variablelist>
   </refsect2>
 
   <refsect2 id="SQL-CREATEINDEX-CONCURRENTLY">
@@ -498,6 +529,13 @@ CREATE INDEX title_idx_nulls_low ON films (title NULLS FIRST);
    To create an index with non-default fill factor:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title) WITH (fillfactor = 70);
+</programlisting>
+  </para>
+
+  <para>
+   To create a <acronym>GIN</> index with fast updates disabled:
+<programlisting>
+CREATE INDEX gin_idx ON documents_table (locations) WITH (fastupdate = off);
 </programlisting>
   </para>
 

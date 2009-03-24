@@ -32,7 +32,7 @@
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.17 2009/01/10 21:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.18 2009/03/24 20:17:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,6 +310,22 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 }
 
 /*
+ * tbm_add_page - add a whole page to a TIDBitmap
+ *
+ * This causes the whole page to be reported (with the recheck flag)
+ * when the TIDBitmap is scanned.
+ */
+void
+tbm_add_page(TIDBitmap *tbm, BlockNumber pageno)
+{
+	/* Enter the page in the bitmap, or mark it lossy if already present */
+	tbm_mark_page_lossy(tbm, pageno);
+	/* If we went over the memory limit, lossify some more pages */
+	if (tbm->nentries > tbm->maxentries)
+		tbm_lossify(tbm);
+}
+
+/*
  * tbm_union - set union
  *
  * a is modified in-place, b is not changed
@@ -496,7 +512,7 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 	{
 		/*
 		 * Some of the tuples in 'a' might not satisfy the quals for 'b',
-		 * but because the page 'b' is lossy, we don't know which ones. 
+		 * but because the page 'b' is lossy, we don't know which ones.
 		 * Therefore we mark 'a' as requiring rechecks, to indicate that
 		 * at most those tuples set in 'a' are matches.
 		 */

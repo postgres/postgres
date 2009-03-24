@@ -4,11 +4,9 @@
  *
  *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.28 2009/01/10 21:08:36 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.29 2009/03/24 20:17:14 tgl Exp $
  *--------------------------------------------------------------------------
  */
-
-
 #ifndef GIN_H
 #define GIN_H
 
@@ -16,11 +14,6 @@
 #include "access/itup.h"
 #include "access/xlog.h"
 #include "fmgr.h"
-#include "nodes/tidbitmap.h"
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/off.h"
-#include "storage/relfilenode.h"
 
 
 /*
@@ -43,20 +36,52 @@
 typedef struct GinPageOpaqueData
 {
 	BlockNumber rightlink;		/* next page if any */
-	OffsetNumber maxoff;		/* number entries on GIN_DATA page: number of
+	OffsetNumber maxoff;		/* number entries on GIN_DATA page; number of
 								 * heap ItemPointer on GIN_DATA|GIN_LEAF page
 								 * and number of records on GIN_DATA &
-								 * ~GIN_LEAF page */
+								 * ~GIN_LEAF page. On GIN_LIST page, number of
+								 * heap tuples. */
 	uint16		flags;			/* see bit definitions below */
 } GinPageOpaqueData;
 
 typedef GinPageOpaqueData *GinPageOpaque;
 
-#define GIN_ROOT_BLKNO	(0)
-
 #define GIN_DATA		  (1 << 0)
 #define GIN_LEAF		  (1 << 1)
 #define GIN_DELETED		  (1 << 2)
+#define GIN_META		  (1 << 3)
+#define GIN_LIST		  (1 << 4)
+#define GIN_LIST_FULLROW  (1 << 5)   /* makes sense only on GIN_LIST page */
+
+/* Page numbers of fixed-location pages */
+#define GIN_METAPAGE_BLKNO	(0)
+#define GIN_ROOT_BLKNO		(1)
+
+typedef struct GinMetaPageData
+{
+	/*
+	 * Pointers to head and tail of pending list, which consists of GIN_LIST
+	 * pages.  These store fast-inserted entries that haven't yet been moved
+	 * into the regular GIN structure.
+	 */
+	BlockNumber			head;
+	BlockNumber         tail;
+
+	/*
+	 * Free space in bytes in the pending list's tail page.
+	 */
+	uint32				tailFreeSize;
+
+	/*
+	 * We store both number of pages and number of heap tuples
+	 * that are in the pending list.
+	 */
+	BlockNumber			nPendingPages;
+	int64				nPendingHeapTuples;
+} GinMetaPageData;
+
+#define GinPageGetMeta(p) \
+	((GinMetaPageData *) PageGetContents(p))
 
 /*
  * Works on page
@@ -68,6 +93,8 @@ typedef GinPageOpaqueData *GinPageOpaque;
 #define GinPageSetNonLeaf(page)    ( GinPageGetOpaque(page)->flags &= ~GIN_LEAF )
 #define GinPageIsData(page)    ( GinPageGetOpaque(page)->flags & GIN_DATA )
 #define GinPageSetData(page)   ( GinPageGetOpaque(page)->flags |= GIN_DATA )
+#define GinPageHasFullRow(page)    ( GinPageGetOpaque(page)->flags & GIN_LIST_FULLROW )
+#define GinPageSetFullRow(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST_FULLROW )
 
 #define GinPageIsDeleted(page) ( GinPageGetOpaque(page)->flags & GIN_DELETED)
 #define GinPageSetDeleted(page)    ( GinPageGetOpaque(page)->flags |= GIN_DELETED)
@@ -76,8 +103,8 @@ typedef GinPageOpaqueData *GinPageOpaque;
 #define GinPageRightMost(page) ( GinPageGetOpaque(page)->rightlink == InvalidBlockNumber)
 
 /*
- * Define our ItemPointerGet(BlockNumber|GetOffsetNumber)
- * to prevent asserts
+ * We use our own ItemPointerGet(BlockNumber|GetOffsetNumber)
+ * to avoid Asserts, since sometimes the ip_posid isn't "valid"
  */
 
 #define GinItemPointerGetBlockNumber(pointer) \
@@ -85,6 +112,22 @@ typedef GinPageOpaqueData *GinPageOpaque;
 
 #define GinItemPointerGetOffsetNumber(pointer) \
 	((pointer)->ip_posid)
+
+#define ItemPointerSetMin(p)  \
+	ItemPointerSet((p), (BlockNumber)0, (OffsetNumber)0)
+#define ItemPointerIsMin(p)  \
+	(ItemPointerGetOffsetNumber(p) == (OffsetNumber)0 && \
+	 ItemPointerGetBlockNumber(p) == (BlockNumber)0)
+#define ItemPointerSetMax(p)  \
+	ItemPointerSet((p), InvalidBlockNumber, (OffsetNumber)0xffff)
+#define ItemPointerIsMax(p)  \
+	(ItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
+	 ItemPointerGetBlockNumber(p) == InvalidBlockNumber)
+#define ItemPointerSetLossyPage(p, b)  \
+	ItemPointerSet((p), (b), (OffsetNumber)0xffff)
+#define ItemPointerIsLossyPage(p)  \
+	(ItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
+	 ItemPointerGetBlockNumber(p) != InvalidBlockNumber)
 
 typedef struct
 {
@@ -134,6 +177,26 @@ typedef struct
 	 - MAXALIGN(sizeof(ItemPointerData)) \
 	 - GinPageGetOpaque(page)->maxoff * GinSizeOfItem(page) \
 	 - MAXALIGN(sizeof(GinPageOpaqueData)))
+
+/*
+ * List pages
+ */
+#define GinListPageSize  \
+    ( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GinPageOpaqueData)) )
+
+/*
+ * Storage type for GIN's reloptions
+ */
+typedef struct GinOptions
+{
+	int32       vl_len_;        /* varlena header (do not touch directly!) */
+	bool		useFastUpdate;	/* use fast updates? */
+} GinOptions;
+
+#define GIN_DEFAULT_USE_FASTUPDATE  true
+#define GinGetUseFastUpdate(relation) \
+	((relation)->rd_options ? \
+	 ((GinOptions *) (relation)->rd_options)->useFastUpdate : GIN_DEFAULT_USE_FASTUPDATE)
 
 
 #define GIN_UNLOCK	BUFFER_LOCK_UNLOCK
@@ -234,14 +297,52 @@ typedef struct ginxlogDeletePage
 	BlockNumber rightLink;
 } ginxlogDeletePage;
 
+#define XLOG_GIN_UPDATE_META_PAGE 0x60
+
+typedef struct ginxlogUpdateMeta
+{
+	RelFileNode     node;
+	GinMetaPageData metadata;
+	BlockNumber     prevTail;
+	BlockNumber     newRightlink;
+	int32           ntuples; /* if ntuples > 0 then metadata.tail was updated
+							  * with that many tuples; else new sub list was
+							  * inserted */
+	/* array of inserted tuples follows */
+} ginxlogUpdateMeta;
+
+#define XLOG_GIN_INSERT_LISTPAGE  0x70
+
+typedef struct ginxlogInsertListPage
+{
+	RelFileNode     node;
+	BlockNumber     blkno;
+	BlockNumber     rightlink;
+	int32           ntuples;
+	/* array of inserted tuples follows */
+} ginxlogInsertListPage;
+
+#define XLOG_GIN_DELETE_LISTPAGE  0x80
+
+#define GIN_NDELETE_AT_ONCE 16
+typedef struct ginxlogDeleteListPages
+{
+	RelFileNode     node;
+	GinMetaPageData metadata;
+	int32           ndeleted;
+	BlockNumber     toDelete[GIN_NDELETE_AT_ONCE];
+} ginxlogDeleteListPages;
+
+
 /* ginutil.c */
 extern Datum ginoptions(PG_FUNCTION_ARGS);
 extern void initGinState(GinState *state, Relation index);
 extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);
 extern void GinInitPage(Page page, uint32 f, Size pageSize);
+extern void GinInitMetabuffer(Buffer b);
 extern int	compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b);
-extern int	compareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a, 
+extern int	compareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
 												  OffsetNumber attnum_b, Datum b);
 extern Datum *extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value,
 				int32 *nentries, bool *needUnique);
@@ -249,9 +350,14 @@ extern Datum *extractEntriesSU(GinState *ginstate, OffsetNumber attnum, Datum va
 
 extern Datum gin_index_getattr(GinState *ginstate, IndexTuple tuple);
 extern OffsetNumber gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple);
+
 /* gininsert.c */
 extern Datum ginbuild(PG_FUNCTION_ARGS);
 extern Datum gininsert(PG_FUNCTION_ARGS);
+extern void ginEntryInsert(Relation index, GinState *ginstate,
+						   OffsetNumber attnum, Datum value,
+						   ItemPointerData *items, uint32 nitem,
+						   bool isBuild);
 
 /* ginxlog.c */
 extern void gin_redo(XLogRecPtr lsn, XLogRecord *record);
@@ -319,7 +425,7 @@ extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack);
 extern void findParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
 
 /* ginentrypage.c */
-extern IndexTuple GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key, 
+extern IndexTuple GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key,
 										ItemPointerData *ipd, uint32 nipd);
 extern void prepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum,
 								Datum value, GinState *ginstate);
@@ -440,13 +546,7 @@ extern void newScanKey(IndexScanDesc scan);
 /* ginget.c */
 extern PGDLLIMPORT int GinFuzzySearchLimit;
 
-#define ItemPointerSetMax(p)	ItemPointerSet( (p), (BlockNumber)0xffffffff, (OffsetNumber)0xffff )
-#define ItemPointerIsMax(p) ( ItemPointerGetBlockNumber(p) == (BlockNumber)0xffffffff && ItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff )
-#define ItemPointerSetMin(p)	ItemPointerSet( (p), (BlockNumber)0, (OffsetNumber)0)
-#define ItemPointerIsMin(p) ( ItemPointerGetBlockNumber(p) == (BlockNumber)0 && ItemPointerGetOffsetNumber(p) == (OffsetNumber)0 )
-
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
-extern Datum gingettuple(PG_FUNCTION_ARGS);
 
 /* ginvacuum.c */
 extern Datum ginbulkdelete(PG_FUNCTION_ARGS);
@@ -485,8 +585,26 @@ typedef struct
 
 extern void ginInitBA(BuildAccumulator *accum);
 extern void ginInsertRecordBA(BuildAccumulator *accum,
-				  ItemPointer heapptr, 
+				  ItemPointer heapptr,
 				  OffsetNumber attnum, Datum *entries, int32 nentry);
 extern ItemPointerData *ginGetEntry(BuildAccumulator *accum, OffsetNumber *attnum, Datum *entry, uint32 *n);
 
-#endif
+/* ginfast.c */
+
+typedef struct GinTupleCollector
+{
+	IndexTuple	*tuples;
+	uint32		 ntuples;
+	uint32		 lentuples;
+	uint32		 sumsize;
+} GinTupleCollector;
+
+extern void ginHeapTupleFastInsert(Relation index, GinState *ginstate,
+								   GinTupleCollector *collector);
+extern uint32 ginHeapTupleFastCollect(Relation index, GinState *ginstate,
+					GinTupleCollector *collector,
+					OffsetNumber attnum, Datum value, ItemPointer item);
+extern void ginInsertCleanup(Relation index, GinState *ginstate,
+							 bool vac_delay, IndexBulkDeleteResult *stats);
+
+#endif /* GIN_H */

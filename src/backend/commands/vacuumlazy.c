@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.118 2009/01/22 19:25:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.119 2009/03/24 20:17:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -875,6 +875,7 @@ lazy_vacuum_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = false;
+	ivinfo.analyze_only = false;
 	ivinfo.message_level = elevel;
 	/* We don't yet know rel_tuples, so pass -1 */
 	ivinfo.num_heap_tuples = -1;
@@ -906,6 +907,7 @@ lazy_cleanup_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = false;
+	ivinfo.analyze_only = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = vacrelstats->rel_tuples;
 	ivinfo.strategy = vac_strategy;

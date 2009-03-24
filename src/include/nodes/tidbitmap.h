@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.9 2009/01/10 21:08:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.10 2009/03/24 20:17:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,7 @@ extern void tbm_free(TIDBitmap *tbm);
 extern void tbm_add_tuples(TIDBitmap *tbm,
 						   const ItemPointer tids, int ntids,
 						   bool recheck);
+extern void tbm_add_page(TIDBitmap *tbm, BlockNumber pageno);
 
 extern void tbm_union(TIDBitmap *a, const TIDBitmap *b);
 extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);

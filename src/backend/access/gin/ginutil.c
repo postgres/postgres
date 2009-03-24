@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.20 2009/01/05 17:14:28 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.21 2009/03/24 20:17:11 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -57,7 +57,7 @@ initGinState(GinState *state, Relation index)
 						CurrentMemoryContext);
 
 		/*
-		 * Check opclass capability to do partial match. 
+		 * Check opclass capability to do partial match.
 		 */
 		if ( index_getprocid(index, i+1, GIN_COMPARE_PARTIAL_PROC) != InvalidOid )
 		{
@@ -88,7 +88,7 @@ gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple)
 		bool    isnull;
 
 		/*
-		 * First attribute is always int16, so we can safely use any 
+		 * First attribute is always int16, so we can safely use any
 		 * tuple descriptor to obtain first attribute of tuple
 		 */
 		res = index_getattr(tuple, FirstOffsetNumber, ginstate->tupdesc[0],
@@ -213,6 +213,22 @@ GinInitBuffer(Buffer b, uint32 f)
 	GinInitPage(BufferGetPage(b), f, BufferGetPageSize(b));
 }
 
+void
+GinInitMetabuffer(Buffer b)
+{
+	GinMetaPageData	*metadata;
+	Page 			 page = BufferGetPage(b);
+
+	GinInitPage(page, GIN_META, BufferGetPageSize(b));
+
+	metadata = GinPageGetMeta(page);
+
+	metadata->head = metadata->tail = InvalidBlockNumber;
+	metadata->tailFreeSize = 0;
+	metadata->nPendingPages = 0;
+	metadata->nPendingHeapTuples = 0;
+}
+
 int
 compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b)
 {
@@ -315,10 +331,26 @@ ginoptions(PG_FUNCTION_ARGS)
 {
 	Datum		reloptions = PG_GETARG_DATUM(0);
 	bool		validate = PG_GETARG_BOOL(1);
-	bytea	   *result;
+	relopt_value *options;
+	GinOptions *rdopts;
+	int			numoptions;
+	static const relopt_parse_elt tab[] = {
+		{"fastupdate", RELOPT_TYPE_BOOL, offsetof(GinOptions, useFastUpdate)}
+	};
 
-	result = default_reloptions(reloptions, validate, RELOPT_KIND_GIN);
-	if (result)
-		PG_RETURN_BYTEA_P(result);
-	PG_RETURN_NULL();
+	options = parseRelOptions(reloptions, validate, RELOPT_KIND_GIN,
+							  &numoptions);
+
+	/* if none set, we're done */
+	if (numoptions == 0)
+		PG_RETURN_NULL();
+
+	rdopts = allocateReloptStruct(sizeof(GinOptions), options, numoptions);
+
+	fillRelOptions((void *) rdopts, sizeof(GinOptions), options, numoptions,
+					validate, tab, lengthof(tab));
+
+	pfree(options);
+
+	PG_RETURN_BYTEA_P(rdopts);
 }

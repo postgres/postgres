@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.61 2009/03/05 23:06:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.62 2009/03/24 20:17:15 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -118,7 +118,7 @@ DESCR("hash index access method");
 DATA(insert OID = 783 (  gist	0 7 f f f t t t t t t 0 gistinsert gistbeginscan gistgettuple gistgetbitmap gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistvacuumcleanup gistcostestimate gistoptions ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783
-DATA(insert OID = 2742 (  gin	0 5 f f f t t f f t f 0 gininsert ginbeginscan gingettuple gingetbitmap ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ginoptions ));
+DATA(insert OID = 2742 (  gin	0 5 f f f t t f f t f 0 gininsert ginbeginscan - gingetbitmap ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ginoptions ));
 DESCR("GIN index access method");
 #define GIN_AM_OID 2742
 

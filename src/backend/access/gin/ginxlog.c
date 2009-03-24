@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.17 2009/01/20 18:59:36 heikki Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.18 2009/03/24 20:17:11 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -71,20 +71,30 @@ static void
 ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 {
 	RelFileNode *node = (RelFileNode *) XLogRecGetData(record);
-	Buffer		buffer;
+	Buffer		RootBuffer, MetaBuffer;
 	Page		page;
 
-	buffer = XLogReadBuffer(*node, GIN_ROOT_BLKNO, true);
-	Assert(BufferIsValid(buffer));
-	page = (Page) BufferGetPage(buffer);
+	MetaBuffer = XLogReadBuffer(*node, GIN_METAPAGE_BLKNO, true);
+	Assert(BufferIsValid(MetaBuffer));
+	GinInitMetabuffer(MetaBuffer);
 
-	GinInitBuffer(buffer, GIN_LEAF);
+	page = (Page) BufferGetPage(MetaBuffer);
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+
+	RootBuffer = XLogReadBuffer(*node, GIN_ROOT_BLKNO, true);
+	Assert(BufferIsValid(RootBuffer));
+	page = (Page) BufferGetPage(RootBuffer);
+
+	GinInitBuffer(RootBuffer, GIN_LEAF);
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
 
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
+	MarkBufferDirty(MetaBuffer);
+	UnlockReleaseBuffer(MetaBuffer);
+	MarkBufferDirty(RootBuffer);
+	UnlockReleaseBuffer(RootBuffer);
 }
 
 static void
@@ -433,6 +443,174 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	}
 }
 
+static void
+ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
+{
+	ginxlogUpdateMeta *data = (ginxlogUpdateMeta*) XLogRecGetData(record);
+	Buffer		metabuffer;
+	Page		metapage;
+
+	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
+	metapage = BufferGetPage(metabuffer);
+
+	if (!XLByteLE(lsn, PageGetLSN(metapage)))
+	{
+		memcpy( GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
+		PageSetLSN(metapage, lsn);
+		PageSetTLI(metapage, ThisTimeLineID);
+		MarkBufferDirty(metabuffer);
+	}
+
+	if ( data->ntuples > 0 )
+	{
+		/*
+		 * insert into tail page
+		 */
+		if (!(record->xl_info & XLR_BKP_BLOCK_1))
+		{
+			Buffer 	buffer = XLogReadBuffer(data->node, data->metadata.tail, false);
+			Page 	page = BufferGetPage(buffer);
+
+			if ( !XLByteLE(lsn, PageGetLSN(page)))
+			{
+				OffsetNumber l, off = (PageIsEmpty(page)) ? FirstOffsetNumber :
+						OffsetNumberNext(PageGetMaxOffsetNumber(page));
+				int				i, tupsize;
+				IndexTuple		tuples = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogUpdateMeta));
+
+				for(i=0; i<data->ntuples; i++)
+				{
+					tupsize = IndexTupleSize(tuples);
+
+					l = PageAddItem(page, (Item)tuples, tupsize, off, false, false);
+
+					if (l == InvalidOffsetNumber)
+						elog(ERROR, "failed to add item to index page");
+
+					tuples = (IndexTuple)( ((char*)tuples) + tupsize );
+				}
+
+				/*
+				 * Increase counter of heap tuples
+				 */
+				GinPageGetOpaque(page)->maxoff++;
+
+				PageSetLSN(page, lsn);
+				PageSetTLI(page, ThisTimeLineID);
+				MarkBufferDirty(buffer);
+			}
+			UnlockReleaseBuffer(buffer);
+		}
+	}
+	else if ( data->prevTail != InvalidBlockNumber )
+	{
+		/*
+		 * New tail
+		 */
+
+		Buffer 	buffer = XLogReadBuffer(data->node, data->prevTail, false);
+		Page 	page = BufferGetPage(buffer);
+
+		if ( !XLByteLE(lsn, PageGetLSN(page)))
+		{
+			GinPageGetOpaque(page)->rightlink = data->newRightlink;
+
+			PageSetLSN(page, lsn);
+			PageSetTLI(page, ThisTimeLineID);
+			MarkBufferDirty(buffer);
+		}
+		UnlockReleaseBuffer(buffer);
+	}
+
+	UnlockReleaseBuffer(metabuffer);
+}
+
+static void
+ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
+{
+	ginxlogInsertListPage *data = (ginxlogInsertListPage*) XLogRecGetData(record);
+	Buffer			buffer;
+	Page			page;
+	OffsetNumber 	l, off = FirstOffsetNumber;
+	int				i, tupsize;
+	IndexTuple      tuples = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsertListPage));
+
+	if (record->xl_info & XLR_BKP_BLOCK_1)
+		return;
+
+	buffer = XLogReadBuffer(data->node, data->blkno, true);
+	page = BufferGetPage(buffer);
+
+	GinInitBuffer(buffer, GIN_LIST);
+	GinPageGetOpaque(page)->rightlink = data->rightlink;
+	if ( data->rightlink == InvalidBlockNumber )
+	{
+		/* tail of sublist */
+		GinPageSetFullRow(page);
+		GinPageGetOpaque(page)->maxoff = 1;
+	}
+	else
+	{
+		GinPageGetOpaque(page)->maxoff = 0;
+	}
+
+	for(i=0; i<data->ntuples; i++)
+	{
+		tupsize = IndexTupleSize(tuples);
+
+		l = PageAddItem(page, (Item)tuples, tupsize, off, false, false);
+
+		if (l == InvalidOffsetNumber)
+			elog(ERROR, "failed to add item to index page");
+
+		tuples = (IndexTuple)( ((char*)tuples) + tupsize );
+	}
+
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	MarkBufferDirty(buffer);
+
+	UnlockReleaseBuffer(buffer);
+}
+
+static void
+ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
+{
+	ginxlogDeleteListPages *data = (ginxlogDeleteListPages*) XLogRecGetData(record);
+	Buffer		metabuffer;
+	Page		metapage;
+	int 		i;
+
+	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
+	metapage = BufferGetPage(metabuffer);
+
+	if (!XLByteLE(lsn, PageGetLSN(metapage)))
+	{
+		memcpy( GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
+		PageSetLSN(metapage, lsn);
+		PageSetTLI(metapage, ThisTimeLineID);
+		MarkBufferDirty(metabuffer);
+	}
+
+	for(i=0; i<data->ndeleted; i++)
+	{
+		Buffer 	buffer = XLogReadBuffer(data->node,data->toDelete[i],false);
+		Page	page = BufferGetPage(buffer);
+
+		if ( !XLByteLE(lsn, PageGetLSN(page)))
+		{
+			GinPageGetOpaque(page)->flags = GIN_DELETED;
+
+			PageSetLSN(page, lsn);
+			PageSetTLI(page, ThisTimeLineID);
+			MarkBufferDirty(buffer);
+		}
+
+		UnlockReleaseBuffer(buffer);
+	}
+	UnlockReleaseBuffer(metabuffer);
+}
+
 void
 gin_redo(XLogRecPtr lsn, XLogRecord *record)
 {
@@ -460,6 +638,15 @@ gin_redo(XLogRecPtr lsn, XLogRecord *record)
 			break;
 		case XLOG_GIN_DELETE_PAGE:
 			ginRedoDeletePage(lsn, record);
+			break;
+		case XLOG_GIN_UPDATE_META_PAGE:
+			ginRedoUpdateMetapage(lsn, record);
+			break;
+		case XLOG_GIN_INSERT_LISTPAGE:
+			ginRedoInsertListPage(lsn, record);
+			break;
+		case XLOG_GIN_DELETE_LISTPAGE: 
+			ginRedoDeleteListPages(lsn, record);
 			break;
 		default:
 			elog(PANIC, "gin_redo: unknown op code %u", info);
@@ -515,6 +702,18 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 		case XLOG_GIN_DELETE_PAGE:
 			appendStringInfo(buf, "Delete page, ");
 			desc_node(buf, ((ginxlogDeletePage *) rec)->node, ((ginxlogDeletePage *) rec)->blkno);
+			break;
+		case XLOG_GIN_UPDATE_META_PAGE:
+			appendStringInfo(buf, "Update metapage, ");
+			desc_node(buf, ((ginxlogUpdateMeta *) rec)->node, ((ginxlogUpdateMeta *) rec)->metadata.tail); 
+			break;
+		case XLOG_GIN_INSERT_LISTPAGE:
+			appendStringInfo(buf, "Insert new list page, ");
+			desc_node(buf, ((ginxlogInsertListPage *) rec)->node, ((ginxlogInsertListPage *) rec)->blkno); 
+			break;
+		case XLOG_GIN_DELETE_LISTPAGE:
+			appendStringInfo(buf, "Delete list pages (%d), ", ((ginxlogDeleteListPages *) rec)->ndeleted);
+			desc_node(buf, ((ginxlogDeleteListPages *) rec)->node, ((ginxlogDeleteListPages *) rec)->metadata.head); 
 			break;
 		default:
 			elog(PANIC, "gin_desc: unknown op code %u", info);

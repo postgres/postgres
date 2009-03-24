@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.133 2009/01/22 20:16:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.134 2009/03/24 20:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,6 +495,28 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 
 	/* We skip to here if there were no analyzable columns */
 cleanup:
+
+	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
+	if (!vacstmt->vacuum)
+	{
+		for (ind = 0; ind < nindexes; ind++)
+		{
+			IndexBulkDeleteResult *stats;
+			IndexVacuumInfo ivinfo;
+
+			ivinfo.index = Irel[ind];
+			ivinfo.vacuum_full = false;
+			ivinfo.analyze_only = true;
+			ivinfo.message_level = elevel;
+			ivinfo.num_heap_tuples = -1; /* not known for sure */
+			ivinfo.strategy = vac_strategy;
+
+			stats = index_vacuum_cleanup(&ivinfo, NULL);
+
+			if (stats)
+				pfree(stats);
+		}
+	}
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);

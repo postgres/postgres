@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.14 2009/01/01 17:23:34 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.15 2009/03/24 20:17:10 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -196,6 +196,8 @@ ginInsertRecordBA(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber att
 
 	if (nentry <= 0)
 		return;
+
+	Assert(ItemPointerIsValid(heapptr) && attnum >= FirstOffsetNumber);
 
 	i = nentry - 1;
 	for (; i > 0; i >>= 1)

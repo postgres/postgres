@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.23 2009/03/23 16:36:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.24 2009/03/24 20:17:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,14 @@ static relopt_bool boolRelOpts[] =
 			"autovacuum_enabled",
 			"Enables autovacuum in this relation",
 			RELOPT_KIND_HEAP
+		},
+		true
+	},
+	{
+		{
+			"fastupdate",
+			"Enables \"fast update\" feature for this GIN index",
+			RELOPT_KIND_GIN
 		},
 		true
 	},

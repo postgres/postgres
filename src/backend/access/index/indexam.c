@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.112 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.113 2009/03/24 20:17:12 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -647,7 +647,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
  * item slot could have been replaced by a newer tuple by the time we get
  * to it.
  *
- * Returns the number of matching tuples found.
+ * Returns the number of matching tuples found.  (Note: this might be only
+ * approximate, so it should only be used for statistical purposes.)
  * ----------------
  */
 int64

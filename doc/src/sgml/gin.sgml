@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.16 2008/07/22 22:05:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.17 2009/03/24 20:17:07 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -100,11 +100,11 @@
        to consult <literal>n</> to determine the data type of
        <literal>query</> and the key values that need to be extracted.
        The number of returned keys must be stored into <literal>*nkeys</>.
-       If the query contains no keys then <function>extractQuery</> 
+       If the query contains no keys then <function>extractQuery</>
        should store 0 or -1 into <literal>*nkeys</>, depending on the
        semantics of the operator.  0 means that every
-       value matches the <literal>query</> and a sequential scan should be 
-       produced.  -1 means nothing can match the <literal>query</>. 
+       value matches the <literal>query</> and a sequential scan should be
+       produced.  -1 means nothing can match the <literal>query</>.
        <literal>pmatch</> is an output argument for use when partial match
        is supported.  To use it, <function>extractQuery</> must allocate
        an array of <literal>*nkeys</> booleans and store its address at
@@ -188,9 +188,47 @@
   list of heap pointers (PL, posting list) if the list is small enough.
  </para>
 
+ <sect2 id="gin-fast-update">
+  <title>GIN fast update technique</title>
+
+  <para>
+   Updating a <acronym>GIN</acronym> index tends to be slow because of the
+   intrinsic nature of inverted indexes: inserting or updating one heap row
+   can cause many inserts into the index (one for each key extracted
+   from the indexed value). As of <productname>PostgreSQL</productname> 8.4,
+   <acronym>GIN</> is capable of postponing much of this work by inserting
+   new tuples into a temporary, unsorted list of pending entries.
+   When the table is vacuumed, or if the pending list becomes too large
+   (larger than <xref linkend="guc-work-mem">), the entries are moved to the
+   main <acronym>GIN</acronym> data structure using the same bulk insert
+   techniques used during initial index creation.  This greatly improves
+   <acronym>GIN</acronym> index update speed, even counting the additional
+   vacuum overhead.  Moreover the overhead can be done by a background
+   process instead of in foreground query processing.
+  </para>
+
+  <para>
+   The main disadvantage of this approach is that searches must scan the list
+   of pending entries in addition to searching the regular index, and so
+   a large list of pending entries will slow searches significantly.
+   Another disadvantage is that, while most updates are fast, an update
+   that causes the pending list to become <quote>too large</> will incur an
+   immediate cleanup cycle and thus be much slower than other updates.
+   Proper use of autovacuum can minimize both of these problems.
+  </para>
+
+  <para>
+   If consistent response time is more important than update speed,
+   use of pending entries can be disabled by turning off the
+   <literal>FASTUPDATE</literal> storage parameter for a
+   <acronym>GIN</acronym> index.  See <xref linkend="sql-createindex"
+   endterm="sql-createindex-title"> for details.
+  </para>
+ </sect2>
+
  <sect2 id="gin-partial-match">
   <title>Partial match algorithm</title>
-  
+
   <para>
    GIN can support <quote>partial match</> queries, in which the query
    does not determine an exact match for one or more keys, but the possible
@@ -205,14 +243,6 @@
    to be searched, or greater than zero if the index key is past the range
    that could match.
   </para>
-
-  <para>
-   During a partial-match scan, all <literal>itemPointer</>s for matching keys
-   are OR'ed into a <literal>TIDBitmap</>.
-   The scan fails if the <literal>TIDBitmap</> becomes lossy.
-   In this case an error message will be reported with advice
-   to increase <literal>work_mem</>.
-  </para>
  </sect2>
 
 </sect1>
@@ -225,10 +255,17 @@
    <term>Create vs insert</term>
    <listitem>
     <para>
-     In most cases, insertion into a <acronym>GIN</acronym> index is slow
+     Insertion into a <acronym>GIN</acronym> index can be slow
      due to the likelihood of many keys being inserted for each value.
      So, for bulk insertions into a table it is advisable to drop the GIN
      index and recreate it after finishing bulk insertion.
+    </para>
+
+    <para>
+     As of <productname>PostgreSQL</productname> 8.4, this advice is less
+     necessary since delayed indexing is used (see <xref
+     linkend="gin-fast-update"> for details).  But for very large updates
+     it may still be best to drop and recreate the index.
     </para>
    </listitem>
   </varlistentry>
@@ -240,6 +277,23 @@
      Build time for a <acronym>GIN</acronym> index is very sensitive to
      the <varname>maintenance_work_mem</> setting; it doesn't pay to
      skimp on work memory during index creation.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><xref linkend="guc-work-mem"></term>
+   <listitem>
+    <para>
+     During a series of insertions into an existing <acronym>GIN</acronym>
+     index that has <literal>FASTUPDATE</> enabled, the system will clean up
+     the pending-entry list whenever it grows larger than
+     <varname>work_mem</>.  To avoid fluctuations in observed response time,
+     it's desirable to have pending-list cleanup occur in the background
+     (i.e., via autovacuum).  Foreground cleanup operations can be avoided by
+     increasing <varname>work_mem</> or making autovacuum more aggressive.
+     However, enlarging <varname>work_mem</> means that if a foreground
+     cleanup does occur, it will take even longer.
     </para>
    </listitem>
   </varlistentry>
@@ -311,8 +365,7 @@
   <function>extractQuery</function> must convert an unrestricted search into
   a partial-match query that will scan the whole index.  This is inefficient
   but might be necessary to avoid corner-case failures with operators such
-  as LIKE.  Note however that failure could still occur if the intermediate
-  <literal>TIDBitmap</> becomes lossy.
+  as <literal>LIKE</>.
  </para>
 </sect1>
 

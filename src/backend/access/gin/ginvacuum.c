@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.27 2009/01/01 17:23:34 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.28 2009/03/24 20:17:11 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -19,8 +19,8 @@
 #include "catalog/storage.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
+#include "postmaster/autovacuum.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 
@@ -593,18 +593,24 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	BlockNumber rootOfPostingTree[BLCKSZ / (sizeof(IndexTupleData) + sizeof(ItemId))];
 	uint32		nRoot;
 
-	/* first time through? */
-	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-	/* we'll re-count the tuples each time */
-	stats->num_index_tuples = 0;
-
 	gvs.index = index;
-	gvs.result = stats;
 	gvs.callback = callback;
 	gvs.callback_state = callback_state;
 	gvs.strategy = info->strategy;
 	initGinState(&gvs.ginstate, index);
+
+	/* first time through? */
+	if (stats == NULL)
+	{
+		/* Yes, so initialize stats to zeroes */
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		/* and cleanup any pending inserts */
+		ginInsertCleanup(index, &gvs.ginstate, true, stats);
+	}
+
+	/* we'll re-count the tuples each time */
+	stats->num_index_tuples = 0;
+	gvs.result = stats;
 
 	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, info->strategy);
@@ -702,10 +708,32 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber totFreePages;
 	BlockNumber lastBlock = GIN_ROOT_BLKNO,
 				lastFilledBlock = GIN_ROOT_BLKNO;
+	GinState	ginstate;
 
-	/* Set up all-zero stats if ginbulkdelete wasn't called */
+	/*
+	 * In an autovacuum analyze, we want to clean up pending insertions.
+	 * Otherwise, an ANALYZE-only call is a no-op.
+	 */
+	if (info->analyze_only)
+	{
+		if (IsAutoVacuumWorkerProcess())
+		{
+			initGinState(&ginstate, index);
+			ginInsertCleanup(index, &ginstate, true, stats);
+		}
+		PG_RETURN_POINTER(stats);
+	}
+
+	/* 
+	 * Set up all-zero stats and cleanup pending inserts
+	 * if ginbulkdelete wasn't called
+	 */
 	if (stats == NULL)
+	{
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		initGinState(&ginstate, index);
+		ginInsertCleanup(index, &ginstate, true, stats);
+	}
 
 	/*
 	 * XXX we always report the heap tuple count as the number of index

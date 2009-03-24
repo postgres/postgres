@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.537 2009/02/24 10:06:34 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.538 2009/03/24 20:17:15 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4184,8 +4184,6 @@ DATA(insert OID = 2592 (  gist_circle_compress	PGNSP PGUID 12 1 0 0 f f f t f i 
 DESCR("GiST support");
 
 /* GIN */
-DATA(insert OID = 2730 (  gingettuple	   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  gingettuple _null_ _null_ _null_ ));
-DESCR("gin(internal)");
 DATA(insert OID = 2731 (  gingetbitmap	   PGNSP PGUID 12 1 0 0 f f f t f v 2 0 20 "2281 2281" _null_ _null_ _null_ _null_  gingetbitmap _null_ _null_ _null_ ));
 DESCR("gin(internal)");
 DATA(insert OID = 2732 (  gininsert		   PGNSP PGUID 12 1 0 0 f f f t f v 6 0 16 "2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	gininsert _null_ _null_ _null_ ));
