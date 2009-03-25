@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.183 2009/03/07 21:28:00 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.184 2009/03/25 14:12:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,7 +578,7 @@ check_db(const char *dbname, const char *role, char *param_str)
 #define INVALID_AUTH_OPTION(optname, validmethods) do {\
 	ereport(LOG, \
 			(errcode(ERRCODE_CONFIG_FILE_ERROR), \
-			 errmsg("authentication option '%s' is only valid for authentication methods '%s'", \
+			 errmsg("authentication option \"%s\" is only valid for authentication methods \"%s\"", \
 					optname, validmethods), \
 			 errcontext("line %d of configuration file \"%s\"", \
 					line_num, HbaFileName))); \
@@ -594,7 +594,7 @@ check_db(const char *dbname, const char *role, char *param_str)
 	if (argvar == NULL) {\
 		ereport(LOG, \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
-				 errmsg("authentication method '%s' requires argument '%s' to be set", \
+				 errmsg("authentication method \"%s\" requires argument \"%s\" to be set", \
 						authname, argname), \
 				 errcontext("line %d of configuration file \"%s\"", \
 						line_num, HbaFileName))); \
@@ -1024,7 +1024,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				{
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
-							 errmsg("invalid ldap port '%s'", c),
+							 errmsg("invalid LDAP port number: \"%s\"", c),
 							 errcontext("line %d of configuration file \"%s\"",
 										line_num, HbaFileName)));
 					return false;
@@ -1068,7 +1068,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("unknown authentication option name '%s'", token),
+						 errmsg("unknown authentication option name: \"%s\"", token),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
 				return false;
@@ -1488,7 +1488,7 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 			pg_regerror(r, &re, errstr, sizeof(errstr));
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-					 errmsg("invalid regular expression '%s': %s", file_ident_user+1, errstr)));
+					 errmsg("invalid regular expression \"%s\": %s", file_ident_user+1, errstr)));
 
 			pfree(wstr);
 			*error_p = true;
@@ -1510,7 +1510,7 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 				pg_regerror(r, &re, errstr, sizeof(errstr));
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("regular expression match for '%s' failed: %s", file_ident_user+1, errstr)));
+						 errmsg("regular expression match for \"%s\" failed: %s", file_ident_user+1, errstr)));
 				*error_p = true;
 			}
 
@@ -1526,7 +1526,7 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 			if (matches[1].rm_so < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("regular expression '%s' has no subexpressions as requested by backreference in '%s'",
+						 errmsg("regular expression \"%s\" has no subexpressions as requested by backreference in \"%s\"",
 								file_ident_user+1, file_pgrole)));
 			/* length: original length minus length of \1 plus length of match plus null terminator */
 			regexp_pgrole = palloc0(strlen(file_pgrole) - 2 + (matches[1].rm_eo-matches[1].rm_so) + 1);
@@ -1642,9 +1642,9 @@ check_usermap(const char *usermap_name,
 	if (!found_entry && !error)
 	{
 		ereport(LOG,
-				(errmsg("no match in usermap for user '%s' authenticated as '%s'",
+				(errmsg("no match in usermap for user \"%s\" authenticated as \"%s\"",
 						pg_role, auth_user),
-				 errcontext("usermap '%s'", usermap_name)));
+				 errcontext("usermap \"%s\"", usermap_name)));
 	}
 	return found_entry?STATUS_OK:STATUS_ERROR;
 }
