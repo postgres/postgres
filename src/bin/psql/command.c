@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.203 2009/02/26 16:02:38 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.204 2009/03/25 13:07:26 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -521,7 +521,7 @@ exec_command(const char *cmd,
 			if (!do_edit(0, query_buf, &edited))
 				status = PSQL_CMD_ERROR;
 			else if (!edited)
-				puts(_("No changes."));
+				puts(_("No changes"));
 			else
 				status = PSQL_CMD_NEWEDIT;
 		}
