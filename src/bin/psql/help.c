@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.142 2009/03/24 12:57:31 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.143 2009/03/25 13:14:17 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -85,7 +85,7 @@ usage(void)
 
 	printf(_("psql is the PostgreSQL interactive terminal.\n\n"));
 	printf(_("Usage:\n"));
-	printf(_("  psql [OPTIONS]... [DBNAME [USERNAME]]\n\n"));
+	printf(_("  psql [OPTION]... [DBNAME [USERNAME]]\n\n"));
 
 	printf(_("General options:\n"));
 	/* Display default database */
@@ -166,110 +166,106 @@ slashUsage(unsigned short int pager)
 
 	/* if you add/remove a line here, change the row count above */
 
-	/*
-	 * if this " is the start of the string then it ought to end there to fit
-	 * in 80 columns >> "
-	 */
 	fprintf(output, _("General\n"));
-	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(output, _("  \\g [FILE] or ; execute query (and send results to file or |pipe)\n"));
-	fprintf(output, _("  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"));
-	fprintf(output, _("  \\q             quit psql\n"));
+	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
+	fprintf(output, _("  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"));
+	fprintf(output, _("  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"));
+	fprintf(output, _("  \\q                     quit psql\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Query Buffer\n"));
-	fprintf(output, _("  \\e [FILE]      edit the query buffer (or file) with external editor\n"));
-	fprintf(output, _("  \\p             show the contents of the query buffer\n"));
-	fprintf(output, _("  \\r             reset (clear) the query buffer\n"));
+	fprintf(output, _("  \\e [FILE]              edit the query buffer (or file) with external editor\n"));
+	fprintf(output, _("  \\p                     show the contents of the query buffer\n"));
+	fprintf(output, _("  \\r                     reset (clear) the query buffer\n"));
 #ifdef USE_READLINE
-	fprintf(output, _("  \\s [FILE]      display history or save it to file\n"));
+	fprintf(output, _("  \\s [FILE]              display history or save it to file\n"));
 #endif
-	fprintf(output, _("  \\w FILE        write query buffer to file\n"));
+	fprintf(output, _("  \\w FILE                write query buffer to file\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Input/Output\n"));
-	fprintf(output, _("  \\copy ...      perform SQL COPY with data stream to the client host\n"));
-	fprintf(output, _("  \\echo [STRING] write string to standard output\n"));
-	fprintf(output, _("  \\i FILE        execute commands from file\n"));
-	fprintf(output, _("  \\o [FILE]      send all query results to file or |pipe\n"));
-	fprintf(output, _("  \\qecho [STRING] write string to query output stream (see \\o)\n"));
+	fprintf(output, _("  \\copy ...              perform SQL COPY with data stream to the client host\n"));
+	fprintf(output, _("  \\echo [STRING]         write string to standard output\n"));
+	fprintf(output, _("  \\i FILE                execute commands from file\n"));
+	fprintf(output, _("  \\o [FILE]              send all query results to file or |pipe\n"));
+	fprintf(output, _("  \\qecho [STRING]        write string to query output stream (see \\o)\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
-	fprintf(output, _("  Modifiers: S = show system objects  + = Additional detail\n"));
-	fprintf(output, _("  \\l[+]                 list all databases\n"));
-	fprintf(output, _("  \\d[S+]                list tables, views, and sequences\n"));
-	fprintf(output, _("  \\d[S+]   NAME         describe table, view, sequence, or index\n"));
-	fprintf(output, _("  \\da[S]   [PATTERN]    list aggregate functions\n"));
-	fprintf(output, _("  \\db[+]   [PATTERN]    list tablespaces\n"));
-	fprintf(output, _("  \\dc[S]   [PATTERN]    list conversions\n"));
-	fprintf(output, _("  \\dC      [PATTERN]    list casts\n"));
-	fprintf(output, _("  \\dd[S]   [PATTERN]    show comments on objects\n"));
-	fprintf(output, _("  \\dD[S]   [PATTERN]    list domains\n"));
-	fprintf(output, _("  \\des[+]  [PATTERN]    list foreign servers\n"));
-	fprintf(output, _("  \\deu[+]  [PATTERN]    list user mappings\n"));
-	fprintf(output, _("  \\dew[+]  [PATTERN]    list foreign-data wrappers\n"));
-	fprintf(output, _("  \\df[S+]  [PATTERN]    list functions\n"));
-	fprintf(output, _("  \\dF[+]   [PATTERN]    list text search configurations\n"));
-	fprintf(output, _("  \\dFd[+]  [PATTERN]    list text search dictionaries\n"));
-	fprintf(output, _("  \\dFp[+]  [PATTERN]    list text search parsers\n"));
-	fprintf(output, _("  \\dFt[+]  [PATTERN]    list text search templates\n"));
-	fprintf(output, _("  \\dg      [PATTERN]    list roles (groups)\n"));
-	fprintf(output, _("  \\di[S+]  [PATTERN]    list indexes\n"));
-	fprintf(output, _("  \\dl                   list large objects, same as \\lo_list\n"));
-	fprintf(output, _("  \\dn[+]   [PATTERN]    list schemas\n"));
-	fprintf(output, _("  \\do[S]   [PATTERN]    list operators\n"));
-	fprintf(output, _("  \\dp      [PATTERN]    list table, view, and sequence access privileges\n"));
-	fprintf(output, _("   \\z      [PATTERN]    same as \\dp\n"));
-	fprintf(output, _("  \\ds[S+]  [PATTERN]    list sequences\n"));
-	fprintf(output, _("  \\dt[S+]  [PATTERN]    list tables\n"));
-	fprintf(output, _("  \\dT[S+]  [PATTERN]    list data types\n"));
-	fprintf(output, _("  \\du      [PATTERN]    list roles (users)\n"));
-	fprintf(output, _("  \\dv[S+]  [PATTERN]    list views\n"));
+	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
+	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
+	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
+	fprintf(output, _("  \\da[S]  [PATTERN]      list aggregate functions\n"));
+	fprintf(output, _("  \\db[+]  [PATTERN]      list tablespaces\n"));
+	fprintf(output, _("  \\dc[S]  [PATTERN]      list conversions\n"));
+	fprintf(output, _("  \\dC     [PATTERN]      list casts\n"));
+	fprintf(output, _("  \\dd[S]  [PATTERN]      show comments on objects\n"));
+	fprintf(output, _("  \\dD[S]  [PATTERN]      list domains\n"));
+	fprintf(output, _("  \\des[+] [PATTERN]      list foreign servers\n"));
+	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));
+	fprintf(output, _("  \\dew[+] [PATTERN]      list foreign-data wrappers\n"));
+	fprintf(output, _("  \\df[S+] [PATTERN]      list functions\n"));
+	fprintf(output, _("  \\dF[+]  [PATTERN]      list text search configurations\n"));
+	fprintf(output, _("  \\dFd[+] [PATTERN]      list text search dictionaries\n"));
+	fprintf(output, _("  \\dFp[+] [PATTERN]      list text search parsers\n"));
+	fprintf(output, _("  \\dFt[+] [PATTERN]      list text search templates\n"));
+	fprintf(output, _("  \\dg     [PATTERN]      list roles (groups)\n"));
+	fprintf(output, _("  \\di[S+] [PATTERN]      list indexes\n"));
+	fprintf(output, _("  \\dl                    list large objects, same as \\lo_list\n"));
+	fprintf(output, _("  \\dn[+]  [PATTERN]      list schemas\n"));
+	fprintf(output, _("  \\do[S]  [PATTERN]      list operators\n"));
+	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
+	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
+	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));
+	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));
+	fprintf(output, _("  \\du     [PATTERN]      list roles (users)\n"));
+	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
+	fprintf(output, _("  \\l[+]                  list all databases\n"));
+	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Formatting\n"));
-	fprintf(output, _("  \\a             toggle between unaligned and aligned output mode\n"));
-	fprintf(output, _("  \\C [STRING]    set table title, or unset if none\n"));
-	fprintf(output, _("  \\f [STRING]    show or set field separator for unaligned query output\n"));
-	fprintf(output, _("  \\H             toggle HTML output mode (currently %s)\n"),
+	fprintf(output, _("  \\a                     toggle between unaligned and aligned output mode\n"));
+	fprintf(output, _("  \\C [STRING]            set table title, or unset if none\n"));
+	fprintf(output, _("  \\f [STRING]            show or set field separator for unaligned query output\n"));
+	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(output, _("  \\pset NAME [VALUE]  set table output option\n"
-					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-					  "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
-	fprintf(output, _("  \\t [on|off]    show only rows (currently %s)\n"),
+	fprintf(output, _("  \\pset NAME [VALUE]     set table output option\n"
+					  "                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
+					  "                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
+	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
-	fprintf(output, _("  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"));
-	fprintf(output, _("  \\x [on|off]    toggle expanded output (currently %s)\n"),
+	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
+	fprintf(output, _("  \\x [on|off]            toggle expanded output (currently %s)\n"),
 			ON(pset.popt.topt.expanded));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Connection\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-			"                 connect to new database (currently \"%s\")\n"),
+					  "                         connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
-	fprintf(output, _("  \\encoding [ENCODING]  show or set client encoding\n"));
-	fprintf(output, _("  \\password [USERNAME]  securely change the password for a user\n"));
+	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
+	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
 	fprintf(output, "\n");
 
-	fprintf(output, _("External\n"));
-	fprintf(output, _("  \\cd [DIR]         change the current working directory\n"));
-	fprintf(output, _("  \\timing [on|off]  toggle timing of commands (currently %s)\n"),
+	fprintf(output, _("Operating System\n"));
+	fprintf(output, _("  \\cd [DIR]              change the current working directory\n"));
+	fprintf(output, _("  \\timing [on|off]       toggle timing of commands (currently %s)\n"),
 			ON(pset.timing));
-	fprintf(output, _("  \\! [COMMAND]      execute command in shell or start interactive shell\n"));
+	fprintf(output, _("  \\! [COMMAND]           execute command in shell or start interactive shell\n"));
 	fprintf(output, "\n");
 
-	fprintf(output, _("Variable\n"));
-	fprintf(output, _("  \\prompt [TEXT] NAME  prompt user to set internal variable\n"));
-	fprintf(output, _("  \\set [NAME [VALUE]]  set internal variable, or list all if no parameters\n"));
-	fprintf(output, _("  \\unset NAME          unset (delete) internal variable\n"));
+	fprintf(output, _("Variables\n"));
+	fprintf(output, _("  \\prompt [TEXT] NAME    prompt user to set internal variable\n"));
+	fprintf(output, _("  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"));
+	fprintf(output, _("  \\unset NAME            unset (delete) internal variable\n"));
 	fprintf(output, "\n");
 
-	fprintf(output, _("Large Object\n"));
+	fprintf(output, _("Large Objects\n"));
 	fprintf(output, _("  \\lo_export LOBOID FILE\n"
 					  "  \\lo_import FILE [COMMENT]\n"
 					  "  \\lo_list\n"
-					  "  \\lo_unlink LOBOID    large object operations\n"));
+					  "  \\lo_unlink LOBOID      large object operations\n"));
 
 	if (output != stdout)
 	{
