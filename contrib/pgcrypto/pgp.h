@@ -26,17 +26,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.4 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.5 2009/03/25 15:03:13 tgl Exp $
  */
 
-enum
+enum PGP_S2K_TYPE
 {
 	PGP_S2K_SIMPLE = 0,
 	PGP_S2K_SALTED = 1,
 	PGP_S2K_ISALTED = 3
-} PGP_S2K_TYPE;
+};
 
-enum
+enum PGP_PKT_TYPE
 {
 	PGP_PKT_RESERVED = 0,
 	PGP_PKT_PUBENCRYPTED_SESSKEY = 1,
@@ -56,18 +56,18 @@ enum
 	PGP_PKT_SYMENCRYPTED_DATA_MDC = 18,
 	PGP_PKT_MDC = 19,
 	PGP_PKT_PRIV_61 = 61		/* occurs in gpg secring */
-} PGP_PKT_TYPE;
+};
 
-enum
+enum PGP_PUB_ALGO_TYPE
 {
 	PGP_PUB_RSA_ENCRYPT_SIGN = 1,
 	PGP_PUB_RSA_ENCRYPT = 2,
 	PGP_PUB_RSA_SIGN = 3,
 	PGP_PUB_ELG_ENCRYPT = 16,
 	PGP_PUB_DSA_SIGN = 17
-} PGP_PUB_ALGO_TYPE;
+};
 
-enum
+enum PGP_SYMENC_TYPE
 {
 	PGP_SYM_PLAIN = 0,			/* ?? */
 	PGP_SYM_IDEA = 1,			/* obsolete, PGP 2.6 compat */
@@ -80,17 +80,17 @@ enum
 	PGP_SYM_AES_192 = 8,
 	PGP_SYM_AES_256 = 9,
 	PGP_SYM_TWOFISH = 10
-} PGP_SYMENC_TYPE;
+};
 
-enum
+enum PGP_COMPR_TYPE
 {
 	PGP_COMPR_NONE = 0,			/* must */
 	PGP_COMPR_ZIP = 1,			/* should */
 	PGP_COMPR_ZLIB = 2,
 	PGP_COMPR_BZIP2 = 3
-} PGP_COMPR_TYPE;
+};
 
-enum
+enum PGP_DIGEST_TYPE
 {
 	PGP_DIGEST_MD5 = 1,			/* should, deprecated  */
 	PGP_DIGEST_SHA1 = 2,		/* must */
@@ -102,7 +102,7 @@ enum
 	PGP_DIGEST_SHA256 = 8,
 	PGP_DIGEST_SHA384 = 9,
 	PGP_DIGEST_SHA512 = 10
-} PGP_DIGEST_TYPE;
+};
 
 #define PGP_MAX_KEY    (256/8)
 #define PGP_MAX_BLOCK  (256/8)
