@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_trgm/uninstall_pg_trgm.sql,v 1.6 2008/04/14 17:05:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_trgm/uninstall_pg_trgm.sql,v 1.7 2009/03/25 22:19:01 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get dropped.
 SET search_path = public;
@@ -25,9 +25,9 @@ DROP OPERATOR CLASS gin_trgm_ops USING gin;
 
 DROP FUNCTION gin_extract_trgm(text, internal);
 
-DROP FUNCTION gin_extract_trgm(text, internal, internal);
+DROP FUNCTION gin_extract_trgm(text, internal, int2, internal, internal);
 
-DROP FUNCTION gin_trgm_consistent(internal, int2, text, internal);
+DROP FUNCTION gin_trgm_consistent(internal, int2, text, int4, internal, internal);
 
 DROP OPERATOR % (text, text);
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/pg_trgm/pg_trgm.sql.in,v 1.8 2008/04/14 17:05:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/pg_trgm/pg_trgm.sql.in,v 1.9 2009/03/25 22:19:01 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -110,13 +110,13 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_trgm(text, internal, internal)
+CREATE OR REPLACE FUNCTION gin_extract_trgm(text, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_trgm_consistent(internal, int2, text, internal)
-RETURNS internal
+CREATE OR REPLACE FUNCTION gin_trgm_consistent(internal, int2, text, int4, internal, internal)
+RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
@@ -127,6 +127,6 @@ AS
         OPERATOR        1       % (text, text),
         FUNCTION        1       btint4cmp (int4, int4),
         FUNCTION        2       gin_extract_trgm (text, internal),
-        FUNCTION        3       gin_extract_trgm (text, internal, internal),
-        FUNCTION        4       gin_trgm_consistent (internal, int2, text, internal),
+        FUNCTION        3       gin_extract_trgm (text, internal, int2, internal, internal),
+        FUNCTION        4       gin_trgm_consistent (internal, int2, text, int4, internal, internal),
         STORAGE         int4;

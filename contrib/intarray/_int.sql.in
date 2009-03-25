@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.28 2008/04/14 17:05:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.29 2009/03/25 22:19:01 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -458,13 +458,13 @@ AS
 
 --GIN
 
-CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2)
+CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, internal)
-RETURNS internal
+CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal)
+RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
@@ -480,6 +480,6 @@ AS
 	OPERATOR	20	@@ (_int4, query_int),
 	FUNCTION	1	btint4cmp (int4, int4),
 	FUNCTION	2	ginarrayextract (anyarray, internal),
-	FUNCTION	3	ginint4_queryextract (internal, internal, int2),
-	FUNCTION	4	ginint4_consistent (internal, int2, internal, internal),
+	FUNCTION	3	ginint4_queryextract (internal, internal, int2, internal, internal),
+	FUNCTION	4	ginint4_consistent (internal, int2, internal, int4, internal, internal),
 	STORAGE		int4;

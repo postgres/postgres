@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.538 2009/03/24 20:17:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.539 2009/03/25 22:19:02 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4212,9 +4212,9 @@ DESCR("gin(internal)");
 /* GIN array support */
 DATA(insert OID = 2743 (  ginarrayextract	 PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2281 "2277 2281" _null_ _null_ _null_ _null_	ginarrayextract _null_ _null_ _null_ ));
 DESCR("GIN array support");
-DATA(insert OID = 2774 (  ginqueryarrayextract	PGNSP PGUID 12 1 0 0 f f f t f i 4 0 2281 "2277 2281 21 2281" _null_ _null_ _null_ _null_ ginqueryarrayextract _null_ _null_ _null_ ));
+DATA(insert OID = 2774 (  ginqueryarrayextract	PGNSP PGUID 12 1 0 0 f f f t f i 5 0 2281 "2277 2281 21 2281 2281" _null_ _null_ _null_ _null_ ginqueryarrayextract _null_ _null_ _null_ ));
 DESCR("GIN array support");
-DATA(insert OID = 2744 (  ginarrayconsistent PGNSP PGUID 12 1 0 0 f f f t f i 4 0 16 "2281 21 2281 2281" _null_ _null_ _null_ _null_	ginarrayconsistent _null_ _null_ _null_ ));
+DATA(insert OID = 2744 (  ginarrayconsistent	PGNSP PGUID 12 1 0 0 f f f t f i 6 0 16 "2281 21 2277 23 2281 2281" _null_ _null_ _null_ _null_ ginarrayconsistent _null_ _null_ _null_ ));
 DESCR("GIN array support");
 
 /* overlap/contains/contained */
@@ -4453,13 +4453,13 @@ DESCR("GiST tsvector support");
 
 DATA(insert OID = 3656 (  gin_extract_tsvector	PGNSP PGUID 12 1 0 0 f f f t f i 2 0 2281 "3614 2281" _null_ _null_ _null_ _null_	gin_extract_tsvector _null_ _null_ _null_ ));
 DESCR("GIN tsvector support");
-DATA(insert OID = 3657 (  gin_extract_tsquery	PGNSP PGUID 12 1 0 0 f f f t f i 4 0 2281 "3615 2281 21 2281" _null_ _null_ _null_ _null_ gin_extract_tsquery _null_ _null_ _null_ ));
+DATA(insert OID = 3657 (  gin_extract_tsquery	PGNSP PGUID 12 1 0 0 f f f t f i 5 0 2281 "3615 2281 21 2281 2281" _null_ _null_ _null_ _null_ gin_extract_tsquery _null_ _null_ _null_ ));
 DESCR("GIN tsvector support");
-DATA(insert OID = 3658 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 f f f t f i 4 0 16 "2281 21 3615 2281" _null_ _null_ _null_ _null_	gin_tsquery_consistent _null_ _null_ _null_ ));
+DATA(insert OID = 3658 (  gin_tsquery_consistent PGNSP PGUID 12 1 0 0 f f f t f i 6 0 16 "2281 21 3615 23 2281 2281" _null_ _null_ _null_ _null_	gin_tsquery_consistent _null_ _null_ _null_ ));
 DESCR("GIN tsvector support");
 DATA(insert OID = 3724 (  gin_cmp_tslexeme      PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ gin_cmp_tslexeme _null_ _null_ _null_ ));
 DESCR("GIN tsvector support");
-DATA(insert OID = 2700 (  gin_cmp_prefix        PGNSP PGUID 12 1 0 0 f f f t f i 3 0 23 "25 25 21" _null_ _null_ _null_ _null_ gin_cmp_prefix _null_ _null_ _null_ ));
+DATA(insert OID = 2700 (  gin_cmp_prefix        PGNSP PGUID 12 1 0 0 f f f t f i 4 0 23 "25 25 21 2281" _null_ _null_ _null_ _null_ gin_cmp_prefix _null_ _null_ _null_ ));
 DESCR("GIN tsvector support");
 
 DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "3615 3615" _null_ _null_ _null_ _null_ tsquery_lt _null_ _null_ _null_ ));

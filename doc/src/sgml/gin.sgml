@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.17 2009/03/24 20:17:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.18 2009/03/25 22:19:01 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -88,7 +88,7 @@
 
     <varlistentry>
      <term>Datum *extractQuery(Datum query, int32 *nkeys,
-        StrategyNumber n, bool **pmatch)</term>
+        StrategyNumber n, bool **pmatch, Pointer **extra_data)</term>
      <listitem>
       <para>
        Returns an array of keys given a value to be queried; that is,
@@ -104,7 +104,7 @@
        should store 0 or -1 into <literal>*nkeys</>, depending on the
        semantics of the operator.  0 means that every
        value matches the <literal>query</> and a sequential scan should be
-       produced.  -1 means nothing can match the <literal>query</>.
+       performed.  -1 means nothing can match the <literal>query</>.
        <literal>pmatch</> is an output argument for use when partial match
        is supported.  To use it, <function>extractQuery</> must allocate
        an array of <literal>*nkeys</> booleans and store its address at
@@ -114,25 +114,40 @@
        is not required.  The variable is initialized to NULL before call,
        so this argument can simply be ignored by operator classes that do
        not support partial match.
+       <literal>extra_data</> is an output argument that allows
+       <function>extractQuery</> to pass additional data to the
+       <function>consistent</> and <function>comparePartial</> methods.
+       To use it, <function>extractQuery</> must allocate
+       an array of <literal>*nkeys</> Pointers and store its address at
+       <literal>*extra_data</>, then store whatever it wants to into the
+       individual pointers.  The variable is initialized to NULL before
+       call, so this argument can simply be ignored by operator classes that
+       do not require extra data.  If <literal>*extra_data</> is set, the
+       whole array is passed to the <function>consistent</> method, and
+       the appropriate element to the <function>comparePartial</> method.
       </para>
 
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>bool consistent(bool check[], StrategyNumber n, Datum query, bool *recheck)</term>
+     <term>bool consistent(bool check[], StrategyNumber n, Datum query,
+                           int32 nkeys, Pointer extra_data[], bool *recheck)</term>
      <listitem>
       <para>
        Returns TRUE if the indexed value satisfies the query operator with
        strategy number <literal>n</> (or might satisfy, if the recheck
-       indication is returned).  The <literal>check</> array has
-       the same length as the number of keys previously returned by
-       <function>extractQuery</> for this query.  Each element of the
+       indication is returned).  The <literal>check</> array has length
+       <literal>nkeys</>, which is the same as the number of keys previously
+       returned by <function>extractQuery</> for this <literal>query</> datum.
+       Each element of the
        <literal>check</> array is TRUE if the indexed value contains the
        corresponding query key, ie, if (check[i] == TRUE) the i-th key of the
        <function>extractQuery</> result array is present in the indexed value.
        The original <literal>query</> datum (not the extracted key array!) is
        passed in case the <function>consistent</> method needs to consult it.
+       <literal>extra_data</> is the extra-data array returned by
+       <function>extractQuery</>, or NULL if none.
        On success, <literal>*recheck</> should be set to TRUE if the heap
        tuple needs to be rechecked against the query operator, or FALSE if
        the index test is exact.
@@ -150,7 +165,8 @@
   <variablelist>
 
     <varlistentry>
-     <term>int comparePartial(Datum partial_key, Datum key, StrategyNumber n)</term>
+     <term>int comparePartial(Datum partial_key, Datum key, StrategyNumber n,
+                              Pointer extra_data)</term>
      <listitem>
       <para>
        Compare a partial-match query to an index key.  Returns an integer
@@ -160,7 +176,9 @@
        indicates that the index scan should stop because no more matches
        are possible.  The strategy number <literal>n</> of the operator
        that generated the partial match query is provided, in case its
-       semantics are needed to determine when to end the scan.
+       semantics are needed to determine when to end the scan.  Also,
+       <literal>extra_data</> is the corresponding element of the extra-data
+       array made by <function>extractQuery</>, or NULL if none.
       </para>
      </listitem>
     </varlistentry>
@@ -383,6 +401,13 @@
  </para>
 
  <variablelist>
+  <varlistentry>
+   <term>btree-gin</term>
+   <listitem>
+    <para>B-Tree equivalent functionality for several data types</para>
+   </listitem>
+  </varlistentry>
+
   <varlistentry>
    <term>hstore</term>
    <listitem>

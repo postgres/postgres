@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.9 2008/04/14 17:05:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.10 2009/03/25 22:19:01 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -244,12 +244,12 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_extract_hstore_query(internal, internal, int2)
+CREATE OR REPLACE FUNCTION gin_extract_hstore_query(internal, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION gin_consistent_hstore(internal, int2, internal, internal)
+CREATE OR REPLACE FUNCTION gin_consistent_hstore(internal, int2, internal, int4, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE;
@@ -261,6 +261,6 @@ AS
 	OPERATOR        9       ?(hstore,text),
 	FUNCTION        1       bttextcmp(text,text),
 	FUNCTION        2       gin_extract_hstore(internal, internal),
-	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2),
-	FUNCTION        4       gin_consistent_hstore(internal, int2, internal, internal),
+	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2, internal, internal),
+	FUNCTION        4       gin_consistent_hstore(internal, int2, internal, int4, internal, internal),
 STORAGE         text;

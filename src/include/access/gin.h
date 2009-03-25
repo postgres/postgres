@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.30 2009/03/24 22:06:03 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.31 2009/03/25 22:19:01 tgl Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -481,6 +481,7 @@ typedef struct GinScanEntryData
 	/* entry, got from extractQueryFn */
 	Datum		entry;
 	OffsetNumber	attnum;
+	Pointer			extra_data;
 
 	/* Current page in posting tree */
 	Buffer		buffer;
@@ -515,6 +516,7 @@ typedef struct GinScanKeyData
 
 	/* array of scans per entry */
 	GinScanEntry scanEntry;
+	Pointer		 *extra_data;
 
 	/* for calling consistentFn(GinScanKey->entryRes, strategy, query) */
 	StrategyNumber strategy;

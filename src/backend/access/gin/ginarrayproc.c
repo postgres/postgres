@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.14 2009/01/01 17:23:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.15 2009/03/25 22:19:01 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -95,7 +95,9 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2);
-	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
+	/* int32	nkeys = PG_GETARG_INT32(3); */
+	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res;
 	int			i,
 				nentries;

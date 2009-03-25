@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.6 2008/11/12 13:43:54 teodor Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.7 2009/03/25 22:19:01 tgl Exp $ 
  */
 #include "trgm.h"
 
@@ -47,53 +47,40 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 
 			ptr++;
 		}
+		if (PG_NARGS() > 4)
+		{
+			/*
+			 * Function called from query extracting
+			 */
+			Pointer      **extra_data = (Pointer **) PG_GETARG_POINTER(4);
+
+			*extra_data = (Pointer*) palloc0(sizeof(Pointer)*(*nentries));
+
+			*(int32*)(*extra_data) = trglen;
+		}
 	}
 
 	PG_RETURN_POINTER(entries);
 }
-
-/*
- * Per call strage for consistent functions to
- * cache computed value from query
- */
-typedef struct PerCallConsistentStorage {
-	int		trglen;
-	text	data[1]; /* query */
-} PerCallConsistentStorage;
-#define PCCSHDR_SZ  offsetof(PerCallConsistentStorage, data)
 
 Datum
 gin_trgm_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
-	text	   *query = PG_GETARG_TEXT_P(2);
-	bool	   *recheck = (bool *) PG_GETARG_POINTER(3);
+	/* text	   *query = PG_GETARG_TEXT_P(2); */
+	/* int32	nkeys = PG_GETARG_INT32(3); */
+	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = FALSE;
 	int4		i,
 				trglen,
 				ntrue = 0;
-	PerCallConsistentStorage  *pccs = (PerCallConsistentStorage*) fcinfo->flinfo->fn_extra;
 
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-	if ( pccs == NULL || VARSIZE(pccs->data) != VARSIZE(query) || memcmp( pccs->data, query, VARSIZE(query) ) !=0  )
-	{
-		TRGM	   *trg = generate_trgm(VARDATA(query), VARSIZE(query) - VARHDRSZ);
-
-		if ( pccs )
-			pfree(pccs);
-
-		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt, 
-									VARSIZE(query) + PCCSHDR_SZ);
-		pccs = (PerCallConsistentStorage*) fcinfo->flinfo->fn_extra;
-
-		pccs->trglen = ARRNELEM(trg);
-		memcpy( pccs->data, query, VARSIZE(query) );
-	}
-
-	trglen = pccs->trglen;
+	trglen = *(int32*)extra_data;
 
 	for (i = 0; i < trglen; i++)
 		if (check[i])

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.23 2009/03/24 20:17:10 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.24 2009/03/25 22:19:01 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -178,10 +178,11 @@ computePartialMatchList( GinBtreeData *btree, GinBtreeStack *stack, GinScanEntry
 		 * case cmp < 0 => not match and continue scan
 		 *----------
 		 */
-    	cmp = DatumGetInt32(FunctionCall3(&btree->ginstate->comparePartialFn[scanEntry->attnum-1],
+    	cmp = DatumGetInt32(FunctionCall4(&btree->ginstate->comparePartialFn[scanEntry->attnum-1],
 										  scanEntry->entry,
 										  idatum,
-										  UInt16GetDatum(scanEntry->strategy)));
+										  UInt16GetDatum(scanEntry->strategy),
+										  PointerGetDatum(scanEntry->extra_data)));
 
 		if ( cmp > 0 )
 			return true;
@@ -695,16 +696,18 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 
 		/*
 		 * If one of the entry's scans returns lossy result, return it without
-		 * checking - we can't suggest anything helpful to consistentFn.
+		 * further checking - we can't call consistentFn for lack of data.
 		 */
 		if (ItemPointerIsLossyPage(&key->curItem))
 			return FALSE;
 
 		oldCtx = MemoryContextSwitchTo(tempCtx);
-		res = DatumGetBool(FunctionCall4(&ginstate->consistentFn[key->attnum-1],
+		res = DatumGetBool(FunctionCall6(&ginstate->consistentFn[key->attnum-1],
 										 PointerGetDatum(key->entryRes),
 										 UInt16GetDatum(key->strategy),
 										 key->query,
+										 UInt32GetDatum(key->nentries),
+										 PointerGetDatum(key->extra_data),
 										 PointerGetDatum(keyrecheck)));
 		MemoryContextSwitchTo(oldCtx);
 		MemoryContextReset(tempCtx);
@@ -796,10 +799,11 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 						  OffsetNumber off, OffsetNumber maxoff,
 						  Datum value, OffsetNumber attrnum,
 						  Datum	*datum, bool *datumExtracted,
-						  StrategyNumber strategy)
+						  StrategyNumber strategy,
+						  Pointer extra_data)
 {
 	IndexTuple  		itup;
-	int 				res;
+	int32 				cmp;
 
 	while ( off < maxoff )
 	{
@@ -813,13 +817,14 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 			datumExtracted[  off-1 ] = true;
 		}
 
-		res = DatumGetInt32(FunctionCall3(&ginstate->comparePartialFn[attrnum],
-						  value,
-						  datum[ off-1 ],
-						  UInt16GetDatum(strategy)));
-		if ( res == 0 )
+		cmp = DatumGetInt32(FunctionCall4(&ginstate->comparePartialFn[attrnum],
+										  value,
+										  datum[off-1],
+										  UInt16GetDatum(strategy),
+										  PointerGetDatum(extra_data)));
+		if (cmp == 0)
 			return true;
-		else if (res>0)
+		else if (cmp > 0)
 			return false;
 	}
 
@@ -912,7 +917,8 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 															  entry->attnum,
 															  datum,
 															  datumExtracted,
-															  entry->strategy);
+															  entry->strategy,
+															  entry->extra_data);
 							else
 								key->entryRes[j] = true;
 							break;
@@ -933,7 +939,8 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 												  entry->attnum,
 												  datum,
 												  datumExtracted,
-												  entry->strategy);
+												  entry->strategy,
+												  entry->extra_data);
 
 				hasMatch |= key->entryRes[j];
 			}
@@ -1015,19 +1022,22 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 		recheck = false;
 		match = true;
 
-		for (i = 0; match && i < so->nkeys; i++)
+		for (i = 0; i < so->nkeys; i++)
 		{
 			GinScanKey  	key = so->keys + i;
 
 			keyrecheck = true;
 
-			if ( DatumGetBool(FunctionCall4(&so->ginstate.consistentFn[ key->attnum-1 ],
-									 PointerGetDatum(key->entryRes),
-									 UInt16GetDatum(key->strategy),
-									 key->query,
-									 PointerGetDatum(&keyrecheck))) == false )
+			if (!DatumGetBool(FunctionCall6(&so->ginstate.consistentFn[key->attnum-1],
+											PointerGetDatum(key->entryRes),
+											UInt16GetDatum(key->strategy),
+											key->query,
+											UInt32GetDatum(key->nentries),
+											PointerGetDatum(key->extra_data),
+											PointerGetDatum(&keyrecheck))))
 			{
 				match = false;
+				break;
 			}
 
 			recheck |= keyrecheck;

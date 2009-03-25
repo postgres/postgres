@@ -1,13 +1,13 @@
-/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.9 2008/04/14 17:05:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.10 2009/03/25 22:19:01 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
 DROP OPERATOR CLASS gin__int_ops USING gin;
 
-DROP FUNCTION ginint4_queryextract(internal, internal, int2);
+DROP FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal);
 
-DROP FUNCTION ginint4_consistent(internal, int2, internal, internal);
+DROP FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal);
 
 DROP OPERATOR CLASS gist__intbig_ops USING gist;
 
