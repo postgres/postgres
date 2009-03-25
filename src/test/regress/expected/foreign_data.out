@@ -230,7 +230,7 @@ CREATE USER MAPPING FOR current_user SERVER s1;
 
 \deu+
         List of user mappings
- Server |     Username      | Options 
+ Server |     User name     | Options 
 --------+-------------------+---------
  s1     | foreign_data_user | 
 (1 row)
@@ -265,8 +265,8 @@ drop cascades to user mapping for foreign_data_user
 
 \deu+
     List of user mappings
- Server | Username | Options 
---------+----------+---------
+ Server | User name | Options 
+--------+-----------+---------
 (0 rows)
 
 -- exercise CREATE SERVER
@@ -493,7 +493,7 @@ RESET ROLE;
 CREATE USER MAPPING FOR current_user SERVER s3;
 \deu
    List of user mappings
- Server |     Username      
+ Server |     User name     
 --------+-------------------
  s3     | foreign_data_user
 (1 row)
@@ -519,8 +519,8 @@ NOTICE:  drop cascades to user mapping for foreign_data_user
 
 \deu
 List of user mappings
- Server | Username 
---------+----------
+ Server | User name 
+--------+-----------
 (0 rows)
 
 -- CREATE USER MAPPING
@@ -553,7 +553,7 @@ CREATE USER MAPPING FOR public SERVER t1;
 RESET ROLE;
 \deu
    List of user mappings
- Server |     Username      
+ Server |     User name     
 --------+-------------------
  s4     | foreign_data_user
  s4     | public
@@ -583,7 +583,7 @@ ALTER USER MAPPING FOR public SERVER t1 OPTIONS (ADD modified '1');
 RESET ROLE;
 \deu+
                   List of user mappings
- Server |     Username      |           Options           
+ Server |     User name     |           Options           
 --------+-------------------+-----------------------------
  s4     | foreign_data_user | 
  s4     | public            | {"mapping=is public"}
@@ -615,7 +615,7 @@ RESET ROLE;
 DROP SERVER s7;
 \deu
    List of user mappings
- Server |     Username      
+ Server |     User name     
 --------+-------------------
  s4     | foreign_data_user
  s4     | public
