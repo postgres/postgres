@@ -32,6 +32,10 @@ auto_explain -
 	Log EXPLAIN output for long-running queries
 	by Takahiro Itagaki <itagaki.takahiro@oss.ntt.co.jp>
 
+btree_gin -
+	Support for emulating BTREE indexing in GIN
+	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
+
 btree_gist -
 	Support for emulating BTREE indexing in GiST
 	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>

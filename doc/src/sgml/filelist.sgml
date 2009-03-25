@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.59 2009/01/04 22:19:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.60 2009/03/25 23:20:01 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -93,6 +93,7 @@
 <!entity contrib         SYSTEM "contrib.sgml">
 <!entity adminpack       SYSTEM "adminpack.sgml">
 <!entity auto-explain    SYSTEM "auto-explain.sgml">
+<!entity btree-gin       SYSTEM "btree-gin.sgml">
 <!entity btree-gist      SYSTEM "btree-gist.sgml">
 <!entity chkpass         SYSTEM "chkpass.sgml">
 <!entity citext          SYSTEM "citext.sgml">

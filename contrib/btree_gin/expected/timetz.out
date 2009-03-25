@@ -1,0 +1,51 @@
+set enable_seqscan=off;
+CREATE TABLE test_timetz (
+	i timetz
+);
+INSERT INTO test_timetz VALUES 
+	( '03:55:08 GMT+2' ),
+	( '04:55:08 GMT+2' ),
+	( '05:55:08 GMT+2' ),
+	( '08:55:08 GMT+2' ),
+	( '09:55:08 GMT+2' ),
+	( '10:55:08 GMT+2' )
+;
+CREATE INDEX idx_timetz ON test_timetz USING gin (i);
+SELECT * FROM test_timetz WHERE i<'08:55:08 GMT+2'::timetz ORDER BY i;
+      i      
+-------------
+ 03:55:08-02
+ 04:55:08-02
+ 05:55:08-02
+(3 rows)
+
+SELECT * FROM test_timetz WHERE i<='08:55:08 GMT+2'::timetz ORDER BY i;
+      i      
+-------------
+ 03:55:08-02
+ 04:55:08-02
+ 05:55:08-02
+ 08:55:08-02
+(4 rows)
+
+SELECT * FROM test_timetz WHERE i='08:55:08 GMT+2'::timetz ORDER BY i;
+      i      
+-------------
+ 08:55:08-02
+(1 row)
+
+SELECT * FROM test_timetz WHERE i>='08:55:08 GMT+2'::timetz ORDER BY i;
+      i      
+-------------
+ 08:55:08-02
+ 09:55:08-02
+ 10:55:08-02
+(3 rows)
+
+SELECT * FROM test_timetz WHERE i>'08:55:08 GMT+2'::timetz ORDER BY i;
+      i      
+-------------
+ 09:55:08-02
+ 10:55:08-02
+(2 rows)
+

@@ -1,0 +1,44 @@
+set enable_seqscan=off;
+CREATE TABLE test_bytea (
+	i bytea
+);
+INSERT INTO test_bytea VALUES ('aaa'),('a'),('abc'),('abb'),('axy'),('xyz');
+CREATE INDEX idx_bytea ON test_bytea USING gin (i);
+SELECT * FROM test_bytea WHERE i<'abc'::bytea ORDER BY i;
+  i  
+-----
+ a
+ aaa
+ abb
+(3 rows)
+
+SELECT * FROM test_bytea WHERE i<='abc'::bytea ORDER BY i;
+  i  
+-----
+ a
+ aaa
+ abb
+ abc
+(4 rows)
+
+SELECT * FROM test_bytea WHERE i='abc'::bytea ORDER BY i;
+  i  
+-----
+ abc
+(1 row)
+
+SELECT * FROM test_bytea WHERE i>='abc'::bytea ORDER BY i;
+  i  
+-----
+ abc
+ axy
+ xyz
+(3 rows)
+
+SELECT * FROM test_bytea WHERE i>'abc'::bytea ORDER BY i;
+  i  
+-----
+ axy
+ xyz
+(2 rows)
+

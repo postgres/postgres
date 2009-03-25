@@ -1,0 +1,51 @@
+set enable_seqscan=off;
+CREATE TABLE test_interval (
+	i interval
+);
+INSERT INTO test_interval VALUES 
+	( '03:55:08' ),
+	( '04:55:08' ),
+	( '05:55:08' ),
+	( '08:55:08' ),
+	( '09:55:08' ),
+	( '10:55:08' )
+;
+CREATE INDEX idx_interval ON test_interval USING gin (i);
+SELECT * FROM test_interval WHERE i<'08:55:08'::interval ORDER BY i;
+            i             
+--------------------------
+ @ 3 hours 55 mins 8 secs
+ @ 4 hours 55 mins 8 secs
+ @ 5 hours 55 mins 8 secs
+(3 rows)
+
+SELECT * FROM test_interval WHERE i<='08:55:08'::interval ORDER BY i;
+            i             
+--------------------------
+ @ 3 hours 55 mins 8 secs
+ @ 4 hours 55 mins 8 secs
+ @ 5 hours 55 mins 8 secs
+ @ 8 hours 55 mins 8 secs
+(4 rows)
+
+SELECT * FROM test_interval WHERE i='08:55:08'::interval ORDER BY i;
+            i             
+--------------------------
+ @ 8 hours 55 mins 8 secs
+(1 row)
+
+SELECT * FROM test_interval WHERE i>='08:55:08'::interval ORDER BY i;
+             i             
+---------------------------
+ @ 8 hours 55 mins 8 secs
+ @ 9 hours 55 mins 8 secs
+ @ 10 hours 55 mins 8 secs
+(3 rows)
+
+SELECT * FROM test_interval WHERE i>'08:55:08'::interval ORDER BY i;
+             i             
+---------------------------
+ @ 9 hours 55 mins 8 secs
+ @ 10 hours 55 mins 8 secs
+(2 rows)
+
