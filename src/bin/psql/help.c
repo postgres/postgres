@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.143 2009/03/25 13:14:17 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.144 2009/03/25 13:15:55 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -162,7 +162,7 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(78, pager);
+	output = PageOutput(85, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
