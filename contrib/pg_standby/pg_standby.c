@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.20 2009/03/18 20:30:35 heikki Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.21 2009/03/26 22:29:13 tgl Exp $ 
  *
  *
  * pg_standby.c
@@ -406,7 +406,7 @@ RestoreWALFileForRecovery(void)
 		fflush(stderr);
 	}
 
-	while (numretries < maxretries)
+	while (numretries <= maxretries)
 	{
 		rc = system(restoreCommand);
 		if (rc == 0)
