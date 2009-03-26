@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.596 2009/03/26 02:48:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.597 2009/03/26 03:46:14 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -68,7 +68,7 @@ do it for earlier branch release files.
 
   <note>
    <title>Release date</title>
-   <simpara>2009-XX-XX, ITEMS CURRENT AS OF 2009-03-16</simpara>   
+   <simpara>2009-XX-XX, ITEMS CURRENT AS OF 2009-03-16</simpara>
   </note>
 
   <sect2>
@@ -155,13 +155,13 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Disable appending of the epoch date/time when '%' escapes are missing in
-       log_filename (Robert Haas)
+       Disable appending of the epoch date/time when no '%' escapes are
+       present in log_filename (Robert Haas)
       </para>
 
       <para>
-       This change was made because some users wanted a consistent log
-       filename.
+       This change was made because some users wanted a constant log filename,
+       for use with an external log rotation tool.
       </para>
      </listitem>
 
@@ -304,8 +304,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Throw an error of an escape character is the last character in a LIKE
-       pattern (nothing to escape) (Tom)
+       Throw an error if an escape character is the last character in a LIKE
+       pattern (it has nothing to escape) (Tom)
       </para>
      </listitem>
 
@@ -350,8 +350,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Remove ~=~ and ~<>~ operators used for LIKE index comparisons (Tom) bjm:
-       needed?  
+       Remove ~=~ and ~&lt;&gt;~ operators used for LIKE index comparisons
+       (Tom) bjm: needed?
       </para>
 
       <para>
@@ -543,7 +543,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add postgresql.conf setting cursor_tuple_fraction to control the 
+       Add postgresql.conf setting cursor_tuple_fraction to control the
        fraction of a cursor's rows expected to be requested by the user (Robert
        Hell)
       </para>
@@ -937,7 +937,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       	OFFSET num {ROW|ROWS} FETCH {FIRST|NEXT} [num] {ROW|ROWS} ONLY.
+       OFFSET num {ROW|ROWS} FETCH {FIRST|NEXT} [num] {ROW|ROWS} ONLY.
       </para>
      </listitem>
 
@@ -971,7 +971,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       	New syntax supported (these formerly required "ALTER TABLE")
+       New syntax supported (these formerly required "ALTER TABLE")
       </para>
      </listitem>
 
@@ -985,17 +985,17 @@ do it for earlier branch release files.
         </listitem>
         <listitem>
          <para>
-       	  ALTER VIEW ALTER COLUMN SET/DROP DEFAULT
+          ALTER VIEW ALTER COLUMN SET/DROP DEFAULT
          </para>
         </listitem>
         <listitem>
          <para>
-       	  ALTER VIEW OWNER TO
+          ALTER VIEW OWNER TO
          </para>
         </listitem>
         <listitem>
          <para>
-       	  ALTER VIEW SET SCHEMA
+          ALTER VIEW SET SCHEMA
          </para>
         </listitem>
        </itemizedlist>
@@ -1181,14 +1181,13 @@ do it for earlier branch release files.
 
       <para>
        Previously EXPLAIN VERBOSE output an internal representation of the
-       output columns.
+       query plan.  (That behavior is now available via debug_print_plan.)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have EXPLAIN honor debug_print_plan (Tom)  bjm: verify behavior, this
-       replaces EXPLAIN VERBOSE?
+       Have EXPLAIN honor debug_print_plan (Tom)
       </para>
      </listitem>
 
@@ -1209,11 +1208,11 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Dramatically improve the speed of building and accessing hash indexes
-       (Tom Raney, Shreya Bhargava, Kenneth Marshall, Tom) 
+       (Tom Raney, Shreya Bhargava, Kenneth Marshall)
       </para>
 
       <para>
-       This allows hash indexes to be often faster than btree indexes.
+       This allows hash indexes to be sometimes faster than btree indexes.
        However, hash indexes are still not crash-safe.
       </para>
      </listitem>
@@ -1810,23 +1809,23 @@ do it for earlier branch release files.
        <itemizedlist>
         <listitem>
          <para>
-       	  Support DETAIL and HINT fields
+          Support DETAIL and HINT fields
          </para>
         </listitem>
         <listitem>
          <para>
-       	  Support SQLSTATE error codes
+          Support SQLSTATE error codes
          </para>
         </listitem>
         <listitem>
          <para>
-       	  Support an exception name parameter
+          Support an exception name parameter
          </para>
         </listitem>
         <listitem>
          <para>
-       	  Allow RAISE without parameters in an exception
-       	  block to rethrow the current error
+          Allow RAISE without parameters in an exception
+          block to rethrow the current error
          </para>
         </listitem>
        </itemizedlist>
