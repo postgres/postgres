@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.234 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.235 2009/03/26 22:26:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,8 @@
 #else
 #define gettext(x) (x)
 #define dgettext(d,x) (x)
+#define ngettext(s,p,n) ((n) == 1 ? (s) : (p))
+#define dngettext(d,s,p,n) ((n) == 1 ? (s) : (p))
 #endif
 
 /*

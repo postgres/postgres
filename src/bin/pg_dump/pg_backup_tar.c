@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.63 2009/02/02 20:07:37 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.64 2009/03/26 22:26:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,9 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 	}
 
 #if 0
-	write_msg(modulename, "requested %d bytes, got %d from lookahead and %d from file\n",
+	write_msg(modulename, ngettext("requested %d byte, got %d from lookahead and %d from file\n",
+								   "requested %d bytes, got %d from lookahead and %d from file\n",
+								   reqLen),
 			  reqLen, used, res);
 #endif
 
@@ -1246,7 +1248,9 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 
 		if (len != 512)
 			die_horribly(AH, modulename,
-						 "incomplete tar header found (%lu bytes)\n",
+						 ngettext("incomplete tar header found (%lu byte)\n",
+								  "incomplete tar header found (%lu bytes)\n",
+								  len),
 						 (unsigned long) len);
 
 		/* Calc checksum */

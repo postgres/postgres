@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.31 2009/01/22 20:16:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.32 2009/03/26 22:26:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -655,12 +655,18 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	}
 
 	if (numNotReportedDeps > 0)
-		appendStringInfo(&descs, _("\nand %d other objects "
-								   "(see server log for list)"),
+		appendStringInfo(&descs, ngettext("\nand %d other object "
+										  "(see server log for list)",
+										  "\nand %d other objects "
+										  "(see server log for list)",
+										  numNotReportedDeps),
 						 numNotReportedDeps);
 	if (numNotReportedDbs > 0)
-		appendStringInfo(&descs, _("\nand objects in %d other databases "
-								   "(see server log for list)"),
+		appendStringInfo(&descs, ngettext("\nand objects in %d other database "
+										  "(see server log for list)",
+										  "\nand objects in %d other databases "
+										  "(see server log for list)",
+										  numNotReportedDbs),
 						 numNotReportedDbs);
 
 	*detail_msg = descs.data;
@@ -1043,7 +1049,7 @@ storeObjectDescription(StringInfo descs, objectType type,
 
 		case REMOTE_OBJECT:
 			/* translator: %s will always be "database %s" */
-			appendStringInfo(descs, _("%d objects in %s"), count, objdesc);
+			appendStringInfo(descs, ngettext("%d object in %s", "%d objects in %s", count), count, objdesc);
 			break;
 
 		default:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.211 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.212 2009/03/26 22:26:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (list_length(fargs) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("cannot pass more than %d arguments to a function",
+				 errmsg(ngettext("cannot pass more than %d argument to a function",
+								 "cannot pass more than %d arguments to a function",
+								 FUNC_MAX_ARGS),
 						FUNC_MAX_ARGS),
 				 parser_errposition(pstate, location)));
 
@@ -259,7 +261,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("cannot pass more than %d arguments to a function",
+					 errmsg(ngettext("cannot pass more than %d argument to a function",
+									 "cannot pass more than %d arguments to a function",
+									 FUNC_MAX_ARGS),
 							FUNC_MAX_ARGS),
 					 parser_errposition(pstate, location)));
 
@@ -538,7 +542,9 @@ func_select_candidate(int nargs,
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("cannot pass more than %d arguments to a function",
+				 errmsg(ngettext("cannot pass more than %d argument to a function",
+								 "cannot pass more than %d arguments to a function",
+								 FUNC_MAX_ARGS),
 						FUNC_MAX_ARGS)));
 
 	/*
@@ -1413,7 +1419,9 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("functions cannot have more than %d arguments",
+				 errmsg(ngettext("functions cannot have more than %d argument",
+								 "functions cannot have more than %d arguments",
+								 FUNC_MAX_ARGS),
 						FUNC_MAX_ARGS)));
 
 	args_item = list_head(argtypes);
@@ -1451,7 +1459,9 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("functions cannot have more than %d arguments",
+				 errmsg(ngettext("functions cannot have more than %d argument",
+								 "functions cannot have more than %d arguments",
+								 FUNC_MAX_ARGS),
 						FUNC_MAX_ARGS)));
 
 	i = 0;

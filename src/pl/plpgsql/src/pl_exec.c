@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.235 2009/02/23 10:03:22 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.236 2009/03/26 22:26:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4088,7 +4088,8 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	if (estate->eval_tuptable->tupdesc->natts != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("query \"%s\" returned %d columns", expr->query,
+				 errmsg(dngettext(TEXTDOMAIN, "query \"%s\" returned %d column", "query \"%s\" returned %d columns", estate->eval_tuptable->tupdesc->natts),
+						expr->query,
 						estate->eval_tuptable->tupdesc->natts)));
 
 	/*

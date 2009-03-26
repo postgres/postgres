@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.118 2009/01/15 13:49:56 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.119 2009/03/26 22:26:08 petere Exp $
  *
  *********************************************************************
  */
@@ -2523,7 +2523,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 					 PLy_procedure_name(PLy_curr_procedure));
 		sv = PyString_AsString(so);
 		PLy_exception_set(PLy_exc_spi_error,
-						  "Expected sequence of %d arguments, got %d: %s",
+						  dngettext(TEXTDOMAIN, "Expected sequence of %d argument, got %d: %s", "Expected sequence of %d arguments, got %d: %s", plan->nargs),
 						  plan->nargs, nargs, sv);
 		Py_DECREF(so);
 

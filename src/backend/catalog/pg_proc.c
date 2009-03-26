@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.161 2009/01/22 20:16:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.162 2009/03/26 22:26:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,9 @@ ProcedureCreate(const char *procedureName,
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg("functions cannot have more than %d arguments",
+				 errmsg(ngettext("functions cannot have more than %d argument",
+								 "functions cannot have more than %d arguments",
+								 FUNC_MAX_ARGS),
 						FUNC_MAX_ARGS)));
 	/* note: the above is correct, we do NOT count output arguments */
 

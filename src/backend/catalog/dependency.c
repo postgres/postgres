@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.86 2009/01/22 20:16:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.87 2009/03/26 22:26:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -885,8 +885,11 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 	}
 
 	if (numNotReportedClient > 0)
-		appendStringInfo(&clientdetail, _("\nand %d other objects "
-										  "(see server log for list)"),
+		appendStringInfo(&clientdetail, ngettext("\nand %d other object "
+												 "(see server log for list)",
+												 "\nand %d other objects "
+												 "(see server log for list)",
+												 numNotReportedClient),
 						 numNotReportedClient);
 
 	if (!ok)
@@ -911,7 +914,9 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 	{
 		ereport(msglevel,
 				/* translator: %d always has a value larger than 1 */
-				(errmsg("drop cascades to %d other objects",
+				(errmsg(ngettext("drop cascades to %d other object",
+								 "drop cascades to %d other objects",
+								 numReportedClient + numNotReportedClient),
 						numReportedClient + numNotReportedClient),
 				 errdetail("%s", clientdetail.data),
 				 errdetail_log("%s", logdetail.data)));

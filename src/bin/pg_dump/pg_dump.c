@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.530 2009/03/22 16:44:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.531 2009/03/26 22:26:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5004,7 +5004,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			numConstrs = PQntuples(res);
 			if (numConstrs != tbinfo->ncheck)
 			{
-				write_msg(NULL, "expected %d check constraints on table \"%s\" but found %d\n",
+				write_msg(NULL, ngettext("expected %d check constraint on table \"%s\" but found %d\n",
+										 "expected %d check constraints on table \"%s\" but found %d\n",
+										 tbinfo->ncheck),
 						  tbinfo->ncheck, tbinfo->dobj.name, numConstrs);
 				write_msg(NULL, "(The system catalogs might be corrupted.)\n");
 				exit_nicely();
@@ -6335,7 +6337,9 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -6532,7 +6536,9 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -7181,7 +7187,9 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -10518,7 +10526,9 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 	if (PQntuples(res) != 1)
 	{
-		write_msg(NULL, "query to get data of sequence \"%s\" returned %d rows (expected 1)\n",
+		write_msg(NULL, ngettext("query to get data of sequence \"%s\" returned %d row (expected 1)\n",
+								 "query to get data of sequence \"%s\" returned %d rows (expected 1)\n",
+								 PQntuples(res)),
 				  tbinfo->dobj.name, PQntuples(res));
 		exit_nicely();
 	}

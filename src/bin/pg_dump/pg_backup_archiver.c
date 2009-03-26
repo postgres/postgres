@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.168 2009/03/20 09:21:08 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.169 2009/03/26 22:26:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,7 +884,10 @@ EndRestoreBlobs(ArchiveHandle *AH)
 			ahprintf(AH, "COMMIT;\n\n");
 	}
 
-	ahlog(AH, 1, "restored %d large objects\n", AH->blobCount);
+	ahlog(AH, 1, ngettext("restored %d large object\n",
+						  "restored %d large objects\n",
+						  AH->blobCount),
+		  AH->blobCount);
 }
 
 
@@ -1230,7 +1233,9 @@ dump_lo_buf(ArchiveHandle *AH)
 		size_t		res;
 
 		res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_used);
-		ahlog(AH, 5, "wrote %lu bytes of large object data (result = %lu)\n",
+		ahlog(AH, 5, ngettext("wrote %lu byte of large object data (result = %lu)\n",
+							  "wrote %lu bytes of large object data (result = %lu)\n",
+							  AH->lo_buf_used),
 			  (unsigned long) AH->lo_buf_used, (unsigned long) res);
 		if (res != AH->lo_buf_used)
 			die_horribly(AH, modulename,
@@ -1781,7 +1786,9 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		AH->lookaheadLen = 0;	/* Don't bother since we've reset the file */
 
 #if 0
-	write_msg(modulename, "read %lu bytes into lookahead buffer\n",
+	write_msg(modulename, ngettext("read %lu byte into lookahead buffer\n",
+								   "read %lu bytes into lookahead buffer\n",
+								   AH->lookaheadLen),
 			  (unsigned long) AH->lookaheadLen);
 #endif
 
