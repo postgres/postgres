@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.595 2009/03/26 02:40:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.596 2009/03/26 02:48:53 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1075,7 +1075,7 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title>Database Operations</title>
+    <title>Database Manipulation</title>
     <itemizedlist>
 
      <listitem>
@@ -1171,7 +1171,111 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title>Vacuum</title>
+    <title>EXPLAIN</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Have EXPLAIN VERBOSE show the output columns of a query (Tom)
+      </para>
+
+      <para>
+       Previously EXPLAIN VERBOSE output an internal representation of the
+       output columns.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Have EXPLAIN honor debug_print_plan (Tom)  bjm: verify behavior, this
+       replaces EXPLAIN VERBOSE?
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow EXPLAIN on CREATE TABLE AS (Peter)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Indexes</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Dramatically improve the speed of building and accessing hash indexes
+       (Tom Raney, Shreya Bhargava, Kenneth Marshall, Tom) 
+      </para>
+
+      <para>
+       This allows hash indexes to be often faster than btree indexes.
+       However, hash indexes are still not crash-safe.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Have hash indexes store only the hashed value, not the full indexed
+       columns (Xiao Meng)
+      </para>
+
+      <para>
+       This greatly reduces the size of hash indexes for long indexed
+       values, and improves performance.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Remove requirement to use "@@@" when doing GIN weighted lookups on full
+       text indexes (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add optimizer selectivity function for '@@' text search operations (Jan
+       Urbanski)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add partial match support for GIN indexes (Teodor Sigaev, Oleg Bartunov)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow prefix matching in full text searches (Teodor Sigaev, Oleg
+       Bartunov)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Support multi-column GIN indexes (Teodor Sigaev)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Special xxx_pattern_ops LIKE indexes can now be used for simple equality
+       comparisons (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>VACUUM</title>
     <itemizedlist>
 
      <listitem>
@@ -1232,38 +1336,6 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add --freeze option to vacuumdb (Bruce)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>EXPLAIN</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Have EXPLAIN VERBOSE show the output columns of a query (Tom)
-      </para>
-
-      <para>
-       Previously EXPLAIN VERBOSE output an internal representation of the
-       output columns.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Have EXPLAIN honor debug_print_plan (Tom)  bjm: verify behavior, this
-       replaces EXPLAIN VERBOSE?
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow EXPLAIN on CREATE TABLE AS (Peter)
       </para>
      </listitem>
 
@@ -1416,6 +1488,86 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
+    <title>Arrays</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Have cast on ARRAY[] apply to all elements, not just the array result
+       (Brendan Jurd)
+      </para>
+
+      <para>
+       This allows NULL ARRAY[] entries as long as it is properly cast
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make the SQL ARRAY dimensions optional to match the SQL standard
+       (Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add array_ndims() function to return the number of dimensions of an array (Robert
+       Haas)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add array_length() function to return the length of an array for the
+       specified dimensions (Jim Nasby, Robert Haas, Peter Eisentraut)
+      </para>
+
+      <para>
+       Also add identically-functioning SQL-standard function cardinality().
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add new aggregate function array_agg(), which returns all aggregated
+       values as a single array (Robert Haas, Jeff Davis, Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add function unnest(), which converts an array to individual row values
+       (Tom)
+      </para>
+
+      <para>
+       This is the opposite of array_agg().
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add array_fill() to create arrays initialized with a value (Pavel Stehule)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add generate_subscripts() to generate array subscripts (Pavel Stehule)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Generate proper error if a SERIAL array is specified (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
     <title>General Functions</title>
     <itemizedlist>
 
@@ -1471,7 +1623,7 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title>Database Informational Functions</title>
+    <title>Object Information Functions</title>
     <itemizedlist>
 
      <listitem>
@@ -1617,158 +1769,6 @@ do it for earlier branch release files.
 
       <para>
        Formerly only SELECT was supported.
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Arrays</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Have cast on ARRAY[] apply to all elements, not just the array result
-       (Brendan Jurd)
-      </para>
-
-      <para>
-       This allows NULL ARRAY[] entries as long as it is properly cast
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Make the SQL ARRAY dimensions optional to match the SQL standard
-       (Peter)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add array_ndims() function to return the number of dimensions of an array (Robert
-       Haas)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add array_length() function to return the length of an array for the
-       specified dimensions (Jim Nasby, Robert Haas, Peter Eisentraut)
-      </para>
-
-      <para>
-       Also add identically-functioning SQL-standard function cardinality().
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add new aggregate function array_agg(), which returns all aggregated
-       values as a single array (Robert Haas, Jeff Davis, Peter)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add function unnest(), which converts an array to individual row values
-       (Tom)
-      </para>
-
-      <para>
-       This is the opposite of array_agg().
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add array_fill() to create arrays initialized with a value (Pavel Stehule)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add generate_subscripts() to generate array subscripts (Pavel Stehule)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Generate proper error if a SERIAL array is specified (Tom)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Indexes</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Dramatically improve the speed of building and accessing hash indexes
-       (Tom Raney, Shreya Bhargava, Kenneth Marshall, Tom) 
-      </para>
-
-      <para>
-       This allows hash indexes to be often faster than btree indexes.
-       However, hash indexes are still not crash-safe.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Have hash indexes store only the hashed value, not the full indexed
-       columns (Xiao Meng)
-      </para>
-
-      <para>
-       This greatly reduces the size of hash indexes for long indexed
-       values, and improves performance.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Remove requirement to use "@@@" when doing GIN weighted lookups on full
-       text indexes (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add optimizer selectivity function for '@@' text search operations (Jan
-       Urbanski)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add partial match support for GIN indexes (Teodor Sigaev, Oleg Bartunov)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow prefix matching in full text searches (Teodor Sigaev, Oleg
-       Bartunov)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Support multi-column GIN indexes (Teodor Sigaev)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Special xxx_pattern_ops LIKE indexes can now be used for simple equality
-       comparisons (Tom)
       </para>
      </listitem>
 
