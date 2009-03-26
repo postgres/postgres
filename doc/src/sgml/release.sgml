@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.597 2009/03/26 03:46:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.598 2009/03/26 12:38:03 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -407,7 +407,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       New semi- and ansi-joins (Tom)
+       New semi- and anti-joins (Tom)
       </para>
 
       <para>
