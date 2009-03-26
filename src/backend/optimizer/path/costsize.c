@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.205 2009/03/21 00:04:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.206 2009/03/26 17:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1880,6 +1880,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 							&numbatches,
 							&num_skew_mcvs);
 	virtualbuckets = (double) numbuckets *(double) numbatches;
+	/* mark the path with estimated # of batches */
+	path->num_batches = numbatches;
 
 	/*
 	 * Determine bucketsize fraction for inner relation.  We use the smallest

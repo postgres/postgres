@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.355 2009/03/21 00:04:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.356 2009/03/26 17:15:34 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1448,6 +1448,7 @@ _outHashPath(StringInfo str, HashPath *node)
 	_outJoinPathInfo(str, (JoinPath *) node);
 
 	WRITE_NODE_FIELD(path_hashclauses);
+	WRITE_INT_FIELD(num_batches);
 }
 
 static void

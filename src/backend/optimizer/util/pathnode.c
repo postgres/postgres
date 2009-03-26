@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.150 2009/02/27 00:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.151 2009/03/26 17:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1480,9 +1480,20 @@ create_hashjoin_path(PlannerInfo *root,
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
-	/* A hashjoin never has pathkeys, since its ordering is unpredictable */
+	/*
+	 * A hashjoin never has pathkeys, since its output ordering is
+	 * unpredictable due to possible batching.  XXX If the inner relation is
+	 * small enough, we could instruct the executor that it must not batch,
+	 * and then we could assume that the output inherits the outer relation's
+	 * ordering, which might save a sort step.  However there is considerable
+	 * downside if our estimate of the inner relation size is badly off.
+	 * For the moment we don't risk it.  (Note also that if we wanted to take
+	 * this seriously, joinpath.c would have to consider many more paths for
+	 * the outer rel than it does now.)
+	 */
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;
+	/* cost_hashjoin will fill in pathnode->num_batches */
 
 	cost_hashjoin(pathnode, root, sjinfo);
 
