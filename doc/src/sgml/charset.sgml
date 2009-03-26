@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.91 2009/02/10 19:29:39 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.92 2009/03/26 20:55:49 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -33,7 +33,7 @@
 
  <sect1 id="locale">
   <title>Locale Support</title>
-  
+
   <indexterm zone="locale"><primary>locale</></>
 
   <para>
@@ -65,7 +65,7 @@ initdb --locale=sv_SE
    </para>
 
    <para>
-    This example for Unix systems sets the locale to Swedish 
+    This example for Unix systems sets the locale to Swedish
     (<literal>sv</>) as spoken
     in Sweden (<literal>SE</>).  Other possibilities might be
     <literal>en_US</> (U.S. English) and <literal>fr_CA</> (French
@@ -136,18 +136,18 @@ initdb --locale=sv_SE
     and <literal>LC_CTYPE</literal> are those categories.  They affect
     the sort order of indexes, so they must be kept fixed, or indexes on
     text columns will become corrupt.  The default values for these
-    categories are defined when <command>initdb</command> is run, and
+    categories are determined when <command>initdb</command> is run, and
     those values are used when new databases are created, unless
     specified otherwise in the <command>CREATE DATABASE</command> command.
    </para>
 
    <para>
-    The other locale categories can be changed as desired whenever the
-    server is running by setting the run-time configuration variables
+    The other locale categories can be changed whenever desired
+    by setting the server configuration parameters
     that have the same name as the locale categories (see <xref
-    linkend="runtime-config-client-format"> for details).  The defaults
-    that are chosen by <command>initdb</command> are actually only written into
-    the configuration file <filename>postgresql.conf</filename> to
+    linkend="runtime-config-client-format"> for details).  The values
+    that are chosen by <command>initdb</command> are actually only written
+    into the configuration file <filename>postgresql.conf</filename> to
     serve as defaults when the server is started.  If you delete these
     assignments from <filename>postgresql.conf</filename> then the
     server will inherit the settings from its execution environment.
@@ -200,7 +200,8 @@ initdb --locale=sv_SE
     <itemizedlist>
      <listitem>
       <para>
-       Sort order in queries using <literal>ORDER BY</> on textual data
+       Sort order in queries using <literal>ORDER BY</> or the standard
+       comparison operators on textual data
        <indexterm><primary>ORDER BY</><secondary>and locales</></indexterm>
       </para>
      </listitem>
@@ -261,9 +262,9 @@ initdb --locale=sv_SE
 
    <para>
     Check that <productname>PostgreSQL</> is actually using the locale
-    that you think it is.  The default <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
-    settings are determined at <command>initdb</> time and cannot be
-    changed without repeating <command>initdb</>.  Other locale
+    that you think it is.  The <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
+    settings are determined when a database is created, and cannot be
+    changed except by creating a new database.  Other locale
     settings including <envar>LC_MESSAGES</> and <envar>LC_MONETARY</>
     are initially determined by the environment the server is started
     in, but can be changed on-the-fly.  You can check the active locale
@@ -714,7 +715,7 @@ initdb --locale=sv_SE
       converting or validating non-ASCII characters.
      </para>
     </sect2>
-    
+
    <sect2>
     <title>Setting the Character Set</title>
 
@@ -907,14 +908,14 @@ $ <userinput>psql -l</userinput>
          <literal>WIN1251</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN1</literal></entry>
          <entry><emphasis>LATIN1</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN2</literal></entry>
          <entry><emphasis>LATIN2</emphasis>,
          <literal>MULE_INTERNAL</literal>,
@@ -922,51 +923,51 @@ $ <userinput>psql -l</userinput>
          <literal>WIN1250</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN3</literal></entry>
          <entry><emphasis>LATIN3</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN4</literal></entry>
          <entry><emphasis>LATIN4</emphasis>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN5</literal></entry>
          <entry><emphasis>LATIN5</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN6</literal></entry>
          <entry><emphasis>LATIN6</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN7</literal></entry>
          <entry><emphasis>LATIN7</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN8</literal></entry>
          <entry><emphasis>LATIN8</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN9</literal></entry>
          <entry><emphasis>LATIN9</emphasis>,
          <literal>UTF8</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>LATIN10</literal></entry>
          <entry><emphasis>LATIN10</emphasis>,
          <literal>UTF8</literal>
@@ -989,7 +990,7 @@ $ <userinput>psql -l</userinput>
           <literal>WIN1251</literal>
          </entry>
         </row>
-        <row> 
+        <row>
          <entry><literal>SJIS</literal></entry>
          <entry><emphasis>not supported as a server encoding</emphasis>
          </entry>
