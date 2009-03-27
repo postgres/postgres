@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.604 2009/03/27 01:26:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.605 2009/03/27 01:44:30 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -800,7 +800,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Allow recovery.conf boolean variables to take the same range of string
-       alues as postgresql.conf (Bruce)
+       values as postgresql.conf (Bruce)
       </para>
      </listitem>
 
@@ -898,7 +898,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add support for Unicode sting and identifier specifications using code
+       Add support for Unicode string and identifier specifications using code
        points, e.g. U&'d\0061t\+000061' (Peter)
       </para>
      </listitem>
@@ -1162,8 +1162,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow CREATE OR REPLACE VIEW to add columns to the _end_ of the view
-       (Robert Haas)
+       Allow CREATE OR REPLACE VIEW to add columns to the <emphasis>end</>
+       of the view (Robert Haas)
       </para>
      </listitem>
 
@@ -1329,7 +1329,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Autovacuum options uses to be stored in a system table.
+       Autovacuum options used to be stored in a system table.
       </para>
      </listitem>
 
@@ -2064,7 +2064,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Allows dumps to fail if unable to acquire shared table within the
+       Allows dumps to fail if unable to acquire shared lock within the
        specified amount of time.
       </para>
      </listitem>
@@ -2339,8 +2339,13 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Add configure option --disable-float4-byval to use the old behavior.
-                                                                                tgl
+       Add configure option --disable-float4-byval to use the old
+       behavior.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Pass float8 and int8 by value in the server where possible (Zoltan
        Boszormenyi)
       </para>
@@ -2521,7 +2526,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add duration option to /contrib/pgbench (Takahiro Itagaki)
+       Add duration option to /contrib/pgbench (ITAGAKI Takahiro)
       </para>
      </listitem>
 
