@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.601 2009/03/27 00:08:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.602 2009/03/27 00:11:34 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1437,7 +1437,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support the IS0 8601 time interval syntax (Ron Mayer) bjm: sufficient?
+       Support the IS0 8601 time interval syntax (Tom, Kevin Grittner)
       </para>
 
       <para>
