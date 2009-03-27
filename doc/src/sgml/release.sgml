@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.602 2009/03/27 00:11:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.603 2009/03/27 00:45:40 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -122,8 +122,8 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This was available previously via a configure --enable-integer-datetimes
-       (Neil Conway)
+       This was available previously via a configure
+       --enable-integer-datetimes.
       </para>
      </listitem>
 
@@ -421,7 +421,7 @@ do it for earlier branch release files.
 
       <para>
        While semi-joins merely replace existing IN joins, anti-joins
-       are a new capability for NOT IN and NOT EXIST clauses (Tom)
+       are a new capability for NOT IN and NOT EXISTS clauses (Tom)
        This improves optimization possibilities.
       </para>
      </listitem>
@@ -432,7 +432,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       IN and EXISTs now provide similar performance for equivalent clauses.
+       IN and EXISTS now provide similar performance for equivalent clauses.
       </para>
      </listitem>
 
@@ -484,7 +484,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       A new constraint_exclusion setting, "partition", which matches this
+       A new constraint_exclusion setting, "partition", was added to match this
        behavior.
       </para>
      </listitem>
@@ -635,8 +635,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Move that server statistics file into the subdirectory pg_stat_tmp
-       (Magnus)
+       Move the server statistics file into the subdirectory pg_stat_tmp
+       and allow its location to be specified via stats_temp_directory (Magnus)
       </para>
 
       <para>
@@ -644,14 +644,6 @@ do it for earlier branch release files.
        directory to reduce I/O requirements.  On startup/shutdown, the
        file is copied to the top-level $PGDATA directory so it is preserved
        between restarts.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow the location of the new pg_stat_tmp to be configured via
-       the stats_temp_directory setting (Magnus)
-
       </para>
      </listitem>
 
