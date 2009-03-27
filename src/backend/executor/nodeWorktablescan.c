@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.5 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.6 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,10 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * worktable plan node, since it cannot appear high enough in the plan
 	 * tree of a scrollable cursor to be exposed to a backward-scan
 	 * requirement.  So it's not worth expending effort to support it.
+	 *
+	 * Note: we are also assuming that this node is the only reader of the
+	 * worktable.  Therefore, we don't need a private read pointer for the
+	 * tuplestore, nor do we need to tell tuplestore_gettupleslot to copy.
 	 */
 	estate = node->ss.ps.state;
 	Assert(ScanDirectionIsForward(estate->es_direction));
@@ -53,7 +57,7 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * Get the next tuple from tuplestore. Return NULL if no more tuples.
 	 */
 	slot = node->ss.ss_ScanTupleSlot;
-	(void) tuplestore_gettupleslot(tuplestorestate, true, slot);
+	(void) tuplestore_gettupleslot(tuplestorestate, true, false, slot);
 	return slot;
 }
 

@@ -47,7 +47,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.46 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.47 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -871,10 +871,17 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
  *
  * If successful, put tuple in slot and return TRUE; else, clear the slot
  * and return FALSE.
+ *
+ * If copy is TRUE, the slot receives a copied tuple (allocated in current
+ * memory context) that will stay valid regardless of future manipulations of
+ * the tuplestore's state.  If copy is FALSE, the slot may just receive a
+ * pointer to a tuple held within the tuplestore.  The latter is more
+ * efficient but the slot contents may be corrupted if additional writes to
+ * the tuplestore occur.  (If using tuplestore_trim, see comments therein.)
  */
 bool
 tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
-						TupleTableSlot *slot)
+						bool copy, TupleTableSlot *slot)
 {
 	MinimalTuple tuple;
 	bool		should_free;
@@ -883,6 +890,11 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 
 	if (tuple)
 	{
+		if (copy && !should_free)
+		{
+			tuple = heap_copy_minimal_tuple(tuple);
+			should_free = true;
+		}
 		ExecStoreMinimalTuple(tuple, slot, should_free);
 		return true;
 	}
@@ -1107,7 +1119,10 @@ tuplestore_trim(Tuplestorestate *state)
 	 * since tuplestore_gettuple returns a direct pointer to our
 	 * internal copy of the tuple, it's likely that the caller has
 	 * still got the tuple just before "current" referenced in a slot.
-	 * So we keep one extra tuple before the oldest "current".
+	 * So we keep one extra tuple before the oldest "current".  (Strictly
+	 * speaking, we could require such callers to use the "copy" flag to
+	 * tuplestore_gettupleslot, but for efficiency we allow this one case
+	 * to not use "copy".)
 	 */
 	nremove = oldest - 1;
 	if (nremove <= 0)

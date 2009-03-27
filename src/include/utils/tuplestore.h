@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.28 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.29 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ extern void tuplestore_trim(Tuplestorestate *state);
 extern bool tuplestore_in_memory(Tuplestorestate *state);
 
 extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
-						TupleTableSlot *slot);
+						bool copy, TupleTableSlot *slot);
 extern bool tuplestore_advance(Tuplestorestate *state, bool forward);
 
 extern bool tuplestore_ateof(Tuplestorestate *state);

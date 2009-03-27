@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.129 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.130 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1118,7 +1118,8 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 
 			oldcontext = MemoryContextSwitchTo(portal->holdContext);
 
-			ok = tuplestore_gettupleslot(portal->holdStore, forward, slot);
+			ok = tuplestore_gettupleslot(portal->holdStore, forward, false,
+										 slot);
 
 			MemoryContextSwitchTo(oldcontext);
 

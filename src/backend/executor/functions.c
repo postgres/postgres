@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.132 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.133 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -736,7 +736,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			/* Re-use the junkfilter's output slot to fetch back the tuple */
 			Assert(fcache->junkFilter);
 			slot = fcache->junkFilter->jf_resultSlot;
-			if (!tuplestore_gettupleslot(fcache->tstore, true, slot))
+			if (!tuplestore_gettupleslot(fcache->tstore, true, false, slot))
 				elog(ERROR, "failed to fetch lazy-eval tuple");
 			/* Extract the result as a datum, and copy out from the slot */
 			result = postquel_get_single_result(slot, fcinfo,
@@ -822,7 +822,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		{
 			/* Re-use the junkfilter's output slot to fetch back the tuple */
 			slot = fcache->junkFilter->jf_resultSlot;
-			if (tuplestore_gettupleslot(fcache->tstore, true, slot))
+			if (tuplestore_gettupleslot(fcache->tstore, true, false, slot))
 				result = postquel_get_single_result(slot, fcinfo,
 													fcache, oldcontext);
 			else

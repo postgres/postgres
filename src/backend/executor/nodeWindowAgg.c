@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.3 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.4 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,7 +480,8 @@ eval_windowaggregates(WindowAggState *winstate)
 			spool_tuples(winstate, winstate->aggregatedupto);
 			tuplestore_select_read_pointer(winstate->buffer,
 										   winstate->agg_ptr);
-			if (!tuplestore_gettupleslot(winstate->buffer, true, agg_row_slot))
+			if (!tuplestore_gettupleslot(winstate->buffer, true, true,
+										 agg_row_slot))
 				break;			/* must be end of partition */
 		}
 
@@ -1001,12 +1002,14 @@ restart:
 	/*
 	 * Read the current row from the tuplestore, and save in ScanTupleSlot.
 	 * (We can't rely on the outerplan's output slot because we may have to
-	 * read beyond the current row.)
+	 * read beyond the current row.  Also, we have to actually copy the row
+	 * out of the tuplestore, since window function evaluation might cause
+	 * the tuplestore to dump its state to disk.)
 	 *
 	 * Current row must be in the tuplestore, since we spooled it above.
 	 */
 	tuplestore_select_read_pointer(winstate->buffer, winstate->current_ptr);
-	if (!tuplestore_gettupleslot(winstate->buffer, true,
+	if (!tuplestore_gettupleslot(winstate->buffer, true, true,
 								 winstate->ss.ss_ScanTupleSlot))
 		elog(ERROR, "unexpected end of tuplestore");
 
@@ -1589,14 +1592,14 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 
 	while (winobj->seekpos > pos)
 	{
-		if (!tuplestore_gettupleslot(winstate->buffer, false, slot))
+		if (!tuplestore_gettupleslot(winstate->buffer, false, true, slot))
 			elog(ERROR, "unexpected end of tuplestore");
 		winobj->seekpos--;
 	}
 
 	while (winobj->seekpos < pos)
 	{
-		if (!tuplestore_gettupleslot(winstate->buffer, true, slot))
+		if (!tuplestore_gettupleslot(winstate->buffer, true, true, slot))
 			elog(ERROR, "unexpected end of tuplestore");
 		winobj->seekpos++;
 	}

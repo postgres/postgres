@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.242 2009/03/26 22:26:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.243 2009/03/27 18:30:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1385,7 +1385,7 @@ restart:
 	if (fcache->funcResultStore)
 	{
 		Assert(isDone);				/* it was provided before ... */
-		if (tuplestore_gettupleslot(fcache->funcResultStore, true,
+		if (tuplestore_gettupleslot(fcache->funcResultStore, true, false,
 									fcache->funcResultSlot))
 		{
 			*isDone = ExprMultipleResult;
