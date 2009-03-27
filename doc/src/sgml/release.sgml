@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.599 2009/03/27 00:01:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.600 2009/03/27 00:06:14 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1484,12 +1484,6 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Increase variability in the number of fractional seconds digits
-       displayed (Ron Mayer)
-      </para>
-     </listitem>
 
     </itemizedlist>
 
