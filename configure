@@ -17787,22 +17787,7 @@ esac
 fi
 
 # Similarly, use system's getopt_long() only if system provides struct option.
-# Solaris' getopt() doesn't do what we want for long options, so always use
-# our versions on that platform.
-if test "$PORTNAME" = "solaris"; then
-  case " $LIBOBJS " in
-  *" getopt.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
- ;;
-esac
-
-  case " $LIBOBJS " in
-  *" getopt_long.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt_long.$ac_objext"
- ;;
-esac
-
-elif test x"$ac_cv_type_struct_option" = xyes ; then
+if test x"$ac_cv_type_struct_option" = xyes ; then
 
 for ac_func in getopt_long
 do
@@ -17909,6 +17894,17 @@ else
   case " $LIBOBJS " in
   *" getopt_long.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS getopt_long.$ac_objext"
+ ;;
+esac
+
+fi
+
+# Solaris' getopt() doesn't do what we want for long options, so always use
+# our version on that platform.
+if test "$PORTNAME" = "solaris"; then
+  case " $LIBOBJS " in
+  *" getopt.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
  ;;
 esac
 
