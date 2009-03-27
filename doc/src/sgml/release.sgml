@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.605 2009/03/27 01:44:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.606 2009/03/27 02:25:04 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1181,7 +1181,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Previously EXPLAIN VERBOSE output an internal representation of the
+       Previously EXPLAIN VERBOSE had output an internal representation of the
        query plan.  (That behavior is now available via debug_print_plan.)
       </para>
      </listitem>
