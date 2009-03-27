@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.606 2009/03/27 02:25:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.607 2009/03/27 11:58:21 mha Exp $ -->
 <!--
 
 Typical markup:
@@ -660,12 +660,17 @@ do it for earlier branch release files.
        Parse pg_hba.conf in the postmaster so errors are reported on reload
        (Magnus)
       </para>
+      
+      <para>
+       Previously errors in the file wouldn't be detected until clients tried
+       to connect, which could leave the system with a broken file loaded.
+      </para>
      </listitem>
 
      <listitem>
       <para>
-       Make pg_hba.conf "sameuser" an optional argument for ident
-       authentication (Magnus)
+       Remove "sameuser" option from pg_hba.conf, making it the default if
+       no usermap is specified (Magnus)
       </para>
      </listitem>
 
@@ -675,6 +680,16 @@ do it for earlier branch release files.
        settings (Magnus)
       </para>
      </listitem>
+     
+     <listitem>
+      <para>
+       Allow usermap parameter in pg_hba.conf for all external authentication
+       methods (Magnus)
+      </para>
+      
+      <para>
+       Previously this was only supported for ident authentication.
+      </para>
 
      <listitem>
       <para>
@@ -702,7 +717,8 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Previously SSL certificates could only authenticate hosts, not users.
+       Previously SSL certificates could only verify that the client had access
+       to a certificate, not authenticate a user.
       </para>
      </listitem>
 
@@ -725,14 +741,14 @@ do it for earlier branch release files.
 
       <para>
        This allows identical usernames from different realms to be
-       authenticated as different database users. bjm: correct?
+       authenticated as different database users using usermaps.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Issue a warning rather than shut down when pg_hba.conf can't be loaded
-       (Selena Deckelmann)
+       Show all parsing errors in pg_hba.conf instead of aborting after the
+       first one (Selena Deckelmann)
       </para>
      </listitem>
 
