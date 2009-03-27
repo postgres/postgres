@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.608 2009/03/27 12:01:57 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.609 2009/03/27 19:17:11 mha Exp $ -->
 <!--
 
 Typical markup:
@@ -690,6 +690,7 @@ do it for earlier branch release files.
       <para>
        Previously this was only supported for ident authentication.
       </para>
+     </listitem>
 
      <listitem>
       <para>
