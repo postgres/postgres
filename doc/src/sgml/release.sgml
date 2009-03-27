@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.598 2009/03/26 12:38:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.599 2009/03/27 00:01:47 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -82,6 +82,8 @@ do it for earlier branch release files.
    </para>
 
    <itemizedlist>
+
+    <!-- This list duplicates items below, but without authors or details-->
 
     <listitem>
      <para>
@@ -345,6 +347,13 @@ do it for earlier branch release files.
 
       <para>
        For example, input value 'AD' does not match format string 'A.D.'.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       DateStyle no longer controls interval output (use new variable
+       IntervalStyle)
       </para>
      </listitem>
 
@@ -1428,7 +1437,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support the IS0 8601 time interval syntax (Tom) bjm: sufficient?
+       Support the IS0 8601 time interval syntax (Ron Mayer) bjm: sufficient?
       </para>
 
       <para>
