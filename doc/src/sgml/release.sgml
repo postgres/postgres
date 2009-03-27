@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.609 2009/03/27 19:17:11 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.610 2009/03/27 22:39:42 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -421,8 +421,8 @@ do it for earlier branch release files.
 
       <para>
        While semi-joins merely replace existing IN joins, anti-joins
-       are a new capability for NOT IN and NOT EXISTS clauses (Tom)
-       This improves optimization possibilities.
+       are a new capability for NOT EXISTS clauses (Tom) This improves
+       optimization possibilities.
       </para>
      </listitem>
 
