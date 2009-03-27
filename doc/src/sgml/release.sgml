@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.607 2009/03/27 11:58:21 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.608 2009/03/27 12:01:57 mha Exp $ -->
 <!--
 
 Typical markup:
@@ -2216,8 +2216,15 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix libpq certificate validation for SSL connections (Magnus) bjm:
-       details?
+       Fix libpq certificate validation for SSL connections (Magnus)
+      </para>
+      
+      <para>
+       libpq now verifies both the certificate and the name of the server by
+       default when making SSL connections. If a root certificate is not
+       available to use for verification, SSL connections will fail. The
+       "sslverify" parameter can be used to disable the host and certificate
+       verification if required.
       </para>
      </listitem>
 
