@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.313 2009/03/24 20:17:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.314 2009/03/27 15:57:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2243,6 +2243,7 @@ reindex_index(Oid indexId)
 				pg_index;
 	Oid			heapId;
 	bool		inplace;
+	IndexInfo  *indexInfo;
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
 
@@ -2293,8 +2294,6 @@ reindex_index(Oid indexId)
 
 	PG_TRY();
 	{
-		IndexInfo  *indexInfo;
-
 		/* Suppress use of the target index while rebuilding it */
 		SetReindexProcessing(heapId, indexId);
 
@@ -2333,6 +2332,10 @@ reindex_index(Oid indexId)
 	 * If the index is marked invalid or not ready (ie, it's from a failed
 	 * CREATE INDEX CONCURRENTLY), we can now mark it valid.  This allows
 	 * REINDEX to be used to clean up in such cases.
+	 *
+	 * We can also reset indcheckxmin, because we have now done a
+	 * non-concurrent index build, *except* in the case where index_build
+	 * found some still-broken HOT chains.
 	 */
 	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
@@ -2343,10 +2346,13 @@ reindex_index(Oid indexId)
 		elog(ERROR, "cache lookup failed for index %u", indexId);
 	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
-	if (!indexForm->indisvalid || !indexForm->indisready)
+	if (!indexForm->indisvalid || !indexForm->indisready ||
+		(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
 	{
 		indexForm->indisvalid = true;
 		indexForm->indisready = true;
+		if (!indexInfo->ii_BrokenHotChain)
+			indexForm->indcheckxmin = false;
 		simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 		CatalogUpdateIndexes(pg_index, indexTuple);
 	}
