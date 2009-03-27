@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.603 2009/03/27 00:45:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.604 2009/03/27 01:26:36 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -469,7 +469,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Increase the default value of default_statistics_target from 10 to 100
-       (Tom)
+       (Greg Sabino Mullane, Tom)
       </para>
 
       <para>
