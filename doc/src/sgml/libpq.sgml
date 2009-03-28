@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.279 2009/03/23 01:45:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.280 2009/03/28 01:36:11 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6169,11 +6169,13 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </para>
 
   <para>
-   If you are using <acronym>SSL</> inside your application (in addition
-   to inside <application>libpq</application>), you can call
-   <function>PQinitSSL(int)</> with <literal>0</> to tell
-   <application>libpq</application> that the <acronym>SSL</> library
-   has already been initialized by your application.
+   If your application initializes <literal>libssl</> or
+   <literal>libcrypto</> libraries and <application>libpq</application>
+   is built with <acronym>SSL</> support, you should call
+   <function>PQinitSSL(0)</> to tell <application>libpq</application>
+   that the <literal>libssl</> and <literal>libcrypto</> libraries
+   have been initialized by your application so
+   <application>libpq</application> will not initialize those libraries.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    See <ulink
    url="http://h71000.www7.hp.com/doc/83final/BA554_90007/ch04.html"></ulink>
