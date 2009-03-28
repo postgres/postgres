@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.610 2009/03/27 22:39:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.611 2009/03/28 14:15:15 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2584,7 +2584,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add /contrib/citext as a case-insensitive text data type (David Wheeler)
+       Add /contrib/citext as a case-insensitive, multibyte-capable text data type (David Wheeler)
       </para>
      </listitem>
 
