@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.11 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.12 2009/03/28 03:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -79,19 +79,18 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
    password is <literal>MD5</>-encrypted.
   </para>
 
-  <para>
-   The remaining variants change a role's session default for
-   a specified configuration variable.  Whenever the role subsequently
-   starts a new session, the specified value becomes the session default,
-   overriding whatever setting is present in <filename>postgresql.conf</>
-   or has been received from the <command>postgres</command> command line.
-   (For a role without <literal>LOGIN</> privilege, session defaults have
-   no effect.)
-   Ordinary roles can change their own session defaults.
-   Superusers can change anyone's session defaults.
-   Roles having <literal>CREATEROLE</> privilege can change defaults for
-   non-superuser roles.
-   Certain variables cannot be set this way, or can only be
+  <para> 
+   The remaining variants change a role's session default for a
+   specified configuration variable. Whenever the role subsequently
+   starts a new session, the specified value becomes the session
+   default, overriding whatever setting is present in
+   <filename>postgresql.conf</> or has been received from the postgres
+   command line. This only happens at login time, so configuration
+   settings associated with a role to which you've <xref
+   linkend="sql-set-role" endterm="sql-set-role-title"> will be ignored.
+   Superusers can change anyone's session defaults. Roles having
+   <literal>CREATEROLE</> privilege can change defaults for non-superuser
+   roles. Certain variables cannot be set this way, or can only be
    set if a superuser issues the command.
   </para>
  </refsect1>
@@ -160,6 +159,12 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
         <literal>RESET ALL</literal> to clear all role-specific settings.
         <literal>SET FROM CURRENT</> saves the session's current value of
         the parameter as the role-specific value.
+       </para>
+
+       <para>
+        Role-specific variable setting take effect only at login;
+        <xref linkend="sql-set-role" endterm="sql-set-role-title">
+        does not process role-specific variable settings.
        </para>
 
        <para>

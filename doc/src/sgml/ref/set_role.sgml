@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.6 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.7 2009/03/28 03:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -89,6 +89,13 @@ RESET ROLE
    allowable for later <command>SET ROLE</> commands, whereas changing
    roles with <command>SET ROLE</> does not change the set of roles
    allowed to a later <command>SET ROLE</>.
+  </para>
+
+  <para>
+   <command>SET ROLE</> does not process session variables as specified by
+   the role's <xref linkend="sql-alterrole"
+   endterm="sql-alterrole-title"> settings;  this only happens during
+   login.
   </para>
 
   <para>
