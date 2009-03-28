@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.611 2009/03/28 14:15:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.612 2009/03/28 22:05:22 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1415,7 +1415,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Accept 'on'/'off' as boolean data type values (ITAGAKI Takahiro)
+       Accept 'on'/'off' as boolean data type values (Itagaki Takahiro)
       </para>
      </listitem>
 
@@ -2544,13 +2544,13 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add -M (query mode) to /contrib/pgbench (ITAGAKI Takahiro)
+       Add -M (query mode) to /contrib/pgbench (Takahiro Itagaki)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add duration option to /contrib/pgbench (ITAGAKI Takahiro)
+       Add duration option to /contrib/pgbench (Takahiro Itagaki)
       </para>
      </listitem>
 
