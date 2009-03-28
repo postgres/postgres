@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.65 2009/03/23 01:52:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.66 2009/03/28 00:10:23 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -1051,7 +1051,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   <para>
    A number of standard probes are provided in the source code,
    as shown in <xref linkend="dtrace-probe-point-table">.
-   More can certainly be added to enhance PostgreSQL's observability.
+   More can certainly be added to enhance <productname>PostgreSQL</>'s
+   observability.
   </para>
 
  <table id="dtrace-probe-point-table">
@@ -1605,8 +1606,9 @@ Total time (ns)                        2312105013
    <step>
     <para>
      Include <filename>pg_trace.h</> if it is not already present in the
-     module(s) containing the probe points, and insert TRACE_POSTGRESQL
-     probe macros at the desired locations in the source code
+     module(s) containing the probe points, and insert
+     <literal>TRACE_POSTGRESQL</> probe macros at the desired locations
+     in the source code
     </para>
    </step>
 
@@ -1628,8 +1630,8 @@ Total time (ns)                        2312105013
   <procedure>
    <step>
     <para>
-     Decide that the probe will be named transaction-start and requires
-     a parameter of type LocalTransactionId
+     Decide that the probe will be named <literal>transaction-start</> and
+     requires a parameter of type LocalTransactionId
     </para>
    </step>
 
@@ -1637,29 +1639,22 @@ Total time (ns)                        2312105013
     <para>
      Add the probe definition to <filename>src/backend/utils/probes.d</>:
 <programlisting>
-      ...
       probe transaction__start(LocalTransactionId);
-      ...
 </programlisting>
      Note the use of the double underline in the probe name. In a DTrace
      script using the probe, the double underline needs to be replaced with a
-     hyphen.
-    </para>
-
-    <para>
-     You should take care that the data types specified for the probe
-     parameters match the data types of the variables used in the macro.
-     Otherwise, you will get compilation errors.
+     hyphen, so <literal>transaction-start</> is the name to document for
+     users.
     </para>
    </step>
 
    <step>
     <para>
-     At compile time, transaction__start is converted to a macro called
-     TRACE_POSTGRESQL_TRANSACTION_START (note the underscores are single
-     here), which is available by including <filename>pg_trace.h</>.
-     Add the macro call to the appropriate location in the source code.
-     In this case, it looks like the following:
+     At compile time, <literal>transaction__start</> is converted to a macro
+     called <literal>TRACE_POSTGRESQL_TRANSACTION_START</> (notice the
+     underscores are single here), which is available by including
+     <filename>pg_trace.h</>.  Add the macro call to the appropriate location
+     in the source code.  In this case, it looks like the following:
 
 <programlisting>
     TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
@@ -1684,6 +1679,44 @@ Total time (ns)                        2312105013
     </para>
    </step>
   </procedure>
+
+  <para>
+   There are a few things to be careful about when adding trace macros
+   to the C code:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      You should take care that the data types specified for a probe's
+      parameters match the data types of the variables used in the macro.
+      Otherwise, you will get compilation errors.
+     </para>
+    </listitem>
+
+
+    <listitem>
+     <para>
+      On most platforms, if <productname>PostgreSQL</productname> is
+      built with <option>--enable-dtrace</>, the arguments to a trace
+      macro will be evaluated whenever control passes through the
+      macro, <emphasis>even if no tracing is being done</>.  This is
+      usually not worth worrying about if you are just reporting the
+      values of a few local variables.  But beware of putting expensive
+      function calls into the arguments.  If you need to do that,
+      consider protecting the macro with a check to see if the trace
+      is actually enabled:
+
+<programlisting>
+    if (TRACE_POSTGRESQL_TRANSACTION_START_ENABLED())
+        TRACE_POSTGRESQL_TRANSACTION_START(some_function(...));
+</programlisting>
+
+      Each trace macro has a corresponding <literal>ENABLED</> macro.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+  </para>
 
   </sect2>
 
