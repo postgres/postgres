@@ -1,11 +1,11 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.614 2009/03/29 03:58:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.615 2009/03/29 19:13:46 momjian Exp $ -->
 <!--
 
 Typical markup:
 
 &<>                             use & escapes
 PostgreSQL                      <productname>
-postgresql.conf, pg_hba.conf	<filename>
+postgresql.conf, pg_hba.conf    <filename>
 [A-Z][A-Z ]+[A-Z]               <command>
 [A-Za-z_][A-Za-z0-9_]+()        <function>
 [A-Za-z_]/[A-Za-z_]+            <filename>
@@ -614,7 +614,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <function>pg_conf_load_time()</> function to report when
+       Add <function>pg_conf_load_time()</> to report when
        the Postgres configuration files were last loaded (George
        Gensure)
       </para>
@@ -1626,14 +1626,14 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <function>array_ndims()</> function to return the number
+       Add <function>array_ndims()</> to return the number
        of dimensions of an array (Robert Haas)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <function>array_length()</> function to return the length
+       Add <function>array_length()</> to return the length
        of an array for the specified dimensions (Jim Nasby, Robert
        Haas, Peter Eisentraut)
       </para>
@@ -1654,7 +1654,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add function <function>unnest()</>, which converts an array to
+       Add <function>unnest()</>, which converts an array to
        individual row values (Tom)
       </para>
 
@@ -1760,14 +1760,14 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <function>pg_get_keywords()</> function to return predefined
+       Add <function>pg_get_keywords()</> to return predefined
        parser keywords (Dave Page)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add function <function>pg_get_functiondef()</> to see a functions
+       Add <function>pg_get_functiondef()</> to see a functions
        definition (Abhijit Menon-Sen)
       </para>
      </listitem>
@@ -1811,7 +1811,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <function>pg_typeof()</> function to return the data type
+       Add <function>pg_typeof()</> which returns the data type
        of any value (Brendan Jurd)
       </para>
      </listitem>
@@ -2376,15 +2376,15 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow the file locations for client <acronym>SSL</> certificates
-       to be specified (Mark Woodward, Alvaro, Magnus)
+       Allow the file locations for client certificates to be specified
+       (Mark Woodward, Alvaro, Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Add connection parameter <literal>sslverify</> to control
-       the verification of the server's <acronym>SSL</> certificate
+       the verification of the server's certificate
        (Magnus)
       </para>
 
@@ -2468,7 +2468,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support 64-bit timezone data files (Heikki)
+       Support 64-bit time zone data files (Heikki)
       </para>
 
       <para>
@@ -2479,7 +2479,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix bug in handling of the timezone database when cross-compiling
+       Fix bug in handling of the time zone database when cross-compiling
        (Richard Evans)
       </para>
      </listitem>
@@ -2540,10 +2540,9 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This allows compile-time control over several compile-time
-       constants that control how large tables and <acronym>WAL</>
-       are segmented into separate files and their internal block
-       sizes
+       This allows compile-time control over several constants that
+       affect how tables and <acronym>WAL</> files are segmented and
+       their internal block sizes.
       </para>
      </listitem>
 
@@ -2555,15 +2554,16 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add support for <productname>Sun Studio</> compiler on
+       Add support for the <productname>Sun Studio</> compiler on
        <productname>Linux</> (Julius Stroffek)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Append major version number to the gettext domain name, and
-       for libraries the soname major version number (Peter)
+       Append the major version number to the <application>gettext</>
+       domain, and the <literal>soname</> major version number to
+       libraries (Peter)
       </para>
 
       <para>
@@ -2610,21 +2610,21 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Additional <application>DTrace</> probes (Robert Lor)
+       Add <application>DTrace</> probes (Robert Lor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <application>DTrace</> support on Mac <application>OS X
+       Add <application>DTrace</> support on <application>Mac OS X
        Leopard</> (Robert Lor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add new <type>cstring</> to text conversion functions (Brendan
-       Jurd, Tom)
+       Add new <type>cstring</> to <type>text</> conversion functions
+       (Brendan Jurd, Tom)
       </para>
      </listitem>
 
@@ -2649,8 +2649,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add a hook to allow planner statistics lookup behavior to be
-       overridden (Simon Riggs)
+       Add a hook to allow the planner statistics lookup behavior to
+       be overridden (Simon Riggs)
       </para>
      </listitem>
 
@@ -2689,8 +2689,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <literal>%expect 0</> to all parser input files to prevent
-       builds with parser conflicts (Peter)
+       Prevent parser input files from being built with any conflicts
+       (Peter)
       </para>
      </listitem>
 
@@ -2711,7 +2711,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <literal>-M</> (query mode) to <filename>/contrib/pgbench</>
+       Add query mode option to <filename>/contrib/pgbench</>
        (Itagaki Takahiro)
       </para>
      </listitem>
@@ -2757,14 +2757,14 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add <filename>/contrib/citext</> as a case-insensitive,
-       multibyte-capable text data type (David Wheeler)
+       multibyte-aware text data type (David Wheeler)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Make sure <filename>/contrib/dblink</> uses a password supplied
-       by the user, and not accidentally from the server .pgpass file
+       by the user, and not accidentally from the server's .pgpass file
        (Joe Conway)
       </para>
 
