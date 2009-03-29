@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.613 2009/03/29 03:01:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.614 2009/03/29 03:58:37 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -166,46 +166,46 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This change was made because some users wanted a constant log
-       filename, for use with an external log rotation tool.
+       This change was made because some users wanted a fixed filename,
+       for use with an external log rotation tool.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove explain_pretty_print <filename>postgresql.conf</> setting
+       Remove <varname>explain_pretty_print</> <filename>postgresql.conf</> setting
        (no longer needed) (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove log_restartpoints from <filename>recovery.conf</>;
-       instead use log_checkpoints (Simon Riggs)
+       Remove <varname>log_restartpoints</> from <filename>recovery.conf</>;
+       instead use <varname>log_checkpoints</> (Simon Riggs)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove support for the (insecure) crypt authentication method
+       Remove support for the (insecure) <literal>crypt</> authentication method
        (Magnus)
       </para>
 
       <para>
-       This breaks compatibility with pre-7.2 versions.
+       This breaks compatibility with pre-<productname>PostgreSQL</> 7.2 versions.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove krb_realm and krb_server_hostname, now
+       Remove <varname>krb_realm</> and <varname>krb_server_hostname</>, now
        <filename>pg_hba.conf</>-only settings (Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove ipcclean utility command (Bruce)
+       Remove <application>ipcclean</> utility command (Bruce)
       </para>
 
       <para>
@@ -216,8 +216,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       <filename>pg_hba.conf</> also has extensive changes related to
-       migration. bjm: add markup
+       The <filename>pg_hba.conf</> section below also has extensive
+       changes related to migration.
       </para>
      </listitem>
 
@@ -301,7 +301,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This was already the float8 behavior.
+       This was already the <type>float8</> behavior.
       </para>
      </listitem>
 
@@ -312,15 +312,15 @@ do it for earlier branch release files.
       </para>
 
       <para>
-        The changed behavior is more <acronym>IEEE</>-standards
-        compliant.
+       The changed behavior is more <acronym>IEEE</>-standards
+       compliant.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Throw an error if an escape character is the last character in
-       a <literal>LIKE</> pattern (it has nothing to escape) (Tom)
+       a <literal>LIKE</> pattern (there is nothing to escape) (Tom)
       </para>
      </listitem>
 
@@ -354,6 +354,11 @@ do it for earlier branch release files.
        (<literal>BC</>/<literal>AD</>) format designations  (Brendan
        Jurd)
       </para>
+
+      <para>
+       For example, input value <literal>ad</> now matches the format
+       string <literal>AD</>.
+      </para>
      </listitem>
 
      <listitem>
@@ -365,29 +370,31 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       For example, input value <literal>AD</> does not match format
-       string <literal>A.D.</>.
+       For example, input value <literal>AD</> now does not match
+       format string <literal>A.D.</>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       DateStyle no longer controls interval output (use new variable
-       IntervalStyle)
+       <varname>DateStyle</> no longer controls <type>INTERVAL</>
+       output (use new variable <varname>IntervalStyle</>)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove ~=~ and ~&lt;&gt;~ operators used for <literal>LIKE</>
-       index comparisons (Tom) bjm: needed?
+       Remove <literal>~=~</> and <literal>~&lt;&gt;~</> operators
+       used for <literal>LIKE</> index comparisons (Tom) bjm: needed,
+       pg_upgrade impact?
       </para>
 
       <para>
        A not-immediately-obvious incompatibility is that the sort
-       order within bpchar_pattern_ops indexes changes --- it had been
-       identical to plain strcmp, but is now trailing-blank-insensitive.
-       This will impact in-place upgrades, if those ever happen.
+       order within <literal>bpchar_pattern_ops</> indexes changes
+       --- it had been identical to plain <function>strcmp()</>, but
+       is now trailing-blank-insensitive.  This will impact in-place
+       upgrades, if those ever happen.
       </para>
      </listitem>
 
@@ -493,25 +500,27 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Increase the default value of default_statistics_target from
-       10 to 100 (Greg Sabino Mullane, Tom)
+       Increase the default value of <varname>default_statistics_target</>
+       from <literal>10</> to <literal>100</> (Greg Sabino Mullane,
+       Tom)
       </para>
 
       <para>
-       The maximum value was also increased from 1000 to 10000.
+       The maximum value was also increased from <literal>1000</> to
+       <literal>10000</>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Modify 'constraint_exclusion' to check for partitioned tables
-       by default when inheritance or <literal>UNION ALL</> is used
-       (Tom)
+       Modify <varname>constraint_exclusion</> to check for partitioned
+       tables by default when inheritance or <literal>UNION ALL</> is
+       used (Tom)
       </para>
 
       <para>
-       A new constraint_exclusion setting, <literal>partition</>, was
-       added to match this behavior.
+       A new <varname>constraint_exclusion</> setting,
+       <literal>partition</>, was added to match this behavior.
       </para>
      </listitem>
 
@@ -521,9 +530,9 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       The amount of read-ahead is controlled by effective_io_concurrency.
-       This requires <function>posix_fadvise()</> support in the
-       kernel.
+       The amount of read-ahead is controlled by
+       <varname>effective_io_concurrency</>.  This requires
+       <function>posix_fadvise()</> support in the kernel.
       </para>
      </listitem>
 
@@ -581,9 +590,10 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <filename>postgresql.conf</> setting cursor_tuple_fraction
-       to control the fraction of a cursor's rows expected to be
-       requested by the user (Robert Hell)
+       Add <filename>postgresql.conf</> setting
+       <varname>cursor_tuple_fraction</> to control the fraction of
+       a cursor's rows expected to be requested by the user (Robert
+       Hell)
       </para>
      </listitem>
 
@@ -613,15 +623,15 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add <function>pg_terminate_backend()</> to safely terminate a
-       backend (the <literal>SIGTERM</> signal also works) (Tom, Bruce)
+       backend (the <literal>SIGTERM</> signal works also) (Tom, Bruce)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Add ability to track user-defined functions call counts and
-       runtimes via <filename>postgresql.conf</> variable 'track_functions'
-       (Martin Pihlak)
+       runtimes via <filename>postgresql.conf</> variable
+       <varname>track_functions</> (Martin Pihlak)
       </para>
 
       <para>
@@ -635,7 +645,7 @@ do it for earlier branch release files.
       <para>
        Allow specification of the maximum <literal>pg_stat_activity</>
        query string size via <filename>postgresql.conf</> variable
-       track_activity_query_size (Thomas Lee)
+       <varname>track_activity_query_size</> (Thomas Lee)
       </para>
      </listitem>
 
@@ -648,8 +658,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add read-only <filename>postgresql.conf</> variables segment_size,
-       wal_block_size, and wal_segment_size (Bernd Helmle)
+       Add read-only <filename>postgresql.conf</> variables <varname>segment_size</>,
+       <varname>wal_block_size</>, and <varname>wal_segment_size</> (Bernd Helmle)
       </para>
      </listitem>
 
@@ -671,7 +681,7 @@ do it for earlier branch release files.
       <para>
        Move the server statistics file into the subdirectory
        <filename>pg_stat_tmp</> and allow its location to be specified
-       via stats_temp_directory (Magnus)
+       via <varname>stats_temp_directory</> (Magnus)
       </para>
 
       <para>
@@ -725,14 +735,15 @@ do it for earlier branch release files.
       </para>
       
       <para>
-       Previously this was only supported for ident authentication.
+       Previously this was only supported for <literal>ident</>
+       authentication.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Allow <literal>ident</> authentication over Unix-domain sockets
-       on Solaris (Garick Hamlin)
+       on <productname>Solaris</> (Garick Hamlin)
       </para>
      </listitem>
 
@@ -805,7 +816,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Report appropriate error message for combination of <literal>MD5</>
-       authentication and db_user_namespace enabled (Bruce)
+       authentication and <varname>db_user_namespace</> enabled (Bruce)
       </para>
      </listitem>
 
@@ -818,8 +829,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow Kerberos/<acronym>GSSAPI</> parameters to be changed
-       without restarting the postmaster (Magnus)
+       Allow <productname>Kerberos</>/<acronym>GSSAPI</> parameters
+       to be changed without restarting the postmaster (Magnus)
       </para>
      </listitem>
 
@@ -1088,12 +1099,12 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Have <command>ALTER TABLE SET WITHOUT OIDS</> rewrite the table
-       to remove oid values (Tom)
+       to remove <type>OID</> values (Tom)
       </para>
 
       <para>
        Also, add <command>ALTER TABLE SET WITH OIDS</> to rewrite the
-       table to add oids.
+       table to add <type>OID</>s.
       </para>
      </listitem>
 
@@ -1205,7 +1216,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Refactor multi-object <command>DROP</> operations so conflicting
-       dependencies don't generate an error (Alex Hunsaker)
+       dependencies do not generate an error (Alex Hunsaker)
       </para>
      </listitem>
 
@@ -1242,7 +1253,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Allow <command>CREATE OR REPLACE VIEW</> to add columns to the
-       <emphasis>end</> of the view (Robert Haas)
+       <emphasis>end</> of a view (Robert Haas)
       </para>
      </listitem>
 
@@ -1261,15 +1272,15 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Previously <command>EXPLAIN VERBOSE</> had output an internal
+       Previously <command>EXPLAIN VERBOSE</> output an internal
        representation of the query plan.  (That behavior is now
-       available via debug_print_plan.)
+       available via <varname>debug_print_plan</>.)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have <command>EXPLAIN</> honor debug_print_plan (Tom)
+       Have <command>EXPLAIN</> honor <varname>debug_print_plan</> (Tom)
       </para>
      </listitem>
 
@@ -1284,7 +1295,7 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title>Indexes</title>
+    <title>General Indexes</title>
     <itemizedlist>
 
      <listitem>
@@ -1313,14 +1324,34 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Remove requirement to use <literal>@@@</> when doing <acronym>GIN</>
-       weighted lookups on full text indexes (Tom)
+       Special xxx_pattern_ops <literal>LIKE</> indexes can now be
+       used for simple equality comparisons (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Full Text Indexes</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Remove the requirement to use <literal>@@@</> when doing
+       <acronym>GIN</> weighted lookups on full text indexes (Tom)
+      </para>
+
+      <para>
+       The normal <literal>@@</> text search operator can be used
+       instead.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add optimizer selectivity function for <literal>@@</> text
+       Add an optimizer selectivity function for <literal>@@</> text
        search operations (Jan Urbanski)
       </para>
      </listitem>
@@ -1345,13 +1376,6 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Special xxx_pattern_ops <literal>LIKE</> indexes can now be
-       used for simple equality comparisons (Tom)
-      </para>
-     </listitem>
-
     </itemizedlist>
 
    </sect3>
@@ -1367,8 +1391,9 @@ do it for earlier branch release files.
 
       <para>
        This allows the recording of all free space discovered by vacuum
-       in *.fsm files, rather than having to limit recording to a
-       fixed-sized shared memory area;  max_fsm_pages and max_fsm_relations
+       in <filename>*.fsm</> files, rather than having to limit
+       recording to a fixed-sized shared memory area;
+       <varname>max_fsm_pages</> and <varname>max_fsm_relations</>
        settings have been removed.
       </para>
      </listitem>
@@ -1398,9 +1423,10 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add vacuum_freeze_table_age to <filename>postgresql.conf</> to
-       control when <command>VACUUM</> should ignore the visibility
-       map and do a full table scan to set frozen xids (Heikki)
+       Add <varname>vacuum_freeze_table_age</> to
+       <filename>postgresql.conf</> to control when <command>VACUUM</>
+       should ignore the visibility map and do a full table scan to
+       set frozen xids (Heikki)
       </para>
      </listitem>
 
@@ -1505,15 +1531,15 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Previously these were interpreted as <literal>1 BC</>.  (Years
+       Previously these were interpreted as <literal>1 BC</>;  years
        <literal>0</> and <literal>00</> are assumed to be the year
-       2000.)
+       2000.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Include <acronym>SGT</> (Singapore time) as a valid timezone
+       Include <acronym>SGT</> (Singapore time) as a valid time zone
        abbreviation (Tom)
       </para>
      </listitem>
@@ -1538,8 +1564,8 @@ do it for earlier branch release files.
 
       <para>
        Formerly the precision had to be specified after the keyword
-       <type>INTERVAL</> (the old syntax is still supported).  Data
-       type definitions will now be output using the new format.
+       <type>INTERVAL</> (this syntax is still supported).  Data type
+       definitions will now be output using the new format.
       </para>
      </listitem>
 
@@ -1551,22 +1577,22 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <filename>postgresql.conf</> variable IntervalStyle which
-       controls how interval values are output (Ron Mayer)
+       Add <filename>postgresql.conf</> variable <varname>IntervalStyle</>
+       which controls how <type>INTERVAL</> values are output (Ron Mayer)
       </para>
 
       <para>
        Valid value are:  <literal>postgres</>, <literal>postgres_verbose</>,
        <literal>sql_standard</>, <literal>iso_8601</>.  This also
-       controls handling of negative <type>INTERVAL</> input when only
+       controls the handling of negative <type>INTERVAL</> input when only
        some fields have positive/negative designations.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Made interval seconds rounding more consistent across output
-       formats (Ron Mayer)
+       Make <type>INTERVAL</> seconds rounding more consistent across
+       output formats (Ron Mayer)
       </para>
      </listitem>
 
@@ -1587,14 +1613,14 @@ do it for earlier branch release files.
 
       <para>
        This allows <literal>NULL</> <type>ARRAY</> entries as long as
-       it is properly cast
+       they are properly cast.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Make the <acronym>SQL</> <type>ARRAY</> dimensions optional to
-       match the <acronym>SQL</> standard (Peter)
+       Make <acronym>SQL</>-syntax <type>ARRAY</> dimensions optional
+       to match the <acronym>SQL</> standard (Peter)
       </para>
      </listitem>
 
@@ -1669,14 +1695,14 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Document that <function>setseed()</> allows values from
-       <literal>-1</> to <literal>1</> (not <literal>0</> to
+       <literal>-1</> to <literal>1</> (not just <literal>0</> to
        <literal>1</>), and enforce the valid range (Kris Jurka)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add server side <function>lo_import(filename, oid)</> function
+       Add server side function <function>lo_import(filename, oid)</>
        (Tatsuo)
       </para>
      </listitem>
@@ -1749,7 +1775,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Modify <function>pg_relation_size()</> to handle free space
-       map (*.fsm) files (Heikki)
+       map (<filename>*.fsm</>) files (Heikki)
       </para>
      </listitem>
 
@@ -1850,8 +1876,8 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Only trailing arguments can be of variable length, and they
-       all must be of the same data type.
+       Only trailing arguments can be optional, and they all must be
+       of the same data type.
       </para>
      </listitem>
 
@@ -1891,27 +1917,27 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support <literal>EXECUTE USING</> in PL/pgSQL (Pavel Stehule)
+       Support <literal>EXECUTE USING</> (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow PL/pgSQL to loop over an open cursor using a <literal>FOR</>
+       Allow looping over an open cursor using a <literal>FOR</>
        loop (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Support <literal>RETURN QUERY EXECUTE</> in PL/pgSQL (Pavel
+       Support <literal>RETURN QUERY EXECUTE</> (Pavel
        Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Improve the PL/pgSQL <literal>RAISE</> command (Pavel Stehule)
+       Improve the <literal>RAISE</> command: (Pavel Stehule)
       </para>
      </listitem>
 
@@ -1945,7 +1971,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow the specification of <varname>SQLSTATE</> numeric codes
+       Allow specification of <varname>SQLSTATE</> numeric codes
        in <literal>EXCEPTION</> lists (Pavel Stehule)
       </para>
 
@@ -1956,21 +1982,20 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support <literal>CASE</> statement in PL/pgSQL (Pavel Stehule)
+       Support the <literal>CASE</> statement (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add PL/PgSQL <literal>FOUND</> and <command>GET DIAGNOSTICS</>
-       support for the <literal>RETURN QUERY</>
-        statement (Pavel Stehule)
+       Add <literal>FOUND</> and <command>GET DIAGNOSTICS</> support
+       for the <literal>RETURN QUERY</> statement (Pavel Stehule)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add PL/pgSQL translation (Alvaro)
+       Add message translation support (Alvaro)
       </para>
      </listitem>
 
@@ -1984,50 +2009,49 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Remove psql startup banner;  now just suggest <literal>help</>
+       Remove startup banner;  now just suggest <literal>help</>
        (Joshua Drake)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have psql <literal>help</> show common backslash commands (Greg
+       Have <literal>help</> show common backslash commands (Greg
        Sabino Mullane)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add psql <literal>\pset format wrapped</> mode to wrap output
-       to screen width, or
-        file/pipe output too if <literal>\pset columns</> is set (Bryce
-        Nesbitt)
+       Add <literal>\pset format wrapped</> mode to wrap output to the
+       screen width, or file/pipe output too if <literal>\pset columns</>
+       is set (Bryce Nesbitt)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Use the psql pager for wide output (Bruce)
+       Use the pager for wide output (Bruce)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require a space between a psql backslash command and the first
+       Require a space between a backslash command and the first
        argument (Bernd Helmle)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Display access control rights on multiple lines in psql (Brendan
+       Display access control rights on multiple lines (Brendan
        Jurd, Andreas Scherbaum)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Improve psql tab completion support for schema qualified and
+       Improve tab completion support for schema qualified and
        quoted identifiers (Greg Sabino Mullane)
       </para>
      </listitem>
@@ -2041,32 +2065,32 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add optional <literal>on</>/<literal>off</> argument to psql
+       Add optional <literal>on</>/<literal>off</> arguments for
        <command>\timing</> (David Fetter)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have psql <command>\l</> show access privileges (Andrew Gilligan)
+       Have <command>\l</> show access privileges (Andrew Gilligan)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have psql <command>\l+</> show database sizes, if permissions
+       Have <command>\l+</> show database sizes, if permissions
        allow (Andrew Gilligan)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add psql <command>\ef</> command to edit function definitions
+       Add the <command>\ef</> command to edit function definitions
        (Abhijit Menon-Sen)
       </para>
 
       <para>
-       <command>\ef</> without a function names creates an empty
+       <command>\ef</> without a function name creates an empty
        function template for editing.
       </para>
      </listitem>
@@ -2081,21 +2105,21 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Have psql <command>\d</> display references to this table as
-       a foreign-key constraint (Kenneth D'Souza)
+       Have <command>\d</> show cases where this table is referenced
+       as a foreign-key constraint (Kenneth D'Souza)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have psql <command>\d</> show the value of sequence columns
+       Have <command>\d</> show the value of sequence columns
        (Euler Taveira de Oliveira)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add column storage type and other relation options to psql
+       Add column storage type and other relation options to the
        <command>\d+</> display (Gregory Stark, Euler Taveira de
        Oliveira)
       </para>
@@ -2103,49 +2127,49 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Show relation size in psql <command>\d+</> output (Dickson S.
+       Show relation size in <command>\d+</> output (Dickson S.
        Guedes)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have all psql <command>\d*</> commands show system objects only
+       Have all <command>\d*</> commands show system objects only
        if <literal>S</> is specified (Greg Sabino Mullane)
       </para>
 
       <para>
-       psql <command>\dt</> already behaved this way.
+       <command>\dt</> already behaved this way. bjm: accuate?
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Make psql <command>\d</> and <command>\dt</> consistent in
+       Make <command>\d</> and <command>\dt</> consistent in
        their display of system tables (Bruce)
       </para>
 
       <para>
-       Previously, <literal>\d pg_class</> would show pg_class while
-       <literal>\dt pg_class</> would not.
+       Previously, <literal>\d pg_class</> would show <literal>pg_class</>
+       while <literal>\dt pg_class</> would not.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Show enumerated values in psql's <command>\dT+</> (David Fetter)
+       Show enumerated values in <command>\dT+</> (David Fetter)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow psql <command>\dC</> to accept wildcard patterns (Tom)
+       Allow <command>\dC</> to accept wildcard patterns (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow psql <command>\d*</> commands to work with versions of
+       Allow <command>\d*</> commands to work with versions of
        <productname>PostgreSQL</> back to 7.4 (Guillaume Lelarge)
       </para>
      </listitem>
@@ -2160,7 +2184,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <literal>--no-tablespaces</> option to
+       Add a <literal>--no-tablespaces</> option to
        <application>pg_dump</>/<application>pg_dumpall</>/<application>pg_restore</>
        so dumps can be restored to clusters that have non-matching
        tablespace layouts (Gavin Roy)
@@ -2174,7 +2198,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Use of the options does not throw an error, but it has no
+       Use of this option does not throw an error, but it has no
        effect.  This option was removed because the version checks
        are considered necessary.
       </para>
@@ -2194,22 +2218,22 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       Allows dumps to fail if unable to acquire shared lock within
-       the specified amount of time.
+       This allows dumps to fail if unable to acquire a shared lock
+       within the specified amount of time.
       </para>
      </listitem>
 
      <listitem>
       <para>
        Reorder <application>pg_dump</> <literal>--data-only</> output
-       to dump primary-key tables referenced by foreign keys are dumped
-       before the foreign-key referencing tables (Tom)
+       to dump primary-key tables referenced by foreign keys before
+       the foreign-key referencing tables (Tom)
       </para>
 
       <para>
        This allows data loads when foreign keys are already present.
-       If circular references make this impossible, issue a
-       <literal>NOTICE</>.
+       If circular references make this impossible, a <literal>NOTICE</>
+       is issued.
       </para>
      </listitem>
 
@@ -2223,8 +2247,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow pg_restore of a custom format archive to use multiple
-       concurrent connections to do the restore (Andrew)
+       Allow <application>pg_restore</> of a custom format archive to
+       use multiple concurrent connections to do the restore (Andrew)
       </para>
 
       <para>
@@ -2236,7 +2260,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add new <application>pg_dump</> <literal>--binary-upgrade</>
-       flag to be used by binary upgrade utilities (Bruce)
+       option for use by binary upgrade utilities (Bruce)
       </para>
      </listitem>
 
@@ -2286,13 +2310,13 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Allow the <type>OID</> to be specified when importing large
-       objects using libpq <function>lo_import_with_oid()</> (Tatsuo)
+       objects using <function>lo_import_with_oid()</> (Tatsuo)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add events support to libpq (Andrew Chernow, Merlin Moncure)
+       Add events support (Andrew Chernow, Merlin Moncure)
       </para>
 
       <para>
@@ -2303,14 +2327,14 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Improve libpq error handling to allow the return of multiple
+       Improve error handling to allow the return of multiple
        error messages as multi-line error reports (Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have libpq <function>PQexecParams()</> return
+       Have <function>PQexecParams()</> return
        <varname>PGRES_EMPTY_QUERY</> for an empty query (Tom)
       </para>
 
@@ -2321,8 +2345,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Document how to avoid the libpq overhead of <function>WSACleanup()</>
-       overhead on Windows (Andrew Chernow)
+       Document how to avoid the overhead of <function>WSACleanup()</>
+       on Windows (Andrew Chernow)
       </para>
      </listitem>
 
@@ -2336,30 +2360,30 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix libpq certificate validation for <acronym>SSL</> connections
+       Fix certificate validation for <acronym>SSL</> connections
        (Magnus)
       </para>
       
       <para>
-       libpq now verifies both the certificate and the name of the
-       server by default when making <acronym>SSL</> connections. If
-       a root certificate is not available to use for verification,
-       <acronym>SSL</> connections will fail. The <literal>sslverify</>
-       parameter can be used to disable the host and certificate
-       verification if required.
+       <application>libpq</> now verifies both the certificate and
+       the name of the server by default when making <acronym>SSL</>
+       connections. If a root certificate is not available to use for
+       verification, <acronym>SSL</> connections will fail. The
+       <literal>sslverify</> parameter can be used to disable the host
+       and certificate verification if required.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow the file locations for libpq <acronym>SSL</> certificates
+       Allow the file locations for client <acronym>SSL</> certificates
        to be specified (Mark Woodward, Alvaro, Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add libpq connection parameter <literal>sslverify</> to control
+       Add connection parameter <literal>sslverify</> to control
        the verification of the server's <acronym>SSL</> certificate
        (Magnus)
       </para>
@@ -2391,7 +2415,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add localization support for ecpg messages (Euler Taveira de
+       Add localization support for messages (Euler Taveira de
        Oliveira)
       </para>
      </listitem>
@@ -2417,7 +2441,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <acronym>SPI</> support for single-use plans with out-of-line
+       Add support for single-use plans with out-of-line
        parameters (Tom)
       </para>
      </listitem>
