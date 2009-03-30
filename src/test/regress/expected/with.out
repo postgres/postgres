@@ -451,6 +451,35 @@ SELECT t1.id, count(t2.*) FROM t AS t1 JOIN t AS t2 ON
   3 |     7
 (2 rows)
 
+-- this variant tickled a whole-row-variable bug in 8.4devel
+WITH RECURSIVE t(id, path) AS (
+    VALUES(1,ARRAY[]::integer[])
+UNION ALL
+    SELECT tree.id, t.path || tree.id
+    FROM tree JOIN t ON (tree.parent_id = t.id)
+)
+SELECT t1.id, t2.path, t2 FROM t AS t1 JOIN t AS t2 ON
+(t1.id=t2.id);
+ id |    path     |         t2         
+----+-------------+--------------------
+  1 | {}          | (1,{})
+  2 | {2}         | (2,{2})
+  3 | {3}         | (3,{3})
+  4 | {2,4}       | (4,"{2,4}")
+  5 | {2,5}       | (5,"{2,5}")
+  6 | {2,6}       | (6,"{2,6}")
+  7 | {3,7}       | (7,"{3,7}")
+  8 | {3,8}       | (8,"{3,8}")
+  9 | {2,4,9}     | (9,"{2,4,9}")
+ 10 | {2,4,10}    | (10,"{2,4,10}")
+ 11 | {3,7,11}    | (11,"{3,7,11}")
+ 12 | {3,7,12}    | (12,"{3,7,12}")
+ 13 | {3,7,13}    | (13,"{3,7,13}")
+ 14 | {2,4,9,14}  | (14,"{2,4,9,14}")
+ 15 | {3,7,11,15} | (15,"{3,7,11,15}")
+ 16 | {3,7,11,16} | (16,"{3,7,11,16}")
+(16 rows)
+
 --
 -- test cycle detection
 --

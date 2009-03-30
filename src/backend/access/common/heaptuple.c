@@ -50,7 +50,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.125 2009/01/01 17:23:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.126 2009/03/30 04:08:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1183,7 +1183,7 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	{
 		if (tuple == NULL)		/* internal error */
 			elog(ERROR, "cannot extract system attribute from virtual tuple");
-		if (slot->tts_mintuple) /* internal error */
+		if (tuple == &(slot->tts_minhdr))	/* internal error */
 			elog(ERROR, "cannot extract system attribute from minimal tuple");
 		return heap_getsysattr(tuple, attnum, tupleDesc, isnull);
 	}
@@ -1369,7 +1369,7 @@ slot_attisnull(TupleTableSlot *slot, int attnum)
 	{
 		if (tuple == NULL)		/* internal error */
 			elog(ERROR, "cannot extract system attribute from virtual tuple");
-		if (slot->tts_mintuple) /* internal error */
+		if (tuple == &(slot->tts_minhdr))	/* internal error */
 			elog(ERROR, "cannot extract system attribute from minimal tuple");
 		return heap_attisnull(tuple, attnum);
 	}

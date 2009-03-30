@@ -743,3 +743,23 @@ select * from tt_log;
  16 | barlog
 (2 rows)
 
+-- test case for a whole-row-variable bug
+create function foo1(n integer, out a text, out b text)
+  returns setof record
+  language sql
+  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
+set work_mem='64kB';
+select t.a, t, t.a from foo1(10000) t limit 1;
+   a   |         t         |   a   
+-------+-------------------+-------
+ foo 1 | ("foo 1","bar 1") | foo 1
+(1 row)
+
+reset work_mem;
+select t.a, t, t.a from foo1(10000) t limit 1;
+   a   |         t         |   a   
+-------+-------------------+-------
+ foo 1 | ("foo 1","bar 1") | foo 1
+(1 row)
+
+drop function foo1(n integer);

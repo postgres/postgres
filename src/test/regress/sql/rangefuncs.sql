@@ -338,3 +338,16 @@ select * from tt;
 -- note that nextval() gets executed a second time in the rule expansion,
 -- which is expected.
 select * from tt_log;
+
+-- test case for a whole-row-variable bug
+create function foo1(n integer, out a text, out b text)
+  returns setof record
+  language sql
+  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
+
+set work_mem='64kB';
+select t.a, t, t.a from foo1(10000) t limit 1;
+reset work_mem;
+select t.a, t, t.a from foo1(10000) t limit 1;
+
+drop function foo1(n integer);

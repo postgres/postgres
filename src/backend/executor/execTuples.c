@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.105 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.106 2009/03/30 04:08:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,7 @@ ExecCreateTupleTable(int tableSize)
 		slot->type = T_TupleTableSlot;
 		slot->tts_isempty = true;
 		slot->tts_shouldFree = false;
+		slot->tts_shouldFreeMin = false;
 		slot->tts_tuple = NULL;
 		slot->tts_tupleDescriptor = NULL;
 		slot->tts_mcxt = CurrentMemoryContext;
@@ -224,6 +225,7 @@ MakeSingleTupleTableSlot(TupleDesc tupdesc)
 	/* This should match ExecCreateTupleTable() */
 	slot->tts_isempty = true;
 	slot->tts_shouldFree = false;
+	slot->tts_shouldFreeMin = false;
 	slot->tts_tuple = NULL;
 	slot->tts_tupleDescriptor = NULL;
 	slot->tts_mcxt = CurrentMemoryContext;
@@ -410,18 +412,16 @@ ExecStoreTuple(HeapTuple tuple,
 	 * Free any old physical tuple belonging to the slot.
 	 */
 	if (slot->tts_shouldFree)
-	{
-		if (slot->tts_mintuple)
-			heap_free_minimal_tuple(slot->tts_mintuple);
-		else
-			heap_freetuple(slot->tts_tuple);
-	}
+		heap_freetuple(slot->tts_tuple);
+	if (slot->tts_shouldFreeMin)
+		heap_free_minimal_tuple(slot->tts_mintuple);
 
 	/*
 	 * Store the new tuple into the specified slot.
 	 */
 	slot->tts_isempty = false;
 	slot->tts_shouldFree = shouldFree;
+	slot->tts_shouldFreeMin = false;
 	slot->tts_tuple = tuple;
 	slot->tts_mintuple = NULL;
 
@@ -473,12 +473,9 @@ ExecStoreMinimalTuple(MinimalTuple mtup,
 	 * Free any old physical tuple belonging to the slot.
 	 */
 	if (slot->tts_shouldFree)
-	{
-		if (slot->tts_mintuple)
-			heap_free_minimal_tuple(slot->tts_mintuple);
-		else
-			heap_freetuple(slot->tts_tuple);
-	}
+		heap_freetuple(slot->tts_tuple);
+	if (slot->tts_shouldFreeMin)
+		heap_free_minimal_tuple(slot->tts_mintuple);
 
 	/*
 	 * Drop the pin on the referenced buffer, if there is one.
@@ -492,7 +489,8 @@ ExecStoreMinimalTuple(MinimalTuple mtup,
 	 * Store the new tuple into the specified slot.
 	 */
 	slot->tts_isempty = false;
-	slot->tts_shouldFree = shouldFree;
+	slot->tts_shouldFree = false;
+	slot->tts_shouldFreeMin = shouldFree;
 	slot->tts_tuple = &slot->tts_minhdr;
 	slot->tts_mintuple = mtup;
 
@@ -526,16 +524,14 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	 * Free the old physical tuple if necessary.
 	 */
 	if (slot->tts_shouldFree)
-	{
-		if (slot->tts_mintuple)
-			heap_free_minimal_tuple(slot->tts_mintuple);
-		else
-			heap_freetuple(slot->tts_tuple);
-	}
+		heap_freetuple(slot->tts_tuple);
+	if (slot->tts_shouldFreeMin)
+		heap_free_minimal_tuple(slot->tts_mintuple);
 
 	slot->tts_tuple = NULL;
 	slot->tts_mintuple = NULL;
 	slot->tts_shouldFree = false;
+	slot->tts_shouldFreeMin = false;
 
 	/*
 	 * Drop the pin on the referenced buffer, if there is one.
@@ -616,6 +612,7 @@ ExecStoreAllNullTuple(TupleTableSlot *slot)
  *		ExecCopySlotTuple
  *			Obtain a copy of a slot's regular physical tuple.  The copy is
  *			palloc'd in the current memory context.
+ *			The slot itself is undisturbed.
  *
  *		This works even if the slot contains a virtual or minimal tuple;
  *		however the "system columns" of the result will not be meaningful.
@@ -631,15 +628,12 @@ ExecCopySlotTuple(TupleTableSlot *slot)
 	Assert(!slot->tts_isempty);
 
 	/*
-	 * If we have a physical tuple then just copy it.
+	 * If we have a physical tuple (either format) then just copy it.
 	 */
-	if (slot->tts_tuple)
-	{
-		if (slot->tts_mintuple)
-			return heap_tuple_from_minimal_tuple(slot->tts_mintuple);
-		else
-			return heap_copytuple(slot->tts_tuple);
-	}
+	if (TTS_HAS_PHYSICAL_TUPLE(slot))
+		return heap_copytuple(slot->tts_tuple);
+	if (slot->tts_mintuple)
+		return heap_tuple_from_minimal_tuple(slot->tts_mintuple);
 
 	/*
 	 * Otherwise we need to build a tuple from the Datum array.
@@ -653,6 +647,7 @@ ExecCopySlotTuple(TupleTableSlot *slot)
  *		ExecCopySlotMinimalTuple
  *			Obtain a copy of a slot's minimal physical tuple.  The copy is
  *			palloc'd in the current memory context.
+ *			The slot itself is undisturbed.
  * --------------------------------
  */
 MinimalTuple
@@ -665,15 +660,13 @@ ExecCopySlotMinimalTuple(TupleTableSlot *slot)
 	Assert(!slot->tts_isempty);
 
 	/*
-	 * If we have a physical tuple then just copy it.
+	 * If we have a physical tuple then just copy it.  Prefer to copy
+	 * tts_mintuple since that's a tad cheaper.
 	 */
+	if (slot->tts_mintuple)
+		return heap_copy_minimal_tuple(slot->tts_mintuple);
 	if (slot->tts_tuple)
-	{
-		if (slot->tts_mintuple)
-			return heap_copy_minimal_tuple(slot->tts_mintuple);
-		else
-			return minimal_tuple_from_heap_tuple(slot->tts_tuple);
-	}
+		return minimal_tuple_from_heap_tuple(slot->tts_tuple);
 
 	/*
 	 * Otherwise we need to build a tuple from the Datum array.
@@ -689,9 +682,11 @@ ExecCopySlotMinimalTuple(TupleTableSlot *slot)
  *
  *		If the slot contains a virtual tuple, we convert it to physical
  *		form.  The slot retains ownership of the physical tuple.
- *		Likewise, if it contains a minimal tuple we convert to regular form.
+ *		If it contains a minimal tuple we convert to regular form and store
+ *		that in addition to the minimal tuple (not instead of, because
+ *		callers may hold pointers to Datums within the minimal tuple).
  *
- * The difference between this and ExecMaterializeSlot() is that this
+ * The main difference between this and ExecMaterializeSlot() is that this
  * does not guarantee that the contained tuple is local storage.
  * Hence, the result must be treated as read-only.
  * --------------------------------
@@ -708,7 +703,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 	/*
 	 * If we have a regular physical tuple then just return it.
 	 */
-	if (slot->tts_tuple && slot->tts_mintuple == NULL)
+	if (TTS_HAS_PHYSICAL_TUPLE(slot))
 		return slot->tts_tuple;
 
 	/*
@@ -722,8 +717,10 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
  *			Fetch the slot's minimal physical tuple.
  *
  *		If the slot contains a virtual tuple, we convert it to minimal
- *		physical form.	The slot retains ownership of the physical tuple.
- *		Likewise, if it contains a regular tuple we convert to minimal form.
+ *		physical form.	The slot retains ownership of the minimal tuple.
+ *		If it contains a regular tuple we convert to minimal form and store
+ *		that in addition to the regular tuple (not instead of, because
+ *		callers may hold pointers to Datums within the regular tuple).
  *
  * As above, the result must be treated as read-only.
  * --------------------------------
@@ -731,7 +728,6 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 MinimalTuple
 ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 {
-	MinimalTuple newTuple;
 	MemoryContext oldContext;
 
 	/*
@@ -741,28 +737,30 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 	Assert(!slot->tts_isempty);
 
 	/*
-	 * If we have a minimal physical tuple then just return it.
+	 * If we have a minimal physical tuple (local or not) then just return it.
 	 */
 	if (slot->tts_mintuple)
 		return slot->tts_mintuple;
 
 	/*
-	 * Otherwise, build a minimal tuple, and then store it as the new slot
-	 * value.  (Note: tts_nvalid will be reset to zero here.  There are cases
-	 * in which this could be optimized but it's probably not worth worrying
-	 * about.)
+	 * Otherwise, copy or build a minimal tuple, and store it into the slot.
 	 *
 	 * We may be called in a context that is shorter-lived than the tuple
 	 * slot, but we have to ensure that the materialized tuple will survive
 	 * anyway.
 	 */
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	newTuple = ExecCopySlotMinimalTuple(slot);
+	slot->tts_mintuple = ExecCopySlotMinimalTuple(slot);
+	slot->tts_shouldFreeMin = true;
 	MemoryContextSwitchTo(oldContext);
 
-	ExecStoreMinimalTuple(newTuple, slot, true);
+	/*
+	 * Note: we may now have a situation where we have a local minimal tuple
+	 * attached to a virtual or non-local physical tuple.  There seems no
+	 * harm in that at the moment, but if any materializes, we should change
+	 * this function to force the slot into minimal-tuple-only state.
+	 */
 
-	Assert(slot->tts_mintuple);
 	return slot->tts_mintuple;
 }
 
@@ -809,7 +807,6 @@ ExecFetchSlotTupleDatum(TupleTableSlot *slot)
 HeapTuple
 ExecMaterializeSlot(TupleTableSlot *slot)
 {
-	HeapTuple	newTuple;
 	MemoryContext oldContext;
 
 	/*
@@ -822,24 +819,47 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 * If we have a regular physical tuple, and it's locally palloc'd, we have
 	 * nothing to do.
 	 */
-	if (slot->tts_tuple && slot->tts_shouldFree && slot->tts_mintuple == NULL)
+	if (slot->tts_tuple && slot->tts_shouldFree)
 		return slot->tts_tuple;
 
 	/*
-	 * Otherwise, copy or build a tuple, and then store it as the new slot
-	 * value.  (Note: tts_nvalid will be reset to zero here.  There are cases
-	 * in which this could be optimized but it's probably not worth worrying
-	 * about.)
+	 * Otherwise, copy or build a physical tuple, and store it into the slot.
 	 *
 	 * We may be called in a context that is shorter-lived than the tuple
 	 * slot, but we have to ensure that the materialized tuple will survive
 	 * anyway.
 	 */
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
-	newTuple = ExecCopySlotTuple(slot);
+	slot->tts_tuple = ExecCopySlotTuple(slot);
+	slot->tts_shouldFree = true;
 	MemoryContextSwitchTo(oldContext);
 
-	ExecStoreTuple(newTuple, slot, InvalidBuffer, true);
+	/*
+	 * Drop the pin on the referenced buffer, if there is one.
+	 */
+	if (BufferIsValid(slot->tts_buffer))
+		ReleaseBuffer(slot->tts_buffer);
+
+	slot->tts_buffer = InvalidBuffer;
+
+	/*
+	 * Mark extracted state invalid.  This is important because the slot
+	 * is not supposed to depend any more on the previous external data;
+	 * we mustn't leave any dangling pass-by-reference datums in tts_values.
+	 * However, we have not actually invalidated any such datums, if there
+	 * happen to be any previously fetched from the slot.  (Note in particular
+	 * that we have not pfree'd tts_mintuple, if there is one.)
+	 */
+	slot->tts_nvalid = 0;
+
+	/*
+	 * On the same principle of not depending on previous remote storage,
+	 * forget the mintuple if it's not local storage.  (If it is local storage,
+	 * we must not pfree it now, since callers might have already fetched
+	 * datum pointers referencing it.)
+	 */
+	if (!slot->tts_shouldFreeMin)
+		slot->tts_mintuple = NULL;
 
 	return slot->tts_tuple;
 }

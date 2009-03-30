@@ -250,6 +250,16 @@ SELECT t1.id, count(t2.*) FROM t AS t1 JOIN t AS t2 ON
 	GROUP BY t1.id
 	ORDER BY t1.id;
 
+-- this variant tickled a whole-row-variable bug in 8.4devel
+WITH RECURSIVE t(id, path) AS (
+    VALUES(1,ARRAY[]::integer[])
+UNION ALL
+    SELECT tree.id, t.path || tree.id
+    FROM tree JOIN t ON (tree.parent_id = t.id)
+)
+SELECT t1.id, t2.path, t2 FROM t AS t1 JOIN t AS t2 ON
+(t1.id=t2.id);
+
 --
 -- test cycle detection
 --
