@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.615 2009/03/29 19:13:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.616 2009/03/30 18:34:56 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -548,7 +548,7 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title><acronym>TOAST</></title>
+    <title>Wide-Value Storage (<acronym>TOAST</>)</title>
     <itemizedlist>
 
      <listitem>
@@ -698,6 +698,77 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
+    <title>Continuous Archiving</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Have <function>pg_stop_backup()</> wait for modified <acronym>WAL</>
+       files to be archived (Simon)
+      </para>
+
+      <para>
+       This guarantees that the backup is valid at the time
+       <function>pg_stop_backup()</> completes.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Prevent normal shutdown if a continuous archiving base backup
+       is in progress (Laurenz Albe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Cancel a continuous archiving base backup if a fast shutdown
+       is requested (Laurenz Albe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <filename>recovery.conf</> boolean variables to take the
+       same range of string values as <filename>postgresql.conf</>
+       (Bruce)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Authentication</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Report appropriate error message for combination of <literal>MD5</>
+       authentication and <varname>db_user_namespace</> enabled (Bruce)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Support regular expressions in <filename>pg_ident.conf</>
+       (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <productname>Kerberos</>/<acronym>GSSAPI</> parameters
+       to be changed without restarting the postmaster (Magnus)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
     <title><filename>pg_hba.conf</></title>
     <itemizedlist>
 
@@ -802,77 +873,6 @@ do it for earlier branch release files.
       <para>
        Show all parsing errors in <filename>pg_hba.conf</> instead of
        aborting after the first one (Selena Deckelmann)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Authentication</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Report appropriate error message for combination of <literal>MD5</>
-       authentication and <varname>db_user_namespace</> enabled (Bruce)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Support regular expressions in <filename>pg_ident.conf</>
-       (Magnus)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <productname>Kerberos</>/<acronym>GSSAPI</> parameters
-       to be changed without restarting the postmaster (Magnus)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Continuous Archiving</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Have <function>pg_stop_backup()</> wait for modified <acronym>WAL</>
-       files to be archived (Simon)
-      </para>
-
-      <para>
-       This guarantees that the backup is valid at the time
-       <function>pg_stop_backup()</> completes.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Prevent normal shutdown if a continuous archiving base backup
-       is in progress (Laurenz Albe)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Cancel a continuous archiving base backup if a fast shutdown
-       is requested (Laurenz Albe)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <filename>recovery.conf</> boolean variables to take the
-       same range of string values as <filename>postgresql.conf</>
-       (Bruce)
       </para>
      </listitem>
 
@@ -1027,99 +1027,6 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title><command>ALTER TABLE</></title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Add <command>ALTER TYPE RENAME</> (Petr Jelinek)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <command>ALTER SEQUENCE ... RESTART</> (no parameter) to
-       reset a sequence to its initial value (Zoltan Boszormenyi)
-       bjm: compatibility problem?
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Modify the <command>ALTER TABLE</> syntax to allow all reasonable
-       combinations for tables, indexes, sequences, and views (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       New syntax supported (these formerly required <command>ALTER
-       TABLE</>)
-      </para>
-
-      <para>
-       <itemizedlist>
-        <listitem>
-         <para>
-          <command>ALTER SEQUENCE OWNER TO</>
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <command>ALTER VIEW ALTER COLUMN SET/DROP DEFAULT</>
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <command>ALTER VIEW OWNER TO</>
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <command>ALTER VIEW SET SCHEMA</>
-         </para>
-        </listitem>
-       </itemizedlist>
-      </para>
-
-     </listitem>
-
-     <listitem>
-      <para>
-       Add support for the syntax <command>ALTER TABLE ... ALTER COLUMN
-       ... SET DATA TYPE</> (Peter)
-      </para>
-
-      <para>
-       This is <acronym>SQL</>-standard syntax for functionality that
-       was already supported.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Have <command>ALTER TABLE SET WITHOUT OIDS</> rewrite the table
-       to remove <type>OID</> values (Tom)
-      </para>
-
-      <para>
-       Also, add <command>ALTER TABLE SET WITH OIDS</> to rewrite the
-       table to add <type>OID</>s.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <command>ALTER DATABASE SET TABLESPACE</> to move a database
-       to a new tablespace (Guillaume Lelarge, Bernd Helmle)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
     <title><command>TRUNCATE</></title>
     <itemizedlist>
 
@@ -1151,6 +1058,39 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add a separate <command>TRUNCATE</> permission (Robert Haas)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title><command>EXPLAIN</></title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Have <command>EXPLAIN VERBOSE</> show the output columns of a
+       query (Tom)
+      </para>
+
+      <para>
+       Previously <command>EXPLAIN VERBOSE</> output an internal
+       representation of the query plan.  (That behavior is now
+       available via <varname>debug_print_plan</>.)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Have <command>EXPLAIN</> honor <varname>debug_print_plan</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>EXPLAIN</> on <command>CREATE TABLE AS</> (Peter)
       </para>
      </listitem>
 
@@ -1262,31 +1202,91 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title><command>EXPLAIN</></title>
+    <title><command>ALTER TABLE</></title>
     <itemizedlist>
 
      <listitem>
       <para>
-       Have <command>EXPLAIN VERBOSE</> show the output columns of a
-       query (Tom)
-      </para>
-
-      <para>
-       Previously <command>EXPLAIN VERBOSE</> output an internal
-       representation of the query plan.  (That behavior is now
-       available via <varname>debug_print_plan</>.)
+       Add <command>ALTER TYPE RENAME</> (Petr Jelinek)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have <command>EXPLAIN</> honor <varname>debug_print_plan</> (Tom)
+       Add <command>ALTER SEQUENCE ... RESTART</> (no parameter) to
+       reset a sequence to its initial value (Zoltan Boszormenyi)
+       bjm: compatibility problem?
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>EXPLAIN</> on <command>CREATE TABLE AS</> (Peter)
+       Modify the <command>ALTER TABLE</> syntax to allow all reasonable
+       combinations for tables, indexes, sequences, and views (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       New syntax supported (these formerly required <command>ALTER
+       TABLE</>)
+      </para>
+
+      <para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          <command>ALTER SEQUENCE OWNER TO</>
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <command>ALTER VIEW ALTER COLUMN SET/DROP DEFAULT</>
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <command>ALTER VIEW OWNER TO</>
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <command>ALTER VIEW SET SCHEMA</>
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+
+     </listitem>
+
+     <listitem>
+      <para>
+       Add support for the syntax <command>ALTER TABLE ... ALTER COLUMN
+       ... SET DATA TYPE</> (Peter)
+      </para>
+
+      <para>
+       This is <acronym>SQL</>-standard syntax for functionality that
+       was already supported.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Have <command>ALTER TABLE SET WITHOUT OIDS</> rewrite the table
+       to remove <type>OID</> values (Tom)
+      </para>
+
+      <para>
+       Also, add <command>ALTER TABLE SET WITH OIDS</> to rewrite the
+       table to add <type>OID</>s.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add <command>ALTER DATABASE SET TABLESPACE</> to move a database
+       to a new tablespace (Guillaume Lelarge, Bernd Helmle)
       </para>
      </listitem>
 
