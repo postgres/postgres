@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.617 2009/03/30 19:59:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.618 2009/03/30 20:32:49 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -125,9 +125,28 @@ do it for earlier branch release files.
 
       <para>
        This was available previously via a configure
-       --enable-integer-datetimes.
+       --enable-integer-datetimes option.
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       Remove <application>ipcclean</> utility command (Bruce)
+      </para>
+
+      <para>
+       The utility only worked on a few platforms;  users should use
+       their operating system tools instead.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+    </sect3>
+
+   <sect3>
+    <title>Server Settings</title>
+    <itemizedlist>
 
      <listitem>
       <para>
@@ -204,19 +223,9 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Remove <application>ipcclean</> utility command (Bruce)
-      </para>
-
-      <para>
-       The utility only worked on a few platforms;  users should use
-       their operating system tools instead.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The <filename>pg_hba.conf</> section below also has extensive
-       changes related to migration.
+       The <link
+       linkend="release-8-4-pg-hba-conf"><filename>pg_hba.conf</></link>
+       section below also has extensive changes related to migration.
       </para>
      </listitem>
 
@@ -288,7 +297,7 @@ do it for earlier branch release files.
 
 
     <sect3>
-     <title>Functions and Operators</title>
+     <title>General Functions and Operators</title>
 
     <itemizedlist>
 
@@ -322,6 +331,31 @@ do it for earlier branch release files.
        a <literal>LIKE</> pattern (there is nothing to escape) (Tom)
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       Remove <literal>~=~</> and <literal>~&lt;&gt;~</> operators
+       used for <literal>LIKE</> index comparisons (Tom) bjm: needed,
+       pg_upgrade impact?
+      </para>
+
+      <para>
+       A not-immediately-obvious incompatibility is that the sort
+       order within <literal>bpchar_pattern_ops</> indexes changes
+       --- it had been identical to plain <function>strcmp()</>, but
+       is now trailing-blank-insensitive.  This will impact in-place
+       upgrades, if those ever happen.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+    <sect3>
+     <title>Temporal Functions and Operators</title>
+
+    <itemizedlist>
 
      <listitem>
       <para>
@@ -378,22 +412,6 @@ do it for earlier branch release files.
       <para>
        <varname>DateStyle</> no longer controls <type>INTERVAL</>
        output (use new variable <varname>IntervalStyle</>)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Remove <literal>~=~</> and <literal>~&lt;&gt;~</> operators
-       used for <literal>LIKE</> index comparisons (Tom) bjm: needed,
-       pg_upgrade impact?
-      </para>
-
-      <para>
-       A not-immediately-obvious incompatibility is that the sort
-       order within <literal>bpchar_pattern_ops</> indexes changes
-       --- it had been identical to plain <function>strcmp()</>, but
-       is now trailing-blank-insensitive.  This will impact in-place
-       upgrades, if those ever happen.
       </para>
      </listitem>
 
@@ -547,35 +565,6 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title>Wide-Value Storage (<acronym>TOAST</>)</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Consider <acronym>TOAST</> compression on values as short as
-       32 bytes (previously 256 bytes) (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Require 25% of space savings before using <acronym>TOAST</>
-       compression (previously 20%) (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Be more aggressive in storing <literal>EXTERNAL</> and
-       <literal>EXTENDED</> column values in <acronym>TOAST</>(Tom)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
     <title>Server Settings</title>
     <itemizedlist>
 
@@ -599,137 +588,6 @@ do it for earlier branch release files.
       <para>
        Allow underscores in <filename>postgresql.conf</> custom variable
        classes (Tom)
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Monitoring</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Add <function>pg_conf_load_time()</> to report when
-       the Postgres configuration files were last loaded (George
-       Gensure)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <function>pg_terminate_backend()</> to safely terminate a
-       backend (the <literal>SIGTERM</> signal works also) (Tom, Bruce)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add ability to track user-defined functions call counts and
-       runtimes via parameter <varname>track_functions</> (Martin
-       Pihlak)
-      </para>
-
-      <para>
-       Function statistics appear in a new system table,
-       <literal>pg_stat_user_functions</>.  However, inlined
-       <acronym>SQL</> functions are not tracked.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow specification of the maximum <literal>pg_stat_activity</>
-       query string size via <varname>track_activity_query_size</>
-       parameter (Thomas Lee)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Improve syslog performance by increasing the maximum line length
-       (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add read-only <filename>postgresql.conf</> variables <varname>segment_size</>,
-       <varname>wal_block_size</>, and <varname>wal_segment_size</> (Bernd Helmle)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       When reporting a deadlock, report all session queries involved
-       in the deadlock to the server log  (Itagaki Takahiro)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       New <function>pg_stat_get_activity(pid)</> function to return
-       information about a specific process id (Magnus)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Move the server statistics file into the subdirectory
-       <filename>pg_stat_tmp</> and allow its location to be specified
-       via <varname>stats_temp_directory</> (Magnus)
-      </para>
-
-      <para>
-       This allows the statistics file to be placed in a
-       <acronym>RAM</>-resident directory to reduce I/O requirements.
-       On startup/shutdown, the file is copied to the top-level
-       <literal>$PGDATA</> directory so it is preserved between
-       restarts.
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Continuous Archiving</title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Have <function>pg_stop_backup()</> wait for modified <acronym>WAL</>
-       files to be archived (Simon)
-      </para>
-
-      <para>
-       This guarantees that the backup is valid at the time
-       <function>pg_stop_backup()</> completes.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Prevent normal shutdown if a continuous archiving base backup
-       is in progress (Laurenz Albe)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Cancel a continuous archiving base backup if a fast shutdown
-       is requested (Laurenz Albe)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Allow <filename>recovery.conf</> boolean variables to take the
-       same range of string values as <filename>postgresql.conf</>
-       (Bruce)
       </para>
      </listitem>
 
@@ -766,7 +624,7 @@ do it for earlier branch release files.
 
    </sect3>
 
-   <sect3>
+   <sect3 id="release-8-4-pg-hba-conf">
     <title><filename>pg_hba.conf</></title>
     <itemizedlist>
 
@@ -877,6 +735,137 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
+    <title>Continuous Archiving</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Have <function>pg_stop_backup()</> wait for modified <acronym>WAL</>
+       files to be archived (Simon)
+      </para>
+
+      <para>
+       This guarantees that the backup is valid at the time
+       <function>pg_stop_backup()</> completes.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Prevent normal shutdown if a continuous archiving base backup
+       is in progress (Laurenz Albe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Cancel a continuous archiving base backup if a fast shutdown
+       is requested (Laurenz Albe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <filename>recovery.conf</> boolean variables to take the
+       same range of string values as <filename>postgresql.conf</>
+       (Bruce)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Monitoring</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Add <function>pg_conf_load_time()</> to report when
+       the Postgres configuration files were last loaded (George
+       Gensure)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add <function>pg_terminate_backend()</> to safely terminate a
+       backend (the <literal>SIGTERM</> signal works also) (Tom, Bruce)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add ability to track user-defined functions call counts and
+       runtimes via parameter <varname>track_functions</> (Martin
+       Pihlak)
+      </para>
+
+      <para>
+       Function statistics appear in a new system table,
+       <literal>pg_stat_user_functions</>.  However, inlined
+       <acronym>SQL</> functions are not tracked.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow specification of the maximum <literal>pg_stat_activity</>
+       query string size via <varname>track_activity_query_size</>
+       parameter (Thomas Lee)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve syslog performance by increasing the maximum line length
+       (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add read-only <filename>postgresql.conf</> variables <varname>segment_size</>,
+       <varname>wal_block_size</>, and <varname>wal_segment_size</> (Bernd Helmle)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When reporting a deadlock, report all session queries involved
+       in the deadlock to the server log  (Itagaki Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       New <function>pg_stat_get_activity(pid)</> function to return
+       information about a specific process id (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Move the server statistics file into the subdirectory
+       <filename>pg_stat_tmp</> and allow its location to be specified
+       via <varname>stats_temp_directory</> (Magnus)
+      </para>
+
+      <para>
+       This allows the statistics file to be placed in a
+       <acronym>RAM</>-resident directory to reduce I/O requirements.
+       On startup/shutdown, the file is copied to the top-level
+       <literal>$PGDATA</> directory so it is preserved between
+       restarts.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
     <title>Queries</title>
     <itemizedlist>
 
@@ -979,8 +968,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Improve the parser's ability to report the error location of
-       a query (Tom)
+       Improve the parser's ability to report error locations (Tom)
       </para>
      </listitem>
 
@@ -1676,6 +1664,35 @@ do it for earlier branch release files.
       <para>
        Generate proper error if a <type>SERIAL</> array is specified
        (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Wide-Value Storage (<acronym>TOAST</>)</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Consider <acronym>TOAST</> compression on values as short as
+       32 bytes (previously 256 bytes) (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require 25% of space savings before using <acronym>TOAST</>
+       compression (previously 20%) (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Be more aggressive in storing <literal>EXTERNAL</> and
+       <literal>EXTENDED</> column values in <acronym>TOAST</>(Tom)
       </para>
      </listitem>
 
