@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.252 2009/03/24 21:12:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.253 2009/03/30 17:30:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@ static void locate_grouping_columns(PlannerInfo *root,
 						AttrNumber *groupColIdx);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
+static List *add_volatile_sort_exprs(List *window_tlist, List *tlist,
+									 List *activeWindows);
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 									  List *tlist, bool canonicalize);
 static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
@@ -1305,7 +1307,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * (In some cases we wouldn't need to propagate all of these
 			 * all the way to the top, since they might only be needed as
 			 * inputs to WindowFuncs.  It's probably not worth trying to
-			 * optimize that though.)  As we climb up the stack, we add
+			 * optimize that though.)  We also need any volatile sort
+			 * expressions, because make_sort_from_pathkeys won't add those
+			 * on its own, and anyway we want them evaluated only once at
+			 * the bottom of the stack.  As we climb up the stack, we add
 			 * outputs for the WindowFuncs computed at each level.  Also,
 			 * each input tlist has to present all the columns needed to
 			 * sort the data for the next WindowAgg step.  That's handled
@@ -1317,6 +1322,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			if (parse->hasAggs)
 				window_tlist = add_to_flat_tlist(window_tlist,
 											pull_agg_clause((Node *) tlist));
+			window_tlist = add_volatile_sort_exprs(window_tlist, tlist,
+												   activeWindows);
 			result_plan->targetlist = (List *) copyObject(window_tlist);
 
 			foreach(l, activeWindows)
@@ -2427,6 +2434,68 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 	}
 
 	return result;
+}
+
+/*
+ * add_volatile_sort_exprs
+ *		Identify any volatile sort/group expressions used by the active
+ *		windows, and add them to window_tlist if not already present.
+ *		Return the modified window_tlist.
+ */
+static List *
+add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
+{
+	Bitmapset  *sgrefs = NULL;
+	ListCell   *lc;
+
+	/* First, collect the sortgrouprefs of the windows into a bitmapset */
+	foreach(lc, activeWindows)
+	{
+		WindowClause *wc = (WindowClause *) lfirst(lc);
+		ListCell   *lc2;
+
+		foreach(lc2, wc->partitionClause)
+		{
+			SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc2);
+
+			sgrefs = bms_add_member(sgrefs, sortcl->tleSortGroupRef);
+		}
+		foreach(lc2, wc->orderClause)
+		{
+			SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc2);
+
+			sgrefs = bms_add_member(sgrefs, sortcl->tleSortGroupRef);
+		}
+	}
+
+	/*
+	 * Now scan the original tlist to find the referenced expressions.
+	 * Any that are volatile must be added to window_tlist.
+	 *
+	 * Note: we know that the input window_tlist contains no items marked
+	 * with ressortgrouprefs, so we don't have to worry about collisions
+	 * of the reference numbers.
+	 */
+	foreach(lc, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->ressortgroupref != 0 &&
+			bms_is_member(tle->ressortgroupref, sgrefs) &&
+			contain_volatile_functions((Node *) tle->expr))
+		{
+			TargetEntry *newtle;
+
+			newtle = makeTargetEntry(tle->expr,
+									 list_length(window_tlist) + 1,
+									 NULL,
+									 false);
+			newtle->ressortgroupref = tle->ressortgroupref;
+			window_tlist = lappend(window_tlist, newtle);
+		}
+	}
+
+	return window_tlist;
 }
 
 /*
