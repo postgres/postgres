@@ -528,3 +528,23 @@ CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 ERROR:  cannot determine result data type
 DETAIL:  A function returning "anyarray" or "anyelement" must have at least one argument of either type.
+-- test case for a whole-row-variable bug
+create function foo1(n integer, out a text, out b text)
+  returns setof record
+  language sql
+  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
+set work_mem='64kB';
+select t.a, t, t.a from foo1(10000) t limit 1;
+   a   |         t         |   a   
+-------+-------------------+-------
+ foo 1 | ("foo 1","bar 1") | foo 1
+(1 row)
+
+reset work_mem;
+select t.a, t, t.a from foo1(10000) t limit 1;
+   a   |         t         |   a   
+-------+-------------------+-------
+ foo 1 | ("foo 1","bar 1") | foo 1
+(1 row)
+
+drop function foo1(n integer);
