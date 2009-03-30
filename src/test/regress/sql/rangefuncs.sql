@@ -261,3 +261,16 @@ DROP FUNCTION dup(anyelement);
 -- fails, no way to deduce outputs
 CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
+
+-- test case for a whole-row-variable bug
+create function foo1(n integer, out a text, out b text)
+  returns setof record
+  language sql
+  as $$ select 'foo ' || i, 'bar ' || i from generate_series(1,$1) i $$;
+
+set work_mem='64kB';
+select t.a, t, t.a from foo1(10000) t limit 1;
+reset work_mem;
+select t.a, t, t.a from foo1(10000) t limit 1;
+
+drop function foo1(n integer);
