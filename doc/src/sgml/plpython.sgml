@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.39 2008/03/28 00:21:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.40 2009/03/30 16:15:43 alvherre Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -337,7 +337,7 @@ $$ LANGUAGE plpythonu;
        <warning>
         <para>
          Currently, due to Python 
-         <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1483133&amp;group_id=5470&amp;atid=105470">bug #1483133</ulink>,
+         <ulink url="http://bugs.python.org/issue1483133">bug #1483133</ulink>,
          some debug versions of Python 2.4
          (configured and compiled with option <literal>--with-pydebug</literal>)
          are known to crash the <productname>PostgreSQL</productname> server
