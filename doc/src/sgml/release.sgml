@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.616 2009/03/30 18:34:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.617 2009/03/30 19:59:19 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -173,8 +173,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Remove <varname>explain_pretty_print</> <filename>postgresql.conf</> setting
-       (no longer needed) (Tom)
+       Remove <varname>explain_pretty_print</> parameter (no longer needed) (Tom)
       </para>
      </listitem>
 
@@ -590,10 +589,9 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <filename>postgresql.conf</> setting
-       <varname>cursor_tuple_fraction</> to control the fraction of
-       a cursor's rows expected to be requested by the user (Robert
-       Hell)
+       Add <varname>cursor_tuple_fraction</> parameter to control the
+       fraction of a cursor's rows expected to be requested by the
+       user (Robert Hell)
       </para>
      </listitem>
 
@@ -630,8 +628,8 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add ability to track user-defined functions call counts and
-       runtimes via <filename>postgresql.conf</> variable
-       <varname>track_functions</> (Martin Pihlak)
+       runtimes via parameter <varname>track_functions</> (Martin
+       Pihlak)
       </para>
 
       <para>
@@ -644,8 +642,8 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Allow specification of the maximum <literal>pg_stat_activity</>
-       query string size via <filename>postgresql.conf</> variable
-       <varname>track_activity_query_size</> (Thomas Lee)
+       query string size via <varname>track_activity_query_size</>
+       parameter (Thomas Lee)
       </para>
      </listitem>
 
@@ -787,22 +785,22 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Remove <literal>sameuser</> option from <filename>pg_hba.conf</>,
-       making it the default if no usermap is specified (Magnus)
+       Remove the <literal>sameuser</> option, making it the default
+       if no usermap is specified (Magnus)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Change all <filename>pg_hba.conf</> authentication options to
-       be <literal>name=value</> settings (Magnus)
+       Change all authentication options to be <literal>name=value</>
+       settings (Magnus)
       </para>
      </listitem>
      
      <listitem>
       <para>
-       Allow usermap parameter in <filename>pg_hba.conf</> for all
-       external authentication methods (Magnus)
+       Allow usermap parameter for all external authentication methods
+       (Magnus)
       </para>
       
       <para>
@@ -820,8 +818,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <filename>pg_hba.conf</> option <literal>clientcert</> to
-       control requesting of a client certificate (Magnus)
+       Add <literal>clientcert</> option to control requesting of a
+       client certificate (Magnus)
       </para>
 
       <para>
@@ -832,9 +830,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <filename>pg_hba.conf</> <literal>cert</> authentication
-       method to allow user authentication via <acronym>SSL</>
-       certificates (Magnus)
+       Add <literal>cert</> authentication method to allow user
+       authentication via <acronym>SSL</> certificates (Magnus)
       </para>
 
       <para>
@@ -859,8 +856,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add <literal>krb5</>, <literal>gssapi</>, and <literal>sspi</>
-       <varname>include_realm</> parameter to <filename>pg_hba.conf</>
-       (Magnus)
+       <varname>include_realm</> parameter (Magnus)
       </para>
 
       <para>
@@ -871,8 +867,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Show all parsing errors in <filename>pg_hba.conf</> instead of
-       aborting after the first one (Selena Deckelmann)
+       Show all parsing errors instead of aborting after the first
+       one (Selena Deckelmann)
       </para>
      </listitem>
 
@@ -993,40 +989,6 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title><literal>LIMIT</>/<literal>OFFSET</></title>
-    <itemizedlist>
-
-     <listitem>
-      <para>
-       Allow <literal>LIMIT</> and <literal>OFFSET</> to use subselects
-       as arguments (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Document that <literal>LIMIT NULL</> and <literal>OFFSET NULL</>
-       have no effect (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <acronym>SQL</>-standards syntax for
-       <literal>LIMIT</>/<literal>OFFSET</> capabilities (Peter)
-      </para>
-
-      <para>
-       <literal>OFFSET num {ROW|ROWS} FETCH {FIRST|NEXT} [num] {ROW|ROWS}
-       ONLY</>.
-      </para>
-     </listitem>
-
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
     <title><command>TRUNCATE</></title>
     <itemizedlist>
 
@@ -1099,35 +1061,32 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title>Database Manipulation</title>
+    <title><literal>LIMIT</>/<literal>OFFSET</></title>
     <itemizedlist>
 
      <listitem>
       <para>
-       Improve reporting of
-       <command>CREATE</>/<command>DROP</>/<command>RENAME DATABASE</>
-       failure when uncommitted prepared transactions are the cause
-       (Tom)
+       Allow <literal>LIMIT</> and <literal>OFFSET</> to use subselects
+       as arguments (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Make <varname>LC_COLLATE</> and <varname>LC_CTYPE</> database-level
-       settings (Radek Strnad, Heikki)
-      </para>
-
-      <para>
-       This makes collation similar to encoding, which was always
-       configurable per database.
+       Document that <literal>LIMIT NULL</> and <literal>OFFSET NULL</>
+       have no effect (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Improve checks that the database encoding, collation
-       (<varname>LC_COLLATE</>), and character classes
-       (<varname>LC_CTYPE</>) match (Heikki)
+       Add <acronym>SQL</>-standards syntax for
+       <literal>LIMIT</>/<literal>OFFSET</> capabilities (Peter)
+      </para>
+
+      <para>
+       <literal>OFFSET num {ROW|ROWS} FETCH {FIRST|NEXT} [num] {ROW|ROWS}
+       ONLY</>.
       </para>
      </listitem>
 
@@ -1202,7 +1161,7 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title><command>ALTER TABLE</></title>
+    <title><command>ALTER</></title>
     <itemizedlist>
 
      <listitem>
@@ -1280,6 +1239,43 @@ do it for earlier branch release files.
       <para>
        Also, add <command>ALTER TABLE SET WITH OIDS</> to rewrite the
        table to add <type>OID</>s.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Database Manipulation</title>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Improve reporting of
+       <command>CREATE</>/<command>DROP</>/<command>RENAME DATABASE</>
+       failure when uncommitted prepared transactions are the cause
+       (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <varname>LC_COLLATE</> and <varname>LC_CTYPE</> database-level
+       settings (Radek Strnad, Heikki)
+      </para>
+
+      <para>
+       This makes collation similar to encoding, which was always
+       configurable per database.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve checks that the database encoding, collation
+       (<varname>LC_COLLATE</>), and character classes
+       (<varname>LC_CTYPE</>) match (Heikki)
       </para>
      </listitem>
 
@@ -1423,10 +1419,9 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <varname>vacuum_freeze_table_age</> to
-       <filename>postgresql.conf</> to control when <command>VACUUM</>
-       should ignore the visibility map and do a full table scan to
-       set frozen xids (Heikki)
+       Add <varname>vacuum_freeze_table_age</> parameter to control
+       when <command>VACUUM</> should ignore the visibility map and
+       do a full table scan to set frozen xids (Heikki)
       </para>
      </listitem>
 
@@ -1577,7 +1572,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <filename>postgresql.conf</> variable <varname>IntervalStyle</>
+       Add <varname>IntervalStyle</> parameter
        which controls how <type>INTERVAL</> values are output (Ron Mayer)
       </para>
 
@@ -2355,7 +2350,8 @@ do it for earlier branch release files.
    </sect3>
 
    <sect3>
-    <title><link linkend="libpq"><application>libpq</></link> <acronym>SSL</></title>
+    <title><link linkend="libpq"><application>libpq</></link>
+    <acronym>SSL</> (Secure Sockets Layer)</title>
     <itemizedlist>
 
      <listitem>
