@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.280 2009/02/11 21:11:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.281 2009/03/31 22:12:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,7 +1056,7 @@ truncate_check_rel(Relation rel)
 	 * Don't allow truncate on temp tables of other backends ... their local
 	 * buffer manager is not going to cope.
 	 */
-	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("cannot truncate temporary tables of other sessions")));
@@ -1203,7 +1203,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 					 errmsg("inherited relation \"%s\" is not a table",
 							parent->relname)));
 		/* Permanent rels cannot inherit from temporary ones */
-		if (!istemp && isTempNamespace(RelationGetNamespace(relation)))
+		if (!istemp && relation->rd_istemp)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot inherit from temporary relation \"%s\"",
@@ -2793,7 +2793,7 @@ ATRewriteTables(List **wqueue)
 			 * Don't allow rewrite on temp tables of other backends ... their
 			 * local buffer manager is not going to cope.
 			 */
-			if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
+			if (RELATION_IS_OTHER_TEMP(OldHeap))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("cannot rewrite temporary tables of other sessions")));
@@ -4603,16 +4603,16 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	 * backend has created in the temp table, because non-shared buffers are
 	 * used for temp tables.)
 	 */
-	if (isTempNamespace(RelationGetNamespace(pkrel)))
+	if (pkrel->rd_istemp)
 	{
-		if (!isTempNamespace(RelationGetNamespace(rel)))
+		if (!rel->rd_istemp)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("cannot reference temporary table from permanent table constraint")));
 	}
 	else
 	{
-		if (isTempNamespace(RelationGetNamespace(rel)))
+		if (rel->rd_istemp)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("cannot reference permanent table from temporary table constraint")));
@@ -6690,7 +6690,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	 * Don't allow moving temp tables of other backends ... their local buffer
 	 * manager is not going to cope.
 	 */
-	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot move temporary tables of other sessions")));
@@ -6901,8 +6901,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent)
 	ATSimplePermissions(parent_rel, false);
 
 	/* Permanent rels cannot inherit from temporary ones */
-	if (!isTempNamespace(RelationGetNamespace(child_rel)) &&
-		isTempNamespace(RelationGetNamespace(parent_rel)))
+	if (parent_rel->rd_istemp && !child_rel->rd_istemp)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot inherit from temporary relation \"%s\"",

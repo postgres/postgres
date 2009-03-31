@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.314 2009/03/27 15:57:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.315 2009/03/31 22:12:46 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2264,7 +2264,7 @@ reindex_index(Oid indexId)
 	 * Don't allow reindex on temp tables of other backends ... their local
 	 * buffer manager is not going to cope.
 	 */
-	if (isOtherTempNamespace(RelationGetNamespace(iRel)))
+	if (RELATION_IS_OTHER_TEMP(iRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot reindex temporary tables of other sessions")));

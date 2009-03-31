@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.182 2009/02/02 19:31:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.183 2009/03/31 22:12:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ DefineIndex(RangeVar *heapRelation,
 	/*
 	 * Don't try to CREATE INDEX on temp tables of other backends.
 	 */
-	if (isOtherTempNamespace(namespaceId))
+	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot create indexes on temporary tables of other sessions")));
@@ -1404,7 +1404,8 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 			continue;
 
 		/* Skip temp tables of other backends; we can't reindex them at all */
-		if (isOtherTempNamespace(classtuple->relnamespace))
+		if (classtuple->relistemp &&
+			!isTempNamespace(classtuple->relnamespace))
 			continue;
 
 		/* Check user/system classification, and optionally skip */

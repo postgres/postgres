@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.93 2009/02/09 20:57:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.94 2009/03/31 22:12:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1942,7 +1942,6 @@ do_autovacuum(void)
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
-		int			backendID;
 
 		relid = HeapTupleGetOid(tuple);
 
@@ -1959,10 +1958,12 @@ do_autovacuum(void)
 		 * Check if it is a temp table (presumably, of some other backend's).
 		 * We cannot safely process other backends' temp tables.
 		 */
-		backendID = GetTempNamespaceBackendId(classForm->relnamespace);
-
-		if (backendID > 0)
+		if (classForm->relistemp)
 		{
+			int			backendID;
+
+			backendID = GetTempNamespaceBackendId(classForm->relnamespace);
+
 			/* We just ignore it if the owning backend is still active */
 			if (backendID == MyBackendId || !BackendIdIsActive(backendID))
 			{
@@ -2052,10 +2053,9 @@ do_autovacuum(void)
 		bool		wraparound;
 
 		/*
-		 * Skip temp tables (i.e. those in temp namespaces).  We cannot safely
-		 * process other backends' temp tables.
+		 * We cannot safely process other backends' temp tables, so skip 'em.
 		 */
-		if (isAnyTempNamespace(classForm->relnamespace))
+		if (classForm->relistemp)
 			continue;
 
 		relid = HeapTupleGetOid(tuple);

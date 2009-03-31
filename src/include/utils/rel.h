@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.112 2009/02/09 20:57:59 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.113 2009/03/31 22:12:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,8 @@ typedef struct RelationData
 	BlockNumber rd_targblock;	/* current insertion target block, or
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
-	bool		rd_istemp;		/* rel uses the local buffer mgr */
+	bool		rd_istemp;		/* rel is a temporary relation */
+	bool		rd_islocaltemp;	/* rel is a temp rel of this session */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
@@ -355,8 +356,17 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_LOCAL(relation) \
-	((relation)->rd_istemp || \
+	((relation)->rd_islocaltemp || \
 	 (relation)->rd_createSubid != InvalidSubTransactionId)
+
+/*
+ * RELATION_IS_OTHER_TEMP
+ *		Test for a temporary relation that belongs to some other session.
+ *
+ * Beware of multiple eval of argument
+ */
+#define RELATION_IS_OTHER_TEMP(relation) \
+	((relation)->rd_istemp && !(relation)->rd_islocaltemp)
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

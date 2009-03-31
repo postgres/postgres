@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.182 2009/02/02 19:31:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.183 2009/03/31 22:12:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 * Reject clustering a remote temp table ... their local buffer
 		 * manager is not going to cope.
 		 */
-		if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		if (RELATION_IS_OTHER_TEMP(rel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			   errmsg("cannot cluster temporary tables of other sessions")));
@@ -302,7 +302,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 		 * check_index_is_clusterable which is redundant, but we leave it for
 		 * extra safety.
 		 */
-		if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
+		if (RELATION_IS_OTHER_TEMP(OldHeap))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
 			return;
@@ -465,7 +465,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 	 * Don't allow cluster on temp tables of other backends ... their local
 	 * buffer manager is not going to cope.
 	 */
-	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
+	if (RELATION_IS_OTHER_TEMP(OldHeap))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			   errmsg("cannot cluster temporary tables of other sessions")));

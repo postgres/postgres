@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.386 2009/03/24 20:17:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.387 2009/03/31 22:12:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1147,7 +1147,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 * warning here; it would just lead to chatter during a database-wide
 	 * VACUUM.)
 	 */
-	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
+	if (RELATION_IS_OTHER_TEMP(onerel))
 	{
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();

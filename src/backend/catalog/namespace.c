@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.116 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.117 2009/03/31 22:12:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2389,6 +2389,9 @@ isAnyTempNamespace(Oid namespaceId)
 /*
  * isOtherTempNamespace - is the given namespace some other backend's
  * temporary-table namespace (including temporary-toast-table namespaces)?
+ *
+ * Note: for most purposes in the C code, this function is obsolete.  Use
+ * RELATION_IS_OTHER_TEMP() instead to detect non-local temp relations.
  */
 bool
 isOtherTempNamespace(Oid namespaceId)
