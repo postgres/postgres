@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.621 2009/03/31 02:34:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.622 2009/03/31 22:23:28 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1287,6 +1287,24 @@ do it for earlier branch release files.
    <sect3>
     <title>Utility Operations</title>
 
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Add verbose option to the <command>CLUSTER</> command and
+       <application>clusterdb</> (Jim Cox)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Decrease memory requirements for recording pending trigger
+       events (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
     <sect4>
      <title>Indexes</title>
      <itemizedlist>
@@ -1437,28 +1455,6 @@ do it for earlier branch release files.
        <para>
         Add <literal>--freeze</> option to <application>vacuumdb</>
         (Bruce)
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title>Other Utility Operations</title>
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Add verbose option to the <command>CLUSTER</> command and
-        <application>clusterdb</> (Jim Cox)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Decrease memory requirements for recording pending trigger
-        events (Tom)
        </para>
       </listitem>
 
@@ -2028,6 +2024,37 @@ do it for earlier branch release files.
    <sect3>
     <title>Client Applications</title>
 
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix <literal>pg_ctl restart</> to preserve command-line arguments
+       (Bruce)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add <literal>-w</>/<literal>--no-password</> option that
+       suppresses password prompts to all utilities that have a
+       <literal>-W</>/<literal>--password</> option (Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Remove <literal>-q</> (quiet) option for create* and drop*
+       utility commands (Peter)
+      </para>
+
+      <para>
+       These options have had no effect since <productname>PostgreSQL</>
+       8.3.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
     <sect4>
      <title><link linkend="APP-PSQL"><application>psql</></link></title>
      <itemizedlist>
@@ -2286,41 +2313,6 @@ do it for earlier branch release files.
        <para>
         Add new <application>pg_dump</> <literal>--binary-upgrade</>
         option for use by binary upgrade utilities (Bruce)
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title>Other Client Applications</title>
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Fix <literal>pg_ctl restart</> to preserve command-line arguments
-        (Bruce)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>-w</>/<literal>--no-password</> option that
-        suppresses password prompts to all utilities that have a
-        <literal>-W</>/<literal>--password</> option (Peter)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Remove <literal>-q</> (quiet) option for create* and drop*
-        utility commands (Peter)
-       </para>
-
-       <para>
-        These options have had no effect since <productname>PostgreSQL</>
-        8.3.
        </para>
       </listitem>
 
