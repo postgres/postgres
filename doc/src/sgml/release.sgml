@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.620 2009/03/31 01:26:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.621 2009/03/31 02:34:04 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -76,11 +76,11 @@ do it for earlier branch release files.
    <title>Overview</title>
 
    <para>
-    This major <productname>PostgreSQL</> release brings <acronym>SQL</>
-    features people have been waiting for for years, as well as
-    performance enhancements and changes to make space reuse more
-    efficient and more automatic.  This release adds the following
-    major features:
+    After many years of development, <productname>PostgreSQL</> has
+    become feature-complete in many areas.   This release shows a
+    targeted approach to adding features (e.g. authentication,
+    monitoring, space reuse), and adds capabilities defined in the
+    later SQL standards;  the major areas of enhancement are:
    </para>
 
    <itemizedlist>
