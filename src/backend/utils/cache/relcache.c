@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.284 2009/01/27 12:40:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.285 2009/03/31 17:59:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1396,6 +1396,12 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 */
 	relation->rd_rel->relisshared = false;
 
+	/*
+	 * Likewise, we must know if a relation is temp ... but formrdesc is
+	 * not used for any temp relations.
+	 */
+	relation->rd_rel->relistemp = false;
+
 	relation->rd_rel->relpages = 1;
 	relation->rd_rel->reltuples = 1;
 	relation->rd_rel->relkind = RELKIND_RELATION;
@@ -2397,6 +2403,9 @@ RelationBuildLocalRelation(const char *relname,
 	 * as the logical ID (OID).
 	 */
 	rel->rd_rel->relisshared = shared_relation;
+
+	/* it is temporary if and only if it is in my temp-table namespace */
+	rel->rd_rel->relistemp = isTempOrToastNamespace(relnamespace);
 
 	RelationGetRelid(rel) = relid;
 

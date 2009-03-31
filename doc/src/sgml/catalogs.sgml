@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.199 2009/03/05 23:06:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.200 2009/03/31 17:59:55 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1529,6 +1529,16 @@
        True if this table is shared across all databases in the cluster.  Only
        certain system catalogs (such as <structname>pg_database</structname>)
        are shared
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>relistemp</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if this table is a temporary relation.  If so, only the creating
+       session can safely access its contents
       </entry>
      </row>
 
