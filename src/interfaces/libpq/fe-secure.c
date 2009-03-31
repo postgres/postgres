@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.121 2009/03/28 18:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.122 2009/03/31 01:41:27 tgl Exp $
  *
  * NOTES
  *
@@ -99,10 +99,11 @@ static char *SSLerrmessage(void);
 static void SSLerrfree(char *buf);
 
 static bool pq_init_ssl_lib = true;
+static bool pq_init_crypto_lib = true;
 static SSL_CTX *SSL_context = NULL;
 
 #ifdef ENABLE_THREAD_SAFETY
-static int ssl_open_connections = 0;
+static long ssl_open_connections = 0;
 
 #ifndef WIN32
 static pthread_mutex_t ssl_config_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -172,8 +173,28 @@ static long win32_ssl_create_mutex = 0;
 void
 PQinitSSL(int do_init)
 {
+	PQinitOpenSSL(do_init, do_init);
+}
+
+/*
+ *	Exported function to allow application to tell us it's already
+ *	initialized OpenSSL and/or libcrypto.
+ */
+void 
+PQinitOpenSSL(int do_ssl, int do_crypto)
+{
 #ifdef USE_SSL
-	pq_init_ssl_lib = do_init;
+#ifdef ENABLE_THREAD_SAFETY
+	/*
+	 * Disallow changing the flags while we have open connections, else
+	 * we'd get completely confused.
+	 */
+	if (ssl_open_connections != 0)
+		return;
+#endif
+
+	pq_init_ssl_lib = do_ssl;
+	pq_init_crypto_lib = do_crypto;
 #endif
 }
 
@@ -810,10 +831,10 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 
 /*
  * Initialize SSL system. In threadsafe mode, this includes setting
- * up OpenSSL callback functions to do thread locking.
+ * up libcrypto callback functions to do thread locking.
  *
- * If the caller has told us (through PQinitSSL) that he's taking care
- * of SSL, we expect that callbacks are already set, and won't try to
+ * If the caller has told us (through PQinitOpenSSL) that he's taking care
+ * of libcrypto, we expect that callbacks are already set, and won't try to
  * override it.
  *
  * The conn parameter is only used to be able to pass back an error
@@ -840,11 +861,11 @@ init_ssl_system(PGconn *conn)
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return -1;
 
-	if (pq_init_ssl_lib)
+	if (pq_init_crypto_lib)
 	{
 		/*
-		 * If necessary, set up an array to hold locks for OpenSSL. OpenSSL will
-		 * tell us how big to make this array.
+		 * If necessary, set up an array to hold locks for libcrypto.
+		 * libcrypto will tell us how big to make this array.
 		 */
 		if (pq_lockarray == NULL)
 		{
@@ -870,8 +891,7 @@ init_ssl_system(PGconn *conn)
 
 		if (ssl_open_connections++ == 0)
 		{
-			/* This is actually libcrypto, not libssl. */
-			/* These are only required for threaded SSL applications */
+			/* These are only required for threaded libcrypto applications */
 			CRYPTO_set_id_callback(pq_threadidcallback);
 			CRYPTO_set_locking_callback(pq_lockingcallback);
 		}
@@ -913,9 +933,10 @@ init_ssl_system(PGconn *conn)
 /*
  *	This function is needed because if the libpq library is unloaded
  *	from the application, the callback functions will no longer exist when
- *	SSL used by other parts of the system.  For this reason,
- *	we unregister the SSL callback functions when the last libpq
- *	connection is closed.
+ *	libcrypto is used by other parts of the system.  For this reason,
+ *	we unregister the callback functions when the last libpq
+ *	connection is closed.  (The same would apply for OpenSSL callbacks
+ *	if we had any.)
  *
  *	Callbacks are only set when we're compiled in threadsafe mode, so
  *	we only need to remove them in this case.
@@ -928,27 +949,23 @@ destroy_ssl_system(void)
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return;
 
-	if (pq_init_ssl_lib)
+	if (pq_init_crypto_lib && ssl_open_connections > 0)
+		--ssl_open_connections;
+
+	if (pq_init_crypto_lib && ssl_open_connections == 0)
 	{
-		if (ssl_open_connections > 0)
-			--ssl_open_connections;
+		/* No connections left, unregister libcrypto callbacks */
+		CRYPTO_set_locking_callback(NULL);
+		CRYPTO_set_id_callback(NULL);
 
-		if (ssl_open_connections == 0)
-		{
-			/* This is actually libcrypto, not libssl. */
-			/* No connections left, unregister all callbacks */
-			CRYPTO_set_locking_callback(NULL);
-			CRYPTO_set_id_callback(NULL);
-
-			/*
-			 * We don't free the lock array. If we get another connection
-			 * from the same caller, we will just re-use it with the existing
-			 * mutexes.
-			 *
-			 * This means we leak a little memory on repeated load/unload
-			 * of the library.
-			 */
-		}
+		/*
+		 * We don't free the lock array. If we get another connection
+		 * in this process, we will just re-use it with the existing
+		 * mutexes.
+		 *
+		 * This means we leak a little memory on repeated load/unload
+		 * of the library.
+		 */
 	}
 
 	pthread_mutex_unlock(&ssl_config_mutex);
@@ -994,8 +1011,6 @@ initialize_SSL(PGconn *conn)
 	{
 		homedir[0] = '\0';
 	}
-
-
 
 	if (conn->sslrootcert)
 		strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));

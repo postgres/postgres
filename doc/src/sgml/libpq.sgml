@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.280 2009/03/28 01:36:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.281 2009/03/31 01:41:27 tgl Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -63,7 +63,7 @@
    The <function>PQstatus</> function should be called to check
    whether a connection was successfully made before queries are sent
    via the connection object.
-  
+
    <note>
     <para>
      On Windows, there is a way to improve performance if a single
@@ -6168,20 +6168,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    environment variables <envar>PGSSLCERT</> and <envar>PGSSLKEY</>.
   </para>
 
-  <para>
-   If your application initializes <literal>libssl</> or
-   <literal>libcrypto</> libraries and <application>libpq</application>
-   is built with <acronym>SSL</> support, you should call
-   <function>PQinitSSL(0)</> to tell <application>libpq</application>
-   that the <literal>libssl</> and <literal>libcrypto</> libraries
-   have been initialized by your application so
-   <application>libpq</application> will not initialize those libraries.
-   <!-- If this URL changes replace it with a URL to www.archive.org. -->
-   See <ulink
-   url="http://h71000.www7.hp.com/doc/83final/BA554_90007/ch04.html"></ulink>
-   for details on the SSL API.
-  </para>
-
   <table id="libpq-ssl-file-usage">
    <title>Libpq/Client SSL File Usage</title>
    <tgroup cols="3">
@@ -6224,6 +6210,93 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   If your application initializes <literal>libssl</> and/or
+   <literal>libcrypto</> libraries and <application>libpq</application>
+   is built with <acronym>SSL</> support, you should call
+   <function>PQinitOpenSSL</> to tell <application>libpq</application>
+   that the <literal>libssl</> and/or <literal>libcrypto</> libraries
+   have been initialized by your application, so that
+   <application>libpq</application> will not also initialize those libraries.
+   <!-- If this URL changes replace it with a URL to www.archive.org. -->
+   See <ulink
+   url="http://h71000.www7.hp.com/doc/83final/BA554_90007/ch04.html"></ulink>
+   for details on the SSL API.
+  </para>
+
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <function>PQinitOpenSSL</function>
+      <indexterm>
+       <primary>PQinitOpenSSL</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       Allows applications to select which security libraries to initialize.
+       <synopsis>
+        void PQinitOpenSSL(int do_ssl, init do_crypto);
+       </synopsis>
+      </para>
+
+      <para>
+       When <parameter>do_ssl</> is non-zero, <application>libpq</application>
+       will initialize the <application>OpenSSL</> library before first
+       opening a database connection.  When <parameter>do_crypto</> is
+       non-zero, the <literal>libcrypto</> library will be initialized.  By
+       default (if <function>PQinitOpenSSL</> is not called), both libraries
+       are initialized.  When SSL support is not compiled in, this function is
+       present but does nothing.
+      </para>
+
+      <para>
+       If your application uses and initializes either <application>OpenSSL</>
+       or its underlying <literal>libcrypto</> library, you <emphasis>must</>
+       call this function with zeroes for the appropriate parameter(s)
+       before first opening a database connection.  Also be sure that you
+       have done that initialization before opening a database connection.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <function>PQinitSSL</function>
+      <indexterm>
+       <primary>PQinitSSL</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       Allows applications to select which security libraries to initialize.
+       <synopsis>
+        void PQinitSSL(int do_ssl);
+       </synopsis>
+      </para>
+
+      <para>
+       This function is equivalent to
+       <literal>PQinitOpenSSL(do_ssl, do_ssl)</>.
+       It is sufficient for applications that initialize both or neither
+       of <application>OpenSSL</> and <literal>libcrypto</>.
+      </para>
+
+      <para>
+       <function>PQinitSSL</> has been present since
+       <productname>PostgreSQL</> 8.0, while <function>PQinitOpenSSL</>
+       was added in <productname>PostgreSQL</> 8.4, so <function>PQinitSSL</>
+       might be preferable for applications that need to work with older
+       versions of <application>libpq</application>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
 
  </sect1>
 
