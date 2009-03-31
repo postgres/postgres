@@ -104,6 +104,16 @@ pgstatindex(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(rel));
 
 	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
+	/*
 	 * Read metapage
 	 */
 	{
@@ -260,6 +270,8 @@ pg_relpages(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
 

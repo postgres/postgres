@@ -8,7 +8,7 @@
  * Copyright (c) 2007-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.4 2008/01/01 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.4.2.1 2009/03/31 22:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,16 @@ get_raw_page(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot get raw page from composite type \"%s\"",
 						RelationGetRelationName(rel))));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
 
 	if (blkno >= RelationGetNumberOfBlocks(rel))
 		elog(ERROR, "block number %u is out of range for relation \"%s\"",

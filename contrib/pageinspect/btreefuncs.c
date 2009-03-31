@@ -186,6 +186,16 @@ bt_page_stats(PG_FUNCTION_ARGS)
 		elog(ERROR, "relation \"%s\" is not a btree index",
 			 RelationGetRelationName(rel));
 
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
 	if (blkno == 0)
 		elog(ERROR, "block 0 is a meta page");
 
@@ -293,6 +303,16 @@ bt_page_items(PG_FUNCTION_ARGS)
 		if (!IS_INDEX(rel) || !IS_BTREE(rel))
 			elog(ERROR, "relation \"%s\" is not a btree index",
 				 RelationGetRelationName(rel));
+
+		/*
+		 * Reject attempts to read non-local temporary relations; we would
+		 * be likely to get wrong data since we have no visibility into the
+		 * owning session's local buffers.
+		 */
+		if (isOtherTempNamespace(RelationGetNamespace(rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot access temporary tables of other sessions")));
 
 		if (blkno == 0)
 			elog(ERROR, "block 0 is a meta page");
@@ -432,6 +452,16 @@ bt_metap(PG_FUNCTION_ARGS)
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "relation \"%s\" is not a btree index",
 			 RelationGetRelationName(rel));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
 
 	buffer = ReadBuffer(rel, 0);
 	page = BufferGetPage(buffer);
