@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.47 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.48 2009/03/31 05:18:33 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 		if (arrayP->procs[index] == proc)
 		{
 			arrayP->procs[index] = arrayP->procs[arrayP->numProcs - 1];
+			arrayP->procs[arrayP->numProcs - 1] = NULL; /* for debugging */
 			arrayP->numProcs--;
 			LWLockRelease(ProcArrayLock);
 			return;
@@ -1107,6 +1108,20 @@ CountActiveBackends(void)
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		volatile PGPROC *proc = arrayP->procs[index];
+
+		/*
+		 * Since we're not holding a lock, need to check that the pointer is
+		 * valid. Someone holding the lock could have incremented numProcs
+		 * already, but not yet inserted a valid pointer to the array.
+		 *
+		 * If someone just decremented numProcs, 'proc' could also point to a
+		 * PGPROC entry that's no longer in the array. It still points to a
+		 * PGPROC struct, though, because freed PGPPROC entries just go to
+		 * the free list and are recycled. Its contents are nonsense in that
+		 * case, but that's acceptable for this function.
+		 */
+		if (proc != NULL)
+			continue;
 
 		if (proc == MyProc)
 			continue;			/* do not count myself */
