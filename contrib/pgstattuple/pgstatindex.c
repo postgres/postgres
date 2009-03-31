@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstatindex.c,v 1.11 2008/05/17 01:28:22 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstatindex.c,v 1.12 2009/03/31 22:54:31 tgl Exp $ 
  *
  *
  * pgstatindex
@@ -106,6 +106,16 @@ pgstatindex(PG_FUNCTION_ARGS)
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "relation \"%s\" is not a btree index",
 			 RelationGetRelationName(rel));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
 
 	/*
 	 * Read metapage
@@ -261,6 +271,8 @@ pg_relpages(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
 
