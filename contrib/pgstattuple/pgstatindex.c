@@ -247,6 +247,16 @@ pgstatindex(PG_FUNCTION_ARGS)
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "pgstatindex() can be used only on b-tree index.");
 
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
 	/*-------------------
 	 * Read a metapage
 	 *-------------------
@@ -405,15 +415,25 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
-	CHECK_RELATION_BLOCK_RANGE(rel, blkno);
-
-	buffer = ReadBuffer(rel, blkno);
-
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "bt_page_stats() can be used only on b-tree index.");
 
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
 	if (blkno == 0)
 		elog(ERROR, "Block 0 is a meta page.");
+
+	CHECK_RELATION_BLOCK_RANGE(rel, blkno);
+
+	buffer = ReadBuffer(rel, blkno);
 
 	{
 		HeapTuple	tuple;
@@ -513,9 +533,6 @@ bt_page_items(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use pgstattuple functions"))));
 
-	if (blkno == 0)
-		elog(ERROR, "Block 0 is a meta page.");
-
 	if (SRF_IS_FIRSTCALL())
 	{
 		fctx = SRF_FIRSTCALL_INIT();
@@ -529,12 +546,25 @@ bt_page_items(PG_FUNCTION_ARGS)
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 		uargs->rel = relation_openrv(relrv, AccessShareLock);
 
+		if (!IS_INDEX(uargs->rel) || !IS_BTREE(uargs->rel))
+			elog(ERROR, "bt_page_items() can be used only on b-tree index.");
+
+		/*
+		 * Reject attempts to read non-local temporary relations; we would
+		 * be likely to get wrong data since we have no visibility into the
+		 * owning session's local buffers.
+		 */
+		if (isOtherTempNamespace(RelationGetNamespace(uargs->rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot access temporary tables of other sessions")));
+
+		if (blkno == 0)
+			elog(ERROR, "Block 0 is a meta page.");
+
 		CHECK_RELATION_BLOCK_RANGE(uargs->rel, blkno);
 
 		uargs->buffer = ReadBuffer(uargs->rel, blkno);
-
-		if (!IS_INDEX(uargs->rel) || !IS_BTREE(uargs->rel))
-			elog(ERROR, "bt_page_items() can be used only on b-tree index.");
 
 		uargs->page = BufferGetPage(uargs->buffer);
 
@@ -651,6 +681,16 @@ bt_metap(PG_FUNCTION_ARGS)
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "bt_metap() can be used only on b-tree index.");
 
+	/*
+	 * Reject attempts to read non-local temporary relations; we would
+	 * be likely to get wrong data since we have no visibility into the
+	 * owning session's local buffers.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
 	buffer = ReadBuffer(rel, 0);
 
 	{
@@ -719,6 +759,8 @@ pg_relpages(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
 
