@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.179 2009/03/22 18:06:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.180 2009/04/01 03:23:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,7 +575,7 @@ recv_password_packet(Port *port)
 
 
 /*----------------------------------------------------------------
- * MD5 and crypt authentication
+ * MD5 authentication
  *----------------------------------------------------------------
  */
 
