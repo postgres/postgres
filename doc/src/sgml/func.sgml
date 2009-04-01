@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.473 2009/03/23 21:00:38 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.474 2009/04/01 03:32:29 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9337,6 +9337,46 @@ SELECT NULLIF(value, '(none)') ...
    available for use with array types. See <xref linkend="arrays">
    for more discussion and examples of the use of these functions.
   </para>
+
+  <indexterm>
+    <primary>array_append</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_cat</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_ndims</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_dims</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_fill</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_length</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_lower</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_prepend</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_to_string</primary>
+  </indexterm>
+ <indexterm>
+    <primary>array_upper</primary>
+  </indexterm>
+  <indexterm>
+    <primary>cardinality</primary>
+  </indexterm>
+  <indexterm>
+    <primary>string_to_array</primary>
+  </indexterm>
+  <indexterm>
+    <primary>unnest</primary>
+  </indexterm>
 
     <table id="array-functions-table">
      <title>Array Functions</title>
