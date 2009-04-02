@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.237 2009/04/02 01:16:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.238 2009/04/02 19:20:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3367,6 +3367,8 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		/* Set the global FOUND variable appropriately. */
 		exec_set_found(estate, n != 0);
 	}
+
+	estate->eval_processed = n;
 
 	return PLPGSQL_RC_OK;
 }

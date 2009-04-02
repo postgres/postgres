@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.138 2009/02/05 15:25:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.139 2009/04/02 19:20:45 momjian Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1285,7 +1285,7 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
      value to be assigned to the specified variable (which should be
      of the right data type to receive it).  The currently available
      status items are <varname>ROW_COUNT</>, the number of rows
-     processed by the last <acronym>SQL</acronym> command sent down to
+     processed by the last <acronym>SQL</acronym> command sent to
      the <acronym>SQL</acronym> engine, and <varname>RESULT_OID</>,
      the OID of the last row inserted by the most recent
      <acronym>SQL</acronym> command.  Note that <varname>RESULT_OID</>
