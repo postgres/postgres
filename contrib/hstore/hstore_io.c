@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.9 2009/03/15 22:05:17 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.10 2009/04/02 17:57:05 teodor Exp $
  */
 #include "postgres.h"
 
@@ -446,7 +446,8 @@ hstore_out(PG_FUNCTION_ARGS)
 {
 	HStore	   *in = PG_GETARG_HS(0);
 	int			buflen,
-				i;
+				i,
+				nnulls=0;
 	char	   *out,
 			   *ptr;
 	char	   *base = STRPTR(in);
@@ -460,8 +461,15 @@ hstore_out(PG_FUNCTION_ARGS)
 		PG_RETURN_CSTRING(out);
 	}
 
-	buflen = (4 /* " */ + 2 /* => */ + 2 /* , */ ) * in->size +
-		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0));
+	for (i = 0; i < in->size; i++)
+		if (entries[i].valisnull)
+			nnulls++;
+
+	buflen = (4 /* " */ + 2 /* => */ ) * ( in->size - nnulls ) +
+		( 2 /* " */ + 2 /* => */ + 4 /* NULL */ ) * nnulls  +
+		2 /* ,  */ * ( in->size - 1 ) +
+		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0)) + 
+		1 /* \0 */;
 
 	out = ptr = palloc(buflen);
 	for (i = 0; i < in->size; i++)
