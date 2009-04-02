@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.238 2009/04/02 19:20:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.239 2009/04/02 20:16:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3284,7 +3284,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 	SPITupleTable *tuptab;
 	Portal		portal;
 	char	   *curname;
-	int			n;
+	uint32		n;
 
 	/* ----------
 	 * Get the portal of the cursor by name
@@ -3342,19 +3342,13 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		n = SPI_processed;
 
 		/* ----------
-		 * Set the target and the global FOUND variable appropriately.
+		 * Set the target appropriately.
 		 * ----------
 		 */
 		if (n == 0)
-		{
 			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-			exec_set_found(estate, false);
-		}
 		else
-		{
 			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
-			exec_set_found(estate, true);
-		}
 
 		SPI_freetuptable(tuptab);
 	}
@@ -3363,12 +3357,11 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		/* Move the cursor */
 		SPI_scroll_cursor_move(portal, stmt->direction, how_many);
 		n = SPI_processed;
-
-		/* Set the global FOUND variable appropriately. */
-		exec_set_found(estate, n != 0);
 	}
 
+	/* Set the ROW_COUNT and the global FOUND variable appropriately. */
 	estate->eval_processed = n;
+	exec_set_found(estate, n != 0);
 
 	return PLPGSQL_RC_OK;
 }
