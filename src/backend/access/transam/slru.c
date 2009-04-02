@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.45 2009/01/01 17:23:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.46 2009/04/02 19:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@
 #include "storage/fd.h"
 #include "storage/shmem.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 
 
 /*
@@ -372,6 +373,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 {
 	SlruShared	shared = ctl->shared;
 
+	TRACE_POSTGRESQL_SLRU_READPAGE_START((uintptr_t)ctl, pageno, write_ok, xid);
 	/* Outer loop handles restart if we must wait for someone else's I/O */
 	for (;;)
 	{
@@ -399,6 +401,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 			}
 			/* Otherwise, it's ready to use */
 			SlruRecentlyUsed(shared, slotno);
+			TRACE_POSTGRESQL_SLRU_READPAGE_DONE(slotno);
 			return slotno;
 		}
 
@@ -446,6 +449,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 			SlruReportIOError(ctl, pageno, xid);
 
 		SlruRecentlyUsed(shared, slotno);
+		TRACE_POSTGRESQL_SLRU_READPAGE_DONE(slotno);
 		return slotno;
 	}
 }
@@ -469,6 +473,8 @@ SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno, TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
 	int			slotno;
+
+	TRACE_POSTGRESQL_SLRU_READPAGE_READONLY((uintptr_t)ctl, pageno, xid);
 
 	/* Try to find the page while holding only shared lock */
 	LWLockAcquire(shared->ControlLock, LW_SHARED);
@@ -511,6 +517,8 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	int			pageno = shared->page_number[slotno];
 	bool		ok;
 
+	TRACE_POSTGRESQL_SLRU_WRITEPAGE_START((uintptr_t)ctl, pageno, slotno);
+
 	/* If a write is in progress, wait for it to finish */
 	while (shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS &&
 		   shared->page_number[slotno] == pageno)
@@ -525,7 +533,10 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	if (!shared->page_dirty[slotno] ||
 		shared->page_status[slotno] != SLRU_PAGE_VALID ||
 		shared->page_number[slotno] != pageno)
+	{
+		TRACE_POSTGRESQL_SLRU_WRITEPAGE_DONE();
 		return;
+	}
 
 	/*
 	 * Mark the slot write-busy, and clear the dirtybit.  After this point, a
@@ -569,6 +580,8 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	/* Now it's okay to ereport if we failed */
 	if (!ok)
 		SlruReportIOError(ctl, pageno, InvalidTransactionId);
+
+	TRACE_POSTGRESQL_SLRU_WRITEPAGE_DONE();
 }
 
 /*
@@ -593,6 +606,8 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 
 	SlruFileName(ctl, path, segno);
 
+	TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_START((uintptr_t)ctl, path, pageno, slotno);
+
 	/*
 	 * In a crash-and-restart situation, it's possible for us to receive
 	 * commands to set the commit status of transactions whose bits are in
@@ -607,6 +622,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 		{
 			slru_errcause = SLRU_OPEN_FAILED;
 			slru_errno = errno;
+			TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 			return false;
 		}
 
@@ -614,6 +630,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 				(errmsg("file \"%s\" doesn't exist, reading as zeroes",
 						path)));
 		MemSet(shared->page_buffer[slotno], 0, BLCKSZ);
+		TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_DONE(true, -1, -1);
 		return true;
 	}
 
@@ -622,6 +639,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 		slru_errcause = SLRU_SEEK_FAILED;
 		slru_errno = errno;
 		close(fd);
+		TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 		return false;
 	}
 
@@ -631,6 +649,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 		slru_errcause = SLRU_READ_FAILED;
 		slru_errno = errno;
 		close(fd);
+		TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 		return false;
 	}
 
@@ -638,8 +657,11 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	{
 		slru_errcause = SLRU_CLOSE_FAILED;
 		slru_errno = errno;
+		TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 		return false;
 	}
+
+	TRACE_POSTGRESQL_SLRU_READPAGE_PHYSICAL_DONE(true, -1, -1);
 
 	return true;
 }
@@ -667,6 +689,8 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	int			offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
 	int			fd = -1;
+
+	TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_START((uintptr_t)ctl, pageno, slotno);
 
 	/*
 	 * Honor the write-WAL-before-data rule, if appropriate, so that we do not
@@ -753,6 +777,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		{
 			slru_errcause = SLRU_OPEN_FAILED;
 			slru_errno = errno;
+			TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 			return false;
 		}
 
@@ -781,6 +806,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		slru_errno = errno;
 		if (!fdata)
 			close(fd);
+		TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 		return false;
 	}
 
@@ -794,6 +820,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		slru_errno = errno;
 		if (!fdata)
 			close(fd);
+		TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 		return false;
 	}
 
@@ -808,6 +835,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 			slru_errcause = SLRU_FSYNC_FAILED;
 			slru_errno = errno;
 			close(fd);
+			TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 			return false;
 		}
 
@@ -815,10 +843,12 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		{
 			slru_errcause = SLRU_CLOSE_FAILED;
 			slru_errno = errno;
+			TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_DONE(false, slru_errcause, slru_errno);
 			return false;
 		}
 	}
 
+	TRACE_POSTGRESQL_SLRU_WRITEPAGE_PHYSICAL_DONE(true, -1, -1);
 	return true;
 }
 

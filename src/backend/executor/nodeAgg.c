@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.164 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.165 2009/04/02 19:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
+#include "pg_trace.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -813,6 +814,8 @@ ExecAgg(AggState *node)
 {
 	if (node->agg_done)
 		return NULL;
+
+	TRACE_POSTGRESQL_EXECUTOR_AGG((uintptr_t)node, ((Agg *) node->ss.ps.plan)->aggstrategy);
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous agg

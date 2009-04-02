@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.96 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.97 2009/04/02 19:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "executor/nodeSubplan.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "pg_trace.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -91,6 +92,8 @@ ExecHashSubPlan(SubPlanState *node,
 	PlanState  *planstate = node->planstate;
 	ExprContext *innerecontext = node->innerecontext;
 	TupleTableSlot *slot;
+
+	TRACE_POSTGRESQL_EXECUTOR_SUBPLAN_HASH((uintptr_t)node);
 
 	/* Shouldn't have any direct correlation Vars */
 	if (subplan->parParam != NIL || node->args != NIL)
@@ -226,6 +229,8 @@ ExecScanSubPlan(SubPlanState *node,
 	ListCell   *pvar;
 	ListCell   *l;
 	ArrayBuildState *astate = NULL;
+
+	TRACE_POSTGRESQL_EXECUTOR_SUBPLAN_SCAN((uintptr_t)node);
 
 	/*
 	 * We are probably in a short-lived expression-evaluation context. Switch

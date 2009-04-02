@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.63 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.64 2009/04/02 19:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeSort.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "utils/tuplesort.h"
 
 
@@ -52,6 +53,8 @@ ExecSort(SortState *node)
 	estate = node->ss.ps.state;
 	dir = estate->es_direction;
 	tuplesortstate = (Tuplesortstate *) node->tuplesortstate;
+
+	TRACE_POSTGRESQL_EXECUTOR_SORT((uintptr_t)node, dir);
 
 	/*
 	 * If first time through, read all tuples from outer plan and pass them to

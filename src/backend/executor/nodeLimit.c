@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.36 2009/03/04 10:55:00 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.37 2009/04/02 19:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
+#include "pg_trace.h"
 
 static void recompute_limits(LimitState *node);
 
@@ -40,6 +41,8 @@ ExecLimit(LimitState *node)
 	ScanDirection direction;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
+
+	TRACE_POSTGRESQL_EXECUTOR_LIMIT((uintptr_t)node);
 
 	/*
 	 * get information from the node
