@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.204 2009/04/02 15:15:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.205 2009/04/02 17:38:26 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -95,7 +95,8 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 					  gettext_noop("Description"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
@@ -282,7 +283,8 @@ describeFunctions(const char *pattern, bool verbose, bool showSystem)
 					  "      AND NOT p.proisagg\n");
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
@@ -373,7 +375,8 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 		appendPQExpBuffer(&buf, "  AND t.typname !~ '^_'\n");
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	/* Match name pattern against either internal or external name */
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
@@ -428,7 +431,8 @@ describeOperators(const char *pattern, bool showSystem)
 					  gettext_noop("Description"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, true,
 						  "n.nspname", "o.oprname", NULL,
@@ -632,7 +636,8 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("aggregate"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
@@ -655,7 +660,8 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("function"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
@@ -673,7 +679,8 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("operator"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
  
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, false,
 						  "n.nspname", "o.oprname", NULL,
@@ -691,7 +698,8 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("data type"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, false,
 						  "n.nspname", "pg_catalog.format_type(t.oid, NULL)",
@@ -714,8 +722,10 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("view"),
 					  gettext_noop("index"),
 					  gettext_noop("sequence"));
+
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
@@ -735,7 +745,8 @@ objectDescription(const char *pattern, bool showSystem)
 					  gettext_noop("rule"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	/* XXX not sure what to do about visibility rule here? */
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
@@ -753,8 +764,10 @@ objectDescription(const char *pattern, bool showSystem)
 				   "       JOIN pg_catalog.pg_class c ON c.oid = t.tgrelid\n"
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n",
 					  gettext_noop("trigger"));
+
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	/* XXX not sure what to do about visibility rule here? */
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, false,
@@ -809,7 +822,8 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 	 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      WHERE n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, false,
 						  "n.nspname", "c.relname", NULL,
@@ -2013,11 +2027,10 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	appendPQExpBuffer(&buf, "''");		/* dummy */
 	appendPQExpBuffer(&buf, ")\n");
 
-	if (!showSystem && !pattern)
-		/* Exclude system and pg_toast objects, but show temp tables */
-		appendPQExpBuffer(&buf,
-						  "  AND n.nspname <> 'pg_catalog'\n"
-						  "  AND n.nspname !~ '^pg_toast'\n");
+ 	if (!showSystem && !pattern)
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n"
+								"      AND n.nspname !~ '^pg_toast'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
@@ -2088,7 +2101,8 @@ listDomains(const char *pattern, bool showSystem)
 					  gettext_noop("Check"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "  AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "t.typname", NULL,
@@ -2143,7 +2157,8 @@ listConversions(const char *pattern, bool showSystem)
 					  gettext_noop("Default?"));
 
  	if (!showSystem && !pattern)
- 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n");
+ 		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
+ 								"      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.conname", NULL,
