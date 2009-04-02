@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.9 2009/02/27 10:27:45 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.10 2009/04/02 01:16:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4351,26 +4351,23 @@ exec_simple_cast_value(Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
 					   bool isnull)
 {
-	if (!isnull)
+	if (valtype != reqtype || reqtypmod != -1)
 	{
-		if (valtype != reqtype || reqtypmod != -1)
-		{
-			Oid			typinput;
-			Oid			typioparam;
-			FmgrInfo	finfo_input;
+		Oid			typinput;
+		Oid			typioparam;
+		FmgrInfo	finfo_input;
 
-			getTypeInputInfo(reqtype, &typinput, &typioparam);
+		getTypeInputInfo(reqtype, &typinput, &typioparam);
 
-			fmgr_info(typinput, &finfo_input);
+		fmgr_info(typinput, &finfo_input);
 
-			value = exec_cast_value(value,
-									valtype,
-									reqtype,
-									&finfo_input,
-									typioparam,
-									reqtypmod,
-									isnull);
-		}
+		value = exec_cast_value(value,
+								valtype,
+								reqtype,
+								&finfo_input,
+								typioparam,
+								reqtypmod,
+								isnull);
 	}
 
 	return value;
