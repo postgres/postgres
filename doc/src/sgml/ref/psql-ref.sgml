@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.220 2009/02/26 16:02:37 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.221 2009/04/02 15:15:31 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -853,9 +853,9 @@ testdb=&gt;
         more information is displayed: any comments associated with the
         columns of the table are shown, as is the presence of OIDs in the
         table.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
 
         <note>
@@ -879,9 +879,9 @@ testdb=&gt;
         return type and the data types they operate on. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only aggregates whose names match the pattern are shown.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
         </listitem>
       </varlistentry>
@@ -910,9 +910,9 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only conversions whose names match the pattern are
         listed.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
         </listitem>
       </varlistentry>
@@ -939,9 +939,9 @@ testdb=&gt;
         class="parameter">pattern</replaceable>, or of all visible objects if
         no argument is given.  But in either case, only objects that have
         a description are listed.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         (<quote>Object</quote> covers aggregates, functions, operators,
         types, relations (tables, views, indexes, sequences, large
         objects), rules, and triggers.) For example:
@@ -971,9 +971,9 @@ testdb=&gt;
         Lists all available domains. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only matching domains are shown.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
         </listitem>
       </varlistentry>
@@ -1045,9 +1045,9 @@ testdb=&gt;
         is specified, only functions whose names match the pattern are shown.
         If the form <literal>\df+</literal> is used, additional information about
         each function, including volatility, language, source code and description, is shown.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
 
         <note>
@@ -1155,9 +1155,9 @@ testdb=&gt;
         and tables.  If <literal>+</literal> is
         appended to the command name, each object is listed with its
         physical size on disk and its associated description, if any.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
 
         <para>
@@ -1202,9 +1202,9 @@ testdb=&gt;
         Lists available operators with their operand and return types.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only operators whose names match the pattern are listed.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
         </listitem>
       </varlistentry>
@@ -1237,9 +1237,9 @@ testdb=&gt;
         class="parameter">pattern</replaceable>. The command form
         <literal>\dT+</literal> shows extra information, namely the type's internal name, size, and
         allowed values for <type>enum</> types.
-        The letter <literal>S</literal> adds the listing of system
-        objects; without <literal>S</literal>, only non-system
-        objects are shown.
+        By default, only user-created objects are shown;  supply a
+        pattern or the <literal>S</literal> modifier to include system
+        objects.
         </para>
         </listitem>
       </varlistentry>
