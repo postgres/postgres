@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.119 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.120 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
-#include "pg_trace.h"
 #include "utils/dynahash.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
@@ -79,8 +78,6 @@ MultiExecHash(HashState *node)
 	TupleTableSlot *slot;
 	ExprContext *econtext;
 	uint32		hashvalue;
-
-	TRACE_POSTGRESQL_EXECUTOR_HASH_MULTI((uintptr_t)node);
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)

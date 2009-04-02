@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.59 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.60 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeUnique.h"
-#include "pg_trace.h"
 #include "utils/memutils.h"
 
 
@@ -50,8 +49,6 @@ ExecUnique(UniqueState *node)
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
-
-	TRACE_POSTGRESQL_EXECUTOR_UNIQUE((uintptr_t)node);
 
 	/*
 	 * get information from the node

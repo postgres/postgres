@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.74 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.75 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
-#include "pg_trace.h"
 
 
 /*
@@ -49,8 +48,6 @@ ExecGroup(GroupState *node)
 	econtext = node->ss.ps.ps_ExprContext;
 	numCols = ((Group *) node->ss.ps.plan)->numCols;
 	grpColIdx = ((Group *) node->ss.ps.plan)->grpColIdx;
-
-	TRACE_POSTGRESQL_EXECUTOR_GROUP((uintptr_t)node, numCols);
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous group

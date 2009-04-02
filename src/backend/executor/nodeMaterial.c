@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.67 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.68 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
 #include "miscadmin.h"
-#include "pg_trace.h"
 
 /* ----------------------------------------------------------------
  *		ExecMaterial
@@ -45,8 +44,6 @@ ExecMaterial(MaterialState *node)
 	Tuplestorestate *tuplestorestate;
 	bool		eof_tuplestore;
 	TupleTableSlot *slot;
-
-	TRACE_POSTGRESQL_EXECUTOR_MATERIAL((uintptr_t)node);
 
 	/*
 	 * get state info from node

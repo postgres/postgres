@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.29 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.30 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeSetOp.h"
-#include "pg_trace.h"
 #include "utils/memutils.h"
 
 
@@ -196,8 +195,6 @@ ExecSetOp(SetOpState *node)
 {
 	SetOp	   *plannode = (SetOp *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot = node->ps.ps_ResultTupleSlot;
-
-	TRACE_POSTGRESQL_EXECUTOR_SETOP((uintptr_t)node);
 
 	/*
 	 * If the previously-returned tuple needs to be returned more than once,

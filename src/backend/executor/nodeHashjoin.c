@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.99 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.100 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "executor/hashjoin.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-#include "pg_trace.h"
 #include "utils/memutils.h"
 
 
@@ -61,8 +60,6 @@ ExecHashJoin(HashJoinState *node)
 	TupleTableSlot *outerTupleSlot;
 	uint32		hashvalue;
 	int			batchno;
-
-	TRACE_POSTGRESQL_EXECUTOR_HASHJOIN((uintptr_t)node);
 
 	/*
 	 * get information from HashJoin node

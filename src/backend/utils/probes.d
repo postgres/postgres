@@ -3,7 +3,7 @@
  *
  *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.10 2009/04/02 19:14:34 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/probes.d,v 1.11 2009/04/02 20:59:10 momjian Exp $
  * ----------
  */
 
@@ -15,7 +15,6 @@
  * in probe definitions, as they cause compilation errors on Mac OS X 10.5.
  */
 #define LocalTransactionId unsigned int
-#define TransactionId unsigned int
 #define LWLockId int
 #define LWLockMode int
 #define LOCKMODE int
@@ -91,29 +90,4 @@ provider postgresql {
 	probe xlog__switch();
 	probe wal__buffer__write__dirty__start();
 	probe wal__buffer__write__dirty__done();
-
-	probe slru__readpage__start(unsigned long, int, bool, TransactionId);
-	probe slru__readpage__done(int);
-	probe slru__readpage__readonly(unsigned long, int, TransactionId);
-	probe slru__writepage__start(unsigned long, int, int);
-	probe slru__writepage__done();
-	probe slru__readpage__physical__start(unsigned long, char *, int, int);
-	probe slru__readpage__physical__done(int, int, int);
-	probe slru__writepage__physical__start(unsigned long, int, int);
-	probe slru__writepage__physical__done(int, int, int);
- 
-	probe executor__scan(unsigned long, unsigned int, unsigned long);
-	probe executor__agg(unsigned long, int);
-	probe executor__group(unsigned long, int);
-	probe executor__hash__multi(unsigned long);
-	probe executor__hashjoin(unsigned long);
-	probe executor__limit(unsigned long);
-	probe executor__material(unsigned long);
-	probe executor__mergejoin(unsigned long);
-	probe executor__nestloop(unsigned long);
-	probe executor__setop(unsigned long);
-	probe executor__sort(unsigned long, int);
-	probe executor__subplan__hash(unsigned long);
-	probe executor__subplan__scan(unsigned long);
-	probe executor__unique(unsigned long);
 };

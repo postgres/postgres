@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.95 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.96 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,6 @@
 #include "executor/execdefs.h"
 #include "executor/nodeMergejoin.h"
 #include "miscadmin.h"
-#include "pg_trace.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -565,8 +564,6 @@ ExecMergeJoin(MergeJoinState *node)
 	ExprContext *econtext;
 	bool		doFillOuter;
 	bool		doFillInner;
-
-	TRACE_POSTGRESQL_EXECUTOR_MERGEJOIN((uintptr_t)node);
 
 	/*
 	 * get information from node

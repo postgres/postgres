@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.51 2009/04/02 19:14:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.52 2009/04/02 20:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 
 #include "executor/execdebug.h"
 #include "executor/nodeNestloop.h"
-#include "pg_trace.h"
 #include "utils/memutils.h"
 
 
@@ -67,8 +66,6 @@ ExecNestLoop(NestLoopState *node)
 	List	   *joinqual;
 	List	   *otherqual;
 	ExprContext *econtext;
-
-	TRACE_POSTGRESQL_EXECUTOR_NESTLOOP((uintptr_t)node);
 
 	/*
 	 * get information from the node
