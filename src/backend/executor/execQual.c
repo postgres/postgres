@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.243 2009/03/27 18:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.244 2009/04/02 22:39:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4966,6 +4966,7 @@ ExecCleanTargetListLength(List *targetlist)
  * prepared to deal with sets of result tuples.  Otherwise, a return
  * of *isDone = ExprMultipleResult signifies a set element, and a return
  * of *isDone = ExprEndResult signifies end of the set of tuple.
+ * We assume that *isDone has been initialized to ExprSingleResult by caller.
  */
 static bool
 ExecTargetList(List *targetlist,
@@ -4987,9 +4988,6 @@ ExecTargetList(List *targetlist,
 	/*
 	 * evaluate all the expressions in the target list
 	 */
-	if (isDone)
-		*isDone = ExprSingleResult;		/* until proven otherwise */
-
 	haveDoneSets = false;		/* any exhausted set exprs in tlist? */
 
 	foreach(tl, targetlist)
@@ -5105,50 +5103,6 @@ ExecTargetList(List *targetlist,
 }
 
 /*
- * ExecVariableList
- *		Evaluates a simple-Variable-list projection.
- *
- * Results are stored into the passed values and isnull arrays.
- */
-static void
-ExecVariableList(ProjectionInfo *projInfo,
-				 Datum *values,
-				 bool *isnull)
-{
-	ExprContext *econtext = projInfo->pi_exprContext;
-	int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
-	int		   *varNumbers = projInfo->pi_varNumbers;
-	int			i;
-
-	/*
-	 * Force extraction of all input values that we need.
-	 */
-	if (projInfo->pi_lastInnerVar > 0)
-		slot_getsomeattrs(econtext->ecxt_innertuple,
-						  projInfo->pi_lastInnerVar);
-	if (projInfo->pi_lastOuterVar > 0)
-		slot_getsomeattrs(econtext->ecxt_outertuple,
-						  projInfo->pi_lastOuterVar);
-	if (projInfo->pi_lastScanVar > 0)
-		slot_getsomeattrs(econtext->ecxt_scantuple,
-						  projInfo->pi_lastScanVar);
-
-	/*
-	 * Assign to result by direct extraction of fields from source slots ... a
-	 * mite ugly, but fast ...
-	 */
-	for (i = list_length(projInfo->pi_targetlist) - 1; i >= 0; i--)
-	{
-		char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
-		TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
-		int			varNumber = varNumbers[i] - 1;
-
-		values[i] = varSlot->tts_values[varNumber];
-		isnull[i] = varSlot->tts_isnull[varNumber];
-	}
-}
-
-/*
  * ExecProject
  *
  *		projects a tuple based on projection info and stores
@@ -5165,6 +5119,8 @@ TupleTableSlot *
 ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 {
 	TupleTableSlot *slot;
+	ExprContext *econtext;
+	int			numSimpleVars;
 
 	/*
 	 * sanity checks
@@ -5175,6 +5131,11 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	 * get the projection info we want
 	 */
 	slot = projInfo->pi_slot;
+	econtext = projInfo->pi_exprContext;
+
+	/* Assume single result row until proven otherwise */
+	if (isDone)
+		*isDone = ExprSingleResult;
 
 	/*
 	 * Clear any former contents of the result slot.  This makes it safe for
@@ -5184,29 +5145,84 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	ExecClearTuple(slot);
 
 	/*
-	 * form a new result tuple (if possible); if successful, mark the result
-	 * slot as containing a valid virtual tuple
+	 * Force extraction of all input values that we'll need.  The
+	 * Var-extraction loops below depend on this, and we are also prefetching
+	 * all attributes that will be referenced in the generic expressions.
 	 */
-	if (projInfo->pi_isVarList)
+	if (projInfo->pi_lastInnerVar > 0)
+		slot_getsomeattrs(econtext->ecxt_innertuple,
+						  projInfo->pi_lastInnerVar);
+	if (projInfo->pi_lastOuterVar > 0)
+		slot_getsomeattrs(econtext->ecxt_outertuple,
+						  projInfo->pi_lastOuterVar);
+	if (projInfo->pi_lastScanVar > 0)
+		slot_getsomeattrs(econtext->ecxt_scantuple,
+						  projInfo->pi_lastScanVar);
+
+	/*
+	 * Assign simple Vars to result by direct extraction of fields from source
+	 * slots ... a mite ugly, but fast ...
+	 */
+	numSimpleVars = projInfo->pi_numSimpleVars;
+	if (numSimpleVars > 0)
 	{
-		/* simple Var list: this always succeeds with one result row */
-		if (isDone)
-			*isDone = ExprSingleResult;
-		ExecVariableList(projInfo,
-						 slot->tts_values,
-						 slot->tts_isnull);
-		ExecStoreVirtualTuple(slot);
-	}
-	else
-	{
-		if (ExecTargetList(projInfo->pi_targetlist,
-						   projInfo->pi_exprContext,
-						   slot->tts_values,
-						   slot->tts_isnull,
-						   projInfo->pi_itemIsDone,
-						   isDone))
-			ExecStoreVirtualTuple(slot);
+		Datum  *values = slot->tts_values;
+		bool   *isnull = slot->tts_isnull;
+		int	   *varSlotOffsets = projInfo->pi_varSlotOffsets;
+		int	   *varNumbers = projInfo->pi_varNumbers;
+		int		i;
+
+		if (projInfo->pi_directMap)
+		{
+			/* especially simple case where vars go to output in order */
+			for (i = 0; i < numSimpleVars; i++)
+			{
+				char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+				int			varNumber = varNumbers[i] - 1;
+
+				values[i] = varSlot->tts_values[varNumber];
+				isnull[i] = varSlot->tts_isnull[varNumber];
+			}
+		}
+		else
+		{
+			/* we have to pay attention to varOutputCols[] */
+			int	   *varOutputCols = projInfo->pi_varOutputCols;
+
+			for (i = 0; i < numSimpleVars; i++)
+			{
+				char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+				TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+				int			varNumber = varNumbers[i] - 1;
+				int			varOutputCol = varOutputCols[i] - 1;
+
+				values[varOutputCol] = varSlot->tts_values[varNumber];
+				isnull[varOutputCol] = varSlot->tts_isnull[varNumber];
+			}
+		}
 	}
 
-	return slot;
+	/*
+	 * If there are any generic expressions, evaluate them.  It's possible
+	 * that there are set-returning functions in such expressions; if so
+	 * and we have reached the end of the set, we return the result slot,
+	 * which we already marked empty.
+	 */
+	if (projInfo->pi_targetlist)
+	{
+		if (!ExecTargetList(projInfo->pi_targetlist,
+							econtext,
+							slot->tts_values,
+							slot->tts_isnull,
+							projInfo->pi_itemIsDone,
+							isDone))
+			return slot;		/* no more result rows, return empty slot */
+	}
+
+	/*
+	 * Successfully formed a result row.  Mark the result slot as containing a
+	 * valid virtual tuple.
+	 */
+	return ExecStoreVirtualTuple(slot);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.202 2009/03/21 00:04:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.203 2009/04/02 22:39:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,16 +201,25 @@ typedef struct ReturnSetInfo
  *
  *		The planner very often produces tlists that consist entirely of
  *		simple Var references (lower levels of a plan tree almost always
- *		look like that).  So we have an optimization to handle that case
- *		with minimum overhead.
+ *		look like that).  And top-level tlists are often mostly Vars too.
+ *		We therefore optimize execution of simple-Var tlist entries.
+ *		The pi_targetlist list actually contains only the tlist entries that
+ *		aren't simple Vars, while those that are Vars are processed using the
+ *		varSlotOffsets/varNumbers/varOutputCols arrays.
  *
- *		targetlist		target list for projection
+ *		The lastXXXVar fields are used to optimize fetching of fields from
+ *		input tuples: they let us do a slot_getsomeattrs() call to ensure
+ *		that all needed attributes are extracted in one pass.
+ *
+ *		targetlist		target list for projection (non-Var expressions only)
  *		exprContext		expression context in which to evaluate targetlist
  *		slot			slot to place projection result in
- *		itemIsDone		workspace for ExecProject
- *		isVarList		TRUE if simple-Var-list optimization applies
+ *		itemIsDone		workspace array for ExecProject
+ *		directMap		true if varOutputCols[] is an identity map
+ *		numSimpleVars	number of simple Vars found in original tlist
  *		varSlotOffsets	array indicating which slot each simple Var is from
- *		varNumbers		array indicating attr numbers of simple Vars
+ *		varNumbers		array containing input attr numbers of simple Vars
+ *		varOutputCols	array containing output attr numbers of simple Vars
  *		lastInnerVar	highest attnum from inner tuple slot (0 if none)
  *		lastOuterVar	highest attnum from outer tuple slot (0 if none)
  *		lastScanVar		highest attnum from scan tuple slot (0 if none)
@@ -223,9 +232,11 @@ typedef struct ProjectionInfo
 	ExprContext *pi_exprContext;
 	TupleTableSlot *pi_slot;
 	ExprDoneCond *pi_itemIsDone;
-	bool		pi_isVarList;
+	bool		pi_directMap;
+	int			pi_numSimpleVars;
 	int		   *pi_varSlotOffsets;
 	int		   *pi_varNumbers;
+	int		   *pi_varOutputCols;
 	int			pi_lastInnerVar;
 	int			pi_lastOuterVar;
 	int			pi_lastScanVar;

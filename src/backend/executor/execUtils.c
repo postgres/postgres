@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.157 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.158 2009/04/02 22:39:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "access/heapam.h"
 #include "catalog/index.h"
 #include "executor/execdebug.h"
+#include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
@@ -66,6 +67,7 @@ int			NIndexTupleInserted;
 int			NIndexTupleProcessed;
 
 
+static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
 static void ShutdownExprContext(ExprContext *econtext);
 
 
@@ -559,119 +561,161 @@ ExecBuildProjectionInfo(List *targetList,
 						TupleDesc inputDesc)
 {
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
-	int			len;
-	bool		isVarList;
+	int			len = ExecTargetListLength(targetList);
+	int		   *workspace;
+	int		   *varSlotOffsets;
+	int		   *varNumbers;
+	int		   *varOutputCols;
+	List	   *exprlist;
+	int			numSimpleVars;
+	bool		directMap;
 	ListCell   *tl;
 
-	len = ExecTargetListLength(targetList);
-
-	projInfo->pi_targetlist = targetList;
 	projInfo->pi_exprContext = econtext;
 	projInfo->pi_slot = slot;
+	/* since these are all int arrays, we need do just one palloc */
+	workspace = (int *) palloc(len * 3 * sizeof(int));
+	projInfo->pi_varSlotOffsets = varSlotOffsets = workspace;
+	projInfo->pi_varNumbers = varNumbers = workspace + len;
+	projInfo->pi_varOutputCols = varOutputCols = workspace + len * 2;
+	projInfo->pi_lastInnerVar = 0;
+	projInfo->pi_lastOuterVar = 0;
+	projInfo->pi_lastScanVar = 0;
 
 	/*
-	 * Determine whether the target list consists entirely of simple Var
-	 * references (ie, references to non-system attributes) that match the
-	 * input.  If so, we can use the simpler ExecVariableList instead of
-	 * ExecTargetList.	(Note: if there is a type mismatch then ExecEvalVar
-	 * will probably throw an error at runtime, but we leave that to it.)
+	 * We separate the target list elements into simple Var references and
+	 * expressions which require the full ExecTargetList machinery.  To be
+	 * a simple Var, a Var has to be a user attribute and not mismatch the
+	 * inputDesc.  (Note: if there is a type mismatch then ExecEvalVar will
+	 * probably throw an error at runtime, but we leave that to it.)
 	 */
-	isVarList = true;
+	exprlist = NIL;
+	numSimpleVars = 0;
+	directMap = true;
 	foreach(tl, targetList)
 	{
 		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
 		Var		   *variable = (Var *) gstate->arg->expr;
-		Form_pg_attribute attr;
+		bool		isSimpleVar = false;
 
-		if (variable == NULL ||
-			!IsA(variable, Var) ||
-			variable->varattno <= 0)
+		if (variable != NULL &&
+			IsA(variable, Var) &&
+			variable->varattno > 0)
 		{
-			isVarList = false;
-			break;
+			if (!inputDesc)
+				isSimpleVar = true;		/* can't check type, assume OK */
+			else if (variable->varattno <= inputDesc->natts)
+			{
+				Form_pg_attribute attr;
+
+				attr = inputDesc->attrs[variable->varattno - 1];
+				if (!attr->attisdropped && variable->vartype == attr->atttypid)
+					isSimpleVar = true;
+			}
 		}
-		if (!inputDesc)
-			continue;			/* can't check type, assume OK */
-		if (variable->varattno > inputDesc->natts)
-		{
-			isVarList = false;
-			break;
-		}
-		attr = inputDesc->attrs[variable->varattno - 1];
-		if (attr->attisdropped || variable->vartype != attr->atttypid)
-		{
-			isVarList = false;
-			break;
-		}
-	}
-	projInfo->pi_isVarList = isVarList;
 
-	if (isVarList)
-	{
-		int		   *varSlotOffsets;
-		int		   *varNumbers;
-		AttrNumber	lastInnerVar = 0;
-		AttrNumber	lastOuterVar = 0;
-		AttrNumber	lastScanVar = 0;
-
-		projInfo->pi_itemIsDone = NULL; /* not needed */
-		projInfo->pi_varSlotOffsets = varSlotOffsets = (int *)
-			palloc0(len * sizeof(int));
-		projInfo->pi_varNumbers = varNumbers = (int *)
-			palloc0(len * sizeof(int));
-
-		/*
-		 * Set up the data needed by ExecVariableList.	The slots in which the
-		 * variables can be found at runtime are denoted by the offsets of
-		 * their slot pointers within the econtext.  This rather grotty
-		 * representation is needed because the caller may not have given us
-		 * the real econtext yet (see hacks in nodeSubplan.c).
-		 */
-		foreach(tl, targetList)
+		if (isSimpleVar)
 		{
-			GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-			Var		   *variable = (Var *) gstate->arg->expr;
-			AttrNumber	attnum = variable->varattno;
 			TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-			AttrNumber	resind = tle->resno - 1;
+			AttrNumber	attnum = variable->varattno;
 
-			Assert(resind >= 0 && resind < len);
-			varNumbers[resind] = attnum;
+			varNumbers[numSimpleVars] = attnum;
+			varOutputCols[numSimpleVars] = tle->resno;
+			if (tle->resno != numSimpleVars+1)
+				directMap = false;
 
 			switch (variable->varno)
 			{
 				case INNER:
-					varSlotOffsets[resind] = offsetof(ExprContext,
-													  ecxt_innertuple);
-					lastInnerVar = Max(lastInnerVar, attnum);
+					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
+															 ecxt_innertuple);
+					if (projInfo->pi_lastInnerVar < attnum)
+						projInfo->pi_lastInnerVar = attnum;
 					break;
 
 				case OUTER:
-					varSlotOffsets[resind] = offsetof(ExprContext,
-													  ecxt_outertuple);
-					lastOuterVar = Max(lastOuterVar, attnum);
+					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
+															 ecxt_outertuple);
+					if (projInfo->pi_lastOuterVar < attnum)
+						projInfo->pi_lastOuterVar = attnum;
 					break;
 
 				default:
-					varSlotOffsets[resind] = offsetof(ExprContext,
-													  ecxt_scantuple);
-					lastScanVar = Max(lastScanVar, attnum);
+					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
+															 ecxt_scantuple);
+					if (projInfo->pi_lastScanVar < attnum)
+						projInfo->pi_lastScanVar = attnum;
 					break;
 			}
+			numSimpleVars++;
 		}
-		projInfo->pi_lastInnerVar = lastInnerVar;
-		projInfo->pi_lastOuterVar = lastOuterVar;
-		projInfo->pi_lastScanVar = lastScanVar;
+		else
+		{
+			/* Not a simple variable, add it to generic targetlist */
+			exprlist = lappend(exprlist, gstate);
+			/* Examine expr to include contained Vars in lastXXXVar counts */
+			get_last_attnums((Node *) variable, projInfo);
+		}
 	}
+	projInfo->pi_targetlist = exprlist;
+	projInfo->pi_numSimpleVars = numSimpleVars;
+	projInfo->pi_directMap = directMap;
+
+	if (exprlist == NIL)
+		projInfo->pi_itemIsDone = NULL; /* not needed */
 	else
-	{
 		projInfo->pi_itemIsDone = (ExprDoneCond *)
 			palloc(len * sizeof(ExprDoneCond));
-		projInfo->pi_varSlotOffsets = NULL;
-		projInfo->pi_varNumbers = NULL;
-	}
 
 	return projInfo;
+}
+
+/*
+ * get_last_attnums: expression walker for ExecBuildProjectionInfo
+ *
+ *	Update the lastXXXVar counts to be at least as large as the largest
+ *	attribute numbers found in the expression
+ */
+static bool
+get_last_attnums(Node *node, ProjectionInfo *projInfo)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var	   *variable = (Var *) node;
+		AttrNumber	attnum = variable->varattno;
+
+		switch (variable->varno)
+		{
+			case INNER:
+				if (projInfo->pi_lastInnerVar < attnum)
+					projInfo->pi_lastInnerVar = attnum;
+				break;
+
+			case OUTER:
+				if (projInfo->pi_lastOuterVar < attnum)
+					projInfo->pi_lastOuterVar = attnum;
+				break;
+
+			default:
+				if (projInfo->pi_lastScanVar < attnum)
+					projInfo->pi_lastScanVar = attnum;
+				break;
+		}
+		return false;
+	}
+	/*
+	 * Don't examine the arguments of Aggrefs or WindowFuncs, because those
+	 * do not represent expressions to be evaluated within the overall
+	 * targetlist's econtext.
+	 */
+	if (IsA(node, Aggref))
+		return false;
+	if (IsA(node, WindowFunc))
+		return false;
+	return expression_tree_walker(node, get_last_attnums,
+								  (void *) projInfo);
 }
 
 /* ----------------
