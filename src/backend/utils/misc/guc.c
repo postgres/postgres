@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.498 2009/04/02 03:51:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.499 2009/04/02 19:57:19 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1713,7 +1713,13 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"effective_io_concurrency", PGC_USERSET, RESOURCES,
+		{"effective_io_concurrency",
+#ifdef USE_PREFETCH
+		PGC_USERSET,
+#else
+		PGC_INTERNAL,
+#endif
+		RESOURCES,
 			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
 			gettext_noop("For RAID arrays, this should be approximately the number of drive spindles in the array.")
 		},
