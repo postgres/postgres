@@ -197,7 +197,13 @@ SELECT test_return_none(), test_return_none() IS NULL AS "is null";
                   | t
 (1 row)
 
--- Test for functions with named parameters
+-- Test for functions with named and nameless parameters
+SELECT test_param_names0(2,7);
+ test_param_names0 
+-------------------
+                 9
+(1 row)
+
 SELECT test_param_names1(1,'text');
  test_param_names1 
 -------------------

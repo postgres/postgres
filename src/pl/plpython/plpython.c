@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.119 2009/03/26 22:26:08 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.120 2009/04/03 16:59:42 tgl Exp $
  *
  *********************************************************************
  */
@@ -1052,9 +1052,11 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				arg = Py_None;
 			}
 
-			if (PyList_SetItem(args, i, arg) == -1 ||
-				(proc->argnames &&
-				 PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1))
+			if (PyList_SetItem(args, i, arg) == -1)
+				PLy_elog(ERROR, "PyList_SetItem() failed for PL/Python function \"%s\" while setting up arguments", proc->proname);
+
+			if (proc->argnames && proc->argnames[i] &&
+				PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1)
 				PLy_elog(ERROR, "PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up arguments", proc->proname);
 			arg = NULL;
 		}
@@ -1081,7 +1083,8 @@ PLy_function_delete_args(PLyProcedure * proc)
 		return;
 
 	for (i = 0; i < proc->nargs; i++)
-		PyDict_DelItemString(proc->globals, proc->argnames[i]);
+		if (proc->argnames[i])
+			PyDict_DelItemString(proc->globals, proc->argnames[i]);
 }
 
 

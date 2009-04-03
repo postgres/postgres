@@ -74,7 +74,8 @@ SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
 SELECT test_void_func2(); -- should fail
 SELECT test_return_none(), test_return_none() IS NULL AS "is null";
 
--- Test for functions with named parameters
+-- Test for functions with named and nameless parameters
+SELECT test_param_names0(2,7);
 SELECT test_param_names1(1,'text');
 SELECT test_param_names2(users) from users;
 SELECT test_param_names3(1);

@@ -391,8 +391,12 @@ $$ LANGUAGE plpythonu;
 
 
 --
--- Test named parameters
+-- Test named and nameless parameters
 --
+CREATE FUNCTION test_param_names0(integer, integer) RETURNS int AS $$
+return args[0] + args[1]
+$$ LANGUAGE plpythonu;
+
 CREATE FUNCTION test_param_names1(a0 integer, a1 text) RETURNS boolean AS $$
 assert a0 == args[0]
 assert a1 == args[1]
