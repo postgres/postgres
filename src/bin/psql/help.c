@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.144 2009/03/25 13:15:55 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.145 2009/04/03 23:38:19 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -162,7 +162,7 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(85, pager);
+	output = PageOutput(86, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -175,6 +175,7 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("Query Buffer\n"));
 	fprintf(output, _("  \\e [FILE]              edit the query buffer (or file) with external editor\n"));
+	fprintf(output, _("  \\ef [FUNCNAME]         edit a function definition with external editor\n"));
 	fprintf(output, _("  \\p                     show the contents of the query buffer\n"));
 	fprintf(output, _("  \\r                     reset (clear) the query buffer\n"));
 #ifdef USE_READLINE
