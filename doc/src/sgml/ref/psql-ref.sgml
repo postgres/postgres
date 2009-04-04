@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.221 2009/04/02 15:15:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.222 2009/04/04 00:39:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -853,6 +853,9 @@ testdb=&gt;
         more information is displayed: any comments associated with the
         columns of the table are shown, as is the presence of OIDs in the
         table.
+        </para>
+
+        <para>
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
@@ -942,9 +945,9 @@ testdb=&gt;
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
-        (<quote>Object</quote> covers aggregates, functions, operators,
-        types, relations (tables, views, indexes, sequences, large
-        objects), rules, and triggers.) For example:
+        <quote>Object</quote> covers aggregates, functions, operators,
+        types, relations (tables, views, indexes, sequences), large
+        objects, rules, and triggers. For example:
 <programlisting>
 =&gt; <userinput>\dd version</userinput>
                      Object descriptions
@@ -1184,7 +1187,7 @@ testdb=&gt;
 
         <listitem>
         <para>
-        Lists all available schemas (namespaces). If <replaceable
+        Lists available schemas (namespaces). If <replaceable
         class="parameter">pattern</replaceable> (a regular expression)
         is specified, only schemas whose names match the pattern are listed.
         Non-local temporary schemas are suppressed.  If <literal>+</literal>
@@ -1214,7 +1217,7 @@ testdb=&gt;
         <term><literal>\dp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Produces a list of all available tables, views and sequences with their
+        Lists available tables, views and sequences with their
         associated access privileges.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only tables, views and sequences whose names match the pattern are listed.
@@ -1233,10 +1236,12 @@ testdb=&gt;
         <term><literal>\dT[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Lists all data types or only those that match <replaceable
-        class="parameter">pattern</replaceable>. The command form
-        <literal>\dT+</literal> shows extra information, namely the type's internal name, size, and
-        allowed values for <type>enum</> types.
+        Lists available data types.
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only types whose names match the pattern are listed.
+        If <literal>+</literal> is appended to the command name, each type is
+        listed with its internal name and size, as well as its allowed values
+        if it is an <type>enum</> type.
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
@@ -1249,8 +1254,9 @@ testdb=&gt;
         <term><literal>\du [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Lists all database roles, or only those that match <replaceable
-        class="parameter">pattern</replaceable>.
+        Lists all database roles. If <replaceable
+        class="parameter">pattern</replaceable> is specified, only
+        those roles whose names match the pattern are listed.
         </para>
         </listitem>
       </varlistentry>
