@@ -717,3 +717,16 @@ select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds';
  @ 0.7 secs | @ 0.7 secs | @ 0.7 secs
 (1 row)
 
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+ t 
+---
+ t
+(1 row)
+
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+ t 
+---
+ t
+(1 row)
+
