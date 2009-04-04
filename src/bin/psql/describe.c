@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.205 2009/04/02 17:38:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.206 2009/04/04 00:41:11 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -2029,8 +2029,15 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 
  	if (!showSystem && !pattern)
  		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
- 								"      AND n.nspname <> 'information_schema'\n"
-								"      AND n.nspname !~ '^pg_toast'\n");
+ 								"      AND n.nspname <> 'information_schema'\n");
+
+	/*
+	 * TOAST objects are suppressed unconditionally.  Since we don't provide
+	 * any way to select relkind 't' above, we would never show toast tables
+	 * in any case; it seems a bit confusing to allow their indexes to be
+	 * shown. Use plain \d if you really need to look at a TOAST table/index.
+	 */
+	appendPQExpBuffer(&buf, "      AND n.nspname !~ '^pg_toast'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
