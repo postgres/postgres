@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.13 2009/03/23 16:36:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.14 2009/04/04 00:45:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,15 +33,15 @@ typedef enum relopt_type
 /* kinds supported by reloptions */
 typedef enum relopt_kind
 {
-	RELOPT_KIND_HEAP,
-	/* XXX do we need a separate kind for TOAST tables? */
-	RELOPT_KIND_BTREE,
-	RELOPT_KIND_HASH,
-	RELOPT_KIND_GIN,
-	RELOPT_KIND_GIST,
+	RELOPT_KIND_HEAP	= (1 << 0),
+	RELOPT_KIND_TOAST	= (1 << 1),
+	RELOPT_KIND_BTREE	= (1 << 2),
+	RELOPT_KIND_HASH	= (1 << 3),
+	RELOPT_KIND_GIN		= (1 << 4),
+	RELOPT_KIND_GIST	= (1 << 5),
 	/* if you add a new kind, make sure you update "last_default" too */
 	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_GIST,
-	RELOPT_KIND_MAX = 255
+	RELOPT_KIND_MAX = (1 << 31)
 } relopt_kind;
 
 /* reloption namespaces allowed for heaps -- currently only TOAST */
@@ -52,7 +52,7 @@ typedef struct relopt_gen
 {
 	const char *name;	/* must be first (used as list termination marker) */
 	const char *desc;
-	relopt_kind	kind;
+	bits32		kinds;
 	int			namelen;
 	relopt_type	type;
 } relopt_gen;
@@ -232,14 +232,14 @@ typedef struct
 	 (char *)(optstruct) + (optstruct)->member)
 
 
-extern int add_reloption_kind(void);
-extern void add_bool_reloption(int kind, char *name, char *desc,
+extern relopt_kind add_reloption_kind(void);
+extern void add_bool_reloption(bits32 kinds, char *name, char *desc,
 				   bool default_val);
-extern void add_int_reloption(int kind, char *name, char *desc,
+extern void add_int_reloption(bits32 kinds, char *name, char *desc,
 				  int default_val, int min_val, int max_val);
-extern void add_real_reloption(int kind, char *name, char *desc,
+extern void add_real_reloption(bits32 kinds, char *name, char *desc,
 				   double default_val, double min_val, double max_val);
-extern void add_string_reloption(int kind, char *name, char *desc,
+extern void add_string_reloption(bits32 kinds, char *name, char *desc,
 					 char *default_val, validate_string_relopt validator);
 
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
