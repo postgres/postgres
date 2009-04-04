@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.96.2.3 2005/05/26 02:14:31 neilc Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.96.2.4 2009/04/04 04:54:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1399,32 +1399,35 @@ timestamp_cmp(PG_FUNCTION_ARGS)
  *
  *		collate invalid interval at the end
  */
+#ifdef HAVE_INT64_TIMESTAMP
+typedef int64 TimeOffset;
+#else
+typedef double TimeOffset;
+#endif
+
+static inline TimeOffset
+interval_cmp_value(const Interval *interval)
+{
+	TimeOffset	span;
+
+	span = interval->time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	if (interval->month != 0)
+		span += ((interval->month * INT64CONST(30) * INT64CONST(86400000000)));
+#else
+	if (interval->month != 0)
+		span += (interval->month * (30.0 * 86400));
+#endif
+
+	return span;
+}
+
 static int
 interval_cmp_internal(Interval *interval1, Interval *interval2)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span1,
-				span2;
-
-#else
-	double		span1,
-				span2;
-#endif
-
-	span1 = interval1->time;
-	span2 = interval2->time;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	if (interval1->month != 0)
-		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
-	if (interval2->month != 0)
-		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
-#else
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-#endif
+	TimeOffset	span1 = interval_cmp_value(interval1);
+	TimeOffset	span2 = interval_cmp_value(interval2);
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
 }
@@ -1493,19 +1496,28 @@ interval_cmp(PG_FUNCTION_ARGS)
 }
 
 /*
- * interval, being an unusual size, needs a specialized hash function.
+ * Hashing for intervals
+ *
+ * We must produce equal hashvals for values that interval_cmp_internal()
+ * considers equal.  So, compute the net span the same way it does,
+ * and then hash that, using either int64 or float8 hashing.
  */
 Datum
 interval_hash(PG_FUNCTION_ARGS)
 {
-	Interval   *key = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
+	TimeOffset	span = interval_cmp_value(interval);
+	uint32		thash;
 
-	/*
-	 * Specify hash length as sizeof(double) + sizeof(int4), not as
-	 * sizeof(Interval), so that any garbage pad bytes in the structure
-	 * won't be included in the hash!
-	 */
-	return hash_any((unsigned char *) key, sizeof(key->time) + sizeof(key->month));
+#ifdef HAVE_INT64_TIMESTAMP
+	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
+											   Int64GetDatumFast(span)));
+#else
+	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
+											   Float8GetDatumFast(span)));
+#endif
+
+	PG_RETURN_UINT32(thash);
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.

@@ -228,3 +228,16 @@ select '4 millenniums 5 centuries 4 decades 1 year 4 months 4 days 17 minutes 31
  @ 4541 years 4 mons 4 days 17 mins 31 secs
 (1 row)
 
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+ t 
+---
+ t
+(1 row)
+
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+ t 
+---
+ t
+(1 row)
+
