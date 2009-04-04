@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.48 2009/03/31 05:18:33 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.49 2009/04/04 17:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1022,25 +1022,42 @@ IsBackendPid(int pid)
 /*
  * GetCurrentVirtualXIDs -- returns an array of currently active VXIDs.
  *
- * The array is palloc'd and is terminated with an invalid VXID.
+ * The array is palloc'd. The number of valid entries is returned into *nvxids.
  *
- * If limitXmin is not InvalidTransactionId, we skip any backends
- * with xmin >= limitXmin.	If allDbs is false, we skip backends attached
- * to other databases.  If excludeVacuum isn't zero, we skip processes for
- * which (excludeVacuum & vacuumFlags) is not zero.  Also, our own process
- * is always skipped.
+ * The arguments allow filtering the set of VXIDs returned.  Our own process
+ * is always skipped.  In addition:
+ *	If limitXmin is not InvalidTransactionId, skip processes with
+ *		xmin > limitXmin.
+ *	If excludeXmin0 is true, skip processes with xmin = 0.
+ *	If allDbs is false, skip processes attached to other databases.
+ *	If excludeVacuum isn't zero, skip processes for which
+ *		(vacuumFlags & excludeVacuum) is not zero.
+ *
+ * Note: the purpose of the limitXmin and excludeXmin0 parameters is to
+ * allow skipping backends whose oldest live snapshot is no older than
+ * some snapshot we have.  Since we examine the procarray with only shared
+ * lock, there are race conditions: a backend could set its xmin just after
+ * we look.  Indeed, on multiprocessors with weak memory ordering, the
+ * other backend could have set its xmin *before* we look.  We know however
+ * that such a backend must have held shared ProcArrayLock overlapping our
+ * own hold of ProcArrayLock, else we would see its xmin update.  Therefore,
+ * any snapshot the other backend is taking concurrently with our scan cannot
+ * consider any transactions as still running that we think are committed
+ * (since backends must hold ProcArrayLock exclusive to commit).
  */
 VirtualTransactionId *
-GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs, int excludeVacuum)
+GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
+					  bool allDbs, int excludeVacuum,
+					  int *nvxids)
 {
 	VirtualTransactionId *vxids;
 	ProcArrayStruct *arrayP = procArray;
 	int			count = 0;
 	int			index;
 
-	/* allocate result space with room for a terminator */
+	/* allocate what's certainly enough result space */
 	vxids = (VirtualTransactionId *)
-		palloc(sizeof(VirtualTransactionId) * (arrayP->maxProcs + 1));
+		palloc(sizeof(VirtualTransactionId) * arrayP->maxProcs);
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -1056,15 +1073,18 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs, int excludeVacuum)
 
 		if (allDbs || proc->databaseId == MyDatabaseId)
 		{
-			/* Fetch xmin just once - might change on us? */
+			/* Fetch xmin just once - might change on us */
 			TransactionId pxmin = proc->xmin;
 
+			if (excludeXmin0 && !TransactionIdIsValid(pxmin))
+				continue;
+
 			/*
-			 * Note that InvalidTransactionId precedes all other XIDs, so a
-			 * proc that hasn't set xmin yet will always be included.
+			 * InvalidTransactionId precedes all other XIDs, so a proc that
+			 * hasn't set xmin yet will not be rejected by this test.
 			 */
 			if (!TransactionIdIsValid(limitXmin) ||
-				TransactionIdPrecedes(pxmin, limitXmin))
+				TransactionIdPrecedesOrEquals(pxmin, limitXmin))
 			{
 				VirtualTransactionId vxid;
 
@@ -1077,10 +1097,7 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs, int excludeVacuum)
 
 	LWLockRelease(ProcArrayLock);
 
-	/* add the terminator */
-	vxids[count].backendId = InvalidBackendId;
-	vxids[count].localTransactionId = InvalidLocalTransactionId;
-
+	*nvxids = count;
 	return vxids;
 }
 

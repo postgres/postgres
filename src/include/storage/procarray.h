@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.24 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.25 2009/04/04 17:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@ extern int	BackendXidGetPid(TransactionId xid);
 extern bool IsBackendPid(int pid);
 
 extern VirtualTransactionId *GetCurrentVirtualXIDs(TransactionId limitXmin,
-					  bool allDbs, int excludeVacuum);
+					  bool excludeXmin0, bool allDbs, int excludeVacuum,
+					  int *nvxids);
 extern int	CountActiveBackends(void);
 extern int	CountDBBackends(Oid databaseid);
 extern int	CountUserBackends(Oid roleid);

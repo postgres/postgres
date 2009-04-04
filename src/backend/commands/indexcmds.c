@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.183 2009/03/31 22:12:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.184 2009/04/04 17:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,12 +130,14 @@ DefineIndex(RangeVar *heapRelation,
 	int			numberOfAttributes;
 	VirtualTransactionId *old_lockholders;
 	VirtualTransactionId *old_snapshots;
+	int			n_old_snapshots;
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
 	Relation	pg_index;
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
+	int			i;
 
 	/*
 	 * count attributes in index
@@ -611,7 +613,7 @@ DefineIndex(RangeVar *heapRelation,
 	 * snapshot treats as committed.  If such a recently-committed transaction
 	 * deleted tuples in the table, we will not include them in the index; yet
 	 * those transactions which see the deleting one as still-in-progress will
-	 * expect them to be there once we mark the index as valid.
+	 * expect such tuples to be there once we mark the index as valid.
 	 *
 	 * We solve this by waiting for all endangered transactions to exit before
 	 * we mark the index as valid.
@@ -634,10 +636,13 @@ DefineIndex(RangeVar *heapRelation,
 	 * transactions that might have older snapshots.  Obtain a list of VXIDs
 	 * of such transactions, and wait for them individually.
 	 *
-	 * We can exclude any running transactions that have xmin >= the xmax of
-	 * our reference snapshot, since they are clearly not interested in any
-	 * missing older tuples.  Transactions in other DBs aren't a problem
-	 * either, since they'll never even be able to see this index.
+	 * We can exclude any running transactions that have xmin > the xmin of
+	 * our reference snapshot; their oldest snapshot must be newer than ours.
+	 * We can also exclude any transactions that have xmin = zero, since they
+	 * evidently have no live snapshot at all (and any one they might be
+	 * in process of taking is certainly newer than ours).  Transactions in
+	 * other DBs can be ignored too, since they'll never even be able to see
+	 * this index.
 	 *
 	 * We can also exclude autovacuum processes and processes running manual
 	 * lazy VACUUMs, because they won't be fazed by missing index entries
@@ -647,14 +652,54 @@ DefineIndex(RangeVar *heapRelation,
 	 *
 	 * Also, GetCurrentVirtualXIDs never reports our own vxid, so we need not
 	 * check for that.
+	 *
+	 * If a process goes idle-in-transaction with xmin zero, we do not need
+	 * to wait for it anymore, per the above argument.  We do not have the
+	 * infrastructure right now to stop waiting if that happens, but we can
+	 * at least avoid the folly of waiting when it is idle at the time we
+	 * would begin to wait.  We do this by repeatedly rechecking the output of
+	 * GetCurrentVirtualXIDs.  If, during any iteration, a particular vxid
+	 * doesn't show up in the output, we know we can forget about it.
 	 */
-	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmax, false,
-										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM);
+	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmin, true, false,
+										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM,
+										  &n_old_snapshots);
 
-	while (VirtualTransactionIdIsValid(*old_snapshots))
+	for (i = 0; i < n_old_snapshots; i++)
 	{
-		VirtualXactLockTableWait(*old_snapshots);
-		old_snapshots++;
+		if (!VirtualTransactionIdIsValid(old_snapshots[i]))
+			continue;			/* found uninteresting in previous cycle */
+
+		if (i > 0)
+		{
+			/* see if anything's changed ... */
+			VirtualTransactionId *newer_snapshots;
+			int			n_newer_snapshots;
+			int			j;
+			int			k;
+
+			newer_snapshots = GetCurrentVirtualXIDs(snapshot->xmin,
+													true, false,
+										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM,
+													&n_newer_snapshots);
+			for (j = i; j < n_old_snapshots; j++)
+			{
+				if (!VirtualTransactionIdIsValid(old_snapshots[j]))
+					continue;		/* found uninteresting in previous cycle */
+				for (k = 0; k < n_newer_snapshots; k++)
+				{
+					if (VirtualTransactionIdEquals(old_snapshots[j],
+												   newer_snapshots[k]))
+						break;
+				}
+				if (k >= n_newer_snapshots)		/* not there anymore */
+					SetInvalidVirtualTransactionId(old_snapshots[j]);
+			}
+			pfree(newer_snapshots);
+		}
+
+		if (VirtualTransactionIdIsValid(old_snapshots[i]))
+			VirtualXactLockTableWait(old_snapshots[i]);
 	}
 
 	/*
