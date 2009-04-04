@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.660 2009/03/07 00:13:57 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.661 2009/04/04 21:12:31 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -163,8 +163,6 @@ static TypeName *TableFuncTypeName(List *columns);
 	FunctionParameterMode fun_param_mode;
 	FuncWithArgs		*funwithargs;
 	DefElem				*defelt;
-	OptionDefElem		*optdef;
-	ReloptElem			*reloptel;
 	SortBy				*sortby;
 	WindowDef			*windef;
 	JoinExpr			*jexpr;
@@ -343,8 +341,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
-%type <defelt>	def_elem old_aggr_elem
-%type <reloptel> reloption_elem
+%type <defelt>	def_elem reloption_elem old_aggr_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr func_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
@@ -366,8 +363,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <str>		generic_option_name
 %type <node>	generic_option_arg
-%type <defelt>	generic_option_elem
-%type <optdef>	alter_generic_option_elem
+%type <defelt>	generic_option_elem alter_generic_option_elem
 %type <list>	generic_option_list alter_generic_option_list
 
 %type <typnam>	Typename SimpleTypename ConstTypename
@@ -1837,22 +1833,24 @@ reloption_list:
 			| reloption_list ',' reloption_elem		{ $$ = lappend($1, $3); }
 		;
 
+/* This should match def_elem and also allow qualified names */
 reloption_elem:	
 			ColLabel '=' def_arg
 				{
-					$$ = makeReloptElem($1, NULL, (Node *) $3);
+					$$ = makeDefElem($1, (Node *) $3);
 				}
 			| ColLabel
 				{
-					$$ = makeReloptElem($1, NULL, NULL);
+					$$ = makeDefElem($1, NULL);
 				}
 			| ColLabel '.' ColLabel '=' def_arg
 				{
-					$$ = makeReloptElem($3, $1, (Node *) $5);
+					$$ = makeDefElemExtended($1, $3, (Node *) $5,
+											 DEFELEM_UNSPEC);
 				}
 			| ColLabel '.' ColLabel
 				{
-					$$ = makeReloptElem($3, $1, NULL);
+					$$ = makeDefElemExtended($1, $3, NULL, DEFELEM_UNSPEC);
 				}
 		;
 
@@ -2482,8 +2480,8 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 /* WITH (options) is preferred, WITH OIDS and WITHOUT OIDS are legacy forms */
 OptWith:
 			WITH reloptions				{ $$ = $2; }
-			| WITH OIDS					{ $$ = list_make1(reloptWithOids(true)); }
-			| WITHOUT OIDS				{ $$ = list_make1(reloptWithOids(false)); }
+			| WITH OIDS					{ $$ = list_make1(defWithOids(true)); }
+			| WITHOUT OIDS				{ $$ = list_make1(defWithOids(false)); }
 			| /*EMPTY*/					{ $$ = NIL; }
 		;
 
@@ -2887,70 +2885,72 @@ AlterFdwStmt: ALTER FOREIGN DATA_P WRAPPER name validator_clause alter_generic_o
 
 /* Options definition for CREATE FDW, SERVER and USER MAPPING */
 create_generic_options:
-				OPTIONS '(' generic_option_list ')'			{ $$ = $3; }
-				| /*EMPTY*/									{ $$ = NIL; }
+			OPTIONS '(' generic_option_list ')'			{ $$ = $3; }
+			| /*EMPTY*/									{ $$ = NIL; }
 		;
 
-generic_option_list:		generic_option_elem
-					{
-						$$ = list_make1(makeOptionDefElem(ALTER_OPT_ADD, $1));
-					}
-				| generic_option_list ',' generic_option_elem
-					{
-						$$ = lappend($1, makeOptionDefElem(ALTER_OPT_ADD, $3));
-					}
+generic_option_list:
+			generic_option_elem
+				{
+					$$ = list_make1($1);
+				}
+			| generic_option_list ',' generic_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
 		;
 
 /* Options definition for ALTER FDW, SERVER and USER MAPPING */
 alter_generic_options:
-				OPTIONS	'(' alter_generic_option_list ')'	{ $$ = $3; }
+			OPTIONS	'(' alter_generic_option_list ')'		{ $$ = $3; }
 		;
 
 alter_generic_option_list:
-				alter_generic_option_elem
-					{
-						$$ = list_make1($1);
-					}
-				| generic_option_elem
-					{
-						$$ = list_make1(makeOptionDefElem(ALTER_OPT_ADD, $1));
-					}
-				| alter_generic_option_list ',' alter_generic_option_elem
-					{
-						$$ = lappend($1, $3);
-					}
-				| alter_generic_option_list ',' generic_option_elem
-					{
-						$$ = lappend($1, makeOptionDefElem(ALTER_OPT_ADD, $3));
-					}
+			alter_generic_option_elem
+				{
+					$$ = list_make1($1);
+				}
+			| alter_generic_option_list ',' alter_generic_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
 		;
 
 alter_generic_option_elem:
-				ADD_P generic_option_elem
-					{
-						$$ = makeOptionDefElem(ALTER_OPT_ADD, $2);
-					}
-				| SET generic_option_elem
-					{
-						$$ = makeOptionDefElem(ALTER_OPT_SET, $2);
-					}
-				| DROP generic_option_name
-					{
-						$$ = makeOptionDefElem(ALTER_OPT_DROP,
-											   makeDefElem($2, NULL));
-					}
+			generic_option_elem
+				{
+					$$ = $1;
+				}
+			| SET generic_option_elem
+				{
+					$$ = $2;
+					$$->defaction = DEFELEM_SET;
+				}
+			| ADD_P generic_option_elem
+				{
+					$$ = $2;
+					$$->defaction = DEFELEM_ADD;
+				}
+			| DROP generic_option_name
+				{
+					$$ = makeDefElemExtended(NULL, $2, NULL, DEFELEM_DROP);
+				}
 		;
 
 generic_option_elem:
-				generic_option_name generic_option_arg			{ $$ = makeDefElem($1, $2); }
+			generic_option_name generic_option_arg
+				{
+					$$ = makeDefElem($1, $2);
+				}
 		;
 
 generic_option_name:
-				attr_name			{ $$ = $1; }
+				ColLabel			{ $$ = $1; }
 		;
 
+/* We could use def_arg here, but the spec only requires string literals */
 generic_option_arg:
-				Sconst				{ $$ = (Node *)makeString($1); }
+				Sconst				{ $$ = (Node *) makeString($1); }
 		;
 
 /*****************************************************************************
@@ -3504,9 +3504,9 @@ def_list:  	def_elem								{ $$ = list_make1($1); }
 			| def_list ',' def_elem					{ $$ = lappend($1, $3); }
 		;
 
-def_elem:  ColLabel '=' def_arg
+def_elem:	ColLabel '=' def_arg
 				{
-					$$ = makeDefElem($1, (Node *)$3);
+					$$ = makeDefElem($1, (Node *) $3);
 				}
 			| ColLabel
 				{

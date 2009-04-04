@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.25 2009/04/04 00:45:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.26 2009/04/04 21:12:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,7 +483,7 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
 }
 
 /*
- * Transform a relation options list (list of ReloptElem) into the text array
+ * Transform a relation options list (list of DefElem) into the text array
  * format that is kept in pg_class.reloptions, including only those options
  * that are in the passed namespace.  The output values do not include the
  * namespace.
@@ -542,23 +542,23 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			/* Search for a match in defList */
 			foreach(cell, defList)
 			{
-				ReloptElem *def = lfirst(cell);
+				DefElem	   *def = (DefElem *) lfirst(cell);
 				int			kw_len;
 
 				/* ignore if not in the same namespace */
 				if (namspace == NULL)
 				{
-					if (def->nmspc != NULL)
+					if (def->defnamespace != NULL)
 						continue;
 				}
-				else if (def->nmspc == NULL)
+				else if (def->defnamespace == NULL)
 					continue;
-				else if (pg_strcasecmp(def->nmspc, namspace) != 0)
+				else if (pg_strcasecmp(def->defnamespace, namspace) != 0)
 					continue;
 
-				kw_len = strlen(def->optname);
+				kw_len = strlen(def->defname);
 				if (text_len > kw_len && text_str[kw_len] == '=' &&
-					pg_strncasecmp(text_str, def->optname, kw_len) == 0)
+					pg_strncasecmp(text_str, def->defname, kw_len) == 0)
 					break;
 			}
 			if (!cell)
@@ -578,8 +578,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 	 */
 	foreach(cell, defList)
 	{
-		ReloptElem    *def = lfirst(cell);
-
+		DefElem	   *def = (DefElem *) lfirst(cell);
 
 		if (isReset)
 		{
@@ -598,7 +597,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			 * Error out if the namespace is not valid.  A NULL namespace
 			 * is always valid.
 			 */
-			if (def->nmspc != NULL)
+			if (def->defnamespace != NULL)
 			{
 				bool	valid = false;
 				int		i;
@@ -607,7 +606,8 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 				{
 					for (i = 0; validnsps[i]; i++)
 					{
-						if (pg_strcasecmp(def->nmspc, validnsps[i]) == 0)
+						if (pg_strcasecmp(def->defnamespace,
+										  validnsps[i]) == 0)
 						{
 							valid = true;
 							break;
@@ -619,37 +619,37 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("unrecognized parameter namespace \"%s\"",
-									def->nmspc)));
+									def->defnamespace)));
 			}
 
-			if (ignoreOids && pg_strcasecmp(def->optname, "oids") == 0)
+			if (ignoreOids && pg_strcasecmp(def->defname, "oids") == 0)
 				continue;
 
 			/* ignore if not in the same namespace */
 			if (namspace == NULL)
 			{
-				if (def->nmspc != NULL)
+				if (def->defnamespace != NULL)
 					continue;
 			}
-			else if (def->nmspc == NULL)
+			else if (def->defnamespace == NULL)
 				continue;
-			else if (pg_strcasecmp(def->nmspc, namspace) != 0)
+			else if (pg_strcasecmp(def->defnamespace, namspace) != 0)
 				continue;
 
 			/*
-			 * Flatten the ReloptElem into a text string like "name=arg". If we
+			 * Flatten the DefElem into a text string like "name=arg". If we
 			 * have just "name", assume "name=true" is meant.  Note: the
 			 * namespace is not output.
 			 */
 			if (def->arg != NULL)
-				value = reloptGetString(def);
+				value = defGetString(def);
 			else
 				value = "true";
-			len = VARHDRSZ + strlen(def->optname) + 1 + strlen(value);
+			len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
 			/* +1 leaves room for sprintf's trailing null */
 			t = (text *) palloc(len + 1);
 			SET_VARSIZE(t, len);
-			sprintf(VARDATA(t), "%s=%s", def->optname, value);
+			sprintf(VARDATA(t), "%s=%s", def->defname, value);
 
 			astate = accumArrayResult(astate, PointerGetDatum(t),
 									  false, TEXTOID,

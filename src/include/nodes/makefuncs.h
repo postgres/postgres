@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.66 2009/02/02 19:31:40 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.67 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,7 @@ extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype,
 			 List *args, CoercionForm fformat);
 
 extern DefElem *makeDefElem(char *name, Node *arg);
-
-extern OptionDefElem *makeOptionDefElem(int op, DefElem *def);
-
-extern ReloptElem *makeReloptElem(char *name, char *namspc, Node *arg);
+extern DefElem *makeDefElemExtended(char *namespace, char *name, Node *arg,
+									DefElemAction defaction);
 
 #endif   /* MAKEFUNC_H */

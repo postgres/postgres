@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/foreign/foreign.h,v 1.3 2009/02/24 10:06:35 petere Exp $
+ * $PostgreSQL: pgsql/src/include/foreign/foreign.h,v 1.4 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,6 @@
 #define FOREIGN_H
 
 #include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
 
 
 /* Helper for obtaining username for user mapping */
@@ -27,10 +26,9 @@
  * NB! Thes are treated as flags, so use only powers of two here.
  */
 typedef enum {
-	InvalidOpt = 0,
 	ServerOpt = 1,				/* options applicable to SERVER */
 	UserMappingOpt = 2,			/* options for USER MAPPING */
-	FdwOpt = 4,					/* options for FOREIGN DATA WRAPPER */
+	FdwOpt = 4					/* options for FOREIGN DATA WRAPPER */
 } GenericOptionFlags;
 
 typedef struct ForeignDataWrapper
@@ -69,9 +67,5 @@ extern ForeignDataWrapper *GetForeignDataWrapper(Oid fdwid);
 extern ForeignDataWrapper *GetForeignDataWrapperByName(const char *name,
 													   bool missing_ok);
 extern Oid GetForeignDataWrapperOidByName(const char *name, bool missing_ok);
-
-/* Foreign data wrapper interface functions */
-extern void _pg_validateOptionList(ForeignDataWrapper *fdw,
-								   GenericOptionFlags flags, List *options);
 
 #endif /* FOREIGN_H */

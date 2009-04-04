@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.103 2009/02/02 19:31:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.104 2009/04/04 21:12:31 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -55,20 +55,24 @@ case_translate_language_name(const char *input)
 }
 
 
-static char *
-nodeGetString(Node *value, char *name)
+/*
+ * Extract a string value (otherwise uninterpreted) from a DefElem.
+ */
+char *
+defGetString(DefElem *def)
 {
-	if (value == NULL)
+	if (def->arg == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s requires a parameter", name)));
-	switch (nodeTag(value))
+				 errmsg("%s requires a parameter",
+						def->defname)));
+	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
 			{
 				char	   *str = palloc(32);
 
-				snprintf(str, 32, "%ld", (long) intVal(value));
+				snprintf(str, 32, "%ld", (long) intVal(def->arg));
 				return str;
 			}
 		case T_Float:
@@ -77,26 +81,17 @@ nodeGetString(Node *value, char *name)
 			 * T_Float values are kept in string form, so this type cheat
 			 * works (and doesn't risk losing precision)
 			 */
-			return strVal(value);
+			return strVal(def->arg);
 		case T_String:
-			return strVal(value);
+			return strVal(def->arg);
 		case T_TypeName:
-			return TypeNameToString((TypeName *) value);
+			return TypeNameToString((TypeName *) def->arg);
 		case T_List:
-			return NameListToString((List *) value);
+			return NameListToString((List *) def->arg);
 		default:
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(value));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
 	}
 	return NULL;				/* keep compiler quiet */
-}
-
-/*
- * Extract a string value (otherwise uninterpreted) from a DefElem.
- */
-char *
-defGetString(DefElem *def)
-{
-	return nodeGetString(def->arg, def->defname);
 }
 
 /*
@@ -125,22 +120,25 @@ defGetNumeric(DefElem *def)
 	return 0;					/* keep compiler quiet */
 }
 
-static bool
-nodeGetBoolean(Node *value, char *name)
+/*
+ * Extract a boolean value from a DefElem.
+ */
+bool
+defGetBoolean(DefElem *def)
 {
 	/*
 	 * If no parameter given, assume "true" is meant.
 	 */
-	if (value == NULL)
+	if (def->arg == NULL)
 		return true;
 
 	/*
 	 * Allow 0, 1, "true", "false"
 	 */
-	switch (nodeTag(value))
+	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
-			switch (intVal(value))
+			switch (intVal(def->arg))
 			{
 				case 0:
 					return false;
@@ -153,7 +151,7 @@ nodeGetBoolean(Node *value, char *name)
 			break;
 		default:
 			{
-				char	   *sval = nodeGetString(value, name);
+				char	   *sval = defGetString(def);
 
 				if (pg_strcasecmp(sval, "true") == 0)
 					return true;
@@ -165,17 +163,9 @@ nodeGetBoolean(Node *value, char *name)
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s requires a Boolean value", name)));
+			 errmsg("%s requires a Boolean value",
+					def->defname)));
 	return false;				/* keep compiler quiet */
-}
-
-/*
- * Extract a boolean value from a DefElem.
- */
-bool
-defGetBoolean(DefElem *def)
-{
-	return nodeGetBoolean(def->arg, def->defname);
 }
 
 /*
@@ -315,35 +305,11 @@ defGetTypeLength(DefElem *def)
 	return 0;					/* keep compiler quiet */
 }
 
-
 /*
- * Extract a string value (otherwise uninterpreted) from a ReloptElem.
+ * Create a DefElem setting "oids" to the specified value.
  */
-char *
-reloptGetString(ReloptElem *relopt)
+DefElem *
+defWithOids(bool value)
 {
-	return nodeGetString(relopt->arg, relopt->optname);
-}
-
-/*
- * Extract a boolean value from a ReloptElem.
- */
-bool
-reloptGetBoolean(ReloptElem *relopt)
-{
-	return nodeGetBoolean(relopt->arg, relopt->optname);
-}
-
-/*
- * Create a ReloptElem setting "oids" to the specified value.
- */
-ReloptElem *
-reloptWithOids(bool value)
-{
-	ReloptElem    *f = makeNode(ReloptElem);
-
-	f->optname = "oids";
-	f->nmspc = NULL;
-	f->arg = (Node *) makeInteger(value);
-	return f;
+	return makeDefElem("oids", (Node *) makeInteger(value));
 }

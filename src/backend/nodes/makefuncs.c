@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.63 2009/02/02 19:31:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.64 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,37 +351,37 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 /*
  * makeDefElem -
  *	build a DefElem node
+ *
+ * This is sufficient for the "typical" case with an unqualified option name
+ * and no special action.
  */
 DefElem *
 makeDefElem(char *name, Node *arg)
 {
 	DefElem    *res = makeNode(DefElem);
 
+	res->defnamespace = NULL;
 	res->defname = name;
 	res->arg = arg;
+	res->defaction = DEFELEM_UNSPEC;
+
 	return res;
 }
 
 /*
- * makeOptionDefElem -
- *	build an OptionDefElem node
+ * makeDefElemExtended -
+ *	build a DefElem node with all fields available to be specified
  */
-OptionDefElem *
-makeOptionDefElem(int op, DefElem *def)
+DefElem *
+makeDefElemExtended(char *namespace, char *name, Node *arg,
+					DefElemAction defaction)
 {
-	OptionDefElem *res = makeNode(OptionDefElem);
-	res->alter_op = op;
-	res->def = def;
-	return res;
-}
+	DefElem    *res = makeNode(DefElem);
 
-ReloptElem *
-makeReloptElem(char *name, char *nmspc, Node *arg)
-{
-	ReloptElem *res = makeNode(ReloptElem);
-
-	res->optname = name;
-	res->nmspc = nmspc;
+	res->defnamespace = namespace;
+	res->defname = name;
 	res->arg = arg;
+	res->defaction = defaction;
+
 	return res;
 }

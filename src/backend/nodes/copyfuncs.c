@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.427 2009/03/21 00:04:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.428 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2098,31 +2098,10 @@ _copyDefElem(DefElem *from)
 {
 	DefElem    *newnode = makeNode(DefElem);
 
+	COPY_STRING_FIELD(defnamespace);
 	COPY_STRING_FIELD(defname);
 	COPY_NODE_FIELD(arg);
-
-	return newnode;
-}
-
-static OptionDefElem *
-_copyOptionDefElem(OptionDefElem *from)
-{
-	OptionDefElem    *newnode = makeNode(OptionDefElem);
-
-	COPY_SCALAR_FIELD(alter_op);
-	COPY_NODE_FIELD(def);
-
-	return newnode;
-}
-
-static ReloptElem *
-_copyReloptElem(ReloptElem *from)
-{
-	ReloptElem	   *newnode = makeNode(ReloptElem);
-
-	COPY_STRING_FIELD(optname);
-	COPY_STRING_FIELD(nmspc);
-	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(defaction);
 
 	return newnode;
 }
@@ -4075,12 +4054,6 @@ copyObject(void *from)
 			break;
 		case T_DefElem:
 			retval = _copyDefElem(from);
-			break;
-		case T_OptionDefElem:
-			retval = _copyOptionDefElem(from);
-			break;
-		case T_ReloptElem:
-			retval = _copyReloptElem(from);
 			break;
 		case T_LockingClause:
 			retval = _copyLockingClause(from);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.6 2009/02/24 10:06:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.7 2009/04/04 21:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,33 +76,31 @@ optionListToArray(List *options)
 
 
 /*
- * Transform the list of OptionDefElem into list of generic options.
- * The result is converted to array of text suitable for storing in
- * options.
+ * Transform a list of DefElem into text array format.  This is substantially
+ * the same thing as optionListToArray(), except we recognize SET/ADD/DROP
+ * actions for modifying an existing list of options, which is passed in
+ * Datum form as oldOptions.  Also, if fdwvalidator isn't InvalidOid
+ * it specifies a validator function to call on the result.
  *
  * Returns the array in the form of a Datum, or PointerGetDatum(NULL)
  * if the list is empty.
  *
- * This is used by CREATE/ALTER of FOREIGN DATA WRAPPER/SERVER/USER
- * MAPPING.  In the ALTER cases, oldOptions is the current text array
- * of options.
+ * This is used by CREATE/ALTER of FOREIGN DATA WRAPPER/SERVER/USER MAPPING.
  */
 static Datum
 transformGenericOptions(Datum oldOptions,
-						List *optionDefList,
-						GenericOptionFlags flags,
-						ForeignDataWrapper *fdw,
+						List *options,
 						Oid fdwvalidator)
 {
 	List	 *resultOptions = untransformRelOptions(oldOptions);
 	ListCell *optcell;
 	Datum	  result;
 
-	foreach(optcell, optionDefList)
+	foreach(optcell, options)
 	{
-		OptionDefElem	*od = lfirst(optcell);
-		ListCell	    *cell;
-		ListCell		*prev = NULL;
+		DefElem	   *od = lfirst(optcell);
+		ListCell   *cell;
+		ListCell   *prev = NULL;
 
 		/*
 		 * Find the element in resultOptions.  We need this for
@@ -112,7 +110,7 @@ transformGenericOptions(Datum oldOptions,
 		{
 			DefElem	*def = lfirst(cell);
 
-			if (strcmp(def->defname, od->def->defname) == 0)
+			if (strcmp(def->defname, od->defname) == 0)
 				break;
 			else
 				prev = cell;
@@ -121,41 +119,42 @@ transformGenericOptions(Datum oldOptions,
 		/*
 		 * It is possible to perform multiple SET/DROP actions on the
 		 * same option.  The standard permits this, as long as the
-		 * options to be added are unique.
+		 * options to be added are unique.  Note that an unspecified
+		 * action is taken to be ADD.
 		 */
-
-		switch (od->alter_op)
+		switch (od->defaction)
 		{
-			case ALTER_OPT_DROP:
+			case DEFELEM_DROP:
 				if (!cell)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
 							 errmsg("option \"%s\" not found",
-									od->def->defname)));
+									od->defname)));
 				resultOptions = list_delete_cell(resultOptions, cell, prev);
 				break;
 
-			case ALTER_OPT_SET:
+			case DEFELEM_SET:
 				if (!cell)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
 							 errmsg("option \"%s\" not found",
-									od->def->defname)));
-				lfirst(cell) = od->def;
+									od->defname)));
+				lfirst(cell) = od;
 				break;
 
-			case ALTER_OPT_ADD:
+			case DEFELEM_ADD:
+			case DEFELEM_UNSPEC:
 				if (cell)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
 							 errmsg("option \"%s\" provided more than once",
-									od->def->defname)));
-				resultOptions = lappend(resultOptions, od->def);
+									od->defname)));
+				resultOptions = lappend(resultOptions, od);
 				break;
 
 			default:
 				elog(ERROR, "unrecognized action %d on option \"%s\"",
-					 od->alter_op, od->def->defname);
+					 (int) od->defaction, od->defname);
 				break;
 		}
 	}
@@ -163,7 +162,7 @@ transformGenericOptions(Datum oldOptions,
 	result = optionListToArray(resultOptions);
 
 	if (fdwvalidator)
-		OidFunctionCall2(fdwvalidator, result, 0);
+		OidFunctionCall2(fdwvalidator, result, (Datum) 0);
 
 	return result;
 }
@@ -386,7 +385,6 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	nulls[Anum_pg_foreign_data_wrapper_fdwacl - 1] = true;
 
 	fdwoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
-										 FdwOpt, NULL,
 										 fdwvalidator);
 
 	if (PointerIsValid(DatumGetPointer(fdwoptions)))
@@ -504,8 +502,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 			datum = PointerGetDatum(NULL);
 
 		/* Transform the options */
-		datum = transformGenericOptions(datum, stmt->options, FdwOpt,
-										NULL, fdwvalidator);
+		datum = transformGenericOptions(datum, stmt->options, fdwvalidator);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = datum;
@@ -672,7 +669,6 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 
 	/* Add server options */
 	srvoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
-										 ServerOpt, fdw,
 										 fdw->fdwvalidator);
 
 	if (PointerIsValid(DatumGetPointer(srvoptions)))
@@ -770,8 +766,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 			datum = PointerGetDatum(NULL);
 
 		/* Prepare the options array */
-		datum = transformGenericOptions(datum, stmt->options, ServerOpt,
-										fdw, fdw->fdwvalidator);
+		datum = transformGenericOptions(datum, stmt->options,
+										fdw->fdwvalidator);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_foreign_server_srvoptions - 1] = datum;
@@ -942,8 +938,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 
 	/* Add user options */
 	useoptions = transformGenericOptions(PointerGetDatum(NULL), stmt->options,
-										 UserMappingOpt,
-										 fdw, fdw->fdwvalidator);
+										 fdw->fdwvalidator);
 
 	if (PointerIsValid(DatumGetPointer(useoptions)))
 		values[Anum_pg_user_mapping_umoptions - 1] = useoptions;
@@ -1037,8 +1032,8 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 			datum = PointerGetDatum(NULL);
 
 		/* Prepare the options array */
-		datum = transformGenericOptions(datum, stmt->options, UserMappingOpt,
-										fdw, fdw->fdwvalidator);
+		datum = transformGenericOptions(datum, stmt->options,
+										fdw->fdwvalidator);
 
 		if (PointerIsValid(DatumGetPointer(datum)))
 			repl_val[Anum_pg_user_mapping_umoptions - 1] = datum;
