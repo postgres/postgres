@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.169.2.2 2008/07/07 18:10:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.169.2.3 2009/04/04 04:53:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1728,31 +1728,35 @@ timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
  *
  *		collate invalid interval at the end
  */
+#ifdef HAVE_INT64_TIMESTAMP
+typedef int64 TimeOffset;
+#else
+typedef double TimeOffset;
+#endif
+
+static inline TimeOffset
+interval_cmp_value(const Interval *interval)
+{
+	TimeOffset	span;
+
+	span = interval->time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	span += interval->month * INT64CONST(30) * USECS_PER_DAY;
+	span += interval->day * INT64CONST(24) * USECS_PER_HOUR;
+#else
+	span += interval->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
+	span += interval->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
+#endif
+
+	return span;
+}
+
 static int
 interval_cmp_internal(Interval *interval1, Interval *interval2)
 {
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span1,
-				span2;
-#else
-	double		span1,
-				span2;
-#endif
-
-	span1 = interval1->time;
-	span2 = interval2->time;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	span1 += interval1->month * INT64CONST(30) * USECS_PER_DAY;
-	span1 += interval1->day * INT64CONST(24) * USECS_PER_HOUR;
-	span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
-	span2 += interval2->day * INT64CONST(24) * USECS_PER_HOUR;
-#else
-	span1 += interval1->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
-	span1 += interval1->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
-	span2 += interval2->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
-	span2 += interval2->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
-#endif
+	TimeOffset	span1 = interval_cmp_value(interval1);
+	TimeOffset	span2 = interval_cmp_value(interval2);
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
 }
@@ -1821,20 +1825,28 @@ interval_cmp(PG_FUNCTION_ARGS)
 }
 
 /*
- * interval, being an unusual size, needs a specialized hash function.
+ * Hashing for intervals
+ *
+ * We must produce equal hashvals for values that interval_cmp_internal()
+ * considers equal.  So, compute the net span the same way it does,
+ * and then hash that, using either int64 or float8 hashing.
  */
 Datum
 interval_hash(PG_FUNCTION_ARGS)
 {
-	Interval   *key = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
+	TimeOffset	span = interval_cmp_value(interval);
+	uint32		thash;
 
-	/*
-	 * Specify hash length as sizeof(double) + sizeof(int4), not as
-	 * sizeof(Interval), so that any garbage pad bytes in the structure won't
-	 * be included in the hash!
-	 */
-	return hash_any((unsigned char *) key,
-				  sizeof(key->time) + sizeof(key->day) + sizeof(key->month));
+#ifdef HAVE_INT64_TIMESTAMP
+	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
+											   Int64GetDatumFast(span)));
+#else
+	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
+											   Float8GetDatumFast(span)));
+#endif
+
+	PG_RETURN_UINT32(thash);
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
