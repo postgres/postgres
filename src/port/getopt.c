@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.12 2009/04/04 21:55:50 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.13 2009/04/04 22:36:11 tgl Exp $ */
 
 /* This is used by psql under Win32 */
 
@@ -50,10 +50,19 @@ int			opterr = 1,			/* if error message should be printed */
 			optopt;				/* character checked for validity */
 char	   *optarg;				/* argument associated with option */
 
+#else
+
+extern int	opterr;
+extern int	optind;
+extern int	optopt;
+extern char *optarg;
+
 #endif
 
 #ifndef HAVE_INT_OPTRESET
 int			optreset;			/* reset getopt */
+#else
+extern int	optreset;
 #endif
 
 #define BADCH	(int)'?'
