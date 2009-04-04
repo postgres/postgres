@@ -264,3 +264,16 @@ SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
 ERROR:  invalid input syntax for type interval: "5.5 seconds 3 milliseconds"
 SELECT '1:20:05 5 microseconds'::interval;          -- error
 ERROR:  invalid input syntax for type interval: "1:20:05 5 microseconds"
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+ t 
+---
+ t
+(1 row)
+
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+ t 
+---
+ t
+(1 row)
+

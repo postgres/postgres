@@ -86,3 +86,7 @@ SELECT '1 second 2 seconds'::interval;              -- error
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
 SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
 SELECT '1:20:05 5 microseconds'::interval;          -- error
+
+-- check that '30 days' equals '1 month' according to the hash function
+select '30 days'::interval = '1 month'::interval as t;
+select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
