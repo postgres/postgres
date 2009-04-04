@@ -221,6 +221,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the global variable 'int opterr'. */
+#undef HAVE_INT_OPTERR
+
 /* Define to 1 if you have the global variable 'int optreset'. */
 #undef HAVE_INT_OPTRESET
 
