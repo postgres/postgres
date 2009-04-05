@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.532 2009/04/01 18:54:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.533 2009/04/05 04:19:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,6 @@
 #endif
 
 #include "getopt_long.h"
-
-#ifndef HAVE_INT_OPTRESET
-int			optreset;
-#endif
 
 #include "access/attnum.h"
 #include "access/sysattr.h"

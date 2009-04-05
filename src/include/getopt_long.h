@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getopt_long.h,v 1.10 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/getopt_long.h,v 1.11 2009/04/05 04:19:59 tgl Exp $
  */
 #ifndef GETOPT_LONG_H
 #define GETOPT_LONG_H
@@ -18,8 +18,6 @@ extern int	opterr;
 extern int	optind;
 extern int	optopt;
 extern char *optarg;
-
-/* Some systems have this, otherwise you need to define it somewhere. */
 extern int	optreset;
 
 #ifndef HAVE_STRUCT_OPTION

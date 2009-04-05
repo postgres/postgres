@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.35 2009/02/26 16:02:38 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.36 2009/04/05 04:19:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,6 @@
 
 static void SetCancelConn(PGconn *conn);
 static void ResetCancelConn(void);
-
-#ifndef HAVE_INT_OPTRESET
-int			optreset;
-#endif
 
 static PGcancel *volatile cancelConn = NULL;
 

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.169 2009/03/31 18:58:16 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.170 2009/04/05 04:19:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,6 @@
 #include "getaddrinfo.h"
 #include "getopt_long.h"
 #include "miscadmin.h"
-
-#ifndef HAVE_INT_OPTRESET
-int			optreset;
-#endif
 
 
 /*

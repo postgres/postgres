@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.109 2009/02/25 13:03:06 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.110 2009/04/05 04:19:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,6 @@
 #include <windows.h>
 /* Cygwin defines WIN32 in windows.h, but we don't want it. */
 #undef WIN32
-#endif
-
-#ifndef HAVE_INT_OPTRESET
-int			optreset;
 #endif
 
 /* PID can be negative for standalone backend */
