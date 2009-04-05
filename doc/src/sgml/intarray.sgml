@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.6 2009/03/18 20:18:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intarray.sgml,v 1.7 2009/04/05 00:40:35 tgl Exp $ -->
 
 <sect1 id="intarray">
  <title>intarray</title>
@@ -134,12 +134,12 @@
       <entry>overlap &mdash; <literal>true</> if arrays have at least one common element</entry>
      </row>
      <row>
-      <entry><literal>int[] @&gt; int[]</literal></entry>
+      <entry><literal>int[] @ int[]</literal></entry>
       <entry><type>boolean</type></entry>
       <entry>contains &mdash; <literal>true</> if left array contains right array</entry>
      </row>
      <row>
-      <entry><literal>int[] &lt;@ int[]</literal></entry>
+      <entry><literal>int[] ~ int[]</literal></entry>
       <entry><type>boolean</type></entry>
       <entry>contained &mdash; <literal>true</> if left array is contained in right array</entry>
      </row>
@@ -203,11 +203,13 @@
   </table>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators @&gt; and &lt;@ were
-   respectively called @ and ~.  These names are still available, but are
-   deprecated and will eventually be retired.  Notice that the old names
-   are reversed from the convention formerly followed by the core geometric
-   datatypes!)
+   The containment operators <literal>@</> and <literal>~</> are functionally
+   equivalent to <productname>PostgreSQL</>'s built-in operators
+   <literal>@&gt;</> and <literal>&lt;@</>, respectively, except that
+   <literal>@</> and <literal>~</> work only on integer arrays.  These
+   operator names are deprecated and will eventually be retired.  (Notice that
+   these names are reversed from the convention formerly followed by the core
+   geometric datatypes!)
   </para>
 
   <para>
@@ -228,10 +230,10 @@
 
   <para>
    <filename>intarray</> provides index support for the
-   <literal>&amp;&amp;</>, <literal>@&gt;</>, <literal>&lt;@</>,
-   and <literal>@@</> operators, as well as regular array equality.
-   The implementation uses an RD-tree data structure with
-   built-in lossy compression.
+   <literal>&amp;&amp;</>, <literal>@</>, <literal>~</>,
+   and <literal>@@</> operators, as well as regular array equality
+   and the built-in <literal>@&gt;</> and <literal>&lt;@</> operators
+   (when used on integer arrays).
   </para>
 
   <para>
@@ -241,11 +243,13 @@
    <literal>gist__intbig_ops</> uses a larger signature and is more
    suitable for indexing large data sets (i.e., columns containing
    a large number of distinct array values).
+   The implementation uses an RD-tree data structure with
+   built-in lossy compression.
   </para>
 
   <para>
    There is also a non-default GIN operator class
-   <literal>gin__int_ops</>.
+   <literal>gin__int_ops</> supporting the same operators.
   </para>
 
   <para>
@@ -304,7 +308,7 @@ SELECT message.mid FROM message WHERE message.sections @@ '1&amp;2'::query_int;
   <title>Authors</title>
 
   <para>
-   All work was done by Teodor Sigaev (<email>teodor@stack.net</email>) and
+   All work was done by Teodor Sigaev (<email>teodor@sigaev.ru</email>) and
    Oleg Bartunov (<email>oleg@sai.msu.su</email>). See
    <ulink url="http://www.sai.msu.su/~megera/postgres/gist"></ulink> for
    additional information. Andrey Oktyabrski did a great work on adding new

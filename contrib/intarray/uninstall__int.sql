@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.10 2009/03/25 22:19:01 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/uninstall__int.sql,v 1.11 2009/04/05 00:40:35 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -90,10 +90,6 @@ DROP OPERATOR # (NONE, _int4);
 DROP FUNCTION icount(_int4);
 
 DROP FUNCTION intset(int4);
-
-DROP OPERATOR <@ (_int4, _int4);
-
-DROP OPERATOR @> (_int4, _int4);
 
 DROP OPERATOR ~ (_int4, _int4);
 
