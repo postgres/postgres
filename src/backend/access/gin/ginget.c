@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.24 2009/03/25 22:19:01 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.25 2009/04/05 11:32:01 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -618,6 +618,7 @@ entryGetItem(Relation index, GinScanEntry entry)
  * Sets key->curItem to new found heap item pointer for one scan key
  * Returns isFinished, ie TRUE means we did NOT get a new item pointer!
  * Also, *keyrecheck is set true if recheck is needed for this scan key.
+ * Note: lossy page could be returned after items from the same page. 
  */
 static bool
 keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
@@ -635,7 +636,10 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 	{
 		/*
 		 * move forward from previously value and set new curItem, which is
-		 * minimal from entries->curItems
+		 * minimal from entries->curItems. Lossy page is encoded by ItemPointer
+		 * with max value for offset (0xffff), so if there is an non-lossy entries
+		 * on lossy page they will returned too and after that the whole page.
+		 * That's not a problem for resulting tidbitmap.
 		 */
 		ItemPointerSetMax(&key->curItem);
 		for (i = 0; i < key->nentries; i++)
@@ -646,7 +650,8 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 			{
 				/*
 				 * Move forward only entries which was the least
-				 * on previous call
+				 * on previous call, key->entryRes[i] points that
+				 * current entry was a result of loop/call.
 				 */
 				if (entry->isFinished == FALSE && entryGetItem(index, entry) == FALSE)
 				{
@@ -671,11 +676,21 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 		}
 
 		/*
+		 * Now key->curItem contains closest ItemPointer to previous result.
+		 *
 		 * if key->nentries == 1 then the consistentFn should always succeed,
 		 * but we must call it anyway to find out the recheck status.
 		 */
 
-		/* setting up array for consistentFn */
+		/*----------
+		 * entryRes array is used for:
+		 * - as an argument for consistentFn
+		 * - entry->curItem with corresponding key->entryRes[i] == false are 
+		 *   greater than key->curItem, so next loop/call they should be 
+		 *   renewed by entryGetItem(). So, we need to set up an array before
+		 *   checking of lossy page.
+		 *----------
+		 */
 		for (i = 0; i < key->nentries; i++)
 		{
 			entry = key->scanEntry + i;
@@ -719,7 +734,10 @@ keyGetItem(Relation index, GinState *ginstate, MemoryContext tempCtx,
 
 /*
  * Get ItemPointer of next heap row to be checked from pending list.
- * Returns false if there are no more.
+ * Returns false if there are no more. On pages with several rows
+ * it returns each row separately, on page with part of heap row returns
+ * per page data.  pos->firstOffset and pos->lastOffset points
+ * fraction of tuples for current heap row.
  *
  * The pendingBuffer is presumed pinned and share-locked on entry, and is
  * pinned and share-locked on success exit.  On failure exit it's released.
@@ -787,6 +805,13 @@ scanGetCandidate(IndexScanDesc scan, pendingPosition *pos)
 				 */
 				pos->lastOffset = maxoff + 1;
 			}
+
+			/*
+			 * Now pos->firstOffset points to the first tuple of current heap row,
+			 * pos->lastOffset points to the first tuple of second heap row (or
+			 * to the end of page)
+			 */
+
 			break;
 		}
 	}
@@ -794,6 +819,12 @@ scanGetCandidate(IndexScanDesc scan, pendingPosition *pos)
 	return true;
 }
 
+/*
+ * Scan page from current tuple (off) up to the first event:
+ * - tuple's attribute number is not equal to entry's attrnum
+ * - reach of last tuple
+ * - match is found (then returns true)
+ */
 static bool
 matchPartialInPendingList(GinState *ginstate, Page page,
 						  OffsetNumber off, OffsetNumber maxoff,
@@ -817,6 +848,13 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 			datumExtracted[  off-1 ] = true;
 		}
 
+		/*----------
+		 * Check of partial match.
+		 * case cmp == 0 => match
+		 * case cmp > 0 => not match and finish scan
+		 * case cmp < 0 => not match and continue scan
+		 *----------
+		 */
 		cmp = DatumGetInt32(FunctionCall4(&ginstate->comparePartialFn[attrnum],
 										  value,
 										  datum[off-1],
@@ -826,6 +864,8 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 			return true;
 		else if (cmp > 0)
 			return false;
+
+		off++;
 	}
 
 	return false;
@@ -833,7 +873,7 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 
 /*
  * Sets entryRes array for each key by looking at
- * every entry per indexed value (row) in pending list.
+ * every entry per indexed value (heap's row) in pending list.
  * returns true if at least one of datum was matched by key's entry
  *
  * The pendingBuffer is presumed pinned and share-locked on entry.
@@ -878,9 +918,15 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 									StopMiddle;
 				GinScanEntry		entry = key->scanEntry + j;
 
+				/* already true - do not extra work */
 				if ( key->entryRes[j] )
 					continue;
 
+				/*
+				 * Interested tuples are from pos->firstOffset to pos->lastOffset
+				 * and they are ordered by (attnum, Datum) as it's done in entry tree
+				 * So we could use binary search to prevent linear scanning
+				 */
 				while (StopLow < StopHigh)
 				{
 					StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
@@ -908,6 +954,11 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 
 						if ( res == 0 )
 						{
+							/*
+							 * The exact match causes, so we just scan from 
+							 * current position to find a partial match.
+							 * See comment above about tuple's ordering.
+							 */
 							if ( entry->isPartialMatch )
 								key->entryRes[j] =
 									matchPartialInPendingList(&so->ginstate,
@@ -931,6 +982,12 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 				}
 
 				if ( StopLow>=StopHigh && entry->isPartialMatch )
+				{
+					/* 
+					 * The exact match wasn't found, so we need to start
+					 * scan from first tuple greater then current entry
+					 * See comment above about tuple's ordering.
+					 */
 					key->entryRes[j] =
 						matchPartialInPendingList(&so->ginstate,
 												  page, StopHigh,
@@ -941,6 +998,7 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 												  datumExtracted,
 												  entry->strategy,
 												  entry->extra_data);
+				}
 
 				hasMatch |= key->entryRes[j];
 			}
@@ -959,6 +1017,11 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 		else
 		{
 			ItemPointerData item = pos->item;
+
+			/*
+			 * need to get next portion of tuples of row containing
+			 * on several pages
+			 */
 
 			if ( scanGetCandidate(scan, pos) == false || !ItemPointerEquals(&pos->item, &item) )
 				elog(ERROR,"Could not process tuple");  /* XXX should not be here ! */
@@ -1004,19 +1067,23 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 	UnlockReleaseBuffer( metabuffer );
 
 	/*
-	 * loop for each heap row
+	 * loop for each heap row. scanGetCandidate returns full row
+	 * or row's tuples from first page. 
 	 */
 	while( scanGetCandidate(scan, &pos) )
 	{
 
 		/*
-		 * Check entries in rows and setup entryRes array
+		 * Check entries in tuple and setup entryRes array
+		 * If tuples of heap's row are placed on several pages
+		 * collectDatumForItem will read all of that pages.
 		 */
 		if (!collectDatumForItem(scan, &pos))
 			continue;
 
 		/*
-		 * check for consistent
+		 * Matching of entries of one row is finished, 
+		 * so check row by consistent function.
 		 */
 		oldCtx = MemoryContextSwitchTo(so->tempCtx);
 		recheck = false;

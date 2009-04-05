@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.22 2009/03/25 22:19:01 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.23 2009/04/05 11:32:01 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -175,12 +175,15 @@ newScanKey(IndexScanDesc scan)
 		bool		*partial_matches = NULL;
 		Pointer		*extra_data = NULL;
 
-		/* XXX can't we treat nulls by just setting isVoidRes? */
-		/* This would amount to assuming that all GIN operators are strict */
+		/*
+		 * Assume, that GIN-indexable operators are strict, so 
+		 * nothing could be found
+		 */
 		if (skey->sk_flags & SK_ISNULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("GIN indexes do not support NULL scan keys")));
+		{
+			so->isVoidRes = true;
+			break;
+		}
 
 		entryValues = (Datum *)
 			DatumGetPointer(FunctionCall5(&so->ginstate.extractQueryFn[skey->sk_attno - 1],
