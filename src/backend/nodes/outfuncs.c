@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.357 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.358 2009/04/05 19:59:40 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -961,6 +961,7 @@ _outSubPlan(StringInfo str, SubPlan *node)
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(paramIds);
 	WRITE_INT_FIELD(plan_id);
+	WRITE_STRING_FIELD(plan_name);
 	WRITE_OID_FIELD(firstColType);
 	WRITE_INT_FIELD(firstColTypmod);
 	WRITE_BOOL_FIELD(useHashTable);

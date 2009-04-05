@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.147 2009/03/10 22:09:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.148 2009/04/05 19:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -502,6 +502,8 @@ typedef struct SubPlan
 	List	   *paramIds;		/* IDs of Params embedded in the above */
 	/* Identification of the Plan tree to use: */
 	int			plan_id;		/* Index (from 1) in PlannedStmt.subplans */
+	/* Identification of the SubPlan for EXPLAIN and debugging purposes: */
+	char	   *plan_name;		/* A name assigned during planning */
 	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
 	int32		firstColTypmod;	/* Typmod of first column of subplan result */

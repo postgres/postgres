@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.296 2009/02/25 18:00:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.297 2009/04/05 19:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4404,20 +4404,42 @@ get_rule_expr(Node *node, deparse_context *context,
 
 		case T_SubPlan:
 			{
+				SubPlan *subplan = (SubPlan *) node;
+
 				/*
 				 * We cannot see an already-planned subplan in rule deparsing,
-				 * only while EXPLAINing a query plan. For now, just punt.
+				 * only while EXPLAINing a query plan.  We don't try to
+				 * reconstruct the original SQL, just reference the subplan
+				 * that appears elsewhere in EXPLAIN's result.
 				 */
-				if (((SubPlan *) node)->useHashTable)
-					appendStringInfo(buf, "(hashed subplan)");
+				if (subplan->useHashTable)
+					appendStringInfo(buf, "(hashed %s)", subplan->plan_name);
 				else
-					appendStringInfo(buf, "(subplan)");
+					appendStringInfo(buf, "(%s)", subplan->plan_name);
 			}
 			break;
 
 		case T_AlternativeSubPlan:
-			/* As above, just punt */
-			appendStringInfo(buf, "(alternative subplans)");
+			{
+				AlternativeSubPlan *asplan = (AlternativeSubPlan *) node;
+				ListCell   *lc;
+
+				/* As above, this can only happen during EXPLAIN */
+				appendStringInfo(buf, "(alternatives: ");
+				foreach(lc, asplan->subplans)
+				{
+					SubPlan	   *splan = (SubPlan *) lfirst(lc);
+
+					Assert(IsA(splan, SubPlan));
+					if (splan->useHashTable)
+						appendStringInfo(buf, "hashed %s", splan->plan_name);
+					else
+						appendStringInfo(buf, "%s", splan->plan_name);
+					if (lnext(lc))
+						appendStringInfo(buf, " or ");
+				}
+				appendStringInfo(buf, ")");
+			}
 			break;
 
 		case T_FieldSelect:

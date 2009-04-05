@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.147 2009/03/10 22:09:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.148 2009/04/05 19:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,8 +412,8 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	int			paramid;
 
 	/*
-	 * Initialize the SubPlan node.  Note plan_id isn't set till further down,
-	 * likewise the cost fields.
+	 * Initialize the SubPlan node.  Note plan_id, plan_name, and cost fields
+	 * are set further down.
 	 */
 	splan = makeNode(SubPlan);
 	splan->subLinkType = subLinkType;
@@ -605,6 +605,30 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	if (splan->parParam == NIL && !isInitPlan && !splan->useHashTable)
 		root->glob->rewindPlanIDs = bms_add_member(root->glob->rewindPlanIDs,
 												   splan->plan_id);
+
+	/* Label the subplan for EXPLAIN purposes */
+	if (isInitPlan)
+	{
+		ListCell   *lc;
+		int			offset;
+
+		splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
+		sprintf(splan->plan_name, "InitPlan %d (returns ", splan->plan_id);
+		offset = strlen(splan->plan_name);
+		foreach(lc, splan->setParam)
+		{
+			sprintf(splan->plan_name + offset, "$%d%s",
+					lfirst_int(lc),
+					lnext(lc) ? "," : "");
+			offset += strlen(splan->plan_name + offset);
+		}
+		sprintf(splan->plan_name + offset, ")");
+	}
+	else
+	{
+		splan->plan_name = palloc(32);
+		sprintf(splan->plan_name, "SubPlan %d", splan->plan_id);
+	}
 
 	/* Lastly, fill in the cost estimates for use later */
 	cost_subplan(root, splan, plan);
@@ -875,7 +899,7 @@ SS_process_ctes(PlannerInfo *root)
 		 * Make a SubPlan node for it.  This is just enough unlike
 		 * build_subplan that we can't share code.
 		 *
-		 * Note plan_id isn't set till further down, likewise the cost fields.
+		 * Note plan_id, plan_name, and cost fields are set further down.
 		 */
 		splan = makeNode(SubPlan);
 		splan->subLinkType = CTE_SUBLINK;
@@ -930,6 +954,10 @@ SS_process_ctes(PlannerInfo *root)
 		root->init_plans = lappend(root->init_plans, splan);
 
 		root->cte_plan_ids = lappend_int(root->cte_plan_ids, splan->plan_id);
+
+		/* Label the subplan for EXPLAIN purposes */
+		splan->plan_name = palloc(4 + strlen(cte->ctename) + 1);
+		sprintf(splan->plan_name, "CTE %s", cte->ctename);
 
 		/* Lastly, fill in the cost estimates for use later */
 		cost_subplan(root, splan, plan);
@@ -2133,6 +2161,11 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	 */
 	prm = generate_new_param(root, resulttype, resulttypmod);
 	node->setParam = list_make1_int(prm->paramid);
+
+	/* Label the subplan for EXPLAIN purposes */
+	node->plan_name = palloc(64);
+	sprintf(node->plan_name, "InitPlan %d (returns $%d)",
+			node->plan_id, prm->paramid);
 
 	return prm;
 }
