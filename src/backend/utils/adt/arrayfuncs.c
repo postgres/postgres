@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.153 2009/01/30 21:21:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.154 2009/04/05 22:28:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1664,6 +1664,28 @@ array_length(PG_FUNCTION_ARGS)
 	dimv = ARR_DIMS(v);
 
 	result = dimv[reqdim - 1];
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * array_cardinality :
+ *		SQL-spec alias for array_length(v, 1)
+ */
+Datum
+array_cardinality(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	int		   *dimv;
+	int			result;
+
+	/* Sanity check: does it look like an array at all? */
+	if (ARR_NDIM(v) <= 0 || ARR_NDIM(v) > MAXDIM)
+		PG_RETURN_NULL();
+
+	dimv = ARR_DIMS(v);
+
+	result = dimv[0];
 
 	PG_RETURN_INT32(result);
 }
