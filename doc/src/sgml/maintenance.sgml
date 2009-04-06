@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.91 2009/04/06 17:55:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.92 2009/04/06 17:56:31 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -49,7 +49,7 @@
    url="http://bucardo.org/check_postgres/"><application>check_postgres.pl</></ulink>
    is available for monitoring database health and reporting unusual
    conditions.  <application>check_postgres.pl</> integrates with
-   Nagios and MRTG, but can be run stand-alone too.
+   Nagios and MRTG, but can be run standalone too.
   </para>
 
   <para>
