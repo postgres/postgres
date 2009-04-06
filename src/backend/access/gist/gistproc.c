@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.15 2009/01/01 17:23:35 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.16 2009/04/06 14:27:27 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,69 @@ chooseLR(GIST_SPLITVEC *v,
 }
 
 /*
+ * Trivial split: half of entries will be placed on one page
+ * and another half - to another
+ */
+static void
+fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
+{
+	OffsetNumber	i, 
+					maxoff;
+	BOX			   *unionL = NULL,
+				   *unionR = NULL;
+	int				nbytes;
+
+	maxoff = entryvec->n - 1;
+
+	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	v->spl_left = (OffsetNumber *) palloc(nbytes);
+	v->spl_right = (OffsetNumber *) palloc(nbytes);
+	v->spl_nleft = v->spl_nright = 0;
+
+	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+	{
+		BOX * cur = DatumGetBoxP(entryvec->vector[i].key);
+
+		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
+		{
+			v->spl_left[v->spl_nleft] = i;
+			if (unionL == NULL)
+			{
+				unionL = (BOX *) palloc(sizeof(BOX));
+				*unionL = *cur;
+			}
+			else
+				adjustBox(unionL, cur);
+
+			v->spl_nleft++;
+		}
+		else
+		{
+			v->spl_right[v->spl_nright] = i;
+			if (unionR == NULL)
+			{
+				unionR = (BOX *) palloc(sizeof(BOX));
+				*unionR = *cur;
+			}
+			else
+				adjustBox(unionR, cur);
+
+			v->spl_nright++;
+		}
+	}
+
+	if (v->spl_ldatum_exists)
+		adjustBox(unionL, DatumGetBoxP(v->spl_ldatum));
+	v->spl_ldatum = BoxPGetDatum(unionL);
+
+	if (v->spl_rdatum_exists)
+		adjustBox(unionR, DatumGetBoxP(v->spl_rdatum));
+	v->spl_rdatum = BoxPGetDatum(unionR);
+
+	v->spl_ldatum_exists = v->spl_rdatum_exists = false;
+}
+
+/*
  * The GiST PickSplit method
  *
  * New linear algorithm, see 'New Linear Node Splitting Algorithm for R-tree',
@@ -324,52 +387,22 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 		adjustBox(&pageunion, cur);
 	}
 
+	if (allisequal)
+	{
+		/*
+		 * All entries are the same
+		 */
+		fallbackSplit(entryvec, v);
+		PG_RETURN_POINTER(v);
+	}
+
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	listL = (OffsetNumber *) palloc(nbytes);
 	listR = (OffsetNumber *) palloc(nbytes);
-	unionL = (BOX *) palloc(sizeof(BOX));
-	unionR = (BOX *) palloc(sizeof(BOX));
-	if (allisequal)
-	{
-		cur = DatumGetBoxP(entryvec->vector[OffsetNumberNext(FirstOffsetNumber)].key);
-		if (memcmp((void *) cur, (void *) &pageunion, sizeof(BOX)) == 0)
-		{
-			v->spl_left = listL;
-			v->spl_right = listR;
-			v->spl_nleft = v->spl_nright = 0;
-			memcpy((void *) unionL, (void *) &pageunion, sizeof(BOX));
-			memcpy((void *) unionR, (void *) &pageunion, sizeof(BOX));
-
-			for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-			{
-				if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
-				{
-					v->spl_left[v->spl_nleft] = i;
-					v->spl_nleft++;
-				}
-				else
-				{
-					v->spl_right[v->spl_nright] = i;
-					v->spl_nright++;
-				}
-			}
-
-			if (v->spl_ldatum_exists)
-				adjustBox(unionL, DatumGetBoxP(v->spl_ldatum));
-			v->spl_ldatum = BoxPGetDatum(unionL);
-
-			if (v->spl_rdatum_exists)
-				adjustBox(unionR, DatumGetBoxP(v->spl_rdatum));
-			v->spl_rdatum = BoxPGetDatum(unionR);
-
-			v->spl_ldatum_exists = v->spl_rdatum_exists = false;
-
-			PG_RETURN_POINTER(v);
-		}
-	}
-
 	listB = (OffsetNumber *) palloc(nbytes);
 	listT = (OffsetNumber *) palloc(nbytes);
+	unionL = (BOX *) palloc(sizeof(BOX));
+	unionR = (BOX *) palloc(sizeof(BOX));
 	unionB = (BOX *) palloc(sizeof(BOX));
 	unionT = (BOX *) palloc(sizeof(BOX));
 
@@ -451,6 +484,12 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			}
 			else
 				ADDLIST(listT, unionT, posT, i);
+		}
+
+		if (IS_BADRATIO(posR, posL) && IS_BADRATIO(posT, posB))
+		{
+			fallbackSplit(entryvec, v);
+			PG_RETURN_POINTER(v);
 		}
 	}
 
