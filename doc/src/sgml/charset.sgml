@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.92 2009/03/26 20:55:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.93 2009/04/06 08:42:52 heikki Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -749,7 +749,7 @@ createdb -E EUC_KR -T template0 --lc-collate=ko_KR.euckr --lc-ctype=ko_KR.euckr 
      Another way to accomplish this is to use this SQL command:
 
 <programlisting>
-CREATE DATABASE korean WITH ENCODING 'EUC_KR' COLLATE='ko_KR.euckr' CTYPE='ko_KR.euckr' TEMPLATE=template0;
+CREATE DATABASE korean WITH ENCODING 'EUC_KR' LC_COLLATE='ko_KR.euckr' LC_CTYPE='ko_KR.euckr' TEMPLATE=template0;
 </programlisting>
 
      The encoding for a database is stored in the system catalog

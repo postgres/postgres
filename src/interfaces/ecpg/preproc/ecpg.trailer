@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.6 2009/01/30 12:53:43 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.7 2009/04/06 08:42:53 heikki Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -1547,7 +1547,6 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| CREATEROLE		{ $$ = make_str("createrole"); }
 		| CREATEUSER		{ $$ = make_str("createuser"); }
 		| CSV				{ $$ = make_str("csv"); }
-		| CTYPE			{ $$ = make_str("ctype"); }
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATA_P			{ $$ = make_str("data"); }
@@ -1610,6 +1609,8 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| LANGUAGE			{ $$ = make_str("language"); }
 		| LARGE_P			{ $$ = make_str("large"); }
 		| LAST_P			{ $$ = make_str("last"); }
+		| LC_COLLATE_P		{ $$ = make_str("lc_collate"); }
+		| LC_CTYPE_P		{ $$ = make_str("lc_ctype"); }
 		| LEVEL				{ $$ = make_str("level"); }
 		| LISTEN			{ $$ = make_str("listen"); }
 		| LOAD				{ $$ = make_str("load"); }

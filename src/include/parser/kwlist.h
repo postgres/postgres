@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.1 2009/03/07 00:13:58 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.2 2009/04/06 08:42:53 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,6 @@ PG_KEYWORD("createrole", CREATEROLE, UNRESERVED_KEYWORD)
 PG_KEYWORD("createuser", CREATEUSER, UNRESERVED_KEYWORD)
 PG_KEYWORD("cross", CROSS, TYPE_FUNC_NAME_KEYWORD)
 PG_KEYWORD("csv", CSV, UNRESERVED_KEYWORD)
-PG_KEYWORD("ctype", CTYPE, UNRESERVED_KEYWORD)
 PG_KEYWORD("current", CURRENT_P, UNRESERVED_KEYWORD)
 PG_KEYWORD("current_catalog", CURRENT_CATALOG, RESERVED_KEYWORD)
 PG_KEYWORD("current_date", CURRENT_DATE, RESERVED_KEYWORD)
@@ -209,6 +208,8 @@ PG_KEYWORD("lancompiler", LANCOMPILER, UNRESERVED_KEYWORD)
 PG_KEYWORD("language", LANGUAGE, UNRESERVED_KEYWORD)
 PG_KEYWORD("large", LARGE_P, UNRESERVED_KEYWORD)
 PG_KEYWORD("last", LAST_P, UNRESERVED_KEYWORD)
+PG_KEYWORD("lc_collate", LC_COLLATE_P, UNRESERVED_KEYWORD)
+PG_KEYWORD("lc_ctype", LC_CTYPE_P, UNRESERVED_KEYWORD)
 PG_KEYWORD("leading", LEADING, RESERVED_KEYWORD)
 PG_KEYWORD("least", LEAST, COL_NAME_KEYWORD)
 PG_KEYWORD("left", LEFT, TYPE_FUNC_NAME_KEYWORD)

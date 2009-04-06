@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.661 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.662 2009/04/06 08:42:52 heikki Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -437,7 +437,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
 	CONTENT_P CONTINUE_P CONVERSION_P COPY COST CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CTYPE CURRENT_P
+	CREATEROLE CREATEUSER CROSS CSV CURRENT_P
 	CURRENT_CATALOG CURRENT_DATE CURRENT_ROLE CURRENT_SCHEMA
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -464,9 +464,9 @@ static TypeName *TableFuncTypeName(List *columns);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
-	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
-	LOCK_P LOGIN_P
+	LANCOMPILER LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
+	LOCATION LOCK_P LOGIN_P
 
 	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
@@ -6011,21 +6011,21 @@ createdb_opt_item:
 				{
 					$$ = makeDefElem("encoding", NULL);
 				}
-			| COLLATE opt_equal Sconst
+			| LC_COLLATE_P opt_equal Sconst
 				{
-					$$ = makeDefElem("collate", (Node *)makeString($3));
+					$$ = makeDefElem("lc_collate", (Node *)makeString($3));
 				}
-			| COLLATE opt_equal DEFAULT
+			| LC_COLLATE_P opt_equal DEFAULT
 				{
-					$$ = makeDefElem("collate", NULL);
+					$$ = makeDefElem("lc_collate", NULL);
 				}
-			| CTYPE opt_equal Sconst
+			| LC_CTYPE_P opt_equal Sconst
 				{
-					$$ = makeDefElem("ctype", (Node *)makeString($3));
+					$$ = makeDefElem("lc_ctype", (Node *)makeString($3));
 				}
-			| CTYPE opt_equal DEFAULT
+			| LC_CTYPE_P opt_equal DEFAULT
 				{
-					$$ = makeDefElem("ctype", NULL);
+					$$ = makeDefElem("lc_ctype", NULL);
 				}
 			| CONNECTION LIMIT opt_equal SignedIconst
 				{
@@ -10169,7 +10169,6 @@ unreserved_keyword:
 			| CREATEROLE
 			| CREATEUSER
 			| CSV
-			| CTYPE
 			| CURRENT_P
 			| CURSOR
 			| CYCLE
@@ -10236,6 +10235,8 @@ unreserved_keyword:
 			| LANGUAGE
 			| LARGE_P
 			| LAST_P
+			| LC_COLLATE_P
+			| LC_CTYPE_P
 			| LEVEL
 			| LISTEN
 			| LOAD

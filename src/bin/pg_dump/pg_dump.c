@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.533 2009/04/05 04:19:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.534 2009/04/06 08:42:53 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1716,12 +1716,12 @@ dumpDatabase(Archive *AH)
 	}
 	if (strlen(collate) > 0)
 	{
-		appendPQExpBuffer(creaQry, " COLLATE = ");
+		appendPQExpBuffer(creaQry, " LC_COLLATE = ");
 		appendStringLiteralAH(creaQry, collate, AH);
 	}
 	if (strlen(ctype) > 0)
 	{
-		appendPQExpBuffer(creaQry, " CTYPE = ");
+		appendPQExpBuffer(creaQry, " LC_CTYPE = ");
 		appendStringLiteralAH(creaQry, ctype, AH);
 	}
 	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0)

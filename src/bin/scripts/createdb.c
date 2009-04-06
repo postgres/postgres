@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.33 2009/02/26 16:20:55 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.34 2009/04/06 08:42:53 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,9 +186,9 @@ main(int argc, char *argv[])
 	if (template)
 		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(template));
 	if (lc_collate)
-		appendPQExpBuffer(&sql, " COLLATE '%s'", lc_collate);
+		appendPQExpBuffer(&sql, " LC_COLLATE '%s'", lc_collate);
 	if (lc_ctype)
-		appendPQExpBuffer(&sql, " CTYPE '%s'", lc_ctype);
+		appendPQExpBuffer(&sql, " LC_CTYPE '%s'", lc_ctype);
 
 	appendPQExpBuffer(&sql, ";\n");
 

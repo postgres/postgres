@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.23 2009/02/24 10:06:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.24 2009/04/06 08:42:52 heikki Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -800,7 +800,7 @@
     <entry>non-reserved</entry>
    </row>
    <row>
-    <entry><token>COLLATE</token></entry>
+    <entry><token>LC_COLLATE</token></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -1168,7 +1168,7 @@
     <entry></entry>
    </row>
    <row>
-    <entry><token>CTYPE</token></entry>
+    <entry><token>LC_CTYPE</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>

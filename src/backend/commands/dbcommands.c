@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.219 2009/01/30 17:24:47 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.220 2009/04/06 08:42:52 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dencoding = defel;
 		}
-		else if (strcmp(defel->defname, "collate") == 0)
+		else if (strcmp(defel->defname, "lc_collate") == 0)
 		{
 			if (dcollate)
 				ereport(ERROR,
@@ -177,7 +177,7 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dcollate = defel;
 		}
-		else if (strcmp(defel->defname, "ctype") == 0)
+		else if (strcmp(defel->defname, "lc_ctype") == 0)
 		{
 			if (dctype)
 				ereport(ERROR,
@@ -362,7 +362,7 @@ createdb(const CreatedbStmt *stmt)
 				(errmsg("encoding %s does not match locale %s",
 						pg_encoding_to_char(encoding),
 						dbctype),
-			 errdetail("The chosen CTYPE setting requires encoding %s.",
+			 errdetail("The chosen LC_CTYPE setting requires encoding %s.",
 					   pg_encoding_to_char(ctype_encoding))));
 
 	if (!(collate_encoding == encoding ||
@@ -375,7 +375,7 @@ createdb(const CreatedbStmt *stmt)
 				(errmsg("encoding %s does not match locale %s",
 						pg_encoding_to_char(encoding),
 						dbcollate),
-			 errdetail("The chosen COLLATE setting requires encoding %s.",
+			 errdetail("The chosen LC_COLLATE setting requires encoding %s.",
 					   pg_encoding_to_char(collate_encoding))));
 
 	/*
@@ -394,8 +394,8 @@ createdb(const CreatedbStmt *stmt)
 
 		if (strcmp(dbctype, src_ctype))
 			ereport(ERROR,
-					(errmsg("new ctype is incompatible with the ctype of the template database (%s)", src_ctype),
-					 errhint("Use the same ctype as in the template database, or use template0 as template")));
+					(errmsg("new LC_CTYPE is incompatible with LC_CTYPE of the template database (%s)", src_ctype),
+					 errhint("Use the same LC_CTYPE as in the template database, or use template0 as template")));
 	}
 
 	/* Resolve default tablespace for new database */

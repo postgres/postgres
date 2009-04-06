@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.50 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.51 2009/04/06 08:42:52 heikki Exp $
 PostgreSQL documentation
 -->
 
@@ -25,8 +25,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
-           [ COLLATE [=] <replaceable class="parameter">collate</replaceable> ]
-           [ CTYPE [=] <replaceable class="parameter">ctype</replaceable> ]
+           [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
+           [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ] ]
 </synopsis>
@@ -207,7 +207,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    The character set encoding specified for the new database must be
-   compatible with the chosen COLLATE and CTYPE settings.
+   compatible with the chosen LC_COLLATE and LC_CTYPE settings.
    If <envar>LC_CTYPE</> is <literal>C</> (or equivalently
    <literal>POSIX</>), then all encodings are allowed, but for other
    locale settings there is only one encoding that will work properly.
@@ -219,9 +219,9 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
-   The <literal>COLLATE</> and <literal>CTYPE</> settings must match
+   The <literal>LC_COLLATE</> and <literal>LC_CTYPE</> settings must match
    those of the template database, except when template0 is used as
-   template. This is because <literal>COLLATE</> and <literal>CTYPE</>
+   template. This is because <literal>LC_COLLATE</> and <literal>LC_CTYPE</>
    affects the ordering in indexes, so that any indexes copied from the
    template database would be invalid in the new database with different
    settings. <literal>template0</literal>, however, is known to not
