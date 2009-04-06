@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.181 2009/03/27 14:58:46 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.182 2009/04/06 15:50:59 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -430,18 +430,6 @@ static const SchemaQuery Query_for_list_of_views = {
 "  UNION ALL SELECT 'session authorization' "\
 "  UNION ALL SELECT 'all') ss "\
 " WHERE substring(name,1,%d)='%s'"
-
-/*
- * Note: As of Pg 8.2, we no longer use relkind 's', but we keep it here
- * for compatibility with older servers
- */
-#define Query_for_list_of_system_relations \
-"SELECT pg_catalog.quote_ident(relname) "\
-"  FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
-" WHERE c.relkind IN ('r', 'v', 's', 'S') "\
-"   AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "\
-"   AND c.relnamespace = n.oid "\
-"   AND n.nspname = 'pg_catalog'"
 
 #define Query_for_list_of_roles \
 " SELECT pg_catalog.quote_ident(rolname) "\
@@ -2183,48 +2171,53 @@ psql_completion(char *text, int start, int end)
 /* TODO:  \dc \dd \dl */
 	else if (strcmp(prev_wd, "\\connect") == 0 || strcmp(prev_wd, "\\c") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_databases);
-	else if (strcmp(prev_wd, "\\d") == 0 || strcmp(prev_wd, "\\d+") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tisv, NULL);
-	else if (strcmp(prev_wd, "\\da") == 0)
+
+	else if (strncmp(prev_wd, "\\da", strlen("\\da")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_aggregates, NULL);
-	else if (strcmp(prev_wd, "\\db") == 0)
+	else if (strncmp(prev_wd, "\\db", strlen("\\db")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
-	else if (strcmp(prev_wd, "\\dD") == 0)
+	else if (strncmp(prev_wd, "\\dD", strlen("\\dD")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_domains, NULL);
-	else if (strcmp(prev_wd, "\\des") == 0 || strcmp(prev_wd, "\\des+") == 0)
+	else if (strncmp(prev_wd, "\\des", strlen("\\des")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_servers);
-	else if (strcmp(prev_wd, "\\deu") == 0 || strcmp(prev_wd, "\\deu+") == 0)
+	else if (strncmp(prev_wd, "\\deu", strlen("\\deu")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_user_mappings);
-	else if (strcmp(prev_wd, "\\dew") == 0 || strcmp(prev_wd, "\\dew+") == 0)
+	else if (strncmp(prev_wd, "\\dew", strlen("\\dew")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_fdws);
-	else if (strcmp(prev_wd, "\\df") == 0 || strcmp(prev_wd, "\\df+") == 0)
+
+	else if (strncmp(prev_wd, "\\df", strlen("\\df")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
-	else if (strcmp(prev_wd, "\\dF") == 0 || strcmp(prev_wd, "\\dF+") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_ts_configurations);
-	else if (strcmp(prev_wd, "\\dFd") == 0 || strcmp(prev_wd, "\\dFd+") == 0)
+	else if (strncmp(prev_wd, "\\dFd", strlen("\\dFd")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_dictionaries);
-	else if (strcmp(prev_wd, "\\dFp") == 0 || strcmp(prev_wd, "\\dFp+") == 0)
+	else if (strncmp(prev_wd, "\\dFp", strlen("\\dFp")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_parsers);
-	else if (strcmp(prev_wd, "\\dFt") == 0 || strcmp(prev_wd, "\\dFt+") == 0)
+	else if (strncmp(prev_wd, "\\dFt", strlen("\\dFt")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_ts_templates);
-	else if (strcmp(prev_wd, "\\di") == 0 || strcmp(prev_wd, "\\di+") == 0)
+	/* must be at end of \dF */
+	else if (strncmp(prev_wd, "\\dF", strlen("\\dF")) == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_ts_configurations);
+
+	else if (strncmp(prev_wd, "\\di", strlen("\\di")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
-	else if (strcmp(prev_wd, "\\dn") == 0)
+	else if (strncmp(prev_wd, "\\dn", strlen("\\dn")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
-	else if (strcmp(prev_wd, "\\dp") == 0 || strcmp(prev_wd, "\\z") == 0)
+	else if (strncmp(prev_wd, "\\dp", strlen("\\dp")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsv, NULL);
-	else if (strcmp(prev_wd, "\\ds") == 0 || strcmp(prev_wd, "\\ds+") == 0)
+	else if (strncmp(prev_wd, "\\ds", strlen("\\ds")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
-	else if (strcmp(prev_wd, "\\dS") == 0 || strcmp(prev_wd, "\\dS+") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_system_relations);
-	else if (strcmp(prev_wd, "\\dt") == 0 || strcmp(prev_wd, "\\dt+") == 0)
+	else if (strncmp(prev_wd, "\\dt", strlen("\\dt")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	else if (strcmp(prev_wd, "\\dT") == 0 || strcmp(prev_wd, "\\dT+") == 0)
+	else if (strncmp(prev_wd, "\\dT", strlen("\\dT")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
-	else if (strcmp(prev_wd, "\\du") == 0)
+	else if (strncmp(prev_wd, "\\du", strlen("\\du")) == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
-	else if (strcmp(prev_wd, "\\dv") == 0 || strcmp(prev_wd, "\\dv+") == 0)
+	else if (strncmp(prev_wd, "\\dv", strlen("\\dv")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
+
+	/* must be at end of \d list */
+	else if (strncmp(prev_wd, "\\d", strlen("\\d")) == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tisv, NULL);
+
 	else if (strcmp(prev_wd, "\\encoding") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_encodings);
 	else if (strcmp(prev_wd, "\\h") == 0 || strcmp(prev_wd, "\\help") == 0)
