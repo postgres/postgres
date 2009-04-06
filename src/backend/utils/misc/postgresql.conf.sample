@@ -122,7 +122,7 @@
 
 # - Cost-Based Vacuum Delay -
 
-#vacuum_cost_delay = 0			# 0-100 milliseconds
+#vacuum_cost_delay = 0ms		# 0-100 milliseconds
 #vacuum_cost_page_hit = 1		# 0-10000 credits
 #vacuum_cost_page_miss = 10		# 0-10000 credits
 #vacuum_cost_page_dirty = 20		# 0-10000 credits
@@ -175,7 +175,7 @@
 				# (change requires restart)
 #archive_command = ''		# command to use to archive a logfile segment
 #archive_timeout = 0		# force a logfile segment switch after this
-				# time; 0 is off
+				# number of seconds; 0 is off
 
 
 #------------------------------------------------------------------------------
@@ -306,9 +306,10 @@
 					#   fatal
 					#   panic (effectively off)
 
-#log_min_duration_statement = -1ms	# -1 is disabled, 0 logs all statements
+#log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
 					# and their durations, > 0 logs only
-					# statements running at least this time.
+					# statements running at least this number
+					# of milliseconds
 
 #silent_mode = off			# DO NOT USE without syslog or
 					# logging_collector
@@ -346,7 +347,7 @@
 #log_lock_waits = off			# log lock waits >= deadlock_timeout
 #log_statement = 'none'			# none, ddl, mod, all
 #log_temp_files = -1			# log temporary files equal or larger
-					# than specified size;
+					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
 #log_timezone = unknown			# actually, defaults to TZ environment
 					# setting
@@ -382,7 +383,8 @@
 					# requires track_counts to also be on.
 #log_autovacuum_min_duration = -1	# -1 disables, 0 logs all actions and
 					# their durations, > 0 logs only
-					# actions running at least that time.
+					# actions running at least this number
+					# of milliseconds.
 #autovacuum_max_workers = 3		# max number of autovacuum subprocesses
 #autovacuum_naptime = 1min		# time between autovacuum runs
 #autovacuum_vacuum_threshold = 50	# min number of row updates before
@@ -393,9 +395,9 @@
 #autovacuum_analyze_scale_factor = 0.1	# fraction of table size before analyze
 #autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
 					# (change requires restart)
-#autovacuum_vacuum_cost_delay = 20	# default vacuum cost delay for
-					# autovacuum, -1 means use
-					# vacuum_cost_delay
+#autovacuum_vacuum_cost_delay = 20ms	# default vacuum cost delay for
+					# autovacuum, in milliseconds;
+					# -1 means use vacuum_cost_delay
 #autovacuum_vacuum_cost_limit = -1	# default vacuum cost limit for
 					# autovacuum, -1 means use
 					# vacuum_cost_limit
@@ -415,7 +417,7 @@
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
 #session_replication_role = 'origin'
-#statement_timeout = 0			# 0 is disabled
+#statement_timeout = 0			# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
 #xmlbinary = 'base64'

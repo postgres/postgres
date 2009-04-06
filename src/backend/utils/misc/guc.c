@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.499 2009/04/02 19:57:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.500 2009/04/06 21:00:52 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1530,7 +1530,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"statement_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the maximum allowed duration of any statement."),
+			gettext_noop("Sets the maximum duration of any statement, in milliseconds."),
 			gettext_noop("A value of 0 turns off the timeout."),
 			GUC_UNIT_MS
 		},
@@ -1684,7 +1684,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_autovacuum_min_duration", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Sets the minimum execution time above which "
+			gettext_noop("Sets the minimum execution milliseconds above which "
 						 "autovacuum actions will be logged."),
 			gettext_noop("Zero prints all actions. -1 turns autovacuum logging off."),
 			GUC_UNIT_MS
@@ -1871,7 +1871,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"tcp_keepalives_idle", PGC_USERSET, CLIENT_CONN_OTHER,
-			gettext_noop("Time between issuing TCP keepalives."),
+			gettext_noop("Seconds between issuing TCP keepalives."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
 		},
@@ -1881,7 +1881,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"tcp_keepalives_interval", PGC_USERSET, CLIENT_CONN_OTHER,
-			gettext_noop("Time between TCP keepalive retransmits."),
+			gettext_noop("Seconds between TCP keepalive retransmits."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
 		},
