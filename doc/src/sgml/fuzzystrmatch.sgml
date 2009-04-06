@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.4 2008/04/03 21:13:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/fuzzystrmatch.sgml,v 1.5 2009/04/06 15:43:00 tgl Exp $ -->
 
 <sect1 id="fuzzystrmatch">
  <title>fuzzystrmatch</title>
@@ -11,6 +11,13 @@
   The <filename>fuzzystrmatch</> module provides several
   functions to determine similarities and distance between strings.
  </para>
+
+ <caution>
+  <para>
+   At present, <filename>fuzzystrmatch</> does not work well with
+   multi-byte encodings (such as UTF-8).
+  </para>
+ </caution>
 
  <sect2>
   <title>Soundex</title>
