@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.90 2009/02/09 20:57:59 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.91 2009/04/06 17:55:19 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -42,6 +42,14 @@
   <para>
    Another task that might need periodic attention is log file management.
    This is discussed in <xref linkend="logfile-maintenance">.
+  </para>
+
+  <para>
+   <ulink
+   url="http://bucardo.org/check_postgres/"><application>check_postgres.pl</></ulink>
+   is available for monitoring database health and reporting unusual
+   conditions.  <application>check_postgres.pl</> integrates with
+   Nagios and MRTG, but can be run stand-alone too.
   </para>
 
   <para>
