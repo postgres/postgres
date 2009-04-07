@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.622 2009/03/31 22:23:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.623 2009/04/07 21:29:02 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2723,6 +2723,16 @@ do it for earlier branch release files.
       <para>
        Add support for the <literal>KOI8U</> (Ukrainian) encoding
        (Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add Japanese message translations
+      </para>
+
+      <para>
+       This used to be maintained as a separate project.
       </para>
      </listitem>
 
