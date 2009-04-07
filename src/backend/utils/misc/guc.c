@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.500 2009/04/06 21:00:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.501 2009/04/07 22:22:19 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1316,7 +1316,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		/* This is PGC_SIGHUP so all backends have the same value. */
 		{"deadlock_timeout", PGC_SIGHUP, LOCK_MANAGEMENT,
-			gettext_noop("Sets the time to wait on a lock before checking for deadlock."),
+			gettext_noop("Sets the time to wait on a lock before checking for deadlock, in milliseconds."),
 			NULL,
 			GUC_UNIT_MS
 		},
@@ -1406,7 +1406,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"maintenance_work_mem", PGC_USERSET, RESOURCES_MEM,
-			gettext_noop("Sets the maximum memory to be used for maintenance operations."),
+			gettext_noop("Sets the maximum memory to be used for maintenance operations, in kilobytes."),
 			gettext_noop("This includes operations such as VACUUM and CREATE INDEX."),
 			GUC_UNIT_KB
 		},
@@ -1569,7 +1569,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"authentication_timeout", PGC_SIGHUP, CONN_AUTH_SECURITY,
-			gettext_noop("Sets the maximum allowed time to complete client authentication."),
+			gettext_noop("Sets the maximum allowed time to complete client authentication, in seconds."),
 			NULL,
 			GUC_UNIT_S
 		},
@@ -1599,7 +1599,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"checkpoint_timeout", PGC_SIGHUP, WAL_CHECKPOINTS,
-			gettext_noop("Sets the maximum time between automatic WAL checkpoints."),
+			gettext_noop("Sets the maximum time between automatic WAL checkpoints, in seconds."),
 			NULL,
 			GUC_UNIT_S
 		},
@@ -1632,7 +1632,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_writer_delay", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("WAL writer sleep time between WAL flushes."),
+			gettext_noop("WAL writer sleep time between WAL flushes, in milliseconds."),
 			NULL,
 			GUC_UNIT_MS
 		},
@@ -1673,8 +1673,8 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Sets the minimum execution time above which "
-						 "statements will be logged."),
+			gettext_noop("Sets the minimum execution time (in milliseconds) above "
+						 "which statements will be logged."),
 			gettext_noop("Zero prints all queries. -1 turns this feature off."),
 			GUC_UNIT_MS
 		},
@@ -1684,7 +1684,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_autovacuum_min_duration", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Sets the minimum execution milliseconds above which "
+			gettext_noop("Sets the minimum execution in milliseconds above which "
 						 "autovacuum actions will be logged."),
 			gettext_noop("Zero prints all actions. -1 turns autovacuum logging off."),
 			GUC_UNIT_MS
@@ -1695,7 +1695,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"bgwriter_delay", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer sleep time between rounds."),
+			gettext_noop("Background writer sleep time between rounds, in milliseconds."),
 			NULL,
 			GUC_UNIT_MS
 		},
@@ -1827,7 +1827,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"autovacuum_naptime", PGC_SIGHUP, AUTOVACUUM,
-			gettext_noop("Time to sleep between autovacuum runs."),
+			gettext_noop("Time to sleep between autovacuum runs, in seconds."),
 			NULL,
 			GUC_UNIT_S
 		},

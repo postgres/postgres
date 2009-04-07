@@ -136,7 +136,7 @@
 
 # - Asynchronous Behavior -
 
-#effective_io_concurrency = 1		# 1-1000, or 0 to disable prefetching
+#effective_io_concurrency = 1		# 1-1000. 0 disables prefetching
 
 
 #------------------------------------------------------------------------------
@@ -167,7 +167,7 @@
 #checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
 #checkpoint_timeout = 5min		# range 30s-1h
 #checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
-#checkpoint_warning = 30s		# 0 is off
+#checkpoint_warning = 30s		# 0 disables
 
 # - Archiving -
 
@@ -175,7 +175,7 @@
 				# (change requires restart)
 #archive_command = ''		# command to use to archive a logfile segment
 #archive_timeout = 0		# force a logfile segment switch after this
-				# number of seconds; 0 is off
+				# number of seconds; 0 disables
 
 
 #------------------------------------------------------------------------------
@@ -253,10 +253,10 @@
 					# off, meaning append to existing files
 					# in all cases.
 #log_rotation_age = 1d			# Automatic rotation of logfiles will
-					# happen after that time.  0 to disable.
+					# happen after that time.  0 disables.
 #log_rotation_size = 10MB		# Automatic rotation of logfiles will 
 					# happen after that much log output.
-					# 0 to disable.
+					# 0 disables.
 
 # These are relevant when logging to syslog:
 #syslog_facility = 'LOCAL0'
