@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.54 2009/01/06 16:39:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.55 2009/04/07 04:02:41 momjian Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -635,8 +635,8 @@ trigf(PG_FUNCTION_ARGS)
    </para>
 
    <para>
-    After you have compiled the source code, declare the function and
-    the triggers:
+    After you have compiled the source code (see <xref
+    linkend="dfunc">), declare the function and the triggers:
 <programlisting>
 CREATE FUNCTION trigf() RETURNS trigger
     AS '<replaceable>filename</>'
