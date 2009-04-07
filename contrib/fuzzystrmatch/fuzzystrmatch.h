@@ -74,7 +74,15 @@ static void _soundex(const char *instr, char *outstr);
 /*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 static const char *soundex_table = "01230120022455012623010202";
 
-#define soundex_code(letter) soundex_table[toupper((unsigned char) (letter)) - 'A']
+static char
+soundex_code(char letter)
+{
+	letter = toupper((unsigned char) letter);
+	/* Defend against non-ASCII letters */
+	if (letter >= 'A' && letter <= 'Z')
+		return soundex_table[letter - 'A'];
+	return letter;
+}
 
 
 /*
@@ -150,26 +158,36 @@ _metaphone(
 
 /*-- Character encoding array & accessing macros --*/
 /* Stolen directly out of the book... */
-char		_codes[26] = {
+static const char _codes[26] = {
 	1, 16, 4, 16, 9, 2, 4, 16, 9, 2, 0, 2, 2, 2, 1, 4, 0, 2, 4, 4, 1, 0, 0, 0, 8, 0
 /*	a  b c	d e f g  h i j k l m n o p q r s t u v w x y z */
 };
 
+static int
+getcode(char c)
+{
+	if (isalpha((unsigned char) c))
+	{
+		c = toupper((unsigned char) c);
+		/* Defend against non-ASCII letters */
+		if (c >= 'A' && c <= 'Z')
+			return _codes[c - 'A'];
+	}
+	return 0;
+}
 
-#define ENCODE(c) (isalpha((unsigned char) (c)) ? _codes[((toupper((unsigned char) (c))) - 'A')] : 0)
-
-#define isvowel(c)	(ENCODE(c) & 1)		/* AEIOU */
+#define isvowel(c)	(getcode(c) & 1)	/* AEIOU */
 
 /* These letters are passed through unchanged */
-#define NOCHANGE(c) (ENCODE(c) & 2)		/* FJMNR */
+#define NOCHANGE(c) (getcode(c) & 2)	/* FJMNR */
 
 /* These form dipthongs when preceding H */
-#define AFFECTH(c)	(ENCODE(c) & 4)		/* CGPST */
+#define AFFECTH(c)	(getcode(c) & 4)	/* CGPST */
 
 /* These make C and G soft */
-#define MAKESOFT(c) (ENCODE(c) & 8)		/* EIY */
+#define MAKESOFT(c) (getcode(c) & 8)	/* EIY */
 
 /* These prevent GH from becoming F */
-#define NOGHTOF(c)	(ENCODE(c) & 16)	/* BDH */
+#define NOGHTOF(c)	(getcode(c) & 16)	/* BDH */
 
 #endif   /* FUZZYSTRMATCH_H */
