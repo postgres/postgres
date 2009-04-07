@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.3.2.1 2007/09/07 17:19:52 teodor Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.3.2.2 2009/04/07 17:46:37 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,71 @@ gist_box_penalty(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
+static void
+adjustBox(BOX *b, BOX *addon)
+{
+    if (b->high.x < addon->high.x)
+		b->high.x = addon->high.x;
+	if (b->low.x > addon->low.x)
+		b->low.x = addon->low.x;
+	if (b->high.y < addon->high.y)
+		b->high.y = addon->high.y;
+	if (b->low.y > addon->low.y)
+		b->low.y = addon->low.y;
+}
+
+/*
+ * Trivial split: half of entries will be placed on one page
+ * and another half - to another
+ */
+static void
+fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
+{
+	OffsetNumber    i, 
+					maxoff;
+	BOX			   *unionL = NULL,
+				   *unionR = NULL;
+	int				nbytes;
+
+	maxoff = entryvec->n - 1;
+
+	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	v->spl_left = (OffsetNumber *) palloc(nbytes);
+	v->spl_right = (OffsetNumber *) palloc(nbytes);
+	v->spl_nleft = v->spl_nright = 0;
+
+	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+	{
+		BOX * cur = DatumGetBoxP(entryvec->vector[i].key);
+
+		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
+		{
+			v->spl_left[v->spl_nleft] = i;
+			if (unionL == NULL)
+			{
+				unionL = (BOX *) palloc(sizeof(BOX));
+				*unionL = *cur;
+			}
+			else
+				adjustBox(unionL, cur);
+
+			v->spl_nleft++;
+		}
+		else
+		{
+			v->spl_right[v->spl_nright] = i;
+			if (unionR == NULL)
+			{
+				unionR = (BOX *) palloc(sizeof(BOX));
+				*unionR = *cur;
+			}
+			else
+				adjustBox(unionR, cur);
+			v->spl_nright++;
+		}
+	}
+}
+
 /*
  * The GiST PickSplit method
  *
@@ -191,54 +256,25 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 								   ))
 			allisequal = false;
 
-		if (pageunion.high.x < cur->high.x)
-			pageunion.high.x = cur->high.x;
-		if (pageunion.low.x > cur->low.x)
-			pageunion.low.x = cur->low.x;
-		if (pageunion.high.y < cur->high.y)
-			pageunion.high.y = cur->high.y;
-		if (pageunion.low.y > cur->low.y)
-			pageunion.low.y = cur->low.y;
+		adjustBox(&pageunion, cur);
+	}
+
+	if (allisequal)
+	{
+		/*
+		 * All entries are the same
+		 */
+		fallbackSplit(entryvec, v);
+		PG_RETURN_POINTER(v);
 	}
 
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	listL = (OffsetNumber *) palloc(nbytes);
 	listR = (OffsetNumber *) palloc(nbytes);
-	unionL = (BOX *) palloc(sizeof(BOX));
-	unionR = (BOX *) palloc(sizeof(BOX));
-	if (allisequal)
-	{
-		cur = DatumGetBoxP(entryvec->vector[OffsetNumberNext(FirstOffsetNumber)].key);
-		if (memcmp((void *) cur, (void *) &pageunion, sizeof(BOX)) == 0)
-		{
-			v->spl_left = listL;
-			v->spl_right = listR;
-			v->spl_nleft = v->spl_nright = 0;
-			memcpy((void *) unionL, (void *) &pageunion, sizeof(BOX));
-			memcpy((void *) unionR, (void *) &pageunion, sizeof(BOX));
-
-			for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-			{
-				if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
-				{
-					v->spl_left[v->spl_nleft] = i;
-					v->spl_nleft++;
-				}
-				else
-				{
-					v->spl_right[v->spl_nright] = i;
-					v->spl_nright++;
-				}
-			}
-			v->spl_ldatum = BoxPGetDatum(unionL);
-			v->spl_rdatum = BoxPGetDatum(unionR);
-
-			PG_RETURN_POINTER(v);
-		}
-	}
-
 	listB = (OffsetNumber *) palloc(nbytes);
 	listT = (OffsetNumber *) palloc(nbytes);
+	unionL = (BOX *) palloc(sizeof(BOX));
+	unionR = (BOX *) palloc(sizeof(BOX));
 	unionB = (BOX *) palloc(sizeof(BOX));
 	unionT = (BOX *) palloc(sizeof(BOX));
 
@@ -318,6 +354,12 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 			}
 			else 
 				ADDLIST(listT, unionT, posT, i);
+		}
+
+		if (IS_BADRATIO(posR, posL) && IS_BADRATIO(posT, posB))
+		{
+			fallbackSplit(entryvec, v);
+			PG_RETURN_POINTER(v);
 		}
 	}
 
