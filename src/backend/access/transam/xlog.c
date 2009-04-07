@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.334 2009/03/11 23:19:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.335 2009/04/07 00:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6914,6 +6914,7 @@ Datum
 pg_start_backup(PG_FUNCTION_ARGS)
 {
 	text	   *backupid = PG_GETARG_TEXT_P(0);
+	bool		fast = PG_GETARG_BOOL(1);
 	char	   *backupidstr;
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
@@ -6983,9 +6984,11 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		 * have different checkpoint positions and hence different history
 		 * file names, even if nothing happened in between.
 		 *
-		 * We don't use CHECKPOINT_IMMEDIATE, hence this can take awhile.
+		 * We use CHECKPOINT_IMMEDIATE only if requested by user (via
+		 * passing fast = true).  Otherwise this can take awhile.
 		 */
-		RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+		RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT |
+						  (fast ? CHECKPOINT_IMMEDIATE : 0));
 
 		/*
 		 * Now we need to fetch the checkpoint record location, and also its

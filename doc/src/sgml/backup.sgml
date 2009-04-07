@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.123 2009/03/05 19:50:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.124 2009/04/07 00:31:25 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -730,19 +730,19 @@ SELECT pg_start_backup('label');
     </para>
 
     <para>
-     <function>pg_start_backup</> can take a long time to finish.
+     By default, <function>pg_start_backup</> can take a long time to finish.
      This is because it performs a checkpoint, and the I/O
-     required for a checkpoint will be spread out over a significant
+     required for the checkpoint will be spread out over a significant
      period of time, by default half your inter-checkpoint interval
      (see the configuration parameter
      <xref linkend="guc-checkpoint-completion-target">).  Usually
-     this is what you want because it minimizes the impact on query
+     this is what you want, because it minimizes the impact on query
      processing.  If you just want to start the backup as soon as
-     possible, execute a <command>CHECKPOINT</> command
-     (which performs a checkpoint as quickly as possible) and then
-     immediately execute <function>pg_start_backup</>.  Then there
-     will be very little for <function>pg_start_backup</>'s checkpoint
-     to do, and it won't take long.
+     possible, use:
+<programlisting>
+SELECT pg_start_backup('label', true);
+</programlisting>
+     This forces the checkpoint to be done as quickly as possible.
     </para>
    </listitem>
    <listitem>
@@ -769,9 +769,9 @@ SELECT pg_stop_backup();
     <para>
      Once the WAL segment files used during the backup are archived, you are
      done.  The file identified by <function>pg_stop_backup</>'s result is
-     the last segment that is required to form a complete set of backup files. 
+     the last segment that is required to form a complete set of backup files.
      <function>pg_stop_backup</> does not return until the last segment has
-     been archived. 
+     been archived.
      Archiving of these files happens automatically since you have
      already configured <varname>archive_command</>. In most cases this
      happens quickly, but you are advised to monitor your archive

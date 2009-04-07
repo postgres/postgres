@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.474 2009/04/01 03:32:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.475 2009/04/07 00:31:25 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12880,10 +12880,10 @@ SELECT set_config('log_statement_stats', 'off', false);
      <tbody>
       <row>
        <entry>
-        <literal><function>pg_start_backup</function>(<parameter>label</> <type>text</>)</literal>
+        <literal><function>pg_start_backup</function>(<parameter>label</> <type>text</> <optional>, <parameter>fast</> <type>boolean</> </optional>)</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Set up for performing on-line backup</entry>
+       <entry>Prepare for performing on-line backup</entry>
       </row>
       <row>
        <entry>
@@ -12932,13 +12932,14 @@ SELECT set_config('log_statement_stats', 'off', false);
    </table>
 
    <para>
-    <function>pg_start_backup</> accepts a single parameter which is an
+    <function>pg_start_backup</> accepts a text parameter which is an
     arbitrary user-defined label for the backup.  (Typically this would be
     the name under which the backup dump file will be stored.)  The function
     writes a backup label file into the database cluster's data directory,
-    and then returns the backup's starting transaction log location as text.  The user
-    need not pay any attention to this result value, but it is provided in
-    case it is of use. 
+    performs a checkpoint,
+    and then returns the backup's starting transaction log location as text.
+    The user need not pay any attention to this result value, but it is
+    provided in case it is of use.
 <programlisting>
 postgres=# select pg_start_backup('label_goes_here');
  pg_start_backup
@@ -12946,6 +12947,10 @@ postgres=# select pg_start_backup('label_goes_here');
  0/D4445B8
 (1 row)
 </programlisting>
+    There is an optional boolean second parameter.  If <literal>true</>,
+    it specifies executing <function>pg_start_backup</> as quickly as
+    possible.  This forces an immediate checkpoint which will cause a
+    spike in I/O operations, slowing any concurrently executing queries.
    </para>
 
    <para>
@@ -12961,7 +12966,7 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    <function>pg_switch_xlog</> moves to the next transaction log file, allowing the 
+    <function>pg_switch_xlog</> moves to the next transaction log file, allowing the
     current file to be archived (assuming you are using continuous archiving).
     The result is the ending transaction log location + 1 within the just-completed transaction log file.
     If there has been no transaction log activity since the last transaction log switch,

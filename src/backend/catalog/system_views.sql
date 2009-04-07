@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.59 2009/02/06 21:15:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.60 2009/04/07 00:31:26 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -403,6 +403,12 @@ CREATE VIEW pg_user_mappings AS
 
 REVOKE ALL on pg_user_mapping FROM public;
 
+--
+-- We have a few function definitions in here, too.
+-- At some point there might be enough to justify breaking them out into
+-- a separate "system_functions.sql" file.
+--
+
 -- Tsearch debug function.  Defined here because it'd be pretty unwieldy
 -- to put it into pg_proc.h
 
@@ -464,3 +470,16 @@ LANGUAGE SQL STRICT STABLE;
 
 COMMENT ON FUNCTION ts_debug(text) IS
     'debug function for current text search configuration';
+
+--
+-- Redeclare built-in functions that need default values attached to their
+-- arguments.  It's impractical to set those up directly in pg_proc.h because
+-- of the complexity and platform-dependency of the expression tree
+-- representation.  (Note that internal functions still have to have entries
+-- in pg_proc.h; we are merely causing their proargnames and proargdefaults
+-- to get filled in.)
+--
+
+CREATE OR REPLACE FUNCTION
+  pg_start_backup(label text, fast boolean DEFAULT false)
+  RETURNS text STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
