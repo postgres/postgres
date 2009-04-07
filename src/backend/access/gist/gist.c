@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.105.4.1 2005/08/30 08:36:52 teodor Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.105.4.2 2009/04/07 17:49:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1212,6 +1212,66 @@ gistadjsubkey(Relation r,
 }
 
 /*
+ * Trivial picksplit implementaion. Function called only 
+ * if user-defined picksplit puts all keys to the one page.
+ * That is a bug of user-defined picksplit but we'd like
+ * to "fix" that.
+ */
+static void
+genericPickSplit(GISTSTATE *giststate, bytea *entryvec, GIST_SPLITVEC *v)
+{
+	OffsetNumber    i,
+					maxoff;
+	int             nbytes;
+	bytea		   *evec;
+	char		   *storage;
+
+	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 1;
+
+	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+
+	v->spl_left = (OffsetNumber *) palloc(nbytes);
+	v->spl_right = (OffsetNumber *) palloc(nbytes);
+	v->spl_nleft = v->spl_nright = 0;
+
+	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+	{
+		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
+		{
+			v->spl_left[v->spl_nleft] = i;
+			v->spl_nleft++;
+		}
+		else
+		{
+			v->spl_right[v->spl_nright] = i;
+			v->spl_nright++;
+		}
+	}
+
+	/*
+	 * Form unions of each page
+	 */
+
+	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
+	storage = (char *) palloc(VARSIZE(entryvec) + MAXALIGN(VARHDRSZ));
+	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
+
+	VARATT_SIZEP(evec) = v->spl_nleft * sizeof(GISTENTRY) + VARHDRSZ;
+	memcpy(VARDATA(evec), ((GISTENTRY *) VARDATA(entryvec)) + FirstOffsetNumber,
+								sizeof(GISTENTRY) * v->spl_nleft);
+	v->spl_ldatum = FunctionCall2(&giststate->unionFn[0],
+									PointerGetDatum(evec),
+									PointerGetDatum(&nbytes));
+
+	VARATT_SIZEP(evec) = v->spl_nright * sizeof(GISTENTRY) + VARHDRSZ;
+	memcpy(VARDATA(evec), ((GISTENTRY *) VARDATA(entryvec)) + FirstOffsetNumber + v->spl_nleft, 
+								sizeof(GISTENTRY) * v->spl_nright);
+	v->spl_rdatum = FunctionCall2(&giststate->unionFn[0],
+									PointerGetDatum(evec),
+									PointerGetDatum(&nbytes));
+}
+
+/*
  *	gistSplit -- split a page in the tree.
  */
 static IndexTuple *
@@ -1299,11 +1359,24 @@ gistSplit(Relation r,
 				  PointerGetDatum(entryvec),
 				  PointerGetDatum(&v));
 
-	/* compatibility with old code */
-	if (v.spl_left[v.spl_nleft - 1] == InvalidOffsetNumber)
-		v.spl_left[v.spl_nleft - 1] = (OffsetNumber) *len;
-	if (v.spl_right[v.spl_nright - 1] == InvalidOffsetNumber)
-		v.spl_right[v.spl_nright - 1] = (OffsetNumber) *len;
+	if ( v.spl_nleft == 0 || v.spl_nright == 0 )
+	{
+		ereport(DEBUG1,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Picksplit method for first column of index \"%s\" failed",
+													RelationGetRelationName(r)),
+				 errhint("Index is not optimal, to optimize it contact developer or try to use the column as a second one in create index command")));
+
+		genericPickSplit(giststate, entryvec, &v);
+	}
+	else
+	{
+		/* compatibility with old code */
+		if (v.spl_left[v.spl_nleft - 1] == InvalidOffsetNumber)
+			v.spl_left[v.spl_nleft - 1] = (OffsetNumber) *len;
+		if (v.spl_right[v.spl_nright - 1] == InvalidOffsetNumber)
+			v.spl_right[v.spl_nright - 1] = (OffsetNumber) *len;
+	}
 
 	v.spl_lattr[0] = v.spl_ldatum;
 	v.spl_rattr[0] = v.spl_rdatum;
