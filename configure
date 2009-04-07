@@ -16324,8 +16324,7 @@ fi
 
 
 
-
-for ac_func in cbrt dlopen fcvt fdatasync getpeereid getpeerucred getrlimit memmove poll posix_fadvise pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs
+for ac_func in cbrt dlopen fcvt fdatasync getpeereid getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 { echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -16419,9 +16418,17 @@ fi
 done
 
 
-{ echo "$as_me:$LINENO: checking whether fdatasync is declared" >&5
-echo $ECHO_N "checking whether fdatasync is declared... $ECHO_C" >&6; }
-if test "${ac_cv_have_decl_fdatasync+set}" = set; then
+# posix_fadvise() is a no-op on Solaris, so don't incur function overhead
+# by calling it, 2009-04-02
+# http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
+if test "$PORTNAME" != "solaris"; then
+
+for ac_func in posix_fadvise
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -16430,27 +16437,53 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <unistd.h>
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $ac_func innocuous_$ac_func
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $ac_func
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$ac_func || defined __stub___$ac_func
+choke me
+#endif
 
 int
 main ()
 {
-#ifndef fdatasync
-  (void) fdatasync;
-#endif
-
+return $ac_func ();
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
   *) ac_try_echo=$ac_try;;
 esac
 eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
+  (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
   rm -f conftest.er1
@@ -16459,34 +16492,29 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (exit $ac_status); } && {
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_cv_have_decl_fdatasync=yes
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  eval "$as_ac_var=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_have_decl_fdatasync=no
+	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_have_decl_fdatasync" >&5
-echo "${ECHO_T}$ac_cv_have_decl_fdatasync" >&6; }
-if test $ac_cv_have_decl_fdatasync = yes; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_FDATASYNC 1
-_ACEOF
-
-
-else
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
   cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_FDATASYNC 0
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
-
 fi
-
+done
 
 { echo "$as_me:$LINENO: checking whether posix_fadvise is declared" >&5
 echo $ECHO_N "checking whether posix_fadvise is declared... $ECHO_C" >&6; }
@@ -16551,6 +16579,77 @@ _ACEOF
 else
   cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_POSIX_FADVISE 0
+_ACEOF
+
+
+fi
+
+
+fi
+
+{ echo "$as_me:$LINENO: checking whether fdatasync is declared" >&5
+echo $ECHO_N "checking whether fdatasync is declared... $ECHO_C" >&6; }
+if test "${ac_cv_have_decl_fdatasync+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <unistd.h>
+
+int
+main ()
+{
+#ifndef fdatasync
+  (void) fdatasync;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_have_decl_fdatasync=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_have_decl_fdatasync=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_have_decl_fdatasync" >&5
+echo "${ECHO_T}$ac_cv_have_decl_fdatasync" >&6; }
+if test $ac_cv_have_decl_fdatasync = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FDATASYNC 1
+_ACEOF
+
+
+else
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FDATASYNC 0
 _ACEOF
 
 
