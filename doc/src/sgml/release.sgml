@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.623 2009/04/07 21:29:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.624 2009/04/07 21:30:01 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2728,7 +2728,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add Japanese message translations
+       Add Japanese message translations (Japan PostgreSQL Users Group)
       </para>
 
       <para>
