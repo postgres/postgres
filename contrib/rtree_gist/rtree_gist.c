@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.10 2004/08/29 05:06:37 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.10.4.1 2009/04/07 17:48:11 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,72 @@ compare_KB(const void *a, const void *b)
 	return (sa > sb) ? 1 : -1;
 }
 
+static void
+adjustBox(BOX *b, BOX *addon)
+{
+	if (b->high.x < addon->high.x)
+		b->high.x = addon->high.x;
+	if (b->low.x > addon->low.x)
+		b->low.x = addon->low.x;
+	if (b->high.y < addon->high.y)
+		b->high.y = addon->high.y;
+	if (b->low.y > addon->low.y)
+		b->low.y = addon->low.y;
+}
+
+/*
+ * Trivial split: half of entries will be placed on one page
+ * and another half - to another
+ */
+static void
+fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
+{
+	OffsetNumber    i, 
+					maxoff;
+	BOX            *unionL = NULL,
+				   *unionR = NULL;
+	int				nbytes;
+
+	maxoff = entryvec->n - 1;
+
+	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+	v->spl_left = (OffsetNumber *) palloc(nbytes);
+	v->spl_right = (OffsetNumber *) palloc(nbytes);
+	v->spl_nleft = v->spl_nright = 0;
+
+	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+	{
+		BOX * cur = DatumGetBoxP(entryvec->vector[i].key);
+
+		if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
+		{
+			v->spl_left[v->spl_nleft] = i;
+			if (unionL == NULL)
+			{
+				unionL = (BOX *) palloc(sizeof(BOX));
+				*unionL = *cur;
+			}
+			else
+				adjustBox(unionL, cur);
+
+			v->spl_nleft++;
+		}
+		else
+		{
+			v->spl_right[v->spl_nright] = i;
+			if (unionR == NULL)
+			{
+				unionR = (BOX *) palloc(sizeof(BOX));
+				*unionR = *cur;
+			}
+			else
+				adjustBox(unionR, cur);
+
+			v->spl_nright++;
+		}
+	}
+}
+
 /*
 ** The GiST PickSplit method
 ** New linear algorithm, see 'New Linear Node Splitting Algorithm for R-tree',
@@ -226,54 +292,25 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 								   ))
 			allisequal = false;
 
-		if (pageunion.high.x < cur->high.x)
-			pageunion.high.x = cur->high.x;
-		if (pageunion.low.x > cur->low.x)
-			pageunion.low.x = cur->low.x;
-		if (pageunion.high.y < cur->high.y)
-			pageunion.high.y = cur->high.y;
-		if (pageunion.low.y > cur->low.y)
-			pageunion.low.y = cur->low.y;
+		adjustBox(&pageunion, cur);
+	}
+
+	if (allisequal)
+	{
+		/*
+		 * All entries are the same
+		 */
+		fallbackSplit(entryvec, v);
+		PG_RETURN_POINTER(v);
 	}
 
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
 	listL = (OffsetNumber *) palloc(nbytes);
 	listR = (OffsetNumber *) palloc(nbytes);
-	unionL = (BOX *) palloc(sizeof(BOX));
-	unionR = (BOX *) palloc(sizeof(BOX));
-	if (allisequal)
-	{
-		cur = DatumGetBoxP(entryvec->vector[OffsetNumberNext(FirstOffsetNumber)].key);
-		if (memcmp((void *) cur, (void *) &pageunion, sizeof(BOX)) == 0)
-		{
-			v->spl_left = listL;
-			v->spl_right = listR;
-			v->spl_nleft = v->spl_nright = 0;
-			memcpy((void *) unionL, (void *) &pageunion, sizeof(BOX));
-			memcpy((void *) unionR, (void *) &pageunion, sizeof(BOX));
-
-			for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-			{
-				if (i <= (maxoff - FirstOffsetNumber + 1) / 2)
-				{
-					v->spl_left[v->spl_nleft] = i;
-					v->spl_nleft++;
-				}
-				else
-				{
-					v->spl_right[v->spl_nright] = i;
-					v->spl_nright++;
-				}
-			}
-			v->spl_ldatum = BoxPGetDatum(unionL);
-			v->spl_rdatum = BoxPGetDatum(unionR);
-
-			PG_RETURN_POINTER(v);
-		}
-	}
-
 	listB = (OffsetNumber *) palloc(nbytes);
 	listT = (OffsetNumber *) palloc(nbytes);
+	unionL = (BOX *) palloc(sizeof(BOX));
+	unionR = (BOX *) palloc(sizeof(BOX));
 	unionB = (BOX *) palloc(sizeof(BOX));
 	unionT = (BOX *) palloc(sizeof(BOX));
 
@@ -343,6 +380,12 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 				ADDLIST(listT, unionT, posT, arr[i - 1].pos);
 		}
 		pfree(arr);
+
+		if ((posR == 0 || posL == 0) && (posT == 0 || posB == 0))
+		{
+			fallbackSplit(entryvec, v);
+			PG_RETURN_POINTER(v);
+		}
 	}
 
 	/* which split more optimal? */
