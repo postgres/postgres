@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.84 2009/04/06 19:34:52 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.85 2009/04/08 09:50:48 heikki Exp $
  */
 #include "postgres.h"
 
@@ -890,7 +890,7 @@ cliplen(const char *str, int len, int limit)
 	return l;
 }
 
-#if defined(ENABLE_NLS) && defined(WIN32)
+#if defined(ENABLE_NLS)
 static const struct codeset_map {
 	int	encoding;
 	const char *codeset;
@@ -929,7 +929,7 @@ static const struct codeset_map {
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_JIS_2004, "EUC-JP"}
 };
-#endif /* WIN32 */
+#endif /* ENABLE_NLS */
 
 void
 SetDatabaseEncoding(int encoding)
@@ -939,21 +939,35 @@ SetDatabaseEncoding(int encoding)
 
 	DatabaseEncoding = &pg_enc2name_tbl[encoding];
 	Assert(DatabaseEncoding->encoding == encoding);
-
-#ifdef ENABLE_NLS
-	pg_bind_textdomain_codeset(textdomain(NULL), encoding);
-#endif
 }
 
 /*
- * On Windows, we need to explicitly bind gettext to the correct
- * encoding, because gettext() tends to get confused.
+ * Bind gettext to the codeset equivalent with the database encoding.
  */
 void
-pg_bind_textdomain_codeset(const char *domainname, int encoding)
+pg_bind_textdomain_codeset(const char *domainname)
 {
-#if defined(ENABLE_NLS) && defined(WIN32)
+#if defined(ENABLE_NLS)
+	int		encoding = GetDatabaseEncoding();
 	int     i;
+
+	/*
+	 * gettext() uses the codeset specified by LC_CTYPE by default,
+	 * so if that matches the database encoding we don't need to do
+	 * anything. In CREATE DATABASE, we enforce or trust that the
+	 * locale's codeset matches database encoding, except for the C
+	 * locale. In C locale, we bind gettext() explicitly to the right
+	 * codeset.
+	 *
+	 * On Windows, though, gettext() tends to get confused so we always
+	 * bind it.
+	 */
+#ifndef WIN32
+	const char *ctype = setlocale(LC_CTYPE, NULL);
+
+	if (pg_strcasecmp(ctype, "C") != 0 && pg_strcasecmp(ctype, "POSIX") != 0)
+		return;
+#endif
 
 	for (i = 0; i < lengthof(codeset_map_array); i++)
 	{

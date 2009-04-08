@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.173 2009/03/08 16:07:12 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.174 2009/04/08 09:50:48 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1242,7 +1242,7 @@ pg_bindtextdomain(const char *domain)
 
 		get_locale_path(my_exec_path, locale_path);
 		bindtextdomain(domain, locale_path);
-		pg_bind_textdomain_codeset(domain, GetDatabaseEncoding());
+		pg_bind_textdomain_codeset(domain);
 	}
 #endif
 }
