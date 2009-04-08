@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.222 2009/04/04 00:39:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.223 2009/04/08 22:29:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1055,15 +1055,9 @@ testdb=&gt;
 
         <note>
         <para>
-        To look up functions taking argument or returning values of a specific
+        To look up functions taking arguments or returning values of a specific
         type, use your pager's search capability to scroll through the <literal>\df</>
         output.
-        </para>
-
-        <para>
-        To reduce clutter, <literal>\df</> does not show data type I/O
-        functions.  This is implemented by ignoring functions that accept
-        or return type <type>cstring</>.
         </para>
         </note>
 
