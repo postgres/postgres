@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.534 2009/04/06 08:42:53 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.535 2009/04/08 19:02:37 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1734,8 +1734,10 @@ dumpDatabase(Archive *AH)
 		appendPQExpBuffer(creaQry, "\n-- For binary upgrade, set datfrozenxid.\n");
 		appendPQExpBuffer(creaQry, "UPDATE pg_database\n"
 							 "SET datfrozenxid = '%u'\n"
-							 "WHERE	datname = '%s';\n",
-							 frozenxid, datname);
+							 "WHERE	datname = ",
+							 frozenxid);
+		appendStringLiteralAH(creaQry, datname, AH);
+		appendPQExpBuffer(creaQry, ";\n");
 	}
 	
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
@@ -9396,9 +9398,15 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 
 	appendPQExpBuffer(q, "CREATE SERVER %s", fmtId(srvinfo->dobj.name));
 	if (srvinfo->srvtype && strlen(srvinfo->srvtype) > 0)
-		appendPQExpBuffer(q, " TYPE '%s'", srvinfo->srvtype);
+	{
+		appendPQExpBuffer(q, " TYPE ");
+		appendStringLiteralAH(q, srvinfo->srvtype, fout);
+	}
 	if (srvinfo->srvversion && strlen(srvinfo->srvversion) > 0)
-		appendPQExpBuffer(q, " VERSION '%s'", srvinfo->srvversion);
+	{
+		appendPQExpBuffer(q, " VERSION ");
+		appendStringLiteralAH(q, srvinfo->srvversion, fout);
+	}
 
 	appendPQExpBuffer(q, " FOREIGN DATA WRAPPER ");
 	appendPQExpBuffer(q, "%s", fmtId(fdwname));
@@ -9891,23 +9899,23 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 										 "		WHERE	relnamespace = "
 										 "(SELECT oid FROM pg_namespace "
 										 "WHERE nspname = CURRENT_SCHEMA)\n"
-										 "			AND relname = '%s'\n"
-										 "	);\n",
+										 "			AND relname = ",
 										 tbinfo->attlen[j],
 										 tbinfo->attalign[j],
-										 tbinfo->attnames[j],
-										 tbinfo->dobj.name);
+										 tbinfo->attnames[j]);
+					appendStringLiteralAH(q, tbinfo->dobj.name, fout);
+					appendPQExpBuffer(q, "\n	);\n");
 				}
 			}
 			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid.\n");
 			appendPQExpBuffer(q, "UPDATE pg_class\n"
 								 "SET relfrozenxid = '%u'\n"
-								 "WHERE	relname = '%s'\n"
-								 "	AND relnamespace = "
+								 "WHERE	relname = ",
+								 tbinfo->frozenxid);
+			appendStringLiteralAH(q, tbinfo->dobj.name, fout);
+			appendPQExpBuffer(q, "\n	AND relnamespace = "
 								 "(SELECT oid FROM pg_namespace "
-								 "WHERE nspname = CURRENT_SCHEMA);\n",
-								 tbinfo->frozenxid,
-								 tbinfo->dobj.name);
+								 "WHERE nspname = CURRENT_SCHEMA);\n");
 		}
 	
 		/* Loop dumping statistics and storage statements */
