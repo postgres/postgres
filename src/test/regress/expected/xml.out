@@ -173,6 +173,21 @@ SELECT xmlelement(name foo, bytea 'bar');
  <foo>626172</foo>
 (1 row)
 
+SELECT xmlelement(name foo, xmlattributes(true as bar));
+    xmlelement     
+-------------------
+ <foo bar="true"/>
+(1 row)
+
+SELECT xmlelement(name foo, xmlattributes('2009-04-09 00:24:37'::timestamp as bar));
+            xmlelement            
+----------------------------------
+ <foo bar="2009-04-09T00:24:37"/>
+(1 row)
+
+SELECT xmlelement(name foo, xmlattributes('infinity'::timestamp as bar));
+ERROR:  timestamp out of range
+DETAIL:  XML does not support infinite timestamp values.
 SELECT xmlparse(content 'abc');
  xmlparse 
 ----------

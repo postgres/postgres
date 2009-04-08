@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.203 2009/04/02 22:39:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.204 2009/04/08 21:51:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -847,7 +847,6 @@ typedef struct XmlExprState
 {
 	ExprState	xprstate;
 	List	   *named_args;		/* ExprStates for named arguments */
-	FmgrInfo   *named_outfuncs; /* array of output fns for named arguments */
 	List	   *args;			/* ExprStates for other arguments */
 } XmlExprState;
 

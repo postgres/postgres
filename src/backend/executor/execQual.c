@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.245 2009/04/05 20:32:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.246 2009/04/08 21:51:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4671,27 +4671,16 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				XmlExprState *xstate = makeNode(XmlExprState);
 				List	   *outlist;
 				ListCell   *arg;
-				int			i;
 
 				xstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalXml;
-				xstate->named_outfuncs = (FmgrInfo *)
-					palloc0(list_length(xexpr->named_args) * sizeof(FmgrInfo));
 				outlist = NIL;
-				i = 0;
 				foreach(arg, xexpr->named_args)
 				{
 					Expr	   *e = (Expr *) lfirst(arg);
 					ExprState  *estate;
-					Oid			typOutFunc;
-					bool		typIsVarlena;
 
 					estate = ExecInitExpr(e, parent);
 					outlist = lappend(outlist, estate);
-
-					getTypeOutputInfo(exprType((Node *) e),
-									  &typOutFunc, &typIsVarlena);
-					fmgr_info(typOutFunc, &xstate->named_outfuncs[i]);
-					i++;
 				}
 				xstate->named_args = outlist;
 

@@ -54,6 +54,10 @@ SELECT xmlelement(name foo, bytea 'bar');
 SET xmlbinary TO hex;
 SELECT xmlelement(name foo, bytea 'bar');
 
+SELECT xmlelement(name foo, xmlattributes(true as bar));
+SELECT xmlelement(name foo, xmlattributes('2009-04-09 00:24:37'::timestamp as bar));
+SELECT xmlelement(name foo, xmlattributes('infinity'::timestamp as bar));
+
 
 SELECT xmlparse(content 'abc');
 SELECT xmlparse(content '<abc>x</abc>');
