@@ -1230,13 +1230,7 @@ INSERT INTO num_input_test(n1) VALUES ('  -93853');
 INSERT INTO num_input_test(n1) VALUES ('555.50');
 INSERT INTO num_input_test(n1) VALUES ('-555.50');
 INSERT INTO num_input_test(n1) VALUES ('NaN ');
-ERROR:  invalid input syntax for type numeric: "NaN "
-LINE 1: INSERT INTO num_input_test(n1) VALUES ('NaN ');
-                                               ^
 INSERT INTO num_input_test(n1) VALUES ('        nan');
-ERROR:  invalid input syntax for type numeric: "        nan"
-LINE 1: INSERT INTO num_input_test(n1) VALUES ('        nan');
-                                               ^
 -- bad inputs
 INSERT INTO num_input_test(n1) VALUES ('     ');
 ERROR:  invalid input syntax for type numeric: "     "
@@ -1278,7 +1272,9 @@ SELECT * FROM num_input_test;
   -93853
   555.50
  -555.50
-(5 rows)
+     NaN
+     NaN
+(7 rows)
 
 --
 -- Test some corner cases for division

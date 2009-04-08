@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.116 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.117 2009/04/08 22:08:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,8 @@ static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
 static void zero_var(NumericVar *var);
 
-static void set_var_from_str(const char *str, NumericVar *dest);
+static const char *set_var_from_str(const char *str, const char *cp,
+									NumericVar *dest);
 static void set_var_from_num(Numeric value, NumericVar *dest);
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static char *get_str_from_var(NumericVar *var, int dscale);
@@ -321,26 +322,69 @@ numeric_in(PG_FUNCTION_ARGS)
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
-	NumericVar	value;
 	Numeric		res;
+	const char *cp;
+
+	/* Skip leading spaces */
+	cp = str;
+	while (*cp)
+	{
+		if (!isspace((unsigned char) *cp))
+			break;
+		cp++;
+	}
 
 	/*
 	 * Check for NaN
 	 */
-	if (pg_strcasecmp(str, "NaN") == 0)
-		PG_RETURN_NUMERIC(make_result(&const_nan));
+	if (pg_strncasecmp(cp, "NaN", 3) == 0)
+	{
+		res = make_result(&const_nan);
 
-	/*
-	 * Use set_var_from_str() to parse the input string and return it in the
-	 * packed DB storage format
-	 */
-	init_var(&value);
-	set_var_from_str(str, &value);
+		/* Should be nothing left but spaces */
+		cp += 3;
+		while (*cp)
+		{
+			if (!isspace((unsigned char) *cp))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for type numeric: \"%s\"",
+							str)));
+			cp++;
+		}
+	}
+	else
+	{
+		/*
+		 * Use set_var_from_str() to parse a normal numeric value
+		 */
+		NumericVar	value;
 
-	apply_typmod(&value, typmod);
+		init_var(&value);
 
-	res = make_result(&value);
-	free_var(&value);
+		cp = set_var_from_str(str, cp, &value);
+
+		/*
+		 * We duplicate a few lines of code here because we would like to
+		 * throw any trailing-junk syntax error before any semantic error
+		 * resulting from apply_typmod.  We can't easily fold the two
+		 * cases together because we mustn't apply apply_typmod to a NaN.
+		 */
+		while (*cp)
+		{
+			if (!isspace((unsigned char) *cp))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for type numeric: \"%s\"",
+							str)));
+			cp++;
+		}
+
+		apply_typmod(&value, typmod);
+
+		res = make_result(&value);
+		free_var(&value);
+	}
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -2121,7 +2165,9 @@ float8_numeric(PG_FUNCTION_ARGS)
 
 	init_var(&result);
 
-	set_var_from_str(buf, &result);
+	/* Assume we need not worry about leading/trailing spaces */
+	(void) set_var_from_str(buf, buf, &result);
+
 	res = make_result(&result);
 
 	free_var(&result);
@@ -2181,7 +2227,9 @@ float4_numeric(PG_FUNCTION_ARGS)
 
 	init_var(&result);
 
-	set_var_from_str(buf, &result);
+	/* Assume we need not worry about leading/trailing spaces */
+	(void) set_var_from_str(buf, buf, &result);
+
 	res = make_result(&result);
 
 	free_var(&result);
@@ -2972,11 +3020,17 @@ zero_var(NumericVar *var)
  * set_var_from_str()
  *
  *	Parse a string and put the number into a variable
+ *
+ * This function does not handle leading or trailing spaces, and it doesn't
+ * accept "NaN" either.  It returns the end+1 position so that caller can
+ * check for trailing spaces/garbage if deemed necessary.
+ *
+ * cp is the place to actually start parsing; str is what to use in error
+ * reports.  (Typically cp would be the same except advanced over spaces.)
  */
-static void
-set_var_from_str(const char *str, NumericVar *dest)
+static const char *
+set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 {
-	const char *cp = str;
 	bool		have_dp = FALSE;
 	int			i;
 	unsigned char *decdigits;
@@ -2993,15 +3047,6 @@ set_var_from_str(const char *str, NumericVar *dest)
 	 * We first parse the string to extract decimal digits and determine the
 	 * correct decimal weight.	Then convert to NBASE representation.
 	 */
-
-	/* skip leading spaces */
-	while (*cp)
-	{
-		if (!isspace((unsigned char) *cp))
-			break;
-		cp++;
-	}
-
 	switch (*cp)
 	{
 		case '+':
@@ -3086,17 +3131,6 @@ set_var_from_str(const char *str, NumericVar *dest)
 			dscale = 0;
 	}
 
-	/* Should be nothing left but spaces */
-	while (*cp)
-	{
-		if (!isspace((unsigned char) *cp))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type numeric: \"%s\"",
-							str)));
-		cp++;
-	}
-
 	/*
 	 * Okay, convert pure-decimal representation to base NBASE.  First we need
 	 * to determine the converted weight and ndigits.  offset is the number of
@@ -3137,6 +3171,9 @@ set_var_from_str(const char *str, NumericVar *dest)
 
 	/* Strip any leading/trailing zeroes, and normalize weight if zero */
 	strip_var(dest);
+
+	/* Return end+1 position for caller */
+	return cp;
 }
 
 
