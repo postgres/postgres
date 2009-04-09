@@ -1,0 +1,219 @@
+# Spanish message translation file for ecpglib
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-01-26 13:21+0000\n"
+"PO-Revision-Date: 2009-01-26 05:34-0300\n"
+"Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: connect.c:226
+msgid "empty message text"
+msgstr "mensaje de texto vacío"
+
+#: connect.c:381 connect.c:407 connect.c:518
+msgid "<DEFAULT>"
+msgstr ""
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:26
+#, c-format
+msgid "no data found on line %d"
+msgstr "no se encontraron datos en la linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:33
+#, c-format
+msgid "out of memory on line %d"
+msgstr "fuera de memoria en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:40
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "tipo no soportado «%s» en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:47
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "demasiados argumentos en la linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:54
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "pocos argumentos en la linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:61
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "sintáxis de entrada no válida para el tipo entero: «%s», en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:68
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "sintáxis de entrada no válida para el tipo entero sin signo: «%s», en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:75
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "sintáxis de entrada no válida para el tipo coma flotante: «%s», en linea %d "
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:83
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "sintáxis no válida para el tipo booleano: «%s», en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:88
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "no se puede convertir el valor booleano: tamaño incorrecto, en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:95
+#, c-format
+msgid "empty query on line %d"
+msgstr "consulta vacía en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:102
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "valor nulo sin indicador en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:109
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "la variable no tiene un tipo de arreglo en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:116
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "dato leído del servidor no es un arrglo en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:123
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "inserción un arreglo de variables no está soportado en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:130
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "conexión «%s» no existe en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:137
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "no conectada a la conexión «%s» en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:144
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "nombre sentencia no válida «%s» en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:151
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "descriptor «%s» no encontrado en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:158
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "índice descriptor fuera de rando en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:165
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "elemento descriptor no reconocido «%s» en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:172
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "la variable no tiene un tipo numérico en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:179
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "la variable no tiene un tipo caracter en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:186
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "error en el procesamiento de la transacción en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:193
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "no se pudo conectar con la base de datos «%s» en linea %d"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:200
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "error SQL %d en linea %d"
+
+#: error.c:313
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "error SQL: %s\n"
+
+#: execute.c:1628
+msgid "<empty>"
+msgstr ""
+
+#: misc.c:113
+msgid "NULL"
+msgstr "NULO"

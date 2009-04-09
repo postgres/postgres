@@ -1,0 +1,125 @@
+# Spanish message translation file for plperl
+# This file is put in the public domain.
+# Emanuel Calvo Franco <postgres.arg@gmail.com>, 2008.
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2008
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-hackers@postgresql.org\n"
+"POT-Creation-Date: 2008-10-29 13:55-0300\n"
+"PO-Revision-Date: 2008-10-31 12:29-0200\n"
+"Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: plperl.c:196
+msgid "If true, will compile trusted and untrusted perl code in strict mode"
+msgstr "Si es verdadero, se compilará código Perl confiable y no confiable en modo «strict»"
+
+#: plperl.c:599 plperl.c:792
+#, c-format
+msgid "Perl hash contains nonexistent column \"%s\""
+msgstr "el hash de Perl contiene el columna inexistente «%s»"
+
+#: plperl.c:768
+msgid "$_TD->{new} does not exist"
+msgstr "$_TD->{new} no existe"
+
+#: plperl.c:772
+msgid "$_TD->{new} is not a hash reference"
+msgstr "$_TD->{new} no es una referencia a un hash"
+
+#: plperl.c:909 plperl.c:1608
+#, c-format
+msgid "plperl functions cannot return type %s"
+msgstr "las funciones en plperl no pueden retornar el tipo %s"
+
+#: plperl.c:921 plperl.c:1655
+#, c-format
+msgid "plperl functions cannot take type %s"
+msgstr "las funciones en plperl no pueden recibir el tipo %s"
+
+#: plperl.c:997
+#, c-format
+msgid "creation of Perl function \"%s\" failed: %s"
+msgstr "la creación de la función Perl «%s» falló: %s"
+
+#: plperl.c:1127 plperl.c:1185
+#, c-format
+msgid "error from Perl function \"%s\": %s"
+msgstr "error en la función de Perl «%s»: %s"
+
+#: plperl.c:1233
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "se llamó a una función que retorna un conjunto en un contexto que no puede aceptarlo"
+
+#: plperl.c:1276
+msgid ""
+"set-returning Perl function must return reference to array or use return_next"
+msgstr ""
+"una función Perl que retorna un conjunto debe retornar una referencia a un arreglo o usar return_next"
+
+#: plperl.c:1309
+msgid "composite-returning Perl function must return reference to hash"
+msgstr "una función Perl que retorna un tipo compuesto debe retornar una referencia a un hash"
+
+#: plperl.c:1318
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
+
+#: plperl.c:1434
+msgid "ignoring modified tuple in DELETE trigger"
+msgstr "ignorando la tupla modificada en el disparador DELETE"
+
+#: plperl.c:1442
+msgid "result of Perl trigger function must be undef, \"SKIP\" or \"MODIFY\""
+msgstr "el resultado de la función disparadora de Perl debe ser undef, «SKIP» o «MODIFY»"
+
+#: plperl.c:1542
+msgid "out of memory"
+msgstr "memoria agotada"
+
+#: plperl.c:1599
+msgid "trigger functions can only be called as triggers"
+msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
+
+#: plperl.c:1820 plperl.c:2065 plperl.c:2149 plperl.c:2276 plperl.c:2429
+#: plperl.c:2563 SPI.xs:39 SPI.xs:66
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plperl.c:1892
+msgid "cannot use return_next in a non-SETOF function"
+msgstr "no se puede utilizar return_next en una función sin SETOF"
+
+#: plperl.c:1898
+msgid ""
+"setof-composite-returning Perl function must call return_next with reference "
+"to hash"
+msgstr ""
+"una función Perl que retorna «setof» de un tipo compuesto debe llamar a "
+"return_next con una referencia a hash"
+
+#: SPI.xs:114
+msgid "Usage: spi_exec_query(query, limit) or spi_exec_query(query)"
+msgstr "Empleo: spi_exec_query(consulta, limite) o spi_exec_query(consulta)"
+
+#: SPI.xs:152
+msgid "Usage: spi_prepare(query, ...)"
+msgstr "Empleo: spi_prepare(consulta, ...)"
+
+#: SPI.xs:171
+#, c-format
+msgid "Usage: spi_exec_prepared(query, [\\%%attr,] [\\@bind_values])"
+msgstr "Empleo: spi_exec_prepared(consulta, [\\%%attributos,] [\\@valores_de_enlace])"
+
+#: SPI.xs:195
+msgid "Usage: spi_query_prepared(query, [\\@bind_values])"
+msgstr "Empleo: spi_query_prepared(consulta, [\\@valores_de_enlace])"

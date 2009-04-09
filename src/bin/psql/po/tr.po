@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-29 14:24-0400\n"
-"PO-Revision-Date: 2008-01-29 17:19-0800\n"
+"POT-Creation-Date: 2008-03-12 23:16-0300\n"
+"PO-Revision-Date: 2008-03-13 00:31-0800\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -139,8 +139,8 @@ msgstr "Zamanlama kapalı."
 #: command.c:1458
 #: command.c:1491
 #: common.c:135
-#: copy.c:509
-#: copy.c:573
+#: copy.c:521
+#: copy.c:585
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -164,9 +164,9 @@ msgstr "%s kulalnıcısının şifresi: "
 #: common.c:809
 #: common.c:834
 #: common.c:907
-#: copy.c:644
-#: copy.c:689
-#: copy.c:818
+#: copy.c:656
+#: copy.c:701
+#: copy.c:830
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -398,47 +398,47 @@ msgstr "Sunucunu sürümü (%d) ON_ERROR_ROLLBACK biçiminde tablespace destekle
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: parametre eksik\n"
 
-#: copy.c:391
+#: copy.c:403
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: \"%s\" ifadesinde ayrıştırma hatası\n"
 
-#: copy.c:393
+#: copy.c:405
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: satır sonunda ayrıştırma hatası\n"
 
-#: copy.c:520
+#: copy.c:532
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: dizinden ya da dizine kopyalanamıyor\n"
 
-#: copy.c:546
+#: copy.c:558
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:550
-#: copy.c:564
+#: copy.c:562
+#: copy.c:576
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: beklenmeyen yanıt (%d)\n"
 
-#: copy.c:619
-#: copy.c:629
+#: copy.c:631
+#: copy.c:641
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "COPY verisi yazılamadı: %s\n"
 
-#: copy.c:636
+#: copy.c:648
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "COPY veri aktarımı başarısız: %s"
 
-#: copy.c:684
+#: copy.c:696
 msgid "canceled by user"
 msgstr "kullanıcı tarafından iptal edildi"
 
-#: copy.c:699
+#: copy.c:711
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -446,7 +446,7 @@ msgstr ""
 "Kopyalanacak veriyi girin ve ardından entera basın.\n"
 "Sonuçlandırmak için yeni satırda ters taksim işareti ve nokta girin."
 
-#: copy.c:811
+#: copy.c:823
 msgid "aborted because of read failure"
 msgstr "okuma hatası nedeniyle kesildi"
 
@@ -3313,12 +3313,12 @@ msgid ""
 "DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
 "DELETE FROM [ ONLY ] tablo [ [ AS ] takma_adı ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 
 #: sql_help.h:285
 msgid "discard session state"
@@ -3684,11 +3684,11 @@ msgstr "tabloda yeni satırları ekliyor"
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
-"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
-"INSERT INTO table [ ( column [, ...] ) ]\n"
+"IINSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
-"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 
 #: sql_help.h:421
 msgid "listen for a notification"
@@ -3931,7 +3931,7 @@ msgstr "tablo ya da  view'dan satırları getir"
 #: sql_help.h:486
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ AS output_name ] [, ...]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
 "    [ GROUP BY expression [, ...] ]\n"
@@ -3951,7 +3951,7 @@ msgid ""
 "    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
 msgstr ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ AS output_name ] [, ...]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
 "    [ GROUP BY expression [, ...] ]\n"
@@ -3973,7 +3973,7 @@ msgstr ""
 #: sql_help.h:490
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ AS output_name ] [, ...]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
 "    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
@@ -3986,7 +3986,7 @@ msgid ""
 "    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
 msgstr ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ AS output_name ] [, ...]\n"
+"    * | expression [ [ AS ] output_name ] [, ...]\n"
 "    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
@@ -4123,14 +4123,14 @@ msgid ""
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
 "    [ FROM fromlist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
 "UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
 "    [ FROM fromlist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 
 #: sql_help.h:533
 msgid "garbage-collect and optionally analyze a database"
@@ -4160,60 +4160,60 @@ msgstr ""
 "    [ LIMIT { count | ALL } ]\n"
 "    [ OFFSET start ]"
 
-#: ../../port/exec.c:192
-#: ../../port/exec.c:306
-#: ../../port/exec.c:349
+#: ../../port/exec.c:195
+#: ../../port/exec.c:309
+#: ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../../port/exec.c:211
+#: ../../port/exec.c:214
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "geçersiz ikili (binary) \"%s\""
 
-#: ../../port/exec.c:260
+#: ../../port/exec.c:263
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "\"%s\" ikili (binary) dosyası okunamadı"
 
-#: ../../port/exec.c:267
+#: ../../port/exec.c:270
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "\"%s\"  çalıştırmak için bulunamadı"
 
-#: ../../port/exec.c:322
-#: ../../port/exec.c:358
+#: ../../port/exec.c:325
+#: ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:340
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../../port/exec.c:583
+#: ../../port/exec.c:586
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
 
-#: ../../port/exec.c:587
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "alt süreç 0x%X exception tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:596
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "alt süreç %s sinyali tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:602
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:603
+#: ../../port/exec.c:606
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"

@@ -1,0 +1,444 @@
+# translation of initdb.
+# Shigehiro Honda <fwif0083@mb.infoweb.ne.jp>, 2005.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-07 22:05+0900\n"
+"PO-Revision-Date: 2008-04-07 21:11+0900\n"
+"Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
+"Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_resetxlog.c:134
+#, c-format
+msgid "%s: invalid argument for option -e\n"
+msgstr "%s: オプション -e の引数が無効です\n"
+
+#: pg_resetxlog.c:135 pg_resetxlog.c:150 pg_resetxlog.c:165 pg_resetxlog.c:180
+#: pg_resetxlog.c:195 pg_resetxlog.c:210 pg_resetxlog.c:217 pg_resetxlog.c:224
+#: pg_resetxlog.c:230 pg_resetxlog.c:238
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "詳細は\"%s --help\"を実行してください\n"
+
+#: pg_resetxlog.c:140
+#, c-format
+msgid "%s: transaction ID epoch (-e) must not be -1\n"
+msgstr "%s: トランザクションID エポック(-e)は -1 であってはなりません\n"
+
+#: pg_resetxlog.c:149
+#, c-format
+msgid "%s: invalid argument for option -x\n"
+msgstr "%s: オプション-xの引数が無効です\n"
+
+#: pg_resetxlog.c:155
+#, c-format
+msgid "%s: transaction ID (-x) must not be 0\n"
+msgstr "%s: トランザクションID(-x)は非0でなければなりません\n"
+
+#: pg_resetxlog.c:164
+#, c-format
+msgid "%s: invalid argument for option -o\n"
+msgstr "%s: オプション-oの引数が無効です\n"
+
+#: pg_resetxlog.c:170
+#, c-format
+msgid "%s: OID (-o) must not be 0\n"
+msgstr "%s: OID(-o)は非0でなければなりません\n"
+
+#: pg_resetxlog.c:179
+#, c-format
+msgid "%s: invalid argument for option -m\n"
+msgstr "%s: オプション-mの引数が無効です\n"
+
+#: pg_resetxlog.c:185
+#, c-format
+msgid "%s: multitransaction ID (-m) must not be 0\n"
+msgstr "%s: マルチトランザクションID(-m)は非0でなければなりません\n"
+
+#: pg_resetxlog.c:194
+#, c-format
+msgid "%s: invalid argument for option -O\n"
+msgstr "%s: オプション-Oの引数が無効です\n"
+
+#: pg_resetxlog.c:200
+#, c-format
+msgid "%s: multitransaction offset (-O) must not be -1\n"
+msgstr "%s: マルチトランザクションオフセット(-O)は-1ではいけません\n"
+
+#: pg_resetxlog.c:209 pg_resetxlog.c:216 pg_resetxlog.c:223
+#, c-format
+msgid "%s: invalid argument for option -l\n"
+msgstr "%s: オプション-lの引数が無効です\n"
+
+#: pg_resetxlog.c:237
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: データディレクトリが指定されていません\n"
+
+#: pg_resetxlog.c:251
+#, c-format
+msgid "%s: cannot be executed by \"root\"\n"
+msgstr "%s: \"root\"では実行できません\n"
+
+#: pg_resetxlog.c:253
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "PostgreSQLのスーパーユーザで%sを実行しなければなりません\n"
+
+#: pg_resetxlog.c:263
+#, c-format
+msgid "%s: could not change directory to \"%s\": %s\n"
+msgstr "%s: ディレクトリ\"%s\"に移動できませんでした: %s\n"
+
+#: pg_resetxlog.c:278 pg_resetxlog.c:391
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: 読み取り用のファイル\"%s\"をオープンできませんでした: %s\n"
+
+#: pg_resetxlog.c:284
+#, c-format
+msgid ""
+"%s: lock file \"%s\" exists\n"
+"Is a server running?  If not, delete the lock file and try again.\n"
+msgstr ""
+"%s: ロックファイル\"%s\"があります\n"
+"サーバが稼動していませんか? 稼動していなければロックファイルを削除し再実行し"
+"てください。\n"
+
+#: pg_resetxlog.c:340
+#, c-format
+msgid ""
+"\n"
+"If these values seem acceptable, use -f to force reset.\n"
+msgstr ""
+"\n"
+"この値が適切だと思われるのであれば、-fを使用して強制リセットしてください。\n"
+
+#: pg_resetxlog.c:352
+#, c-format
+msgid ""
+"The database server was not shut down cleanly.\n"
+"Resetting the transaction log might cause data to be lost.\n"
+"If you want to proceed anyway, use -f to force reset.\n"
+msgstr ""
+"データベースサーバが正しくシャットダウンされていませんでした。\n"
+"トランザクションログのリセットにはデータ損失の恐れがあります。\n"
+"とにかく処理したいのであれば、-fを使用して強制的にリセットしてください。\n"
+
+#: pg_resetxlog.c:365
+#, c-format
+msgid "Transaction log reset\n"
+msgstr "トランザクションログをリセットします。\n"
+
+#: pg_resetxlog.c:394
+#, c-format
+msgid ""
+"If you are sure the data directory path is correct, execute\n"
+"  touch %s\n"
+"and try again.\n"
+msgstr ""
+"確実にデータディレクトリのパスが正しければ、\n"
+"  touch %s\n"
+"を実行し、再実行してください。\n"
+"\n"
+
+#: pg_resetxlog.c:407
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: ファイル\"%s\"を読み込めませんでした: %s\n"
+
+#: pg_resetxlog.c:430
+#, c-format
+msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
+msgstr "%s: pg_controlがありましたが、CRCが無効でした。警告付きで続行します\n"
+
+#: pg_resetxlog.c:439
+#, c-format
+msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
+msgstr ""
+"%s: pg_controlがありましたが、破損あるいは未知のバージョンでしたので無視しま"
+"す\n"
+
+#: pg_resetxlog.c:523
+#, c-format
+msgid ""
+"Guessed pg_control values:\n"
+"\n"
+msgstr ""
+"pg_controlの推測値:\n"
+"\n"
+
+#: pg_resetxlog.c:525
+#, c-format
+msgid ""
+"pg_control values:\n"
+"\n"
+msgstr ""
+"pg_controlの値:\n"
+"\n"
+
+#: pg_resetxlog.c:534
+#, c-format
+msgid "First log file ID after reset:        %u\n"
+msgstr "リセット後、現在のログファイルID:     %u\n"
+
+#: pg_resetxlog.c:536
+#, c-format
+msgid "First log file segment after reset:   %u\n"
+msgstr "リセット後、最初のログファイルセグメント: %u\n"
+
+#: pg_resetxlog.c:538
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "pg_controlバージョン番号:                 %u\n"
+
+#: pg_resetxlog.c:540
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "カタログバージョン番号:                   %u\n"
+
+#: pg_resetxlog.c:542
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "データベースシステム識別子:               %s\n"
+
+#: pg_resetxlog.c:544
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "最終チェックポイントの時系列ID:           %u\n"
+
+#: pg_resetxlog.c:546
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "最終チェックポイントのNextXID:                    %u/%u\n"
+
+#: pg_resetxlog.c:549
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "最終チェックポイントのNextOID:            %u\n"
+
+#: pg_resetxlog.c:551
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "最終チェックポイントのNextMultiXactId:  %u\n"
+
+#: pg_resetxlog.c:553
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "最終チェックポイントのNextMultiOffset:   %u\n"
+
+#: pg_resetxlog.c:555
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "最大のデータアライメント:               %u\n"
+
+#: pg_resetxlog.c:558
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "データベースブロックサイズ:               %u\n"
+
+#: pg_resetxlog.c:560
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "ラージリレーションセグメントのブロック数: %u\n"
+
+#: pg_resetxlog.c:562
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WALブロックのサイズ:                              %u\n"
+
+#: pg_resetxlog.c:564
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "WALセグメント当たりのバイト数:                  %u\n"
+
+#: pg_resetxlog.c:566
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "識別子の最大長:                           %u\n"
+
+#: pg_resetxlog.c:568
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "インデックス内の最大列数:                  %u\n"
+
+#: pg_resetxlog.c:570
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST チャンク一個の最大サイズ:       %u\n"
+
+#: pg_resetxlog.c:572
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "日付/時刻型の格納方式                     %s\n"
+
+#: pg_resetxlog.c:573
+msgid "64-bit integers"
+msgstr "64ビット整数\""
+
+#: pg_resetxlog.c:573
+msgid "floating-point numbers"
+msgstr "浮動小数点数"
+
+#: pg_resetxlog.c:574
+#, c-format
+msgid "Float4 argument passing:              %s\n"
+msgstr "Float4 引数の渡し方：                 %s\n"
+
+#: pg_resetxlog.c:575 pg_resetxlog.c:577
+msgid "by value"
+msgstr "値渡し"
+
+#: pg_resetxlog.c:575 pg_resetxlog.c:577
+msgid "by reference"
+msgstr "参照渡し"
+
+#: pg_resetxlog.c:576
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Float8  引数の渡し方：                %s\n"
+
+#: pg_resetxlog.c:627
+#, c-format
+msgid ""
+"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
+"PG_CONTROL_SIZE\n"
+msgstr ""
+"%s: 内部エラー -- sizeof(ControlFileData)が大きすぎます \n"
+"... PG_CONTROL_SIZE を修正してください\n"
+
+#: pg_resetxlog.c:642
+#, c-format
+msgid "%s: could not create pg_control file: %s\n"
+msgstr "%s: pg_controlファイルを作成できませんでした: %s\n"
+
+#: pg_resetxlog.c:653
+#, c-format
+msgid "%s: could not write pg_control file: %s\n"
+msgstr "%s: pg_controlファイルを書き込めませんでした: %s\n"
+
+#: pg_resetxlog.c:660 pg_resetxlog.c:910
+#, c-format
+msgid "%s: fsync error: %s\n"
+msgstr "%s: fsyncエラー: %s\n"
+
+#: pg_resetxlog.c:698 pg_resetxlog.c:773
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: ディレクトリ\"%s\"をオープンできませんでした: %s\n"
+
+#: pg_resetxlog.c:742 pg_resetxlog.c:806
+#, c-format
+msgid "%s: could not read from directory \"%s\": %s\n"
+msgstr "%s: ディレクトリ%s\"から読み込めませんでした: %s\n"
+
+#: pg_resetxlog.c:787
+#, c-format
+msgid "%s: could not delete file \"%s\": %s\n"
+msgstr "%s: ファイル\"%s\"を削除できませんでした: %s\n"
+
+#: pg_resetxlog.c:877
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: ファイル\"%s\"をオープンできませんでした: %s\n"
+
+#: pg_resetxlog.c:888 pg_resetxlog.c:902
+#, c-format
+msgid "%s: could not write file \"%s\": %s\n"
+msgstr "%s: ファイル\"%s\"を書き込めませんでした: %s\n"
+
+#: pg_resetxlog.c:921
+#, c-format
+msgid ""
+"%s resets the PostgreSQL transaction log.\n"
+"\n"
+msgstr ""
+"%sはPostgreSQLのトランザクションログをリセットします。\n"
+"\n"
+
+#: pg_resetxlog.c:922
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... DATADIR\n"
+"\n"
+msgstr ""
+"使用方法:\n"
+"  %s [OPTION]... DATADIR\n"
+"\n"
+
+#: pg_resetxlog.c:923
+#, c-format
+msgid "Options:\n"
+msgstr "オプション:\n"
+
+#: pg_resetxlog.c:924
+#, c-format
+msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
+msgstr "  -e XIDEPOCH     次のトランザクションIDエポックを設定します\n"
+
+#: pg_resetxlog.c:925
+#, c-format
+msgid "  -f              force update to be done\n"
+msgstr "  -f              強制的に更新を実施します\n"
+
+#: pg_resetxlog.c:926
+#, c-format
+msgid ""
+"  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
+"log\n"
+msgstr ""
+"  -l TLI,FILE,SEG 新しいトランザクションログについて、強制的に最小のWAL開始位"
+"置を設定します\n"
+
+#: pg_resetxlog.c:927
+#, c-format
+msgid "  -m XID          set next multitransaction ID\n"
+msgstr "  -m XID          次のマルチトランザクションIDを設定します\n"
+
+#: pg_resetxlog.c:928
+#, c-format
+msgid ""
+"  -n              no update, just show extracted control values (for "
+"testing)\n"
+msgstr ""
+"  -n              更新をせず、単に取り出した制御値を表示します(試験用)\n"
+
+#: pg_resetxlog.c:929
+#, c-format
+msgid "  -o OID          set next OID\n"
+msgstr "  -o OID          次のOIDを設定します\n"
+
+#: pg_resetxlog.c:930
+#, c-format
+msgid "  -O OFFSET       set next multitransaction offset\n"
+msgstr "  -O OFFSET        次のマルチトランザクションオフセットを設定します\n"
+
+#: pg_resetxlog.c:931
+#, c-format
+msgid "  -x XID          set next transaction ID\n"
+msgstr "  -x XID          次のトランザクションIDを設定します\n"
+
+#: pg_resetxlog.c:932
+#, c-format
+msgid "  --help          show this help, then exit\n"
+msgstr "  --help          ヘルプを表示し、終了します\n"
+
+#: pg_resetxlog.c:933
+#, c-format
+msgid "  --version       output version information, then exit\n"
+msgstr "  --version       バージョン情報を表示し、終了します\n"
+
+#: pg_resetxlog.c:934
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"

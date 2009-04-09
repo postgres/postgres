@@ -1,0 +1,54 @@
+# German message translation file for PL/Tcl
+# Peter Eisentraut <peter_e@gmx.net>, 2009.
+#
+# pgtranslation Id: pltcl.po,v 1.1 2009/01/14 22:07:09 petere Exp $
+#
+# Use these quotes: »%s«
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-01-14 21:58+0200\n"
+"PO-Revision-Date: 2009-01-14 22:05+0200\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: German <peter_e@gmx.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:1027
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1028
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"in PL/Tcl-Funktion »%s«"
+
+#: pltcl.c:1127
+msgid "out of memory"
+msgstr "Speicher aufgebraucht"
+
+#: pltcl.c:1192
+msgid "trigger functions can only be called as triggers"
+msgstr "Triggerfunktionen können nur als Trigger aufgerufen werden"
+
+#: pltcl.c:1201
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl-Funktionen können keinen Rückgabetyp %s haben"
+
+#: pltcl.c:1213
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl-Funktion können keine zusammengesetzten Typen zurückgeben"
+
+#: pltcl.c:1253
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl-Funktionen können Typ %s nicht annehmen"

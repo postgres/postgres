@@ -1,0 +1,769 @@
+# LANGUAGE message translation file for plpgsql
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-02-19 09:23+0000\n"
+"PO-Revision-Date: 2009-02-19 22:16-0000\n"
+"Last-Translator: Gheorghe Rosca Codreanu <max@oceanline.co.uk>\n"
+"Language-Team: ROMÂNĂ <max@oceanline.co.uk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Romanian\n"
+"X-Poedit-Country: ROMANIA\n"
+
+#: pl_comp.c:418
+#: pl_handler.c:177
+#, c-format
+msgid "PL/pgSQL functions cannot accept type %s"
+msgstr "funcţiile PL/pgSQL nu pot accepta tipul %s"
+
+#: pl_comp.c:501
+#, c-format
+msgid "could not determine actual return type for polymorphic function \"%s\""
+msgstr "nu pot determina tipul de dată returnat pentru funcţia polimorfică  \"%s\""
+
+#: pl_comp.c:533
+msgid "trigger functions can only be called as triggers"
+msgstr "funcţiile trigger pot fi apelate doar ca triggere"
+
+#: pl_comp.c:537
+#: pl_handler.c:162
+#, c-format
+msgid "PL/pgSQL functions cannot return type %s"
+msgstr "funcţiile PL/pgSQL nu pot returna tipul %s"
+
+#: pl_comp.c:578
+msgid "trigger functions cannot have declared arguments"
+msgstr "funcţiile trigger nu pot avea argumente declarate"
+
+#: pl_comp.c:579
+msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
+msgstr "Argumentele trigger-ului pot fi accesate cu ajutorul TG_NARGS și  TG_ARGV."
+
+#: pl_comp.c:769
+#, c-format
+msgid "compilation of PL/pgSQL function \"%s\" near line %d"
+msgstr "compilarea funcțiee PL/pgSQL \"%s\" aproape de linia %d"
+
+#: pl_comp.c:804
+msgid "expected \"[\""
+msgstr "este așteptat \"[\""
+
+#: pl_comp.c:942
+#, c-format
+msgid "row \"%s\" has no field \"%s\""
+msgstr "rândul \"%s\" nu are nici un câmp \"%s\""
+
+#: pl_comp.c:1044
+#, c-format
+msgid "row \"%s.%s\" has no field \"%s\""
+msgstr "rândul \"%s.%s\" nu are nici un câmp \"%s\""
+
+#: pl_comp.c:1356
+#, c-format
+msgid "relation \"%s\" does not exist"
+msgstr "relaţia \"%s\" nu există"
+
+#: pl_comp.c:1401
+#, c-format
+msgid "relation \"%s.%s\" does not exist"
+msgstr "relaţia \"%s.%s\" nu există"
+
+#: pl_comp.c:1484
+#, c-format
+msgid "variable \"%s\" has pseudo-type %s"
+msgstr "variabila  \"%s\" are pseudo-tipul %s"
+
+#: pl_comp.c:1545
+#, c-format
+msgid "relation \"%s\" is not a table"
+msgstr "relaţia \"%s\" nu este o tabelă"
+
+#: pl_comp.c:1718
+#, c-format
+msgid "type \"%s\" is only a shell"
+msgstr "tipul \"%s\" este doar un shell"
+
+#: pl_comp.c:1788
+#: pl_comp.c:1841
+#, c-format
+msgid "unrecognized exception condition \"%s\""
+msgstr "condiţia excepției \"%s\" nu este recunoscută"
+
+#: pl_comp.c:1996
+#, c-format
+msgid "could not determine actual argument type for polymorphic function \"%s\""
+msgstr "nu pot determina tipul de dată returnat pentru funcţia polimorfică  \"%s\""
+
+#: pl_exec.c:234
+#: pl_exec.c:505
+msgid "during initialization of execution state"
+msgstr "în timpul inițializării stării de execuție"
+
+#: pl_exec.c:241
+#: pl_exec.c:632
+msgid "while storing call arguments into local variables"
+msgstr "în timpul stocării argumentelor de apelare în variabile locale"
+
+#: pl_exec.c:296
+#: pl_exec.c:643
+msgid "during function entry"
+msgstr "în timpul intrării în funcție"
+
+#: pl_exec.c:327
+#: pl_exec.c:674
+msgid "CONTINUE cannot be used outside a loop"
+msgstr "CONTINUE nu poate fi folosit în afara unei bucle"
+
+#: pl_exec.c:331
+#: pl_exec.c:678
+msgid "RAISE without parameters cannot be used outside an exception handler"
+msgstr "RAISE fără parametri nu poate fi folosit în afara unui gestionar de excepții - exception handler"
+
+#: pl_exec.c:335
+msgid "control reached end of function without RETURN"
+msgstr "controlul a ajuns la sfârșitul funcției fără a întâlni comanda RETURN"
+
+#: pl_exec.c:342
+msgid "while casting return value to function's return type"
+msgstr "în timpul transformării valorii returnate în tipul de dată returnat de funcție"
+
+#: pl_exec.c:355
+#: pl_exec.c:2351
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "funcţie set-valoare apelată într-un context care nu acceptă set"
+
+#: pl_exec.c:390
+msgid "returned record type does not match expected record type"
+msgstr "tipul înregistrării returnate nu se potrivește cu tipul înregistrării așteptat"
+
+#: pl_exec.c:446
+#: pl_exec.c:686
+msgid "during function exit"
+msgstr "în timpul ieșirii din fucție"
+
+#: pl_exec.c:682
+msgid "control reached end of trigger procedure without RETURN"
+msgstr "controlul a ajuns la sfârșitul trigger-ului fără a întâlni comanda RETURN"
+
+#: pl_exec.c:691
+msgid "trigger procedure cannot return a set"
+msgstr "o procedură trigger nu poate returna un set"
+
+#: pl_exec.c:709
+msgid "returned row structure does not match the structure of the triggering table"
+msgstr "structura rândului nu se potrivește cu structura tabelei carea a activat triggerul"
+
+#. translator: last %s is a phrase such as "during statement block local variable initialization"
+#: pl_exec.c:769
+#, c-format
+msgid "PL/pgSQL function \"%s\" line %d %s"
+msgstr "PL/pgSQL funcție  \"%s\" linie %d %s"
+
+#. translator: last %s is a phrase such as "while storing call arguments into local variables"
+#: pl_exec.c:777
+#, c-format
+msgid "PL/pgSQL function \"%s\" %s"
+msgstr "PL/pgSQL funcție \"%s\" %s"
+
+#. translator: last %s is a plpgsql statement type name
+#: pl_exec.c:785
+#, c-format
+msgid "PL/pgSQL function \"%s\" line %d at %s"
+msgstr "PL/pgSQL funcție \"%s\" linie %d la %s"
+
+#: pl_exec.c:791
+#, c-format
+msgid "PL/pgSQL function \"%s\""
+msgstr "PL/pgSQL funcție \"%s\""
+
+#: pl_exec.c:900
+msgid "during statement block local variable initialization"
+msgstr "în timpul inițializării variabilei locale în blocul de comenzi"
+
+#: pl_exec.c:942
+#, c-format
+msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
+msgstr "variabila \"%s\" declarată NOT NULL nu poate fi avea valoare predefinită ca NULL"
+
+#: pl_exec.c:990
+msgid "during statement block entry"
+msgstr "în timpul intrării în blocul de comenzi"
+
+#: pl_exec.c:1011
+msgid "during statement block exit"
+msgstr "în timpul ieșirii din blocul de comenzi"
+
+#: pl_exec.c:1053
+msgid "during exception cleanup"
+msgstr "în timpul operaţiei de curăţare, a excepţiei "
+
+#: pl_exec.c:1517
+msgid "case not found"
+msgstr "caz negăsit"
+
+#: pl_exec.c:1518
+msgid "CASE statement is missing ELSE part."
+msgstr "comandă CASE fără partea ELSE."
+
+#: pl_exec.c:1674
+msgid "lower bound of FOR loop cannot be null"
+msgstr "limita de jos a unei bucle FOR nu poate fi NULL"
+
+#: pl_exec.c:1689
+msgid "upper bound of FOR loop cannot be null"
+msgstr "limita de sus a unei bucle FOR nu poate fi NULL"
+
+#: pl_exec.c:1706
+msgid "BY value of FOR loop cannot be null"
+msgstr "BY valoare într-o buclă FOR nu poate fi NULL"
+
+#: pl_exec.c:1712
+msgid "BY value of FOR loop must be greater than zero"
+msgstr "BY valoare într-o buclă FOR trebuie să fie mai mare ca zero"
+
+#: pl_exec.c:1884
+#: pl_exec.c:3122
+#, c-format
+msgid "cursor \"%s\" already in use"
+msgstr "cursor \"%s\" deja în uz"
+
+#: pl_exec.c:1907
+#: pl_exec.c:3216
+msgid "arguments given for cursor without arguments"
+msgstr "argumente transmise unui cursor ce nu primeşte argumente"
+
+#: pl_exec.c:1926
+#: pl_exec.c:3235
+msgid "arguments required for cursor"
+msgstr "argumente necesare pentru cursor"
+
+#: pl_exec.c:2144
+#: gram.y:2404
+msgid "cannot use RETURN NEXT in a non-SETOF function"
+msgstr "RETURN NEXT nu poate fi folosit într-o funcţie de tip non-SETOF"
+
+#: pl_exec.c:2168
+#: pl_exec.c:2228
+msgid "wrong result type supplied in RETURN NEXT"
+msgstr "rezultat cu tip de dată greșit, furnizat în RETURN NEXT"
+
+#: pl_exec.c:2191
+#: pl_exec.c:3606
+#: pl_exec.c:3898
+#: pl_exec.c:3937
+#, c-format
+msgid "record \"%s\" is not assigned yet"
+msgstr "înregistrarea \"%s\" nu este atribuită încă"
+
+#: pl_exec.c:2193
+#: pl_exec.c:3608
+#: pl_exec.c:3900
+#: pl_exec.c:3939
+msgid "The tuple structure of a not-yet-assigned record is indeterminate."
+msgstr "Structura tuplului unei înregistrări încă-ne-atribuită  nu poate fi determinată"
+
+#: pl_exec.c:2196
+#: pl_exec.c:2209
+msgid "wrong record type supplied in RETURN NEXT"
+msgstr "tipul  înregistrării furnizat în RETURN NEXT este greşit"
+
+#: pl_exec.c:2253
+msgid "RETURN NEXT must have a parameter"
+msgstr "RETURN NEXT trebuie să aibă un parametru"
+
+#: pl_exec.c:2285
+#: gram.y:2451
+msgid "cannot use RETURN QUERY in a non-SETOF function"
+msgstr "RETURN QUERY nu pote fi folosit într-o funcție non-SETOF"
+
+#: pl_exec.c:2304
+msgid "structure of query does not match function result type"
+msgstr "structura interogării nu se potriveşte cu tipul rezultatului funcţiei"
+
+#: pl_exec.c:2421
+msgid "too few parameters specified for RAISE"
+msgstr "prea puțini parametri specificați pentru RAISE"
+
+#: pl_exec.c:2447
+msgid "too many parameters specified for RAISE"
+msgstr "prea mulți parametri specificați pentru RAISE"
+
+#: pl_exec.c:2467
+msgid "RAISE statement option cannot be null"
+msgstr "opţiunea comenzii RAISE nu poate fi NULL"
+
+#: pl_exec.c:2477
+#: pl_exec.c:2486
+#: pl_exec.c:2494
+#: pl_exec.c:2502
+#, c-format
+msgid "RAISE option already specified: %s"
+msgstr "opțiune RAISE deja specificată: %s"
+
+#: pl_exec.c:2537
+#: pl_exec.c:2538
+#: pl_exec.c:5131
+#: pl_exec.c:5136
+#: pl_exec.c:5145
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pl_exec.c:2680
+#: pl_exec.c:2986
+msgid "cannot COPY to/from client in PL/pgSQL"
+msgstr "COPY la/de la un client nu poate fi folosită în PL/pgSQL"
+
+#: pl_exec.c:2684
+#: pl_exec.c:2990
+msgid "cannot begin/end transactions in PL/pgSQL"
+msgstr "nu pot începe/termina tranzacții în PL/pgSQL"
+
+#: pl_exec.c:2685
+#: pl_exec.c:2991
+msgid "Use a BEGIN block with an EXCEPTION clause instead."
+msgstr "Folosiți, în loc, blocul BEGIN cu clauza EXCEPTION "
+
+#: pl_exec.c:2836
+#: pl_exec.c:3015
+msgid "INTO used with a command that cannot return data"
+msgstr "INTO utilizat într-o comandă care nu poate returna date"
+
+#: pl_exec.c:2856
+#: pl_exec.c:3035
+msgid "query returned no rows"
+msgstr "interogarea nu a rezultat nici un rând"
+
+#: pl_exec.c:2865
+#: pl_exec.c:3044
+msgid "query returned more than one row"
+msgstr "interogarea a rezultat mai mult de un rând"
+
+#: pl_exec.c:2879
+msgid "query has no destination for result data"
+msgstr "interogarea nu are destinaţie pentru datele rezultate"
+
+#: pl_exec.c:2880
+msgid "If you want to discard the results of a SELECT, use PERFORM instead."
+msgstr "Dacă doriți să renunțați la rezultatul unui SELECT, folosiți PERFORM în loc."
+
+#: pl_exec.c:2913
+#: pl_exec.c:3163
+#: pl_exec.c:5399
+msgid "query string argument of EXECUTE is null"
+msgstr "comanda EXECUTE are ca parametru o expresie nulă"
+
+#: pl_exec.c:2978
+msgid "EXECUTE of SELECT ... INTO is not implemented"
+msgstr "EXECUTE of SELECT ... INTO nu este încă implementat"
+
+#: pl_exec.c:3297
+#: pl_exec.c:3393
+#, c-format
+msgid "cursor variable \"%s\" is null"
+msgstr "variabila cursor \"%s\" este NULL"
+
+#: pl_exec.c:3304
+#: pl_exec.c:3400
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "cursorul \"%s\" nu există"
+
+#: pl_exec.c:3318
+msgid "relative or absolute cursor position is null"
+msgstr "poziţia relativă sau absolută a cursorului este NULL"
+
+#: pl_exec.c:3460
+#, c-format
+msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
+msgstr "NULL nu poate fi attribuit variabilei \"%s\" declarată NOT NULL"
+
+#: pl_exec.c:3505
+msgid "cannot assign non-composite value to a row variable"
+msgstr "o valoare de tip non-compozit nu poate fi atribuită unei variabile de tip rând"
+
+#: pl_exec.c:3547
+msgid "cannot assign non-composite value to a record variable"
+msgstr "o valoare de tip non-compozit nu poate fi atribuită unei variabile de tip înregistrare"
+
+#: pl_exec.c:3619
+#: pl_exec.c:3944
+#, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "înregistrarea \"%s\" nu are nici un câmp \"%s\""
+
+#: pl_exec.c:3717
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "numarul dimensiunilor array-ului  (%d)  depăşeşte maximul admis, %d"
+
+#: pl_exec.c:3731
+msgid "subscripted object is not an array"
+msgstr "obiectul transmis nu este un array"
+
+#: pl_exec.c:3754
+msgid "array subscript in assignment must not be null"
+msgstr "array-ul transmis pentru atribuire nu poate fi null"
+
+#: pl_exec.c:3860
+#: pl_exec.c:3885
+#: pl_exec.c:3922
+#, c-format
+msgid "type of \"%s\" does not match that when preparing the plan"
+msgstr "tipul pentru \"%s\" nu se potriveşte cu asta în pregatirea planului"
+
+#: pl_exec.c:3951
+#, c-format
+msgid "type of \"%s.%s\" does not match that when preparing the plan"
+msgstr "de tipul \"%s.%s\" nu pe potriveşte cu asta în timpul preparării planului"
+
+#: pl_exec.c:3976
+#, c-format
+msgid "type of tgargv[%d] does not match that when preparing the plan"
+msgstr "de tipul tgargv[%d] nu se potriveşte cu asta în timpul preparării planului"
+
+#: pl_exec.c:4069
+#, c-format
+msgid "query \"%s\" did not return data"
+msgstr "interogarea \"%s\" nu a rezultat date"
+
+#: pl_exec.c:4086
+#, c-format
+msgid "query \"%s\" returned more than one row"
+msgstr "interogarea \"%s\" a rezultat mai mult un rând"
+
+#: pl_exec.c:4091
+#, c-format
+msgid "query \"%s\" returned %d columns"
+msgstr "interogarea \"%s\" a rezultat %d coloane"
+
+#: pl_exec.c:4149
+#, c-format
+msgid "query \"%s\" is not a SELECT"
+msgstr "interogarea \"%s\" nu este un SELECT"
+
+#: pl_exec.c:5126
+msgid "N/A (dropped column)"
+msgstr "N/A (coloană ştearsă)"
+
+#: pl_exec.c:5137
+#, c-format
+msgid "Number of returned columns (%d) does not match expected column count (%d)."
+msgstr "Numărul coloanelor rezultate (%d) nu se potriveşte cu numărul coloanelor aşteptat (%d)."
+
+#: pl_exec.c:5146
+#, c-format
+msgid "Returned type %s does not match expected type %s in column %s."
+msgstr "Tipul de dată rezultat %s nu se potriveşte cu tipul de dată aşteptat %s în coloana %s."
+
+#: gram.y:359
+msgid "row or record variable cannot be CONSTANT"
+msgstr "variabila de tip rând sau înregistrare nu poate fi CONSTANT"
+
+#: gram.y:368
+msgid "row or record variable cannot be NOT NULL"
+msgstr "variabila de tip rând sau înregistrare nu poate fi NOT NULL"
+
+#: gram.y:377
+msgid "default value for row or record variable is not supported"
+msgstr "valoare predefinită pentru o variabilă de tip rând sau înregistrare nu este suportată"
+
+#: gram.y:526
+msgid "only positional parameters can be aliased"
+msgstr "doar parametrii poziționali pot avea alias"
+
+#: gram.y:536
+#, c-format
+msgid "function has no parameter \"%s\""
+msgstr "funcţia nu are nici un parametru \"%s\""
+
+#: gram.y:746
+#: gram.y:750
+#: gram.y:754
+msgid "expected an integer variable"
+msgstr "e așteptată o variabilă de tip integer"
+
+#: gram.y:1009
+#: gram.y:1198
+msgid "loop variable of loop over rows must be a record or row variable or list of scalar variables"
+msgstr "variabila unei bucle de tip -buclă peste rânduri-  trebuie să fie o variabilă de tip înregistrare sau rând, sau o listă de variabile de tip scalar"
+
+#: gram.y:1046
+msgid "cursor FOR loop must have only one target variable"
+msgstr "bucla cursor FOR trebuie sa aibă doar o variabilă ţintă"
+
+#: gram.y:1058
+msgid "cursor FOR loop must use a bound cursor variable"
+msgstr "bucla cursor FOR trebuie să utilizeze o variabilă de tip bound cursor"
+
+#: gram.y:1134
+msgid "integer FOR loop must have only one target variable"
+msgstr "variabila de tip integer din bucla FOR trebuie să aibă o singură variabilă ţintă"
+
+#: gram.y:1167
+msgid "cannot specify REVERSE in query FOR loop"
+msgstr "REVERSE nu poate fi specificat într-o interogare buclă FOR"
+
+#: gram.y:1258
+#: gram.y:2616
+#, c-format
+msgid "\"%s\" is not a scalar variable"
+msgstr "\"%s\" nu este o variabilă de tip scalar"
+
+#: gram.y:1311
+#: gram.y:1351
+#: gram.y:1395
+#: gram.y:2172
+#: gram.y:2263
+#: gram.y:2881
+msgid "unexpected end of function definition"
+msgstr "sfârșit de definiție a funcției nerecunoscut"
+
+#: gram.y:1415
+#: gram.y:1437
+#: gram.y:1451
+#: gram.y:1459
+#: gram.y:1520
+#: gram.y:1607
+#: gram.y:1776
+#: gram.y:1780
+msgid "syntax error"
+msgstr "eroare de sintaxă"
+
+#: gram.y:1441
+#: gram.y:1443
+#: gram.y:1784
+#: gram.y:1786
+msgid "invalid SQLSTATE code"
+msgstr "cod SQLSTATE invalid"
+
+#: gram.y:1571
+#: gram.y:2565
+#: gram.y:2810
+#, c-format
+msgid "syntax error at \"%s\""
+msgstr "eroare de sintaxă la \"%s\""
+
+#: gram.y:1573
+msgid "Expected \"FOR\", to open a reference cursor."
+msgstr "este așteptat \"FOR\" pentru a deschide o referinţă cursor."
+
+#: gram.y:1660
+msgid "cursor variable must be a simple variable"
+msgstr "variabila cursor trebuie să fie o variabilă simplă"
+
+#: gram.y:1667
+#, c-format
+msgid "variable \"%s\" must be of type cursor or refcursor"
+msgstr "variabila \"%s\" trebuie să fie de tip cursor sau refcursor"
+
+#: gram.y:1674
+#: gram.y:1678
+#: gram.y:1682
+msgid "expected a cursor or refcursor variable"
+msgstr "aşteptam o variabilă cursor sau refcursor"
+
+#: gram.y:1907
+#: gram.y:2978
+msgid "too many variables specified in SQL statement"
+msgstr "prea multe variabile specificate in comanda SQL"
+
+#: gram.y:1992
+#: gram.y:2002
+#: gram.y:2095
+msgid "mismatched parentheses"
+msgstr "paranteze care nu se potrivesc"
+
+#: gram.y:2007
+#, c-format
+msgid "missing \"%s\" at end of SQL expression"
+msgstr "lipsă \"%s\" la sfârșitul unei expresii SQL"
+
+#: gram.y:2012
+#, c-format
+msgid "missing \"%s\" at end of SQL statement"
+msgstr "lipsă \"%s\" la sfârșitul unei comenzi SQL"
+
+#: gram.y:2097
+msgid "incomplete data type declaration"
+msgstr "declarație incompletă pentru un tip de dată"
+
+#: gram.y:2122
+msgid "missing data type declaration"
+msgstr "declarație lipsă pentru un tip de dată"
+
+#: gram.y:2177
+msgid "INTO specified more than once"
+msgstr "INTO este folosit mai mult de o singură dată"
+
+#: gram.y:2326
+msgid "expected FROM or IN"
+msgstr "este așteptat FROM sau IN"
+
+#: gram.y:2347
+msgid "RETURN cannot have a parameter in function returning set; use RETURN NEXT or RETURN QUERY"
+msgstr "RETURN nu poate avea un parametru în cazul unei funcții ce returnează un set; folosiți RETURN NEXT sau RETURN QUERY"
+
+#: gram.y:2353
+msgid "RETURN cannot have a parameter in function with OUT parameters"
+msgstr "RETURN nu poate avea un parametru în cazul unei funcții cu parametrii de tip OUT"
+
+#: gram.y:2359
+msgid "RETURN cannot have a parameter in function returning void"
+msgstr "RETURN nu poate avea un parametru în cazul unei funcții de tip void"
+
+#: gram.y:2378
+#: gram.y:2382
+msgid "RETURN must specify a record or row variable in function returning row"
+msgstr "RETURN trebuie să specifice o variabilă de tip înregistrare sau rând într-o funcție ce returnează un rând"
+
+#: gram.y:2415
+msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
+msgstr "RETURN NEXT nu poate avea un parametru într-o funcţie cu parametrii de tip OUT"
+
+#: gram.y:2431
+#: gram.y:2435
+msgid "RETURN NEXT must specify a record or row variable in function returning row"
+msgstr "RETURN NEXT trebuie să specifice o variabilă de tip înregistrare sau rând într-o funcție ce returnează un rând"
+
+#: gram.y:2498
+#, c-format
+msgid "\"%s\" is declared CONSTANT"
+msgstr "\"%s\" este declarat CONSTANT"
+
+#: gram.y:2515
+msgid "cannot assign to tg_argv"
+msgstr "nu pot aloca la  tg_argv"
+
+#: gram.y:2566
+msgid "Expected record variable, row variable, or list of scalar variables following INTO."
+msgstr "Este așteptată variabilă de tip înregistrare, variabilă de tip rând, sau listă de variabile de tip scalar după INTO."
+
+#: gram.y:2600
+msgid "too many INTO variables specified"
+msgstr "prea multe variabile INTO specificate"
+
+#: gram.y:2734
+#, c-format
+msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
+msgstr "comandă SQL în funcția PL/PgSQL \"%s\" aproape de linia %d"
+
+#: gram.y:2748
+msgid "label does not exist"
+msgstr "etichetă inexistentă"
+
+#: gram.y:2762
+#, c-format
+msgid "end label \"%s\" specified for unlabelled block"
+msgstr "etichetă de sfârșit \"%s\" specificată pentru un bloc fără etichetă "
+
+#: gram.y:2771
+#, c-format
+msgid "end label \"%s\" differs from block's label \"%s\""
+msgstr "eticheta de sfârșit \"%s\" diferă față de eticheta blocului \"%s\""
+
+#: gram.y:2801
+#, c-format
+msgid "cursor \"%s\" has no arguments"
+msgstr "cursorul \"%s\" nu are argumente"
+
+#: gram.y:2823
+#, c-format
+msgid "cursor \"%s\" has arguments"
+msgstr "cursorul \"%s\" are argumente"
+
+#: gram.y:2861
+msgid "expected \")\""
+msgstr "este așteptat \")\""
+
+#: gram.y:2898
+#, c-format
+msgid "unrecognized RAISE statement option \"%s\""
+msgstr "opțiune nerecunoscută a comenzii RAISE \"%s\""
+
+#: gram.y:2903
+msgid "syntax error, expected \"=\""
+msgstr "eroare de sintaxă, expected \"=\""
+
+#: pl_funcs.c:359
+#, c-format
+msgid "variable \"%s\" does not exist in the current block"
+msgstr "variabila \"%s\" nu există in blocul curent"
+
+#: pl_funcs.c:415
+#, c-format
+msgid "unterminated \" in identifier: %s"
+msgstr "\" neterminat în identificatorul: %s"
+
+#: pl_funcs.c:439
+#, c-format
+msgid "qualified identifier cannot be used here: %s"
+msgstr "identificatorul calificat nu poate fi utilizat aici: %s"
+
+#: pl_funcs.c:471
+msgid "statement block"
+msgstr "bloc de comenzi"
+
+#: pl_funcs.c:473
+msgid "assignment"
+msgstr "atribuire"
+
+#: pl_funcs.c:483
+msgid "FOR with integer loop variable"
+msgstr "FOR cu variabila buclei de tip integer"
+
+#: pl_funcs.c:485
+msgid "FOR over SELECT rows"
+msgstr "FOR peste SELECT rânduri"
+
+#: pl_funcs.c:487
+msgid "FOR over cursor"
+msgstr "FOR peste cursor"
+
+#: pl_funcs.c:499
+msgid "SQL statement"
+msgstr "comandă SQL"
+
+#: pl_funcs.c:501
+msgid "EXECUTE statement"
+msgstr "comandă EXECUTE"
+
+#: pl_funcs.c:503
+msgid "FOR over EXECUTE statement"
+msgstr "FOR peste comandă EXECUTE"
+
+#: scan.l:232
+msgid "unterminated quoted identifier"
+msgstr "identificator în ghilimele, neterminat"
+
+#: scan.l:257
+msgid "unterminated /* comment"
+msgstr "comentariu  /* neterminat"
+
+#: scan.l:296
+msgid "unterminated quoted string"
+msgstr "șir în ghilimele, neterminat"
+
+#: scan.l:333
+msgid "unterminated dollar-quoted string"
+msgstr "șir încadrat în semnul dollar neterminat"
+
+#. translator: %s is typically "syntax error"
+#: scan.l:395
+#, c-format
+msgid "%s at end of input"
+msgstr "%s la sfârşit de intrare"
+
+#. translator: first %s is typically "syntax error"
+#: scan.l:404
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s la sau aproape de \"%s\""
+

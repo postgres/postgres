@@ -4,9 +4,14 @@
 # Copyright (c) 2004-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.5 2005/01/17 21:21:09 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.6 2009/04/09 19:38:51 petere Exp $
+#
+# translation of subject-specific terminology, see:
+# перевод некоторых специфичных терминов:
+# http://wiki.postgresql.org/wiki/NLS/ru/dict
 #
 # ChangeLog:
+#   - March 26, 2009: complete translation for 8.3, Sergey Burladyan <eshkinkot@gmail.com>
 #   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>
 #   - October 13 - November 24, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -14,8 +19,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2005-01-17 19:04+0000\n"
-"PO-Revision-Date: 2005-01-17 15:22-0500\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-01-16 09:15+0000\n"
+"PO-Revision-Date: 2009-03-29 08:14+0400\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -24,7 +30,13 @@ msgstr ""
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: RUSSIAN FEDERATION\n"
 
-#: pg_config.c:36
+#: pg_config.c:231 pg_config.c:247 pg_config.c:263 pg_config.c:279
+#: pg_config.c:295 pg_config.c:311 pg_config.c:327 pg_config.c:343
+#, c-format
+msgid "not recorded\n"
+msgstr "не сохранено\n"
+
+#: pg_config.c:398
 #, c-format
 msgid ""
 "\n"
@@ -35,28 +47,35 @@ msgstr ""
 "%s предоставляет информацию об установленной версии PostgreSQL.\n"
 "\n"
 
-#: pg_config.c:37
+#: pg_config.c:399
+#, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: pg_config.c:38
+#: pg_config.c:400
 #, c-format
 msgid ""
-"  %s OPTION...\n"
+"  %s [ OPTION ... ]\n"
 "\n"
-msgstr ""
-"  %s ОПЦИЯ...\n"
-"\n"
+msgstr "  %s [ ОПЦИЯ ... ]\n\n"
 
-#: pg_config.c:39
+#: pg_config.c:401
+#, c-format
 msgid "Options:\n"
 msgstr "Опции:\n"
 
-#: pg_config.c:40
+#: pg_config.c:402
+#, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              показать расположение выполняемых файлов\n"
 
-#: pg_config.c:41
+#: pg_config.c:403
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              показать расположение файлов документации\n"
+
+#: pg_config.c:404
+#, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
@@ -64,23 +83,63 @@ msgstr ""
 "  --includedir          показать расположение файлов-заголовков C (.h)\n"
 "                        клиентских интерфейсов\n"
 
-#: pg_config.c:43
-msgid "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   показать расположение файлов-заголовков C (.h) сервера\n"
+#: pg_config.c:406
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       показать расположение других файлов-заголовков C (.h)\n"
 
-#: pg_config.c:44
+#: pg_config.c:407
+#, c-format
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
+msgstr ""
+"  --includedir-server   показать расположение файлов-заголовков C (.h) "
+"сервера\n"
+
+#: pg_config.c:408
+#, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              показать расположение библиотек объектного кода\n"
+msgstr ""
+"  --libdir              показать расположение библиотек объектного кода\n"
 
-#: pg_config.c:45
+#: pg_config.c:409
+#, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           показать расположение динамически загружаемых модулей\n"
+msgstr ""
+"  --pkglibdir           показать расположение динамически загружаемых "
+"модулей\n"
 
-#: pg_config.c:46
+#: pg_config.c:410
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           показать расположение файлов описания локалей\n"
+
+#: pg_config.c:411
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              показать расположение справочных страниц\n"
+
+#: pg_config.c:412
+#, c-format
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr "  --sharedir            показать расположение платформенно-независимых файлов\n"
+
+#: pg_config.c:413
+#, c-format
+msgid ""
+"  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          показать расположение общесистемных конфигурационных файлов\n"
+
+#: pg_config.c:414
+#, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                показать расположение  makefile для  расширений\n"
+msgstr ""
+"  --pgxs                показать расположение  makefile для  расширений\n"
 
-#: pg_config.c:47
+#: pg_config.c:415
+#, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
@@ -88,91 +147,140 @@ msgstr ""
 "  --configure           показать опции, использованные \"configure\"\n"
 "                        при компиляции PostgreSQL\n"
 
-#: pg_config.c:49
-msgid "  --version             show the PostgreSQL version, then exit\n"
-msgstr "  --version             показать версию PostgreSQL и выйти\n"
+#: pg_config.c:417
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --cc                  показать значение CC использованное при компиляции PostgreSQL\n"
 
-#: pg_config.c:50
+#: pg_config.c:418
+#, c-format
 msgid ""
-"  --help                show this help, then exit\n"
-"\n"
-msgstr ""
-"  --help                показать эту подсказку и выйти\n"
-"\n"
+"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            показать значение CPPFLAGS использованное при компиляции PostgreSQL\n"
 
-#: pg_config.c:51
+#: pg_config.c:419
+#, c-format
+msgid ""
+"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags              показать значение CFLAGS использованное при компиляции PostgreSQL\n"
+
+#: pg_config.c:420
+#, c-format
+msgid ""
+"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           показать значение CFLAGS_SL использованное при компиляции PostgreSQL\n"
+
+#: pg_config.c:421
+#, c-format
+msgid ""
+"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             показать значение LDFLAGS использованное при компиляции PostgreSQL\n"
+
+#: pg_config.c:422
+#, c-format
+msgid ""
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr "  --ldflags_sl          показать значение LDFLAGS_SL использованное при компиляции PostgreSQL\n"
+
+#: pg_config.c:423
+#, c-format
+msgid ""
+"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                показать значение LIBS использованное при компиляции PostgreSQL\n"
+
+#: pg_config.c:424
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             показать версию PostgreSQL\n"
+
+#: pg_config.c:425
+#, c-format
+msgid "  --help                show this help, then exit\n"
+msgstr "  --help                показать эту подсказку и выйти\n"
+
+#: pg_config.c:426
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
+"\n"
+msgstr "\nПри запуске без аргументов, будут показаны все известные значения.\n\n"
+
+#: pg_config.c:427
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Сообщать об ошибках: <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_config.c:57
+#: pg_config.c:433
 #, c-format
-msgid ""
-"\n"
-"Try \"%s --help\" for more information\n"
-msgstr ""
-"\n"
-"Наберите \"%s --help\" для более подробной информации\n"
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Наберите \"%s --help\" для более подробной информации\n"
 
-#: pg_config.c:75
+#: pg_config.c:472
 #, c-format
-msgid "%s: argument required\n"
-msgstr "%s: требуется аргумент\n"
+msgid "%s: could not find own program executable\n"
+msgstr "%s: не удалось найти свой собственный выполняемый файл\n"
 
-#: pg_config.c:104
+#: pg_config.c:495
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: неверный аргумент: %s\n"
 
-#: pg_config.c:113
-#, c-format
-msgid "%s: could not find own executable\n"
-msgstr "%s: не удалось найти свой собственный выполняемый файл\n"
-
-#: ../../port/exec.c:194
-#: ../../port/exec.c:308
-#: ../../port/exec.c:351
+#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "не удалось идентифицировать текущую директорию: %s"
 
-#: ../../port/exec.c:213
+#: ../../port/exec.c:214
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "неверный бинарный \"%s\""
 
-#: ../../port/exec.c:262
+#: ../../port/exec.c:263
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "не удалось считать бинарный \"%s\""
 
-#: ../../port/exec.c:269
+#: ../../port/exec.c:270
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "\"%s\" не найден для выполнения"
 
-#: ../../port/exec.c:324
-#: ../../port/exec.c:360
+#: ../../port/exec.c:325 ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "не удалось поменять директорию на \"%s\""
 
-#: ../../port/exec.c:339
+#: ../../port/exec.c:340
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "не получилось считать символическую ссылку \"%s\""
 
-#: ../../port/exec.c:587
+#: ../../port/exec.c:586
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возврата %d"
 
 #: ../../port/exec.c:590
 #, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "дочерний процесс завершён исключением 0x%X"
+
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "дочерний процесс завершён сигналом %s"
+
+#: ../../port/exec.c:602
+#, c-format
 msgid "child process was terminated by signal %d"
 msgstr "дочерний процесс завершён сигналом %d"
 
-#: ../../port/exec.c:593
+#: ../../port/exec.c:606
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным статусом %d"
 
+#~ msgid "%s: argument required\n"
+#~ msgstr "%s: требуется аргумент\n"

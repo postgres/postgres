@@ -1,0 +1,53 @@
+# Spanish translation file for ecpg
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-01 11:24+0000\n"
+"PO-Revision-Date: 2009-04-01 12:00-0300\n"
+"Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:1027
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1028
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"en función PL/Tcl \"%s\""
+
+#: pltcl.c:1127
+msgid "out of memory"
+msgstr "memoria agotada"
+
+#: pltcl.c:1192
+msgid "trigger functions can only be called as triggers"
+msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
+
+#: pltcl.c:1201
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "Las funciones PL/Tcl no pueden retornar tipo %s"
+
+#: pltcl.c:1213
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "Las funciones PL/Tcl no pueden retornar tipos compuestos"
+
+#: pltcl.c:1253
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "Las funciones PL/Tcl no aceptan tipos %s"
