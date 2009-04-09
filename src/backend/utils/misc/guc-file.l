@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.58 2009/01/01 17:23:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.59 2009/04/09 14:21:02 tgl Exp $
  */
 
 %{
@@ -446,8 +446,13 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 
 		/* now we'd like an end of line, or possibly EOF */
 		token = yylex();
-		if (token != GUC_EOL && token != 0)
-			goto parse_error;
+		if (token != GUC_EOL)
+		{
+			if (token != 0)
+				goto parse_error;
+			/* treat EOF like \n for line numbering purposes, cf bug 4752 */
+			ConfigFileLineno++;
+		}
 
 		/* OK, process the option name and value */
 		if (guc_name_compare(opt_name, "include") == 0)
