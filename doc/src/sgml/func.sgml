@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.475 2009/04/07 00:31:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.476 2009/04/09 17:39:47 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9369,9 +9369,6 @@ SELECT NULLIF(value, '(none)') ...
     <primary>array_upper</primary>
   </indexterm>
   <indexterm>
-    <primary>cardinality</primary>
-  </indexterm>
-  <indexterm>
     <primary>string_to_array</primary>
   </indexterm>
   <indexterm>
@@ -9502,19 +9499,6 @@ SELECT NULLIF(value, '(none)') ...
         <entry>returns upper bound of the requested array dimension</entry>
         <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
         <entry><literal>4</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>cardinality</function>(<type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns the length of the first dimension of the array
-        (special case of <function>array_length</function> for SQL
-        compatibility)</entry>
-        <entry><literal>cardinality(array[1,2,3])</literal></entry>
-        <entry><literal>3</literal></entry>
        </row>
        <row>
         <entry>

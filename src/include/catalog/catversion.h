@@ -37,7 +37,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/catversion.h,v 1.529 2009/04/07 00:31:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/catversion.h,v 1.530 2009/04/09 17:39:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,6 @@
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	200904061
+#define CATALOG_VERSION_NO	200904091
 
 #endif
