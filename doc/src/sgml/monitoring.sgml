@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.66 2009/03/28 00:10:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.67 2009/04/09 22:32:02 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -924,8 +924,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
    <note>
     <para>
-     <function>blocks_fetched</function> minus
-     <function>blocks_hit</function> gives the number of kernel
+     <function>pg_stat_get_blocks_fetched</function> minus
+     <function>pg_stat_get_blocks_hit</function> gives the number of kernel
      <function>read()</> calls issued for the table, index, or
      database; but the actual number of physical reads is usually
      lower due to kernel-level buffering.
