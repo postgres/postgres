@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.109 2009/02/17 11:34:34 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.110 2009/04/09 02:57:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,12 +205,12 @@ typedef struct PLpgSQL_expr
 	Oid			expr_simple_type;		/* result type Oid, if simple */
 
 	/*
-	 * if expr is simple AND prepared in current eval_estate,
-	 * expr_simple_state is valid.	Test validity by seeing if expr_simple_id
-	 * matches eval_estate_simple_id.
+	 * if expr is simple AND prepared in current transaction,
+	 * expr_simple_state is valid. Test validity by seeing if expr_simple_lxid
+	 * matches current LXID.
 	 */
 	ExprState  *expr_simple_state;
-	long int	expr_simple_id;
+	LocalTransactionId expr_simple_lxid;
 
 	/* params to pass to expr */
 	int			nparams;
@@ -719,8 +719,6 @@ typedef struct
 	uint32		eval_processed;
 	Oid			eval_lastoid;
 	ExprContext *eval_econtext; /* for executing simple expressions */
-	EState	   *eval_estate;	/* EState containing eval_econtext */
-	long int	eval_estate_simple_id;	/* ID for eval_estate */
 
 	/* status information for error context reporting */
 	PLpgSQL_function *err_func; /* current func */

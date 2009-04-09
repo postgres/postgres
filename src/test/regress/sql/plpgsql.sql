@@ -2972,3 +2972,36 @@ select * from rttest();
 
 drop function rttest();
 
+-- Test for proper cleanup at subtransaction exit.  This example
+-- exposed a bug in PG 8.2.
+
+CREATE FUNCTION leaker_1(fail BOOL) RETURNS INTEGER AS $$
+DECLARE
+  v_var INTEGER;
+BEGIN
+  BEGIN
+    v_var := (leaker_2(fail)).error_code;
+  EXCEPTION
+    WHEN others THEN RETURN 0;
+  END;
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION leaker_2(fail BOOL, OUT error_code INTEGER, OUT new_id INTEGER)
+  RETURNS RECORD AS $$
+BEGIN
+  IF fail THEN
+    RAISE EXCEPTION 'fail ...';
+  END IF;
+  error_code := 1;
+  new_id := 1;
+  RETURN;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM leaker_1(false);
+SELECT * FROM leaker_1(true);
+
+DROP FUNCTION leaker_1(bool);
+DROP FUNCTION leaker_2(bool);

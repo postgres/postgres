@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.239 2009/04/02 20:16:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.240 2009/04/09 02:57:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/scansup.h"
+#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -51,27 +52,26 @@ typedef struct
  * creates its own "eval_econtext" ExprContext within this estate for
  * per-evaluation workspace.  eval_econtext is freed at normal function exit,
  * and the EState is freed at transaction end (in case of error, we assume
- * that the abort mechanisms clean it all up).	In order to be sure
- * ExprContext callbacks are handled properly, each subtransaction has to have
- * its own such EState; hence we need a stack.	We use a simple counter to
- * distinguish different instantiations of the EState, so that we can tell
- * whether we have a current copy of a prepared expression.
+ * that the abort mechanisms clean it all up).  Furthermore, any exception
+ * block within a function has to have its own eval_econtext separate from
+ * the containing function's, so that we can clean up ExprContext callbacks
+ * properly at subtransaction exit.  We maintain a stack that tracks the
+ * individual econtexts so that we can clean up correctly at subxact exit.
  *
  * This arrangement is a bit tedious to maintain, but it's worth the trouble
  * so that we don't have to re-prepare simple expressions on each trip through
  * a function.	(We assume the case to optimize is many repetitions of a
  * function within a transaction.)
  */
-typedef struct SimpleEstateStackEntry
+typedef struct SimpleEcontextStackEntry
 {
-	EState	   *xact_eval_estate;		/* EState for current xact level */
-	long int	xact_estate_simple_id;	/* ID for xact_eval_estate */
-	SubTransactionId xact_subxid;		/* ID for current subxact */
-	struct SimpleEstateStackEntry *next;		/* next stack entry up */
-} SimpleEstateStackEntry;
+	ExprContext *stack_econtext;			/* a stacked econtext */
+	SubTransactionId xact_subxid;			/* ID for current subxact */
+	struct SimpleEcontextStackEntry *next;	/* next stack entry up */
+} SimpleEcontextStackEntry;
 
-static SimpleEstateStackEntry *simple_estate_stack = NULL;
-static long int simple_estate_id_counter = 0;
+static EState *simple_eval_estate = NULL;
+static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
 
 /************************************************************
  * Local function forward declarations
@@ -193,6 +193,7 @@ static void validate_tupdesc_compat(TupleDesc expected, TupleDesc returned,
 						const char *msg);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void plpgsql_create_econtext(PLpgSQL_execstate *estate);
+static void plpgsql_destroy_econtext(PLpgSQL_execstate *estate);
 static void free_var(PLpgSQL_var *var);
 static void assign_text_var(PLpgSQL_var *var, const char *str);
 static PreparedParamsData *exec_eval_using_params(PLpgSQL_execstate *estate,
@@ -452,8 +453,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 		((*plugin_ptr)->func_end) (&estate, func);
 
 	/* Clean up any leftover temporary memory */
-	FreeExprContext(estate.eval_econtext);
-	estate.eval_econtext = NULL;
+	plpgsql_destroy_econtext(&estate);
 	exec_eval_cleanup(&estate);
 
 	/*
@@ -718,8 +718,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		((*plugin_ptr)->func_end) (&estate, func);
 
 	/* Clean up any leftover temporary memory */
-	FreeExprContext(estate.eval_econtext);
-	estate.eval_econtext = NULL;
+	plpgsql_destroy_econtext(&estate);
 	exec_eval_cleanup(&estate);
 
 	/*
@@ -984,8 +983,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
 		ExprContext *old_eval_econtext = estate->eval_econtext;
-		EState	   *old_eval_estate = estate->eval_estate;
-		long int	old_eval_estate_simple_id = estate->eval_estate_simple_id;
 
 		estate->err_text = gettext_noop("during statement block entry");
 
@@ -1034,10 +1031,11 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			MemoryContextSwitchTo(oldcontext);
 			CurrentResourceOwner = oldowner;
 
-			/* Revert to outer eval_econtext */
+			/*
+			 * Revert to outer eval_econtext.  (The inner one was automatically
+			 * cleaned up during subxact exit.)
+			 */
 			estate->eval_econtext = old_eval_econtext;
-			estate->eval_estate = old_eval_estate;
-			estate->eval_estate_simple_id = old_eval_estate_simple_id;
 
 			/*
 			 * AtEOSubXact_SPI() should not have popped any SPI context, but
@@ -1064,8 +1062,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 			/* Revert to outer eval_econtext */
 			estate->eval_econtext = old_eval_econtext;
-			estate->eval_estate = old_eval_estate;
-			estate->eval_estate_simple_id = old_eval_estate_simple_id;
 
 			/*
 			 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it
@@ -4333,6 +4329,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 					  Oid *rettype)
 {
 	ExprContext *econtext = estate->eval_econtext;
+	LocalTransactionId curlxid = MyProc->lxid;
 	CachedPlanSource *plansource;
 	CachedPlan *cplan;
 	ParamListInfo paramLI;
@@ -4373,14 +4370,14 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
-	 * the current eval_estate.  (This will be forced to happen if we called
+	 * the current transaction.  (This will be forced to happen if we called
 	 * exec_simple_check_plan above.)
 	 */
-	if (expr->expr_simple_id != estate->eval_estate_simple_id)
+	if (expr->expr_simple_lxid != curlxid)
 	{
 		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
-												  estate->eval_estate);
-		expr->expr_simple_id = estate->eval_estate_simple_id;
+												  simple_eval_estate);
+		expr->expr_simple_lxid = curlxid;
 	}
 
 	/*
@@ -5103,7 +5100,7 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 	expr->expr_simple_expr = tle->expr;
 	expr->expr_simple_state = NULL;
-	expr->expr_simple_id = -1;
+	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);
 }
@@ -5165,46 +5162,69 @@ exec_set_found(PLpgSQL_execstate *estate, bool state)
 /*
  * plpgsql_create_econtext --- create an eval_econtext for the current function
  *
- * We may need to create a new eval_estate too, if there's not one already
- * for the current (sub) transaction.  The EState will be cleaned up at
- * (sub) transaction end.
+ * We may need to create a new simple_eval_estate too, if there's not one
+ * already for the current transaction.  The EState will be cleaned up at
+ * transaction end.
  */
 static void
 plpgsql_create_econtext(PLpgSQL_execstate *estate)
 {
-	SubTransactionId my_subxid = GetCurrentSubTransactionId();
-	SimpleEstateStackEntry *entry = simple_estate_stack;
+	SimpleEcontextStackEntry *entry;
 
-	/* Create new EState if not one for current subxact */
-	if (entry == NULL ||
-		entry->xact_subxid != my_subxid)
+	/*
+	 * Create an EState for evaluation of simple expressions, if there's not
+	 * one already in the current transaction.	The EState is made a child of
+	 * TopTransactionContext so it will have the right lifespan.
+	 */
+	if (simple_eval_estate == NULL)
 	{
 		MemoryContext oldcontext;
 
-		/* Stack entries are kept in TopTransactionContext for simplicity */
-		entry = (SimpleEstateStackEntry *)
-			MemoryContextAlloc(TopTransactionContext,
-							   sizeof(SimpleEstateStackEntry));
-
-		/* But each EState should be a child of its CurTransactionContext */
-		oldcontext = MemoryContextSwitchTo(CurTransactionContext);
-		entry->xact_eval_estate = CreateExecutorState();
+		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+		simple_eval_estate = CreateExecutorState();
 		MemoryContextSwitchTo(oldcontext);
-
-		/* Assign a reasonably-unique ID to this EState */
-		entry->xact_estate_simple_id = simple_estate_id_counter++;
-		entry->xact_subxid = my_subxid;
-
-		entry->next = simple_estate_stack;
-		simple_estate_stack = entry;
 	}
 
-	/* Link plpgsql estate to it */
-	estate->eval_estate = entry->xact_eval_estate;
-	estate->eval_estate_simple_id = entry->xact_estate_simple_id;
+	/*
+	 * Create a child econtext for the current function.
+	 */
+	estate->eval_econtext = CreateExprContext(simple_eval_estate);
 
-	/* And create a child econtext for the current function */
-	estate->eval_econtext = CreateExprContext(estate->eval_estate);
+	/*
+	 * Make a stack entry so we can clean up the econtext at subxact end.
+	 * Stack entries are kept in TopTransactionContext for simplicity.
+	 */
+	entry = (SimpleEcontextStackEntry *)
+		MemoryContextAlloc(TopTransactionContext,
+						   sizeof(SimpleEcontextStackEntry));
+
+	entry->stack_econtext = estate->eval_econtext;
+	entry->xact_subxid = GetCurrentSubTransactionId();
+
+	entry->next = simple_econtext_stack;
+	simple_econtext_stack = entry;
+}
+
+/*
+ * plpgsql_destroy_econtext --- destroy function's econtext
+ *
+ * We check that it matches the top stack entry, and destroy the stack
+ * entry along with the context.
+ */
+static void
+plpgsql_destroy_econtext(PLpgSQL_execstate *estate)
+{
+	SimpleEcontextStackEntry *next;
+
+	Assert(simple_econtext_stack != NULL);
+	Assert(simple_econtext_stack->stack_econtext == estate->eval_econtext);
+
+	next = simple_econtext_stack->next;
+	pfree(simple_econtext_stack);
+	simple_econtext_stack = next;
+
+	FreeExprContext(estate->eval_econtext);
+	estate->eval_econtext = NULL;
 }
 
 /*
@@ -5220,29 +5240,31 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	 * If we are doing a clean transaction shutdown, free the EState (so that
 	 * any remaining resources will be released correctly). In an abort, we
 	 * expect the regular abort recovery procedures to release everything of
-	 * interest.  We don't need to free the individual stack entries since
-	 * TopTransactionContext is about to go away anyway.
-	 *
-	 * Note: if plpgsql_subxact_cb is doing its job, there should be at most
-	 * one stack entry, but we may as well code this as a loop.
+	 * interest.
 	 */
 	if (event != XACT_EVENT_ABORT)
 	{
-		while (simple_estate_stack != NULL)
-		{
-			FreeExecutorState(simple_estate_stack->xact_eval_estate);
-			simple_estate_stack = simple_estate_stack->next;
-		}
+		/* Shouldn't be any econtext stack entries left at commit */
+		Assert(simple_econtext_stack == NULL);
+
+		if (simple_eval_estate)
+			FreeExecutorState(simple_eval_estate);
+		simple_eval_estate = NULL;
 	}
 	else
-		simple_estate_stack = NULL;
+	{
+		simple_econtext_stack = NULL;
+		simple_eval_estate = NULL;
+	}
 }
 
 /*
  * plpgsql_subxact_cb --- post-subtransaction-commit-or-abort cleanup
  *
- * If a simple-expression EState was created in the current subtransaction,
- * it has to be cleaned up.
+ * Make sure any simple-expression econtexts created in the current
+ * subtransaction get cleaned up.  We have to do this explicitly because
+ * no other code knows which child econtexts of simple_eval_estate belong
+ * to which level of subxact.
  */
 void
 plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
@@ -5251,16 +5273,15 @@ plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 	if (event == SUBXACT_EVENT_START_SUB)
 		return;
 
-	if (simple_estate_stack != NULL &&
-		simple_estate_stack->xact_subxid == mySubid)
+	while (simple_econtext_stack != NULL &&
+		   simple_econtext_stack->xact_subxid == mySubid)
 	{
-		SimpleEstateStackEntry *next;
+		SimpleEcontextStackEntry *next;
 
-		if (event == SUBXACT_EVENT_COMMIT_SUB)
-			FreeExecutorState(simple_estate_stack->xact_eval_estate);
-		next = simple_estate_stack->next;
-		pfree(simple_estate_stack);
-		simple_estate_stack = next;
+		FreeExprContext(simple_econtext_stack->stack_econtext);
+		next = simple_econtext_stack->next;
+		pfree(simple_econtext_stack);
+		simple_econtext_stack = next;
 	}
 }
 
