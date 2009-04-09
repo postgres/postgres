@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.58 2009/01/15 00:34:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.59 2009/04/09 16:20:50 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -326,15 +326,24 @@
    are points in the sequence of transactions at which it is guaranteed
    that the data files have been updated with all information written before
    the checkpoint.  At checkpoint time, all dirty data pages are flushed to
-   disk and a special checkpoint record is written to the log file.
+   disk and a special checkpoint record is written to the log file. 
+   (The changes were previously flushed to the <acronym>WAL</acronym> files.)
    In the event of a crash, the crash recovery procedure looks at the latest
    checkpoint record to determine the point in the log (known as the redo
    record) from which it should start the REDO operation.  Any changes made to
-   data files before that point are known to be already on disk.  Hence, after
-   a checkpoint has been made, any log segments preceding the one containing
+   data files before that point are guaranteed to be already on disk.  Hence, after
+   a checkpoint, log segments preceding the one containing
    the redo record are no longer needed and can be recycled or removed. (When
    <acronym>WAL</acronym> archiving is being done, the log segments must be
    archived before being recycled or removed.)
+  </para>
+
+  <para>
+   The checkpoint requirement of flushing all dirty data pages to disk
+   can cause a significant I/O load.  For this reason, checkpoint
+   activity is throttled so I/O begins at checkpoint start and completes
+   before the next checkpoint starts;  this minimizes performance
+   degradation during checkpoints.
   </para>
 
   <para>
