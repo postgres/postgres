@@ -48,6 +48,7 @@ For Major Releases
 
 * Ports
 	o update config.guess and config.sub at the start of beta
+	  (from http://savannah.gnu.org/projects/config)
 	o update ports list in doc/src/sgml/installation.sgml
 	o update platform-specific FAQ's, if needed
 
