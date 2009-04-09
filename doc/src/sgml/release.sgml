@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.625 2009/04/09 17:39:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.626 2009/04/09 23:22:49 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -69,7 +69,7 @@ do it for earlier branch release files.
 
   <note>
    <title>Release date</title>
-   <simpara>2009-XX-XX, ITEMS CURRENT AS OF 2009-03-16</simpara>
+   <simpara>2009-XX-XX, ITEMS CURRENT AS OF 2009-04-08</simpara>
   </note>
 
   <sect2>
@@ -89,7 +89,97 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      *MAJOR ITEM LIST GOES HERE*
+      Windowing Functions
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Common Table Expressions and Recursive Joins
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Default and variadic parameters for functions
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Parallel Restore
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Column Permissions
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Per-database locale settings
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improved hash indexes
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improved join performance for EXISTS and NOT EXISTS queries
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Easier-to-use Warm Standby
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Automatic sizing of the Free Space Map
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Visibility Map (greatly reduces vacuum overhead for slowly-changing tables)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Version-aware psql (backslash commands work against older servers)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support SSL certificates for authentication
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Per-function runtime statistics
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Easy editing of functions in psql
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New contrib modules: pg_stat_statements, auto_explain, citext, btree_gin
      </para>
     </listitem>
 
@@ -150,24 +240,24 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Change <filename>postgresql.conf</> default for log_min_messages
-       to <literal>warning</> (previously <literal>notice</>) to reduce
-       log file volume (Tom)
+       Change <filename>postgresql.conf</> default for
+       <literal>log_min_messages</> to <literal>warning</> (previously
+       <literal>notice</>) to reduce log file volume (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have debug_print_parse, debug_print_rewritten, and debug_print_plan
-       output appear as <literal>LOG</> message level, not
-       <literal>DEBUG1</> (Tom) bjm: inconsistency because of var
-       names?
+       Have <literal>debug_print_parse</>, <literal>debug_print_rewritten</>,
+       and <literal>debug_print_plan</>
+       output appear at <literal>LOG</> message level, not
+       <literal>DEBUG1</> as formerly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Have debug_pretty_print default to on (Tom)
+       Make <literal>debug_pretty_print</> default to <literal>on</> (Tom)
       </para>
      </listitem>
 
@@ -181,7 +271,7 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Disable appending of the epoch date/time when no <literal>%</>
-       escapes are present in log_filename (Robert Haas)
+       escapes are present in <literal>log_filename</> (Robert Haas)
       </para>
 
       <para>
@@ -240,16 +330,15 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Have children inherit <literal>CHECK</> constraints from parents
+       Force child tables to inherit <literal>CHECK</> constraints from parents
        (Alex Hunsaker, Nikhil Sontakke, Tom Lane)
       </para>
-     </listitem>
 
-     <listitem>
       <para>
-       Force child tables to have the same <literal>CHECK</> constraints
-       as parents (Alex Hunsaker, Nikhil Sontakke, Tom Lane) bjm:
-       verify
+       Formerly it was possible to delete such a constraint from a child
+       table, allowing rows that violate the constraint to be visible
+       when scanning the parent table.  This was deemed inconsistent,
+       as well as contrary to SQL standard.
       </para>
      </listitem>
 
@@ -284,13 +373,6 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Make <command>DISCARD ALL</> also discard advisory locks (Marko
-       Kreen)
-      </para>
-     </listitem>
-
     </itemizedlist>
 
    </sect3>
@@ -320,7 +402,7 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       The changed behavior is more <acronym>IEEE</>-standards
+       The changed behavior is more <acronym>IEEE</>-standard
        compliant.
       </para>
      </listitem>
@@ -335,16 +417,37 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Remove <literal>~=~</> and <literal>~&lt;&gt;~</> operators
-       used for <literal>LIKE</> index comparisons (Tom) bjm: needed,
-       pg_upgrade impact?
+       formerly used for <literal>LIKE</> index comparisons (Tom)
       </para>
 
       <para>
-       A not-immediately-obvious incompatibility is that the sort
-       order within <literal>bpchar_pattern_ops</> indexes changes
-       --- it had been identical to plain <function>strcmp()</>, but
-       is now trailing-blank-insensitive.  This will impact in-place
-       upgrades, if those ever happen.
+       Pattern indexes now use the regular equality operator.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <function>xpath()</> now passes its arguments to <application>libxml</>
+       without any changes (Andrew)
+      </para>
+
+      <para>
+       This means that the XML argument must be a well-formed XML document.
+       The previous coding attempted to allow XML fragments, but it did not
+       work well.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <function>xmlelement()</> format attribute values just like
+       content values (Peter)
+      </para>
+
+      <para>
+       Previously, attribute values were formatted according to the
+       normal SQL output behavior, which is sometimes at odds with
+       XML rules.
       </para>
      </listitem>
 
@@ -452,11 +555,13 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This causes <command>SELECT DISTINCT</> no longer always produces
-       sorted output; add an <literal>ORDER BY</> clause. The old
-       <literal>SELECT DISTINCT</> behavior can be restored by disabling
-       enable_hashagg. <literal>SELECT DISTINCT ON</> does not use
-       hashing. bjm: enable_hashagg accurate?
+       This means that these types of queries no longer automatically
+       produce sorted output.  The recommended response is to add an
+       <literal>ORDER BY</> clause if needed.  As a short-term workaround,
+       the previous behavior can be restored by
+       disabling <literal>enable_hashagg</>, but that is a very
+       performance-expensive fix. <literal>SELECT DISTINCT ON</> never
+       uses hashing.
       </para>
      </listitem>
 
@@ -468,7 +573,7 @@ do it for earlier branch release files.
       <para>
        While semi-joins merely replace existing <literal>IN</> joins,
        anti-joins are a new capability for <literal>NOT EXISTS</>
-       clauses (Tom) This improves optimization possibilities.
+       clauses.  This improves optimization possibilities.
       </para>
      </listitem>
 
@@ -557,6 +662,29 @@ do it for earlier branch release files.
       <para>
        Inline simple set-returning <acronym>SQL</> functions in
        <literal>FROM</> clauses (Richard Rowell)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve performance of multi-batch hash joins by providing a special
+       case for join key values that are especially common in the outer
+       relation (Bryce Cutt, Ramon Lawrence)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Reduce volume of temporary data in multi-batch hash joins
+       by suppressing <quote>physical tlist</> optimization (Michael
+       Henderson, Ramon Lawrence)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Avoid waiting for idle-in-transaction sessions during
+       <command>CREATE INDEX CONCURRENTLY</> (Simon)
       </para>
      </listitem>
 
@@ -744,6 +872,18 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Provide an option to <function>pg_start_backup()</> to force its
+        implied checkpoint to finish as quickly as possible (Tom)
+       </para>
+
+       <para>
+        The default behavior avoids excess I/O consumption, but that is
+        pointless if no concurrent query activity is going on.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Have <function>pg_stop_backup()</> wait for modified <acronym>WAL</>
         files to be archived (Simon)
        </para>
@@ -910,10 +1050,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Support set-returning functions in the target lists of Agg and
-       Group plan nodes.  This is a pretty ugly feature but since we
-       don't yet have a plausible substitute, we'd better support it
-       everywhere (Tom) bjm:  details?
+       Support set-returning functions in the output of aggregation
+       and grouping queries (Tom)
       </para>
      </listitem>
 
@@ -932,34 +1070,32 @@ do it for earlier branch release files.
 
       <para>
        There are no remote or external <acronym>SQL/MED</> capabilities
-       yet. bjm:  accurate?
+       yet, but this change provides a standardized and future-proof
+       system for managing connection information for modules like
+       dblink and plproxy.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Invalidate cached plans when schemas, operators, or operator
-       classes are modified (Tom) bjm: effect?
+       Invalidate cached plans when referenced schemas, functions, operators,
+       or operator classes are modified (Martin Pihlak, Tom)
       </para>
-     </listitem>
 
-     <listitem>
       <para>
-       Improve the plan cache invalidation mechanism to make it
-       invalidate plans when user-defined functions used in a plan
-       are modified (Tom, Martin Pihlak) bjm: explain
+       This improves the system's ability to respond to on-the-fly
+       DDL changes.
       </para>
      </listitem>
-
      <listitem>
       <para>
        Allow comparison of composite types and allow arrays of
-       possibly-anonymous composite types (Tom)  bjm: clear?
+       anonymous composite types (Tom)
       </para>
 
       <para>
-       Specifically this allows <literal>array[ row(1,2), row(3,4)]</>
-       and <literal>row(1,1.1) = any (array[ row(7,7.7), row(1,1.0)</>.
+       Specifically this allows <literal>array[row(1,2), row(3,4)]</>
+       and <literal>row(1,1.1) = any (array[row(7,7.7), row(1,1.0)])</>.
        This is particularly useful for recursive queries.
       </para>
      </listitem>
@@ -1038,6 +1174,13 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Make <command>EXPLAIN</> identify subplans and initplans with
+        individual labels (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Have <command>EXPLAIN</> honor <varname>debug_print_plan</> (Tom)
        </para>
       </listitem>
@@ -1072,11 +1215,12 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add <acronym>SQL</>-standards syntax for
+        Add <acronym>SQL</>-standard syntax for
         <literal>LIMIT</>/<literal>OFFSET</> capabilities (Peter)
        </para>
 
        <para>
+        To wit,
         <literal>OFFSET num {ROW|ROWS} FETCH {FIRST|NEXT} [num] {ROW|ROWS}
         ONLY</>.
        </para>
@@ -1139,7 +1283,8 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This simplifies creation of data types like existing types.
+       This simplifies creation of data types that use the same internal
+       representation as an existing type.
       </para>
      </listitem>
 
@@ -1335,8 +1480,19 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Special xxx_pattern_ops <literal>LIKE</> indexes can now be
-        used for simple equality comparisons (Tom)
+        Implement fast update for GIN indexes (Teodor, Oleg)
+       </para>
+
+       <para>
+        This option greatly improves update speed at a small penalty in search
+        speed.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        <literal>xxx_pattern_ops</> indexes can now be used for simple
+        equality comparisons, not only <literal>LIKE</> (Tom)
        </para>
       </listitem>
 
@@ -1378,6 +1534,12 @@ do it for earlier branch release files.
        <para>
         Allow prefix matching in full text searches (Teodor Sigaev,
         Oleg Bartunov)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve support for Nepali language and Devanagari alphabet (Teodor)
        </para>
       </listitem>
 
@@ -1503,6 +1665,13 @@ do it for earlier branch release files.
       <para>
        Accept <literal>on</>/<literal>off</> as boolean data type
        values (Itagaki Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow spaces around <literal>NaN</> in the input string for
+       type <type>numeric</> (Sam Mason)
       </para>
      </listitem>
 
@@ -1949,11 +2118,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Improve the <literal>RAISE</> command: (Pavel Stehule)
-       </para>
-      </listitem>
 
-      <listitem>
-       <para>
         <itemizedlist>
          <listitem>
           <para>
@@ -2006,7 +2171,22 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Make <command>FETCH</> and <command>MOVE</> set the
+        <command>GET DIAGNOSTICS</> <literal>ROW_COUNT</> variable
+        (Andrew Gierth)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add message translation support (Alvaro)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid memory leakage when the same function is called at varying
+        exception-block nesting depths (Tom)
        </para>
       </listitem>
 
@@ -2181,12 +2361,14 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Have all <command>\d*</> commands show system objects only
-        if <literal>S</> is specified (Greg Sabino Mullane)
+        Make <command>\d*</> commands that do not have a pattern argument
+        show system objects only if the <literal>S</> modifier is specified
+        (Greg Sabino Mullane, Bruce)
        </para>
 
        <para>
-        <command>\dt</> already behaved this way. bjm: accuate?
+        The former behavior was inconsistent across different variants
+        of <command>\d</>, and provided no easy way to see just user objects.
        </para>
       </listitem>
 
@@ -2221,6 +2403,20 @@ do it for earlier branch release files.
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Make <command>\df</> not hide functions that take or return
+        type <type>cstring</> (Tom)
+       </para>
+
+       <para>
+        Previously, such functions were hidden because most of them are
+        datatype I/O functions, which were deemed uninteresting.  The new
+        policy about hiding system functions by default makes this wart
+        unnecessary.
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -2240,7 +2436,22 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Remove <literal>-i</>/<literal>--ignore-version</> option from
+        Remove <option>-d</> and <option>-D</> options from
+        <application>pg_dump</> and <application>pg_dumpall</> (Tom)
+       </para>
+
+       <para>
+        These options were too frequently confused with the option to
+        select a database name in other <productname>PostgreSQL</>
+        client applications.  The functionality is still available,
+        but you must spell out the long option name
+        <option>--inserts</> or <option>--column-inserts</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove <option>-i</>/<option>--ignore-version</> option from
         <application>pg_dump</> and <application>pg_dumpall</> (Tom)
        </para>
 
@@ -2261,7 +2472,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Add <application>pg_dump</>/<application>pg_dumpall</> option
-        <literal>--lock-wait-timeout</> (David Gould)
+        <option>--lock-wait-timeout</> (David Gould)
        </para>
 
        <para>
@@ -2413,13 +2624,20 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Add a <function>PQinitOpenSSL</> function to allow greater control
+        over OpenSSL/libcrypto initialization (Andrew Chernow)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Properly unregister <application>OpenSSL</> callbacks when
-        libpq is done with all connection (Bruce, Magnus, Russell Smith)
+        libpq is done with all connections (Bruce, Magnus, Russell Smith)
        </para>
 
        <para>
-        This is required for applications that unload the libpq library
-        so no invalid <application>OpenSSL</> callbacks remain.
+        This is required for applications that unload the libpq library,
+        otherwise invalid <application>OpenSSL</> callbacks will remain.
        </para>
       </listitem>
 
@@ -2574,6 +2792,18 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Use the system's <function>getopt_long()</> on <productname>Solaris</>
+       (Zdenek Kotala, Tom)
+      </para>
+
+      <para>
+       This makes option processing more consistent with what Solaris users
+       expect.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Add support for the <productname>Sun Studio</> compiler on
        <productname>Linux</> (Julius Stroffek)
       </para>
@@ -2630,6 +2860,13 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Improve <application>gettext</> support to allow better translation
+       of plurals (Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Add <application>DTrace</> probes (Robert Lor)
       </para>
      </listitem>
@@ -2650,13 +2887,20 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Add a <structfield>relistemp</> column to <structname>pg_class</>
+       to ease identification of temporary tables (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Improve logic for shared cache invalidation (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Make <type>name</> char-aligned (Tom) bjm: pg_upgrade?
+       Make <type>name</> char-aligned (Tom)
       </para>
      </listitem>
 
@@ -2786,6 +3030,13 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Add <filename>/contrib/btree_gin</> to allow GIN indexes to
+       handle more datatypes (Oleg, Teodor)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Add <filename>/contrib/citext</> as a case-insensitive,
        multibyte-aware text data type (David Wheeler)
       </para>
@@ -2828,6 +3079,20 @@ do it for earlier branch release files.
        Rewrite <filename>/contrib/intagg</> to user new server-side
        functions <function>array_agg()</> and <function>unnest()</>
        (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Remove <filename>/contrib/intarray</>'s definitions of the
+       <literal>&lt;@</> and <literal>@&gt;</> operators (Tom)
+      </para>
+
+      <para>
+       This avoids confusion with the equivalent built-in operators.
+       If necessary, the <filename>/contrib/intarray</> implementations
+       are still available under their historical names <literal>@</>
+       and <literal>~</>.
       </para>
      </listitem>
 
