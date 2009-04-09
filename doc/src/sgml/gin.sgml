@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.18 2009/03/25 22:19:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.19 2009/04/09 19:07:44 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -103,8 +103,10 @@
        If the query contains no keys then <function>extractQuery</>
        should store 0 or -1 into <literal>*nkeys</>, depending on the
        semantics of the operator.  0 means that every
-       value matches the <literal>query</> and a sequential scan should be
-       performed.  -1 means nothing can match the <literal>query</>.
+       value matches the <literal>query</> and a full-index scan should be
+       performed (but see <xref linkend="gin-limit">).
+       -1 means that nothing can match the <literal>query</>, and
+       so the index scan can be skipped entirely.
        <literal>pmatch</> is an output argument for use when partial match
        is supported.  To use it, <function>extractQuery</> must allocate
        an array of <literal>*nkeys</> booleans and store its address at
@@ -354,26 +356,20 @@
  <title>Limitations</title>
 
  <para>
-  <acronym>GIN</acronym> doesn't support full index scans: because there are
-  often many keys per value, each heap pointer would be returned many times,
-  and there is no easy way to prevent this.
+  <acronym>GIN</acronym> doesn't support full index scans.  The reason for
+  this is that <function>extractValue</> is allowed to return zero keys,
+  as for example might happen with an empty string or empty array.  In such
+  a case the indexed value will be unrepresented in the index.  It is
+  therefore impossible for <acronym>GIN</acronym> to guarantee that a
+  scan of the index can find every row in the table.
  </para>
 
  <para>
-  When <function>extractQuery</function> returns zero keys,
-  <acronym>GIN</acronym> will emit an error.  Depending on the operator,
-  a void query might match all, some, or none of the indexed values (for
-  example, every array contains the empty array, but does not overlap the
-  empty array), and <acronym>GIN</acronym> cannot determine the correct
-  answer, nor produce a full-index-scan result if it could determine that
-  that was correct.
- </para>
-
- <para>
-  It is not an error for <function>extractValue</> to return zero keys,
-  but in this case the indexed value will be unrepresented in the index.
-  This is another reason why full index scan is not useful &mdash; it would
-  miss such rows.
+  Because of this limitation, when <function>extractQuery</function> returns
+  <literal>nkeys = 0</> to indicate that all values match the query,
+  <acronym>GIN</acronym> will emit an error.  (If there are multiple ANDed
+  indexable operators in the query, this happens only if they all return zero
+  for <literal>nkeys</>.)
  </para>
 
  <para>
@@ -383,7 +379,21 @@
   <function>extractQuery</function> must convert an unrestricted search into
   a partial-match query that will scan the whole index.  This is inefficient
   but might be necessary to avoid corner-case failures with operators such
-  as <literal>LIKE</>.
+  as <literal>LIKE</> or subset inclusion.
+ </para>
+
+ <para>
+  <acronym>GIN</acronym> assumes that indexable operators are strict.
+  This means that <function>extractValue</> will not be called at all on
+  a NULL value (so the value will go unindexed), and
+  <function>extractQuery</function> will not be called on a NULL comparison
+  value either (instead, the query is presumed to be unmatchable).
+ </para>
+
+ <para>
+  A possibly more serious limitation is that <acronym>GIN</acronym> cannot
+  handle NULL keys &mdash; for example, an array containing a NULL cannot
+  be handled except by ignoring the NULL.
  </para>
 </sect1>
 
