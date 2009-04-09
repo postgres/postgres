@@ -2,8 +2,6 @@ For All Releases (major, minor, beta, RC)
 ================
 
 * Release version number changes
-	o update doc/FAQ and doc/src/FAQ/FAQ.html
-	o copy FAQs from HEAD to top-most branch
 	o run src/tools/version_stamp.pl, then run autoconf
 	  (by packager) (beta)
 
