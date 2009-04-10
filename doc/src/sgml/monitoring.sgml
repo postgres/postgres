@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.67 2009/04/09 22:32:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.68 2009/04/10 03:13:36 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -927,8 +927,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <function>pg_stat_get_blocks_fetched</function> minus
      <function>pg_stat_get_blocks_hit</function> gives the number of kernel
      <function>read()</> calls issued for the table, index, or
-     database; but the actual number of physical reads is usually
-     lower due to kernel-level buffering.
+     database; the number of actual physical reads is usually
+     lower due to kernel-level buffering.  The <literal>*_blks_read</>
+     statistics columns uses this subtraction, i.e. fetched minus hit.
     </para>
    </note>
 
