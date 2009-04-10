@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.42 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.43 2009/04/10 17:56:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -92,6 +92,15 @@ where <replaceable class="PARAMETER">direction</replaceable> can be empty or one
    row.  This will succeed unless the cursor is positioned before the
    first row or after the last row; in which case, no row is returned.
   </para>
+
+  <note>
+   <para>
+    This page describes usage of cursors at the SQL command level.
+    If you are trying to use cursors inside a <application>PL/pgSQL</>
+    function, the rules are different &mdash;
+    see <xref linkend="plpgsql-cursors">.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1>
