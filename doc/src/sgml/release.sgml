@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.626 2009/04/09 23:22:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.627 2009/04/11 02:06:16 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -161,7 +161,7 @@ do it for earlier branch release files.
 
     <listitem>
      <para>
-      Support SSL certificates for authentication
+      Support SSL certificates for user authentication
      </para>
     </listitem>
 
@@ -820,8 +820,9 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add <literal>cert</> authentication method to allow user
-        authentication via <acronym>SSL</> certificates (Magnus)
+        Add <literal>cert</> authentication method to allow
+        <emphasis>user</> authentication via <acronym>SSL</> certificates
+        (Magnus)
        </para>
 
        <para>
