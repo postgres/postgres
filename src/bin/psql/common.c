@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.141 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.142 2009/04/11 18:38:54 alvherre Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -824,8 +824,8 @@ SendQuery(const char *query)
 	{
 		if (on_error_rollback_warning == false && pset.sversion < 80000)
 		{
-			fprintf(stderr, _("The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"),
-					pset.sversion);
+			fprintf(stderr, _("The server (version %d.%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"),
+					pset.sversion / 10000, (pset.sversion / 100) % 100);
 			on_error_rollback_warning = true;
 		}
 		else
