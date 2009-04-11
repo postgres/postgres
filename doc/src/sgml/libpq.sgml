@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.282 2009/04/11 12:27:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.283 2009/04/11 16:46:54 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6139,8 +6139,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    <filename>%APPDATA%\postgresql\root.crt</filename>.)
    <application>libpq</application> will then verify that the server's
    certificate is signed by one of the trusted certificate authorities.
-   The SSL connection will fail if the server does not present a trusted
-   certificate.  Certificate Revocation List (CRL) entries are also checked
+   The SSL connection will fail if the server certificate cannot be verified.
+   Certificate Revocation List (CRL) entries are also checked
    if the file <filename>~/.postgresql/root.crl</filename> exists
    (<filename>%APPDATA%\postgresql\root.crl</filename> on Microsoft
    Windows).
