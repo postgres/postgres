@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.120 2009/04/11 02:07:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.121 2009/04/11 02:08:34 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1245,7 +1245,7 @@ ldapserver=ldap.example.net prefix="cn=" suffix="dc=example, dc=net"
     When using this authentication method, the server will require that
     the client provide a certificate. No password prompt will be sent
     to the client. The <literal>cn</literal> attribute of the certificate
-    will be compared with the login username, and if they match the
+    will be compared to the login username, and if they match the
     login will be allowed. Username mapping can be used if the usernames
     don't match.
    </para>
