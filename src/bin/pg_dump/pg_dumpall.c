@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.123 2009/04/08 19:02:37 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.124 2009/04/11 20:23:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,13 @@ static const char *progname;
 
 static void help(void);
 
+static void dropRoles(PGconn *conn);
 static void dumpRoles(PGconn *conn);
 static void dumpRoleMembership(PGconn *conn);
 static void dumpGroups(PGconn *conn);
+static void dropTablespaces(PGconn *conn);
 static void dumpTablespaces(PGconn *conn);
+static void dropDBs(PGconn *conn);
 static void dumpCreateDB(PGconn *conn);
 static void dumpDatabaseConfig(PGconn *conn, const char *dbname);
 static void dumpUserConfig(PGconn *conn, const char *username);
@@ -54,7 +57,6 @@ static void executeCommand(PGconn *conn, const char *query);
 
 static char pg_dump_bin[MAXPGPATH];
 static PQExpBuffer pgdumpopts;
-static bool output_clean = false;
 static bool skip_acls = false;
 static bool verbose = false;
 
@@ -82,6 +84,7 @@ main(int argc, char *argv[])
 	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		data_only = false;
 	bool		globals_only = false;
+	bool		output_clean = false;
 	bool		roles_only = false;
 	bool		tablespaces_only = false;
 	bool		schema_only = false;
@@ -90,8 +93,9 @@ main(int argc, char *argv[])
 	const char *std_strings;
 	int			c,
 				ret;
+	int			optindex;
 
-	struct option long_options[] = {
+	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
 		{"file", required_argument, NULL, 'f'},
@@ -129,8 +133,6 @@ main(int argc, char *argv[])
 
 		{NULL, 0, NULL, 0}
 	};
-
-	int			optindex;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_dump"));
 
@@ -442,16 +444,41 @@ main(int argc, char *argv[])
 
 	fprintf(OPF, "\\connect postgres\n\n");
 
+	/* Replicate encoding and std_strings in output */
+	fprintf(OPF, "SET client_encoding = '%s';\n",
+			pg_encoding_to_char(encoding));
+	fprintf(OPF, "SET standard_conforming_strings = %s;\n", std_strings);
+	if (strcmp(std_strings, "off") == 0)
+		fprintf(OPF, "SET escape_string_warning = off;\n");
+	fprintf(OPF, "\n");
+
 	if (!data_only)
 	{
-		/* Replicate encoding and std_strings in output */
-		fprintf(OPF, "SET client_encoding = '%s';\n",
-				pg_encoding_to_char(encoding));
-		fprintf(OPF, "SET standard_conforming_strings = %s;\n", std_strings);
-		if (strcmp(std_strings, "off") == 0)
-			fprintf(OPF, "SET escape_string_warning = 'off';\n");
-		fprintf(OPF, "\n");
+		/*
+		 * If asked to --clean, do that first.  We can avoid detailed
+		 * dependency analysis because databases never depend on each other,
+		 * and tablespaces never depend on each other.  Roles could have
+		 * grants to each other, but DROP ROLE will clean those up silently.
+		 */
+		if (output_clean)
+		{
+			if (!globals_only && !roles_only && !tablespaces_only)
+				dropDBs(conn);
 
+			if (!roles_only && !no_tablespaces)
+			{
+				if (server_version >= 80000)
+					dropTablespaces(conn);
+			}
+
+			if (!tablespaces_only)
+				dropRoles(conn);
+		}
+
+		/*
+		 * Now create objects as requested.  Be careful that option logic
+		 * here is the same as for drops above.
+		 */
 		if (!tablespaces_only)
 		{
 			/* Dump roles (users) */
@@ -490,7 +517,6 @@ main(int argc, char *argv[])
 
 	exit(0);
 }
-
 
 
 static void
@@ -541,6 +567,48 @@ help(void)
 }
 
 
+/*
+ * Drop roles
+ */
+static void
+dropRoles(PGconn *conn)
+{
+	PGresult   *res;
+	int			i_rolname;
+	int			i;
+
+	if (server_version >= 80100)
+		res = executeQuery(conn,
+						   "SELECT rolname "
+						   "FROM pg_authid "
+						   "ORDER BY 1");
+	else
+		res = executeQuery(conn,
+						   "SELECT usename as rolname "
+						   "FROM pg_shadow "
+						   "UNION "
+						   "SELECT groname as rolname "
+						   "FROM pg_group "
+						   "ORDER BY 1");
+
+	i_rolname = PQfnumber(res, "rolname");
+
+	if (PQntuples(res) > 0)
+		fprintf(OPF, "--\n-- Drop roles\n--\n\n");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		const char *rolename;
+
+		rolename = PQgetvalue(res, i, i_rolname);
+
+		fprintf(OPF, "DROP ROLE %s;\n", fmtId(rolename));
+	}
+
+	PQclear(res);
+
+	fprintf(OPF, "\n\n");
+}
 
 /*
  * Dump roles
@@ -637,14 +705,12 @@ dumpRoles(PGconn *conn)
 
 		resetPQExpBuffer(buf);
 
-		if (output_clean)
-			appendPQExpBuffer(buf, "DROP ROLE %s;\n", fmtId(rolename));
-
 		/*
 		 * We dump CREATE ROLE followed by ALTER ROLE to ensure that the role
-		 * will acquire the right properties even if it already exists. (The
-		 * above DROP may therefore seem redundant, but it isn't really,
-		 * because this technique doesn't get rid of role memberships.)
+		 * will acquire the right properties even if it already exists (ie,
+		 * it won't hurt for the CREATE to fail).  This is particularly
+		 * important for the role we are connected as, since even with --clean
+		 * we will have failed to drop it.
 		 */
 		appendPQExpBuffer(buf, "CREATE ROLE %s;\n", fmtId(rolename));
 		appendPQExpBuffer(buf, "ALTER ROLE %s WITH", fmtId(rolename));
@@ -834,6 +900,40 @@ dumpGroups(PGconn *conn)
 	fprintf(OPF, "\n\n");
 }
 
+
+/*
+ * Drop tablespaces.
+ */
+static void
+dropTablespaces(PGconn *conn)
+{
+	PGresult   *res;
+	int			i;
+
+	/*
+	 * Get all tablespaces except built-in ones (which we assume are named
+	 * pg_xxx)
+	 */
+	res = executeQuery(conn, "SELECT spcname "
+					   "FROM pg_catalog.pg_tablespace "
+					   "WHERE spcname !~ '^pg_' "
+					   "ORDER BY 1");
+
+	if (PQntuples(res) > 0)
+		fprintf(OPF, "--\n-- Drop tablespaces\n--\n\n");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		char	   *spcname = PQgetvalue(res, i, 0);
+
+		fprintf(OPF, "DROP TABLESPACE %s;\n", fmtId(spcname));
+	}
+
+	PQclear(res);
+
+	fprintf(OPF, "\n\n");
+}
+
 /*
  * Dump tablespaces.
  */
@@ -880,9 +980,6 @@ dumpTablespaces(PGconn *conn)
 		/* needed for buildACLCommands() */
 		fspcname = strdup(fmtId(spcname));
 
-		if (output_clean)
-			appendPQExpBuffer(buf, "DROP TABLESPACE %s;\n", fspcname);
-
 		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", fspcname);
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
 
@@ -914,6 +1011,53 @@ dumpTablespaces(PGconn *conn)
 	}
 
 	PQclear(res);
+	fprintf(OPF, "\n\n");
+}
+
+
+/*
+ * Dump commands to drop each database.
+ *
+ * This should match the set of databases targeted by dumpCreateDB().
+ */
+static void
+dropDBs(PGconn *conn)
+{
+	PGresult   *res;
+	int			i;
+
+	if (server_version >= 70100)
+		res = executeQuery(conn,
+						   "SELECT datname "
+						   "FROM pg_database d "
+						   "WHERE datallowconn ORDER BY 1");
+	else
+		res = executeQuery(conn,
+						   "SELECT datname "
+						   "FROM pg_database d "
+						   "ORDER BY 1");
+
+	if (PQntuples(res) > 0)
+		fprintf(OPF, "--\n-- Drop databases\n--\n\n");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		char	   *dbname = PQgetvalue(res, i, 0);
+
+		/*
+		 * Skip "template1" and "postgres"; the restore script is almost
+		 * certainly going to be run in one or the other, and we don't know
+		 * which.  This must agree with dumpCreateDB's choices!
+		 */
+		if (strcmp(dbname, "template1") != 0 &&
+			strcmp(dbname, "postgres") != 0)
+		{
+			fprintf(OPF, "DROP DATABASE %s;\n", fmtId(dbname));
+		}
+	}
+
+	PQclear(res);
+
 	fprintf(OPF, "\n\n");
 }
 
@@ -984,7 +1128,7 @@ dumpCreateDB(PGconn *conn)
 					"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid"
+						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, "
 						   "datistemplate, '' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
@@ -999,7 +1143,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 					"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid"
+						   "null::text AS datcollate, null::text AS datctype, 0 AS datfrozenxid, "
 						   "'f' as datistemplate, "
 						   "'' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
@@ -1033,9 +1177,6 @@ dumpCreateDB(PGconn *conn)
 		if (strcmp(dbname, "template1") != 0 &&
 			strcmp(dbname, "postgres") != 0)
 		{
-			if (output_clean)
-				appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fdbname);
-
 			appendPQExpBuffer(buf, "CREATE DATABASE %s", fdbname);
 
 			appendPQExpBuffer(buf, " WITH TEMPLATE = template0");
@@ -1118,7 +1259,6 @@ dumpCreateDB(PGconn *conn)
 
 	fprintf(OPF, "\n\n");
 }
-
 
 
 /*
