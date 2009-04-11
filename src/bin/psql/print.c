@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.111 2009/03/26 22:26:07 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.112 2009/04/11 14:11:45 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -2260,7 +2260,7 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 				print_troff_ms_text(cont, fout);
 			break;
 		default:
-			fprintf(stderr, _("invalid fout format (internal error): %d"),
+			fprintf(stderr, _("invalid output format (internal error): %d"),
 					cont->opt->format);
 			exit(EXIT_FAILURE);
 	}
