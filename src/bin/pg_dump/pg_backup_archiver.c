@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.169 2009/03/26 22:26:07 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.170 2009/04/12 21:02:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,7 @@ static parallel_restore_result parallel_restore(RestoreArgs *args);
 static void mark_work_done(ArchiveHandle *AH, thandle worker, int status,
 						   ParallelSlot *slots, int n_slots);
 static void fix_dependencies(ArchiveHandle *AH);
+static bool has_lock_conflicts(TocEntry *te1, TocEntry *te2);
 static void repoint_table_dependencies(ArchiveHandle *AH,
 									   DumpId tableId, DumpId tableDataId);
 static void identify_locking_dependencies(TocEntry *te,
@@ -3350,6 +3351,29 @@ get_next_slot(ParallelSlot *slots, int n_slots)
 	return NO_SLOT;
 }
 
+
+/*
+ * Check if te1 has an exclusive lock requirement for an item that te2 also
+ * requires, whether or not te2's requirement is for an exclusive lock.
+ */
+static bool
+has_lock_conflicts(TocEntry *te1, TocEntry *te2)
+{
+	int j,k;
+
+	for (j = 0; j < te1->nLockDeps; j++)
+	{
+		for (k = 0; k < te2->nDeps; k++)
+		{
+			if (te1->lockDeps[j] == te2->dependencies[k])
+				return true;
+		}
+	}
+	return false;
+}
+
+
+
 /*
  * Find the next work item (if any) that is capable of being run now.
  *
@@ -3373,7 +3397,7 @@ get_next_work_item(ArchiveHandle *AH, TocEntry **first_unprocessed,
 	bool      pref_non_data = false; /* or get from AH->ropt */
 	TocEntry *data_te = NULL;
 	TocEntry *te;
-	int       i,j,k;
+	int       i,k;
 
 	/*
 	 * Bogus heuristics for pref_non_data
@@ -3413,8 +3437,8 @@ get_next_work_item(ArchiveHandle *AH, TocEntry **first_unprocessed,
 
 		/*
 		 * Check to see if the item would need exclusive lock on something
-		 * that a currently running item also needs lock on.  If so, we
-		 * don't want to schedule them together.
+		 * that a currently running item also needs lock on, or vice versa.
+		 * If so, we don't want to schedule them together.
 		 */
 		for (i = 0; i < n_slots && !conflicts; i++)
 		{
@@ -3423,16 +3447,12 @@ get_next_work_item(ArchiveHandle *AH, TocEntry **first_unprocessed,
 			if (slots[i].args == NULL)
 				continue;
 			running_te = slots[i].args->te;
-			for (j = 0; j < te->nLockDeps && !conflicts; j++)
+
+			if (has_lock_conflicts(te, running_te) ||
+				has_lock_conflicts(running_te, te))
 			{
-				for (k = 0; k < running_te->nLockDeps; k++)
-				{
-					if (te->lockDeps[j] == running_te->lockDeps[k])
-					{
-						conflicts = true;
-						break;
-					}
-				}
+				conflicts = true;
+				break;
 			}
 		}
 
