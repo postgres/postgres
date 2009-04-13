@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.97 2009/04/05 04:19:58 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.98 2009/04/13 21:03:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ main(int argc, char **argv)
 	{
 		if (opts->filename)
 		{
-			fprintf(stderr, _("%s: cannot specify both -d and -f output\n"),
+			fprintf(stderr, _("%s: options -d/--dbname and -f/--file cannot be used together\n"),
 					progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
@@ -316,7 +316,7 @@ main(int argc, char **argv)
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && opts->number_of_jobs > 1)
 	{
-		fprintf(stderr, _("%s: cannot specify both --single-transaction and multiple jobs\n"),
+		fprintf(stderr, _("%s: options -1/--single-transaction and -j/--jobs cannot be used together\n"),
 				progname);
 		exit(1);
 	}
