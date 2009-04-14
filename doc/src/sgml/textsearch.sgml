@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.48 2009/03/24 20:17:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.49 2009/04/14 00:49:56 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -1082,7 +1082,8 @@ ORDER BY rank DESC LIMIT 10;
       <para>
        <literal>StartSel</>, <literal>StopSel</literal>: the strings with which
        query words appearing in the document should be delimited to distinguish
-       them from other excerpted words.
+       them from other excerpted words.  You must double-quote these strings
+       if they contain spaces or commas.
       </para>
      </listitem>
      <listitem >
@@ -1095,36 +1096,36 @@ ORDER BY rank DESC LIMIT 10;
       <para>
        <literal>ShortWord</literal>: words of this length or less will be
        dropped at the start and end of a headline. The default
-       value of three eliminates the English articles.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       <literal>MaxFragments</literal>: maximum number of text excerpts 
-       or fragments that matches the query words. It also triggers a 
-       different headline generation function than the default one. This
-       function finds text fragments with as many query words as possible and 
-       stretches  those fragments around the query words. As a result 
-       query words are close to the middle of each fragment and have words on 
-       each side. Each fragment will be of at  most MaxWords and will not 
-       have words of size less than or equal to ShortWord at the start or 
-       end of a  fragment. If all query words are not found in the document, 
-       then  a single fragment of MinWords will be displayed.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       <literal>FragmentDelimiter</literal>: When more than one fragments are 
-       displayed, then the fragments will be separated by this delimiter. This 
-       option is effective only if MaxFragments is greater than 1 and there are
-       more than one fragments to be diplayed. This option has no effect on the
-       default headline generation function.
+       value of three eliminates common English articles.
       </para>
      </listitem>
      <listitem>
       <para>
        <literal>HighlightAll</literal>: Boolean flag;  if
-       <literal>true</literal> the whole document will be highlighted.
+       <literal>true</literal> the whole document will be used as the
+       headline, ignoring the preceding three parameters.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>MaxFragments</literal>: maximum number of text excerpts
+       or fragments to display.  The default value of zero selects a
+       non-fragment-oriented headline generation method.  A value greater than
+       zero selects fragment-based headline generation.  This method
+       finds text fragments with as many query words as possible and
+       stretches those fragments around the query words.  As a result
+       query words are close to the middle of each fragment and have words on
+       each side. Each fragment will be of at most <literal>MaxWords</> and
+       words of length <literal>ShortWord</> or less are dropped at the start
+       and end of each fragment. If not all query words are found in the
+       document, then a single fragment of the first <literal>MinWords</>
+       in the document will be displayed.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>FragmentDelimiter</literal>: When more than one fragment is
+       displayed, the fragments will be separated by this string.
       </para>
      </listitem>
     </itemizedlist>
@@ -1132,7 +1133,9 @@ ORDER BY rank DESC LIMIT 10;
     Any unspecified options receive these defaults:
 
 <programlisting>
-StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxFragments=0, FragmentDelimiter=" ... ", MaxWords=35, MinWords=15, ShortWord=3, HighlightAll=FALSE
+StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;,
+MaxWords=35, MinWords=15, ShortWord=3, HighlightAll=FALSE,
+MaxFragments=0, FragmentDelimiter=" ... "
 </programlisting>
    </para>
 
@@ -1140,17 +1143,20 @@ StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxFragments=0, FragmentDelimiter=" ... 
     For example:
 
 <programlisting>
-SELECT ts_headline('english', 'The most common type of search
+SELECT ts_headline('english',
+  'The most common type of search
 is to find all documents containing given query terms 
 and return them in order of their similarity to the
-query.', to_tsquery('query &amp; similarity'));
+query.',
+  to_tsquery('query &amp; similarity'));
                         ts_headline                         
 ------------------------------------------------------------
- given &lt;b&gt;query&lt;/b&gt; terms
+ containing given &lt;b&gt;query&lt;/b&gt; terms 
  and return them in order of their &lt;b&gt;similarity&lt;/b&gt; to the
  &lt;b&gt;query&lt;/b&gt;.
 
-SELECT ts_headline('english', 'The most common type of search
+SELECT ts_headline('english',
+  'The most common type of search
 is to find all documents containing given query terms
 and return them in order of their similarity to the
 query.',
@@ -1158,7 +1164,7 @@ query.',
   'StartSel = &lt;, StopSel = &gt;');
                       ts_headline                      
 -------------------------------------------------------
- given &lt;query&gt; terms
+ containing given &lt;query&gt; terms
  and return them in order of their &lt;similarity&gt; to the
  &lt;query&gt;.
 </programlisting>
