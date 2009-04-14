@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.98 2009/04/13 21:03:36 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.99 2009/04/14 00:06:35 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,7 +316,7 @@ main(int argc, char **argv)
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && opts->number_of_jobs > 1)
 	{
-		fprintf(stderr, _("%s: options -1/--single-transaction and -j/--jobs cannot be used together\n"),
+		fprintf(stderr, _("%s: cannot specify both --single-transaction and multiple jobs\n"),
 				progname);
 		exit(1);
 	}
