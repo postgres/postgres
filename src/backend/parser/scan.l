@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.149 2009/03/04 13:02:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.150 2009/04/14 22:18:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,6 +553,7 @@ other			.
 					startlit();
 				}
 {dolqfailed}	{
+					SET_YYLLOC();
 					/* throw back all but the initial "$" */
 					yyless(1);
 					/* and treat it as {other} */
@@ -646,10 +647,15 @@ other			.
 <xd,xui><<EOF>>		{ yyerror("unterminated quoted identifier"); }
 
 {xufailed}	{
+					char		   *ident;
+
+					SET_YYLLOC();
 					/* throw back all but the initial u/U */
 					yyless(1);
-					/* and treat it as {other} */
-					return yytext[0];
+					/* and treat it as {identifier} */
+					ident = downcase_truncate_identifier(yytext, yyleng, true);
+					yylval.str = ident;
+					return IDENT;
 				}
 
 {typecast}		{
