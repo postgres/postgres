@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.283 2009/04/11 16:46:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.284 2009/04/14 20:42:48 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -254,23 +254,55 @@
           <para>
            This option determines whether or with what priority a
            <acronym>SSL</> TCP/IP connection will be negotiated with the
-           server. There are four modes: <literal>disable</> will attempt
-           only an unencrypted <acronym>SSL</> connection;
-           <literal>allow</> will negotiate, trying first a
-           non-<acronym>SSL</> connection, then if that fails, trying an
-           <acronym>SSL</> connection; <literal>prefer</> (the default)
-           will negotiate, trying first an <acronym>SSL</> connection,
-           then if that fails, trying a regular non-<acronym>SSL</>
-           connection; <literal>require</> will try only an
-           <acronym>SSL</> connection.  <literal>sslmode</> is ignored
-           for Unix domain socket communication.
-          </para>
+           server. There are four modes:
+
+           <table id="libpq-connect-sslmode-options">
+            <title><literal>sslmode</literal> options</title>
+            <tgroup cols="2">
+             <thead>
+              <row>
+               <entry>Option</entry>
+               <entry>Description</entry>
+              </row>
+             </thead>
+         
+             <tbody>
+         
+              <row>
+               <entry><literal>disable</></entry>
+               <entry>only try a non-<acronym>SSL</> connection
+              </row>
+         
+              <row>
+               <entry><literal>allow</></entry>
+               <entry>first try a non-<acronym>SSL</>
+                connection;  if that fails, try an <acronym>SSL</>
+                connection</entry>
+              </row>
+         
+              <row>
+               <entry><literal>prefer</> (default)</entry>
+               <entry>first try an <acronym>SSL</> connection;  if
+               that fails, try a non-<acronym>SSL</>
+               connection</entry>
+              </row>
+         
+              <row>
+               <entry><literal>require</></entry>
+               <entry>only try an <acronym>SSL</> connection</entry>
+              </row>
+         
+             </tbody>
+            </tgroup>
+           </table>
 
           <para>
+           <literal>sslmode</> is ignored for Unix domain socket
+           communication.
            If <productname>PostgreSQL</> is compiled without SSL support,
            using option <literal>require</> will cause an error, while
            options <literal>allow</> and <literal>prefer</> will be
-           accepted but <application>libpq</> will not in fact attempt
+           accepted but <application>libpq</> will not actually attempt
            an <acronym>SSL</>
            connection.<indexterm><primary>SSL</><secondary
            sortas="libpq">with libpq</></indexterm>
