@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.155 2009/04/09 17:39:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.156 2009/04/15 23:30:33 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4492,7 +4492,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 	if (ARR_LBOUND(dims)[0] != 1)
 		ereport(ERROR,
 			    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			     errmsg("wrong range of array_subscripts"),
+			     errmsg("wrong range of array subscripts"),
 			     errdetail("Lower bound of dimension array must be one.")));
 
 	if (ARR_HASNULL(dims))
@@ -4524,7 +4524,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 		if (ARR_LBOUND(lbs)[0] != 1)
 			ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			         errmsg("wrong range of array_subscripts"),
+			         errmsg("wrong range of array subscripts"),
 			    	 errdetail("Lower bound of dimension array must be one.")));
 
 		if (ARR_HASNULL(lbs))
@@ -4535,7 +4535,7 @@ array_fill_internal(ArrayType *dims, ArrayType *lbs,
 		if (ARR_DIMS(lbs)[0] != ndims)
 			ereport(ERROR,
 				    (errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				     errmsg("wrong number of array_subscripts"),
+				     errmsg("wrong number of array subscripts"),
 				     errdetail("Low bound array has different size than dimensions array.")));
 
 		lbsv = (int *) ARR_DATA_PTR(lbs);
