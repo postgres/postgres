@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.104 2009/02/11 21:11:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.105 2009/04/15 22:42:50 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -450,13 +450,10 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
        <para>
         The name (possibly schema-qualified) of an existing table to
         alter. If <literal>ONLY</> is specified, only that table is
-        altered. If <literal>ONLY</> is not specified, the table and all
-        its descendant tables (if any) are updated. <literal>*</> can be
-        appended to the table name to indicate that descendant tables are
-        to be altered, but in the current version, this is the default
-        behavior.  (In releases before 7.1, <literal>ONLY</> was the
-        default behavior.  The default can be altered by changing the
-        configuration parameter <xref linkend="guc-sql-inheritance">.)
+        altered. If <literal>ONLY</> is not specified, the table and any
+        descendant tables are altered. The default can be changed
+        using the configuration parameter <xref
+        linkend="guc-sql-inheritance">.
        </para>
       </listitem>
      </varlistentry>

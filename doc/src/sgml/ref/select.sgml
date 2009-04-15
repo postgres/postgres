@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.120 2009/02/02 20:42:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.121 2009/04/15 22:42:50 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -271,12 +271,8 @@ TABLE { [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] |
         The name (optionally schema-qualified) of an existing table or
         view.  If <literal>ONLY</> is specified, only that table is
         scanned.  If <literal>ONLY</> is not specified, the table and
-        all its descendant tables (if any) are scanned.  <literal>*</>
-        can be appended to the table name to indicate that descendant
-        tables are to be scanned, but in the current version, this is
-        the default behavior.  (In releases before 7.1,
-        <literal>ONLY</> was the default behavior.)  The default
-        behavior can be modified by changing the <xref
+        any descendant tables are scanned.  The default
+        behavior can be changed using the <xref
         linkend="guc-sql-inheritance"> configuration option.
        </para>
       </listitem>
