@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.184 2009/03/25 14:12:02 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.185 2009/04/15 21:42:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,8 +578,9 @@ check_db(const char *dbname, const char *role, char *param_str)
 #define INVALID_AUTH_OPTION(optname, validmethods) do {\
 	ereport(LOG, \
 			(errcode(ERRCODE_CONFIG_FILE_ERROR), \
-			 errmsg("authentication option \"%s\" is only valid for authentication methods \"%s\"", \
-					optname, validmethods), \
+			 /* translator: the second %s is a list of auth methods */ \
+			 errmsg("authentication option \"%s\" is only valid for authentication methods %s", \
+					optname, _(validmethods)), \
 			 errcontext("line %d of configuration file \"%s\"", \
 					line_num, HbaFileName))); \
 	return false; \
@@ -952,7 +953,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					parsedline->auth_method != uaGSS &&
 					parsedline->auth_method != uaSSPI &&
 					parsedline->auth_method != uaCert)
-					INVALID_AUTH_OPTION("map", "ident, krb5, gssapi, sspi and cert");
+					INVALID_AUTH_OPTION("map", gettext_noop("ident, krb5, gssapi, sspi and cert"));
 				parsedline->usermap = pstrdup(c);
 			}
 			else if (strcmp(token, "clientcert") == 0)
@@ -1050,7 +1051,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				if (parsedline->auth_method != uaKrb5 &&
 					parsedline->auth_method != uaGSS &&
 					parsedline->auth_method != uaSSPI)
-					INVALID_AUTH_OPTION("krb_realm", "krb5, gssapi and sspi");
+					INVALID_AUTH_OPTION("krb_realm", gettext_noop("krb5, gssapi and sspi"));
 				parsedline->krb_realm = pstrdup(c);
 			}
 			else if (strcmp(token, "include_realm") == 0)
@@ -1058,7 +1059,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				if (parsedline->auth_method != uaKrb5 &&
 					parsedline->auth_method != uaGSS &&
 					parsedline->auth_method != uaSSPI)
-					INVALID_AUTH_OPTION("include_realm", "krb5, gssapi and sspi");
+					INVALID_AUTH_OPTION("include_realm", gettext_noop("krb5, gssapi and sspi"));
 				if (strcmp(c, "1") == 0)
 					parsedline->include_realm = true;
 				else
