@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.284 2009/04/14 20:42:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.285 2009/04/15 13:03:11 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -255,46 +255,47 @@
            This option determines whether or with what priority a
            <acronym>SSL</> TCP/IP connection will be negotiated with the
            server. There are four modes:
+          </para>
 
-           <table id="libpq-connect-sslmode-options">
-            <title><literal>sslmode</literal> options</title>
-            <tgroup cols="2">
-             <thead>
-              <row>
-               <entry>Option</entry>
-               <entry>Description</entry>
-              </row>
-             </thead>
-         
-             <tbody>
-         
-              <row>
-               <entry><literal>disable</></entry>
-               <entry>only try a non-<acronym>SSL</> connection
-              </row>
-         
-              <row>
-               <entry><literal>allow</></entry>
-               <entry>first try a non-<acronym>SSL</>
-                connection;  if that fails, try an <acronym>SSL</>
-                connection</entry>
-              </row>
-         
-              <row>
-               <entry><literal>prefer</> (default)</entry>
-               <entry>first try an <acronym>SSL</> connection;  if
-               that fails, try a non-<acronym>SSL</>
+          <table id="libpq-connect-sslmode-options">
+           <title><literal>sslmode</literal> options</title>
+           <tgroup cols="2">
+            <thead>
+             <row>
+              <entry>Option</entry>
+              <entry>Description</entry>
+             </row>
+            </thead>
+        
+            <tbody>
+        
+             <row>
+              <entry><literal>disable</></entry>
+              <entry>only try a non-<acronym>SSL</> connection</entry>
+             </row>
+        
+             <row>
+              <entry><literal>allow</></entry>
+              <entry>first try a non-<acronym>SSL</>
+               connection;  if that fails, try an <acronym>SSL</>
                connection</entry>
-              </row>
-         
-              <row>
-               <entry><literal>require</></entry>
-               <entry>only try an <acronym>SSL</> connection</entry>
-              </row>
-         
-             </tbody>
-            </tgroup>
-           </table>
+             </row>
+        
+             <row>
+              <entry><literal>prefer</> (default)</entry>
+              <entry>first try an <acronym>SSL</> connection;  if
+              that fails, try a non-<acronym>SSL</>
+              connection</entry>
+             </row>
+        
+             <row>
+              <entry><literal>require</></entry>
+              <entry>only try an <acronym>SSL</> connection</entry>
+             </row>
+        
+            </tbody>
+           </tgroup>
+          </table>
 
           <para>
            <literal>sslmode</> is ignored for Unix domain socket
