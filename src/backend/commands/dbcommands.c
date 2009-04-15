@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.220 2009/04/06 08:42:52 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.221 2009/04/15 21:36:12 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,12 +390,12 @@ createdb(const CreatedbStmt *stmt)
 		if (strcmp(dbcollate, src_collate))
 			ereport(ERROR,
 					(errmsg("new collation is incompatible with the collation of the template database (%s)", src_collate),
-					 errhint("Use the same collation as in the template database, or use template0 as template")));
+					 errhint("Use the same collation as in the template database, or use template0 as template.")));
 
 		if (strcmp(dbctype, src_ctype))
 			ereport(ERROR,
 					(errmsg("new LC_CTYPE is incompatible with LC_CTYPE of the template database (%s)", src_ctype),
-					 errhint("Use the same LC_CTYPE as in the template database, or use template0 as template")));
+					 errhint("Use the same LC_CTYPE as in the template database, or use template0 as template.")));
 	}
 
 	/* Resolve default tablespace for new database */
