@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.227.2.1 2008/09/12 14:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.227.2.2 2009/04/16 20:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2254,11 +2254,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 				if (boolqual)
 				{
 					resultquals = lappend(resultquals,
-										  make_restrictinfo(boolqual,
-															true,
-															false,
-															false,
-															NULL));
+										  make_simple_restrictinfo(boolqual));
 					continue;
 				}
 			}
@@ -2289,11 +2285,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			{
 				Assert(index->amsearchnulls);
 				resultquals = lappend(resultquals,
-									  make_restrictinfo(clause,
-														true,
-														false,
-														false,
-														NULL));
+									  make_simple_restrictinfo(clause));
 			}
 			else
 				elog(ERROR, "unsupported indexqual type: %d",
@@ -2652,7 +2644,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 								  matching_cols);
 		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
 								  matching_cols);
-		return make_restrictinfo((Expr *) rc, true, false, false, NULL);
+		return make_simple_restrictinfo((Expr *) rc);
 	}
 	else
 	{
@@ -2661,7 +2653,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		opexpr = make_opclause(linitial_oid(new_ops), BOOLOID, false,
 							   copyObject(linitial(clause->largs)),
 							   copyObject(linitial(clause->rargs)));
-		return make_restrictinfo(opexpr, true, false, false, NULL);
+		return make_simple_restrictinfo(opexpr);
 	}
 }
 
@@ -2749,7 +2741,7 @@ prefix_quals(Node *leftop, Oid opfamily,
 			elog(ERROR, "no = operator for opfamily %u", opfamily);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
-		result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
+		result = list_make1(make_simple_restrictinfo(expr));
 		return result;
 	}
 
@@ -2764,7 +2756,7 @@ prefix_quals(Node *leftop, Oid opfamily,
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
-	result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
+	result = list_make1(make_simple_restrictinfo(expr));
 
 	/*-------
 	 * If we can create a string larger than the prefix, we can say
@@ -2781,8 +2773,7 @@ prefix_quals(Node *leftop, Oid opfamily,
 	{
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
-		result = lappend(result,
-						 make_restrictinfo(expr, true, false, false, NULL));
+		result = lappend(result, make_simple_restrictinfo(expr));
 	}
 
 	return result;
@@ -2845,7 +2836,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, -1, opr1right,
 											false, false));
-	result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
+	result = list_make1(make_simple_restrictinfo(expr));
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
@@ -2860,8 +2851,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, -1, opr2right,
 											false, false));
-	result = lappend(result,
-					 make_restrictinfo(expr, true, false, false, NULL));
+	result = lappend(result, make_simple_restrictinfo(expr));
 
 	return result;
 }

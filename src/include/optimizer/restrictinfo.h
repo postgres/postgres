@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/restrictinfo.h,v 1.41 2008/01/01 19:45:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/restrictinfo.h,v 1.41.2.1 2009/04/16 20:42:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,16 @@
 #include "nodes/relation.h"
 
 
+/* Convenience macro for the common case of a valid-everywhere qual */
+#define make_simple_restrictinfo(clause)  \
+	make_restrictinfo(clause, true, false, false, NULL, NULL)
+
 extern RestrictInfo *make_restrictinfo(Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
-				  Relids required_relids);
+				  Relids required_relids,
+				  Relids nullable_relids);
 extern List *make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 								  bool is_pushed_down,
 								  bool include_predicates);
