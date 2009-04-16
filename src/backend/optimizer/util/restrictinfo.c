@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.57 2009/02/06 23:43:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.58 2009/04/16 20:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,14 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   bool is_pushed_down,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
-						   Relids required_relids);
+						   Relids required_relids,
+						   Relids nullable_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
-					   Relids required_relids);
+					   Relids required_relids,
+					   Relids nullable_relids);
 static bool join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list);
@@ -44,9 +46,9 @@ static bool join_clause_is_redundant(PlannerInfo *root,
  * Build a RestrictInfo node containing the given subexpression.
  *
  * The is_pushed_down, outerjoin_delayed, and pseudoconstant flags for the
- * RestrictInfo must be supplied by the caller.  required_relids can be NULL,
- * in which case it defaults to the actual clause contents (i.e.,
- * clause_relids).
+ * RestrictInfo must be supplied by the caller, as well as the correct value
+ * for nullable_relids.  required_relids can be NULL, in which case it
+ * defaults to the actual clause contents (i.e., clause_relids).
  *
  * We initialize fields that depend only on the given subexpression, leaving
  * others that depend on context (or may never be needed at all) to be filled
@@ -57,7 +59,8 @@ make_restrictinfo(Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
-				  Relids required_relids)
+				  Relids required_relids,
+				  Relids nullable_relids)
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
@@ -68,7 +71,8 @@ make_restrictinfo(Expr *clause,
 													   is_pushed_down,
 													   outerjoin_delayed,
 													   pseudoconstant,
-													   required_relids);
+													   required_relids,
+													   nullable_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
@@ -78,7 +82,8 @@ make_restrictinfo(Expr *clause,
 									  is_pushed_down,
 									  outerjoin_delayed,
 									  pseudoconstant,
-									  required_relids);
+									  required_relids,
+									  nullable_relids);
 }
 
 /*
@@ -92,8 +97,8 @@ make_restrictinfo(Expr *clause,
  * RestrictInfos.
  *
  * The caller must pass is_pushed_down, but we assume outerjoin_delayed
- * and pseudoconstant are false (no such qual should ever get into a
- * bitmapqual).
+ * and pseudoconstant are false and nullable_relids is NULL (no other
+ * kind of qual should ever get into a bitmapqual).
  *
  * If include_predicates is true, we add any partial index predicates to
  * the explicit index quals.  When this is not true, we return a condition
@@ -224,6 +229,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													  is_pushed_down,
 													  false,
 													  false,
+													  NULL,
 													  NULL));
 		}
 	}
@@ -250,6 +256,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													   is_pushed_down,
 													   false,
 													   false,
+													   NULL,
 													   NULL));
 			}
 		}
@@ -274,7 +281,8 @@ make_restrictinfo_internal(Expr *clause,
 						   bool is_pushed_down,
 						   bool outerjoin_delayed,
 						   bool pseudoconstant,
-						   Relids required_relids)
+						   Relids required_relids,
+						   Relids nullable_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
@@ -284,6 +292,7 @@ make_restrictinfo_internal(Expr *clause,
 	restrictinfo->outerjoin_delayed = outerjoin_delayed;
 	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->can_join = false;		/* may get set below */
+	restrictinfo->nullable_relids = nullable_relids;
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info. In any case
@@ -369,7 +378,8 @@ make_restrictinfo_internal(Expr *clause,
  * simple clauses are valid RestrictInfos.
  *
  * The same is_pushed_down, outerjoin_delayed, and pseudoconstant flag
- * values can be applied to all RestrictInfo nodes in the result.
+ * values can be applied to all RestrictInfo nodes in the result.  Likewise
+ * for nullable_relids.
  *
  * The given required_relids are attached to our top-level output,
  * but any OR-clause constituents are allowed to default to just the
@@ -380,7 +390,8 @@ make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
 					   bool pseudoconstant,
-					   Relids required_relids)
+					   Relids required_relids,
+					   Relids nullable_relids)
 {
 	if (or_clause((Node *) clause))
 	{
@@ -393,13 +404,15 @@ make_sub_restrictinfos(Expr *clause,
 													is_pushed_down,
 													outerjoin_delayed,
 													pseudoconstant,
-													NULL));
+													NULL,
+													nullable_relids));
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
-												   required_relids);
+												   required_relids,
+												   nullable_relids);
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -412,7 +425,8 @@ make_sub_restrictinfos(Expr *clause,
 													 is_pushed_down,
 													 outerjoin_delayed,
 													 pseudoconstant,
-													 required_relids));
+													 required_relids,
+													 nullable_relids));
 		return make_andclause(andlist);
 	}
 	else
@@ -421,7 +435,8 @@ make_sub_restrictinfos(Expr *clause,
 												   is_pushed_down,
 												   outerjoin_delayed,
 												   pseudoconstant,
-												   required_relids);
+												   required_relids,
+												   nullable_relids);
 }
 
 /*

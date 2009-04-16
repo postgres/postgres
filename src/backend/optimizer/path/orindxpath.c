@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.88 2009/02/15 20:16:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.89 2009/04/16 20:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,12 +89,18 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *i;
 
 	/*
-	 * Find potentially interesting OR joinclauses.  Note we must ignore any
-	 * joinclauses that are marked outerjoin_delayed or !is_pushed_down,
-	 * because they cannot be pushed down to the per-relation level due to
-	 * outer-join rules.  (XXX in some cases it might be possible to allow
-	 * this, but it would require substantially more bookkeeping about where
-	 * the clause came from.)
+	 * Find potentially interesting OR joinclauses.
+	 *
+	 * We must ignore clauses for which the target rel is in nullable_relids;
+	 * that means there's an outer join below the clause and so it can't be
+	 * enforced at the relation scan level.
+	 *
+	 * We must also ignore clauses that are marked !is_pushed_down (ie they
+	 * are themselves outer-join clauses).  It would be safe to extract an
+	 * index condition from such a clause if we are within the nullable rather
+	 * than the non-nullable side of its join, but we haven't got enough
+	 * context here to tell which applies.  OR clauses in outer-join quals
+	 * aren't exactly common, so we'll let that case go unoptimized for now.
 	 */
 	foreach(i, rel->joininfo)
 	{
@@ -102,7 +108,7 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 
 		if (restriction_is_or_clause(rinfo) &&
 			rinfo->is_pushed_down &&
-			!rinfo->outerjoin_delayed)
+			!bms_is_member(rel->relid, rinfo->nullable_relids))
 		{
 			/*
 			 * Use the generate_bitmap_or_paths() machinery to estimate the

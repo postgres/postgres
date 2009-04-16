@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.149 2009/02/27 22:41:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.150 2009/04/16 20:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids ojscope,
 						Relids outerjoin_nonnullable);
 static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
-					  bool is_pushed_down);
+					  Relids *nullable_relids_p, bool is_pushed_down);
 static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
@@ -755,6 +755,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	bool		pseudoconstant = false;
 	bool		maybe_equivalence;
 	bool		maybe_outer_join;
+	Relids		nullable_relids;
 	RestrictInfo *restrictinfo;
 
 	/*
@@ -861,6 +862,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		Assert(!ojscope);
 		is_pushed_down = true;
 		outerjoin_delayed = false;
+		nullable_relids = NULL;
 		/* Don't feed it back for more deductions */
 		maybe_equivalence = false;
 		maybe_outer_join = false;
@@ -882,7 +884,10 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		maybe_outer_join = true;
 
 		/* Check to see if must be delayed by lower outer join */
-		outerjoin_delayed = check_outerjoin_delay(root, &relids, false);
+		outerjoin_delayed = check_outerjoin_delay(root,
+												  &relids,
+												  &nullable_relids,
+												  false);
 
 		/*
 		 * Now force the qual to be evaluated exactly at the level of joining
@@ -907,7 +912,10 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		is_pushed_down = true;
 
 		/* Check to see if must be delayed by lower outer join */
-		outerjoin_delayed = check_outerjoin_delay(root, &relids, true);
+		outerjoin_delayed = check_outerjoin_delay(root,
+												  &relids,
+												  &nullable_relids,
+												  true);
 
 		if (outerjoin_delayed)
 		{
@@ -957,7 +965,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									 is_pushed_down,
 									 outerjoin_delayed,
 									 pseudoconstant,
-									 relids);
+									 relids,
+									 nullable_relids);
 
 	/*
 	 * If it's a join clause (either naturally, or because delayed by
@@ -1064,7 +1073,9 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * If the qual must be delayed, add relids to *relids_p to reflect the lowest
  * safe level for evaluating the qual, and return TRUE.  Any extra delay for
  * higher-level joins is reflected by setting delay_upper_joins to TRUE in
- * SpecialJoinInfo structs.
+ * SpecialJoinInfo structs.  We also compute nullable_relids, the set of
+ * referenced relids that are nullable by lower outer joins (note that this
+ * can be nonempty even for a non-delayed qual).
  *
  * For an is_pushed_down qual, we can evaluate the qual as soon as (1) we have
  * all the rels it mentions, and (2) we are at or above any outer joins that
@@ -1087,8 +1098,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * mentioning only C cannot be applied below the join to A.
  *
  * For a non-pushed-down qual, this isn't going to determine where we place the
- * qual, but we need to determine outerjoin_delayed anyway for possible use
- * in reconsider_outer_join_clauses().
+ * qual, but we need to determine outerjoin_delayed and nullable_relids anyway
+ * for use later in the planning process.
  *
  * Lastly, a pushed-down qual that references the nullable side of any current
  * join_info_list member and has to be evaluated above that OJ (because its
@@ -1104,13 +1115,26 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * two OJs to commute.)
  */
 static bool
-check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
+check_outerjoin_delay(PlannerInfo *root,
+					  Relids *relids_p,				/* in/out parameter */
+					  Relids *nullable_relids_p,	/* output parameter */
 					  bool is_pushed_down)
 {
-	Relids		relids = *relids_p;
+	Relids		relids;
+	Relids		nullable_relids;
 	bool		outerjoin_delayed;
 	bool		found_some;
 
+	/* fast path if no special joins */
+	if (root->join_info_list == NIL)
+	{
+		*nullable_relids_p = NULL;
+		return false;
+	}
+
+	/* must copy relids because we need the original value at the end */
+	relids = bms_copy(*relids_p);
+	nullable_relids = NULL;
 	outerjoin_delayed = false;
 	do
 	{
@@ -1126,18 +1150,23 @@ check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 				(sjinfo->jointype == JOIN_FULL &&
 				 bms_overlap(relids, sjinfo->min_lefthand)))
 			{
-				/* yes, so set the result flag */
-				outerjoin_delayed = true;
-				/* have we included all its rels in relids? */
+				/* yes; have we included all its rels in relids? */
 				if (!bms_is_subset(sjinfo->min_lefthand, relids) ||
 					!bms_is_subset(sjinfo->min_righthand, relids))
 				{
 					/* no, so add them in */
 					relids = bms_add_members(relids, sjinfo->min_lefthand);
 					relids = bms_add_members(relids, sjinfo->min_righthand);
+					outerjoin_delayed = true;
 					/* we'll need another iteration */
 					found_some = true;
 				}
+				/* track all the nullable rels of relevant OJs */
+				nullable_relids = bms_add_members(nullable_relids,
+												  sjinfo->min_righthand);
+				if (sjinfo->jointype == JOIN_FULL)
+					nullable_relids = bms_add_members(nullable_relids,
+													  sjinfo->min_lefthand);
 				/* set delay_upper_joins if needed */
 				if (is_pushed_down && sjinfo->jointype != JOIN_FULL &&
 					bms_overlap(relids, sjinfo->min_lefthand))
@@ -1146,7 +1175,13 @@ check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 		}
 	} while (found_some);
 
+	/* identify just the actually-referenced nullable rels */
+	nullable_relids = bms_int_members(nullable_relids, *relids_p);
+
+	/* replace *relids_p, and return nullable_relids */
+	bms_free(*relids_p);
 	*relids_p = relids;
+	*nullable_relids_p = nullable_relids;
 	return outerjoin_delayed;
 }
 
@@ -1352,7 +1387,8 @@ build_implied_join_equality(Oid opno,
 									 true,		/* is_pushed_down */
 									 false,		/* outerjoin_delayed */
 									 false,		/* pseudoconstant */
-									 qualscope);
+									 qualscope,	/* required_relids */
+									 NULL);		/* nullable_relids */
 
 	/* Set mergejoinability info always, and hashjoinability if enabled */
 	check_mergejoinable(restrictinfo);

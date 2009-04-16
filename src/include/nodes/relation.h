@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.171 2009/03/26 17:15:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.172 2009/04/16 20:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -920,8 +920,14 @@ typedef struct HashPath
  *
  * RestrictInfo nodes also contain an outerjoin_delayed flag, which is true
  * if the clause's applicability must be delayed due to any outer joins
- * appearing below its own syntactic level (ie, it references any Vars from
- * the nullable side of any lower outer join).
+ * appearing below it (ie, it has to be postponed to some join level higher
+ * than the set of relations it actually references).  There is also a
+ * nullable_relids field, which is the set of rels it references that can be
+ * forced null by some outer join below the clause.  outerjoin_delayed = true
+ * is subtly different from nullable_relids != NULL: a clause might reference
+ * some nullable rels and yet not be outerjoin_delayed because it also
+ * references all the other rels of the outer join(s).  A clause that is not
+ * outerjoin_delayed can be enforced anywhere it is computable.
  *
  * In general, the referenced clause might be arbitrarily complex.	The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
@@ -982,6 +988,9 @@ typedef struct RestrictInfo
 
 	/* The set of relids required to evaluate the clause: */
 	Relids		required_relids;
+
+	/* The relids used in the clause that are nullable by lower outer joins: */
+	Relids		nullable_relids;
 
 	/* These fields are set for any binary opclause: */
 	Relids		left_relids;	/* relids in left side of clause */
