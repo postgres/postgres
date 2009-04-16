@@ -1023,7 +1023,7 @@ ERROR:  dimension array or low bound array cannot be NULL
 select array_fill(1, array[2,2], null);
 ERROR:  dimension array or low bound array cannot be NULL
 select array_fill(1, array[3,3], array[1,1,1]);
-ERROR:  wrong number of array_subscripts
+ERROR:  wrong number of array subscripts
 DETAIL:  Low bound array has different size than dimensions array.
 select array_fill(1, array[1,2,null]);
 ERROR:  dimension values cannot be null
