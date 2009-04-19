@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.121 2009/02/18 11:33:04 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.122 2009/04/19 18:52:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,8 @@ static PLpgSQL_row		*make_scalar_list1(const char *initial_name,
 										   int lineno);
 static	void			 check_sql_expr(const char *stmt);
 static	void			 plpgsql_sql_error_callback(void *arg);
+static	char			*parse_string_token(const char *token);
+static	void			 plpgsql_string_error_callback(void *arg);
 static	char			*check_label(const char *yytxt);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label);
@@ -228,8 +230,6 @@ static List				*read_raise_options(void);
 		/*
 		 * Other tokens
 		 */
-%token	T_FUNCTION
-%token	T_TRIGGER
 %token	T_STRING
 %token	T_NUMBER
 %token	T_SCALAR				/* a VAR, RECFIELD, or TRIGARG */
@@ -244,13 +244,9 @@ static List				*read_raise_options(void);
 
 %%
 
-pl_function		: T_FUNCTION comp_optsect pl_block opt_semi
+pl_function		: comp_optsect pl_block opt_semi
 					{
-						yylval.program = (PLpgSQL_stmt_block *)$3;
-					}
-				| T_TRIGGER comp_optsect pl_block opt_semi
-					{
-						yylval.program = (PLpgSQL_stmt_block *)$3;
+						yylval.program = (PLpgSQL_stmt_block *) $2;
 					}
 				;
 
@@ -1403,7 +1399,7 @@ stmt_raise		: K_RAISE lno
 							if (tok == T_STRING)
 							{
 								/* old style message and parameters */
-								new->message = plpgsql_get_string_value();
+								new->message = parse_string_token(yytext);
 								/*
 								 * We expect either a semi-colon, which
 								 * indicates no parameters, or a comma that
@@ -1435,7 +1431,7 @@ stmt_raise		: K_RAISE lno
 
 									if (yylex() != T_STRING)
 										yyerror("syntax error");
-									sqlstatestr = plpgsql_get_string_value();
+									sqlstatestr = parse_string_token(yytext);
 
 									if (strlen(sqlstatestr) != 5)
 										yyerror("invalid SQLSTATE code");
@@ -1778,7 +1774,7 @@ proc_condition	: opt_lblname
 							/* next token should be a string literal */
 							if (yylex() != T_STRING)
 								yyerror("syntax error");
-							sqlstatestr = plpgsql_get_string_value();
+							sqlstatestr = parse_string_token(yytext);
 
 							if (strlen(sqlstatestr) != 5)
 								yyerror("invalid SQLSTATE code");
@@ -2735,6 +2731,49 @@ plpgsql_sql_error_callback(void *arg)
 			   plpgsql_error_funcname, plpgsql_error_lineno);
 	internalerrquery(sql_stmt);
 	internalerrposition(geterrposition());
+	errposition(0);
+}
+
+/*
+ * Convert a string-literal token to the represented string value.
+ *
+ * To do this, we need to invoke the core lexer.  To avoid confusion between
+ * the core bison/flex definitions and our own, the actual invocation is in
+ * pl_funcs.c.  Here we are only concerned with setting up the right errcontext
+ * state, which is handled the same as in check_sql_expr().
+ */
+static char *
+parse_string_token(const char *token)
+{
+	char	   *result;
+	ErrorContextCallback  syntax_errcontext;
+	ErrorContextCallback *previous_errcontext;
+
+	/* See comments in check_sql_expr() */
+	Assert(error_context_stack->callback == plpgsql_compile_error_callback);
+
+	previous_errcontext = error_context_stack;
+	syntax_errcontext.callback = plpgsql_string_error_callback;
+	syntax_errcontext.arg = (char *) token;
+	syntax_errcontext.previous = error_context_stack->previous;
+	error_context_stack = &syntax_errcontext;
+
+	result = plpgsql_parse_string_token(token);
+
+	/* Restore former ereport callback */
+	error_context_stack = previous_errcontext;
+
+	return result;
+}
+
+static void
+plpgsql_string_error_callback(void *arg)
+{
+	Assert(plpgsql_error_funcname);
+
+	errcontext("string literal in PL/PgSQL function \"%s\" near line %d",
+			   plpgsql_error_funcname, plpgsql_error_lineno);
+	/* representing the string literal as internalquery seems overkill */
 	errposition(0);
 }
 

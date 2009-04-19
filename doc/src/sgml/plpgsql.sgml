@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.139 2009/04/02 19:20:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.140 2009/04/19 18:52:56 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -220,10 +220,8 @@ END <optional> <replaceable>label</replaceable> </optional>;
      There are two types of comments in <application>PL/pgSQL</>. A double
      dash (<literal>--</literal>) starts a comment that extends to the end of
      the line. A <literal>/*</literal> starts a block comment that extends to
-     the next occurrence of <literal>*/</literal>.  Block comments cannot be
-     nested, but double dash comments can be enclosed into a block comment and
-     a double dash can hide the block comment delimiters <literal>/*</literal>
-     and <literal>*/</literal>.
+     the next occurrence of <literal>*/</literal>.  Block comments nest,
+     just as in ordinary SQL.
     </para>
 
     <para>

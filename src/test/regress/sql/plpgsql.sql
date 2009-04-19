@@ -3005,3 +3005,47 @@ SELECT * FROM leaker_1(true);
 
 DROP FUNCTION leaker_1(bool);
 DROP FUNCTION leaker_2(bool);
+
+-- Test handling of string literals.
+
+set standard_conforming_strings = off;
+
+create or replace function strtest() returns text as $$
+begin
+  raise notice 'foo\\bar\041baz';
+  return 'foo\\bar\041baz';
+end
+$$ language plpgsql;
+
+select strtest();
+
+create or replace function strtest() returns text as $$
+begin
+  raise notice E'foo\\bar\041baz';
+  return E'foo\\bar\041baz';
+end
+$$ language plpgsql;
+
+select strtest();
+
+set standard_conforming_strings = on;
+
+create or replace function strtest() returns text as $$
+begin
+  raise notice 'foo\\bar\041baz\';
+  return 'foo\\bar\041baz\';
+end
+$$ language plpgsql;
+
+select strtest();
+
+create or replace function strtest() returns text as $$
+begin
+  raise notice E'foo\\bar\041baz';
+  return E'foo\\bar\041baz';
+end
+$$ language plpgsql;
+
+select strtest();
+
+drop function strtest();

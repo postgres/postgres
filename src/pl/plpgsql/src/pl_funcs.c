@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.76 2009/02/18 11:33:04 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.77 2009/04/19 18:52:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,8 @@
 
 #include <ctype.h>
 
+#include "parser/gramparse.h"
+#include "parser/gram.h"
 #include "parser/scansup.h"
 
 
@@ -456,6 +458,41 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 	if (identctr != numidents)
 		elog(ERROR, "improperly qualified identifier: %s",
 			 sstart);
+}
+
+
+/*
+ * plpgsql_parse_string_token - get the value represented by a string literal
+ *
+ * We do not make plpgsql's lexer produce the represented value, because
+ * in many cases we don't need it.  Instead this function is invoked when
+ * we do need it.  The input is the T_STRING token as identified by the lexer.
+ *
+ * The result is a palloc'd string.
+ *
+ * Note: this is called only from plpgsql's gram.y, but we can't just put it
+ * there because including parser/gram.h there would cause confusion.
+ */
+char *
+plpgsql_parse_string_token(const char *token)
+{
+	int		ctoken;
+
+	/*
+	 * We use the core lexer to do the dirty work.  Aside from getting the
+	 * right results for escape sequences and so on, this helps us produce
+	 * appropriate warnings for escape_string_warning etc.
+	 */
+	scanner_init(token);
+
+	ctoken = base_yylex();
+
+	if (ctoken != SCONST)
+		elog(ERROR, "unexpected result from base lexer: %d", ctoken);
+
+	scanner_finish();
+
+	return base_yylval.str;
 }
 
 

@@ -3737,3 +3737,74 @@ SELECT * FROM leaker_1(true);
 
 DROP FUNCTION leaker_1(bool);
 DROP FUNCTION leaker_2(bool);
+-- Test handling of string literals.
+set standard_conforming_strings = off;
+create or replace function strtest() returns text as $$
+begin
+  raise notice 'foo\\bar\041baz';
+  return 'foo\\bar\041baz';
+end
+$$ language plpgsql;
+WARNING:  nonstandard use of \\ in a string literal
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+CONTEXT:  string literal in PL/PgSQL function "strtest" near line 2
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: SELECT  'foo\\bar\041baz'
+                ^
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+QUERY:  SELECT  'foo\\bar\041baz'
+CONTEXT:  SQL statement in PL/PgSQL function "strtest" near line 3
+select strtest();
+NOTICE:  foo\bar!baz
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: SELECT  'foo\\bar\041baz'
+                ^
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+QUERY:  SELECT  'foo\\bar\041baz'
+CONTEXT:  PL/pgSQL function "strtest" line 3 at RETURN
+   strtest   
+-------------
+ foo\bar!baz
+(1 row)
+
+create or replace function strtest() returns text as $$
+begin
+  raise notice E'foo\\bar\041baz';
+  return E'foo\\bar\041baz';
+end
+$$ language plpgsql;
+select strtest();
+NOTICE:  foo\bar!baz
+   strtest   
+-------------
+ foo\bar!baz
+(1 row)
+
+set standard_conforming_strings = on;
+create or replace function strtest() returns text as $$
+begin
+  raise notice 'foo\\bar\041baz\';
+  return 'foo\\bar\041baz\';
+end
+$$ language plpgsql;
+select strtest();
+NOTICE:  foo\\bar\041baz\
+     strtest      
+------------------
+ foo\\bar\041baz\
+(1 row)
+
+create or replace function strtest() returns text as $$
+begin
+  raise notice E'foo\\bar\041baz';
+  return E'foo\\bar\041baz';
+end
+$$ language plpgsql;
+select strtest();
+NOTICE:  foo\bar!baz
+   strtest   
+-------------
+ foo\bar!baz
+(1 row)
+
+drop function strtest();

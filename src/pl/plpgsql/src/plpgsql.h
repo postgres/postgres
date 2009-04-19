@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.110 2009/04/09 02:57:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.111 2009/04/19 18:52:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,7 +650,7 @@ typedef struct PLpgSQL_function
 	Oid			fn_oid;
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
-	int			fn_functype;
+	bool		fn_is_trigger;
 	PLpgSQL_func_hashkey *fn_hashkey;	/* back-link to hashtable key */
 	MemoryContext fn_cxt;
 
@@ -880,6 +880,7 @@ extern void plpgsql_ns_rename(char *oldname, char *newname);
  * ----------
  */
 extern void plpgsql_convert_ident(const char *s, char **output, int numidents);
+extern char *plpgsql_parse_string_token(const char *token);
 extern const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 
@@ -894,8 +895,7 @@ extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
 extern void plpgsql_yyerror(const char *message);
 extern int	plpgsql_scanner_lineno(void);
-extern void plpgsql_scanner_init(const char *str, int functype);
+extern void plpgsql_scanner_init(const char *str);
 extern void plpgsql_scanner_finish(void);
-extern char *plpgsql_get_string_value(void);
 
 #endif   /* PLPGSQL_H */
