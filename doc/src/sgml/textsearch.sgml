@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.49 2009/04/14 00:49:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.50 2009/04/19 20:36:06 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -454,12 +454,12 @@ WHERE to_tsvector(body) @@ to_tsquery('friend');
 <programlisting>
 SELECT title
 FROM pgweb
-WHERE to_tsvector(title || body) @@ to_tsquery('create &amp; table')
+WHERE to_tsvector(title || ' ' || body) @@ to_tsquery('create &amp; table')
 ORDER BY last_mod_date DESC LIMIT 10;
 </programlisting>
 
-    For clarity we omitted the <function>coalesce</function> function
-    which would be needed to search rows that contain <literal>NULL</literal>
+    For clarity we omitted the <function>coalesce</function> function calls
+    which would be needed to find rows that contain <literal>NULL</literal>
     in one of the two fields.
    </para>
 
@@ -526,7 +526,7 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(config_name, body));
     Indexes can even concatenate columns:
 
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || body));
+CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || ' ' || body));
 </programlisting>
    </para>
 
@@ -540,7 +540,7 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || body))
 <programlisting>
 ALTER TABLE pgweb ADD COLUMN textsearchable_index_col tsvector;
 UPDATE pgweb SET textsearchable_index_col =
-     to_tsvector('english', coalesce(title,'') || coalesce(body,''));
+     to_tsvector('english', coalesce(title,'') || ' ' || coalesce(body,''));
 </programlisting>
 
     Then we create a <acronym>GIN</acronym> index to speed up the search:
