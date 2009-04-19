@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.86 2009/01/21 10:30:02 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.87 2009/04/19 22:37:13 tgl Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -297,7 +297,7 @@ extern void pgwin32_unsetenv(const char *);
 #define putenv(x) pgwin32_putenv(x)
 #define unsetenv(x) pgwin32_unsetenv(x)
 
-/* Things that exist in MingW headers, but need to be added to MSVC */
+/* Things that exist in MingW headers, but need to be added to MSVC & BCC */
 #ifdef WIN32_ONLY_COMPILER
 typedef long ssize_t;
 #ifndef __BORLANDC__
@@ -334,5 +334,23 @@ typedef unsigned short mode_t;
 
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"
+
+#ifdef __BORLANDC__
+
+/* for port/dirent.c */
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES ((DWORD) -1)
+#endif
+
+/* for port/open.c */
+#ifndef O_RANDOM
+#define O_RANDOM		0x0010	/* File access is primarily random */
+#define O_SEQUENTIAL	0x0020	/* File access is primarily sequential */
+#define O_TEMPORARY	0x0040	/* Temporary file bit */
+#define O_SHORT_LIVED	0x1000	/* Temporary storage file, try not to flush */
+#define _O_SHORT_LIVED	O_SHORT_LIVED
+#endif /* ifndef O_RANDOM */
+
+#endif /* __BORLANDC__ */
 
 #endif
