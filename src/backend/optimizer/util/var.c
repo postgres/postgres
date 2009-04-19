@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.84 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.85 2009/04/19 19:46:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef struct
 typedef struct
 {
 	List	   *varlist;
-	bool		includePlaceHolderVars;
+	PVCPlaceHolderBehavior behavior;
 } pull_var_clause_context;
 
 typedef struct
@@ -614,11 +614,13 @@ find_minimum_var_level_walker(Node *node,
  * pull_var_clause
  *	  Recursively pulls all Var nodes from an expression clause.
  *
- *	  PlaceHolderVars are included too, if includePlaceHolderVars is true.
- *	  If it isn't true, an error is thrown if any are found.
- *	  Note that Vars within a PHV's expression are *not* included.
+ *	  PlaceHolderVars are handled according to 'behavior':
+ *		PVC_REJECT_PLACEHOLDERS		throw error if PlaceHolderVar found
+ *		PVC_INCLUDE_PLACEHOLDERS	include PlaceHolderVars in output list
+ *		PVC_RECURSE_PLACEHOLDERS	recurse into PlaceHolderVar argument
+ *	  Vars within a PHV's expression are included only in the last case.
  *
- *	  CurrentOfExpr nodes are *not* included.
+ *	  CurrentOfExpr nodes are ignored in all cases.
  *
  *	  Upper-level vars (with varlevelsup > 0) are not included.
  *	  (These probably represent errors too, but we don't complain.)
@@ -630,12 +632,12 @@ find_minimum_var_level_walker(Node *node,
  * of sublinks to subplans!
  */
 List *
-pull_var_clause(Node *node, bool includePlaceHolderVars)
+pull_var_clause(Node *node, PVCPlaceHolderBehavior behavior)
 {
 	pull_var_clause_context context;
 
 	context.varlist = NIL;
-	context.includePlaceHolderVars = includePlaceHolderVars;
+	context.behavior = behavior;
 
 	pull_var_clause_walker(node, &context);
 	return context.varlist;
@@ -654,12 +656,20 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 	}
 	if (IsA(node, PlaceHolderVar))
 	{
-		if (!context->includePlaceHolderVars)
-			elog(ERROR, "PlaceHolderVar found where not expected");
-		if (((PlaceHolderVar *) node)->phlevelsup == 0)
-			context->varlist = lappend(context->varlist, node);
-		/* we do NOT descend into the contained expression */
-		return false;
+		switch (context->behavior)
+		{
+			case PVC_REJECT_PLACEHOLDERS:
+				elog(ERROR, "PlaceHolderVar found where not expected");
+				break;
+			case PVC_INCLUDE_PLACEHOLDERS:
+				if (((PlaceHolderVar *) node)->phlevelsup == 0)
+					context->varlist = lappend(context->varlist, node);
+				/* we do NOT descend into the contained expression */
+				return false;
+			case PVC_RECURSE_PLACEHOLDERS:
+				/* ignore the placeholder, look at its argument instead */
+				break;
+		}
 	}
 	return expression_tree_walker(node, pull_var_clause_walker,
 								  (void *) context);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.150 2009/04/16 20:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.151 2009/04/19 19:46:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,8 @@ add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
 void
 build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 {
-	List	   *tlist_vars = pull_var_clause((Node *) final_tlist, true);
+	List	   *tlist_vars = pull_var_clause((Node *) final_tlist,
+											 PVC_INCLUDE_PLACEHOLDERS);
 
 	if (tlist_vars != NIL)
 	{
@@ -981,7 +982,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 */
 	if (bms_membership(relids) == BMS_MULTIPLE)
 	{
-		List	   *vars = pull_var_clause(clause, true);
+		List	   *vars = pull_var_clause(clause, PVC_INCLUDE_PLACEHOLDERS);
 
 		add_vars_to_targetlist(root, vars, relids);
 		list_free(vars);
