@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.307 2009/03/31 22:12:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.308 2009/04/19 21:08:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2718,7 +2718,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		char	   *start_ptr;
 		char	   *end_ptr;
 		int			input_len;
-		bool		saw_high_bit = false;
+		bool		saw_non_ascii = false;
 
 		/* Make sure space remains in fieldvals[] */
 		if (fieldno >= maxfields)
@@ -2783,8 +2783,8 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 								}
 							}
 							c = val & 0377;
-							if (IS_HIGHBIT_SET(c))
-								saw_high_bit = true;
+							if (c == '\0' || IS_HIGHBIT_SET(c))
+								saw_non_ascii = true;
 						}
 						break;
 					case 'x':
@@ -2808,8 +2808,8 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 									}
 								}
 								c = val & 0xff;
-								if (IS_HIGHBIT_SET(c))
-									saw_high_bit = true;
+								if (c == '\0' || IS_HIGHBIT_SET(c))
+									saw_non_ascii = true;
 							}
 						}
 						break;
@@ -2847,11 +2847,11 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		*output_ptr++ = '\0';
 
 		/*
-		 * If we de-escaped a char with the high bit set, make sure we still
+		 * If we de-escaped a non-7-bit-ASCII char, make sure we still
 		 * have valid data for the db encoding. Avoid calling strlen here for
 		 * the sake of efficiency.
 		 */
-		if (saw_high_bit)
+		if (saw_non_ascii)
 		{
 			char	   *fld = fieldvals[fieldno];
 
