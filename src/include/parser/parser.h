@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.24 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.25 2009/04/19 21:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,5 +17,7 @@
 #include "nodes/pg_list.h"
 
 extern List *raw_parser(const char *str);
+
+extern char *pg_parse_string_token(const char *token);
 
 #endif   /* PARSER_H */

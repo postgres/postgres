@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.76 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.77 2009/04/19 21:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,36 @@ raw_parser(const char *str)
 		return NIL;
 
 	return parsetree;
+}
+
+
+/*
+ * pg_parse_string_token - get the value represented by a string literal
+ *
+ * Given the textual form of a SQL string literal, produce the represented
+ * value as a palloc'd string.  It is caller's responsibility that the
+ * passed string does represent one single string literal.
+ *
+ * We export this function to avoid having plpgsql depend on internal details
+ * of the core grammar (such as the token code assigned to SCONST).  Note
+ * that since the scanner isn't presently re-entrant, this cannot be used
+ * during use of the main parser/scanner.
+ */
+char *
+pg_parse_string_token(const char *token)
+{
+	int		ctoken;
+
+	scanner_init(token);
+
+	ctoken = base_yylex();
+
+	if (ctoken != SCONST)		/* caller error */
+		elog(ERROR, "expected string constant, got token code %d", ctoken);
+
+	scanner_finish();
+
+	return base_yylval.str;
 }
 
 

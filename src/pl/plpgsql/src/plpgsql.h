@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.111 2009/04/19 18:52:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.112 2009/04/19 21:50:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -880,7 +880,6 @@ extern void plpgsql_ns_rename(char *oldname, char *newname);
  * ----------
  */
 extern void plpgsql_convert_ident(const char *s, char **output, int numidents);
-extern char *plpgsql_parse_string_token(const char *token);
 extern const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 

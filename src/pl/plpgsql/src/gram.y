@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.122 2009/04/19 18:52:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.123 2009/04/19 21:50:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2737,10 +2737,9 @@ plpgsql_sql_error_callback(void *arg)
 /*
  * Convert a string-literal token to the represented string value.
  *
- * To do this, we need to invoke the core lexer.  To avoid confusion between
- * the core bison/flex definitions and our own, the actual invocation is in
- * pl_funcs.c.  Here we are only concerned with setting up the right errcontext
- * state, which is handled the same as in check_sql_expr().
+ * To do this, we need to invoke the core lexer.  Here we are only concerned
+ * with setting up the right errcontext state, which is handled the same as
+ * in check_sql_expr().
  */
 static char *
 parse_string_token(const char *token)
@@ -2758,7 +2757,7 @@ parse_string_token(const char *token)
 	syntax_errcontext.previous = error_context_stack->previous;
 	error_context_stack = &syntax_errcontext;
 
-	result = plpgsql_parse_string_token(token);
+	result = pg_parse_string_token(token);
 
 	/* Restore former ereport callback */
 	error_context_stack = previous_errcontext;
