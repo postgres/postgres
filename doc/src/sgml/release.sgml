@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.629 2009/04/18 00:01:01 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.630 2009/04/19 15:49:34 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -333,6 +333,39 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Change <command>TRUNCATE</> and <command>LOCK</> to
+       apply to child tables of the specified table(s) (Peter)
+      </para>
+
+      <para>
+       These commands now accept an <literal>ONLY</> option that prevents
+       processing child tables; this option must be used if the old
+       behavior is needed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <command>SELECT DISTINCT</> and
+       <literal>UNION</>/<literal>INTERSECT</>/<literal>EXCEPT</>
+       no longer always produce sorted output (Tom)
+      </para>
+
+      <para>
+       Previously, these types of queries always removed duplicate rows
+       by means of Sort/Unique processing (i.e., sort then remove adjacent
+       duplicates).  Now they can be implemented by hashing, which will not
+       produce sorted output.  If an application relied on the output being
+       in sorted order, the recommended fix is to add an <literal>ORDER BY</>
+       clause.  As a short-term workaround, the previous behavior can be
+       restored by disabling <literal>enable_hashagg</>, but that is a very
+       performance-expensive fix.  <literal>SELECT DISTINCT ON</> never uses
+       hashing, however, so its behavior is unchanged.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Force child tables to inherit <literal>CHECK</> constraints from parents
        (Alex Hunsaker, Nikhil Sontakke, Tom)
       </para>
@@ -342,19 +375,6 @@ do it for earlier branch release files.
        table, allowing rows that violate the constraint to be visible
        when scanning the parent table.  This was deemed inconsistent,
        as well as contrary to SQL standard.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Change <command>TRUNCATE</> and <command>LOCK</> to
-       apply to child tables of the specified table(s) (Peter)
-      </para>
-
-      <para>
-       These commands now accept an <literal>ONLY</> option that prevents
-       processing child tables; this option must be used if the old
-       behavior is needed.
       </para>
      </listitem>
 
@@ -512,6 +532,12 @@ do it for earlier branch release files.
         to more consistently report errors for invalid input (Brendan
         Jurd)
        </para>
+
+       <para>
+        Previous versions would often ignore or silently misread input
+        that did not match the format string.  Such cases will now
+        result in an error.
+       </para>
       </listitem>
 
       <listitem>
@@ -525,21 +551,6 @@ do it for earlier branch release files.
        <para>
         For example, input value <literal>ad</> now matches the format
         string <literal>AD</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Require <function>to_timestamp()</> input to match
-        meridian (<literal>AM</>/<literal>PM</>) and era
-        (<literal>BC</>/<literal>AD</>) format designations with
-        respect to presence of periods
-        (Brendan Jurd)
-       </para>
-
-       <para>
-        For example, input value <literal>AD</> now does not match
-        format string <literal>A.D.</>.
        </para>
       </listitem>
 
@@ -584,12 +595,7 @@ do it for earlier branch release files.
 
       <para>
        This means that these types of queries no longer automatically
-       produce sorted output.  The recommended response is to add an
-       <literal>ORDER BY</> clause if needed.  As a short-term workaround,
-       the previous behavior can be restored by
-       disabling <literal>enable_hashagg</>, but that is a very
-       performance-expensive fix. <literal>SELECT DISTINCT ON</> never
-       uses hashing, however, so its behavior is unchanged.
+       produce sorted output.
       </para>
      </listitem>
 
