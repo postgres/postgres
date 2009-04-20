@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.32 2009/01/21 09:25:11 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.33 2009/04/20 08:38:00 mha Exp $
 #
 use strict;
 use warnings;
@@ -470,11 +470,10 @@ sub GenerateNLSFiles
 				  }, "src");
     foreach (@flist)
     {
+        my $prgm = DetermineCatalogName($_);
         s/nls.mk/po/;
         my $dir = $_;
         next unless ($dir =~ /([^\/]+)\/po$/);
-        my $prgm = $1;
-        $prgm = 'postgres' if ($prgm eq 'backend');
         foreach (glob("$dir/*.po"))
         {
             my $lang;
@@ -496,6 +495,15 @@ sub DetermineMajorVersion
 {
     my $f = read_file('src/include/pg_config.h') || croak 'Could not open pg_config.h';
     $f =~ /^#define\s+PG_MAJORVERSION\s+"([^"]+)"/m || croak 'Could not determine major version';
+    return $1;
+}
+
+sub DetermineCatalogName
+{
+    my $filename = shift;
+
+    my $f = read_file($filename) || croak "Could not open $filename";
+    $f =~ /CATALOG_NAME\s*\:?=\s*(\S+)/m || croak "Could not determine catalog name in $filename";
     return $1;
 }
 
