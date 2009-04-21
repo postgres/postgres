@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.224 2009/04/21 15:49:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.225 2009/04/21 17:23:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1038,8 +1038,7 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\df[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-        <term><literal>\df[antw][S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\df[antwS+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
