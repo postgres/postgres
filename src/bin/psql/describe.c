@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.209 2009/04/21 15:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.210 2009/04/21 17:28:01 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -206,9 +206,15 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
+	if (strlen(functypes) != strspn(functypes, "antwS+"))
+	{
+		fprintf(stderr, _("\\df only takes [antwS+] as options\n"));
+		return true;
+	}
+
 	if (showWindow && pset.sversion < 80400)
 	{
-		fprintf(stderr, _("\\df does not take a \"w\" decorator in %d.%d.\n"),
+		fprintf(stderr, _("\\df does not take a \"w\" option in %d.%d.\n"),
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
