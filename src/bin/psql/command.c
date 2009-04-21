@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.204 2009/03/25 13:07:26 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.205 2009/04/21 15:49:06 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -365,8 +365,22 @@ exec_command(const char *cmd,
 			case 'D':
 				success = listDomains(pattern, show_system);
 				break;
-			case 'f':
-				success = describeFunctions(pattern, show_verbose, show_system);
+			case 'f':			/* function subsystem */
+				switch (cmd[2])
+				{
+					case '\0':
+					case '+':
+					case 'S':
+					case 'a':
+					case 'n':
+					case 't':
+					case 'w':
+						success =  describeFunctions(&cmd[2], pattern, show_verbose, show_system);
+						break;
+					default:
+						status = PSQL_CMD_UNKNOWN;
+						break;
+				}
 				break;
 			case 'g':
 				/* no longer distinct from \du */

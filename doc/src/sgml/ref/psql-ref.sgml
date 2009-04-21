@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.223 2009/04/08 22:29:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.224 2009/04/21 15:49:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1039,18 +1039,22 @@ testdb=&gt;
 
       <varlistentry>
         <term><literal>\df[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\df[antw][S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
         <listitem>
         <para>
-        Lists available functions, together with their argument and
-        return types. If <replaceable
-        class="parameter">pattern</replaceable>
-        is specified, only functions whose names match the pattern are shown.
-        If the form <literal>\df+</literal> is used, additional information about
-        each function, including volatility, language, source code and description, is shown.
-        By default, only user-created objects are shown;  supply a
-        pattern or the <literal>S</literal> modifier to include system
-        objects.
+        Lists available functions, together with their arguments,
+        return types, and their function types: 'agg' (aggregate),
+        'normal', 'trigger', and 'window'.  To display only functions
+        of a specific type, use the corresponding letters <literal>a</>,
+        <literal>n</>, <literal>t</>, or <literal>w</>.  If <replaceable
+        class="parameter">pattern</replaceable> is specified, only
+        functions whose names match the pattern are shown.  If the
+        form <literal>\df+</literal> is used, additional information
+        about each function, including volatility, language, source
+        code and description, is shown.  By default, only user-created
+        objects are shown;  supply a pattern or the <literal>S</literal>
+        modifier to include system objects.
         </para>
 
         <note>
@@ -1063,7 +1067,6 @@ testdb=&gt;
 
         </listitem>
       </varlistentry>
-
 
       <varlistentry>
         <term><literal>\dF[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>

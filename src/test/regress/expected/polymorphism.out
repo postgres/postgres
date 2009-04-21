@@ -838,9 +838,9 @@ select dfunc();
 -- verify it lists properly
 \df dfunc
                                        List of functions
- Schema | Name  | Result data type |                    Argument data types                    
---------+-------+------------------+-----------------------------------------------------------
- public | dfunc | integer          | a integer DEFAULT 1, OUT sum integer, b integer DEFAULT 2
+ Schema | Name  | Result data type |                    Argument data types                    |  Type  
+--------+-------+------------------+-----------------------------------------------------------+--------
+ public | dfunc | integer          | a integer DEFAULT 1, OUT sum integer, b integer DEFAULT 2 | normal
 (1 row)
 
 drop function dfunc(int, int);
@@ -1006,9 +1006,9 @@ ERROR:  cannot remove parameter defaults from existing function
 HINT:  Use DROP FUNCTION first.
 \df dfunc
                                   List of functions
- Schema | Name  | Result data type |               Argument data types               
---------+-------+------------------+-------------------------------------------------
- public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]::integer[]
+ Schema | Name  | Result data type |               Argument data types               |  Type  
+--------+-------+------------------+-------------------------------------------------+--------
+ public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]::integer[] | normal
 (1 row)
 
 drop function dfunc(a variadic int[]);

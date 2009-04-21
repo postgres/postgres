@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.146 2009/04/11 14:11:21 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.147 2009/04/21 15:49:06 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -196,7 +196,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
 	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
 	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
-	fprintf(output, _("  \\da[S]  [PATTERN]      list aggregate functions\n"));
+	fprintf(output, _("  \\da[+]  [PATTERN]      list aggregates\n"));
 	fprintf(output, _("  \\db[+]  [PATTERN]      list tablespaces\n"));
 	fprintf(output, _("  \\dc[S]  [PATTERN]      list conversions\n"));
 	fprintf(output, _("  \\dC     [PATTERN]      list casts\n"));
@@ -206,6 +206,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));
 	fprintf(output, _("  \\dew[+] [PATTERN]      list foreign-data wrappers\n"));
 	fprintf(output, _("  \\df[S+] [PATTERN]      list functions\n"));
+	fprintf(output, _("  \\df[antwS+] [PATTERN]  list only agg/normal/trigger/window functions\n"));
 	fprintf(output, _("  \\dF[+]  [PATTERN]      list text search configurations\n"));
 	fprintf(output, _("  \\dFd[+] [PATTERN]      list text search dictionaries\n"));
 	fprintf(output, _("  \\dFp[+] [PATTERN]      list text search parsers\n"));

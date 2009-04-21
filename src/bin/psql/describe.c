@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.208 2009/04/08 22:29:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.209 2009/04/21 15:49:06 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -183,14 +183,42 @@ describeTablespaces(const char *pattern, bool verbose)
 
 
 /* \df
- * Takes an optional regexp to select particular functions
+ * Takes an optional regexp to select particular functions.
+ *
+ * As with \d, you can specify the kinds of functions you want:
+ *
+ * a for aggregates
+ * n for normal
+ * t for trigger
+ * w for window
+ *
+ * and you can mix and match these in any order.
  */
 bool
-describeFunctions(const char *pattern, bool verbose, bool showSystem)
+describeFunctions(const char *functypes, const char *pattern, bool verbose, bool showSystem)
 {
+	bool			showAggregate = strchr(functypes, 'a') != NULL;
+	bool			showNormal = strchr(functypes, 'n') != NULL;
+	bool			showTrigger = strchr(functypes, 't') != NULL;
+	bool			showWindow = strchr(functypes, 'w') != NULL;
+
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+
+	if (showWindow && pset.sversion < 80400)
+	{
+		fprintf(stderr, _("\\df does not take a \"w\" decorator in %d.%d.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
+	if (!showAggregate && !showNormal && !showTrigger && !showWindow)
+	{
+		showAggregate = showNormal = showTrigger = true;
+		if (pset.sversion >= 80400)
+			showWindow = true;
+	}
 
 	initPQExpBuffer(&buf);
 
@@ -203,9 +231,21 @@ describeFunctions(const char *pattern, bool verbose, bool showSystem)
     if (pset.sversion >= 80400)
 		appendPQExpBuffer(&buf,
 						  "  pg_catalog.pg_get_function_result(p.oid) as \"%s\",\n"
-						  "  pg_catalog.pg_get_function_arguments(p.oid) as \"%s\"",
+						  "  pg_catalog.pg_get_function_arguments(p.oid) as \"%s\",\n"
+						  " CASE\n"
+						  "  WHEN p.proisagg THEN '%s'\n"
+						  "  WHEN p.proiswindow THEN '%s'\n"
+						  "  WHEN pg_catalog.pg_get_function_result(p.oid) = 'trigger' THEN '%s'\n"
+						  "  ELSE '%s'\n"
+						  "END as \"%s\"",
 						  gettext_noop("Result data type"),
-						  gettext_noop("Argument data types"));
+							  gettext_noop("Argument data types"),
+							  /* translator: "agg" is short for "aggregate" */
+							  gettext_noop("agg"),
+							  gettext_noop("window"),
+							  gettext_noop("trigger"),
+							  gettext_noop("normal"),
+							  gettext_noop("Type"));
     else if (pset.sversion >= 80100)
 		appendPQExpBuffer(&buf,
 					  "  CASE WHEN p.proretset THEN 'SETOF ' ELSE '' END ||\n"
@@ -238,16 +278,36 @@ describeFunctions(const char *pattern, bool verbose, bool showSystem)
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
+					  "  END AS \"%s\",\n"
+					  "  CASE\n"
+					  "    WHEN p.proisagg THEN '%s'\n"
+					  "    WHEN 'trigger' = pg_catalog.format_type(p.prorettype, NULL) THEN '%s'\n"
+					  "    ELSE '%s'\n"
 					  "  END AS \"%s\"",
 						  gettext_noop("Result data type"),
-						  gettext_noop("Argument data types"));
+						  gettext_noop("Argument data types"),
+						  /* translator: "agg" is short for "aggregate" */
+						  gettext_noop("agg"),
+						  gettext_noop("trigger"),
+						  gettext_noop("normal"),
+						  gettext_noop("Type"));
 	else
 		appendPQExpBuffer(&buf,
 					  "  CASE WHEN p.proretset THEN 'SETOF ' ELSE '' END ||\n"
 				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
-					  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
+					  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\",\n"
+					  "  CASE\n"
+					  "    WHEN p.proisagg THEN '%s'\n"
+					  "    WHEN 'trigger' = pg_catalog.format_type(p.prorettype, NULL) THEN '%s'\n"
+					  "    ELSE '%s'\n"
+					  "  END AS \"%s\"",
 						  gettext_noop("Result data type"),
-						  gettext_noop("Argument data types"));
+						  gettext_noop("Argument data types"),
+						  /* translator: "agg" is short for "aggregate" */
+						  gettext_noop("agg"),
+						  gettext_noop("trigger"),
+						  gettext_noop("normal"),
+						  gettext_noop("Type"));
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
@@ -274,15 +334,62 @@ describeFunctions(const char *pattern, bool verbose, bool showSystem)
 		appendPQExpBuffer(&buf,
 						  "     LEFT JOIN pg_catalog.pg_language l ON l.oid = p.prolang\n");
 
-	appendPQExpBuffer(&buf, "WHERE NOT p.proisagg\n");
+	processSQLNamePattern(pset.db, &buf, pattern, false, true,
+						  "n.nspname", "p.proname", NULL,
+						  "pg_catalog.pg_function_is_visible(p.oid)");
+
+	if (showNormal && showAggregate && showTrigger && showWindow)
+		/* Do nothing */;
+	else if (showNormal)
+	{
+		if (!showWindow && pset.sversion >= 80400)
+				appendPQExpBuffer(&buf, "      AND NOT p.proiswindow\n");
+		if (!showAggregate)
+			appendPQExpBuffer(&buf, "      AND NOT p.proisagg\n");
+		if (!showTrigger)
+		{
+			if (pset.sversion >= 80400)
+				appendPQExpBuffer(&buf,
+								  "      AND pg_catalog.pg_get_function_result(p.oid) <> 'trigger'\n");
+			else
+				appendPQExpBuffer(&buf,
+								  "      AND pg_catalog.format_type(p.prorettype, NULL) <> 'trigger'\n");
+		}
+	}
+	else
+	{
+		bool	needs_or = false;
+
+		appendPQExpBuffer(&buf, "      AND (\n         ");
+		if (showAggregate)
+		{
+			appendPQExpBuffer(&buf,"p.proisagg\n");
+			needs_or = true;
+		}
+		if (showTrigger)
+		{
+			if (needs_or)
+				appendPQExpBuffer(&buf, "      OR ");
+			if (pset.sversion >= 80400)
+				appendPQExpBuffer(&buf,
+								  "pg_catalog.pg_get_function_result(p.oid) = 'trigger'\n");
+			else
+				appendPQExpBuffer(&buf,
+								  "'trigger' <> pg_catalog.format_type(p.prorettype, NULL)\n");
+			needs_or = true;
+		}
+		if (showWindow)
+		{
+			if (needs_or)
+				appendPQExpBuffer(&buf, "      OR ");
+			appendPQExpBuffer(&buf, "p.proiswindow\n");
+		}
+		appendPQExpBuffer(&buf, "      )\n");
+	}
 
  	if (!showSystem && !pattern)
  		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
  								"      AND n.nspname <> 'information_schema'\n");
-
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
-						  "n.nspname", "p.proname", NULL,
-						  "pg_catalog.pg_function_is_visible(p.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 4;");
 
