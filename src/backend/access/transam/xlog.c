@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.335 2009/04/07 00:31:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.336 2009/04/22 19:51:12 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4850,10 +4850,22 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 		 * If we are establishing a new timeline, we have to copy data from
 		 * the last WAL segment of the old timeline to create a starting WAL
 		 * segment for the new timeline.
+		 *
+		 * Notify the archiver that the last WAL segment of the old timeline
+		 * is ready to copy to archival storage. Otherwise, it is not archived
+		 * for a while.
 		 */
 		if (endTLI != ThisTimeLineID)
+		{
 			XLogFileCopy(endLogId, endLogSeg,
 						 endTLI, endLogId, endLogSeg);
+
+			if (XLogArchivingActive())
+			{
+				XLogFileName(xlogpath, endTLI, endLogId, endLogSeg);
+				XLogArchiveNotify(xlogpath);
+			}
+		}
 	}
 
 	/*
