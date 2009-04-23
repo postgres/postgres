@@ -18,6 +18,8 @@ SELECT * FROM pxtest1;
 (1 row)
 
 PREPARE TRANSACTION 'foo1';
+ERROR:  prepared transactions are disabled
+HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -26,13 +28,13 @@ SELECT * FROM pxtest1;
 
 -- Test pg_prepared_xacts system view
 SELECT gid FROM pg_prepared_xacts;
- gid  
-------
- foo1
-(1 row)
+ gid 
+-----
+(0 rows)
 
 -- Test ROLLBACK PREPARED
 ROLLBACK PREPARED 'foo1';
+ERROR:  prepared transaction with identifier "foo1" does not exist
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -55,6 +57,8 @@ SELECT * FROM pxtest1;
 (2 rows)
 
 PREPARE TRANSACTION 'foo2';
+ERROR:  prepared transactions are disabled
+HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT * FROM pxtest1;
  foobar 
 --------
@@ -62,12 +66,12 @@ SELECT * FROM pxtest1;
 (1 row)
 
 COMMIT PREPARED 'foo2';
+ERROR:  prepared transaction with identifier "foo2" does not exist
 SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
- ddd
-(2 rows)
+(1 row)
 
 -- Test duplicate gids
 BEGIN;
@@ -76,15 +80,15 @@ SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
- eee
-(2 rows)
+(1 row)
 
 PREPARE TRANSACTION 'foo3';
+ERROR:  prepared transactions are disabled
+HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT gid FROM pg_prepared_xacts;
- gid  
-------
- foo3
-(1 row)
+ gid 
+-----
+(0 rows)
 
 BEGIN;
 INSERT INTO pxtest1 VALUES ('fff');
@@ -92,27 +96,26 @@ SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
- ddd
  fff
-(3 rows)
+(2 rows)
 
 -- This should fail, because the gid foo3 is already in use
 PREPARE TRANSACTION 'foo3';
-ERROR:  transaction identifier "foo3" is already in use
+ERROR:  prepared transactions are disabled
+HINT:  Set max_prepared_transactions to a nonzero value.
 SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
- ddd
-(2 rows)
+(1 row)
 
 ROLLBACK PREPARED 'foo3';
+ERROR:  prepared transaction with identifier "foo3" does not exist
 SELECT * FROM pxtest1;
  foobar 
 --------
  aaa
- ddd
-(2 rows)
+(1 row)
 
 -- Clean up
 DROP TABLE pxtest1;
@@ -126,6 +129,8 @@ BEGIN;
   SAVEPOINT b;
   INSERT INTO pxtest2 VALUES (3);
 PREPARE TRANSACTION 'regress-one';
+ERROR:  prepared transactions are disabled
+HINT:  Set max_prepared_transactions to a nonzero value.
 CREATE TABLE pxtest3(fff int);
 -- Test shared invalidation
 BEGIN;
@@ -142,6 +147,8 @@ BEGIN;
 (1 row)
 
 PREPARE TRANSACTION 'regress-two';
+ERROR:  prepared transactions are disabled
+HINT:  Set max_prepared_transactions to a nonzero value.
 -- No such cursor
 FETCH 1 FROM foo;
 ERROR:  cursor "foo" does not exist
@@ -152,60 +159,56 @@ LINE 1: SELECT * FROM pxtest2;
                       ^
 -- There should be two prepared transactions
 SELECT gid FROM pg_prepared_xacts;
-     gid     
--------------
- regress-one
- regress-two
-(2 rows)
+ gid 
+-----
+(0 rows)
 
 -- pxtest3 should be locked because of the pending DROP
 set statement_timeout to 2000;
 SELECT * FROM pxtest3;
-ERROR:  canceling statement due to statement timeout
+ fff 
+-----
+(0 rows)
+
 reset statement_timeout;
 -- Disconnect, we will continue testing in a different backend
 \c -
 -- There should still be two prepared transactions
 SELECT gid FROM pg_prepared_xacts;
-     gid     
--------------
- regress-one
- regress-two
-(2 rows)
+ gid 
+-----
+(0 rows)
 
 -- pxtest3 should still be locked because of the pending DROP
 set statement_timeout to 2000;
 SELECT * FROM pxtest3;
-ERROR:  canceling statement due to statement timeout
+ fff 
+-----
+(0 rows)
+
 reset statement_timeout;
 -- Commit table creation
 COMMIT PREPARED 'regress-one';
+ERROR:  prepared transaction with identifier "regress-one" does not exist
 \d pxtest2
-    Table "public.pxtest2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- a      | integer | 
-
 SELECT * FROM pxtest2;
- a 
----
- 1
- 3
-(2 rows)
-
+ERROR:  relation "pxtest2" does not exist
+LINE 1: SELECT * FROM pxtest2;
+                      ^
 -- There should be one prepared transaction
 SELECT gid FROM pg_prepared_xacts;
-     gid     
--------------
- regress-two
-(1 row)
+ gid 
+-----
+(0 rows)
 
 -- Commit table drop
 COMMIT PREPARED 'regress-two';
+ERROR:  prepared transaction with identifier "regress-two" does not exist
 SELECT * FROM pxtest3;
-ERROR:  relation "pxtest3" does not exist
-LINE 1: SELECT * FROM pxtest3;
-                      ^
+ fff 
+-----
+(0 rows)
+
 -- There should be no prepared transactions
 SELECT gid FROM pg_prepared_xacts;
  gid 
@@ -214,6 +217,7 @@ SELECT gid FROM pg_prepared_xacts;
 
 -- Clean up
 DROP TABLE pxtest2;
+ERROR:  table "pxtest2" does not exist
 DROP TABLE pxtest3;  -- will still be there if prepared xacts are disabled
-ERROR:  table "pxtest3" does not exist
 DROP TABLE pxtest4;
+ERROR:  table "pxtest4" does not exist

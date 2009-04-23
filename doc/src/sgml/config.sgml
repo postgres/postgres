@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.214 2009/04/02 22:44:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.215 2009/04/23 00:23:45 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -785,18 +785,18 @@ SET ENABLE_SEQSCAN TO OFF;
         <quote>prepared</> state simultaneously (see <xref
         linkend="sql-prepare-transaction"
         endterm="sql-prepare-transaction-title">).
-        Setting this parameter to zero disables the prepared-transaction
-        feature.
-        The default is five transactions.
+        Setting this parameter to zero (which is the default)
+        disables the prepared-transaction feature.
         This parameter can only be set at server start.
        </para>
 
        <para>
-        If you are not using prepared transactions, this parameter may as
-        well be set to zero.  If you are using them, you will probably
-        want <varname>max_prepared_transactions</varname> to be at least
-        as large as <xref linkend="guc-max-connections">, to avoid unwanted
-        failures at the prepare step.
+        If you are not planning to use prepared transactions, this parameter
+        should be set to zero to prevent accidental creation of prepared
+        transactions.  If you are using prepared transactions, you will
+        probably want <varname>max_prepared_transactions</varname> to be at
+        least as large as <xref linkend="guc-max-connections">, so that every
+        session can have a prepared transaction pending.
        </para>
 
        <para>

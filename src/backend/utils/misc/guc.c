@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.502 2009/04/07 23:27:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.503 2009/04/23 00:23:45 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1504,7 +1504,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_prepared_xacts,
-		5, 0, INT_MAX, NULL, NULL
+		0, 0, INT_MAX / 4, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG

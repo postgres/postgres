@@ -134,4 +134,5 @@ SELECT gid FROM pg_prepared_xacts;
 
 -- Clean up
 DROP TABLE pxtest2;
+DROP TABLE pxtest3;  -- will still be there if prepared xacts are disabled
 DROP TABLE pxtest4;

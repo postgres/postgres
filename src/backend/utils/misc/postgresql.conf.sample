@@ -106,10 +106,12 @@
 #shared_buffers = 32MB			# min 128kB
 					# (change requires restart)
 #temp_buffers = 8MB			# min 800kB
-#max_prepared_transactions = 5		# can be 0 or more
+#max_prepared_transactions = 0		# zero disables the feature
 					# (change requires restart)
 # Note:  Increasing max_prepared_transactions costs ~600 bytes of shared memory
 # per transaction slot, plus lock space (see max_locks_per_transaction).
+# It is not advisable to set max_prepared_transactions nonzero unless you
+# actively intend to use prepared transactions.
 #work_mem = 1MB				# min 64kB
 #maintenance_work_mem = 16MB		# min 1MB
 #max_stack_depth = 2MB			# min 100kB

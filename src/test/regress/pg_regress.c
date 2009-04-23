@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.61 2009/02/12 13:26:03 petere Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.62 2009/04/23 00:23:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2037,6 +2037,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	if (temp_install)
 	{
+		FILE	   *pg_conf;
+
 		/*
 		 * Prepare the temp installation
 		 */
@@ -2092,20 +2094,29 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			exit_nicely(2);
 		}
 
-		/* add any extra config specified to the postgresql.conf */
+		/*
+		 * Adjust the default postgresql.conf as needed for regression testing.
+		 * The user can specify a file to be appended; in any case we set
+		 * max_prepared_transactions to enable testing of prepared xacts.
+		 * (Note: to reduce the probability of unexpected shmmax failures,
+		 * don't set max_prepared_transactions any higher than actually
+		 * needed by the prepared_xacts regression test.)
+		 */
+		snprintf(buf, sizeof(buf), "%s/data/postgresql.conf", temp_install);
+		pg_conf = fopen(buf, "a");
+		if (pg_conf == NULL)
+		{
+			fprintf(stderr, _("\n%s: could not open \"%s\" for adding extra config: %s\n"), progname, buf, strerror(errno));
+			exit_nicely(2);
+		}
+		fputs("\n# Configuration added by pg_regress\n\n", pg_conf);
+		fputs("max_prepared_transactions = 2\n", pg_conf);
+
 		if (temp_config != NULL)
 		{
 			FILE	   *extra_conf;
-			FILE	   *pg_conf;
 			char		line_buf[1024];
 
-			snprintf(buf, sizeof(buf), "%s/data/postgresql.conf", temp_install);
-			pg_conf = fopen(buf, "a");
-			if (pg_conf == NULL)
-			{
-				fprintf(stderr, _("\n%s: could not open \"%s\" for adding extra config: %s\n"), progname, buf, strerror(errno));
-				exit_nicely(2);
-			}
 			extra_conf = fopen(temp_config, "r");
 			if (extra_conf == NULL)
 			{
@@ -2115,8 +2126,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			while (fgets(line_buf, sizeof(line_buf), extra_conf) != NULL)
 				fputs(line_buf, pg_conf);
 			fclose(extra_conf);
-			fclose(pg_conf);
 		}
+
+		fclose(pg_conf);
 
 		/*
 		 * Check if there is a postmaster running already.

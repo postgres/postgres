@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.83 2009/01/01 17:23:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.84 2009/04/23 00:23:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,14 +86,16 @@ GetNewTransactionId(bool isSubXact)
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
 							NameStr(ShmemVariableCache->limit_datname)),
-					 errhint("Stop the postmaster and use a standalone backend to vacuum database \"%s\".",
+					 errhint("Stop the postmaster and use a standalone backend to vacuum database \"%s\".\n"
+							 "You might also need to commit or roll back old prepared transactions.",
 							 NameStr(ShmemVariableCache->limit_datname))));
 		else if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit))
 			ereport(WARNING,
 			(errmsg("database \"%s\" must be vacuumed within %u transactions",
 					NameStr(ShmemVariableCache->limit_datname),
 					ShmemVariableCache->xidWrapLimit - xid),
-			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
+			 errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".\n"
+					 "You might also need to commit or roll back old prepared transactions.",
 					 NameStr(ShmemVariableCache->limit_datname))));
 	}
 
@@ -299,7 +301,8 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 		   (errmsg("database \"%s\" must be vacuumed within %u transactions",
 				   NameStr(*oldest_datname),
 				   xidWrapLimit - curXid),
-			errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".",
+			errhint("To avoid a database shutdown, execute a database-wide VACUUM in \"%s\".\n"
+					"You might also need to commit or roll back old prepared transactions.",
 					NameStr(*oldest_datname))));
 }
 

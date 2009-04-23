@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.8 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.9 2009/04/23 00:23:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    <command>PREPARE TRANSACTION</command> prepares the current transaction
-   for two-phase commit. After this command, the transaction is no longer 
+   for two-phase commit. After this command, the transaction is no longer
    associated with the current session; instead, its state is fully stored on
    disk, and there is a very high probability that it can be committed
    successfully, even if a database crash occurs before the commit is
@@ -100,7 +100,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
    If the transaction modified any run-time parameters with <command>SET</>
    (without the <literal>LOCAL</> option),
    those effects persist after <command>PREPARE TRANSACTION</>, and will not
-   be affected by any later <command>COMMIT PREPARED</command> or 
+   be affected by any later <command>COMMIT PREPARED</command> or
    <command>ROLLBACK PREPARED</command>.  Thus, in this one respect
    <command>PREPARE TRANSACTION</> acts more like <command>COMMIT</> than
    <command>ROLLBACK</>.
@@ -112,26 +112,28 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
    system view.
   </para>
 
-  <para>
-   From a performance standpoint, it is unwise to leave transactions in
-   the prepared state for a long time: this will for instance interfere with
-   the ability of <command>VACUUM</> to reclaim storage.  Keep in mind also
-   that the transaction continues to hold whatever locks it held.
-   The intended
-   usage of the feature is that a prepared transaction will normally be
-   committed or rolled back as soon as an external transaction manager
-   has verified that other databases are also prepared to commit.
-  </para>
+  <caution>
+   <para>
+    It is unwise to leave transactions in the prepared state for a long time.
+    This will interfere with the ability of <command>VACUUM</> to reclaim
+    storage, and in extreme cases could cause the database to shut down
+    to prevent transaction ID wraparound (see <xref
+    linkend="vacuum-for-wraparound">).  Keep in mind also that the transaction
+    continues to hold whatever locks it held.  The intended usage of the
+    feature is that a prepared transaction will normally be committed or
+    rolled back as soon as an external transaction manager has verified that
+    other databases are also prepared to commit.
+   </para>
 
-  <para>
-   If you make any serious use of prepared transactions, you will probably
-   want to increase the value of <xref
-   linkend="guc-max-prepared-transactions">, as the default setting is
-   quite small (to avoid wasting resources for those who don't use it).
-   It is recommendable to make it at least equal to
-   <xref linkend="guc-max-connections">, so that every session can have
-   a prepared transaction pending.
-  </para>
+   <para>
+    If you have not set up an external transaction manager to track prepared
+    transactions and ensure they get closed out promptly, it is best to keep
+    the prepared-transaction feature disabled by setting
+    <xref linkend="guc-max-prepared-transactions"> to zero.  This will
+    prevent accidental creation of prepared transactions that might then
+    be forgotten and eventually cause problems.
+   </para>
+  </caution>
  </refsect1>
 
  <refsect1 id="sql-prepare-transaction-examples">
@@ -139,7 +141,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
   <para>
    Prepare the current transaction for two-phase commit, using
    <literal>foobar</> as the transaction identifier:
-   
+
 <programlisting>
 PREPARE TRANSACTION 'foobar';
 </programlisting>
