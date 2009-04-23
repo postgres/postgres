@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.26 2008/10/06 14:13:17 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.27 2009/04/23 10:20:27 heikki Exp $ -->
 
 <chapter id="storage">
 
@@ -134,7 +134,9 @@ or index's <firstterm>filenode</> number, which can be found in
 main file (aka. main fork), a <firstterm>free space map</> (see
 <xref linkend="storage-fsm">) that stores information about free space
 available in the relation, is stored in a file named after the filenode
-number, with the the <literal>_fsm</> suffix.
+number, with the <literal>_fsm</> suffix.  Tables also have a visibility map
+fork, with the <literal>_vm</> suffix, to track which pages are known to have
+no dead tuples and therefore need no vacuuming.
 </para>
 
 <caution>
