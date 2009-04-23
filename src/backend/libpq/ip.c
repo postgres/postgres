@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.44 2009/01/23 19:58:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.45 2009/04/23 23:25:13 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -394,6 +394,7 @@ pg_sockaddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 
 				if (bits < 0 || bits > 32)
 					return -1;
+				memset(&mask4, 0, sizeof(mask4));
 				/* avoid "x << 32", which is not portable */
 				if (bits > 0)
 					maskl = (0xffffffffUL << (32 - (int) bits))
@@ -413,6 +414,7 @@ pg_sockaddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 
 				if (bits < 0 || bits > 128)
 					return -1;
+				memset(&mask6, 0, sizeof(mask6));
 				for (i = 0; i < 16; i++)
 				{
 					if (bits <= 0)
