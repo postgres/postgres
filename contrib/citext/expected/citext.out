@@ -213,10 +213,10 @@ SELECT citext_cmp('AARDVARK'::citext, 'AARDVARK'::citext) AS zero;
     0
 (1 row)
 
-SELECT citext_cmp('B'::citext, 'a'::citext) AS one;
- one 
------
-   1
+SELECT citext_cmp('B'::citext, 'a'::citext) > 0 AS true;
+ true 
+------
+    t
 (1 row)
 
 -- Do some tests using a table and index.

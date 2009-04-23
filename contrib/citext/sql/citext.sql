@@ -90,7 +90,7 @@ SELECT 'aardvark'::citext = 'aardVark'::citext AS t;
 SELECT citext_cmp('aardvark'::citext, 'aardvark'::citext) AS zero;
 SELECT citext_cmp('aardvark'::citext, 'aardVark'::citext) AS zero;
 SELECT citext_cmp('AARDVARK'::citext, 'AARDVARK'::citext) AS zero;
-SELECT citext_cmp('B'::citext, 'a'::citext) AS one;
+SELECT citext_cmp('B'::citext, 'a'::citext) > 0 AS true;
 
 -- Do some tests using a table and index.
 
