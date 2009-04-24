@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.630 2009/04/19 15:49:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.631 2009/04/24 13:01:30 mha Exp $ -->
 <!--
 
 Typical markup:
@@ -2622,24 +2622,16 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        <application>libpq</> now verifies both the certificate and
-        the name of the server by default when making <acronym>SSL</>
+        <application>libpq</> now supports verifying both the certificate
+        and the name of the server when making <acronym>SSL</>
         connections. If a root certificate is not available to use for
         verification, <acronym>SSL</> connections will fail. The
-        <literal>sslverify</> parameter can be used to disable the host
-        and certificate verification if required.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add connection parameter <literal>sslverify</> to control
-        the verification of the server's certificate
-        (Magnus)
+        <literal>sslmode</> parameter is used to enable the certificate
+        verification.
        </para>
 
        <para>
-        The default is full verification.
+        The default is still not to do any verification.
        </para>
       </listitem>
 
