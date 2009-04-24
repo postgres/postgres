@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.372 2009/01/01 17:24:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.373 2009/04/24 09:43:10 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,11 +91,9 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultAuthtype		  ""
 #define DefaultPassword		  ""
 #ifdef USE_SSL
-#define DefaultSSLMode	"prefer"
-#define DefaultSSLVerify "cn"
+#define DefaultSSLMode "prefer"
 #else
 #define DefaultSSLMode	"disable"
-#define DefaultSSLVerify "none"
 #endif
 
 /* ----------
@@ -184,9 +182,6 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	 */
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
-
-	{"sslverify", "PGSSLVERIFY", DefaultSSLVerify, NULL,
-	"SSL-Verify", "", 5},		/* sizeof("chain") == 5 */
 
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 	"SSL-Client-Cert", "", 64},
@@ -431,8 +426,6 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslmode");
 	conn->sslmode = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslverify");
-	conn->sslverify = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslkey");
 	conn->sslkey = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslcert");
@@ -522,7 +515,9 @@ connectOptions2(PGconn *conn)
 		if (strcmp(conn->sslmode, "disable") != 0
 			&& strcmp(conn->sslmode, "allow") != 0
 			&& strcmp(conn->sslmode, "prefer") != 0
-			&& strcmp(conn->sslmode, "require") != 0)
+			&& strcmp(conn->sslmode, "require") != 0
+			&& strcmp(conn->sslmode, "verify-ca") != 0
+			&& strcmp(conn->sslmode, "verify-full") != 0)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
@@ -544,6 +539,7 @@ connectOptions2(PGconn *conn)
 				break;
 
 			case 'r':			/* "require" */
+			case 'v':			/* "verify-ca" or "verify-full" */
 				conn->status = CONNECTION_BAD;
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("sslmode value \"%s\" invalid when SSL support is not compiled in\n"),
@@ -554,24 +550,6 @@ connectOptions2(PGconn *conn)
 	}
 	else
 		conn->sslmode = strdup(DefaultSSLMode);
-
-	/*
-	 * Validate sslverify option
-	 */
-	if (conn->sslverify)
-	{
-		if (strcmp(conn->sslverify, "none") != 0
-			&& strcmp(conn->sslverify, "cert") != 0
-			&& strcmp(conn->sslverify, "cn") != 0)
-		{
-			conn->status = CONNECTION_BAD;
-			printfPQExpBuffer(&conn->errorMessage,
-							libpq_gettext("invalid sslverify value: \"%s\"\n"),
-							  conn->sslverify);
-			return false;
-		}
-	}
-
 
 	/*
 	 * Only if we get this far is it appropriate to try to connect. (We need a
@@ -1428,7 +1406,8 @@ keep_going:						/* We will come back to here until there is
 					}
 					else if (SSLok == 'N')
 					{
-						if (conn->sslmode[0] == 'r')	/* "require" */
+						if (conn->sslmode[0] == 'r' ||	/* "require" */
+							conn->sslmode[0] == 'v')    /* "verify-ca" or "verify-full" */
 						{
 							/* Require SSL, but server does not want it */
 							appendPQExpBuffer(&conn->errorMessage,
@@ -1445,7 +1424,8 @@ keep_going:						/* We will come back to here until there is
 						/* Received error - probably protocol mismatch */
 						if (conn->Pfdebug)
 							fprintf(conn->Pfdebug, "received error from server, attempting fallback to pre-7.0\n");
-						if (conn->sslmode[0] == 'r')	/* "require" */
+						if (conn->sslmode[0] == 'r' ||	/* "require" */
+							conn->sslmode[0] == 'v')    /* "verify-ca" or "verify-full" */
 						{
 							/* Require SSL, but server is too old */
 							appendPQExpBuffer(&conn->errorMessage,
@@ -2052,8 +2032,6 @@ freePGconn(PGconn *conn)
 		free(conn->pgpass);
 	if (conn->sslmode)
 		free(conn->sslmode);
-	if (conn->sslverify)
-		free(conn->sslverify);
 	if (conn->sslcert)
 		free(conn->sslcert);
 	if (conn->sslkey)

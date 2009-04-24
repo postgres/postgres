@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.285 2009/04/15 13:03:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.286 2009/04/24 09:43:09 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -292,7 +292,21 @@
               <entry><literal>require</></entry>
               <entry>only try an <acronym>SSL</> connection</entry>
              </row>
-        
+
+             <row>
+              <entry><literal>verify-ca</></entry>
+              <entry>only try an <acronym>SSL</> connection, and verify that
+              the server certificate is issued by a trusted <acronym>CA</>.
+              </entry>
+             </row>
+
+             <row>
+              <entry><literal>verify-full</></entry>
+              <entry>only try an <acronym>SSL</> connection, verify that
+              the server certificate is issued by a trusted <acronym>CA</> and
+              that the server hostname matches that in the certificate.</entry>
+             </row>
+
             </tbody>
            </tgroup>
           </table>
@@ -307,43 +321,6 @@
            an <acronym>SSL</>
            connection.<indexterm><primary>SSL</><secondary
            sortas="libpq">with libpq</></indexterm>
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslverify" xreflabel="sslverify">
-         <term><literal>sslverify</literal></term>
-         <listitem>
-          <para>
-           This option controls how libpq verifies the certificate on the
-           server when performing an <acronym>SSL</> connection. There are
-           three options: <literal>none</> disables verification completely
-           (not recommended); <literal>cert</> enables verification that
-           the server certificate chains to a known certificate
-           authority (CA); <literal>cn</> will both verify that the
-           certificate chains to a known CA and that the <literal>cn</>
-           attribute of the server certificate matches the server's
-           hostname (default).
-          </para>
-
-          <para>
-           It is always recommended to use the <literal>cn</> value for
-           this parameter, since this is the only option that prevents
-           man-in-the-middle attacks. Note that this requires the server
-           name on the certificate to match exactly with the host name
-           used for the connection, and therefore does not support connections
-           to aliased names. It can be used with pure IP address connections
-           only if the certificate also has just the IP address in the
-           <literal>cn</> field.
-          </para>
-
-          <para>
-           If the <literal>cn</> attribute in the certificate sent by the
-           server starts with an asterisk (<literal>*</>), it will be treated
-           as a wildcard. This wildcard can only be present at the start of
-           the value, and will match all characters <emphasis>except</> a
-           dot (<literal>.</>). This means the certificate will not match
-           subdomains.
           </para>
          </listitem>
         </varlistentry>
@@ -5803,16 +5780,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     <listitem>
      <para>
       <indexterm>
-       <primary><envar>PGSSLVERIFY</envar></primary>
-      </indexterm>
-      <envar>PGSSLVERIFY</envar> behaves the same as <xref
-      linkend="libpq-connect-sslverify"> connection parameter.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
        <primary><envar>PGREQUIRESSL</envar></primary>
       </indexterm>
       <envar>PGREQUIRESSL</envar> behaves the same as <xref
@@ -6162,25 +6129,60 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    file.
   </para>
 
+ <sect2 id="libq-ssl-certificates">
+  <title>Certificate verification</title>
+
   <para>
-   When the <literal>sslverify</> parameter is set to <literal>cn</> or
-   <literal>cert</>, libpq requires a trustworthy server certificate by
-   checking the certificate chain up to a <acronym>CA</>.
-   To allow verification, place the certificate of a trusted <acronym>CA</>
-   in the file <filename>~/.postgresql/root.crt</> in the user's home directory.
-   (On Microsoft Windows the file is named
+   By default, <productname>PostgreSQL</> will not perform any validation of
+   the server certificate. This means that it is possible to spoof the server
+   identity (for example by modifying a DNS record or by taking over the server
+   IP address) without the client knowing. In order to prevent this,
+   <acronym>SSL</> certificate validation must be used.
+  </para>
+
+  <para>
+   If the parameter <literal>sslmode</> is set to <literal>verify-ca</>
+   libpq will verify that the server is trustworthy by checking the certificate
+   chain up to a trusted <acronym>CA</>. If <literal>sslmode</> is set to
+   <literal>verify-full</>, libpq will <emphasis>also</> verify that the server
+   hostname matches that of the certificate. The SSL connection will fail if
+   the server certificate cannot be verified. <literal>verify-full</> is
+   recommended in most security sensitive environments.
+  </para>
+
+  <para>
+   In <literal>verify-full</> mode, the <literal>cn</> attribute of the
+   certificate is matched against the hostname. If the <literal>cn</>
+   attribute starts with an asterisk (<literal>*</>), it will be treated as
+   a wildcard, and will match all characters <emphasis>except</> a dot
+   (<literal>.</>). This means the certificate will not match subdomains.
+   If the connection is made using an IP address instead of a hostname, the
+   IP address will be matched (without doing any DNS lookups).
+  </para>
+
+  <para>
+   To allow verification, the certificate of a trusted <acronym>CA</> must be
+   placed in the file <filename>~/.postgresql/root.crt</> in the user's home
+   directory. (On Microsoft Windows the file is named
    <filename>%APPDATA%\postgresql\root.crt</filename>.)
-   <application>libpq</application> will then verify that the server's
-   certificate is signed by one of the trusted certificate authorities.
-   The SSL connection will fail if the server certificate cannot be verified.
+  </para>
+
+  <para>
    Certificate Revocation List (CRL) entries are also checked
    if the file <filename>~/.postgresql/root.crl</filename> exists
    (<filename>%APPDATA%\postgresql\root.crl</filename> on Microsoft
    Windows).
+  </para>
+
+  <para>
    The location of the root certificate store and the CRL can be overridden
    by the connection parameters <literal>sslrootcert</> and <literal>sslcrl</>
    or the environment variables <envar>PGSSLROOTCERT</> and <envar>PGSSLCRL</>.
   </para>
+ </sect2>
+
+ <sect2 id="libpq-ssl-clientcert">
+  <title>Client certificates</title>
 
   <para>
    If the server requests a trusted client certificate,
@@ -6201,6 +6203,9 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    environment variables <envar>PGSSLCERT</> and <envar>PGSSLKEY</>.
   </para>
 
+ </sect2>
+ <sect2 id="libpq-ssl-fileusage">
+  <title>SSL File Usage</title>
   <table id="libpq-ssl-file-usage">
    <title>Libpq/Client SSL File Usage</title>
    <tgroup cols="3">
@@ -6243,6 +6248,10 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     </tbody>
    </tgroup>
   </table>
+ </sect2>
+
+ <sect2 id="libpq-ssl-initialize">
+  <title>SSL library initialization</title>
 
   <para>
    If your application initializes <literal>libssl</> and/or
@@ -6330,6 +6339,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
     </varlistentry>
    </variablelist>
   </para>
+ </sect2>
 
  </sect1>
 

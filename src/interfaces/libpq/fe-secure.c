@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.123 2009/04/14 17:30:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.124 2009/04/24 09:43:10 mha Exp $
  *
  * NOTES
  *
@@ -523,7 +523,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	 * If told not to verify the peer name, don't do it. Return
 	 * 0 indicating that the verification was successful.
 	 */
-	if(strcmp(conn->sslverify, "cn") != 0)
+	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
 
 	if (conn->pghostaddr)
@@ -987,9 +987,9 @@ initialize_SSL(PGconn *conn)
 		return -1;
 
 	/*
-	 * If sslverify is set to anything other than "none", perform certificate
-	 * verification. If set to "cn" we will also do further verifications after
-	 * the connection has been completed.
+	 * If sslmode is set to one of the verify options, perform certificate
+	 * verification. If set to "verify-full" we will also do further
+	 * verification after the connection has been completed.
 	 *
 	 * If we are going to look for either root certificate or CRL in the home directory,
 	 * we need pqGetHomeDirectory() to succeed. In other cases, we don't need to
@@ -999,7 +999,7 @@ initialize_SSL(PGconn *conn)
 	{
 		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 		{
-			if (strcmp(conn->sslverify, "none") != 0)
+			if (conn->sslmode[0] == 'v') /* "verify-ca" or "verify-full" */
 			{
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("could not get home directory to locate root certificate file"));
@@ -1064,7 +1064,7 @@ initialize_SSL(PGconn *conn)
 	else
 	{
 		/* stat() failed; assume cert file doesn't exist */
-		if (strcmp(conn->sslverify, "none") != 0)
+		if (conn->sslmode[0] == 'v') /* "verify-ca" or "verify-full" */
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("root certificate file \"%s\" does not exist\n"

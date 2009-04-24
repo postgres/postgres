@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.425 2009/01/09 13:37:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.426 2009/04/24 09:43:09 mha Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -1422,8 +1422,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    <filename>server.key</filename> (key) and
    <filename>server.crt</filename> (certificate) files (<xref
    linkend="ssl-tcp">). The TCP client must connect using
-   <literal>sslmode='require'</>, specify <literal>sslverify='cn'</>
-   or <literal>sslverify='cert'</> and have the required certificate
+   <literal>sslmode='verify-ca'</> or
+   <literal>'verify-full'</> and have the required certificate
    files present (<xref linkend="libpq-connect">).
   </para>
  </sect1>
