@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.426 2009/04/24 09:43:09 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.427 2009/04/24 20:46:16 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -1392,7 +1392,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
   <para>
    While the server is running, it is not possible for a malicious user
-   to interfere with client/server communications.  However, when the
+   to take the place of the normal database server.  However, when the
    server is down it is possible for a local user to spoof the normal
    server by starting their own server.  The spoof server could read
    passwords and queries sent by clients, but could not return any data
