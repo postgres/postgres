@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.212 2009/03/26 22:26:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.213 2009/04/24 16:09:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,6 +826,15 @@ func_get_detail(List *funcname,
 {
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
+
+	/* initialize output arguments to silence compiler warnings */
+	*funcid = InvalidOid;
+	*rettype = InvalidOid;
+	*retset = false;
+	*nvargs = 0;
+	*true_typeids = NULL;
+	if (argdefaults)
+	  *argdefaults = NIL;
 
 	/* Get list of possible candidates from namespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs,
