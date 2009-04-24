@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.286 2009/04/24 09:43:09 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.287 2009/04/24 14:10:41 mha Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -254,7 +254,7 @@
           <para>
            This option determines whether or with what priority a
            <acronym>SSL</> TCP/IP connection will be negotiated with the
-           server. There are four modes:
+           server. There are six modes:
           </para>
 
           <table id="libpq-connect-sslmode-options">
@@ -310,6 +310,11 @@
             </tbody>
            </tgroup>
           </table>
+
+          <para>
+           See <xref linkend="libpq-ssl"> for a detailed description of how
+           these options work.
+          </para>
 
           <para>
            <literal>sslmode</> is ignored for Unix domain socket
@@ -6133,11 +6138,11 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <title>Certificate verification</title>
 
   <para>
-   By default, <productname>PostgreSQL</> will not perform any validation of
+   By default, <productname>PostgreSQL</> will not perform any verification of
    the server certificate. This means that it is possible to spoof the server
    identity (for example by modifying a DNS record or by taking over the server
    IP address) without the client knowing. In order to prevent this,
-   <acronym>SSL</> certificate validation must be used.
+   <acronym>SSL</> certificate verification must be used.
   </para>
 
   <para>
@@ -6204,6 +6209,180 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </para>
 
  </sect2>
+
+ <sect2 id="libpq-ssl-protection">
+  <title>Protection provided in different modes</title>
+
+  <para>
+   The different values for the <literal>sslmode</> parameter provide different
+   levels of protection, in different environments. SSL itself provides
+   protection against three different types of attacks:
+  </para>
+  <table id="libpq-ssl-protect-attacks">
+   <title>SSL attacks</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>Eavesdropping</entry>
+      <entry>If a third party can listen to the network traffic between the
+       client and the server, it can read both connection information (including
+       the username and password) and the data that is passed. <acronym>SSL</>
+       uses encryption to prevent this.
+      </entry>
+     </row>
+
+     <row>
+      <entry>Man in the middle (<acronym>MITM</>)</entry>
+      <entry>If a third party can modify the data while passing between the
+       client and server, it can pretend to be the server and therefore see and
+       modify data <emphasis>even if it is encrypted</>. The third party can then
+       forward the connection information and data to the original server,
+       making it impossible to detect this attack. Common vectors to do this
+       include DNS poisoning and address hijacking, whereby the client is directed
+       to a different server than intended. There are also several other
+       attack methods that can accomplish this. <acronym>SSL</> uses certificate
+       verification to prevent this, by authenticating the server to the client.
+      </entry>
+     </row>
+
+     <row>
+      <entry>Impersonation</entry>
+      <entry>If a third party can pretend to be an authorized client, it can
+       simply access data it should not have access to. Typically this can
+       happen through insecure password management. <acronym>SSL</> uses
+       client certificates to prevent this, by making sure that only holders
+       of valid certificates can access the server.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   For a connection to be known secure, the two first of these have to be
+   set up on <emphasis>both the client and the server</> before the connection
+   is made. If it is only configured on the server, the client may end up
+   sending sensitive information (e.g. passwords) before
+   it knows that the server requires high security. In libpq, this is controlled
+   by setting the <literal>sslmode</> parameter to <literal>verify-full</> or
+   <literal>verify-ca</>, and providing the system with a root certificate to
+   verify against. This is analogous to using a <literal>https</>
+   <acronym>URL</> for encrypted web browsing.
+  </para>
+
+  <para>
+   Once the server has been authenticated, the client can pass sensitive data.
+   This means that up until this point, the client does not need to know if
+   certificates will be used for authentication, making it safe to specify this
+   only in the server configuration.
+  </para>
+
+  <para>
+   All <acronym>SSL</> options carry overhead in the form of encryption and
+   key-exchange, and it is a tradeoff that has to be made between performance
+   and security. The following table illustrates the risks the different
+   <literal>sslmode</> values protect against, and what statement they make
+   about security and overhead:
+  </para>
+
+  <table id="libpq-ssl-sslmode-statements">
+   <title>SSL mode descriptions</title>
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry><literal>sslmode</></entry>
+      <entry>Eavesdropping protection</entry>
+      <entry><acronym>MITM</> protection</entry>
+      <entry>Statement</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>disabled</></entry>
+      <entry>No</entry>
+      <entry>No</entry>
+      <entry>I don't care about security, and I don't want to pay the overhead
+       of encryption.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>allow</></entry>
+      <entry>Maybe</entry>
+      <entry>No</entry>
+      <entry>I don't care about security, but I will pay the overhead of
+       encryption if the server insists on it.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>prefer</></entry>
+      <entry>Maybe</entry>
+      <entry>No</entry>
+      <entry>I don't care about encryption, but I wish to pay the overhead of
+       encryption if the server supports it.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>require</></entry>
+      <entry>Yes</entry>
+      <entry>No</entry>
+      <entry>I want my data to be encrypted, and I accept the overhead. I trust
+       that the network will make sure I always connect to the server I want.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>verify-ca</></entry>
+      <entry>Yes</entry>
+      <entry><literal>Depends on CA</>-policy</entry>
+      <entry>I want my data encrypted, and I accept the overhead. I want to be
+       sure that I connect to a server that I trust.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>verify-full</></entry>
+       <entry>Yes</entry>
+       <entry>Yes</entry>
+       <entry>I want my data encrypted, and I accept the overhead. I want to be
+        sure that I connect to a server I trust, and that it's the one I
+        specify.
+       </entry>
+      </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The difference between <literal>verify-ca</> and <literal>verify-full</>
+   depends on the policy of the root <acronym>CA</>. If a public
+   <acronym>CA</> is used, <literal>verify-ca</> allows connections to a server
+   that <emphasis>somebody else</> may have registered with the <acronym>CA</>
+   to succeed. In this case, <literal>verify-full</> should always be used. If
+   a local <acronym>CA</> is used, or even a self-signed certificate, using
+   <literal>verify-ca</> often provides enough protection.
+  </para>
+
+  <para>
+   The default value for <literal>sslmode</> is <literal>prefer</>. As is shown
+   in the table, this makes no sense from a security point of view, and it only
+   promises performance overhead if possible. It is only provided as the default
+   for backwards compatiblity, and not recommended in secure deployments.
+  </para>
+
+ </sect2>
+
  <sect2 id="libpq-ssl-fileusage">
   <title>SSL File Usage</title>
   <table id="libpq-ssl-file-usage">
