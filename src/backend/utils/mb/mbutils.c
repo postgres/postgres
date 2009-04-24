@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.85 2009/04/08 09:50:48 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.86 2009/04/24 08:43:50 mha Exp $
  */
 #include "postgres.h"
 
@@ -890,47 +890,6 @@ cliplen(const char *str, int len, int limit)
 	return l;
 }
 
-#if defined(ENABLE_NLS)
-static const struct codeset_map {
-	int	encoding;
-	const char *codeset;
-} codeset_map_array[] = {
-	{PG_UTF8, "UTF-8"},
-	{PG_LATIN1, "LATIN1"},
-	{PG_LATIN2, "LATIN2"},
-	{PG_LATIN3, "LATIN3"},
-	{PG_LATIN4, "LATIN4"},
-	{PG_ISO_8859_5, "ISO-8859-5"},
-	{PG_ISO_8859_6, "ISO_8859-6"},
-	{PG_ISO_8859_7, "ISO-8859-7"},
-	{PG_ISO_8859_8, "ISO-8859-8"},
-	{PG_LATIN5, "LATIN5"},
-	{PG_LATIN6, "LATIN6"},
-	{PG_LATIN7, "LATIN7"},
-	{PG_LATIN8, "LATIN8"},
-	{PG_LATIN9, "LATIN-9"},
-	{PG_LATIN10, "LATIN10"},
-	{PG_KOI8R, "KOI8-R"},
-	{PG_KOI8U, "KOI8-U"},
-	{PG_WIN1250, "CP1250"},
-	{PG_WIN1251, "CP1251"},
-	{PG_WIN1252, "CP1252"},
-	{PG_WIN1253, "CP1253"},
-	{PG_WIN1254, "CP1254"},
-	{PG_WIN1255, "CP1255"},
-	{PG_WIN1256, "CP1256"},
-	{PG_WIN1257, "CP1257"},
-	{PG_WIN1258, "CP1258"},
-	{PG_WIN866, "CP866"},
-	{PG_WIN874, "CP874"},
-	{PG_EUC_CN, "EUC-CN"},
-	{PG_EUC_JP, "EUC-JP"},
-	{PG_EUC_KR, "EUC-KR"},
-	{PG_EUC_TW, "EUC-TW"},
-	{PG_EUC_JIS_2004, "EUC-JP"}
-};
-#endif /* ENABLE_NLS */
-
 void
 SetDatabaseEncoding(int encoding)
 {
@@ -969,12 +928,12 @@ pg_bind_textdomain_codeset(const char *domainname)
 		return;
 #endif
 
-	for (i = 0; i < lengthof(codeset_map_array); i++)
+	for (i = 0; pg_enc2gettext_tbl[i].name != NULL; i++)
 	{
-		if (codeset_map_array[i].encoding == encoding)
+		if (pg_enc2gettext_tbl[i].encoding == encoding)
 		{
 			if (bind_textdomain_codeset(domainname,
-										codeset_map_array[i].codeset) == NULL)
+										pg_enc2gettext_tbl[i].name) == NULL)
 				elog(LOG, "bind_textdomain_codeset failed");
 			break;
 		}

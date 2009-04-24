@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.89 2009/04/08 09:50:48 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.90 2009/04/24 08:43:51 mha Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -260,6 +260,17 @@ typedef struct pg_enc2name
 } pg_enc2name;
 
 extern pg_enc2name pg_enc2name_tbl[];
+
+/*
+ * Encoding names for gettext
+ */
+typedef struct pg_enc2gettext
+{
+	pg_enc		encoding;
+	const char *name;
+} pg_enc2gettext;
+
+extern pg_enc2gettext pg_enc2gettext_tbl[];
 
 /*
  * pg_wchar stuff

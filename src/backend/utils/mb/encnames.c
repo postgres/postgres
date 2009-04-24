@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.38 2009/02/10 19:29:39 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.39 2009/04/24 08:43:50 mha Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -429,6 +429,49 @@ pg_enc2name pg_enc2name_tbl[] =
 		"SHIFT_JIS_2004", PG_SHIFT_JIS_2004
 	}
 };
+
+/* ----------
+ * These are encoding names for gettext.
+ * ----------
+ */
+pg_enc2gettext pg_enc2gettext_tbl[] =
+{
+	{PG_UTF8, "UTF-8"},
+	{PG_LATIN1, "LATIN1"},
+	{PG_LATIN2, "LATIN2"},
+	{PG_LATIN3, "LATIN3"},
+	{PG_LATIN4, "LATIN4"},
+	{PG_ISO_8859_5, "ISO-8859-5"},
+	{PG_ISO_8859_6, "ISO_8859-6"},
+	{PG_ISO_8859_7, "ISO-8859-7"},
+	{PG_ISO_8859_8, "ISO-8859-8"},
+	{PG_LATIN5, "LATIN5"},
+	{PG_LATIN6, "LATIN6"},
+	{PG_LATIN7, "LATIN7"},
+	{PG_LATIN8, "LATIN8"},
+	{PG_LATIN9, "LATIN-9"},
+	{PG_LATIN10, "LATIN10"},
+	{PG_KOI8R, "KOI8-R"},
+	{PG_KOI8U, "KOI8-U"},
+	{PG_WIN1250, "CP1250"},
+	{PG_WIN1251, "CP1251"},
+	{PG_WIN1252, "CP1252"},
+	{PG_WIN1253, "CP1253"},
+	{PG_WIN1254, "CP1254"},
+	{PG_WIN1255, "CP1255"},
+	{PG_WIN1256, "CP1256"},
+	{PG_WIN1257, "CP1257"},
+	{PG_WIN1258, "CP1258"},
+	{PG_WIN866, "CP866"},
+	{PG_WIN874, "CP874"},
+	{PG_EUC_CN, "EUC-CN"},
+	{PG_EUC_JP, "EUC-JP"},
+	{PG_EUC_KR, "EUC-KR"},
+	{PG_EUC_TW, "EUC-TW"},
+	{PG_EUC_JIS_2004, "EUC-JP"},
+	{0, NULL}
+};
+
 
 /* ----------
  * Encoding checks, for error returns -1 else encoding id
