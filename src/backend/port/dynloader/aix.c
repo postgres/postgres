@@ -1,9 +1,3 @@
-/*
- * @(#)dlfcn.c	1.7 revision of 95/08/14  19:08:38
- * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
- * 30159 Hannover, Germany
- */
-
 #include "postgres.h"
 
 #include "sys/ldr.h"
