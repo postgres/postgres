@@ -80,6 +80,12 @@ group by ten
 having exists (select 1 from onek b
                where sum(distinct a.four + b.four) = b.four);
 
+-- Test handling of sublinks within outer-level aggregates.
+-- Per bug report from Daniel Grace.
+select
+  (select max((select i.unique2 from tenk1 i where i.unique1 = o.unique1)))
+from tenk1 o;
+
 --
 -- test for bitwise integer aggregates
 --
