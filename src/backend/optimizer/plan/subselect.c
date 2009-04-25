@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.83.2.2 2004/05/11 13:15:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.83.2.3 2009/04/25 16:45:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,13 +474,23 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		foreach(lst, node->parParam)
 		{
 			PlannerParamItem *pitem = nth(lfirsti(lst), PlannerParamList);
+			Node   *arg;
 
 			/*
 			 * The Var or Aggref has already been adjusted to have the
 			 * correct varlevelsup or agglevelsup.	We probably don't even
 			 * need to copy it again, but be safe.
 			 */
-			args = lappend(args, copyObject(pitem->item));
+			arg = copyObject(pitem->item);
+
+			/*
+			 * If it's an Aggref, its arguments might contain SubLinks,
+			 * which have not yet been processed.  Do that now.
+			 */
+			if (IsA(arg, Aggref))
+				arg = SS_process_sublinks(arg, false);
+
+			args = lappend(args, arg);
 		}
 		node->args = args;
 
@@ -771,6 +781,12 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
  * so after expanding its sublinks to subplans.  And we don't want any steps
  * in between, else those steps would never get applied to the aggregate
  * argument expressions, either in the parent or the child level.
+ *
+ * Another fairly tricky thing going on here is the handling of SubLinks in
+ * the arguments of uplevel aggregates.  Those are not touched inside the
+ * intermediate query level, either.  Instead, SS_process_sublinks recurses
+ * on them after copying the Aggref expression into the parent plan level
+ * (this is actually taken care of in make_subplan).
  */
 Node *
 SS_replace_correlation_vars(Node *expr)
@@ -837,6 +853,18 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 		 * Now build the SubPlan node and make the expr to return.
 		 */
 		return make_subplan(sublink, lefthand, *isTopQual);
+	}
+
+	/*
+	 * Don't recurse into the arguments of an outer aggregate here.
+	 * Any SubLinks in the arguments have to be dealt with at the outer
+	 * query level; they'll be handled when make_subplan collects the
+	 * Aggref into the arguments to be passed down to the current subplan.
+	 */
+	if (IsA(node, Aggref))
+	{
+		if (((Aggref *) node)->agglevelsup > 0)
+			return node;
 	}
 
 	/*
