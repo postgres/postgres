@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.79 2009/01/01 17:23:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.80 2009/04/26 15:31:50 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -26,10 +26,6 @@
 #include "prompt.h"
 #include "stringutils.h"
 
-#if defined(WIN32) && !defined(S_ISDIR)
-#define __S_ISTYPE(mode, mask)	(((mode) & S_IFMT) == (mask))
-#define S_ISDIR(mode)	 __S_ISTYPE((mode), S_IFDIR)
-#endif
 
 /*
  * parse_slash_copy
