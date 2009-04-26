@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.631 2009/04/24 13:01:30 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.632 2009/04/26 20:08:30 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -277,7 +277,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Disable appending of the epoch date/time when no <literal>%</>
+       Remove automatic appending of the epoch timestamp when no <literal>%</>
        escapes are present in <literal>log_filename</> (Robert Haas)
       </para>
 
@@ -301,9 +301,9 @@ do it for earlier branch release files.
       </para>
 
       <para>
-       This breaks compatibility with pre-<productname>PostgreSQL</> 7.2
-       clients, as there is no longer any non-plaintext password method
-       that they can use.
+       This effectively obsoletes pre-<productname>PostgreSQL</> 7.2 client
+       libraries, as there is no longer any non-plaintext password method that
+       they can use.
       </para>
      </listitem>
 
@@ -491,6 +491,18 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Adopt a faster algorithm for hash functions (Kenneth Marshall,
+       based on work of Bob Jenkins)
+      </para>
+
+      <para>
+       Many of the built-in hash functions now deliver different results on
+       little-endian and big-endian platforms.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
     <sect4>
@@ -617,13 +629,25 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Improve optimization of sub-selects beneath outer joins (Tom)
+      </para>
+
+      <para>
+       Formerly, a sub-select or view could not be optimized very well if it
+       appeared within the nullable side of an outer join and contained
+       non-strict expressions (for instance, constants) in its result list.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Improve the performance of <function>text_position()</> and
        related functions by using Boyer-Moore-Horspool searching (David
        Rowley)
       </para>
 
       <para>
-       This is particularly useful for long search patterns.
+       This is particularly helpful for long search patterns.
       </para>
      </listitem>
 
@@ -707,6 +731,12 @@ do it for earlier branch release files.
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Improve performance of shared cache invalidation (Tom)
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -722,7 +752,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Convert many <filename>postgresql.conf</> settings to enumerated
-        values so <literal>pg_settings</> can display valid
+        values so that <literal>pg_settings</> can display the valid
         values (Magnus)
        </para>
       </listitem>
@@ -950,8 +980,8 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Add <function>pg_conf_load_time()</> to report when
-        the Postgres configuration files were last loaded (George
-        Gensure)
+        the <productname>PostgreSQL</> configuration files were last loaded
+        (George Gensure)
        </para>
       </listitem>
 
@@ -1013,23 +1043,22 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        New <function>pg_stat_get_activity(pid)</> function to return
+        Add <function>pg_stat_get_activity(pid)</> function to return
         information about a specific process id (Magnus)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Move the server statistics file into the subdirectory
-        <filename>pg_stat_tmp</> and allow its location to be specified
+        Allow the location of the server's statistics file to be specified
         via <varname>stats_temp_directory</> (Magnus)
        </para>
 
        <para>
         This allows the statistics file to be placed in a
         <acronym>RAM</>-resident directory to reduce I/O requirements.
-        On startup/shutdown, the file is copied to the top-level
-        <literal>$PGDATA</> directory so it is preserved across restarts.
+        On startup/shutdown, the file is copied to its traditional location
+        (<literal>$PGDATA/global/</>) so it is preserved across restarts.
        </para>
       </listitem>
 
@@ -1058,7 +1087,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       New <command>TABLE</> command (Peter)
+       Add <command>TABLE</> command (Peter)
       </para>
 
       <para>
@@ -1147,7 +1176,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add support for Unicode string and identifier specifications
+       Add support for Unicode string literal and identifier specifications
        using code points, e.g. <literal>U&amp;'d\0061t\+000061'</>
        (Peter)
       </para>
@@ -1178,8 +1207,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add <command>TRUNCATE TABLE</> ...
-        <literal>RESTART</>/<literal>CONTINUE IDENTITY</> clauses
+        Add <literal>RESTART</>/<literal>CONTINUE IDENTITY</> options
+        for <command>TRUNCATE TABLE</>
         (Zoltan Boszormenyi)
        </para>
 
@@ -1287,15 +1316,29 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Improve reporting of dependencies during <command>DROP</>
-       commands (Alex Hunsaker)
+       Refactor multi-object <command>DROP</> operations to reduce the
+       need for <literal>CASCADE</> (Alex Hunsaker)
+      </para>
+
+      <para>
+       For example, if table <literal>B</> has a dependency on table
+       <literal>A</>, the command <literal>DROP TABLE A, B</> no longer
+       requires the <literal>CASCADE</> option.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Refactor multi-object <command>DROP</> operations so conflicting
-       dependencies do not generate an error (Alex Hunsaker)
+       Fix various problems with concurrent <command>DROP</> commands
+       by ensuring that locks are taken before we begin to drop dependencies
+       of an object (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve reporting of dependencies during <command>DROP</>
+       commands (Tom)
       </para>
      </listitem>
 
@@ -1327,6 +1370,18 @@ do it for earlier branch release files.
       <para>
        This simplifies creation of data types that use the same internal
        representation as an existing type.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow specification of the type category and <quote>preferred</>
+       status for user-defined base types (Tom)
+      </para>
+
+      <para>
+       This allows more control over the coercion behavior of user-defined
+       types.
       </para>
      </listitem>
 
@@ -1475,7 +1530,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add a verbose option to the <command>CLUSTER</> command and
+       Add a <literal>VERBOSE</> option to the <command>CLUSTER</> command and
        <application>clusterdb</> (Jim Cox)
       </para>
      </listitem>
@@ -1496,7 +1551,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Dramatically improve the speed of building and accessing hash
-        indexes (Tom Raney, Shreya Bhargava, Kenneth Marshall)
+        indexes (Tom Raney, Shreya Bhargava)
        </para>
 
        <para>
@@ -1507,8 +1562,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Make hash indexes store only the hashed value, not the full
-        indexed columns (Xiao Meng)
+        Make hash indexes store only the hash code, not the full value of
+        the indexed column (Xiao Meng)
        </para>
 
        <para>
@@ -1519,7 +1574,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Implement fast update for GIN indexes (Teodor, Oleg)
+        Implement fast update option for GIN indexes (Teodor, Oleg)
        </para>
 
        <para>
@@ -1546,7 +1601,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Remove the requirement to use <literal>@@@</> when doing
-        <acronym>GIN</> weighted lookups on full text indexes (Tom)
+        <acronym>GIN</> weighted lookups on full text indexes (Tom, Teodor)
        </para>
 
        <para>
@@ -1559,13 +1614,6 @@ do it for earlier branch release files.
        <para>
         Add an optimizer selectivity function for <literal>@@</> text
         search operations (Jan Urbanski)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add partial match support for <acronym>GIN</> indexes (Teodor
-        Sigaev, Oleg Bartunov)
        </para>
       </listitem>
 
@@ -1627,7 +1675,7 @@ do it for earlier branch release files.
        <para>
         Add <varname>vacuum_freeze_table_age</> parameter to control
         when <command>VACUUM</> should ignore the visibility map and
-        do a full table scan to set frozen xids (Heikki)
+        do a full table scan to freeze tuples (Heikki)
        </para>
       </listitem>
 
@@ -1637,8 +1685,8 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        This can improve space reuse by <command>VACUUM</> in the presence of
-        long-running transactions.
+        This improves <command>VACUUM</>'s ability to reclaim space
+        in the presence of long-running transactions.
        </para>
       </listitem>
 
@@ -1737,8 +1785,41 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Include <acronym>SGT</> (Singapore time) as a valid time zone
-        abbreviation (Tom)
+        Include <literal>SGT</> (Singapore time) in the default list of
+        known time zone abbreviations (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support <literal>infinity</> and <literal>-infinity</> as
+        values of type <type>date</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make parsing of <type>interval</> literals more standard-compliant (Tom)
+       </para>
+
+       <para>
+        For example, <literal>INTERVAL '1' YEAR</> now does what it's
+        supposed to.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <type>interval</> fractional-seconds precision to be specified
+        after the <literal>second</> keyword, for <acronym>SQL</> standard
+        compliance (Tom)
+       </para>
+
+       <para>
+        Formerly the precision had to be specified after the keyword
+        <type>interval</>.  (For backwards compatibility, this syntax is still
+        supported, though deprecated.)  Data type definitions will now be
+        output using the standard format.
        </para>
       </listitem>
 
@@ -1751,26 +1832,6 @@ do it for earlier branch release files.
        <para>
         For example, <literal>INTERVAL 'P1Y2M3DT4H5M6.7S'</> is now
         supported.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <type>interval</> precision to be specified after the
-        last field, for <acronym>SQL</>-standards compliance (Tom)
-       </para>
-
-       <para>
-        Formerly the precision had to be specified after the keyword
-        <type>interval</> (this syntax is still supported).  Data type
-        definitions will now be output using the new format.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Support <literal>infinity</> and <literal>-infinity</> as
-        values of type <type>date</> (Tom)
        </para>
       </listitem>
 
@@ -1844,7 +1905,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add new aggregate function <function>array_agg()</>, which
+        Add aggregate function <function>array_agg()</>, which
         returns all aggregated values as a single array (Robert Haas,
         Jeff Davis, Peter)
        </para>
@@ -1870,15 +1931,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add <function>generate_subscripts()</> to generate array
-        subscripts (Pavel Stehule)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Generate proper error if a <type>SERIAL</> array is specified
-        (Tom)
+        Add <function>generate_subscripts()</> to simplify generating
+        the range of an array's subscripts (Pavel Stehule)
        </para>
       </listitem>
 
@@ -1907,10 +1961,9 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Improve toast heuristics for rows including a mix of large and
-        small toastable fields, so that we prefer to push large values
-        out of line and don't compress small values unnecessarily
-        (Greg, Tom)
+        Improve <acronym>TOAST</> heuristics for rows that have a mix of large
+        and small toastable fields, so that we prefer to push large values out
+        of line and don't compress small values unnecessarily (Greg, Tom)
        </para>
       </listitem>
 
@@ -1950,14 +2003,14 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Improve full text search <function>headline()</> function to
-       allow several fragments (Sushant Sinha)
+       allow extracting several fragments of text (Sushant Sinha)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Add <function>suppress_redundant_updates_trigger()</> trigger
-       function to prevent non-data-changing updates (Andrew)
+       function to avoid overhead for non-data-changing updates (Andrew)
       </para>
      </listitem>
 
@@ -1970,7 +2023,7 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <type>TIMESTAMP</> and <type>TIMESTAMPTZ</> versions of
+       Add <type>timestamp</> and <type>timestamptz</> versions of
        <function>generate_series()</> (Hitoshi Harada)
       </para>
      </listitem>
@@ -2022,13 +2075,25 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Add source file name and line number columns to
+        <literal>pg_settings</> output for variables set in a configuration
+        file (Magnus, Alvaro)
+       </para>
+
+       <para>
+        For security reasons, these columns are only visible to superusers.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add support for <varname>CURRENT_CATALOG</>,
         <varname>CURRENT_SCHEMA</>, <varname>SET CATALOG</>, <varname>SET
         SCHEMA</> (Peter)
        </para>
 
        <para>
-        These are <acronym>SQL</>-standard capabilities.
+        These provide <acronym>SQL</>-standard syntax for existing features.
        </para>
       </listitem>
 
@@ -2042,7 +2107,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Make <function>version()</> return information about whether
-        the server is a 32 or 64-bit binary (Bruce)
+        the server is a 32- or 64-bit binary (Bruce)
        </para>
       </listitem>
 
@@ -2072,7 +2137,15 @@ do it for earlier branch release files.
        <para>
         Make <function>pg_*_is_visible()</> and
         <function>has_*_privilege()</> functions return <literal>NULL</>
-        for invalid oids, rather than generate an error (Tom)
+        for invalid OIDs, rather than reporting an error (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Extend <function>has_*_privilege()</> functions to allow inquiring
+        about the OR of multiple privileges in one call (Stephen
+        Frost, Tom)
        </para>
       </listitem>
 
@@ -2106,8 +2179,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support <literal>DEFAULT</> values for function arguments (Pavel
-        Stehule)
+        Support default values for function arguments (Pavel Stehule)
        </para>
       </listitem>
 
@@ -2136,7 +2208,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support <literal>EXECUTE USING</> (Pavel Stehule)
+        Support <literal>EXECUTE USING</> for easier insertion of data
+        values into a dynamic query string (Pavel Stehule)
        </para>
       </listitem>
 
@@ -2166,7 +2239,7 @@ do it for earlier branch release files.
          </listitem>
          <listitem>
           <para>
-           Support <literal>SQLSTATE</> error codes
+           Support specification of the <literal>SQLSTATE</> error code
           </para>
          </listitem>
          <listitem>
@@ -2186,7 +2259,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Allow specification of numeric <varname>SQLSTATE</> codes
+        Allow specification of <varname>SQLSTATE</> codes
         in <literal>EXCEPTION</> lists (Pavel Stehule)
        </para>
 
@@ -2203,8 +2276,9 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add <literal>FOUND</> and <command>GET DIAGNOSTICS</> support
-        for the <literal>RETURN QUERY</> statement (Pavel Stehule)
+        Make <command>RETURN QUERY</> set the special <literal>FOUND</> and
+        <command>GET DIAGNOSTICS</> <literal>ROW_COUNT</> variables
+        (Pavel Stehule)
        </para>
       </listitem>
 
@@ -2213,12 +2287,6 @@ do it for earlier branch release files.
         Make <command>FETCH</> and <command>MOVE</> set the
         <command>GET DIAGNOSTICS</> <literal>ROW_COUNT</> variable
         (Andrew Gierth)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add message translation support (Alvaro)
        </para>
       </listitem>
 
@@ -2250,15 +2318,16 @@ do it for earlier branch release files.
      <listitem>
       <para>
        Add <literal>-w</>/<literal>--no-password</> option that
-       suppresses password prompts to all utilities that have a
+       prevents password prompting in all utilities that have a
        <literal>-W</>/<literal>--password</> option (Peter)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Remove <literal>-q</> (quiet) option of create* and drop*
-       utility commands (Peter)
+       Remove <option>-q</> (quiet) option of <application>createdb</>,
+       <application>createuser</>, <application>dropdb</>,
+       <application>dropuser</> (Peter)
       </para>
 
       <para>
@@ -2297,25 +2366,31 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
+        Allow all supported spellings of boolean values in <command>\pset</>,
+        rather than just <literal>on</> and <literal>off</> (Bruce)
+       </para>
+
+       <para>
+        Formerly, any string other than <quote>off</> was silently taken
+        to mean <literal>true</>.  <application>psql</> will now complain
+        about unrecognized spellings (but still take them as <literal>true</>).
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Use the pager for wide output (Bruce)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Require a space between a backslash command and the first
+        Require a space between a one-letter backslash command and its first
         argument (Bernd Helmle)
        </para>
 
        <para>
         This removes a historical source of ambiguity.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Display access control rights on multiple lines (Brendan
-        Jurd, Andreas Scherbaum)
        </para>
       </listitem>
 
@@ -2328,21 +2403,21 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Allow all supported spellings of boolean values in <command>\pset</>,
-        rather than just <literal>on</> and <literal>off</> (Bruce)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add optional <literal>on</>/<literal>off</> arguments for
+        Add optional <literal>on</>/<literal>off</> argument for
         <command>\timing</> (David Fetter)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Make <command>\l</> show access privileges (Andrew Gilligan)
+        Display access control rights on multiple lines (Brendan
+        Jurd, Andreas Scherbaum)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make <command>\l</> show database access privileges (Andrew Gilligan)
        </para>
       </listitem>
 
@@ -2366,12 +2441,36 @@ do it for earlier branch release files.
 
     <sect4>
      <title><application>psql</> \d* commands</title>
+
      <itemizedlist>
 
       <listitem>
        <para>
-        Make <command>\d</> show cases where the current table is referenced
-        by a foreign-key constraint (Kenneth D'Souza)
+        Make <command>\d*</> commands that do not have a pattern argument
+        show system objects only if the <literal>S</> modifier is specified
+        (Greg Sabino Mullane, Bruce)
+       </para>
+
+       <para>
+        The former behavior was inconsistent across different variants
+        of <command>\d</>, and in most cases it provided no easy way to see
+        just user objects.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve <command>\d*</> commands to work with older
+        <productname>PostgreSQL</> server versions (back to 7.4),
+        not only the current server version
+        (Guillaume Lelarge)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make <command>\d</> show foreign-key constraints that reference
+        the selected table (Kenneth D'Souza)
        </para>
       </listitem>
 
@@ -2399,35 +2498,15 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Make <command>\d*</> commands that do not have a pattern argument
-        show system objects only if the <literal>S</> modifier is specified
-        (Greg Sabino Mullane, Bruce)
-       </para>
-
-       <para>
-        The former behavior was inconsistent across different variants
-        of <command>\d</>, and in most cases it provided no easy way to see
-        just user objects.
+        Show the possible values of <literal>enum</> types in <command>\dT+</>
+        (David Fetter)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Show the values of <literal>enum</> types in <command>\dT+</> (David
-        Fetter)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <command>\dC</> to accept wildcard patterns (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <command>\d*</> commands to work with versions of
-        <productname>PostgreSQL</> back to 7.4 (Guillaume Lelarge)
+        Allow <command>\dC</> to accept a wildcard pattern, which matches
+        either datatype involved in the cast (Tom)
        </para>
       </listitem>
 
@@ -2472,7 +2551,7 @@ do it for earlier branch release files.
         These options were too frequently confused with the option to
         select a database name in other <productname>PostgreSQL</>
         client applications.  The functionality is still available,
-        but you must spell out the long option name
+        but you must now spell out the long option name
         <option>--inserts</> or <option>--column-inserts</>.
        </para>
       </listitem>
@@ -2543,13 +2622,6 @@ do it for earlier branch release files.
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Add new <application>pg_dump</> option <option>--binary-upgrade</>
-        for use by binary upgrade utilities (Bruce)
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     </sect4>
@@ -2572,12 +2644,13 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add events support (Andrew Chernow, Merlin Moncure)
+        Add <quote>events</> support (Andrew Chernow, Merlin Moncure)
        </para>
 
        <para>
-        This adds the ability to register callbacks to handle private
-        data for connection and result creation and destruction.
+        This adds the ability to register callbacks to manage private
+        data associated with <structname>PGconn</> and <structname>PGresult</>
+        objects.
        </para>
       </listitem>
 
@@ -2590,12 +2663,12 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Make <function>PQexecParams()</> return
+        Make <function>PQexecParams()</> and related functions return
         <varname>PGRES_EMPTY_QUERY</> for an empty query (Tom)
        </para>
 
        <para>
-         It previously returned <varname>PGRES_COMMAND_OK</>.
+        They previously returned <varname>PGRES_COMMAND_OK</>.
        </para>
       </listitem>
 
@@ -2651,8 +2724,9 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Properly unregister <application>OpenSSL</> callbacks when
-        libpq is finished with all connections (Bruce, Magnus, Russell Smith)
+        Make <application>libpq</> unregister its <application>OpenSSL</>
+        callbacks when no database connections remain open
+        (Bruce, Magnus, Russell Smith)
        </para>
 
        <para>
@@ -2704,13 +2778,25 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add new <varname>SPI_OK_REWRITTEN</> return code to
+        Add new <varname>SPI_OK_REWRITTEN</> return code for
         <function>SPI_execute()</> (Heikki)
        </para>
 
        <para>
         This is used when a command is rewritten to another type of
         command.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove unnecessary inclusions from <filename>executor/spi.h</> (Tom)
+       </para>
+
+       <para>
+        SPI-using modules might need to add some <literal>#include</>
+        lines if they were depending on <filename>spi.h</> to include
+        things for them.
        </para>
       </listitem>
 
@@ -2757,18 +2843,23 @@ do it for earlier branch release files.
       <para>
        Add <application>configure</> option
        <literal>--disable-float4-byval</> to use the old behavior.
+       External C functions that use old-style (version 0) call convention
+       and pass or return <type>float4</> values will be broken by this
+       change, so you may need the <application>configure</> option if you
+       have such functions and don't want to update them.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Pass <type>float8</> and <type>int8</> by value in the server
-       where possible (Zoltan Boszormenyi)
+       Pass <type>float8</>, <type>int8</>, and related datatypes
+       by value inside the server on 64-bit platforms (Zoltan Boszormenyi)
       </para>
 
       <para>
        Add <application>configure</> option
        <literal>--disable-float8-byval</> to use the old behavior.
+       As above, this change might break old-style external C functions.
       </para>
      </listitem>
 
@@ -2825,6 +2916,13 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Add support for code coverage testing with <application>gcov</>
+       (Michelle Caisse)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Allow out-of-tree builds on <productname>Mingw</> and
        <productname>Cygwin</> (Richard Evans)
       </para>
@@ -2858,6 +2956,20 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Deprecate use of platform's <type>time_t</> data type (Tom)
+      </para>
+
+      <para>
+       Some platforms have migrated to 64-bit <type>time_t</>, some have
+       not, and Windows can't make up its mind what it's doing.  Define
+       <type>pg_time_t</> to have the same meaning as <type>time_t</>,
+       but always be 64 bits (unless the platform has no 64-bit integer type),
+       and use that type in all module APIs and on-disk data formats.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Fix bug in handling of the time zone database when cross-compiling
        (Richard Evans)
       </para>
@@ -2879,53 +2991,57 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Add <application>DTrace</> probes (Robert Lor)
+       Add message translation support to the PL languages (Alvaro, Peter)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add <application>DTrace</> support on <application>Mac OS X
-       Leopard</> (Robert Lor)
+       Add more <application>DTrace</> probes (Robert Lor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add new <type>cstring</> to <type>text</> conversion functions
+       Enable <application>DTrace</> support on <application>Mac OS X
+       Leopard</> and other non-Solaris platforms (Robert Lor)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Simplify and standardize conversions between C strings and
+       <type>text</> datums, by providing common functions for the purpose
        (Brendan Jurd, Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add a <structfield>relistemp</> column to <structname>pg_class</>
-       to ease identification of temporary tables (Tom)
+       Clean up the <filename>include/catalog/</> header files so that
+       frontend programs can include them without including
+       <filename>postgres.h</>
+       (Zdenek Kotala)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Improve logic for shared cache invalidation (Tom)
+       Make <type>name</> char-aligned, and suppress zero-padding of
+       <type>name</> entries in indexes (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Make <type>name</> char-aligned (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add function hook to let plug-ins monitor the executor (Itagaki
+       Add a hook to let plug-ins monitor the executor (Itagaki
        Takahiro)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Add a hook to allow the planner statistics lookup behavior to
+       Add a hook to allow the planner's statistics lookup behavior to
        be overridden (Simon Riggs)
       </para>
      </listitem>
@@ -2939,20 +3055,42 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Replace <literal>pg_class</> column <literal>reltriggers</>
-       with boolean <literal>relhastriggers</> (Simon)
+       Replace the index access method <function>amgetmulti</> entry point
+       with <function>amgetbitmap</>, and extend the API for
+       <function>amgettuple</> to support run-time determination of
+       operator lossiness (Heikki, Tom, Teodor)
       </para>
 
       <para>
-       Also remove unused <literal>pg_class</> columns <literal>relukeys</>,
-       <literal>relfkeys</>, and <literal>relrefs</>.
+       The API for GIN and GiST opclass <function>consistent</> functions
+       has been extended as well.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Move <acronym>SQL</>-command manual pages from the <filename>manl</>
-       (man-el) section to <filename>man7</> (Peter)
+       Add support for partial-match searches in <acronym>GIN</> indexes
+       (Teodor Sigaev, Oleg Bartunov)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Replace <structname>pg_class</> column <structfield>reltriggers</>
+       with boolean <structfield>relhastriggers</> (Simon)
+      </para>
+
+      <para>
+       Also remove unused <structname>pg_class</> columns
+       <structfield>relukeys</>, <structfield>relfkeys</>, and
+       <structfield>relrefs</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add a <structfield>relistemp</> column to <structname>pg_class</>
+       to ease identification of temporary tables (Tom)
       </para>
      </listitem>
 
@@ -3001,43 +3139,14 @@ do it for earlier branch release files.
 
    <sect3>
     <title>Contrib</title>
+
     <itemizedlist>
 
      <listitem>
       <para>
-       Add duration and query mode options to <filename>contrib/pgbench</>
-       (Itagaki Takahiro)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix <filename>contrib/pgstattuple</> to handle tables and
-       indexes with over 2 billion pages (Tatsuhito Kasahara)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add Levenshtein string-distance function to
-       <filename>contrib/fuzzystrmatch</> that allows the user to
-       specify the cost of insertion, deletion, and substitution
-       (Volkan Yazici)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Remove <function>dblink_current_query()</> from
-       <filename>contrib/dblink</>; one should now use
-       <function>current_query()</> (Tomas Doran)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Make <filename>contrib/ltree</> support multibyte encodings
-       (laser)
+       Add <filename>contrib/auto_explain</> to automatically run
+       <command>EXPLAIN</> on queries exceeding a specified duration
+       (Itagaki Takahiro, Tom)
       </para>
      </listitem>
 
@@ -3057,13 +3166,57 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Add <filename>contrib/pg_stat_statements</> for server-wide
+       tracking of statement execution statistics (Itagaki Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add duration and query mode options to <filename>contrib/pgbench</>
+       (Itagaki Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <filename>contrib/pgstattuple</> to handle tables and
+       indexes with over 2 billion pages (Tatsuhito Kasahara)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In <filename>contrib/fuzzystrmatch</>, add a version of the
+       Levenshtein string-distance function that allows the user to
+       specify the costs of insertion, deletion, and substitution
+       (Volkan Yazici)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <filename>contrib/ltree</> support multibyte encodings
+       (laser)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve <filename>contrib/dblink</>'s reporting of errors from
+       the remote server (Joe Conway)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Make sure <filename>contrib/dblink</> uses a password supplied
        by the user, and not accidentally taken from the server's
        <filename>.pgpass</> file (Joe Conway)
       </para>
 
       <para>
-       This is a security enhancement.
+       This is a minor security enhancement.
       </para>
      </listitem>
 
@@ -3108,21 +3261,6 @@ do it for earlier branch release files.
        If needed, the <filename>contrib/intarray</> implementations
        are still available under their historical names <literal>@</>
        and <literal>~</>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <filename>contrib/auto_explain</> to automatically run
-       <command>EXPLAIN</> on queries exceeding a specified duration
-       (Itagaki Takahiro, Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Add <filename>contrib/pg_stat_statements</> for server-wide
-       tracking of statement execution statistics (Itagaki Takahiro)
       </para>
      </listitem>
 
