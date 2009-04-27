@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.85 2009/01/08 12:47:58 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.86 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -153,7 +153,7 @@ DROP TABLE products;
   </para>
 
   <para>
-   If you need to modify a table that already exists look into <xref
+   If you need to modify a table that already exists, see <xref
    linkend="ddl-alter"> later in this chapter.
   </para>
 
@@ -206,7 +206,7 @@ CREATE TABLE products (
    The default value can be an expression, which will be
    evaluated whenever the default value is inserted
    (<emphasis>not</emphasis> when the table is created).  A common example
-   is that a <type>timestamp</type> column can have a default of <literal>now()</>,
+   is for a <type>timestamp</type> column to have a default of <literal>CURRENT_TIMESTAMP</>,
    so that it gets set to the time of row insertion.  Another common
    example is generating a <quote>serial number</> for each row.
    In <productname>PostgreSQL</productname> this is typically done by
@@ -374,8 +374,8 @@ CREATE TABLE products (
    </para>
 
    <para>
-    Names can be assigned to table constraints in just the same way as
-    for column constraints:
+    Names can be assigned to table constraints in the same way as
+    column constraints:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -550,15 +550,15 @@ CREATE TABLE products (
    </indexterm>
 
    <para>
-    In general, a unique constraint is violated when there are two or
-    more rows in the table where the values of all of the
+    In general, a unique constraint is violated when there is more than
+    one row in the table where the values of all of the
     columns included in the constraint are equal.
     However, two null values are not considered equal in this
     comparison.  That means even in the presence of a
     unique constraint it is possible to store duplicate
     rows that contain a null value in at least one of the constrained
-    columns.  This behavior conforms to the SQL standard, but we have
-    heard that other SQL databases might not follow this rule.  So be
+    columns.  This behavior conforms to the SQL standard, but there
+    might be other SQL databases might not follow this rule.  So be
     careful when developing applications that are intended to be
     portable.
    </para>
@@ -857,7 +857,7 @@ CREATE TABLE order_items (
    restrictions are separate from whether the name is a key word or
    not; quoting a name will not allow you to escape these
    restrictions.)  You do not really need to be concerned about these
-   columns, just know they exist.
+   columns; just know they exist.
   </para>
 
   <indexterm>
@@ -1037,8 +1037,8 @@ CREATE TABLE order_items (
     Command identifiers are also 32-bit quantities.  This creates a hard limit
     of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
     within a single transaction.  In practice this limit is not a
-    problem &mdash; note that the limit is on number of
-    <acronym>SQL</acronym> commands, not number of rows processed.
+    problem &mdash; note that the limit is on the number of
+    <acronym>SQL</acronym> commands, not the number of rows processed.
     Also, as of <productname>PostgreSQL</productname> 8.3, only commands
     that actually modify the database contents will consume a command
     identifier.
@@ -1055,7 +1055,7 @@ CREATE TABLE order_items (
 
   <para>
    When you create a table and you realize that you made a mistake, or
-   the requirements of the application change, then you can drop the
+   the requirements of the application change, you can drop the
    table and create it again.  But this is not a convenient option if
    the table is already filled with data, or if the table is
    referenced by other database objects (for instance a foreign key
@@ -1067,31 +1067,31 @@ CREATE TABLE order_items (
   </para>
 
   <para>
-   You can
+   You can:
    <itemizedlist spacing="compact">
     <listitem>
-     <para>Add columns,</para>
+     <para>Add columns</para>
     </listitem>
     <listitem>
-     <para>Remove columns,</para>
+     <para>Remove columns</para>
     </listitem>
     <listitem>
-     <para>Add constraints,</para>
+     <para>Add constraints</para>
     </listitem>
     <listitem>
-     <para>Remove constraints,</para>
+     <para>Remove constraints</para>
     </listitem>
     <listitem>
-     <para>Change default values,</para>
+     <para>Change default values</para>
     </listitem>
     <listitem>
-     <para>Change column data types,</para>
+     <para>Change column data types</para>
     </listitem>
     <listitem>
-     <para>Rename columns,</para>
+     <para>Rename columns</para>
     </listitem>
     <listitem>
-     <para>Rename tables.</para>
+     <para>Rename tables</para>
     </listitem>
    </itemizedlist>
 
@@ -1110,7 +1110,7 @@ CREATE TABLE order_items (
    </indexterm>
 
    <para>
-    To add a column, use a command like this:
+    To add a column, use a command like:
 <programlisting>
 ALTER TABLE products ADD COLUMN description text;
 </programlisting>
@@ -1154,7 +1154,7 @@ ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '')
    </indexterm>
 
    <para>
-    To remove a column, use a command like this:
+    To remove a column, use a command like:
 <programlisting>
 ALTER TABLE products DROP COLUMN description;
 </programlisting>
@@ -1250,7 +1250,7 @@ ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
    </indexterm>
 
    <para>
-    To set a new default for a column, use a command like this:
+    To set a new default for a column, use a command like:
 <programlisting>
 ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
 </programlisting>
@@ -1279,7 +1279,7 @@ ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
    </indexterm>
 
    <para>
-    To convert a column to a different data type, use a command like this:
+    To convert a column to a different data type, use a command like:
 <programlisting>
 ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
 </programlisting>
@@ -1488,7 +1488,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
     <listitem>
      <para>
       Third-party applications can be put into separate schemas so
-      they cannot collide with the names of other objects.
+      they do not collide with the names of other objects.
      </para>
     </listitem>
    </itemizedlist>
@@ -1603,7 +1603,7 @@ CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATION <replaceable>u
 
    <para>
     In the previous sections we created tables without specifying any
-    schema names.  By default, such tables (and other objects) are
+    schema names.  By default such tables (and other objects) are
     automatically put into a schema named <quote>public</quote>.  Every new
     database contains such a schema.  Thus, the following are equivalent:
 <programlisting>
@@ -1746,7 +1746,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
    <para>
     By default, users cannot access any objects in schemas they do not
-    own.  To allow that, the owner of the schema needs to grant the
+    own.  To allow that, the owner of the schema must grant the
     <literal>USAGE</literal> privilege on the schema.  To allow users
     to make use of the objects in the schema, additional privileges
     might need to be granted, as appropriate for the object.
@@ -1802,7 +1802,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     such names, to ensure that you won't suffer a conflict if some
     future version defines a system table named the same as your
     table.  (With the default search path, an unqualified reference to
-    your table name would be resolved as the system table instead.)
+    your table name would be resolved as a system table instead.)
     System tables will continue to follow the convention of having
     names beginning with <literal>pg_</>, so that they will not
     conflict with unqualified user-table names so long as users avoid
@@ -2024,7 +2024,7 @@ WHERE c.altitude &gt; 500;
 <programlisting>
 SELECT p.relname, c.name, c.altitude
 FROM cities c, pg_class p
-WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
+WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
 </programlisting>
 
    which returns:
@@ -2130,7 +2130,7 @@ VALUES ('New York', NULL, NULL, 'NY');
   <para>
    Table access permissions are not automatically inherited.  Therefore,
    a user attempting to access a parent table must either have permissions
-   to do the operation on all its child tables as well, or must use the
+   to do the same operation on all its child tables as well, or must use the
    <literal>ONLY</literal> notation.  When adding a new child table to
    an existing inheritance hierarchy, be careful to grant all the needed
    permissions on it.
@@ -2197,7 +2197,7 @@ VALUES ('New York', NULL, NULL, 'NY');
 
    These deficiencies will probably be fixed in some future release,
    but in the meantime considerable care is needed in deciding whether
-   inheritance is useful for your problem.
+   inheritance is useful for your application.
   </para>
 
   <note>
@@ -2374,7 +2374,7 @@ CHECK ( outletID &gt;= 100 AND outletID &lt; 200 )
 </programlisting>
         Ensure that the constraints guarantee that there is no overlap
         between the key values permitted in different partitions.  A common
-        mistake is to set up range constraints like this:
+        mistake is to set up range constraints like:
 <programlisting>
 CHECK ( outletID BETWEEN 100 AND 200 )
 CHECK ( outletID BETWEEN 200 AND 300 )
@@ -2424,7 +2424,7 @@ CHECK ( outletID BETWEEN 200 AND 300 )
      For example, suppose we are constructing a database for a large
      ice cream company. The company measures peak temperatures every
      day as well as ice cream sales in each region. Conceptually,
-     we want a table like this:
+     we want a table like:
 
 <programlisting>
 CREATE TABLE measurement (
@@ -2571,12 +2571,15 @@ CREATE TRIGGER insert_measurement_trigger
 CREATE OR REPLACE FUNCTION measurement_insert_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF ( NEW.logdate &gt;= DATE '2006-02-01' AND NEW.logdate &lt; DATE '2006-03-01' ) THEN
+    IF ( NEW.logdate &gt;= DATE '2006-02-01' AND 
+         NEW.logdate &lt; DATE '2006-03-01' ) THEN
         INSERT INTO measurement_y2006m02 VALUES (NEW.*);
-    ELSIF ( NEW.logdate &gt;= DATE '2006-03-01' AND NEW.logdate &lt; DATE '2006-04-01' ) THEN
+    ELSIF ( NEW.logdate &gt;= DATE '2006-03-01' AND 
+            NEW.logdate &lt; DATE '2006-04-01' ) THEN
         INSERT INTO measurement_y2006m03 VALUES (NEW.*);
     ...
-    ELSIF ( NEW.logdate &gt;= DATE '2008-01-01' AND NEW.logdate &lt; DATE '2008-02-01' ) THEN
+    ELSIF ( NEW.logdate &gt;= DATE '2008-01-01' AND 
+            NEW.logdate &lt; DATE '2008-02-01' ) THEN
         INSERT INTO measurement_y2008m01 VALUES (NEW.*);
     ELSE
         RAISE EXCEPTION 'Date out of range.  Fix the measurement_insert_trigger() function!';
@@ -2706,9 +2709,9 @@ SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     Without constraint exclusion, the above query would scan each of
     the partitions of the <structname>measurement</> table. With constraint
     exclusion enabled, the planner will examine the constraints of each
-    partition and try to prove that the partition need not
-    be scanned because it could not contain any rows meeting the query's
-    <literal>WHERE</> clause.  When the planner can prove this, it
+    partition and try to determine which partitions need not
+    be scanned because they cannot not contain any rows meeting the query's
+    <literal>WHERE</> clause.  When the planner can determine this, it
     excludes the partition from the query plan.
    </para>
 
@@ -2875,7 +2878,7 @@ UNION ALL SELECT * FROM measurement_y2008m01;
      <para>
       If you are using manual <command>VACUUM</command> or
       <command>ANALYZE</command> commands, don't forget that
-      you need to run them on each partition individually. A command like
+      you need to run them on each partition individually. A command like:
 <programlisting>
 ANALYZE measurement;
 </programlisting>
@@ -2903,7 +2906,7 @@ ANALYZE measurement;
 
     <listitem>
      <para>
-      Keep the partitioning constraints simple, else the planner may not be
+      Keep the partitioning constraints simple or else the planner may not be
       able to prove that partitions don't need to be visited.  Use simple
       equality conditions for list partitioning, or simple
       range tests for range partitioning, as illustrated in the preceding
@@ -2937,7 +2940,7 @@ ANALYZE measurement;
    that exist in a database.  Many other kinds of objects can be
    created to make the use and management of the data more efficient
    or convenient.  They are not discussed in this chapter, but we give
-   you a list here so that you are aware of what is possible.
+   you a list here so that you are aware of what is possible:
   </para>
 
   <itemizedlist>
@@ -2988,7 +2991,7 @@ ANALYZE measurement;
   <para>
    When you create complex database structures involving many tables
    with foreign key constraints, views, triggers, functions, etc. you
-   will implicitly create a net of dependencies between the objects.
+   implicitly create a net of dependencies between the objects.
    For instance, a table with a foreign key constraint depends on the
    table it references.
   </para>
@@ -3008,7 +3011,7 @@ ERROR:  cannot drop table products because other objects depend on it
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 </screen>
    The error message contains a useful hint: if you do not want to
-   bother deleting all the dependent objects individually, you can run
+   bother deleting all the dependent objects individually, you can run:
 <screen>
 DROP TABLE products CASCADE;
 </screen>
@@ -3024,7 +3027,7 @@ DROP TABLE products CASCADE;
    the possible dependencies varies with the type of the object.  You
    can also write <literal>RESTRICT</literal> instead of
    <literal>CASCADE</literal> to get the default behavior, which is to
-   prevent drops of objects that other objects depend on.
+   prevent the dropping of objects that other objects depend on.
   </para>
 
   <note>

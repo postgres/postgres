@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.5 2008/05/08 16:49:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xml2.sgml,v 1.6 2009/04/27 16:27:36 momjian Exp $ -->
 
 <sect1 id="xml2">
  <title>xml2</title>
@@ -173,7 +173,7 @@
       <entry>
        <para>
         the name of the <quote>key</> field &mdash; this is just a field to be used as
-        the first column of the output table, i.e. it identifies the record from
+        the first column of the output table, i.e., it identifies the record from
         which each output row came (see note below about multiple values)
        </para>
       </entry>

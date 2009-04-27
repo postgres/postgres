@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.48 2009/01/06 03:05:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.49 2009/04/27 16:27:36 momjian Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -74,7 +74,7 @@
       <para>
        A server process, which manages the database files, accepts
        connections to the database from client applications, and
-       performs actions on the database on behalf of the clients.  The
+       performs database actions on the behalf of the clients.  The
        database server program is called
        <filename>postgres</filename>.
        <indexterm><primary>postgres</primary></indexterm>
@@ -108,7 +108,7 @@
 
    <para>
     The <productname>PostgreSQL</productname> server can handle
-    multiple concurrent connections from clients.  For that purpose it
+    multiple concurrent connections from clients.  To achieve this it
     starts (<quote>forks</quote>) a new process for each connection.
     From that point on, the client and the new server process
     communicate without intervention by the original
@@ -159,25 +159,26 @@
    </para>
 
    <para>
-    If you see a message similar to
+    If you see a message similar to:
 <screen>
 createdb: command not found
 </screen>
     then <productname>PostgreSQL</> was not installed properly.  Either it was not
-    installed at all or the search path was not set correctly.  Try
+    installed at all or your shell's search path was not set correctly.  Try
     calling the command with an absolute path instead:
 <screen>
 <prompt>$</prompt> <userinput>/usr/local/pgsql/bin/createdb mydb</userinput>
 </screen>
     The path at your site might be different.  Contact your site
-    administrator or check back in the installation instructions to
+    administrator or check the installation instructions to
     correct the situation.
    </para>
 
    <para>
     Another response could be this:
 <screen>
-createdb: could not connect to database postgres: could not connect to server: No such file or directory
+createdb: could not connect to database postgres: could not connect
+to server: No such file or directory
         Is the server running locally and accepting
         connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
 </screen>
@@ -246,7 +247,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
     length.  A convenient choice is to create a database with the same
     name as your current user name.  Many tools assume that database
     name as the default, so it can save you some typing.  To create
-    that database, simply type
+    that database, simply type:
 <screen>
 <prompt>$</prompt> <userinput>createdb</userinput>
 </screen>
@@ -299,7 +300,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
       <para>
        Using an existing graphical frontend tool like
        <application>pgAdmin</application> or an office suite with
-       <acronym>ODBC</acronym> support to create and manipulate a
+       <acronym>ODBC</> or <acronym>JDBC</> support to create and manipulate a
        database.  These possibilities are not covered in this
        tutorial.
       </para>
@@ -314,15 +315,15 @@ createdb: database creation failed: ERROR:  permission denied to create database
      </listitem>
     </itemizedlist>
 
-    You probably want to start up <command>psql</command>, to try out
+    You probably want to start up <command>psql</command> to try
     the examples in this tutorial.  It can be activated for the
     <literal>mydb</literal> database by typing the command:
 <screen>
 <prompt>$</prompt> <userinput>psql mydb</userinput>
 </screen>
-    If you leave off the database name then it will default to your
+    If you do not supply the database name then it will default to your
     user account name.  You already discovered this scheme in the
-    previous section.
+    previous section using <command>createdb</command>.
    </para>
 
    <para>
@@ -335,15 +336,15 @@ Type "help" for help.
 mydb=&gt;
 </screen>
     <indexterm><primary>superuser</primary></indexterm>
-    The last line could also be
+    The last line could also be:
 <screen>
 mydb=#
 </screen>
     That would mean you are a database superuser, which is most likely
     the case if you installed <productname>PostgreSQL</productname>
     yourself.  Being a superuser means that you are not subject to
-    access controls.  For the purposes of this tutorial that is not of
-    importance.
+    access controls.  For the purposes of this tutorial that is not
+    important.
    </para>
 
    <para>
@@ -395,7 +396,7 @@ mydb=#
    </para>
 
    <para>
-    To get out of <command>psql</command>, type
+    To get out of <command>psql</command>, type:
 <screen>
 <prompt>mydb=&gt;</prompt> <userinput>\q</userinput>
 </screen>
@@ -407,7 +408,7 @@ mydb=#
     installed correctly you can also type <literal>man psql</literal>
     at the operating system shell prompt to see the documentation.  In
     this tutorial we will not use these features explicitly, but you
-    can use them yourself when you see fit.
+    can use them yourself when it is helpful.
    </para>
 
   </sect1>

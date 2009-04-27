@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.3 2008/08/14 12:56:41 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbuffercache.sgml,v 2.4 2009/04/27 16:27:36 momjian Exp $ -->
 
 <sect1 id="pgbuffercache">
  <title>pg_buffercache</title>
@@ -141,7 +141,8 @@
                   b.reldatabase IN (0, (SELECT oid FROM pg_database
                                         WHERE datname = current_database()))
                GROUP BY c.relname
-               ORDER BY 2 DESC LIMIT 10;
+               ORDER BY 2 DESC
+               LIMIT 10;
                relname             | buffers
   ---------------------------------+---------
    tenk2                           |     345

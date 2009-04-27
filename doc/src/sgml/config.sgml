@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.215 2009/04/23 00:23:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.216 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1253,7 +1253,7 @@ SET ENABLE_SEQSCAN TO OFF;
          function, which some operating systems lack.  If the function is not
          present then setting this parameter to anything but zero will result
          in an error.  On some operating systems the function is present but
-         does not actually do anything (e.g. Solaris).
+         does not actually do anything (e.g., Solaris).
         </para>
        </listitem>
       </varlistentry>
@@ -4333,7 +4333,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         If a dynamically loadable module needs to be opened and the
         file name specified in the <command>CREATE FUNCTION</command> or
         <command>LOAD</command> command
-        does not have a directory component (i.e. the
+        does not have a directory component (i.e., the
         name does not contain a slash), the system will search this
         path for the required file.
        </para>
@@ -4503,7 +4503,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         The shared lock table is created to track locks on
         <varname>max_locks_per_transaction</varname> * (<xref
         linkend="guc-max-connections"> + <xref
-        linkend="guc-max-prepared-transactions">) objects (e.g.  tables);
+        linkend="guc-max-prepared-transactions">) objects (e.g.,  tables);
         hence, no more than this many distinct objects can be locked at
         any one time.  This parameter controls the average number of object
         locks allocated for each transaction;  individual transactions

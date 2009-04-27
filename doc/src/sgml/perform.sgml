@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.69 2008/12/13 19:13:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.70 2009/04/27 16:27:36 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -9,7 +9,7 @@
 
   <para>
    Query performance can be affected by many things. Some of these can
-   be manipulated by the user, while others are fundamental to the underlying
+   be controlled by the user, while others are fundamental to the underlying
    design of the system.  This chapter provides some hints about understanding
    and tuning <productname>PostgreSQL</productname> performance.
   </para>
@@ -27,10 +27,10 @@
 
    <para>
     <productname>PostgreSQL</productname> devises a <firstterm>query
-    plan</firstterm> for each query it is given.  Choosing the right
+    plan</firstterm> for each query it receives.  Choosing the right
     plan to match the query structure and the properties of the data
     is absolutely critical for good performance, so the system includes
-    a complex <firstterm>planner</> that tries to select good plans.
+    a complex <firstterm>planner</> that tries to choose good plans.
     You can use the
     <xref linkend="sql-explain" endterm="sql-explain-title"> command
     to see what query plan the planner creates for any query.
@@ -40,14 +40,13 @@
 
    <para>
     The structure of a query plan is a tree of <firstterm>plan nodes</>.
-    Nodes at the bottom level are table scan nodes: they return raw rows
+    Nodes at the bottom level of the tree are table scan nodes: they return raw rows
     from a table.  There are different types of scan nodes for different
     table access methods: sequential scans, index scans, and bitmap index
     scans.  If the query requires joining, aggregation, sorting, or other
     operations on the raw rows, then there will be additional nodes
-    <quote>atop</> the scan nodes to perform these operations.  Again,
-    there is usually more than one possible way to do these operations,
-    so different node types can appear here too.  The output
+    above the scan nodes to perform these operations.  Other nodes types
+    are also supported.  The output
     of <command>EXPLAIN</command> has one line for each node in the plan
     tree, showing the basic node type plus the cost estimates that the planner
     made for the execution of that plan node.  The first line (topmost node)
@@ -56,15 +55,15 @@
    </para>
 
    <para>
-    Here is a trivial example, just to show what the output looks like.
+    Here is a trivial example, just to show what the output looks like:
     <footnote>
      <para>
       Examples in this section are drawn from the regression test database
       after doing a <command>VACUUM ANALYZE</>, using 8.2 development sources.
       You should be able to get similar results if you try the examples yourself,
-      but your estimated costs and row counts will probably vary slightly
+      but your estimated costs and row counts might vary slightly
       because <command>ANALYZE</>'s statistics are random samples rather
-      than being exact.
+      than exact.
      </para>
     </footnote>
 
@@ -78,22 +77,23 @@ EXPLAIN SELECT * FROM tenk1;
    </para>
 
    <para>
-    The numbers that are quoted by <command>EXPLAIN</command> are:
+    The numbers that are quoted by <command>EXPLAIN</command> are (left
+    to right):
 
     <itemizedlist>
      <listitem>
       <para>
-       Estimated start-up cost (Time expended before output scan can start,
-       e.g., time to do the sorting in a sort node.)
+       Estimated start-up cost, e.g., time expended before the output scan can start,
+       time to do the sorting in a sort node
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated total cost (If all rows were to be retrieved, though they might
-       not be: for example, a query with a <literal>LIMIT</> clause will stop
-       short of paying the total cost of the <literal>Limit</> plan node's
-       input node.)
+       Estimated total cost if all rows were to be retrieved (though they might
+       not be, e.g., a query with a <literal>LIMIT</> clause will stop
+       short of paying the total cost of the <literal>Limit</> node's
+       input node)
       </para>
      </listitem>
 
@@ -119,8 +119,8 @@ EXPLAIN SELECT * FROM tenk1;
     Traditional practice is to measure the costs in units of disk page
     fetches; that is, <xref linkend="guc-seq-page-cost"> is conventionally
     set to <literal>1.0</> and the other cost parameters are set relative
-    to that.  The examples in this section are run with the default cost
-    parameters.
+    to that.  (The examples in this section are run with the default cost
+    parameters.)
    </para>
 
    <para>
@@ -129,17 +129,18 @@ EXPLAIN SELECT * FROM tenk1;
     the cost only reflects things that the planner cares about.
     In particular, the cost does not consider the time spent transmitting
     result rows to the client, which could be an important
-    factor in the true elapsed time; but the planner ignores it because
+    factor in the total elapsed time; but the planner ignores it because
     it cannot change it by altering the plan.  (Every correct plan will
     output the same row set, we trust.)
    </para>
 
    <para>
-    Rows output is a little tricky because it is <emphasis>not</emphasis> the
+    The <command>EXPLAIN</command> <literal>rows=</> value is a little tricky
+    because it is <emphasis>not</emphasis> the
     number of rows processed or scanned by the plan node.  It is usually less,
     reflecting the estimated selectivity of any <literal>WHERE</>-clause
     conditions that are being
-    applied at the node.  Ideally the top-level rows estimate will
+    applied to the node.  Ideally the top-level rows estimate will
     approximate the number of rows actually returned, updated, or deleted
     by the query.
    </para>
@@ -163,16 +164,16 @@ EXPLAIN SELECT * FROM tenk1;
 SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
 </programlisting>
 
-    you will find out that <classname>tenk1</classname> has 358 disk
-    pages and 10000 rows.  The estimated cost is (disk pages read *
+    you will find that <classname>tenk1</classname> has 358 disk
+    pages and 10000 rows.  The estimated cost is computed as (disk pages read *
     <xref linkend="guc-seq-page-cost">) + (rows scanned *
     <xref linkend="guc-cpu-tuple-cost">).  By default,
-    <varname>seq_page_cost</> is 1.0 and <varname>cpu_tuple_cost</> is 0.01.
-    So the estimated cost is (358 * 1.0) + (10000 * 0.01) = 458.
+    <varname>seq_page_cost</> is 1.0 and <varname>cpu_tuple_cost</> is 0.01,
+    so the estimated cost is (358 * 1.0) + (10000 * 0.01) = 458.
    </para>
 
    <para>
-    Now let's modify the query to add a <literal>WHERE</> condition:
+    Now let's modify the original query to add a <literal>WHERE</> condition:
 
 <programlisting>
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
@@ -187,7 +188,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
     clause being applied as a <quote>filter</> condition; this means that
     the plan node checks the condition for each row it scans, and outputs
     only the ones that pass the condition.
-    The estimate of output rows has gone down because of the <literal>WHERE</>
+    The estimate of output rows has been reduced because of the <literal>WHERE</>
     clause.
     However, the scan will still have to visit all 10000 rows, so the cost
     hasn't decreased; in fact it has gone up a bit (by 10000 * <xref
@@ -196,7 +197,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
    </para>
 
    <para>
-    The actual number of rows this query would select is 7000, but the rows
+    The actual number of rows this query would select is 7000, but the <literal>rows=</>
     estimate is only approximate.  If you try to duplicate this experiment,
     you will probably get a slightly different estimate; moreover, it will
     change after each <command>ANALYZE</command> command, because the
@@ -224,16 +225,16 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
     from the table itself.  Fetching the rows separately is much more
     expensive than sequentially reading them, but because not all the pages
     of the table have to be visited, this is still cheaper than a sequential
-    scan.  (The reason for using two levels of plan is that the upper plan
+    scan.  (The reason for using two plan levels is that the upper plan
     node sorts the row locations identified by the index into physical order
-    before reading them, so as to minimize the costs of the separate fetches.
+    before reading them, to minimize the cost of separate fetches.
     The <quote>bitmap</> mentioned in the node names is the mechanism that
     does the sorting.)
    </para>
 
    <para>
     If the <literal>WHERE</> condition is selective enough, the planner might
-    switch to a <quote>simple</> index scan plan:
+    switch to a <emphasis>simple</> index scan plan:
 
 <programlisting>
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3;
@@ -247,8 +248,8 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3;
     In this case the table rows are fetched in index order, which makes them
     even more expensive to read, but there are so few that the extra cost
     of sorting the row locations is not worth it.  You'll most often see
-    this plan type for queries that fetch just a single row, and for queries
-    that request an <literal>ORDER BY</> condition that matches the index
+    this plan type in queries that fetch just a single row, and for queries
+    with an <literal>ORDER BY</> condition that matches the index
     order.
    </para>
 
@@ -271,11 +272,11 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3 AND stringu1 = 'xxx';
     cannot be applied as an index condition (since this index is only on
     the <literal>unique1</> column).  Instead it is applied as a filter on
     the rows retrieved by the index.  Thus the cost has actually gone up
-    a little bit to reflect this extra checking.
+    slightly to reflect this extra checking.
    </para>
 
    <para>
-    If there are indexes on several columns used in <literal>WHERE</>, the
+    If there are indexes on several columns referenced in <literal>WHERE</>, the
     planner might choose to use an AND or OR combination of the indexes:
 
 <programlisting>
@@ -302,7 +303,9 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
     Let's try joining two tables, using the columns we have been discussing:
 
 <programlisting>
-EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+EXPLAIN SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                       QUERY PLAN
 --------------------------------------------------------------------------------------
@@ -317,12 +320,12 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
    </para>
 
    <para>
-    In this nested-loop join, the outer scan is the same bitmap index scan we
+    In this nested-loop join, the outer scan (upper) is the same bitmap index scan we
     saw earlier, and so its cost and row count are the same because we are
     applying the <literal>WHERE</> clause <literal>unique1 &lt; 100</literal>
     at that node.
     The <literal>t1.unique2 = t2.unique2</literal> clause is not relevant yet,
-    so it doesn't affect row count of the outer scan.  For the inner scan, the
+    so it doesn't affect the row count of the outer scan.  For the inner (lower) scan, the
     <literal>unique2</> value of the current outer-scan row is plugged into
     the inner index scan to produce an index condition like
     <literal>t2.unique2 = <replaceable>constant</replaceable></literal>.
@@ -335,8 +338,8 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
 
    <para>
     In this example the join's output row count is the same as the product
-    of the two scans' row counts, but that's not true in general, because
-    in general you can have <literal>WHERE</> clauses that mention both tables
+    of the two scans' row counts, but that's not true in all cases because
+    you can have <literal>WHERE</> clauses that mention both tables
     and so can only be applied at the join point, not to either input scan.
     For example, if we added
     <literal>WHERE ... AND t1.hundred &lt; t2.hundred</literal>,
@@ -346,14 +349,16 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
 
    <para>
     One way to look at variant plans is to force the planner to disregard
-    whatever strategy it thought was the winner, using the enable/disable
+    whatever strategy it thought was the cheapest, using the enable/disable
     flags described in <xref linkend="runtime-config-query-enable">.
     (This is a crude tool, but useful.  See
     also <xref linkend="explicit-joins">.)
 
 <programlisting>
 SET enable_nestloop = off;
-EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+EXPLAIN SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                         QUERY PLAN
 ------------------------------------------------------------------------------------------
@@ -370,9 +375,9 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
     This plan proposes to extract the 100 interesting rows of <classname>tenk1</classname>
     using that same old index scan, stash them into an in-memory hash table,
     and then do a sequential scan of <classname>tenk2</classname>, probing into the hash table
-    for possible matches of <literal>t1.unique2 = t2.unique2</literal> at each <classname>tenk2</classname> row.
-    The cost to read <classname>tenk1</classname> and set up the hash table is entirely start-up
-    cost for the hash join, since we won't get any rows out until we can
+    for possible matches of <literal>t1.unique2 = t2.unique2</literal> for each <classname>tenk2</classname> row.
+    The cost to read <classname>tenk1</classname> and set up the hash table is a start-up
+    cost for the hash join, since there will be no output until we can
     start reading <classname>tenk2</classname>.  The total time estimate for the join also
     includes a hefty charge for the CPU time to probe the hash table
     10000 times.  Note, however, that we are <emphasis>not</emphasis> charging 10000 times 232.35;
@@ -380,14 +385,16 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique
    </para>
 
    <para>
-    It is possible to check on the accuracy of the planner's estimated costs
+    It is possible to check the accuracy of the planner's estimated costs
     by using <command>EXPLAIN ANALYZE</>.  This command actually executes the query,
     and then displays the true run time accumulated within each plan node
     along with the same estimated costs that a plain <command>EXPLAIN</command> shows.
     For example, we might get a result like this:
 
 <screen>
-EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
+EXPLAIN ANALYZE SELECT *
+FROM tenk1 t1, tenk2 t2
+WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                                             QUERY PLAN
 ----------------------------------------------------------------------------------------------------------------------------------
@@ -402,7 +409,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
 </screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of
-    real time, whereas the <quote>cost</quote> estimates are expressed in
+    real time, whereas the <literal>cost=</> estimates are expressed in
     arbitrary units; so they are unlikely to match up.
     The thing to pay attention to is whether the ratios of actual time and
     estimated costs are consistent.
@@ -412,11 +419,11 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
     In some query plans, it is possible for a subplan node to be executed more
     than once.  For example, the inner index scan is executed once per outer
     row in the above nested-loop plan.  In such cases, the
-    <quote>loops</quote> value reports the
+    <literal>loops=</> value reports the
     total number of executions of the node, and the actual time and rows
     values shown are averages per-execution.  This is done to make the numbers
     comparable with the way that the cost estimates are shown.  Multiply by
-    the <quote>loops</quote> value to get the total time actually spent in
+    the <literal>loops=</> value to get the total time actually spent in
     the node.
    </para>
 
@@ -429,9 +436,9 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
     reported for the top-level plan node.  For <command>INSERT</>,
     <command>UPDATE</>, and <command>DELETE</> commands, the total run time
     might be considerably larger, because it includes the time spent processing
-    the result rows.  In these commands, the time for the top plan node
-    essentially is the time spent computing the new rows and/or locating the
-    old ones, but it doesn't include the time spent applying the changes.
+    the result rows.  For these commands, the time for the top plan node is
+    essentially the time spent locating the old rows and/or computing
+    the new ones, but it doesn't include the time spent applying the changes.
     Time spent firing triggers, if any, is also outside the top plan node,
     and is shown separately for each trigger.
    </para>
@@ -475,7 +482,9 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
    queries similar to this one:
 
 <screen>
-SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 'tenk1%';
+SELECT relname, relkind, reltuples, relpages
+FROM pg_class
+WHERE relname LIKE 'tenk1%';
 
        relname        | relkind | reltuples | relpages
 ----------------------+---------+-----------+----------
@@ -512,7 +521,7 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
 
   <para>
    Most queries retrieve only a fraction of the rows in a table, due
-   to having <literal>WHERE</> clauses that restrict the rows to be
+   to <literal>WHERE</> clauses that restrict the rows to be
    examined.  The planner thus needs to make an estimate of the
    <firstterm>selectivity</> of <literal>WHERE</> clauses, that is,
    the fraction of rows that match each condition in the
@@ -544,7 +553,9 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
    For example, we might do:
 
 <screen>
-SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'road';
+SELECT attname, n_distinct, most_common_vals
+FROM pg_stats
+WHERE tablename = 'road';
 
  attname | n_distinct |                                                                                                                                                                                  most_common_vals                                                                                                                                                                                   
 ---------+------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -769,7 +780,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </indexterm>
 
    <para>
-    Turn off autocommit and just do one commit at the end.  (In plain
+    When doing <command>INSERT</>s, turn off autocommit and just do
+    one commit at the end.  (In plain
     SQL, this means issuing <command>BEGIN</command> at the start and
     <command>COMMIT</command> at the end.  Some client libraries might
     do this behind your back, in which case you need to make sure the
@@ -812,7 +824,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <para>
     Note that loading a large number of rows using
     <command>COPY</command> is almost always faster than using
-    <command>INSERT</command>, even if <command>PREPARE</> is used and
+    <command>INSERT</command>, even if the <command>PREPARE ... INSERT</> is used and
     multiple insertions are batched into a single transaction.
    </para>
 
@@ -823,7 +835,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     needs to be written, because in case of an error, the files
     containing the newly loaded data will be removed anyway.
     However, this consideration does not apply when
-    <xref linkend="guc-archive-mode"> is set, as all commands
+    <xref linkend="guc-archive-mode"> is on, as all commands
     must write WAL in that case.
    </para>
 
@@ -833,7 +845,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Remove Indexes</title>
 
    <para>
-    If you are loading a freshly created table, the fastest way is to
+    If you are loading a freshly created table, the fastest method is to
     create the table, bulk load the table's data using
     <command>COPY</command>, then create any indexes needed for the
     table.  Creating an index on pre-existing data is quicker than
@@ -844,8 +856,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     If you are adding large amounts of data to an existing table,
     it might be a win to drop the index,
     load the table, and then recreate the index.  Of course, the
-    database performance for other users might be adversely affected
-    during the time that the index is missing.  One should also think
+    database performance for other users might suffer
+    during the time the index is missing.  One should also think
     twice before dropping unique indexes, since the error checking
     afforded by the unique constraint will be lost while the index is
     missing.

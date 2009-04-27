@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.29 2009/01/06 17:27:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.30 2009/04/27 16:27:36 momjian Exp $ -->
 
 <sect1 id="bug-reporting">
  <title>Bug Reporting Guidelines</title>
@@ -136,7 +136,7 @@
       file that can be run through the <application>psql</application>
       frontend that shows the problem. (Be sure to not have anything
       in your <filename>~/.psqlrc</filename> start-up file.)  An easy
-      start at this file is to use <application>pg_dump</application>
+      way to create this file is to use <application>pg_dump</application>
       to dump out the table declarations and data needed to set the
       scene, then add the problem query.  You are encouraged to
       minimize the size of your example, but this is not absolutely
@@ -252,7 +252,7 @@
       C library, processor, memory information, and so on. In most
       cases it is sufficient to report the vendor and version, but do
       not assume everyone knows what exactly <quote>Debian</quote>
-      contains or that everyone runs on Pentiums. If you have
+      contains or that everyone runs on i386s. If you have
       installation problems then information about the toolchain on
       your machine (compiler, <application>make</application>, and so
       on) is also necessary.

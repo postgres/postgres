@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.476 2009/04/09 17:39:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.477 2009/04/27 16:27:35 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -17,16 +17,16 @@
    define their own functions and operators, as described in
    <xref linkend="server-programming">.  The
    <application>psql</application> commands <command>\df</command> and
-   <command>\do</command> can be used to show the list of all actually
+   <command>\do</command> can be used to list all
    available functions and operators, respectively.
   </para>
 
   <para>
-   If you are concerned about portability then take note that most of
+   If you are concerned about portability then note that most of
    the functions and operators described in this chapter, with the
    exception of the most trivial arithmetic and comparison operators
    and some explicitly marked functions, are not specified by the
-   <acronym>SQL</acronym> standard. Some of the extended functionality
+   <acronym>SQL</acronym> standard. Some of this extended functionality
    is present in other <acronym>SQL</acronym> database management
    systems, and in many cases this functionality is compatible and
    consistent between the various implementations.  This chapter is also
@@ -247,8 +247,8 @@
    </note>
 
    <para>
-    Comparison operators are available for all data types where this
-    makes sense.  All comparison operators are binary operators that
+    Comparison operators are available for all relevant data types.
+    All comparison operators are binary operators that
     return values of type <type>boolean</type>; expressions like
     <literal>1 &lt; 2 &lt; 3</literal> are not valid (because there is
     no <literal>&lt;</literal> operator to compare a Boolean value with
@@ -260,7 +260,7 @@
      <primary>BETWEEN</primary>
     </indexterm>
     In addition to the comparison operators, the special
-    <token>BETWEEN</token> construct is available.
+    <token>BETWEEN</token> construct is available:
 <synopsis>
 <replaceable>a</replaceable> BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
 </synopsis>
@@ -268,7 +268,8 @@
 <synopsis>
 <replaceable>a</replaceable> &gt;= <replaceable>x</replaceable> AND <replaceable>a</replaceable> &lt;= <replaceable>y</replaceable>
 </synopsis>
-    Similarly,
+    Note <token>BETWEEN</token> is inclusive in comparing the endpoint
+    values.  <literal>NOT BETWEEN</literal> does the opposite comparison:
 <synopsis>
 <replaceable>a</replaceable> NOT BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
 </synopsis>
@@ -276,9 +277,6 @@
 <synopsis>
 <replaceable>a</replaceable> &lt; <replaceable>x</replaceable> OR <replaceable>a</replaceable> &gt; <replaceable>y</replaceable>
 </synopsis>
-    There is no difference between the two respective forms apart from
-    the <acronym>CPU</acronym> cycles required to rewrite the first one
-    into the second one internally.
     <indexterm>
      <primary>BETWEEN SYMMETRIC</primary>
     </indexterm>
@@ -300,12 +298,12 @@
     <indexterm>
      <primary>NOTNULL</primary>
     </indexterm>
-    To check whether a value is or is not null, use the constructs
+    To check whether a value is or is not null, use the constructs:
 <synopsis>
 <replaceable>expression</replaceable> IS NULL
 <replaceable>expression</replaceable> IS NOT NULL
 </synopsis>
-    or the equivalent, but nonstandard, constructs
+    or the equivalent, but nonstandard, constructs:
 <synopsis>
 <replaceable>expression</replaceable> ISNULL
 <replaceable>expression</replaceable> NOTNULL
@@ -324,7 +322,7 @@
 
   <tip>
    <para>
-    Some applications might expect that
+    Some applications might expect
     <literal><replaceable>expression</replaceable> = NULL</literal>
     returns true if <replaceable>expression</replaceable> evaluates to
     the null value.  It is highly recommended that these applications
@@ -332,9 +330,7 @@
     cannot be done the <xref linkend="guc-transform-null-equals">
     configuration variable is available. If it is enabled,
     <productname>PostgreSQL</productname> will convert <literal>x =
-    NULL</literal> clauses to <literal>x IS NULL</literal>.  This was
-    the default behavior in <productname>PostgreSQL</productname>
-    releases 6.5 through 7.1.
+    NULL</literal> clauses to <literal>x IS NULL</literal>.
    </para>
   </tip>
 
@@ -346,7 +342,7 @@
     <literal>IS NOT NULL</> is true when the row expression itself is non-null
     and all the row's fields are non-null.  Because of this behavior,
     <literal>IS NULL</> and <literal>IS NOT NULL</> do not always return
-    inverse results for row-valued expressions, i.e. a row-valued
+    inverse results for row-valued expressions, i.e., a row-valued
     expression that contains both NULL and non-null values will return false
     for both tests.
     This definition conforms to the SQL standard, and is a change from the
@@ -362,17 +358,19 @@
     <indexterm>
      <primary>IS NOT DISTINCT FROM</primary>
     </indexterm>
-    The ordinary comparison operators yield null (signifying <quote>unknown</>)
-    when either input is null.  Another way to do comparisons is with the
+    Ordinary comparison operators yield null (signifying <quote>unknown</>)
+    when either input is null, not true or false, e.g., <literal>7 =
+    NULL</> yields null.
+    Another way to do comparisons is with the
     <literal>IS <optional> NOT </> DISTINCT FROM</literal> construct:
 <synopsis>
 <replaceable>expression</replaceable> IS DISTINCT FROM <replaceable>expression</replaceable>
 <replaceable>expression</replaceable> IS NOT DISTINCT FROM <replaceable>expression</replaceable>
 </synopsis>
     For non-null inputs, <literal>IS DISTINCT FROM</literal> is
-    the same as the <literal>&lt;&gt;</> operator.  However, when both
-    inputs are null it will return false, and when just one input is
-    null it will return true.  Similarly, <literal>IS NOT DISTINCT
+    the same as the <literal>&lt;&gt;</> operator.  However, if both
+    inputs are null it returns false, and if only one input is
+    null it returns true.  Similarly, <literal>IS NOT DISTINCT
     FROM</literal> is identical to <literal>=</literal> for non-null
     inputs, but it returns true when both inputs are null, and false when only
     one input is null. Thus, these constructs effectively act as though null
@@ -442,8 +440,8 @@
 
    <para>
     Mathematical operators are provided for many
-    <productname>PostgreSQL</productname> types. For types without
-    common mathematical conventions for all possible permutations 
+    <productname>PostgreSQL</productname> types. For types that support
+    only limited mathematical operations 
     (e.g., date/time types) we
     describe the actual behavior in subsequent sections.
    </para>
@@ -489,7 +487,7 @@
 
       <row>
        <entry> <literal>/</literal> </entry>
-       <entry>division (integer division truncates results)</entry>
+       <entry>division (integer division truncates the result)</entry>
        <entry><literal>4 / 2</literal></entry>
        <entry><literal>2</literal></entry>
       </row>
@@ -686,7 +684,7 @@
      <tbody>
       <row>
        <entry><literal><function>abs</>(<replaceable>x</replaceable>)</literal></entry>
-       <entry>(same as <replaceable>x</>)</entry>
+       <entry>(same as input)</entry>
        <entry>absolute value</entry>
        <entry><literal>abs(-17.4)</literal></entry>
        <entry><literal>17.4</literal></entry>
@@ -820,7 +818,7 @@
       <row>
        <entry><literal><function>random</function>()</literal></entry>
        <entry><type>dp</type></entry>
-       <entry>random value between 0.0 and 1.0</entry>
+       <entry>random value between 0.0 and 1.0, inclusive</entry>
        <entry><literal>random()</literal></entry>
        <entry></entry>
       </row>
@@ -844,7 +842,8 @@
       <row>
        <entry><literal><function>setseed</function>(<type>dp</type>)</literal></entry>
        <entry><type>void</type></entry>
-       <entry>set seed for subsequent <literal>random()</literal> calls (value between -1.0 and 1.0)</entry>
+       <entry>set seed for subsequent <literal>random()</literal> calls (value between -1.0 and
+       1.0, inclusive)</entry>
        <entry><literal>setseed(0.54823)</literal></entry>
        <entry></entry>
       </row>
@@ -1332,8 +1331,8 @@
        <entry>
         <acronym>ASCII</acronym> code of the first character of the
         argument.  For <acronym>UTF8</acronym> returns the Unicode code
-        point of the character.  For other multibyte encodings. the
-        argument must be a strictly <acronym>ASCII</acronym> character.
+        point of the character.  For other multibyte encodings, the
+        argument must be an <acronym>ASCII</acronym> character.
        </entry>
        <entry><literal>ascii('x')</literal></entry>
        <entry><literal>120</literal></entry>
@@ -1358,7 +1357,7 @@
        <entry>
         Character with the given code. For <acronym>UTF8</acronym> the
         argument is treated as a Unicode code point. For other multibyte
-        encodings the argument must designate a strictly
+        encodings the argument must designate an
         <acronym>ASCII</acronym> character.  The NULL (0) character is not
         allowed because text data types cannot store such bytes.
        </entry>
@@ -1383,7 +1382,8 @@
         linkend="conversion-names"> for available conversions.
        </entry>
        <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
-       <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>
+       <entry><literal>text_in_utf8</literal> represented in Latin-1
+       encoding (ISO 8859-1)</entry>
       </row>
 
       <row>
@@ -1796,8 +1796,8 @@
           The conversion names follow a standard naming scheme: The
           official name of the source encoding with all
           non-alphanumeric characters replaced by underscores followed
-          by <literal>_to_</literal> followed by the equally processed
-          destination encoding name. Therefore the names might deviate
+          by <literal>_to_</literal> followed by similarly
+          destination encoding name. Therefore, the names might deviate
           from the customary encoding names.
          </para>
         </footnote>
@@ -2585,12 +2585,11 @@
    </para>
 
    <para>
-    <acronym>SQL</acronym> defines some string functions with a
-    special syntax where 
-    certain key words rather than commas are used to separate the
+    <acronym>SQL</acronym> defines some string functions that use
+    a key word syntax, rather than commas to separate
     arguments.  Details are in
     <xref linkend="functions-binarystring-sql">.
-    Some functions are also implemented using the regular syntax for
+    Such functions are also implemented using the regular syntax for
     function invocation.
     (See <xref linkend="functions-binarystring-other">.)
    </para>
@@ -2932,7 +2931,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 '1110'::bit(4)::integer        <lineannotation>14</lineannotation>
 </programlisting>
     Note that casting to just <quote>bit</> means casting to
-    <literal>bit(1)</>, and so it will deliver only the least significant
+    <literal>bit(1)</>, and so will deliver only the least significant
     bit of the integer.
    </para>
 
@@ -2964,7 +2963,8 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     SQL:1999), and <acronym>POSIX</acronym>-style regular
     expressions.  Aside from the basic <quote>does this string match
     this pattern?</> operators, functions are available to extract
-    or replace matching substrings and to split a string at the matches.
+    or replace matching substrings and to split a string at matching
+    locations.
    </para>
 
    <tip>
@@ -2987,10 +2987,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 </synopsis>
 
     <para>
-     Every <replaceable>pattern</replaceable> defines a set of strings.
-     The <function>LIKE</function> expression returns true if the
-     <replaceable>string</replaceable> is contained in the set of
-     strings represented by <replaceable>pattern</replaceable>.  (As
+     The <function>LIKE</function> expression returns true if
+     <replaceable>string</replaceable> matches the supplied
+     <replaceable>pattern</replaceable>.  (As
      expected, the <function>NOT LIKE</function> expression returns
      false if <function>LIKE</function> returns true, and vice versa.
      An equivalent expression is
@@ -3019,13 +3018,13 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
    
    <para>
-    <function>LIKE</function> pattern matches always cover the entire
-    string.  To match a sequence anywhere within a string, the
-    pattern must therefore start and end with a percent sign.
+    <function>LIKE</function> pattern matching always covers the entire
+    string.  Therefore, to match a sequence anywhere within a string, the
+    pattern must start and end with a percent sign.
    </para>
 
    <para>
-    To match a literal underscore or percent sign without matching
+    To match only a literal underscore or percent sign without matching
     other characters, the respective character in
     <replaceable>pattern</replaceable> must be 
     preceded by the escape character.  The default escape
@@ -3042,7 +3041,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     actually matches a literal backslash means writing four backslashes in the
     statement.  You can avoid this by selecting a different escape character
     with <literal>ESCAPE</literal>; then a backslash is not special to
-    <function>LIKE</function> anymore. (But it is still special to the string
+    <function>LIKE</function> anymore. (But backslash is still special to the string
     literal parser, so you still need two of them.)
    </para>
 
@@ -3095,7 +3094,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    <para>
     The <function>SIMILAR TO</function> operator returns true or
     false depending on whether its pattern matches the given string.
-    It is much like <function>LIKE</function>, except that it
+    It is similar to <function>LIKE</function>, except that it
     interprets the pattern using the SQL standard's definition of a
     regular expression.  SQL regular expressions are a curious cross
     between <function>LIKE</function> notation and common regular
@@ -3103,9 +3102,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
-    Like <function>LIKE</function>, the  <function>SIMILAR TO</function>
+    Like <function>LIKE</function>, the <function>SIMILAR TO</function>
     operator succeeds only if its pattern matches the entire string;
-    this is unlike common regular expression practice, wherein the pattern
+    this is unlike common regular expression behavior where the pattern
     can match any part of the string.
     Also like
     <function>LIKE</function>, <function>SIMILAR TO</function> uses
@@ -3153,7 +3152,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </itemizedlist>
 
     Notice that bounded repetition (<literal>?</> and <literal>{...}</>)
-    are not provided, though they exist in POSIX.  Also, the dot (<literal>.</>)
+    is not provided, though they exist in POSIX.  Also, the period (<literal>.</>)
     is not a metacharacter.
    </para>
 
@@ -3180,7 +3179,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     <replaceable>escape-character</replaceable>)</function>, provides
     extraction of a substring that matches an SQL
     regular expression pattern.  As with <literal>SIMILAR TO</>, the
-    specified pattern must match to the entire data string, else the
+    specified pattern must match the entire data string, or else the
     function fails and returns null.  To indicate the part of the
     pattern that should be returned on success, the pattern must contain
     two occurrences of the escape character followed by a double quote
@@ -3190,7 +3189,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
-    Some examples:
+    Some examples, with <literal>#"</> delimiting the return string:
 <programlisting>
 substring('foobar' from '%#"o_b#"%' for '#')   <lineannotation>oob</lineannotation>
 substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotation>
@@ -3284,7 +3283,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
      expression.  As with <function>LIKE</function>, pattern characters
      match string characters exactly unless they are special characters
      in the regular expression language &mdash; but regular expressions use
-     different special characters than <function>LIKE</function> does.
+     different special characters than <function>LIKE</function>.
      Unlike <function>LIKE</function> patterns, a
      regular expression is allowed to match anywhere within a string, unless
      the regular expression is explicitly anchored to the beginning or
@@ -3505,9 +3504,9 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <para>
     <productname>PostgreSQL</productname>'s regular expressions are implemented
-    using a package written by Henry Spencer.  Much of
+    using a software package written by Henry Spencer.  Much of
     the description of regular expressions below is copied verbatim from his
-    manual entry.
+    manual.
    </para>
 
    <para>
@@ -3519,7 +3518,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     (roughly those of <command>ed</command>).
     <productname>PostgreSQL</productname> supports both forms, and
     also implements some extensions
-    that are not in the POSIX standard, but have become widely used anyway
+    that are not in the POSIX standard, but have become widely used
     due to their availability in programming languages such as Perl and Tcl.
     <acronym>RE</acronym>s using these non-POSIX extensions are called
     <firstterm>advanced</> <acronym>RE</acronym>s or <acronym>ARE</>s
@@ -3536,7 +3535,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
      <productname>PostgreSQL</> can be chosen by setting the <xref
      linkend="guc-regex-flavor"> run-time parameter.  The usual
      setting is <literal>advanced</>, but one might choose
-     <literal>extended</> for maximum backwards compatibility with
+     <literal>extended</> for backwards compatibility with
      pre-7.4 releases of <productname>PostgreSQL</>.
     </para>
    </note>
@@ -3551,7 +3550,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    <para>
     A branch is zero or more <firstterm>quantified atoms</> or
     <firstterm>constraints</>, concatenated.
-    It matches a match for the first, followed by a match for the second, etc;
+    It tries a match of the first, followed by a match for the second, etc;
     an empty branch matches the empty string.
    </para>
 
@@ -3568,8 +3567,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <para>
     A <firstterm>constraint</> matches an empty string, but matches only when
-    specific conditions are met.  A constraint can be used where an atom
-    could be used, except it cannot be followed by a quantifier.
+    specific conditions are met.  A constraint cannot be followed by a quantifier.
     The simple constraints are shown in
     <xref linkend="posix-constraints-table">;
     some more constraints are described later.
@@ -3618,7 +3616,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> <literal>\</><replaceable>k</> </entry>
        <entry> (where <replaceable>k</> is a non-alphanumeric character)
        matches that character taken as an ordinary character,
-       e.g. <literal>\\</> matches a backslash character </entry>
+       e.g., <literal>\\</> matches a backslash character </entry>
        </row>
 
        <row>
@@ -3756,7 +3754,8 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <note>
     <para>
-     A quantifier cannot immediately follow another quantifier.
+     A quantifier cannot immediately follow another quantifier, e.g.,
+     <literal>**</> is invalid.
      A quantifier cannot
      begin an expression or subexpression or follow
      <literal>^</literal> or <literal>|</literal>.
@@ -3777,12 +3776,12 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
       <tbody>
        <row>
        <entry> <literal>^</> </entry>
-       <entry> matches at the beginning of the string </entry>
+       <entry> matches the beginning of the string </entry>
        </row>
 
        <row>
        <entry> <literal>$</> </entry>
-       <entry> matches at the end of the string </entry>
+       <entry> matches the end of the string </entry>
        </row>
 
        <row>
@@ -3822,21 +3821,21 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     in the list are separated by <literal>-</literal>, this is
     shorthand for the full range of characters between those two
     (inclusive) in the collating sequence,
-    e.g. <literal>[0-9]</literal> in <acronym>ASCII</acronym> matches
+    e.g., <literal>[0-9]</literal> in <acronym>ASCII</acronym> matches
     any decimal digit.  It is illegal for two ranges to share an
-    endpoint, e.g.  <literal>a-c-e</literal>.  Ranges are very
+    endpoint, e.g.,  <literal>a-c-e</literal>.  Ranges are very
     collating-sequence-dependent, so portable programs should avoid
     relying on them.
    </para>
 
    <para>
     To include a literal <literal>]</literal> in the list, make it the
-    first character (following a possible <literal>^</literal>).  To
+    first character (possibly following a <literal>^</literal>).  To
     include a literal <literal>-</literal>, make it the first or last
     character, or the second endpoint of a range.  To use a literal
-    <literal>-</literal> as the first endpoint of a range, enclose it
+    <literal>-</literal> as the start of a range, enclose it
     in <literal>[.</literal> and <literal>.]</literal> to make it a
-    collating element (see below).  With the exception of these characters,
+    collating element (see below).  With the exception of these characters and
     some combinations using <literal>[</literal>
     (see next paragraphs), and escapes (AREs only), all other special
     characters lose their special significance within a bracket expression.
@@ -3851,9 +3850,10 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     character, or a collating-sequence name for either) enclosed in
     <literal>[.</literal> and <literal>.]</literal> stands for the
     sequence of characters of that collating element.  The sequence is
-    a single element of the bracket expression's list.  A bracket
-    expression containing a multiple-character collating element can thus
-    match more than one character, e.g. if the collating sequence
+    treated as a single element of the bracket expression's list.  This
+    allows a bracket
+    expression containing a multiple-character collating element to
+    match more than one character, e.g., if the collating sequence
     includes a <literal>ch</literal> collating element, then the RE
     <literal>[[.ch.]]*c</literal> matches the first five characters of
     <literal>chchcc</literal>.
@@ -3861,15 +3861,15 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <note>
     <para>
-     <productname>PostgreSQL</> currently has no multicharacter collating
+     <productname>PostgreSQL</> currently does not support multi-character collating
      elements. This information describes possible future behavior.
     </para>
    </note>
 
    <para>
     Within a bracket expression, a collating element enclosed in
-    <literal>[=</literal> and <literal>=]</literal> is an equivalence
-    class, standing for the sequences of characters of all collating
+    <literal>[=</literal> and <literal>=]</literal> is an <firstterm>equivalence
+    class</>, standing for the sequences of characters of all collating
     elements equivalent to that one, including itself.  (If there are
     no other equivalent collating elements, the treatment is as if the
     enclosing delimiters were <literal>[.</literal> and
@@ -3910,8 +3910,8 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     or an underscore.  This is an extension, compatible with but not
     specified by <acronym>POSIX</acronym> 1003.2, and should be used with
     caution in software intended to be portable to other systems.
-    The constraint escapes described below are usually preferable (they
-    are no more standard, but are certainly easier to type).
+    The constraint escapes described below are usually preferable; they
+    are no more standard, but are easier to type.
    </para>
    </sect3>
 
@@ -3933,7 +3933,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <para>
     <firstterm>Character-entry escapes</> exist to make it easier to specify
-    non-printing and otherwise inconvenient characters in REs.  They are
+    non-printing and inconvenient characters in REs.  They are
     shown in <xref linkend="posix-character-entry-escapes-table">.
    </para>
 
@@ -3996,7 +3996,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
        <row>
        <entry> <literal>\B</> </entry>
-       <entry> synonym for <literal>\</> to help reduce the need for backslash
+       <entry> synonym for backslash (<literal>\</>) to help reduce the need for backslash
        doubling </entry>
        </row>
 
@@ -4038,14 +4038,14 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> <literal>\u</><replaceable>wxyz</> </entry>
        <entry> (where <replaceable>wxyz</> is exactly four hexadecimal digits)
        the UTF16 (Unicode, 16-bit) character <literal>U+</><replaceable>wxyz</>
-       in the local byte ordering </entry>
+       in the local byte encoding</entry>
        </row>
 
        <row>
        <entry> <literal>\U</><replaceable>stuvwxyz</> </entry>
        <entry> (where <replaceable>stuvwxyz</> is exactly eight hexadecimal
        digits)
-       reserved for a somewhat-hypothetical Unicode extension to 32 bits
+       reserved for a hypothetical Unicode extension to 32 bits
        </entry> 
        </row>
 
@@ -4055,34 +4055,34 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        </row>
 
        <row>
-       <entry> <literal>\x</><replaceable>hhh</> </entry>
-       <entry> (where <replaceable>hhh</> is any sequence of hexadecimal
+       <entry> <literal>\x</><replaceable>###</> </entry>
+       <entry> (where <replaceable>###</> is any sequence of hexadecimal
        digits)
        the character whose hexadecimal value is
-       <literal>0x</><replaceable>hhh</>
+       <literal>0x</><replaceable>###</>
        (a single character no matter how many hexadecimal digits are used)
        </entry>
        </row>
 
        <row>
        <entry> <literal>\0</> </entry>
-       <entry> the character whose value is <literal>0</> </entry>
+       <entry> the character whose value is <literal>0</> (the null byte)</entry>
        </row>
 
        <row>
-       <entry> <literal>\</><replaceable>xy</> </entry>
-       <entry> (where <replaceable>xy</> is exactly two octal digits,
+       <entry> <literal>\</><replaceable>##</> </entry>
+       <entry> (where <replaceable>##</> is exactly two octal digits,
        and is not a <firstterm>back reference</>)
        the character whose octal value is
-       <literal>0</><replaceable>xy</> </entry>
+       <literal>0</><replaceable>##</> </entry>
        </row>
 
        <row>
-       <entry> <literal>\</><replaceable>xyz</> </entry>
-       <entry> (where <replaceable>xyz</> is exactly three octal digits,
+       <entry> <literal>\</><replaceable>###</> </entry>
+       <entry> (where <replaceable>###</> is exactly three octal digits,
        and is not a <firstterm>back reference</>)
        the character whose octal value is
-       <literal>0</><replaceable>xyz</> </entry>
+       <literal>0</><replaceable>###</> </entry>
        </row>
       </tbody>
      </tgroup>
@@ -4245,7 +4245,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <note>
     <para>
-     There is an inherent historical ambiguity between octal character-entry 
+     There is an inherent ambiguity between octal character-entry
      escapes and back references, which is resolved by heuristics,
      as hinted at above.
      A leading zero always indicates an octal escape.
@@ -4253,7 +4253,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
      is always taken as a back reference.
      A multidigit sequence not starting with a zero is taken as a back 
      reference if it comes after a suitable subexpression
-     (i.e. the number is in the legal range for a back reference),
+     (i.e., the number is in the legal range for a back reference),
      and otherwise is taken as octal.
     </para>
    </note>
@@ -4401,7 +4401,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
      </listitem>
      <listitem>
       <para>
-       white space and comments cannot appear within multicharacter symbols,
+       white space and comments cannot appear within multi-character symbols,
        such as <literal>(?:</>
       </para>
      </listitem>
@@ -4417,7 +4417,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     (where <replaceable>ttt</> is any text not containing a <literal>)</>)
     is a comment, completely ignored.
     Again, this is not allowed between the characters of
-    multicharacter symbols, like <literal>(?:</>.
+    multi-character symbols, like <literal>(?:</>.
     Such comments are more a historical artifact than a useful facility,
     and their use is deprecated; use the expanded syntax instead.
    </para>
@@ -4566,9 +4566,9 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     When an alphabetic that exists in multiple cases appears as an
     ordinary character outside a bracket expression, it is effectively
     transformed into a bracket expression containing both cases,
-    e.g. <literal>x</> becomes <literal>[xX]</>.
+    e.g., <literal>x</> becomes <literal>[xX]</>.
     When it appears inside a bracket expression, all case counterparts
-    of it are added to the bracket expression, e.g.
+    of it are added to the bracket expression, e.g.,
     <literal>[x]</> becomes <literal>[xX]</>
     and <literal>[^x]</> becomes <literal>[^xX]</>.
    </para>
@@ -4670,7 +4670,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
    <para>
     BREs differ from EREs in several respects.
-    <literal>|</>, <literal>+</>, and <literal>?</>
+    In BREs, <literal>|</>, <literal>+</>, and <literal>?</>
     are ordinary characters and there is no equivalent
     for their functionality.
     The delimiters for bounds are
@@ -4691,7 +4691,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     <literal>\&lt;</> and <literal>\&gt;</>
     are synonyms for
     <literal>[[:&lt;:]]</> and <literal>[[:&gt;:]]</>
-    respectively; no other escapes are available.
+    respectively; no other escapes are available in BREs.
    </para>
    </sect3>
 
@@ -4732,8 +4732,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     template that defines the output or input format.
    </para>
    <para>
-    The <function>to_timestamp</function> function can also take a single 
-    <type>double precision</type> argument to convert from Unix epoch to 
+    A single-argument <function>to_timestamp</function> function is also
+    available;  it accepts a
+    <type>double precision</type> argument and converts from Unix epoch
+    (seconds since 1970-01-01 00:00:00+00) to
     <type>timestamp with time zone</type>.
     (<type>Integer</type> Unix epochs are implicitly cast to 
     <type>double precision</type>.)
@@ -4804,19 +4806,18 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal><function>to_timestamp</function>(<type>double precision</type>)</literal></entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>convert UNIX epoch to time stamp</entry>
-        <entry><literal>to_timestamp(200120400)</literal></entry>
+        <entry><literal>to_timestamp(1284352323)</literal></entry>
        </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
-    In an output template string (for <function>to_char</>), there are certain patterns that are
-    recognized and replaced with appropriately-formatted data from the value
-    to be formatted.  Any text that is not a template pattern is simply
-    copied verbatim.  Similarly, in an input template string (for anything but <function>to_char</>), template patterns
-    identify the parts of the input data string to be looked at and the
-    values to be found there.
+    In a <function>to_char</> output template string, there are certain patterns that are
+    recognized and replaced with appropriately-formatted data based on the value.
+    Any text that is not a template pattern is simply
+    copied verbatim.  Similarly, in an input template string (anything but <function>to_char</>), template patterns
+    identify the values to be supplied by the input data string.
    </para>
 
   <para>
@@ -4928,7 +4929,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>Month</literal></entry>
-        <entry>full mixed-case month name (blank-padded to 9 chars)</entry>
+        <entry>full capitalized month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
         <entry><literal>month</literal></entry>
@@ -4940,7 +4941,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>Mon</literal></entry>
-        <entry>abbreviated mixed-case month name (3 chars in English, localized lengths vary)</entry>
+        <entry>abbreviated capitalized month name (3 chars in English, localized lengths vary)</entry>
        </row>
        <row>
         <entry><literal>mon</literal></entry>
@@ -4956,7 +4957,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>Day</literal></entry>
-        <entry>full mixed-case day name (blank-padded to 9 chars)</entry>
+        <entry>full capitalized day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
         <entry><literal>day</literal></entry>
@@ -4968,7 +4969,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>Dy</literal></entry>
-        <entry>abbreviated mixed-case day name (3 chars in English, localized lengths vary)</entry>
+        <entry>abbreviated capitalized day name (3 chars in English, localized lengths vary)</entry>
        </row>
        <row>
         <entry><literal>dy</literal></entry>
@@ -5004,7 +5005,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>IW</literal></entry>
-        <entry>ISO week number of year (1 - 53; the first Thursday of the new year is in week 1.)</entry>
+        <entry>ISO week number of year (01 - 53; the first Thursday of the new year is in week 1.)</entry>
        </row>
        <row>
         <entry><literal>CC</literal></entry>
@@ -5020,26 +5021,26 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>RM</literal></entry>
-        <entry>month in Roman numerals (I-XII; I=January) (uppercase)</entry>
+        <entry>uppercase month in Roman numerals (I-XII; I=January)</entry>
        </row>
        <row>
         <entry><literal>rm</literal></entry>
-        <entry>month in Roman numerals (i-xii; i=January) (lowercase)</entry>
+        <entry>lowercase month in Roman numerals (i-xii; i=January)</entry>
        </row>
        <row>
         <entry><literal>TZ</literal></entry>
-        <entry>time-zone name (uppercase)</entry>
+        <entry>uppercase time-zone name</entry>
        </row>
        <row>
         <entry><literal>tz</literal></entry>
-        <entry>time-zone name (lowercase)</entry>
+        <entry>lowercase time-zone name</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
-    Certain modifiers can be applied to any template pattern to alter its
+    Modifiers can be applied to any template pattern to alter its
     behavior.  For example, <literal>FMMonth</literal>
     is the <literal>Month</literal> pattern with the
     <literal>FM</literal> modifier.
@@ -5060,18 +5061,18 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       <tbody>
        <row>
         <entry><literal>FM</literal> prefix</entry>
-        <entry>fill mode (suppress padding blanks and zeroes)</entry>
+        <entry>fill mode (suppress padding of blanks and zeroes)</entry>
         <entry><literal>FMMonth</literal></entry>
        </row>
        <row>
         <entry><literal>TH</literal> suffix</entry>
         <entry>uppercase ordinal number suffix</entry>
-        <entry><literal>DDTH</literal></entry>
+        <entry><literal>DDTH</literal>, e.g., <literal>12TH</></entry>
        </row>   
        <row>
         <entry><literal>th</literal> suffix</entry>
         <entry>lowercase ordinal number suffix</entry>
-        <entry><literal>DDth</literal></entry>
+        <entry><literal>DDth</literal>, e.g., <literal>12th</></entry>
        </row>
        <row>
         <entry><literal>FX</literal> prefix</entry>
@@ -5086,7 +5087,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>       
        <row>
         <entry><literal>SP</literal> suffix</entry>
-        <entry>spell mode (not yet implemented)</entry>
+        <entry>spell mode (not supported)</entry>
         <entry><literal>DDSP</literal></entry>
        </row>       
       </tbody>
@@ -5114,12 +5115,13 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      <listitem>
       <para>
        <function>to_timestamp</function> and <function>to_date</function>
-       skip multiple blank spaces in the input string if the <literal>FX</literal> option 
-       is not used. <literal>FX</literal> must be specified as the first item
-       in the template.  For example 
-       <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'YYYY MON')</literal> is correct, but
-       <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'FXYYYY MON')</literal> returns an error,
+       skip multiple blank spaces in the input string unless the <literal>FX</literal> option 
+       is used. For example,
+       <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'YYYY MON')</literal> works, but
+       <literal>to_timestamp('2000&nbsp;&nbsp;&nbsp;&nbsp;JUN', 'FXYYYY MON')</literal> returns an error
        because <function>to_timestamp</function> expects one space only.
+       <literal>FX</literal> must be specified as the first item in
+       the template.
       </para>
      </listitem>
 
@@ -5140,15 +5142,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        If you want to have a double quote in the output you must
        precede it with a backslash, for example <literal>E'\\"YYYY
        Month\\"'</literal>. <!-- "" font-lock sanity :-) -->
-       (Two backslashes are necessary because the backslash already
-       has a special meaning when using the escape string syntax.)
+       (Two backslashes are necessary because the backslash
+       has special meaning when using the escape string syntax.)
       </para>
      </listitem>
 
      <listitem>
       <para>
        The <literal>YYYY</literal> conversion from string to <type>timestamp</type> or
-       <type>date</type> has a restriction if you use a year with more than 4 digits. You must
+       <type>date</type> has a restriction when processing years with more than 4 digits. You must
        use some non-digit character or template after <literal>YYYY</literal>,
        otherwise the year is always interpreted as 4 digits. For example
        (with the year 20000):
@@ -5163,7 +5165,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      <listitem>
       <para>
        In conversions from string to <type>timestamp</type> or
-       <type>date</type>, the <literal>CC</literal> field is ignored if there
+       <type>date</type>, the <literal>CC</literal> field (century) is ignored if there
        is a <literal>YYY</literal>, <literal>YYYY</literal> or
        <literal>Y,YYY</literal> field. If <literal>CC</literal> is used with
        <literal>YY</literal> or <literal>Y</literal> then the year is computed
@@ -5173,16 +5175,22 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
-       An ISO week date (as distinct from a Gregorian date) can be specified to <function>to_timestamp</function> and <function>to_date</function> in one of two ways:
+       An ISO week date (as distinct from a Gregorian date) can be
+       specified to <function>to_timestamp</function> and
+       <function>to_date</function> in one of two ways:
        <itemizedlist>
         <listitem>
          <para>
-          Year, week and weekday, for example <literal>to_date('2006-42-4', 'IYYY-IW-ID')</literal> returns the date <literal>2006-10-19</literal>.  If you omit the weekday it is assumed to be 1 (Monday).
+          Year, week, and weekday:  for example <literal>to_date('2006-42-4',
+          'IYYY-IW-ID')</literal> returns the date
+          <literal>2006-10-19</literal>.  If you omit the weekday it
+          is assumed to be 1 (Monday).
          </para>
         </listitem>
         <listitem>
          <para>
-          Year and day of year, for example <literal>to_date('2006-291', 'IYYY-IDDD')</literal> also returns <literal>2006-10-19</literal>.
+          Year and day of year:  for example <literal>to_date('2006-291',
+          'IYYY-IDDD')</literal> also returns <literal>2006-10-19</literal>.
          </para>
         </listitem>
        </itemizedlist>
@@ -5192,16 +5200,17 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        Gregorian date fields is nonsensical, and will cause an error.  In the
        context of an ISO year, the concept of a <quote>month</> or <quote>day
        of month</> has no meaning.  In the context of a Gregorian year, the
-       ISO week has no meaning.  Users should take care to keep Gregorian and
-       ISO date specifications separate.
+       ISO week has no meaning.  Users should avoid mixing Gregorian and
+       ISO date specifications.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Millisecond (<literal>MS</literal>) and microsecond (<literal>US</literal>)
-       values in a conversion from string to <type>timestamp</type> are used as part of the
-       seconds after the decimal point. For example 
+       In a conversion from string to <type>timestamp</type>, millisecond
+       (<literal>MS</literal>) and microsecond (<literal>US</literal>)
+       values are used as the
+       seconds digits after the decimal point. For example 
        <literal>to_timestamp('12:3', 'SS:MS')</literal> is not 3 milliseconds,
        but 300, because the conversion counts it as 12 + 0.3 seconds.
        This means for the format <literal>SS:MS</literal>, the input values
@@ -5232,7 +5241,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      <listitem>
       <para><function>to_char(interval)</function> formats <literal>HH</> and 
         <literal>HH12</> as hours in a single day, while <literal>HH24</>
-        can output hours exceeding a single day, e.g. &gt;24.
+        can output hours exceeding a single day, e.g., &gt;24.
       </para>
      </listitem>
 
@@ -5304,7 +5313,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>RN</literal></entry>
-        <entry>roman numeral (input between 1 and 3999)</entry>
+        <entry>Roman numeral (input between 1 and 3999)</entry>
        </row>
        <row>
         <entry><literal>TH</literal> or <literal>th</literal></entry>
@@ -5316,7 +5325,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>EEEE</literal></entry>
-        <entry>scientific notation (not implemented yet)</entry>
+        <entry>scientific notation (not implemented)</entry>
        </row>
       </tbody>
      </tgroup>
@@ -5331,10 +5340,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        A sign formatted using <literal>SG</literal>, <literal>PL</literal>, or
        <literal>MI</literal> is not anchored to
        the number; for example,
-       <literal>to_char(-12, 'S9999')</literal> produces <literal>'&nbsp;&nbsp;-12'</literal>,
-       but <literal>to_char(-12, 'MI9999')</literal> produces <literal>'-&nbsp;&nbsp;12'</literal>.
+       <literal>to_char(-12, 'MI9999')</literal> produces <literal>'-&nbsp;&nbsp;12'</literal>
+       but <literal>to_char(-12, 'S9999')</literal> produces <literal>'&nbsp;&nbsp;-12'</literal>.
        The Oracle implementation does not allow the use of
-       <literal>MI</literal> ahead of <literal>9</literal>, but rather
+       <literal>MI</literal> before <literal>9</literal>, but rather
        requires that <literal>9</literal> precede
        <literal>MI</literal>.
       </para>
@@ -5371,8 +5380,8 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <replaceable>n</replaceable> is the number of digits following
        <literal>V</literal>. 
        <function>to_char</function> does not support the use of
-       <literal>V</literal> combined with a decimal point.
-       (E.g., <literal>99.9V99</literal> is not allowed.)
+       <literal>V</literal> with non-integer values.
+       (e.g., <literal>99.9V99</literal> is not allowed.)
       </para>
      </listitem>
     </itemizedlist>
@@ -5666,7 +5675,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry> <literal>-</literal> </entry>
         <entry><literal>date '2001-10-01' - date '2001-09-28'</literal></entry>
-        <entry><literal>integer '3'</literal></entry>
+        <entry><literal>integer '3'</literal> (days)</entry>
        </row>
 
        <row>
@@ -5819,7 +5828,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal><function>age</function>(<type>timestamp</type>)</literal></entry>
         <entry><type>interval</type></entry>
-        <entry>Subtract from <function>current_date</function></entry>
+        <entry>Subtract from <function>current_date</function> (at midnight)</entry>
         <entry><literal>age(timestamp '1957-06-13')</literal></entry>
         <entry><literal>43 years 8 mons 3 days</literal></entry>
        </row>
@@ -5941,16 +5950,16 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal><function>justify_days</function>(<type>interval</type>)</literal></entry>
         <entry><type>interval</type></entry>
         <entry>Adjust interval so 30-day time periods are represented as months</entry>
-        <entry><literal>justify_days(interval '30 days')</literal></entry>
-        <entry><literal>1 month</literal></entry>
+        <entry><literal>justify_days(interval '35 days')</literal></entry>
+        <entry><literal>1 mon 5 days</literal></entry>
        </row>
 
        <row>
         <entry><literal><function>justify_hours</function>(<type>interval</type>)</literal></entry>
         <entry><type>interval</type></entry>
         <entry>Adjust interval so 24-hour time periods are represented as days</entry>
-        <entry><literal>justify_hours(interval '24 hours')</literal></entry>
-        <entry><literal>1 day</literal></entry>
+        <entry><literal>justify_hours(interval '27 hours')</literal></entry>
+        <entry><literal>1 day 03:00:00</literal></entry>
        </row>
 
        <row>
@@ -6094,8 +6103,8 @@ EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
     such as year or hour from date/time values.
     <replaceable>source</replaceable> must be a value expression of
     type <type>timestamp</type>, <type>time</type>, or <type>interval</type>.
-    (Expressions of type <type>date</type> will
-    be cast to <type>timestamp</type> and can therefore be used as
+    (Expressions of type <type>date</type> are
+    cast to <type>timestamp</type> and can therefore be used as
     well.)  <replaceable>field</replaceable> is an identifier or
     string that selects what field to extract from the source value.
     The <function>extract</function> function returns values of type
@@ -6108,7 +6117,7 @@ EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
       <term><literal>century</literal></term>
       <listitem>
        <para>
-        The century
+        The century:
        </para>
 
 <screen>
@@ -6122,7 +6131,7 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
         The first century starts at 0001-01-01 00:00:00 AD, although
         they did not know it at the time. This definition applies to all
         Gregorian calendar countries. There is no century number 0,
-        you go from -1 to 1.
+        you go from -1 century to 1 century.
 
         If you disagree with this, please write your complaint to:
         Pope, Cathedral Saint-Peter of Roma, Vatican.
@@ -6178,7 +6187,7 @@ SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
 </screen>
        <para>
         Note that <function>extract</function>'s day of the week numbering
-        is different from that of the <function>to_char(...,
+        differs from that of the <function>to_char(...,
         'D')</function> function.
        </para>
 
@@ -6204,7 +6213,7 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
       <listitem>
        <para>
         For <type>date</type> and <type>timestamp</type> values, the
-        number of seconds since 1970-01-01 00:00:00-00 (can be negative);
+        number of seconds since 1970-01-01 00:00:00-00 GMT (can be negative);
         for <type>interval</type> values, the total number
         of seconds in the interval
        </para>
@@ -6266,7 +6275,7 @@ SELECT EXTRACT(ISODOW FROM TIMESTAMP '2001-02-18 20:38:40');
       <term><literal>isoyear</literal></term>
       <listitem>
        <para>
-        The <acronym>ISO</acronym> 8601 year that the date falls in (not applicable to intervals).
+        The <acronym>ISO</acronym> 8601 year that the date falls in (not applicable to intervals)
        </para>
 
 <screen>
@@ -6290,7 +6299,7 @@ SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
       <listitem>
        <para>
         The seconds field, including fractional parts, multiplied by 1
-        000 000.  Note that this includes full seconds.
+        000 000;  note that this includes full seconds
        </para>
 
 <screen>
@@ -6314,7 +6323,7 @@ SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
 
        <para>
         Years in the 1900s are in the second millennium.
-        The third millennium starts January 1, 2001.
+        The third millennium started January 1, 2001.
        </para>
 
        <para>
@@ -6380,7 +6389,7 @@ SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
       <term><literal>quarter</literal></term>
       <listitem>
        <para>
-        The quarter of the year (1 - 4) that the day is in
+        The quarter of the year (1 - 4) that the date is in
        </para>
 
 <screen>
@@ -6527,8 +6536,8 @@ date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>
     <replaceable>source</replaceable> is a value expression of type
     <type>timestamp</type> or <type>interval</>.
     (Values of type <type>date</type> and
-    <type>time</type> are cast automatically, to <type>timestamp</type> or
-    <type>interval</> respectively.)
+    <type>time</type> are cast automatically to <type>timestamp</type> or
+    <type>interval</>, respectively.)
     <replaceable>field</replaceable> selects to which precision to
     truncate the input value.  The return value is of type
     <type>timestamp</type> or <type>interval</>
@@ -6611,7 +6620,8 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
          <literal><type>timestamp with time zone</type> AT TIME ZONE <replaceable>zone</></literal>
         </entry>
         <entry><type>timestamp without time zone</type></entry>
-        <entry>Convert given time stamp <emphasis>with time zone</> to the new time zone</entry>
+        <entry>Convert given time stamp <emphasis>with time zone</> to the new time
+        zone, with no time zone designation</entry>
        </row>
 
        <row>
@@ -6634,7 +6644,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    </para>
 
    <para>
-    Examples (supposing that the local time zone is <literal>PST8PDT</>):
+    Examples (assuming the local time zone is <literal>PST8PDT</>):
 <screen>
 SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'MST';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 19:38:40-08</computeroutput>
@@ -6698,7 +6708,7 @@ LOCALTIMESTAMP(<replaceable>precision</replaceable>)
      <function>CURRENT_TIMESTAMP</function>,
      <function>LOCALTIME</function>, and
      <function>LOCALTIMESTAMP</function>
-     can optionally be given
+     can optionally take
      a precision parameter, which causes the result to be rounded
      to that many fractional digits in the seconds field.  Without a precision parameter,
      the result is given to the full available precision.
@@ -6747,20 +6757,15 @@ SELECT LOCALTIMESTAMP;
     current time at the instant the function is called.  The complete list
     of non-SQL-standard time functions is:
 <synopsis>
-now()
 transaction_timestamp()
 statement_timestamp()
 clock_timestamp()
 timeofday()
+now()
 </synopsis>
    </para>
 
    <para>
-    <function>now()</> is a traditional <productname>PostgreSQL</productname>
-    equivalent to <function>CURRENT_TIMESTAMP</function>.
-    <function>transaction_timestamp()</> is likewise equivalent to
-    <function>CURRENT_TIMESTAMP</function>, but is named to clearly reflect
-    what it returns.
     <function>statement_timestamp()</> returns the start time of the current
     statement (more specifically, the time of receipt of the latest command
     message from the client).
@@ -6774,6 +6779,11 @@ timeofday()
     <function>clock_timestamp()</>, it returns the actual current time,
     but as a formatted <type>text</> string rather than a <type>timestamp
     with time zone</> value.
+    <function>now()</> is a traditional <productname>PostgreSQL</productname>
+    equivalent to <function>CURRENT_TIMESTAMP</function>.
+    <function>transaction_timestamp()</> is likewise equivalent to
+    <function>CURRENT_TIMESTAMP</function>, but is named to clearly reflect
+    what it returns.
    </para>
 
    <para>
@@ -7135,7 +7145,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
      Before <productname>PostgreSQL</productname> 8.2, the containment
      operators <literal>@&gt;</> and <literal>&lt;@</> were respectively
      called <literal>~</> and <literal>@</>.  These names are still
-     available, but are deprecated and will eventually be retired.
+     available, but are deprecated and will eventually be removed.
     </para>
    </note>
 
@@ -7406,7 +7416,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
     <para>
      It is possible to access the two component numbers of a <type>point</>
-     as though it were an array with indices 0 and 1.  For example, if
+     as though they were an array with indices 0 and 1.  For example, if
      <literal>t.p</> is a <type>point</> column then
      <literal>SELECT p[0] FROM t</> retrieves the X coordinate and
      <literal>UPDATE t SET p[1] = ...</> changes the Y coordinate.
@@ -7422,7 +7432,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
      <type>path</type> are non-intersecting.  For example, the
      <type>path</type>
      <literal>'((0,0),(0,1),(2,1),(2,2),(1,2),(1,0),(0,0))'::PATH</literal>
-     won't work, however, the following visually identical
+     will not work;  however, the following visually identical
      <type>path</type>
      <literal>'((0,0),(0,1),(1,1),(1,2),(2,2),(2,1),(1,1),(1,0),(0,0))'::PATH</literal>
      will work.  If the concept of an intersecting versus
@@ -7442,8 +7452,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    The operators <literal>&lt;&lt;</literal>,
    <literal>&lt;&lt;=</literal>, <literal>&gt;&gt;</literal>, and
    <literal>&gt;&gt;=</literal> test for subnet inclusion.  They
-   consider only the network parts of the two addresses, ignoring any
-   host part, and determine whether one network part is identical to
+   consider only the network parts of the two addresses (ignoring any
+   host part) and determine whether one network is identical to
    or a subnet of the other.
   </para>
 
@@ -7545,8 +7555,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
   <para>
    <xref linkend="cidr-inet-functions-table"> shows the functions
    available for use with the <type>cidr</type> and <type>inet</type>
-   types.  The <function>host</function>,
-   <function>text</function>, and <function>abbrev</function>
+   types.  The <function>abbrev</function>, <function>host</function>,
+   and <function>text</function>
    functions are primarily intended to offer alternative display
    formats.
   </para>
@@ -8066,8 +8076,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     <para>
      The function <function>xmlcomment</function> creates an XML value
      containing an XML comment with the specified text as content.
-     The text cannot contain <literal>--</literal> or end with a
-     <literal>-</literal> so that the resulting construct is a valid
+     The text cannot contain <quote><literal>--</literal></quote> or end with a
+     <quote><literal>-</literal></quote> so that the resulting construct is a valid
      XML comment.  If the argument is null, the result is null.
     </para>
 
@@ -8197,7 +8207,7 @@ SELECT xmlelement(name "foo$bar", xmlattributes('xyz' as "a&b"));
     <para>
      An explicit attribute name need not be specified if the attribute
      value is a column reference, in which case the column's name will
-     be used as attribute name by default.  In any other case, the
+     be used as the attribute name by default.  In other cases, the
      attribute must be given an explicit name.  So this example is
      valid:
 <screen>
@@ -8213,7 +8223,7 @@ SELECT xmlelement(name test, xmlattributes(func(a, b))) FROM test;
 
     <para>
      Element content, if specified, will be formatted according to
-     data type.  If the content is itself of type <type>xml</type>,
+     the data type.  If the content is itself of type <type>xml</type>,
      complex XML documents can be constructed.  For example:
 <screen><![CDATA[
 SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
@@ -8264,7 +8274,9 @@ SELECT xmlforest('abc' AS foo, 123 AS bar);
  <foo>abc</foo><bar>123</bar>
 
 
-SELECT xmlforest(table_name, column_name) FROM information_schema.columns WHERE table_schema = 'pg_catalog';
+SELECT xmlforest(table_name, column_name)
+FROM information_schema.columns
+WHERE table_schema = 'pg_catalog';
 
                                          xmlforest
 -------------------------------------------------------------------------------------------
@@ -8287,7 +8299,7 @@ SELECT xmlforest(table_name, column_name) FROM information_schema.columns WHERE 
 
     <para>
      Note that XML forests are not valid XML documents if they consist
-     of more than one element.  So it might be useful to wrap
+     of more than one element, so it might be useful to wrap
      <function>xmlforest</function> expressions in
      <function>xmlelement</function>.
     </para>
@@ -8330,20 +8342,21 @@ SELECT xmlpi(name php, 'echo "hello world";');
    </indexterm>
  
  <synopsis>
- <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable>|no value <optional>, standalone yes|no|no value</optional>)
+ <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable> | no value <optional>, standalone yes|no|no value</optional>)
  </synopsis>
  
     <para>
      The <function>xmlroot</function> expression alters the properties
      of the root node of an XML value.  If a version is specified,
-     this replaces the value in the version declaration, if a
+     this replaces the value in the version declaration;  if a
      standalone value is specified, this replaces the value in the
      standalone declaration.
     </para>
 
     <para>
 <screen><![CDATA[
-SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'), version '1.0', standalone yes);
+SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'), 
+               version '1.0', standalone yes);
 
                 xmlroot
 ----------------------------------------
@@ -8464,7 +8477,8 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
    <para>
     Example:
 <screen><![CDATA[
-SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>', ARRAY[ARRAY['my', 'http://example.com']]);
+SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>', 
+             ARRAY[ARRAY['my', 'http://example.com']]);
 
  xpath  
 --------
@@ -8483,11 +8497,12 @@ SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>', 
 
    <para>
     The following functions map the contents of relational tables to
-    XML values.  They can be thought of as XML export functionality.
+    XML values.  They can be thought of as XML export functionality:
 <synopsis>
 table_to_xml(tbl regclass, nulls boolean, tableforest boolean, targetns text)
 query_to_xml(query text, nulls boolean, tableforest boolean, targetns text)
-cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xml(cursor refcursor, count int, nulls boolean, 
+              tableforest boolean, targetns text)
 </synopsis>
     The return type of each function is <type>xml</type>.
    </para>
@@ -8502,7 +8517,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
     <parameter>query</parameter> and maps the result set.
     <function>cursor_to_xml</function> fetches the indicated number of
     rows from the cursor specified by the parameter
-    <parameter>cursor</parameter>.  This variant is recommendable if
+    <parameter>cursor</parameter>.  This variant is recommended if
     large tables have to be mapped, because the result value is built
     up in memory by each function.
    </para>
@@ -8564,7 +8579,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
    <para>
     The parameter <parameter>nulls</parameter> determines whether null
     values should be included in the output.  If true, null values in
-    columns are represented as
+    columns are represented as:
 <screen><![CDATA[
 <columnname xsi:nil="true"/>
 ]]></screen>
@@ -8581,9 +8596,8 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
    </para>
 
    <para>
-    The following functions return XML Schema documents describing the
-    mappings made by the data mappings produced by the corresponding
-    functions above.
+    The following functions return XML Schema documents similar to the
+    mappings produced by the corresponding functions above:
 <synopsis>
 table_to_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
 query_to_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
@@ -8597,7 +8611,7 @@ cursor_to_xmlschema(cursor refcursor, nulls boolean, tableforest boolean, target
     The following functions produce XML data mappings and the
     corresponding XML Schema in one document (or forest), linked
     together.  They can be useful where self-contained and
-    self-describing results are wanted.
+    self-describing results are wanted:
 <synopsis>
 table_to_xml_and_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
 query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
@@ -8607,7 +8621,7 @@ query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targe
    <para>
     In addition, the following functions are available to produce
     analogous mappings of entire schemas or the entire current
-    database.
+    database:
 <synopsis>
 schema_to_xml(schema name, nulls boolean, tableforest boolean, targetns text)
 schema_to_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
@@ -8620,7 +8634,7 @@ database_to_xml_and_xmlschema(nulls boolean, tableforest boolean, targetns text)
 
     Note that these potentially produce a lot of data, which needs to
     be built up in memory.  When requesting content mappings of large
-    schemas or databases, it may be worthwhile to consider mapping the
+    schemas or databases, it might be worthwhile to consider mapping the
     tables separately instead, possibly even through a cursor.
    </para>
 
@@ -8664,12 +8678,12 @@ table2-mapping
    </para>
 
    <para>
-    As an example for using the output produced by these functions,
+    As an example of using the output produced by these functions,
     <xref linkend="xslt-xml-html"> shows an XSLT stylesheet that
     converts the output of
     <function>table_to_xml_and_xmlschema</function> to an HTML
     document containing a tabular rendition of the table data.  In a
-    similar manner, the result data of these functions can be
+    similar manner, the results from these functions can be
     converted into other XML-based formats.
    </para>
 
@@ -8798,13 +8812,13 @@ table2-mapping
    </table>
 
   <para>
-   The sequence to be operated on by a sequence-function call is specified by
-   a <type>regclass</> argument, which is just the OID of the sequence in the
+   The sequence to be operated on by a sequence function is specified by
+   a <type>regclass</> argument, which is simply the OID of the sequence in the
    <structname>pg_class</> system catalog.  You do not have to look up the
    OID by hand, however, since the <type>regclass</> data type's input
    converter will do the work for you.  Just write the sequence name enclosed
-   in single quotes, so that it looks like a literal constant.  To
-   achieve some compatibility with the handling of ordinary
+   in single quotes so that it looks like a literal constant.  For
+   compatibility with the handling of ordinary
    <acronym>SQL</acronym> names, the string will be converted to lowercase
    unless it contains double quotes around the sequence name.  Thus:
 <programlisting>
@@ -8839,7 +8853,7 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
     Since this is really just an OID, it will track the originally
     identified sequence despite later renaming, schema reassignment,
     etc.  This <quote>early binding</> behavior is usually desirable for
-    sequence references in column defaults and views.  But sometimes you will
+    sequence references in column defaults and views.  But sometimes you might
     want <quote>late binding</> where the sequence reference is resolved
     at run time.  To get late-binding behavior, force the constant to be
     stored as a <type>text</> constant instead of <type>regclass</>:
@@ -8881,7 +8895,7 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         Return the value most recently obtained by <function>nextval</function>
         for this sequence in the current session.  (An error is
         reported if <function>nextval</function> has never been called for this
-        sequence in this session.)  Notice that because this is returning
+        sequence in this session.)  Because this is returning
         a session-local value, it gives a predictable answer whether or not
         other sessions have executed <function>nextval</function> since the
         current session did.
@@ -8897,8 +8911,8 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         <function>nextval</> in the current session. This function is
         identical to <function>currval</function>, except that instead
         of taking the sequence name as an argument it fetches the
-        value of the last sequence that <function>nextval</function>
-        was used on in the current session. It is an error to call
+        value of the last sequence used by <function>nextval</function>
+        in the current session. It is an error to call
         <function>lastval</function> if <function>nextval</function>
         has not yet been called in the current session.
        </para>
@@ -8916,9 +8930,9 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         <function>nextval</function> will advance the sequence before
         returning a value.  The value reported by <function>currval</> is
         also set to the specified value.  In the three-parameter form,
-        <literal>is_called</literal> can be set either <literal>true</literal>
+        <literal>is_called</literal> can be set to either <literal>true</literal>
         or <literal>false</literal>.  <literal>true</> has the same effect as
-        the two-parameter form. If it's set to <literal>false</literal>, the
+        the two-parameter form. If it is set to <literal>false</literal>, the
         next <function>nextval</function> will return exactly the specified
         value, and sequence advancement commences with the following
         <function>nextval</function>.  Furthermore, the value reported by
@@ -8941,7 +8955,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
 
   <para>
    If a sequence object has been created with default parameters,
-   <function>nextval</function> calls on it will return successive values
+   <function>nextval</function> will return successive values
    beginning with 1.  Other behaviors can be obtained by using
    special parameters in the <xref linkend="sql-createsequence" endterm="sql-createsequence-title"> command;
    see its command reference page for more information.
@@ -8949,7 +8963,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
 
   <important>
    <para>
-    To avoid blocking of concurrent transactions that obtain numbers from the
+    To avoid blocking concurrent transactions that obtain numbers from the
     same sequence, a <function>nextval</function> operation is never rolled back;
     that is, once a value has been fetched it is considered used, even if the
     transaction that did the <function>nextval</function> later aborts.  This means
@@ -8981,7 +8995,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
   <tip>
    <para>
     If your needs go beyond the capabilities of these conditional
-    expressions you might want to consider writing a stored procedure
+    expressions, you might want to consider writing a stored procedure
     in a more expressive programming language.
    </para>
   </tip>
@@ -8992,7 +9006,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
   <para>
    The <acronym>SQL</acronym> <token>CASE</token> expression is a
    generic conditional expression, similar to if/else statements in
-   other languages:
+   other programming languages:
 
 <synopsis>
 CASE WHEN <replaceable>condition</replaceable> THEN <replaceable>result</replaceable>
@@ -9004,12 +9018,12 @@ END
    <token>CASE</token> clauses can be used wherever
    an expression is valid.  <replaceable>condition</replaceable> is an
    expression that returns a <type>boolean</type> result.  If the result is true
-   then the value of the <token>CASE</token> expression is the
-   <replaceable>result</replaceable> that follows the condition.  If the result is false any
+   the value of the <token>CASE</token> expression is the
+   <replaceable>result</replaceable> that follows the condition.  If the result is false
    subsequent <token>WHEN</token> clauses are searched in the same
    manner.  If no <token>WHEN</token>
    <replaceable>condition</replaceable> is true then the value of the
-   case expression is the <replaceable>result</replaceable> in the
+   case expression is the <replaceable>result</replaceable> of the
    <token>ELSE</token> clause.  If the <token>ELSE</token> clause is
    omitted and no condition matches, the result is null.
   </para>
@@ -9044,12 +9058,12 @@ SELECT a,
   <para>
    The data types of all the <replaceable>result</replaceable>
    expressions must be convertible to a single output type.
-   See <xref linkend="typeconv-union-case"> for more detail.
+   See <xref linkend="typeconv-union-case"> for more details.
   </para>
 
   <para>
-   The following <quote>simple</quote> <token>CASE</token> expression is a
-   specialized variant of the general form above:
+   The following <token>CASE</token> expression is a
+   variant of the general form above:
 
 <synopsis>
 CASE <replaceable>expression</replaceable>
@@ -9061,9 +9075,9 @@ END
 
    The
    <replaceable>expression</replaceable> is computed and compared to
-   all the <replaceable>value</replaceable> specifications in the
+   all the <replaceable>value</replaceable>s in the
    <token>WHEN</token> clauses until one is found that is equal.  If
-   no match is found, the <replaceable>result</replaceable> in the
+   no match is found, the <replaceable>result</replaceable> of the
    <token>ELSE</token> clause (or a null value) is returned.  This is similar
    to the <function>switch</function> statement in C.
   </para>
@@ -9088,8 +9102,8 @@ SELECT a,
    </para>
 
    <para>
-    A <token>CASE</token> expression does not evaluate any subexpressions
-    that are not needed to determine the result.  For example, this is a
+    A <token>CASE</token> expression evaluates any subexpressions
+    that are needed to determine the result.  For example, this is a
     possible way of avoiding a division-by-zero failure:
 <programlisting>
 SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
@@ -9127,8 +9141,8 @@ SELECT COALESCE(description, short_description, '(none)') ...
   </para>
 
    <para>
-    Like a <token>CASE</token> expression, <function>COALESCE</function> will
-    not evaluate arguments that are not needed to determine the result;
+    Like a <token>CASE</token> expression, <function>COALESCE</function> only
+    evaluates arguments that are needed to determine the result;
     that is, arguments to the right of the first non-null argument are
     not evaluated.  This SQL-standard function provides capabilities similar
     to <function>NVL</> and <function>IFNULL</>, which are used in some other
@@ -9149,8 +9163,8 @@ SELECT COALESCE(description, short_description, '(none)') ...
 
   <para>
    The <function>NULLIF</function> function returns a null value if
-   <replaceable>value1</replaceable> and <replaceable>value2</replaceable>
-   are equal;  otherwise it returns <replaceable>value1</replaceable>.
+   <replaceable>value1</replaceable> equals <replaceable>value2</replaceable>;
+   otherwise it returns <replaceable>value1</replaceable>.
    This can be used to perform the inverse operation of the
    <function>COALESCE</function> example given above:
 <programlisting>
@@ -9335,7 +9349,7 @@ SELECT NULLIF(value, '(none)') ...
   <para>
    <xref linkend="array-functions-table"> shows the functions
    available for use with array types. See <xref linkend="arrays">
-   for more discussion and examples of the use of these functions.
+   for more information  and examples of the use of these functions.
   </para>
 
   <indexterm>
@@ -9485,7 +9499,7 @@ SELECT NULLIF(value, '(none)') ...
          </literal>
         </entry>
         <entry><type>text</type></entry>
-        <entry>concatenates array elements using provided delimiter</entry>
+        <entry>concatenates array elements using supplied delimiter</entry>
         <entry><literal>array_to_string(ARRAY[1, 2, 3], '~^~')</literal></entry>
         <entry><literal>1~^~2~^~3</literal></entry>
        </row>
@@ -9507,7 +9521,7 @@ SELECT NULLIF(value, '(none)') ...
          </literal>
         </entry>
         <entry><type>text[]</type></entry>
-        <entry>splits string into array elements using provided delimiter</entry>
+        <entry>splits string into array elements using supplied delimiter</entry>
         <entry><literal>string_to_array('xx~^~yy~^~zz', '~^~')</literal></entry>
         <entry><literal>{xx,yy,zz}</literal></entry>
        </row>
@@ -9542,7 +9556,7 @@ SELECT NULLIF(value, '(none)') ...
 
   <para>
    <firstterm>Aggregate functions</firstterm> compute a single result
-   value from a set of input values.  The built-in aggregate functions
+   from a set of input values.  The built-in aggregate functions
    are listed in
    <xref linkend="functions-aggregate-table"> and
    <xref linkend="functions-aggregate-statistics-table">.
@@ -9595,7 +9609,7 @@ SELECT NULLIF(value, '(none)') ...
        precision</type>, <type>numeric</type>, or <type>interval</type>
       </entry>
       <entry>
-       <type>numeric</type> for any integer type argument,
+       <type>numeric</type> for any integer-type argument,
        <type>double precision</type> for a floating-point argument,
        otherwise the same as the argument data type
       </entry>
@@ -9787,8 +9801,8 @@ SELECT NULLIF(value, '(none)') ...
 <programlisting>
 SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
 </programlisting>
-      Here <function>ANY</function> can be considered both as leading
-      to a subquery or as an aggregate if the select expression returns 1 row.
+      Here <function>ANY</function> can be considered as leading either
+      to a subquery or to an aggregate, if the select expression returns one row.
       Thus the standard name cannot be given to these aggregates.
     </para>
   </note>
@@ -9796,14 +9810,14 @@ SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
   <note>
    <para>
     Users accustomed to working with other SQL database management
-    systems might be surprised by the performance of the
+    systems might be disappointed by the performance of the
     <function>count</function> aggregate when it is applied to the
     entire table. A query like:
 <programlisting>
 SELECT count(*) FROM sometable;
 </programlisting>
     will be executed by <productname>PostgreSQL</productname> using a
-    sequential scan of the entire table.
+    sequential scan of an entire table.
    </para>
   </note>
 
@@ -10517,17 +10531,17 @@ EXISTS (<replaceable>subquery</replaceable>)
   </para>
 
   <para>
-   The subquery will generally only be executed far enough to determine
+   The subquery will generally only be executed long enough to determine
    whether at least one row is returned, not all the way to completion.
-   It is unwise to write a subquery that has any side effects (such as
-   calling sequence functions); whether the side effects occur or not
-   might be difficult to predict.
+   It is unwise to write a subquery that has side effects (such as
+   calling sequence functions); whether the side effects occur
+   might be unpredictable.
   </para>
 
   <para>
    Since the result depends only on whether any rows are returned,
    and not on the contents of those rows, the output list of the
-   subquery is normally uninteresting.  A common coding convention is
+   subquery is normally unimportant.  A common coding convention is
    to write all <literal>EXISTS</> tests in the form
    <literal>EXISTS(SELECT 1 WHERE ...)</literal>.  There are exceptions to
    this rule however, such as subqueries that use <token>INTERSECT</token>.
@@ -10536,10 +10550,11 @@ EXISTS (<replaceable>subquery</replaceable>)
   <para>
    This simple example is like an inner join on <literal>col2</>, but
    it produces at most one output row for each <literal>tab1</> row,
-   even if there are multiple matching <literal>tab2</> rows:
+   even if there are several matching <literal>tab2</> rows:
 <screen>
-SELECT col1 FROM tab1
-    WHERE EXISTS(SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
+SELECT col1
+FROM tab1
+WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
 </screen>
   </para>
   </sect2>
@@ -10556,7 +10571,7 @@ SELECT col1 FROM tab1
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result.
    The result of <token>IN</token> is <quote>true</> if any equal subquery row is found.
-   The result is <quote>false</> if no equal row is found (including the special
+   The result is <quote>false</> if no equal row is found (including the
    case where the subquery returns no rows).
   </para>
 
@@ -10585,7 +10600,7 @@ SELECT col1 FROM tab1
    expressions in the left-hand row.  The left-hand expressions are
    evaluated and compared row-wise to each row of the subquery result.
    The result of <token>IN</token> is <quote>true</> if any equal subquery row is found.
-   The result is <quote>false</> if no equal row is found (including the special
+   The result is <quote>false</> if no equal row is found (including the
    case where the subquery returns no rows).
   </para>
 
@@ -10612,7 +10627,7 @@ SELECT col1 FROM tab1
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result.
    The result of <token>NOT IN</token> is <quote>true</> if only unequal subquery rows
-   are found (including the special case where the subquery returns no rows).
+   are found (including the case where the subquery returns no rows).
    The result is <quote>false</> if any equal row is found.
   </para>
 
@@ -10641,7 +10656,7 @@ SELECT col1 FROM tab1
    expressions in the left-hand row.  The left-hand expressions are
    evaluated and compared row-wise to each row of the subquery result.
    The result of <token>NOT IN</token> is <quote>true</> if only unequal subquery rows
-   are found (including the special case where the subquery returns no rows).
+   are found (including the case where the subquery returns no rows).
    The result is <quote>false</> if any equal row is found.
   </para>
 
@@ -10671,7 +10686,7 @@ SELECT col1 FROM tab1
    given <replaceable>operator</replaceable>, which must yield a Boolean
    result.
    The result of <token>ANY</token> is <quote>true</> if any true result is obtained.
-   The result is <quote>false</> if no true result is found (including the special
+   The result is <quote>false</> if no true result is found (including the
    case where the subquery returns no rows).
   </para>
 
@@ -10709,7 +10724,7 @@ SELECT col1 FROM tab1
    The result of <token>ANY</token> is <quote>true</> if the comparison
    returns true for any subquery row.
    The result is <quote>false</> if the comparison returns false for every
-   subquery row (including the special case where the subquery returns no
+   subquery row (including the case where the subquery returns no
    rows).
    The result is NULL if the comparison does not return true for any row,
    and it returns NULL for at least one row.
@@ -10735,7 +10750,7 @@ SELECT col1 FROM tab1
    given <replaceable>operator</replaceable>, which must yield a Boolean
    result.
    The result of <token>ALL</token> is <quote>true</> if all rows yield true
-   (including the special case where the subquery returns no rows).
+   (including the case where the subquery returns no rows).
    The result is <quote>false</> if any false result is found.
    The result is NULL if the comparison does not return false for any row,
    and it returns NULL for at least one row.
@@ -10763,7 +10778,7 @@ SELECT col1 FROM tab1
    evaluated and compared row-wise to each row of the subquery result,
    using the given <replaceable>operator</replaceable>.
    The result of <token>ALL</token> is <quote>true</> if the comparison
-   returns true for all subquery rows (including the special
+   returns true for all subquery rows (including the
    case where the subquery returns no rows).
    The result is <quote>false</> if the comparison returns false for any
    subquery row.
@@ -10855,7 +10870,7 @@ SELECT col1 FROM tab1
    The forms involving array subexpressions are
    <productname>PostgreSQL</productname> extensions; the rest are
    <acronym>SQL</acronym>-compliant.
-   All of the expression forms documented in this section return
+   All of the expressions documented in this section return
    Boolean (true/false) results.
   </para>
 
@@ -10926,7 +10941,7 @@ AND
    <literal>x NOT IN y</literal> is equivalent to <literal>NOT (x IN y)</literal> in all
    cases.  However, null values are much more likely to trip up the novice when
    working with <token>NOT IN</token> than when working with <token>IN</token>.
-   It's best to express your condition positively if possible.
+   It is best to express your condition positively if possible.
   </para>
   </tip>
   </sect2>
@@ -10947,7 +10962,7 @@ AND
    given <replaceable>operator</replaceable>, which must yield a Boolean
    result.
    The result of <token>ANY</token> is <quote>true</> if any true result is obtained.
-   The result is <quote>false</> if no true result is found (including the special
+   The result is <quote>false</> if no true result is found (including the
    case where the array has zero elements).
   </para>
 
@@ -10983,7 +10998,7 @@ AND
    given <replaceable>operator</replaceable>, which must yield a Boolean
    result.
    The result of <token>ALL</token> is <quote>true</> if all comparisons yield true
-   (including the special case where the array has zero elements).
+   (including the case where the array has zero elements).
    The result is <quote>false</> if any false result is found.
   </para>
 
@@ -11066,8 +11081,8 @@ AND
    This construct is similar to a <literal>&lt;&gt;</literal> row comparison,
    but it does not yield null for null inputs.  Instead, any null value is
    considered unequal to (distinct from) any non-null value, and any two
-   nulls are considered equal (not distinct).  Thus the result will always
-   be either true or false, never null.
+   nulls are considered equal (not distinct).  Thus the result will
+   either be true or false, never null.
   </para>
 
 <synopsis>
@@ -11173,7 +11188,7 @@ AND
    Zero rows are also returned for <literal>NULL</literal> inputs. It is an error
    for <parameter>step</parameter> to be zero. Some examples follow:
 <programlisting>
-select * from generate_series(2,4);
+SELECT * FROM generate_series(2,4);
  generate_series
 -----------------
                2
@@ -11181,7 +11196,7 @@ select * from generate_series(2,4);
                4
 (3 rows)
 
-select * from generate_series(5,1,-2);
+SELECT * FROM generate_series(5,1,-2);
  generate_series
 -----------------
                5
@@ -11189,13 +11204,13 @@ select * from generate_series(5,1,-2);
                1
 (3 rows)
 
-select * from generate_series(4,3);
+SELECT * FROM generate_series(4,3);
  generate_series
 -----------------
 (0 rows)
 
 -- this example relies on the date-plus-integer operator
-select current_date + s.a as dates from generate_series(0,14,7) as s(a);
+SELECT current_date + s.a AS dates FROM generate_series(0,14,7) AS s(a);
    dates
 ------------
  2004-02-05
@@ -11203,7 +11218,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
  2004-02-19
 (3 rows)
 
-select * from generate_series('2008-03-01 00:00'::timestamp,
+SELECT * FROM generate_series('2008-03-01 00:00'::timestamp,
                               '2008-03-04 12:00', '10 hours');
    generate_series   
 ---------------------
@@ -11490,7 +11505,7 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
     the current database connection; but superusers can change this setting
     with <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">.
     The <function>current_user</function> is the user identifier
-    that is applicable for permission checking. Normally, it is equal
+    that is applicable for permission checking. Normally it is equal
     to the session user, but it can be changed with
     <xref linkend="sql-set-role" endterm="sql-set-role-title">.
     It also changes during the execution of
@@ -11512,13 +11527,13 @@ postgres=# select * from unnest2(array[[1,2],[3,4]]);
 
    <para>
     <function>current_schema</function> returns the name of the schema that is
-    at the front of the search path (or a null value if the search path is
+    first in the search path (or a null value if the search path is
     empty).  This is the schema that will be used for any tables or
     other named objects that are created without specifying a target schema.
     <function>current_schemas(boolean)</function> returns an array of the names of all
     schemas presently in the search path.  The Boolean option determines whether or not
-    implicitly included system schemas such as <literal>pg_catalog</> are included in the search 
-    path returned.
+    implicitly included system schemas such as <literal>pg_catalog</> are included in the
+    returned search path.
    </para>
 
    <note>
@@ -11567,10 +11582,10 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 
    <para>
     <function>pg_my_temp_schema</function> returns the OID of the current
-    session's temporary schema, or 0 if it has none (because it has not
-    created any temporary tables).
+    session's temporary schema, or 0 if it has none (because no
+    temporary tables have been created).
     <function>pg_is_other_temp_schema</function> returns true if the
-    given OID is the OID of any other session's temporary schema.
+    given OID is the OID of another session's temporary schema.
     (This can be useful, for example, to exclude other sessions' temporary
     tables from a catalog display.)
    </para>
@@ -11864,8 +11879,8 @@ SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION')
 
    <para>
     <function>has_any_column_privilege</function> checks whether a user can
-    access any column of a table in a particular way.  The possibilities for
-    its arguments are the same as for <function>has_table_privilege</>,
+    access any column of a table in a particular way; its argument possibilities
+    are analogous to <function>has_table_privilege</>,
     except that the desired access privilege type must evaluate to some
     combination of
     <literal>SELECT</literal>,
@@ -11881,8 +11896,8 @@ SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION')
 
    <para>
     <function>has_column_privilege</function> checks whether a user
-    can access a column in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>,
+    can access a column in a particular way;  its argument possibilities
+    are analogous to <function>has_table_privilege</function>,
     with the addition that the column can be specified either by name
     or attribute number.
     The desired access privilege type must evaluate to some combination of
@@ -11895,8 +11910,8 @@ SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION')
 
    <para>
     <function>has_database_privilege</function> checks whether a user
-    can access a database in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a database in a particular way; its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to some combination of
     <literal>CREATE</literal>,
     <literal>CONNECT</literal>,
@@ -11907,8 +11922,8 @@ SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION')
 
    <para>
     <function>has_function_privilege</function> checks whether a user
-    can access a function in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a function in a particular way; its argument  possibilities
+    are analogous to <function>has_table_privilege</function>.
     When specifying a function by a text string rather than by OID,
     the allowed input is the same as for the <type>regprocedure</> data type
     (see <xref linkend="datatype-oid">).
@@ -11922,24 +11937,24 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
 
    <para>
     <function>has_foreign_data_wrapper_privilege</function> checks whether a user
-    can access a foreign-data wrapper in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a foreign-data wrapper in a particular way; its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
    </para>
 
    <para>
     <function>has_language_privilege</function> checks whether a user
-    can access a procedural language in a particular way.  The possibilities
-    for its arguments are analogous to <function>has_table_privilege</function>.
+    can access a procedural language in a particular way;  its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
    </para>
 
    <para>
     <function>has_schema_privilege</function> checks whether a user
-    can access a schema in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a schema in a particular way; its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to some combination of
     <literal>CREATE</literal> or
     <literal>USAGE</literal>.
@@ -11947,24 +11962,24 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
 
    <para>
     <function>has_server_privilege</function> checks whether a user
-    can access a foreign server in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a foreign server in a particular way;  its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
    </para>
 
    <para>
     <function>has_tablespace_privilege</function> checks whether a user
-    can access a tablespace in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a tablespace in a particular way;  its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>CREATE</literal>.
    </para>
 
    <para>
     <function>pg_has_role</function> checks whether a user
-    can access a role in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
+    can access a role in a particular way; its argument possibilities
+    are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to some combination of
     <literal>MEMBER</literal> or
     <literal>USAGE</literal>.
@@ -12111,8 +12126,8 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
 <programlisting>
 SELECT pg_type_is_visible('myschema.widget'::regtype);
 </programlisting>
-    Note that it would not make much sense to test an unqualified name in
-    this way &mdash; if the name can be recognized at all, it must be visible.
+    Note that it would not make much sense to test a non-schema-qualified
+    type name in this way &mdash; if the name can be recognized at all, it must be visible.
    </para>
 
    <indexterm>
@@ -12280,7 +12295,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_get_userbyid</function>(<parameter>roleid</parameter>)</literal></entry>
        <entry><type>name</type></entry>
-       <entry>get role name with given ID</entry>
+       <entry>get role name with given OID</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>)</literal></entry>
@@ -12374,11 +12389,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    as a double-quoted identifier, meaning it is lowercased by default,
    while the second parameter, being just a column name, is treated as
    double-quoted and has its case preserved.  The function returns a value
-   suitably formatted for passing to the sequence functions (see <xref
+   suitably formatted for passing to sequence functions (see <xref
    linkend="functions-sequence">).  This association can be modified or
    removed with <command>ALTER SEQUENCE OWNED BY</>.  (The function
    probably should have been called
-   <function>pg_get_owned_sequence</function>; its name reflects the fact
+   <function>pg_get_owned_sequence</function>; its current name reflects the fact
    that it's typically used with <type>serial</> or <type>bigserial</>
    columns.)
   </para>
@@ -12442,7 +12457,7 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
     The functions shown in <xref linkend="functions-info-comment-table">
     extract comments previously stored with the <xref linkend="sql-comment"
     endterm="sql-comment-title"> command.  A null value is returned if no
-    comment could be found matching the specified parameters.
+    comment could be found for the specified parameters.
    </para>
 
    <table id="functions-info-comment-table">
@@ -12489,16 +12504,16 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
     comment for a database object specified by its OID and the name of the
     containing system catalog.  For example,
     <literal>obj_description(123456,'pg_class')</literal>
-    would retrieve the comment for a table with OID 123456.
+    would retrieve the comment for the table with OID 123456.
     The one-parameter form of <function>obj_description</function> requires only
-    the object OID.  It is now deprecated since there is no guarantee that
+    the object OID.  It is deprecated since there is no guarantee that
     OIDs are unique across different system catalogs; therefore, the wrong
-    comment could be returned.
+    comment might be returned.
    </para>
 
    <para>
     <function>shobj_description</function> is used just like
-    <function>obj_description</function> only that it is used for retrieving
+    <function>obj_description</function> except it is used for retrieving
     comments on shared objects.  Some system catalogs are global to all
     databases within each cluster and their descriptions are stored globally
     as well.
@@ -12530,7 +12545,7 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
 
    <para>
     The functions shown in <xref linkend="functions-txid-snapshot">
-    export server internal transaction information to user level.  The main
+    export server transaction information.  The main
     use of these functions is to determine which transactions were committed
     between two snapshots.
    </para>
@@ -12578,10 +12593,10 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
    </table>
 
    <para>
-    The internal transaction ID type (<type>xid</>) is 32 bits wide and so
-    it wraps around every 4 billion transactions.  However, these functions
+    The internal transaction ID type (<type>xid</>) is 32 bits wide and
+    wraps around every 4 billion transactions.  However, these functions
     export a 64-bit format that is extended with an <quote>epoch</> counter
-    so that it will not wrap around for the life of an installation.
+    so it will not wrap around during the life of an installation.
     The data type used by these functions, <type>txid_snapshot</type>,
     stores information about transaction ID
     visibility at a particular moment in time.  Its components are
@@ -12612,7 +12627,7 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
       <row>
        <entry><type>xmax</type></entry>
        <entry>
-        First as-yet-unassigned txid.  All txids later than this one are
+        First as-yet-unassigned txid.  All txids later than this are
         not yet started as of the time of the snapshot, and thus invisible.
        </entry>
       </row>
@@ -12664,7 +12679,7 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
         <literal><function>current_setting</function>(<parameter>setting_name</parameter>)</literal>
        </entry>
        <entry><type>text</type></entry>
-       <entry>current value of setting</entry>
+       <entry>get current value of setting</entry>
       </row>
       <row>
        <entry>
@@ -12803,15 +12818,16 @@ SELECT set_config('log_statement_stats', 'off', false);
     send signals (<systemitem>SIGINT</> or <systemitem>SIGTERM</>
     respectively) to backend processes identified by process ID.
     The process ID of an active backend can be found from
-    the <structfield>procpid</structfield> column in the
+    the <structfield>procpid</structfield> column of the
     <structname>pg_stat_activity</structname> view, or by listing the
-    <command>postgres</command> processes on the server with
-    <application>ps</>.
+    <command>postgres</command> processes on the server using
+    <application>ps</> on Unix or the <application>Task
+    Manager</> on <productname>Windows</>.
    </para>
 
    <para>
     <function>pg_reload_conf</> sends a <systemitem>SIGHUP</> signal
-    to the server, causing the configuration files
+    to the server, causing configuration files
     to be reloaded by all server processes.
    </para>
 
@@ -12874,7 +12890,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_stop_backup</function>()</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Finish performing on-line backup</entry>
+       <entry>Finalize after performing on-line backup</entry>
       </row>
       <row>
        <entry>
@@ -12916,14 +12932,14 @@ SELECT set_config('log_statement_stats', 'off', false);
    </table>
 
    <para>
-    <function>pg_start_backup</> accepts a text parameter which is an
+    <function>pg_start_backup</> accepts an
     arbitrary user-defined label for the backup.  (Typically this would be
     the name under which the backup dump file will be stored.)  The function
-    writes a backup label file into the database cluster's data directory,
-    performs a checkpoint,
+    writes a backup label file (<filename>backup_label</>) into the
+    database cluster's data directory, performs a checkpoint,
     and then returns the backup's starting transaction log location as text.
-    The user need not pay any attention to this result value, but it is
-    provided in case it is of use.
+    The user can ignore this result value, but it is
+    provided in case it is useful.
 <programlisting>
 postgres=# select pg_start_backup('label_goes_here');
  pg_start_backup
@@ -12939,12 +12955,13 @@ postgres=# select pg_start_backup('label_goes_here');
 
    <para>
     <function>pg_stop_backup</> removes the label file created by
-    <function>pg_start_backup</>, and instead creates a backup history file in
+    <function>pg_start_backup</>, and creates a backup history file in
     the transaction log archive area.  The history file includes the label given to
     <function>pg_start_backup</>, the starting and ending transaction log locations for
     the backup, and the starting and ending times of the backup.  The return
-    value is the backup's ending transaction log location (which again might be of little
-    interest).  After noting the ending location, the current transaction log insertion
+    value is the backup's ending transaction log location (which again
+    can be ignored).  After recording the ending location, the current
+    transaction log insertion
     point is automatically advanced to the next transaction log file, so that the
     ending transaction log file can be archived immediately to complete the backup.
    </para>
@@ -12952,7 +12969,7 @@ postgres=# select pg_start_backup('label_goes_here');
    <para>
     <function>pg_switch_xlog</> moves to the next transaction log file, allowing the
     current file to be archived (assuming you are using continuous archiving).
-    The result is the ending transaction log location + 1 within the just-completed transaction log file.
+    The return value is the ending transaction log location + 1 within the just-completed transaction log file.
     If there has been no transaction log activity since the last transaction log switch,
     <function>pg_switch_xlog</> does nothing and returns the start location
     of the transaction log file currently in use.
@@ -12960,7 +12977,7 @@ postgres=# select pg_start_backup('label_goes_here');
 
    <para>
     <function>pg_current_xlog_location</> displays the current transaction log write
-    location in the same format used by the above functions.  Similarly,
+    location in the format used by the above functions.  Similarly,
     <function>pg_current_xlog_insert_location</> displays the current transaction log
     insertion point.  The insertion point is the <quote>logical</> end
     of the transaction log
@@ -12978,7 +12995,7 @@ postgres=# select pg_start_backup('label_goes_here');
     corresponding transaction log file name and byte offset from the results of any of the
     above functions.  For example:
 <programlisting>
-postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
+postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         file_name         | file_offset 
 --------------------------+-------------
  00000001000000000000000D |     4039624
@@ -12999,7 +13016,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     The functions shown in <xref linkend="functions-admin-dbsize"> calculate
-    the actual disk space usage of database objects.
+    the disk space usage of database objects.
    </para>
 
    <indexterm>
@@ -13057,7 +13074,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         Disk space used by the specified fork, <literal>'main'</literal> or
         <literal>'fsm'</literal>, of a table or index with the specified OID
-        or name. The table name can be qualified with a schema name
+        or name; the table name can be schema-qualified.
        </entry>
       </row>
       <row>
@@ -13097,8 +13114,8 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>bigint</type></entry>
        <entry>
         Total disk space used by the table with the specified OID or name,
-        including indexes and toasted data.  The table name can be
-        qualified with a schema name
+        including indexes and <acronym>TOAST</> data; the table name can be
+        schema-qualified.
        </entry>
       </row>
      </tbody>
@@ -13140,10 +13157,10 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
 
    <para>
     The functions shown in <xref
-    linkend="functions-admin-genfile"> provide native file access to
+    linkend="functions-admin-genfile"> provide native access to
     files on the machine hosting the server. Only files within the
     database cluster directory and the <varname>log_directory</> can be
-    accessed.  Use a relative path for files within the cluster directory,
+    accessed.  Use a relative path for files in the cluster directory,
     and a path matching the <varname>log_directory</> configuration setting
     for log files.  Use of these functions is restricted to superusers.
    </para>
@@ -13209,7 +13226,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     size, last accessed time stamp, last modified time stamp,
     last file status change time stamp (Unix platforms only),
     file creation time stamp (Windows only), and a <type>boolean</type>
-    indicating if it is a directory.  Typical usages include:
+    indicating if it is a directory.  Typical usage include:
 <programlisting>
 SELECT * FROM pg_stat_file('filename');
 SELECT (pg_stat_file('filename')).modification;
@@ -13218,7 +13235,7 @@ SELECT (pg_stat_file('filename')).modification;
 
    <para>
     The functions shown in <xref linkend="functions-advisory-locks"> manage
-    advisory locks.  For details about proper usage of these functions, see
+    advisory locks.  For details about proper use of these functions, see
     <xref linkend="advisory-locks">.
    </para>
 
@@ -13366,7 +13383,7 @@ SELECT (pg_stat_file('filename')).modification;
     <function>pg_advisory_lock</>, except the function will not wait for the
     lock to become available.  It will either obtain the lock immediately and
     return <literal>true</>, or return <literal>false</> if the lock cannot be
-    acquired now.
+    acquired immediately.
    </para>
 
    <indexterm>
@@ -13375,7 +13392,7 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_try_advisory_lock_shared</> works the same as
     <function>pg_try_advisory_lock</>, except it attempts to acquire
-    shared rather than exclusive lock.
+    a shared rather than an exclusive lock.
    </para>
 
    <indexterm>
@@ -13384,8 +13401,8 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_advisory_unlock</> will release a previously-acquired
     exclusive advisory lock.  It
-    will return <literal>true</> if the lock is successfully released.
-    If the lock was in fact not held, it will return <literal>false</>,
+    returns <literal>true</> if the lock is successfully released.
+    If the lock was not held, it will return <literal>false</>,
     and in addition, an SQL warning will be raised by the server.
    </para>
 
@@ -13395,7 +13412,7 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_advisory_unlock_shared</> works the same as
     <function>pg_advisory_unlock</>, 
-    except to release a shared advisory lock.
+    except is releases a shared advisory lock.
    </para>
 
    <indexterm>
@@ -13404,7 +13421,7 @@ SELECT (pg_stat_file('filename')).modification;
    <para>
     <function>pg_advisory_unlock_all</> will release all advisory locks
     held by the current session.  (This function is implicitly invoked
-    at session end, even if the client disconnects ungracefully.)
+    at session end, even if the client disconnects abruptly.)
    </para>
 
   </sect1>

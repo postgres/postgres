@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.76 2009/02/07 20:05:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.77 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -27,35 +27,35 @@ CREATE TABLE test1 (
     content varchar
 );
 </programlisting>
-   and the application requires a lot of queries of the form:
+   and the application issues many queries of the form:
 <programlisting>
 SELECT content FROM test1 WHERE id = <replaceable>constant</replaceable>;
 </programlisting>
    With no advance preparation, the system would have to scan the entire
    <structname>test1</structname> table, row by row, to find all
-   matching entries.  If there are a lot of rows in
-   <structname>test1</structname> and only a few rows (perhaps only zero
-   or one) that would be returned by such a query, then this is clearly an
-   inefficient method.  But if the system has been instructed to maintain an
-   index on the <structfield>id</structfield> column, then it can use a more
+   matching entries.  If there are many rows in
+   <structname>test1</structname> and only a few rows (perhaps zero
+   or one) that would be returned by such a query, this is clearly an
+   inefficient method.  But if the system maintains an
+   index on the <structfield>id</structfield> column, it can use a more
    efficient method for locating matching rows.  For instance, it
    might only have to walk a few levels deep into a search tree.
   </para>
 
   <para>
-   A similar approach is used in most books of non-fiction:  terms and
+   A similar approach is used in most non-fiction books:  terms and
    concepts that are frequently looked up by readers are collected in
    an alphabetic index at the end of the book.  The interested reader
    can scan the index relatively quickly and flip to the appropriate
    page(s), rather than having to read the entire book to find the
    material of interest.  Just as it is the task of the author to
-   anticipate the items that the readers are likely to look up,
+   anticipate the items that readers are likely to look up,
    it is the task of the database programmer to foresee which indexes
-   will be of advantage.
+   will be useful.
   </para>
 
   <para>
-   The following command would be used to create the index on the
+   The following command can be used to create an index on the
    <structfield>id</structfield> column, as discussed:
 <programlisting>
 CREATE INDEX test1_id_index ON test1 (id);
@@ -73,7 +73,7 @@ CREATE INDEX test1_id_index ON test1 (id);
   <para>
    Once an index is created, no further intervention is required: the
    system will update the index when the table is modified, and it will
-   use the index in queries when it thinks this would be more efficient
+   use the index in queries when it thinks it would be more efficient
    than a sequential table scan.  But you might have to run the
    <command>ANALYZE</command> command regularly to update
    statistics to allow the query planner to make educated decisions.
@@ -87,14 +87,14 @@ CREATE INDEX test1_id_index ON test1 (id);
    <command>DELETE</command> commands with search conditions.
    Indexes can moreover be used in join searches.  Thus,
    an index defined on a column that is part of a join condition can
-   significantly speed up queries with joins.
+   also significantly speed up queries with joins.
   </para>
 
   <para>
    Creating an index on a large table can take a long time.  By default,
    <productname>PostgreSQL</productname> allows reads (selects) to occur
-   on the table in parallel with creation of an index, but writes (inserts,
-   updates, deletes) are blocked until the index build is finished.
+   on the table in parallel with index creation, but writes (INSERTs,
+   UPDATEs, DELETEs) are blocked until the index build is finished.
    In production environments this is often unacceptable.
    It is possible to allow writes to occur in parallel with index
    creation, but there are several caveats to be aware of &mdash;
@@ -118,8 +118,8 @@ CREATE INDEX test1_id_index ON test1 (id);
    <productname>PostgreSQL</productname> provides several index types:
    B-tree, Hash, GiST and GIN.  Each index type uses a different
    algorithm that is best suited to different types of queries.
-   By default, the <command>CREATE INDEX</command> command will create a
-   B-tree index, which fits the most common situations.
+   By default, the <command>CREATE INDEX</command> command creates
+   B-tree indexes, which fit the most common situations.
   </para>
 
   <para>
@@ -159,11 +159,11 @@ CREATE INDEX test1_id_index ON test1 (id);
    'foo%'</literal> or <literal>col ~ '^foo'</literal>, but not
    <literal>col LIKE '%bar'</literal>. However, if your database does not
    use the C locale you will need to create the index with a special
-   operator class to support indexing of pattern-matching queries. See
+   operator class to support indexing of pattern-matching queries; see
    <xref linkend="indexes-opclass"> below. It is also possible to use
    B-tree indexes for <literal>ILIKE</literal> and
    <literal>~*</literal>, but only if the pattern starts with
-   non-alphabetic characters, i.e. characters that are not affected by
+   non-alphabetic characters, i.e., characters that are not affected by
    upper/lower case conversion.
   </para>
 
@@ -180,7 +180,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    Hash indexes can only handle simple equality comparisons.
    The query planner will consider using a hash index whenever an
    indexed column is involved in a comparison using the
-   <literal>=</literal> operator.  (But hash indexes do not support
+   <literal>=</literal> operator.  (Hash indexes do not support
    <literal>IS NULL</> searches.)
    The following command is used to create a hash index:
 <synopsis>
@@ -290,11 +290,11 @@ CREATE TABLE test2 (
 );
 </programlisting>
    (say, you keep your <filename class="directory">/dev</filename>
-   directory in a database...) and you frequently make queries like:
+   directory in a database...) and you frequently issue queries like:
 <programlisting>
 SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> AND minor = <replaceable>constant</replaceable>;
 </programlisting>
-   then it might be appropriate to define an index on the columns
+   then it might be appropriate to define an index on columns
    <structfield>major</structfield> and
    <structfield>minor</structfield> together, e.g.:
 <programlisting>
@@ -359,7 +359,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    Indexes with more than three columns are unlikely to be helpful
    unless the usage of the table is extremely stylized.  See also
    <xref linkend="indexes-bitmap-scans"> for some discussion of the
-   merits of different index setups.
+   merits of different index configurations.
   </para>
  </sect1>
 
@@ -375,7 +375,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   <para>
    In addition to simply finding the rows to be returned by a query,
    an index may be able to deliver them in a specific sorted order.
-   This allows a query's <literal>ORDER BY</> specification to be met
+   This allows a query's <literal>ORDER BY</> specification to be honored
    without a separate sorting step.  Of the index types currently
    supported by <productname>PostgreSQL</productname>, only B-tree
    can produce sorted output &mdash; the other index types return
@@ -384,22 +384,23 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    The planner will consider satisfying an <literal>ORDER BY</> specification
-   either by scanning any available index that matches the specification,
+   by either scanning an available index that matches the specification,
    or by scanning the table in physical order and doing an explicit
    sort.  For a query that requires scanning a large fraction of the
-   table, the explicit sort is likely to be faster because it requires
-   less disk I/O due to a better-ordered access pattern.  Indexes are
+   table, the explicit sort is likely to be faster than using an index
+   because it requires
+   less disk I/O due to a sequential access pattern.  Indexes are
    more useful when only a few rows need be fetched.  An important
    special case is <literal>ORDER BY</> in combination with
    <literal>LIMIT</> <replaceable>n</>: an explicit sort will have to process
-   all the data to identify the first <replaceable>n</> rows, but if there is
-   an index matching the <literal>ORDER BY</> then the first <replaceable>n</>
+   all data to identify the first <replaceable>n</> rows, but if there is
+   an index matching the <literal>ORDER BY</>, the first <replaceable>n</>
    rows can be retrieved directly, without scanning the remainder at all.
   </para>
 
   <para>
    By default, B-tree indexes store their entries in ascending order
-   with nulls last.  This means that a forward scan of an index on a
+   with nulls last.  This means that a forward scan of an index on
    column <literal>x</> produces output satisfying <literal>ORDER BY x</>
    (or more verbosely, <literal>ORDER BY x ASC NULLS LAST</>).  The
    index can also be scanned backward, producing output satisfying
@@ -432,14 +433,14 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    <literal>ORDER BY x DESC, y DESC</> if we scan backward.
    But it might be that the application frequently needs to use
    <literal>ORDER BY x ASC, y DESC</>.  There is no way to get that
-   ordering from a regular index, but it is possible if the index is defined
+   ordering from a simpler index, but it is possible if the index is defined
    as <literal>(x ASC, y DESC)</> or <literal>(x DESC, y ASC)</>.
   </para>
 
   <para>
    Obviously, indexes with non-default sort orderings are a fairly
    specialized feature, but sometimes they can produce tremendous
-   speedups for certain queries.  Whether it's worth keeping such an
+   speedups for certain queries.  Whether it's worth creating such an
    index depends on how often you use queries that require a special
    sort ordering.
   </para>
@@ -468,7 +469,7 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
   </para>
 
   <para>
-   Beginning in release 8.1,
+   Fortunately,
    <productname>PostgreSQL</> has the ability to combine multiple indexes
    (including multiple uses of the same index) to handle cases that cannot
    be implemented by single index scans.  The system can form <literal>AND</>
@@ -513,7 +514,7 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    more efficient than index combination for queries involving both
    columns, but as discussed in <xref linkend="indexes-multicolumn">, it
    would be almost useless for queries involving only <literal>y</>, so it
-   could not be the only index.  A combination of the multicolumn index
+   should not be the only index.  A combination of the multicolumn index
    and a separate index on <literal>y</> would serve reasonably well.  For
    queries involving only <literal>x</>, the multicolumn index could be
    used, though it would be larger and hence slower than an index on
@@ -547,16 +548,16 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
   <para>
    When an index is declared unique, multiple table rows with equal
-   indexed values will not be allowed.  Null values are not considered
+   indexed values are not allowed.  Null values are not considered
    equal.  A multicolumn unique index will only reject cases where all
-   of the indexed columns are equal in two rows.
+   indexed columns are equal in multiple rows.
   </para>
 
   <para>
    <productname>PostgreSQL</productname> automatically creates a unique
-   index when a unique constraint or a primary key is defined for a table.
+   index when a unique constraint or primary key is defined for a table.
    The index covers the columns that make up the primary key or unique
-   columns (a multicolumn index, if appropriate), and is the mechanism
+   constraint (a multicolumn index, if appropriate), and is the mechanism
    that enforces the constraint.
   </para>
 
@@ -583,9 +584,9 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
   </indexterm>
 
   <para>
-   An index column need not be just a column of the underlying table,
+   An index column need not be just a column of an underlying table,
    but can be a function or scalar expression computed from one or
-   more columns of the table.  This feature is useful to obtain fast
+   more columns of a table.  This feature is useful to obtain fast
    access to tables based on the results of computations.
   </para>
 
@@ -595,9 +596,9 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 <programlisting>
 SELECT * FROM test1 WHERE lower(col1) = 'value';
 </programlisting>
-   This query can use an index, if one has been
+   This query can use an index if one has been
    defined on the result of the <literal>lower(col1)</literal>
-   operation:
+   function:
 <programlisting>
 CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
 </programlisting>
@@ -612,7 +613,7 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
   </para>
 
   <para>
-   As another example, if one often does queries like this:
+   As another example, if one often does queries like:
 <programlisting>
 SELECT * FROM people WHERE (first_name || ' ' || last_name) = 'John Smith';
 </programlisting>
@@ -655,7 +656,7 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
    A <firstterm>partial index</firstterm> is an index built over a
    subset of a table; the subset is defined by a conditional
    expression (called the <firstterm>predicate</firstterm> of the
-   partial index).  The index contains entries for only those table
+   partial index).  The index contains entries only for those table
    rows that satisfy the predicate.  Partial indexes are a specialized
    feature, but there are several situations in which they are useful.
   </para>
@@ -665,8 +666,8 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
    values.  Since a query searching for a common value (one that
    accounts for more than a few percent of all the table rows) will not
    use the index anyway, there is no point in keeping those rows in the
-   index at all.  This reduces the size of the index, which will speed
-   up queries that do use the index.  It will also speed up many table
+   index.  A partial index reduces the size of the index, which speeds
+   up queries that use the index.  It will also speed up many table
    update operations because the index does not need to be
    updated in all cases.  <xref linkend="indexes-partial-ex1"> shows a
    possible application of this idea.
@@ -700,39 +701,43 @@ CREATE TABLE access_log (
     such as this:
 <programlisting>
 CREATE INDEX access_log_client_ip_ix ON access_log (client_ip)
-    WHERE NOT (client_ip &gt; inet '192.168.100.0' AND client_ip &lt; inet '192.168.100.255');
+WHERE NOT (client_ip &gt; inet '192.168.100.0' AND 
+           client_ip &lt; inet '192.168.100.255');
 </programlisting>
    </para>
 
    <para>
     A typical query that can use this index would be:
 <programlisting>
-SELECT * FROM access_log WHERE url = '/index.html' AND client_ip = inet '212.78.10.32';
+SELECT *
+FROM access_log
+WHERE url = '/index.html' AND client_ip = inet '212.78.10.32';
 </programlisting>
     A query that cannot use this index is:
 <programlisting>
-SELECT * FROM access_log WHERE client_ip = inet '192.168.100.23';
+SELECT *
+FROM access_log
+WHERE client_ip = inet '192.168.100.23';
 </programlisting>
    </para>
 
    <para>
     Observe that this kind of partial index requires that the common
-    values be predetermined.  If the distribution of values is
-    inherent (due to the nature of the application) and static (not
-    changing over time), this is not difficult, but if the common values are
-    merely due to the coincidental data load this can require a lot of
-    maintenance work to change the index definition from time to time.
+    values be predetermined, so such partial indexes are best used for
+    data distribution that do not change.  The indexes can be recreated
+    occasionally to adjust for new data distributions, but this adds
+    maintenance overhead.
    </para>
   </example>
 
   <para>
-   Another possible use for a partial index is to exclude values from the
+   Another possible use for partial indexes is to exclude values from the
    index that the
    typical query workload is not interested in; this is shown in <xref
    linkend="indexes-partial-ex2">.  This results in the same
    advantages as listed above, but it prevents the
    <quote>uninteresting</quote> values from being accessed via that
-   index at all, even if an index scan might be profitable in that
+   index, even if an index scan might be profitable in that
    case.  Obviously, setting up partial indexes for this kind of
    scenario will require a lot of care and experimentation.
   </para>
@@ -774,7 +779,7 @@ SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;
 <programlisting>
 SELECT * FROM orders WHERE order_nr = 3501;
 </programlisting>
-    The order 3501 might be among the billed or among the unbilled
+    The order 3501 might be among the billed or unbilled
     orders.
    </para>
   </example>
@@ -799,9 +804,9 @@ SELECT * FROM orders WHERE order_nr = 3501;
    <quote>x &lt; 1</quote> implies <quote>x &lt; 2</quote>; otherwise
    the predicate condition must exactly match part of the query's
    <literal>WHERE</> condition
-   or the index will not be recognized to be usable. Matching takes
+   or the index will not be recognized as usable. Matching takes
    place at query planning time, not at run time. As a result,
-   parameterized query clauses will not work with a partial index. For
+   parameterized query clauses do not work with a partial index. For
    example a prepared query with a parameter might specify
    <quote>x &lt; ?</quote> which will never imply
    <quote>x &lt; 2</quote> for all possible values of the parameter.
@@ -835,7 +840,7 @@ CREATE TABLE tests (
 CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     WHERE success;
 </programlisting>
-    This is a particularly efficient way of doing it when there are few
+    This is a particularly efficient approach when there are few
     successful tests and many unsuccessful ones.
    </para>
   </example>
@@ -859,7 +864,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
    know when an index might be profitable.  Forming this knowledge
    requires experience and understanding of how indexes in
    <productname>PostgreSQL</> work.  In most cases, the advantage of a
-   partial index over a regular index will not be much.
+   partial index over a regular index will be minimal.
   </para>
 
   <para>
@@ -892,7 +897,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    would use the <literal>int4_ops</literal> class; this operator
    class includes comparison functions for values of type <type>int4</type>.
    In practice the default operator class for the column's data type is
-   usually sufficient.  The main point of having operator classes is
+   usually sufficient.  The main reason for having operator classes is
    that for some data types, there could be more than one meaningful
    index behavior.  For example, we might want to sort a complex-number data
    type either by absolute value or by real part.  We could do this by
@@ -931,7 +936,7 @@ CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
       to use an index.  Such queries cannot use the
       <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
       operator classes.  (Ordinary equality comparisons can use these
-      operator classes, however.)  It is allowed to create multiple
+      operator classes, however.)  It is possible to create multiple
       indexes on the same column with different operator classes.
       If you do use the C locale, you do not need the
       <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
@@ -990,7 +995,7 @@ SELECT am.amname AS index_method,
 
   <para>
    Although indexes in <productname>PostgreSQL</> do not need
-   maintenance and tuning, it is still important to check
+   maintenance or tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
    Examining index usage for an individual query is done with the
    <xref linkend="sql-explain" endterm="sql-explain-title">
@@ -1002,10 +1007,10 @@ SELECT am.amname AS index_method,
 
   <para>
    It is difficult to formulate a general procedure for determining
-   which indexes to set up.  There are a number of typical cases that
+   which indexes to create.  There are a number of typical cases that
    have been shown in the examples throughout the previous sections.
-   A good deal of experimentation will be necessary in most cases.
-   The rest of this section gives some tips for that.
+   A good deal of experimentation is often necessary.
+   The rest of this section gives some tips for that:
   </para>
 
   <itemizedlist>
@@ -1014,7 +1019,7 @@ SELECT am.amname AS index_method,
      Always run <xref linkend="sql-analyze" endterm="sql-analyze-title">
      first.  This command
      collects statistics about the distribution of the values in the
-     table.  This information is required to guess the number of rows
+     table.  This information is required to estimate the number of rows
      returned by a query, which is needed by the planner to assign
      realistic costs to each possible query plan.  In absence of any
      real statistics, some default values are assumed, which are
@@ -1035,13 +1040,13 @@ SELECT am.amname AS index_method,
      It is especially fatal to use very small test data sets.
      While selecting 1000 out of 100000 rows could be a candidate for
      an index, selecting 1 out of 100 rows will hardly be, because the
-     100 rows will probably fit within a single disk page, and there
+     100 rows probably fit within a single disk page, and there
      is no plan that can beat sequentially fetching 1 disk page.
     </para>
 
     <para>
      Also be careful when making up test data, which is often
-     unavoidable when the application is not in production use yet.
+     unavoidable when the application is not yet in production.
      Values that are very similar, completely random, or inserted in
      sorted order will skew the statistics away from the distribution
      that real data would have.
@@ -1058,7 +1063,7 @@ SELECT am.amname AS index_method,
      (<varname>enable_nestloop</>), which are the most basic plans,
      will force the system to use a different plan.  If the system
      still chooses a sequential scan or nested-loop join then there is
-     probably a more fundamental reason why the index is not
+     probably a more fundamental reason why the index is not being
      used; for example, the query condition does not match the index.
      (What kind of query can use what kind of index is explained in
      the previous sections.)

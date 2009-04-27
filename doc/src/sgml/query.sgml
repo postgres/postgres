@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.51 2008/12/28 18:53:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.52 2009/04/27 16:27:36 momjian Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -38,7 +38,7 @@
     functions and types.  (If you installed a pre-packaged version of
     <productname>PostgreSQL</productname> rather than building from source,
     look for a directory named <filename>tutorial</> within the
-    <productname>PostgreSQL</productname> documentation.  The <quote>make</>
+    <productname>PostgreSQL</productname> distribution.  The <quote>make</>
     part should already have been done for you.)
     Then, to start the tutorial, do the following:
 
@@ -53,7 +53,7 @@
 </screen>
 
     The <literal>\i</literal> command reads in commands from the
-    specified file. The <literal>-s</literal> option puts you in
+    specified file. The <command>psql</command> <literal>-s</> option puts you in
     single step mode which pauses before sending each statement to the
     server.  The commands used in this section are in the file
     <filename>basics.sql</filename>.
@@ -165,7 +165,7 @@ CREATE TABLE weather (
     and a rich set of geometric types.
     <productname>PostgreSQL</productname> can be customized with an
     arbitrary number of user-defined data types.  Consequently, type
-    names are not syntactical key words, except where required to
+    names are not special key words in the syntax except where required to
     support special cases in the <acronym>SQL</acronym> standard.
    </para>
 
@@ -421,7 +421,7 @@ SELECT DISTINCT city
        <literal>DISTINCT</literal> automatically orders the rows and
        so <literal>ORDER BY</literal> is unnecessary.  But this is not
        required by the SQL standard, and current
-       <productname>PostgreSQL</productname> doesn't guarantee that
+       <productname>PostgreSQL</productname> does not guarantee that
        <literal>DISTINCT</literal> causes the rows to be ordered.
       </para>
      </footnote>
@@ -451,8 +451,8 @@ SELECT DISTINCT city
     <firstterm>join</firstterm> query.  As an example, say you wish to
     list all the weather records together with the location of the
     associated city.  To do that, we need to compare the city column of
-    each row of the weather table with the name column of all rows in
-    the cities table, and select the pairs of rows where these values match.
+    each row of the <literal>weather</> table with the name column of all rows in
+    the <literal>cities</> table, and select the pairs of rows where these values match.
     <note>
      <para>
       This  is only a conceptual model.  The join is usually performed
@@ -486,7 +486,7 @@ SELECT *
        There is no result row for the city of Hayward.  This is
        because there is no matching entry in the
        <classname>cities</classname> table for Hayward, so the join
-       ignores the unmatched rows in the weather table.  We will see
+       ignores the unmatched rows in the <literal>weather</> table.  We will see
        shortly how this can be fixed.
       </para>
      </listitem>
@@ -494,9 +494,9 @@ SELECT *
      <listitem>
       <para>
        There are two columns containing the city name.  This is
-       correct because the lists of columns of the
+       correct because the columns from the
        <classname>weather</classname> and the
-       <classname>cities</classname> table are concatenated.  In
+       <classname>cities</classname> tables are concatenated.  In
        practice this is undesirable, though, so you will probably want
        to list the output columns explicitly rather than using
        <literal>*</literal>:
@@ -514,14 +514,14 @@ SELECT city, temp_lo, temp_hi, prcp, date, location
     <title>Exercise:</title>
 
     <para>
-     Attempt to find out the semantics of this query when the
+     Attempt to determine the semantics of this query when the
      <literal>WHERE</literal> clause is omitted.
     </para>
    </formalpara>
 
    <para>
     Since the columns all had different names, the parser
-    automatically found out which table they belong to.  If there
+    automatically found which table they belong to.  If there
     were duplicate column names in the two tables you'd need to
     <firstterm>qualify</> the column names to show which one you
     meant, as in:

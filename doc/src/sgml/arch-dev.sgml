@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.31 2007/12/12 06:23:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.32 2009/04/27 16:27:35 momjian Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -67,7 +67,7 @@
       One application of the rewrite system is in the realization of
       <firstterm>views</firstterm>.
       Whenever a query against a view
-      (i.e. a <firstterm>virtual table</firstterm>) is made,
+      (i.e., a <firstterm>virtual table</firstterm>) is made,
       the rewrite system rewrites the user's query to
       a query that accesses the <firstterm>base tables</firstterm> given in
       the <firstterm>view definition</firstterm> instead.
@@ -145,7 +145,7 @@
    <para>
     Once a connection is established the client process can send a query
     to the <firstterm>backend</firstterm> (server). The query is transmitted using plain text,
-    i.e. there is no parsing done in the <firstterm>frontend</firstterm> (client). The
+    i.e., there is no parsing done in the <firstterm>frontend</firstterm> (client). The
     server parses the query, creates an <firstterm>execution plan</firstterm>,
     executes the plan and returns the retrieved rows to the client
     by transmitting them over the established connection.
@@ -442,7 +442,7 @@
      relations, a near-exhaustive search is conducted to find the best
      join sequence.  The planner preferentially considers joins between any
      two relations for which there exist a corresponding join clause in the
-     <literal>WHERE</literal> qualification (i.e. for
+     <literal>WHERE</literal> qualification (i.e., for
      which a restriction like <literal>where rel1.attr1=rel2.attr2</literal>
      exists). Join pairs with no join clause are considered only when there
      is no other choice, that is, a particular relation has no available

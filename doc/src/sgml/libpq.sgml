@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.287 2009/04/24 14:10:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.288 2009/04/27 16:27:36 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -6633,7 +6633,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
 #include &lt;libpq-fe.h&gt;
 </programlisting>
       If you failed to do that then you will normally get error messages
-      from your compiler similar to
+      from your compiler similar to:
 <screen>
 foo.c: In function `main':
 foo.c:34: `PGconn' undeclared (first use in this function)
@@ -6679,7 +6679,7 @@ CPPFLAGS += -I/usr/local/pgsql/include
 
      <para>
       Failure to specify the correct option to the compiler will
-      result in an error message such as
+      result in an error message such as:
 <screen>
 testlibpq.c:8:22: libpq-fe.h: No such file or directory
 </screen>
@@ -6713,7 +6713,7 @@ cc -o testprog testprog1.o testprog2.o -L/usr/local/pgsql/lib -lpq
 
      <para>
       Error messages that point to problems in this area could look like
-      the following.
+      the following:
 <screen>
 testlibpq.o: In function `main':
 testlibpq.o(.text+0x60): undefined reference to `PQsetdbLogin'

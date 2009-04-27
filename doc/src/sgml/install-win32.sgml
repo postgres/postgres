@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.51 2009/01/09 13:37:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.52 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -383,7 +383,7 @@
  <para>
   To build the <application>libpq</application> client library using
   <productname>Visual Studio 7.1 or later</productname>, change into the
-  <filename>src</filename> directory and type the command
+  <filename>src</filename> directory and type the command:
 <screen>
 <userinput>nmake /f win32.mak</userinput>
 </screen>
@@ -392,7 +392,7 @@
  To build a 64-bit version of the <application>libpq</application>
  client library using <productname>Visual Studio 8.0 or
  later</productname>, change into the <filename>src</filename>
- directory and type in the command
+ directory and type in the command:
 <screen>
 <userinput>nmake /f win32.mak CPU=AMD64</userinput>
 </screen>
@@ -403,7 +403,7 @@
  <para>
   To build the <application>libpq</application> client library using
   <productname>Borland C++</productname>, change into the
-  <filename>src</filename> directory and type the command
+  <filename>src</filename> directory and type the command:
 <screen>
 <userinput>make -N -DCFG=Release /f bcc32.mak</userinput>
 </screen>

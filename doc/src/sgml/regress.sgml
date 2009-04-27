@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.62 2009/02/12 13:26:03 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.63 2009/04/27 16:27:36 momjian Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -37,7 +37,7 @@
 
   <para>
    To run the regression tests after building but before installation,
-   type
+   type:
 <screen>
 gmake check
 </screen>
@@ -45,7 +45,7 @@ gmake check
    <filename>src/test/regress</filename> and run the command there.)
    This will first build several auxiliary files, such as
    some sample user-defined trigger functions, and then run the test driver
-   script.  At the end you should see something like
+   script.  At the end you should see something like:
 <screen>
 <computeroutput>
 =======================
@@ -64,7 +64,7 @@ gmake check
     If you already did the build as root, you do not have to start all
     over.  Instead, make the regression test directory writable by
     some other user, log in as that user, and restart the tests.
-    For example
+    For example:
 <screen>
 <prompt>root# </prompt><userinput>chmod -R a+w src/test/regress</userinput>
 <prompt>root# </prompt><userinput>su - joeuser</userinput>
@@ -101,7 +101,7 @@ gmake check
     make sure this limit is at least fifty or so, else you might get
     random-seeming failures in the parallel test.  If you are not in
     a position to raise the limit, you can cut down the degree of parallelism
-    by setting the <literal>MAX_CONNECTIONS</> parameter.  For example,
+    by setting the <literal>MAX_CONNECTIONS</> parameter.  For example:
 <screen>
 gmake MAX_CONNECTIONS=10 check
 </screen>
@@ -111,11 +111,11 @@ gmake MAX_CONNECTIONS=10 check
   <para>
    To run the tests after installation<![%standalone-ignore;[ (see <xref linkend="installation">)]]>,
    initialize a data area and start the
-   server, <![%standalone-ignore;[as explained in <xref linkend="runtime">, ]]> then type
+   server, <![%standalone-ignore;[as explained in <xref linkend="runtime">, ]]> then type:
 <screen>
 gmake installcheck
 </screen>
-or for a parallel test
+or for a parallel test:
 <screen>
 gmake installcheck-parallel
 </screen>
@@ -130,14 +130,14 @@ gmake installcheck-parallel
    At present, these tests can be used only against an already-installed
    server.  To run the tests for all procedural languages that have been
    built and installed, change to the <filename>src/pl</> directory of the
-   build tree and type
+   build tree and type:
 <screen>
 gmake installcheck
 </screen>
    You can also do this in any of the subdirectories of <filename>src/pl</>
    to run tests for just one procedural language.  To run the tests for all
    <filename>contrib</> modules that have them, change to the
-   <filename>contrib</> directory of the build tree and type
+   <filename>contrib</> directory of the build tree and type:
 <screen>
 gmake installcheck
 </screen>
@@ -479,7 +479,7 @@ gmake coverage-html
    </para>
 
    <para>
-    To reset the execution counts between test runs, run
+    To reset the execution counts between test runs, run:
 <screen>
 gmake coverage-clean
 </screen>

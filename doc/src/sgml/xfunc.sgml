@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.136 2008/12/18 18:20:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.137 2009/04/27 16:27:36 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -2866,7 +2866,7 @@ typedef struct
     /*
      * OPTIONAL pointer to struct containing tuple description
      *
-     * tuple_desc is for use when returning tuples (i.e. composite data types)
+     * tuple_desc is for use when returning tuples (i.e., composite data types)
      * and is only needed if you are going to build the tuples with
      * heap_form_tuple() rather than with BuildTupleFromCStrings().  Note that
      * the TupleDesc pointer stored here should usually have been run through

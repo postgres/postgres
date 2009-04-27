@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.130 2009/02/04 21:30:41 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.131 2009/04/27 16:27:36 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -11,12 +11,12 @@
  <para>
   This chapter describes the syntax of SQL.  It forms the foundation
   for understanding the following chapters which will go into detail
-  about how the SQL commands are applied to define and modify data.
+  about how SQL commands are applied to define and modify data.
  </para>
 
  <para>
   We also advise users who are already familiar with SQL to read this
-  chapter carefully because there are several rules and concepts that
+  chapter carefully because it contains several rules and concepts that
   are implemented inconsistently among SQL databases or that are
   specific to <productname>PostgreSQL</productname>.
  </para>
@@ -293,7 +293,7 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
      bounded by single quotes (<literal>'</literal>), for example
      <literal>'This is a string'</literal>.  To include
      a single-quote character within a string constant,
-     write two adjacent single quotes, e.g.
+     write two adjacent single quotes, e.g.,
      <literal>'Dianne''s horse'</literal>.
      Note that this is <emphasis>not</> the same as a double-quote
      character (<literal>"</>). <!-- font-lock sanity: " -->
@@ -337,7 +337,7 @@ SELECT 'foo'      'bar';
      string constants, which are an extension to the SQL standard.
      An escape string constant is specified by writing the letter
      <literal>E</literal> (upper or lower case) just before the opening single
-     quote, e.g. <literal>E'foo'</>.  (When continuing an escape string
+     quote, e.g., <literal>E'foo'</>.  (When continuing an escape string
      constant across lines, write <literal>E</> only before the first opening
      quote.)
      Within an escape string, a backslash character (<literal>\</>) begins a
@@ -422,14 +422,14 @@ SELECT 'foo'      'bar';
      <xref linkend="guc-standard-conforming-strings"> is <literal>off</>,
      then <productname>PostgreSQL</productname> recognizes backslash escapes
      in both regular and escape string constants.  This is for backward
-     compatibility with the historical behavior, in which backslash escapes
+     compatibility with the historical behavior, where backslash escapes
      were always recognized.
      Although <varname>standard_conforming_strings</> currently defaults to
      <literal>off</>, the default will change to <literal>on</> in a future
      release for improved standards compliance.  Applications are therefore
      encouraged to migrate away from using backslash escapes.  If you need
      to use a backslash escape to represent a special character, write the
-     constant with an <literal>E</> to be sure it will be handled the same
+     string constant with an <literal>E</> to be sure it will be handled the same
      way in future releases.
     </para>
 
@@ -442,7 +442,7 @@ SELECT 'foo'      'bar';
     </caution>
 
     <para>
-     The character with the code zero cannot be in a string constant.
+     The zero-byte (null byte) character cannot be in a string constant.
     </para>
    </sect3>
 
@@ -896,7 +896,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </indexterm>
 
    <para>
-    A comment is an arbitrary sequence of characters beginning with
+    A comment is a sequence of characters beginning with
     double dashes and extending to the end of the line, e.g.:
 <programlisting>
 -- This is a standard SQL comment
@@ -918,8 +918,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </para>
 
    <para>
-    A comment is removed from the input stream before further syntax
-    analysis and is effectively replaced by whitespace.
+    Comment are removed from the input stream before further syntax
+    analysis and are effectively replaced by whitespace.
    </para>
   </sect2>
 
@@ -1112,7 +1112,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
     the <literal>OPERATOR</> construct is taken to have the default precedence
     shown in <xref linkend="sql-precedence-table"> for <quote>any other</> operator.  This is true no matter
-    which specific operator name appears inside <literal>OPERATOR()</>.
+    which specific operator appears inside <literal>OPERATOR()</>.
    </para>
   </sect2>
  </sect1>
@@ -1154,80 +1154,80 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    <itemizedlist>
     <listitem>
      <para>
-      A constant or literal value.
+      A constant or literal value
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A column reference.
+      A column reference
      </para>
     </listitem>
 
     <listitem>
      <para>
       A positional parameter reference, in the body of a function definition
-      or prepared statement.
+      or prepared statement
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A subscripted expression.
+      A subscripted expression
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A field selection expression.
+      A field selection expression
      </para>
     </listitem>
 
     <listitem>
      <para>
-      An operator invocation.
+      An operator invocation
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A function call.
+      A function call
      </para>
     </listitem>
 
     <listitem>
      <para>
-      An aggregate expression.
+      An aggregate expression
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A window function call.
+      A window function call
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A type cast.
+      A type cast
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A scalar subquery.
+      A scalar subquery
      </para>
     </listitem>
 
     <listitem>
      <para>
-      An array constructor.
+      An array constructor
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A row constructor.
+      A row constructor
      </para>
     </listitem>
 
@@ -1264,7 +1264,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    </indexterm>
 
    <para>
-    A column can be referenced in the form
+    A column can be referenced in the form:
 <synopsis>
 <replaceable>correlation</replaceable>.<replaceable>columnname</replaceable>
 </synopsis>
@@ -1426,7 +1426,7 @@ $1.somecolumn
     where the <replaceable>operator</replaceable> token follows the syntax
     rules of <xref linkend="sql-syntax-operators">, or is one of the
     key words <token>AND</token>, <token>OR</token>, and
-    <token>NOT</token>, or is a qualified operator name in the form
+    <token>NOT</token>, or is a qualified operator name in the form:
 <synopsis>
 <literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operatorname</><literal>)</>
 </synopsis>
@@ -1714,7 +1714,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     casts that are marked <quote>OK to apply implicitly</>
     in the system catalogs.  Other casts must be invoked with
     explicit casting syntax.  This restriction is intended to prevent
-    surprising conversions from being applied silently.
+    surprising conversions from being silently applied.
    </para>
 
    <para>
@@ -1730,7 +1730,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     <literal>timestamp</> can only be used in this fashion if they are
     double-quoted, because of syntactic conflicts.  Therefore, the use of
     the function-like cast syntax leads to inconsistencies and should
-    probably be avoided in new applications.
+    probably be avoided.
    </para>
 
    <note>
@@ -1794,7 +1794,7 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
 
    <para>
     An array constructor is an expression that builds an
-    array value from values for its member elements.  A simple array
+    array using values for its member elements.  A simple array
     constructor
     consists of the key word <literal>ARRAY</literal>, a left square bracket
     <literal>[</>, a list of expressions (separated by commas) for the
@@ -1925,8 +1925,8 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
    </indexterm>
 
    <para>
-    A row constructor is an expression that builds a row value (also
-    called a composite value) from values
+    A row constructor is an expression that builds a row (also
+    called a composite value) using values
     for its member fields.  A row constructor consists of the key word
     <literal>ROW</literal>, a left parenthesis, zero or more
     expressions (separated by commas) for the row field values, and finally

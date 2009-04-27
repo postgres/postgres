@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.320 2009/03/23 01:52:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.321 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -11,7 +11,7 @@
  <para>
   This <![%standalone-include;[document]]>
   <![%standalone-ignore;[chapter]]> describes the installation of
-  <productname>PostgreSQL</productname> from the source code
+  <productname>PostgreSQL</productname> using the source code
   distribution.  (If you are installing a pre-packaged distribution,
   such as an RPM or Debian package, ignore this
   <![%standalone-include;[document]]>
@@ -75,7 +75,7 @@ su - postgres
       refer to it by that name. (On some systems
       <acronym>GNU</acronym> <application>make</> is the default tool with the name
       <filename>make</>.) To test for <acronym>GNU</acronym>
-      <application>make</application> enter
+      <application>make</application> enter:
 <screen>
 <userinput>gmake --version</userinput>
 </screen>
@@ -85,9 +85,10 @@ su - postgres
 
     <listitem>
      <para>
-      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler. Recent
+      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler (minimum
+      C89-compliant). Recent
       versions of <productname>GCC</> are recommendable, but
-      <productname>PostgreSQL</> is known to build with a wide variety
+      <productname>PostgreSQL</> is known to build using a wide variety
       of compilers from different vendors.
      </para>
     </listitem>
@@ -95,7 +96,7 @@ su - postgres
     <listitem>
      <para>
       <application>tar</> is required to unpack the source
-      distribution in the first place, in addition to either
+      distribution, in addition to either
       <application>gzip</> or <application>bzip2</>.  In
       addition, <application>gzip</> is required to install the
       documentation.
@@ -117,7 +118,7 @@ su - postgres
       command you type, and allows you to use arrow keys to recall and
       edit previous commands.  This is very helpful and is strongly
       recommended.  If you don't want to use it then you must specify
-      the <option>--without-readline</option> option for
+      the <option>--without-readline</option> option of
       <filename>configure</>. As an alternative, you can often use the
       BSD-licensed <filename>libedit</filename> library, originally
       developed on <productname>NetBSD</productname>. The
@@ -140,7 +141,7 @@ su - postgres
 
       The <productname>zlib</productname> compression library will be
       used by default. If you don't want to use it then you must
-      specify the <option>--without-zlib</option> option for
+      specify the <option>--without-zlib</option> option to
       <filename>configure</filename>. Using this option disables
       support for compressed archives in <application>pg_dump</> and
       <application>pg_restore</>.
@@ -152,7 +153,7 @@ su - postgres
   <para>
    The following packages are optional.  They are not required in the
    default configuration, but they are needed when certain build
-   options are enabled, as explained below.
+   options are enabled, as explained below:
 
    <itemizedlist>
     <listitem>
@@ -172,7 +173,8 @@ su - postgres
 
      <para>
       If you don't have the shared library but you need one, a message
-      like this will appear during the build to point out this fact:
+      like this will appear during the <productname>PostgreSQL</>
+      build to point out this fact:
 <screen>
 *** Cannot build PL/Perl because libperl is not a shared library.
 *** You might have to rebuild your Perl installation.  Refer to
@@ -206,7 +208,7 @@ su - postgres
       <filename>libpython</filename> library must be a shared library
       also on most platforms.  This is not the case in a default
       <productname>Python</productname> installation.  If after
-      building and installing you have a file called
+      building and installing <productname>PostgreSQL</> you have a file called
       <filename>plpython.so</filename> (possibly a different
       extension), then everything went well.  Otherwise you should
       have seen a notice like this flying by:
@@ -216,7 +218,7 @@ su - postgres
 *** the documentation for details.
 </screen>
       That means you have to rebuild (part of) your
-      <productname>Python</productname> installation to supply this
+      <productname>Python</productname> installation to create this
       shared library.
      </para>
 
@@ -272,7 +274,7 @@ su - postgres
 
   <para>
    If you are building from a <acronym>CVS</acronym> tree instead of
-   using a released source package, or if you want to do development,
+   using a released source package, or if you want to do server development,
    you also need the following packages:
 
    <itemizedlist>
@@ -314,7 +316,7 @@ su - postgres
    Also check that you have sufficient disk space. You will need about
    65 MB for the source tree during compilation and about 15 MB for
    the installation directory. An empty database cluster takes about
-   25 MB, databases take about five times the amount of space that a
+   25 MB; databases take about five times the amount of space that a
    flat text file with the same data would take. If you are going to
    run the regression tests you will temporarily need up to an extra
    90 MB. Use the <command>df</command> command to check free disk
@@ -420,7 +422,7 @@ su - postgres
      On systems that have <productname>PostgreSQL</> started at boot time,
      there is probably a start-up file that will accomplish the same thing. For
      example, on a <systemitem class="osname">Red Hat Linux</> system one
-     might find that
+     might find that:
 <screen>
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
@@ -469,7 +471,7 @@ su - postgres
 
    <step>
     <para>
-     Start the database server, again from the special database user
+     Start the database server, again the special database user
      account:
 <programlisting>
 <userinput>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</>
@@ -479,7 +481,7 @@ su - postgres
 
    <step>
     <para>
-     Finally, restore your data from backup with
+     Finally, restore your data from backup with:
 <screen>
 <userinput>/usr/local/pgsql/bin/psql -d postgres -f <replaceable>outputfile</></userinput>
 </screen>
@@ -514,12 +516,12 @@ su - postgres
     The first step of the installation procedure is to configure the
     source tree for your system and choose the options you would like.
     This is done by running the <filename>configure</> script. For a
-    default installation simply enter
+    default installation simply enter:
 <screen>
 <userinput>./configure</userinput>
 </screen>
-    This script will run a number of tests to guess values for various
-    system dependent variables and detect some quirks of your
+    This script will run a number of tests to determine values for various
+    system dependent variables and detect any quirks of your
     operating system, and finally will create several files in the
     build tree to record what it found.  (You can also run
     <filename>configure</filename> in a directory outside the source
@@ -719,7 +721,7 @@ su - postgres
        internal header files and the server header files are installed
        into private directories under <varname>includedir</varname>. See
        the documentation of each interface for information about how to
-       get at the its header files. Finally, a private subdirectory will
+       access its header files. Finally, a private subdirectory will
        also be created, if appropriate, under <varname>libdir</varname>
        for dynamically loadable modules.
       </para>
@@ -769,7 +771,7 @@ su - postgres
          Enables Native Language Support (<acronym>NLS</acronym>),
          that is, the ability to display a program's messages in a
          language other than English.
-         <replaceable>LANGUAGES</replaceable> is a space-separated
+         <replaceable>LANGUAGES</replaceable> is an optional space-separated
          list of codes of the languages that you want supported, for
          example <literal>--enable-nls='de fr'</>.  (The intersection
          between your list and the set of actually provided
@@ -927,11 +929,11 @@ su - postgres
          and libpq]]><![%standalone-ignore[<xref linkend="libpq-ldap"> and
          <xref linkend="auth-ldap">]]> for more information). On Unix,
          this requires the <productname>OpenLDAP</> package to be
-         installed. <filename>configure</> will check for the required
+         installed. On Windows, the default <productname>WinLDAP</>
+         library is used.  <filename>configure</> will check for the required
          header files and libraries to make sure that your
          <productname>OpenLDAP</> installation is sufficient before
-         proceeding. On Windows, the default <productname>WinLDAP</>
-         library is used.
+         proceeding. 
         </para>
        </listitem>
       </varlistentry>
@@ -1225,7 +1227,7 @@ su - postgres
        <listitem>
         <para>
          Compiles all programs and libraries with debugging symbols.
-         This means that you can run the programs through a debugger
+         This means that you can run the programs in a debugger
          to analyze problems. This enlarges the size of the installed
          executables considerably, and on non-GCC compilers it usually
          also disables compiler optimization, causing slowdowns. However,
@@ -1293,7 +1295,7 @@ su - postgres
          be rebuilt when any header file is changed.  This is useful
          if you are doing development work, but is just wasted overhead
          if you intend only to compile once and install.  At present,
-         this option will work only if you use GCC.
+         this option only works with GCC.
         </para>
        </listitem>
       </varlistentry>
@@ -1510,13 +1512,13 @@ su - postgres
    <title>Build</title>
 
    <para>
-    To start the build, type
+    To start the build, type:
 <screen>
 <userinput>gmake</userinput>
 </screen>
     (Remember to use <acronym>GNU</> <application>make</>.) The build
     will take a few minutes depending on your
-    hardware. The last line displayed should be
+    hardware. The last line displayed should be:
 <screen>
 All of PostgreSQL is successfully made. Ready to install.
 </screen>
@@ -1535,7 +1537,7 @@ All of PostgreSQL is successfully made. Ready to install.
     you can run the regression tests at this point. The regression
     tests are a test suite to verify that <productname>PostgreSQL</>
     runs on your machine in the way the developers expected it
-    to. Type
+    to. Type:
 <screen>
 <userinput>gmake check</userinput>
 </screen>
@@ -1550,7 +1552,7 @@ All of PostgreSQL is successfully made. Ready to install.
   </step>
 
   <step id="install">
-   <title>Installing The Files</title>
+   <title>Installing the Files</title>
 
    <note>
     <para>
@@ -1562,14 +1564,14 @@ All of PostgreSQL is successfully made. Ready to install.
    </note>
 
    <para>
-    To install <productname>PostgreSQL</> enter
+    To install <productname>PostgreSQL</> enter:
 <screen>
 <userinput>gmake install</userinput>
 </screen>
     This will install files into the directories that were specified
     in <xref linkend="configure">. Make sure that you have appropriate
     permissions to write into that area. Normally you need to do this
-    step as root. Alternatively, you could create the target
+    step as root. Alternatively, you can create the target
     directories in advance and arrange for appropriate permissions to
     be granted.
    </para>
@@ -1639,14 +1641,14 @@ All of PostgreSQL is successfully made. Ready to install.
    <title>Cleaning:</title>
 
    <para>
-    After the installation you can make room by removing the built
+    After the installation you can free disk space by removing the built
     files from the source tree with the command <command>gmake
     clean</>. This will preserve the files made by the <command>configure</command>
     program, so that you can rebuild everything with <command>gmake</>
     later on. To reset the source tree to the state in which it was
     distributed, use <command>gmake distclean</>. If you are going to
     build for several platforms within the same source tree you must do
-    this and re-configure for each build.  (Alternatively, use
+    this and rebuild for each platform.  (Alternatively, use
     a separate build tree for each platform, so that the source tree
     remains unmodified.)
    </para>
@@ -1673,8 +1675,8 @@ All of PostgreSQL is successfully made. Ready to install.
    </indexterm>
 
    <para>
-    On some systems that have shared libraries (which most systems do)
-    you need to tell your system how to find the newly installed
+    On several systems with shared libraries
+    you need to tell the system how to find the newly installed
     shared libraries.  The systems on which this is
     <emphasis>not</emphasis> necessary include <systemitem
     class="osname">BSD/OS</>, <systemitem class="osname">FreeBSD</>,
@@ -1688,7 +1690,7 @@ All of PostgreSQL is successfully made. Ready to install.
 
    <para>
     The method to set the shared library search path varies between
-    platforms, but the most widely usable method is to set the
+    platforms, but the most widely-used method is to set the
     environment variable <envar>LD_LIBRARY_PATH</> like so: In Bourne
     shells (<command>sh</>, <command>ksh</>, <command>bash</>, <command>zsh</>):
 <programlisting>
@@ -1724,7 +1726,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
    <para>
     If in doubt, refer to the manual pages of your system (perhaps
     <command>ld.so</command> or <command>rld</command>). If you later
-    on get a message like
+    get a message like:
 <screen>
 psql: error in loading shared libraries
 libpq.so.2.1: cannot open shared object file: No such file or directory
@@ -1776,7 +1778,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
    <para>
     To do this, add the following to your shell start-up file, such as
     <filename>~/.bash_profile</> (or <filename>/etc/profile</>, if you
-    want it to affect every user):
+    want it to affect all users):
 <programlisting>
 PATH=/usr/local/pgsql/bin:$PATH
 export PATH
@@ -1807,7 +1809,7 @@ export MANPATH
     server, overriding the compiled-in defaults. If you are going to
     run client applications remotely then it is convenient if every
     user that plans to use the database sets <envar>PGHOST</>.  This
-    is not required, however: the settings can be communicated via command
+    is not required, however; the settings can be communicated via command
     line options to most client programs.
    </para>
   </sect2>
@@ -1902,7 +1904,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
 <screen>
 <userinput>createdb testdb</>
 </screen>
-     Then enter
+     Then enter:
 <screen>
 <userinput>psql testdb</>
 </screen>
@@ -2950,7 +2952,7 @@ LIBOBJS = snprintf.o
 
     <para>
      If you see the linking of the postgres executable abort with an
-     error message like
+     error message like:
 <screen>
 Undefined                       first referenced
  symbol                             in file

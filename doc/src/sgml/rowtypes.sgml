@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.9 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.10 2009/04/27 16:27:36 momjian Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -12,9 +12,9 @@
  </indexterm>
 
  <para>
-  A <firstterm>composite type</> describes the structure of a row or record;
-  it is in essence just a list of field names and their data types.
-  <productname>PostgreSQL</productname> allows values of composite types to be
+  A <firstterm>composite type</> represents the structure of a row or record;
+  it is essentially just a list of field names and their data types.
+  <productname>PostgreSQL</productname> allows  composite types to be
   used in many of the same ways that simple types can be used.  For example, a
   column of a table can be declared to be of a composite type.
  </para>
@@ -39,9 +39,9 @@ CREATE TYPE inventory_item AS (
   The syntax is comparable to <command>CREATE TABLE</>, except that only
   field names and types can be specified; no constraints (such as <literal>NOT
   NULL</>) can presently be included.  Note that the <literal>AS</> keyword
-  is essential; without it, the system will think a quite different kind
-  of <command>CREATE TYPE</> command is meant, and you'll get odd syntax
-  errors.
+  is essential; without it, the system will think a different kind
+  of <command>CREATE TYPE</> command is meant, and you will get odd syntax
+  error.
  </para>
 
  <para>
@@ -68,8 +68,8 @@ SELECT price_extension(item, 10) FROM on_hand;
  </para>
 
  <para>
-  Whenever you create a table, a composite type is also automatically
-  created, with the same name as the table, to represent the table's
+  Whenever you create a table, a composite type is automatically
+  created also, with the same name as the table, to represent the table's
   row type.  For example, had we said:
 <programlisting>
 CREATE TABLE inventory_item (
@@ -135,7 +135,7 @@ CREATE TABLE inventory_item (
  <para>
   The <literal>ROW</literal> expression syntax can also be used to
   construct composite values.  In most cases this is considerably
-  simpler to use than the string-literal syntax, since you don't have
+  simpler to use than the string-literal syntax since you don't have
   to worry about multiple layers of quoting.  We already used this
   method above:
 <programlisting>
@@ -169,7 +169,8 @@ SELECT item.name FROM on_hand WHERE item.price &gt; 9.99;
 </programlisting>
 
   This will not work since the name <literal>item</> is taken to be a table
-  name, not a field name, per SQL syntax rules.  You must write it like this:
+  name, not a column name of <literal>on_hand</>, per SQL syntax rules.
+  You must write it like this:
 
 <programlisting>
 SELECT (item).name FROM on_hand WHERE (item).price &gt; 9.99;
@@ -195,7 +196,7 @@ SELECT (on_hand.item).name FROM on_hand WHERE (on_hand.item).price &gt; 9.99;
 SELECT (my_func(...)).field FROM ...
 </programlisting>
 
-  Without the extra parentheses, this will provoke a syntax error.
+  Without the extra parentheses, this will generate a syntax error.
  </para>
  </sect2>
 
@@ -249,7 +250,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
    The external text representation of a composite value consists of items that
    are interpreted according to the I/O conversion rules for the individual
    field types, plus decoration that indicates the composite structure.
-   The decoration consists of parentheses (<literal>(</> and <literal>)</>)
+   The decoration consists of parentheses
    around the whole value, plus commas (<literal>,</>) between adjacent
    items.  Whitespace outside the parentheses is ignored, but within the
    parentheses it is considered part of the field value, and might or might not be
@@ -263,7 +264,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
   </para>
 
   <para>
-   As shown previously, when writing a composite value you can write double
+   As shown previously, when writing a composite value you can use double
    quotes around any individual field value.
    You <emphasis>must</> do so if the field value would otherwise
    confuse the composite-value parser.  In particular, fields containing
@@ -272,7 +273,8 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
    precede it with a backslash.  (Also, a pair of double quotes within a
    double-quoted field value is taken to represent a double quote character,
    analogously to the rules for single quotes in SQL literal strings.)
-   Alternatively, you can use backslash-escaping to protect all data characters
+   Alternatively, you can avoid quoting and use backslash-escaping to
+   protect all data characters
    that would otherwise be taken as composite syntax.
   </para>
 

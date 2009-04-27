@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.57 2009/02/04 21:30:41 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.58 2009/04/27 16:27:35 momjian Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -19,10 +19,10 @@
    <para>
     This chapter will on occasion refer to examples found in <xref
     linkend="tutorial-sql"> to change or improve them, so it will be
-    of advantage if you have read that chapter.  Some examples from
+    good if you have read that chapter.  Some examples from
     this chapter can also be found in
     <filename>advanced.sql</filename> in the tutorial directory.  This
-    file also contains some example data to load, which is not
+    file also contains some sample data to load, which is not
     repeated here.  (Refer to <xref linkend="tutorial-sql-intro"> for
     how to use the file.)
    </para>
@@ -173,7 +173,7 @@ UPDATE branches SET balance = balance + 100.00
    </para>
 
    <para>
-    The details of these commands are not important here; the important
+    The details of these commands are not important; the important
     point is that there are several separate updates involved to accomplish
     this rather simple operation.  Our bank's officers will want to be
     assured that either all these updates happen, or none of them happen.
@@ -307,7 +307,7 @@ COMMIT;
 
    <para>
     This example is, of course, oversimplified, but there's a lot of control
-    to be had over a transaction block through the use of savepoints.
+    possible in a transaction block through the use of savepoints.
     Moreover, <command>ROLLBACK TO</> is the only way to regain control of a
     transaction block that was put in aborted state by the
     system due to an error, short of rolling it back completely and starting

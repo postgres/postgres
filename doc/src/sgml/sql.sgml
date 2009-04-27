@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.47 2008/02/15 22:17:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.48 2009/04/27 16:27:36 momjian Exp $ -->
 
  <chapter id="sql-intro">
   <title>SQL</title>
@@ -95,7 +95,7 @@
    as <firstterm><acronym>SQL3</acronym></firstterm>
    is under development. It is planned to make <acronym>SQL</acronym>
    a Turing-complete
-   language, i.e. all computable queries (e.g. recursive queries) will be
+   language, i.e., all computable queries (e.g., recursive queries) will be
    possible. This has now been completed as SQL:2003.
   </para>
 
@@ -761,7 +761,7 @@ x(A) &mid; F(x)
 
     <para>
      The relational algebra and the relational calculus have the same
-     <firstterm>expressive power</firstterm>; i.e. all queries that
+     <firstterm>expressive power</firstterm>; i.e., all queries that
      can be formulated using relational algebra can also be formulated 
      using the relational calculus and vice versa.
      This was first proved by E. F. Codd in
@@ -811,7 +811,7 @@ x(A) &mid; F(x)
       <para>
        Arithmetic capability: In <acronym>SQL</acronym> it is possible
        to involve
-       arithmetic operations as well as comparisons, e.g.
+       arithmetic operations as well as comparisons, e.g.:
 
        <programlisting>
 A &lt; B + 3.
@@ -1027,7 +1027,7 @@ SELECT S.SNAME, P.PNAME
       SUPPLIER &times; PART &times; SELLS
 
       is derived. Now only those tuples satisfying the
-      conditions given in the WHERE clause are selected (i.e. the common
+      conditions given in the WHERE clause are selected (i.e., the common
       named attributes have to be equal). Finally we project out all
       columns but S.SNAME and P.PNAME. 
      </para>
@@ -1312,7 +1312,7 @@ SELECT COUNT(PNO)
       <acronym>SQL</acronym> allows one to partition the tuples of a table
       into groups. Then the
       aggregate functions described above can be applied to the groups &mdash;
-      i.e. the value of the aggregate function is no longer calculated over
+      i.e., the value of the aggregate function is no longer calculated over
       all the values of the specified column but over all values of a
       group. Thus the aggregate function is evaluated separately for every
       group.
@@ -1517,7 +1517,7 @@ SELECT *
 
        <para>
         If we want to know all suppliers that do not sell any part 
-        (e.g. to be able to remove these suppliers from the database) we use:
+        (e.g., to be able to remove these suppliers from the database) we use:
 
         <programlisting>
 SELECT * 
@@ -1533,7 +1533,7 @@ SELECT *
         sells at least one part. Note that we use S.SNO from the outer
         <command>SELECT</command> within the WHERE clause of the inner
         <command>SELECT</command>. Here the subquery must be evaluated
-        afresh for each tuple from the outer query, i.e. the value for
+        afresh for each tuple from the outer query, i.e., the value for
         S.SNO is always taken from the current tuple of the outer
         <command>SELECT</command>.
        </para>
@@ -1811,7 +1811,7 @@ CREATE INDEX I ON SUPPLIER (SNAME);
      </para>
 
        <para>
-        The created index is maintained automatically, i.e. whenever a new
+        The created index is maintained automatically, i.e., whenever a new
         tuple is inserted into the relation SUPPLIER the index I is
         adapted. Note that the only changes a user can perceive when an
         index is present are increased speed for <command>SELECT</command>
@@ -1826,7 +1826,7 @@ CREATE INDEX I ON SUPPLIER (SNAME);
 
      <para>
       A view can be regarded as a <firstterm>virtual table</firstterm>,
-      i.e. a table that
+      i.e., a table that
       does not <emphasis>physically</emphasis> exist in the database
       but looks to the user
       as if it does. By contrast, when we talk of a
@@ -1838,7 +1838,7 @@ CREATE INDEX I ON SUPPLIER (SNAME);
      <para>
       Views do not have their own, physically separate, distinguishable
       stored data. Instead, the system stores the definition of the
-      view (i.e. the rules about how to access physically stored base
+      view (i.e., the rules about how to access physically stored base
       tables in order to materialize the view) somewhere in the system
       catalogs (see
       <xref linkend="tutorial-catalogs-title" endterm="tutorial-catalogs-title">). For a
@@ -2082,7 +2082,7 @@ DELETE FROM SUPPLIER
 
     <para>
      In this section we will sketch how <acronym>SQL</acronym> can be
-     embedded into a host language (e.g. <literal>C</literal>).
+     embedded into a host language (e.g., <literal>C</literal>).
      There are two main reasons why we want to use <acronym>SQL</acronym>
      from a host language:
 
@@ -2090,7 +2090,7 @@ DELETE FROM SUPPLIER
       <listitem>
        <para>
         There are queries that cannot be formulated using pure <acronym>SQL</acronym>
-        (i.e. recursive queries). To be able to perform such queries we need a
+        (i.e., recursive queries). To be able to perform such queries we need a
         host language with a greater expressive power than
         <acronym>SQL</acronym>.
        </para>
@@ -2099,7 +2099,7 @@ DELETE FROM SUPPLIER
       <listitem>
        <para>
         We simply want to access a database from some application that
-        is written in the host language (e.g. a ticket reservation system
+        is written in the host language (e.g., a ticket reservation system
         with a graphical user interface is written in C and the information
         about which tickets are still left is stored in a database that can be
         accessed using embedded <acronym>SQL</acronym>).

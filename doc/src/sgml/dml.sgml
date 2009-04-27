@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.17 2007/12/03 23:49:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.18 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -14,7 +14,7 @@
   table data.  We also introduce ways to effect automatic data changes
   when certain events occur: triggers and rewrite rules.  The chapter
   after this will finally explain how to extract your long-lost data
-  back out of the database.
+  from the database.
  </para>
 
  <sect1 id="dml-insert">
@@ -33,14 +33,14 @@
    do before a database can be of much use is to insert data.  Data is
    conceptually inserted one row at a time.  Of course you can also
    insert more than one row, but there is no way to insert less than
-   one row at a time.  Even if you know only some column values, a
+   one row.  Even if you know only some column values, a
    complete row must be created.
   </para>
 
   <para>
    To create a new row, use the <xref linkend="sql-insert"
    endterm="sql-insert-title"> command.  The command requires the
-   table name and a value for each of the columns of the table.  For
+   table name and column values.  For
    example, consider the products table from <xref linkend="ddl">:
 <programlisting>
 CREATE TABLE products (
@@ -60,7 +60,7 @@ INSERT INTO products VALUES (1, 'Cheese', 9.99);
 
   <para>
    The above syntax has the drawback that you need to know the order
-   of the columns in the table.  To avoid that you can also list the
+   of the columns in the table.  To avoid this you can also list the
    columns explicitly.  For example, both of the following commands
    have the same effect as the one above:
 <programlisting>
@@ -137,15 +137,15 @@ INSERT INTO products (product_no, name, price) VALUES
    To perform an update, you need three pieces of information:
    <orderedlist spacing="compact">
     <listitem>
-     <para>The name of the table and column to update,</para>
+     <para>The name of the table and column to update</para>
     </listitem>
 
     <listitem>
-     <para>The new value of the column,</para>
+     <para>The new value of the column</para>
     </listitem>
 
     <listitem>
-     <para>Which row(s) to update.</para>
+     <para>Which row(s) to update</para>
     </listitem>
    </orderedlist>
   </para>
@@ -153,10 +153,10 @@ INSERT INTO products (product_no, name, price) VALUES
   <para>
    Recall from <xref linkend="ddl"> that SQL does not, in general,
    provide a unique identifier for rows.  Therefore it is not
-   necessarily possible to directly specify which row to update.
+   always possible to directly specify which row to update.
    Instead, you specify which conditions a row must meet in order to
-   be updated.  Only if you have a primary key in the table (no matter
-   whether you declared it or not) can you reliably address individual rows,
+   be updated.  Only if you have a primary key in the table (independent of
+   whether you declared it or not) can you reliably address individual rows
    by choosing a condition that matches the primary key.
    Graphical database access tools rely on this fact to allow you to
    update rows individually.
@@ -177,7 +177,7 @@ UPDATE products SET price = 10 WHERE price = 5;
    <literal>UPDATE</literal> followed by the table name.  As usual,
    the table name can be schema-qualified, otherwise it is looked up
    in the path.  Next is the key word <literal>SET</literal> followed
-   by the column name, an equals sign and the new column value.  The
+   by the column name, an equal sign, and the new column value.  The
    new column value can be any scalar expression, not just a constant.
    For example, if you want to raise the price of all products by 10%
    you could use:
@@ -248,7 +248,10 @@ DELETE FROM products WHERE price = 10;
 <programlisting>
 DELETE FROM products;
 </programlisting>
-   then all rows in the table will be deleted!  Caveat programmer.
+   then all rows in the table will be deleted!  (<xref
+   linkend="sql-truncate" endterm="sql-truncate-title"> can also be used
+   to delete all rows.)
+   Caveat programmer.
   </para>
  </sect1>
 </chapter>

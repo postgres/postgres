@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.124 2009/04/07 00:31:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.125 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1523,7 +1523,7 @@ archive_command = 'local_backup_script.sh'
   </para>
 
   <para>
-   It should be noted that the log shipping is asynchronous, i.e. the WAL
+   It should be noted that the log shipping is asynchronous, i.e., the WAL
    records are shipped after transaction commit. As a result there is a
    window for data loss should the primary server suffer a catastrophic
    failure: transactions not yet shipped will be lost.  The length of the

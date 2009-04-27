@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.12 2009/03/25 23:20:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/contrib.sgml,v 1.13 2009/04/27 16:27:35 momjian Exp $ -->
 
 <appendix id="contrib">
  <title>Additional Supplied Modules</title>
@@ -16,7 +16,7 @@
 
  <para>
   When building from the source distribution, these modules are not built
-  automatically.  You can build and install all of them by running
+  automatically.  You can build and install all of them by running:
 <screen>
 <userinput>gmake</userinput>
 <userinput>gmake install</userinput>
@@ -25,7 +25,7 @@
   or to build and install
   just one selected module, do the same in that module's subdirectory.
   Many of the modules have regression tests, which can be executed by
-  running
+  running:
 <screen>
 <userinput>gmake installcheck</userinput>
 </screen>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.427 2009/04/24 20:46:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.428 2009/04/27 16:27:36 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Server Setup and Operation</title>
@@ -76,7 +76,7 @@
    linkend="app-initdb">,<indexterm><primary>initdb</></> which is
    installed with <productname>PostgreSQL</productname>. The desired
    file system location of your database cluster is indicated by the
-   <option>-D</option> option, for example
+   <option>-D</option> option, for example:
 <screen>
 <prompt>$</> <userinput>initdb -D /usr/local/pgsql/data</userinput>
 </screen>
@@ -382,7 +382,7 @@ FATAL:  could not create TCP/IP listen socket
     </para>
 
     <para>
-     A message like
+     A message like:
 <screen>
 FATAL:  could not create shared memory segment: Invalid argument
 DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
@@ -401,7 +401,7 @@ DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
     </para>
 
     <para>
-     An error like
+     An error like:
 <screen>
 FATAL:  could not create semaphores: No space left on device
 DETAIL:  Failed system call was semget(5440126, 17, 03600).

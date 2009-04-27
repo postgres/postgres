@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.68 2009/04/10 03:13:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.69 2009/04/27 16:27:36 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -929,7 +929,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <function>read()</> calls issued for the table, index, or
      database; the number of actual physical reads is usually
      lower due to kernel-level buffering.  The <literal>*_blks_read</>
-     statistics columns uses this subtraction, i.e. fetched minus hit.
+     statistics columns uses this subtraction, i.e., fetched minus hit.
     </para>
    </note>
 

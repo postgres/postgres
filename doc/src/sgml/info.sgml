@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.26 2008/01/09 02:37:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.27 2009/04/27 16:27:35 momjian Exp $ -->
 
 <sect1 id="resources">
  <title>Further Information</title>
@@ -8,12 +8,17 @@
   resources about <productname>PostgreSQL</productname>:
 
   <variablelist>
+
    <varlistentry>
-    <term>FAQs</term>
+    <term>Wiki</term>
     <listitem>
      <para>
-      The FAQ list <indexterm><primary>FAQ</></> contains
-      continuously updated answers to frequently asked questions.
+      The <productname>PostgreSQL</productname> <ulink
+      url="http://wiki.postgresql.org">wiki</ulink> contains the project's <ulink
+      url="http://wiki.postgresql.org/wiki/Frequently_Asked_Questions">FAQ</>
+      (Frequently Asked Questions) list, <ulink
+      url="http://wiki.postgresql.org/wiki/Todo">TODO</> list, and
+      detailed information about many more topics.
      </para>
     </listitem>
    </varlistentry>

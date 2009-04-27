@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.87 2008/12/07 23:46:39 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.88 2009/04/27 16:27:35 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -750,7 +750,7 @@ EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
   <para>
    The pgtypes library maps <productname>PostgreSQL</productname> database
    types to C equivalents that can be used in C programs. It also offers
-   functions to do basic calculations with those types within C, i.e. without
+   functions to do basic calculations with those types within C, i.e., without
    the help of the <productname>PostgreSQL</productname> server. See the
    following example:
 <programlisting><![CDATA[
@@ -1232,7 +1232,7 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
 char *PGTYPESdate_to_asc(date dDate);
 </synopsis>
         The function receives the date <literal>dDate</> as its only parameter.
-        It will output the date in the form <literal>1999-01-18</>, i.e. in the
+        It will output the date in the form <literal>1999-01-18</>, i.e., in the
         <literal>YYYY-MM-DD</> format.
        </para>
       </listitem>
