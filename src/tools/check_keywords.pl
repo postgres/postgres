@@ -1,31 +1,41 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+
+use strict;
 
 # Check that the keyword lists in gram.y and kwlist.h are sane. Run from
 # the top directory, or pass a path to a top directory as argument.
 #
-# $PostgreSQL: pgsql/src/tools/check_keywords.pl,v 1.1 2009/04/29 05:05:57 heikki Exp $
+# $PostgreSQL: pgsql/src/tools/check_keywords.pl,v 1.2 2009/04/30 10:26:35 heikki Exp $
+
+my $path;
 
 if (@ARGV) {
 	$path = $ARGV[0];
 	shift @ARGV;
+} else {
+	$path = "."; 
 }
-
-if ($path eq '') { $path = "."; }
 
 $[ = 1;			# set array base to 1
 $, = ' ';		# set output field separator
 $\ = "\n";		# set output record separator
 
+my %keyword_categories;
 $keyword_categories{'unreserved_keyword'} = 'UNRESERVED_KEYWORD';
 $keyword_categories{'col_name_keyword'} = 'COL_NAME_KEYWORD';
 $keyword_categories{'type_func_name_keyword'} = 'TYPE_FUNC_NAME_KEYWORD';
 $keyword_categories{'reserved_keyword'} = 'RESERVED_KEYWORD';
 
-$gram_filename = "$path/src/backend/parser/gram.y";
-open(GRAM, $gram_filename) || die("Could not open $gram_filename!");
+my $gram_filename = "$path/src/backend/parser/gram.y";
+open(GRAM, $gram_filename) || die("Could not open : $gram_filename");
+
+my ($S, $s, $k, $n, $kcat);
+my $comment;
+my @arr;
+my %keywords;
+
 line: while (<GRAM>) {
     chomp;	# strip record separator
-    @Fld = split(' ', $_, -1);
 
     $S = $_;
     # Make sure any braces are split
@@ -50,7 +60,7 @@ line: while (<GRAM>) {
     $n = (@arr = split(' ', $S));
 
     # Ok, we're in a keyword list. Go through each field in turn
-    for ($fieldIndexer = 1; $fieldIndexer <= $n; $fieldIndexer++) {
+    for (my $fieldIndexer = 1; $fieldIndexer <= $n; $fieldIndexer++) {
 	if ($arr[$fieldIndexer] eq '*/' && $comment) {
 	    $comment = 0;
 	    next;
@@ -69,7 +79,6 @@ line: while (<GRAM>) {
 
 	if ($arr[$fieldIndexer] eq ';') {
 	    # end of keyword list
-	    $line = '';
 	    $kcat = '';
 	    next;
 	}
@@ -85,6 +94,7 @@ line: while (<GRAM>) {
 close GRAM;
 
 # Check that all keywords are in alphabetical order
+my ($prevkword, $kword, $bare_kword);
 foreach $kcat (keys %keyword_categories) {
     $prevkword = '';
 
@@ -103,6 +113,7 @@ foreach $kcat (keys %keyword_categories) {
 # kwhashes is a hash of hashes, keyed by keyword category id, e.g.
 # UNRESERVED_KEYWORD. Each inner hash is a keyed by keyword id, e.g. ABORT_P
 # with a dummy value.
+my %kwhashes;
 while ( my ($kcat, $kcat_id) = each(%keyword_categories) ) {
     @arr = @{$keywords{$kcat}};
 
@@ -114,10 +125,12 @@ while ( my ($kcat, $kcat_id) = each(%keyword_categories) ) {
 
 # Now read in kwlist.h
 
-$kwlist_filename = "$path/src/include/parser/kwlist.h";
-open(KWLIST, $kwlist_filename) || die("Could not open $kwlist_filename!");
+my $kwlist_filename = "$path/src/include/parser/kwlist.h";
+open(KWLIST, $kwlist_filename) || die("Could not open : $kwlist_filename");
 
-$prevkwstring = '';
+my $prevkwstring = '';
+my $bare_kwname;
+my %kwhash;
 kwlist_line: while (<KWLIST>) {
     my($line) = $_;
 
