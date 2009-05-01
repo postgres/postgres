@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.11 2009/03/05 14:29:26 heikki Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.12 2009/05/01 19:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2217,13 +2217,13 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
+		|| (*fsec < INT64CONST(0)) || (*fsec > INT64CONST(1000000)))
 		return DTERR_FIELD_OVERFLOW;
 #else
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < 0) || (*fsec >= 1))
+		|| (*fsec < 0) || (*fsec > 1))
 		return DTERR_FIELD_OVERFLOW;
 #endif
 
@@ -2482,13 +2482,13 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
+		|| (*fsec < INT64CONST(0)) || (*fsec > INT64CONST(1000000)))
 		return DTERR_FIELD_OVERFLOW;
 #else
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < 0) || (*fsec >= 1))
+		|| (*fsec < 0) || (*fsec > 1))
 		return DTERR_FIELD_OVERFLOW;
 #endif
 
