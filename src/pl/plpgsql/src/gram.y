@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.123 2009/04/19 21:50:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.124 2009/05/01 23:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ static List				*read_raise_options(void);
 %type <forvariable>	for_variable
 %type <stmt>	for_control
 
-%type <str>		opt_lblname opt_block_label opt_label
+%type <str>		any_identifier any_name opt_block_label opt_label
 %type <str>		execsql_start
 
 %type <list>	proc_sect proc_stmts stmt_else
@@ -331,7 +331,7 @@ decl_stmts		: decl_stmts decl_stmt
 					{	$$ = $1;	}
 				;
 
-decl_stmt		: '<' '<' opt_lblname '>' '>'
+decl_stmt		: '<' '<' any_name '>' '>'
 					{	$$ = $3;	}
 				| K_DECLARE
 					{	$$ = NULL;	}
@@ -512,12 +512,12 @@ decl_cursor_arg : decl_varname decl_datatype
 decl_is_for		:	K_IS |		/* Oracle */
 					K_FOR;		/* ANSI */
 
-decl_aliasitem	: T_WORD
+decl_aliasitem	: any_identifier
 					{
 						char	*name;
 						PLpgSQL_nsitem *nsi;
 
-						plpgsql_convert_ident(yytext, &name, 1);
+						plpgsql_convert_ident($1, &name, 1);
 						if (name[0] != '$')
 							yyerror("only positional parameters can be aliased");
 
@@ -549,8 +549,27 @@ decl_varname	: T_WORD
 						$$.name = name;
 						$$.lineno  = plpgsql_scanner_lineno();
 					}
+				| T_SCALAR
+					{
+						/*
+						 * Since the scanner is only searching the topmost
+						 * namestack entry, getting T_SCALAR etc can only
+						 * happen if the name is already declared in this
+						 * block.
+						 */
+						yyerror("duplicate declaration");
+					}
+				| T_ROW
+					{
+						yyerror("duplicate declaration");
+					}
+				| T_RECORD
+					{
+						yyerror("duplicate declaration");
+					}
 				;
 
+/* XXX this is broken because it doesn't allow for T_SCALAR,T_ROW,T_RECORD */
 decl_renname	: T_WORD
 					{
 						char	*name;
@@ -1752,45 +1771,39 @@ proc_conditions	: proc_conditions K_OR proc_condition
 						}
 				;
 
-proc_condition	: opt_lblname
+proc_condition	: any_name
 						{
-							$$ = plpgsql_parse_err_condition($1);
-						}
-				| T_SCALAR
-						{
-							/*
-							 * Because we know the special sqlstate variable
-							 * is at the top of the namestack (see the
-							 * exception_sect production), the SQLSTATE
-							 * keyword will always lex as T_SCALAR.  This
-							 * might not be true in other parsing contexts!
-							 */
-							PLpgSQL_condition *new;
-							char   *sqlstatestr;
+							if (strcmp($1, "sqlstate") != 0)
+							{
+								$$ = plpgsql_parse_err_condition($1);
+							}
+							else
+							{
+								PLpgSQL_condition *new;
+								char   *sqlstatestr;
 
-							if (pg_strcasecmp(yytext, "sqlstate") != 0)
-								yyerror("syntax error");
+								/* next token should be a string literal */
+								if (yylex() != T_STRING)
+									yyerror("syntax error");
+								sqlstatestr = parse_string_token(yytext);
 
-							/* next token should be a string literal */
-							if (yylex() != T_STRING)
-								yyerror("syntax error");
-							sqlstatestr = parse_string_token(yytext);
+								if (strlen(sqlstatestr) != 5)
+									yyerror("invalid SQLSTATE code");
+								if (strspn(sqlstatestr, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") != 5)
+									yyerror("invalid SQLSTATE code");
 
-							if (strlen(sqlstatestr) != 5)
-								yyerror("invalid SQLSTATE code");
-							if (strspn(sqlstatestr, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") != 5)
-								yyerror("invalid SQLSTATE code");
+								new = palloc(sizeof(PLpgSQL_condition));
+								new->sqlerrstate =
+									MAKE_SQLSTATE(sqlstatestr[0],
+												  sqlstatestr[1],
+												  sqlstatestr[2],
+												  sqlstatestr[3],
+												  sqlstatestr[4]);
+								new->condname = sqlstatestr;
+								new->next = NULL;
 
-							new = palloc(sizeof(PLpgSQL_condition));
-							new->sqlerrstate = MAKE_SQLSTATE(sqlstatestr[0],
-															 sqlstatestr[1],
-															 sqlstatestr[2],
-															 sqlstatestr[3],
-															 sqlstatestr[4]);
-							new->condname = sqlstatestr;
-							new->next = NULL;
-
-							$$ = new;
+								$$ = new;
+							}
 						}
 				;
 
@@ -1815,35 +1828,20 @@ opt_block_label	:
 						plpgsql_ns_push(NULL);
 						$$ = NULL;
 					}
-				| '<' '<' opt_lblname '>' '>'
+				| '<' '<' any_name '>' '>'
 					{
 						plpgsql_ns_push($3);
 						$$ = $3;
 					}
 				;
 
-/*
- * need all the options because scanner will have tried to resolve as variable
- */
 opt_label	:
 					{
 						$$ = NULL;
 					}
-				| T_WORD
+				| any_identifier
 					{
-						$$ = check_label(yytext);
-					}
-				| T_SCALAR
-					{
-						$$ = check_label(yytext);
-					}
-				| T_RECORD
-					{
-						$$ = check_label(yytext);
-					}
-				| T_ROW
-					{
-						$$ = check_label(yytext);
+						$$ = check_label($1);
 					}
 				;
 
@@ -1853,11 +1851,32 @@ opt_exitcond	: ';'
 					{ $$ = $2; }
 				;
 
-opt_lblname		: T_WORD
+/*
+ * need all the options because scanner will have tried to resolve as variable
+ */
+any_identifier	: T_WORD
+					{
+						$$ = yytext;
+					}
+				| T_SCALAR
+					{
+						$$ = yytext;
+					}
+				| T_RECORD
+					{
+						$$ = yytext;
+					}
+				| T_ROW
+					{
+						$$ = yytext;
+					}
+				;
+
+any_name		: any_identifier
 					{
 						char	*name;
 
-						plpgsql_convert_ident(yytext, &name, 1);
+						plpgsql_convert_ident($1, &name, 1);
 						$$ = name;
 					}
 				;
