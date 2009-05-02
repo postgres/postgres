@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.577 2009/04/05 04:19:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.578 2009/05/02 22:02:37 tgl Exp $
  *
  * NOTES
  *
@@ -315,6 +315,7 @@ extern int	optreset;			/* might not be declared by system headers */
 /*
  * postmaster.c - function prototypes
  */
+static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
 
 #ifdef USE_BONJOUR
@@ -493,11 +494,8 @@ PostmasterMain(int argc, char *argv[])
 											  ALLOCSET_DEFAULT_MAXSIZE);
 	MemoryContextSwitchTo(PostmasterContext);
 
-	if (find_my_exec(argv[0], my_exec_path) < 0)
-		elog(FATAL, "%s: could not locate my own executable path",
-			 argv[0]);
-
-	get_pkglib_path(my_exec_path, pkglib_path);
+	/* Initialize paths to installation files */
+	getInstallationPaths(argv[0]);
 
 	/*
 	 * Options setup
@@ -689,15 +687,6 @@ PostmasterMain(int argc, char *argv[])
 					 progname);
 		ExitPostmaster(1);
 	}
-
-#ifdef EXEC_BACKEND
-	/* Locate executable backend before we change working directory */
-	if (find_other_exec(argv[0], "postgres", PG_BACKEND_VERSIONSTR,
-						postgres_exec_path) < 0)
-		ereport(FATAL,
-				(errmsg("%s: could not locate matching postgres executable",
-						progname)));
-#endif
 
 	/*
 	 * Locate the proper configuration files and data directory, and read
@@ -1059,6 +1048,58 @@ PostmasterMain(int argc, char *argv[])
 	ExitPostmaster(status != STATUS_OK);
 
 	return 0;					/* not reached */
+}
+
+
+/*
+ * Compute and check the directory paths to files that are part of the
+ * installation (as deduced from the postgres executable's own location)
+ */
+static void
+getInstallationPaths(const char *argv0)
+{
+	DIR		   *pdir;
+
+	/* Locate the postgres executable itself */
+	if (find_my_exec(argv0, my_exec_path) < 0)
+		elog(FATAL, "%s: could not locate my own executable path", argv0);
+
+#ifdef EXEC_BACKEND
+	/* Locate executable backend before we change working directory */
+	if (find_other_exec(argv0, "postgres", PG_BACKEND_VERSIONSTR,
+						postgres_exec_path) < 0)
+		ereport(FATAL,
+				(errmsg("%s: could not locate matching postgres executable",
+						argv0)));
+#endif
+
+	/*
+	 * Locate the pkglib directory --- this has to be set early in case we try
+	 * to load any modules from it in response to postgresql.conf entries.
+	 */
+	get_pkglib_path(my_exec_path, pkglib_path);
+
+	/*
+	 * Verify that there's a readable directory there; otherwise the
+	 * Postgres installation is incomplete or corrupt.  (A typical cause
+	 * of this failure is that the postgres executable has been moved or
+	 * hardlinked to some directory that's not a sibling of the installation
+	 * lib/ directory.)
+	 */
+	pdir = AllocateDir(pkglib_path);
+	if (pdir == NULL)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m",
+						pkglib_path),
+				 errhint("This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location.",
+						 my_exec_path)));
+	FreeDir(pdir);
+
+	/*
+	 * XXX is it worth similarly checking the share/ directory?  If the
+	 * lib/ directory is there, then share/ probably is too.
+	 */
 }
 
 
