@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.59.2.3 2004/03/09 20:10:19 momjian Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.59.2.4 2009/05/02 20:18:21 tgl Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -173,9 +173,8 @@ INSTALL HISTORY regress_README: % : %.html
 INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml >$@
 
-HISTORY.html: release.sgml
-	( echo '<!doctype appendix PUBLIC "-//OASIS//DTD DocBook V3.1//EN">'; \
-	  cat $< ) >tempfile_HISTORY.sgml
+HISTORY.html: generate_history.pl $(wildcard $(srcdir)/release*.sgml)
+	$(PERL) $< "$(srcdir)" release.sgml >tempfile_HISTORY.sgml
 	$(JADE.text) -V nochunks tempfile_HISTORY.sgml >$@
 	rm tempfile_HISTORY.sgml
 
