@@ -68,15 +68,14 @@ Creating Back-Branch Release Notes
 
 * Do 'cvs log' on each back-branch and run pgcvslog
 
-* Edit and create SGML markup for the most recent branch
+* In CVS HEAD, edit and create SGML markup for the most recent branch
+  in that branch's release-N.N.sgml file
 
-* Make copies of the SGML for each branch, then remove items
-  that do not apply based on cvs logs for that branch
+* Copy this into older branches' release-N.N.sgml files, then remove
+  items that do not apply based on cvs logs for that branch (and add
+  any that are needed)
 
-* Copy the SGML for each branch into release.sgml in CVS HEAD
-
-* Use src/tools/major_release_split to create a release.sgml for
-  each branch and copy them to the branch's CVS
+* Copy the appropriate release-N.N.sgml files into each back CVS branch
 
 
 ---------------------------------------------------------------------------
