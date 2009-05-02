@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.140 2009/04/19 18:52:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.141 2009/05/02 17:27:57 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1904,8 +1904,8 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
       indefinitely until terminated by an <literal>EXIT</> or
       <command>RETURN</command> statement.  The optional
       <replaceable>label</replaceable> can be used by <literal>EXIT</>
-      and <literal>CONTINUE</literal> statements in nested loops to
-      specify which loop the statement should be applied to.
+      and <literal>CONTINUE</literal> statements within nested loops to
+      specify which loop those statements refer to.
      </para>
     </sect3>
 
@@ -1939,9 +1939,19 @@ EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <re
 
        <para>
         <literal>EXIT</> can be used with all types of loops; it is
-        not limited to use with unconditional loops. When used with a
+        not limited to use with unconditional loops.
+       </para>
+
+       <para>
+        When used with a
         <literal>BEGIN</literal> block, <literal>EXIT</literal> passes
         control to the next statement after the end of the block.
+        Note that a label must be used for this purpose; an unlabelled
+        <literal>EXIT</literal> is never considered to match a
+        <literal>BEGIN</literal> block.  (This is a change from
+        pre-8.4 releases of <productname>PostgreSQL</productname>, which
+        would allow an unlabelled <literal>EXIT</literal> to match
+        a <literal>BEGIN</literal> block.)
        </para>
 
        <para>
@@ -1959,11 +1969,13 @@ LOOP
     EXIT WHEN count &gt; 0;  -- same result as previous example
 END LOOP;
 
+&lt;&lt;ablock&gt;&gt;
 BEGIN
     -- some computations
     IF stocks &gt; 100000 THEN
-        EXIT;  -- causes exit from the BEGIN block
+        EXIT ablock;  -- causes exit from the BEGIN block
     END IF;
+    -- computations here will be skipped when stocks &gt; 100000
 END;
 </programlisting>
        </para>
