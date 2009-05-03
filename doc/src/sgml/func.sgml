@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.477 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.478 2009/05/03 21:10:27 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8596,8 +8596,8 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean,
    </para>
 
    <para>
-    The following functions return XML Schema documents similar to the
-    mappings produced by the corresponding functions above:
+    The following functions return XML Schema documents describing the
+    mappings performed by the corresponding functions above:
 <synopsis>
 table_to_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
 query_to_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
