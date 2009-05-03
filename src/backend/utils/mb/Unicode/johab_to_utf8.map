@@ -1,6 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/johab_to_utf8.map,v 1.2 2006/03/11 04:38:38 momjian Exp $ */
-
-static pg_local_to_utf LUmapJOHAB[ 17046 ] = {
+static pg_local_to_utf LUmapJOHAB[ 17049 ] = {
   {0x8444, 0xe384b3},
   {0x8446, 0xe384b5},
   {0x8447, 0xe384b6},
@@ -11387,6 +11385,9 @@ static pg_local_to_utf LUmapJOHAB[ 17046 ] = {
   {0xd9e3, 0xe38f82},
   {0xd9e4, 0xe38f98},
   {0xd9e5, 0xe284a1},
+  {0xd9e6, 0xe282ac},
+  {0xd9e7, 0xc2ae},
+  {0xd9e8, 0xe389be},
   {0xda31, 0xefbc81},
   {0xda32, 0xefbc82},
   {0xda33, 0xefbc83},

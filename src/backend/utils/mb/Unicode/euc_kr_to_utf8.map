@@ -1,6 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/euc_kr_to_utf8.map,v 1.4 2006/03/11 04:38:31 momjian Exp $ */
-
-static pg_local_to_utf LUmapEUC_KR[ 8224 ] = {
+static pg_local_to_utf LUmapEUC_KR[ 8227 ] = {
   {0xa1a1, 0xe38080},
   {0xa1a2, 0xe38081},
   {0xa1a3, 0xe38082},
@@ -164,6 +162,9 @@ static pg_local_to_utf LUmapEUC_KR[ 8224 ] = {
   {0xa2e3, 0xe38f82},
   {0xa2e4, 0xe38f98},
   {0xa2e5, 0xe284a1},
+  {0xa2e6, 0xe282ac},
+  {0xa2e7, 0xc2ae},
+  {0xa2e8, 0xe389be},
   {0xa3a1, 0xefbc81},
   {0xa3a2, 0xefbc82},
   {0xa3a3, 0xefbc83},
