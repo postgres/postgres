@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.72 2009/02/25 13:03:07 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.73 2009/05/03 23:13:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ static void PrintControlValues(bool guessed);
 static void RewriteControlFile(void);
 static void FindEndOfXLOG(void);
 static void KillExistingXLOG(void);
+static void KillExistingArchiveStatus(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
 
@@ -360,6 +361,7 @@ main(int argc, char *argv[])
 	 */
 	RewriteControlFile();
 	KillExistingXLOG();
+	KillExistingArchiveStatus();
 	WriteEmptyXLOG();
 
 	printf(_("Transaction log reset\n"));
@@ -805,6 +807,63 @@ KillExistingXLOG(void)
 	{
 		fprintf(stderr, _("%s: could not read from directory \"%s\": %s\n"),
 				progname, XLOGDIR, strerror(errno));
+		exit(1);
+	}
+	closedir(xldir);
+}
+
+
+/*
+ * Remove existing archive status files
+ */
+static void
+KillExistingArchiveStatus(void)
+{
+	DIR		   *xldir;
+	struct dirent *xlde;
+	char		path[MAXPGPATH];
+
+#define ARCHSTATDIR	XLOGDIR "/archive_status"
+
+	xldir = opendir(ARCHSTATDIR);
+	if (xldir == NULL)
+	{
+		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
+				progname, ARCHSTATDIR, strerror(errno));
+		exit(1);
+	}
+
+	errno = 0;
+	while ((xlde = readdir(xldir)) != NULL)
+	{
+		if (strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
+			(strcmp(xlde->d_name + 24, ".ready") == 0 ||
+			 strcmp(xlde->d_name + 24, ".done")  == 0))
+		{
+			snprintf(path, MAXPGPATH, "%s/%s", ARCHSTATDIR, xlde->d_name);
+			if (unlink(path) < 0)
+			{
+				fprintf(stderr, _("%s: could not delete file \"%s\": %s\n"),
+						progname, path, strerror(errno));
+				exit(1);
+			}
+		}
+		errno = 0;
+	}
+#ifdef WIN32
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+	{
+		fprintf(stderr, _("%s: could not read from directory \"%s\": %s\n"),
+				progname, ARCHSTATDIR, strerror(errno));
 		exit(1);
 	}
 	closedir(xldir);
