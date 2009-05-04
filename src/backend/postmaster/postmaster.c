@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.578 2009/05/02 22:02:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.579 2009/05/04 02:24:17 alvherre Exp $
  *
  * NOTES
  *
@@ -143,6 +143,7 @@ typedef struct bkend
 	long		cancel_key;		/* cancel key for cancels for this backend */
 	bool		is_autovacuum;	/* is it an autovacuum process? */
 	bool		dead_end;		/* is it going to send an error and quit? */
+	Dlelem		elem;			/* self pointer into BackendList */
 } Backend;
 
 static Dllist *BackendList;
@@ -2459,7 +2460,6 @@ CleanupBackend(int pid,
 #endif
 			DLRemove(curr);
 			free(bp);
-			DLFreeElem(curr);
 			break;
 		}
 	}
@@ -2506,7 +2506,6 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 #endif
 			DLRemove(curr);
 			free(bp);
-			DLFreeElem(curr);
 			/* Keep looping so we can signal remaining backends */
 		}
 		else
@@ -3014,7 +3013,8 @@ BackendStartup(Port *port)
 	bn->is_autovacuum = false;
 	bn->dead_end = (port->canAcceptConnections != CAC_OK &&
 					port->canAcceptConnections != CAC_WAITBACKUP);
-	DLAddHead(BackendList, DLNewElem(bn));
+	DLInitElem(&bn->elem, bn);
+	DLAddHead(BackendList, &bn->elem);
 #ifdef EXEC_BACKEND
 	if (!bn->dead_end)
 		ShmemBackendArrayAdd(bn);
