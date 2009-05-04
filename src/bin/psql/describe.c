@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.210 2009/04/21 17:28:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.211 2009/05/04 17:31:35 heikki Exp $
  */
 #include "postgres_fe.h"
 
@@ -1049,7 +1049,7 @@ describeOneTableDetails(const char *schemaname,
 						  "%s, reltablespace\n"
 						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 						  (verbose ?
-						   "pg_catalog.array_to_string(reloptions, E', ')" : ",''"),
+						   "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
 						  oid);
 	}
 	else if (pset.sversion >= 80000)
