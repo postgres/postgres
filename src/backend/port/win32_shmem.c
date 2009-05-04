@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.4.2.2 2008/10/30 17:04:11 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.4.2.3 2009/05/04 08:36:44 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 
 	UsedShmemSegAddr = NULL;
 
+	/* In case CreateFileMapping() doesn't set the error code to 0 on success */
+	SetLastError(0);
+
 	hmap = CreateFileMapping((HANDLE) 0xFFFFFFFF,		/* Use the pagefile */
 							 NULL,		/* Default security attrs */
 							 PAGE_READWRITE,	/* Memory is Read/Write */
@@ -159,6 +162,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 								 * one to the previous segment. */
 
 		Sleep(1000);
+
+		/* In case CreateFileMapping() doesn't set the error code to 0 on success */
+		SetLastError(0);
 
 		hmap = CreateFileMapping((HANDLE) 0xFFFFFFFF, NULL, PAGE_READWRITE, 0L, (DWORD) size, szShareMem);
 		if (!hmap)
