@@ -31,8 +31,9 @@ For Major Releases
 	o src/interfaces/*/*/Makefile
 
 * Release notes
-	o check that dashed items from the TODO list are complete
-	o remove dashed TODO items
+	o check completion of items that have been marked as completed at
+	  http://wiki.postgresql.org/wiki/Todo
+	o remove completed TODO items
 	o group items into categories
 	o select major features
 	o select incompatibilities
