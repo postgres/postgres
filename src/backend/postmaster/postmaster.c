@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.579 2009/05/04 02:24:17 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.580 2009/05/04 02:46:36 tgl Exp $
  *
  * NOTES
  *
@@ -143,7 +143,7 @@ typedef struct bkend
 	long		cancel_key;		/* cancel key for cancels for this backend */
 	bool		is_autovacuum;	/* is it an autovacuum process? */
 	bool		dead_end;		/* is it going to send an error and quit? */
-	Dlelem		elem;			/* self pointer into BackendList */
+	Dlelem		elem;			/* list link in BackendList */
 } Backend;
 
 static Dllist *BackendList;
@@ -4288,7 +4288,8 @@ StartAutovacuumWorker(void)
 				bn->cancel_key = MyCancelKey;
 				bn->is_autovacuum = true;
 				bn->dead_end = false;
-				DLAddHead(BackendList, DLNewElem(bn));
+				DLInitElem(&bn->elem, bn);
+				DLAddHead(BackendList, &bn->elem);
 #ifdef EXEC_BACKEND
 				ShmemBackendArrayAdd(bn);
 #endif
