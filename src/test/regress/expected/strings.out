@@ -22,6 +22,7 @@ ERROR:  syntax error at or near "' - third line'"
 LINE 3: ' - third line'
         ^
 -- Unicode escapes
+SET standard_conforming_strings TO on;
 SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
  data 
 ------
@@ -32,6 +33,18 @@ SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
  dat\+000061 
 -------------
  dat\+000061
+(1 row)
+
+SELECT U&' \' UESCAPE '!' AS "tricky";
+ tricky 
+--------
+  \
+(1 row)
+
+SELECT 'tricky' AS U&"\" UESCAPE '!';
+   \    
+--------
+ tricky
 (1 row)
 
 SELECT U&'wrong: \061';
@@ -46,6 +59,32 @@ SELECT U&'wrong: +0061' UESCAPE '+';
 ERROR:  invalid Unicode escape character at or near "+'"
 LINE 1: SELECT U&'wrong: +0061' UESCAPE '+';
                                          ^
+SET standard_conforming_strings TO off;
+SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
+ERROR:  unsafe use of string constant with Unicode escapes
+DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
+SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
+ERROR:  unsafe use of string constant with Unicode escapes
+DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
+SELECT U&' \' UESCAPE '!' AS "tricky";
+ERROR:  unsafe use of string constant with Unicode escapes
+DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
+SELECT 'tricky' AS U&"\" UESCAPE '!';
+   \    
+--------
+ tricky
+(1 row)
+
+SELECT U&'wrong: \061';
+ERROR:  unsafe use of string constant with Unicode escapes
+DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
+SELECT U&'wrong: \+0061';
+ERROR:  unsafe use of string constant with Unicode escapes
+DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
+SELECT U&'wrong: +0061' UESCAPE '+';
+ERROR:  unsafe use of string constant with Unicode escapes
+DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
+RESET standard_conforming_strings;
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.151 2009/04/19 21:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.152 2009/05/05 18:32:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -469,6 +469,11 @@ other			.
 					startlit();
 				}
 {xusstart}		{
+					if (!standard_conforming_strings)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("unsafe use of string constant with Unicode escapes"),
+								 errdetail("String constants with Unicode escapes cannot be used when standard_conforming_strings is off.")));
 					SET_YYLLOC();
 					BEGIN(xus);
 					startlit();
