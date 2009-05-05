@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.102 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.103 2009/05/05 20:06:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,15 @@
  * of the exit procedure.  We do NOT want to go back to the idle loop...
  */
 bool		proc_exit_inprogress = false;
+
+/*
+ * This flag tracks whether we've called atexit(2) in the current process
+ * (or in the parent postmaster).
+ */
+static bool atexit_callback_setup = false;
+
+/* local functions */
+static void proc_exit_prepare(int code);
 
 
 /* ----------------------------------------------------------------
@@ -69,51 +78,21 @@ static int	on_proc_exit_index,
  *
  *		this function calls all the callbacks registered
  *		for it (to free resources) and then calls exit.
+ *
  *		This should be the only function to call exit().
  *		-cim 2/6/90
+ *
+ *		Unfortunately, we can't really guarantee that add-on code
+ *		obeys the rule of not calling exit() directly.  So, while
+ *		this is the preferred way out of the system, we also register
+ *		an atexit callback that will make sure cleanup happens.
  * ----------------------------------------------------------------
  */
 void
 proc_exit(int code)
 {
-	/*
-	 * Once we set this flag, we are committed to exit.  Any ereport() will
-	 * NOT send control back to the main loop, but right back here.
-	 */
-	proc_exit_inprogress = true;
-
-	/*
-	 * Forget any pending cancel or die requests; we're doing our best to
-	 * close up shop already.  Note that the signal handlers will not set
-	 * these flags again, now that proc_exit_inprogress is set.
-	 */
-	InterruptPending = false;
-	ProcDiePending = false;
-	QueryCancelPending = false;
-	/* And let's just make *sure* we're not interrupted ... */
-	ImmediateInterruptOK = false;
-	InterruptHoldoffCount = 1;
-	CritSectionCount = 0;
-
-	elog(DEBUG3, "proc_exit(%d)", code);
-
-	/* do our shared memory exits first */
-	shmem_exit(code);
-
-	/*
-	 * call all the callbacks registered before calling exit().
-	 *
-	 * Note that since we decrement on_proc_exit_index each time, if a
-	 * callback calls ereport(ERROR) or ereport(FATAL) then it won't be
-	 * invoked again when control comes back here (nor will the
-	 * previously-completed callbacks).  So, an infinite loop should not be
-	 * possible.
-	 */
-	while (--on_proc_exit_index >= 0)
-		(*on_proc_exit_list[on_proc_exit_index].function) (code,
-								  on_proc_exit_list[on_proc_exit_index].arg);
-
-	elog(DEBUG3, "exit(%d)", code);
+	/* Clean up everything that must be cleaned up */
+	proc_exit_prepare(code);
 
 #ifdef PROFILE_PID_DIR
 	{
@@ -134,7 +113,10 @@ proc_exit(int code)
 		 *
 		 * Note that we do this here instead of in an on_proc_exit() callback
 		 * because we want to ensure that this code executes last - we don't
-		 * want to interfere with any other on_proc_exit() callback.
+		 * want to interfere with any other on_proc_exit() callback.  For
+		 * the same reason, we do not include it in proc_exit_prepare ...
+		 * so if you are exiting in the "wrong way" you won't drop your profile
+		 * in a nice place.
 		 */
 		char		gprofDirName[32];
 
@@ -149,7 +131,57 @@ proc_exit(int code)
 	}
 #endif
 
+	elog(DEBUG3, "exit(%d)", code);
+
 	exit(code);
+}
+
+/*
+ * Code shared between proc_exit and the atexit handler.  Note that in
+ * normal exit through proc_exit, this will actually be called twice ...
+ * but the second call will have nothing to do.
+ */
+static void
+proc_exit_prepare(int code)
+{
+	/*
+	 * Once we set this flag, we are committed to exit.  Any ereport() will
+	 * NOT send control back to the main loop, but right back here.
+	 */
+	proc_exit_inprogress = true;
+
+	/*
+	 * Forget any pending cancel or die requests; we're doing our best to
+	 * close up shop already.  Note that the signal handlers will not set
+	 * these flags again, now that proc_exit_inprogress is set.
+	 */
+	InterruptPending = false;
+	ProcDiePending = false;
+	QueryCancelPending = false;
+	/* And let's just make *sure* we're not interrupted ... */
+	ImmediateInterruptOK = false;
+	InterruptHoldoffCount = 1;
+	CritSectionCount = 0;
+
+	/* do our shared memory exits first */
+	shmem_exit(code);
+
+	elog(DEBUG3, "proc_exit(%d)", code);
+
+	/*
+	 * call all the registered callbacks.
+	 *
+	 * Note that since we decrement on_proc_exit_index each time, if a
+	 * callback calls ereport(ERROR) or ereport(FATAL) then it won't be
+	 * invoked again when control comes back here (nor will the
+	 * previously-completed callbacks).  So, an infinite loop should not be
+	 * possible.
+	 */
+	while (--on_proc_exit_index >= 0)
+		(*on_proc_exit_list[on_proc_exit_index].function) (code,
+								  on_proc_exit_list[on_proc_exit_index].arg);
+
+	on_proc_exit_index = 0;
 }
 
 /* ------------------
@@ -177,6 +209,37 @@ shmem_exit(int code)
 }
 
 /* ----------------------------------------------------------------
+ *		atexit_callback
+ *
+ *		Backstop to ensure that direct calls of exit() don't mess us up.
+ *
+ * Somebody who was being really uncooperative could call _exit(),
+ * but for that case we have a "dead man switch" that will make the
+ * postmaster treat it as a crash --- see pmsignal.c.
+ * ----------------------------------------------------------------
+ */
+#ifdef HAVE_ATEXIT
+
+static void
+atexit_callback(void)
+{
+	/* Clean up everything that must be cleaned up */
+	/* ... too bad we don't know the real exit code ... */
+	proc_exit_prepare(-1);
+}
+
+#else  /* assume we have on_exit instead */
+
+static void
+atexit_callback(int exitstatus, void *arg)
+{
+	/* Clean up everything that must be cleaned up */
+	proc_exit_prepare(exitstatus);
+}
+
+#endif /* HAVE_ATEXIT */
+
+/* ----------------------------------------------------------------
  *		on_proc_exit
  *
  *		this function adds a callback function to the list of
@@ -195,6 +258,16 @@ on_proc_exit(pg_on_exit_callback function, Datum arg)
 	on_proc_exit_list[on_proc_exit_index].arg = arg;
 
 	++on_proc_exit_index;
+
+	if (!atexit_callback_setup)
+	{
+#ifdef HAVE_ATEXIT
+		atexit(atexit_callback);
+#else
+		on_exit(atexit_callback, NULL);
+#endif
+		atexit_callback_setup = true;
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -216,6 +289,16 @@ on_shmem_exit(pg_on_exit_callback function, Datum arg)
 	on_shmem_exit_list[on_shmem_exit_index].arg = arg;
 
 	++on_shmem_exit_index;
+
+	if (!atexit_callback_setup)
+	{
+#ifdef HAVE_ATEXIT
+		atexit(atexit_callback);
+#else
+		on_exit(atexit_callback, NULL);
+#endif
+		atexit_callback_setup = true;
+	}
 }
 
 /* ----------------------------------------------------------------
