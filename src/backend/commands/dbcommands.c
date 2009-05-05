@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.222 2009/04/23 17:39:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.223 2009/05/05 23:39:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,10 +332,12 @@ createdb(const CreatedbStmt *stmt)
 				 errmsg("invalid locale name %s", dbctype)));
 
 	/*
-	 * Check whether encoding matches server locale settings.  We allow
-	 * mismatch in three cases:
+	 * Check whether chosen encoding matches chosen locale settings.  This
+	 * restriction is necessary because libc's locale-specific code usually
+	 * fails when presented with data in an encoding it's not expecting.
+	 * We allow mismatch in three cases:
 	 *
-	 * 1. ctype_encoding = SQL_ASCII, which means either that the locale is
+	 * 1. locale encoding = SQL_ASCII, which means either that the locale is
 	 * C/POSIX which works with any encoding, or that we couldn't determine
 	 * the locale's encoding and have to trust the user to get it right.
 	 *
