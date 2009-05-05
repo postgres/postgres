@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.55 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.56 2009/05/05 19:36:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/hash.h"
 #include "access/relscan.h"
+#include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
@@ -74,6 +75,8 @@ _hash_readnext(Relation rel,
 	blkno = (*opaquep)->hasho_nextblkno;
 	_hash_relbuf(rel, *bufp);
 	*bufp = InvalidBuffer;
+	/* check for interrupts while we're not holding any buffer lock */
+	CHECK_FOR_INTERRUPTS();
 	if (BlockNumberIsValid(blkno))
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
@@ -94,6 +97,8 @@ _hash_readprev(Relation rel,
 	blkno = (*opaquep)->hasho_prevblkno;
 	_hash_relbuf(rel, *bufp);
 	*bufp = InvalidBuffer;
+	/* check for interrupts while we're not holding any buffer lock */
+	CHECK_FOR_INTERRUPTS();
 	if (BlockNumberIsValid(blkno))
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ,

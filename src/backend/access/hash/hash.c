@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.109 2009/03/24 20:17:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.110 2009/05/05 19:36:32 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -22,7 +22,6 @@
 #include "access/relscan.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
-#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 #include "storage/bufmgr.h"
@@ -296,8 +295,6 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 	while (res)
 	{
 		bool	add_tuple;
-
-		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Skip killed tuples if asked to.

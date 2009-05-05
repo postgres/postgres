@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.168 2009/03/24 20:17:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.169 2009/05/05 19:36:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "catalog/index.h"
 #include "catalog/storage.h"
 #include "commands/vacuum.h"
-#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
@@ -315,8 +314,6 @@ btgetbitmap(PG_FUNCTION_ARGS)
 		 */
 		if (++so->currPos.itemIndex > so->currPos.lastItem)
 		{
-			CHECK_FOR_INTERRUPTS();
-
 			/* let _bt_next do the heavy lifting */
 			if (!_bt_next(scan, ForwardScanDirection))
 				break;
