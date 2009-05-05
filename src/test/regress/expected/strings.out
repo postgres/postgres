@@ -62,12 +62,18 @@ LINE 1: SELECT U&'wrong: +0061' UESCAPE '+';
 SET standard_conforming_strings TO off;
 SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
 ERROR:  unsafe use of string constant with Unicode escapes
+LINE 1: SELECT U&'d\0061t\+000061' AS U&"d\0061t\+000061";
+               ^
 DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
 SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061" UESCAPE '*';
 ERROR:  unsafe use of string constant with Unicode escapes
+LINE 1: SELECT U&'d!0061t\+000061' UESCAPE '!' AS U&"d*0061t\+000061...
+               ^
 DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
 SELECT U&' \' UESCAPE '!' AS "tricky";
 ERROR:  unsafe use of string constant with Unicode escapes
+LINE 1: SELECT U&' \' UESCAPE '!' AS "tricky";
+               ^
 DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
 SELECT 'tricky' AS U&"\" UESCAPE '!';
    \    
@@ -77,12 +83,18 @@ SELECT 'tricky' AS U&"\" UESCAPE '!';
 
 SELECT U&'wrong: \061';
 ERROR:  unsafe use of string constant with Unicode escapes
+LINE 1: SELECT U&'wrong: \061';
+               ^
 DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
 SELECT U&'wrong: \+0061';
 ERROR:  unsafe use of string constant with Unicode escapes
+LINE 1: SELECT U&'wrong: \+0061';
+               ^
 DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
 SELECT U&'wrong: +0061' UESCAPE '+';
 ERROR:  unsafe use of string constant with Unicode escapes
+LINE 1: SELECT U&'wrong: +0061' UESCAPE '+';
+               ^
 DETAIL:  String constants with Unicode escapes cannot be used when standard_conforming_strings is off.
 RESET standard_conforming_strings;
 --
