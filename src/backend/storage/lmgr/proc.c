@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.205 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.206 2009/05/05 19:59:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/spin.h"
@@ -273,6 +274,14 @@ InitProcess(void)
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("sorry, too many clients already")));
 	}
+
+	/*
+	 * Now that we have a PGPROC, mark ourselves as an active postmaster
+	 * child; this is so that the postmaster can detect it if we exit
+	 * without cleaning up.
+	 */
+	if (IsUnderPostmaster)
+		MarkPostmasterChildActive();
 
 	/*
 	 * Initialize all fields of MyProc, except for the semaphore which was
@@ -613,6 +622,13 @@ ProcKill(int code, Datum arg)
 	procglobal->spins_per_delay = update_spins_per_delay(procglobal->spins_per_delay);
 
 	SpinLockRelease(ProcStructLock);
+
+	/*
+	 * This process is no longer present in shared memory in any meaningful
+	 * way, so tell the postmaster we've cleaned up acceptably well.
+	 */
+	if (IsUnderPostmaster)
+		MarkPostmasterChildInactive();
 
 	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */
 	if (AutovacuumLauncherPid != 0)
