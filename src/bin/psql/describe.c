@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.211 2009/05/04 17:31:35 heikki Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.212 2009/05/05 02:29:06 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -197,14 +197,15 @@ describeTablespaces(const char *pattern, bool verbose)
 bool
 describeFunctions(const char *functypes, const char *pattern, bool verbose, bool showSystem)
 {
-	bool			showAggregate = strchr(functypes, 'a') != NULL;
-	bool			showNormal = strchr(functypes, 'n') != NULL;
-	bool			showTrigger = strchr(functypes, 't') != NULL;
-	bool			showWindow = strchr(functypes, 'w') != NULL;
-
+	bool		showAggregate = strchr(functypes, 'a') != NULL;
+	bool		showNormal = strchr(functypes, 'n') != NULL;
+	bool		showTrigger = strchr(functypes, 't') != NULL;
+	bool		showWindow = strchr(functypes, 'w') != NULL;
+	bool		have_where;
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+	static const bool translate_columns[] = {false, false, false, false, true, true, false, false, false, false};
 
 	if (strlen(functypes) != strspn(functypes, "antwS+"))
 	{
@@ -241,7 +242,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 						  " CASE\n"
 						  "  WHEN p.proisagg THEN '%s'\n"
 						  "  WHEN p.proiswindow THEN '%s'\n"
-						  "  WHEN pg_catalog.pg_get_function_result(p.oid) = 'trigger' THEN '%s'\n"
+						  "  WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
 						  "  ELSE '%s'\n"
 						  "END as \"%s\"",
 						  gettext_noop("Result data type"),
@@ -287,7 +288,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 					  "  END AS \"%s\",\n"
 					  "  CASE\n"
 					  "    WHEN p.proisagg THEN '%s'\n"
-					  "    WHEN 'trigger' = pg_catalog.format_type(p.prorettype, NULL) THEN '%s'\n"
+					  "    WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
 					  "    ELSE '%s'\n"
 					  "  END AS \"%s\"",
 						  gettext_noop("Result data type"),
@@ -304,7 +305,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 					  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\",\n"
 					  "  CASE\n"
 					  "    WHEN p.proisagg THEN '%s'\n"
-					  "    WHEN 'trigger' = pg_catalog.format_type(p.prorettype, NULL) THEN '%s'\n"
+					  "    WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
 					  "    ELSE '%s'\n"
 					  "  END AS \"%s\"",
 						  gettext_noop("Result data type"),
@@ -318,14 +319,17 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	if (verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n CASE\n"
-						  "  WHEN p.provolatile = 'i' THEN 'immutable'\n"
-						  "  WHEN p.provolatile = 's' THEN 'stable'\n"
-						  "  WHEN p.provolatile = 'v' THEN 'volatile'\n"
+						  "  WHEN p.provolatile = 'i' THEN '%s'\n"
+						  "  WHEN p.provolatile = 's' THEN '%s'\n"
+						  "  WHEN p.provolatile = 'v' THEN '%s'\n"
 						  "END as \"%s\""
 						  ",\n  pg_catalog.pg_get_userbyid(p.proowner) as \"%s\",\n"
 						  "  l.lanname as \"%s\",\n"
 						  "  p.prosrc as \"%s\",\n"
 				  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
+						  gettext_noop("immutable"),
+						  gettext_noop("stable"),
+						  gettext_noop("volatile"),
 						  gettext_noop("Volatility"),
 						  gettext_noop("Owner"),
 						  gettext_noop("Language"),
@@ -340,33 +344,54 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		appendPQExpBuffer(&buf,
 						  "     LEFT JOIN pg_catalog.pg_language l ON l.oid = p.prolang\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern, false, true,
-						  "n.nspname", "p.proname", NULL,
-						  "pg_catalog.pg_function_is_visible(p.oid)");
+	have_where = false;
 
+	/* filter by function type, if requested */
 	if (showNormal && showAggregate && showTrigger && showWindow)
 		/* Do nothing */;
 	else if (showNormal)
 	{
-		if (!showWindow && pset.sversion >= 80400)
-				appendPQExpBuffer(&buf, "      AND NOT p.proiswindow\n");
 		if (!showAggregate)
-			appendPQExpBuffer(&buf, "      AND NOT p.proisagg\n");
+		{
+			if (have_where)
+				appendPQExpBuffer(&buf, "      AND ");
+			else
+			{
+				appendPQExpBuffer(&buf, "WHERE ");
+				have_where = true;
+			}
+			appendPQExpBuffer(&buf, "NOT p.proisagg\n");
+		}
 		if (!showTrigger)
 		{
-			if (pset.sversion >= 80400)
-				appendPQExpBuffer(&buf,
-								  "      AND pg_catalog.pg_get_function_result(p.oid) <> 'trigger'\n");
+			if (have_where)
+				appendPQExpBuffer(&buf, "      AND ");
 			else
-				appendPQExpBuffer(&buf,
-								  "      AND pg_catalog.format_type(p.prorettype, NULL) <> 'trigger'\n");
+			{
+				appendPQExpBuffer(&buf, "WHERE ");
+				have_where = true;
+			}
+			appendPQExpBuffer(&buf, "p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype\n");
+		}
+		if (!showWindow && pset.sversion >= 80400)
+		{
+			if (have_where)
+				appendPQExpBuffer(&buf, "      AND ");
+			else
+			{
+				appendPQExpBuffer(&buf, "WHERE ");
+				have_where = true;
+			}
+			appendPQExpBuffer(&buf, "NOT p.proiswindow\n");
 		}
 	}
 	else
 	{
 		bool	needs_or = false;
 
-		appendPQExpBuffer(&buf, "      AND (\n         ");
+		appendPQExpBuffer(&buf, "WHERE (\n       ");
+		have_where = true;
+		/* Note: at least one of these must be true ... */
 		if (showAggregate)
 		{
 			appendPQExpBuffer(&buf,"p.proisagg\n");
@@ -375,23 +400,24 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		if (showTrigger)
 		{
 			if (needs_or)
-				appendPQExpBuffer(&buf, "      OR ");
-			if (pset.sversion >= 80400)
-				appendPQExpBuffer(&buf,
-								  "pg_catalog.pg_get_function_result(p.oid) = 'trigger'\n");
-			else
-				appendPQExpBuffer(&buf,
-								  "'trigger' <> pg_catalog.format_type(p.prorettype, NULL)\n");
+				appendPQExpBuffer(&buf, "       OR ");
+			appendPQExpBuffer(&buf,
+							  "p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype\n");
 			needs_or = true;
 		}
 		if (showWindow)
 		{
 			if (needs_or)
-				appendPQExpBuffer(&buf, "      OR ");
+				appendPQExpBuffer(&buf, "       OR ");
 			appendPQExpBuffer(&buf, "p.proiswindow\n");
+			needs_or = true;
 		}
 		appendPQExpBuffer(&buf, "      )\n");
 	}
+
+	processSQLNamePattern(pset.db, &buf, pattern, have_where, true,
+						  "n.nspname", "p.proname", NULL,
+						  "pg_catalog.pg_function_is_visible(p.oid)");
 
  	if (!showSystem && !pattern)
  		appendPQExpBuffer(&buf, "      AND n.nspname <> 'pg_catalog'\n"
@@ -407,6 +433,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of functions");
 	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
