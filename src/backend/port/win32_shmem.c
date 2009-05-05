@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.9 2009/05/05 09:48:51 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.10 2009/05/05 21:51:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,12 +158,13 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 
 		/*
 		 * If the segment already existed, CreateFileMapping() will return a
-		 * handle to the existing one.
+		 * handle to the existing one and set ERROR_ALREADY_EXISTS.
 		 */
 		if (GetLastError() == ERROR_ALREADY_EXISTS)
 		{
-			CloseHandle(hmap);		/* Close the old handle, since we got a valid
+			CloseHandle(hmap);		/* Close the handle, since we got a valid
 									 * one to the previous segment. */
+			hmap = NULL;
 			Sleep(1000);
 			continue;
 		}
@@ -171,10 +172,10 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	}
 
 	/*
-	 * If the last call in the loop still returned ERROR_ALREADY_EXISTS, this shared memory
-	 * segment exists and we assume it belongs to somebody else.
+	 * If the last call in the loop still returned ERROR_ALREADY_EXISTS, this
+	 * shared memory segment exists and we assume it belongs to somebody else.
 	 */
-	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	if (!hmap)
 		ereport(FATAL,
 			 (errmsg("pre-existing shared memory block is still in use"),
 			  errhint("Check if there are any old server processes still running, and terminate them.")));
