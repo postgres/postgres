@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.151 2009/04/19 19:46:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.152 2009/05/06 20:31:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,9 +818,12 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 				root->hasPseudoConstantQuals = true;
 				/* if not below outer join, push it to top of tree */
 				if (!below_outer_join)
+				{
 					relids =
 						get_relids_in_jointree((Node *) root->parse->jointree,
 											   false);
+					qualscope = bms_copy(relids);
+				}
 			}
 		}
 	}
