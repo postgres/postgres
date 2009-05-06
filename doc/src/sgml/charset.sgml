@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.93 2009/04/06 08:42:52 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.94 2009/05/06 16:15:20 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -20,11 +20,9 @@
 
     <listitem>
      <para>
-      Providing a number of different character sets defined in the
-      <productname>PostgreSQL</productname> server, including
-      multiple-byte character sets, to support storing text in all
-      kinds of languages, and providing character set translation between
-      client and server.
+      Providing a number of different character sets to support storing text
+      in all kinds of languages, and providing character set translation
+      between client and server.
      </para>
     </listitem>
    </itemizedlist>
@@ -75,8 +73,8 @@ initdb --locale=sv_SE
     names on your system depends on what was provided by the operating
     system vendor and what was installed.  On most Unix systems, the command
     <literal>locale -a</> will provide a list of available locales.
-    Windows uses more verbose names, such as <literal>German_Germany</>
-    or <literal>Swedish_Sweden.1252</>.
+    Windows uses more verbose locale names, such as <literal>German_Germany</>
+    or <literal>Swedish_Sweden.1252</>, but the principles are the same.
    </para>
 
    <para>
@@ -133,7 +131,7 @@ initdb --locale=sv_SE
     fixed when the database is created.  You can use different settings
     for different databases, but once a database is created, you cannot
     change them for that database anymore. <literal>LC_COLLATE</literal>
-    and <literal>LC_CTYPE</literal> are those categories.  They affect
+    and <literal>LC_CTYPE</literal> are these categories.  They affect
     the sort order of indexes, so they must be kept fixed, or indexes on
     text columns will become corrupt.  The default values for these
     categories are determined when <command>initdb</command> is run, and
@@ -169,7 +167,7 @@ initdb --locale=sv_SE
      For a given locale category, say the collation, the following
      environment variables are consulted in this order until one is
      found to be set: <envar>LC_ALL</envar>, <envar>LC_COLLATE</envar>
-     (the variable corresponding to the respective category),
+     (or the variable corresponding to the respective category),
      <envar>LANG</envar>.  If none of these environment variables are
      set then the locale defaults to <literal>C</literal>.
     </para>
@@ -186,8 +184,9 @@ initdb --locale=sv_SE
 
    <para>
     To enable messages to be translated to the user's preferred language,
-    <acronym>NLS</acronym> must have been enabled at build time.  This
-    choice is independent of the other locale support.
+    <acronym>NLS</acronym> must have been selected at build time
+    (<literal>configure --enable-nls</>).  All other locale support is
+    built in automatically.
    </para>
   </sect2>
 
@@ -325,6 +324,7 @@ initdb --locale=sv_SE
    <envar>LC_COLLATE</> locale settings. For <literal>C</> or
    <literal>POSIX</> locale, any character set is allowed, but for other
    locales there is only one character set that will work correctly.
+   (On Windows, however, UTF-8 encoding can be used with any locale.)
   </para>
 
    <sect2 id="multibyte-charset-supported">
@@ -752,6 +752,14 @@ createdb -E EUC_KR -T template0 --lc-collate=ko_KR.euckr --lc-ctype=ko_KR.euckr 
 CREATE DATABASE korean WITH ENCODING 'EUC_KR' LC_COLLATE='ko_KR.euckr' LC_CTYPE='ko_KR.euckr' TEMPLATE=template0;
 </programlisting>
 
+     Notice that the above commands specify copying the <literal>template0</>
+     database.  When copying any other database, the encoding and locale
+     settings cannot be changed from those of the source database, because
+     that might result in corrupt data.  For more information see
+     <xref linkend="manage-ag-templatedbs">.
+    </para>
+
+    <para>
      The encoding for a database is stored in the system catalog
      <literal>pg_database</literal>.  You can see it by using the
      <option>-l</option> option or the <command>\l</command> command
@@ -777,7 +785,7 @@ $ <userinput>psql -l</userinput>
      <para>
       On most modern operating systems, <productname>PostgreSQL</productname>
       can determine which character set is implied by an <envar>LC_CTYPE</>
-      setting, and it will enforce that only the correct database encoding is
+      setting, and it will enforce that only the matching database encoding is
       used.  On older systems it is your responsibility to ensure that you use
       the encoding expected by the locale you have selected.  A mistake in
       this area is likely to lead to strange misbehavior of locale-dependent
@@ -1225,7 +1233,7 @@ RESET client_encoding;
 
        <listitem>
         <para>
-         The web site of the Unicode Consortium
+         The web site of the Unicode Consortium.
         </para>
        </listitem>
       </varlistentry>

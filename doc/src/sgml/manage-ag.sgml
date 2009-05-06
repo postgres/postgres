@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.57 2007/11/08 15:21:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.58 2009/05/06 16:15:20 tgl Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -203,8 +203,17 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
    <literal>template1</>.  This is particularly handy when restoring a
    <literal>pg_dump</> dump: the dump script should be restored in a
    virgin database to ensure that one recreates the correct contents
-   of the dumped database, without any conflicts with additions that
-   can now be present in <literal>template1</>.
+   of the dumped database, without any conflicts with objects that
+   might have been added to <literal>template1</> later on.
+  </para>
+
+  <para>
+   Another common reason for copying <literal>template0</> instead
+   of <literal>template1</> is that new encoding and locale settings
+   can be specified when copying <literal>template0</>, whereas a copy
+   of <literal>template1</> must use the same settings it does.
+   This is because <literal>template1</> might contain encoding-specific
+   or locale-specific data, while <literal>template0</> is known not to.
   </para>
 
   <para>
@@ -238,9 +247,8 @@ createdb -T template0 <replaceable>dbname</>
    <literal>datallowconn</literal>.  <literal>datistemplate</literal>
    can be set to indicate that a database is intended as a template for
    <command>CREATE DATABASE</>.  If this flag is set, the database can be
-   cloned by 
-   any user with <literal>CREATEDB</> privileges; if it is not set, only superusers
-   and the owner of the database can clone it.
+   cloned by any user with <literal>CREATEDB</> privileges; if it is not set,
+   only superusers and the owner of the database can clone it.
    If <literal>datallowconn</literal> is false, then no new connections
    to that database will be allowed (but existing sessions are not killed
    simply by setting the flag false).  The <literal>template0</literal>
@@ -305,14 +313,14 @@ ALTER DATABASE mydb SET geqo TO off;
   <title>Destroying a Database</title>
 
   <para>
-   Databases are destroyed with the command 
+   Databases are destroyed with the command
    <xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title">:<indexterm><primary>DROP DATABASE</></>
 <synopsis>
 DROP DATABASE <replaceable>name</>;
 </synopsis>
    Only the owner of the database, or
    a superuser, can drop a database. Dropping a database removes all objects
-   that were 
+   that were
    contained within the database. The destruction of a database cannot
    be undone.
   </para>
@@ -403,8 +411,8 @@ CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
   <para>
    Tables, indexes, and entire databases can be assigned to
    particular tablespaces. To do so, a user with the <literal>CREATE</>
-   privilege on a given tablespace must pass the tablespace name as a 
-   parameter to the relevant command. For example, the following creates 
+   privilege on a given tablespace must pass the tablespace name as a
+   parameter to the relevant command. For example, the following creates
    a table in the tablespace <literal>space1</>:
 <programlisting>
 CREATE TABLE foo(i int) TABLESPACE space1;
@@ -493,7 +501,7 @@ SELECT spcname FROM pg_tablespace;
    update the <structname>pg_tablespace</> catalog to show the new
    locations.  (If you do not, <literal>pg_dump</> will continue to show
    the old tablespace locations.)
-  </para> 
+  </para>
 
  </sect1>
 </chapter>
