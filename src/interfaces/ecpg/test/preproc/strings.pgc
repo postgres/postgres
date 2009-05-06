@@ -12,6 +12,8 @@ int main(void)
 
   exec sql connect to REGRESSDB1;
 
+  exec sql set standard_conforming_strings to on;
+
   exec sql select 'abcdef',
                   N'abcdef' AS foo,
                   E'abc\bdef' AS "foo",
