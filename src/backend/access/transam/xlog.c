@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.336 2009/04/22 19:51:12 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.337 2009/05/07 11:25:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6986,6 +6986,19 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	}
 	XLogCtl->Insert.forcePageWrites = true;
 	LWLockRelease(WALInsertLock);
+
+	/*
+	 * Force an XLOG file switch before the checkpoint, to ensure that the WAL
+	 * segment the checkpoint is written to doesn't contain pages with old
+	 * timeline IDs. That would otherwise happen if you called
+	 * pg_start_backup() right after restoring from a PITR archive: the first
+	 * WAL segment containing the startup checkpoint has pages in the
+	 * beginning with the old timeline ID. That can cause trouble at recovery:
+	 * we won't have a history file covering the old timeline if pg_xlog
+	 * directory was not included in the base backup and the WAL archive was
+	 * cleared too before starting the backup.
+	 */
+	RequestXLogSwitch();
 
 	/* Ensure we release forcePageWrites if fail below */
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
