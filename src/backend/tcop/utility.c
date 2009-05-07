@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.306 2009/02/02 19:31:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.307 2009/05/07 22:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,10 +442,13 @@ ProcessUtility(Node *parsetree,
 															"toast",
 															validnsps,
 															true, false);
-						(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options,
+						(void) heap_reloptions(RELKIND_TOASTVALUE,
+											   toast_options,
 											   true);
 
-						AlterTableCreateToastTable(relOid, toast_options);
+						AlterTableCreateToastTable(relOid,
+												   toast_options,
+												   false);
 					}
 					else
 					{
