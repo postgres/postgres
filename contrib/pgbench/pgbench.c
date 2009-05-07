@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.85 2009/02/27 09:30:21 petere Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.86 2009/05/07 22:01:18 tgl Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -76,8 +76,8 @@ int			nxacts = 0;			/* number of transactions per client */
 int			duration = 0;		/* duration in seconds */
 
 /*
- * scaling factor. for example, scale = 10 will make 1000000 tuples of
- * accounts table.
+ * scaling factor. for example, scale = 10 will make 1000000 tuples in
+ * pgbench_accounts table.
  */
 int			scale = 1;
 
@@ -181,11 +181,11 @@ static char *tpc_b = {
 	"\\setrandom tid 1 :ntellers\n"
 	"\\setrandom delta -5000 5000\n"
 	"BEGIN;\n"
-	"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
-	"UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
-	"UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
-	"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+	"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+	"UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
+	"UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
+	"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
 	"END;\n"
 };
 
@@ -199,9 +199,9 @@ static char *simple_update = {
 	"\\setrandom tid 1 :ntellers\n"
 	"\\setrandom delta -5000 5000\n"
 	"BEGIN;\n"
-	"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
-	"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+	"UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
+	"INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
 	"END;\n"
 };
 
@@ -209,7 +209,7 @@ static char *simple_update = {
 static char *select_only = {
 	"\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
-	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+	"SELECT abalance FROM pgbench_accounts WHERE aid = :aid;\n"
 };
 
 /* Connection overhead time */
@@ -269,8 +269,8 @@ usage(const char *progname)
 		   "  -M {simple|extended|prepared}\n"
 		   "               protocol for submitting queries to server (default: simple)\n"
 		   "  -n           do not run VACUUM before tests\n"
-		   "  -N           do not update tables \"tellers\" and \"branches\"\n"
-		   "  -s NUM       report scale factor in output\n"
+		   "  -N           do not update tables \"pgbench_tellers\" and \"pgbench_branches\"\n"
+		   "  -s NUM       report this scale factor in output\n"
 		   "  -S           perform SELECT-only transactions\n"
 		   "  -t NUM       number of transactions each client runs (default: 10)\n"
 		   "  -T NUM       duration of benchmark test in seconds\n"
@@ -356,8 +356,6 @@ doConnect(void)
 		PQfinish(conn);
 		return NULL;
 	}
-
-	executeStatement(conn, "SET search_path = public");
 
 	return conn;
 }
@@ -1001,8 +999,6 @@ disconnect_all(CState * state)
 static void
 init(void)
 {
-	PGconn	   *con;
-	PGresult   *res;
 	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
 	 * fields in these table declarations were intended to comply with that.
@@ -1014,22 +1010,24 @@ init(void)
 	 * behavior.
 	 */
 	static char *DDLs[] = {
-		"drop table if exists branches",
-		"create table branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
-		"drop table if exists tellers",
-		"create table tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d)",
-		"drop table if exists accounts",
-		"create table accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
-		"drop table if exists history",
-	"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
+		"drop table if exists pgbench_branches",
+		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
+		"drop table if exists pgbench_tellers",
+		"create table pgbench_tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d)",
+		"drop table if exists pgbench_accounts",
+		"create table pgbench_accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
+		"drop table if exists pgbench_history",
+		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"
+	};
 	static char *DDLAFTERs[] = {
-		"alter table branches add primary key (bid)",
-		"alter table tellers add primary key (tid)",
-	"alter table accounts add primary key (aid)"};
+		"alter table pgbench_branches add primary key (bid)",
+		"alter table pgbench_tellers add primary key (tid)",
+		"alter table pgbench_accounts add primary key (aid)"
+	};
 
-
+	PGconn	   *con;
+	PGresult   *res;
 	char		sql[256];
-
 	int			i;
 
 	if ((con = doConnect()) == NULL)
@@ -1040,9 +1038,9 @@ init(void)
 		/*
 		 * set fillfactor for branches, tellers and accounts tables
 		 */
-		if ((strstr(DDLs[i], "create table branches") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table tellers") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table accounts") == DDLs[i]))
+		if ((strstr(DDLs[i], "create table pgbench_branches") == DDLs[i]) ||
+			(strstr(DDLs[i], "create table pgbench_tellers") == DDLs[i]) ||
+			(strstr(DDLs[i], "create table pgbench_accounts") == DDLs[i]))
 		{
 			char		ddl_stmt[128];
 
@@ -1058,13 +1056,13 @@ init(void)
 
 	for (i = 0; i < nbranches * scale; i++)
 	{
-		snprintf(sql, 256, "insert into branches(bid,bbalance) values(%d,0)", i + 1);
+		snprintf(sql, 256, "insert into pgbench_branches(bid,bbalance) values(%d,0)", i + 1);
 		executeStatement(con, sql);
 	}
 
 	for (i = 0; i < ntellers * scale; i++)
 	{
-		snprintf(sql, 256, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
+		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)"
 				 ,i + 1, i / ntellers + 1);
 		executeStatement(con, sql);
 	}
@@ -1072,14 +1070,14 @@ init(void)
 	executeStatement(con, "commit");
 
 	/*
-	 * fill the accounts table with some data
+	 * fill the pgbench_accounts table with some data
 	 */
 	fprintf(stderr, "creating tables...\n");
 
 	executeStatement(con, "begin");
-	executeStatement(con, "truncate accounts");
+	executeStatement(con, "truncate pgbench_accounts");
 
-	res = PQexec(con, "copy accounts from stdin");
+	res = PQexec(con, "copy pgbench_accounts from stdin");
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
 		fprintf(stderr, "%s", PQerrorMessage(con));
@@ -1122,10 +1120,10 @@ init(void)
 
 	/* vacuum */
 	fprintf(stderr, "vacuum...");
-	executeStatement(con, "vacuum analyze branches");
-	executeStatement(con, "vacuum analyze tellers");
-	executeStatement(con, "vacuum analyze accounts");
-	executeStatement(con, "vacuum analyze history");
+	executeStatement(con, "vacuum analyze pgbench_branches");
+	executeStatement(con, "vacuum analyze pgbench_tellers");
+	executeStatement(con, "vacuum analyze pgbench_accounts");
+	executeStatement(con, "vacuum analyze pgbench_history");
 
 	fprintf(stderr, "done.\n");
 	PQfinish(con);
@@ -1466,7 +1464,7 @@ printResults(
 	if (ttype == 0)
 		s = "TPC-B (sort of)";
 	else if (ttype == 2)
-		s = "Update only accounts";
+		s = "Update only pgbench_accounts";
 	else if (ttype == 1)
 		s = "SELECT only";
 	else
@@ -1811,9 +1809,9 @@ main(int argc, char **argv)
 	{
 		/*
 		 * get the scaling factor that should be same as count(*) from
-		 * branches if this is not a custom query
+		 * pgbench_branches if this is not a custom query
 		 */
-		res = PQexec(con, "select count(*) from branches");
+		res = PQexec(con, "select count(*) from pgbench_branches");
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
 			fprintf(stderr, "%s", PQerrorMessage(con));
@@ -1822,7 +1820,7 @@ main(int argc, char **argv)
 		scale = atoi(PQgetvalue(res, 0, 0));
 		if (scale < 0)
 		{
-			fprintf(stderr, "count(*) from branches invalid (%d)\n", scale);
+			fprintf(stderr, "count(*) from pgbench_branches invalid (%d)\n", scale);
 			exit(1);
 		}
 		PQclear(res);
@@ -1830,7 +1828,7 @@ main(int argc, char **argv)
 		/* warn if we override user-given -s switch */
 		if (scale_given)
 			fprintf(stderr,
-					"Scale option ignored, using branches table count = %d\n",
+					"Scale option ignored, using pgbench_branches table count = %d\n",
 					scale);
 	}
 
@@ -1854,15 +1852,15 @@ main(int argc, char **argv)
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
-		executeStatement(con, "vacuum branches");
-		executeStatement(con, "vacuum tellers");
-		executeStatement(con, "truncate history");
+		executeStatement(con, "vacuum pgbench_branches");
+		executeStatement(con, "vacuum pgbench_tellers");
+		executeStatement(con, "truncate pgbench_history");
 		fprintf(stderr, "end.\n");
 
 		if (do_vacuum_accounts)
 		{
-			fprintf(stderr, "starting vacuum accounts...");
-			executeStatement(con, "vacuum analyze accounts");
+			fprintf(stderr, "starting vacuum pgbench_accounts...");
+			executeStatement(con, "vacuum analyze pgbench_accounts");
 			fprintf(stderr, "end.\n");
 		}
 	}
