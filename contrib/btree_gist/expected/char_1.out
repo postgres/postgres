@@ -1,0 +1,66 @@
+-- char check
+CREATE TABLE chartmp (a char(32));
+\copy chartmp from 'data/char.data'
+SET enable_seqscan=on;
+SELECT count(*) FROM chartmp WHERE a <   '31b0'::char(32);
+ count 
+-------
+   773
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a <=  '31b0'::char(32);
+ count 
+-------
+   774
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a  =  '31b0'::char(32);
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a >=  '31b0'::char(32);
+ count 
+-------
+   215
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a >   '31b0'::char(32);
+ count 
+-------
+   214
+(1 row)
+
+CREATE INDEX charidx ON chartmp USING GIST ( a );
+SET enable_seqscan=off;
+SELECT count(*) FROM chartmp WHERE a <   '31b0'::char(32);
+ count 
+-------
+   773
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a <=  '31b0'::char(32);
+ count 
+-------
+   774
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a  =  '31b0'::char(32);
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a >=  '31b0'::char(32);
+ count 
+-------
+   215
+(1 row)
+
+SELECT count(*) FROM chartmp WHERE a >   '31b0'::char(32);
+ count 
+-------
+   214
+(1 row)
+
