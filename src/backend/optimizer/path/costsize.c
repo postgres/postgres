@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.207 2009/04/17 15:33:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.208 2009/05/09 22:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
@@ -119,6 +120,11 @@ static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   RestrictInfo *rinfo,
 			   PathKey *pathkey);
 static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
+static bool adjust_semi_join(PlannerInfo *root, JoinPath *path,
+				 SpecialJoinInfo *sjinfo,
+				 Selectivity *outer_match_frac,
+				 Selectivity *match_count,
+				 bool *indexed_join_quals);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
 								 List *quals);
 static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
@@ -1394,11 +1400,15 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	Path	   *inner_path = path->innerjoinpath;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	Cost		inner_run_cost;
 	Cost		cpu_per_tuple;
 	QualCost	restrict_qual_cost;
 	double		outer_path_rows = PATH_ROWS(outer_path);
 	double		inner_path_rows = nestloop_inner_path_rows(inner_path);
 	double		ntuples;
+	Selectivity	outer_match_frac;
+	Selectivity	match_count;
+	bool		indexed_join_quals;
 
 	if (!enable_nestloop)
 		startup_cost += disable_cost;
@@ -1428,13 +1438,66 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		 */
 		run_cost += (outer_path_rows - 1) * inner_path->startup_cost;
 	}
-	run_cost += outer_path_rows *
-		(inner_path->total_cost - inner_path->startup_cost);
+	inner_run_cost = inner_path->total_cost - inner_path->startup_cost;
 
-	/*
-	 * Compute number of tuples processed (not number emitted!)
-	 */
-	ntuples = outer_path_rows * inner_path_rows;
+	if (adjust_semi_join(root, path, sjinfo,
+						 &outer_match_frac,
+						 &match_count,
+						 &indexed_join_quals))
+	{
+		double		outer_matched_rows;
+		Selectivity	inner_scan_frac;
+
+		/*
+		 * SEMI or ANTI join: executor will stop after first match.
+		 *
+		 * For an outer-rel row that has at least one match, we can expect the
+		 * inner scan to stop after a fraction 1/(match_count+1) of the inner
+		 * rows, if the matches are evenly distributed.  Since they probably
+		 * aren't quite evenly distributed, we apply a fuzz factor of 2.0 to
+		 * that fraction.  (If we used a larger fuzz factor, we'd have to
+		 * clamp inner_scan_frac to at most 1.0; but since match_count is at
+		 * least 1, no such clamp is needed now.)
+		 */
+		outer_matched_rows = rint(outer_path_rows * outer_match_frac);
+		inner_scan_frac = 2.0 / (match_count + 1.0);
+
+		/* Add inner run cost for outer tuples having matches */
+		run_cost += outer_matched_rows * inner_run_cost * inner_scan_frac;
+
+		/* Compute number of tuples processed (not number emitted!) */
+		ntuples = outer_matched_rows * inner_path_rows * inner_scan_frac;
+
+		/*
+		 * For unmatched outer-rel rows, there are two cases.  If the inner
+		 * path is an indexscan using all the joinquals as indexquals, then
+		 * an unmatched row results in an indexscan returning no rows, which
+		 * is probably quite cheap.  We estimate this case as the same cost
+		 * to return the first tuple of a nonempty scan.  Otherwise, the
+		 * executor will have to scan the whole inner rel; not so cheap.
+		 */
+		if (indexed_join_quals)
+		{
+			run_cost += (outer_path_rows - outer_matched_rows) *
+				inner_run_cost / inner_path_rows;
+			/* We won't be evaluating any quals at all for these rows */
+		}
+		else
+		{
+			run_cost += (outer_path_rows - outer_matched_rows) *
+				inner_run_cost;
+			ntuples += (outer_path_rows - outer_matched_rows) *
+				inner_path_rows;
+		}
+	}
+	else
+	{
+		/* Normal case; we'll scan whole input rel for each outer row */
+		run_cost += outer_path_rows * inner_run_cost;
+
+		/* Compute number of tuples processed (not number emitted!) */
+		ntuples = outer_path_rows * inner_path_rows;
+	}
 
 	/* CPU costs */
 	cost_qual_eval(&restrict_qual_cost, path->joinrestrictinfo, root);
@@ -1731,6 +1794,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
 	 * clauses that are to be applied at the join.	(This is pessimistic since
 	 * not all of the quals may get evaluated at each tuple.)
+	 *
+	 * Note: we could adjust for SEMI/ANTI joins skipping some qual evaluations
+	 * here, but it's probably not worth the trouble.
 	 */
 	startup_cost += qp_qual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
@@ -1824,6 +1890,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	int			num_skew_mcvs;
 	double		virtualbuckets;
 	Selectivity innerbucketsize;
+	Selectivity	outer_match_frac;
+	Selectivity	match_count;
 	ListCell   *hcl;
 
 	if (!enable_hashjoin)
@@ -1837,12 +1905,6 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	cost_qual_eval(&qp_qual_cost, path->jpath.joinrestrictinfo, root);
 	qp_qual_cost.startup -= hash_qual_cost.startup;
 	qp_qual_cost.per_tuple -= hash_qual_cost.per_tuple;
-
-	/*
-	 * Get approx # tuples passing the hashquals.  We use approx_tuple_count
-	 * here because we need an estimate done with JOIN_INNER semantics.
-	 */
-	hashjointuples = approx_tuple_count(root, &path->jpath, hashclauses);
 
 	/* cost of source data */
 	startup_cost += outer_path->startup_cost;
@@ -1970,18 +2032,78 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/* CPU costs */
 
-	/*
-	 * The number of tuple comparisons needed is the number of outer tuples
-	 * times the typical number of tuples in a hash bucket, which is the inner
-	 * relation size times its bucketsize fraction.  At each one, we need to
-	 * evaluate the hashjoin quals.  But actually, charging the full qual eval
-	 * cost at each tuple is pessimistic, since we don't evaluate the quals
-	 * unless the hash values match exactly.  For lack of a better idea, halve
-	 * the cost estimate to allow for that.
-	 */
-	startup_cost += hash_qual_cost.startup;
-	run_cost += hash_qual_cost.per_tuple *
-		outer_path_rows * clamp_row_est(inner_path_rows * innerbucketsize) * 0.5;
+	if (adjust_semi_join(root, &path->jpath, sjinfo,
+						 &outer_match_frac,
+						 &match_count,
+						 NULL))
+	{
+		double		outer_matched_rows;
+		Selectivity	inner_scan_frac;
+
+		/*
+		 * SEMI or ANTI join: executor will stop after first match.
+		 *
+		 * For an outer-rel row that has at least one match, we can expect the
+		 * bucket scan to stop after a fraction 1/(match_count+1) of the
+		 * bucket's rows, if the matches are evenly distributed.  Since they
+		 * probably aren't quite evenly distributed, we apply a fuzz factor of
+		 * 2.0 to that fraction.  (If we used a larger fuzz factor, we'd have
+		 * to clamp inner_scan_frac to at most 1.0; but since match_count is
+		 * at least 1, no such clamp is needed now.)
+		 */
+		outer_matched_rows = rint(outer_path_rows * outer_match_frac);
+		inner_scan_frac = 2.0 / (match_count + 1.0);
+
+		startup_cost += hash_qual_cost.startup;
+		run_cost += hash_qual_cost.per_tuple * outer_matched_rows *
+			clamp_row_est(inner_path_rows * innerbucketsize * inner_scan_frac) * 0.5;
+
+		/*
+		 * For unmatched outer-rel rows, the picture is quite a lot different.
+		 * In the first place, there is no reason to assume that these rows
+		 * preferentially hit heavily-populated buckets; instead assume they
+		 * are uncorrelated with the inner distribution and so they see an
+		 * average bucket size of inner_path_rows / virtualbuckets.  In the
+		 * second place, it seems likely that they will have few if any
+		 * exact hash-code matches and so very few of the tuples in the
+		 * bucket will actually require eval of the hash quals.  We don't
+		 * have any good way to estimate how many will, but for the moment
+		 * assume that the effective cost per bucket entry is one-tenth what
+		 * it is for matchable tuples.
+		 */
+		run_cost += hash_qual_cost.per_tuple *
+			(outer_path_rows - outer_matched_rows) *
+			clamp_row_est(inner_path_rows / virtualbuckets) * 0.05;
+
+		/* Get # of tuples that will pass the basic join */
+		if (path->jpath.jointype == JOIN_SEMI)
+			hashjointuples = outer_matched_rows;
+		else
+			hashjointuples = outer_path_rows - outer_matched_rows;
+	}
+	else
+	{
+		/*
+		 * The number of tuple comparisons needed is the number of outer
+		 * tuples times the typical number of tuples in a hash bucket, which
+		 * is the inner relation size times its bucketsize fraction.  At each
+		 * one, we need to evaluate the hashjoin quals.  But actually,
+		 * charging the full qual eval cost at each tuple is pessimistic,
+		 * since we don't evaluate the quals unless the hash values match
+		 * exactly.  For lack of a better idea, halve the cost estimate to
+		 * allow for that.
+		 */
+		startup_cost += hash_qual_cost.startup;
+		run_cost += hash_qual_cost.per_tuple * outer_path_rows *
+			clamp_row_est(inner_path_rows * innerbucketsize) * 0.5;
+
+		/*
+		 * Get approx # tuples passing the hashquals.  We use
+		 * approx_tuple_count here because we need an estimate done with
+		 * JOIN_INNER semantics.
+		 */
+		hashjointuples = approx_tuple_count(root, &path->jpath, hashclauses);
+	}
 
 	/*
 	 * For each tuple that gets through the hashjoin proper, we charge
@@ -2317,6 +2439,156 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	/* recurse into children */
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) context);
+}
+
+
+/*
+ * adjust_semi_join
+ *	  Estimate how much of the inner input a SEMI or ANTI join
+ *	  can be expected to scan.
+ *
+ * In a hash or nestloop SEMI/ANTI join, the executor will stop scanning
+ * inner rows as soon as it finds a match to the current outer row.
+ * We should therefore adjust some of the cost components for this effect.
+ * This function computes some estimates needed for these adjustments.
+ *
+ * 'path' is already filled in except for the cost fields
+ * 'sjinfo' is extra info about the join for selectivity estimation
+ *
+ * Returns TRUE if this is a SEMI or ANTI join, FALSE if not.
+ *
+ * Output parameters (set only in TRUE-result case):
+ * *outer_match_frac is set to the fraction of the outer tuples that are
+ *		expected to have at least one match.
+ * *match_count is set to the average number of matches expected for
+ *		outer tuples that have at least one match.
+ * *indexed_join_quals is set to TRUE if all the joinquals are used as
+ *		inner index quals, FALSE if not.
+ *
+ * indexed_join_quals can be passed as NULL if that information is not
+ * relevant (it is only useful for the nestloop case).
+ */
+static bool
+adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
+				 Selectivity *outer_match_frac,
+				 Selectivity *match_count,
+				 bool *indexed_join_quals)
+{
+	JoinType	jointype = path->jointype;
+	Selectivity jselec;
+	Selectivity nselec;
+	Selectivity avgmatch;
+	SpecialJoinInfo norm_sjinfo;
+	List	   *joinquals;
+	ListCell   *l;
+
+	/* Fall out if it's not JOIN_SEMI or JOIN_ANTI */
+	if (jointype != JOIN_SEMI && jointype != JOIN_ANTI)
+		return false;
+
+	/*
+	 * Note: it's annoying to repeat this selectivity estimation on each call,
+	 * when the joinclause list will be the same for all path pairs
+	 * implementing a given join.  clausesel.c will save us from the worst
+	 * effects of this by caching at the RestrictInfo level; but perhaps it'd
+	 * be worth finding a way to cache the results at a higher level.
+	 */
+
+	/*
+	 * In an ANTI join, we must ignore clauses that are "pushed down",
+	 * since those won't affect the match logic.  In a SEMI join, we do not
+	 * distinguish joinquals from "pushed down" quals, so just use the whole
+	 * restrictinfo list.
+	 */
+	if (jointype == JOIN_ANTI)
+	{
+		joinquals = NIL;
+		foreach(l, path->joinrestrictinfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+			Assert(IsA(rinfo, RestrictInfo));
+			if (!rinfo->is_pushed_down)
+				joinquals = lappend(joinquals, rinfo);
+		}
+	}
+	else
+		joinquals = path->joinrestrictinfo;
+
+	/*
+	 * Get the JOIN_SEMI or JOIN_ANTI selectivity of the join clauses.
+	 */
+	jselec = clauselist_selectivity(root,
+									joinquals,
+									0,
+									jointype,
+									sjinfo);
+
+	/*
+	 * Also get the normal inner-join selectivity of the join clauses.
+	 */
+	norm_sjinfo.type = T_SpecialJoinInfo;
+	norm_sjinfo.min_lefthand = path->outerjoinpath->parent->relids;
+	norm_sjinfo.min_righthand = path->innerjoinpath->parent->relids;
+	norm_sjinfo.syn_lefthand = path->outerjoinpath->parent->relids;
+	norm_sjinfo.syn_righthand = path->innerjoinpath->parent->relids;
+	norm_sjinfo.jointype = JOIN_INNER;
+	/* we don't bother trying to make the remaining fields valid */
+	norm_sjinfo.lhs_strict = false;
+	norm_sjinfo.delay_upper_joins = false;
+	norm_sjinfo.join_quals = NIL;
+
+	nselec = clauselist_selectivity(root,
+									joinquals,
+									0,
+									JOIN_INNER,
+									&norm_sjinfo);
+
+	/* Avoid leaking a lot of ListCells */
+	if (jointype == JOIN_ANTI)
+		list_free(joinquals);
+
+	/*
+	 * jselec can be interpreted as the fraction of outer-rel rows that have
+	 * any matches (this is true for both SEMI and ANTI cases).  And nselec
+	 * is the fraction of the Cartesian product that matches.  So, the
+	 * average number of matches for each outer-rel row that has at least
+	 * one match is nselec * inner_rows / jselec.
+	 *
+	 * Note: it is correct to use the inner rel's "rows" count here, not
+	 * PATH_ROWS(), even if the inner path under consideration is an inner
+	 * indexscan.  This is because we have included all the join clauses
+	 * in the selectivity estimate, even ones used in an inner indexscan.
+	 */
+	if (jselec > 0)				/* protect against zero divide */
+	{
+		avgmatch = nselec * path->innerjoinpath->parent->rows / jselec;
+		/* Clamp to sane range */
+		avgmatch = Max(1.0, avgmatch);
+	}
+	else
+		avgmatch = 1.0;
+
+	*outer_match_frac = jselec;
+	*match_count = avgmatch;
+
+	/*
+	 * If requested, check whether the inner path uses all the joinquals
+	 * as indexquals.  (If that's true, we can assume that an unmatched
+	 * outer tuple is cheap to process, whereas otherwise it's probably
+	 * expensive.)
+	 */
+	if (indexed_join_quals)
+	{
+		List	   *nrclauses;
+
+		nrclauses = select_nonredundant_join_clauses(root,
+													 path->joinrestrictinfo,
+													 path->innerjoinpath);
+		*indexed_join_quals = (nrclauses == NIL);
+	}
+
+	return true;
 }
 
 
