@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.24 2009/01/09 15:46:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.25 2009/05/10 22:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,14 +124,31 @@ static void InvalidateOprProofCacheCallBack(Datum arg, int cacheid, ItemPointer 
 bool
 predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 {
+	Node	   *p,
+			   *r;
+
 	if (predicate_list == NIL)
 		return true;			/* no predicate: implication is vacuous */
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: implication must fail */
 
-	/* Otherwise, away we go ... */
-	return predicate_implied_by_recurse((Node *) restrictinfo_list,
-										(Node *) predicate_list);
+	/*
+	 * If either input is a single-element list, replace it with its lone
+	 * member; this avoids one useless level of AND-recursion.  We only need
+	 * to worry about this at top level, since eval_const_expressions should
+	 * have gotten rid of any trivial ANDs or ORs below that.
+	 */
+	if (list_length(predicate_list) == 1)
+		p = (Node *) linitial(predicate_list);
+	else
+		p = (Node *) predicate_list;
+	if (list_length(restrictinfo_list) == 1)
+		r = (Node *) linitial(restrictinfo_list);
+	else
+		r = (Node *) restrictinfo_list;
+
+	/* And away we go ... */
+	return predicate_implied_by_recurse(r, p);
 }
 
 /*
@@ -165,14 +182,31 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 bool
 predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 {
+	Node	   *p,
+			   *r;
+
 	if (predicate_list == NIL)
 		return false;			/* no predicate: no refutation is possible */
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: refutation must fail */
 
-	/* Otherwise, away we go ... */
-	return predicate_refuted_by_recurse((Node *) restrictinfo_list,
-										(Node *) predicate_list);
+	/*
+	 * If either input is a single-element list, replace it with its lone
+	 * member; this avoids one useless level of AND-recursion.  We only need
+	 * to worry about this at top level, since eval_const_expressions should
+	 * have gotten rid of any trivial ANDs or ORs below that.
+	 */
+	if (list_length(predicate_list) == 1)
+		p = (Node *) linitial(predicate_list);
+	else
+		p = (Node *) predicate_list;
+	if (list_length(restrictinfo_list) == 1)
+		r = (Node *) linitial(restrictinfo_list);
+	else
+		r = (Node *) restrictinfo_list;
+
+	/* And away we go ... */
+	return predicate_refuted_by_recurse(r, p);
 }
 
 /*----------
