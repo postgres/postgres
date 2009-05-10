@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.124 2009/04/11 20:23:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.125 2009/05/10 02:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1076,11 +1076,59 @@ static void
 dumpCreateDB(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
+	char	   *default_encoding = NULL;
+	char	   *default_collate = NULL;
+	char	   *default_ctype = NULL;
 	PGresult   *res;
 	int			i;
 
 	fprintf(OPF, "--\n-- Database creation\n--\n\n");
 
+	/*
+	 * First, get the installation's default encoding and locale information.
+	 * We will dump encoding and locale specifications in the CREATE DATABASE
+	 * commands for just those databases with values different from defaults.
+	 *
+	 * We consider template0's encoding and locale (or, pre-7.1, template1's)
+	 * to define the installation default.  Pre-8.4 installations do not
+	 * have per-database locale settings; for them, every database must
+	 * necessarily be using the installation default, so there's no need to
+	 * do anything (which is good, since in very old versions there is no
+	 * good way to find out what the installation locale is anyway...)
+	 */
+	if (server_version >= 80400)
+		res = executeQuery(conn,
+						   "SELECT pg_encoding_to_char(encoding), "
+						   "datcollate, datctype "
+						   "FROM pg_database "
+						   "WHERE datname = 'template0'");
+	else if (server_version >= 70100)
+		res = executeQuery(conn,
+						   "SELECT pg_encoding_to_char(encoding), "
+						   "null::text AS datcollate, null::text AS datctype "
+						   "FROM pg_database "
+						   "WHERE datname = 'template0'");
+	else
+		res = executeQuery(conn,
+						   "SELECT pg_encoding_to_char(encoding), "
+						   "null::text AS datcollate, null::text AS datctype "
+						   "FROM pg_database "
+						   "WHERE datname = 'template1'");
+
+	/* If for some reason the template DB isn't there, treat as unknown */
+	if (PQntuples(res) > 0)
+	{
+		if (!PQgetisnull(res, 0, 0))
+			default_encoding = strdup(PQgetvalue(res, 0, 0));
+		if (!PQgetisnull(res, 0, 1))
+			default_collate = strdup(PQgetvalue(res, 0, 1));
+		if (!PQgetisnull(res, 0, 2))
+			default_ctype = strdup(PQgetvalue(res, 0, 2));
+	}
+
+	PQclear(res);
+
+	/* Now collect all the information about databases to dump */
 	if (server_version >= 80400)
 		res = executeQuery(conn,
 						   "SELECT datname, "
@@ -1184,16 +1232,19 @@ dumpCreateDB(PGconn *conn)
 			if (strlen(dbowner) != 0)
 				appendPQExpBuffer(buf, " OWNER = %s", fmtId(dbowner));
 
-			appendPQExpBuffer(buf, " ENCODING = ");
-			appendStringLiteralConn(buf, dbencoding, conn);
+			if (default_encoding && strcmp(dbencoding, default_encoding) != 0)
+			{
+				appendPQExpBuffer(buf, " ENCODING = ");
+				appendStringLiteralConn(buf, dbencoding, conn);
+			}
 
-			if (strlen(dbcollate) != 0)
+			if (default_collate && strcmp(dbcollate, default_collate) != 0)
 			{
 				appendPQExpBuffer(buf, " LC_COLLATE = ");
 				appendStringLiteralConn(buf, dbcollate, conn);
 			}
 
-			if (strlen(dbctype) != 0)
+			if (default_ctype && strcmp(dbctype, default_ctype) != 0)
 			{
 				appendPQExpBuffer(buf, " LC_CTYPE = ");
 				appendStringLiteralConn(buf, dbctype, conn);
@@ -1219,18 +1270,18 @@ dumpCreateDB(PGconn *conn)
 
 			if (strcmp(dbistemplate, "t") == 0)
 			{
-				appendPQExpBuffer(buf, "UPDATE pg_database SET datistemplate = 't' WHERE datname = ");
+				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database SET datistemplate = 't' WHERE datname = ");
 				appendStringLiteralConn(buf, dbname, conn);
 				appendPQExpBuffer(buf, ";\n");
 			}
 
 			if (binary_upgrade)
 			{
-				appendPQExpBuffer(buf, "\n-- For binary upgrade, set datfrozenxid.\n");
-				appendPQExpBuffer(buf, "UPDATE pg_database\n"
-									 "SET datfrozenxid = '%u'\n"
-									 "WHERE	datname = ",
-									 dbfrozenxid);
+				appendPQExpBuffer(buf, "-- For binary upgrade, set datfrozenxid.\n");
+				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database "
+								  "SET datfrozenxid = '%u' "
+								  "WHERE datname = ",
+								  dbfrozenxid);
 				appendStringLiteralConn(buf, dbname, conn);
 				appendPQExpBuffer(buf, ";\n");
 			}
