@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.1 2009/05/02 20:17:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.2 2009/05/11 09:00:10 mha Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -714,7 +714,7 @@
     </sect4>
 
     <sect4>
-     <title>Authentication</title>
+     <title>Authentication and security</title>
      <itemizedlist>
 
       <listitem>
@@ -738,6 +738,19 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Support <acronym>SSL</> certificate chains in server certificate
+        file (Andrew Gierth)
+       </para>
+
+       <para>
+        Including the full certificate chain makes the client able
+        to verify the certificate without having all intermediate CA
+        certificates present in the local store, which is often the case for
+        commercial CAs.
+       </para>
+      </listitem>
      </itemizedlist>
 
     </sect4>
@@ -2616,6 +2629,16 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Make Kerberos use the same method to determine the username of the
+        client as all other authentication methods (Magnus)
+       </para>
+
+       <para>
+        Previously a special Kerberos-only API was used.
+       </para>
+      </listitem>
      </itemizedlist>
 
     </sect4>
@@ -2637,11 +2660,25 @@
         connections. If a root certificate is not available to use for
         verification, <acronym>SSL</> connections will fail. The
         <literal>sslmode</> parameter is used to enable the certificate
-        verification.
+        verification and set the level.
        </para>
 
        <para>
-        The default is still not to do any verification.
+        The default is still not to do any verification, allowing connections
+        to SSL enabled servers without requiring a root certificate on the
+        client.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support wildcard server certificates (Magnus)
+       </para>
+
+       <para>
+        If a certificate <acronym>CN</> starts with <literal>*</>, it will
+        be treated as a wildcard when matching the hostname, allowing the
+        use of the same certificate for multiple servers.
        </para>
       </listitem>
 
