@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.2 2009/05/11 09:00:10 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.3 2009/05/11 09:11:41 mha Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -228,19 +228,6 @@
       <para>
        Remove <varname>log_restartpoints</> from <filename>recovery.conf</>;
        instead use <varname>log_checkpoints</> (Simon)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Remove support for the (insecure) <literal>crypt</> authentication method
-       (Magnus)
-      </para>
-
-      <para>
-       This effectively obsoletes pre-<productname>PostgreSQL</> 7.2 client
-       libraries, as there is no longer any non-plaintext password method that
-       they can use.
       </para>
      </listitem>
 
@@ -726,6 +713,19 @@
 
       <listitem>
        <para>
+        Remove support for the (insecure) <literal>crypt</> authentication method
+        (Magnus)
+       </para>
+
+       <para>
+        This effectively obsoletes pre-<productname>PostgreSQL</> 7.2 client
+        libraries, as there is no longer any non-plaintext password method that
+        they can use.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Support regular expressions in <filename>pg_ident.conf</>
         (Magnus)
        </para>
@@ -792,6 +792,13 @@
        <para>
         Change all authentication options to use <literal>name=value</>
         syntax (Magnus)
+       </para>
+
+       <para>
+        This makes incompatible changes to the <literal>ldap</>,
+        <literal>pam</> and <literal>ident</> authentication methods. All
+        <filename>pg_hba.conf</> entries with these methods need to be
+        rewritten using the new format.
        </para>
       </listitem>
 
