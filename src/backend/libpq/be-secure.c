@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.90 2009/01/28 15:06:47 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.91 2009/05/11 08:06:21 mha Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -729,9 +729,8 @@ initialize_SSL(void)
 		/*
 		 * Load and verify certificate and private key
 		 */
-		if (SSL_CTX_use_certificate_file(SSL_context,
-										  SERVER_CERT_FILE,
-										  SSL_FILETYPE_PEM) != 1)
+		if (SSL_CTX_use_certificate_chain_file(SSL_context,
+										  SERVER_CERT_FILE) != 1)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("could not load server certificate file \"%s\": %s",
