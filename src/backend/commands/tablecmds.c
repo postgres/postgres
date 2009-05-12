@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.282 2009/05/07 22:58:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.283 2009/05/12 00:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,6 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
-#include "optimizer/plancat.h"
-#include "optimizer/prep.h"
 #include "parser/gramparse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -1873,7 +1871,6 @@ renameatt(Oid myrelid,
 		ListCell   *child;
 		List	   *children;
 
-		/* this routine is actually in the planner */
 		children = find_all_inheritors(myrelid);
 
 		/*
@@ -3292,7 +3289,6 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 		ListCell   *child;
 		List	   *children;
 
-		/* this routine is actually in the planner */
 		children = find_all_inheritors(relid);
 
 		/*
@@ -3331,7 +3327,6 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 	ListCell   *child;
 	List	   *children;
 
-	/* this routine is actually in the planner */
 	children = find_inheritance_children(relid);
 
 	foreach(child, children)

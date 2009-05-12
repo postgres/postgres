@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.168 2009/03/31 22:12:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.169 2009/05/12 00:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -39,7 +40,6 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
@@ -1080,47 +1080,6 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 	return grouplist;
 }
 
-
-/*
- * find_all_inheritors -
- *		Returns a list of relation OIDs including the given rel plus
- *		all relations that inherit from it, directly or indirectly.
- */
-List *
-find_all_inheritors(Oid parentrel)
-{
-	List	   *rels_list;
-	ListCell   *l;
-
-	/*
-	 * We build a list starting with the given rel and adding all direct and
-	 * indirect children.  We can use a single list as both the record of
-	 * already-found rels and the agenda of rels yet to be scanned for more
-	 * children.  This is a bit tricky but works because the foreach() macro
-	 * doesn't fetch the next list element until the bottom of the loop.
-	 */
-	rels_list = list_make1_oid(parentrel);
-
-	foreach(l, rels_list)
-	{
-		Oid			currentrel = lfirst_oid(l);
-		List	   *currentchildren;
-
-		/* Get the direct children of this rel */
-		currentchildren = find_inheritance_children(currentrel);
-
-		/*
-		 * Add to the queue only those children not already seen. This avoids
-		 * making duplicate entries in case of multiple inheritance paths from
-		 * the same parent.  (It'll also keep us from getting into an infinite
-		 * loop, though theoretically there can't be any cycles in the
-		 * inheritance graph anyway.)
-		 */
-		rels_list = list_concat_unique_oid(rels_list, currentchildren);
-	}
-
-	return rels_list;
-}
 
 /*
  * expand_inherited_tables

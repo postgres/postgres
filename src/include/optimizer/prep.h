@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.65 2009/04/28 21:31:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.66 2009/05/12 00:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,6 @@ extern List *preprocess_targetlist(PlannerInfo *root, List *tlist);
  */
 extern Plan *plan_set_operations(PlannerInfo *root, double tuple_fraction,
 					List **sortClauses);
-
-extern List *find_all_inheritors(Oid parentrel);
 
 extern void expand_inherited_tables(PlannerInfo *root);
 

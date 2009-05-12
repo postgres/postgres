@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.21 2009/01/12 08:54:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.22 2009/05/12 00:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,9 @@
 
 #include "access/heapam.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_inherits.h"
 #include "commands/lockcmds.h"
 #include "miscadmin.h"
-#include "optimizer/prep.h"
 #include "parser/parse_clause.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"

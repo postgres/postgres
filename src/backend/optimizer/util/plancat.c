@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.156 2009/03/05 23:06:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.157 2009/05/12 00:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_inherits.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -35,12 +34,9 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
-#include "utils/syscache.h"
-#include "utils/tqual.h"
 
 
 /* GUC parameter */
@@ -848,79 +844,6 @@ join_selectivity(PlannerInfo *root,
 		elog(ERROR, "invalid join selectivity: %f", result);
 
 	return (Selectivity) result;
-}
-
-/*
- * find_inheritance_children
- *
- * Returns a list containing the OIDs of all relations which
- * inherit *directly* from the relation with OID 'inhparent'.
- *
- * XXX might be a good idea to create an index on pg_inherits' inhparent
- * field, so that we can use an indexscan instead of sequential scan here.
- * However, in typical databases pg_inherits won't have enough entries to
- * justify an indexscan...
- */
-List *
-find_inheritance_children(Oid inhparent)
-{
-	List	   *list = NIL;
-	Relation	relation;
-	HeapScanDesc scan;
-	HeapTuple	inheritsTuple;
-	Oid			inhrelid;
-	ScanKeyData key[1];
-
-	/*
-	 * Can skip the scan if pg_class shows the relation has never had a
-	 * subclass.
-	 */
-	if (!has_subclass(inhparent))
-		return NIL;
-
-	ScanKeyInit(&key[0],
-				Anum_pg_inherits_inhparent,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(inhparent));
-	relation = heap_open(InheritsRelationId, AccessShareLock);
-	scan = heap_beginscan(relation, SnapshotNow, 1, key);
-	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
-		list = lappend_oid(list, inhrelid);
-	}
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-	return list;
-}
-
-/*
- * has_subclass
- *
- * In the current implementation, has_subclass returns whether a
- * particular class *might* have a subclass. It will not return the
- * correct result if a class had a subclass which was later dropped.
- * This is because relhassubclass in pg_class is not updated when a
- * subclass is dropped, primarily because of concurrency concerns.
- *
- * Currently has_subclass is only used as an efficiency hack to skip
- * unnecessary inheritance searches, so this is OK.
- */
-bool
-has_subclass(Oid relationId)
-{
-	HeapTuple	tuple;
-	bool		result;
-
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relationId),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relationId);
-
-	result = ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
-	ReleaseSysCache(tuple);
-	return result;
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.64 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.65 2009/05/12 00:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,6 @@ extern int func_match_argtypes(int nargs,
 extern FuncCandidateList func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates);
-
-extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
 extern void make_fn_arguments(ParseState *pstate,
 				  List *fargs,
