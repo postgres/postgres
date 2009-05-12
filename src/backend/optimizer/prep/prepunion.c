@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.169 2009/05/12 00:56:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.170 2009/05/12 03:11:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_inherits.h"
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -1157,8 +1157,29 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		return;
 	}
 
-	/* Scan for all members of inheritance set */
-	inhOIDs = find_all_inheritors(parentOID);
+	/*
+	 * The rewriter should already have obtained an appropriate lock on each
+	 * relation named in the query.  However, for each child relation we add
+	 * to the query, we must obtain an appropriate lock, because this will be
+	 * the first use of those relations in the parse/rewrite/plan pipeline.
+	 *
+	 * If the parent relation is the query's result relation, then we need
+	 * RowExclusiveLock.  Otherwise, if it's accessed FOR UPDATE/SHARE, we
+	 * need RowShareLock; otherwise AccessShareLock.  We can't just grab
+	 * AccessShareLock because then the executor would be trying to upgrade
+	 * the lock, leading to possible deadlocks.  (This code should match the
+	 * parser and rewriter.)
+	 */
+	oldrc = get_rowmark(parse, rti);
+	if (rti == parse->resultRelation)
+		lockmode = RowExclusiveLock;
+	else if (oldrc)
+		lockmode = RowShareLock;
+	else
+		lockmode = AccessShareLock;
+
+	/* Scan for all members of inheritance set, acquire needed locks */
+	inhOIDs = find_all_inheritors(parentOID, lockmode);
 
 	/*
 	 * Check that there's at least one descendant, else treat as no-child
@@ -1173,39 +1194,18 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	}
 
 	/*
-	 * Find out if parent relation is selected FOR UPDATE/SHARE.  If so,
-	 * we need to mark its RowMarkClause as isParent = true, and generate
-	 * a new RowMarkClause for each child.
+	 * If parent relation is selected FOR UPDATE/SHARE, we need to mark its
+	 * RowMarkClause as isParent = true, and generate a new RowMarkClause for
+	 * each child.
 	 */
-	oldrc = get_rowmark(parse, rti);
 	if (oldrc)
 		oldrc->isParent = true;
 
 	/*
 	 * Must open the parent relation to examine its tupdesc.  We need not lock
-	 * it since the rewriter already obtained at least AccessShareLock on each
-	 * relation used in the query.
+	 * it; we assume the rewriter already did.
 	 */
 	oldrelation = heap_open(parentOID, NoLock);
-
-	/*
-	 * However, for each child relation we add to the query, we must obtain an
-	 * appropriate lock, because this will be the first use of those relations
-	 * in the parse/rewrite/plan pipeline.
-	 *
-	 * If the parent relation is the query's result relation, then we need
-	 * RowExclusiveLock.  Otherwise, if it's accessed FOR UPDATE/SHARE, we
-	 * need RowShareLock; otherwise AccessShareLock.  We can't just grab
-	 * AccessShareLock because then the executor would be trying to upgrade
-	 * the lock, leading to possible deadlocks.  (This code should match the
-	 * parser and rewriter.)
-	 */
-	if (rti == parse->resultRelation)
-		lockmode = RowExclusiveLock;
-	else if (oldrc)
-		lockmode = RowShareLock;
-	else
-		lockmode = AccessShareLock;
 
 	/* Scan the inheritance set and expand it */
 	appinfos = NIL;
@@ -1217,9 +1217,9 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		Index		childRTindex;
 		AppendRelInfo *appinfo;
 
-		/* Open rel, acquire the appropriate lock type */
+		/* Open rel if needed; we already have required locks */
 		if (childOID != parentOID)
-			newrelation = heap_open(childOID, lockmode);
+			newrelation = heap_open(childOID, NoLock);
 		else
 			newrelation = oldrelation;
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.1 2009/05/12 00:56:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.2 2009/05/12 03:11:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,9 @@
 #include "access/heapam.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_inherits_fn.h"
 #include "parser/parse_type.h"
+#include "storage/lmgr.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -33,9 +35,14 @@
  *
  * Returns a list containing the OIDs of all relations which
  * inherit *directly* from the relation with OID 'parentrelId'.
+ *
+ * The specified lock type is acquired on each child relation (but not on the
+ * given rel; caller should already have locked it).  If lockmode is NoLock
+ * then no locks are acquired, but caller must beware of race conditions
+ * against possible DROPs of child relations.
  */
 List *
-find_inheritance_children(Oid parentrelId)
+find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 {
 	List	   *list = NIL;
 	Relation	relation;
@@ -63,13 +70,38 @@ find_inheritance_children(Oid parentrelId)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(parentrelId));
 	scan = heap_beginscan(relation, SnapshotNow, 1, key);
+
 	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
+
+		if (lockmode != NoLock)
+		{
+			/* Get the lock to synchronize against concurrent drop */
+			LockRelationOid(inhrelid, lockmode);
+
+			/*
+			 * Now that we have the lock, double-check to see if the relation
+			 * really exists or not.  If not, assume it was dropped while
+			 * we waited to acquire lock, and ignore it.
+			 */
+			if (!SearchSysCacheExists(RELOID,
+									  ObjectIdGetDatum(inhrelid),
+									  0, 0, 0))
+			{
+				/* Release useless lock */
+				UnlockRelationOid(inhrelid, lockmode);
+				/* And ignore this relation */
+				continue;
+			}
+		}
+
 		list = lappend_oid(list, inhrelid);
 	}
+
 	heap_endscan(scan);
 	heap_close(relation, AccessShareLock);
+
 	return list;
 }
 
@@ -78,9 +110,14 @@ find_inheritance_children(Oid parentrelId)
  * find_all_inheritors -
  *		Returns a list of relation OIDs including the given rel plus
  *		all relations that inherit from it, directly or indirectly.
+ *
+ * The specified lock type is acquired on all child relations (but not on the
+ * given rel; caller should already have locked it).  If lockmode is NoLock
+ * then no locks are acquired, but caller must beware of race conditions
+ * against possible DROPs of child relations.
  */
 List *
-find_all_inheritors(Oid parentrelId)
+find_all_inheritors(Oid parentrelId, LOCKMODE lockmode)
 {
 	List	   *rels_list;
 	ListCell   *l;
@@ -100,7 +137,7 @@ find_all_inheritors(Oid parentrelId)
 		List	   *currentchildren;
 
 		/* Get the direct children of this rel */
-		currentchildren = find_inheritance_children(currentrel);
+		currentchildren = find_inheritance_children(currentrel, lockmode);
 
 		/*
 		 * Add to the queue only those children not already seen. This avoids

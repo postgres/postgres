@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.22 2009/05/12 00:56:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.23 2009/05/12 03:11:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_inherits.h"
+#include "catalog/pg_inherits_fn.h"
 #include "commands/lockcmds.h"
 #include "miscadmin.h"
 #include "parser/parse_clause.h"
@@ -48,8 +48,9 @@ LockTableCommand(LockStmt *lockstmt)
 
 		reloid = RangeVarGetRelid(relation, false);
 
+		/* XXX NoLock here is not really a good idea */
 		if (recurse)
-			children_and_self = find_all_inheritors(reloid);
+			children_and_self = find_all_inheritors(reloid, NoLock);
 		else
 			children_and_self = list_make1_oid(reloid);
 

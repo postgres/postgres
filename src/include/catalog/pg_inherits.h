@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_inherits.h,v 1.27 2009/05/12 00:56:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_inherits.h,v 1.28 2009/05/12 03:11:02 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -20,7 +20,6 @@
 #define PG_INHERITS_H
 
 #include "catalog/genbki.h"
-#include "nodes/pg_list.h"
 
 /* ----------------
  *		pg_inherits definition.  cpp turns this into
@@ -56,13 +55,5 @@ typedef FormData_pg_inherits *Form_pg_inherits;
  *		pg_inherits has no initial contents
  * ----------------
  */
-
-/*
- * prototypes for functions in pg_inherits.c
- */
-extern List *find_inheritance_children(Oid parentrelId);
-extern List *find_all_inheritors(Oid parentrelId);
-extern bool has_subclass(Oid relationId);
-extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
 #endif   /* PG_INHERITS_H */
