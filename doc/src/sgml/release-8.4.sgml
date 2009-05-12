@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.3 2009/05/11 09:11:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.4 2009/05/12 23:43:50 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -6,7 +6,7 @@
 
   <note>
    <title>Release date</title>
-   <simpara>2009-??-??, ITEMS CURRENT AS OF 2009-04-08</simpara>
+   <simpara>2009-??-??, ITEMS CURRENT AS OF 2009-05-11</simpara>
   </note>
 
   <sect2>
@@ -181,6 +181,13 @@
        Change default setting for
        <literal>log_min_messages</> to <literal>warning</> (previously
        it was <literal>notice</>) to reduce log file volume (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Change default setting for <literal>max_prepared_transactions</> to
+       zero (previously it was 5) (Tom)
       </para>
      </listitem>
 
@@ -706,13 +713,6 @@
 
       <listitem>
        <para>
-        Report appropriate error message for combination of <literal>MD5</>
-        authentication and <varname>db_user_namespace</> enabled (Bruce)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Remove support for the (insecure) <literal>crypt</> authentication method
         (Magnus)
        </para>
@@ -751,6 +751,13 @@
         commercial CAs.
        </para>
       </listitem>
+
+      <listitem>
+       <para>
+        Report appropriate error message for combination of <literal>MD5</>
+        authentication and <varname>db_user_namespace</> enabled (Bruce)
+       </para>
+      </listitem>
      </itemizedlist>
 
     </sect4>
@@ -758,35 +765,6 @@
     <sect4 id="release-8-4-pg-hba-conf">
      <title><filename>pg_hba.conf</></title>
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Parse <filename>pg_hba.conf</> fully when it is loaded,
-        so that errors are reported immediately (Magnus)
-       </para>
-
-       <para>
-        Previously, most errors in the file wouldn't be detected until clients
-        tried to connect, so an erroneous file could render the system
-        unusable.  With the new behavior, if an error is detected during
-        reload then the bad file is rejected and the postmaster continues
-        to use its old copy.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Show all parsing errors in <filename>pg_hba.conf</> instead of
-        aborting after the first one (Selena Deckelmann)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Remove the <literal>ident sameuser</> option, instead making that
-        behavior the default if no usermap is specified (Magnus)
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -799,6 +777,13 @@
         <literal>pam</> and <literal>ident</> authentication methods. All
         <filename>pg_hba.conf</> entries with these methods need to be
         rewritten using the new format.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove the <literal>ident sameuser</> option, instead making that
+        behavior the default if no usermap is specified (Magnus)
        </para>
       </listitem>
 
@@ -861,6 +846,28 @@
        <para>
         This allows identical usernames from different realms to be
         authenticated as different database users using usermaps.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Parse <filename>pg_hba.conf</> fully when it is loaded,
+        so that errors are reported immediately (Magnus)
+       </para>
+
+       <para>
+        Previously, most errors in the file wouldn't be detected until clients
+        tried to connect, so an erroneous file could render the system
+        unusable.  With the new behavior, if an error is detected during
+        reload then the bad file is rejected and the postmaster continues
+        to use its old copy.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Show all parsing errors in <filename>pg_hba.conf</> instead of
+        aborting after the first one (Selena Deckelmann)
        </para>
       </listitem>
 
@@ -1136,6 +1143,18 @@
        Add support for Unicode string literal and identifier specifications
        using code points, e.g. <literal>U&amp;'d\0061t\+000061'</>
        (Peter)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Reject <literal>\000</> in string literals and <command>COPY</> data
+       (Tom)
+      </para>
+
+      <para>
+       Previously, this was accepted but had the effect of terminating
+       the string contents.
       </para>
      </listitem>
 
@@ -1463,7 +1482,13 @@
        <para>
         Improve checks that the database encoding, collation
         (<varname>LC_COLLATE</>), and character classes
-        (<varname>LC_CTYPE</>) match (Heikki)
+        (<varname>LC_CTYPE</>) match (Heikki, Tom)
+       </para>
+
+       <para>
+        Note in particular that a new database's encoding and locale
+        settings can be changed only when copying from <literal>template0</>.
+        This prevents possibly copying data that doesn't match the settings.
        </para>
       </listitem>
 
@@ -2249,6 +2274,27 @@
 
       <listitem>
        <para>
+        Make <command>EXIT</> without a label always exit the innermost
+        loop (Tom)
+       </para>
+
+       <para>
+        Formerly, if there were a <literal>BEGIN</> block more closely nested
+        than any loop, it would exit that block instead.  The new behavior
+        matches Oracle(TM) and is also what was previously stated by our own
+        documentation.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make processing of string literals and nested block comments
+        match the main SQL parser's processing (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Avoid memory leakage when the same function is called at varying
         exception-block nesting depths (Tom)
        </para>
@@ -2469,6 +2515,13 @@
 
       <listitem>
        <para>
+        Add a function type column to <command>\df</>'s output, and add
+        options to list only selected types of functions (David Fetter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Make <command>\df</> not hide functions that take or return
         type <type>cstring</> (Tom)
        </para>
@@ -2638,8 +2691,8 @@
 
       <listitem>
        <para>
-        Make Kerberos use the same method to determine the username of the
-        client as all other authentication methods (Magnus)
+        Make Kerberos connections use the same method to determine the
+        username of the client as all other authentication methods (Magnus)
        </para>
 
        <para>
@@ -2666,13 +2719,10 @@
         and the name of the server when making <acronym>SSL</>
         connections. If a root certificate is not available to use for
         verification, <acronym>SSL</> connections will fail. The
-        <literal>sslmode</> parameter is used to enable the certificate
-        verification and set the level.
-       </para>
-
-       <para>
+        <literal>sslmode</> parameter is used to enable certificate
+        verification and set the level of checking.
         The default is still not to do any verification, allowing connections
-        to SSL enabled servers without requiring a root certificate on the
+        to SSL-enabled servers without requiring a root certificate on the
         client.
        </para>
       </listitem>
@@ -3015,6 +3065,13 @@
 
      <listitem>
       <para>
+       Recover better if dynamically-loaded code executes <function>exit()</>
+       (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Add a hook to let plug-ins monitor the executor (Itagaki
        Takahiro)
       </para>
@@ -3156,6 +3213,21 @@
       <para>
        Add duration and query mode options to <filename>contrib/pgbench</>
        (Itagaki Takahiro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <filename>contrib/pgbench</> use table names
+       <structname>pgbench_accounts</>, <structname>pgbench_branches</>,
+       <structname>pgbench_history</>, and <structname>pgbench_tellers</>,
+       rather than just <structname>accounts</>, <structname>branches</>,
+       <structname>history</>, and <structname>tellers</> (Tom)
+      </para>
+
+      <para>
+       This is to reduce the risk of accidentally destroying real data
+       by running <application>pgbench</>.
       </para>
      </listitem>
 
