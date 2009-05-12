@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.274 2009/01/20 18:59:36 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.275 2009/05/12 16:43:32 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -933,56 +933,6 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 	}
 
 	/* Should be safe to do a relcache load */
-	r = RelationIdGetRelation(relationId);
-
-	if (!RelationIsValid(r))
-		elog(ERROR, "could not open relation with OID %u", relationId);
-
-	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
-		MyXactAccessedTempRel = true;
-
-	pgstat_initstats(r);
-
-	return r;
-}
-
-/* ----------------
- *		relation_open_nowait - open but don't wait for lock
- *
- *		Same as relation_open, except throw an error instead of waiting
- *		when the requested lock is not immediately obtainable.
- * ----------------
- */
-Relation
-relation_open_nowait(Oid relationId, LOCKMODE lockmode)
-{
-	Relation	r;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/* Get the lock before trying to open the relcache entry */
-	if (lockmode != NoLock)
-	{
-		if (!ConditionalLockRelationOid(relationId, lockmode))
-		{
-			/* try to throw error by name; relation could be deleted... */
-			char	   *relname = get_rel_name(relationId);
-
-			if (relname)
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						 errmsg("could not obtain lock on relation \"%s\"",
-								relname)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					  errmsg("could not obtain lock on relation with OID %u",
-							 relationId)));
-		}
-	}
-
-	/* The relcache does all the real work... */
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
