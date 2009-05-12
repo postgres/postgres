@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.7 2009/02/28 19:13:28 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.8 2009/05/12 20:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,8 +237,6 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 		}
 		appendStringInfoString(&buf, str + len);
 
-		if (version)
-			xmlFree(version);
 		pfree(str);
 
 		return buf.data;
@@ -487,7 +485,7 @@ xmlconcat(List *args)
 		if (!version)
 			global_version_no_value = true;
 		else if (!global_version)
-			global_version = xmlStrdup(version);
+			global_version = version;
 		else if (xmlStrcmp(version, global_version) != 0)
 			global_version_no_value = true;
 
@@ -955,6 +953,24 @@ xml_init(void)
 			|| xmlIsCombiningQ(c) \
 			|| xmlIsExtender_ch(c))
 
+/* pnstrdup, but deal with xmlChar not char; len is measured in xmlChars */
+static xmlChar *
+xml_pnstrdup(const xmlChar *str, size_t len)
+{
+	xmlChar	   *result;
+
+	result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
+	memcpy(result, str, len * sizeof(xmlChar));
+	result[len] = 0;
+	return result;
+}
+
+/*
+ * str is the null-terminated input string.  Remaining arguments are
+ * output arguments; each can be NULL if value is not wanted.
+ * version and encoding are returned as locally-palloc'd strings.
+ * Result is 0 if OK, an error code if not.
+ */
 static int
 parse_xml_decl(const xmlChar * str, size_t *lenp,
 			   xmlChar ** version, xmlChar ** encoding, int *standalone)
@@ -967,6 +983,7 @@ parse_xml_decl(const xmlChar * str, size_t *lenp,
 
 	xml_init();
 
+	/* Initialize output arguments to "not present" */
 	if (version)
 		*version = NULL;
 	if (encoding)
@@ -1008,7 +1025,7 @@ parse_xml_decl(const xmlChar * str, size_t *lenp,
 			return XML_ERR_VERSION_MISSING;
 
 		if (version)
-			*version = xmlStrndup(p + 1, q - p - 1);
+			*version = xml_pnstrdup(p + 1, q - p - 1);
 		p = q + 1;
 	}
 	else
@@ -1036,7 +1053,7 @@ parse_xml_decl(const xmlChar * str, size_t *lenp,
 				return XML_ERR_MISSING_ENCODING;
 
 			if (encoding)
-				*encoding = xmlStrndup(p + 1, q - p - 1);
+				*encoding = xml_pnstrdup(p + 1, q - p - 1);
 			p = q + 1;
 		}
 		else
@@ -1209,8 +1226,6 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		xmlChar    *version = NULL;
 		int			standalone = -1;
 
-		doc = xmlNewDoc(NULL);
-
 		res_code = parse_xml_decl(utf8string,
 								  &count, &version, NULL, &standalone);
 		if (res_code != 0)
@@ -1218,15 +1233,16 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 								"invalid XML content: invalid XML declaration",
 								res_code);
 
+		doc = xmlNewDoc(version);
+		Assert(doc->encoding == NULL);
+		doc->encoding = xmlStrdup((const xmlChar *) "UTF-8");
+		doc->standalone = standalone;
+
 		res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
 											   utf8string + count, NULL);
 		if (res_code != 0)
 			xml_ereport(ERROR, ERRCODE_INVALID_XML_CONTENT,
 						"invalid XML content");
-
-		doc->version = xmlStrdup(version);
-		doc->encoding = xmlStrdup((xmlChar *) "UTF-8");
-		doc->standalone = standalone;
 	}
 
 	xmlFreeParserCtxt(ctxt);
