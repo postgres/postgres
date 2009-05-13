@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.478 2009/05/03 21:10:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.479 2009/05/13 21:53:41 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3445,7 +3445,7 @@ SELECT regexp_matches('foobarbequebaz', 'barbeque');
     Some examples:
 <programlisting>
 
-SELECT foo FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', E'\\\s+') AS foo;
+SELECT foo FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', E'\\s+') AS foo;
   foo   
 --------
  the    
