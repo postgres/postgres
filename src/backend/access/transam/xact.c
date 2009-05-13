@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.272 2009/01/20 18:59:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.273 2009/05/13 20:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
-#include "utils/xml.h"
 #include "pg_trace.h"
 
 
@@ -1701,7 +1700,6 @@ CommitTransaction(void)
 
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
-	AtEOXact_xml();
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
 	/* smgrcommit already done */
@@ -1937,7 +1935,6 @@ PrepareTransaction(void)
 	/* PREPARE acts the same as COMMIT as far as GUC is concerned */
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
-	AtEOXact_xml();
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
 	/* smgrcommit already done */
@@ -2082,7 +2079,6 @@ AbortTransaction(void)
 
 	AtEOXact_GUC(false, 1);
 	AtEOXact_SPI(false);
-	AtEOXact_xml();
 	AtEOXact_on_commit_actions(false);
 	AtEOXact_Namespace(false);
 	AtEOXact_Files();
@@ -3919,7 +3915,6 @@ AbortSubTransaction(void)
 
 		AtEOXact_GUC(false, s->gucNestLevel);
 		AtEOSubXact_SPI(false, s->subTransactionId);
-		AtEOXact_xml();
 		AtEOSubXact_on_commit_actions(false, s->subTransactionId,
 									  s->parent->subTransactionId);
 		AtEOSubXact_Namespace(false, s->subTransactionId,

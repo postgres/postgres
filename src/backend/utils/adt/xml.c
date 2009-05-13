@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.87 2009/05/12 20:17:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.88 2009/05/13 20:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,29 +26,22 @@
 /*
  * Notes on memory management:
  *
- * Via callbacks, libxml is told to use palloc and friends for memory
- * management, within a context that we reset at transaction end (and also at
- * subtransaction abort) to prevent memory leaks.  Resetting at transaction or
- * subtransaction abort is necessary since we might have thrown a longjmp
- * while some data structures were not linked from anywhere persistent.
- * Resetting at transaction commit might not be necessary, but seems a good
- * idea to forestall long-term leaks.
- *
  * Sometimes libxml allocates global structures in the hope that it can reuse
- * them later on.  Therefore, before resetting LibxmlContext, we must tell
- * libxml to discard any global data it has.  The libxml API documentation is
- * not very good about specifying this, but for now we assume that
- * xmlCleanupParser() will get rid of anything we need to worry about.
- *
- * We use palloc --- which will throw a longjmp on error --- for allocation
- * callbacks that officially should act like malloc, ie, return NULL on
- * out-of-memory.  This is a bit risky since there is a chance of leaving
- * persistent libxml data structures in an inconsistent partially-constructed
- * state, perhaps leading to crash in xmlCleanupParser().  However, as of
- * early 2008 it is *known* that libxml can crash on out-of-memory due to
- * inadequate checks for NULL returns, so this behavior seems the lesser
- * of two evils.
+ * them later on.  This makes it impractical to change the xmlMemSetup
+ * functions on-the-fly; that is likely to lead to trying to pfree() chunks
+ * allocated with malloc() or vice versa.  Since libxml might be used by
+ * loadable modules, eg libperl, our only safe choices are to change the
+ * functions at postmaster/backend launch or not at all.  Since we'd rather
+ * not activate libxml in sessions that might never use it, the latter choice
+ * is the preferred one.  However, for debugging purposes it can be awfully
+ * handy to constrain libxml's allocations to be done in a specific palloc
+ * context, where they're easy to track.  Therefore there is code here that
+ * can be enabled in debug builds to redirect libxml's allocations into a
+ * special context LibxmlContext.  It's not recommended to turn this on in
+ * a production build because of the possibility of bad interactions with
+ * external modules.
  */
+/* #define USE_LIBXMLCONTEXT */
 
 #include "postgres.h"
 
@@ -86,25 +79,31 @@
 
 
 /* GUC variables */
-int xmlbinary;
-int xmloption;
+int		xmlbinary;
+int		xmloption;
 
 #ifdef USE_LIBXML
 
 static StringInfo xml_err_buf = NULL;
-static MemoryContext LibxmlContext = NULL;
 
-static void xml_init(void);
-static void xml_memory_init(void);
-static void xml_memory_cleanup(void);
-static void *xml_palloc(size_t size);
-static void *xml_repalloc(void *ptr, size_t size);
-static void xml_pfree(void *ptr);
-static char *xml_pstrdup(const char *string);
 static void xml_ereport(int level, int sqlcode, const char *msg);
 static void xml_errorHandler(void *ctxt, const char *msg,...);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
+
+#ifdef USE_LIBXMLCONTEXT
+
+static MemoryContext LibxmlContext = NULL;
+
+static void xml_memory_init(void);
+static void *xml_palloc(size_t size);
+static void *xml_repalloc(void *ptr, size_t size);
+static void xml_pfree(void *ptr);
+static char *xml_pstrdup(const char *string);
+
+#endif /* USE_LIBXMLCONTEXT */
+
+static void xml_init(void);
 static xmlChar *xml_text2xmlChar(text *in);
 static int parse_xml_decl(const xmlChar * str, size_t *lenp,
 			   xmlChar ** version, xmlChar ** encoding, int *standalone);
@@ -150,15 +149,15 @@ static void SPI_sql_row_to_xmlelement(int rownum, StringInfo result,
 #ifdef USE_LIBXML
 
 static int
-xmlChar_to_encoding(xmlChar * encoding_name)
+xmlChar_to_encoding(const xmlChar *encoding_name)
 {
-	int			encoding = pg_char_to_encoding((char *) encoding_name);
+	int			encoding = pg_char_to_encoding((const char *) encoding_name);
 
 	if (encoding < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid encoding name \"%s\"",
-						(char *) encoding_name)));
+						(const char *) encoding_name)));
 	return encoding;
 }
 #endif
@@ -548,8 +547,8 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 	int			i;
 	ListCell   *arg;
 	ListCell   *narg;
-	xmlBufferPtr buf;
-	xmlTextWriterPtr writer;
+	xmlBufferPtr buf = NULL;
+	xmlTextWriterPtr writer = NULL;
 
 	/*
 	 * We first evaluate all the arguments, then start up libxml and create
@@ -596,8 +595,16 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 	/* now safe to run libxml */
 	xml_init();
 
+	PG_TRY();
+	{
 	buf = xmlBufferCreate();
+	if (!buf)
+		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+					"could not allocate xmlBuffer");
 	writer = xmlNewTextWriterMemory(buf, 0);
+	if (!writer)
+		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+					"could not allocate xmlTextWriter");
 
 	xmlTextWriterStartElement(writer, (xmlChar *) xexpr->name);
 
@@ -620,9 +627,23 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 	}
 
 	xmlTextWriterEndElement(writer);
+
+	/* we MUST do this now to flush data out to the buffer ... */
 	xmlFreeTextWriter(writer);
+	writer = NULL;
 
 	result = xmlBuffer_to_xmltype(buf);
+	}
+	PG_CATCH();
+	{
+		if (writer)
+			xmlFreeTextWriter(writer);
+		if (buf)
+			xmlBufferFree(buf);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
 	xmlBufferFree(buf);
 
 	return result;
@@ -776,6 +797,7 @@ xml_is_document(xmltype *arg)
 	xmlDocPtr	doc = NULL;
 	MemoryContext ccxt = CurrentMemoryContext;
 
+	/* We want to catch ereport(INVALID_XML_DOCUMENT) and return false */
 	PG_TRY();
 	{
 		doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true, NULL);
@@ -809,19 +831,6 @@ xml_is_document(xmltype *arg)
 	NO_XML_SUPPORT();
 	return false;
 #endif   /* not USE_LIBXML */
-}
-
-
-/*
- * xml cleanup function for transaction end.  This is also called on
- * subtransaction abort; see notes at top of file for rationale.
- */
-void
-AtEOXact_xml(void)
-{
-#ifdef USE_LIBXML
-	xml_memory_cleanup();
-#endif
 }
 
 
@@ -862,8 +871,10 @@ xml_init(void)
 		/* Now that xml_err_buf exists, safe to call xml_errorHandler */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 
+#ifdef USE_LIBXMLCONTEXT
 		/* Set up memory allocation our way, too */
 		xml_memory_init();
+#endif
 
 		/* Check library compatibility */
 		LIBXML_TEST_VERSION;
@@ -877,14 +888,13 @@ xml_init(void)
 		resetStringInfo(xml_err_buf);
 
 		/*
-		 * We re-establish the callback functions every time.  This makes it
-		 * safe for other subsystems (PL/Perl, say) to also use libxml with
+		 * We re-establish the error callback function every time.  This makes
+		 * it safe for other subsystems (PL/Perl, say) to also use libxml with
 		 * their own callbacks ... so long as they likewise set up the
-		 * callbacks on every use.	It's cheap enough to not be worth worrying
+		 * callbacks on every use. It's cheap enough to not be worth worrying
 		 * about, anyway.
 		 */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-		xml_memory_init();
 	}
 }
 
@@ -1096,7 +1106,7 @@ static bool
 print_xml_decl(StringInfo buf, const xmlChar * version,
 			   pg_enc encoding, int standalone)
 {
-	xml_init();
+	xml_init();					/* why is this here? */
 
 	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
 		|| (encoding && encoding != PG_UTF8)
@@ -1135,7 +1145,10 @@ print_xml_decl(StringInfo buf, const xmlChar * version,
 /*
  * Convert a C string to XML internal representation
  *
- * TODO maybe, libxml2's xmlreader is better? (do not construct DOM,
+ * Note: it is caller's responsibility to xmlFreeDoc() the result,
+ * else a permanent memory leak will ensue!
+ *
+ * TODO maybe libxml2's xmlreader is better? (do not construct DOM,
  * yet do not use SAX - see xmlreader.c)
  */
 static xmlDocPtr
@@ -1158,13 +1171,18 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 										   GetDatabaseEncoding(),
 										   PG_UTF8);
 
+	/* Start up libxml and its parser (no-ops if already done) */
 	xml_init();
 	xmlInitParser();
+
 	ctxt = xmlNewParserCtxt();
 	if (ctxt == NULL)
 		xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
 					"could not allocate parser context");
 
+	/* Use a TRY block to ensure the ctxt is released */
+	PG_TRY();
+	{
 	if (xmloption_arg == XMLOPTION_DOCUMENT)
 	{
 		/*
@@ -1204,9 +1222,19 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
 											   utf8string + count, NULL);
 		if (res_code != 0)
+		{
+			xmlFreeDoc(doc);
 			xml_ereport(ERROR, ERRCODE_INVALID_XML_CONTENT,
 						"invalid XML content");
+		}
 	}
+	}
+	PG_CATCH();
+	{
+		xmlFreeParserCtxt(ctxt);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	xmlFreeParserCtxt(ctxt);
 
@@ -1224,18 +1252,16 @@ xml_text2xmlChar(text *in)
 }
 
 
+#ifdef USE_LIBXMLCONTEXT
+
 /*
- * Manage the special context used for all libxml allocations
+ * Manage the special context used for all libxml allocations (but only
+ * in special debug builds; see notes at top of file)
  */
 static void
 xml_memory_init(void)
 {
-	/*
-	 * Create memory context if not there already.  We make it a child of
-	 * TopMemoryContext, even though our current policy is that it doesn't
-	 * survive past transaction end, because we want to be really really
-	 * sure it doesn't go away before we've called xmlCleanupParser().
-	 */
+	/* Create memory context if not there already */
 	if (LibxmlContext == NULL)
 		LibxmlContext = AllocSetContextCreate(TopMemoryContext,
 											  "LibxmlContext",
@@ -1245,20 +1271,6 @@ xml_memory_init(void)
 
 	/* Re-establish the callbacks even if already set */
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
-}
-
-static void
-xml_memory_cleanup(void)
-{
-	if (LibxmlContext != NULL)
-	{
-		/* Give libxml a chance to clean up dangling pointers */
-		xmlCleanupParser();
-
-		/* And flush the context */
-		MemoryContextDelete(LibxmlContext);
-		LibxmlContext = NULL;
-	}
 }
 
 /*
@@ -1290,6 +1302,8 @@ xml_pstrdup(const char *string)
 {
 	return MemoryContextStrdup(LibxmlContext, string);
 }
+
+#endif /* USE_LIBXMLCONTEXT */
 
 
 /*
@@ -1706,25 +1720,48 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 			case BYTEAOID:
 				{
 					bytea	   *bstr = DatumGetByteaPP(value);
-					xmlBufferPtr buf;
-					xmlTextWriterPtr writer;
+					xmlBufferPtr buf = NULL;
+					xmlTextWriterPtr writer = NULL;
 					char	   *result;
 
 					xml_init();
 
-					buf = xmlBufferCreate();
-					writer = xmlNewTextWriterMemory(buf, 0);
+					PG_TRY();
+					{
+						buf = xmlBufferCreate();
+						if (!buf)
+							xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+										"could not allocate xmlBuffer");
+						writer = xmlNewTextWriterMemory(buf, 0);
+						if (!writer)
+							xml_ereport(ERROR, ERRCODE_OUT_OF_MEMORY,
+										"could not allocate xmlTextWriter");
 
-					if (xmlbinary == XMLBINARY_BASE64)
-						xmlTextWriterWriteBase64(writer, VARDATA_ANY(bstr),
-												 0, VARSIZE_ANY_EXHDR(bstr));
-					else
-						xmlTextWriterWriteBinHex(writer, VARDATA_ANY(bstr),
-												 0, VARSIZE_ANY_EXHDR(bstr));
+						if (xmlbinary == XMLBINARY_BASE64)
+							xmlTextWriterWriteBase64(writer, VARDATA_ANY(bstr),
+													 0, VARSIZE_ANY_EXHDR(bstr));
+						else
+							xmlTextWriterWriteBinHex(writer, VARDATA_ANY(bstr),
+													 0, VARSIZE_ANY_EXHDR(bstr));
 
-					xmlFreeTextWriter(writer);
-					result = pstrdup((const char *) xmlBufferContent(buf));
+						/* we MUST do this now to flush data out to the buffer */
+						xmlFreeTextWriter(writer);
+						writer = NULL;
+
+						result = pstrdup((const char *) xmlBufferContent(buf));
+					}
+					PG_CATCH();
+					{
+						if (writer)
+							xmlFreeTextWriter(writer);
+						if (buf)
+							xmlBufferFree(buf);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+
 					xmlBufferFree(buf);
+
 					return result;
 				}
 #endif   /* USE_LIBXML */
@@ -3168,21 +3205,41 @@ SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename,
 static text *
 xml_xmlnodetoxmltype(xmlNodePtr cur)
 {
-	xmlChar    *str;
 	xmltype    *result;
-	xmlBufferPtr buf;
 
 	if (cur->type == XML_ELEMENT_NODE)
 	{
+		xmlBufferPtr buf;
+
 		buf = xmlBufferCreate();
-		xmlNodeDump(buf, NULL, cur, 0, 1);
-		result = xmlBuffer_to_xmltype(buf);
+		PG_TRY();
+		{
+			xmlNodeDump(buf, NULL, cur, 0, 1);
+			result = xmlBuffer_to_xmltype(buf);
+		}
+		PG_CATCH();
+		{
+			xmlBufferFree(buf);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		xmlBufferFree(buf);
 	}
 	else
 	{
+		xmlChar    *str;
+
 		str = xmlXPathCastNodeToString(cur);
-		result = (xmltype *) cstring_to_text((char *) str);
+		PG_TRY();
+		{
+			result = (xmltype *) cstring_to_text((char *) str);
+		}
+		PG_CATCH();
+		{
+			xmlFree(str);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		xmlFree(str);
 	}
 
@@ -3210,11 +3267,11 @@ xpath(PG_FUNCTION_ARGS)
 	xmltype    *data = PG_GETARG_XML_P(1);
 	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
 	ArrayBuildState *astate = NULL;
-	xmlParserCtxtPtr ctxt;
-	xmlDocPtr	doc;
-	xmlXPathContextPtr xpathctx;
-	xmlXPathCompExprPtr xpathcomp;
-	xmlXPathObjectPtr xpathobj;
+	xmlParserCtxtPtr ctxt = NULL;
+	xmlDocPtr	doc = NULL;
+	xmlXPathContextPtr xpathctx = NULL;
+	xmlXPathCompExprPtr xpathcomp = NULL;
+	xmlXPathObjectPtr xpathobj = NULL;
 	char	   *datastr;
 	int32		len;
 	int32		xpath_len;
@@ -3273,8 +3330,6 @@ xpath(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("empty XPath expression")));
 
-	xml_init();
-
 	string = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
 	memcpy(string, datastr, len);
 	string[len] = '\0';
@@ -3283,8 +3338,11 @@ xpath(PG_FUNCTION_ARGS)
 	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
 	xpath_expr[xpath_len] = '\0';
 
+	xml_init();
 	xmlInitParser();
 
+	PG_TRY();
+	{
 	/*
 	 * redundant XML parsing (two parsings for the same value during one
 	 * command execution are possible)
@@ -3337,10 +3395,8 @@ xpath(PG_FUNCTION_ARGS)
 
 	xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
 	if (xpathobj == NULL)	/* TODO: reason? */
-		ereport(ERROR,
-				(errmsg("could not create XPath object")));
-
-	xmlXPathFreeCompExpr(xpathcomp);
+		xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+					"could not create XPath object");
 
 	/* return empty array in cases when nothing is found */
 	if (xpathobj->nodesetval == NULL)
@@ -3361,8 +3417,25 @@ xpath(PG_FUNCTION_ARGS)
 									  CurrentMemoryContext);
 		}
 	}
+	}
+	PG_CATCH();
+	{
+		if (xpathobj)
+			xmlXPathFreeObject(xpathobj);
+		if (xpathcomp)
+			xmlXPathFreeCompExpr(xpathcomp);
+		if (xpathctx)
+			xmlXPathFreeContext(xpathctx);
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	xmlXPathFreeObject(xpathobj);
+	xmlXPathFreeCompExpr(xpathcomp);
 	xmlXPathFreeContext(xpathctx);
 	xmlFreeDoc(doc);
 	xmlFreeParserCtxt(ctxt);
