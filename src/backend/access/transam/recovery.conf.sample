@@ -40,13 +40,20 @@
 # NOTE that the basename of %p will be different from %f; do not
 # expect them to be interchangeable.
 #
-#
 #restore_command = 'cp /mnt/server/archivedir/%f %p'
 #
 #
 #---------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 #---------------------------------------------------------------------------
+#
+# recovery_end_command
+#
+# specifies an optional shell command to execute at completion of recovery.
+# This can be useful for cleaning up after the restore_command.
+#
+#recovery_end_command = ''
+#
 #
 # By default, recovery will rollforward to the end of the WAL log.
 # If you want to stop rollforward before that point, you
