@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.8 2009/05/14 20:31:09 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.9 2009/05/14 21:59:22 tgl Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -93,20 +93,20 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
    the <replaceable>archivelocation</> directory must be writable too.
   </para>
   <para>
-   There are two ways to fail over a <quote>warm standby</> database server.
-   You control the type of failover with the contents of the trigger file:
+   There are two ways to fail over to a <quote>warm standby</> database server
+   when the master server fails:
 
    <variablelist>
     <varlistentry>
      <term>Smart Failover</term>
      <listitem>
       <para>
-       In smart failover, the server is brought up after applying all
-       WAL files available in the archive. This results in zero data loss,
-       even if the standby server has fallen behind, but if there is a lot
-       unapplied WAL the recovery can take a long time. To trigger a smart
-       failover, create a trigger file containing the word <literal>smart</>,
-       or just leave it empty.
+       In smart failover, the server is brought up after applying all WAL
+       files available in the archive. This results in zero data loss, even if
+       the standby server has fallen behind, but if there is a lot of
+       unapplied WAL it can be a long time before the standby server becomes
+       ready. To trigger a smart failover, create a trigger file containing
+       the word <literal>smart</>, or just create it and leave it empty.
       </para>
      </listitem>
     </varlistentry>
@@ -117,7 +117,10 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
        In fast failover, the server is brought up immediately. Any WAL files
        in the archive that have not yet been applied will be ignored, and
        all transactions in those files are lost. To trigger a fast failover,
-       write the word <literal>fast</> into the trigger file.
+       create a trigger file and write the word <literal>fast</> into it.
+       <application>pg_standby</> can also be configured to execute a fast
+       failover automatically if no new WAL file appears within a defined
+       interval.
       </para>
      </listitem>
     </varlistentry>
@@ -208,7 +211,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
       <entry><literal>-t</> <replaceable>triggerfile</></entry>
       <entry>none</entry>
       <entry>
-       Specify a trigger file whose presence should perform failover.
+       Specify a trigger file whose presence should cause failover.
        It is recommended that you use a structured filename to
        avoid confusion as to which server is being triggered
        when multiple servers exist on the same system; for example
@@ -240,6 +243,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
 archive_command = 'cp %p .../archive/%f'
 
 restore_command = 'pg_standby -l -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f %p %r 2>>standby.log'
+
 recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
   </programlisting>
   <para>
@@ -289,11 +293,14 @@ recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
 archive_command = 'copy %p ...\\archive\\%f'
 
 restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p %r 2>>standby.log'
+
+recovery_end_command = 'del C:\pgsql.trigger.5442'
   </programlisting>
   <para>
    Note that backslashes need to be doubled in the
    <literal>archive_command</>, but <emphasis>not</emphasis> in the
-   <literal>restore_command</>.  This will:
+   <literal>restore_command</> or <literal>recovery_end_command</>.
+   This will:
   </para>
   <itemizedlist>
    <listitem>
@@ -320,6 +327,11 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
    </listitem>
    <listitem>
     <para>
+     remove the trigger file when recovery ends
+    </para>
+   </listitem>
+   <listitem>
+    <para>
      remove no-longer-needed files from the archive directory
     </para>
    </listitem>
@@ -335,7 +347,7 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
   </para>
 
   <para>
-   Using the Since the Windows example uses <literal>copy</> at both ends, either
+   Since the Windows example uses <literal>copy</> at both ends, either
    or both servers might be accessing the archive directory across the
    network.
   </para>
@@ -355,6 +367,11 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
    last file it needs to keep.  With <productname>PostgreSQL</> 8.2, the
    <literal>-k</literal> option must be used if archive cleanup is
    required.  This option remains available in 8.3, but its use is deprecated.
+  </para>
+  <para>
+   <productname>PostgreSQL</> 8.4 provides the
+   <literal>recovery_end_command</literal> option.  Without this option
+   a leftover trigger file can be hazardous.
   </para>
  </sect2>
 
