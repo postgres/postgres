@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.4 2009/05/12 23:43:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.5 2009/05/14 21:01:49 heikki Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -3314,6 +3314,19 @@
        If needed, the <filename>contrib/intarray</> implementations
        are still available under their historical names <literal>@</>
        and <literal>~</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <filename>contrib/pg_standby</> recover all available WAL before
+       failover (Fujii Masao, Simon, Heikki)
+      </para>
+
+      <para>
+       To make this safe, you now need to set the new
+       <literal>recovery_end_command</> option in <filename>recovery.conf</> to
+       clean up the trigger fail after failover.
       </para>
      </listitem>
 
