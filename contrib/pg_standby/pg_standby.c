@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.21 2009/03/26 22:29:13 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.22 2009/05/14 20:31:09 heikki Exp $ 
  *
  *
  * pg_standby.c
@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <signal.h>
 
 #ifdef WIN32
@@ -52,7 +53,6 @@ int			maxwaittime = 0;	/* how long are we prepared to wait for? */
 int			keepfiles = 0;		/* number of WAL files to keep, 0 keep all */
 int			maxretries = 3;		/* number of retries on restore command */
 bool		debug = false;		/* are we debugging? */
-bool		triggered = false;	/* have we been triggered? */
 bool		need_cleanup = false;		/* do we need to remove files from
 										 * archive? */
 
@@ -68,6 +68,30 @@ char		WALFilePath[MAXPGPATH];		/* the file path including archive */
 char		restoreCommand[MAXPGPATH];	/* run this to restore */
 char		exclusiveCleanupFileName[MAXPGPATH];		/* the file we need to
 														 * get from archive */
+
+/*
+ * Two types of failover are supported (smart and fast failover).
+ *
+ * The content of the trigger file determines the type of failover. If the
+ * trigger file contains the word "smart" (or the file is empty), smart
+ * failover is chosen: pg_standby acts as cp or ln command itself, on
+ * successful completion all the available WAL records will be applied
+ * resulting in zero data loss. But, it might take a long time to finish
+ * recovery if there's a lot of unapplied WAL.
+ *
+ * On the other hand, if the trigger file contains the word "fast", the
+ * recovery is finished immediately even if unapplied WAL files remain. Any
+ * transactions in the unapplied WAL files are lost.
+ *
+ * An empty trigger file performs smart failover. SIGUSR or SIGINT triggers
+ * fast failover. A timeout causes fast failover (smart failover would have
+ * the same effect, since if the timeout is reached there is no unapplied WAL).
+ */
+#define NoFailover		0
+#define SmartFailover	1
+#define FastFailover	2
+
+static int Failover = NoFailover;
 
 #define RESTORE_COMMAND_COPY 0
 #define RESTORE_COMMAND_LINK 1
@@ -108,7 +132,6 @@ struct stat stat_buf;
  *
  *	As an example, and probably the common case, we use either
  *	cp/ln commands on *nix, or copy/move command on Windows.
- *
  */
 static void
 CustomizableInitialize(void)
@@ -352,12 +375,16 @@ SetWALFileNameForCleanup(void)
 /*
  * CheckForExternalTrigger()
  *
- *	  Is there a trigger file?
+ *	  Is there a trigger file? Sets global 'Failover' variable to indicate
+ *    what kind of a trigger file it was. A "fast" trigger file is turned
+ *    into a "smart" file as a side-effect.
  */
-static bool
+static void
 CheckForExternalTrigger(void)
 {
-	int			rc;
+	char	buf[32];
+	int		fd;
+	int		len;
 
 	/*
 	 * Look for a trigger file, if that option has been selected
@@ -365,28 +392,79 @@ CheckForExternalTrigger(void)
 	 * We use stat() here because triggerPath is always a file rather than
 	 * potentially being in an archive
 	 */
-	if (triggerPath && stat(triggerPath, &stat_buf) == 0)
+	if (!triggerPath || stat(triggerPath, &stat_buf) != 0)
+		return;
+
+	/*
+	 * An empty trigger file performs smart failover. There's a little race
+	 * condition here: if the writer of the trigger file has just created
+	 * the file, but not yet written anything to it, we'll treat that as
+	 * smart shutdown even if the other process was just about to write "fast"
+	 * to it. But that's fine: we'll restore one more WAL file, and when we're
+	 * invoked next time, we'll see the word "fast" and fail over immediately.
+	 */
+	if (stat_buf.st_size == 0)
 	{
-		fprintf(stderr, "trigger file found\n");
+		Failover = SmartFailover;
+		fprintf(stderr, "trigger file found: smart failover\n");
+		fflush(stderr);
+		return;
+	}
+
+	if ((fd = open(triggerPath, O_RDWR, 0)) < 0)
+	{
+		fprintf(stderr, "WARNING: could not open \"%s\": %s\n",
+				triggerPath, strerror(errno));
+		fflush(stderr);
+		return;
+	}
+	
+	if ((len = read(fd, buf, sizeof(buf))) < 0)
+	{
+		fprintf(stderr, "WARNING: could not read \"%s\": %s\n",
+				triggerPath, strerror(errno));
+		fflush(stderr);
+		close(fd);
+		return;
+	}
+	buf[len] = '\0';
+	
+	if (strncmp(buf, "smart", 5) == 0)
+	{
+		Failover = SmartFailover;
+		fprintf(stderr, "trigger file found: smart failover\n");
+		fflush(stderr);
+		close(fd);
+		return;
+	}
+	
+	if (strncmp(buf, "fast", 4) == 0)
+	{
+		Failover = FastFailover;
+
+		fprintf(stderr, "trigger file found: fast failover\n");
 		fflush(stderr);
 
 		/*
-		 * If trigger file found, we *must* delete it. Here's why: When
-		 * recovery completes, we will be asked again for the same file from
-		 * the archive using pg_standby so must remove trigger file so we can
-		 * reload file again and come up correctly.
+		 * Turn it into a "smart" trigger by truncating the file. Otherwise
+		 * if the server asks us again to restore a segment that was restored
+		 * restored already, we would return "not found" and upset the server.
 		 */
-		rc = unlink(triggerPath);
-		if (rc != 0)
+		if (ftruncate(fd, 0) < 0)
 		{
-			fprintf(stderr, "\n ERROR: could not remove \"%s\": %s", triggerPath, strerror(errno));
+			fprintf(stderr, "WARNING: could not read \"%s\": %s\n",
+					triggerPath, strerror(errno));
 			fflush(stderr);
-			exit(rc);
 		}
-		return true;
-	}
+		close(fd);
 
-	return false;
+		return;
+	}
+	close(fd);
+	
+	fprintf(stderr, "WARNING: invalid content in \"%s\"\n", triggerPath);
+	fflush(stderr);
+	return;
 }
 
 /*
@@ -402,7 +480,7 @@ RestoreWALFileForRecovery(void)
 
 	if (debug)
 	{
-		fprintf(stderr, "\nrunning restore		:");
+		fprintf(stderr, "running restore		:");
 		fflush(stderr);
 	}
 
@@ -413,7 +491,7 @@ RestoreWALFileForRecovery(void)
 		{
 			if (debug)
 			{
-				fprintf(stderr, " OK");
+				fprintf(stderr, " OK\n");
 				fflush(stderr);
 			}
 			return true;
@@ -425,7 +503,7 @@ RestoreWALFileForRecovery(void)
 	 * Allow caller to add additional info
 	 */
 	if (debug)
-		fprintf(stderr, "not restored		: ");
+		fprintf(stderr, "not restored\n");
 	return false;
 }
 
@@ -552,8 +630,6 @@ main(int argc, char **argv)
 				break;
 			case 't':			/* Trigger file */
 				triggerPath = optarg;
-				if (CheckForExternalTrigger())
-					exit(1);	/* Normal exit, with non-zero */
 				break;
 			case 'w':			/* Max wait time */
 				maxwaittime = atoi(optarg);
@@ -633,20 +709,20 @@ main(int argc, char **argv)
 
 	if (debug)
 	{
-		fprintf(stderr, "\nTrigger file 		: %s", triggerPath ? triggerPath : "<not set>");
-		fprintf(stderr, "\nWaiting for WAL file	: %s", nextWALFileName);
-		fprintf(stderr, "\nWAL file path		: %s", WALFilePath);
-		fprintf(stderr, "\nRestoring to...		: %s", xlogFilePath);
-		fprintf(stderr, "\nSleep interval		: %d second%s",
+		fprintf(stderr, "Trigger file 		: %s\n", triggerPath ? triggerPath : "<not set>");
+		fprintf(stderr, "Waiting for WAL file	: %s\n", nextWALFileName);
+		fprintf(stderr, "WAL file path		: %s\n", WALFilePath);
+		fprintf(stderr, "Restoring to		: %s\n", xlogFilePath);
+		fprintf(stderr, "Sleep interval		: %d second%s\n",
 				sleeptime, (sleeptime > 1 ? "s" : " "));
-		fprintf(stderr, "\nMax wait interval	: %d %s",
+		fprintf(stderr, "Max wait interval	: %d %s\n",
 				maxwaittime, (maxwaittime > 0 ? "seconds" : "forever"));
-		fprintf(stderr, "\nCommand for restore	: %s", restoreCommand);
-		fprintf(stderr, "\nKeep archive history	: ");
+		fprintf(stderr, "Command for restore	: %s\n", restoreCommand);
+		fprintf(stderr, "Keep archive history	: ");
 		if (need_cleanup)
-			fprintf(stderr, "%s and later", exclusiveCleanupFileName);
+			fprintf(stderr, "%s and later\n", exclusiveCleanupFileName);
 		else
-			fprintf(stderr, "No cleanup required");
+			fprintf(stderr, "No cleanup required\n");
 		fflush(stderr);
 	}
 
@@ -676,56 +752,74 @@ main(int argc, char **argv)
 	/*
 	 * Main wait loop
 	 */
-	while (!CustomizableNextWALFileReady() && !triggered)
+	for (;;)
 	{
+		/* Check for trigger file or signal first */
+		CheckForExternalTrigger();
+		if (signaled)
+		{
+			Failover = FastFailover;
+			if (debug)
+			{
+				fprintf(stderr, "signaled to exit: fast failover\n");
+				fflush(stderr);
+			}
+		}
+
+		/*
+		 * Check for fast failover immediately, before checking if the
+		 * requested WAL file is available
+		 */
+		if (Failover == FastFailover)
+			exit(1);
+
+		if (CustomizableNextWALFileReady())
+		{
+			/*
+			 * Once we have restored this file successfully we can remove some
+			 * prior WAL files. If this restore fails we musn't remove any file
+			 * because some of them will be requested again immediately after
+			 * the failed restore, or when we restart recovery.
+			 */
+			if (RestoreWALFileForRecovery())
+			{
+				if (need_cleanup)
+					CustomizableCleanupPriorWALFiles();
+
+				exit(0);
+			}
+			else
+			{
+				/* Something went wrong in copying the file */
+				exit(1);
+			}
+		}
+
+		/* Check for smart failover if the next WAL file was not available */
+		if (Failover == SmartFailover)
+			exit(1);
+
 		if (sleeptime <= 60)
 			pg_usleep(sleeptime * 1000000L);
 
-		if (signaled)
+		waittime += sleeptime;
+		if (waittime >= maxwaittime && maxwaittime > 0)
 		{
-			triggered = true;
+			Failover = FastFailover;
 			if (debug)
 			{
-				fprintf(stderr, "\nsignaled to exit\n");
+				fprintf(stderr, "Timed out after %d seconds: fast failover\n",
+						waittime);
 				fflush(stderr);
 			}
 		}
-		else
+		if (debug)
 		{
-
-			if (debug)
-			{
-				fprintf(stderr, "\nWAL file not present yet.");
-				if (triggerPath)
-					fprintf(stderr, " Checking for trigger file...");
-				fflush(stderr);
-			}
-
-			waittime += sleeptime;
-
-			if (!triggered && (CheckForExternalTrigger() || (waittime >= maxwaittime && maxwaittime > 0)))
-			{
-				triggered = true;
-				if (debug && waittime >= maxwaittime && maxwaittime > 0)
-					fprintf(stderr, "\nTimed out after %d seconds\n", waittime);
-			}
+			fprintf(stderr, "WAL file not present yet.");
+			if (triggerPath)
+				fprintf(stderr, " Checking for trigger file...");
+			fprintf(stderr, "\n");
+			fflush(stderr);
 		}
 	}
-
-	/*
-	 * Action on exit
-	 */
-	if (triggered)
-		exit(1);				/* Normal exit, with non-zero */
-
-	/*
-	 * Once we have restored this file successfully we can remove some prior
-	 * WAL files. If this restore fails we musn't remove any file because some
-	 * of them will be requested again immediately after the failed restore,
-	 * or when we restart recovery.
-	 */
-	if (RestoreWALFileForRecovery() && need_cleanup)
-		CustomizableCleanupPriorWALFiles();
-
-	return 0;
 }

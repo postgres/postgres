@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.7 2009/02/27 09:30:21 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.8 2009/05/14 20:31:09 heikki Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -92,6 +92,37 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
    is specified,
    the <replaceable>archivelocation</> directory must be writable too.
   </para>
+  <para>
+   There are two ways to fail over a <quote>warm standby</> database server.
+   You control the type of failover with the contents of the trigger file:
+
+   <variablelist>
+    <varlistentry>
+     <term>Smart Failover</term>
+     <listitem>
+      <para>
+       In smart failover, the server is brought up after applying all
+       WAL files available in the archive. This results in zero data loss,
+       even if the standby server has fallen behind, but if there is a lot
+       unapplied WAL the recovery can take a long time. To trigger a smart
+       failover, create a trigger file containing the word <literal>smart</>,
+       or just leave it empty.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Fast Failover</term>
+     <listitem>
+      <para>
+       In fast failover, the server is brought up immediately. Any WAL files
+       in the archive that have not yet been applied will be ignored, and
+       all transactions in those files are lost. To trigger a fast failover,
+       write the word <literal>fast</> into the trigger file.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
 
   <table>
    <title><application>pg_standby</> options</title>
@@ -177,8 +208,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
       <entry><literal>-t</> <replaceable>triggerfile</></entry>
       <entry>none</entry>
       <entry>
-       Specify a trigger file whose presence should cause recovery to end
-       whether or not the next WAL file is available.
+       Specify a trigger file whose presence should perform failover.
        It is recommended that you use a structured filename to
        avoid confusion as to which server is being triggered
        when multiple servers exist on the same system; for example
@@ -190,7 +220,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
       <entry>0</entry>
       <entry>
        Set the maximum number of seconds to wait for the next WAL file,
-       after which recovery will end and the standby will come up.
+       after which a fast failover will be performed.
        A setting of zero (the default) means wait forever.
        The default setting is not necessarily recommended;
        consult <xref linkend="warm-standby"> for discussion.
@@ -210,6 +240,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
 archive_command = 'cp %p .../archive/%f'
 
 restore_command = 'pg_standby -l -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f %p %r 2>>standby.log'
+recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
   </programlisting>
   <para>
    where the archive directory is physically located on the standby server,
@@ -236,7 +267,13 @@ restore_command = 'pg_standby -l -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive 
    <listitem>
     <para>
      stop waiting only when a trigger file called
-     <filename>/tmp/pgsql.trigger.5442</> appears
+     <filename>/tmp/pgsql.trigger.5442</> appears,
+     and perform failover according to its content
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     remove the trigger file when recovery ends
     </para>
    </listitem>
    <listitem>
@@ -277,7 +314,8 @@ restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p
    <listitem>
     <para>
      stop waiting only when a trigger file called
-     <filename>C:\pgsql.trigger.5442</> appears
+     <filename>C:\pgsql.trigger.5442</> appears,
+     and perform failover according to its content
     </para>
    </listitem>
    <listitem>

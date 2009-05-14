@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.337 2009/05/07 11:25:25 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.338 2009/05/14 20:31:09 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,7 @@ static bool restoredFromArchive = false;
 
 /* options taken from recovery.conf */
 static char *recoveryRestoreCommand = NULL;
+static char *recoveryEndCommand = NULL;
 static bool recoveryTarget = false;
 static bool recoveryTargetExact = false;
 static bool recoveryTargetInclusive = true;
@@ -463,6 +464,7 @@ static int	XLogFileRead(uint32 log, uint32 seg, int emode);
 static void XLogFileClose(void);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
+static void ExecuteRecoveryEndCommand(void);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
 static void ValidateXLOGDirectoryStructure(void);
@@ -2850,6 +2852,114 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 }
 
 /*
+ * Attempt to execute the recovery_end_command.
+ */
+static void
+ExecuteRecoveryEndCommand(void)
+{
+	char		xlogRecoveryEndCmd[MAXPGPATH];
+	char		lastRestartPointFname[MAXPGPATH];
+	char	   *dp;
+	char	   *endp;
+	const char *sp;
+	int			rc;
+	bool		signaled;
+	uint32		restartLog;
+	uint32		restartSeg;
+
+	Assert(recoveryEndCommand);
+
+	/*
+	 * Calculate the archive file cutoff point for use during log shipping
+	 * replication. All files earlier than this point can be deleted
+	 * from the archive, though there is no requirement to do so.
+	 *
+	 * We initialise this with the filename of an InvalidXLogRecPtr, which
+	 * will prevent the deletion of any WAL files from the archive
+	 * because of the alphabetic sorting property of WAL filenames. 
+	 *
+	 * Once we have successfully located the redo pointer of the checkpoint
+	 * from which we start recovery we never request a file prior to the redo
+	 * pointer of the last restartpoint. When redo begins we know that we
+	 * have successfully located it, so there is no need for additional
+	 * status flags to signify the point when we can begin deleting WAL files
+	 * from the archive. 
+	 */
+	if (InRedo)
+	{
+		XLByteToSeg(ControlFile->checkPointCopy.redo,
+					restartLog, restartSeg);
+		XLogFileName(lastRestartPointFname,
+					 ControlFile->checkPointCopy.ThisTimeLineID,
+					 restartLog, restartSeg);
+	}
+	else
+		XLogFileName(lastRestartPointFname, 0, 0, 0);
+
+	/*
+	 * construct the command to be executed
+	 */
+	dp = xlogRecoveryEndCmd;
+	endp = xlogRecoveryEndCmd + MAXPGPATH - 1;
+	*endp = '\0';
+
+	for (sp = recoveryEndCommand; *sp; sp++)
+	{
+		if (*sp == '%')
+		{
+			switch (sp[1])
+			{
+				case 'r':
+					/* %r: filename of last restartpoint */
+					sp++;
+					StrNCpy(dp, lastRestartPointFname, endp - dp);
+					dp += strlen(dp);
+					break;
+				case '%':
+					/* convert %% to a single % */
+					sp++;
+					if (dp < endp)
+						*dp++ = *sp;
+					break;
+				default:
+					/* otherwise treat the % as not special */
+					if (dp < endp)
+						*dp++ = *sp;
+					break;
+			}
+		}
+		else
+		{
+			if (dp < endp)
+				*dp++ = *sp;
+		}
+	}
+	*dp = '\0';
+
+	ereport(DEBUG3,
+			(errmsg_internal("executing recovery end command \"%s\"",
+							 xlogRecoveryEndCmd)));
+
+	/*
+	 * Copy xlog from archival storage to XLOGDIR
+	 */
+	rc = system(xlogRecoveryEndCmd);
+	if (rc != 0)
+	{
+		/*
+		 * If the failure was due to any sort of signal, it's best to punt and
+		 * abort recovery. See also detailed comments on signals in 
+		 * RestoreArchivedFile().
+		 */
+		signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
+
+		ereport(signaled ? FATAL : WARNING,
+				(errmsg("recovery_end_command \"%s\": return code %d",
+								xlogRecoveryEndCmd, rc)));
+	}
+}
+
+/*
  * Preallocate log files beyond the specified log endpoint.
  *
  * XXX this is currently extremely conservative, since it forces only one
@@ -4664,6 +4774,13 @@ readRecoveryCommandFile(void)
 					(errmsg("restore_command = '%s'",
 							recoveryRestoreCommand)));
 		}
+		else if (strcmp(tok1, "recovery_end_command") == 0)
+		{
+			recoveryEndCommand = pstrdup(tok2);
+			ereport(LOG,
+					(errmsg("recovery_end_command = '%s'",
+							recoveryEndCommand)));
+		}
 		else if (strcmp(tok1, "recovery_target_timeline") == 0)
 		{
 			rtliGiven = true;
@@ -5622,6 +5739,9 @@ StartupXLOG(void)
 		 * allows some extra error checking in xlog_redo.
 		 */
 		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
+
+		if (recoveryEndCommand)
+			ExecuteRecoveryEndCommand();
 	}
 
 	/*

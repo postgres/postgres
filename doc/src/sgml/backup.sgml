@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.125 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.126 2009/05/14 20:31:09 heikki Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1122,6 +1122,29 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 restore_command = 'cp /mnt/server/archivedir/%f "%p"'
 restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 </programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-end-command" xreflabel="recovery_end_command">
+      <term><varname>recovery_end_command</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+		This parameter specifies a shell command that will be executed once only
+		at the end of recovery. This parameter is optional. The purpose of the
+		recovery_end_command is to provide a mechanism for cleanup following
+		replication or recovery. 
+		Any <literal>%r</> is replaced by the name of the file
+		containing the last valid restart point. That is the earliest file that
+		must be kept to allow a restore to be restartable, so this information
+		can be used to truncate the archive to just the minimum required to
+		support restart of the current restore. <literal>%r</> would only be
+		used in a warm-standby configuration  (see <xref linkend="warm-standby">). 
+        Write <literal>%%</> to embed an actual <literal>%</> character
+        in the command.
+		If the command returns a non-zero exit status then a WARNING log
+		message will be written, unless signalled in which case we return
+		a FATAL error.
        </para>
       </listitem>
      </varlistentry>
