@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.5 2009/05/14 21:01:49 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.6 2009/05/14 22:17:28 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -6,7 +6,7 @@
 
   <note>
    <title>Release date</title>
-   <simpara>2009-??-??, ITEMS CURRENT AS OF 2009-05-11</simpara>
+   <simpara>2009-??-??, ITEMS CURRENT AS OF 2009-05-14</simpara>
   </note>
 
   <sect2>
@@ -419,6 +419,18 @@
        Previously, attribute values were formatted according to the
        normal SQL output behavior, which is sometimes at odds with
        XML rules.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Rewrite memory management for <application>libxml</>-using functions
+       (Tom)
+      </para>
+
+      <para>
+       This change should avoid some compatibility problems with use of
+       <application>libxml</> in PL/Perl and other add-on code.
       </para>
      </listitem>
 
@@ -3324,9 +3336,10 @@
       </para>
 
       <para>
-       To make this safe, you now need to set the new
-       <literal>recovery_end_command</> option in <filename>recovery.conf</> to
-       clean up the trigger fail after failover.
+       To make this work safely, you now need to set the new
+       <literal>recovery_end_command</> option in <filename>recovery.conf</>
+       to clean up the trigger file after failover. <application>pg_standby</>
+       will no longer remove the trigger file itself.
       </para>
      </listitem>
 
