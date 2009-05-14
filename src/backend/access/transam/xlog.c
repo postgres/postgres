@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.338 2009/05/14 20:31:09 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.339 2009/05/14 21:28:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2941,7 +2941,7 @@ ExecuteRecoveryEndCommand(void)
 							 xlogRecoveryEndCmd)));
 
 	/*
-	 * Copy xlog from archival storage to XLOGDIR
+	 * execute the constructed command
 	 */
 	rc = system(xlogRecoveryEndCmd);
 	if (rc != 0)
@@ -5740,6 +5740,9 @@ StartupXLOG(void)
 		 */
 		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 
+		/*
+		 * And finally, execute the recovery_end_command, if any.
+		 */
 		if (recoveryEndCommand)
 			ExecuteRecoveryEndCommand();
 	}
