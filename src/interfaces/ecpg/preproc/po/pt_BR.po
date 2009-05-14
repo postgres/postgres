@@ -1,0 +1,627 @@
+# Brazilian Portuguese message translation file for ecpg
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Fernando Ike de Oliveira <fike@midstorm.org>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-05-07 20:06-0300\n"
+"PO-Revision-Date: 2009-02-09 12:59-0200\n"
+"Last-Translator: Fernando Ike de Oliveira <fike@midstorm.org>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@postgresql.org.br>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+#: descriptor.c:64
+#, c-format
+msgid "variable \"%s\" must have a numeric type"
+msgstr "variável \"%s\" deve ter um tipo númerico"
+
+#: descriptor.c:124 descriptor.c:146
+#, c-format
+msgid "descriptor \"%s\" does not exist"
+msgstr "descritor \"%s\" não existe"
+
+#: descriptor.c:161 descriptor.c:210
+#, c-format
+msgid "descriptor header item \"%d\" does not exist"
+msgstr "item do cabeçalho do descritor \"%d\" não existe"
+
+#: descriptor.c:182
+msgid "nullable is always 1"
+msgstr "nullable é sempre 1"
+
+#: descriptor.c:185
+msgid "key_member is always 0"
+msgstr "key_member é sempre 0"
+
+#: descriptor.c:277
+#, c-format
+msgid "descriptor item \"%s\" is not implemented"
+msgstr "item do descritor \"%s\" não está implementado"
+
+#: descriptor.c:287
+#, c-format
+msgid "descriptor item \"%s\" cannot be set"
+msgstr "item do descritor \"%s\" não pode ser definido"
+
+#: ecpg.c:36
+#, c-format
+msgid ""
+"%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
+"\n"
+msgstr ""
+"%s é o pré-processador SQL embutido do PostgeSQL para programas em C.\n"
+"\n"
+
+#: ecpg.c:38
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... FILE...\n"
+"\n"
+msgstr ""
+"Uso:\n"
+"  %s [OPÇÃO]... ARQUIVO...\n"
+"\n"
+
+#: ecpg.c:41
+#, c-format
+msgid "Options:\n"
+msgstr "Opções:\n"
+
+#: ecpg.c:42
+#, c-format
+msgid ""
+"  -c             automatically generate C code from embedded SQL code;\n"
+"                 this affects EXEC SQL TYPE\n"
+msgstr ""
+"  -c             gera automaticamente código C a partir do código SQL "
+"embutido;\n"
+"                 isso afeta o EXEC SQL TYPE\n"
+
+#: ecpg.c:44
+#, c-format
+msgid ""
+"  -C MODE        set compatibility mode; MODE can be one of\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+msgstr ""
+"  -C mode        define o modo de compatilidade; MODE pode ser um de\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+
+#: ecpg.c:47
+#, c-format
+msgid "  -d             generate parser debug output\n"
+msgstr "  -d             gera saída de depuração do analisador\n"
+
+#: ecpg.c:49
+#, c-format
+msgid "  -D SYMBOL      define SYMBOL\n"
+msgstr "  -D SÍMBOLO     define SÍMBOLO\n"
+
+#: ecpg.c:50
+#, c-format
+msgid ""
+"  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr ""
+"  -h             analisa um arquivo de cabeçalho, essa opção inclui a opção "
+"\"-c\"\n"
+
+#: ecpg.c:51
+#, c-format
+msgid "  -i             parse system include files as well\n"
+msgstr "  -i             analisa arquivos de cabeçalho do sistema também\n"
+
+#: ecpg.c:52
+#, c-format
+msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
+msgstr "  -I DIRETÓRIO   procura DIRETÓRIO para incluir arquivos\n"
+
+#: ecpg.c:53
+#, c-format
+msgid "  -o OUTFILE     write result to OUTFILE\n"
+msgstr "  -o ARQUIVO     grava resultado no ARQUIVO\n"
+
+#: ecpg.c:54
+#, c-format
+msgid ""
+"  -r OPTION      specify run-time behavior; OPTION can be:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+msgstr ""
+"  -r OPÇÃO       especifica comportamento em tempo de execução; OPÇÃO pode "
+"ser:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+
+#: ecpg.c:56
+#, c-format
+msgid "  --regression   run in regression testing mode\n"
+msgstr "  --regression   executa em modo de teste de regressão\n"
+
+#: ecpg.c:57
+#, c-format
+msgid "  -t             turn on autocommit of transactions\n"
+msgstr "  -t             habilita o auto efetivação de transações\n"
+
+#: ecpg.c:58
+#, c-format
+msgid "  --help         show this help, then exit\n"
+msgstr "  --help         mostra essa ajuda e termina\n"
+
+#: ecpg.c:59
+#, c-format
+msgid "  --version      output version information, then exit\n"
+msgstr "  --version     mostra informação sobre a versão e termina\n"
+
+#: ecpg.c:60
+#, c-format
+msgid ""
+"\n"
+"If no output file is specified, the name is formed by adding .c to the\n"
+"input file name, after stripping off .pgc if present.\n"
+msgstr ""
+"\n"
+"Se nenhum arquivo de saída for especificado, o nome é formado adicionando .c "
+"ao\n"
+"nome do arquivo de entrada, após remover .pgc se presente.\n"
+
+#: ecpg.c:62
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Relate erros a <pgsql-bugs@postgresql.org>.\n"
+
+#: ecpg.c:183 ecpg.c:334 ecpg.c:344
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: não pôde abrir arquivo \"%s\": %s\n"
+
+#: ecpg.c:222 ecpg.c:235 ecpg.c:251 ecpg.c:276
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
+
+#: ecpg.c:246
+#, c-format
+msgid "%s: parser debug support (-d) not available\n"
+msgstr "%s: suporte a depuração do analisador (-d) não está disponível\n"
+
+#: ecpg.c:264
+#, c-format
+msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
+msgstr "%s, the pré-processador C embutido do PostgreSQL, versão %d.%d.%d\n"
+
+#: ecpg.c:266
+#, c-format
+msgid "EXEC SQL INCLUDE ... search starts here:\n"
+msgstr "EXEC SQL INCLUDE ... pesquisa inicia aqui:\n"
+
+#: ecpg.c:269
+#, c-format
+msgid "end of search list\n"
+msgstr "fim da lista de pesquisa\n"
+
+#: ecpg.c:275
+#, c-format
+msgid "%s: no input files specified\n"
+msgstr "%s: nenhum arquivo de entrada foi especificado\n"
+
+#: ecpg.c:465
+#, c-format
+msgid "cursor \"%s\" has been declared but not opened"
+msgstr "cursor \"%s\" foi declarado mas não foi aberto"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:386
+msgid "unterminated /* comment"
+msgstr "comentário /* não foi terminado"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:399
+msgid "invalid bit string literal"
+msgstr "cadeia de bits inválida"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:408
+msgid "unterminated bit string literal"
+msgstr "cadeia de bits não foi terminada"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:424
+msgid "unterminated hexadecimal string literal"
+msgstr "cadeia de caracteres hexadecimal não foi terminada"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:501
+msgid "unterminated quoted string"
+msgstr "cadeia de caracteres entre aspas não foi terminada"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:556
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:569
+msgid "zero-length delimited identifier"
+msgstr "identificador delimitado tem tamanho zero"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:577
+msgid "unterminated quoted identifier"
+msgstr "identificador entre aspas não foi terminado"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:898
+msgid "missing identifier in EXEC SQL UNDEF command"
+msgstr "faltando identificador no comando EXEC SQL UNDEF"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:944
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:958
+msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+msgstr "faltando correspondente \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:947
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:960
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1136
+msgid "missing \"EXEC SQL ENDIF;\""
+msgstr "faltando \"EXEC SQL ENDIF;\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:976
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:995
+msgid "more than one EXEC SQL ELSE"
+msgstr "mais de um EXEC SQL ELSE"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1017
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1031
+msgid "unmatched EXEC SQL ENDIF"
+msgstr "EXEC SQL ENDIF não tem correspondente"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1051
+msgid "too many nested EXEC SQL IFDEF conditions"
+msgstr "muitas condições EXEC SQL IFDEF aninhadas"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1084
+msgid "missing identifier in EXEC SQL IFDEF command"
+msgstr "faltando identificador no comando EXEC SQL IFDEF"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1093
+msgid "missing identifier in EXEC SQL DEFINE command"
+msgstr "faltando identificador no comando EXEC SQL IFDEF"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1126
+msgid "syntax error in EXEC SQL INCLUDE command"
+msgstr "erro de sintaxe no comando EXEC SQL INCLUDE"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1175
+msgid ""
+"internal error: unreachable state; please report this to <pgsql-"
+"bugs@postgresql.org>"
+msgstr ""
+"erro interno: estado inacessível; por favor relato isso a <psql-"
+"bugs@postgresql.org>"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1298
+#, c-format
+msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
+msgstr ""
+"Erro: caminho de inclusão \"%s/%s\" é muito longo na linha %d, ignorando\n"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/pgc.l:1314
+#, c-format
+msgid "could not open include file \"%s\" on line %d"
+msgstr "não pôde abrir arquivo de inclusão \"%s\" na linha %d"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:72
+#, c-format
+msgid "WARNING: "
+msgstr "AVISO: "
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:76
+#, c-format
+msgid "ERROR: "
+msgstr "ERRO: "
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:100
+#, c-format
+msgid "could not remove output file \"%s\"\n"
+msgstr "não pôde remover arquivo de saída \"%s\"\n"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:312
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "cursor \"%s\" não existe"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:340
+msgid "initializer not allowed in type definition"
+msgstr "inicializador não é permitido na definição do tipo"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:347
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10614
+#, c-format
+msgid "type \"%s\" is already defined"
+msgstr "tipo \"%s\" já está definido"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:370
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:11213
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:11728
+#: variable.c:584
+msgid "multidimensional arrays for simple data types are not supported"
+msgstr ""
+"matrizes multidimensionais para tipo de dados simples não são suportadas"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1237
+msgid "AT option not allowed in CLOSE DATABASE statement"
+msgstr "opção AT não é permitida no comando CLOSE DATABASE"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1303
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1443
+msgid "AT option not allowed in DEALLOCATE statement"
+msgstr "opção AT não é permitida no comando DEALLOCATE"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1429
+msgid "AT option not allowed in CONNECT statement"
+msgstr "opção AT não é permitida no comando CONNECT"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1465
+msgid "AT option not allowed in DISCONNECT statement"
+msgstr "opção AT não é permitida no comando DISCONNECT"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1517
+msgid "AT option not allowed in SET CONNECTION statement"
+msgstr "opção AT não é permitida no comando SET CONNECTION"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1539
+msgid "AT option not allowed in TYPE statement"
+msgstr "opção AT não é permitida no comando TYPE"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1548
+msgid "AT option not allowed in VAR statement"
+msgstr "opção AT não é permitida no comando VAR"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1555
+msgid "AT option not allowed in WHENEVER statement"
+msgstr "opção AT não é permitida no comando WHENEVER"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:1911
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:2907
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:3805
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:3814
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:4045
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:5854
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:5859
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:5864
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:8029
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:8559
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:8564
+msgid "unsupported feature will be passed to server"
+msgstr "funcionalidade não suportada será enviada ao servidor"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:2141
+msgid "SHOW ALL is not implemented"
+msgstr "SHOW ALL não está implementado"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:2476
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:2487
+msgid "COPY TO STDIN is not possible"
+msgstr "COPY TO STDIN não é possível"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:2478
+msgid "COPY FROM STDOUT is not possible"
+msgstr "COPY FROM STDOUT não é possível"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:2480
+msgid "COPY FROM STDIN is not implemented"
+msgstr "COPY FROM STDIN não está implementado"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:3745
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:3756
+msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
+msgstr "restrição declarada INITIALLY DEFERRED deve ser DEFERRABLE"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:6563
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10230
+#, c-format
+msgid "cursor \"%s\" is already defined"
+msgstr "cursor \"%s\" já está definido"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:6916
+msgid "no longer supported LIMIT #,# syntax passed to server"
+msgstr "sintaxe LIMIT #,# que não é suportada foi enviada ao servidor"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:7158
+msgid "subquery in FROM must have an alias"
+msgstr "subconsulta no FROM deve ter um aliás"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:9919
+msgid "OLD used in query that is not in a rule"
+msgstr "OLD utilizado em consulta que não é uma regra"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:9926
+msgid "NEW used in query that is not in a rule"
+msgstr "NEW utilizado em consulta que não é uma regra"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:9958
+msgid "CREATE TABLE AS cannot specify INTO"
+msgstr "CREATE TABLE AS não pode especificar INTO"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10005
+#, c-format
+msgid "expected \"@\", found \"%s\""
+msgstr "esperado \"@\", encontrado \"%s\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10017
+msgid ""
+"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
+"supported"
+msgstr ""
+"somente os protocolos \"tcp\" e \"unix\" e tipo banco de dados \"postgressql"
+"\" sãosuportados"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10020
+#, c-format
+msgid "expected \"://\", found \"%s\""
+msgstr "esperado \"://\", encontrado \"%s\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10025
+#, c-format
+msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
+msgstr ""
+"Soquetes de domínio Unix trabalham somente com \"localhost\" e não com \"%s\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10051
+#, c-format
+msgid "expected \"postgresql\", found \"%s\""
+msgstr "esperado \"postgresql\", encontrado \"%s\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10054
+#, c-format
+msgid "invalid connection type: %s"
+msgstr "tipo de conexão inválido: %s"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10063
+#, c-format
+msgid "expected \"@\" or \"://\", found \"%s\""
+msgstr "esperado \"@\" ou \"://\", encontrado \"%s\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10138
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10155
+msgid "invalid data type"
+msgstr "tipo de dado inválido"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10166
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10181
+msgid "incomplete statement"
+msgstr "comando incompleto"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10169
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10184
+#, c-format
+msgid "unrecognized token \"%s\""
+msgstr "informação desconhecida \"%s\""
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10433
+msgid "only data types numeric and decimal have precision/scale argument"
+msgstr ""
+"somente os tipos de dados numeric e decimal possuem argumento de precisão/"
+"escala"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10445
+msgid "interval specification not allowed here"
+msgstr "especificação de intervalo não é permitida aqui"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10589
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10641
+msgid "too many levels in nested structure/union definition"
+msgstr "muitos níveis em definição aninhada de estrutura/união"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10772
+msgid "pointers to varchar are not implemented"
+msgstr "ponteiros para varchar não estão implentados"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10936
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10943
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:10950
+msgid "using unsupported DESCRIBE statement"
+msgstr "utilizando comando DESCRIBE que não é suportado"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:11181
+msgid "initializer not allowed in EXEC SQL VAR command"
+msgstr "inicilização não é permitido no comando EXEC SQL VAR"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:11697
+msgid "arrays of indicators are not allowed on input"
+msgstr "matrizes do indicadores não são permitidas na entrada"
+
+#: /home/euler/pgsql/src/interfaces/ecpg/preproc/preproc.y:11925
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s em ou próximo a \"%s\""
+
+#: type.c:18 type.c:30
+msgid "out of memory"
+msgstr "sem memória"
+
+#: type.c:204 type.c:554
+#, c-format
+msgid "unrecognized variable type code %d"
+msgstr "tipo de código de variável %d é desconhecido"
+
+#: type.c:241
+msgid "indicator for array/pointer has to be array/pointer"
+msgstr "indicador para matriz/ponteiro tem de ser matriz/ponteiro"
+
+#: type.c:245
+msgid "nested arrays are not supported (except strings)"
+msgstr "matrizes aninhadas não são suportadas (exceto cadeia de caracteres)"
+
+#: type.c:278
+msgid "indicator for struct has to be a struct"
+msgstr "indicador para struct tem que ser struct"
+
+#: type.c:287 type.c:295 type.c:303
+msgid "indicator for simple data type has to be simple"
+msgstr "indicador para tipo de dados simples tem que ser simples"
+
+#: type.c:613
+#, c-format
+msgid "unrecognized descriptor item code %d"
+msgstr "código do item do descritor %d é desconhecido"
+
+#: variable.c:89 variable.c:112
+#, c-format
+msgid "incorrectly formed variable \"%s\""
+msgstr "variável \"%s\" possui formato incorreto"
+
+#: variable.c:135
+#, c-format
+msgid "variable \"%s\" is not a pointer"
+msgstr "variável \"%s\" não é um ponteiro"
+
+#: variable.c:138 variable.c:163
+#, c-format
+msgid "variable \"%s\" is not a pointer to a structure or a union"
+msgstr "variável \"%s\" não é um ponteiro para uma estrutura ou uma união"
+
+#: variable.c:150
+#, c-format
+msgid "variable \"%s\" is neither a structure nor a union"
+msgstr "variável \"%s\" não é nem uma estrutura nem uma união"
+
+#: variable.c:160
+#, c-format
+msgid "variable \"%s\" is not an array"
+msgstr "variável \"%s\" não é uma matriz"
+
+#: variable.c:229 variable.c:251
+#, c-format
+msgid "variable \"%s\" is not declared"
+msgstr "variável \"%s\" não foi declarada"
+
+#: variable.c:459
+msgid "indicator variable must have an integer type"
+msgstr "variável de indicador deve ter um tipo inteiro"
+
+#: variable.c:471
+#, c-format
+msgid "unrecognized data type name \"%s\""
+msgstr "nome do tipo dados \"%s\" é desconhecido"
+
+#: variable.c:482 variable.c:490 variable.c:507 variable.c:510
+msgid "multidimensional arrays are not supported"
+msgstr "matrizes multidimensionais não são suportadas"
+
+#: variable.c:499
+#, c-format
+msgid ""
+"multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural ""
+"multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] ""
+"ponteiros com múltiplos níveis (mais do que 2 níveis) não são suportados; "
+"%d nível encontrado"
+msgstr[1] ""
+"ponteiros com múltiplos níveis (mais do que 2 níveis) não são suportados; "
+"%d níveis encontrados"
+
+#: variable.c:504
+msgid "pointer to pointer is not supported for this data type"
+msgstr "ponteiro para ponteiro não é suportado para esse tipo de dado"
+
+#: variable.c:524
+msgid "multidimensional arrays for structures are not supported"
+msgstr "matrizes multidimensionais para estruturas não são suportadas"

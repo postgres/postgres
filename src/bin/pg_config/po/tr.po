@@ -5,9 +5,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-tr\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-12 23:16-0300\n"
-"PO-Revision-Date: 2008-03-13 00:29-0800\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-29 07:09+0000\n"
+"PO-Revision-Date: 2009-04-29 16:28+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -48,10 +48,10 @@ msgstr "Kullanımı:\n"
 #: pg_config.c:413
 #, c-format
 msgid ""
-"  %s [ OPTION ... ]\n"
+"  %s [OPTION]...\n"
 "\n"
 msgstr ""
-"  %s [ SEÇENEK ... ]\n"
+"  %s [SEÇENEK]...\n"
 "\n"
 
 #: pg_config.c:414
@@ -270,4 +270,11 @@ msgstr "alt süreç %d sinyali tarafından sonlandırıldı"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırıldı"
+
+#~ msgid ""
+#~ "  %s [ OPTION ... ]\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  %s [ SEÇENEK ... ]\n"
+#~ "\n"
 

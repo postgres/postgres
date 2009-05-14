@@ -1,6 +1,6 @@
-# $PostgreSQL: pgsql/src/backend/nls.mk,v 1.24 2009/04/09 19:38:47 petere Exp $
+# $PostgreSQL: pgsql/src/backend/nls.mk,v 1.25 2009/05/14 21:41:50 alvherre Exp $
 CATALOG_NAME	:= postgres
-AVAIL_LANGUAGES	:= af cs de es fr hr hu it ja ko nb nl pt_BR ro ru sk sl sv tr zh_CN zh_TW
+AVAIL_LANGUAGES	:= af cs de es fr hr hu it ja ko nb nl pt_BR ro ru sk sl sv tr zh_CN zh_TW pl
 GETTEXT_FILES	:= + gettext-files
 GETTEXT_TRIGGERS:= _ errmsg errdetail errdetail_log errhint errcontext write_stderr yyerror
 

@@ -1,19 +1,20 @@
 # translation of pg_resetxlog.po to fr_fr
 # french message translation file for pg_resetxlog
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/fr.po,v 1.12 2009/04/09 19:38:52 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/fr.po,v 1.13 2009/05/14 21:41:52 alvherre Exp $
 #
 # Use these quotes: « %s »
-# Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.
 #
+# Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.
+# Stéphane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-05 05:22+0000\n"
-"PO-Revision-Date: 2009-04-05 10:08+0100\n"
-"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team: French <guillaume@lelarge.info>\n"
+"POT-Creation-Date: 2009-04-16 23:18+0000\n"
+"PO-Revision-Date: 2009-04-17 08:57+0200\n"
+"Last-Translator: Stéphane Schildknecht <stephane.schildknecht@dalibo.com>\n"
+"Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -35,7 +36,7 @@ msgstr "%s : argument invalide pour l'option -e\n"
 #: pg_resetxlog.c:238
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez « %s --help » pour plus d'informations.\n"
+msgstr "Essayer « %s --help » pour plus d'informations.\n"
 
 #: pg_resetxlog.c:140
 #, c-format
@@ -72,7 +73,7 @@ msgstr "%s : argument invalide pour l'option -m\n"
 #: pg_resetxlog.c:185
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
-msgstr "%s : l'identifiant de la multi-transaction (-m) ne doit pas être 0\n"
+msgstr "%s : l'identifiant de multi-transaction (-m) ne doit pas être 0\n"
 
 #: pg_resetxlog.c:194
 #, c-format
@@ -82,7 +83,7 @@ msgstr "%s : argument invalide pour l'option -O\n"
 #: pg_resetxlog.c:200
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
-msgstr "%s : le décalage de la multi-transaction (-O) ne doit pas être -1\n"
+msgstr "%s : le décalage de multi-transaction (-O) ne doit pas être -1\n"
 
 #: pg_resetxlog.c:209
 #: pg_resetxlog.c:216
@@ -124,7 +125,7 @@ msgid ""
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s : le verrou « %s » existe\n"
-"Le serveur est-il démarré ? Sinon, supprimez le verrou et réessayez.\n"
+"Le serveur est-il démarré ? Sinon, supprimer le fichier verrou et réessayer.\n"
 
 #: pg_resetxlog.c:340
 #, c-format
@@ -133,7 +134,7 @@ msgid ""
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"Si ces valeurs semblent acceptables, utilisez -f pour forcer la\n"
+"Si ces valeurs semblent acceptables, utiliser -f pour forcer la\n"
 "réinitialisation.\n"
 
 #: pg_resetxlog.c:352
@@ -146,13 +147,13 @@ msgstr ""
 "Le serveur de bases de données n'a pas été arrêté proprement.\n"
 "Ré-initialiser le journal des transactions peut occasionner des pertes de\n"
 "données.\n"
-"Si vous souhaitez continuer malgré tout, utilisez -f pour forcer la\n"
-"ré-initialisation.\n"
+"Pour continuer malgré tout, utiliser -f pour forcer la\n"
+"réinitialisation.\n"
 
 #: pg_resetxlog.c:365
 #, c-format
 msgid "Transaction log reset\n"
-msgstr "Ré-initialisation du journal des transactions\n"
+msgstr "Réinitialisation du journal des transactions\n"
 
 #: pg_resetxlog.c:394
 #, c-format
@@ -161,9 +162,9 @@ msgid ""
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"Si vous êtes certain du chemin du répertoire de données, exécutez\n"
+"Si le chemin du répertoire de données est correct, exécuter\n"
 "  touch %s\n"
-"et réessayez.\n"
+"et réessayer.\n"
 
 #: pg_resetxlog.c:407
 #, c-format
@@ -173,7 +174,7 @@ msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
 #: pg_resetxlog.c:430
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr "%s : pg_control existe mais son CRC est invalide ; agissez prudemment\n"
+msgstr "%s : pg_control existe mais son CRC est invalide ; agir avec précaution\n"
 
 #: pg_resetxlog.c:439
 #, c-format
@@ -281,7 +282,7 @@ msgstr "Longueur maximale des identifiants :                    %u\n"
 #: pg_resetxlog.c:568
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "Nombre maximum de colonnes d'un index:                  %u\n"
+msgstr "Nombre maximal de colonnes d'un index:                  %u\n"
 
 #: pg_resetxlog.c:570
 #, c-format
@@ -436,7 +437,7 @@ msgstr "  -o OID          fixe le prochain OID\n"
 #: pg_resetxlog.c:930
 #, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
-msgstr "  -O DÉCALAGE     fixe le prochain décalage multi-transaction\n"
+msgstr "  -O DÉCALAGE     fixe le décalage de la prochaine multi-transaction\n"
 
 #: pg_resetxlog.c:931
 #, c-format
@@ -446,12 +447,12 @@ msgstr "  -x XID          fixe le prochain identifiant de transaction\n"
 #: pg_resetxlog.c:932
 #, c-format
 msgid "  --help          show this help, then exit\n"
-msgstr "  --help          affiche cette aide, puis quitte\n"
+msgstr "  --help          affiche cette aide et quitte\n"
 
 #: pg_resetxlog.c:933
 #, c-format
 msgid "  --version       output version information, then exit\n"
-msgstr "  --version       affiche la version, puis quitte\n"
+msgstr "  --version       afficherla version et quitte\n"
 
 #: pg_resetxlog.c:934
 #, c-format
@@ -460,16 +461,5 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "%s: invalid LC_COLLATE setting\n"
-#~ msgstr "%s : LC_COLLATE invalide\n"
-#~ msgid "%s: invalid LC_CTYPE setting\n"
-#~ msgstr "%s : LC_CTYPE invalide\n"
-#~ msgid "Maximum length of locale name:        %u\n"
-#~ msgstr "Longueur maximale du nom de la locale :                 %u\n"
-#~ msgid "LC_COLLATE:                           %s\n"
-#~ msgstr "LC_COLLATE :                                            %s\n"
-#~ msgid "LC_CTYPE:                             %s\n"
-#~ msgstr "LC_CTYPE :                                              %s\n"
+"Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 

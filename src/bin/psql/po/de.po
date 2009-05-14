@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: psql.po,v 1.26 2009/04/07 05:11:42 petere Exp $
+# pgtranslation Id: psql.po,v 1.27 2009/04/11 14:11:59 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-07 01:13+0000\n"
-"PO-Revision-Date: 2009-04-07 08:09+0300\n"
+"POT-Creation-Date: 2009-04-11 14:02+0300\n"
+"PO-Revision-Date: 2009-04-11 17:10+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -1268,11 +1268,11 @@ msgstr "%s: unbekannter Transaktionsstatus\n"
 msgid "ID"
 msgstr "ID"
 
-#: large_obj.c:287 describe.c:95 describe.c:158 describe.c:267 describe.c:356
-#: describe.c:431 describe.c:502 describe.c:625 describe.c:1107
-#: describe.c:1878 describe.c:2006 describe.c:2298 describe.c:2360
-#: describe.c:2496 describe.c:2535 describe.c:2602 describe.c:2661
-#: describe.c:2670 describe.c:2729
+#: large_obj.c:287 describe.c:95 describe.c:158 describe.c:267 describe.c:350
+#: describe.c:425 describe.c:496 describe.c:619 describe.c:1097
+#: describe.c:1868 describe.c:1996 describe.c:2288 describe.c:2350
+#: describe.c:2486 describe.c:2525 describe.c:2592 describe.c:2651
+#: describe.c:2660 describe.c:2719
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -1379,18 +1379,18 @@ msgstr "%s: Warnung: überflüssiges Kommandozeilenargument »%s« ignoriert\n"
 msgid "contains support for command-line editing"
 msgstr "enthält Unterstützung für Kommandozeilenbearbeitung"
 
-#: describe.c:68 describe.c:200 describe.c:328 describe.c:426 describe.c:547
-#: describe.c:622 describe.c:1984 describe.c:2104 describe.c:2159
-#: describe.c:2358 describe.c:2585 describe.c:2657 describe.c:2668
-#: describe.c:2727
+#: describe.c:68 describe.c:200 describe.c:322 describe.c:420 describe.c:541
+#: describe.c:616 describe.c:1974 describe.c:2094 describe.c:2149
+#: describe.c:2348 describe.c:2575 describe.c:2647 describe.c:2658
+#: describe.c:2717
 msgid "Schema"
 msgstr "Schema"
 
-#: describe.c:69 describe.c:145 describe.c:201 describe.c:329 describe.c:427
-#: describe.c:477 describe.c:548 describe.c:623 describe.c:1985
-#: describe.c:2105 describe.c:2160 describe.c:2289 describe.c:2359
-#: describe.c:2586 describe.c:2658 describe.c:2669 describe.c:2728
-#: describe.c:2918 describe.c:2977
+#: describe.c:69 describe.c:145 describe.c:201 describe.c:323 describe.c:421
+#: describe.c:471 describe.c:542 describe.c:617 describe.c:1975
+#: describe.c:2095 describe.c:2150 describe.c:2279 describe.c:2349
+#: describe.c:2576 describe.c:2648 describe.c:2659 describe.c:2718
+#: describe.c:2908 describe.c:2967
 msgid "Name"
 msgstr "Name"
 
@@ -1411,8 +1411,8 @@ msgstr "Liste der Aggregatfunktionen"
 msgid "The server (version %d.%d) does not support tablespaces.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Tablespaces.\n"
 
-#: describe.c:146 describe.c:264 describe.c:478 describe.c:1992
-#: describe.c:2290 describe.c:2919 describe.c:2978
+#: describe.c:146 describe.c:264 describe.c:472 describe.c:1982
+#: describe.c:2280 describe.c:2909 describe.c:2968
 msgid "Owner"
 msgstr "Eigentümer"
 
@@ -1436,550 +1436,550 @@ msgstr "Sprache"
 msgid "Source code"
 msgstr "Quelltext"
 
-#: describe.c:301
+#: describe.c:295
 msgid "List of functions"
 msgstr "Liste der Funktionen"
 
-#: describe.c:339
+#: describe.c:333
 msgid "Internal name"
 msgstr "Interner Name"
 
-#: describe.c:340 describe.c:494 describe.c:2002
+#: describe.c:334 describe.c:488 describe.c:1992
 msgid "Size"
 msgstr "Größe"
 
-#: describe.c:352
+#: describe.c:346
 msgid "Elements"
 msgstr "Elemente"
 
-#: describe.c:395
+#: describe.c:389
 msgid "List of data types"
 msgstr "Liste der Datentypen"
 
-#: describe.c:428
+#: describe.c:422
 msgid "Left arg type"
 msgstr "Linker Typ"
 
-#: describe.c:429
+#: describe.c:423
 msgid "Right arg type"
 msgstr "Rechter Typ"
 
-#: describe.c:430
+#: describe.c:424
 msgid "Result type"
 msgstr "Ergebnistyp"
 
-#: describe.c:449
+#: describe.c:443
 msgid "List of operators"
 msgstr "Liste der Operatoren"
 
-#: describe.c:479
+#: describe.c:473
 msgid "Encoding"
 msgstr "Kodierung"
 
-#: describe.c:484
+#: describe.c:478
 msgid "Collation"
 msgstr "Sortierfolge"
 
-#: describe.c:485
+#: describe.c:479
 msgid "Ctype"
 msgstr "Zeichentyp"
 
-#: describe.c:498
+#: describe.c:492
 msgid "Tablespace"
 msgstr "Tablespace"
 
-#: describe.c:515
+#: describe.c:509
 msgid "List of databases"
 msgstr "Liste der Datenbanken"
 
-#: describe.c:549 describe.c:721 describe.c:1986
+#: describe.c:543 describe.c:711 describe.c:1976
 msgid "table"
 msgstr "Tabelle"
 
-#: describe.c:549 describe.c:722 describe.c:1987
+#: describe.c:543 describe.c:712 describe.c:1977
 msgid "view"
 msgstr "Sicht"
 
-#: describe.c:549 describe.c:724 describe.c:1989
+#: describe.c:543 describe.c:714 describe.c:1979
 msgid "sequence"
 msgstr "Sequenz"
 
-#: describe.c:550 describe.c:1092 describe.c:1991 describe.c:2106
-#: describe.c:2990
+#: describe.c:544 describe.c:1082 describe.c:1981 describe.c:2096
+#: describe.c:2980
 msgid "Type"
 msgstr "Typ"
 
-#: describe.c:561
+#: describe.c:555
 msgid "Column access privileges"
 msgstr "Spalten-Zugriffsprivilegien"
 
-#: describe.c:587 describe.c:3085 describe.c:3089
+#: describe.c:581 describe.c:3075 describe.c:3079
 msgid "Access privileges"
 msgstr "Zugriffsrechte"
 
-#: describe.c:624
+#: describe.c:618
 msgid "Object"
 msgstr "Objekt"
 
-#: describe.c:636
+#: describe.c:630
 msgid "aggregate"
 msgstr "Aggregat"
 
-#: describe.c:660
+#: describe.c:650
 msgid "function"
 msgstr "Funktion"
 
-#: describe.c:679
+#: describe.c:669
 msgid "operator"
 msgstr "Operator"
 
-#: describe.c:698
+#: describe.c:688
 msgid "data type"
 msgstr "Datentyp"
 
-#: describe.c:723 describe.c:1988
+#: describe.c:713 describe.c:1978
 msgid "index"
 msgstr "Index"
 
-#: describe.c:745
+#: describe.c:735
 msgid "rule"
 msgstr "Rule"
 
-#: describe.c:766
+#: describe.c:756
 msgid "trigger"
 msgstr "Trigger"
 
-#: describe.c:789
+#: describe.c:779
 msgid "Object descriptions"
 msgstr "Objektbeschreibungen"
 
-#: describe.c:842
+#: describe.c:832
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Keine Relationen namens »%s« gefunden\n"
 
-#: describe.c:979
+#: describe.c:969
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Keine Relation mit OID %s gefunden.\n"
 
-#: describe.c:1054
+#: describe.c:1044
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Tabelle »%s.%s«"
 
-#: describe.c:1058
+#: describe.c:1048
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Sicht »%s.%s«"
 
-#: describe.c:1062
+#: describe.c:1052
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Sequenz »%s.%s«"
 
-#: describe.c:1066
+#: describe.c:1056
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Index »%s.%s«"
 
-#: describe.c:1071
+#: describe.c:1061
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Spezielle Relation »%s.%s«"
 
-#: describe.c:1075
+#: describe.c:1065
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-Tabelle »%s.%s«"
 
-#: describe.c:1079
+#: describe.c:1069
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Zusammengesetzter Typ »%s.%s«"
 
-#: describe.c:1091
+#: describe.c:1081
 msgid "Column"
 msgstr "Spalte"
 
-#: describe.c:1097
+#: describe.c:1087
 msgid "Modifiers"
 msgstr "Attribute"
 
-#: describe.c:1102
+#: describe.c:1092
 msgid "Value"
 msgstr "Wert"
 
-#: describe.c:1106
+#: describe.c:1096
 msgid "Storage"
 msgstr "Speicherung"
 
-#: describe.c:1148
+#: describe.c:1138
 msgid "not null"
 msgstr "not null"
 
 #. translator: default values of column definitions
-#: describe.c:1157
+#: describe.c:1147
 #, c-format
 msgid "default %s"
 msgstr "Vorgabewert %s"
 
-#: describe.c:1223
+#: describe.c:1213
 msgid "primary key, "
 msgstr "Primärschlüssel, "
 
-#: describe.c:1225
+#: describe.c:1215
 msgid "unique, "
 msgstr "eindeutig, "
 
-#: describe.c:1231
+#: describe.c:1221
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "für Tabelle »%s.%s«"
 
-#: describe.c:1235
+#: describe.c:1225
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", Prädikat (%s)"
 
-#: describe.c:1238
+#: describe.c:1228
 msgid ", clustered"
 msgstr ", geclustert"
 
-#: describe.c:1241
+#: describe.c:1231
 msgid ", invalid"
 msgstr ", ungültig"
 
-#: describe.c:1255
+#: describe.c:1245
 msgid "View definition:"
 msgstr "Sichtdefinition:"
 
-#: describe.c:1272 describe.c:1525
+#: describe.c:1262 describe.c:1515
 msgid "Rules:"
 msgstr "Regeln:"
 
-#: describe.c:1319
+#: describe.c:1309
 msgid "Indexes:"
 msgstr "Indexe:"
 
-#: describe.c:1379
+#: describe.c:1369
 msgid "Check constraints:"
 msgstr "Check-Constraints:"
 
-#: describe.c:1410
+#: describe.c:1400
 msgid "Foreign-key constraints:"
 msgstr "Fremdschlüssel-Constraints:"
 
-#: describe.c:1441
+#: describe.c:1431
 msgid "Referenced by:"
 msgstr "Fremdschlüsselverweise von:"
 
 #. translator: the first %s is a FK name, the following are
 #. * a table name and the FK definition
-#: describe.c:1446
+#: describe.c:1436
 #, fuzzy, c-format
 msgid "  \"%s\" IN %s %s"
 msgstr "    »%s« %s"
 
-#: describe.c:1528
+#: describe.c:1518
 msgid "Disabled rules:"
 msgstr "Abgeschaltete Regeln:"
 
-#: describe.c:1531
+#: describe.c:1521
 msgid "Rules firing always:"
 msgstr "Regeln, die immer aktiv werden:"
 
-#: describe.c:1534
+#: describe.c:1524
 msgid "Rules firing on replica only:"
 msgstr "Regeln, die nur im Replikat aktiv werden:"
 
-#: describe.c:1630
+#: describe.c:1620
 msgid "Triggers:"
 msgstr "Trigger:"
 
-#: describe.c:1633
+#: describe.c:1623
 msgid "Disabled triggers:"
 msgstr "Abgeschaltete Trigger:"
 
-#: describe.c:1636
+#: describe.c:1626
 msgid "Triggers firing always:"
 msgstr "Trigger, die immer aktiv werden:"
 
-#: describe.c:1639
+#: describe.c:1629
 msgid "Triggers firing on replica only:"
 msgstr "Trigger, die nur im Replikat aktiv werden:"
 
-#: describe.c:1672
+#: describe.c:1662
 msgid "Inherits"
 msgstr "Erbt von"
 
-#: describe.c:1687
+#: describe.c:1677
 msgid "Has OIDs"
 msgstr "Hat OIDs"
 
-#: describe.c:1690 describe.c:2163 describe.c:2236
+#: describe.c:1680 describe.c:2153 describe.c:2226
 msgid "yes"
 msgstr "ja"
 
-#: describe.c:1690 describe.c:2163 describe.c:2236
+#: describe.c:1680 describe.c:2153 describe.c:2226
 msgid "no"
 msgstr "nein"
 
-#: describe.c:1698 describe.c:2928 describe.c:2992 describe.c:3048
+#: describe.c:1688 describe.c:2918 describe.c:2982 describe.c:3038
 msgid "Options"
 msgstr "Optionen"
 
-#: describe.c:1783
+#: describe.c:1773
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace: »%s«"
 
 #. translator: before this string there's an index
 #. * description like '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:1793
+#: describe.c:1783
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr ", Tablespace »%s«"
 
-#: describe.c:1871
+#: describe.c:1861
 msgid "List of roles"
 msgstr "Liste der Rollen"
 
-#: describe.c:1873
+#: describe.c:1863
 msgid "Role name"
 msgstr "Rollenname"
 
-#: describe.c:1874
+#: describe.c:1864
 msgid "Attributes"
 msgstr "Attribute"
 
-#: describe.c:1875
+#: describe.c:1865
 msgid "Member of"
 msgstr "Mitglied von"
 
-#: describe.c:1886
+#: describe.c:1876
 msgid "Superuser"
 msgstr "Superuser"
 
-#: describe.c:1889
+#: describe.c:1879
 msgid "No inheritance"
 msgstr "keine Vererbung"
 
-#: describe.c:1892
+#: describe.c:1882
 msgid "Create role"
 msgstr "Rolle erzeugen"
 
-#: describe.c:1895
+#: describe.c:1885
 msgid "Create DB"
 msgstr "DB erzeugen"
 
-#: describe.c:1898
+#: describe.c:1888
 msgid "Cannot login"
 msgstr "kann nicht einloggen"
 
-#: describe.c:1907
+#: describe.c:1897
 msgid "No connections"
 msgstr "keine Verbindungen"
 
-#: describe.c:1909
+#: describe.c:1899
 #, c-format
 msgid "1 connection"
 msgid_plural "%d connections"
 msgstr[0] "1 Verbindung"
 msgstr[1] "%d Verbindungen"
 
-#: describe.c:1990
+#: describe.c:1980
 msgid "special"
 msgstr "speziell"
 
-#: describe.c:1997
+#: describe.c:1987
 msgid "Table"
 msgstr "Tabelle"
 
-#: describe.c:2056
+#: describe.c:2046
 #, c-format
 msgid "No matching relations found.\n"
 msgstr "Keine passenden Relationen gefunden\n"
 
-#: describe.c:2058
+#: describe.c:2048
 #, c-format
 msgid "No relations found.\n"
 msgstr "Keine Relationen gefunden\n"
 
-#: describe.c:2063
+#: describe.c:2053
 msgid "List of relations"
 msgstr "Liste der Relationen"
 
-#: describe.c:2107
+#: describe.c:2097
 msgid "Modifier"
 msgstr "Attribut"
 
-#: describe.c:2108
+#: describe.c:2098
 msgid "Check"
 msgstr "Check"
 
-#: describe.c:2126
+#: describe.c:2116
 msgid "List of domains"
 msgstr "Liste der Domänen"
 
-#: describe.c:2161
+#: describe.c:2151
 msgid "Source"
 msgstr "Quelle"
 
-#: describe.c:2162
+#: describe.c:2152
 msgid "Destination"
 msgstr "Ziel"
 
-#: describe.c:2164
+#: describe.c:2154
 msgid "Default?"
 msgstr "Standard?"
 
-#: describe.c:2182
+#: describe.c:2172
 msgid "List of conversions"
 msgstr "Liste der Konversionen"
 
-#: describe.c:2233
+#: describe.c:2223
 msgid "Source type"
 msgstr "Quelltyp"
 
-#: describe.c:2234
+#: describe.c:2224
 msgid "Target type"
 msgstr "Zieltyp"
 
-#: describe.c:2235 describe.c:2495
+#: describe.c:2225 describe.c:2485
 msgid "Function"
 msgstr "Funktion"
 
-#: describe.c:2236
+#: describe.c:2226
 msgid "in assignment"
 msgstr "in Zuweisung"
 
-#: describe.c:2237
+#: describe.c:2227
 msgid "Implicit?"
 msgstr "Implizit?"
 
-#: describe.c:2263
+#: describe.c:2253
 msgid "List of casts"
 msgstr "Liste der Typumwandlungen"
 
-#: describe.c:2318
+#: describe.c:2308
 msgid "List of schemas"
 msgstr "Liste der Schemas"
 
-#: describe.c:2341 describe.c:2574 describe.c:2642 describe.c:2710
+#: describe.c:2331 describe.c:2564 describe.c:2632 describe.c:2700
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Volltextsuche.\n"
 
-#: describe.c:2375
+#: describe.c:2365
 msgid "List of text search parsers"
 msgstr "Liste der Textsucheparser"
 
-#: describe.c:2418
+#: describe.c:2408
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "Kein Textsucheparser namens »%s« gefunden\n"
 
-#: describe.c:2493
+#: describe.c:2483
 msgid "Start parse"
 msgstr "Parsen starten"
 
-#: describe.c:2494
+#: describe.c:2484
 msgid "Method"
 msgstr "Methode"
 
-#: describe.c:2498
+#: describe.c:2488
 msgid "Get next token"
 msgstr "Nächstes Token lesen"
 
-#: describe.c:2500
+#: describe.c:2490
 msgid "End parse"
 msgstr "Parsen beenden"
 
-#: describe.c:2502
+#: describe.c:2492
 msgid "Get headline"
 msgstr "Überschrift ermitteln"
 
-#: describe.c:2504
+#: describe.c:2494
 msgid "Get token types"
 msgstr "Tokentypen ermitteln"
 
-#: describe.c:2514
+#: describe.c:2504
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Textsucheparser »%s.%s«"
 
-#: describe.c:2516
+#: describe.c:2506
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "Textsucheparser »%s«"
 
-#: describe.c:2534
+#: describe.c:2524
 msgid "Token name"
 msgstr "Tokenname"
 
-#: describe.c:2545
+#: describe.c:2535
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "Tokentypen für Parser »%s.%s«"
 
-#: describe.c:2547
+#: describe.c:2537
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "Tokentypen für Parser »%s«"
 
-#: describe.c:2596
+#: describe.c:2586
 msgid "Template"
 msgstr "Vorlage"
 
-#: describe.c:2597
+#: describe.c:2587
 msgid "Init options"
 msgstr "Initialisierungsoptionen:"
 
-#: describe.c:2619
+#: describe.c:2609
 msgid "List of text search dictionaries"
 msgstr "Liste der Textsuchewörterbücher"
 
-#: describe.c:2659
+#: describe.c:2649
 msgid "Init"
 msgstr "Init"
 
-#: describe.c:2660
+#: describe.c:2650
 msgid "Lexize"
 msgstr "Lexize"
 
-#: describe.c:2687
+#: describe.c:2677
 msgid "List of text search templates"
 msgstr "Liste der Textsuchevorlagen"
 
-#: describe.c:2744
+#: describe.c:2734
 msgid "List of text search configurations"
 msgstr "Liste der Textsuchekonfigurationen"
 
-#: describe.c:2788
+#: describe.c:2778
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "Keine Textsuchekonfiguration namens »%s« gefunden\n"
 
-#: describe.c:2854
+#: describe.c:2844
 msgid "Token"
 msgstr "Token"
 
-#: describe.c:2855
+#: describe.c:2845
 msgid "Dictionaries"
 msgstr "Wörterbücher"
 
-#: describe.c:2866
+#: describe.c:2856
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Textsuchekonfiguration »%s.%s«"
 
-#: describe.c:2869
+#: describe.c:2859
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Textsuchekonfiguration »%s«"
 
-#: describe.c:2873
+#: describe.c:2863
 #, c-format
 msgid ""
 "\n"
@@ -1988,7 +1988,7 @@ msgstr ""
 "\n"
 "Parser: »%s.%s«"
 
-#: describe.c:2876
+#: describe.c:2866
 #, c-format
 msgid ""
 "\n"
@@ -1997,50 +1997,50 @@ msgstr ""
 "\n"
 "Parser: »%s«"
 
-#: describe.c:2908
+#: describe.c:2898
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Fremddaten-Wrapper.\n"
 
-#: describe.c:2920
+#: describe.c:2910
 msgid "Validator"
 msgstr "Validator"
 
-#: describe.c:2944
+#: describe.c:2934
 msgid "List of foreign-data wrappers"
 msgstr "Liste der Fremddaten-Wrapper"
 
-#: describe.c:2967
+#: describe.c:2957
 #, c-format
 msgid "The server (version %d.%d) does not support foreign servers.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Fremdserver.\n"
 
-#: describe.c:2979
+#: describe.c:2969
 msgid "Foreign-data wrapper"
 msgstr "Fremddaten-Wrapper"
 
-#: describe.c:2991
+#: describe.c:2981
 msgid "Version"
 msgstr "Version"
 
-#: describe.c:3010
+#: describe.c:3000
 msgid "List of foreign servers"
 msgstr "Liste der Fremdserver"
 
-#: describe.c:3033
+#: describe.c:3023
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
 msgstr "Der Server (Version %d.%d) unterstützt keine Benutzerabbildungen.\n"
 
-#: describe.c:3042
+#: describe.c:3032
 msgid "Server"
 msgstr "Server"
 
-#: describe.c:3043
+#: describe.c:3033
 msgid "User name"
 msgstr "Benutzername"
 
-#: describe.c:3063
+#: describe.c:3053
 msgid "List of user mappings"
 msgstr "Liste der Benutzerabbildungen"
 
@@ -2083,7 +2083,6 @@ msgid "change a database"
 msgstr "ändert eine Datenbank"
 
 #: sql_help.h:38
-#, fuzzy
 msgid ""
 "ALTER DATABASE name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2113,8 +2112,9 @@ msgstr ""
 "\n"
 "ALTER DATABASE name OWNER TO neuer_eigentümer\n"
 "\n"
-"ALTER DATABASE name SET konfigurationsparameter { TO | = } { wert | "
-"DEFAULT }\n"
+"ALTER DATABASE name SET TABLESPACE neuer_tablespace\n"
+"\n"
+"ALTER DATABASE name SET konfigurationsparameter { TO | = } { wert | DEFAULT }\n"
 "ALTER DATABASE name SET konfigurationsparameter FROM CURRENT\n"
 "ALTER DATABASE name RESET konfigurationsparameter\n"
 "ALTER DATABASE name RESET ALL"
@@ -2288,7 +2288,6 @@ msgid "change the definition of an operator family"
 msgstr "ändert die Definition einer Operatorfamilie"
 
 #: sql_help.h:74
-#, fuzzy
 msgid ""
 "ALTER OPERATOR FAMILY name USING index_method ADD\n"
 "  {  OPERATOR strategy_number operator_name ( op_type, op_type )\n"
@@ -2303,9 +2302,8 @@ msgid ""
 "ALTER OPERATOR FAMILY name USING index_method OWNER TO newowner"
 msgstr ""
 "ALTER OPERATOR FAMILY name USING indexmethode ADD\n"
-"  {  OPERATOR strategienummer operatorname ( optyp, optyp ) [ RECHECK ]\n"
-"   | FUNCTION supportnummer [ ( optyp [ , optyp ] ) ] funkname ( argumenttyp "
-"[, ...] )\n"
+"  {  OPERATOR strategienummer operatorname ( optyp, optyp )\n"
+"   | FUNCTION supportnummer [ ( optyp [ , optyp ] ) ] funkname ( argumenttyp [, ...] )\n"
 "  } [, ... ]\n"
 "ALTER OPERATOR FAMILY name USING indexmethode DROP\n"
 "  {  OPERATOR strategienummer ( optyp [ , optyp ] )\n"
@@ -2379,7 +2377,6 @@ msgid "change the definition of a sequence generator"
 msgstr "ändert die Definition eines Sequenzgenerators"
 
 #: sql_help.h:86
-#, fuzzy
 msgid ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -2393,8 +2390,11 @@ msgid ""
 msgstr ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] inkrement ]\n"
 "    [ MINVALUE minwert | NO MINVALUE ] [ MAXVALUE maxwert | NO MAXVALUE ]\n"
-"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
+"    [ START [ WITH ] start ]\n"
+"    [ RESTART [ WITH ] start ]\n"
+"    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
 "    [ OWNED BY { tabelle.spalte | NONE } ]\n"
+"ALTER SEQUENCE name OWNER TO neuer_eigentümer\n"
 "ALTER SEQUENCE name RENAME TO neuer_name\n"
 "ALTER SEQUENCE name SET SCHEMA neues_schema"
 
@@ -2927,7 +2927,6 @@ msgid "define a new cast"
 msgstr "definiert eine neue Typumwandlung"
 
 #: sql_help.h:178
-#, fuzzy
 msgid ""
 "CREATE CAST (sourcetype AS targettype)\n"
 "    WITH FUNCTION funcname (argtypes)\n"
@@ -2947,6 +2946,10 @@ msgstr ""
 "\n"
 "CREATE CAST (quelltyp AS zieltyp)\n"
 "    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (quelltyp AS zieltyp)\n"
+"    WITH INOUT\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 
 #: sql_help.h:181
@@ -3192,7 +3195,6 @@ msgid "define a new operator class"
 msgstr "definiert eine neue Operatorklasse"
 
 #: sql_help.h:222
-#, fuzzy
 msgid ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type\n"
 "  USING index_method [ FAMILY family_name ] AS\n"
@@ -3204,9 +3206,8 @@ msgid ""
 msgstr ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE datentyp\n"
 "  USING indexmethode [ FAMILY familienname ] AS\n"
-"  {  OPERATOR strategienummer operatorname [ ( optyp, optyp ) ] [ RECHECK ]\n"
-"   | FUNCTION unterst_nummer [ ( optyp [, optyp ] ) ] funcname ( argumenttyp "
-"[, ...] )\n"
+"  {  OPERATOR strategienummer operatorname [ ( optyp, optyp ) ]\n"
+"   | FUNCTION unterst_nummer [ ( optyp [, optyp ] ) ] funcname ( argumenttyp [, ...] )\n"
 "   | STORAGE storage_typ\n"
 "  } [, ... ]"
 
@@ -3420,7 +3421,6 @@ msgid "define a new table from the results of a query"
 msgstr "definiert eine neue Tabelle aus den Ergebnissen einer Anfrage"
 
 #: sql_help.h:254
-#, fuzzy
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name\n"
 "    [ (column_name [, ...] ) ]\n"
@@ -3433,11 +3433,11 @@ msgid ""
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellenname\n"
 "    [ (spaltenname [, ...] ) ]\n"
-"    [ WITH ( storage_parameter [= wert] [, ... ] ) | WITH OIDS | WITHOUT "
-"OIDS ]\n"
+"    [ WITH ( storage_parameter [= wert] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
 "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
 "    [ TABLESPACE tablespace ]\n"
-"    AS anfrage"
+"    AS anfrage\n"
+"    [ WITH [ NO ] DATA ]"
 
 #: sql_help.h:257
 msgid "define a new tablespace"
@@ -3539,7 +3539,6 @@ msgid "define a new data type"
 msgstr "definiert einen neuen Datentyp"
 
 #: sql_help.h:282
-#, fuzzy
 msgid ""
 "CREATE TYPE name AS\n"
 "    ( attribute_name data_type [, ... ] )\n"
@@ -3587,6 +3586,9 @@ msgstr ""
 "    [ , PASSEDBYVALUE ]\n"
 "    [ , ALIGNMENT = ausrichtung ]\n"
 "    [ , STORAGE = speicherung ]\n"
+"    [ , LIKE = wie_typ ]\n"
+"    [ , CATEGORY = kategorie ]\n"
+"    [ , PREFERRED = bevorzugt ]\n"
 "    [ , DEFAULT = vorgabewert ]\n"
 "    [ , ELEMENT = element ]\n"
 "    [ , DELIMITER = trennzeichen ]\n"

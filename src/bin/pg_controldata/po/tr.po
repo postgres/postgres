@@ -4,9 +4,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata-tr\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-29 14:24-0400\n"
-"PO-Revision-Date: 2008-01-29 17:16-0800\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-29 07:08+0000\n"
+"PO-Revision-Date: 2009-04-29 16:29+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -88,27 +88,27 @@ msgstr "üretim modunda"
 msgid "unrecognized status code"
 msgstr "tanımlayamayan durum kodu"
 
-#: pg_controldata.c:102
+#: pg_controldata.c:103
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: hiçbir veri dizini belirtilmedi\n"
 
-#: pg_controldata.c:103
+#: pg_controldata.c:104
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Ayrıntılı bilgi için \"%s --help\" komutunu kullanabilirsiniz.\n"
 
-#: pg_controldata.c:111
+#: pg_controldata.c:112
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: \"%s\" dosyası okunmak için açılamadı: %s\n"
 
-#: pg_controldata.c:118
+#: pg_controldata.c:119
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası okunamadı: %s\n"
 
-#: pg_controldata.c:132
+#: pg_controldata.c:133
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -121,12 +121,12 @@ msgstr ""
 "bir yapıya sahip olabilir. Aşağıdaki sonuçlar güvenilir değildir.\n"
 "\n"
 
-#: pg_controldata.c:152
+#: pg_controldata.c:160
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control sürüm numarası:            %u\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:163
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
@@ -140,141 +140,153 @@ msgstr ""
 "sonuçlar yanlış olacak ve PostgreSQL kurulumu bu veri dizini ile uyumsuz\n"
 "olacaktır.\n"
 
-#: pg_controldata.c:159
+#: pg_controldata.c:167
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Katalog sürüm numarası:               %u\n"
 
-#: pg_controldata.c:161
+#: pg_controldata.c:169
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Veritabanı sistem belirteci:           %s\n"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:171
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Veritabanı kümesinin durumu:               %s\n"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:173
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control son düzenlenme tarihi:             %s\n"
 
-#: pg_controldata.c:167
+#: pg_controldata.c:175
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "En son checkpoint yeri:           %X/%X\n"
 
-#: pg_controldata.c:170
+#: pg_controldata.c:178
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Önceki checkpoint yeri:            %X/%X\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:181
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "En son checkpoint'in REDO yeri:    %X/%X\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:184
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "En son checkpoint'in TimeLineID'si:       %u\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:186
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "En son checkpoint'in NextXID'si:          %u/%u\n"
 
-#: pg_controldata.c:181
+#: pg_controldata.c:189
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "En son checkpoint'in NextOID'si:          %u\n"
 
-#: pg_controldata.c:183
+#: pg_controldata.c:191
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "En son checkpoint'in NextMultiXactId'si:          %u\n"
 
-#: pg_controldata.c:185
+#: pg_controldata.c:193
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "En son checkpoint'in NextMultiOffset'i:  %u\n"
 
-#: pg_controldata.c:187
+#: pg_controldata.c:195
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "En son checkpoint'in zamanı:            %s\n"
 
-#: pg_controldata.c:189
+#: pg_controldata.c:197
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Minimum kurtarma sonlandırma yeri:     %X/%X\n"
 
-#: pg_controldata.c:192
+#: pg_controldata.c:200
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Azami veri hizalama:                %u\n"
 
-#: pg_controldata.c:195
+#: pg_controldata.c:203
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Veritabanı blok boyutu:                  %u\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:205
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Büyük ilişkilerin parçası başına blok sayısı: %u\n"
 
-#: pg_controldata.c:199
+#: pg_controldata.c:207
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL blok boyutu:                  %u\n"
 
-#: pg_controldata.c:201
+#: pg_controldata.c:209
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Her bir WAL parçası başına byte sayısı:                %u\n"
 
-#: pg_controldata.c:203
+#: pg_controldata.c:211
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Belirteçlerin en fazla uzunluğu:        %u\n"
 
-#: pg_controldata.c:205
+#: pg_controldata.c:213
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "İndekste en fazla kolon sayısı:        %u\n"
 
-#: pg_controldata.c:207
+#: pg_controldata.c:215
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOAST parçasının en yüksek boyutu:        %u\n"
 
-#: pg_controldata.c:209
+#: pg_controldata.c:217
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tarih/zaman tipi saklanması:               %s\n"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:218
 msgid "64-bit integers"
 msgstr "64-bit tamsayı"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:218
 msgid "floating-point numbers"
 msgstr "kayan noktalı sayılar"
 
-#: pg_controldata.c:211
+#: pg_controldata.c:219
 #, c-format
-msgid "Maximum length of locale name:        %u\n"
-msgstr "Yerel adının en fazla büyüklüğü:        %u\n"
+msgid "Float4 argument passing:              %s\n"
+msgstr "Float4 argument passing:              %s\n"
 
-#: pg_controldata.c:213
-#, c-format
-msgid "LC_COLLATE:                           %s\n"
-msgstr "LC_COLLATE:                           %s\n"
+#: pg_controldata.c:220
+#: pg_controldata.c:222
+msgid "by value"
+msgstr "değer ile"
 
-#: pg_controldata.c:215
+#: pg_controldata.c:220
+#: pg_controldata.c:222
+msgid "by reference"
+msgstr "referans ile"
+
+#: pg_controldata.c:221
 #, c-format
-msgid "LC_CTYPE:                             %s\n"
-msgstr "LC_CTYPE:                             %s\n"
+msgid "Float8 argument passing:              %s\n"
+msgstr "Float8 argument passing:              %s\n"
+
+#~ msgid "Maximum length of locale name:        %u\n"
+#~ msgstr "Yerel adının en fazla büyüklüğü:        %u\n"
+#~ msgid "LC_COLLATE:                           %s\n"
+#~ msgstr "LC_COLLATE:                           %s\n"
+#~ msgid "LC_CTYPE:                             %s\n"
+#~ msgstr "LC_CTYPE:                             %s\n"
 

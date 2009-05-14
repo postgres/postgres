@@ -1,19 +1,20 @@
 # translation of libpq.po to fr_fr
 # french message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.18 2009/04/09 19:38:53 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.19 2009/05/14 21:41:53 alvherre Exp $
 #
 # Use these quotes: « %s »
-# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.
 #
+# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.
+# Stéphane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-05 05:22+0000\n"
-"PO-Revision-Date: 2009-04-05 10:08+0100\n"
-"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team: French <guillaume@lelarge.info>\n"
+"POT-Creation-Date: 2009-04-15 15:19+0000\n"
+"PO-Revision-Date: 2009-04-15 22:57+0200\n"
+"Last-Translator: Stéphane Schildknecht <stephane.schildknecht@dalibo.com>\n"
+"Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -36,7 +37,7 @@ msgstr "n'a pas pu rétablir le mode non-bloquant pour la socket : %s\n"
 
 #: fe-auth.c:403
 msgid "GSSAPI continuation error"
-msgstr "erreur de continuation GSSAPI"
+msgstr "erreur de suite GSSAPI"
 
 #: fe-auth.c:432
 msgid "duplicate GSS authentication request\n"
@@ -48,7 +49,7 @@ msgstr "erreur d'import du nom GSSAPI"
 
 #: fe-auth.c:538
 msgid "SSPI continuation error"
-msgstr "erreur de continuation SSPI"
+msgstr "erreur de suite SSPI"
 
 #: fe-auth.c:549
 #: fe-auth.c:622
@@ -75,7 +76,7 @@ msgstr "n'a pas pu récupérer les pièces d'identité SSPI"
 
 #: fe-auth.c:650
 msgid "host name must be specified\n"
-msgstr "le nom d'hôte doit être spécifié\n"
+msgstr "le nom d'hôte doit être précisé\n"
 
 #: fe-auth.c:729
 msgid "SCM_CRED authentication method not supported\n"
@@ -282,7 +283,7 @@ msgstr "échec de la recherche sur le serveur LDAP : %s\n"
 
 #: fe-connect.c:2806
 msgid "more than one entry found on LDAP lookup\n"
-msgstr "plus d'une entrée trouvée pendant la recherche LDAP\n"
+msgstr "plusieurs entrées trouvées pendant la recherche LDAP\n"
 
 #: fe-connect.c:2807
 #: fe-connect.c:2819
@@ -292,7 +293,7 @@ msgstr "aucune entrée trouvée pendant la recherche LDAP\n"
 #: fe-connect.c:2830
 #: fe-connect.c:2843
 msgid "attribute has no values on LDAP lookup\n"
-msgstr "l'attribut n'a pas de valeurs après la recherche LDAP\n"
+msgstr "l'attribut n'a pas de valeur après la recherche LDAP\n"
 
 #: fe-connect.c:2894
 #: fe-connect.c:2912
@@ -358,7 +359,7 @@ msgstr "la chaîne de commande est un pointeur nul\n"
 #: fe-exec.c:1103
 #: fe-exec.c:1198
 msgid "statement name is a null pointer\n"
-msgstr "le nom de l'instruction est un pointeur null\n"
+msgstr "le nom de l'instruction est un pointeur nul\n"
 
 #: fe-exec.c:1118
 #: fe-exec.c:1272
@@ -727,8 +728,8 @@ msgstr "code d'erreur SSL inconnu : %d\n"
 #: fe-secure.c:532
 msgid "verified SSL connections are only supported when connecting to a host name"
 msgstr ""
-"les connexions SSL vérifiées sont seulement supportées lors de la\n"
-"connexion à un alias hôte"
+"les connexions SSL vérifiées ne sont supportées que lors de la connexion\n"
+"à un alias hôte"
 
 #: fe-secure.c:551
 #, c-format
@@ -816,8 +817,14 @@ msgstr "la bibliothèque SSL ne supporte pas les certificats CRL (fichier « %s »)
 
 #: fe-secure.c:1070
 #, c-format
-msgid "root certificate file \"%s\" does not exist"
-msgstr "le certificat racine « %s » n'existe pas"
+msgid ""
+"root certificate file \"%s\" does not exist\n"
+"Either supply the file or set sslverify to \"none\" to disable server "
+"certificate verification.\n"
+msgstr ""
+"Le fichier de certificat racine « %s » n'existe pas.\n"
+"Fournissez le fichier ou positionnez sslverify à \"none\" pour désactiver\n"
+"la vérification du certificat par le serveur.\n"
 
 #: fe-secure.c:1166
 #, c-format
@@ -832,21 +839,4 @@ msgstr "aucune erreur SSL reportée"
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL %lu"
-
-#~ msgid "error querying socket: %s\n"
-#~ msgstr "erreur durant l'appel au socket : « %s »\n"
-#~ msgid "could not get information about host \"%s\": %s\n"
-#~ msgstr "n'a pas pu obtenir les informations concernant l'hôte « %s » : %s\n"
-#~ msgid "unsupported protocol\n"
-#~ msgstr "protocole non supporté\n"
-#~ msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
-#~ msgstr "impossible de traduire le nom courant « %s » vers %ld.%ld.%ld.%ld\n"
-#~ msgid "could not get user information\n"
-#~ msgstr "n'a pas pu obtenir les informations utilisateur\n"
-#~ msgid "invalid value of PGSSLKEY environment variable\n"
-#~ msgstr "valeur invalide de la variable d'environnement PGSSLKEY\n"
-#~ msgid "private key file \"%s\" has wrong permissions\n"
-#~ msgstr "les droits de la clé privée « %s » ne sont pas corrects\n"
-#~ msgid "certificate could not be validated: %s\n"
-#~ msgstr "le certificat n'a pas pu être validé : %s\n"
 

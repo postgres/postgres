@@ -1,17 +1,16 @@
-# Spanish translation file for ecpg
+# Brazilian Portuguese message translation file for pltcl
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-01 11:24+0000\n"
-"PO-Revision-Date: 2009-04-09 17:49-0400\n"
-"Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
-"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2009-05-06 18:00-0300\n"
+"PO-Revision-Date: 2009-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,26 +27,26 @@ msgid ""
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"en función PL/Tcl \"%s\""
+"na função PL/Tcl \"%s\""
 
 #: pltcl.c:1127
 msgid "out of memory"
-msgstr "memoria agotada"
+msgstr "sem memória"
 
 #: pltcl.c:1192
 msgid "trigger functions can only be called as triggers"
-msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
+msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
 #: pltcl.c:1201
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
+msgstr "funções PL/Tcl não podem retornar tipo %s"
 
 #: pltcl.c:1213
 msgid "PL/Tcl functions cannot return composite types"
-msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"
+msgstr "funções PL/Tcl não podem retornar tipos compostos"
 
 #: pltcl.c:1253
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
+msgstr "funções PL/Tcl não podem aceitar tipo %s"

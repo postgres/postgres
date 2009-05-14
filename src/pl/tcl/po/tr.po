@@ -1,17 +1,16 @@
-# Spanish translation file for ecpg
+# LANGUAGE message translation file for pltcl
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-01 11:24+0000\n"
-"PO-Revision-Date: 2009-04-09 17:49-0400\n"
-"Last-Translator: Emanuel Calvo Franco <postgres.arg@gmail.com>\n"
-"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2009-04-29 07:08+0000\n"
+"PO-Revision-Date: 2009-04-29 15:06+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"Language-Team: TR <devrim@commandprompt.com>>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,26 +27,27 @@ msgid ""
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"en función PL/Tcl \"%s\""
+"Şu PL/Tcl fonksiyonunda: \"%s\""
 
 #: pltcl.c:1127
 msgid "out of memory"
-msgstr "memoria agotada"
+msgstr "yetersiz bellek"
 
 #: pltcl.c:1192
 msgid "trigger functions can only be called as triggers"
-msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
+msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler"
 
 #: pltcl.c:1201
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
+msgstr "PL/Tcl fonksiyonları %s tipini döndüremezler"
 
 #: pltcl.c:1213
 msgid "PL/Tcl functions cannot return composite types"
-msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"
+msgstr "PL/Tcl fonksiyonları composit tip döndüremezler"
 
 #: pltcl.c:1253
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
+msgstr "PL/Tcl fonksiyonları %s veri tipini kabul etmezler"
+

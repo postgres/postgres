@@ -1,0 +1,272 @@
+# LANGUAGE message translation file for plpython
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-08 15:22+0000\n"
+"PO-Revision-Date: 2009-05-05 00:38+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"Language-Team: Turkish <devrim@gunduz.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Poedit-Language: Turkish\n"
+"X-Poedit-Country: Turkey\n"
+
+#: plpython.c:420
+#: plpython.c:445
+msgid "unexpected return value from trigger procedure"
+msgstr "trigger yordamından beklenmeyen dönüş değeri"
+
+#: plpython.c:421
+msgid "Expected None or a string."
+msgstr "None ya da string bekleniyordu."
+
+#: plpython.c:435
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "PL/Python trigger fonksiyonu DELETE triggerında \"MODIFY\" döndürdü -- gözardı edildi"
+
+#: plpython.c:446
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "None, \"OK\", \"SKIP\", ya da \"MODIFY\" bekleniyordu"
+
+#: plpython.c:493
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] silindi, satır düzenlenemiyor"
+
+#: plpython.c:496
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] bir sözlük değil"
+
+#: plpython.c:515
+#, c-format
+msgid "name of TD[\"new\"] attribute at ordinal position %d is not a string"
+msgstr ""
+
+#: plpython.c:519
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr ""
+
+#: plpython.c:540
+#, c-format
+msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
+msgstr ""
+
+#: plpython.c:622
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "trigger argümanlarını oluştururken yeni sözlük yaratılamadı"
+
+#: plpython.c:830
+msgid "unsupported set function return mode"
+msgstr "desteklenmeyen küme fonksiyonu dönüş modu"
+
+#: plpython.c:831
+msgid "PL/Python set-returning functions only support returning only value per call."
+msgstr "PL/Python küme dönen fonksiyonları her çağrı içinde sadece değer döndürmeyi desteklerler"
+
+#: plpython.c:843
+msgid "returned object cannot be iterated"
+msgstr ""
+
+#: plpython.c:844
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "PL/Python küme dönen fonksiyonları yinelenebilir bir nesne dönmelidir."
+
+#: plpython.c:872
+msgid "error fetching next item from iterator"
+msgstr "yineleticiden sonraki öğeyi alırken hata"
+
+#: plpython.c:890
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "dönüş tipi \"void\" olan PL/Python fonksiyonu None döndürmedi"
+
+#: plpython.c:937
+#, c-format
+msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
+msgstr ""
+
+#: plpython.c:986
+#, c-format
+msgid "PL/Python function \"%s\" failed"
+msgstr "\"%s\" PL/Python fonksiyonu başarısız oldu"
+
+#: plpython.c:1056
+#, c-format
+msgid "PyList_SetItem() failed for PL/Python function \"%s\" while setting up arguments"
+msgstr "PyList_SetItem() PL/Python fonksiyonunda başarısız oldu Argümanları ayarlarken \"%s\" oldu"
+
+#: plpython.c:1060
+#, c-format
+msgid "PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up arguments"
+msgstr "PyDict_SetItemString() PL/Python fonksiyonunda başarısız oldu Argümanları ayarlarken \"%s\" oldu"
+
+#: plpython.c:1238
+msgid "trigger functions can only be called as triggers"
+msgstr "trigger fonksiyonları sadece trigger olarak çağırılabilirler."
+
+#: plpython.c:1242
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python fonksiyonları %s tipini döndüremezler"
+
+#: plpython.c:1321
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python fonksiyonlar %s tipini kabul etmezler"
+
+#: plpython.c:1415
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "\"%s\" PL/Python fonksiyonu derlenemedi"
+
+#: plpython.c:1727
+msgid "could not create new dictionary"
+msgstr "Yeni sözlük yaratılamadı"
+
+#: plpython.c:1814
+#: plpython.c:1903
+#: plpython.c:1974
+msgid "could not compute string representation of Python object"
+msgstr "Python nesnesinin dizgi gösterimi hesaplanamadı"
+
+#: plpython.c:1828
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "\"%s\" anahtarı planlamada bulunnamadı"
+
+#: plpython.c:1829
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr ""
+
+#: plpython.c:1873
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "Dönen sequence'in uzunluğu satırdaki kolonların sayısı ile eşleşmiyor."
+
+#: plpython.c:1987
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "\"%s\" niteliği Python nesnesinde bulunmaz"
+
+#: plpython.c:1988
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr ""
+
+#: plpython.c:2210
+msgid "plan.status takes no arguments"
+msgstr "plan.status bir argüman almaz"
+
+#: plpython.c:2340
+#: plpython.c:2479
+msgid "transaction aborted"
+msgstr "transaction iptal edildi"
+
+#: plpython.c:2347
+msgid "invalid arguments for plpy.prepare"
+msgstr "plpy.prepare için geçersiz argümanlar"
+
+#: plpython.c:2354
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "plpy.prepare'in ikinci argümanı sequence olmalıdır"
+
+#: plpython.c:2399
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr ""
+
+#: plpython.c:2426
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare kompozit tipleri desteklemez"
+
+#: plpython.c:2454
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "PLy_spi_prepare içinde tanımlanamayan hata"
+
+#: plpython.c:2456
+#: plpython.c:2618
+#: plpython.c:2665
+#, c-format
+msgid "in PL/Python function \"%s\""
+msgstr "\"%s\" PL/Python fonksiyonu içinde"
+
+#: plpython.c:2492
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute bir sorgu ya da bir plan bekledi"
+
+#: plpython.c:2509
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute bir sequence'ı ikinci argüman olarak alır"
+
+#: plpython.c:2525
+#: plpython.c:2552
+#, c-format
+msgid "PL/Python function \"%s\" could not execute plan"
+msgstr "\"%s\" PL/Python fonksiyonu planı çalıştıramadı"
+
+#: plpython.c:2529
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "%d argümanının sequence'ı beklendi; %d alındı: %s"
+
+#: plpython.c:2616
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "PLy_spi_execute_plan içinde beklenmeyen hata"
+
+#: plpython.c:2637
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan başarısız oldu: %s"
+
+#: plpython.c:2663
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "PLy_spi_execute_query içinde tanımlanamayan hata"
+
+#: plpython.c:2674
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute başarısız oldu: %s"
+
+#: plpython.c:2734
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "PLy_spi_execute_fetch_result içinde tanımlanamayan hata"
+
+#: plpython.c:2770
+msgid "untrapped error in initialization"
+msgstr "ilklendirme aşamasında yakalanamayan hata"
+
+#: plpython.c:2773
+msgid "could not create procedure cache"
+msgstr "yordam önbelleği yaratılamadı"
+
+#: plpython.c:2785
+msgid "could not import \"__main__\" module"
+msgstr "\"__main__\" modülü alınamadı"
+
+#: plpython.c:2792
+msgid "could not initialize globals"
+msgstr "global değerler ilklendirilemediler"
+
+#: plpython.c:2894
+msgid "could not parse error message in plpy.elog"
+msgstr "plpy.elog dosyasındaki hata mesajı ayrıştırılamadı"
+
+#: plpython.c:2990
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python: %s"
+
+#: plpython.c:2991
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpython.c:3081
+msgid "out of memory"
+msgstr "yetersiz bellek"
+

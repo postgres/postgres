@@ -1,19 +1,20 @@
 # translation of initdb.po to fr_fr
 # french message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.15 2009/04/09 19:38:51 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.16 2009/05/14 21:41:51 alvherre Exp $
 #
 # Use these quotes: « %s »
-# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.
 #
+# Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.
+# Stéphane Schildknecht <stephane.schildknecht@dalibo.com>, 2009.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-05 05:22+0000\n"
-"PO-Revision-Date: 2009-04-05 10:08+0100\n"
-"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team: French <guillaume@lelarge.info>\n"
+"POT-Creation-Date: 2009-04-15 15:09+0000\n"
+"PO-Revision-Date: 2009-04-15 22:41+0200\n"
+"Last-Translator: Stéphane Schildknecht <stephane.schildknecht@dalibo.com>\n"
+"Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -116,7 +117,7 @@ msgstr ""
 #: initdb.c:672
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
-msgstr "%s : n'a pas pu obtenir des informations sur l'utilisateur courant : %s\n"
+msgstr "%s : n'a pas pu obtenir d'informations sur l'utilisateur courant : %s\n"
 
 #: initdb.c:689
 #, c-format
@@ -147,7 +148,7 @@ msgid ""
 "This might mean you have a corrupted installation or identified\n"
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
-"Cela pourrait signifier que votre installation est corrompue ou que vous avez\n"
+"Cela peut signifier que votre installation est corrompue ou que vous avez\n"
 "identifié le mauvais répertoire avec l'option -L.\n"
 
 #: initdb.c:956
@@ -168,7 +169,7 @@ msgstr "sélection de la valeur par défaut de max_connections... "
 #: initdb.c:1104
 #, c-format
 msgid "selecting default shared_buffers ... "
-msgstr "sélection d'une valeur par défaut pour shared_buffers... "
+msgstr "sélection de la valeur par défaut pour shared_buffers... "
 
 #: initdb.c:1147
 msgid "creating configuration files ... "
@@ -297,11 +298,10 @@ msgid ""
 "or choose a matching combination.\n"
 msgstr ""
 "L'encodage que vous avez sélectionné (%s) et celui que la locale\n"
-"sélectionnée utilise (%s) ne sont pas connus pour leur compatibilité. Ceci\n"
-"peut aboutir à un mauvais comportement des fonctions de manipulation des\n"
-"chaînes de caractères.\n"
-"Ré-exécutez %s soit sans spécifier explicitement d'encodage, soit en\n"
-"choisissant une combinaison possible.\n"
+"sélectionnée utilise (%s) ne sont pas compatibles. Cela peut conduire à\n"
+"des erreurs dans les fonctions de manipulation de chaînes de caractères.\n"
+"Ré-exécutez %s sans préciser d'encodage, ou en choisissant une combinaison\n"
+"compatible.\n"
 
 #: initdb.c:2427
 #, c-format
@@ -381,7 +381,7 @@ msgstr "      --no-locale            équivalent à --locale=C\n"
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr ""
-"      --pwfile=nomfichier    lit le mot de passe du nouveau\n"
+"      --pwfile=NOMFICHIER    lit le mot de passe du nouveau\n"
 "                             super-utilisateur à partir de ce fichier\n"
 
 #: initdb.c:2441
@@ -479,7 +479,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
+"Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 
 #: initdb.c:2561
 #, c-format
@@ -496,7 +496,7 @@ msgstr "Lancé en mode « sans nettoyage ». Les erreurs ne seront pas supprimées.\
 #: initdb.c:2894
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez « %s --help » pour plus d'informations.\n"
+msgstr "Essayer « %s --help » pour plus d'informations.\n"
 
 #: initdb.c:2624
 #, c-format
@@ -507,7 +507,7 @@ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
 msgstr ""
-"%s : les options d'invite du mot de passe et de fichier de mot de passe ne\n"
+"%s : les options d'invite du mot de passe et le fichier de mots de passe ne\n"
 " peuvent pas être indiquées simultanément\n"
 
 #: initdb.c:2639
@@ -520,8 +520,8 @@ msgstr ""
 "\n"
 "ATTENTION : active l'authentification « trust » pour les connexions\n"
 "locales.\n"
-"Vous pouvez modifier ceci en éditant pg_hba.conf ou en utilisant l'option -A\n"
-"au prochain lancement d'initdb.\n"
+"Cela peut être modifié par l'édition de pg_hba.conf ou en utilisant l'option\n"
+"-A au prochain lancement d'initdb.\n"
 
 #: initdb.c:2662
 #, c-format
@@ -659,14 +659,14 @@ msgstr ""
 #, c-format
 msgid "%s: warning: suitable text search configuration for locale %s is unknown\n"
 msgstr ""
-"%s : attention : la configuration de la recherche plein texte en adéquation\n"
-"avec la locale « %s » est inconnue\n"
+"%s : attention : pas de configuration de la recherche plein texte connue\n"
+"pour la locale « %s »\n"
 
 #: initdb.c:2946
 #, c-format
 msgid "%s: warning: specified text search configuration \"%s\" might not match locale %s\n"
 msgstr ""
-"%s : attention : la configuration spécifiée pour la recherche plein texte,\n"
+"%s : attention : la configuration indiquée pour la recherche plein texte,\n"
 "« %s », pourrait ne pas correspondre à la locale « %s »\n"
 
 #: initdb.c:2951
@@ -857,11 +857,4 @@ msgstr "le processus fils a été terminé par le signal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
-
-#~ msgid ""
-#~ "  --locale=LOCALE           initialize database cluster with given "
-#~ "locale\n"
-#~ msgstr ""
-#~ "  --locale=LOCALE            initialise le cluster avec la locale "
-#~ "indiquée\n"
 
