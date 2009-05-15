@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.103 2009/05/05 20:06:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.104 2009/05/15 15:56:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,8 @@ proc_exit_prepare(int code)
 	/* do our shared memory exits first */
 	shmem_exit(code);
 
-	elog(DEBUG3, "proc_exit(%d)", code);
+	elog(DEBUG3, "proc_exit(%d): %d callbacks to make",
+		 code, on_proc_exit_index);
 
 	/*
 	 * call all the registered callbacks.
@@ -193,7 +194,8 @@ proc_exit_prepare(int code)
 void
 shmem_exit(int code)
 {
-	elog(DEBUG3, "shmem_exit(%d)", code);
+	elog(DEBUG3, "shmem_exit(%d): %d callbacks to make",
+		 code, on_shmem_exit_index);
 
 	/*
 	 * call all the registered callbacks.
