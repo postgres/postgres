@@ -1,9 +1,8 @@
-# PostgreSQL Ident Authentication Maps
-# ====================================
+# PostgreSQL User Name Maps
+# =========================
 #
 # Refer to the PostgreSQL Administrator's Guide, chapter "Client
-# Authentication" for a complete description.  A short synopsis
-# follows.
+# Authentication" for a complete description.  A short synopsis follows.
 #
 # This file controls PostgreSQL username mapping. It maps
 # external user names to their corresponding
@@ -20,10 +19,15 @@
 # PG-USERNAME.
 #
 # If SYSTEM-USERNAME starts with a slash (/), it will be treated as
-# a regular expression. Up to one capture is allowed, and this will
-# be replaced in PG-USERNAME for backslash-one (\1) if present.
+# a regular expression.  Optionally this can contain a capture (a
+# parenthesized subexpression).  The substring matching the capture
+# will be substituted for \1 (backslash-one) if present in PG-USERNAME.
 #
-# Multiple maps may be specified in this file and used # by pg_hba.conf.
+# Multiple maps may be specified in this file and used by pg_hba.conf.
+#
+# No map names are defined in the default configuration.  If all system
+# user names and PostgreSQL user names are the same, you don't need
+# anything in this file.
 #
 # This file is read on server startup and when the postmaster receives
 # a SIGHUP signal.  If you edit the file on a running system, you have
@@ -32,9 +36,5 @@
 
 # Put your actual configuration here
 # ----------------------------------
-#
-# No map names are defined in the default configuration.  If all system
-# user names and PostgreSQL user names are the same, you don't need
-# this file.
 
 # MAPNAME     SYSTEM-USERNAME    PG-USERNAME
