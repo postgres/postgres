@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.27 2009/04/23 10:20:27 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.28 2009/05/16 22:03:53 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -33,7 +33,7 @@ these required items, the cluster configuration files
 <filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>, and
 <filename>pg_ident.conf</filename> are traditionally stored in
 <varname>PGDATA</> (although in <productname>PostgreSQL</productname> 8.0 and
-later, it is possible to keep them elsewhere). 
+later, it is possible to keep them elsewhere).
 </para>
 
 <table tocentry="1" id="pgdata-contents-table">
@@ -74,7 +74,7 @@ Item
 <row>
  <entry><filename>pg_multixact</></entry>
  <entry>Subdirectory containing multitransaction status data
-  (used for shared row locks)</entry> 
+  (used for shared row locks)</entry>
 </row>
 
 <row>
@@ -131,12 +131,12 @@ there.
 Each table and index is stored in a separate file, named after the table
 or index's <firstterm>filenode</> number, which can be found in
 <structname>pg_class</>.<structfield>relfilenode</>. In addition to the
-main file (aka. main fork), a <firstterm>free space map</> (see
-<xref linkend="storage-fsm">) that stores information about free space
-available in the relation, is stored in a file named after the filenode
-number, with the <literal>_fsm</> suffix.  Tables also have a visibility map
-fork, with the <literal>_vm</> suffix, to track which pages are known to have
-no dead tuples and therefore need no vacuuming.
+main file (a/k/a main fork), each table and index has a <firstterm>free space
+map</> (see <xref linkend="storage-fsm">), which stores information about free
+space available in the relation.  The free space map is stored in a file named
+with the filenode number plus the suffix <literal>_fsm</>.  Tables also have a
+visibility map fork, with the suffix <literal>_vm</>, to track which pages are
+known to have no dead tuples and therefore need no vacuuming.
 </para>
 
 <caution>
@@ -157,6 +157,8 @@ This arrangement avoids problems on platforms that have file size limitations.
 (Actually, 1 GB is just the default segment size.  The segment size can be
 adjusted using the configuration option <option>--with-segsize</option>
 when building <productname>PostgreSQL</>.)
+In principle, free space map and visibility map forks could require multiple
+segments as well, though this is unlikely to happen in practice.
 The contents of tables and indexes are discussed further in
 <xref linkend="storage-page-layout">.
 </para>
@@ -193,7 +195,7 @@ if a tablespace other than <literal>pg_default</> is specified for them.
 The name of a temporary file has the form
 <filename>pgsql_tmp<replaceable>PPP</>.<replaceable>NNN</></filename>,
 where <replaceable>PPP</> is the PID of the owning backend and
-<replaceable>NNN</> distinguishes different files of that backend.
+<replaceable>NNN</> distinguishes different temporary files of that backend.
 </para>
 
 </sect1>
@@ -215,10 +217,10 @@ Oversized-Attribute Storage Technique).
 <para>
 <productname>PostgreSQL</productname> uses a fixed page size (commonly
 8 kB), and does not allow tuples to span multiple pages.  Therefore,  it is
-not possible to store very large field values directly.  To overcome 
+not possible to store very large field values directly.  To overcome
 this limitation, large  field values are compressed and/or broken up into
 multiple physical rows. This happens transparently to the user, with only
-small impact on most of the backend code.  The technique is affectionately 
+small impact on most of the backend code.  The technique is affectionately
 known as <acronym>TOAST</>  (or <quote>the best thing since sliced bread</>).
 </para>
 
@@ -377,24 +379,24 @@ comparison table, in which all the HTML pages were cut down to 7 kB to fit.
 
 <title>Free Space Map</title>
 
-    <indexterm>
-     <primary>Free Space Map</primary>
-    </indexterm>
-    <indexterm><primary>FSM</><see>Free Space Map</></indexterm>
+<indexterm>
+ <primary>Free Space Map</primary>
+</indexterm>
+<indexterm><primary>FSM</><see>Free Space Map</></indexterm>
 
 <para>
-A Free Space Map is stored with every heap and index relation, except for
-hash indexes, to keep track of available space in the relation. It's stored
-along the main relation data, in a separate FSM relation fork, named after
-relfilenode of the relation, but with a <literal>_fsm</> suffix. For example,
-if the relfilenode of a relation is 12345, the FSM is stored in a file called
+Each heap and index relation, except for hash indexes, has a Free Space Map
+(FSM) to keep track of available space in the relation. It's stored
+alongside the main relation data in a separate relation fork, named after the
+filenode number of the relation, plus a <literal>_fsm</> suffix. For example,
+if the filenode of a relation is 12345, the FSM is stored in a file called
 <filename>12345_fsm</>, in the same directory as the main relation file.
 </para>
 
 <para>
 The Free Space Map is organized as a tree of <acronym>FSM</> pages. The
-bottom level <acronym>FSM</> pages stores the free space available on every
-heap (or index) page, using one byte to represent each heap page. The upper
+bottom level <acronym>FSM</> pages store the free space available on each
+heap (or index) page, using one byte to represent each such page. The upper
 levels aggregate information from the lower levels.
 </para>
 
@@ -409,8 +411,8 @@ at the root.
 <para>
 See <filename>src/backend/storage/freespace/README</> for more details on
 how the <acronym>FSM</> is structured, and how it's updated and searched.
-<xref linkend="pgfreespacemap"> contrib module can be used to view the
-information stored in free space maps.
+The <filename>contrib/pg_freespacemap</> module can be used to examine the
+information stored in free space maps (see <xref linkend="pgfreespacemap">).
 </para>
 
 </sect1>
@@ -515,7 +517,7 @@ data. Empty in ordinary tables.</entry>
   and <structfield>pd_special</structfield>). These contain byte offsets
   from the page start to the start
   of unallocated space, to the end of unallocated space, and to the start of
-  the special space. 
+  the special space.
   The next 2 bytes of the page header,
   <structfield>pd_pagesize_version</structfield>, store both the page size
   and a version indicator.  Beginning with
@@ -530,15 +532,15 @@ data. Empty in ordinary tables.</entry>
   more than one page size in an installation.
   The last field is a hint that shows whether pruning the page is likely
   to be profitable: it tracks the oldest un-pruned XMAX on the page.
-  
+
  </para>
- 
+
  <table tocentry="1" id="pageheaderdata-table">
  <title>PageHeaderData Layout</title>
  <titleabbrev>PageHeaderData Layout</titleabbrev>
- <tgroup cols="4">   
+ <tgroup cols="4">
  <thead>
-  <row> 
+  <row>
    <entry>Field</entry>
    <entry>Type</entry>
    <entry>Length</entry>
@@ -627,25 +629,25 @@ data. Empty in ordinary tables.</entry>
  </para>
 
  <para>
- 
+
   The items themselves are stored in space allocated backwards from the end
   of unallocated space.  The exact structure varies depending on what the
   table is to contain. Tables and sequences both use a structure named
   <type>HeapTupleHeaderData</type>, described below.
 
  </para>
- 
+
  <para>
- 
+
   The final section is the <quote>special section</quote> which can
  contain anything the access method wishes to store.  For example,
   b-tree indexes store links to the page's left and right siblings,
   as well as some other data relevant to the index structure.
   Ordinary tables do not use a special section at all (indicated by setting
   <structfield>pd_special</> to equal the page size).
-  
+
  </para>
- 
+
  <para>
 
   All table rows are structured in the same way. There is a fixed-size
@@ -669,15 +671,15 @@ data. Empty in ordinary tables.</entry>
   <structfield>t_hoff</> a MAXALIGN multiple will appear between the null
   bitmap and the object ID.  (This in turn ensures that the object ID is
   suitably aligned.)
-  
+
  </para>
- 
+
  <table tocentry="1" id="heaptupleheaderdata-table">
  <title>HeapTupleHeaderData Layout</title>
  <titleabbrev>HeapTupleHeaderData Layout</titleabbrev>
- <tgroup cols="4">   
+ <tgroup cols="4">
  <thead>
-  <row> 
+  <row>
    <entry>Field</entry>
    <entry>Type</entry>
    <entry>Length</entry>
@@ -743,7 +745,7 @@ data. Empty in ordinary tables.</entry>
  </para>
 
  <para>
- 
+
   Interpreting the actual data can only be done with information obtained
   from other tables, mostly <structname>pg_attribute</structname>. The
   key values needed to identify field locations are
@@ -753,7 +755,7 @@ data. Empty in ordinary tables.</entry>
   null values. All this trickery is wrapped up in the functions
   <firstterm>heap_getattr</firstterm>, <firstterm>fastgetattr</firstterm>
   and <firstterm>heap_getsysattr</firstterm>.
-  
+
  </para>
  <para>
 
@@ -767,7 +769,7 @@ data. Empty in ordinary tables.</entry>
   value and some flag bits.  Depending on the flags, the data can be either
   inline or in a <acronym>TOAST</> table;
   it might be compressed, too (see <xref linkend="storage-toast">).
-  
+
  </para>
 </sect1>
 
