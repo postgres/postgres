@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.93 2009/04/23 10:09:11 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.94 2009/05/16 22:51:24 tgl Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -375,24 +375,25 @@
    </para>
 
    <para>
-    <command>VACUUM</> normally skips pages that don't have any dead row
-    versions, but those pages might still have tuples with old XID values.
-    To replace them too, a scan of the whole table is needed.
-    <xref linkend="guc-vacuum-freeze-table-age"> controls when
-    <command>VACUUM</> does that: a whole table sweep is forced if
-    the table hasn't been fully scanned for <varname>vacuum_freeze_table_age</>
-    - <varname>vacuum_freeze_min_age</> transactions. Setting it to 0
-    makes <command>VACUUM</> to ignore the visibility map and always scan all
-    pages.
-   </para>
-
-   <para>
-    <xref linkend="guc-vacuum-freeze-min-age"> 
+    <xref linkend="guc-vacuum-freeze-min-age">
     controls how old an XID value has to be before it's replaced with
     <literal>FrozenXID</>.  Larger values of this setting
     preserve transactional information longer, while smaller values increase
     the number of transactions that can elapse before the table must be
     vacuumed again.
+   </para>
+
+   <para>
+    <command>VACUUM</> normally skips pages that don't have any dead row
+    versions, but those pages might still have row versions with old XID
+    values.  To ensure all old XIDs have been replaced by
+    <literal>FrozenXID</>, a scan of the whole table is needed.
+    <xref linkend="guc-vacuum-freeze-table-age"> controls when
+    <command>VACUUM</> does that: a whole table sweep is forced if
+    the table hasn't been fully scanned for <varname>vacuum_freeze_table_age</>
+    minus <varname>vacuum_freeze_min_age</> transactions. Setting it to 0
+    forces <command>VACUUM</> to always scan all pages, effectively ignoring
+    the visibility map.
    </para>
 
    <para>
@@ -423,9 +424,9 @@
    </para>
 
    <para>
-    The effective maximum for <varname>vacuum_table_age</> is 0.95 * 
+    The effective maximum for <varname>vacuum_freeze_table_age</> is 0.95 *
     <varname>autovacuum_freeze_max_age</>; a setting higher than that will be
-    capped to that maximum. A value higher than
+    capped to the maximum. A value higher than
     <varname>autovacuum_freeze_max_age</> wouldn't make sense because an
     anti-wraparound autovacuum would be triggered at that point anyway, and
     the 0.95 multiplier leaves some breathing room to run a manual
@@ -477,7 +478,7 @@
     <structname>pg_database</>.  In particular,
     the <structfield>relfrozenxid</> column of a table's
     <structname>pg_class</> row contains the freeze cutoff XID that was used
-    by the last <command>VACUUM</> for that table.  All normal
+    by the last whole-table <command>VACUUM</> for that table.  All normal
     XIDs older than this cutoff XID are guaranteed to have been replaced by
     <literal>FrozenXID</> within the table.  Similarly,
     the <structfield>datfrozenxid</> column of a database's
@@ -493,12 +494,16 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 </programlisting>
 
     The <literal>age</> column measures the number of transactions from the
-    cutoff XID to the current transaction's XID.  <command>VACUUM</> normally
-    only scans pages that have been modified since last vacuum, but
+    cutoff XID to the current transaction's XID.
+   </para>
+
+   <para>
+    <command>VACUUM</> normally
+    only scans pages that have been modified since the last vacuum, but
     <structfield>relfrozenxid</> can only be advanced when the whole table is
     scanned. The whole table is scanned when <structfield>relfrozenxid</> is
-    more than <varname>vacuum_freeze_table_age</> transactions old, if
-    <command>VACUUM FREEZE</> command is used, or if all pages happen to
+    more than <varname>vacuum_freeze_table_age</> transactions old, when the
+    <command>VACUUM FREEZE</> command is used, or when all pages happen to
     require vacuuming to remove dead row versions. When <command>VACUUM</>
     scans the whole table, after it's finished <literal>age(relfrozenxid)</>
     should be a little more than the <varname>vacuum_freeze_min_age</> setting
@@ -571,14 +576,14 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     There is a persistent daemon process, called the
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
     <firstterm>autovacuum worker</firstterm> processes for all databases. The
-    launcher will distribute the work across time, but attempt to start one
+    launcher will distribute the work across time, attempting to start one
     worker on each database every <xref linkend="guc-autovacuum-naptime">
     seconds. One worker will be launched for each database, with a maximum
     of <xref linkend="guc-autovacuum-max-workers"> processes running at the
     same time. If there are more than
     <xref linkend="guc-autovacuum-max-workers"> databases to be processed,
     the next database will be processed as soon as the first worker finishes.
-    The worker processes will check each table within its database and
+    Each worker process will check each table within its database and
     execute <command>VACUUM</> and/or <command>ANALYZE</> as needed.
    </para>
 
@@ -621,7 +626,7 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
     than <varname>vacuum_freeze_table_age</> transactions old, the whole
     table is scanned to freeze old tuples and advance
     <structfield>relfrozenxid</>, otherwise only pages that have been modified
-    since last vacuum are vacuumed.
+    since the last vacuum are scanned.
    </para>
 
    <para>
@@ -636,7 +641,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <para>
     The default thresholds and scale factors are taken from
     <filename>postgresql.conf</filename>, but it is possible to override them
-    on a table-by-table basis; see 
+    on a table-by-table basis; see
     <xref linkend="sql-createtable-storage-parameters"
     endterm="sql-createtable-storage-parameters-title"> for more information.
     If a setting
@@ -806,7 +811,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
    just when you need them the most.  Also, on <productname>Linux</>,
    <application>syslog</> will sync each message to disk, yielding poor
    performance.  (You can use a <literal>-</> at the start of the file name
-   in the <application>syslog</> configuration file to disable this behavior.)
+   in the <application>syslog</> configuration file to disable syncing.)
   </para>
 
   <para>
