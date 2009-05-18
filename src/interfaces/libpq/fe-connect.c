@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.373 2009/04/24 09:43:10 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.374 2009/05/18 16:15:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3779,7 +3779,7 @@ pwdfMatchesString(char *buf, char *token)
 		return NULL;
 	tbuf = buf;
 	ttok = token;
-	if (*tbuf == '*')
+	if (tbuf[0] == '*' && tbuf[1] == ':')
 		return tbuf + 2;
 	while (*tbuf != 0)
 	{
