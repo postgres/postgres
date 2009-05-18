@@ -471,14 +471,14 @@ T572	Multiset-returning external SQL-invoked functions			NO
 T581	Regular expression substring function			YES	
 T591	UNIQUE constraints of possibly null columns			YES	
 T601	Local cursor references			NO	
-T611	Elementary OLAP operations			NO	
-T612	Advanced OLAP operations			NO	
+T611	Elementary OLAP operations			NO	most forms supported
+T612	Advanced OLAP operations			NO	some forms supported
 T613	Sampling			NO	
-T614	NTILE function			NO	
-T615	LEAD and LAG functions			NO	
+T614	NTILE function			YES	
+T615	LEAD and LAG functions			YES	
 T616	Null treatment option for LEAD and LAG functions			NO	
-T617	FIRST_VALUE and LAST_VALUE function			NO	
-T618	NTH_VALUE function			NO	
+T617	FIRST_VALUE and LAST_VALUE function			YES	
+T618	NTH_VALUE function			NO	function exists, but some options missing
 T621	Enhanced numeric functions			YES	
 T631	IN predicate with one list element			NO	
 T641	Multiple column assignment			NO	only some syntax variants supported
