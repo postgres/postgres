@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cube.sgml,v 1.5 2007/12/06 04:12:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cube.sgml,v 1.6 2009/05/18 11:08:24 petere Exp $ -->
 
 <sect1 id="cube">
  <title>cube</title>
@@ -16,12 +16,13 @@
   <title>Syntax</title>
 
   <para>
-   The following are valid external representations for the <type>cube</>
-   type.  <replaceable>x</>, <replaceable>y</>, etc denote floating-point
-   numbers:
+   <xref linkend="cube-repr-table"> shows the valid external
+   representations for the <type>cube</>
+   type.  <replaceable>x</>, <replaceable>y</>, etc. denote
+   floating-point numbers.
   </para>
 
-  <table>
+  <table id="cube-repr-table">
    <title>Cube external representations</title>
    <tgroup cols="2">
     <tbody>
@@ -159,10 +160,10 @@ a &lt;@ b                Contained in
   </para>
 
   <para>
-   The following functions are available:
+   <xref linkend="cube-functions-table"> shows the available functions.
   </para>
 
-  <table>
+  <table id="cube-functions-table">
    <title>Cube functions</title>
    <tgroup cols="2">
     <tbody>

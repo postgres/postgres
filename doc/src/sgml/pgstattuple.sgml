@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.4 2008/03/21 03:23:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstattuple.sgml,v 1.5 2009/05/18 11:08:24 petere Exp $ -->
 
 <sect1 id="pgstattuple">
  <title>pgstattuple</title>
@@ -28,8 +28,7 @@
       to determine whether vacuum is necessary or not.  The argument is the
       target relation's name (optionally schema-qualified).
       For example:
-     </para>
-     <programlisting>
+<programlisting>
 test=> SELECT * FROM pgstattuple('pg_catalog.pg_proc');
 -[ RECORD 1 ]------+-------
 table_len          | 458752
@@ -41,13 +40,11 @@ dead_tuple_len     | 3157
 dead_tuple_percent | 0.69
 free_space         | 8932
 free_percent       | 1.95
-     </programlisting>
-
-    <para>
-     The output columns are:
+</programlisting>
+     The output columns are described in <xref linkend="pgstattuple-columns">.
     </para>
 
-    <table>
+    <table id="pgstattuple-columns">
      <title><function>pgstattuple</function> output columns</title>
      <tgroup cols="3">
       <thead>

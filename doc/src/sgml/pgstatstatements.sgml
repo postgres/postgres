@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.1 2009/01/04 22:19:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstatstatements.sgml,v 1.2 2009/05/18 11:08:24 petere Exp $ -->
 
 <sect1 id="pgstatstatements">
  <title>pg_stat_statements</title>
@@ -27,10 +27,10 @@
    named <structname>pg_stat_statements</>.  This view contains one row for
    each distinct query text, database ID, and user ID (up to the maximum
    number of distinct statements that the module can track).  The columns
-   of the view are:
+   of the view are shown in <xref linkend="pgstatstatements-columns">.
   </para>
 
-  <table>
+  <table id="pgstatstatements-columns">
    <title><structname>pg_stat_statements</> columns</title>
 
    <tgroup cols="4">

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.6 2008/01/17 14:34:45 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgcrypto.sgml,v 1.7 2009/05/18 11:08:24 petere Exp $ -->
 
 <sect1 id="pgcrypto">
  <title>pgcrypto</title>
@@ -217,10 +217,11 @@
     too high a count the time to calculate a hash may be several years
     &mdash; which is somewhat impractical.  If the <parameter>iter_count</>
     parameter is omitted, the default iteration count is used.
-    Allowed values for <parameter>iter_count</> depend on the algorithm:
+    Allowed values for <parameter>iter_count</> depend on the algorithm and
+    are shown in <xref linkend="pgcrypto-icfc-table">.
    </para>
 
-   <table>
+   <table id="pgcrypto-icfc-table">
     <title>Iteration counts for <function>crypt()</></title>
     <tgroup cols="4">
      <thead>
@@ -262,7 +263,7 @@
    </para>
 
    <para>
-    Here is a table that gives an overview of the relative slowness
+    <xref linkend="pgcrypto-hash-speed-table"> gives an overview of the relative slowness
     of different hashing algorithms.
     The table shows how much time it would take to try all
     combinations of characters in an 8-character password, assuming
@@ -273,7 +274,7 @@
     <function>gen_salt</function>.
    </para>
 
-   <table>
+   <table id="pgcrypto-hash-speed-table">
     <title>Hash algorithm speeds</title>
     <tgroup cols="4">
      <thead>
@@ -1224,8 +1225,7 @@
    <filename>pgcrypto</filename> uses code from the following sources:
   </para>
 
-  <table>
-   <title>Credits</title>
+  <informaltable>
    <tgroup cols="3">
     <thead>
      <row>
@@ -1277,7 +1277,7 @@
      </row>
     </tbody>
    </tgroup>
-  </table>
+  </informaltable>
  </sect2>
 
 </sect1>

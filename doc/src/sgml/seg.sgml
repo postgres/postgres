@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.4 2007/12/06 04:12:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/seg.sgml,v 1.5 2009/05/18 11:08:24 petere Exp $ -->
 
 <sect1 id="seg">
  <title>seg</title>
@@ -89,13 +89,13 @@ test=> select '6.25 .. 6.50'::seg as "pH";
   </para>
 
   <para>
-   In the following table, <replaceable>x</>, <replaceable>y</>, and
+   In <xref linkend="seg-repr-table">, <replaceable>x</>, <replaceable>y</>, and
    <replaceable>delta</> denote
    floating-point numbers.  <replaceable>x</> and <replaceable>y</>, but
-   not <replaceable>delta</>, can be preceded by a certainty indicator:
+   not <replaceable>delta</>, can be preceded by a certainty indicator.
   </para>
 
-  <table>
+  <table id="seg-repr-table">
    <title><type>seg</> external representations</title>
    <tgroup cols="2">
     <tbody>

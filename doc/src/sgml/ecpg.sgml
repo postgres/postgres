@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.88 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.89 2009/05/18 11:08:24 petere Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -1137,8 +1137,9 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
         currently no variable to change that within ecpg.
        </para>
        <para>
-        The following input formats are allowed:
-        <table>
+        <xref linkend="ecpg-pgtypesdate-from-asc-table"> shows the allowed input formats.
+       </para>
+        <table id="ecpg-pgtypesdate-from-asc-table">
          <title>Valid input formats for <function>PGTYPESdate_from_asc</function></title>
          <tgroup cols="2">
           <thead>
@@ -1219,7 +1220,6 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
           </tbody>
          </tgroup>
         </table>
-       </para>
       </listitem>
      </varlistentry>
 
@@ -1392,10 +1392,11 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
         All other characters are copied 1:1 to the output string.
        </para>
        <para>
-        The following table indicates a few possible formats. This will give
+        <xref linkend="ecpg-pgtypesdate-fmt-asc-example-table"> indicates a few possible formats. This will give
         you an idea of how to use this function. All output lines are based on
-        the same date: November, 23rd, 1959.
-        <table>
+        the same date: November 23, 1959.
+       </para>
+        <table id="ecpg-pgtypesdate-fmt-asc-example-table">
          <title>Valid input formats for <function>PGTYPESdate_fmt_asc</function></title>
          <tgroup cols="2">
           <thead>
@@ -1456,7 +1457,6 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
           </tbody>
          </tgroup>
         </table>
-       </para>
       </listitem>
      </varlistentry>
 
@@ -1483,9 +1483,10 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
         day.
        </para>
        <para>
-        The following table indicates a few possible formats. This will give
+        <xref linkend="ecpg-rdefmtdate-example-table"> indicates a few possible formats. This will give
         you an idea of how to use this function.
-        <table>
+       </para>
+        <table id="ecpg-rdefmtdate-example-table">
          <title>Valid input formats for <function>rdefmtdate</function></title>
          <tgroup cols="3">
           <thead>
@@ -1564,7 +1565,6 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
           </tbody>
          </tgroup>
         </table>
-       </para>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -1612,8 +1612,9 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
         specifiers are silently discarded.
        </para>
        <para>
-        The following table contains a few examples for input strings:
-        <table>
+        <xref linkend="ecpg-pgtypestimestamp-from-asc-example-table"> contains a few examples for input strings.
+       </para>
+        <table id="ecpg-pgtypestimestamp-from-asc-example-table">
          <title>Valid input formats for <function>PGTYPEStimestamp_from_asc</function></title>
          <tgroup cols="2">
           <thead>
@@ -1642,7 +1643,6 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
           </tbody>
          </tgroup>
         </table>
-       </para>
       </listitem>
      </varlistentry>
 
