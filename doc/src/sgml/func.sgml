@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.479 2009/05/13 21:53:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.480 2009/05/18 08:59:29 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1997,7 +1997,7 @@
       <row>
        <entry><literal>iso_8859_5_to_koi8_r</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
       </row>
 
       <row>
@@ -2056,32 +2056,38 @@
 
       <row>
        <entry><literal>koi8_r_to_iso_8859_5</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
        <entry><literal>koi8_r_to_mic</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
        <entry><literal>koi8_r_to_utf8</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
        <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
        <entry><literal>koi8_r_to_windows_1251</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
        <entry><literal>WIN1251</literal></entry>
       </row>
 
       <row>
        <entry><literal>koi8_r_to_windows_866</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
        <entry><literal>WIN866</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>koi8_u_to_utf8</literal></entry>
+       <entry><literal>KOI8U</literal></entry>
+       <entry><literal>UTF8</literal></entry>
       </row>
 
       <row>
@@ -2153,7 +2159,7 @@
       <row>
        <entry><literal>mic_to_koi8_r</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
       </row>
 
       <row>
@@ -2351,7 +2357,13 @@
       <row>
        <entry><literal>utf8_to_koi8_r</literal></entry>
        <entry><literal>UTF8</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>utf8_to_koi8_u</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>KOI8U</literal></entry>
       </row>
 
       <row>
@@ -2459,7 +2471,7 @@
       <row>
        <entry><literal>windows_1251_to_koi8_r</literal></entry>
        <entry><literal>WIN1251</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
       </row>
 
       <row>
@@ -2501,7 +2513,7 @@
       <row>
        <entry><literal>windows_866_to_koi8_r</literal></entry>
        <entry><literal>WIN866</literal></entry>
-       <entry><literal>KOI8</literal></entry>
+       <entry><literal>KOI8R</literal></entry>
       </row>
 
       <row>

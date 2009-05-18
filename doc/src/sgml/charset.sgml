@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.94 2009/05/06 16:15:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.95 2009/05/18 08:59:28 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -875,7 +875,7 @@ $ <userinput>psql -l</userinput>
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
          <entry><emphasis>ISO_8859_5</emphasis>,
-         <literal>KOI8</literal>,
+         <literal>KOI8R</literal>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>,
          <literal>WIN866</literal>,
@@ -907,13 +907,19 @@ $ <userinput>psql -l</userinput>
          </entry>
         </row>
         <row>
-         <entry><literal>KOI8</literal></entry>
-         <entry><emphasis>KOI8</emphasis>,
+         <entry><literal>KOI8R</literal></entry>
+         <entry><emphasis>KOI8R</emphasis>,
          <literal>ISO_8859_5</literal>,
          <literal>MULE_INTERNAL</literal>,
          <literal>UTF8</literal>,
          <literal>WIN866</literal>,
          <literal>WIN1251</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>KOI8U</literal></entry>
+         <entry><emphasis>KOI8U</emphasis>,
+         <literal>UTF8</literal>
          </entry>
         </row>
         <row>
@@ -990,7 +996,7 @@ $ <userinput>psql -l</userinput>
           <literal>EUC_KR</literal>,
           <literal>EUC_TW</literal>,
           <literal>ISO_8859_5</literal>,
-          <literal>KOI8</literal>,
+          <literal>KOI8R</literal>,
           <literal>LATIN1</literal> to <literal>LATIN4</literal>,
           <literal>SJIS</literal>,
           <literal>WIN866</literal>,
@@ -1022,7 +1028,7 @@ $ <userinput>psql -l</userinput>
          <entry><literal>WIN866</literal></entry>
          <entry><emphasis>WIN866</emphasis>,
           <literal>ISO_8859_5</literal>,
-          <literal>KOI8</literal>,
+          <literal>KOI8R</literal>,
           <literal>MULE_INTERNAL</literal>,
           <literal>UTF8</literal>,
           <literal>WIN1251</literal>
@@ -1046,7 +1052,7 @@ $ <userinput>psql -l</userinput>
          <entry><literal>WIN1251</literal></entry>
          <entry><emphasis>WIN1251</emphasis>,
           <literal>ISO_8859_5</literal>,
-          <literal>KOI8</literal>,
+          <literal>KOI8R</literal>,
           <literal>MULE_INTERNAL</literal>,
           <literal>UTF8</literal>,
           <literal>WIN866</literal>
