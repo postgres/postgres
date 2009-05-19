@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.136 2009/05/05 18:02:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.137 2009/05/19 08:30:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,19 +363,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Quit if no analyzable columns
+	 * Quit if no analyzable columns and no pg_class update needed.
 	 */
-	if (attr_cnt <= 0 && !analyzableindex)
-	{
-		/*
-		 * We report that the table is empty; this is just so that the
-		 * autovacuum code doesn't go nuts trying to get stats about a
-		 * zero-column table.
-		 */
-		if (update_reltuples)
-			pgstat_report_analyze(onerel, 0, 0);
+	if (attr_cnt <= 0 && !analyzableindex && !update_reltuples)
 		goto cleanup;
-	}
 
 	/*
 	 * Determine how many rows we need to sample, using the worst case from
