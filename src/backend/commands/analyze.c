@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.89.2.2 2008/01/03 21:24:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.89.2.3 2009/05/19 08:30:24 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,22 +313,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/*
-	 * Quit if no analyzable columns
-	 */
-	if (attr_cnt <= 0 && !analyzableindex)
-	{
-		/*
-		 * We report that the table is empty; this is just so that the
-		 * autovacuum code doesn't go nuts trying to get stats about a
-		 * zero-column table.
-		 */
-		if (!vacstmt->vacuum)
-			pgstat_report_analyze(RelationGetRelid(onerel),
-								  onerel->rd_rel->relisshared,
-								  0, 0);
-
+ 	 * Quit if no analyzable columns and no pg_class update needed.
+ 	 */
+	if (attr_cnt <= 0 && !analyzableindex && vacstmt->vacuum)
 		goto cleanup;
-	}
 
 	/*
 	 * Determine how many rows we need to sample, using the worst case from
