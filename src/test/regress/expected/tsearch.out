@@ -624,7 +624,7 @@ to_tsquery('english', 'sea&foo'), 'HighlightAll=true');
  <body>
  <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>
  <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
-  ff-bg
+ ff-bg
  <script>
         document.write(15);
  </script>
@@ -1026,4 +1026,38 @@ SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 -------
      1
 (1 row)
+
+-- test finding items in GIN's pending list
+create temp table pendtest (ts tsvector);
+create index pendtest_idx on pendtest using gin(ts);
+insert into pendtest values (to_tsvector('Lore ipsam'));
+insert into pendtest values (to_tsvector('Lore ipsum'));
+select * from pendtest where 'ipsu:*'::tsquery @@ ts;
+         ts         
+--------------------
+ 'ipsum':2 'lore':1
+(1 row)
+
+select * from pendtest where 'ipsa:*'::tsquery @@ ts;
+         ts         
+--------------------
+ 'ipsam':2 'lore':1
+(1 row)
+
+select * from pendtest where 'ips:*'::tsquery @@ ts;
+         ts         
+--------------------
+ 'ipsam':2 'lore':1
+ 'ipsum':2 'lore':1
+(2 rows)
+
+select * from pendtest where 'ipt:*'::tsquery @@ ts;
+ ts 
+----
+(0 rows)
+
+select * from pendtest where 'ipi:*'::tsquery @@ ts;
+ ts 
+----
+(0 rows)
 

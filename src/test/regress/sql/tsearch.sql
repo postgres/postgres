@@ -361,3 +361,14 @@ SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 INSERT INTO test_tsvector (t) VALUES ('345 qwerty');
 
 SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+
+-- test finding items in GIN's pending list
+create temp table pendtest (ts tsvector);
+create index pendtest_idx on pendtest using gin(ts);
+insert into pendtest values (to_tsvector('Lore ipsam'));
+insert into pendtest values (to_tsvector('Lore ipsum'));
+select * from pendtest where 'ipsu:*'::tsquery @@ ts;
+select * from pendtest where 'ipsa:*'::tsquery @@ ts;
+select * from pendtest where 'ips:*'::tsquery @@ ts;
+select * from pendtest where 'ipt:*'::tsquery @@ ts;
+select * from pendtest where 'ipi:*'::tsquery @@ ts;
