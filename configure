@@ -1431,7 +1431,7 @@ Some influential environment variables:
   CPPFLAGS    C/C++/Objective C preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
-  LDFLAGS_SL
+  LDFLAGS_SL  linker flags for shared library linking
   DOCBOOKSTYLE
               location of DocBook stylesheets
 
