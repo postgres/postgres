@@ -50,7 +50,7 @@ typedef  struct ind {
 #line 21 "array_of_struct.pgc"
 
 
-int main( int argc, char * argv[] )
+int main()
 {
     /* exec sql begin declare section */
         

@@ -23,7 +23,7 @@
 #line 6 "parser.pgc"
 
 
-int main(int argc, char* argv[]) {
+int main() {
   /* exec sql begin declare section */
   	   
   

@@ -91,74 +91,73 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 4 "indicators.pgc"
 
 
-
-int main(int argc, char **argv)
+int main()
 {
 	/* exec sql begin declare section */
 		   
 		   
 	
-#line 10 "indicators.pgc"
+#line 9 "indicators.pgc"
  int intvar = 5 ;
  
-#line 11 "indicators.pgc"
+#line 10 "indicators.pgc"
  int nullind = - 1 ;
 /* exec sql end declare section */
-#line 12 "indicators.pgc"
+#line 11 "indicators.pgc"
 
 
 	ECPGdebug(1,stderr);
 
 	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
-#line 16 "indicators.pgc"
+#line 15 "indicators.pgc"
 
 	{ ECPGsetcommit(__LINE__, "off", NULL);}
-#line 17 "indicators.pgc"
+#line 16 "indicators.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table indicator_test ( \"id\" int primary key , \"str\" text not null , val int null )", ECPGt_EOIT, ECPGt_EORT);}
-#line 22 "indicators.pgc"
+#line 21 "indicators.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
-#line 23 "indicators.pgc"
+#line 22 "indicators.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 1 , 'Hello' , 0 )", ECPGt_EOIT, ECPGt_EORT);}
-#line 25 "indicators.pgc"
+#line 24 "indicators.pgc"
 
 
 	/* use indicator in insert */
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 2 , 'Hi there' , $1  )", 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
-#line 28 "indicators.pgc"
+#line 27 "indicators.pgc"
 
 	nullind = 0;
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into indicator_test ( id , str , val ) values ( 3 , 'Good evening' , $1  )", 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
-#line 30 "indicators.pgc"
+#line 29 "indicators.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
-#line 31 "indicators.pgc"
+#line 30 "indicators.pgc"
 
 
 	/* use indicators to get information about selects */
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 1", ECPGt_EOIT, 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 34 "indicators.pgc"
+#line 33 "indicators.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 2", ECPGt_EOIT, 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EORT);}
-#line 35 "indicators.pgc"
+#line 34 "indicators.pgc"
 
 	printf("intvar: %d, nullind: %d\n", intvar, nullind);
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 3", ECPGt_EOIT, 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EORT);}
-#line 37 "indicators.pgc"
+#line 36 "indicators.pgc"
 
 	printf("intvar: %d, nullind: %d\n", intvar, nullind);
 
@@ -167,24 +166,24 @@ int main(int argc, char **argv)
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "update indicator_test set val = $1  where id = 1", 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
-#line 42 "indicators.pgc"
+#line 41 "indicators.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select val from indicator_test where id = 1", ECPGt_EOIT, 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EORT);}
-#line 43 "indicators.pgc"
+#line 42 "indicators.pgc"
 
 	printf("intvar: %d, nullind: %d\n", intvar, nullind);
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table indicator_test", ECPGt_EOIT, ECPGt_EORT);}
-#line 46 "indicators.pgc"
+#line 45 "indicators.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit work");}
-#line 47 "indicators.pgc"
+#line 46 "indicators.pgc"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
-#line 49 "indicators.pgc"
+#line 48 "indicators.pgc"
 
 	return 0;
 }

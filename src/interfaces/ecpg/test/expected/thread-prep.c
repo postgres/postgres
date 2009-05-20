@@ -195,7 +195,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	return 0;
 }
 
-int main (int argc, char** argv)
+int main ()
 {
 	int i;
 #ifdef WIN32

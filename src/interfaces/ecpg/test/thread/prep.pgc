@@ -57,7 +57,7 @@ static void* fn(void* arg)
 	return 0;
 }
 
-int main (int argc, char** argv)
+int main ()
 {
 	int i;
 #ifdef WIN32

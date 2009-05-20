@@ -20,7 +20,7 @@ EXEC SQL TYPE cust_ind IS
         short   phone_ind;
     };
 
-int main( int argc, char * argv[] )
+int main()
 {
     EXEC SQL begin declare section;
       customer  custs1[10];

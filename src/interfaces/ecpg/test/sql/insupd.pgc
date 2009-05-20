@@ -4,7 +4,7 @@
 
 EXEC SQL INCLUDE ../regression;
 
-int main(int argc, char* argv[]) {
+int main() {
   EXEC SQL BEGIN DECLARE SECTION;
   	int i1[3], i2[3];
   EXEC SQL END DECLARE SECTION;

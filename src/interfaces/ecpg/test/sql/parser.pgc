@@ -5,7 +5,7 @@
 /* test parser addition that merges two tokens into one */
 EXEC SQL INCLUDE ../regression;
 
-int main(int argc, char* argv[]) {
+int main() {
   EXEC SQL BEGIN DECLARE SECTION;
   	int item[3], ind[3], i;
   EXEC SQL END DECLARE SECTION;

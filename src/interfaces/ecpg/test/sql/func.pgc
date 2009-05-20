@@ -4,7 +4,7 @@
 
 EXEC SQL INCLUDE ../regression;
 
-int main(int argc, char* argv[]) {
+int main() {
   EXEC SQL char text[25];
 
   ECPGdebug(1, stderr);
