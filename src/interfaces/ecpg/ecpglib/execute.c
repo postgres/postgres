@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.83 2009/05/20 16:13:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.84 2009/05/20 16:49:23 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -759,7 +759,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 			case ECPGt_unsigned_char:
 				{
 					/* set slen to string length if type is char * */
-					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
+					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : (unsigned int)var->varcharsize;
 
 					if (!(newcopy = ecpg_alloc(slen + 1, lineno)))
 						return false;

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.36 2009/05/20 16:13:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.37 2009/05/20 16:49:23 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -347,7 +347,7 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 	char	   *fmt_ystart,
 			   *fmt_mstart,
 			   *fmt_dstart;
-	int			i;
+	unsigned int	i;
 	int			reading_digit;
 	int			token_count;
 	char	   *str_copy;
