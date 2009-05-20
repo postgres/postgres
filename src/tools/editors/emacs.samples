@@ -89,7 +89,7 @@
 )
 
 (setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.sgml\\'" . pgsql-c-mode)
+  (cons '("\\(postgres\\|pgsql\\).*\\.sgml\\'" . pgsql-sgml-mode)
         auto-mode-alist))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
