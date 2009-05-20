@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.284 2009/05/12 03:11:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.285 2009/05/20 08:48:10 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -606,7 +606,7 @@ DropErrorMsgWrongType(const char *relname, char wrongkind, char rightkind)
 	ereport(ERROR,
 			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			 errmsg(rentry->nota_msg, relname),
-			 (wentry->kind != '\0') ? errhint(wentry->drophint_msg) : 0));
+			 (wentry->kind != '\0') ? errhint("%s", _(wentry->drophint_msg)) : 0));
 }
 
 /*
