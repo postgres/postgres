@@ -126,7 +126,7 @@ if (sqlca.sqlcode < 0) sqlprint();
 	return 0;
 }
 
-int main (int argc, char** argv)
+int main ()
 {
 #ifdef ENABLE_THREAD_SAFETY
 	int i;

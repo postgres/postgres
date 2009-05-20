@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.41 2009/02/04 08:51:09 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.42 2009/05/20 16:13:18 meskes Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -334,7 +334,7 @@ do { \
 
 int			DecodeTimeOnly(char **, int *, int, int *, struct tm *, fsec_t *, int *);
 int			DecodeInterval(char **, int *, int, int *, struct tm *, fsec_t *);
-int			DecodeTime(char *, int, int *, struct tm *, fsec_t *);
+int			DecodeTime(char *, int *, struct tm *, fsec_t *);
 int			EncodeTimeOnly(struct tm *, fsec_t, int *, int, char *);
 int			EncodeDateTime(struct tm *, fsec_t, int *, char **, int, char *, bool);
 int			EncodeInterval(struct tm *, fsec_t, int, char *);
@@ -343,7 +343,7 @@ int			DecodeUnits(int field, char *lowtoken, int *val);
 bool		CheckDateTokenTables(void);
 int			EncodeDateOnly(struct tm *, int, char *, bool);
 int		GetEpochTime(struct tm *);
-int			ParseDateTime(char *, char *, char **, int *, int, int *, char **);
+int			ParseDateTime(char *, char *, char **, int *, int *, char **);
 int			DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, bool);
 void		j2date(int, int *, int *, int *);
 void		GetCurrentDateTime(struct tm *);

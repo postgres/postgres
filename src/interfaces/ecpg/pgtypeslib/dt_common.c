@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.48 2009/03/22 01:12:32 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.49 2009/05/20 16:13:18 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -1132,7 +1132,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-	int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+	int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -1258,7 +1258,7 @@ DecodeNumber(int flen, char *str, int fmask,
 		 */
 		if (cp - str > 2)
 			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
-									 tmask, tm, fsec, is2digits, EuroDates);
+									 tmask, tm, fsec, is2digits);
 
 		*fsec = strtod(cp, &cp);
 		if (*cp != '\0')
@@ -1476,7 +1476,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
  *	can be used to represent time spans.
  */
 int
-DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -1640,7 +1640,7 @@ DecodePosixTimezone(char *str, int *tzp)
  */
 int
 ParseDateTime(char *timestr, char *lowstr,
-	  char **field, int *ftype, int maxfields, int *numfields, char **endstr)
+	  char **field, int *ftype, int *numfields, char **endstr)
 {
 	int			nf = 0;
 	char	   *lp = lowstr;
@@ -1928,7 +1928,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * time
 						 */
 						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], fmask,
-							   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+							   &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 
 						/*
@@ -1951,7 +1951,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_TIME:
-				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
+				if (DecodeTime(field[i], &tmask, tm, fsec) != 0)
 					return -1;
 
 				/*
@@ -2116,7 +2116,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-							   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+							   &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 
 							if (tmask != DTK_TIME_M)
@@ -2154,13 +2154,13 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * Example: 20011223 or 040506
 						 */
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-							   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+							   &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					else if (flen > 4)
 					{
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-							   &tmask, tm, fsec, &is2digits, EuroDates)) < 0)
+							   &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					/* otherwise it is a single date/time field... */
@@ -2580,10 +2580,10 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 	int			scan_type;
 
 	char	   *pstr,
-			   *pfmt,
-			   *tmp;
-	int			err = 1;
-	int			j;
+			*pfmt,
+			*tmp;
+	int		err = 1;
+	int	j;
 	struct tm	tm;
 
 	pfmt = fmt;
@@ -2908,7 +2908,7 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 0 || scan_val.uint_val > 53)
+				if (scan_val.uint_val > 53)
 					err = 1;
 				break;
 			case 'V':
@@ -2922,14 +2922,14 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 0 || scan_val.uint_val > 6)
+				if (scan_val.uint_val > 6)
 					err = 1;
 				break;
 			case 'W':
 				pfmt++;
 				scan_type = PGTYPES_TYPE_UINT;
 				err = pgtypes_defmt_scan(&scan_val, scan_type, &pstr, pfmt);
-				if (scan_val.uint_val < 0 || scan_val.uint_val > 53)
+				if (scan_val.uint_val > 53)
 					err = 1;
 				break;
 			case 'x':

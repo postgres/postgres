@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.29 2008/05/16 15:20:03 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.30 2009/05/20 16:13:18 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -56,7 +56,7 @@ isvarchar(unsigned char c)
 }
 
 static bool
-replace_variables(char **text, int lineno, bool questionmarks)
+replace_variables(char **text, int lineno)
 {
 	bool		string = false;
 	int			counter = 1,
@@ -110,8 +110,9 @@ replace_variables(char **text, int lineno, bool questionmarks)
 }
 
 /* handle the EXEC SQL PREPARE statement */
+/* questionmarks is not needed but remians in there for the time being to not change the API */
 bool
-ECPGprepare(int lineno, const char *connection_name, const int questionmarks, const char *name, const char *variable)
+ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, const char *name, const char *variable)
 {
 	struct connection *con;
 	struct statement *stmt;
@@ -148,7 +149,7 @@ ECPGprepare(int lineno, const char *connection_name, const int questionmarks, co
 	stmt->inlist = stmt->outlist = NULL;
 
 	/* if we have C variables in our statment replace them with '?' */
-	replace_variables(&(stmt->command), lineno, questionmarks);
+	replace_variables(&(stmt->command), lineno);
 
 	/* add prepared statement to our list */
 	this->name = (char *) name;
@@ -290,7 +291,7 @@ ECPGdeallocate_all(int lineno, int compat, const char *connection_name)
 }
 
 char *
-ecpg_prepared(const char *name, struct connection * con, int lineno)
+ecpg_prepared(const char *name, struct connection * con)
 {
 	struct prepared_statement *this;
 
@@ -299,10 +300,11 @@ ecpg_prepared(const char *name, struct connection * con, int lineno)
 }
 
 /* return the prepared statement */
+/* lineno is not used here, but kept in to not break API */
 char *
 ECPGprepared_statement(const char *connection_name, const char *name, int lineno)
 {
-	return ecpg_prepared(name, ecpg_get_connection(connection_name), lineno);
+	return ecpg_prepared(name, ecpg_get_connection(connection_name));
 }
 
 /*
@@ -460,7 +462,7 @@ AddStmtToCache(int lineno,		/* line # of statement		*/
 
 /* handle cache and preparation of statments in auto-prepare mode */
 bool
-ecpg_auto_prepare(int lineno, const char *connection_name, int compat, const int questionmarks, char **name, const char *query)
+ecpg_auto_prepare(int lineno, const char *connection_name, int compat, char **name, const char *query)
 {
 	int			entNo;
 
@@ -481,7 +483,7 @@ ecpg_auto_prepare(int lineno, const char *connection_name, int compat, const int
 		*name = (char *) ecpg_alloc(STMTID_SIZE, lineno);
 		sprintf(*name, "ecpg%d", nextStmtID++);
 
-		if (!ECPGprepare(lineno, connection_name, questionmarks, ecpg_strdup(*name, lineno), query))
+		if (!ECPGprepare(lineno, connection_name, 0, ecpg_strdup(*name, lineno), query))
 			return (false);
 		if (AddStmtToCache(lineno, *name, connection_name, compat, query) < 0)
 			return (false);

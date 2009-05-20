@@ -92,7 +92,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 
-int main(int argc, char **argv)
+int main()
 {  /* exec sql begin declare section */
     
    

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.82 2009/02/03 08:55:45 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.83 2009/05/20 16:13:18 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1501,7 +1501,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	 */
 	if (statement_type == ECPGst_prepnormal)
 	{
-		if (!ecpg_auto_prepare(lineno, connection_name, compat, questionmarks, &prepname, query))
+		if (!ecpg_auto_prepare(lineno, connection_name, compat, &prepname, query))
 			return (false);
 
 		/*
@@ -1519,7 +1519,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	if (statement_type == ECPGst_execute)
 	{
 		/* if we have an EXECUTE command, only the name is send */
-		char	   *command = ecpg_prepared(stmt->command, con, lineno);
+		char	   *command = ecpg_prepared(stmt->command, con);
 
 		if (command)
 		{

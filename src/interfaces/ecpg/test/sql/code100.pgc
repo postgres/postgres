@@ -4,7 +4,7 @@ exec sql include sqlca;
 exec sql include ../regression;
 
 
-int main(int argc, char **argv)
+int main()
 {  exec sql begin declare section;
    int index;
    exec sql end declare section;

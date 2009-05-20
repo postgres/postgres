@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.43 2009/02/04 08:51:10 meskes Exp $ 
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.44 2009/05/20 16:13:18 meskes Exp $ 
  */
 #include "postgres_fe.h"
 
@@ -302,7 +302,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 		return (noresult);
 	}
 
-	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
+	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
 		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, 0) != 0)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;

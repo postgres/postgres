@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.39 2008/11/26 16:47:08 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.40 2009/05/20 16:13:18 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -362,7 +362,7 @@ DecodeInterval(char **field, int *ftype, int nf, /*int range,*/
 		switch (ftype[i])
 		{
 			case DTK_TIME:
-				dterr = DecodeTime(field[i], fmask, /* range, */
+				dterr = DecodeTime(field[i], /* range, */
 								   &tmask, tm, fsec);
 				if (dterr)
 					return dterr;
@@ -384,7 +384,7 @@ DecodeInterval(char **field, int *ftype, int nf, /*int range,*/
 				 * and signed year-month values.
 				 */
 				if (strchr(field[i] + 1, ':') != NULL &&
-					DecodeTime(field[i] + 1, fmask, /* INTERVAL_FULL_RANGE, */
+					DecodeTime(field[i] + 1, /* INTERVAL_FULL_RANGE, */
 							   &tmask, tm, fsec) == 0)
 				{
 					if (*field[i] == '-')
@@ -1096,7 +1096,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 		return NULL;
 	}
 
-	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
+	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
 		(DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0 &&
 		 DecodeISO8601Interval(str, &dtype, tm, &fsec) != 0))
 	{

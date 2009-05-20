@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.35 2009/02/04 08:51:09 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.36 2009/05/20 16:13:18 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -74,7 +74,7 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 		return INT_MIN;
 	}
 
-	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
+	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
 		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, EuroDates) != 0)
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
