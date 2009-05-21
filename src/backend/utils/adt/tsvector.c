@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.16 2009/05/21 12:54:27 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.17 2009/05/21 20:09:36 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,6 +451,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 								 * WordEntries */
 	Size		hdrlen;
 	Size		len;			/* allocated size of vec */
+	bool		needSort = false;
 
 	nentries = pq_getmsgint(buf, sizeof(int32));
 	if (nentries < 0 || nentries > (MaxAllocSize / sizeof(WordEntry)))
@@ -507,7 +508,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		if (i > 0 && WordEntryCMP(&vec->entries[i],
 								  &vec->entries[i - 1],
 								  STRPTR(vec)) <= 0)
-			elog(ERROR, "lexemes are misordered");
+			needSort = true;
 
 		/* Receive positions */
 		if (npos > 0)
@@ -541,6 +542,10 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	}
 
 	SET_VARSIZE(vec, hdrlen + datalen);
+
+	if (needSort)
+		qsort_arg((void *) ARRPTR(vec), vec->size, sizeof(WordEntry), 	
+					compareentry, (void*)STRPTR(vec));
 
 	PG_RETURN_TSVECTOR(vec);
 }
