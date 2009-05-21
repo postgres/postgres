@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.535 2009/04/08 19:02:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.536 2009/05/21 01:08:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7728,7 +7728,9 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -7976,7 +7978,9 @@ convertTSFunction(Oid funcOid)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query);
 		exit_nicely();
 	}
@@ -8080,7 +8084,9 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -8459,7 +8465,9 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -8633,7 +8641,9 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -8828,7 +8838,9 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -9053,7 +9065,9 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -9206,7 +9220,9 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -9390,7 +9406,9 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
@@ -11244,7 +11262,9 @@ getFormattedTypeName(Oid oid, OidOptions opts)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "query returned %d rows instead of one: %s\n",
+		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+								 "query returned %d rows instead of one: %s\n",
+								 ntups),
 				  ntups, query->data);
 		exit_nicely();
 	}
