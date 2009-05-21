@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.15 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.16 2009/05/21 12:54:27 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,7 +475,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		/* sanity checks */
 
 		lex_len = strlen(lexeme);
-		if (lex_len < 0 || lex_len > MAXSTRLEN)
+		if (lex_len > MAXSTRLEN)
 			elog(ERROR, "invalid tsvector: lexeme too long");
 
 		if (datalen > MAXSTRPOS)
