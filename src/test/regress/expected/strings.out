@@ -827,6 +827,33 @@ SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
 (1 row)
 
 --
+-- test %/_ combination cases, cf bug #4821
+--
+SELECT 'foo' LIKE '_%' as t, 'f' LIKE '_%' as t, '' LIKE '_%' as f;
+ t | t | f 
+---+---+---
+ t | t | f
+(1 row)
+
+SELECT 'foo' LIKE '%_' as t, 'f' LIKE '%_' as t, '' LIKE '%_' as f;
+ t | t | f 
+---+---+---
+ t | t | f
+(1 row)
+
+SELECT 'foo' LIKE '__%' as t, 'foo' LIKE '___%' as t, 'foo' LIKE '____%' as f;
+ t | t | f 
+---+---+---
+ t | t | f
+(1 row)
+
+SELECT 'foo' LIKE '%__' as t, 'foo' LIKE '%___' as t, 'foo' LIKE '%____' as f;
+ t | t | f 
+---+---+---
+ t | t | f
+(1 row)
+
+--
 -- test implicit type conversion
 --
 -- E021-07 character concatenation
