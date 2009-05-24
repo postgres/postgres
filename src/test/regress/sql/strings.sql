@@ -280,6 +280,17 @@ SELECT 'Hawkeye' ILIKE 'h%' AS "true";
 SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
 
 --
+-- test %/_ combination cases, cf bug #4821
+--
+
+SELECT 'foo' LIKE '_%' as t, 'f' LIKE '_%' as t, '' LIKE '_%' as f;
+SELECT 'foo' LIKE '%_' as t, 'f' LIKE '%_' as t, '' LIKE '%_' as f;
+
+SELECT 'foo' LIKE '__%' as t, 'foo' LIKE '___%' as t, 'foo' LIKE '____%' as f;
+SELECT 'foo' LIKE '%__' as t, 'foo' LIKE '%___' as t, 'foo' LIKE '%____' as f;
+
+
+--
 -- test implicit type conversion
 --
 
