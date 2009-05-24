@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.26 2009/04/04 21:12:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.27 2009/05/24 22:22:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ static relopt_string stringRelOpts[] =
 };
 
 static relopt_gen **relOpts = NULL;
-static bits32 last_assigned_kind = RELOPT_KIND_LAST_DEFAULT << 1;
+static bits32 last_assigned_kind = RELOPT_KIND_LAST_DEFAULT;
 
 static int		num_custom_options = 0;
 static relopt_gen **custom_options = NULL;
@@ -278,17 +278,13 @@ initialize_reloptions(void)
 relopt_kind
 add_reloption_kind(void)
 {
-	relopt_kind		kind;
-
-	/* don't hand out the last bit so that the wraparound check is portable */
+	/* don't hand out the last bit so that the enum's behavior is portable */
 	if (last_assigned_kind >= RELOPT_KIND_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("user-defined relation parameter types limit exceeded")));
-
-	kind = (relopt_kind) last_assigned_kind;
 	last_assigned_kind <<= 1;
-	return kind;
+	return (relopt_kind) last_assigned_kind;
 }
 
 /*

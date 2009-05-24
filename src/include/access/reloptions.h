@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.14 2009/04/04 00:45:02 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/reloptions.h,v 1.15 2009/05/24 22:22:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,8 @@ typedef enum relopt_kind
 	RELOPT_KIND_GIST	= (1 << 5),
 	/* if you add a new kind, make sure you update "last_default" too */
 	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_GIST,
-	RELOPT_KIND_MAX = (1 << 31)
+	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
+	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;
 
 /* reloption namespaces allowed for heaps -- currently only TOAST */
