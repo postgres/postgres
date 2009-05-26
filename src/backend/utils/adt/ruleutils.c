@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.297 2009/04/05 19:59:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.298 2009/05/26 17:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ static char *pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags);
-static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
+static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 				   int prettyFlags);
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults);
@@ -1198,7 +1198,8 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
  *
  * Currently, the expression can only refer to a single relation, namely
  * the one specified by the second parameter.  This is sufficient for
- * partial indexes, column default expressions, etc.
+ * partial indexes, column default expressions, etc.  We also support
+ * Var-free expressions, for which the OID can be InvalidOid.
  * ----------
  */
 Datum
@@ -1208,12 +1209,24 @@ pg_get_expr(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(1);
 	char	   *relname;
 
-	/* Get the name for the relation */
-	relname = get_rel_name(relid);
-	if (relname == NULL)
-		PG_RETURN_NULL();		/* should we raise an error? */
+	if (OidIsValid(relid))
+	{
+		/* Get the name for the relation */
+		relname = get_rel_name(relid);
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_expr_worker(expr, relid, relname, 0)));
+		/*
+		 * If the OID isn't actually valid, don't throw an error, just return
+		 * NULL.  This is a bit questionable, but it's what we've done
+		 * historically, and it can help avoid unwanted failures when
+		 * examining catalog entries for just-deleted relations.
+		 */
+		if (relname == NULL)
+			PG_RETURN_NULL();
+	}
+	else
+		relname = NULL;
+
+	PG_RETURN_TEXT_P(pg_get_expr_worker(expr, relid, relname, 0));
 }
 
 Datum
@@ -1227,16 +1240,22 @@ pg_get_expr_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 
-	/* Get the name for the relation */
-	relname = get_rel_name(relid);
-	if (relname == NULL)
-		PG_RETURN_NULL();		/* should we raise an error? */
+	if (OidIsValid(relid))
+	{
+		/* Get the name for the relation */
+		relname = get_rel_name(relid);
+		/* See notes above */
+		if (relname == NULL)
+			PG_RETURN_NULL();
+	}
+	else
+		relname = NULL;
 
-	PG_RETURN_TEXT_P(string_to_text(pg_get_expr_worker(expr, relid, relname, prettyFlags)));
+	PG_RETURN_TEXT_P(pg_get_expr_worker(expr, relid, relname, prettyFlags));
 }
 
-static char *
-pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
+static text *
+pg_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 {
 	Node	   *node;
 	List	   *context;
@@ -1249,14 +1268,19 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 	/* Convert expression to node tree */
 	node = (Node *) stringToNode(exprstr);
 
+	pfree(exprstr);
+
+	/* Prepare deparse context if needed */
+	if (OidIsValid(relid))
+		context = deparse_context_for(relname, relid);
+	else
+		context = NIL;
+
 	/* Deparse */
-	context = deparse_context_for(relname, relid);
 	str = deparse_expression_pretty(node, context, false, false,
 									prettyFlags, 0);
 
-	pfree(exprstr);
-
-	return str;
+	return string_to_text(str);
 }
 
 

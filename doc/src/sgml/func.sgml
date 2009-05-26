@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.480 2009/05/18 08:59:29 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.481 2009/05/26 17:36:05 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12367,7 +12367,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    is a decompiled reconstruction, not the original text of the command.)
    <function>pg_get_expr</function> decompiles the internal form of an
    individual expression, such as the default value for a column.  It can be
-   useful when examining the contents of system catalogs.
+   useful when examining the contents of system catalogs.  If the expression
+   might contain Vars, specify the OID of the relation they refer to as the
+   second parameter; if no Vars are expected, zero is sufficient.
    <function>pg_get_viewdef</function> reconstructs the <command>SELECT</>
    query that defines a view. Most of these functions come in two variants,
    one of which can optionally <quote>pretty-print</> the result.  The
