@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.144 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.145 2009/05/26 01:29:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1088,8 +1088,18 @@ time_recv(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result = pq_getmsgint64(buf);
+
+	if (result < INT64CONST(0) || result > USECS_PER_DAY)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("time out of range")));
 #else
 	result = pq_getmsgfloat8(buf);
+
+	if (result < 0 || result > (double) SECS_PER_DAY)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("time out of range")));
 #endif
 
 	AdjustTimeForTypmod(&result, typmod);
@@ -1853,10 +1863,28 @@ timetz_recv(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = pq_getmsgint64(buf);
+
+	if (result->time < INT64CONST(0) || result->time > USECS_PER_DAY)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("time out of range")));
 #else
 	result->time = pq_getmsgfloat8(buf);
+
+	if (result->time < 0 || result->time > (double) SECS_PER_DAY)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("time out of range")));
 #endif
+
 	result->zone = pq_getmsgint(buf, sizeof(result->zone));
+
+	/* we allow GMT displacements up to 14:59:59, cf DecodeTimezone() */
+	if (result->zone <= -15 * SECS_PER_HOUR ||
+		result->zone >= 15 * SECS_PER_HOUR)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
+				 errmsg("time zone displacement out of range")));
 
 	AdjustTimeForTypmod(&(result->time), typmod);
 
