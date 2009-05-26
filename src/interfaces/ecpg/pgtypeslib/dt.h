@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.42 2009/05/20 16:13:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.43 2009/05/26 01:39:49 tgl Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -332,10 +332,8 @@ do { \
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
-int			DecodeTimeOnly(char **, int *, int, int *, struct tm *, fsec_t *, int *);
 int			DecodeInterval(char **, int *, int, int *, struct tm *, fsec_t *);
 int			DecodeTime(char *, int *, struct tm *, fsec_t *);
-int			EncodeTimeOnly(struct tm *, fsec_t, int *, int, char *);
 int			EncodeDateTime(struct tm *, fsec_t, int *, char **, int, char *, bool);
 int			EncodeInterval(struct tm *, fsec_t, int, char *);
 int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
