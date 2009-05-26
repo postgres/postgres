@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.204 2009/05/01 19:29:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.205 2009/05/26 02:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3601,11 +3601,10 @@ EncodeTimezone(char *str, int tz, int style)
 /* EncodeDateOnly()
  * Encode date as local time.
  */
-int
+void
 EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 {
-	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
-		return -1;
+	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
 
 	switch (style)
 	{
@@ -3654,20 +3653,15 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 				sprintf(str + 5, "-%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 	}
-
-	return TRUE;
-}	/* EncodeDateOnly() */
+}
 
 
 /* EncodeTimeOnly()
  * Encode time fields only.
  */
-int
+void
 EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
-	if (tm->tm_hour < 0 || tm->tm_hour > HOURS_PER_DAY)
-		return -1;
-
 	sprintf(str, "%02d:%02d:", tm->tm_hour, tm->tm_min);
 	str += strlen(str);
 
@@ -3675,9 +3669,7 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 
 	if (tzp != NULL)
 		EncodeTimezone(str, *tzp, style);
-
-	return TRUE;
-}	/* EncodeTimeOnly() */
+}
 
 
 /* EncodeDateTime()
@@ -3692,15 +3684,11 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
  *	US - mm/dd/yyyy
  *	European - dd/mm/yyyy
  */
-int
+void
 EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
 {
 	int			day;
 
-	/*
-	 * Why are we checking only the month field? Change this to an assert...
-	 * if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR) return -1;
-	 */
 	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
 
 	switch (style)
@@ -3825,8 +3813,6 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 				sprintf(str + strlen(str), " BC");
 			break;
 	}
-
-	return TRUE;
 }
 
 
@@ -3906,7 +3892,7 @@ AddVerboseIntPart(char *cp, int value, const char *units,
  * "year-month literal"s (that look like '2-3') and
  * "day-time literal"s (that look like ('4 5:6:7')
  */
-int
+void
 EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 {
 	char	   *cp = str;
@@ -4083,9 +4069,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 				strcat(cp, " ago");
 			break;
 	}
-
-	return 0;
-}	/* EncodeInterval() */
+}
 
 
 /*
