@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.663 2009/04/28 09:09:41 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.664 2009/05/27 20:42:29 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3639,9 +3639,14 @@ opt_opfamily:	FAMILY any_name				{ $$ = $2; }
 
 opt_recheck:	RECHECK
 				{
-					ereport(ERROR,
+					/*
+					 * RECHECK no longer does anything in opclass definitions,
+					 * but we still accept it to ease porting of old database
+					 * dumps.
+					 */
+					ereport(NOTICE,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("RECHECK is no longer supported"),
+							 errmsg("RECHECK is no longer required"),
 							 errhint("Update your data type."),
 							 scanner_errposition(@1)));
 					$$ = TRUE;

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.537 2009/05/26 17:36:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.538 2009/05/27 20:42:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8159,8 +8159,10 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 		 * pg_depend entries.
 		 *
 		 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
-		 * an older server's table in which it is used.  Would it be better
-		 * to silently ignore it?
+		 * an older server's opclass in which it is used.  This is to avoid
+		 * hard-to-detect breakage if a newer pg_dump is used to dump from
+		 * an older server and then reload into that old version.  This can
+		 * go away once 8.3 is so old as to not be of interest to anyone.
 		 */
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
 						  "amopopr::pg_catalog.regoperator "
@@ -8370,8 +8372,10 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	{
 		/*
 		 * XXX RECHECK is gone as of 8.4, but we'll still print it if dumping
-		 * an older server's table in which it is used.  Would it be better
-		 * to silently ignore it?
+		 * an older server's opclass in which it is used.  This is to avoid
+		 * hard-to-detect breakage if a newer pg_dump is used to dump from
+		 * an older server and then reload into that old version.  This can
+		 * go away once 8.3 is so old as to not be of interest to anyone.
 		 */
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
 					  "amopopr::pg_catalog.regoperator "
