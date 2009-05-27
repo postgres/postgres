@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.55 2009/04/07 04:02:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.56 2009/05/27 01:18:06 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -247,6 +247,14 @@
       </para>
      </listitem>
     </itemizedlist>
+   </para>
+
+   <para>
+    If your trigger function is written in any of the standard procedural
+    languages, then the above statements apply only if the function is
+    declared <literal>VOLATILE</>.  Functions that are declared
+    <literal>STABLE</> or <literal>IMMUTABLE</> will not see changes made by
+    the calling command in any case.
    </para>
 
    <para>

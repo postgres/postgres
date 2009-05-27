@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.137 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.138 2009/05/27 01:18:06 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1178,6 +1178,12 @@ CREATE FUNCTION test(int, int) RETURNS int
    </para>
 
    <para>
+    Another important example is that the <function>current_timestamp</>
+    family of functions qualify as <literal>STABLE</>, since their values do
+    not change within a transaction.
+   </para>
+
+   <para>
     There is relatively little difference between <literal>STABLE</> and
     <literal>IMMUTABLE</> categories when considering simple interactive
     queries that are planned and immediately executed: it doesn't matter
@@ -1192,16 +1198,35 @@ CREATE FUNCTION test(int, int) RETURNS int
    </para>
 
    <para>
-    Because of the snapshotting behavior of MVCC (see <xref linkend="mvcc">)
+    For functions written in SQL or in any of the standard procedural
+    languages, there is a second important property determined by the
+    volatility category, namely the visibility of any data changes that have
+    been made by the SQL command that is calling the function.  A
+    <literal>VOLATILE</> function will see such changes, a <literal>STABLE</>
+    or <literal>IMMUTABLE</> function will not.  This behavior is implemented
+    using the snapshotting behavior of MVCC (see <xref linkend="mvcc">):
+    <literal>STABLE</> and <literal>IMMUTABLE</> functions use a snapshot
+    established as of the start of the calling query, whereas
+    <literal>VOLATILE</> functions obtain a fresh snapshot at the start of
+    each query they execute.
+   </para>
+
+   <note>
+    <para>
+     Functions written in C can manage snapshots however they want, but it's
+     usually a good idea to make C functions work this way too.
+    </para>
+   </note>
+
+   <para>
+    Because of this snapshotting behavior,
     a function containing only <command>SELECT</> commands can safely be
     marked <literal>STABLE</>, even if it selects from tables that might be
     undergoing modifications by concurrent queries.
-    <productname>PostgreSQL</productname> will execute a <literal>STABLE</>
-    function using the snapshot established for the calling query, and so it
-    will see a fixed view of the database throughout that query.
-    Also note
-    that the <function>current_timestamp</> family of functions qualify
-    as stable, since their values do not change within a transaction.
+    <productname>PostgreSQL</productname> will execute all commands of a
+    <literal>STABLE</> function using the snapshot established for the
+    calling query, and so it will see a fixed view of the database throughout
+    that query.
    </para>
 
    <para>
@@ -1225,14 +1250,14 @@ CREATE FUNCTION test(int, int) RETURNS int
     <para>
      Before <productname>PostgreSQL</productname> release 8.0, the requirement
      that <literal>STABLE</> and <literal>IMMUTABLE</> functions cannot modify
-     the database was not enforced by the system.  Release 8.0 enforces it
+     the database was not enforced by the system.  Releases 8.0 and later enforce it
      by requiring SQL functions and procedural language functions of these
      categories to contain no SQL commands other than <command>SELECT</>.
      (This is not a completely bulletproof test, since such functions could
      still call <literal>VOLATILE</> functions that modify the database.
      If you do that, you will find that the <literal>STABLE</> or
      <literal>IMMUTABLE</> function does not notice the database changes
-     applied by the called function.)
+     applied by the called function, since they are hidden from its snapshot.)
     </para>
    </note>
   </sect1>
