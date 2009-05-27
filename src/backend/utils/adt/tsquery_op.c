@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.4 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.5 2009/05/27 19:41:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,9 @@ NAME(PG_FUNCTION_ARGS) {						\
 	PG_FREE_IF_COPY(b,1);						\
 												\
 	PG_RETURN_BOOL( CONDITION );				\
-}
+}												\
+/* keep compiler quiet - no extra ; */			\
+extern int no_such_variable
 
 CMPFUNC(tsquery_lt, res < 0);
 CMPFUNC(tsquery_le, res <= 0);

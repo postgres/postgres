@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.21 2009/01/07 13:44:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.22 2009/05/27 19:41:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,9 @@ tsvector_##type(PG_FUNCTION_ARGS)						\
 	PG_FREE_IF_COPY(a,0);								\
 	PG_FREE_IF_COPY(b,1);								\
 	PG_RETURN_##ret( res action 0 );					\
-}
+}														\
+/* keep compiler quiet - no extra ; */					\
+extern int no_such_variable
 
 TSVECTORCMPFUNC(lt, <, BOOL);
 TSVECTORCMPFUNC(le, <=, BOOL);
