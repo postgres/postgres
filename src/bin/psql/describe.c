@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.212 2009/05/05 02:29:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.213 2009/05/27 20:47:55 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -2036,7 +2036,7 @@ describeRoles(const char *pattern, bool verbose)
 			if (conns == 0)
 				appendPQExpBuffer(&buf, _("No connections"));
 			else
-				appendPQExpBuffer(&buf, ngettext("1 connection", "%d connections", conns), conns);
+				appendPQExpBuffer(&buf, ngettext("%d connection", "%d connections", conns), conns);
 		}
 
 		attr[i] = pg_strdup(buf.data);

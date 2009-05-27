@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.112 2009/04/11 14:11:45 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.113 2009/05/27 20:47:55 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -2348,7 +2348,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 		char		default_footer[100];
 
 		total_records = opt->topt.prior_records + cont.nrows;
-		snprintf(default_footer, 100, ngettext("(1 row)", "(%lu rows)", total_records), total_records);
+		snprintf(default_footer, 100, ngettext("(%lu row)", "(%lu rows)", total_records), total_records);
 
 		printTableAddFooter(&cont, default_footer);
 	}
