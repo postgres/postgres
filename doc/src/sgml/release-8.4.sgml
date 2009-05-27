@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.6 2009/05/14 22:17:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.7 2009/05/27 22:12:53 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -2703,12 +2703,18 @@
 
       <listitem>
        <para>
-        Make Kerberos connections use the same method to determine the
-        username of the client as all other authentication methods (Magnus)
+        Do not rely on Kerberos tickets to determine the default database
+        username (Magnus)
        </para>
 
        <para>
-        Previously a special Kerberos-only API was used.
+        Previously, a Kerberos-capable build of libpq would use the
+        principal name from any available Kerberos ticket as default
+        database username, even if the connection wasn't using Kerberos
+        authentication.  This was deemed inconsistent and confusing.
+        The default username is now determined the same way with or
+        without Kerberos.  Note however that the database username must still
+        match the ticket when Kerberos authentication is used.
        </para>
       </listitem>
      </itemizedlist>
