@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.288 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.289 2009/05/28 20:02:10 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -63,6 +63,16 @@
    The <function>PQstatus</> function should be called to check
    whether a connection was successfully made before queries are sent
    via the connection object.
+
+   <warning>
+    <para>
+     On Unix, forking a process with open libpq connections can lead to
+     unpredictable results because the parent and child processes share
+     the same sockets and operating system resources.  For this reason,
+     such usage is not recommended, though doing an <function>exec</> from
+     the child process to load a new executable is safe.
+    </para>
+   </warning>
 
    <note>
     <para>
