@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.308 2009/04/19 21:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.309 2009/05/29 13:54:52 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,8 +194,7 @@ if (1) \
 		need_data = true; \
 		continue; \
 	} \
-} else
-
+} else ((void) 0)
 
 /* This consumes the remainder of the buffer and breaks */
 #define IF_NEED_REFILL_AND_EOF_BREAK(extralen) \
@@ -209,8 +208,7 @@ if (1) \
 		result = true; \
 		break; \
 	} \
-} else
-
+} else ((void) 0)
 
 /*
  * Transfer any approved data to line_buf; must do this to be sure
@@ -226,7 +224,7 @@ if (1) \
 							   raw_buf_ptr - cstate->raw_buf_index); \
 		cstate->raw_buf_index = raw_buf_ptr; \
 	} \
-} else
+} else ((void) 0)
 
 /* Undo any read-ahead and jump out of the block. */
 #define NO_END_OF_COPY_GOTO \
@@ -234,8 +232,7 @@ if (1) \
 { \
 	raw_buf_ptr = prev_raw_ptr + 1; \
 	goto not_end_of_copy; \
-} else
-
+} else ((void) 0)
 
 static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
