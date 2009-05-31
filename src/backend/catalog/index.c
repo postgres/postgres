@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.315 2009/03/31 22:12:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.316 2009/05/31 20:55:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -901,14 +901,13 @@ index_drop(Oid indexId)
 
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
-	 * table; otherwise there could be other backends using the index!
-	 * Exclusive lock on the index alone is insufficient because another
-	 * backend might be in the midst of devising a query plan that will use
-	 * the index.  The parser and planner take care to hold an appropriate
-	 * lock on the parent table while working, but having them hold locks on
-	 * all the indexes too seems overly expensive.	We do grab exclusive lock
-	 * on the index too, just to be safe. Both locks must be held till end of
-	 * transaction, else other backends will still see this index in pg_index.
+	 * table.  Exclusive lock on the index alone is insufficient because
+	 * another backend might be about to execute a query on the parent table.
+	 * If it relies on a previously cached list of index OIDs, then it could
+	 * attempt to access the just-dropped index.  We must therefore take a
+	 * table lock strong enough to prevent all queries on the table from
+	 * proceeding until we commit and send out a shared-cache-inval notice
+	 * that will make them update their index lists.
 	 */
 	heapId = IndexGetRelation(indexId);
 	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
