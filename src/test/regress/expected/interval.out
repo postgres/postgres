@@ -358,10 +358,44 @@ SELECT '1:20:05 5 microseconds'::interval;          -- error
 ERROR:  invalid input syntax for type interval: "1:20:05 5 microseconds"
 LINE 1: SELECT '1:20:05 5 microseconds'::interval;
                ^
+SELECT '1 day 1 day'::interval;                     -- error
+ERROR:  invalid input syntax for type interval: "1 day 1 day"
+LINE 1: SELECT '1 day 1 day'::interval;
+               ^
 SELECT interval '1-2';  -- SQL year-month literal
    interval    
 ---------------
  1 year 2 mons
+(1 row)
+
+SELECT interval '999' second;  -- oversize leading field is ok
+ interval 
+----------
+ 00:16:39
+(1 row)
+
+SELECT interval '999' minute;
+ interval 
+----------
+ 16:39:00
+(1 row)
+
+SELECT interval '999' hour;
+ interval  
+-----------
+ 999:00:00
+(1 row)
+
+SELECT interval '999' day;
+ interval 
+----------
+ 999 days
+(1 row)
+
+SELECT interval '999' month;
+    interval     
+-----------------
+ 83 years 3 mons
 (1 row)
 
 -- test SQL-spec syntaxes for restricted field sets
@@ -472,15 +506,15 @@ ERROR:  invalid input syntax for type interval: "1 2"
 LINE 1: SELECT interval '1 2' hour to minute;
                         ^
 SELECT interval '1 2:03' hour to minute;
- interval 
-----------
- 02:03:00
+    interval    
+----------------
+ 1 day 02:03:00
 (1 row)
 
 SELECT interval '1 2:03:04' hour to minute;
- interval 
-----------
- 02:03:00
+    interval    
+----------------
+ 1 day 02:03:00
 (1 row)
 
 SELECT interval '1 2' hour to second;
@@ -488,15 +522,15 @@ ERROR:  invalid input syntax for type interval: "1 2"
 LINE 1: SELECT interval '1 2' hour to second;
                         ^
 SELECT interval '1 2:03' hour to second;
- interval 
-----------
- 02:03:00
+    interval    
+----------------
+ 1 day 02:03:00
 (1 row)
 
 SELECT interval '1 2:03:04' hour to second;
- interval 
-----------
- 02:03:04
+    interval    
+----------------
+ 1 day 02:03:04
 (1 row)
 
 SELECT interval '1 2' minute to second;
@@ -504,17 +538,31 @@ ERROR:  invalid input syntax for type interval: "1 2"
 LINE 1: SELECT interval '1 2' minute to second;
                         ^
 SELECT interval '1 2:03' minute to second;
- interval 
-----------
- 00:02:03
+    interval    
+----------------
+ 1 day 00:02:03
 (1 row)
 
 SELECT interval '1 2:03:04' minute to second;
- interval 
-----------
- 00:03:04
+    interval    
+----------------
+ 1 day 02:03:04
 (1 row)
 
+SELECT interval '123 11' day to hour; -- ok
+     interval      
+-------------------
+ 123 days 11:00:00
+(1 row)
+
+SELECT interval '123 11' day; -- not ok
+ERROR:  invalid input syntax for type interval: "123 11"
+LINE 1: SELECT interval '123 11' day;
+                        ^
+SELECT interval '123 11'; -- not ok, too ambiguous
+ERROR:  invalid input syntax for type interval: "123 11"
+LINE 1: SELECT interval '123 11';
+                        ^
 -- test syntaxes for restricted precision
 SELECT interval(0) '1 day 01:23:45.6789';
     interval    
@@ -585,15 +633,15 @@ ERROR:  invalid input syntax for type interval: "1 2.345"
 LINE 1: SELECT interval '1 2.345' hour to second(2);
                         ^
 SELECT interval '1 2:03.45678' hour to second(2);
-  interval   
--------------
- 00:02:03.46
+     interval      
+-------------------
+ 1 day 00:02:03.46
 (1 row)
 
 SELECT interval '1 2:03:04.5678' hour to second(2);
-  interval   
--------------
- 02:03:04.57
+     interval      
+-------------------
+ 1 day 02:03:04.57
 (1 row)
 
 SELECT interval '1 2.3456' minute to second(2);
@@ -601,15 +649,15 @@ ERROR:  invalid input syntax for type interval: "1 2.3456"
 LINE 1: SELECT interval '1 2.3456' minute to second(2);
                         ^
 SELECT interval '1 2:03.5678' minute to second(2);
-  interval   
--------------
- 00:02:03.57
+     interval      
+-------------------
+ 1 day 00:02:03.57
 (1 row)
 
 SELECT interval '1 2:03:04.5678' minute to second(2);
-  interval   
--------------
- 00:03:04.57
+     interval      
+-------------------
+ 1 day 02:03:04.57
 (1 row)
 
 -- test inputting and outputting SQL standard interval literals

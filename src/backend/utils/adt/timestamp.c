@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.199 2009/05/26 02:17:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.200 2009/06/01 23:55:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -955,13 +955,32 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 
 	/*
 	 * Unspecified range and precision? Then not necessary to adjust. Setting
-	 * typmod to -1 is the convention for all types.
+	 * typmod to -1 is the convention for all data types.
 	 */
 	if (typmod >= 0)
 	{
 		int			range = INTERVAL_RANGE(typmod);
 		int			precision = INTERVAL_PRECISION(typmod);
 
+		/*
+		 * Our interpretation of intervals with a limited set of fields
+		 * is that fields to the right of the last one specified are zeroed
+		 * out, but those to the left of it remain valid.  Thus for example
+		 * there is no operational difference between INTERVAL YEAR TO MONTH
+		 * and INTERVAL MONTH.  In some cases we could meaningfully enforce
+		 * that higher-order fields are zero; for example INTERVAL DAY could
+		 * reject nonzero "month" field.  However that seems a bit pointless
+		 * when we can't do it consistently.  (We cannot enforce a range limit
+		 * on the highest expected field, since we do not have any equivalent
+		 * of SQL's <interval leading field precision>.)
+		 *
+		 * Note: before PG 8.4 we interpreted a limited set of fields as
+		 * actually causing a "modulo" operation on a given value, potentially
+		 * losing high-order as well as low-order information.  But there is
+		 * no support for such behavior in the standard, and it seems fairly
+		 * undesirable on data consistency grounds anyway.  Now we only
+		 * perform truncation or rounding of low-order fields.
+		 */
 		if (range == INTERVAL_FULL_RANGE)
 		{
 			/* Do nothing... */
@@ -974,27 +993,21 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(MONTH))
 		{
-			interval->month %= MONTHS_PER_YEAR;
 			interval->day = 0;
 			interval->time = 0;
 		}
 		/* YEAR TO MONTH */
 		else if (range == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
 		{
-			/* month is already year to month */
 			interval->day = 0;
 			interval->time = 0;
 		}
 		else if (range == INTERVAL_MASK(DAY))
 		{
-			interval->month = 0;
 			interval->time = 0;
 		}
 		else if (range == INTERVAL_MASK(HOUR))
 		{
-			interval->month = 0;
-			interval->day = 0;
-
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
 				USECS_PER_HOUR;
@@ -1004,42 +1017,21 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
 		{
-			TimeOffset	hour;
-
-			interval->month = 0;
-			interval->day = 0;
-
 #ifdef HAVE_INT64_TIMESTAMP
-			hour = interval->time / USECS_PER_HOUR;
-			interval->time -= hour * USECS_PER_HOUR;
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
 #else
-			TMODULO(interval->time, hour, (double) SECS_PER_HOUR);
 			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
 #endif
 		}
 		else if (range == INTERVAL_MASK(SECOND))
 		{
-			TimeOffset	minute;
-
-			interval->month = 0;
-			interval->day = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			minute = interval->time / USECS_PER_MINUTE;
-			interval->time -= minute * USECS_PER_MINUTE;
-#else
-			TMODULO(interval->time, minute, (double) SECS_PER_MINUTE);
-			/* return subseconds too */
-#endif
+			/* fractional-second rounding will be dealt with below */
 		}
 		/* DAY TO HOUR */
 		else if (range == (INTERVAL_MASK(DAY) |
 						   INTERVAL_MASK(HOUR)))
 		{
-			interval->month = 0;
-
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
 				USECS_PER_HOUR;
@@ -1052,8 +1044,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
-			interval->month = 0;
-
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
@@ -1066,15 +1056,13 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
-			interval->month = 0;
-
+		{
+			/* fractional-second rounding will be dealt with below */
+		}
 		/* HOUR TO MINUTE */
 		else if (range == (INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
-			interval->month = 0;
-			interval->day = 0;
-
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 				USECS_PER_MINUTE;
@@ -1087,25 +1075,13 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
 		{
-			interval->month = 0;
-			interval->day = 0;
-			/* return subseconds too */
+			/* fractional-second rounding will be dealt with below */
 		}
 		/* MINUTE TO SECOND */
 		else if (range == (INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
 		{
-			TimeOffset	hour;
-
-			interval->month = 0;
-			interval->day = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			hour = interval->time / USECS_PER_HOUR;
-			interval->time -= hour * USECS_PER_HOUR;
-#else
-			TMODULO(interval->time, hour, (double) SECS_PER_HOUR);
-#endif
+			/* fractional-second rounding will be dealt with below */
 		}
 		else
 			elog(ERROR, "unrecognized interval typmod: %d", typmod);
@@ -1148,8 +1124,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 	}
-
-	return;
 }
 
 

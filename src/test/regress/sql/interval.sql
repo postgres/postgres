@@ -130,7 +130,13 @@ SELECT '1 second 2 seconds'::interval;              -- error
 SELECT '10 milliseconds 20 milliseconds'::interval; -- error
 SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
 SELECT '1:20:05 5 microseconds'::interval;          -- error
+SELECT '1 day 1 day'::interval;                     -- error
 SELECT interval '1-2';  -- SQL year-month literal
+SELECT interval '999' second;  -- oversize leading field is ok
+SELECT interval '999' minute;
+SELECT interval '999' hour;
+SELECT interval '999' day;
+SELECT interval '999' month;
 
 -- test SQL-spec syntaxes for restricted field sets
 SELECT interval '1' year;
@@ -159,6 +165,9 @@ SELECT interval '1 2:03:04' hour to second;
 SELECT interval '1 2' minute to second;
 SELECT interval '1 2:03' minute to second;
 SELECT interval '1 2:03:04' minute to second;
+SELECT interval '123 11' day to hour; -- ok
+SELECT interval '123 11' day; -- not ok
+SELECT interval '123 11'; -- not ok, too ambiguous
 
 -- test syntaxes for restricted precision
 SELECT interval(0) '1 day 01:23:45.6789';
