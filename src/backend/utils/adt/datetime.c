@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.205 2009/05/26 02:17:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.206 2009/06/01 16:55:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3022,19 +3022,19 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 						tm->tm_hour += val;
 						AdjustFractSeconds(fval, tm, fsec, SECS_PER_HOUR);
 						tmask = DTK_M(HOUR);
-						type = DTK_DAY;
+						type = DTK_DAY;	/* set for next field */
 						break;
 
 					case DTK_DAY:
 						tm->tm_mday += val;
 						AdjustFractSeconds(fval, tm, fsec, SECS_PER_DAY);
-						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
+						tmask = DTK_M(DAY);
 						break;
 
 					case DTK_WEEK:
 						tm->tm_mday += val * 7;
 						AdjustFractDays(fval, tm, fsec, 7);
-						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
+						tmask = DTK_M(WEEK);
 						break;
 
 					case DTK_MONTH:
@@ -3047,28 +3047,28 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 						tm->tm_year += val;
 						if (fval != 0)
 							tm->tm_mon += fval * MONTHS_PER_YEAR;
-						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
+						tmask = DTK_M(YEAR);
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
 						if (fval != 0)
 							tm->tm_mon += fval * MONTHS_PER_YEAR * 10;
-						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
+						tmask = DTK_M(DECADE);
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
 						if (fval != 0)
 							tm->tm_mon += fval * MONTHS_PER_YEAR * 100;
-						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
+						tmask = DTK_M(CENTURY);
 						break;
 
 					case DTK_MILLENNIUM:
 						tm->tm_year += val * 1000;
 						if (fval != 0)
 							tm->tm_mon += fval * MONTHS_PER_YEAR * 1000;
-						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
+						tmask = DTK_M(MILLENNIUM);
 						break;
 
 					default:
