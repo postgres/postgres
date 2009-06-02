@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.77 2009/01/01 17:23:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.78 2009/06/02 03:21:56 joe Exp $
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -77,7 +77,7 @@ typedef struct remoteConn
 /*
  * Internal declarations
  */
-static Datum dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get);
+static Datum dblink_record_internal(FunctionCallInfo fcinfo, bool is_async);
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
 static void createNewConnection(const char *name, remoteConn * rconn);
@@ -689,25 +689,47 @@ PG_FUNCTION_INFO_V1(dblink_record);
 Datum
 dblink_record(PG_FUNCTION_ARGS)
 {
-	return dblink_record_internal(fcinfo, false, false);
+	return dblink_record_internal(fcinfo, false);
 }
 
 PG_FUNCTION_INFO_V1(dblink_send_query);
 Datum
 dblink_send_query(PG_FUNCTION_ARGS)
 {
-	return dblink_record_internal(fcinfo, true, false);
+	PGconn	   *conn = NULL;
+	char	   *connstr = NULL;
+	char	   *sql = NULL;
+	remoteConn *rconn = NULL;
+	char	   *msg;
+	bool		freeconn = false;
+	int			retval;
+
+	if (PG_NARGS() == 2)
+	{
+		DBLINK_GET_CONN;
+		sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	}
+	else
+		/* shouldn't happen */
+		elog(ERROR, "wrong number of arguments");
+
+	/* async query send */
+	retval = PQsendQuery(conn, sql);
+	if (retval != 1)
+		elog(NOTICE, "%s", PQerrorMessage(conn));
+
+	PG_RETURN_INT32(retval);
 }
 
 PG_FUNCTION_INFO_V1(dblink_get_result);
 Datum
 dblink_get_result(PG_FUNCTION_ARGS)
 {
-	return dblink_record_internal(fcinfo, true, true);
+	return dblink_record_internal(fcinfo, true);
 }
 
 static Datum
-dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
+dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 {
 	FuncCallContext *funcctx;
 	TupleDesc	tupdesc = NULL;
@@ -775,14 +797,14 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 				/* shouldn't happen */
 				elog(ERROR, "wrong number of arguments");
 		}
-		else if (is_async && do_get)
+		else /* is_async */
 		{
 			/* get async result */
 			if (PG_NARGS() == 2)
 			{
 				/* text,bool */
 				DBLINK_GET_CONN;
-				fail = PG_GETARG_BOOL(2);
+				fail = PG_GETARG_BOOL(1);
 			}
 			else if (PG_NARGS() == 1)
 			{
@@ -793,24 +815,10 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 				/* shouldn't happen */
 				elog(ERROR, "wrong number of arguments");
 		}
-		else
-		{
-			/* send async query */
-			if (PG_NARGS() == 2)
-			{
-				DBLINK_GET_CONN;
-				sql = text_to_cstring(PG_GETARG_TEXT_PP(1));
-			}
-			else
-				/* shouldn't happen */
-				elog(ERROR, "wrong number of arguments");
-		}
 
 		if (!conn)
 			DBLINK_CONN_NOT_AVAIL;
 
-		if (!is_async || (is_async && do_get))
-		{
 			/* synchronous query, or async result retrieval */
 			if (!is_async)
 				res = PQexec(conn, sql);
@@ -911,19 +919,6 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 			funcctx->attinmeta = attinmeta;
 
 			MemoryContextSwitchTo(oldcontext);
-		}
-		else
-		{
-			/* async query send */
-			MemoryContextSwitchTo(oldcontext);
-			PG_RETURN_INT32(PQsendQuery(conn, sql));
-		}
-	}
-
-	if (is_async && !do_get)
-	{
-		/* async query send -- should not happen */
-		elog(ERROR, "async query send called more than once");
 
 	}
 
