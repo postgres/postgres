@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.216 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.217 2009/06/02 17:37:55 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2025,6 +2025,16 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
      <sect2 id="runtime-config-query-geqo">
      <title>Genetic Query Optimizer</title>
 
+     <para>
+      The genetic query optimizer (GEQO) is an algorithm that does query
+      planning using heuristic searching.  This reduces planning time for
+      complex queries (those joining many relations), at the cost of producing
+      plans that are sometimes inferior to those found by the normal
+      exhaustive-search algorithm.  Also, GEQO's searching is randomized and
+      therefore its plans may vary nondeterministically.
+      For more information see <xref linkend="geqo">.
+     </para>
+
      <variablelist>
 
      <varlistentry id="guc-geqo" xreflabel="geqo">
@@ -2041,11 +2051,10 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
       <term><varname>geqo</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Enables or disables genetic query optimization, which is an
-        algorithm that attempts to do query planning without
-        exhaustive searching. This is on by default. The
-        <varname>geqo_threshold</varname> variable provides a more
-        granular way to disable GEQO for certain classes of queries.
+        Enables or disables genetic query optimization.
+        This is on by default.  It is usually best not to turn it off in
+        production; the <varname>geqo_threshold</varname> variable provides a
+        more granular way to control use of GEQO.
        </para>
       </listitem>
      </varlistentry>
@@ -2075,8 +2084,8 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        Controls the trade off between planning time and query plan
-        efficiency in GEQO. This variable must be an integer in the
+        Controls the trade-off between planning time and query plan
+        quality in GEQO. This variable must be an integer in the
         range from 1 to 10. The default value is five. Larger values
         increase the time spent doing query planning, but also
         increase the likelihood that an efficient query plan will be
@@ -2100,11 +2109,11 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        Controls the pool size used by GEQO. The pool size is the
+        Controls the pool size used by GEQO, that is the
         number of individuals in the genetic population.  It must be
         at least two, and useful values are typically 100 to 1000.  If
         it is set to zero (the default setting) then a suitable
-        default is chosen based on <varname>geqo_effort</varname> and
+        value is chosen based on <varname>geqo_effort</varname> and
         the number of tables in the query.
        </para>
       </listitem>
@@ -2117,11 +2126,11 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        Controls the number of generations used by GEQO.  Generations
-        specifies the number of iterations of the algorithm.  It must
+        Controls the number of generations used by GEQO, that is
+        the number of iterations of the algorithm.  It must
         be at least one, and useful values are in the same range as
         the pool size.  If it is set to zero (the default setting)
-        then a suitable default is chosen based on
+        then a suitable value is chosen based on
         <varname>geqo_pool_size</varname>.
        </para>
       </listitem>
@@ -2252,9 +2261,14 @@ SELECT * FROM parent WHERE key = 2400;
         The planner will merge sub-queries into upper queries if the
         resulting <literal>FROM</literal> list would have no more than
         this many items.  Smaller values reduce planning time but might
-        yield inferior query plans.  The default is eight.  It is usually
-        wise to keep this less than <xref linkend="guc-geqo-threshold">.
+        yield inferior query plans.  The default is eight.
         For more information see <xref linkend="explicit-joins">.
+       </para>
+
+       <para>
+        Setting this value to <xref linkend="guc-geqo-threshold"> or more
+        may trigger use of the GEQO planner, resulting in nondeterministic
+        plans.  See <xref linkend="runtime-config-query-geqo">.
        </para>
       </listitem>
      </varlistentry>
@@ -2284,6 +2298,12 @@ SELECT * FROM parent WHERE key = 2400;
         temporarily set this variable to 1, and then specify the join
         order they desire explicitly.
         For more information see <xref linkend="explicit-joins">.
+       </para>
+
+       <para>
+        Setting this value to <xref linkend="guc-geqo-threshold"> or more
+        may trigger use of the GEQO planner, resulting in nondeterministic
+        plans.  See <xref linkend="runtime-config-query-geqo">.
        </para>
       </listitem>
      </varlistentry>
