@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.310 2009/06/03 14:48:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.311 2009/06/03 15:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,11 +175,13 @@ typedef struct
 /*
  * These macros centralize code used to process line_buf and raw_buf buffers.
  * They are macros because they often do continue/break control and to avoid
- * function call overhead in tight COPY loops.  "((void) 0)" is used to silence
- * compiler warnings.
+ * function call overhead in tight COPY loops.
  *
- * We must use "if (1)" because "do {} while(0)" overrides the continue/break
- * processing.	See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
+ * We must use "if (1)" because the usual "do {...} while(0)" wrapper would
+ * prevent the continue/break processing from working.  We end the "if (1)"
+ * with "else ((void) 0)" to ensure the "if" does not unintentionally match
+ * any "else" in the calling code, and to avoid any compiler warnings about
+ * empty statements.  See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
  */
 
 /*
