@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.5 2009/01/23 12:43:32 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.6 2009/06/03 20:24:51 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -56,7 +56,7 @@ struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, {NULL}, 0};
  * Handle parsing errors and warnings
  */
 void
-mmerror(int error_code, enum errortype type, char * error, ...)
+mmerror(int error_code, enum errortype type, const char *error, ...)
 {
 	va_list ap;
 
