@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.218 2009/06/03 00:38:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.219 2009/06/03 20:34:29 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3089,7 +3089,7 @@ local0.*    /var/log/postgresql
          separated by a dot.  The numbers are the process start time and the
          process ID, so <literal>%c</> can also be used as a space saving way
          of printing those items.  For example, to generate the session
-         identifier from <literal>pg_stat_activity</>, use:
+         identifier from <literal>pg_stat_activity</>, use this query:
 <programlisting>
 SELECT to_hex(EXTRACT(EPOCH FROM backend_start)::integer) || '.' ||
        to_hex(procpid)
