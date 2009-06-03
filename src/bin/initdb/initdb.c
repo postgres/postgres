@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.170 2009/04/05 04:19:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.171 2009/06/03 16:17:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,8 +654,6 @@ get_id(void)
 
 	struct passwd *pw;
 
-	pw = getpwuid(geteuid());
-
 	if (geteuid() == 0)			/* 0 is root's uid */
 	{
 		fprintf(stderr,
@@ -666,6 +664,8 @@ get_id(void)
 				progname);
 		exit(1);
 	}
+
+	pw = getpwuid(geteuid());
 	if (!pw)
 	{
 		fprintf(stderr,
