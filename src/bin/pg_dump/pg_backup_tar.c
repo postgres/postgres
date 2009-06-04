@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.64 2009/03/26 22:26:07 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.65 2009/06/04 19:16:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -548,13 +548,6 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 		else
 			die_horribly(AH, modulename, "internal error -- neither th nor fh specified in tarReadRaw()\n");
 	}
-
-#if 0
-	write_msg(modulename, ngettext("requested %d byte, got %d from lookahead and %d from file\n",
-								   "requested %d bytes, got %d from lookahead and %d from file\n",
-								   reqLen),
-			  reqLen, used, res);
-#endif
 
 	ctx->tarFHpos += res + used;
 
