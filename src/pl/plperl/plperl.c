@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94.2.10 2008/01/22 20:41:39 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94.2.11 2009/06/04 16:00:49 adunstan Exp $
  *
  **********************************************************************/
 
@@ -282,6 +282,8 @@ plperl_init_interp(void)
 		"", "-e", PERLBOOT
 	};
 
+	int nargs = 3;
+
 #ifdef WIN32
 
 	/* 
@@ -321,12 +323,16 @@ plperl_init_interp(void)
 
 #endif
 
+#ifdef PERL_SYS_INIT3
+	PERL_SYS_INIT3(&nargs, (char ***) &embedding, NULL);
+#endif
+
 	plperl_interp = perl_alloc();
 	if (!plperl_interp)
 		elog(ERROR, "could not allocate Perl interpreter");
 
 	perl_construct(plperl_interp);
-	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
+	perl_parse(plperl_interp, plperl_init_shared_libs, nargs, embedding, NULL);
 	perl_run(plperl_interp);
 
 	plperl_proc_hash = newHV();
@@ -374,7 +380,6 @@ plperl_init_interp(void)
 #endif
 
 }
-
 
 static void
 plperl_safe_init(void)
