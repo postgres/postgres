@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.33 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.34 2009/06/04 18:33:06 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -183,6 +183,19 @@ ereport(ERROR,
    </listitem>
    <listitem>
     <para>
+     <function>errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+     unsigned long n, ...)</function> is like <function>errmsg</>, but with
+     support for various plural forms of the message.
+     <replaceable>fmt_singular</> is the English singular format,
+     <replaceable>fmt_plural</> is the English plural format,
+     <replaceable>n</> is the integer value that determines which plural
+     form is needed, and the remaining arguments are formatted according
+     to the selected format string.  For more information see
+     <xref linkend="nls-guidelines">.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
      <function>errdetail(const char *msg, ...)</function> supplies an optional
      <quote>detail</> message; this is to be used when there is additional
      information that seems inappropriate to put in the primary message.
@@ -199,6 +212,14 @@ ereport(ERROR,
      and the other to the log.  This is useful for error details that are
      too security-sensitive or too bulky to include in the report
      sent to the client.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+     unsigned long n, ...)</function> is like <function>errdetail</>, but with
+     support for various plural forms of the message.
+     For more information see <xref linkend="nls-guidelines">.
     </para>
    </listitem>
    <listitem>
@@ -390,14 +411,14 @@ Hint:       the addendum
    <para>
     There are functions in the backend that will double-quote their own output
     at need (for example, <function>format_type_be</>()).  Do not put
-    additional quotes around the output of such functions. 
+    additional quotes around the output of such functions.
    </para>
 
    <para>
     Rationale: Objects can have names that create ambiguity when embedded in a
     message.  Be consistent about denoting where a plugged-in name starts and
     ends.  But don't clutter messages with unnecessary or duplicate quote
-    marks. 
+    marks.
    </para>
 
   </simplesect>
@@ -413,7 +434,7 @@ Hint:       the addendum
    <para>
     Primary error messages: Do not capitalize the first letter.  Do not end a
     message with a period.  Do not even think about ending a message with an
-    exclamation point. 
+    exclamation point.
    </para>
 
    <para>
@@ -430,7 +451,7 @@ Hint:       the addendum
     long enough to be more than one sentence, they should be split into
     primary and detail parts.)  However, detail and hint messages are longer
     and might need to include multiple sentences.  For consistency, they should
-    follow complete-sentence style even when there's only one sentence. 
+    follow complete-sentence style even when there's only one sentence.
    </para>
 
   </simplesect>
@@ -473,7 +494,7 @@ Hint:       the addendum
    <para>
     Use past tense if an attempt to do something failed, but could perhaps
     succeed next time (perhaps after fixing some problem).  Use present tense
-    if the failure is certainly permanent. 
+    if the failure is certainly permanent.
    </para>
 
    <para>
@@ -489,20 +510,20 @@ cannot open file "%s"
     message should give a reason, such as <quote>disk full</quote> or
     <quote>file doesn't exist</quote>.  The past tense is appropriate because
     next time the disk might not be full anymore or the file in question might
-    exist. 
+    exist.
    </para>
 
    <para>
     The second form indicates that the functionality of opening the named file
     does not exist at all in the program, or that it's conceptually
     impossible.  The present tense is appropriate because the condition will
-    persist indefinitely. 
+    persist indefinitely.
    </para>
 
    <para>
     Rationale: Granted, the average user will not be able to draw great
     conclusions merely from the tense of the message, but since the language
-    provides us with a grammar we should use it correctly. 
+    provides us with a grammar we should use it correctly.
    </para>
 
   </simplesect>
@@ -552,7 +573,7 @@ could not open file %s: %m
     to paste this into a single smooth sentence, so some sort of punctuation
     is needed.  Putting the embedded text in parentheses has also been
     suggested, but it's unnatural if the embedded text is likely to be the
-    most important part of the message, as is often the case. 
+    most important part of the message, as is often the case.
    </para>
 
   </simplesect>
@@ -579,7 +600,7 @@ BETTER: could not open file %s (I/O failure)
     Don't include the name of the reporting routine in the error text. We have
     other mechanisms for finding that out when needed, and for most users it's
     not helpful information.  If the error text doesn't make as much sense
-    without the function name, reword it. 
+    without the function name, reword it.
 <programlisting>
 BAD:    pg_atoi: error in "z": cannot parse "z"
 BETTER: invalid input syntax for integer: "z"
@@ -620,7 +641,7 @@ BETTER: could not open file %s: %m
    <para>
     Error messages like <quote>bad result</quote> are really hard to interpret
     intelligently.  It's better to write why the result is <quote>bad</quote>,
-    e.g., <quote>invalid format</quote>. 
+    e.g., <quote>invalid format</quote>.
    </para>
   </formalpara>
 
@@ -638,7 +659,7 @@ BETTER: could not open file %s: %m
     Try to avoid <quote>unknown</quote>.  Consider <quote>error: unknown
     response</quote>.  If you don't know what the response is, how do you know
     it's erroneous? <quote>Unrecognized</quote> is often a better choice.
-    Also, be sure to include the value being complained of. 
+    Also, be sure to include the value being complained of.
 <programlisting>
 BAD:    unknown node type
 BETTER: unrecognized node type: 42
@@ -654,7 +675,7 @@ BETTER: unrecognized node type: 42
     couldn't <quote>find</quote> the resource.  If, on the other hand, the
     expected location of the resource is known but the program cannot access
     it there then say that the resource doesn't <quote>exist</quote>.  Using
-    <quote>find</quote> in this case sounds weak and confuses the issue. 
+    <quote>find</quote> in this case sounds weak and confuses the issue.
    </para>
   </formalpara>
 

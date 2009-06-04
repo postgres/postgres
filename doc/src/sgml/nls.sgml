@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.17 2009/01/09 10:54:07 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.18 2009/06/04 18:33:06 tgl Exp $ -->
 
 <chapter id="nls">
  <chapterinfo>
@@ -46,7 +46,7 @@
     <filename>msgmerge</filename>, respectively, in a GNU-compatible
     implementation.  Later, we will try to arrange it so that if you
     use a packaged source distribution, you won't need
-    <filename>xgettext</filename>.  (From CVS, you will still need
+    <filename>xgettext</filename>.  (If working from CVS, you will still need
     it.)  <application>GNU Gettext 0.10.36</application> or later is currently recommended.
    </para>
 
@@ -152,7 +152,7 @@ msgstr "another translated"
     If there are already some <filename>.po</filename> files, then
     someone has already done some translation work.  The files are
     named <filename><replaceable>language</replaceable>.po</filename>,
-    where <replaceable>language</replaceable> is the 
+    where <replaceable>language</replaceable> is the
     <ulink url="http://lcweb.loc.gov/standards/iso639-2/englangn.html">
     ISO 639-1 two-letter language code (in lower case)</ulink>, e.g.,
     <filename>fr.po</filename> for French.  If there is really a need
@@ -224,7 +224,7 @@ gmake update-po
     that gives room for other people to pick up your work.  However,
     you are encouraged to give priority to removing fuzzy entries
     after doing a merge.  Remember that fuzzy entries will not be
-    installed; they only serve as reference what might be the right
+    installed; they only serve as reference for what might be the right
     translation.
    </para>
 
@@ -347,8 +347,8 @@ fprintf(stderr, "panic level %d\n", lvl);
 <programlisting>
 fprintf(stderr, gettext("panic level %d\n"), lvl);
 </programlisting>
-     (<symbol>gettext</symbol> is defined as a no-op if no NLS is
-     configured.)
+     (<symbol>gettext</symbol> is defined as a no-op if NLS support is
+     not configured.)
     </para>
 
     <para>
@@ -421,6 +421,9 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
          them here.  If the translatable string is not the first
          argument, the item needs to be of the form
          <literal>func:2</literal> (for the second argument).
+         If you have a function that supports pluralized messages,
+         the item should look like <literal>func:1,2</literal>
+         (identifying the singular and plural message arguments).
         </para>
        </listitem>
       </varlistentry>
@@ -451,8 +454,8 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
 printf("Files were %s.\n", flag ? "copied" : "removed");
 </programlisting>
       The word order within the sentence might be different in other
-      languages.  Also, even if you remember to call gettext() on each
-      fragment, the fragments might not translate well separately.  It's
+      languages.  Also, even if you remember to call <function>gettext()</> on
+      each fragment, the fragments might not translate well separately.  It's
       better to duplicate a little code so that each message to be
       translated is a coherent whole.  Only numbers, file names, and
       such-like run-time variables should be inserted at run time into
@@ -475,12 +478,43 @@ else
     printf("copied %d files", n):
 </programlisting>
       then be disappointed.  Some languages have more than two forms,
-      with some peculiar rules.  We might have a solution for this in
-      the future, but for now the matter is best avoided altogether.
-      You could write:
+      with some peculiar rules.  It's often best to design the message
+      to avoid the issue altogether, for instance like this:
 <programlisting>
 printf("number of copied files: %d", n);
 </programlisting>
+     </para>
+
+     <para>
+      If you really want to construct a properly pluralized message,
+      there is support for this, but it's a bit awkward.  When generating
+      a primary or detail error message in <function>ereport()</>, you can
+      write something like this:
+<programlisting>
+errmsg_plural("copied %d file",
+              "copied %d files",
+              n,
+              n)
+</programlisting>
+      The first argument is the format string appropriate for English
+      singular form, the second is the format string appropriate for
+      English plural form, and the third is the integer control value
+      that determines which plural form to use.  Subsequent arguments
+      are formatted per the format string as usual.  (Normally, the
+      pluralization control value will also be one of the values to be
+      formatted, so it has to be written twice.)  In English it only
+      matters whether <replaceable>n</> is 1 or not 1, but in other
+      languages there can be many different plural forms.  The translator
+      sees the two English forms as a group and has the opportunity to
+      supply multiple substitute strings, with the appropriate one being
+      selected based on the run-time value of <replaceable>n</>.
+     </para>
+
+     <para>
+      If you need to pluralize a message that isn't going directly to an
+      <function>errmsg</> or <function>errdetail</> report, you have to use
+      the underlying function <function>ngettext</>.  See the gettext
+      documentation.
      </para>
     </listitem>
 

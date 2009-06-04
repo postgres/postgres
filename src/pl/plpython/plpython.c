@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.120 2009/04/03 16:59:42 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.121 2009/06/04 18:33:08 tgl Exp $
  *
  *********************************************************************
  */
@@ -205,9 +205,13 @@ static void PLy_init_interp(void);
 static void PLy_init_plpy(void);
 
 /* call PyErr_SetString with a vprint interface and translation support */
-static void
-PLy_exception_set(PyObject *, const char *,...)
+static void PLy_exception_set(PyObject *, const char *,...)
 __attribute__((format(printf, 2, 3)));
+/* same, with pluralized message */
+static void PLy_exception_set_plural(PyObject *, const char *, const char *,
+									 unsigned long n,...)
+__attribute__((format(printf, 2, 5)))
+__attribute__((format(printf, 3, 5)));
 
 /* Get the innermost python procedure called from the backend */
 static char *PLy_procedure_name(PLyProcedure *);
@@ -2525,9 +2529,11 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 			PLy_elog(ERROR, "PL/Python function \"%s\" could not execute plan",
 					 PLy_procedure_name(PLy_curr_procedure));
 		sv = PyString_AsString(so);
-		PLy_exception_set(PLy_exc_spi_error,
-						  dngettext(TEXTDOMAIN, "Expected sequence of %d argument, got %d: %s", "Expected sequence of %d arguments, got %d: %s", plan->nargs),
-						  plan->nargs, nargs, sv);
+		PLy_exception_set_plural(PLy_exc_spi_error,
+								 "Expected sequence of %d argument, got %d: %s",
+								 "Expected sequence of %d arguments, got %d: %s",
+								 plan->nargs,
+								 plan->nargs, nargs, sv);
 		Py_DECREF(so);
 
 		return NULL;
@@ -2941,8 +2947,8 @@ PLy_procedure_name(PLyProcedure * proc)
 	return proc->proname;
 }
 
-/* output a python traceback/exception via the postgresql elog
- * function.  not pretty.
+/*
+ * Call PyErr_SetString with a vprint interface and translation support
  */
 static void
 PLy_exception_set(PyObject * exc, const char *fmt,...)
@@ -2952,6 +2958,26 @@ PLy_exception_set(PyObject * exc, const char *fmt,...)
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), dgettext(TEXTDOMAIN, fmt), ap);
+	va_end(ap);
+
+	PyErr_SetString(exc, buf);
+}
+
+/*
+ * The same, pluralized.
+ */
+static void
+PLy_exception_set_plural(PyObject *exc,
+						 const char *fmt_singular, const char *fmt_plural,
+						 unsigned long n,...)
+{
+	char		buf[1024];
+	va_list		ap;
+
+	va_start(ap, n);
+	vsnprintf(buf, sizeof(buf),
+			  dngettext(TEXTDOMAIN, fmt_singular, fmt_plural, n),
+			  ap);
 	va_end(ap);
 
 	PyErr_SetString(exc, buf);

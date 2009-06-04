@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.246 2009/04/08 21:51:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.247 2009/06/04 18:33:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,10 +616,11 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("table row type and query-specified row type do not match"),
-						 errdetail(ngettext("Table row contains %d attribute, but query expects %d.",
-									"Table row contains %d attributes, but query expects %d.",
-									slot_tupdesc->natts),
-								   slot_tupdesc->natts, var_tupdesc->natts)));
+						 errdetail_plural("Table row contains %d attribute, but query expects %d.",
+										  "Table row contains %d attributes, but query expects %d.",
+										  slot_tupdesc->natts,
+										  slot_tupdesc->natts,
+										  var_tupdesc->natts)));
 			else if (var_tupdesc->natts < slot_tupdesc->natts)
 				needslow = true;
 
@@ -1043,10 +1044,10 @@ init_fcache(Oid foid, FuncExprState *fcache,
 	if (list_length(fcache->args) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg(ngettext("cannot pass more than %d argument to a function",
-								 "cannot pass more than %d arguments to a function",
-								 FUNC_MAX_ARGS),
-						FUNC_MAX_ARGS)));
+				 errmsg_plural("cannot pass more than %d argument to a function",
+							   "cannot pass more than %d arguments to a function",
+							   FUNC_MAX_ARGS,
+							   FUNC_MAX_ARGS)));
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);
@@ -1314,10 +1315,10 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function return row and query-specified return row do not match"),
-				 errdetail(ngettext("Returned row contains %d attribute, but query expects %d.",
-							"Returned row contains %d attributes, but query expects %d.",
-							src_tupdesc->natts),
-						   src_tupdesc->natts, dst_tupdesc->natts)));
+				 errdetail_plural("Returned row contains %d attribute, but query expects %d.",
+								  "Returned row contains %d attributes, but query expects %d.",
+								  src_tupdesc->natts,
+								  src_tupdesc->natts, dst_tupdesc->natts)));
 
 	for (i = 0; i < dst_tupdesc->natts; i++)
 	{

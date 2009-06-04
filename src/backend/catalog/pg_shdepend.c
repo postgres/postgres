@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.32 2009/03/26 22:26:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.33 2009/06/04 18:33:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1049,7 +1049,10 @@ storeObjectDescription(StringInfo descs, objectType type,
 
 		case REMOTE_OBJECT:
 			/* translator: %s will always be "database %s" */
-			appendStringInfo(descs, ngettext("%d object in %s", "%d objects in %s", count), count, objdesc);
+			appendStringInfo(descs, ngettext("%d object in %s",
+											 "%d objects in %s",
+											 count),
+							 count, objdesc);
 			break;
 
 		default:

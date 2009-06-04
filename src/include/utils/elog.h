@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.99 2009/01/06 16:39:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.100 2009/06/04 18:33:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,8 @@
 	(errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain) ? \
 	 (errfinish rest) : (void) 0)
 
-#define ereport(level, rest)	\
-	ereport_domain(level, TEXTDOMAIN, rest)
+#define ereport(elevel, rest)	\
+	ereport_domain(elevel, TEXTDOMAIN, rest)
 
 #define TEXTDOMAIN NULL
 
@@ -133,6 +133,14 @@ errmsg_internal(const char *fmt,...)
 __attribute__((format(printf, 1, 2)));
 
 extern int
+errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+			  unsigned long n, ...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(printf, 1, 4)))
+__attribute__((format(printf, 2, 4)));
+
+extern int
 errdetail(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
@@ -143,6 +151,14 @@ errdetail_log(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
+
+extern int
+errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+				 unsigned long n, ...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(printf, 1, 4)))
+__attribute__((format(printf, 2, 4)));
 
 extern int
 errhint(const char *fmt,...)

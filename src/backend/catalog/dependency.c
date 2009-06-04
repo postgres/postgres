@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.87 2009/03/26 22:26:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.88 2009/06/04 18:33:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -914,10 +914,10 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 	{
 		ereport(msglevel,
 				/* translator: %d always has a value larger than 1 */
-				(errmsg(ngettext("drop cascades to %d other object",
-								 "drop cascades to %d other objects",
-								 numReportedClient + numNotReportedClient),
-						numReportedClient + numNotReportedClient),
+				(errmsg_plural("drop cascades to %d other object",
+							   "drop cascades to %d other objects",
+							   numReportedClient + numNotReportedClient,
+							   numReportedClient + numNotReportedClient),
 				 errdetail("%s", clientdetail.data),
 				 errdetail_log("%s", logdetail.data)));
 	}

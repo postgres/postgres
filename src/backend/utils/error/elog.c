@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.213 2009/03/02 21:18:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.214 2009/06/04 18:33:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,6 +681,47 @@ errcode_for_socket_access(void)
 		pfree(buf.data); \
 	}
 
+/*
+ * Same as above, except for pluralized error messages.  The calling routine
+ * must be declared like "const char *fmt_singular, const char *fmt_plural,
+ * unsigned long n, ...".  Translation is assumed always wanted.
+ */
+#define EVALUATE_MESSAGE_PLURAL(targetfield, appendval)  \
+	{ \
+		const char	   *fmt; \
+		char		   *fmtbuf; \
+		StringInfoData	buf; \
+		/* Internationalize the error format string */ \
+		if (!in_error_recursion_trouble()) \
+			fmt = dngettext(edata->domain, fmt_singular, fmt_plural, n); \
+		else \
+			fmt = (n == 1 ? fmt_singular : fmt_plural); \
+		/* Expand %m in format string */ \
+		fmtbuf = expand_fmt_string(fmt, edata); \
+		initStringInfo(&buf); \
+		if ((appendval) && edata->targetfield) \
+			appendStringInfo(&buf, "%s\n", edata->targetfield); \
+		/* Generate actual output --- have to use appendStringInfoVA */ \
+		for (;;) \
+		{ \
+			va_list		args; \
+			bool		success; \
+			va_start(args, n); \
+			success = appendStringInfoVA(&buf, fmtbuf, args); \
+			va_end(args); \
+			if (success) \
+				break; \
+			enlargeStringInfo(&buf, buf.maxlen); \
+		} \
+		/* Done with expanded fmt */ \
+		pfree(fmtbuf); \
+		/* Save the completed message into the stack item */ \
+		if (edata->targetfield) \
+			pfree(edata->targetfield); \
+		edata->targetfield = pstrdup(buf.data); \
+		pfree(buf.data); \
+	}
+
 
 /*
  * errmsg --- add a primary error message text to the current error
@@ -739,6 +780,29 @@ errmsg_internal(const char *fmt,...)
 
 
 /*
+ * errmsg_plural --- add a primary error message text to the current error,
+ * with support for pluralization of the message text
+ */
+int
+errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+			  unsigned long n, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE_PLURAL(message, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
  * errdetail --- add a detail error message text to the current error
  */
 int
@@ -773,6 +837,29 @@ errdetail_log(const char *fmt,...)
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	EVALUATE_MESSAGE(detail_log, false, true);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errdetail_plural --- add a detail error message text to the current error,
+ * with support for pluralization of the message text
+ */
+int
+errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+				 unsigned long n, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE_PLURAL(detail, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
