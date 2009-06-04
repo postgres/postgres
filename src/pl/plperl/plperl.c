@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.136 2008/01/23 00:55:47 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.136.2.1 2009/06/04 16:00:11 adunstan Exp $
  *
  **********************************************************************/
 
@@ -386,6 +386,8 @@ plperl_init_interp(void)
 		"", "-e", PERLBOOT
 	};
 
+	int nargs = 3;
+
 #ifdef WIN32
 
 	/*
@@ -429,13 +431,19 @@ plperl_init_interp(void)
 #endif
 
 
+#ifdef PERL_SYS_INIT3
+	/* only call this the first time through, as per perlembed man page */
+	if (interp_state == INTERP_NONE)
+		PERL_SYS_INIT3(&nargs, (char ***) &embedding, NULL);
+#endif
+
 	plperl_held_interp = perl_alloc();
 	if (!plperl_held_interp)
 		elog(ERROR, "could not allocate Perl interpreter");
 
 	perl_construct(plperl_held_interp);
 	perl_parse(plperl_held_interp, plperl_init_shared_libs,
-			   3, embedding, NULL);
+			   nargs, embedding, NULL);
 	perl_run(plperl_held_interp);
 
 	if (interp_state == INTERP_NONE)
