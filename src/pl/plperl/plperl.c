@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.8 2007/11/22 17:47:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.9 2009/06/04 16:01:03 adunstan Exp $
  *
  **********************************************************************/
 
@@ -210,6 +210,8 @@ plperl_init_interp(void)
 		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
 	};
 
+	int nargs = 3;
+
 #ifdef WIN32
 
 	/* 
@@ -249,12 +251,16 @@ plperl_init_interp(void)
 
 #endif
 
+#ifdef PERL_SYS_INIT3
+	PERL_SYS_INIT3(&nargs, (char ***) &embedding, NULL);
+#endif
+
 	plperl_interp = perl_alloc();
 	if (!plperl_interp)
 		elog(ERROR, "could not allocate Perl interpreter");
 
 	perl_construct(plperl_interp);
-	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
+	perl_parse(plperl_interp, plperl_init_shared_libs, nargs, embedding, NULL);
 	perl_run(plperl_interp);
 
 	/************************************************************
@@ -306,7 +312,6 @@ plperl_init_interp(void)
 
 
 }
-
 
 static void
 plperl_safe_init(void)
