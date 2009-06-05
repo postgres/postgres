@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94.2.11 2009/06/04 16:00:49 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94.2.12 2009/06/05 20:32:41 adunstan Exp $
  *
  **********************************************************************/
 
@@ -284,6 +284,8 @@ plperl_init_interp(void)
 
 	int nargs = 3;
 
+	char *dummy_perl_env[1] = { NULL }; 
+
 #ifdef WIN32
 
 	/* 
@@ -323,8 +325,17 @@ plperl_init_interp(void)
 
 #endif
 
-#ifdef PERL_SYS_INIT3
-	PERL_SYS_INIT3(&nargs, (char ***) &embedding, NULL);
+	/****
+	 * The perl API docs state that PERL_SYS_INIT3 should be called before
+	 * allocating interprters. Unfortunately, on some platforms this fails
+	 * in the Perl_do_taint() routine, which is called when the platform is
+	 * using the system's malloc() instead of perl's own. Other platforms,
+	 * notably Windows, fail if PERL_SYS_INIT3 is not called. So we call it
+	 * if it's available, unless perl is using the system malloc(), which is
+	 * true when MYMALLOC is set.
+	 */
+#if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
+	PERL_SYS_INIT3(&nargs, (char ***)&embedding, (char***)&dummy_perl_env);
 #endif
 
 	plperl_interp = perl_alloc();
