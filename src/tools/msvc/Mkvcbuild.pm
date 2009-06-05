@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.25.2.3 2008/05/10 16:07:56 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.25.2.4 2009/06/05 18:31:48 adunstan Exp $
 #
 use Carp;
 use Win32;
@@ -104,7 +104,16 @@ sub mkvcbuild
             }
         }
         $plperl->AddReference($postgres);
-        $plperl->AddLibrary($solution->{options}->{perl} . '\lib\CORE\perl58.lib');
+		my @perl_libs = grep {/perl\d+.lib$/ }
+		   glob($solution->{options}->{perl} . '\lib\CORE\perl*.lib');
+		if (@perl_libs == 1)
+		{
+			$plperl->AddLibrary($perl_libs[0]);
+		}
+		else
+		{
+			die "could not identify perl library version";
+		}
     }
 
     if ($solution->{options}->{python})
