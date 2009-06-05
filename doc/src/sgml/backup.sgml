@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.127 2009/05/27 12:28:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.128 2009/06/05 13:40:31 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1335,7 +1335,6 @@ touch /var/lib/pgsql/backup_in_progress
 psql -c "select pg_start_backup('hot_backup');"
 tar -cf /var/lib/pgsql/backup.tar /var/lib/pgsql/data/
 psql -c "select pg_stop_backup();"
-sleep 20
 rm /var/lib/pgsql/backup_in_progress
 tar -rf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
 </programlisting>
