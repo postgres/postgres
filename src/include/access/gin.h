@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.31 2009/03/25 22:19:01 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.32 2009/06/05 18:50:47 tgl Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -124,18 +124,18 @@ typedef struct GinMetaPageData
 #define ItemPointerSetMin(p)  \
 	ItemPointerSet((p), (BlockNumber)0, (OffsetNumber)0)
 #define ItemPointerIsMin(p)  \
-	(ItemPointerGetOffsetNumber(p) == (OffsetNumber)0 && \
-	 ItemPointerGetBlockNumber(p) == (BlockNumber)0)
+	(GinItemPointerGetOffsetNumber(p) == (OffsetNumber)0 && \
+	 GinItemPointerGetBlockNumber(p) == (BlockNumber)0)
 #define ItemPointerSetMax(p)  \
 	ItemPointerSet((p), InvalidBlockNumber, (OffsetNumber)0xffff)
 #define ItemPointerIsMax(p)  \
-	(ItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
-	 ItemPointerGetBlockNumber(p) == InvalidBlockNumber)
+	(GinItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
+	 GinItemPointerGetBlockNumber(p) == InvalidBlockNumber)
 #define ItemPointerSetLossyPage(p, b)  \
 	ItemPointerSet((p), (b), (OffsetNumber)0xffff)
 #define ItemPointerIsLossyPage(p)  \
-	(ItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
-	 ItemPointerGetBlockNumber(p) != InvalidBlockNumber)
+	(GinItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
+	 GinItemPointerGetBlockNumber(p) != InvalidBlockNumber)
 
 typedef struct
 {
