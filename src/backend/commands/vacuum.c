@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.387 2009/03/31 22:12:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.388 2009/06/06 22:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3389,6 +3389,7 @@ scan_index(Relation indrel, double num_tuples)
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = true;
 	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = num_tuples;
 	ivinfo.strategy = vac_strategy;
@@ -3398,10 +3399,14 @@ scan_index(Relation indrel, double num_tuples)
 	if (!stats)
 		return;
 
-	/* now update statistics in pg_class */
-	vac_update_relstats(indrel,
-						stats->num_pages, stats->num_index_tuples,
-						false, InvalidTransactionId);
+	/*
+	 * Now update statistics in pg_class, but only if the index says the
+	 * count is accurate.
+	 */
+	if (!stats->estimated_count)
+		vac_update_relstats(indrel,
+							stats->num_pages, stats->num_index_tuples,
+							false, InvalidTransactionId);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -3417,7 +3422,8 @@ scan_index(Relation indrel, double num_tuples)
 	 * Check for tuple count mismatch.	If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
 	 */
-	if (stats->num_index_tuples != num_tuples)
+	if (!stats->estimated_count &&
+		stats->num_index_tuples != num_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples ||
 			!vac_is_partial_index(indrel))
@@ -3456,6 +3462,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = true;
 	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = num_tuples + keep_tuples;
 	ivinfo.strategy = vac_strategy;
@@ -3469,10 +3476,14 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	if (!stats)
 		return;
 
-	/* now update statistics in pg_class */
-	vac_update_relstats(indrel,
-						stats->num_pages, stats->num_index_tuples,
-						false, InvalidTransactionId);
+	/*
+	 * Now update statistics in pg_class, but only if the index says the
+	 * count is accurate.
+	 */
+	if (!stats->estimated_count)
+		vac_update_relstats(indrel,
+							stats->num_pages, stats->num_index_tuples,
+							false, InvalidTransactionId);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -3490,7 +3501,8 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	 * Check for tuple count mismatch.	If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
 	 */
-	if (stats->num_index_tuples != num_tuples + keep_tuples)
+	if (!stats->estimated_count &&
+		stats->num_index_tuples != num_tuples + keep_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))

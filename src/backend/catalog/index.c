@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.316 2009/05/31 20:55:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.317 2009/06/06 22:13:51 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1938,8 +1938,9 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.index = indexRelation;
 	ivinfo.vacuum_full = false;
 	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = true;
 	ivinfo.message_level = DEBUG2;
-	ivinfo.num_heap_tuples = -1;
+	ivinfo.num_heap_tuples = heapRelation->rd_rel->reltuples;
 	ivinfo.strategy = NULL;
 
 	state.tuplesort = tuplesort_begin_datum(TIDOID,

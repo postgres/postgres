@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.137 2009/05/19 08:30:00 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.138 2009/06/06 22:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,8 +498,9 @@ cleanup:
 			ivinfo.index = Irel[ind];
 			ivinfo.vacuum_full = false;
 			ivinfo.analyze_only = true;
+			ivinfo.estimated_count = true;
 			ivinfo.message_level = elevel;
-			ivinfo.num_heap_tuples = -1; /* not known for sure */
+			ivinfo.num_heap_tuples = onerel->rd_rel->reltuples;
 			ivinfo.strategy = vac_strategy;
 
 			stats = index_vacuum_cleanup(&ivinfo, NULL);

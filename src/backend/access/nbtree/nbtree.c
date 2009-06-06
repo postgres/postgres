@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.169 2009/05/05 19:36:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.170 2009/06/06 22:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,10 +579,11 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	/*
 	 * During a non-FULL vacuum it's quite possible for us to be fooled by
 	 * concurrent page splits into double-counting some index tuples, so
-	 * disbelieve any total that exceeds the underlying heap's count. (We
-	 * can't check this during btbulkdelete.)
+	 * disbelieve any total that exceeds the underlying heap's count ...
+	 * if we know that accurately.  Otherwise this might just make matters
+	 * worse.
 	 */
-	if (!info->vacuum_full)
+	if (!info->vacuum_full && !info->estimated_count)
 	{
 		if (stats->num_index_tuples > info->num_heap_tuples)
 			stats->num_index_tuples = info->num_heap_tuples;
@@ -618,6 +619,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * Reset counts that will be incremented during the scan; needed in case
 	 * of multiple scans during a single VACUUM command
 	 */
+	stats->estimated_count = false;
 	stats->num_index_tuples = 0;
 	stats->pages_deleted = 0;
 

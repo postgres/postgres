@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.28 2009/03/24 20:17:11 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.29 2009/06/06 22:13:50 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -741,6 +741,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 	 * tell how many distinct heap entries are referenced by a GIN index.
 	 */
 	stats->num_index_tuples = info->num_heap_tuples;
+	stats->estimated_count = info->estimated_count;
 
 	/*
 	 * If vacuum full, we already have exclusive lock on the index. Otherwise,

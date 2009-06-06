@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.119 2009/03/24 20:17:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.120 2009/06/06 22:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,9 +84,11 @@ typedef struct LVRelStats
 {
 	/* hasindex = true means two-pass strategy; false means one-pass */
 	bool		hasindex;
+	bool		scanned_all;	/* have we scanned all pages (this far)? */
 	/* Overall statistics about rel */
 	BlockNumber rel_pages;
-	double		rel_tuples;
+	double		old_rel_tuples;	/* previous value of pg_class.reltuples */
+	double		rel_tuples;		/* counts only tuples on scanned pages */
 	BlockNumber pages_removed;
 	double		tuples_deleted;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
@@ -96,7 +98,6 @@ typedef struct LVRelStats
 	int			max_dead_tuples;	/* # slots allocated in array */
 	ItemPointer dead_tuples;	/* array of ItemPointerData */
 	int			num_index_scans;
-	bool		scanned_all;	/* have we scanned all pages (this far)? */
 } LVRelStats;
 
 
@@ -174,8 +175,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
-	vacrelstats->num_index_scans = 0;
 	vacrelstats->scanned_all = true; /* will be cleared if we skip a page */
+	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
+	vacrelstats->num_index_scans = 0;
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
@@ -876,9 +878,9 @@ lazy_vacuum_index(Relation indrel,
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = false;
 	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = true;
 	ivinfo.message_level = elevel;
-	/* We don't yet know rel_tuples, so pass -1 */
-	ivinfo.num_heap_tuples = -1;
+	ivinfo.num_heap_tuples = vacrelstats->old_rel_tuples;
 	ivinfo.strategy = vac_strategy;
 
 	/* Do bulk deletion */
@@ -908,8 +910,10 @@ lazy_cleanup_index(Relation indrel,
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = false;
 	ivinfo.analyze_only = false;
+	ivinfo.estimated_count = !vacrelstats->scanned_all;
 	ivinfo.message_level = elevel;
-	ivinfo.num_heap_tuples = vacrelstats->rel_tuples;
+	/* use rel_tuples only if we scanned all pages, else fall back */
+	ivinfo.num_heap_tuples = vacrelstats->scanned_all ? vacrelstats->rel_tuples : vacrelstats->old_rel_tuples;
 	ivinfo.strategy = vac_strategy;
 
 	stats = index_vacuum_cleanup(&ivinfo, stats);
@@ -917,10 +921,14 @@ lazy_cleanup_index(Relation indrel,
 	if (!stats)
 		return;
 
-	/* now update statistics in pg_class */
-	vac_update_relstats(indrel,
-						stats->num_pages, stats->num_index_tuples,
-						false, InvalidTransactionId);
+	/*
+	 * Now update statistics in pg_class, but only if the index says the
+	 * count is accurate.
+	 */
+	if (!stats->estimated_count)
+		vac_update_relstats(indrel,
+							stats->num_pages, stats->num_index_tuples,
+							false, InvalidTransactionId);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
