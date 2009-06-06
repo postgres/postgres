@@ -784,3 +784,46 @@ SELECT dblink_disconnect('dtest1');
  OK
 (1 row)
 
+-- test foreign data wrapper functionality
+CREATE USER dblink_regression_test;
+CREATE FOREIGN DATA WRAPPER postgresql;
+CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (dbname 'contrib_regression');
+CREATE USER MAPPING FOR public SERVER fdtest;
+GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
+GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test;
+\set ORIGINAL_USER :USER
+\c - dblink_regression_test
+-- should fail
+SELECT dblink_connect('myconn', 'fdtest');
+ERROR:  password is required
+DETAIL:  Non-superusers must provide a password in the connection string.
+-- should succeed
+SELECT dblink_connect_u('myconn', 'fdtest');
+ dblink_connect_u 
+------------------
+ OK
+(1 row)
+
+SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+ a  | b |       c       
+----+---+---------------
+  0 | a | {a0,b0,c0}
+  1 | b | {a1,b1,c1}
+  2 | c | {a2,b2,c2}
+  3 | d | {a3,b3,c3}
+  4 | e | {a4,b4,c4}
+  5 | f | {a5,b5,c5}
+  6 | g | {a6,b6,c6}
+  7 | h | {a7,b7,c7}
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+(11 rows)
+
+\c - :ORIGINAL_USER
+REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
+REVOKE EXECUTE ON FUNCTION dblink_connect_u(text, text) FROM dblink_regression_test;
+DROP USER dblink_regression_test;
+DROP USER MAPPING FOR public SERVER fdtest;
+DROP SERVER fdtest;
+DROP FOREIGN DATA WRAPPER postgresql;

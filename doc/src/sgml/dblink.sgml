@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.6 2008/11/12 15:52:44 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.7 2009/06/06 21:27:56 joe Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -42,6 +42,18 @@
     only one unnamed connection is permitted at a time.  The connection
     will persist until closed or until the database session is ended.
    </para>
+
+   <para>
+    The connection string may also be the name of an existing foreign
+    server that utilizes the postgresql_fdw foreign data wrapper library.
+    See the example below, as well as the following:
+    <simplelist type="inline">
+     <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
+     <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
+     <member><xref linkend="sql-createusermapping" endterm="sql-createusermapping-title"></member>
+    </simplelist>
+   </para>
+
   </refsect1>
 
   <refsect1>
@@ -113,6 +125,53 @@
  ----------------
   OK
  (1 row)
+
+ -- FOREIGN DATA WRAPPER functionality
+ -- Note: local connection must require password authentication for this to work properly
+ --       Otherwise, you will receive the following error from dblink_connect():
+ --       ----------------------------------------------------------------------
+ --       ERROR:  password is required
+ --       DETAIL:  Non-superuser cannot connect if the server does not request a password.
+ --       HINT:  Target server's authentication method must be changed.
+ CREATE USER dblink_regression_test WITH PASSWORD 'secret';
+ CREATE FOREIGN DATA WRAPPER postgresql;
+ CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
+
+ CREATE USER MAPPING FOR dblink_regression_test SERVER fdtest OPTIONS (user 'dblink_regression_test', password 'secret');
+ GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
+ GRANT SELECT ON TABLE foo TO dblink_regression_test;
+
+ \set ORIGINAL_USER :USER
+ \c - dblink_regression_test
+ SELECT dblink_connect('myconn', 'fdtest');
+  dblink_connect 
+ ----------------
+  OK
+ (1 row)
+
+ SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+  a  | b |       c       
+ ----+---+---------------
+   0 | a | {a0,b0,c0}
+   1 | b | {a1,b1,c1}
+   2 | c | {a2,b2,c2}
+   3 | d | {a3,b3,c3}
+   4 | e | {a4,b4,c4}
+   5 | f | {a5,b5,c5}
+   6 | g | {a6,b6,c6}
+   7 | h | {a7,b7,c7}
+   8 | i | {a8,b8,c8}
+   9 | j | {a9,b9,c9}
+  10 | k | {a10,b10,c10}
+ (11 rows)
+
+ \c - :ORIGINAL_USER
+ REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
+ REVOKE SELECT ON TABLE foo FROM  dblink_regression_test;
+ DROP USER MAPPING FOR dblink_regression_test SERVER fdtest;
+ DROP USER dblink_regression_test;
+ DROP SERVER fdtest;
+ DROP FOREIGN DATA WRAPPER postgresql;
    </programlisting>
   </refsect1>
  </refentry>

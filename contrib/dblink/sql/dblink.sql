@@ -364,3 +364,28 @@ SELECT * from
 SELECT dblink_cancel_query('dtest1');
 SELECT dblink_error_message('dtest1');
 SELECT dblink_disconnect('dtest1');
+
+-- test foreign data wrapper functionality
+CREATE USER dblink_regression_test;
+
+CREATE FOREIGN DATA WRAPPER postgresql;
+CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (dbname 'contrib_regression');
+CREATE USER MAPPING FOR public SERVER fdtest;
+GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
+GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test;
+
+\set ORIGINAL_USER :USER
+\c - dblink_regression_test
+-- should fail
+SELECT dblink_connect('myconn', 'fdtest');
+-- should succeed
+SELECT dblink_connect_u('myconn', 'fdtest');
+SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+
+\c - :ORIGINAL_USER
+REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
+REVOKE EXECUTE ON FUNCTION dblink_connect_u(text, text) FROM dblink_regression_test;
+DROP USER dblink_regression_test;
+DROP USER MAPPING FOR public SERVER fdtest;
+DROP SERVER fdtest;
+DROP FOREIGN DATA WRAPPER postgresql;
