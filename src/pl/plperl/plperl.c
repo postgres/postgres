@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.148 2009/06/05 20:32:00 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.149 2009/06/06 03:45:36 tgl Exp $
  *
  **********************************************************************/
 
@@ -398,10 +398,7 @@ plperl_init_interp(void)
 	static char *embedding[3] = {
 		"", "-e", PERLBOOT
 	};
-
 	int nargs = 3;
-
-	char *dummy_perl_env[1] = { NULL }; 
 
 #ifdef WIN32
 
@@ -457,7 +454,11 @@ plperl_init_interp(void)
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
 	/* only call this the first time through, as per perlembed man page */
 	if (interp_state == INTERP_NONE)
-		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char***)&dummy_perl_env);
+	{
+		char *dummy_env[1] = { NULL }; 
+
+		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
+	}
 #endif
 
 	plperl_held_interp = perl_alloc();
