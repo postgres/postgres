@@ -4,7 +4,7 @@
  *
  *	Copyright (c) 2006-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.32 2009/06/05 18:50:47 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.33 2009/06/06 02:39:40 tgl Exp $
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_H
@@ -435,6 +435,7 @@ extern void findParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBl
 /* ginentrypage.c */
 extern IndexTuple GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key,
 										ItemPointerData *ipd, uint32 nipd);
+extern void GinShortenTuple(IndexTuple itup, uint32 nipd);
 extern void prepareEntryScan(GinBtree btree, Relation index, OffsetNumber attnum,
 								Datum value, GinState *ginstate);
 extern void entryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
@@ -442,7 +443,7 @@ extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
 extern int	compareItemPointers(ItemPointer a, ItemPointer b);
-extern void MergeItemPointers(ItemPointerData *dst,
+extern uint32 MergeItemPointers(ItemPointerData *dst,
 				  ItemPointerData *a, uint32 na,
 				  ItemPointerData *b, uint32 nb);
 

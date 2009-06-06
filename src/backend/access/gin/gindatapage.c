@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.14 2009/03/24 20:17:10 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.15 2009/06/06 02:39:40 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -32,10 +32,14 @@ compareItemPointers(ItemPointer a, ItemPointer b)
 }
 
 /*
- * Merge two ordered array of itempointer
+ * Merge two ordered arrays of itempointers, eliminating any duplicates.
+ * Returns the number of items in the result.
+ * Caller is responsible that there is enough space at *dst.
  */
-void
-MergeItemPointers(ItemPointerData *dst, ItemPointerData *a, uint32 na, ItemPointerData *b, uint32 nb)
+uint32
+MergeItemPointers(ItemPointerData *dst,
+				  ItemPointerData *a, uint32 na,
+				  ItemPointerData *b, uint32 nb)
 {
 	ItemPointerData *dptr = dst;
 	ItemPointerData *aptr = a,
@@ -62,6 +66,8 @@ MergeItemPointers(ItemPointerData *dst, ItemPointerData *a, uint32 na, ItemPoint
 
 	while (bptr - b < nb)
 		*dptr++ = *bptr++;
+
+	return dptr - dst;
 }
 
 /*

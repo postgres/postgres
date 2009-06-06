@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.20 2009/03/24 22:06:03 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.21 2009/06/06 02:39:40 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -102,17 +102,19 @@ addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 {
 	Datum			key = gin_index_getattr(ginstate, old);
 	OffsetNumber	attnum = gintuple_get_attrnum(ginstate, old);
-	IndexTuple		res = GinFormTuple(ginstate, attnum, key, NULL, nitem + GinGetNPosting(old));
+	IndexTuple		res = GinFormTuple(ginstate, attnum, key,
+									   NULL, nitem + GinGetNPosting(old));
 
 	if (res)
 	{
 		/* good, small enough */
-		MergeItemPointers(GinGetPosting(res),
-						  GinGetPosting(old), GinGetNPosting(old),
-						  items, nitem
-			);
+		uint32 newnitem;
 
-		GinSetNPosting(res, nitem + GinGetNPosting(old));
+		newnitem = MergeItemPointers(GinGetPosting(res),
+									 GinGetPosting(old), GinGetNPosting(old),
+									 items, nitem);
+		/* merge might have eliminated some duplicate items */
+		GinShortenTuple(res, newnitem);
 	}
 	else
 	{
