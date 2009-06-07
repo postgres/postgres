@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.7 2009/05/27 22:12:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.8 2009/06/07 20:09:34 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -3318,20 +3318,6 @@
        Rewrite <filename>contrib/intagg</> to use new
        functions <function>array_agg()</> and <function>unnest()</>
        (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Remove <filename>contrib/intarray</>'s definitions of the
-       <literal>&lt;@</> and <literal>@&gt;</> operators (Tom)
-      </para>
-
-      <para>
-       This avoids confusion with the equivalent built-in operators.
-       If needed, the <filename>contrib/intarray</> implementations
-       are still available under their historical names <literal>@</>
-       and <literal>~</>.
       </para>
      </listitem>
 

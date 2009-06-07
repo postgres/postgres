@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.30 2009/04/05 00:40:35 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.31 2009/06/07 20:09:34 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -152,23 +152,23 @@ CREATE OPERATOR && (
 --	JOIN = neqjoinsel
 --);
 
---CREATE OPERATOR @> (
---	LEFTARG = _int4,
---	RIGHTARG = _int4,
---	PROCEDURE = _int_contains,
---	COMMUTATOR = '<@',
---	RESTRICT = contsel,
---	JOIN = contjoinsel
---);
+CREATE OPERATOR @> (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_contains,
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
 
---CREATE OPERATOR <@ (
---	LEFTARG = _int4,
---	RIGHTARG = _int4,
---	PROCEDURE = _int_contained,
---	COMMUTATOR = '@>',
---	RESTRICT = contsel,
---	JOIN = contjoinsel
---);
+CREATE OPERATOR <@ (
+	LEFTARG = _int4,
+	RIGHTARG = _int4,
+	PROCEDURE = _int_contained,
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
 
 -- obsolete:
 CREATE OPERATOR @ (
@@ -365,8 +365,8 @@ CREATE OPERATOR CLASS gist__int_ops
 DEFAULT FOR TYPE _int4 USING gist AS
 	OPERATOR	3	&&,
 	OPERATOR	6	= (anyarray, anyarray),
-	OPERATOR	7	@> (anyarray, anyarray),
-	OPERATOR	8	<@ (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
 	OPERATOR	13	@,
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
@@ -442,8 +442,8 @@ FOR TYPE _int4 USING gist
 AS
 	OPERATOR	3	&&,
 	OPERATOR	6	= (anyarray, anyarray),
-	OPERATOR	7	@> (anyarray, anyarray),
-	OPERATOR	8	<@ (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
 	OPERATOR	13	@,
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
@@ -473,8 +473,8 @@ FOR TYPE _int4 USING gin
 AS
 	OPERATOR	3	&&,
 	OPERATOR	6	= (anyarray, anyarray),
-	OPERATOR	7	@> (anyarray, anyarray),
-	OPERATOR	8	<@ (anyarray, anyarray),
+	OPERATOR	7	@>,
+	OPERATOR	8	<@,
 	OPERATOR	13	@,
 	OPERATOR	14	~,
 	OPERATOR	20	@@ (_int4, query_int),
