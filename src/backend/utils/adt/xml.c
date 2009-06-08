@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.8 2009/05/12 20:17:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.9 2009/06/08 21:32:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2648,12 +2648,16 @@ map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls,
 					 rowtypename);
 
 	for (i = 0; i < tupdesc->natts; i++)
+	{
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
 		appendStringInfo(&result,
 			   "    <xsd:element name=\"%s\" type=\"%s\"%s></xsd:element>\n",
 		  map_sql_identifier_to_xml_name(NameStr(tupdesc->attrs[i]->attname),
 										 true, false),
 				   map_sql_type_to_xml_name(tupdesc->attrs[i]->atttypid, -1),
 						 nulls ? " nillable=\"true\"" : " minOccurs=\"0\"");
+	}
 
 	appendStringInfoString(&result,
 						   "  </xsd:sequence>\n"
