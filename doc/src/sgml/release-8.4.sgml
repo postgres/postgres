@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.8 2009/06/07 20:09:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.9 2009/06/08 14:57:21 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -2302,6 +2302,14 @@
        <para>
         Make processing of string literals and nested block comments
         match the main SQL parser's processing (Tom)
+       </para>
+
+       <para>
+        In particular, the format string in <command>RAISE</> now works
+        the same as any other string literal, including being subject
+        to <varname>standard_conforming_strings</>.  This change also
+        fixes other cases in which valid commands would fail when
+        <varname>standard_conforming_strings</> is on.
        </para>
       </listitem>
 
