@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pageinspect.sgml,v 1.5 2008/10/06 14:13:17 heikki Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pageinspect.sgml,v 1.6 2009/06/08 16:22:44 tgl Exp $ -->
 
 <sect1 id="pageinspect">
  <title>pageinspect</title>
@@ -27,8 +27,9 @@
       <function>get_raw_page</function> reads the specified block of the named
       table and returns a copy as a <type>bytea</> value.  This allows a
       single time-consistent copy of the block to be obtained.
-      <literal>fork</literal> should be <literal>'main'</literal> for the main
-      data fork, or <literal>'fsm'</literal> for the FSM.
+      <replaceable>fork</replaceable> should be <literal>'main'</literal> for
+      the main data fork, or <literal>'fsm'</literal> for the free space map,
+      or <literal>'vm'</literal> for the visibility map.
      </para>
     </listitem>
    </varlistentry>
@@ -40,8 +41,9 @@
 
     <listitem>
      <para>
-      A shorthand of above, for reading from the main fork. Equal to
-      <literal>get_raw_page(relname, 0, blkno)</literal>
+      A shorthand version of <function>get_raw_page</function>, for reading
+      from the main fork.  Equivalent to
+      <literal>get_raw_page(relname, 'main', blkno)</literal>
      </para>
     </listitem>
    </varlistentry>
