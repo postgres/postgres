@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.298 2009/05/26 17:36:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.299 2009/06/09 14:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1832,7 +1832,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 			appendStringInfoString(buf, ", ");
 		appendStringInfoString(buf, modename);
 		if (argname && argname[0])
-			appendStringInfo(buf, "%s ", argname);
+			appendStringInfo(buf, "%s ", quote_identifier(argname));
 		appendStringInfoString(buf, format_type_be(argtype));
 		if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
