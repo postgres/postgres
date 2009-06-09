@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.26 2009/05/13 20:27:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.27 2009/06/09 22:00:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ extern text *xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg
 
 extern char *map_sql_identifier_to_xml_name(char *ident, bool fully_escaped, bool escape_period);
 extern char *map_xml_name_to_sql_identifier(char *name);
-extern char *map_sql_value_to_xml_value(Datum value, Oid type);
+extern char *map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings);
 
 typedef enum
 {

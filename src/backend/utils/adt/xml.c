@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.89 2009/06/08 21:32:33 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.90 2009/06/09 22:00:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,7 +569,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 		if (isnull)
 			str = NULL;
 		else
-			str = map_sql_value_to_xml_value(value, exprType((Node *) e->expr));
+			str = map_sql_value_to_xml_value(value, exprType((Node *) e->expr), false);
 		named_arg_strings = lappend(named_arg_strings, str);
 		i++;
 	}
@@ -587,7 +587,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 		if (!isnull)
 		{
 			str = map_sql_value_to_xml_value(value,
-											 exprType((Node *) e->expr));
+											 exprType((Node *) e->expr), true);
 			arg_strings = lappend(arg_strings, str);
 		}
 	}
@@ -1580,9 +1580,18 @@ map_xml_name_to_sql_identifier(char *name)
 
 /*
  * Map SQL value to XML value; see SQL/XML:2003 section 9.16.
+ *
+ * When xml_escape_strings is true, then certain characters in string
+ * values are replaced by entity references (&lt; etc.), as specified
+ * in SQL/XML:2003 section 9.16 GR 8) ii).  This is normally what is
+ * wanted.  The false case is mainly useful when the resulting value
+ * is used with xmlTextWriterWriteAttribute() to write out an
+ * attribute, because that function does the escaping itself.  The SQL
+ * standard of 2003 is somewhat buggy in this regard, so we do our
+ * best to make sense.
  */
 char *
-map_sql_value_to_xml_value(Datum value, Oid type)
+map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 {
 	StringInfoData buf;
 
@@ -1616,7 +1625,7 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 			appendStringInfoString(&buf, "<element>");
 			appendStringInfoString(&buf,
 								   map_sql_value_to_xml_value(elem_values[i],
-															  elmtype));
+															  elmtype, true));
 			appendStringInfoString(&buf, "</element>");
 		}
 
@@ -1774,8 +1783,8 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 		getTypeOutputInfo(type, &typeOut, &isvarlena);
 		str = OidOutputFunctionCall(typeOut, value);
 
-		/* ... exactly as-is for XML */
-		if (type == XMLOID)
+		/* ... exactly as-is for XML, and when escaping is not wanted */
+		if (type == XMLOID || !xml_escape_strings)
 			return str;
 
 		/* otherwise, translate special characters as needed */
@@ -3183,7 +3192,7 @@ SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename,
 			appendStringInfo(result, "  <%s>%s</%s>\n",
 							 colname,
 							 map_sql_value_to_xml_value(colval,
-									SPI_gettypeid(SPI_tuptable->tupdesc, i)),
+								SPI_gettypeid(SPI_tuptable->tupdesc, i), true),
 							 colname);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.247 2009/06/04 18:33:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.248 2009/06/09 22:00:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3243,7 +3243,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				{
 					appendStringInfo(&buf, "<%s>%s</%s>",
 									 argname,
-									 map_sql_value_to_xml_value(value, exprType((Node *) e->expr)),
+									 map_sql_value_to_xml_value(value, exprType((Node *) e->expr), true),
 									 argname);
 					*isNull = false;
 				}
