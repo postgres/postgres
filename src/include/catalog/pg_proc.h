@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.542 2009/04/09 17:39:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.543 2009/06/09 19:51:00 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3702,19 +3702,19 @@ DATA(insert OID = 2298 (  void_in			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2278 "2
 DESCR("I/O");
 DATA(insert OID = 2299 (  void_out			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2278" _null_ _null_ _null_ _null_ void_out _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2300 (  trigger_in		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2279 "2275" _null_ _null_ _null_ _null_ trigger_in _null_ _null_ _null_ ));
+DATA(insert OID = 2300 (  trigger_in		PGNSP PGUID 12 1 0 0 f f f f f i 1 0 2279 "2275" _null_ _null_ _null_ _null_ trigger_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2301 (  trigger_out		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2279" _null_ _null_ _null_ _null_ trigger_out _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2302 (  language_handler_in	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2280 "2275" _null_ _null_ _null_ _null_ language_handler_in _null_ _null_ _null_ ));
+DATA(insert OID = 2302 (  language_handler_in	PGNSP PGUID 12 1 0 0 f f f f f i 1 0 2280 "2275" _null_ _null_ _null_ _null_ language_handler_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2303 (  language_handler_out	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2280" _null_ _null_ _null_ _null_ language_handler_out _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2304 (  internal_in		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2281 "2275" _null_ _null_ _null_ _null_ internal_in _null_ _null_ _null_ ));
+DATA(insert OID = 2304 (  internal_in		PGNSP PGUID 12 1 0 0 f f f f f i 1 0 2281 "2275" _null_ _null_ _null_ _null_ internal_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2305 (  internal_out		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2281" _null_ _null_ _null_ _null_ internal_out _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2306 (  opaque_in			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2282 "2275" _null_ _null_ _null_ _null_ opaque_in _null_ _null_ _null_ ));
+DATA(insert OID = 2306 (  opaque_in			PGNSP PGUID 12 1 0 0 f f f f f i 1 0 2282 "2275" _null_ _null_ _null_ _null_ opaque_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2307 (  opaque_out		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2282" _null_ _null_ _null_ _null_ opaque_out _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -3722,7 +3722,7 @@ DATA(insert OID = 2312 (  anyelement_in		PGNSP PGUID 12 1 0 0 f f f t f i 1 0 22
 DESCR("I/O");
 DATA(insert OID = 2313 (  anyelement_out	PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2283" _null_ _null_ _null_ _null_ anyelement_out _null_ _null_ _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2398 (  shell_in			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2282 "2275" _null_ _null_ _null_ _null_ shell_in _null_ _null_ _null_ ));
+DATA(insert OID = 2398 (  shell_in			PGNSP PGUID 12 1 0 0 f f f f f i 1 0 2282 "2275" _null_ _null_ _null_ _null_ shell_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2399 (  shell_out			PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "2282" _null_ _null_ _null_ _null_ shell_out _null_ _null_ _null_ ));
 DESCR("I/O");
