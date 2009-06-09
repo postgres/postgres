@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.95 2009/05/15 15:56:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.96 2009/06/09 16:41:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,8 @@ int			Log_autovacuum_min_duration = -1;
 /* how long to keep pgstat data in the launcher, in milliseconds */
 #define STATS_READ_DELAY 1000
 
+/* the minimum allowed time between two awakening of the launcher */
+#define MIN_AUTOVAC_SLEEPTIME 100.0 /* milliseconds */
 
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
@@ -822,11 +824,11 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
 		return;
 	}
 
-	/* 100ms is the smallest time we'll allow the launcher to sleep */
-	if (nap->tv_sec <= 0 && nap->tv_usec <= 100000)
+	/* The smallest time we'll allow the launcher to sleep. */
+	if (nap->tv_sec <= 0 && nap->tv_usec <= MIN_AUTOVAC_SLEEPTIME * 1000)
 	{
 		nap->tv_sec = 0;
-		nap->tv_usec = 100000;	/* 100 ms */
+		nap->tv_usec = MIN_AUTOVAC_SLEEPTIME * 1000;
 	}
 }
 
@@ -997,8 +999,17 @@ rebuild_database_list(Oid newdb)
 		/* sort the array */
 		qsort(dbary, nelems, sizeof(avl_dbase), db_comparator);
 
-		/* this is the time interval between databases in the schedule */
+		/*
+		 * Determine the time interval between databases in the schedule.
+		 * If we see that the configured naptime would take us to sleep times
+		 * lower than our min sleep time (which launcher_determine_sleep is
+		 * coded not to allow), silently use a larger naptime (but don't touch
+		 * the GUC variable).
+		 */
 		millis_increment = 1000.0 * autovacuum_naptime / nelems;
+		if (millis_increment <= MIN_AUTOVAC_SLEEPTIME)
+			millis_increment = MIN_AUTOVAC_SLEEPTIME * 1.1;
+
 		current_time = GetCurrentTimestamp();
 
 		/*
