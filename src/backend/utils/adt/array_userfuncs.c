@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.28 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.29 2009/06/09 18:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,13 +520,18 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	int			dims[1];
 	int			lbs[1];
 
+	/*
+	 * Test for null before Asserting we are in right context.  This is
+	 * to avoid possible Assert failure in 8.4beta installations, where
+	 * it is possible for users to create NULL constants of type internal.
+	 */
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();   /* returns null iff no input values */
+
 	/* cannot be called directly because of internal-type argument */
 	Assert(fcinfo->context &&
 		   (IsA(fcinfo->context, AggState) ||
 			IsA(fcinfo->context, WindowAggState)));
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();   /* returns null iff no input values */
 
 	state = (ArrayBuildState *) PG_GETARG_POINTER(0);
 
