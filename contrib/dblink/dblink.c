@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.79 2009/06/06 21:27:56 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.80 2009/06/09 16:35:36 joe Exp $
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -48,6 +48,7 @@
 #include "executor/spi.h"
 #include "foreign/foreign.h"
 #include "lib/stringinfo.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "nodes/nodes.h"
@@ -185,6 +186,7 @@ typedef struct remoteConnHashEnt
 							 errdetail("%s", msg))); \
 				} \
 				dblink_security_check(conn, rconn); \
+				PQsetClientEncoding(conn, GetDatabaseEncodingName()); \
 				freeconn = true; \
 			} \
 	} while (0)
@@ -262,6 +264,9 @@ dblink_connect(PG_FUNCTION_ARGS)
 
 	/* check password actually used if not superuser */
 	dblink_security_check(conn, rconn);
+
+	/* attempt to set client encoding to match server encoding */
+	PQsetClientEncoding(conn, GetDatabaseEncodingName());
 
 	if (connname)
 	{
