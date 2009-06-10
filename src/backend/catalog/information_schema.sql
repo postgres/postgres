@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.53 2009/02/24 10:06:32 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.54 2009/06/10 07:03:34 petere Exp $
  */
 
 /*
@@ -160,12 +160,12 @@ CREATE FUNCTION _pg_datetime_precision(typid oid, typmod int4) RETURNS integer
     RETURNS NULL ON NULL INPUT
     AS
 $$SELECT
-  CASE WHEN $2 = -1 /* default typmod */
-       THEN null
+  CASE WHEN $1 IN (1082) /* date */
+           THEN 0
        WHEN $1 IN (1083, 1114, 1184, 1266) /* time, timestamp, same + tz */
-       THEN $2
+           THEN CASE WHEN $2 < 0 THEN 6 ELSE $2 END
        WHEN $1 IN (1186) /* interval */
-       THEN $2 & 65535
+           THEN CASE WHEN $2 < 0 THEN 6 ELSE $2 & 65535 END
        ELSE null
   END$$;
 
