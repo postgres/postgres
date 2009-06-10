@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.3.2.1 2009/04/06 14:47:02 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.3.2.2 2009/06/10 19:59:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,9 +368,9 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	{
 		ereport(DEBUG1,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Picksplit method for %d column of index \"%s\" failed",
+				 errmsg("picksplit method for %d column of index \"%s\" failed",
 											attno+1, RelationGetRelationName(r)),
-				 errhint("Index is not optimal, to optimize it contact developer or try to use the column as a second one in create index command")));
+				 errhint("The index is not optimal. To optimize it, contact a developer, or try to use the column as the second one in the CREATE INDEX command.")));
 
 		/*
 		 * Reinit GIST_SPLITVEC. Although that fields are not used
