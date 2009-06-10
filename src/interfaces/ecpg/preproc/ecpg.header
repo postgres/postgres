@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.6 2009/06/03 20:24:51 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.7 2009/06/10 23:11:52 petere Exp $ */
 
 /* Copyright comment */
 %{
@@ -21,6 +21,12 @@
  * really want it to call filtered_base_yylex (see parser.c).
  */
 #define base_yylex filtered_base_yylex
+
+/*
+ * This is only here so the string gets into the POT.  Bison uses it
+ * internally.
+ */
+#define bison_gettext_dummy gettext_noop("syntax error")
 
 /*
  * Variables containing simple states.

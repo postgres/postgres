@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.8 2009/06/03 20:24:51 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.9 2009/06/10 23:11:52 petere Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -1987,8 +1987,9 @@ ecpg_into: INTO into_list	{ $$ = EMPTY; }
 
 void base_yyerror(const char *error)
 {
+	/* translator: %s is typically the translation of "syntax error" */
 	mmerror(PARSE_ERROR, ET_ERROR, "%s at or near \"%s\"",
-			error, token_start ? token_start : yytext);
+			_(error), token_start ? token_start : yytext);
 }
 
 void parser_init(void)
