@@ -1,0 +1,52 @@
+# LANGUAGE message translation file for pltcl
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-10 23:59+0900\n"
+"PO-Revision-Date: 2009-04-11 00:00+0900\n"
+"Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
+"Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:1027
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1028
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"PL/Tcl 関数 \"%s\""
+
+#: pltcl.c:1127
+msgid "out of memory"
+msgstr "メモリ不足です"
+
+#: pltcl.c:1192
+msgid "trigger functions can only be called as triggers"
+msgstr "トリガー関数はトリガーとしてのみコールできます"
+
+#: pltcl.c:1201
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl 関数は戻り値の型 %s を返せません"
+
+#: pltcl.c:1213
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "PL/Tcl 関数は戻り値の型として複合型を返せません"
+
+#: pltcl.c:1253
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl 関数は型 %s を受け付けません"

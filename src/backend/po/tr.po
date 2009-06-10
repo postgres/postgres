@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-30 11:03+0000\n"
-"PO-Revision-Date: 2009-05-05 01:13+0200\n"
+"POT-Creation-Date: 2009-05-17 01:02+0000\n"
+"PO-Revision-Date: 2009-05-17 15:01+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -193,12 +193,12 @@ msgstr "GSSAPI protokol 2'de desteklenmiyor"
 #: storage/ipc/procarray.c:392
 #: storage/ipc/procarray.c:708
 #: storage/ipc/procarray.c:715
-#: postmaster/postmaster.c:1819
-#: postmaster/postmaster.c:1852
-#: postmaster/postmaster.c:2909
-#: postmaster/postmaster.c:3622
-#: postmaster/postmaster.c:3703
-#: postmaster/postmaster.c:4267
+#: postmaster/postmaster.c:1856
+#: postmaster/postmaster.c:1889
+#: postmaster/postmaster.c:2951
+#: postmaster/postmaster.c:3680
+#: postmaster/postmaster.c:3761
+#: postmaster/postmaster.c:4329
 msgid "out of memory"
 msgstr "yetersiz bellek"
 
@@ -447,7 +447,7 @@ msgstr "SSL hatası: %s"
 
 #: libpq/be-secure.c:284
 #: libpq/be-secure.c:378
-#: libpq/be-secure.c:931
+#: libpq/be-secure.c:930
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "bilinmeyen SSL hata kodu: %d"
@@ -467,98 +467,98 @@ msgstr "SSL görüşme cevabı gönderme başarısız"
 msgid "could not create SSL context: %s"
 msgstr "SSL context oluşturma hatası: %s"
 
-#: libpq/be-secure.c:737
+#: libpq/be-secure.c:736
 #, c-format
 msgid "could not load server certificate file \"%s\": %s"
 msgstr "sunucu srtifika dosyası \"%s\" yükleme başarısız: %s"
 
-#: libpq/be-secure.c:743
+#: libpq/be-secure.c:742
 #, c-format
 msgid "could not access private key file \"%s\": %m"
 msgstr "private key dosyası \"%s\" okunamıyor: %m"
 
-#: libpq/be-secure.c:758
+#: libpq/be-secure.c:757
 #, fuzzy, c-format
 msgid "private key file \"%s\" has group or world access"
 msgstr "veritabanı dizini \"%s\" gruba ve herkese erişime açıktır"
 
-#: libpq/be-secure.c:760
+#: libpq/be-secure.c:759
 msgid "Permissions should be u=rw (0600) or less."
 msgstr "İzinler u=rw (0600) ya da daha az olmalıdır."
 
-#: libpq/be-secure.c:767
+#: libpq/be-secure.c:766
 #, c-format
 msgid "could not load private key file \"%s\": %s"
 msgstr "private key dosyası \"%s\" okunamıyor: %s"
 
-#: libpq/be-secure.c:772
+#: libpq/be-secure.c:771
 #, c-format
 msgid "check of private key failed: %s"
 msgstr "private key denetlemesi başarısız: %s"
 
-#: libpq/be-secure.c:799
+#: libpq/be-secure.c:798
 #, fuzzy, c-format
 msgid "could not access root certificate file \"%s\": %m"
 msgstr "ana sertifika dosyası \"%s\" okunaıyor: %s"
 
-#: libpq/be-secure.c:811
+#: libpq/be-secure.c:810
 #, c-format
 msgid "could not load root certificate file \"%s\": %s"
 msgstr "ana sertifika dosyası \"%s\" okunaıyor: %s"
 
-#: libpq/be-secure.c:833
+#: libpq/be-secure.c:832
 #, c-format
 msgid "SSL certificate revocation list file \"%s\" ignored"
 msgstr "SSL feshedilmiş sertifika dosyası \"%s\" yoksayıldı"
 
-#: libpq/be-secure.c:835
+#: libpq/be-secure.c:834
 msgid "SSL library does not support certificate revocation lists."
 msgstr "SSL kütühanesi feshedilmiş sertifika listelerini desteklememektedir."
 
-#: libpq/be-secure.c:841
+#: libpq/be-secure.c:840
 #, c-format
 msgid "SSL certificate revocation list file \"%s\" not found, skipping: %s"
 msgstr "SSL feshedilmiş sertifika dosyası \"%s\" bulunmadı, atlanıyor: %s"
 
-#: libpq/be-secure.c:843
+#: libpq/be-secure.c:842
 msgid "Certificates will not be checked against revocation list."
 msgstr "Sertifikalar, feshedilmiş sertifika listeleri ile karşılaştırmayacaktır."
 
-#: libpq/be-secure.c:876
+#: libpq/be-secure.c:875
 #, c-format
 msgid "could not initialize SSL connection: %s"
 msgstr "SSL bağlantısı oluşturulamıyor: %s"
 
-#: libpq/be-secure.c:885
+#: libpq/be-secure.c:884
 #, c-format
 msgid "could not set SSL socket: %s"
 msgstr "SSL socket kurulamıyor: %s"
 
-#: libpq/be-secure.c:911
+#: libpq/be-secure.c:910
 #, c-format
 msgid "could not accept SSL connection: %m"
 msgstr "SSL bağlantı alınamıyor: %m"
 
-#: libpq/be-secure.c:915
-#: libpq/be-secure.c:926
+#: libpq/be-secure.c:914
+#: libpq/be-secure.c:925
 msgid "could not accept SSL connection: EOF detected"
 msgstr "SSL bağlantı alınamıyor: EOF algılandı"
 
-#: libpq/be-secure.c:920
+#: libpq/be-secure.c:919
 #, c-format
 msgid "could not accept SSL connection: %s"
 msgstr "SSL bağlantı alınamıyor: %s"
 
-#: libpq/be-secure.c:958
+#: libpq/be-secure.c:957
 #, c-format
 msgid "SSL connection from \"%s\""
 msgstr "\"%s\" adresinden SSL bağşantısı"
 
-#: libpq/be-secure.c:1002
+#: libpq/be-secure.c:1001
 msgid "no SSL error reported"
 msgstr "SSL hata yok"
 
-#: libpq/be-secure.c:1006
+#: libpq/be-secure.c:1005
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL hata kodu: %lu"
@@ -655,9 +655,9 @@ msgid "end-of-line before netmask specification"
 msgstr ""
 
 #: libpq/hba.c:787
-#, fuzzy, c-format
+#, c-format
 msgid "invalid IP mask \"%s\": %s"
-msgstr "\"%2$s\" dosyasında  %3$d satırında geçersiz IP maskesi \"%1$s\" : %4$s"
+msgstr "geçersiz IP maskesi \"%s\" : %s"
 
 #: libpq/hba.c:803
 #, c-format
@@ -665,29 +665,26 @@ msgid "IP address and mask do not match in file \"%s\" line %d"
 msgstr "\"%s\" dosyasında  %d satırında IP adresi ve maske uyuşmamaktadır"
 
 #: libpq/hba.c:816
-#, fuzzy
 msgid "end-of-line before authentication method"
-msgstr "\"%s\" kullanıcısının kimlik doğrulaması başarısız: geçersiz kimlik doğrulama yöntemi"
+msgstr "yetkilendirme yönteminden önce satır sonu"
 
 #: libpq/hba.c:883
-#, fuzzy, c-format
+#, c-format
 msgid "invalid authentication method \"%s\""
-msgstr "%s: bilinmeyen yetkilendirme yöntemi\"%s\".\n"
+msgstr "geçersiz yetkilendirme yöntemi\"%s\""
 
 #: libpq/hba.c:894
-#, fuzzy, c-format
+#, c-format
 msgid "invalid authentication method \"%s\": not supported on this platform"
-msgstr "%u yetkilendirme sistemi desteklenmiyor\n"
+msgstr "\"%s*\" yetkilendirme sistemi bu platformda desteklenmiyor"
 
 #: libpq/hba.c:907
-#, fuzzy
 msgid "krb5 authentication is not supported on local sockets"
-msgstr "bu platformda yerel bağlantılarda Ident kimlik doğrulaması desteklenmemektedir"
+msgstr "yerel soketlerde krb5 yetkilendirmesi desteklenmemektedir"
 
 #: libpq/hba.c:918
-#, fuzzy
 msgid "cert authentication is only supported on hostssl connections"
-msgstr "bu platformda yerel bağlantılarda Ident kimlik doğrulaması desteklenmemektedir"
+msgstr "cert yetkilendirmesi sadece hostssl bağlantılarında desteklenmektedir"
 
 #: libpq/hba.c:941
 #, c-format
@@ -730,16 +727,16 @@ msgid "unknown authentication option name: \"%s\""
 msgstr "%s: bilinmeyen yetkilendirme yöntemi\"%s\".\n"
 
 #: libpq/hba.c:1228
-#: access/transam/xlog.c:2281
-#: access/transam/xlog.c:3736
-#: access/transam/xlog.c:3826
-#: access/transam/xlog.c:3924
+#: access/transam/xlog.c:2283
+#: access/transam/xlog.c:3846
+#: access/transam/xlog.c:3936
+#: access/transam/xlog.c:4034
 #: utils/init/miscinit.c:993
 #: utils/init/miscinit.c:1099
 #: utils/init/postinit.c:94
 #: utils/init/postinit.c:134
 #: utils/error/elog.c:1307
-#: postmaster/autovacuum.c:1789
+#: postmaster/autovacuum.c:1797
 #: ../port/copydir.c:119
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -752,9 +749,9 @@ msgid "could not open configuration file \"%s\": %m"
 msgstr "yapılandırma dosyası \"%s\" açılamadı: %m"
 
 #: libpq/hba.c:1492
-#, fuzzy, c-format
+#, c-format
 msgid "invalid regular expression \"%s\": %s"
-msgstr "regular expression geçersiz: %s"
+msgstr "geçersiz düzensiz ifade \"%s\" : %s"
 
 #: libpq/hba.c:1514
 #, fuzzy, c-format
@@ -1305,115 +1302,115 @@ msgstr "Veritabanı kapanmasını önlemek için \"%s\" veritabanında full-data
 msgid "transaction ID wrap limit is %u, limited by database \"%s\""
 msgstr "\"%2$s\" veritabanın transaction ID warp limiti %1$u"
 
-#: access/transam/xact.c:622
+#: access/transam/xact.c:621
 msgid "cannot have more than 2^32-1 commands in a transaction"
 msgstr "bir transaction içinde 2^32-1 komuttan fazla olamaz"
 
-#: access/transam/xact.c:1105
+#: access/transam/xact.c:1104
 #, fuzzy, c-format
 msgid "maximum number of committed subtransactions (%d) exceeded"
 msgstr "En çok olabilecek prepared transaction sayısına ulaşılmıştır."
 
-#: access/transam/xact.c:1823
+#: access/transam/xact.c:1821
 msgid "cannot PREPARE a transaction that has operated on temporary tables"
 msgstr "geçeci tablolarda işlem yapmış transaction'a PREPARE yapılamaz"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2611
+#: access/transam/xact.c:2607
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s bir transaction bloğu içinde çalışamaz"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2621
+#: access/transam/xact.c:2617
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s bir subtransaction içinde çalışamaz"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2631
+#: access/transam/xact.c:2627
 #, c-format
 msgid "%s cannot be executed from a function or multi-command string"
 msgstr "%s bir fonksiyonun veya çoklu komut satırından içinden çalıştırılamaz"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2682
+#: access/transam/xact.c:2678
 #, c-format
 msgid "%s can only be used in transaction blocks"
 msgstr "%s sadece transaction bloğu içinde kullanılabilir"
 
-#: access/transam/xact.c:2864
+#: access/transam/xact.c:2860
 msgid "there is already a transaction in progress"
 msgstr "bir transaction zaten başlatılmıştır"
 
-#: access/transam/xact.c:3031
-#: access/transam/xact.c:3123
+#: access/transam/xact.c:3027
+#: access/transam/xact.c:3119
 msgid "there is no transaction in progress"
 msgstr "çalışan bir transaction yok"
 
-#: access/transam/xact.c:3217
-#: access/transam/xact.c:3267
-#: access/transam/xact.c:3273
-#: access/transam/xact.c:3317
-#: access/transam/xact.c:3365
-#: access/transam/xact.c:3371
+#: access/transam/xact.c:3213
+#: access/transam/xact.c:3263
+#: access/transam/xact.c:3269
+#: access/transam/xact.c:3313
+#: access/transam/xact.c:3361
+#: access/transam/xact.c:3367
 msgid "no such savepoint"
 msgstr "böyle bir savepoint bulunamadı"
 
-#: access/transam/xact.c:4006
+#: access/transam/xact.c:4001
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "bir transaction içinde 2^32-1 subtransactiondan fazla olamaz"
 
-#: access/transam/xlog.c:1155
+#: access/transam/xlog.c:1157
 #, c-format
 msgid "could not create archive status file \"%s\": %m"
 msgstr "\"%s\" arşiv durum dosyası oluşturulamadı: %m"
 
-#: access/transam/xlog.c:1163
+#: access/transam/xlog.c:1165
 #, c-format
 msgid "could not write archive status file \"%s\": %m"
 msgstr "\"%s\" arşiv durum dosyası yazılamadı: %m"
 
-#: access/transam/xlog.c:1618
-#: access/transam/xlog.c:3322
+#: access/transam/xlog.c:1620
+#: access/transam/xlog.c:3432
 #, c-format
 msgid "could not seek in log file %u, segment %u to offset %u: %m"
 msgstr "kayıt dosyası %u, segment %u, offset %u imleç ilerleme hatası: %m"
 
-#: access/transam/xlog.c:1635
+#: access/transam/xlog.c:1637
 #, c-format
 msgid "could not write to log file %u, segment %u at offset %u, length %lu: %m"
 msgstr "kayıt dosyası %u, segment %u, offset %u, uzunluk %lu yazma hatası: %m"
 
-#: access/transam/xlog.c:1822
+#: access/transam/xlog.c:1824
 #, fuzzy, c-format
 msgid "updated min recovery point to %X/%X"
 msgstr "recoveri yeniden başlangıç noktası: %X/%X"
 
-#: access/transam/xlog.c:2142
-#: access/transam/xlog.c:2244
-#: access/transam/xlog.c:2477
-#: access/transam/xlog.c:2544
-#: access/transam/xlog.c:2553
+#: access/transam/xlog.c:2144
+#: access/transam/xlog.c:2246
+#: access/transam/xlog.c:2479
+#: access/transam/xlog.c:2546
+#: access/transam/xlog.c:2555
 #, c-format
 msgid "could not open file \"%s\" (log file %u, segment %u): %m"
 msgstr "\"%s\" dosyası (log dosyası %u, segment %u) açma hatası: %m"
 
-#: access/transam/xlog.c:2167
-#: access/transam/xlog.c:2296
-#: access/transam/xlog.c:3905
-#: access/transam/xlog.c:7051
-#: access/transam/xlog.c:7186
-#: postmaster/postmaster.c:3421
+#: access/transam/xlog.c:2169
+#: access/transam/xlog.c:2298
+#: access/transam/xlog.c:4015
+#: access/transam/xlog.c:7187
+#: access/transam/xlog.c:7322
+#: postmaster/postmaster.c:3479
 #: ../port/copydir.c:126
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "\"%s\" dosyası oluşturulamıyor: %m"
 
-#: access/transam/xlog.c:2199
-#: access/transam/xlog.c:2328
-#: access/transam/xlog.c:3957
-#: access/transam/xlog.c:3995
+#: access/transam/xlog.c:2201
+#: access/transam/xlog.c:2330
+#: access/transam/xlog.c:4067
+#: access/transam/xlog.c:4105
 #: utils/misc/guc.c:6765
 #: utils/misc/guc.c:6790
 #: utils/init/miscinit.c:1042
@@ -1421,65 +1418,65 @@ msgstr "\"%s\" dosyası oluşturulamıyor: %m"
 #: commands/copy.c:1290
 #: commands/tablespace.c:706
 #: commands/tablespace.c:712
-#: postmaster/postmaster.c:3431
-#: postmaster/postmaster.c:3441
+#: postmaster/postmaster.c:3489
+#: postmaster/postmaster.c:3499
 #: ../port/copydir.c:148
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "\"%s\" dosyası yazma hatası: %m"
 
-#: access/transam/xlog.c:2207
-#: access/transam/xlog.c:2335
-#: access/transam/xlog.c:4001
+#: access/transam/xlog.c:2209
+#: access/transam/xlog.c:2337
+#: access/transam/xlog.c:4111
 #: ../port/copydir.c:158
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "\"%s\" dosyası fsync hatası: %m"
 
-#: access/transam/xlog.c:2212
-#: access/transam/xlog.c:2340
-#: access/transam/xlog.c:4006
+#: access/transam/xlog.c:2214
+#: access/transam/xlog.c:2342
+#: access/transam/xlog.c:4116
 #: ../port/copydir.c:163
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "\"%s\" dosyası kapatılamıyor: %m"
 
-#: access/transam/xlog.c:2309
-#: access/transam/xlog.c:3936
-#: access/transam/xlog.c:7158
-#: access/transam/xlog.c:7208
-#: access/transam/xlog.c:7500
-#: access/transam/xlog.c:7525
-#: access/transam/xlog.c:7563
+#: access/transam/xlog.c:2311
+#: access/transam/xlog.c:4046
+#: access/transam/xlog.c:7294
+#: access/transam/xlog.c:7344
+#: access/transam/xlog.c:7636
+#: access/transam/xlog.c:7661
+#: access/transam/xlog.c:7699
 #: utils/adt/genfile.c:132
 #: ../port/copydir.c:137
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "\"%s\" dosyası okuma hatası: %m"
 
-#: access/transam/xlog.c:2312
+#: access/transam/xlog.c:2314
 #, c-format
 msgid "not enough data in file \"%s\""
 msgstr "\"%s\" dosyasında yetersiz veri"
 
-#: access/transam/xlog.c:2429
+#: access/transam/xlog.c:2431
 #, c-format
 msgid "could not link file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m"
 msgstr "\"%s\" dosyası \"%s\" dosyasına bağlanamıyor (log dosyası %u, segment %u sıfırlama işlemi): %m"
 
-#: access/transam/xlog.c:2450
+#: access/transam/xlog.c:2452
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m"
 msgstr "\"%s\" dosyası \"%s\" dosyasına taşınamıyor (log dosyası %u, segment %u ilklendirme işlemi): %m"
 
-#: access/transam/xlog.c:2582
+#: access/transam/xlog.c:2584
 #, c-format
 msgid "could not close log file %u, segment %u: %m"
 msgstr "log dosyası %u kapatılamadı, segment %u : %m"
 
-#: access/transam/xlog.c:2650
-#: access/transam/xlog.c:2800
-#: access/transam/xlog.c:7034
+#: access/transam/xlog.c:2652
+#: access/transam/xlog.c:2802
+#: access/transam/xlog.c:7170
 #: utils/adt/dbsize.c:62
 #: utils/adt/dbsize.c:209
 #: utils/adt/dbsize.c:278
@@ -1489,220 +1486,225 @@ msgstr "log dosyası %u kapatılamadı, segment %u : %m"
 msgid "could not stat file \"%s\": %m"
 msgstr "\"%s\" dosyası durumlanamadı: %m"
 
-#: access/transam/xlog.c:2658
-#: access/transam/xlog.c:7213
+#: access/transam/xlog.c:2660
+#: access/transam/xlog.c:7349
 #: commands/tablespace.c:631
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "\"%s\" dosyası silinemedi: %m"
 
-#: access/transam/xlog.c:2781
+#: access/transam/xlog.c:2783
 #, c-format
 msgid "archive file \"%s\" has wrong size: %lu instead of %lu"
 msgstr "\"%s\" arşiv dosyası yanlış boyuta sahip: %lu yerine %lu olmalıydı."
 
-#: access/transam/xlog.c:2788
+#: access/transam/xlog.c:2790
 #, c-format
 msgid "restored log file \"%s\" from archive"
 msgstr "\"%s\" log dosyası arşivden geri yüklendi"
 
-#: access/transam/xlog.c:2838
+#: access/transam/xlog.c:2840
 #, c-format
 msgid "could not restore file \"%s\" from archive: return code %d"
 msgstr "\"%s\" dosyası arşivden geri yüklenemiyor: dönüş kodu %d"
 
-#: access/transam/xlog.c:2911
-#: access/transam/xlog.c:3037
+#: access/transam/xlog.c:2957
+#, c-format
+msgid "recovery_end_command \"%s\": return code %d"
+msgstr ""
+
+#: access/transam/xlog.c:3021
+#: access/transam/xlog.c:3147
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
 msgstr "\"%s\" transaction kayıt dizini açılamıyor: %m"
 
-#: access/transam/xlog.c:2946
+#: access/transam/xlog.c:3056
 #, c-format
 msgid "recycled transaction log file \"%s\""
 msgstr "\"%s\" transaction kayıt dosyası yeniden kullanımda"
 
-#: access/transam/xlog.c:2960
+#: access/transam/xlog.c:3070
 #, c-format
 msgid "removing transaction log file \"%s\""
 msgstr "\"%s\" transaction kayıt dosyası kaldırılıyor"
 
-#: access/transam/xlog.c:2997
-#: access/transam/xlog.c:3007
+#: access/transam/xlog.c:3107
+#: access/transam/xlog.c:3117
 #, fuzzy, c-format
 msgid "required WAL directory \"%s\" does not exist"
 msgstr "veritabanı deizini \"%s\" mevcut değil"
 
-#: access/transam/xlog.c:3013
+#: access/transam/xlog.c:3123
 #, fuzzy, c-format
 msgid "creating missing WAL directory \"%s\""
 msgstr "%s dizini yaratılıyor... "
 
-#: access/transam/xlog.c:3016
+#: access/transam/xlog.c:3126
 #, fuzzy, c-format
 msgid "could not create missing directory \"%s\": %m"
 msgstr "\"%s\" dizini oluşturulamadı: %m"
 
-#: access/transam/xlog.c:3050
+#: access/transam/xlog.c:3160
 #, c-format
 msgid "removing transaction log backup history file \"%s\""
 msgstr "\"%s\" transaction kayıt yedek dosyası kaldırılıyor"
 
-#: access/transam/xlog.c:3169
+#: access/transam/xlog.c:3279
 #, c-format
 msgid "incorrect hole size in record at %X/%X"
 msgstr "%X/%X adresinde geçersiz boşluk boyutu"
 
-#: access/transam/xlog.c:3182
+#: access/transam/xlog.c:3292
 #, c-format
 msgid "incorrect total length in record at %X/%X"
 msgstr "%X/%X adresinde geçersiz toplam uzunluk"
 
-#: access/transam/xlog.c:3195
+#: access/transam/xlog.c:3305
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "resoource manager data checksum %X/%X kaydında geçersiz"
 
-#: access/transam/xlog.c:3264
-#: access/transam/xlog.c:3352
+#: access/transam/xlog.c:3374
+#: access/transam/xlog.c:3462
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "%X/%X adresinde geçersiz kayıt offseti"
 
-#: access/transam/xlog.c:3306
-#: access/transam/xlog.c:3330
-#: access/transam/xlog.c:3495
+#: access/transam/xlog.c:3416
+#: access/transam/xlog.c:3440
+#: access/transam/xlog.c:3605
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u: %m"
 msgstr "log dosyası %u, segment %u, offset %u okuma başarısız: %m"
 
-#: access/transam/xlog.c:3360
+#: access/transam/xlog.c:3470
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord %X/%X tarafından talep edilmiştir"
 
-#: access/transam/xlog.c:3377
+#: access/transam/xlog.c:3487
 #, c-format
 msgid "invalid xlog switch record at %X/%X"
 msgstr "%X/%X adresinde geçersiz xlog switch kaydı"
 
-#: access/transam/xlog.c:3385
+#: access/transam/xlog.c:3495
 #, c-format
 msgid "record with zero length at %X/%X"
 msgstr "%X/%X adresinde sıfır uzunluklu kayıt"
 
-#: access/transam/xlog.c:3394
+#: access/transam/xlog.c:3504
 #, c-format
 msgid "invalid record length at %X/%X"
 msgstr "%X/%X adresinde geçersiz kayıt uzunluk"
 
-#: access/transam/xlog.c:3401
+#: access/transam/xlog.c:3511
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "%2$X/%3$X adresinde geçersiz resource manager ID %1$u"
 
-#: access/transam/xlog.c:3414
-#: access/transam/xlog.c:3430
+#: access/transam/xlog.c:3524
+#: access/transam/xlog.c:3540
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "geçersiz incorrect prev-link olan kayıt: %X/%X at %X/%X"
 
-#: access/transam/xlog.c:3459
+#: access/transam/xlog.c:3569
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "%2$X/%3$X adresinde çok büyük kayıt uzunluğu: %1$u "
 
-#: access/transam/xlog.c:3504
+#: access/transam/xlog.c:3614
 #, c-format
 msgid "there is no contrecord flag in log file %u, segment %u, offset %u"
 msgstr "kayıt dosyası %u, segment %u, offset %u adresinde contrecord bulunamadı"
 
-#: access/transam/xlog.c:3514
+#: access/transam/xlog.c:3624
 #, c-format
 msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
 msgstr "kayıt dosyası %2$u, segment %3$u, offset %4$u adresinde contrecord fazla uzun %1$u"
 
-#: access/transam/xlog.c:3603
+#: access/transam/xlog.c:3713
 #, c-format
 msgid "invalid magic number %04X in log file %u, segment %u, offset %u"
 msgstr "kayıt dosyası %2$u, segment %3$u, offset %4$u adresinde geçersiz tanıtım kodu %1$04X"
 
-#: access/transam/xlog.c:3610
-#: access/transam/xlog.c:3656
+#: access/transam/xlog.c:3720
+#: access/transam/xlog.c:3766
 #, c-format
 msgid "invalid info bits %04X in log file %u, segment %u, offset %u"
 msgstr "kayıt dosyası %2$u, segment %3$u, offset %4$u adresinde geçersiz info bits %1$04X"
 
-#: access/transam/xlog.c:3632
-#: access/transam/xlog.c:3640
-#: access/transam/xlog.c:3647
+#: access/transam/xlog.c:3742
+#: access/transam/xlog.c:3750
+#: access/transam/xlog.c:3757
 msgid "WAL file is from different system"
 msgstr "WAL dosyası farklı bir sistemden"
 
-#: access/transam/xlog.c:3633
+#: access/transam/xlog.c:3743
 #, c-format
 msgid "WAL file SYSID is %s, pg_control SYSID is %s"
 msgstr "WAL dosyası SYSID %s, pg_control SYSID %s"
 
-#: access/transam/xlog.c:3641
+#: access/transam/xlog.c:3751
 msgid "Incorrect XLOG_SEG_SIZE in page header."
 msgstr "Sayfa başlığında geçersiz XLOG_SEG_SIZE."
 
-#: access/transam/xlog.c:3648
+#: access/transam/xlog.c:3758
 msgid "Incorrect XLOG_BLCKSZ in page header."
 msgstr "Sayfa başlığında geçersiz XLOG_BLCKSZ."
 
-#: access/transam/xlog.c:3666
+#: access/transam/xlog.c:3776
 #, c-format
 msgid "unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
 msgstr "beklenmeyen pageaddr %X/%X: kayıt dosyası: %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3678
+#: access/transam/xlog.c:3788
 #, c-format
 msgid "unexpected timeline ID %u in log file %u, segment %u, offset %u"
 msgstr "beklenmeyen timeline ID %u: kayıt dosyası: %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3696
+#: access/transam/xlog.c:3806
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log file %u, segment %u, offset %u"
 msgstr "sıra dışı timeline ID %u (%u'dan sonra) log dosyası %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3765
+#: access/transam/xlog.c:3875
 #, c-format
 msgid "syntax error in history file: %s"
 msgstr "%s geçmiş dosyasında sözdizimi hatası"
 
-#: access/transam/xlog.c:3766
+#: access/transam/xlog.c:3876
 msgid "Expected a numeric timeline ID."
 msgstr "Sayısal timeline ID bekleniyordu."
 
-#: access/transam/xlog.c:3771
+#: access/transam/xlog.c:3881
 #, c-format
 msgid "invalid data in history file: %s"
 msgstr "geçmiş dosyasında geçersiz veri: %s"
 
-#: access/transam/xlog.c:3772
+#: access/transam/xlog.c:3882
 msgid "Timeline IDs must be in increasing sequence."
 msgstr "Timeline ID daima artan sırayla olmalıdır."
 
-#: access/transam/xlog.c:3785
+#: access/transam/xlog.c:3895
 #, c-format
 msgid "invalid data in history file \"%s\""
 msgstr "\"%s\" geçmiş dosyasında geçersiz veri"
 
-#: access/transam/xlog.c:3786
+#: access/transam/xlog.c:3896
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "timeline ID, child timeline ID'sinden daha düşük olmalıdır."
 
-#: access/transam/xlog.c:4023
+#: access/transam/xlog.c:4133
 #, c-format
 msgid "could not link file \"%s\" to \"%s\": %m"
 msgstr "\"%s\" dosyası \"%s\" dosyasına bağlanamadı: %m"
 
-#: access/transam/xlog.c:4030
-#: access/transam/xlog.c:4837
-#: access/transam/xlog.c:4890
-#: access/transam/xlog.c:5288
+#: access/transam/xlog.c:4140
+#: access/transam/xlog.c:4954
+#: access/transam/xlog.c:5007
+#: access/transam/xlog.c:5405
 #: utils/init/flatfiles.c:289
 #: utils/init/flatfiles.c:673
 #: postmaster/pgarch.c:704
@@ -1710,643 +1712,648 @@ msgstr "\"%s\" dosyası \"%s\" dosyasına bağlanamadı: %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "\"%s\" -- \"%s\" ad değiştirme hatası: %m"
 
-#: access/transam/xlog.c:4112
+#: access/transam/xlog.c:4222
 #, c-format
 msgid "could not create control file \"%s\": %m"
 msgstr "kontrol dosyası \"%s\" oluşturma hatası: %m"
 
-#: access/transam/xlog.c:4123
-#: access/transam/xlog.c:4348
+#: access/transam/xlog.c:4233
+#: access/transam/xlog.c:4458
 #, c-format
 msgid "could not write to control file: %m"
 msgstr "kontrol dosyası yazma hatası: %m"
 
-#: access/transam/xlog.c:4129
-#: access/transam/xlog.c:4354
+#: access/transam/xlog.c:4239
+#: access/transam/xlog.c:4464
 #, c-format
 msgid "could not fsync control file: %m"
 msgstr "kontrol dosyası fsync hatası: %m"
 
-#: access/transam/xlog.c:4134
-#: access/transam/xlog.c:4359
+#: access/transam/xlog.c:4244
+#: access/transam/xlog.c:4469
 #, c-format
 msgid "could not close control file: %m"
 msgstr "kontrol dosyası kapatma hatası: %m"
 
-#: access/transam/xlog.c:4152
-#: access/transam/xlog.c:4337
+#: access/transam/xlog.c:4262
+#: access/transam/xlog.c:4447
 #, c-format
 msgid "could not open control file \"%s\": %m"
 msgstr "kontrol dosyası \"%s\" açma hatası: %m"
 
-#: access/transam/xlog.c:4158
+#: access/transam/xlog.c:4268
 #, c-format
 msgid "could not read from control file: %m"
 msgstr "kontrol dosyasından okuma hatası: %m"
 
-#: access/transam/xlog.c:4171
-#: access/transam/xlog.c:4180
-#: access/transam/xlog.c:4204
-#: access/transam/xlog.c:4211
-#: access/transam/xlog.c:4218
-#: access/transam/xlog.c:4223
-#: access/transam/xlog.c:4230
-#: access/transam/xlog.c:4237
-#: access/transam/xlog.c:4244
-#: access/transam/xlog.c:4251
-#: access/transam/xlog.c:4258
-#: access/transam/xlog.c:4265
-#: access/transam/xlog.c:4274
 #: access/transam/xlog.c:4281
 #: access/transam/xlog.c:4290
-#: access/transam/xlog.c:4297
-#: access/transam/xlog.c:4306
-#: access/transam/xlog.c:4313
+#: access/transam/xlog.c:4314
+#: access/transam/xlog.c:4321
+#: access/transam/xlog.c:4328
+#: access/transam/xlog.c:4333
+#: access/transam/xlog.c:4340
+#: access/transam/xlog.c:4347
+#: access/transam/xlog.c:4354
+#: access/transam/xlog.c:4361
+#: access/transam/xlog.c:4368
+#: access/transam/xlog.c:4375
+#: access/transam/xlog.c:4384
+#: access/transam/xlog.c:4391
+#: access/transam/xlog.c:4400
+#: access/transam/xlog.c:4407
+#: access/transam/xlog.c:4416
+#: access/transam/xlog.c:4423
 #: utils/init/miscinit.c:1117
 msgid "database files are incompatible with server"
 msgstr "veri dosyaları veritabanı sunucusu ile uyumlu değildir"
 
-#: access/transam/xlog.c:4172
+#: access/transam/xlog.c:4282
 #, c-format
 msgid "The database cluster was initialized with PG_CONTROL_VERSION %d (0x%08x), but the server was compiled with PG_CONTROL_VERSION %d (0x%08x)."
 msgstr "Veritabanı clusteri PG_CONTROL_VERSION %d (0x%08x) ile ilklendirilmiştir, ancak sunucu  PG_CONTROL_VERSION %d (0x%08x) ile derlenmiştir. "
 
-#: access/transam/xlog.c:4176
+#: access/transam/xlog.c:4286
 msgid "This could be a problem of mismatched byte ordering.  It looks like you need to initdb."
 msgstr "Bunun nedeni eşleşmeyen bayt sıralaması olabilir. initdb yapmanız gerekebilir."
 
-#: access/transam/xlog.c:4181
+#: access/transam/xlog.c:4291
 #, c-format
 msgid "The database cluster was initialized with PG_CONTROL_VERSION %d, but the server was compiled with PG_CONTROL_VERSION %d."
 msgstr "Veritabanı clusteri PG_CONTROL_VERSION %d ile ilklendirilmiştir, ancak sunucu  PG_CONTROL_VERSION %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4184
-#: access/transam/xlog.c:4208
-#: access/transam/xlog.c:4215
-#: access/transam/xlog.c:4220
+#: access/transam/xlog.c:4294
+#: access/transam/xlog.c:4318
+#: access/transam/xlog.c:4325
+#: access/transam/xlog.c:4330
 msgid "It looks like you need to initdb."
 msgstr "Durumu düzeltmek için initdb çalıştırın."
 
-#: access/transam/xlog.c:4195
+#: access/transam/xlog.c:4305
 msgid "incorrect checksum in control file"
 msgstr "kontrol dosyasında geçersiz checksum"
 
-#: access/transam/xlog.c:4205
+#: access/transam/xlog.c:4315
 #, c-format
 msgid "The database cluster was initialized with CATALOG_VERSION_NO %d, but the server was compiled with CATALOG_VERSION_NO %d."
 msgstr "Veritabanı clusteri CATALOG_VERSION_NO %d ile ilklendirilmiştir, ancak sunucu  CATALOG_VERSION_NO %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4212
+#: access/transam/xlog.c:4322
 #, c-format
 msgid "The database cluster was initialized with MAXALIGN %d, but the server was compiled with MAXALIGN %d."
 msgstr "Veritabanı clusteri MAXALIGN %d ile ilklendirilmiştir, ancak sunucu  MAXALIGN %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4219
+#: access/transam/xlog.c:4329
 msgid "The database cluster appears to use a different floating-point number format than the server executable."
 msgstr "Veritabanı dosyaları, sunucu programından farklı ondalık sayı biçimini kullanıyor."
 
-#: access/transam/xlog.c:4224
+#: access/transam/xlog.c:4334
 #, c-format
 msgid "The database cluster was initialized with BLCKSZ %d, but the server was compiled with BLCKSZ %d."
 msgstr "Veritabanı clusteri BLCKSZ %d ile ilklendirilmiştir, ancak sunucu  BLCKSZ %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4227
-#: access/transam/xlog.c:4234
-#: access/transam/xlog.c:4241
-#: access/transam/xlog.c:4248
-#: access/transam/xlog.c:4255
-#: access/transam/xlog.c:4262
-#: access/transam/xlog.c:4269
-#: access/transam/xlog.c:4277
-#: access/transam/xlog.c:4284
-#: access/transam/xlog.c:4293
-#: access/transam/xlog.c:4300
-#: access/transam/xlog.c:4309
-#: access/transam/xlog.c:4316
+#: access/transam/xlog.c:4337
+#: access/transam/xlog.c:4344
+#: access/transam/xlog.c:4351
+#: access/transam/xlog.c:4358
+#: access/transam/xlog.c:4365
+#: access/transam/xlog.c:4372
+#: access/transam/xlog.c:4379
+#: access/transam/xlog.c:4387
+#: access/transam/xlog.c:4394
+#: access/transam/xlog.c:4403
+#: access/transam/xlog.c:4410
+#: access/transam/xlog.c:4419
+#: access/transam/xlog.c:4426
 msgid "It looks like you need to recompile or initdb."
 msgstr "Sistemi yeniden derlemeniz veya initdb çalıştırmanız gerekmetedir."
 
-#: access/transam/xlog.c:4231
+#: access/transam/xlog.c:4341
 #, c-format
 msgid "The database cluster was initialized with RELSEG_SIZE %d, but the server was compiled with RELSEG_SIZE %d."
 msgstr "Veritabanı clusteri RELSEG_SIZE %d ile ilklendirilmiştir, ancak sunucu  RELSEG_SIZE %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4238
+#: access/transam/xlog.c:4348
 #, c-format
 msgid "The database cluster was initialized with XLOG_BLCKSZ %d, but the server was compiled with XLOG_BLCKSZ %d."
 msgstr "Veritabanı clusteri XLOG_BLCKSZ %d ile ilklendirilmiştir, ancak sunucu  XLOG_BLCKSZ %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4245
+#: access/transam/xlog.c:4355
 #, c-format
 msgid "The database cluster was initialized with XLOG_SEG_SIZE %d, but the server was compiled with XLOG_SEG_SIZE %d."
 msgstr "Veritabanı clusteri XLOG_SEG_SIZE %d ile ilklendirilmiştir, ancak sunucu  XLOG_SEG_SIZE %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4252
+#: access/transam/xlog.c:4362
 #, c-format
 msgid "The database cluster was initialized with NAMEDATALEN %d, but the server was compiled with NAMEDATALEN %d."
 msgstr "Veritabanı clusteri NAMEDATALEN %d ile ilklendirilmiştir, ancak sunucu  NAMEDATALEN %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4259
+#: access/transam/xlog.c:4369
 #, c-format
 msgid "The database cluster was initialized with INDEX_MAX_KEYS %d, but the server was compiled with INDEX_MAX_KEYS %d."
 msgstr "Veritabanı clusteri INDEX_MAX_KEYS %d ile ilklendirilmiştir, ancak sunucu  INDEX_MAX_KEYS %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4266
+#: access/transam/xlog.c:4376
 #, c-format
 msgid "The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d, but the server was compiled with TOAST_MAX_CHUNK_SIZE %d."
 msgstr "Veritabanı clusteri TOAST_MAX_CHUNK_SIZE %d ile ilklendirilmiştir, ancak sunucu  TOAST_MAX_CHUNK_SIZE %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4275
+#: access/transam/xlog.c:4385
 msgid "The database cluster was initialized without HAVE_INT64_TIMESTAMP but the server was compiled with HAVE_INT64_TIMESTAMP."
 msgstr "Veritabanı clusteri HAVE_INT64_TIMESTAMP olmadan ilklendirilmiştir, ancak sunucu HAVE_INT64_TIMESTAMP ile derlenmiştir."
 
-#: access/transam/xlog.c:4282
+#: access/transam/xlog.c:4392
 msgid "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the server was compiled without HAVE_INT64_TIMESTAMP."
 msgstr "Veritabanı clusteri HAVE_INT64_TIMESTAMP ile ilklendirilmiştir,  ancak sunucu HAVE_INT64_TIMESTAMP olmadan derlenmiştir."
 
-#: access/transam/xlog.c:4291
+#: access/transam/xlog.c:4401
 #, fuzzy
 msgid "The database cluster was initialized without USE_FLOAT4_BYVAL but the server was compiled with USE_FLOAT4_BYVAL."
 msgstr "Veritabanı clusteri XLOG_BLCKSZ %d ile ilklendirilmiştir, ancak sunucu  XLOG_BLCKSZ %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4298
+#: access/transam/xlog.c:4408
 #, fuzzy
 msgid "The database cluster was initialized with USE_FLOAT4_BYVAL but the server was compiled without USE_FLOAT4_BYVAL."
 msgstr "Veritabanı clusteri XLOG_BLCKSZ %d ile ilklendirilmiştir, ancak sunucu  XLOG_BLCKSZ %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4307
+#: access/transam/xlog.c:4417
 #, fuzzy
 msgid "The database cluster was initialized without USE_FLOAT8_BYVAL but the server was compiled with USE_FLOAT8_BYVAL."
 msgstr "Veritabanı clusteri XLOG_BLCKSZ %d ile ilklendirilmiştir, ancak sunucu  XLOG_BLCKSZ %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4314
+#: access/transam/xlog.c:4424
 #, fuzzy
 msgid "The database cluster was initialized with USE_FLOAT8_BYVAL but the server was compiled without USE_FLOAT8_BYVAL."
 msgstr "Veritabanı clusteri XLOG_BLCKSZ %d ile ilklendirilmiştir, ancak sunucu  XLOG_BLCKSZ %d ile derlenmiştir."
 
-#: access/transam/xlog.c:4542
+#: access/transam/xlog.c:4652
 #, c-format
 msgid "could not write bootstrap transaction log file: %m"
 msgstr "bootstrap transaction log dosyası kapatılamadı: %m"
 
-#: access/transam/xlog.c:4548
+#: access/transam/xlog.c:4658
 #, c-format
 msgid "could not fsync bootstrap transaction log file: %m"
 msgstr "bootstrap transaction log dosyası fsync başarısız: %m"
 
-#: access/transam/xlog.c:4553
+#: access/transam/xlog.c:4663
 #, c-format
 msgid "could not close bootstrap transaction log file: %m"
 msgstr "bootstrap transaction log dosyası kapatılamadı: %m"
 
-#: access/transam/xlog.c:4614
+#: access/transam/xlog.c:4724
 #, c-format
 msgid "could not open recovery command file \"%s\": %m"
 msgstr "recovery command dosyası \"%s\" açılamıyor: %m"
 
-#: access/transam/xlog.c:4619
+#: access/transam/xlog.c:4729
 msgid "starting archive recovery"
 msgstr "arşivden geri getirme başlatılıyor"
 
-#: access/transam/xlog.c:4664
+#: access/transam/xlog.c:4774
 #, c-format
 msgid "restore_command = '%s'"
 msgstr "restore_command = '%s'"
 
-#: access/transam/xlog.c:4678
+#: access/transam/xlog.c:4781
+#, fuzzy, c-format
+msgid "recovery_end_command = '%s'"
+msgstr "restore_command = '%s'"
+
+#: access/transam/xlog.c:4795
 #, c-format
 msgid "recovery_target_timeline is not a valid number: \"%s\""
 msgstr "recovery_target_timeline geçerli sayısal bir değer değildir: \"%s\""
 
-#: access/transam/xlog.c:4683
+#: access/transam/xlog.c:4800
 #, c-format
 msgid "recovery_target_timeline = %u"
 msgstr "recovery_target_timeline = %u"
 
-#: access/transam/xlog.c:4686
+#: access/transam/xlog.c:4803
 msgid "recovery_target_timeline = latest"
 msgstr "recovery_target_timeline = latest"
 
-#: access/transam/xlog.c:4694
+#: access/transam/xlog.c:4811
 #, c-format
 msgid "recovery_target_xid is not a valid number: \"%s\""
 msgstr "recovery_target_xid geçerli sayısal bir değer değildir: \"%s\""
 
-#: access/transam/xlog.c:4697
+#: access/transam/xlog.c:4814
 #, c-format
 msgid "recovery_target_xid = %u"
 msgstr "recovery_target_xid = %u"
 
-#: access/transam/xlog.c:4722
+#: access/transam/xlog.c:4839
 #, c-format
 msgid "recovery_target_time = '%s'"
 msgstr "recovery_target_time = '%s'"
 
-#: access/transam/xlog.c:4733
+#: access/transam/xlog.c:4850
 #, fuzzy
 msgid "parameter \"recovery_target_inclusive\" requires a Boolean value"
 msgstr "\"%s\" seçeneği boolean değerini alır"
 
-#: access/transam/xlog.c:4735
+#: access/transam/xlog.c:4852
 #, c-format
 msgid "recovery_target_inclusive = %s"
 msgstr "recovery_target_inclusive = %s"
 
-#: access/transam/xlog.c:4739
+#: access/transam/xlog.c:4856
 #, c-format
 msgid "unrecognized recovery parameter \"%s\""
 msgstr "\"%s\" tanınmayan recovery parametresi"
 
-#: access/transam/xlog.c:4747
+#: access/transam/xlog.c:4864
 #, c-format
 msgid "syntax error in recovery command file: %s"
 msgstr "%s recovery komut dosyasında sözdizimi hatası "
 
-#: access/transam/xlog.c:4749
+#: access/transam/xlog.c:4866
 msgid "Lines should have the format parameter = 'value'."
 msgstr "Satırların biçimi şöyle olmalıdır: parametre = 'değer'."
 
-#: access/transam/xlog.c:4754
+#: access/transam/xlog.c:4871
 #, c-format
 msgid "recovery command file \"%s\" did not specify restore_command"
 msgstr "\"%s\"recovery komut dosyasında restore_command değeri belirtilmemiştir"
 
-#: access/transam/xlog.c:4773
+#: access/transam/xlog.c:4890
 #, c-format
 msgid "recovery target timeline %u does not exist"
 msgstr "recovery_target_timeline %u mevcut değil"
 
-#: access/transam/xlog.c:4894
+#: access/transam/xlog.c:5011
 msgid "archive recovery complete"
 msgstr "archive recovery tamamlandı"
 
-#: access/transam/xlog.c:4984
+#: access/transam/xlog.c:5101
 #, c-format
 msgid "recovery stopping after commit of transaction %u, time %s"
 msgstr "kurtarma işlemi %u transactionunun, %s zamanında commit edilmesinden sonra durdu"
 
-#: access/transam/xlog.c:4989
+#: access/transam/xlog.c:5106
 #, c-format
 msgid "recovery stopping before commit of transaction %u, time %s"
 msgstr "kurtarma işlemi %u transactionunun, %s zamanında commit edilmesinden önce durdu"
 
-#: access/transam/xlog.c:4997
+#: access/transam/xlog.c:5114
 #, c-format
 msgid "recovery stopping after abort of transaction %u, time %s"
 msgstr "kurtarma işlemi %u transactionunun, %s zamanunda iptal edilmesinden sonra duruyor"
 
-#: access/transam/xlog.c:5002
+#: access/transam/xlog.c:5119
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
 msgstr "kurtarma işlemi %u transactionunun, %s zamanunda iptal edilmesinden önce duruyor"
 
-#: access/transam/xlog.c:5052
+#: access/transam/xlog.c:5169
 msgid "control file contains invalid data"
 msgstr "kontrol dosyası geçersiz veri içeriyor"
 
-#: access/transam/xlog.c:5056
+#: access/transam/xlog.c:5173
 #, c-format
 msgid "database system was shut down at %s"
 msgstr "veritabanı sunucusu %s tarihinde kapatıldı"
 
-#: access/transam/xlog.c:5060
+#: access/transam/xlog.c:5177
 #, c-format
 msgid "database system shutdown was interrupted; last known up at %s"
 msgstr "veritabanı kapatma işlemi iptal edildi; bilinen en son çalışma zamanı %s"
 
-#: access/transam/xlog.c:5064
+#: access/transam/xlog.c:5181
 #, c-format
 msgid "database system was interrupted while in recovery at %s"
 msgstr "%s'da recovery sırasında veritabanı sistemi durduruldu"
 
-#: access/transam/xlog.c:5066
+#: access/transam/xlog.c:5183
 msgid "This probably means that some data is corrupted and you will have to use the last backup for recovery."
 msgstr "Büyük ihtimalle veri bozulmuştur, kurtarmak için en son yedeğinizi kullanın."
 
-#: access/transam/xlog.c:5070
+#: access/transam/xlog.c:5187
 #, c-format
 msgid "database system was interrupted while in recovery at log time %s"
 msgstr "log time %s'da recovery sırasında veritabanı sistemi kesildi"
 
-#: access/transam/xlog.c:5072
+#: access/transam/xlog.c:5189
 msgid "If this has occurred more than once some data might be corrupted and you might need to choose an earlier recovery target."
 msgstr "Bu hata birden fazla kere meydana geldiyse, veri bozulmuş olabilir. Bu durumda daha erken tarihli kurtarma hedefinini belirtmelisiniz."
 
-#: access/transam/xlog.c:5076
+#: access/transam/xlog.c:5193
 #, c-format
 msgid "database system was interrupted; last known up at %s"
 msgstr "veritabanı sunucusu durdurulmuştur; bilinen en son çalışma zamanı %s"
 
-#: access/transam/xlog.c:5115
+#: access/transam/xlog.c:5232
 #, c-format
 msgid "requested timeline %u is not a child of database system timeline %u"
 msgstr "talep edilmiş timeline %u veritabanı sistem timeline %u için geçerli bir timeline değildir"
 
-#: access/transam/xlog.c:5129
-#: access/transam/xlog.c:5153
+#: access/transam/xlog.c:5246
+#: access/transam/xlog.c:5270
 #, c-format
 msgid "checkpoint record is at %X/%X"
 msgstr "checkpoint kaydı %X/%X noktasındadır"
 
-#: access/transam/xlog.c:5136
+#: access/transam/xlog.c:5253
 msgid "could not locate required checkpoint record"
 msgstr "istenilen checkpoint kaydı bulunamadı"
 
-#: access/transam/xlog.c:5137
+#: access/transam/xlog.c:5254
 #, c-format
 msgid "If you are not restoring from a backup, try removing the file \"%s/backup_label\"."
 msgstr "Yedekten geri almıyorsanız, \"%s/backup_label\" dosyasını silmeyi deneyin."
 
-#: access/transam/xlog.c:5163
+#: access/transam/xlog.c:5280
 #, c-format
 msgid "using previous checkpoint record at %X/%X"
 msgstr "%X/%X adresindeki eski checkpoint kaydı kullanılıyor"
 
-#: access/transam/xlog.c:5169
+#: access/transam/xlog.c:5286
 msgid "could not locate a valid checkpoint record"
 msgstr "geçerli checkpoint kaydı bulunamıyor"
 
-#: access/transam/xlog.c:5178
+#: access/transam/xlog.c:5295
 #, c-format
 msgid "redo record is at %X/%X; shutdown %s"
 msgstr "redo kaydı %X/%X; kapatma %s"
 
-#: access/transam/xlog.c:5182
+#: access/transam/xlog.c:5299
 #, c-format
 msgid "next transaction ID: %u/%u; next OID: %u"
 msgstr "sıradaki transaction ID: %u/%u; sıradaki OID: %u"
 
-#: access/transam/xlog.c:5186
+#: access/transam/xlog.c:5303
 #, c-format
 msgid "next MultiXactId: %u; next MultiXactOffset: %u"
 msgstr "sıradaki MultiXactId: %u; sıradaki MultiXactOffset: %u"
 
-#: access/transam/xlog.c:5190
+#: access/transam/xlog.c:5307
 msgid "invalid next transaction ID"
 msgstr "sıradaki transaction ID geçersiz"
 
-#: access/transam/xlog.c:5208
+#: access/transam/xlog.c:5325
 msgid "invalid redo in checkpoint record"
 msgstr "checkpoint kaydındaki redo geçersizdir"
 
-#: access/transam/xlog.c:5219
+#: access/transam/xlog.c:5336
 msgid "invalid redo record in shutdown checkpoint"
 msgstr "shutdown checkpointteki redo kaydı geçersizdir"
 
-#: access/transam/xlog.c:5244
+#: access/transam/xlog.c:5361
 msgid "automatic recovery in progress"
 msgstr "otomatik kurtarma sürüyor"
 
-#: access/transam/xlog.c:5250
+#: access/transam/xlog.c:5367
 msgid "database system was not properly shut down; automatic recovery in progress"
 msgstr "veritabanı düzgün kapatılmamış; otomatik kurtarma işlemi sürüyor"
 
-#: access/transam/xlog.c:5332
+#: access/transam/xlog.c:5449
 #, c-format
 msgid "redo starts at %X/%X"
 msgstr "redo başlangıcı %X/%X"
 
-#: access/transam/xlog.c:5336
+#: access/transam/xlog.c:5453
 #, c-format
 msgid "redo starts at %X/%X, consistency will be reached at %X/%X"
 msgstr ""
 
-#: access/transam/xlog.c:5405
+#: access/transam/xlog.c:5522
 msgid "consistent recovery state reached"
 msgstr ""
 
-#: access/transam/xlog.c:5460
+#: access/transam/xlog.c:5577
 #, c-format
 msgid "redo done at %X/%X"
 msgstr "redo bitişi %X/%X"
 
-#: access/transam/xlog.c:5464
-#: access/transam/xlog.c:6575
+#: access/transam/xlog.c:5581
+#: access/transam/xlog.c:6698
 #, c-format
 msgid "last completed transaction was at log time %s"
 msgstr "son tamamlanan transaction %s kayıt zamanındaydı"
 
-#: access/transam/xlog.c:5472
+#: access/transam/xlog.c:5589
 msgid "redo is not required"
 msgstr "redo işlemi gerekmiyor"
 
-#: access/transam/xlog.c:5492
+#: access/transam/xlog.c:5609
 #, fuzzy
 msgid "requested recovery stop point is before consistent recovery point"
 msgstr "talep edilen kurtarma durma noktası yedek dump'ının bitiş tarihinden öncedir"
 
-#: access/transam/xlog.c:5495
+#: access/transam/xlog.c:5612
 msgid "WAL ends before consistent recovery point"
 msgstr ""
 
-#: access/transam/xlog.c:5516
+#: access/transam/xlog.c:5633
 #, c-format
 msgid "selected new timeline ID: %u"
 msgstr "seçili yeni timeline ID: %u"
 
-#: access/transam/xlog.c:5737
+#: access/transam/xlog.c:5860
 msgid "invalid primary checkpoint link in control file"
 msgstr "kontrol dosyasındaki ana checkpoint bağlantısı geçersiz"
 
-#: access/transam/xlog.c:5741
+#: access/transam/xlog.c:5864
 msgid "invalid secondary checkpoint link in control file"
 msgstr "kontrol dosyasındaki ikincil checkpoint bağlantısı geçersiz"
 
-#: access/transam/xlog.c:5745
+#: access/transam/xlog.c:5868
 msgid "invalid checkpoint link in backup_label file"
 msgstr "backup_label dosyasındaki checkpoint linki geçersiz"
 
-#: access/transam/xlog.c:5759
+#: access/transam/xlog.c:5882
 msgid "invalid primary checkpoint record"
 msgstr "birincil checkpoint kaydı geçersiz"
 
-#: access/transam/xlog.c:5763
+#: access/transam/xlog.c:5886
 msgid "invalid secondary checkpoint record"
 msgstr "ikincil checkpoint kaydı geçersiz"
 
-#: access/transam/xlog.c:5767
+#: access/transam/xlog.c:5890
 msgid "invalid checkpoint record"
 msgstr "geçersiz checkpoint kaydı"
 
-#: access/transam/xlog.c:5778
+#: access/transam/xlog.c:5901
 msgid "invalid resource manager ID in primary checkpoint record"
 msgstr "birincil checkpoint kaydındaki resource manager ID geçersiz"
 
-#: access/transam/xlog.c:5782
+#: access/transam/xlog.c:5905
 msgid "invalid resource manager ID in secondary checkpoint record"
 msgstr "ikincil checkpoint kaydındaki resource manager ID geçersiz"
 
-#: access/transam/xlog.c:5786
+#: access/transam/xlog.c:5909
 msgid "invalid resource manager ID in checkpoint record"
 msgstr "checkpoint kaydındaki resource manager ID geçersiz"
 
-#: access/transam/xlog.c:5798
+#: access/transam/xlog.c:5921
 msgid "invalid xl_info in primary checkpoint record"
 msgstr "primary checkpoint kaydındaki xl_info geçersiz"
 
-#: access/transam/xlog.c:5802
+#: access/transam/xlog.c:5925
 msgid "invalid xl_info in secondary checkpoint record"
 msgstr "ikincil checkpoint kaydındaki xl_info geçersiz"
 
-#: access/transam/xlog.c:5806
+#: access/transam/xlog.c:5929
 msgid "invalid xl_info in checkpoint record"
 msgstr "checkpoint kaydındaki xl_info geçersiz"
 
-#: access/transam/xlog.c:5818
+#: access/transam/xlog.c:5941
 msgid "invalid length of primary checkpoint record"
 msgstr "birincil checkpoint kaydının uzunluğu geçersiz"
 
-#: access/transam/xlog.c:5822
+#: access/transam/xlog.c:5945
 msgid "invalid length of secondary checkpoint record"
 msgstr "ikincil checkpoint kaydının uzunluğu geçersiz"
 
-#: access/transam/xlog.c:5826
+#: access/transam/xlog.c:5949
 msgid "invalid length of checkpoint record"
 msgstr "checkpoint kaydın uzunluğu geçersiz"
 
-#: access/transam/xlog.c:5960
+#: access/transam/xlog.c:6083
 msgid "shutting down"
 msgstr "kapanıyor"
 
-#: access/transam/xlog.c:5971
+#: access/transam/xlog.c:6094
 msgid "database system is shut down"
 msgstr "veritabanı sistemi kapandı"
 
-#: access/transam/xlog.c:6099
+#: access/transam/xlog.c:6222
 msgid "hurrying in-progress restartpoint"
 msgstr ""
 
-#: access/transam/xlog.c:6325
+#: access/transam/xlog.c:6448
 msgid "concurrent transaction log activity while database system is shutting down"
 msgstr "veritabanının kapanması sırasında eşzamanlı transaction log hareketi"
 
-#: access/transam/xlog.c:6503
+#: access/transam/xlog.c:6626
 msgid "skipping restartpoint, recovery has already ended"
 msgstr ""
 
-#: access/transam/xlog.c:6527
+#: access/transam/xlog.c:6650
 #, fuzzy, c-format
 msgid "skipping restartpoint, already performed at %X/%X"
 msgstr "%X/%X adresindeki eski checkpoint kaydı kullanılıyor"
 
-#: access/transam/xlog.c:6570
+#: access/transam/xlog.c:6693
 #, c-format
 msgid "recovery restart point at %X/%X"
 msgstr "recoveri yeniden başlangıç noktası: %X/%X"
 
-#: access/transam/xlog.c:6693
+#: access/transam/xlog.c:6816
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
 msgstr "checkpoint kaydındaki beklenmeyen timeline ID %u (%u'dan sonra)"
 
-#: access/transam/xlog.c:6725
+#: access/transam/xlog.c:6848
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr "checkpoint kaydındaki beklenmeyen timeline ID %u (%u olmalıydı)"
 
-#: access/transam/xlog.c:6861
-#: access/transam/xlog.c:6884
+#: access/transam/xlog.c:6984
+#: access/transam/xlog.c:7007
 #, c-format
 msgid "could not fsync log file %u, segment %u: %m"
 msgstr "kayıt dosyası %u, segment %u fsync yapılamıyor: %m"
 
-#: access/transam/xlog.c:6892
+#: access/transam/xlog.c:7015
 #, c-format
 msgid "could not fsync write-through log file %u, segment %u: %m"
 msgstr "write-through log dosyası %u, segment %u fsync yapılamıyor: %m"
 
-#: access/transam/xlog.c:6901
+#: access/transam/xlog.c:7024
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
 msgstr "kayıt dosyası %u, segment %u fdatasync yapılamıyor: %m"
 
-#: access/transam/xlog.c:6944
-#: access/transam/xlog.c:7118
+#: access/transam/xlog.c:7067
+#: access/transam/xlog.c:7254
 msgid "must be superuser to run a backup"
 msgstr "yedeklemeyi gerçekleştirmek için superuser haklarına sahip olmalısınız"
 
-#: access/transam/xlog.c:6949
-#: access/transam/xlog.c:6955
-#: access/transam/xlog.c:7123
+#: access/transam/xlog.c:7072
+#: access/transam/xlog.c:7078
+#: access/transam/xlog.c:7259
 msgid "WAL archiving is not active"
 msgstr "WAL arşivleme etkin değil"
 
-#: access/transam/xlog.c:6950
-#: access/transam/xlog.c:7124
+#: access/transam/xlog.c:7073
+#: access/transam/xlog.c:7260
 msgid "archive_mode must be enabled at server start."
 msgstr "archive_mode sunucu başlatıldığında etkinleştirilmedir."
 
-#: access/transam/xlog.c:6956
+#: access/transam/xlog.c:7079
 msgid "archive_command must be defined before online backups can be made safely."
 msgstr "online yedekleme güvenilir bir biçimde çalışması için, önce archive_command tanımlayın."
 
-#: access/transam/xlog.c:6984
-#: access/transam/xlog.c:7040
+#: access/transam/xlog.c:7107
+#: access/transam/xlog.c:7176
 msgid "a backup is already in progress"
 msgstr "bir backup işlemi zaten aktif"
 
-#: access/transam/xlog.c:6985
+#: access/transam/xlog.c:7108
 msgid "Run pg_stop_backup() and try again."
 msgstr "pg_stop_backup() çalıştırıp yeniden deneyin."
 
-#: access/transam/xlog.c:7041
+#: access/transam/xlog.c:7177
 #, c-format
 msgid "If you're sure there is no backup in progress, remove file \"%s\" and try again."
 msgstr "Eğer bir backup sürecinin şu an çalışmadığından eminseniz, \"%s\" dosyasını kaldırın ve yeniden deneyin."
 
-#: access/transam/xlog.c:7062
-#: access/transam/xlog.c:7199
+#: access/transam/xlog.c:7198
+#: access/transam/xlog.c:7335
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "\"%s\" dosyasına yazma hatası: %m"
 
-#: access/transam/xlog.c:7162
+#: access/transam/xlog.c:7298
 msgid "a backup is not in progress"
 msgstr "şu an backup süreci çalışmıyor"
 
-#: access/transam/xlog.c:7174
-#: access/transam/xlog.c:7515
-#: access/transam/xlog.c:7521
-#: access/transam/xlog.c:7552
-#: access/transam/xlog.c:7558
+#: access/transam/xlog.c:7310
+#: access/transam/xlog.c:7651
+#: access/transam/xlog.c:7657
+#: access/transam/xlog.c:7688
+#: access/transam/xlog.c:7694
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "\"%s\" dosyasında geçersiz veri"
 
-#: access/transam/xlog.c:7254
+#: access/transam/xlog.c:7390
 #, c-format
 msgid "pg_stop_backup still waiting for archive to complete (%d seconds elapsed)"
 msgstr ""
 
-#: access/transam/xlog.c:7279
+#: access/transam/xlog.c:7415
 msgid "must be superuser to switch transaction log files"
 msgstr "transaction log dosyaları değiştirmek için superuser olmalısınız"
 
-#: access/transam/xlog.c:7376
-#: access/transam/xlog.c:7442
+#: access/transam/xlog.c:7512
+#: access/transam/xlog.c:7578
 #, c-format
 msgid "could not parse transaction log location \"%s\""
 msgstr "\"%s\" transaction log konumu ayrıştıramadı"
 
-#: access/transam/xlog.c:7586
+#: access/transam/xlog.c:7722
 #, c-format
 msgid "xlog redo %s"
 msgstr "xlog redo %s"
 
-#: access/transam/xlog.c:7626
+#: access/transam/xlog.c:7762
 msgid "online backup mode cancelled"
 msgstr "çevrimiçi yedekleme modu iptal edildi"
 
-#: access/transam/xlog.c:7627
+#: access/transam/xlog.c:7763
 #, fuzzy, c-format
 msgid "\"%s\" was renamed to \"%s\"."
 msgstr "\"%s\" zaten \"%s\" nesnesinin alt nesnesidir"
 
-#: access/transam/xlog.c:7634
+#: access/transam/xlog.c:7770
 msgid "online backup mode was not cancelled"
 msgstr "çevrimiçi yedek modu iptal edilmedi"
 
-#: access/transam/xlog.c:7635
+#: access/transam/xlog.c:7771
 #, fuzzy, c-format
 msgid "Could not rename \"%s\" to \"%s\": %m."
 msgstr "\"%s\" -- \"%s\" ad değiştirme hatası: %m"
@@ -2392,38 +2399,28 @@ msgstr "\"%s\" indexi btree değildir."
 msgid "version mismatch in index \"%s\": file version %d, code version %d"
 msgstr "\"%s\" indexinde sürüm uyuşmazlığı: dosya sürümü %d, kod sürümü ise %d"
 
-#: access/heap/heapam.c:975
-#, c-format
-msgid "could not obtain lock on relation \"%s\""
-msgstr "\"%s\" tablosu için lock alınamadı"
-
-#: access/heap/heapam.c:980
-#, c-format
-msgid "could not obtain lock on relation with OID %u"
-msgstr "OID %u olan tablosu için lock alınamadı"
-
-#: access/heap/heapam.c:1114
-#: access/heap/heapam.c:1142
-#: access/heap/heapam.c:1172
+#: access/heap/heapam.c:1064
+#: access/heap/heapam.c:1092
+#: access/heap/heapam.c:1122
 #: catalog/aclchk.c:880
 #, c-format
 msgid "\"%s\" is an index"
 msgstr "\"%s\" bir indextir"
 
-#: access/heap/heapam.c:1119
-#: access/heap/heapam.c:1147
-#: access/heap/heapam.c:1177
+#: access/heap/heapam.c:1069
+#: access/heap/heapam.c:1097
+#: access/heap/heapam.c:1127
 #: catalog/aclchk.c:887
-#: commands/tablecmds.c:2062
-#: commands/tablecmds.c:6244
-#: commands/tablecmds.c:7530
+#: commands/tablecmds.c:2061
+#: commands/tablecmds.c:6249
+#: commands/tablecmds.c:7538
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" bir birleşik tiptir"
 
-#: access/heap/heapam.c:3191
-#: access/heap/heapam.c:3222
-#: access/heap/heapam.c:3257
+#: access/heap/heapam.c:3141
+#: access/heap/heapam.c:3172
+#: access/heap/heapam.c:3207
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "\"%s\" tablosundaki satır için lock alınamadı"
@@ -2437,8 +2434,8 @@ msgstr "satır çok büyük: boyutu %lu, olabileceği en fazla boyut %lu"
 #: access/index/indexam.c:149
 #: commands/comment.c:502
 #: commands/indexcmds.c:1324
-#: commands/tablecmds.c:212
-#: commands/tablecmds.c:2258
+#: commands/tablecmds.c:211
+#: commands/tablecmds.c:2257
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" bir index değildir"
@@ -2457,7 +2454,7 @@ msgstr "Bir buffer sayfası boyutundan yüksek değerler indekslenemz."
 msgid "out of overflow pages in hash index \"%s\""
 msgstr " \"%s\" hash indexi içinde sayfa taşması hatası"
 
-#: access/hash/hashsearch.c:147
+#: access/hash/hashsearch.c:152
 msgid "hash indexes do not support whole-index scans"
 msgstr "hash indexler tüm index taramasını desteklememektedir"
 
@@ -2610,14 +2607,14 @@ msgstr "bilinmeyen hak türü: \"%s\""
 #: commands/comment.c:579
 #: commands/copy.c:3403
 #: commands/sequence.c:1301
-#: commands/tablecmds.c:3820
-#: commands/tablecmds.c:3912
-#: commands/tablecmds.c:3959
-#: commands/tablecmds.c:4055
-#: commands/tablecmds.c:4116
-#: commands/tablecmds.c:4180
-#: commands/tablecmds.c:5561
-#: commands/tablecmds.c:5699
+#: commands/tablecmds.c:3819
+#: commands/tablecmds.c:3911
+#: commands/tablecmds.c:3958
+#: commands/tablecmds.c:4054
+#: commands/tablecmds.c:4115
+#: commands/tablecmds.c:4179
+#: commands/tablecmds.c:5566
+#: commands/tablecmds.c:5704
 #: parser/analyze.c:1718
 #: parser/parse_relation.c:2056
 #: parser/parse_relation.c:2111
@@ -2634,13 +2631,13 @@ msgstr "\"%s\" kolonu \"%s\" tablosunda mevcut değil"
 #: utils/init/postinit.c:555
 #: catalog/aclchk.c:500
 #: commands/comment.c:626
-#: commands/dbcommands.c:740
-#: commands/dbcommands.c:884
-#: commands/dbcommands.c:989
-#: commands/dbcommands.c:1165
-#: commands/dbcommands.c:1352
-#: commands/dbcommands.c:1424
-#: commands/dbcommands.c:1511
+#: commands/dbcommands.c:759
+#: commands/dbcommands.c:903
+#: commands/dbcommands.c:1008
+#: commands/dbcommands.c:1185
+#: commands/dbcommands.c:1372
+#: commands/dbcommands.c:1444
+#: commands/dbcommands.c:1531
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "\"%s\" veritabanı mevcut değil"
@@ -2683,11 +2680,11 @@ msgstr "\"%s\" şeması mevcut değil"
 #: utils/adt/dbsize.c:240
 #: catalog/aclchk.c:577
 #: commands/comment.c:665
-#: commands/dbcommands.c:412
-#: commands/dbcommands.c:1022
+#: commands/dbcommands.c:431
+#: commands/dbcommands.c:1041
 #: commands/indexcmds.c:212
-#: commands/tablecmds.c:401
-#: commands/tablecmds.c:6503
+#: commands/tablecmds.c:400
+#: commands/tablecmds.c:6508
 #: commands/tablespace.c:415
 #: commands/tablespace.c:770
 #: commands/tablespace.c:837
@@ -3069,8 +3066,8 @@ msgid "TIME(%d)%s precision reduced to maximum allowed, %d"
 msgstr "TIME(%d)%s kesinliği en yüksek değerine (%d) kadar düşürüldü"
 
 #: utils/adt/date.c:142
-#: utils/adt/datetime.c:1180
-#: utils/adt/datetime.c:1925
+#: utils/adt/datetime.c:1181
+#: utils/adt/datetime.c:1926
 msgid "date/time value \"current\" is no longer supported"
 msgstr "\"current\" tarih/saat değeri artık desteklenmiyor"
 
@@ -3133,10 +3130,10 @@ msgstr "timestamp için tarih aralık dışıdır"
 #: utils/adt/timestamp.c:4568
 #: utils/adt/timestamp.c:4572
 #: utils/adt/timestamp.c:4629
-#: utils/adt/xml.c:1650
-#: utils/adt/xml.c:1657
-#: utils/adt/xml.c:1677
-#: utils/adt/xml.c:1684
+#: utils/adt/xml.c:1680
+#: utils/adt/xml.c:1687
+#: utils/adt/xml.c:1707
+#: utils/adt/xml.c:1714
 msgid "timestamp out of range"
 msgstr "timestamp sıra dışıdır"
 
@@ -3158,7 +3155,7 @@ msgstr "\"%s\" birimi \"time with time zone\" veri tipi için tanımlı değildi
 
 #: utils/adt/date.c:2559
 #: utils/adt/datetime.c:925
-#: utils/adt/datetime.c:1656
+#: utils/adt/datetime.c:1657
 #: utils/adt/timestamp.c:4467
 #: utils/adt/timestamp.c:4640
 #, c-format
@@ -3170,28 +3167,28 @@ msgstr "time zone \"%s\" tanınmadı"
 msgid "\"interval\" time zone \"%s\" not valid"
 msgstr "\"%s\"  \"interval\" saat dilim geçersizdir"
 
-#: utils/adt/datetime.c:3512
-#: utils/adt/datetime.c:3519
+#: utils/adt/datetime.c:3511
+#: utils/adt/datetime.c:3518
 #, c-format
 msgid "date/time field value out of range: \"%s\""
 msgstr "date/time alan değieri kapsam dışıdır: \"%s\""
 
-#: utils/adt/datetime.c:3521
+#: utils/adt/datetime.c:3520
 msgid "Perhaps you need a different \"datestyle\" setting."
 msgstr "Mutemelen farklı \"datestyle\" ayarınıza gerek var."
 
-#: utils/adt/datetime.c:3526
+#: utils/adt/datetime.c:3525
 #, c-format
 msgid "interval field value out of range: \"%s\""
 msgstr "interval alan değeri kapsam dışında: \"%s\""
 
-#: utils/adt/datetime.c:3532
+#: utils/adt/datetime.c:3531
 #, c-format
 msgid "time zone displacement out of range: \"%s\""
 msgstr "yer değiştirme değeri kapsam dışında: \"%s\""
 
 #. translator: first %s is inet or cidr
-#: utils/adt/datetime.c:3539
+#: utils/adt/datetime.c:3538
 #: utils/adt/network.c:107
 #, c-format
 msgid "invalid input syntax for type %s: \"%s\""
@@ -3593,8 +3590,10 @@ msgstr "dizindeki dosya listesini görmek için superuser olmalısınız"
 
 #: utils/adt/genfile.c:240
 #: utils/adt/misc.c:210
+#: utils/misc/tzparser.c:345
 #: commands/tablespace.c:581
 #: storage/file/fd.c:1525
+#: postmaster/postmaster.c:1089
 #: ../port/copydir.c:65
 #, c-format
 msgid "could not open directory \"%s\": %m"
@@ -3808,7 +3807,7 @@ msgid "PID %d is not a PostgreSQL server process"
 msgstr "PID %d bir PostgreSQL sunucu süreci değildir"
 
 #: utils/adt/misc.c:101
-#: storage/lmgr/proc.c:916
+#: storage/lmgr/proc.c:932
 #, c-format
 msgid "could not send signal to process %d: %m"
 msgstr "%d sürecine sinyal gönderme başarısız: %m"
@@ -4207,6 +4206,7 @@ msgstr "Operatör için iki argüman tipi sağlayın."
 
 #: utils/adt/regproc.c:818
 #: catalog/namespace.c:275
+#: commands/lockcmds.c:118
 #: parser/parse_relation.c:877
 #: parser/parse_relation.c:885
 #, c-format
@@ -4215,10 +4215,10 @@ msgstr "\"%s\" nesnesi mevcut değil"
 
 #: utils/adt/regproc.c:983
 #: commands/functioncmds.c:126
-#: commands/tablecmds.c:216
+#: commands/tablecmds.c:215
 #: commands/typecmds.c:648
 #: commands/typecmds.c:2535
-#: parser/parse_func.c:1407
+#: parser/parse_func.c:1311
 #: parser/parse_type.c:199
 #, c-format
 msgid "type \"%s\" does not exist"
@@ -4686,7 +4686,7 @@ msgstr "Şema belirtilmediği takdirde isimlerin hangi şemalarda aranacağını
 #: utils/adt/tsvector_op.c:1339
 #: commands/copy.c:3408
 #: commands/indexcmds.c:835
-#: commands/tablecmds.c:1914
+#: commands/tablecmds.c:1913
 #: parser/parse_expr.c:466
 #, c-format
 msgid "column \"%s\" does not exist"
@@ -4827,70 +4827,70 @@ msgstr "sayısı sıfırdan büyük olmalı"
 msgid "argument of nth_value must be greater than zero"
 msgstr "sayısı sıfırdan büyük olmalı"
 
-#: utils/adt/xml.c:139
+#: utils/adt/xml.c:138
 msgid "unsupported XML feature"
 msgstr "desteklenmeyen XML özelliği"
 
-#: utils/adt/xml.c:140
+#: utils/adt/xml.c:139
 #, fuzzy
 msgid "This functionality requires the server to be built with libxml support."
 msgstr "Bu özellik libxml desteği gerektirmektedir."
 
-#: utils/adt/xml.c:141
+#: utils/adt/xml.c:140
 msgid "You need to rebuild PostgreSQL using --with-libxml."
 msgstr "PostgreSQL'i --with-libxml seçeneği ile yeniden derlemeniz gerekiyor."
 
-#: utils/adt/xml.c:160
+#: utils/adt/xml.c:159
 #: utils/mb/mbutils.c:477
 #, c-format
 msgid "invalid encoding name \"%s\""
 msgstr "geçersiz dil kodlaması adı \"%s\""
 
-#: utils/adt/xml.c:401
-#: utils/adt/xml.c:406
+#: utils/adt/xml.c:398
+#: utils/adt/xml.c:403
 msgid "invalid XML comment"
 msgstr "XML açıklaması geçersiz"
 
-#: utils/adt/xml.c:535
+#: utils/adt/xml.c:532
 msgid "not an XML document"
 msgstr "XML dokümanı değildir"
 
-#: utils/adt/xml.c:665
-#: utils/adt/xml.c:688
+#: utils/adt/xml.c:684
+#: utils/adt/xml.c:707
 msgid "invalid XML processing instruction"
 msgstr "geçersiz XML işleme komutu"
 
-#: utils/adt/xml.c:666
+#: utils/adt/xml.c:685
 #, fuzzy, c-format
 msgid "XML processing instruction target name cannot be \"%s\"."
 msgstr "XML işleme komut hedefi \"xml\" ile başlayamaz."
 
-#: utils/adt/xml.c:689
+#: utils/adt/xml.c:708
 msgid "XML processing instruction cannot contain \"?>\"."
 msgstr "XML işleme komutu \"?>\" içeremez."
 
-#: utils/adt/xml.c:768
+#: utils/adt/xml.c:787
 #, fuzzy
 msgid "xmlvalidate is not implemented"
 msgstr "UNIQUE predicate implemente edilmemiştir"
 
-#: utils/adt/xml.c:855
+#: utils/adt/xml.c:862
 msgid "could not initialize XML library"
 msgstr "XML kütühanesi ilklendirilemedi"
 
-#: utils/adt/xml.c:856
+#: utils/adt/xml.c:863
 #, c-format
 msgid "libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u."
 msgstr "libxml2 kütüphanesi uyumsuz karakter veri tipine sahiptir: sizeof(char)=%u, sizeof(xmlChar)=%u."
 
-#: utils/adt/xml.c:1309
-#: utils/adt/xml.c:1310
-#: utils/adt/xml.c:1316
-#: utils/adt/xml.c:1387
+#: utils/adt/xml.c:1339
+#: utils/adt/xml.c:1340
+#: utils/adt/xml.c:1346
+#: utils/adt/xml.c:1417
 #: utils/misc/guc.c:4749
 #: utils/misc/guc.c:5017
 #: utils/fmgr/dfmgr.c:381
-#: tcop/postgres.c:3982
+#: tcop/postgres.c:3990
 #: catalog/dependency.c:902
 #: catalog/dependency.c:903
 #: catalog/dependency.c:909
@@ -4909,54 +4909,54 @@ msgstr "libxml2 kütüphanesi uyumsuz karakter veri tipine sahiptir: sizeof(char
 msgid "%s"
 msgstr "%s"
 
-#: utils/adt/xml.c:1363
+#: utils/adt/xml.c:1393
 #, fuzzy
 msgid "Invalid character value."
 msgstr "karakter kapsamı için geçersiz isimler"
 
-#: utils/adt/xml.c:1366
+#: utils/adt/xml.c:1396
 msgid "Space required."
 msgstr ""
 
-#: utils/adt/xml.c:1369
+#: utils/adt/xml.c:1399
 msgid "standalone accepts only 'yes' or 'no'."
 msgstr ""
 
-#: utils/adt/xml.c:1372
+#: utils/adt/xml.c:1402
 msgid "Malformed declaration: missing version."
 msgstr ""
 
-#: utils/adt/xml.c:1375
+#: utils/adt/xml.c:1405
 msgid "Missing encoding in text declaration."
 msgstr ""
 
-#: utils/adt/xml.c:1378
+#: utils/adt/xml.c:1408
 msgid "Parsing XML declaration: '?>' expected."
 msgstr ""
 
-#: utils/adt/xml.c:1381
+#: utils/adt/xml.c:1411
 #, fuzzy, c-format
 msgid "Unrecognized libxml error code: %d."
 msgstr "bilinmeyen SSL hata kodu: %d"
 
-#: utils/adt/xml.c:1627
+#: utils/adt/xml.c:1657
 #, fuzzy
 msgid "date out of range"
 msgstr "date kapsam dışıdır: \"%s\""
 
-#: utils/adt/xml.c:1628
+#: utils/adt/xml.c:1658
 #, fuzzy
 msgid "XML does not support infinite date values."
 msgstr "NULLIF, set argümanları desteklememektedir"
 
-#: utils/adt/xml.c:1651
-#: utils/adt/xml.c:1678
+#: utils/adt/xml.c:1681
+#: utils/adt/xml.c:1708
 #, fuzzy
 msgid "XML does not support infinite timestamp values."
 msgstr "sonsuz timestap veri tipi üzerinde çıkarma işlemi yapılamaz"
 
-#: utils/adt/xml.c:1945
-#: utils/adt/xml.c:2109
+#: utils/adt/xml.c:1998
+#: utils/adt/xml.c:2162
 #: commands/portalcmds.c:168
 #: commands/portalcmds.c:222
 #: executor/execCurrent.c:66
@@ -4964,36 +4964,32 @@ msgstr "sonsuz timestap veri tipi üzerinde çıkarma işlemi yapılamaz"
 msgid "cursor \"%s\" does not exist"
 msgstr "\"%s\" imleci mevcut değil"
 
-#: utils/adt/xml.c:2024
+#: utils/adt/xml.c:2077
 msgid "invalid query"
 msgstr "geçersiz sorgu"
 
-#: utils/adt/xml.c:3233
+#: utils/adt/xml.c:3306
 #, fuzzy
 msgid "invalid array for XML namespace mapping"
 msgstr "namespace eşlemi için geçersiz dizi verilmiştir"
 
-#: utils/adt/xml.c:3234
+#: utils/adt/xml.c:3307
 msgid "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr ""
 
-#: utils/adt/xml.c:3258
+#: utils/adt/xml.c:3331
 msgid "empty XPath expression"
 msgstr "boş XPath ifadesi"
 
-#: utils/adt/xml.c:3305
+#: utils/adt/xml.c:3379
 #, fuzzy
 msgid "neither namespace name nor URI may be null"
 msgstr "ne isim ne de URI, NULL olamaz"
 
-#: utils/adt/xml.c:3312
+#: utils/adt/xml.c:3386
 #, fuzzy, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr "prefix=\"%s\" ve href=\"%s\" olan ad XML namespace oluştutulamaz"
-
-#: utils/adt/xml.c:3325
-msgid "could not create XPath object"
-msgstr "XPath nesnesi oluşturulamadı"
 
 #: utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c:126
 #: utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c:153
@@ -5099,8 +5095,8 @@ msgstr "Tabloda mukerrer değerler mevcut."
 #: storage/lmgr/lock.c:2051
 #: storage/lmgr/lock.c:2339
 #: storage/lmgr/lock.c:2404
-#: storage/lmgr/proc.c:185
-#: storage/lmgr/proc.c:198
+#: storage/lmgr/proc.c:186
+#: storage/lmgr/proc.c:199
 #: storage/ipc/shmem.c:190
 #: storage/ipc/shmem.c:359
 msgid "out of shared memory"
@@ -6524,18 +6520,24 @@ msgstr "geçersiz zaman dilimi dosyası adı: \"%s\""
 msgid "time zone file recursion limit exceeded in file \"%s\""
 msgstr "\"%s\" dosyasında derinlik sınırı aşılmıştır. (DİKKAT: Bu hatayı gördüyseniz pgsql-hackers@postgresql.org listesine rapor gönderin)"
 
-#: utils/misc/tzparser.c:333
 #: utils/misc/tzparser.c:347
+#: postmaster/postmaster.c:1091
+#, c-format
+msgid "This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location."
+msgstr ""
+
+#: utils/misc/tzparser.c:361
+#: utils/misc/tzparser.c:376
 #, c-format
 msgid "could not read time zone file \"%s\": %m"
 msgstr "\"%s\" time zone dosyası okuma hatası: %m"
 
-#: utils/misc/tzparser.c:359
+#: utils/misc/tzparser.c:388
 #, c-format
 msgid "line is too long in time zone file \"%s\", line %d"
 msgstr "\"%s\" timezone dosyası, %d satırında, satır çok uzundur"
 
-#: utils/misc/tzparser.c:384
+#: utils/misc/tzparser.c:413
 #, fuzzy, c-format
 msgid "@INCLUDE without file name in time zone file \"%s\", line %d"
 msgstr "\"%s\" timezone dosyası, %d satırında @INCLUDE komutu dosya adını içermemktedir"
@@ -6593,7 +6595,7 @@ msgstr "çalışma dizini \"%s\" olarak değiştirilemedi: %m"
 #: commands/variable.c:882
 #, c-format
 msgid "role \"%s\" does not exist"
-msgstr "\"%s\" rol'ü mevcut değil"
+msgstr "\"%s\" rolü mevcut değil"
 
 #: utils/init/miscinit.c:451
 #, c-format
@@ -6697,7 +6699,7 @@ msgstr "\"%s\" dosyası geçerli bilgi içermiyor."
 
 #: utils/init/miscinit.c:1110
 msgid "You might need to initdb."
-msgstr "initdb işlemi gerekebilir."
+msgstr "initdb yapmanız gerekebilir."
 
 #: utils/init/miscinit.c:1118
 #, c-format
@@ -6868,7 +6870,7 @@ msgstr "YER: %s:%d\n"
 
 #: utils/error/elog.c:2065
 msgid "STATEMENT:  "
-msgstr "KOMUT:"
+msgstr "KOMUT:  "
 
 #: utils/error/elog.c:2162
 msgid "Not safe to send CSV data\n"
@@ -6891,7 +6893,7 @@ msgstr "LOG"
 
 #: utils/error/elog.c:2495
 msgid "INFO"
-msgstr "BILGI"
+msgstr "BİLGİ"
 
 #: utils/error/elog.c:2498
 msgid "NOTICE"
@@ -6942,7 +6944,7 @@ msgstr "extension kütüphaneleri PG_MODULE_MAGIC makrosunu kullanmak zorundadı
 #: utils/fmgr/dfmgr.c:312
 #, c-format
 msgid "incompatible library \"%s\": version mismatch"
-msgstr "uyumsuz kütüphane \"%s\": sürüm uyumsuz"
+msgstr "uyumsuz kütüphane \"%s\": sürüm uyuşmazlığı"
 
 #: utils/fmgr/dfmgr.c:314
 #, c-format
@@ -7309,7 +7311,7 @@ msgstr "istemci bağlantısında beklenmeyen EOF"
 #: tcop/postgres.c:388
 #: tcop/postgres.c:399
 #: tcop/postgres.c:411
-#: tcop/postgres.c:3831
+#: tcop/postgres.c:3839
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr "geçersiz frontend mesaj tipi %d"
@@ -7442,96 +7444,96 @@ msgstr "Başka bir sürecin olağan dışı çıkışı nedeniyle shared memory 
 msgid "In a moment you should be able to reconnect to the database and repeat your command."
 msgstr "Birkaç saniye sonra veritabana bağlanıp işlemlerinize devam edebilirsiniz."
 
-#: tcop/postgres.c:2605
+#: tcop/postgres.c:2613
 msgid "floating-point exception"
 msgstr "gerçel sayı istisnası"
 
-#: tcop/postgres.c:2606
+#: tcop/postgres.c:2614
 msgid "An invalid floating-point operation was signaled. This probably means an out-of-range result or an invalid operation, such as division by zero."
 msgstr "Geçersiz floating-point işlemi sinyali alındı. Bu, matematiksel sıfıra bölme gibi geçersiz işlem ya da kapsam dışı sonucun göstergesidir."
 
-#: tcop/postgres.c:2643
+#: tcop/postgres.c:2651
 msgid "terminating autovacuum process due to administrator command"
 msgstr "yönetici talimatı doğrultusunda autovacuum süreci sonlandırılıyor"
 
-#: tcop/postgres.c:2647
+#: tcop/postgres.c:2655
 msgid "terminating connection due to administrator command"
 msgstr "yönetici talimatı doğrultusunda bağlantı kesildi"
 
-#: tcop/postgres.c:2658
+#: tcop/postgres.c:2666
 msgid "canceling statement due to statement timeout"
 msgstr "sorgu zaman aşımına uğradı ve iptal edildi"
 
-#: tcop/postgres.c:2662
+#: tcop/postgres.c:2670
 msgid "canceling autovacuum task"
 msgstr "autovacuum görevi iptal ediliyor"
 
-#: tcop/postgres.c:2666
+#: tcop/postgres.c:2674
 msgid "canceling statement due to user request"
 msgstr "kullanıcı isteği ile sorgu iptal edildi"
 
-#: tcop/postgres.c:2710
+#: tcop/postgres.c:2718
 msgid "stack depth limit exceeded"
 msgstr "stack derinliği sınırı aşıldı"
 
-#: tcop/postgres.c:2711
+#: tcop/postgres.c:2719
 msgid "Increase the configuration parameter \"max_stack_depth\", after ensuring the platform's stack depth limit is adequate."
 msgstr "İşletim sisteminin stack derinliğinin yeterli olduğundan emin olarak \"max_stack_depth\" konfigurasyon parametresini artırın."
 
-#: tcop/postgres.c:2727
+#: tcop/postgres.c:2735
 #, c-format
 msgid "\"max_stack_depth\" must not exceed %ldkB"
 msgstr "\"max_stack_depth\" parametresi %ldkB açmamalıdır"
 
-#: tcop/postgres.c:2729
+#: tcop/postgres.c:2737
 msgid "Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent."
 msgstr "İşletim sisteminin stack derinliği \"ulimit -s\" veya benzeri komutu ile arttırın."
 
-#: tcop/postgres.c:3106
+#: tcop/postgres.c:3114
 #: bootstrap/bootstrap.c:294
-#: postmaster/postmaster.c:658
+#: postmaster/postmaster.c:652
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s bir değer gerektirir"
 
-#: tcop/postgres.c:3111
+#: tcop/postgres.c:3119
 #: bootstrap/bootstrap.c:299
-#: postmaster/postmaster.c:663
+#: postmaster/postmaster.c:657
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s bir değer gerektirir"
 
-#: tcop/postgres.c:3246
+#: tcop/postgres.c:3254
 msgid "invalid command-line arguments for server process"
 msgstr "sunucu süreci için geçersiz komut satırı parametreleri"
 
-#: tcop/postgres.c:3247
-#: tcop/postgres.c:3261
+#: tcop/postgres.c:3255
+#: tcop/postgres.c:3269
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Daha fazla bilgi için \"%s --help\" yazın."
 
-#: tcop/postgres.c:3259
+#: tcop/postgres.c:3267
 #, c-format
 msgid "%s: invalid command-line arguments"
 msgstr "%s: komut satırı parametresi yanlış"
 
-#: tcop/postgres.c:3269
+#: tcop/postgres.c:3277
 #, c-format
 msgid "%s: no database nor user name specified"
 msgstr ":%s: ne veritabanı ne de kullanıcı adı belirtilmemiştir"
 
-#: tcop/postgres.c:3741
+#: tcop/postgres.c:3749
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr "geçersiz CLOSE mesaj alt tipi %d"
 
-#: tcop/postgres.c:3774
+#: tcop/postgres.c:3782
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
 msgstr "geçersiz DESCRIBE mesaj alt tipi %d"
 
-#: tcop/postgres.c:4012
+#: tcop/postgres.c:4020
 #, c-format
 msgid "disconnection: session time: %d:%02d:%02d.%03d user=%s database=%s host=%s%s%s"
 msgstr "bağlantı bitti: oturum zamanı: %d:%02d:%02d.%03d user=%s database=%s host=%s%s%s"
@@ -7557,14 +7559,15 @@ msgid "Declare it with SCROLL option to enable backward scan."
 msgstr "Geriye gitmesini sağlamak için SCROLL seçeneği ile bildirin."
 
 #: tcop/utility.c:90
-#: commands/tablecmds.c:733
+#: commands/tablecmds.c:732
 #: commands/tablecmds.c:1042
 #: commands/tablecmds.c:1860
-#: commands/tablecmds.c:3240
-#: commands/tablecmds.c:3269
-#: commands/tablecmds.c:4595
+#: commands/tablecmds.c:3239
+#: commands/tablecmds.c:3268
+#: commands/tablecmds.c:4598
 #: commands/trigger.c:122
 #: commands/trigger.c:847
+#: rewrite/rewriteDefine.c:259
 #, c-format
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "erişim engellendi: \"%s\" bir sistem kataloğudur"
@@ -7575,7 +7578,7 @@ msgstr "erişim engellendi: \"%s\" bir sistem kataloğudur"
 msgid "transaction is read-only"
 msgstr "transaction salt okunurdur"
 
-#: tcop/utility.c:1016
+#: tcop/utility.c:1019
 msgid "must be superuser to do CHECKPOINT"
 msgstr "CHECKPOINT yapmak için superuser olmalısınız"
 
@@ -7621,8 +7624,8 @@ msgid "incorrect binary data format in function argument %d"
 msgstr "%d fonksiyon argümanında geçersiz ikili veri"
 
 #: bootstrap/bootstrap.c:310
-#: postmaster/postmaster.c:675
-#: postmaster/postmaster.c:688
+#: postmaster/postmaster.c:669
+#: postmaster/postmaster.c:682
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için \"%s --help\" yazın\n"
@@ -7709,10 +7712,10 @@ msgstr "nesne için geçersiz hak tipi %s"
 #: catalog/aclchk.c:895
 #: commands/comment.c:509
 #: commands/sequence.c:945
-#: commands/tablecmds.c:200
-#: commands/tablecmds.c:2046
-#: commands/tablecmds.c:2266
-#: commands/tablecmds.c:7489
+#: commands/tablecmds.c:199
+#: commands/tablecmds.c:2045
+#: commands/tablecmds.c:2265
+#: commands/tablecmds.c:7497
 #, c-format
 msgid "\"%s\" is not a sequence"
 msgstr "\"%s\" bir sequence değildir"
@@ -8275,7 +8278,7 @@ msgstr "System catalog değişikliklerine şu anda izin verilmiyor."
 #: catalog/heap.c:362
 #: commands/tablecmds.c:1156
 #: commands/tablecmds.c:1481
-#: commands/tablecmds.c:3594
+#: commands/tablecmds.c:3593
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "bir tablo en fazla %d sütun içerebilir"
@@ -8306,7 +8309,7 @@ msgstr "\"%s\" sütunu %s pseudo-tipine sahip"
 
 #: catalog/heap.c:865
 #: catalog/index.c:595
-#: commands/tablecmds.c:2113
+#: commands/tablecmds.c:2112
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "\"%s\" nesnesi zaten mevcut"
@@ -8327,7 +8330,7 @@ msgstr "Aynı adı taşıyan bir nesneye ilişkili veri tipi mevcuttur, başka b
 
 #: catalog/heap.c:904
 #: catalog/index.c:589
-#: commands/tablecmds.c:6687
+#: commands/tablecmds.c:6692
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr "pg_global tablo aralığına sadece paylaşımlı sensne konulabilir"
 
@@ -8343,7 +8346,7 @@ msgstr "\"%s\"check constraint'i zaten mevcut"
 
 #: catalog/heap.c:2028
 #: catalog/pg_constraint.c:613
-#: commands/tablecmds.c:4425
+#: commands/tablecmds.c:4426
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "\"%s\" constraint 'i \"%s\" nesnesi için zaten mevcut"
@@ -8468,6 +8471,7 @@ msgid "temporary tables cannot specify a schema name"
 msgstr "geçici tablolarda şema adı belirtilemez"
 
 #: catalog/namespace.c:270
+#: commands/lockcmds.c:113
 #: parser/parse_relation.c:864
 #, c-format
 msgid "relation \"%s.%s\" does not exist"
@@ -8577,8 +8581,8 @@ msgstr "sort işletmeni sadece tek argümanlı aggregate işin belirtilebilir"
 #: commands/typecmds.c:1400
 #: commands/typecmds.c:1427
 #: commands/typecmds.c:1454
-#: parser/parse_func.c:240
-#: parser/parse_func.c:1387
+#: parser/parse_func.c:236
+#: parser/parse_func.c:1291
 #, c-format
 msgid "function %s does not exist"
 msgstr "%s fonksiyonu mevcut değildir"
@@ -8695,8 +8699,8 @@ msgid "operator cannot be its own negator or sort operator"
 msgstr "bir işlem, kendisinin zıttı veya kendisinin sort operatörü olamaz"
 
 #: catalog/pg_proc.c:115
-#: parser/parse_func.c:1431
-#: parser/parse_func.c:1471
+#: parser/parse_func.c:1335
+#: parser/parse_func.c:1375
 #, fuzzy, c-format
 msgid "functions cannot have more than %d argument"
 msgid_plural "functions cannot have more than %d arguments"
@@ -8866,21 +8870,21 @@ msgstr[1] "%2$s veritabanında %1$d nesne"
 msgid "cannot drop objects owned by %s because they are required by the database system"
 msgstr "veritabanı sistemi tarafından ihtiyaç duyulduğu için %s kaldırılamıyor"
 
-#: catalog/toasting.c:84
+#: catalog/toasting.c:88
 #: commands/comment.c:516
 #: commands/indexcmds.c:174
 #: commands/indexcmds.c:1358
-#: commands/lockcmds.c:83
-#: commands/tablecmds.c:194
+#: commands/lockcmds.c:140
+#: commands/tablecmds.c:193
 #: commands/tablecmds.c:1029
-#: commands/tablecmds.c:3228
+#: commands/tablecmds.c:3227
 #: commands/trigger.c:116
 #: commands/trigger.c:841
 #, c-format
 msgid "\"%s\" is not a table"
 msgstr "\"%s\" bir tablo değildir"
 
-#: catalog/toasting.c:132
+#: catalog/toasting.c:137
 msgid "shared tables cannot be toasted after initdb"
 msgstr "initdb işleminden sonra paylaşılmış tablolar toast edilemez"
 
@@ -8972,7 +8976,7 @@ msgid "there is no previously clustered index for table \"%s\""
 msgstr "\"%s\" tablosunda daha önce cluster edilmiş index yoktur"
 
 #: commands/cluster.c:168
-#: commands/tablecmds.c:6467
+#: commands/tablecmds.c:6472
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "\"%s\"indexi, \"%s\" tablosunda mevcut değil"
@@ -9028,10 +9032,10 @@ msgid "\"%s\" is a system catalog"
 msgstr "\"%s\" bir sistem kataloğudur"
 
 #: commands/comment.c:523
-#: commands/tablecmds.c:206
-#: commands/tablecmds.c:2052
-#: commands/tablecmds.c:2274
-#: commands/tablecmds.c:7497
+#: commands/tablecmds.c:205
+#: commands/tablecmds.c:2051
+#: commands/tablecmds.c:2273
+#: commands/tablecmds.c:7505
 #: commands/view.c:162
 #, c-format
 msgid "\"%s\" is not a view"
@@ -9074,8 +9078,8 @@ msgid "Specify a relation name as well as a rule name."
 msgstr "Rule adının yanında nesne adını da belirtin."
 
 #: commands/comment.c:841
-#: rewrite/rewriteDefine.c:672
-#: rewrite/rewriteDefine.c:735
+#: rewrite/rewriteDefine.c:689
+#: rewrite/rewriteDefine.c:752
 #: rewrite/rewriteRemove.c:63
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" does not exist"
@@ -9253,8 +9257,8 @@ msgstr "stdin akımından COPY işlemi sırasında beklenmeyen mesaj tipi 0x%02X
 #: commands/dbcommands.c:177
 #: commands/dbcommands.c:185
 #: commands/dbcommands.c:193
-#: commands/dbcommands.c:1301
-#: commands/dbcommands.c:1309
+#: commands/dbcommands.c:1321
+#: commands/dbcommands.c:1329
 #: commands/functioncmds.c:452
 #: commands/functioncmds.c:542
 #: commands/functioncmds.c:550
@@ -9613,7 +9617,7 @@ msgid "Consider using tablespaces instead."
 msgstr "Onun yerine tablespace kullanabilirsiniz."
 
 #: commands/dbcommands.c:252
-#: commands/dbcommands.c:1333
+#: commands/dbcommands.c:1353
 #: commands/user.c:250
 #: commands/user.c:547
 #, fuzzy, c-format
@@ -9645,132 +9649,141 @@ msgstr "%d sunucu dil kodlaması geçersiz"
 msgid "invalid locale name %s"
 msgstr "geçirsiz rol adı \"%s\""
 
-#: commands/dbcommands.c:362
-#: commands/dbcommands.c:375
+#: commands/dbcommands.c:365
+#: commands/dbcommands.c:379
 #, fuzzy, c-format
 msgid "encoding %s does not match locale %s"
 msgstr "%s dil kodlaması, sunucu yereli ile (%s) eşleşmiyor"
 
-#: commands/dbcommands.c:365
+#: commands/dbcommands.c:368
 #, fuzzy, c-format
 msgid "The chosen LC_CTYPE setting requires encoding %s."
 msgstr "Sunucunun LC_TYPE yerel ayarı, %s dil kodlamasını gerektirir."
 
-#: commands/dbcommands.c:378
+#: commands/dbcommands.c:382
 #, fuzzy, c-format
 msgid "The chosen LC_COLLATE setting requires encoding %s."
 msgstr "Sunucunun LC_TYPE yerel ayarı, %s dil kodlamasını gerektirir."
 
-#: commands/dbcommands.c:392
+#: commands/dbcommands.c:400
 #, c-format
-msgid "new collation is incompatible with the collation of the template database (%s)"
+msgid "new encoding (%s) is incompatible with the encoding of the template database (%s)"
 msgstr ""
 
-#: commands/dbcommands.c:393
+#: commands/dbcommands.c:403
+msgid "Use the same encoding as in the template database, or use template0 as template."
+msgstr ""
+
+#: commands/dbcommands.c:408
+#, c-format
+msgid "new collation (%s) is incompatible with the collation of the template database (%s)"
+msgstr ""
+
+#: commands/dbcommands.c:410
 msgid "Use the same collation as in the template database, or use template0 as template."
 msgstr ""
 
-#: commands/dbcommands.c:397
+#: commands/dbcommands.c:415
 #, c-format
-msgid "new LC_CTYPE is incompatible with LC_CTYPE of the template database (%s)"
+msgid "new LC_CTYPE (%s) is incompatible with the LC_CTYPE of the template database (%s)"
 msgstr ""
 
-#: commands/dbcommands.c:398
+#: commands/dbcommands.c:417
 msgid "Use the same LC_CTYPE as in the template database, or use template0 as template."
 msgstr ""
 
-#: commands/dbcommands.c:425
-#: commands/dbcommands.c:1039
+#: commands/dbcommands.c:444
+#: commands/dbcommands.c:1058
 msgid "pg_global cannot be used as default tablespace"
 msgstr "pg_global öntanımlı tablespace olarak kullanılamaz"
 
-#: commands/dbcommands.c:451
+#: commands/dbcommands.c:470
 #, c-format
 msgid "cannot assign new default tablespace \"%s\""
 msgstr "yeni varsayılan tablespace \"%s\"  atanamıyor"
 
-#: commands/dbcommands.c:453
+#: commands/dbcommands.c:472
 #, c-format
 msgid "There is a conflict because database \"%s\" already has some tables in this tablespace."
 msgstr "Bir  çakışma var, çünkü \"%s\" veritabanının bulunduğu tablespace içinde başka tablolar var."
 
-#: commands/dbcommands.c:473
-#: commands/dbcommands.c:904
+#: commands/dbcommands.c:492
+#: commands/dbcommands.c:923
 #, c-format
 msgid "database \"%s\" already exists"
 msgstr "\"%s\" veritabanı zaten mevcut"
 
-#: commands/dbcommands.c:487
+#: commands/dbcommands.c:506
 #, c-format
 msgid "source database \"%s\" is being accessed by other users"
 msgstr "\"%s\" kaynak veritabanı başka bir kullanıcı tarafından kullanılmaktadır"
 
-#: commands/dbcommands.c:747
+#: commands/dbcommands.c:766
 #, c-format
 msgid "database \"%s\" does not exist, skipping"
 msgstr "\"%s\" veritabanı mevcut değil, atlanıyor"
 
-#: commands/dbcommands.c:768
+#: commands/dbcommands.c:787
 msgid "cannot drop a template database"
 msgstr "template veritabanı kaldırılamaz"
 
-#: commands/dbcommands.c:774
+#: commands/dbcommands.c:793
 msgid "cannot drop the currently open database"
 msgstr "şu anda açık olan veritabanı kaldırılamaz"
 
-#: commands/dbcommands.c:785
-#: commands/dbcommands.c:926
-#: commands/dbcommands.c:1061
+#: commands/dbcommands.c:804
+#: commands/dbcommands.c:945
+#: commands/dbcommands.c:1080
 #, c-format
 msgid "database \"%s\" is being accessed by other users"
 msgstr "\"%s\" veritabanına başka kullanıcılar tarafından erişilmektedir"
 
-#: commands/dbcommands.c:895
+#: commands/dbcommands.c:914
 msgid "permission denied to rename database"
 msgstr "veritabanı adı değiştirilmesine izin verilmedi"
 
-#: commands/dbcommands.c:915
+#: commands/dbcommands.c:934
 msgid "current database cannot be renamed"
 msgstr "geçerli veritabanının adını değiştirilemez"
 
-#: commands/dbcommands.c:1013
+#: commands/dbcommands.c:1032
 #, fuzzy
 msgid "cannot change the tablespace of the currently open database"
 msgstr "şu anda açık olan veritabanı kaldırılamaz"
 
-#: commands/dbcommands.c:1100
+#: commands/dbcommands.c:1120
 #, fuzzy, c-format
 msgid "some relations of database \"%s\" are already in tablespace \"%s\""
 msgstr "\"%s\" nesnesi zaten \"%s\" şemasında mevcuttur"
 
-#: commands/dbcommands.c:1102
+#: commands/dbcommands.c:1122
 #, fuzzy
 msgid "You must move them back to the database's default tablespace before using this command."
 msgstr "Boş değer, veritabanının varsayılan tablespace'ı seçmektedir."
 
-#: commands/dbcommands.c:1232
-#: commands/dbcommands.c:1783
-#: commands/dbcommands.c:1978
-#: commands/dbcommands.c:2014
+#: commands/dbcommands.c:1252
+#: commands/dbcommands.c:1803
+#: commands/dbcommands.c:1998
+#: commands/dbcommands.c:2034
 #, c-format
 msgid "some useless files may be left behind in old database directory \"%s\""
 msgstr ""
 
-#: commands/dbcommands.c:1550
+#: commands/dbcommands.c:1570
 msgid "permission denied to change owner of database"
 msgstr "veritabanı sahipliğini değiştirilmesine izin verilmedi"
 
-#: commands/dbcommands.c:1871
+#: commands/dbcommands.c:1891
 #, c-format
 msgid "There are %d other session(s) and %d prepared transaction(s) using the database."
 msgstr ""
 
-#: commands/dbcommands.c:1874
+#: commands/dbcommands.c:1894
 #, c-format
 msgid "There are %d other session(s) using the database."
 msgstr ""
 
-#: commands/dbcommands.c:1877
+#: commands/dbcommands.c:1897
 #, fuzzy, c-format
 msgid "There are %d prepared transaction(s) using the database."
 msgstr "prepared transaction başka bir veritabanına aittir"
@@ -10175,13 +10188,13 @@ msgid "function \"%s\" is already in schema \"%s\""
 msgstr "\"%s\" fonksiyonu \"%s\" şemasında zaten mevcut"
 
 #: commands/functioncmds.c:1880
-#: commands/tablecmds.c:7558
+#: commands/tablecmds.c:7566
 #: commands/typecmds.c:2761
 msgid "cannot move objects into or out of temporary schemas"
 msgstr "geçici şemasına nesleri aktarılamaz ve içinden alınamaz"
 
 #: commands/functioncmds.c:1886
-#: commands/tablecmds.c:7564
+#: commands/tablecmds.c:7572
 #: commands/typecmds.c:2767
 msgid "cannot move objects into or out of TOAST schema"
 msgstr "TOAST şemasına nesleri aktarılamaz ve içinden alınamaz"
@@ -10312,6 +10325,16 @@ msgstr "ancak açık olan veritabanı üzerinde reindex işlemi yapılabilir"
 #, c-format
 msgid "table \"%s\" was reindexed"
 msgstr "\"%s\" tablosu yeniden indexlenmiştir"
+
+#: commands/lockcmds.c:84
+#, c-format
+msgid "could not obtain lock on relation \"%s\""
+msgstr "\"%s\" tablosu için lock alınamadı"
+
+#: commands/lockcmds.c:89
+#, c-format
+msgid "could not obtain lock on relation with OID %u"
+msgstr "OID %u olan tablosu için lock alınamadı"
 
 #: commands/opclasscmds.c:197
 #: commands/opclasscmds.c:715
@@ -10673,7 +10696,7 @@ msgid "Specify OWNED BY table.column or OWNED BY NONE."
 msgstr "OWNED BY table.column veya OWNED BY NONE belirtin."
 
 #: commands/sequence.c:1283
-#: commands/tablecmds.c:4589
+#: commands/tablecmds.c:4592
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr " rerefans edilen \"%s\" nesnesi bir tablo değildir"
@@ -10686,78 +10709,78 @@ msgstr "sequence ait olduğu tablo ile aynı kullanıcıya sahip olmalıdır"
 msgid "sequence must be in same schema as table it is linked to"
 msgstr "sequence ait olduğu tablonun bulunduğu şemada bulunmalıdır"
 
-#: commands/tablecmds.c:192
+#: commands/tablecmds.c:191
 #, c-format
 msgid "table \"%s\" does not exist"
 msgstr "tablo \"%s\" mevcut değil"
 
-#: commands/tablecmds.c:193
+#: commands/tablecmds.c:192
 #, c-format
 msgid "table \"%s\" does not exist, skipping"
 msgstr "tablo \"%s\" mevcut değil, atlanıyor"
 
-#: commands/tablecmds.c:195
+#: commands/tablecmds.c:194
 msgid "Use DROP TABLE to remove a table."
 msgstr "Bir tabloyu kaldırmak için DROP TABLE KULLANIN."
 
-#: commands/tablecmds.c:198
+#: commands/tablecmds.c:197
 #, c-format
 msgid "sequence \"%s\" does not exist"
 msgstr "sequence \"%s\" mevcut değil"
 
-#: commands/tablecmds.c:199
+#: commands/tablecmds.c:198
 #, c-format
 msgid "sequence \"%s\" does not exist, skipping"
 msgstr "sequence \"%s\" mevcut değil, atlanıyor"
 
-#: commands/tablecmds.c:201
+#: commands/tablecmds.c:200
 msgid "Use DROP SEQUENCE to remove a sequence."
 msgstr "Bir sequence kaldırmak için DROP SEQUENCE kullanın."
 
-#: commands/tablecmds.c:204
+#: commands/tablecmds.c:203
 #, c-format
 msgid "view \"%s\" does not exist"
 msgstr "view \"%s\" mevcut değil"
 
-#: commands/tablecmds.c:205
+#: commands/tablecmds.c:204
 #, c-format
 msgid "view \"%s\" does not exist, skipping"
 msgstr "view \"%s\" mevcut değil, atlanıyor"
 
-#: commands/tablecmds.c:207
+#: commands/tablecmds.c:206
 msgid "Use DROP VIEW to remove a view."
 msgstr "Bir view kaldırmak için DROP VIEW kullanın."
 
-#: commands/tablecmds.c:210
+#: commands/tablecmds.c:209
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "\"%s\" indexi mevcut değil"
 
-#: commands/tablecmds.c:211
+#: commands/tablecmds.c:210
 #, c-format
 msgid "index \"%s\" does not exist, skipping"
 msgstr "\"%s\" indexi mevcut değil, atlanıyor"
 
-#: commands/tablecmds.c:213
+#: commands/tablecmds.c:212
 msgid "Use DROP INDEX to remove an index."
 msgstr "Bir index kaldırmak için DROP INDEX kullanın."
 
-#: commands/tablecmds.c:217
+#: commands/tablecmds.c:216
 #: commands/typecmds.c:654
 #, c-format
 msgid "type \"%s\" does not exist, skipping"
 msgstr "\"%s\" tipi mevcut değil, atlanıyor"
 
-#: commands/tablecmds.c:218
+#: commands/tablecmds.c:217
 #, c-format
 msgid "\"%s\" is not a type"
 msgstr "\"%s\" bir tip değildir"
 
-#: commands/tablecmds.c:219
+#: commands/tablecmds.c:218
 msgid "Use DROP TYPE to remove a type."
 msgstr "Bir tipi kaldırmak için DROP TYPE kullanın."
 
-#: commands/tablecmds.c:371
+#: commands/tablecmds.c:370
 #: executor/execMain.c:2860
 msgid "ON COMMIT can only be used on temporary tables"
 msgstr "ON COMMIT sadece geçici tablolarda kullanılabilir"
@@ -10784,13 +10807,13 @@ msgid "inherited relation \"%s\" is not a table"
 msgstr "miras alınan \"%s\" nesnesi bir tablo değildir"
 
 #: commands/tablecmds.c:1209
-#: commands/tablecmds.c:6907
+#: commands/tablecmds.c:6912
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "\"%s\" geçici nesnesinden inherit yapılamaz"
 
 #: commands/tablecmds.c:1226
-#: commands/tablecmds.c:6935
+#: commands/tablecmds.c:6940
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "\"%s\" ilişkisi birden fazla miras alınmış"
@@ -10807,10 +10830,10 @@ msgstr "miras alınan \"%s\"  sütunu tip çakışması yaşıyor"
 
 #: commands/tablecmds.c:1291
 #: commands/tablecmds.c:1449
-#: parser/parse_coerce.c:301
-#: parser/parse_coerce.c:1486
-#: parser/parse_coerce.c:1505
-#: parser/parse_coerce.c:1550
+#: parser/parse_coerce.c:302
+#: parser/parse_coerce.c:1487
+#: parser/parse_coerce.c:1506
+#: parser/parse_coerce.c:1551
 #: parser/parse_expr.c:1871
 #, c-format
 msgid "%s versus %s"
@@ -10840,352 +10863,353 @@ msgstr "Çakışmayı çözmek için varsayılan değeri açıkca belirtin."
 msgid "check constraint name \"%s\" appears multiple times but with different expressions"
 msgstr "\"%s\" check kısıtlaması birçok kez ve farklı anlatımla mevcuttur"
 
-#: commands/tablecmds.c:1904
+#: commands/tablecmds.c:1903
 #, c-format
 msgid "inherited column \"%s\" must be renamed in child tables too"
 msgstr "miras alınan \"%s\"  kolonunun adı alt tablolarda da değiştirilmelidir"
 
-#: commands/tablecmds.c:1922
+#: commands/tablecmds.c:1921
 #, c-format
 msgid "cannot rename system column \"%s\""
 msgstr "\"%s\" sistem sütununun adı değiştirilemez"
 
-#: commands/tablecmds.c:1932
+#: commands/tablecmds.c:1931
 #, c-format
 msgid "cannot rename inherited column \"%s\""
 msgstr "miras alınan \"%s\" sütununun adı değiştirilemez"
 
-#: commands/tablecmds.c:1943
-#: commands/tablecmds.c:3582
+#: commands/tablecmds.c:1942
+#: commands/tablecmds.c:3581
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "\"%2$s\" nesnesinin \"%1$s\" sütunu zaten mevcut"
 
-#: commands/tablecmds.c:2064
-#: commands/tablecmds.c:6246
-#: commands/tablecmds.c:7532
+#: commands/tablecmds.c:2063
+#: commands/tablecmds.c:6251
+#: commands/tablecmds.c:7540
 msgid "Use ALTER TYPE instead."
 msgstr "Yerine ALTER TYPE kullanın."
 
 #. translator: first %s is a SQL command, eg ALTER TABLE
-#: commands/tablecmds.c:2189
+#: commands/tablecmds.c:2188
 #, fuzzy, c-format
 msgid "cannot %s \"%s\" because it is being used by active queries in this session"
 msgstr "\"%s\" tablosu şu anda aktif sorgular tarafından kullanılmaktadır"
 
 #. translator: first %s is a SQL command, eg ALTER TABLE
-#: commands/tablecmds.c:2198
+#: commands/tablecmds.c:2197
 #, fuzzy, c-format
 msgid "cannot %s \"%s\" because it has pending trigger events"
 msgstr "\"%s\" tablosuna bağlı trigger olayları bulunduğu için truncate işlemi yapılamadı"
 
-#: commands/tablecmds.c:2789
+#: commands/tablecmds.c:2788
 #, c-format
 msgid "cannot rewrite system relation \"%s\""
 msgstr "\"%s\" sistem tablosu yeniden yazılamaz"
 
-#: commands/tablecmds.c:2799
+#: commands/tablecmds.c:2798
 msgid "cannot rewrite temporary tables of other sessions"
 msgstr "diğer oturumların geçici tabloları yeniden yazılamaz"
 
-#: commands/tablecmds.c:3125
+#: commands/tablecmds.c:3124
 #, c-format
 msgid "column \"%s\" contains null values"
 msgstr "\"%s\" sütunu null değerleri içermektedir"
 
-#: commands/tablecmds.c:3139
+#: commands/tablecmds.c:3138
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
 msgstr "\"%s\" bütünlük kısıtlaması bir(kaç) satır tarafından ihlal edilmiş"
 
-#: commands/tablecmds.c:3222
+#: commands/tablecmds.c:3221
+#: rewrite/rewriteDefine.c:253
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" bir tablo veya view değildir"
 
-#: commands/tablecmds.c:3258
-#: commands/tablecmds.c:4009
+#: commands/tablecmds.c:3257
+#: commands/tablecmds.c:4008
 #, c-format
 msgid "\"%s\" is not a table or index"
 msgstr "\"%s\" bir tablo veya index değil"
 
-#: commands/tablecmds.c:3413
+#: commands/tablecmds.c:3412
 #, c-format
 msgid "cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype"
 msgstr "\"%2$s\".\"%3$s\" sütunu onun rowtype veri tipini kullandığı için \"%1$s\" tablosu değiştirilemez"
 
-#: commands/tablecmds.c:3420
+#: commands/tablecmds.c:3419
 #, fuzzy, c-format
 msgid "cannot alter type \"%s\" because column \"%s\".\"%s\" uses it"
 msgstr "\"%2$s\".\"%3$s\" sütunu onun rowtype veri tipini kullandığı için \"%1$s\" tablosu değiştirilemez"
 
-#: commands/tablecmds.c:3491
+#: commands/tablecmds.c:3490
 msgid "column must be added to child tables too"
 msgstr "sütun, alt tablolarana da eklenmelidir"
 
-#: commands/tablecmds.c:3536
-#: commands/tablecmds.c:7088
+#: commands/tablecmds.c:3535
+#: commands/tablecmds.c:7096
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "\"%s\" alt tablosundaki  \"%s\" sütununun tipi farklıdır"
 
-#: commands/tablecmds.c:3543
+#: commands/tablecmds.c:3542
 #, fuzzy, c-format
 msgid "child table \"%s\" has a conflicting \"%s\" column"
 msgstr "alt tablosunda  \"%s\" kısıtlama eksiktir"
 
-#: commands/tablecmds.c:3555
+#: commands/tablecmds.c:3554
 #, c-format
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr "\"%s\" sütunun tanımı \"%s\" alt tablo için birleştiriliyor"
 
-#: commands/tablecmds.c:3829
-#: commands/tablecmds.c:3921
-#: commands/tablecmds.c:3966
-#: commands/tablecmds.c:4062
-#: commands/tablecmds.c:4123
-#: commands/tablecmds.c:5570
+#: commands/tablecmds.c:3828
+#: commands/tablecmds.c:3920
+#: commands/tablecmds.c:3965
+#: commands/tablecmds.c:4061
+#: commands/tablecmds.c:4122
+#: commands/tablecmds.c:5575
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "\"%s\" sistem sütunu değiştirilemez"
 
-#: commands/tablecmds.c:3865
+#: commands/tablecmds.c:3864
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "\"%s\" sütunu bir birincil anahtardır"
 
-#: commands/tablecmds.c:4036
+#: commands/tablecmds.c:4035
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "statistics target %d çok düşüktür"
 
-#: commands/tablecmds.c:4044
+#: commands/tablecmds.c:4043
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "statistics target, %d değerine düşürülmektedir"
 
-#: commands/tablecmds.c:4104
+#: commands/tablecmds.c:4103
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "geçersiz saklama tipi \"%s\""
 
-#: commands/tablecmds.c:4135
+#: commands/tablecmds.c:4134
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr "%s sütün veri tipleri sadece PLAIN depolama yöntemini kullanabilir"
 
-#: commands/tablecmds.c:4190
+#: commands/tablecmds.c:4189
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "\"%s\" sistem sütunu kaldırılamaz"
 
-#: commands/tablecmds.c:4197
+#: commands/tablecmds.c:4196
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "miras alınan \"%s\"  sütunu kaldırılamaz"
 
-#: commands/tablecmds.c:4526
+#: commands/tablecmds.c:4528
 #, fuzzy
 msgid "constraint must be added to child tables too"
 msgstr "sütun, alt tablolarana da eklenmelidir"
 
-#: commands/tablecmds.c:4611
+#: commands/tablecmds.c:4614
 msgid "cannot reference temporary table from permanent table constraint"
 msgstr "sürekli tablo kısıtlayıcısından geçici tablo referans edilemez"
 
-#: commands/tablecmds.c:4618
+#: commands/tablecmds.c:4621
 msgid "cannot reference permanent table from temporary table constraint"
 msgstr "geçeci tablo kısıtlayıcısından sürekli  tablo referans edilemez"
 
-#: commands/tablecmds.c:4678
+#: commands/tablecmds.c:4681
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr "foreign key'in referans eden ve referans edilen sütun sayısı uyuşmuyor"
 
-#: commands/tablecmds.c:4769
+#: commands/tablecmds.c:4772
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "\"%s\" foreign key constrain oluşturulamaz"
 
-#: commands/tablecmds.c:4772
+#: commands/tablecmds.c:4775
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "\"%s\" ve \"%s\" anahtar sütunların tipi farklı: %s ve %s."
 
-#: commands/tablecmds.c:4865
+#: commands/tablecmds.c:4868
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "foreign key kısıtlaması tarafından referans edilen sütun \"%s\" mevcut değil"
 
-#: commands/tablecmds.c:4870
+#: commands/tablecmds.c:4873
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "foreign key kısıtlamasında %d'dan fazla anahtar olamaz"
 
-#: commands/tablecmds.c:4943
+#: commands/tablecmds.c:4946
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "referans edilen \"%s\" tablosunda primary key mevcut değil"
 
-#: commands/tablecmds.c:5077
+#: commands/tablecmds.c:5080
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr "\"%s\" referans edilen tablosunda belirtilen anahtarlara uyan bir unique constraint yok"
 
-#: commands/tablecmds.c:5401
+#: commands/tablecmds.c:5404
 #, fuzzy, c-format
 msgid "cannot drop inherited constraint \"%s\" of relation \"%s\""
 msgstr "miras alınan \"%s\"  sütunu kaldırılamaz"
 
-#: commands/tablecmds.c:5425
-#: commands/tablecmds.c:5526
+#: commands/tablecmds.c:5428
+#: commands/tablecmds.c:5531
 #, fuzzy, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist"
 msgstr "\"%s\" kolonu \"%s\" tablosunda mevcut değil"
 
-#: commands/tablecmds.c:5577
+#: commands/tablecmds.c:5582
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "miras alınan \"%s\" kolonu değiştirilemez"
 
-#: commands/tablecmds.c:5612
+#: commands/tablecmds.c:5617
 msgid "transform expression must not return a set"
 msgstr "transform ifadesi bir set döndürmemelidir"
 
-#: commands/tablecmds.c:5618
+#: commands/tablecmds.c:5623
 msgid "cannot use subquery in transform expression"
 msgstr "transform ifadesinde set kullanılamaz"
 
-#: commands/tablecmds.c:5622
+#: commands/tablecmds.c:5627
 msgid "cannot use aggregate function in transform expression"
 msgstr "transform ifadesinde aggregate function kullanılamaz"
 
-#: commands/tablecmds.c:5626
+#: commands/tablecmds.c:5631
 #, fuzzy
 msgid "cannot use window function in transform expression"
 msgstr "transform ifadesinde aggregate function kullanılamaz"
 
-#: commands/tablecmds.c:5644
+#: commands/tablecmds.c:5649
 #, fuzzy, c-format
 msgid "column \"%s\" cannot be cast to type %s"
 msgstr "\"%s\" sütunu \"%s\" tipine dönüştürülemez"
 
-#: commands/tablecmds.c:5670
+#: commands/tablecmds.c:5675
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr "\"%s\" inherinted sütununların tipi çocuk tablolarında da değiştirilmelidir"
 
-#: commands/tablecmds.c:5709
+#: commands/tablecmds.c:5714
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "\"%s\" sütununun tipini iki kez değiştirilemez"
 
-#: commands/tablecmds.c:5743
+#: commands/tablecmds.c:5748
 #, fuzzy, c-format
 msgid "default for column \"%s\" cannot be cast to type %s"
 msgstr "\"%s\" sütunun varsayılan tipi \"%s\" tipine dönüştürülemez"
 
-#: commands/tablecmds.c:5869
+#: commands/tablecmds.c:5874
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "view veya rule tarafından kullanılan sütunun tipini değiştirilemedi"
 
-#: commands/tablecmds.c:5870
+#: commands/tablecmds.c:5875
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s sütunu \"%s\" sütununa bağlıdır"
 
-#: commands/tablecmds.c:6214
+#: commands/tablecmds.c:6219
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "\"%s\" indeksinin sahibi değiştirilemez"
 
-#: commands/tablecmds.c:6216
+#: commands/tablecmds.c:6221
 msgid "Change the ownership of the index's table, instead."
 msgstr "Bunun yerine indeksin bağlı oldüğü tablonun sahipliğini değiştirin."
 
-#: commands/tablecmds.c:6232
+#: commands/tablecmds.c:6237
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "\"%s\" sequence'in sahibi değiştirilemez"
 
-#: commands/tablecmds.c:6234
-#: commands/tablecmds.c:7522
+#: commands/tablecmds.c:6239
+#: commands/tablecmds.c:7530
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "\"%s\" sequence'i, \"%s\" tablosuna bağlıdır"
 
-#: commands/tablecmds.c:6255
-#: commands/tablecmds.c:7540
+#: commands/tablecmds.c:6260
+#: commands/tablecmds.c:7548
 #, c-format
 msgid "\"%s\" is not a table, view, or sequence"
 msgstr "\"%s\" bir tablo, view veya sequence değildir"
 
-#: commands/tablecmds.c:6514
+#: commands/tablecmds.c:6519
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "birden fazla SET TABLESPACE alt komutu veremezsiniz"
 
-#: commands/tablecmds.c:6568
+#: commands/tablecmds.c:6573
 #, c-format
 msgid "\"%s\" is not a table, index, or TOAST table"
 msgstr "\"%s\" bir tablo, dizin, veya TOAST tablosu değildir"
 
-#: commands/tablecmds.c:6680
+#: commands/tablecmds.c:6685
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "\"%s\" sistem nesnesi taşınamaz"
 
-#: commands/tablecmds.c:6696
+#: commands/tablecmds.c:6701
 msgid "cannot move temporary tables of other sessions"
 msgstr "diğer oturumların geçici tabloları taşınamaz"
 
-#: commands/tablecmds.c:6959
+#: commands/tablecmds.c:6967
 msgid "circular inheritance not allowed"
 msgstr "çevrimsel inheritance yapısına izin verilmemektedir"
 
-#: commands/tablecmds.c:6960
+#: commands/tablecmds.c:6968
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "\"%s\" zaten \"%s\" nesnesinin alt nesnesidir"
 
-#: commands/tablecmds.c:6968
+#: commands/tablecmds.c:6976
 #, c-format
 msgid "table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs"
 msgstr "OID olmayan \"%s\" tablosu, OID olan \"%s\" tablosu inherit edemez"
 
-#: commands/tablecmds.c:7095
+#: commands/tablecmds.c:7103
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "alt tablosundaki \"%s\" sütunu NOT NULL olmalıdır"
 
-#: commands/tablecmds.c:7111
+#: commands/tablecmds.c:7119
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "alt tablosunda  \"%s\" sütunu eksiktir"
 
-#: commands/tablecmds.c:7190
+#: commands/tablecmds.c:7198
 #, fuzzy, c-format
 msgid "child table \"%s\" has different definition for check constraint \"%s\""
 msgstr "\"%s\" alt tablosundaki  \"%s\" sütununun tipi farklıdır"
 
-#: commands/tablecmds.c:7214
+#: commands/tablecmds.c:7222
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "alt tablosunda  \"%s\" kısıtlama eksiktir"
 
-#: commands/tablecmds.c:7295
+#: commands/tablecmds.c:7303
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "\"%s\" nesnesi \"%s\" nesnesinin üst nesnesi değildir"
 
-#: commands/tablecmds.c:7521
+#: commands/tablecmds.c:7529
 msgid "cannot move an owned sequence into another schema"
 msgstr "sahipliği belli olan sequence başka bir şemaya taşınamaz"
 
-#: commands/tablecmds.c:7550
+#: commands/tablecmds.c:7558
 #, c-format
 msgid "relation \"%s\" is already in schema \"%s\""
 msgstr "\"%s\" nesnesi zaten \"%s\" şemasında mevcuttur"
 
-#: commands/tablecmds.c:7615
+#: commands/tablecmds.c:7623
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "\"%s\" nesnesi zaten \"%s\" şemasında mevcuttur"
@@ -11998,8 +12022,8 @@ msgid ""
 "%u index pages have been deleted, %u are currently reusable.\n"
 "%s."
 msgstr ""
-"%.0f index sürüm satırı kaldırılmış.\n"
-"%u index sayfasu silindi, %u şu an kullanılabilir.\n"
+"%.0f index sürüm satırı kaldırıldı.\n"
+"%u index sayfası silindi, %u şu an kullanılabilir.\n"
 "%s"
 
 #: commands/vacuumlazy.c:232
@@ -12026,7 +12050,7 @@ msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of
 msgstr "\"%s\": bulunan %.0f kaldırılabilen, %.0f sabit satır sürümleri, toplam %u sayfa"
 
 #: commands/vacuumlazy.c:738
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
 "There were %.0f unused item pointers.\n"
@@ -12035,7 +12059,6 @@ msgid ""
 msgstr ""
 "%.0f ölü satır sürümü şu an kaldırılamıyor.\n"
 "%.0f kullanılmamış öğe göstergesi vardı.\n"
-"%.u sayfa kullanılabilecek boş alan içeriyor.\n"
 "%u sayfa ise tamamen boş.\n"
 "%s."
 
@@ -12272,9 +12295,9 @@ msgid "Physical storage mismatch on dropped attribute at ordinal position %d."
 msgstr "%d adresinde düşürülmüş sütunda fiziksel saklam uyuşmazlığı."
 
 #: executor/execQual.c:1046
-#: parser/parse_func.c:92
-#: parser/parse_func.c:264
-#: parser/parse_func.c:545
+#: parser/parse_func.c:88
+#: parser/parse_func.c:260
+#: parser/parse_func.c:541
 #, fuzzy, c-format
 msgid "cannot pass more than %d argument to a function"
 msgid_plural "cannot pass more than %d arguments to a function"
@@ -12679,9 +12702,9 @@ msgstr "%u/%u/%u nesnesi %u blokuna kadar kesilemiyor: nesnenin boyutu %u blok o
 
 #: storage/smgr/md.c:815
 #: storage/smgr/md.c:839
-#, fuzzy, c-format
+#, c-format
 msgid "could not truncate relation %s to %u blocks: %m"
-msgstr "%u/%u/%u nesnesi %u blok boyutuna kadar kesilemiyor: %m"
+msgstr "%s ilişkisi to %u bloğa küçültülemedi: %m"
 
 #: storage/smgr/md.c:884
 #: storage/smgr/md.c:1058
@@ -12706,9 +12729,9 @@ msgid "could not seek to end of segment %u of relation %s: %m"
 msgstr "segment %u, nesne %u/%u/%u arama yapılamıyor: %m"
 
 #: storage/file/fd.c:382
-#, fuzzy, c-format
+#, c-format
 msgid "getrlimit failed: %m"
-msgstr "select() başarısız oldu: %s\n"
+msgstr "getrlimit başarısız oldu: %m"
 
 #: storage/file/fd.c:468
 msgid "insufficient file descriptors available to start server process"
@@ -12846,34 +12869,34 @@ msgstr "max_locks_per_transaction değerini artırmanız gerekebilir."
 msgid "Not enough memory for reassigning the prepared transaction's locks."
 msgstr "Hazırlanmış transaction'un lock'ları yeniden atanması için yeterli bellek yok."
 
-#: storage/lmgr/proc.c:274
+#: storage/lmgr/proc.c:275
 #: storage/ipc/procarray.c:151
 #: storage/ipc/sinvaladt.c:293
-#: postmaster/postmaster.c:1687
+#: postmaster/postmaster.c:1724
 msgid "sorry, too many clients already"
 msgstr "üzgünüm, istemci sayısı çok fazla"
 
-#: storage/lmgr/proc.c:950
+#: storage/lmgr/proc.c:966
 #, c-format
 msgid "process %d avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms"
 msgstr "%d süreci %s işlemi %s nesnesi için kaynak kilitlenmesini önledi bunun için %ld.%03d milisaniye bekledikten sonra sırada bekleyen işlemler yeniden düzenlendi"
 
-#: storage/lmgr/proc.c:962
+#: storage/lmgr/proc.c:978
 #, c-format
 msgid "process %d detected deadlock while waiting for %s on %s after %ld.%03d ms"
 msgstr "%d süreci %s nesnesini %s  işlemi için beklerken %ld.%03d milisaniye sonra deadlock tespit etti"
 
-#: storage/lmgr/proc.c:968
+#: storage/lmgr/proc.c:984
 #, fuzzy, c-format
 msgid "process %d still waiting for %s on %s after %ld.%03d ms"
 msgstr "Process %d waits for %s on %s; blocked by process %d."
 
-#: storage/lmgr/proc.c:972
+#: storage/lmgr/proc.c:988
 #, c-format
 msgid "process %d acquired %s on %s after %ld.%03d ms"
 msgstr "process %d acquired %s on %s after %ld.%03d ms"
 
-#: storage/lmgr/proc.c:988
+#: storage/lmgr/proc.c:1004
 #, c-format
 msgid "process %d failed to acquire %s on %s after %ld.%03d ms"
 msgstr "process %d failed to acquire %s on %s after %ld.%03d ms"
@@ -13283,9 +13306,8 @@ msgstr "VALUES kısmında aggregate fonksiyonları kullanılamaz"
 
 #: parser/analyze.c:695
 #: parser/analyze.c:1102
-#, fuzzy
 msgid "cannot use window function in VALUES"
-msgstr "VALUES kısmında aggregate fonksiyonları kullanılamaz"
+msgstr "VALUES işleminde window fonksiyonu kullanılamaz"
 
 #: parser/analyze.c:727
 msgid "INSERT has more expressions than target columns"
@@ -13338,9 +13360,8 @@ msgid "cannot use aggregate function in UPDATE"
 msgstr "UPDATE parametresinde aggregate fonksiyon kullanılamaz"
 
 #: parser/analyze.c:1673
-#, fuzzy
 msgid "cannot use window function in UPDATE"
-msgstr "UPDATE parametresinde aggregate fonksiyon kullanılamaz"
+msgstr "UPDATE işleminde window fonksiyonu kullanılamaz"
 
 #: parser/analyze.c:1780
 msgid "cannot use aggregate function in RETURNING"
@@ -13368,9 +13389,8 @@ msgid "DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE is not supported"
 msgstr "DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE desteklenmiyor"
 
 #: parser/analyze.c:1867
-#, fuzzy
 msgid "Holdable cursors must be READ ONLY."
-msgstr "Cursor READ ONLY olmalıdır."
+msgstr "Holdable imleçler READ  ONLY olmalıdır."
 
 #: parser/analyze.c:1880
 msgid "DECLARE INSENSITIVE CURSOR ... FOR UPDATE/SHARE is not supported"
@@ -13431,7 +13451,7 @@ msgid "relation \"%s\" in FOR UPDATE/SHARE clause not found in FROM clause"
 msgstr "FOR UPDATE/SHARE ifadesinde belirtilen \"%s\" tablosu FROM ifadesinde bulunamadı"
 
 #: parser/analyze.c:2201
-#: parser/parse_coerce.c:282
+#: parser/parse_coerce.c:283
 #: parser/parse_expr.c:641
 #: parser/parse_expr.c:648
 #, c-format
@@ -13631,105 +13651,105 @@ msgstr "%s geçerli bir sıralama operatör adı değildir"
 msgid "Ordering operators must be \"<\" or \">\" members of btree operator families."
 msgstr "Ordering operators must be \"<\" or \">\" members of btree operator families."
 
-#: parser/parse_coerce.c:299
+#: parser/parse_coerce.c:300
 #: parser/parse_expr.c:1869
 #, c-format
 msgid "inconsistent types deduced for parameter $%d"
 msgstr "$%d parametresi için geçersiz tip bulundu"
 
-#: parser/parse_coerce.c:889
-#: parser/parse_coerce.c:918
-#: parser/parse_coerce.c:936
-#: parser/parse_coerce.c:951
+#: parser/parse_coerce.c:890
+#: parser/parse_coerce.c:919
+#: parser/parse_coerce.c:937
+#: parser/parse_coerce.c:952
 #: parser/parse_expr.c:1521
 #: parser/parse_expr.c:2024
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "%s tipi %s tipine dökülemiyor"
 
-#: parser/parse_coerce.c:921
+#: parser/parse_coerce.c:922
 msgid "Input has too few columns."
 msgstr "Girişte sütun sayısı azdır."
 
-#: parser/parse_coerce.c:939
+#: parser/parse_coerce.c:940
 #, c-format
 msgid "Cannot cast type %s to %s in column %d."
 msgstr "%3$d sütununda %1$s tipi %2$s tipine dökülemiyor."
 
-#: parser/parse_coerce.c:954
+#: parser/parse_coerce.c:955
 msgid "Input has too many columns."
 msgstr "Giriş çok fazla sütun içeriyor."
 
 #. translator: first %s is name of a SQL construct, eg WHERE
-#: parser/parse_coerce.c:997
+#: parser/parse_coerce.c:998
 #, c-format
 msgid "argument of %s must be type boolean, not type %s"
 msgstr "%s'ın argümanları %s değil, boolean tipinde olamalıdır"
 
 #. translator: %s is name of a SQL construct, eg WHERE
 #. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:1007
-#: parser/parse_coerce.c:1056
+#: parser/parse_coerce.c:1008
+#: parser/parse_coerce.c:1057
 #, c-format
 msgid "argument of %s must not return a set"
 msgstr "%s'ın argümanları set veri tipini döndüremez"
 
 #. translator: first %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:1044
+#: parser/parse_coerce.c:1045
 #, c-format
 msgid "argument of %s must be type %s, not type %s"
 msgstr "%s'ın argümanı %s değil, %s tipinde olamalıdır"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1177
+#: parser/parse_coerce.c:1178
 #, c-format
 msgid "%s types %s and %s cannot be matched"
 msgstr "%s tipleri %s ve %s bir araya gelemez"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1244
+#: parser/parse_coerce.c:1245
 #, c-format
 msgid "%s could not convert type %s to %s"
 msgstr "%s %s tipi %s tipime dönüştürülemiyor"
 
-#: parser/parse_coerce.c:1485
+#: parser/parse_coerce.c:1486
 msgid "arguments declared \"anyelement\" are not all alike"
 msgstr "\"anyelement\" olarak tanımlanan argümanlar birbirine benzemiyor"
 
-#: parser/parse_coerce.c:1504
+#: parser/parse_coerce.c:1505
 msgid "arguments declared \"anyarray\" are not all alike"
 msgstr "\"anyarray\" olarak tanımlanan argümanlar birbirine benzemiyor"
 
-#: parser/parse_coerce.c:1533
-#: parser/parse_coerce.c:1677
-#: parser/parse_coerce.c:1708
+#: parser/parse_coerce.c:1534
+#: parser/parse_coerce.c:1678
+#: parser/parse_coerce.c:1709
 #, c-format
 msgid "argument declared \"anyarray\" is not an array but type %s"
 msgstr "\"anyarray\" olarak tanımlanmış argüman bir dizin değil, %s tipidir"
 
-#: parser/parse_coerce.c:1549
+#: parser/parse_coerce.c:1550
 msgid "argument declared \"anyarray\" is not consistent with argument declared \"anyelement\""
 msgstr "\"anyarray\" olarak tanımlanmış parametre \"anyelement\" olarak tanımlanmış parametresiyle tutarlı değildir"
 
-#: parser/parse_coerce.c:1567
+#: parser/parse_coerce.c:1568
 msgid "could not determine polymorphic type because input has type \"unknown\""
 msgstr "giriş, \"unknown\" tipinde olduğu için polymorphic tipi belirlenemedi"
 
-#: parser/parse_coerce.c:1577
+#: parser/parse_coerce.c:1578
 #, fuzzy, c-format
 msgid "type matched to anynonarray is an array type: %s"
 msgstr "enyenum ile eşleştirilen tip bir enum tipi değildir: %s"
 
-#: parser/parse_coerce.c:1587
+#: parser/parse_coerce.c:1588
 #, c-format
 msgid "type matched to anyenum is not an enum type: %s"
 msgstr "enyenum ile eşleştirilen tip bir enum tipi değildir: %s"
 
-#: parser/parse_coerce.c:1616
-#: parser/parse_coerce.c:1633
-#: parser/parse_coerce.c:1691
+#: parser/parse_coerce.c:1617
+#: parser/parse_coerce.c:1634
+#: parser/parse_coerce.c:1692
 #: parser/parse_expr.c:1487
-#: parser/parse_func.c:308
+#: parser/parse_func.c:304
 #: parser/parse_oper.c:972
 #: nodes/nodeFuncs.c:107
 #: nodes/nodeFuncs.c:133
@@ -13924,89 +13944,89 @@ msgstr "Birden fazla uygun aday vardır."
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
 msgstr "boolean değerini almak için IS DISTINCT FROM, = işlemini kullanmalıdır"
 
-#: parser/parse_func.c:191
+#: parser/parse_func.c:187
 #, c-format
 msgid "%s(*) specified, but %s is not an aggregate function"
 msgstr "%s(*) belirtilmiş, ancak %s bir aggregate fonksiyonu değildir"
 
-#: parser/parse_func.c:198
+#: parser/parse_func.c:194
 #, c-format
 msgid "DISTINCT specified, but %s is not an aggregate function"
 msgstr "DISTINCT belirtilmiş, ancak %s bir aggregate fonksiyonu değildir"
 
-#: parser/parse_func.c:204
+#: parser/parse_func.c:200
 #, fuzzy, c-format
 msgid "OVER specified, but %s is not a window function nor an aggregate function"
 msgstr "%s(*) belirtilmiş, ancak %s bir aggregate fonksiyonu değildir"
 
-#: parser/parse_func.c:231
+#: parser/parse_func.c:227
 #, c-format
 msgid "function %s is not unique"
 msgstr "%s fonksiyonu benzersiz değildir"
 
-#: parser/parse_func.c:234
+#: parser/parse_func.c:230
 msgid "Could not choose a best candidate function. You might need to add explicit type casts."
 msgstr "En iyi aday fonksiyon seçilememiş. Explicit type cast eklemeniz gerekebilir."
 
-#: parser/parse_func.c:243
+#: parser/parse_func.c:239
 msgid "No function matches the given name and argument types. You might need to add explicit type casts."
 msgstr "Verilmiş ad ve argüman tiplerine uyan fonksiyon bulunamamış. Explicit type cast eklemeniz gerekebilir."
 
-#: parser/parse_func.c:350
-#: parser/parse_func.c:403
+#: parser/parse_func.c:346
+#: parser/parse_func.c:399
 #, c-format
 msgid "%s(*) must be used to call a parameterless aggregate function"
 msgstr "%s(*) olmadan parametre olmayan aggregate çağırılamaz"
 
-#: parser/parse_func.c:357
+#: parser/parse_func.c:353
 msgid "aggregates cannot return sets"
 msgstr "aggregate set söndüremez"
 
-#: parser/parse_func.c:376
+#: parser/parse_func.c:372
 msgid "window function call requires an OVER clause"
 msgstr ""
 
-#: parser/parse_func.c:393
+#: parser/parse_func.c:389
 #, fuzzy
 msgid "DISTINCT is not implemented for window functions"
 msgstr "SSPI bu sunucuda desteklenmemektedir"
 
-#: parser/parse_func.c:410
+#: parser/parse_func.c:406
 #, fuzzy
 msgid "window functions cannot return sets"
 msgstr "SQL fonksiyonları %s tipini dündüremezler"
 
-#: parser/parse_func.c:1286
+#: parser/parse_func.c:1190
 #, c-format
 msgid "column %s.%s does not exist"
 msgstr "%s.%s sütunu mevcut değil"
 
-#: parser/parse_func.c:1298
+#: parser/parse_func.c:1202
 #, c-format
 msgid "column \"%s\" not found in data type %s"
 msgstr "%2$s veri tipinde \"%1$s\" sütunu bulunamadı"
 
-#: parser/parse_func.c:1304
+#: parser/parse_func.c:1208
 #, c-format
 msgid "could not identify column \"%s\" in record data type"
 msgstr "record veri tipinde  \"%s\" sütunu bulunamamış"
 
-#: parser/parse_func.c:1310
+#: parser/parse_func.c:1214
 #, c-format
 msgid "column notation .%s applied to type %s, which is not a composite type"
 msgstr ".%s sütün tanım biçimi %s tipine uygulanmış; bu tip, bir composite tipi değildir"
 
-#: parser/parse_func.c:1494
+#: parser/parse_func.c:1398
 #, c-format
 msgid "aggregate %s(*) does not exist"
 msgstr "aggregate %s(*) mevcut değil"
 
-#: parser/parse_func.c:1499
+#: parser/parse_func.c:1403
 #, c-format
 msgid "aggregate %s does not exist"
 msgstr "aggregate %s mevcut değil"
 
-#: parser/parse_func.c:1520
+#: parser/parse_func.c:1424
 #, c-format
 msgid "function %s is not an aggregate"
 msgstr "%s fonksiyonu bir aggregate değildir"
@@ -14527,83 +14547,91 @@ msgstr "sonuçlandırılmamış bit string literal"
 msgid "unterminated hexadecimal string literal"
 msgstr "sonuçlandırılmamış hexadecimal string literal"
 
-#: scan.l:518
+#: scan.l:476
+msgid "unsafe use of string constant with Unicode escapes"
+msgstr ""
+
+#: scan.l:477
+msgid "String constants with Unicode escapes cannot be used when standard_conforming_strings is off."
+msgstr ""
+
+#: scan.l:524
 msgid "unsafe use of \\' in a string literal"
 msgstr "string literal içinde güvenli olmayan \\' kullanımı"
 
-#: scan.l:519
+#: scan.l:525
 msgid "Use '' to write quotes in strings. \\' is insecure in client-only encodings."
 msgstr "Satır içinde tırnak yazmak için iki tek tırnak ('') kullanın. İstemci baslı kodlamalarda (\\') kullanımı güvendi değildir."
 
-#: scan.l:548
+#: scan.l:554
 msgid "unterminated quoted string"
 msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış satır"
 
-#: scan.l:592
+#: scan.l:598
 msgid "unterminated dollar-quoted string"
 msgstr "sonuçlandırılmamış dolar işeretiyle sınırlandırılmış satır"
 
-#: scan.l:609
-#: scan.l:621
-#: scan.l:635
+#: scan.l:615
+#: scan.l:627
+#: scan.l:641
 msgid "zero-length delimited identifier"
 msgstr "sınırlandırılmış tanım sıfır uzunluklu"
 
-#: scan.l:648
+#: scan.l:654
 msgid "unterminated quoted identifier"
 msgstr "sonuçlandırılmamış tırnakla sınırlandırılmış tanım"
 
-#: scan.l:742
+#: scan.l:748
 msgid "operator too long"
 msgstr "operator fazla uzun"
 
 #. translator: %s is typically the translation of "syntax error"
-#: scan.l:891
+#: scan.l:897
 #, c-format
 msgid "%s at end of input"
 msgstr "giriş sonuna %s"
 
 #. translator: first %s is typically the translation of "syntax error"
-#: scan.l:899
+#: scan.l:905
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "\"%2$s\"  yerinde %1$s"
 
-#: scan.l:1019
+#: scan.l:1025
 msgid "Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8"
 msgstr ""
 
-#: scan.l:1036
+#: scan.l:1042
 #, fuzzy
 msgid "invalid Unicode escape character"
 msgstr "escape satırı geçersiz"
 
-#: scan.l:1079
+#: scan.l:1085
 #, fuzzy
 msgid "invalid Unicode escape value"
 msgstr "geçersiz end sequence"
 
-#: scan.l:1128
+#: scan.l:1134
 msgid "nonstandard use of \\' in a string literal"
 msgstr "string literal içinde standart olmayan \\' kullanımı"
 
-#: scan.l:1129
+#: scan.l:1135
 msgid "Use '' to write quotes in strings, or use the escape string syntax (E'...')."
 msgstr "Satır içinde tırnak yazmak için ya iki tek tırnak ('') ya da escape kullanın (E'...')."
 
-#: scan.l:1138
+#: scan.l:1144
 msgid "nonstandard use of \\\\ in a string literal"
 msgstr "string literal içinde standart olmayan \\\\ kullanımı"
 
-#: scan.l:1139
+#: scan.l:1145
 msgid "Use the escape string syntax for backslashes, e.g., E'\\\\'."
 msgstr "Ters taksim için escape satır sözdizimini kullanın, örneğin, E'\\\\'."
 
-#: scan.l:1153
+#: scan.l:1159
 msgid "nonstandard use of escape in a string literal"
 msgstr "string literal içinde standart olmayan escape kullanımı"
 
-#: scan.l:1154
+#: scan.l:1160
 msgid ""
 "Use the escape string syntax for escapes, e.g., E'\\r\\n"
 "'."
@@ -14740,34 +14768,32 @@ msgstr ""
 msgid "could not stat data directory \"%s\": %m"
 msgstr "\"%s\" veri dizin hakkında bilgi alınamadı: %m"
 
-#: port/win32_shmem.c:143
-#: port/win32_shmem.c:166
-#: port/win32_shmem.c:183
-#: port/win32_shmem.c:204
+#: port/win32_shmem.c:155
+#: port/win32_shmem.c:190
+#: port/win32_shmem.c:211
 #, c-format
 msgid "could not create shared memory segment: %lu"
 msgstr "shared memory segment oluşturulamıyor: %lu"
 
-#: port/win32_shmem.c:144
-#: port/win32_shmem.c:167
+#: port/win32_shmem.c:156
 #, fuzzy, c-format
 msgid "Failed system call was CreateFileMapping(size=%lu, name=%s)."
 msgstr "Başarısız sistem çağrısı: CreateFileMapping(size=%lu, name=%s)"
 
-#: port/win32_shmem.c:172
+#: port/win32_shmem.c:180
 msgid "pre-existing shared memory block is still in use"
 msgstr "daha önce tanımlanmış shared memory bloğu hala kullanılmaktadır"
 
-#: port/win32_shmem.c:173
+#: port/win32_shmem.c:181
 msgid "Check if there are any old server processes still running, and terminate them."
 msgstr "Hala çalışan sunucu süreçleri bulun ve varsa sonlandırın."
 
-#: port/win32_shmem.c:184
+#: port/win32_shmem.c:191
 #, fuzzy
 msgid "Failed system call was DuplicateHandle."
 msgstr "Başarısız çağrı: DuplicateHandle"
 
-#: port/win32_shmem.c:205
+#: port/win32_shmem.c:212
 #, fuzzy
 msgid "Failed system call was MapViewOfFileEx."
 msgstr "Başarısız çağrı: MapViewOfFileEx"
@@ -14785,45 +14811,45 @@ msgstr "otomatik vacuum başlatma süreci çalıştırıldı"
 msgid "autovacuum launcher shutting down"
 msgstr "otomatik vacuum başlatma süreci kapatılıyor"
 
-#: postmaster/autovacuum.c:1407
+#: postmaster/autovacuum.c:1415
 #, fuzzy, c-format
 msgid "could not fork autovacuum worker process: %m"
 msgstr "Otomatik vacuum süreci fork edilemedi: %m"
 
-#: postmaster/autovacuum.c:1609
+#: postmaster/autovacuum.c:1617
 #, c-format
 msgid "autovacuum: processing database \"%s\""
 msgstr "autovacuum: \"%s\" veritabanı işleniyor"
 
-#: postmaster/autovacuum.c:1981
+#: postmaster/autovacuum.c:1989
 #, fuzzy, c-format
 msgid "autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr "autovacuum: \"%s\" veritabanı işleniyor"
 
-#: postmaster/autovacuum.c:1993
+#: postmaster/autovacuum.c:2001
 #, fuzzy, c-format
 msgid "autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr "autovacuum: \"%s\" veritabanı işleniyor"
 
-#: postmaster/autovacuum.c:2254
+#: postmaster/autovacuum.c:2262
 #, c-format
 msgid "automatic vacuum of table \"%s.%s.%s\""
 msgstr "\"%s.%s.%s\" tablosunun otomatik vacuum'u"
 
-#: postmaster/autovacuum.c:2257
+#: postmaster/autovacuum.c:2265
 #, c-format
 msgid "automatic analyze of table \"%s.%s.%s\""
 msgstr "\"%s.%s.%s\" tablosunun otomatik analizi"
 
-#: postmaster/autovacuum.c:2719
+#: postmaster/autovacuum.c:2727
 msgid "autovacuum not started because of misconfiguration"
 msgstr "geçersiz ayarlarından dolayı autovacuum çalıştırılamadı"
 
-#: postmaster/autovacuum.c:2720
+#: postmaster/autovacuum.c:2728
 msgid "Enable the \"track_counts\" option."
 msgstr "\"track_counts\" seçeneği etkinleştir."
 
-#: postmaster/autovacuum.c:2776
+#: postmaster/autovacuum.c:2784
 msgid "not enough shared memory for autovacuum"
 msgstr "otomatik vacuum için shared memory yeterli değildir"
 
@@ -14843,15 +14869,15 @@ msgstr "\"checkpoint_segments\" yapılandırma parametresi ile bu aralığı bü
 msgid "transaction log switch forced (archive_timeout=%d)"
 msgstr "transaction log switch forced (archive_timeout=%d)"
 
-#: postmaster/bgwriter.c:875
+#: postmaster/bgwriter.c:883
 msgid "not enough shared memory for background writer"
 msgstr "arka planı writer için shared memory yeterli değildir"
 
-#: postmaster/bgwriter.c:1023
+#: postmaster/bgwriter.c:1031
 msgid "checkpoint request failed"
 msgstr "checkpoint isteği başarısız"
 
-#: postmaster/bgwriter.c:1024
+#: postmaster/bgwriter.c:1032
 msgid "Consult recent messages in the server log for details."
 msgstr "Ayrıntılar için sunucu günlük dosyasına bakın."
 
@@ -14889,7 +14915,7 @@ msgid "archive command was terminated by exception 0x%X"
 msgstr "arşiv süreç 0x%X exception tarafından sonlandırıldı"
 
 #: postmaster/pgarch.c:568
-#: postmaster/postmaster.c:2610
+#: postmaster/postmaster.c:2659
 #, fuzzy
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Bu hex değerin tanımlaması için \"ntstatus.h\" dosyasına bakın."
@@ -15036,107 +15062,107 @@ msgstr "bozuk pgstat.stat dosyası"
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "veritabanı %d için tablolar hash tablosu temizleme sırasında bozulmuştur --- iptal"
 
-#: postmaster/postmaster.c:549
+#: postmaster/postmaster.c:543
 #, c-format
 msgid "%s: invalid argument for option -f: \"%s\"\n"
 msgstr "%s: -f seçeneği için geçersiz parametre: \"%s\"\n"
 
-#: postmaster/postmaster.c:635
+#: postmaster/postmaster.c:629
 #, c-format
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s: -t seçeneği için geçersiz parametre: \"%s\"\n"
 
-#: postmaster/postmaster.c:686
+#: postmaster/postmaster.c:680
 #, c-format
 msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s: geçersiz parametre: \"%s\"\n"
 
-#: postmaster/postmaster.c:698
-#, c-format
-msgid "%s: could not locate matching postgres executable"
-msgstr "%s: uygun postgres çalıştırma dosysı bulunamadı"
-
-#: postmaster/postmaster.c:720
+#: postmaster/postmaster.c:705
 #, c-format
 msgid "%s: superuser_reserved_connections must be less than max_connections\n"
 msgstr "%s: superuser_reserved_connections parametresi, max_connections parametresinden küçük olmalıdır\n"
 
-#: postmaster/postmaster.c:730
+#: postmaster/postmaster.c:715
 #, c-format
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr "%s: datetoken tabloları bozuk, lütfen düzeltin\n"
 
-#: postmaster/postmaster.c:836
+#: postmaster/postmaster.c:821
 msgid "invalid list syntax for \"listen_addresses\""
 msgstr "\"listen_addresses\" için geçersiz sözdizimi"
 
-#: postmaster/postmaster.c:857
+#: postmaster/postmaster.c:842
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "\"%s\" için socket oluşturma hatası"
 
-#: postmaster/postmaster.c:863
+#: postmaster/postmaster.c:848
 msgid "could not create any TCP/IP sockets"
 msgstr "TCP/IP socket oluşturma hatası"
 
-#: postmaster/postmaster.c:890
+#: postmaster/postmaster.c:875
 msgid "could not create Unix-domain socket"
 msgstr "UNIX-domani socket oluşturma hatası"
 
-#: postmaster/postmaster.c:898
+#: postmaster/postmaster.c:883
 msgid "no socket created for listening"
 msgstr "dinlemek için socket oluşturulmadı"
 
-#: postmaster/postmaster.c:921
-#: postmaster/postmaster.c:3175
+#: postmaster/postmaster.c:906
+#: postmaster/postmaster.c:3233
 #, fuzzy
 msgid "could not load pg_hba.conf"
 msgstr "wldap32.dll yüklenemedi"
 
-#: postmaster/postmaster.c:938
+#: postmaster/postmaster.c:923
 #, fuzzy
 msgid "could not create I/O completion port for child queue"
 msgstr "\"%s\" için socket oluşturma hatası"
 
-#: postmaster/postmaster.c:982
+#: postmaster/postmaster.c:967
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: harici PID dosyası \"%s\" yazılamadı: %s\n"
 
-#: postmaster/postmaster.c:1082
+#: postmaster/postmaster.c:1068
+#, c-format
+msgid "%s: could not locate matching postgres executable"
+msgstr "%s: uygun postgres çalıştırma dosysı bulunamadı"
+
+#: postmaster/postmaster.c:1119
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "veritabanı deizini \"%s\" mevcut değil"
 
-#: postmaster/postmaster.c:1087
+#: postmaster/postmaster.c:1124
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "\"%s\" dizininin erişim haklarını okunamıyor: %m"
 
-#: postmaster/postmaster.c:1095
+#: postmaster/postmaster.c:1132
 #, fuzzy, c-format
 msgid "specified data directory \"%s\" is not a directory"
 msgstr "veritabanı deizini \"%s\" mevcut değil"
 
-#: postmaster/postmaster.c:1111
+#: postmaster/postmaster.c:1148
 #, c-format
 msgid "data directory \"%s\" has wrong ownership"
 msgstr "\"%s\" veritabanı dizininin erişim hakları yalnıştır"
 
-#: postmaster/postmaster.c:1113
+#: postmaster/postmaster.c:1150
 msgid "The server must be started by the user that owns the data directory."
 msgstr "Sunucu, veri dizini sahip kullanıcı tarafından başlatılmalıdır."
 
-#: postmaster/postmaster.c:1133
+#: postmaster/postmaster.c:1170
 #, c-format
 msgid "data directory \"%s\" has group or world access"
 msgstr "veritabanı dizini \"%s\" gruba ve herkese erişime açıktır"
 
-#: postmaster/postmaster.c:1135
+#: postmaster/postmaster.c:1172
 msgid "Permissions should be u=rwx (0700)."
 msgstr "Erişim hakları u=rwx (0700) olmalıdır."
 
-#: postmaster/postmaster.c:1146
+#: postmaster/postmaster.c:1183
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -15147,273 +15173,274 @@ msgstr ""
 "\"%s\" klasöründe arama yapılmıştır,\n"
 "ancak \"%s\" dosyası bulunamamıştır: %s\n"
 
-#: postmaster/postmaster.c:1181
+#: postmaster/postmaster.c:1218
 #, c-format
 msgid "%s: could not fork background process: %s\n"
 msgstr "%s: artalan süreci başlatma hatası: %s\n"
 
-#: postmaster/postmaster.c:1202
+#: postmaster/postmaster.c:1239
 #, c-format
 msgid "%s: could not dissociate from controlling TTY: %s\n"
 msgstr "%s: control TTY ile bağlantı kesilemiyor: %s\n"
 
-#: postmaster/postmaster.c:1282
+#: postmaster/postmaster.c:1319
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "postmaster içinde select() başarısız: %m"
 
-#: postmaster/postmaster.c:1430
-#: postmaster/postmaster.c:1461
+#: postmaster/postmaster.c:1467
+#: postmaster/postmaster.c:1498
 msgid "incomplete startup packet"
 msgstr "başlatma paketi eksik"
 
-#: postmaster/postmaster.c:1442
+#: postmaster/postmaster.c:1479
 msgid "invalid length of startup packet"
 msgstr "başlatma paketinin uzunluğu geçirsiz"
 
-#: postmaster/postmaster.c:1498
+#: postmaster/postmaster.c:1535
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "SSL görüşme cevabı gönderme başarısız: %m"
 
-#: postmaster/postmaster.c:1527
+#: postmaster/postmaster.c:1564
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "frontend protokolü %u.%u desteklenememktedir: sunucunun desteklediği protokolleri %u.0 ila %u.%u arasında"
 
-#: postmaster/postmaster.c:1591
+#: postmaster/postmaster.c:1628
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "geçersiz sartup packet düzeni: son bayt bir sonlandırıcı olmalıdır"
 
-#: postmaster/postmaster.c:1619
+#: postmaster/postmaster.c:1656
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "başlatma paketinde PostgreSQL kullanıcı adı belirtilmemiştir"
 
-#: postmaster/postmaster.c:1672
+#: postmaster/postmaster.c:1709
 msgid "the database system is starting up"
 msgstr "veritabanı başlatılıyor"
 
-#: postmaster/postmaster.c:1677
+#: postmaster/postmaster.c:1714
 msgid "the database system is shutting down"
 msgstr "veritabanı kapatılıyor"
 
-#: postmaster/postmaster.c:1682
+#: postmaster/postmaster.c:1719
 msgid "the database system is in recovery mode"
 msgstr "veritabanı kurtarma modundadır"
 
-#: postmaster/postmaster.c:1749
+#: postmaster/postmaster.c:1786
 #, fuzzy, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "%d sürecinin iptal isteminde geçersiz anahtar"
 
-#: postmaster/postmaster.c:1757
+#: postmaster/postmaster.c:1794
 #, fuzzy, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "%d sürecinin iptal isteminde geçersiz pid"
 
-#: postmaster/postmaster.c:1949
+#: postmaster/postmaster.c:1986
 msgid "received SIGHUP, reloading configuration files"
 msgstr "SIGHUP sinyali alınmıştır, yapılandırma dosyaları yeniden okunuyor"
 
-#: postmaster/postmaster.c:1970
+#: postmaster/postmaster.c:2007
 msgid "pg_hba.conf not reloaded"
 msgstr "pg_hba.conf yeniden yüklenmedi"
 
-#: postmaster/postmaster.c:2013
+#: postmaster/postmaster.c:2050
 msgid "received smart shutdown request"
 msgstr "akıllı kapatma isteği alındı"
 
-#: postmaster/postmaster.c:2049
+#: postmaster/postmaster.c:2086
 msgid "received fast shutdown request"
 msgstr "hızlı kapatma isteği alındı"
 
-#: postmaster/postmaster.c:2063
+#: postmaster/postmaster.c:2100
 msgid "aborting any active transactions"
 msgstr "aktif transactionlar iptal ediliyor"
 
-#: postmaster/postmaster.c:2091
+#: postmaster/postmaster.c:2128
 msgid "received immediate shutdown request"
 msgstr "immediate shutdown isteği alındı"
 
-#: postmaster/postmaster.c:2165
-#: postmaster/postmaster.c:2191
+#: postmaster/postmaster.c:2202
+#: postmaster/postmaster.c:2228
 msgid "startup process"
 msgstr "başlatma süreci"
 
-#: postmaster/postmaster.c:2168
+#: postmaster/postmaster.c:2205
 msgid "aborting startup due to startup process failure"
 msgstr "başlatma süreci hatası nedeniyle başlatma süreci durdurulmuştır"
 
-#: postmaster/postmaster.c:2231
+#: postmaster/postmaster.c:2268
 msgid "database system is ready to accept connections"
-msgstr "veritabanı bağlantı kabul etmeye hazırdır"
+msgstr "veritabanı sunucusu bağlantı kabul etmeye hazır"
 
-#: postmaster/postmaster.c:2283
+#: postmaster/postmaster.c:2320
 msgid "background writer process"
 msgstr "background writer süreci"
 
-#: postmaster/postmaster.c:2299
+#: postmaster/postmaster.c:2336
 msgid "WAL writer process"
 msgstr "WAL yazma süreci"
 
-#: postmaster/postmaster.c:2314
+#: postmaster/postmaster.c:2351
 msgid "autovacuum launcher process"
 msgstr "otomatik vacuum başlatma süreci"
 
-#: postmaster/postmaster.c:2328
+#: postmaster/postmaster.c:2365
 msgid "archiver process"
 msgstr "arşivleyici süreci"
 
-#: postmaster/postmaster.c:2346
+#: postmaster/postmaster.c:2383
 msgid "statistics collector process"
 msgstr "istatistik toplama süreci"
 
-#: postmaster/postmaster.c:2360
+#: postmaster/postmaster.c:2397
 msgid "system logger process"
 msgstr "logger süreci"
 
-#: postmaster/postmaster.c:2395
-#: postmaster/postmaster.c:2405
+#: postmaster/postmaster.c:2432
+#: postmaster/postmaster.c:2442
+#: postmaster/postmaster.c:2460
 msgid "server process"
 msgstr "sunucu süreci"
 
-#: postmaster/postmaster.c:2449
+#: postmaster/postmaster.c:2496
 msgid "terminating any other active server processes"
 msgstr "diğer aktif sunucu süreçleri durduruluyor"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2599
+#: postmaster/postmaster.c:2648
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) exit code %d ile sonlandı"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2608
+#: postmaster/postmaster.c:2657
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) 0x%X exception tarafından sonlandırıldı"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2617
+#: postmaster/postmaster.c:2666
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) %d sinyali tarafından sonlandırıldı: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2627
+#: postmaster/postmaster.c:2676
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
 msgstr "%s (PID %d) %d sinyali tarafından sonlandırıldı"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:2636
+#: postmaster/postmaster.c:2685
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) tanınmayan status kodu ile sonlandırıldı %d"
 
-#: postmaster/postmaster.c:2773
+#: postmaster/postmaster.c:2822
 msgid "abnormal database system shutdown"
 msgstr "veritabanı sistemi olağandışı kapandı"
 
-#: postmaster/postmaster.c:2805
+#: postmaster/postmaster.c:2854
 msgid "all server processes terminated; reinitializing"
 msgstr "tüm sunucu süreçleri durduruldu; yeniden ilklendiriliyor"
 
-#: postmaster/postmaster.c:2957
+#: postmaster/postmaster.c:3017
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "bağlantı için yeni süreç başlatılamadı: %m"
 
-#: postmaster/postmaster.c:3001
+#: postmaster/postmaster.c:3059
 msgid "could not fork new process for connection: "
 msgstr "bağlantı için yeni süreç başlatılamadı:"
 
-#: postmaster/postmaster.c:3141
+#: postmaster/postmaster.c:3199
 #, c-format
 msgid "connection received: host=%s%s%s"
 msgstr "bağlantı alındı: istemci=%s%s%s"
 
-#: postmaster/postmaster.c:3220
+#: postmaster/postmaster.c:3278
 #, c-format
 msgid "connection authorized: user=%s database=%s"
 msgstr "bağlantı tanımı: kullanıcı=%s veritabanı=%s"
 
-#: postmaster/postmaster.c:3460
+#: postmaster/postmaster.c:3518
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "\"%s\" sunucu süreci başlatma hatası: %m"
 
-#: postmaster/postmaster.c:3962
+#: postmaster/postmaster.c:4020
 #, fuzzy
 msgid "database system is in consistent recovery mode"
 msgstr "veritabanı kurtarma modundadır"
 
-#: postmaster/postmaster.c:4179
+#: postmaster/postmaster.c:4237
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "başlatma süreci fork edilemedi: %m"
 
-#: postmaster/postmaster.c:4183
+#: postmaster/postmaster.c:4241
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "background writer süreci başlatılamadı: %m"
 
-#: postmaster/postmaster.c:4187
+#: postmaster/postmaster.c:4245
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "WAL yazıcı süreci başlatılamadı: %m"
 
-#: postmaster/postmaster.c:4191
+#: postmaster/postmaster.c:4249
 #, c-format
 msgid "could not fork process: %m"
 msgstr "süreç başlatma hatası: %m"
 
-#: postmaster/postmaster.c:4438
+#: postmaster/postmaster.c:4521
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "backend içinde kullanılacak duplicate socket %d oluşturulamadı: hata kodu %d"
 
-#: postmaster/postmaster.c:4467
+#: postmaster/postmaster.c:4550
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "inherited socket oluşturulamıyor: hata kodu %d\n"
 
-#: postmaster/postmaster.c:4496
-#: postmaster/postmaster.c:4503
+#: postmaster/postmaster.c:4579
+#: postmaster/postmaster.c:4586
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "\"%s\" backend parametreler dosyasından okunamıyor: %s\n"
 
-#: postmaster/postmaster.c:4512
+#: postmaster/postmaster.c:4595
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "\"%s\" dosyası silinemedi: %s\n"
 
-#: postmaster/postmaster.c:4525
+#: postmaster/postmaster.c:4608
 #, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr "backend değişkenleri map view hatası: hata kodu: %d\n"
 
-#: postmaster/postmaster.c:4534
+#: postmaster/postmaster.c:4617
 #, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr "backend değişkenleri unmap view hatası: hata kodu: %d\n"
 
-#: postmaster/postmaster.c:4541
+#: postmaster/postmaster.c:4624
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr "backend parameter değişkenler tanıtıcısı kapatılamadı: hata kodu %d\n"
 
-#: postmaster/postmaster.c:4704
+#: postmaster/postmaster.c:4771
 msgid "could not read exit code for process\n"
 msgstr "Sürecin çıkış kodu okunamadı\n"
 
-#: postmaster/postmaster.c:4709
+#: postmaster/postmaster.c:4776
 #, fuzzy
 msgid "could not post child completion status\n"
 msgstr "SSL bağlantı alınamıyor: %s"
@@ -15477,136 +15504,136 @@ msgstr "yeni kayıt dosyası \"%s\" açma hatası: %m"
 msgid "disabling automatic rotation (use SIGHUP to reenable)"
 msgstr "otomatik dönüşüm etkisiz (yeniden yetkilendirmek için SIGHUP kullanın)"
 
-#: rewrite/rewriteDefine.c:108
-#: rewrite/rewriteDefine.c:742
+#: rewrite/rewriteDefine.c:109
+#: rewrite/rewriteDefine.c:759
 #, c-format
 msgid "rule \"%s\" for relation \"%s\" already exists"
 msgstr "\"%s\" kuralı(rule), \"%s\" nesnesi için zaten mevcut"
 
-#: rewrite/rewriteDefine.c:266
+#: rewrite/rewriteDefine.c:283
 msgid "rule actions on OLD are not implemented"
 msgstr "OLD için rule eylemleri implement edilmemiş"
 
-#: rewrite/rewriteDefine.c:267
+#: rewrite/rewriteDefine.c:284
 msgid "Use views or triggers instead."
 msgstr "Bunun yerine view veya trigger kullanın."
 
-#: rewrite/rewriteDefine.c:271
+#: rewrite/rewriteDefine.c:288
 msgid "rule actions on NEW are not implemented"
 msgstr "NEW için rule eylemleri implement edilmemiş"
 
-#: rewrite/rewriteDefine.c:272
+#: rewrite/rewriteDefine.c:289
 msgid "Use triggers instead."
 msgstr "Bunun yerine lütfen triggerleri kullanın."
 
-#: rewrite/rewriteDefine.c:285
+#: rewrite/rewriteDefine.c:302
 msgid "INSTEAD NOTHING rules on SELECT are not implemented"
 msgstr "SELECT üzerinde INSTEAD NOTHING rule implement edilmemiştir"
 
-#: rewrite/rewriteDefine.c:286
+#: rewrite/rewriteDefine.c:303
 msgid "Use views instead."
 msgstr "Lütfen yerine viewları kullanın"
 
-#: rewrite/rewriteDefine.c:294
+#: rewrite/rewriteDefine.c:311
 msgid "multiple actions for rules on SELECT are not implemented"
 msgstr "SELECT rule'ler için birden fazla eylem tanımlanma implement edilmemiştir"
 
-#: rewrite/rewriteDefine.c:306
+#: rewrite/rewriteDefine.c:323
 msgid "rules on SELECT must have action INSTEAD SELECT"
 msgstr "SELECT rule tanımları INSTEAD SELECT öğesini taşımak zorundadır"
 
-#: rewrite/rewriteDefine.c:314
+#: rewrite/rewriteDefine.c:331
 msgid "event qualifications are not implemented for rules on SELECT"
 msgstr "SELECT rule'ler için olay tanımları implement edilmemiştir"
 
-#: rewrite/rewriteDefine.c:339
+#: rewrite/rewriteDefine.c:356
 #, c-format
 msgid "\"%s\" is already a view"
 msgstr "\"%s\" zanten bir view'dur"
 
-#: rewrite/rewriteDefine.c:363
+#: rewrite/rewriteDefine.c:380
 #, c-format
 msgid "view rule for \"%s\" must be named \"%s\""
 msgstr "rule \"%s\" için view'nun adını \"%s\" olarak değiştirilmelidir"
 
-#: rewrite/rewriteDefine.c:388
+#: rewrite/rewriteDefine.c:405
 #, c-format
 msgid "could not convert table \"%s\" to a view because it is not empty"
 msgstr "\"%s\" tablosu boş olmadığı için vew'a çevirilemedi"
 
-#: rewrite/rewriteDefine.c:395
+#: rewrite/rewriteDefine.c:412
 #, c-format
 msgid "could not convert table \"%s\" to a view because it has triggers"
 msgstr "\"%s\" tablosuna bağlı trigger bulunduğu için vew'a çevirilemedi"
 
-#: rewrite/rewriteDefine.c:397
+#: rewrite/rewriteDefine.c:414
 msgid "In particular, the table cannot be involved in any foreign key relationships."
 msgstr "Özellikle, tablo, foreign key ilişkilerinde kullanılamaz."
 
-#: rewrite/rewriteDefine.c:402
+#: rewrite/rewriteDefine.c:419
 #, c-format
 msgid "could not convert table \"%s\" to a view because it has indexes"
 msgstr "\"%s\" tablosuna bağlı index bulunduğu için vew'a çevirilemedi"
 
-#: rewrite/rewriteDefine.c:408
+#: rewrite/rewriteDefine.c:425
 #, c-format
 msgid "could not convert table \"%s\" to a view because it has child tables"
 msgstr "\"%s\" tablosuna bağlı çöcuk tabloları bulunduğu için vew'a çevirilemedi"
 
-#: rewrite/rewriteDefine.c:435
+#: rewrite/rewriteDefine.c:452
 msgid "cannot have multiple RETURNING lists in a rule"
 msgstr "bir rule içinde birden fazla RETURNING listesi olamaz"
 
-#: rewrite/rewriteDefine.c:440
+#: rewrite/rewriteDefine.c:457
 msgid "RETURNING lists are not supported in conditional rules"
 msgstr "şartlı rule içinde RETURNING listeleri kullanılamaz"
 
-#: rewrite/rewriteDefine.c:444
+#: rewrite/rewriteDefine.c:461
 msgid "RETURNING lists are not supported in non-INSTEAD rules"
 msgstr "non-INSTEAD rule içinde RETURNING listeleri kullanılamaz"
 
-#: rewrite/rewriteDefine.c:523
+#: rewrite/rewriteDefine.c:540
 msgid "SELECT rule's target list has too many entries"
 msgstr "SELECT rule'un hedef öğesi listesinin öğe sayısı fazladır"
 
-#: rewrite/rewriteDefine.c:524
+#: rewrite/rewriteDefine.c:541
 msgid "RETURNING list has too many entries"
 msgstr "RETURNING listesinde çok fazla öğe vardır"
 
-#: rewrite/rewriteDefine.c:540
+#: rewrite/rewriteDefine.c:557
 msgid "cannot convert relation containing dropped columns to view"
 msgstr "cannot convert relation containing dropped columns to view"
 
-#: rewrite/rewriteDefine.c:545
+#: rewrite/rewriteDefine.c:562
 #, c-format
 msgid "SELECT rule's target entry %d has different column name from \"%s\""
 msgstr "SELECT rule'un hedef öğesi %d sütun \"%s\"'dan farklı bir isme sahip"
 
-#: rewrite/rewriteDefine.c:551
+#: rewrite/rewriteDefine.c:568
 #, c-format
 msgid "SELECT rule's target entry %d has different type from column \"%s\""
 msgstr "SELECT rule'un hedef öğesi %d sütun \"%s\"'dan farklı bir tipe sahip"
 
-#: rewrite/rewriteDefine.c:553
+#: rewrite/rewriteDefine.c:570
 #, c-format
 msgid "RETURNING list's entry %d has different type from column \"%s\""
 msgstr "RETURNING listesinin %d öğesi \"%s\" sütunun tipinden farklı"
 
-#: rewrite/rewriteDefine.c:568
+#: rewrite/rewriteDefine.c:585
 #, c-format
 msgid "SELECT rule's target entry %d has different size from column \"%s\""
 msgstr "SELECT rule'un hedef öğesi %d sütun \"%s\"'dan farklı bir boyuta sahip"
 
-#: rewrite/rewriteDefine.c:570
+#: rewrite/rewriteDefine.c:587
 #, c-format
 msgid "RETURNING list's entry %d has different size from column \"%s\""
 msgstr "RETURNING listesinin %d öğesi \"%s\" sütunun boyutundan farklı"
 
-#: rewrite/rewriteDefine.c:578
+#: rewrite/rewriteDefine.c:595
 msgid "SELECT rule's target list has too few entries"
 msgstr "SELECT rule'un hedef listesi gereğinden az öğeye sahip"
 
-#: rewrite/rewriteDefine.c:579
+#: rewrite/rewriteDefine.c:596
 msgid "RETURNING list has too few entries"
 msgstr "RETURNING ifadesinde çok az öğe vardır"
 
@@ -15850,6 +15877,8 @@ msgstr "%lu win32 hata kodu %d koduna adreslendi"
 msgid "unrecognized win32 error code: %lu"
 msgstr "bilinmeyen win32 hata kodu: %lu"
 
+#~ msgid "could not create XPath object"
+#~ msgstr "XPath nesnesi oluşturulamadı"
 #~ msgid "fillfactor=%d is out of range (should be between %d and 100)"
 #~ msgstr "fillfactor=%d kapsam dışıdır (%d ile 100 arasında olmalıdır)"
 #~ msgid "GIN index does not support search with void query"

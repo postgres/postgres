@@ -1,0 +1,220 @@
+# LANGUAGE message translation file for ecpglib
+# Copyright (C) 2009 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# honda <honda@postgresql.jp>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-04-10 15:20+0000\n"
+"PO-Revision-Date: 2009-04-11 16:01+0900\n"
+"Last-Translator: honda <honda@postgresql.jp>\n"
+"Language-Team: Japanese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: connect.c:226
+msgid "empty message text"
+msgstr "メッセージテキストが空です"
+
+#: connect.c:381 connect.c:407 connect.c:518
+msgid "<DEFAULT>"
+msgstr "<デフォルト>"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:26
+#, c-format
+msgid "no data found on line %d"
+msgstr "行番号%dにおいてデータがありませんでした"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:33
+#, c-format
+msgid "out of memory on line %d"
+msgstr "行番号%dにおいてメモリ不足です"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:40
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "行番号%2$dにおいて未サポートのデータ型\"%1$s\"があります"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:47
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "行番号%dにおいて引数が多すぎます"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:54
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "行番号%dにおいて引数が少なすぎます"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:61
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "行番号%2$dにおいて、整数型に対して無効な入力構文があります:\"%1$s\""
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:68
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "行番号%2$dにおいて、符号無し整数型に対して無効な入力構文があります:\"%1$s\""
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:75
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "行番号%2$dにおいて、浮動小数点型に対して無効な入力構文があります:\"%1$s\""
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:83
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "行番号%2$dにおいて、論理型に対して無効な入力構文があります:\"%1$s\""
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:88
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "行番号%dにおいて、論理型に変換できませんでした。サイズが合っていません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:95
+#, c-format
+msgid "empty query on line %d"
+msgstr "行番号%dにおいて問い合わせが空です"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:102
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "行番号%dにおいて、指示子が無いヌル値です"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:109
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "行番号%dにおいて、変数は配列型ではありません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:116
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "行番号%dにおいて、サーバから読み込んだデータは配列ではありません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:123
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "行番号%dにおいて、変数の配列への挿入はサポートされません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:130
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "行番号%2$dにおいて、接続\"%1$s\"は存在しません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:137
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "行番号%2$dにおいて、接続\"%1$s\"に接続していません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:144
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "行番号%2$dにおいて、文の名前\"%1$s\"が無効です"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:151
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "行番号%2$dにおいて、記述子\"%1$s\"がありません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:158
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "行番号%dにおいて、記述子のインデックスが範囲外です"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:165
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "行番号%2$dにおいて、記述子項目\"%1$s\"が認識できません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:172
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "行番号%dにおいて、変数は数値型ではありません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:179
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "行番号%dにおいて、変数は文字型ではありません"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:186
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "行番号%dにおいて、トランザクション処理がエラーになりました"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:193
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "行番号%2$dにおいて、データベース\"%1$s\"に接続できませんでした"
+
+#. translator: this string will be truncated at 149
+#. characters expanded.
+#: error.c:200
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "行番号%2$dにおいて、SQLエラー%1$dがあります"
+
+#: error.c:313
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQLエラー: %s\n"
+
+#: execute.c:1637
+msgid "<empty>"
+msgstr "<空>"
+
+#: misc.c:113
+msgid "NULL"
+msgstr "ヌル"

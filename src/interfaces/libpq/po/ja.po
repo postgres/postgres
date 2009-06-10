@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-06 20:52+0900\n"
-"PO-Revision-Date: 2009-04-07 11:33+0900\n"
+"POT-Creation-Date: 2009-05-08 19:12+0900\n"
+"PO-Revision-Date: 2009-05-08 19:21+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: Shigehiro Honda <fwif0083@mb.infoweb.ne.jp>\n"
 "MIME-Version: 1.0\n"
@@ -44,66 +44,66 @@ msgstr "GSSAPI名のインポートエラー"
 msgid "SSPI continuation error"
 msgstr "SSPI続行エラー"
 
-#: fe-auth.c:549 fe-auth.c:622 fe-auth.c:648 fe-auth.c:745 fe-connect.c:1357
-#: fe-connect.c:2638 fe-connect.c:2855 fe-connect.c:3221 fe-connect.c:3230
-#: fe-connect.c:3367 fe-connect.c:3413 fe-connect.c:3431 fe-exec.c:3109
+#: fe-auth.c:549 fe-auth.c:622 fe-auth.c:656 fe-auth.c:753 fe-connect.c:1335
+#: fe-connect.c:2616 fe-connect.c:2833 fe-connect.c:3199 fe-connect.c:3208
+#: fe-connect.c:3345 fe-connect.c:3391 fe-connect.c:3409 fe-exec.c:3109
 #: fe-lobj.c:696 fe-protocol2.c:1027 fe-protocol3.c:1421
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: fe-auth.c:642
+#: fe-auth.c:637
+msgid "could not acquire SSPI credentials"
+msgstr "SSPI資格を入手できませんでした"
+
+#: fe-auth.c:650
 msgid "host name must be specified\n"
 msgstr "ホスト名を指定しなければなりません\n"
 
-#: fe-auth.c:721
+#: fe-auth.c:729
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED認証方式はサポートされていません\n"
 
-#: fe-auth.c:795
+#: fe-auth.c:803
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Kerberos 4認証はサポートされていません\n"
 
-#: fe-auth.c:811
+#: fe-auth.c:819
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Kerberos 5認証はサポートされていません\n"
 
-#: fe-auth.c:878
+#: fe-auth.c:886
 msgid "GSSAPI authentication not supported\n"
 msgstr "GSSAPI認証はサポートされていません\n"
 
-#: fe-auth.c:902
+#: fe-auth.c:910
 msgid "SSPI authentication not supported\n"
 msgstr "SSPI認証はサポートされていません\n"
 
-#: fe-auth.c:909
+#: fe-auth.c:917
 msgid "Crypt authentication not supported\n"
 msgstr "Crypt認証はサポートされていません\n"
 
-#: fe-auth.c:936
+#: fe-auth.c:944
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "認証方式%uはサポートされていません\n"
 
-#: fe-connect.c:529
+#: fe-connect.c:524
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
 msgstr "sslmodeの値が無効です: \"%s\"\n"
 
-#: fe-connect.c:549
+#: fe-connect.c:545
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgstr "SSLサポートが組み込まれていない場合sslmodeの値\"%s\"は無効です\n"
 
-#: fe-connect.c:569
-msgid "invalid sslverify value: \"%s\"\n"
-msgstr "sslverifyの値が無効です: \"%s\"\n"
-
-#: fe-connect.c:750
+#: fe-connect.c:728
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
 msgstr "TCPソケットを非遅延モードに設定できませんでした: %s\n"
 
-#: fe-connect.c:780
+#: fe-connect.c:758
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -115,7 +115,7 @@ msgstr ""
 "                              Unixドメインソケット\"%s\"で通信を受け付けてい"
 "ますか?\n"
 
-#: fe-connect.c:790
+#: fe-connect.c:768
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -127,187 +127,188 @@ msgstr ""
 "                              また、ポート%sでTCP/IP接続を受け付けています"
 "か?\n"
 
-#: fe-connect.c:880
+#: fe-connect.c:858
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "ホスト名\"%s\"をアドレスに変換できませんでした: %s\n"
 
-#: fe-connect.c:884
+#: fe-connect.c:862
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "Unixドメインソケットのパス\"%s\"をアドレスに変換できませんでした: %s\n"
 
-#: fe-connect.c:1087
+#: fe-connect.c:1065
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr "接続状態が無効です。メモリ障害の可能性があります\n"
 
-#: fe-connect.c:1130
+#: fe-connect.c:1108
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "ソケットを作成できませんでした: %s\n"
 
-#: fe-connect.c:1153
+#: fe-connect.c:1131
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "ソケットを非ブロッキングモードに設定できませんでした: %s\n"
 
-#: fe-connect.c:1165
+#: fe-connect.c:1143
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr "ソケットをclose-on-execモードに設定できませんでした: %s\n"
 
-#: fe-connect.c:1252
+#: fe-connect.c:1230
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "ソケットのエラー状態を入手できませんでした: %s\n"
 
-#: fe-connect.c:1290
+#: fe-connect.c:1268
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "ソケットからクライアントアドレスを入手できませんでした: %s\n"
 
-#: fe-connect.c:1334
+#: fe-connect.c:1312
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "SSL調停パケットを送信できませんでした: %s\n"
 
-#: fe-connect.c:1370
+#: fe-connect.c:1348
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "開始パケットを送信できませんでした: %s\n"
 
-#: fe-connect.c:1435 fe-connect.c:1452
+#: fe-connect.c:1414 fe-connect.c:1432
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "サーバはSSLをサポートしていませんが、SSLが要求されました\n"
 
-#: fe-connect.c:1468
+#: fe-connect.c:1448
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "SSL調停に対して無効な応答を受信しました: %c\n"
 
-#: fe-connect.c:1544 fe-connect.c:1577
+#: fe-connect.c:1524 fe-connect.c:1557
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "サーバからの認証要求を想定していましたが、%cを受信しました\n"
 
-#: fe-connect.c:1748
+#: fe-connect.c:1728
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%i)"
 msgstr "GSSAPIバッファの割り当て時のメモリ不足(%i)"
 
-#: fe-connect.c:1833
+#: fe-connect.c:1813
 msgid "unexpected message from server during startup\n"
 msgstr "起動時にサーバから想定外のメッセージがありました\n"
 
-#: fe-connect.c:1901
+#: fe-connect.c:1881
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "接続状態%cが向こうです。メモリ障害の可能性があります\n"
 
-#: fe-connect.c:2246 fe-connect.c:2306
+#: fe-connect.c:2224 fe-connect.c:2284
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
-msgstr ""
+msgstr "PGEVT_CONNRESETイベント中にPGEventProc \"%s\"に失敗しました\n"
 
-#: fe-connect.c:2651
+#: fe-connect.c:2629
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "無効なLDAP URL\"%s\":スキーマはldap://でなければなりません\n"
 
-#: fe-connect.c:2666
+#: fe-connect.c:2644
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "無効なLDAP URL \"%s\": 区別名がありません\n"
 
-#: fe-connect.c:2677 fe-connect.c:2730
+#: fe-connect.c:2655 fe-connect.c:2708
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "無効なLDAP URL \"%s\": 正確に1つの属性を持たなければなりません\n"
 
-#: fe-connect.c:2687 fe-connect.c:2744
+#: fe-connect.c:2665 fe-connect.c:2722
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr ""
 "無効なLDAP URL \"%s\": 検索スコープ(base/one/sub)を持たなければなりません\n"
 
-#: fe-connect.c:2698
+#: fe-connect.c:2676
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "無効なLDAP URL \"%s\": フィルタがありません\n"
 
-#: fe-connect.c:2719
+#: fe-connect.c:2697
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "無効なLDAP URL \"%s\": ポート番号が無効です\n"
 
-#: fe-connect.c:2753
+#: fe-connect.c:2731
 msgid "could not create LDAP structure\n"
 msgstr "LDAP構造体を作成できませんでした: %s\n"
 
-#: fe-connect.c:2795
+#: fe-connect.c:2773
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "LDAPサーバで検索に失敗しました: %s\n"
 
-#: fe-connect.c:2806
+#: fe-connect.c:2784
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "LDAP検索結果が複数ありました\n"
 
-#: fe-connect.c:2807 fe-connect.c:2819
+#: fe-connect.c:2785 fe-connect.c:2797
 msgid "no entry found on LDAP lookup\n"
 msgstr "LDAP検索結果が空でした\n"
 
-#: fe-connect.c:2830 fe-connect.c:2843
+#: fe-connect.c:2808 fe-connect.c:2821
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "LDAP検索で属性に値がありませんでした\n"
 
-#: fe-connect.c:2894 fe-connect.c:2912 fe-connect.c:3269
+#: fe-connect.c:2872 fe-connect.c:2890 fe-connect.c:3247
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "接続情報文字列において\"%s\"の後に\"=\"がありませんでした\n"
 
-#: fe-connect.c:2975 fe-connect.c:3351
+#: fe-connect.c:2953 fe-connect.c:3329
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "接続オプション\"%s\"は無効です\n"
 
-#: fe-connect.c:2988 fe-connect.c:3318
+#: fe-connect.c:2966 fe-connect.c:3296
 msgid "unterminated quoted string in connection info string\n"
 msgstr "接続情報文字列において閉じていない引用符がありました\n"
 
-#: fe-connect.c:3031
+#: fe-connect.c:3009
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "ERROR: \"%s\"サービスファイルがありません\n"
 
-#: fe-connect.c:3044
+#: fe-connect.c:3022
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "ERROR: サービスファイル\"%2$s\"の行%1$dが長すぎます。\n"
 
-#: fe-connect.c:3116 fe-connect.c:3143
+#: fe-connect.c:3094 fe-connect.c:3121
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr ""
 "ERROR: サービスファイル\"%s\"の行%dに構文エラーがあります\n"
 "\"\n"
 
-#: fe-connect.c:3599
+#: fe-connect.c:3577
 msgid "connection pointer is NULL\n"
 msgstr "接続ポインタはNULLです\n"
 
-#: fe-connect.c:3882
+#: fe-connect.c:3860
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "WARNING: パスワードファイル\"%s\"がテキストファイルではありません\n"
 
-#: fe-connect.c:3891
+#: fe-connect.c:3869
+#, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
 "be u=rw (0600) or less\n"
 msgstr ""
-"警告: パスワードファイル \"%s\" がグループメンバもしくは他のユーザから"
-"読める状態になっています。この権限はu=rw (0600)以下にすべきです\n"
+"警告: パスワードファイル \"%s\" がグループメンバもしくは他のユーザから読める"
+"状態になっています。この権限はu=rw (0600)以下にすべきです\n"
 
 #: fe-exec.c:826
 msgid "NOTICE"
@@ -345,7 +346,7 @@ msgstr "想定外のasyncStatus: %d\n"
 #: fe-exec.c:1615
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
-msgstr ""
+msgstr "PGEVT_RESULTCREATEイベント中にPGEventProc \"%s\"に失敗しました\n"
 
 #: fe-exec.c:1745
 msgid "COPY terminated by new PQexec"
@@ -634,133 +635,148 @@ msgstr "行 %d: "
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: テキストのCOPY OUTを行っていません\n"
 
-#: fe-secure.c:223
+#: fe-secure.c:244
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "SSL接続を確立できませんでした: %s\n"
 
-#: fe-secure.c:299 fe-secure.c:383 fe-secure.c:1097
+#: fe-secure.c:320 fe-secure.c:404 fe-secure.c:1115
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALLエラー: %s\n"
 
-#: fe-secure.c:305 fe-secure.c:389 fe-secure.c:1101
+#: fe-secure.c:326 fe-secure.c:410 fe-secure.c:1119
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALLエラー: EOFを検知\n"
 
-#: fe-secure.c:317 fe-secure.c:400 fe-secure.c:1120
+#: fe-secure.c:338 fe-secure.c:421 fe-secure.c:1138
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSLエラー: %s\n"
 
-#: fe-secure.c:327 fe-secure.c:410 fe-secure.c:1130
+#: fe-secure.c:348 fe-secure.c:431 fe-secure.c:1148
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "不明のSSLエラーコード: %d\n"
 
-#: fe-secure.c:511
+#: fe-secure.c:532
 msgid ""
 "verified SSL connections are only supported when connecting to a host name"
-msgstr ""
+msgstr "検証されたSSL接続はホスト名への接続時のみサポートされます"
 
-#: fe-secure.c:530
+#: fe-secure.c:551
+#, c-format
 msgid "server common name \"%s\" does not match host name \"%s\""
-msgstr "サーバの正式名(common name)\"%s\"がホスト名と一致しません"
+msgstr "サーバの正式名(common name)\"%s\"がホスト名\"%s\"と一致しません"
 
-#: fe-secure.c:572
+#: fe-secure.c:593
 msgid "could not get home directory to locate client certificate files"
-msgstr "クライアント証明書ファイルの場所を特定しようとしましたが、"
-"ホームディレクトリを取得できませんでした。＞"
+msgstr ""
+"クライアント証明書ファイルの場所を特定しようとしましたが、ホームディレクトリ"
+"を取得できませんでした。＞"
 
-#: fe-secure.c:596 fe-secure.c:610
+#: fe-secure.c:617 fe-secure.c:631
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "証明書ファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: fe-secure.c:621
+#: fe-secure.c:642
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "証明書ファイル\"%s\"を読み込めませんでした: %s\n"
 
-#: fe-secure.c:660
+#: fe-secure.c:681
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "SSLエンジン\"%s\"を読み込みできませんでした: %s\n"
 
-#: fe-secure.c:675
+#: fe-secure.c:696
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr ""
 "SSL秘密キーファイル\"%s\"をエンジン\"%s\"から読み取れませんでした: %s\n"
 
-#: fe-secure.c:706
+#: fe-secure.c:727
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "証明書はありましたが、秘密キーファイル\"%s\"はありませんでした\n"
 
-#: fe-secure.c:715
+#: fe-secure.c:736
+#, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
 "u=rw (0600) or less\n"
 msgstr ""
-"警告：秘密キーファイル \"%s\" がグループメンバや第三者から読める状態に"
-"なっています。この権限はu=rw (0600)またはそれ以下とすべきです\n"
+"警告：秘密キーファイル \"%s\" がグループメンバや第三者から読める状態になって"
+"います。この権限はu=rw (0600)またはそれ以下とすべきです\n"
 
-#: fe-secure.c:725
+#: fe-secure.c:746
 #, c-format
 msgid "could not open private key file \"%s\": %s\n"
 msgstr "秘密キーファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: fe-secure.c:736
+#: fe-secure.c:757
 #, c-format
 msgid "private key file \"%s\" changed during execution\n"
 msgstr "秘密キーファイル\"%s\"が実行中に変更されました\n"
 
-#: fe-secure.c:747
+#: fe-secure.c:768
 #, c-format
 msgid "could not read private key file \"%s\": %s\n"
 msgstr "秘密キーファイル\"%s\"を読み取れませんでした: %s\n"
 
-#: fe-secure.c:765
+#: fe-secure.c:786
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "証明書と秘密キーファイル\"%s\"が一致しません: %s\n"
 
-#: fe-secure.c:896
+#: fe-secure.c:917
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "SSLコンテキストを作成できませんでした: %s\n"
 
-#: fe-secure.c:986
+#: fe-secure.c:1005
 msgid "could not get home directory to locate root certificate file"
-msgstr "ルート証明書ファイルの場所を特定しようとしましたが、"
-"ホームディレクトリを取得できませんでした。"
+msgstr ""
+"ルート証明書ファイルの場所を特定しようとしましたが、ホームディレクトリを取得"
+"できませんでした。"
 
-#: fe-secure.c:1012
+#: fe-secure.c:1029
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "ルート証明書\"%s\"を読み取れませんでした: %s\n"
 
-#: fe-secure.c:1037
+#: fe-secure.c:1054
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "SSLライブラリがCRL証明書（\"%s\"）をオープンできませんでした\n"
 
-#: fe-secure.c:1053
-msgid "root certificate file \"%s\" does not exist"
-msgstr "ルート証明書ファイル \"%s\" は存在しません"
+#: fe-secure.c:1070
+#, c-format
+msgid ""
+"root certificate file \"%s\" does not exist\n"
+"Either provide the file or change sslmode to disable server certificate "
+"verification.\n"
+msgstr ""
+"ルート証明書ファイル\"%s\"が存在しません。\n"
+"ファイルを用意するかサーバ証明書の検証を無効にするようにsslmodeを変更してください\n"
 
-#: fe-secure.c:1149
+#: fe-secure.c:1167
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "証明書を入手できませんでした: %s\n"
 
-#: fe-secure.c:1223
+#: fe-secure.c:1241
 msgid "no SSL error reported"
 msgstr "SSLエラーはありませんでした"
 
-#: fe-secure.c:1232
+#: fe-secure.c:1250
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSLエラーコード: %lu"
 
+#~ msgid "invalid sslverify value: \"%s\"\n"
+#~ msgstr "sslverifyの値が無効です: \"%s\"\n"
+
+#~ msgid "root certificate file \"%s\" does not exist"
+#~ msgstr "ルート証明書ファイル \"%s\" は存在しません"

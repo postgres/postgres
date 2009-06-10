@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-03-02 22:29+0900\n"
-"PO-Revision-Date: 2009-03-02 22:28+0900\n"
+"POT-Creation-Date: 2009-04-11 14:10+0900\n"
+"PO-Revision-Date: 2009-04-11 22:28+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: Shigehiro Honda <fwif0083@mb.infoweb.ne.jp>\n"
 "MIME-Version: 1.0\n"
@@ -18,35 +18,42 @@ msgstr ""
 #: dropdb.c:100 droplang.c:100 droplang.c:121 droplang.c:175 dropuser.c:83
 #: dropuser.c:98 clusterdb.c:104 clusterdb.c:119 vacuumdb.c:121 vacuumdb.c:136
 #: reindexdb.c:114 reindexdb.c:128
+#, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "詳細は\"%s --help\"を実行してください。\n"
 
 #: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:119
 #: dropuser.c:96 clusterdb.c:117 vacuumdb.c:134 reindexdb.c:127
+#, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: コマンドライン引数が多すきます(先頭は\"%s\")\n"
 
 #: createdb.c:141
+#, c-format
 msgid "%s: only one of --locale and --lc-ctype can be specified\n"
 msgstr "%s:  --locale と --lc-ctype のいずれか１つだけを指定してください\n"
 
 #: createdb.c:147
 msgid "%s: only one of --locale and --lc-collate can be specified\n"
-msgstr "--locale と --lc-collate のいずれか１つだけを指定してください\n"
+msgstr "%s: --locale と --lc-collate のいずれか１つだけを指定してください\n"
 
 #: createdb.c:159
+#, c-format
 msgid "%s: \"%s\" is not a valid encoding name\n"
 msgstr "%s: エンコード方式名 \"%s\" は無効です\n"
 
 #: createdb.c:204
+#, c-format
 msgid "%s: database creation failed: %s"
 msgstr "%s: データベースの生成に失敗しました: %s"
 
 #: createdb.c:227
+#, c-format
 msgid "%s: comment creation failed (database was created): %s"
 msgstr "%s: コメントの生成に失敗しました(データベースの生成は成功しました): %s"
 
 #: createdb.c:244
+#, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
 "\n"
@@ -57,16 +64,19 @@ msgstr ""
 #: createdb.c:245 createlang.c:215 createuser.c:300 dropdb.c:140
 #: droplang.c:332 dropuser.c:139 clusterdb.c:236 vacuumdb.c:262
 #: reindexdb.c:313
+#, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
 #: createdb.c:246
+#, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [オプション]... [データベース名] [説明]\n"
 
 #: createdb.c:247 createlang.c:217 createuser.c:302 dropdb.c:142
 #: droplang.c:334 dropuser.c:141 clusterdb.c:238 vacuumdb.c:264
 #: reindexdb.c:315
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
@@ -75,52 +85,63 @@ msgstr ""
 "オプション:\n"
 
 #: createdb.c:248
+#, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
 "  -D, --tablespace=TABLESPACE  データベース用のデフォルトテーブル空間\n"
 
 #: createdb.c:249
+#, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   サーバに送信するコマンドを表示する\n"
 
 #: createdb.c:250
+#, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=ENCODING      データベースのエンコード方式\n"
 
 #: createdb.c:251
+#, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=LOCALE          データベースのロケール設定\n"
 
 #: createdb.c:252
+#, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=LOCALE      データベースの LC_COLLATE 設定\n"
 
 #: createdb.c:253
+#, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=LOCALE        データベースの LC_CTYPE 設定\n"
 
 #: createdb.c:254
+#, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr ""
-"  -O, --owner=OWNER            新しいデータベースを所有するデータベースユーザ"
-"\n"
+"  -O, --owner=OWNER            新しいデータベースを所有するデータベースユー"
+"ザ\n"
 
 #: createdb.c:255
+#, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      複製するテンプレートデータベース\n"
 
 #: createdb.c:256
+#, c-format
 msgid "  --help                       show this help, then exit\n"
 msgstr "  --help                       ヘルプを表示して終了\n"
 
 #: createdb.c:257
+#, c-format
 msgid "  --version                    output version information, then exit\n"
 msgstr "  --version                    バージョン情報を表示して終了\n"
 
 #: createdb.c:258 createlang.c:223 createuser.c:321 dropdb.c:147
 #: droplang.c:340 dropuser.c:146 clusterdb.c:247 vacuumdb.c:276
 #: reindexdb.c:325
+#, c-format
 msgid ""
 "\n"
 "Connection options:\n"
@@ -129,29 +150,35 @@ msgstr ""
 "接続用オプション:\n"
 
 #: createdb.c:259
+#, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
-"  -h, --host=HOSTNAME          データベースサーバホスト、"
-"または、ソケットディレクトリ\n"
+"  -h, --host=HOSTNAME          データベースサーバホスト、または、ソケットディ"
+"レクトリ\n"
 
 #: createdb.c:260
+#, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              データベースサーバのポート\n"
 
 #: createdb.c:261
+#, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=USERNAME      接続用ユーザの名前\n"
 
 #: createdb.c:262
+#, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            パスワードプロンプトを表示しない\n"
 
 #: createdb.c:263
+#, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               パスワード入力を強制する\n"
 
 #: createdb.c:264
+#, c-format
 msgid ""
 "\n"
 "By default, a database with the same name as the current user is created.\n"
@@ -162,6 +189,7 @@ msgstr ""
 #: createdb.c:265 createlang.c:229 createuser.c:329 dropdb.c:153
 #: droplang.c:346 dropuser.c:152 clusterdb.c:254 vacuumdb.c:283
 #: reindexdb.c:332
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -190,18 +218,22 @@ msgid "Procedural Languages"
 msgstr "手続き言語"
 
 #: createlang.c:162 droplang.c:173
+#, c-format
 msgid "%s: missing required argument language name\n"
 msgstr "%s: 必要な言語名引数がありません\n"
 
 #: createlang.c:184
+#, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
 msgstr "%s: 言語\"%s\"は既にデータベース\"%s\"にインストールされています\n"
 
 #: createlang.c:198
+#, c-format
 msgid "%s: language installation failed: %s"
 msgstr "%s: 言語のインストールに失敗しました: %s"
 
 #: createlang.c:214
+#, c-format
 msgid ""
 "%s installs a procedural language into a PostgreSQL database.\n"
 "\n"
@@ -210,74 +242,86 @@ msgstr ""
 "\n"
 
 #: createlang.c:216 droplang.c:333
+#, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "  %s [オプション]... LANGNAME [データベース名]\n"
 
 #: createlang.c:218
+#, c-format
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=DBNAME       言語をインストールするデータベース\n"
 
 #: createlang.c:219 createuser.c:306 dropdb.c:143 droplang.c:336
 #: dropuser.c:142 clusterdb.c:241 reindexdb.c:318
+#, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                サーバに送られるコマンドを表示する\n"
 
 #: createlang.c:220 droplang.c:337
+#, c-format
 msgid ""
 "  -l, --list                show a list of currently installed languages\n"
 msgstr "  -l, --list                インストール済みの言語の一覧を表示する\n"
 
 #: createlang.c:221 createuser.c:319 dropdb.c:145 droplang.c:338
 #: dropuser.c:144 clusterdb.c:245 reindexdb.c:323
+#, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    このヘルプを表示して終了する\n"
 
 #: createlang.c:222 createuser.c:320 dropdb.c:146 droplang.c:339
 #: dropuser.c:145 clusterdb.c:246 reindexdb.c:324
+#, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 バージョン情報を表示して終了する\n"
 
 #: createlang.c:224 createuser.c:322 dropdb.c:148 droplang.c:341
 #: dropuser.c:147 clusterdb.c:248 vacuumdb.c:277 reindexdb.c:326
+#, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
-"  -h, --host=HOSTNAME       データベースサーバホスト、"
-"またはソケットディレクトリ\n"
+"  -h, --host=HOSTNAME       データベースサーバホスト、またはソケットディレク"
+"トリ\n"
 
 #: createlang.c:225 createuser.c:323 dropdb.c:149 droplang.c:342
 #: dropuser.c:148 clusterdb.c:249 vacuumdb.c:278 reindexdb.c:327
+#, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           データベースサーバのポート\n"
 
 #: createlang.c:226 dropdb.c:150 droplang.c:343 clusterdb.c:250 vacuumdb.c:279
 #: reindexdb.c:328
+#, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USERNAME   このユーザとして接続する\n"
 
 #: createlang.c:227 createuser.c:325 dropdb.c:151 droplang.c:344
 #: dropuser.c:150 clusterdb.c:251 vacuumdb.c:280 reindexdb.c:329
+#, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         パスワードプロンプトを表示しない\n"
 
 #: createlang.c:228 createuser.c:326 dropdb.c:152 droplang.c:345
 #: dropuser.c:151 clusterdb.c:252 vacuumdb.c:281 reindexdb.c:330
+#, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            パスワード入力を強制する\n"
 
 #: createuser.c:169
-msgid "Enter name of role to add："
-msgstr "作成するロール名："
+msgid "Enter name of role to add: "
+msgstr "作成するロール名を入力してください: "
 
 #: createuser.c:176
-msgid "Enter password for new role："
-msgstr "新規ロールのパスワード："
+msgid "Enter password for new role: "
+msgstr "新しいロールのパスワード："
 
 #: createuser.c:177
 msgid "Enter it again: "
 msgstr "もう一度入力してください："
 
 #: createuser.c:180
+#, c-format
 msgid "Passwords didn't match.\n"
 msgstr "パスワードが一致しません。\n"
 
@@ -294,14 +338,17 @@ msgid "Shall the new role be allowed to create more new roles?"
 msgstr "新しいロールにロールを作成する権限を与えますか?"
 
 #: createuser.c:245
+#, c-format
 msgid "Password encryption failed.\n"
 msgstr "パスワードの暗号化に失敗しました。\n"
 
 #: createuser.c:284
+#, c-format
 msgid "%s: creation of new role failed: %s"
 msgstr "%s: 新しいロールの作成に失敗しました: %s"
 
 #: createuser.c:299
+#, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
 "\n"
@@ -310,72 +357,88 @@ msgstr ""
 "\n"
 
 #: createuser.c:301 dropuser.c:140
+#, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [オプション]... [ロール名]\n"
 
 #: createuser.c:303
+#, c-format
 msgid ""
 "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr ""
 "  -c, --connection-limit=N  ロール用の接続数の上限（デフォルトは無制限）\n"
 
 #: createuser.c:304
+#, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            ロールはデータベースを作成できる\n"
 
 #: createuser.c:305
+#, c-format
 msgid "  -D, --no-createdb         role cannot create databases\n"
 msgstr "  -D, --no-createdb         ロールはデータベースを作成できない\n"
 
 #: createuser.c:307
+#, c-format
 msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           パスワードを暗号化して格納する\n"
 
 #: createuser.c:308
+#, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
 "                            member of (default)\n"
 msgstr ""
-"  -i, --inherit             ロールはそれ自身がメンバとして属する（親）"
-"ロールの権限を継承する（デフォルト）\n"
+"  -i, --inherit             ロールはそれ自身がメンバとして属する（親）ロール"
+"の権限を継承する（デフォルト）\n"
 
 #: createuser.c:310
+#, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          ロールは権限を継承しない\n"
 
 #: createuser.c:311
+#, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               ロールはログイン可能（デフォルト）\n"
 
 #: createuser.c:312
+#, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            ロールはログイン不可\n"
 
 #: createuser.c:313
+#, c-format
 msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         格納時にパスワードを暗号化しない\n"
 
 #: createuser.c:314
+#, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            ロールにパスワードを割り当てる\n"
 
 #: createuser.c:315
+#, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          ロールは新しいロールを作成可能\n"
 
 #: createuser.c:316
+#, c-format
 msgid "  -R, --no-createrole       role cannot create roles\n"
 msgstr "  -R, --no-createrole       ロールはロールを作成不可\n"
 
 #: createuser.c:317
+#, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           ロールはスーパーユーザになれる\n"
 
 #: createuser.c:318
+#, c-format
 msgid "  -S, --no-superuser        role will not be superuser\n"
 msgstr "  -S, --no-superuser        ロールはスーパーユーザになれない\n"
 
 #: createuser.c:324
+#, c-format
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
@@ -383,6 +446,7 @@ msgstr ""
 "ん)\n"
 
 #: createuser.c:327
+#, c-format
 msgid ""
 "\n"
 "If one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
@@ -393,10 +457,12 @@ msgstr ""
 "会話的な入力が促されます。\n"
 
 #: dropdb.c:91
+#, c-format
 msgid "%s: missing required argument database name\n"
 msgstr "%s: 必要なデータベース名引数がありません\n"
 
 #: dropdb.c:106
+#, c-format
 msgid "Database \"%s\" will be permanently removed.\n"
 msgstr "データベース\"%s\"は永遠に削除されます\n"
 
@@ -405,10 +471,12 @@ msgid "Are you sure?"
 msgstr "よろしいですか?"
 
 #: dropdb.c:124
+#, c-format
 msgid "%s: database removal failed: %s"
 msgstr "%s: データベースの削除に失敗しました: %s"
 
 #: dropdb.c:139
+#, c-format
 msgid ""
 "%s removes a PostgreSQL database.\n"
 "\n"
@@ -417,27 +485,33 @@ msgstr ""
 "\n"
 
 #: dropdb.c:141
+#, c-format
 msgid "  %s [OPTION]... DBNAME\n"
 msgstr "  %s [オプション]... データベース名\n"
 
 #: dropdb.c:144 dropuser.c:143
+#, c-format
 msgid "  -i, --interactive         prompt before deleting anything\n"
 msgstr "  -i, --interactive         何かを削除する前に確認します\n"
 
 #: droplang.c:203
+#, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%s: 言語\"%s\"はデータベース\"%s\"にはインストールされていません\n"
 
 #: droplang.c:223
+#, c-format
 msgid ""
 "%s: still %s functions declared in language \"%s\"; language not removed\n"
 msgstr "%s: 関数%sが言語\"%s\"で宣言されていましたので、言語は削除しません\n"
 
 #: droplang.c:316
+#, c-format
 msgid "%s: language removal failed: %s"
 msgstr "%s: 言語の削除に失敗しました: %s"
 
 #: droplang.c:331
+#, c-format
 msgid ""
 "%s removes a procedural language from a database.\n"
 "\n"
@@ -446,6 +520,7 @@ msgstr ""
 "\n"
 
 #: droplang.c:335
+#, c-format
 msgid ""
 "  -d, --dbname=DBNAME       database from which to remove the language\n"
 msgstr "  -d, --dbname=DBNAME       言語を削除するデータベース\n"
@@ -455,14 +530,17 @@ msgid "Enter name of role to drop: "
 msgstr "削除するロール名を入力してください: "
 
 #: dropuser.c:107
+#, c-format
 msgid "Role \"%s\" will be permanently removed.\n"
 msgstr "ロール\"%s\"は永遠に削除されます。\n"
 
 #: dropuser.c:123
+#, c-format
 msgid "%s: removal of role \"%s\" failed: %s"
 msgstr "%s: ロール\"%s\"の削除に失敗しました: %s\""
 
 #: dropuser.c:138
+#, c-format
 msgid ""
 "%s removes a PostgreSQL role.\n"
 "\n"
@@ -471,6 +549,7 @@ msgstr ""
 "\n"
 
 #: dropuser.c:149
+#, c-format
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr ""
@@ -478,30 +557,36 @@ msgstr ""
 "ん)\n"
 
 #: clusterdb.c:129
+#, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
 msgstr ""
 "%s: 同時に全てのデータベースと特定のデータベースをクラスタ化することはできま"
 "せん\n"
 
 #: clusterdb.c:135
+#, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
 msgstr ""
 "%s: 全データベースの中でテーブル指定のクラスタ化を行うことはできません\n"
 
 #: clusterdb.c:187
+#, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
 msgstr ""
 "%1$s: データベース\"%3$s\"のテーブル\"%2$s\"のクラスタ化に失敗しました: %4$s"
 
 #: clusterdb.c:190
+#, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: データベース\"%s\"のクラスタ化に失敗しました: %s"
 
 #: clusterdb.c:219
+#, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: データベース\"%s\"をクラスタ化しています\n"
 
 #: clusterdb.c:235
+#, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
 "\n"
@@ -510,30 +595,37 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:237 vacuumdb.c:263 reindexdb.c:314
+#, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [オプション]... [データベース名]\n"
 
 #: clusterdb.c:239
+#, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 全てのデータベースをクラスタ化\n"
 
 #: clusterdb.c:240
+#, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       クラスタ化するデータベース\n"
 
 #: clusterdb.c:242 reindexdb.c:320
+#, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               一切メッセージを出力しません\n"
 
 #: clusterdb.c:243
+#, c-format
 msgid "  -t, --table=TABLE         cluster specific table only\n"
 msgstr "  -t, --table=TABLE         指定したテーブルのみをクラスタ化します\n"
 
 #: clusterdb.c:244
+#, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             冗長な出力を行います\n"
 
 #: clusterdb.c:253
+#, c-format
 msgid ""
 "\n"
 "Read the description of the SQL command CLUSTER for details.\n"
@@ -542,30 +634,36 @@ msgstr ""
 "詳細はSQLコマンドCLUSTERの説明を参照してください。\n"
 
 #: vacuumdb.c:146
+#, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr ""
 "%s: 同時に全てのデータベースと特定のデータベースをバキュームすることはできま"
 "せん\n"
 
 #: vacuumdb.c:152
+#, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr ""
 "%s: 全てのデータベースの中でテーブル指定のバキュームを行うことはできません\n"
 
 #: vacuumdb.c:212
+#, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr ""
 "%1$s: データベース\"%3$s\"のテーブル\"%2$s\"のバキュームに失敗しました: %4$s"
 
 #: vacuumdb.c:215
+#, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: データベース\"%s\"のバキュームに失敗しました: %s"
 
 #: vacuumdb.c:245
+#, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: データベース\"%s\"をバキュームしています\n"
 
 #: vacuumdb.c:261
+#, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
 "\n"
@@ -574,15 +672,18 @@ msgstr ""
 "\n"
 
 #: vacuumdb.c:265
+#, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr ""
 "  -a, --all                       全てのデータベースをバキュームします\n"
 
 #: vacuumdb.c:266
+#, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAME             バキュームするデータベースです\n"
 
 #: vacuumdb.c:267
+#, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
@@ -590,41 +691,52 @@ msgstr ""
 "  -e, --echo                      サーバに送信されるコマンドを表示します\n"
 
 #: vacuumdb.c:268
+#, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      完全バキュームを行います\n"
 
 #: vacuumdb.c:269
+#, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
-msgstr "  -F, --freeze                    行のトランザクション情報を更新しない(freeze)\n"
+msgstr ""
+"  -F, --freeze                    行のトランザクション情報を更新しない"
+"(freeze)\n"
 
 #: vacuumdb.c:270
+#, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     メッセージを表示しません\n"
 
 #: vacuumdb.c:271
+#, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr ""
 "  -t, --table='TABLE[(COLUMNS)]'  指定したテーブルのみをバキュームします\n"
 
 #: vacuumdb.c:272
+#, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   冗長な出力を行います\n"
 
 #: vacuumdb.c:273
+#, c-format
 msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr ""
 "  -z, --analyze                   オプティマイザ用のヒントを更新します\n"
 
 #: vacuumdb.c:274
+#, c-format
 msgid "  --help                          show this help, then exit\n"
 msgstr "  --help                          ヘルプを表示し、終了します\n"
 
 #: vacuumdb.c:275
+#, c-format
 msgid ""
 "  --version                       output version information, then exit\n"
 msgstr "  --version                       バージョン情報を出力し、終了します\n"
 
 #: vacuumdb.c:282
+#, c-format
 msgid ""
 "\n"
 "Read the description of the SQL command VACUUM for details.\n"
@@ -633,29 +745,34 @@ msgstr ""
 "詳細はSQLコマンドVACUUMの説明を参照してください。\n"
 
 #: reindexdb.c:138
+#, c-format
 msgid "%s: cannot reindex all databases and a specific one at the same time\n"
 msgstr ""
 "%s: 同時に全てのデータベースと特定のデータベースのインデックス再構築を行うこ"
 "とはできません\n"
 
 #: reindexdb.c:143
+#, c-format
 msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
 msgstr ""
 "%s: 同時に全てのデータベースとシステムカタログのインデックス再構築を行うこと"
 "はできません\n"
 
 #: reindexdb.c:148
+#, c-format
 msgid "%s: cannot reindex a specific table in all databases\n"
 msgstr ""
 "%s: 全データベースの中でテーブル指定のインデックス再構築を行うことはできませ"
 "ん\n"
 
 #: reindexdb.c:153
+#, c-format
 msgid "%s: cannot reindex a specific index in all databases\n"
 msgstr ""
 "%s: 全データベースの中で特定のインデックスの再構築を行うことはできません\n"
 
 #: reindexdb.c:164
+#, c-format
 msgid ""
 "%s: cannot reindex a specific table and system catalogs at the same time\n"
 msgstr ""
@@ -663,6 +780,7 @@ msgstr ""
 "きません\n"
 
 #: reindexdb.c:169
+#, c-format
 msgid ""
 "%s: cannot reindex a specific index and system catalogs at the same time\n"
 msgstr ""
@@ -670,30 +788,36 @@ msgstr ""
 "はできません\n"
 
 #: reindexdb.c:238
+#, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr ""
 "%1$s: データベース\"%3$s\"のテーブル\"%2$s\"のインデックス再構築に失敗しまし"
 "た: %4$s"
 
 #: reindexdb.c:241
+#, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr ""
 "%1$s: データベース\"%3$s\"のインデックス\"%2$s\"のインデックス再構築に失敗し"
 "ました: %4$s"
 
 #: reindexdb.c:244
+#, c-format
 msgid "%s: reindexing of database \"%s\" failed: %s"
 msgstr "%s: データベース\"%s\"のインデックス再構築に失敗しました: %s"
 
 #: reindexdb.c:273
+#, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: データベース\"%s\"のインデックスを再構築しています\n"
 
 #: reindexdb.c:300
+#, c-format
 msgid "%s: reindexing of system catalogs failed: %s"
 msgstr "%s: システムカタログのインデックス再構築に失敗しました: %s"
 
 #: reindexdb.c:312
+#, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
 "\n"
@@ -702,31 +826,37 @@ msgstr ""
 "\n"
 
 #: reindexdb.c:316
+#, c-format
 msgid "  -a, --all                 reindex all databases\n"
 msgstr ""
 "  -a, --all                 全てのデータベースのインデックス再構築を行いま"
 "す\n"
 
 #: reindexdb.c:317
+#, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=DBNAME       インデックスを再構築するデータベースです\n"
 
 #: reindexdb.c:319
+#, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
 msgstr "  -i, --index=INDEX         指定したインデックスのみを再構築します\n"
 
 #: reindexdb.c:321
+#, c-format
 msgid "  -s, --system              reindex system catalogs\n"
 msgstr ""
 "  -s, --system              システムカタログのインデックス再構築を行います\n"
 
 #: reindexdb.c:322
+#, c-format
 msgid "  -t, --table=TABLE         reindex specific table only\n"
 msgstr ""
 "  -t, --table=TABLE         指定したテーブルだけのインデックスを再構築しま"
 "す\n"
 
 #: reindexdb.c:331
+#, c-format
 msgid ""
 "\n"
 "Read the description of the SQL command REINDEX for details.\n"
@@ -734,64 +864,75 @@ msgstr ""
 "\n"
 "詳細はSQLコマンドREINDEXの説明を参照してください。\n"
 
-#: common.c:49
+#: common.c:45
+#, c-format
 msgid "%s: could not obtain information about current user: %s\n"
 msgstr "%s: 現在のユーザに関する情報を取得できませんでした: %s\n"
 
-#: common.c:60
+#: common.c:56
+#, c-format
 msgid "%s: could not get current user name: %s\n"
 msgstr "%s: 現在のユーザ名を取得できませんでした: %s\n"
 
-#: common.c:107 common.c:131
+#: common.c:103 common.c:127
 msgid "Password: "
 msgstr "パスワード: "
 
-#: common.c:120
+#: common.c:116
+#, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: データベース%sに接続できませんでした\n"
 
-#: common.c:142
+#: common.c:138
+#, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: データベース%sに接続できませんでした: %s\""
 
-#: common.c:166 common.c:194
+#: common.c:162 common.c:190
+#, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: 問い合わせが失敗しました: %s"
 
-#: common.c:168 common.c:196
+#: common.c:164 common.c:192
+#, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: 問い合わせ: %s\n"
 
-#: common.c:242
+#: common.c:238
 msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
-msgstr "%s: pg_strdup: null ポインタを複製できません（内部エラー）。\n"
+msgstr "pg_strdup: null ポインタを複製できません（内部エラー）。\n"
 
-#: common.c:248
+#: common.c:244
+#, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:259
+#: common.c:255
 msgid "y"
 msgstr "y"
 
 #. translator: abbreviation for "no"
-#: common.c:261
+#: common.c:257
 msgid "n"
 msgstr "n"
 
-#: common.c:272
+#: common.c:268
+#, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s)"
 
-#: common.c:293
+#: common.c:289
+#, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "\"%s\" または\"%s\"を入力してください。\n"
 
-#: common.c:371 common.c:404
+#: common.c:367 common.c:400
+#, c-format
 msgid "Cancel request sent\n"
 msgstr "送信した要求をキャンセル\n"
 
-#: common.c:373 common.c:406
+#: common.c:369 common.c:402
+#, c-format
 msgid "Could not send cancel request: %s"
 msgstr "要求をキャンセルできませんでした: %s"

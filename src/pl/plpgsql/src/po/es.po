@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-14 03:10+0000\n"
-"PO-Revision-Date: 2009-04-14 11:21-0400\n"
+"POT-Creation-Date: 2009-06-10 21:07+0000\n"
+"PO-Revision-Date: 2009-06-10 17:25-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -139,7 +139,7 @@ msgstr ""
 "mientras se hacía conversión del valor de retorno al tipo de retorno de la "
 "función"
 
-#: pl_exec.c:356 pl_exec.c:2347
+#: pl_exec.c:356 pl_exec.c:2351
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "se llamó una función que retorna un conjunto en un contexto que no puede "
@@ -215,232 +215,232 @@ msgstr "durante la salida del bloque de sentencias"
 msgid "during exception cleanup"
 msgstr "durante la finalización por excepción"
 
-#: pl_exec.c:1513
+#: pl_exec.c:1517
 msgid "case not found"
 msgstr "caso no encontrado"
 
-#: pl_exec.c:1514
+#: pl_exec.c:1518
 msgid "CASE statement is missing ELSE part."
 msgstr "A la sentencia CASE le falta la parte ELSE."
 
-#: pl_exec.c:1670
+#: pl_exec.c:1674
 msgid "lower bound of FOR loop cannot be null"
 msgstr "el límite inferior de un ciclo FOR no puede ser null"
 
-#: pl_exec.c:1685
+#: pl_exec.c:1689
 msgid "upper bound of FOR loop cannot be null"
 msgstr "el límite superior de un ciclo FOR no puede ser null"
 
-#: pl_exec.c:1702
+#: pl_exec.c:1706
 msgid "BY value of FOR loop cannot be null"
 msgstr "el valor BY de un ciclo FOR no puede ser null"
 
-#: pl_exec.c:1708
+#: pl_exec.c:1712
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "el valor BY de un ciclo FOR debe ser mayor que cero"
 
-#: pl_exec.c:1880 pl_exec.c:3118
+#: pl_exec.c:1884 pl_exec.c:3122
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "el cursor «%s» ya está en uso"
 
-#: pl_exec.c:1903 pl_exec.c:3212
+#: pl_exec.c:1907 pl_exec.c:3216
 msgid "arguments given for cursor without arguments"
 msgstr "se dieron argumentos a un cursor sin argumentos"
 
-#: pl_exec.c:1922 pl_exec.c:3231
+#: pl_exec.c:1926 pl_exec.c:3235
 msgid "arguments required for cursor"
 msgstr "se requieren argumentos para el cursor"
 
-#: pl_exec.c:2140 gram.y:2404
+#: pl_exec.c:2144 gram.y:2419
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "no se puede usar RETURN NEXT en una función que no es SETOF"
 
-#: pl_exec.c:2164 pl_exec.c:2224
+#: pl_exec.c:2168 pl_exec.c:2228
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "se pasó un tipo incorrecto de resultado a RETURN NEXT"
 
-#: pl_exec.c:2187 pl_exec.c:3597 pl_exec.c:3889 pl_exec.c:3928
+#: pl_exec.c:2191 pl_exec.c:3601 pl_exec.c:3893 pl_exec.c:3932
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "el registro «%s» no ha sido asignado aún"
 
-#: pl_exec.c:2189 pl_exec.c:3599 pl_exec.c:3891 pl_exec.c:3930
+#: pl_exec.c:2193 pl_exec.c:3603 pl_exec.c:3895 pl_exec.c:3934
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""
 "La estructura de fila de un registro aún no asignado no está determinado."
 
-#: pl_exec.c:2192 pl_exec.c:2205
+#: pl_exec.c:2196 pl_exec.c:2209
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "tipo de registro incorrecto suplantado en RETURN NEXT"
 
-#: pl_exec.c:2249
+#: pl_exec.c:2253
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT debe tener un parámetro"
 
-#: pl_exec.c:2281 gram.y:2451
+#: pl_exec.c:2285 gram.y:2466
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr ""
 "no se puede usar RETURN QUERY en una función que no ha sido declarada SETOF"
 
-#: pl_exec.c:2300
+#: pl_exec.c:2304
 msgid "structure of query does not match function result type"
 msgstr ""
 "la estructura de la consulta con concuerda con el tipo del resultado de la "
 "función"
 
-#: pl_exec.c:2417
+#: pl_exec.c:2421
 msgid "too few parameters specified for RAISE"
 msgstr "se especificaron muy pocos parámetros a RAISE"
 
-#: pl_exec.c:2443
+#: pl_exec.c:2447
 msgid "too many parameters specified for RAISE"
 msgstr "se especificaron demasiados parámetros a RAISE"
 
-#: pl_exec.c:2463
+#: pl_exec.c:2467
 msgid "RAISE statement option cannot be null"
 msgstr "la opción de sentencia en RAISE no puede ser null"
 
-#: pl_exec.c:2473 pl_exec.c:2482 pl_exec.c:2490 pl_exec.c:2498
+#: pl_exec.c:2477 pl_exec.c:2486 pl_exec.c:2494 pl_exec.c:2502
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "la opción de RAISE ya se especificó: %s"
 
-#: pl_exec.c:2533 pl_exec.c:2534 pl_exec.c:5121 pl_exec.c:5126 pl_exec.c:5135
+#: pl_exec.c:2537 pl_exec.c:2538 pl_exec.c:5127 pl_exec.c:5132 pl_exec.c:5141
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:2676 pl_exec.c:2982
+#: pl_exec.c:2680 pl_exec.c:2986
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "no se puede ejecutar COPY desde/a un cliente en PL/pgSQL"
 
-#: pl_exec.c:2680 pl_exec.c:2986
+#: pl_exec.c:2684 pl_exec.c:2990
 msgid "cannot begin/end transactions in PL/pgSQL"
 msgstr "no se puede terminar/iniciar transacciones en PL/pgSQL"
 
-#: pl_exec.c:2681 pl_exec.c:2987
+#: pl_exec.c:2685 pl_exec.c:2991
 msgid "Use a BEGIN block with an EXCEPTION clause instead."
 msgstr "Utilice un bloque BEGIN con una cláusula EXCEPTION."
 
-#: pl_exec.c:2832 pl_exec.c:3011
+#: pl_exec.c:2836 pl_exec.c:3015
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO es utilizado con un comando uqe no puede retornar datos"
 
-#: pl_exec.c:2852 pl_exec.c:3031
+#: pl_exec.c:2856 pl_exec.c:3035
 msgid "query returned no rows"
 msgstr "la consulta no regresó renglones"
 
-#: pl_exec.c:2861 pl_exec.c:3040
+#: pl_exec.c:2865 pl_exec.c:3044
 msgid "query returned more than one row"
 msgstr "la consulta regresó más de un renglón"
 
-#: pl_exec.c:2875
+#: pl_exec.c:2879
 msgid "query has no destination for result data"
 msgstr "la consulta no tiene un destino para los datos de resultado"
 
-#: pl_exec.c:2876
+#: pl_exec.c:2880
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Si quiere descartar los resultados de un SELECT, utilice PERFORM."
 
-#: pl_exec.c:2909 pl_exec.c:3159 pl_exec.c:5413
+#: pl_exec.c:2913 pl_exec.c:3163 pl_exec.c:5419
 msgid "query string argument of EXECUTE is null"
 msgstr "el argumento de consulta a ejecutar en EXECUTE es null"
 
-#: pl_exec.c:2974
+#: pl_exec.c:2978
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "no está implementado EXECUTE de un SELECT ... INTO"
 
-#: pl_exec.c:3293 pl_exec.c:3384
+#: pl_exec.c:3297 pl_exec.c:3388
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "variable cursor «%s» es null"
 
-#: pl_exec.c:3300 pl_exec.c:3391
+#: pl_exec.c:3304 pl_exec.c:3395
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "no existe el cursor «%s»"
 
-#: pl_exec.c:3314
+#: pl_exec.c:3318
 msgid "relative or absolute cursor position is null"
 msgstr "la posición relativa o absoluta del cursor es null"
 
-#: pl_exec.c:3451
+#: pl_exec.c:3455
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr ""
 "no puede asignarse un valor null a la variable «%s» que fue declarada NOT "
 "NULLNULL"
 
-#: pl_exec.c:3496
+#: pl_exec.c:3500
 msgid "cannot assign non-composite value to a row variable"
 msgstr "no se puede asignar un valor no compuesto a una variable de tipo fila"
 
-#: pl_exec.c:3538
+#: pl_exec.c:3542
 msgid "cannot assign non-composite value to a record variable"
 msgstr "no se puede asignar un valor no compuesto a un registro variable"
 
-#: pl_exec.c:3610 pl_exec.c:3935
+#: pl_exec.c:3614 pl_exec.c:3939
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "el registro «%s» no tiene un campo «%s»"
 
-#: pl_exec.c:3708
+#: pl_exec.c:3712
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr ""
 "el número de dimensiones del array (%d) excede el máximo permitido (%d)"
 
-#: pl_exec.c:3722
+#: pl_exec.c:3726
 msgid "subscripted object is not an array"
 msgstr "el objeto al que se le puso un subíndice no es un array"
 
-#: pl_exec.c:3745
+#: pl_exec.c:3749
 msgid "array subscript in assignment must not be null"
 msgstr "subíndice de array en asignación no puede ser nulo"
 
-#: pl_exec.c:3851 pl_exec.c:3876 pl_exec.c:3913
+#: pl_exec.c:3855 pl_exec.c:3880 pl_exec.c:3917
 #, c-format
 msgid "type of \"%s\" does not match that when preparing the plan"
 msgstr "tipo de «%s» no concuerda consigo cuando fue preparado el plan"
 
-#: pl_exec.c:3942
+#: pl_exec.c:3946
 #, c-format
 msgid "type of \"%s.%s\" does not match that when preparing the plan"
 msgstr "tipo de «%s».«%s» no concuerda condigo cuando fue preparado el plan"
 
-#: pl_exec.c:3967
+#: pl_exec.c:3971
 #, c-format
 msgid "type of tgargv[%d] does not match that when preparing the plan"
 msgstr "tipo de tgarv[%d] no concuerda condigo cuando fue preparado el plan"
 
-#: pl_exec.c:4060
+#: pl_exec.c:4064
 #, c-format
 msgid "query \"%s\" did not return data"
 msgstr "la consulta «%s» no retornó datos"
 
-#: pl_exec.c:4077
+#: pl_exec.c:4081
 #, c-format
 msgid "query \"%s\" returned more than one row"
 msgstr "la consulta «%s» retornó más de un registro"
 
-#: pl_exec.c:4082
+#: pl_exec.c:4086
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
 msgstr[0] "la consulta «%s» retornó una columna"
 msgstr[1] "la consulta «%s» retornó %d columnas"
 
-#: pl_exec.c:4141
+#: pl_exec.c:4147
 #, c-format
 msgid "query \"%s\" is not a SELECT"
 msgstr "la consulta «%s» no es una orden SELECT"
 
-#: pl_exec.c:5116
+#: pl_exec.c:5122
 msgid "N/A (dropped column)"
 msgstr "N/A (columna eliminada)"
 
-#: pl_exec.c:5127
+#: pl_exec.c:5133
 #, c-format
 msgid ""
 "Number of returned columns (%d) does not match expected column count (%d)."
@@ -448,38 +448,42 @@ msgstr ""
 "El número de columnas retornadas (%d) no coincide con la cantidad esperada "
 "de columnas (%d)."
 
-#: pl_exec.c:5136
+#: pl_exec.c:5142
 #, c-format
 msgid "Returned type %s does not match expected type %s in column \"%s\"."
 msgstr ""
 "El tipo retornado %s no coincide con el tipo esperado %s en la columna «%s»."
 
-#: gram.y:359
+#: gram.y:355
 msgid "row or record variable cannot be CONSTANT"
 msgstr "fila o registro variable no puede ser CONSTANT"
 
-#: gram.y:368
+#: gram.y:364
 msgid "row or record variable cannot be NOT NULL"
 msgstr "fila o registro variable no peude ser NOT NULL"
 
-#: gram.y:377
+#: gram.y:373
 msgid "default value for row or record variable is not supported"
 msgstr "valor por defecto de la fila o registro variable no soportado"
 
-#: gram.y:526
+#: gram.y:522
 msgid "only positional parameters can be aliased"
 msgstr "solo ls parámetros posicionados pueden tener alias"
 
-#: gram.y:536
+#: gram.y:532
 #, c-format
 msgid "function has no parameter \"%s\""
 msgstr "la función no tiene un parámetro «%s»"
 
-#: gram.y:746 gram.y:750 gram.y:754
+#: gram.y:560 gram.y:564 gram.y:568
+msgid "duplicate declaration"
+msgstr "declaración duplicada"
+
+#: gram.y:761 gram.y:765 gram.y:769
 msgid "expected an integer variable"
 msgstr "se esperaba una variable entera"
 
-#: gram.y:1009 gram.y:1198
+#: gram.y:1024 gram.y:1213
 msgid ""
 "loop variable of loop over rows must be a record or row variable or list of "
 "scalar variables"
@@ -487,98 +491,98 @@ msgstr ""
 "variable de bucle de un bucle sobre filas debe ser un registro o una "
 "variable de tipo registro o una lista de variables escalares"
 
-#: gram.y:1046
+#: gram.y:1061
 msgid "cursor FOR loop must have only one target variable"
 msgstr "un bucle FOR de un cursor debe tener sólo una variable de destino"
 
-#: gram.y:1058
+#: gram.y:1073
 msgid "cursor FOR loop must use a bound cursor variable"
 msgstr "un bucle FOR en torno a un cursor debe usar un cursor enlazado"
 
-#: gram.y:1134
+#: gram.y:1149
 msgid "integer FOR loop must have only one target variable"
 msgstr ""
 "un bucle FOR de un número entero debe tener sólo una variable de destino"
 
-#: gram.y:1167
+#: gram.y:1182
 msgid "cannot specify REVERSE in query FOR loop"
 msgstr "no se puede especificar REVERSE en un bucle FOR de una consulta"
 
-#: gram.y:1258 gram.y:2616
+#: gram.y:1273 gram.y:2631
 #, c-format
 msgid "\"%s\" is not a scalar variable"
 msgstr "«%s» no es una variable escalar"
 
-#: gram.y:1311 gram.y:1351 gram.y:1395 gram.y:2172 gram.y:2263 gram.y:2881
+#: gram.y:1326 gram.y:1366 gram.y:1410 gram.y:2187 gram.y:2278 gram.y:2938
 msgid "unexpected end of function definition"
 msgstr "fin inesperado de la definición de la función"
 
-#: gram.y:1415 gram.y:1437 gram.y:1451 gram.y:1459 gram.y:1520 gram.y:1607
-#: gram.y:1776 gram.y:1780
+#: gram.y:1430 gram.y:1452 gram.y:1466 gram.y:1474 gram.y:1535 gram.y:1622
+#: gram.y:1787
 msgid "syntax error"
 msgstr "error de sintaxis"
 
-#: gram.y:1441 gram.y:1443 gram.y:1784 gram.y:1786
+#: gram.y:1456 gram.y:1458 gram.y:1791 gram.y:1793
 msgid "invalid SQLSTATE code"
 msgstr "código SQLSTATE no válido"
 
-#: gram.y:1571 gram.y:2565 gram.y:2810
+#: gram.y:1586 gram.y:2580 gram.y:2867
 #, c-format
 msgid "syntax error at \"%s\""
 msgstr "error de sintaxis en «%s»"
 
-#: gram.y:1573
+#: gram.y:1588
 msgid "Expected \"FOR\", to open a reference cursor."
 msgstr "Se esperaba «FOR», para abrir un cursor de referencia."
 
-#: gram.y:1660
+#: gram.y:1675
 msgid "cursor variable must be a simple variable"
 msgstr "variable de cursor debe ser una variable simple"
 
-#: gram.y:1667
+#: gram.y:1682
 #, c-format
 msgid "variable \"%s\" must be of type cursor or refcursor"
 msgstr "la variable «%s» debe ser de tipo cursor o refcursor"
 
-#: gram.y:1674 gram.y:1678 gram.y:1682
+#: gram.y:1689 gram.y:1693 gram.y:1697
 msgid "expected a cursor or refcursor variable"
 msgstr "se espera un cursor o una variable de referencia a cursor"
 
-#: gram.y:1907 gram.y:2978
+#: gram.y:1922 gram.y:3035
 msgid "too many variables specified in SQL statement"
 msgstr "se especificaron demasiadas variables en la sentencia SQL"
 
-#: gram.y:1992 gram.y:2002 gram.y:2095
+#: gram.y:2007 gram.y:2017 gram.y:2110
 msgid "mismatched parentheses"
 msgstr "no coinciden los paréntesis"
 
-#: gram.y:2007
+#: gram.y:2022
 #, c-format
 msgid "missing \"%s\" at end of SQL expression"
 msgstr "falta «%s» al final de la expresión SQL"
 
-#: gram.y:2012
+#: gram.y:2027
 #, c-format
 msgid "missing \"%s\" at end of SQL statement"
 msgstr "falta «%s» al final de la sentencia SQL"
 
-#: gram.y:2097
+#: gram.y:2112
 msgid "incomplete data type declaration"
 msgstr "declaración de tipo de dato incompleta"
 
-#: gram.y:2122
+#: gram.y:2137
 msgid "missing data type declaration"
 msgstr "declaración de tipo de dato faltante"
 
-#: gram.y:2177
+#: gram.y:2192
 msgid "INTO specified more than once"
 msgstr "INTO fue especificado más de una vez"
 
-#: gram.y:2326
+#: gram.y:2341
 msgid "expected FROM or IN"
 msgstr "se espera FROM o IN"
 
-#: gram.y:2347
+#: gram.y:2362
 msgid ""
 "RETURN cannot have a parameter in function returning set; use RETURN NEXT or "
 "RETURN QUERY"
@@ -586,43 +590,43 @@ msgstr ""
 "RETURN no puede tener un parámetro en una función que retorna un conjunto; "
 "use RETURN NEXT o RETURN QUERY"
 
-#: gram.y:2353
+#: gram.y:2368
 msgid "RETURN cannot have a parameter in function with OUT parameters"
 msgstr "RETURN no puede tener parámetros en una función con parámetros OUT"
 
-#: gram.y:2359
+#: gram.y:2374
 msgid "RETURN cannot have a parameter in function returning void"
 msgstr ""
 "RETURN no puede tener un parámetro en una función returnando valor vacío"
 
-#: gram.y:2378 gram.y:2382
+#: gram.y:2393 gram.y:2397
 msgid "RETURN must specify a record or row variable in function returning row"
 msgstr ""
 "RETURN debe especificar una variable de tipo record o registro en una "
 "función que retorna una fila"
 
-#: gram.y:2415
+#: gram.y:2430
 msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
 msgstr ""
 "RETURN NEXT no puede tener parámetros en una función con parámetros OUT"
 
-#: gram.y:2431 gram.y:2435
+#: gram.y:2446 gram.y:2450
 msgid ""
 "RETURN NEXT must specify a record or row variable in function returning row"
 msgstr ""
-"RETURN NEXT debe especificar una variable tipo record o registro en una función que "
-"retorna una fila"
+"RETURN NEXT debe especificar una variable tipo record o registro en una "
+"función que retorna una fila"
 
-#: gram.y:2498
+#: gram.y:2513
 #, c-format
 msgid "\"%s\" is declared CONSTANT"
 msgstr "«%s» esta declarada como CONSTANT"
 
-#: gram.y:2515
+#: gram.y:2530
 msgid "cannot assign to tg_argv"
 msgstr "no se puede asignar a tg_argv"
 
-#: gram.y:2566
+#: gram.y:2581
 msgid ""
 "Expected record variable, row variable, or list of scalar variables "
 "following INTO."
@@ -630,49 +634,54 @@ msgstr ""
 "Se espera una variable registro, variable de tipo fila, o una lista de "
 "variables escalares seguido de INTO."
 
-#: gram.y:2600
+#: gram.y:2615
 msgid "too many INTO variables specified"
 msgstr "se especificaron demasiadas variables INTO"
 
-#: gram.y:2734
+#: gram.y:2749
 #, c-format
 msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
-msgstr "sentencia SQL en una función PL/PgSQL «%s» cerca de la línea %d"
+msgstr "sentencia SQL en la función PL/PgSQL «%s» cerca de la línea %d"
 
-#: gram.y:2748
+#: gram.y:2792
+#, c-format
+msgid "string literal in PL/PgSQL function \"%s\" near line %d"
+msgstr "literal de cadena en la función PL/PgSQL «%s» cerca de la línea %d"
+
+#: gram.y:2805
 msgid "label does not exist"
 msgstr "la etiqueta no existe"
 
-#: gram.y:2762
+#: gram.y:2819
 #, c-format
 msgid "end label \"%s\" specified for unlabelled block"
 msgstr "etiqueta de término «%s» especificada para un bloque sin etiqueta"
 
-#: gram.y:2771
+#: gram.y:2828
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
 msgstr "el nombre de la tabla «%s» difiere del nombre de bloque «%s»"
 
-#: gram.y:2801
+#: gram.y:2858
 #, c-format
 msgid "cursor \"%s\" has no arguments"
 msgstr "el cursor «%s» no tiene argumentos"
 
-#: gram.y:2823
+#: gram.y:2880
 #, c-format
 msgid "cursor \"%s\" has arguments"
 msgstr "el cursor «%s» tiene argumentos"
 
-#: gram.y:2861
+#: gram.y:2918
 msgid "expected \")\""
 msgstr "se esperaba «)»"
 
-#: gram.y:2898
+#: gram.y:2955
 #, c-format
 msgid "unrecognized RAISE statement option \"%s\""
 msgstr "no se reconoce la opción «%s» de sentencia RAISE"
 
-#: gram.y:2903
+#: gram.y:2960
 msgid "syntax error, expected \"=\""
 msgstr "error de sintaxis, se esperaba «=»"
 
@@ -723,30 +732,30 @@ msgstr "sentencia EXECUTE"
 msgid "FOR over EXECUTE statement"
 msgstr "bucle FOR en torno a una sentencia EXECUTE"
 
-#: scan.l:232
+#: scan.l:263
 msgid "unterminated quoted identifier"
 msgstr "un identificador entre comillas está inconcluso"
 
-#: scan.l:257
+#: scan.l:306
 msgid "unterminated /* comment"
 msgstr "un comentario /* está inconcluso"
 
-#: scan.l:296
+#: scan.l:342
 msgid "unterminated quoted string"
 msgstr "una cadena de caracteres entre comillas está inconclusa"
 
-#: scan.l:333
+#: scan.l:382
 msgid "unterminated dollar-quoted string"
 msgstr "cadena separada por $ inconclusa"
 
 #. translator: %s is typically "syntax error"
-#: scan.l:395
+#: scan.l:445
 #, c-format
 msgid "%s at end of input"
 msgstr "%s al final de la entrada"
 
 #. translator: first %s is typically "syntax error"
-#: scan.l:404
+#: scan.l:454
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s en o cerca de «%s»"

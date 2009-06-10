@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-05-05 03:09+0000\n"
-"PO-Revision-Date: 2009-05-05 09:31+0200\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2009-05-29 15:08+0000\n"
+"PO-Revision-Date: 2009-05-31 21:33+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -785,7 +785,7 @@ msgstr "  \\h [NAME]              SQL komutları için sözdizimi yardımı, tü
 #: help.c:173
 #, c-format
 msgid "  \\q                     quit psql\n"
-msgstr "  \\q                    psql'den çık\n"
+msgstr "  \\q                     psql'den çık\n"
 
 #: help.c:176
 #, c-format
@@ -925,7 +925,7 @@ msgstr "  \\df[antw][S+] [PATRN]  [sadece agg/normal/trigger/window] fonksiyonla
 #: help.c:209
 #, c-format
 msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
-msgstr "  \\dF[+]  [PATTERN]      öetin ama yapılandırmalarını listele\n"
+msgstr "  \\dF[+]  [PATTERN]      metin arama yapılandırmalarını listele\n"
 
 #: help.c:210
 #, c-format
@@ -950,7 +950,7 @@ msgstr "  \\dg     [PATTERN]      rolleri (grupları) listele\n"
 #: help.c:214
 #, c-format
 msgid "  \\di[S+] [PATTERN]      list indexes\n"
-msgstr "  \\dD[S+]  [PATTERN]  indexleri göster\n"
+msgstr "  \\di[S+] [PATTERN]      indexleri göster\n"
 
 #: help.c:215
 #, c-format
@@ -985,7 +985,7 @@ msgstr "  \\dt[S+] [PATTERN]      tabloları listele\n"
 #: help.c:221
 #, c-format
 msgid "  \\dT[S+] [PATTERN]      list data types\n"
-msgstr "  \\dT[S+] [PATTERN]      lveri tiplerini listele\n"
+msgstr "  \\dT[S+] [PATTERN]      veri tiplerini listele\n"
 
 #: help.c:222
 #, c-format
@@ -1020,12 +1020,12 @@ msgstr "  \\a                    düzenli ve düzensiz çıktı modu arasında g
 #: help.c:230
 #, c-format
 msgid "  \\C [STRING]            set table title, or unset if none\n"
-msgstr "  \\C [STRING]            tablo başlığını ayarla, ya daboş bırakılırsa kaldır\n"
+msgstr "  \\C [DİZİ]            tablo başlığını ayarla, ya da boş bırakılırsa kaldır\n"
 
 #: help.c:231
 #, c-format
 msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
-msgstr "  \\f [STRING]            düzensiz sorgu çıktısı için alan ayracını göster ya da tanımla\n"
+msgstr "  \\f [DİZİ]            düzensiz sorgu çıktısı için alan ayracını göster ya da tanımla\n"
 
 #: help.c:232
 #, c-format
@@ -1039,8 +1039,8 @@ msgid ""
 "                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
-"  \\pset NAME [VALUE]    tablo çıktısı biçimini ayarla\n"
-"                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
+"  \\pset AD [VALUE]    tablo çıktısı biçimini ayarla\n"
+"                         (AD := {format|border|expanded|fieldsep|footer|null|\n"
 "                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:237
@@ -1100,7 +1100,7 @@ msgstr "  \\timing [on|off]       komutların çalışma zamanlamasının göste
 #: help.c:256
 #, c-format
 msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
-msgstr "  \\! [KOMUT]           konutu kabukta çalıştır ya da etkileşimli kabuğu başlat\n"
+msgstr "  \\! [KOMUT]           komutu kabukta çalıştır ya da etkileşimli kabuğu başlat\n"
 
 #: help.c:259
 #, c-format
@@ -1247,7 +1247,7 @@ msgid ""
 msgstr ""
 "Komutlar:  \\copyright dağıtım koşulları için\n"
 "       \\h SQL komutları hakkında yardım için\n"
-"       \\? psql dahili komutların yardımı için\n"
+"       \\? psql dahili komutlarının yardımı için\n"
 "       \\g ya da noktalı virgül:  sorguyu çalıştırmak için\n"
 "       \\q çıkmak için\n"
 
@@ -1278,10 +1278,10 @@ msgstr "geçersiz çıktı biçimi (iç hata): %d"
 
 #: print.c:2351
 #, c-format
-msgid "(1 row)"
+msgid "(%lu row)"
 msgid_plural "(%lu rows)"
 msgstr[0] "(%lu satır)"
-msgstr[1] "(1 satır)"
+msgstr[1] "(%lu satır)"
 
 #: startup.c:217
 #, c-format
@@ -1834,7 +1834,7 @@ msgstr "Bağlantı yok"
 
 #: describe.c:2039
 #, c-format
-msgid "1 connection"
+msgid "%d connection"
 msgid_plural "%d connections"
 msgstr[0] "%d bağlantı"
 msgstr[1] "1 bağlantı"
@@ -2516,7 +2516,7 @@ msgstr ""
 "ALTER TABLE ad\n"
 "    SET SCHEMA yeni şema\n"
 "\n"
-"where action is one of:\n"
+"action aşağıdakilerden birisi olabilir:\n"
 "\n"
 "    ADD [ COLUMN ] kolon kolon_tipi [ kolon kısıtlaması [ ... ] ]\n"
 "    DROP [ COLUMN ] kolon [ RESTRICT | CASCADE ]\n"
@@ -2524,7 +2524,7 @@ msgstr ""
 "    ALTER [ COLUMN ] kolon SET DEFAULT ifade\n"
 "    ALTER [ COLUMN ] kolon DROP DEFAULT\n"
 "    ALTER [ COLUMN ] kolon { SET | DROP } NOT NULL\n"
-"    ALTER [ COLUMN ] kolon SET STATISTICS tamyısa\n"
+"    ALTER [ COLUMN ] kolon SET STATISTICS tamsayı\n"
 "    ALTER [ COLUMN ] kolon SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
 "    ADD tablo kısıtlaması\n"
 "    DROP CONSTRAINT kısıtlama adı [ RESTRICT | CASCADE ]\n"
@@ -4740,6 +4740,10 @@ msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 
+#~ msgid "(1 row)"
+#~ msgid_plural "(%lu rows)"
+#~ msgstr[0] "(%lu satır)"
+#~ msgstr[1] "(1 satır)"
 #~ msgid "Usage:"
 #~ msgstr "Kullanımı:"
 #~ msgid "General options:"
@@ -4807,8 +4811,6 @@ msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 #~ "ile aynı)\n"
 #~ msgid "Copy, Large Object\n"
 #~ msgstr "Copy, Large Object\n"
-#~ msgid "(%lu rows)"
-#~ msgstr "(%lu satır)"
 #~ msgid ""
 #~ "Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n"
 #~ "\n"

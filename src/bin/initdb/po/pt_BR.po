@@ -345,7 +345,7 @@ msgstr ""
 #: initdb.c:2434
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
-msgstr "     --locale=LOCALE       ajusta configuração regional padrão para novos bancos de dados\n"
+msgstr "     --locale=LOCALE           ajusta configuração regional padrão para novos bancos de dados\n"
 
 #: initdb.c:2435
 #, c-format
@@ -358,20 +358,20 @@ msgid ""
 msgstr ""
 "      --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "      --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-"                            ajusta configuração regional padrão na respectiva categoria\n"
-"                            para novos bancos de dados (o ambiente é assumido como padrão)\n"
+"                               ajusta configuração regional padrão na respectiva categoria\n"
+"                               para novos bancos de dados (o ambiente é assumido como padrão)\n"
 
 #: initdb.c:2439
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
-msgstr "      --no-locale           equivalente a --locale=C\n"
+msgstr "      --no-locale              equivalente a --locale=C\n"
 
 #: initdb.c:2440
 #, c-format
 msgid ""
 "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr ""
-"      --pwfile=ARQUIVO      lê senha do novo super-usuário a partir do arquivo\n"
+"      --pwfile=ARQUIVO         lê senha do novo super-usuário a partir do arquivo\n"
 
 #: initdb.c:2441
 #, c-format

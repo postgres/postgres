@@ -175,7 +175,7 @@ msgstr "  -U, --username=USUÁRIO    nome do usuário para se conectar\n"
 #: createdb.c:262
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
-msgstr "  -w, --no-password            nunca pergunta senha\n"
+msgstr "  -w, --no-password         nunca pergunta senha\n"
 
 #: createdb.c:263
 #, c-format

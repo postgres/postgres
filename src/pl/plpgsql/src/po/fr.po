@@ -1,7 +1,7 @@
 # translation of plpgsql.po to fr_fr
 # french message translation file for plpgsql
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/po/fr.po,v 1.2 2009/05/14 21:41:53 alvherre Exp $
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/po/fr.po,v 1.3 2009/06/10 23:42:44 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
@@ -697,7 +697,7 @@ msgstr "instruction SQL dans la fonction PL/pgsql « %s » près de la ligne %d"
 #: gram.y:2792
 #, c-format
 msgid "string literal in PL/PgSQL function \"%s\" near line %d"
-msgstr "chaîne litérale dans la fonction PL/pgsql « %s » près de la ligne %d"
+msgstr "chaîne littérale dans la fonction PL/pgsql « %s » près de la ligne %d"
 
 #: gram.y:2805
 msgid "label does not exist"
