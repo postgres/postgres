@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.237 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.238 2009/06/10 20:25:41 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3958,6 +3958,14 @@ SET xmloption TO { DOCUMENT | CONTENT };
     processed in UTF-8, computations will be most efficient if the
     server encoding is also UTF-8.
    </para>
+
+   <caution>
+    <para>
+     Some XML-related functions may not work at all on non-ASCII data
+     when the server encoding is not UTF-8.  This is known to be an
+     issue for <function>xpath()</> in particular.
+    </para>
+   </caution>
    </sect2>
 
    <sect2>
