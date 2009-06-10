@@ -8252,8 +8252,7 @@ return com_err ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' krb5 'krb5 -lcrypto -ldes -lasn1 -lroken'
-                              com_err 'com_err -lssl -lcrypto'; do
+for ac_lib in '' krb5 'krb5 -lcrypto -ldes -lasn1 -lroken' com_err 'com_err -lssl -lcrypto'; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
