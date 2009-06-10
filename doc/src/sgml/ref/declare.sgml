@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.46 2009/04/10 17:56:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.47 2009/06/10 19:21:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -227,6 +227,20 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     includes <literal>FOR UPDATE</> or <literal>FOR SHARE</>; therefore
     <literal>SCROLL</literal> may not be specified in this case.
    </para>
+
+   <caution>
+    <para>
+     Scrollable and <literal>WITH HOLD</literal> cursors may give unexpected
+     results if they invoke any volatile functions (see <xref
+     linkend="xfunc-volatility">).  When a previously fetched row is
+     re-fetched, the functions might be re-executed, perhaps leading to
+     results different from the first time.  One workaround for such cases
+     is to declare the cursor <literal>WITH HOLD</literal> and commit the
+     transaction before reading any rows from it.  This will force the
+     entire output of the cursor to be materialized in temporary storage,
+     so that volatile functions are executed exactly once for each row.
+    </para>
+   </caution>
 
    <para>
     If the cursor's query includes <literal>FOR UPDATE</> or <literal>FOR
