@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.206 2009/06/01 16:55:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.207 2009/06/10 05:05:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2917,17 +2917,17 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 							break;
 						case INTERVAL_MASK(HOUR):
 						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR):
-						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
-						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
 							type = DTK_HOUR;
 							break;
 						case INTERVAL_MASK(MINUTE):
 						case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
 							type = DTK_MINUTE;
 							break;
 						case INTERVAL_MASK(SECOND):
-						case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
 						case INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
 							type = DTK_SECOND;
 							break;
 						default:

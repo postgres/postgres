@@ -466,11 +466,9 @@ SELECT interval '1 2:03:04' day to hour;
 (1 row)
 
 SELECT interval '1 2' day to minute;
-    interval    
-----------------
- 1 day 02:00:00
-(1 row)
-
+ERROR:  invalid input syntax for type interval: "1 2"
+LINE 1: SELECT interval '1 2' day to minute;
+                        ^
 SELECT interval '1 2:03' day to minute;
     interval    
 ----------------
@@ -484,11 +482,9 @@ SELECT interval '1 2:03:04' day to minute;
 (1 row)
 
 SELECT interval '1 2' day to second;
-    interval    
-----------------
- 1 day 02:00:00
-(1 row)
-
+ERROR:  invalid input syntax for type interval: "1 2"
+LINE 1: SELECT interval '1 2' day to second;
+                        ^
 SELECT interval '1 2:03' day to second;
     interval    
 ----------------
@@ -605,11 +601,9 @@ SELECT interval '1.234' second(2);
 (1 row)
 
 SELECT interval '1 2.345' day to second(2);
-    interval    
-----------------
- 1 day 02:20:42
-(1 row)
-
+ERROR:  invalid input syntax for type interval: "1 2.345"
+LINE 1: SELECT interval '1 2.345' day to second(2);
+                        ^
 SELECT interval '1 2:03' day to second(2);
     interval    
 ----------------
