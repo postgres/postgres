@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.80 2008/06/09 19:58:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.81 2009/06/10 16:31:32 tgl Exp $
  */
 
 #include "postgres.h"
@@ -191,23 +191,21 @@ cash_in(PG_FUNCTION_ARGS)
 
 	for (;; s++)
 	{
-		/* we look for digits as int8 as we have less */
+		/* we look for digits as long as we have found less */
 		/* than the required number of decimal places */
-		if (isdigit((unsigned char) *s) && dec < fpoint)
+		if (isdigit((unsigned char) *s) && (!seen_dot || dec < fpoint))
 		{
-			value = (value * 10) + *s - '0';
+			value = (value * 10) + (*s - '0');
 
 			if (seen_dot)
 				dec++;
-
 		}
 		/* decimal point? then start counting fractions... */
 		else if (*s == dsymbol && !seen_dot)
 		{
 			seen_dot = 1;
-
 		}
-		/* not "thousands" separator? */
+		/* ignore if "thousands" separator, else we're done */
 		else if (*s != ssymbol)
 		{
 			/* round off */
@@ -236,7 +234,7 @@ cash_in(PG_FUNCTION_ARGS)
 	result = value * sgn;
 
 #ifdef CASHDEBUG
-	printf("cashin- result is %d\n", result);
+	printf("cashin- result is " INT64_FORMAT "\n", result);
 #endif
 
 	PG_RETURN_CASH(result);
