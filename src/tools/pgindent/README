@@ -1,10 +1,17 @@
-$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.29 2008/03/21 13:23:29 momjian Exp $
+$PostgreSQL: pgsql/src/tools/pgindent/README,v 1.30 2009/06/10 01:47:59 momjian Exp $
 
 pgindent
 ========
 
-This can format all PostgreSQL *.c and *.h files, but excludes *.y, and *.l
-files.
+This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
+*.l files.  For source code typedefs, download:
+
+	http://www.pgbuildfarm.org/cgi-bin/typedefs.pl
+
+---------------------------------------------------------------------------
+
+Obsolete typedef list creation instructions:
+--------------------------------------------
 
 To use pgindent:
 
