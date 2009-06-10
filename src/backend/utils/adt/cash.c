@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.68 2006/07/14 14:52:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.68.2.1 2009/06/10 16:31:44 tgl Exp $
  */
 
 #include "postgres.h"
@@ -152,28 +152,22 @@ cash_in(PG_FUNCTION_ARGS)
 
 	for (;; s++)
 	{
-		/* we look for digits as int4 as we have less */
+		/* we look for digits as long as we have found less */
 		/* than the required number of decimal places */
-		if (isdigit((unsigned char) *s) && dec < fpoint)
+		if (isdigit((unsigned char) *s) && (!seen_dot || dec < fpoint))
 		{
-			value = (value * 10) + *s - '0';
+			value = (value * 10) + (*s - '0');
 
 			if (seen_dot)
 				dec++;
-
-			/* decimal point? then start counting fractions... */
 		}
+		/* decimal point? then start counting fractions... */
 		else if (*s == dsymbol && !seen_dot)
 		{
 			seen_dot = 1;
-
-			/* "thousands" separator? then skip... */
 		}
-		else if (*s == ssymbol)
-		{
-
-		}
-		else
+		/* ignore if "thousands" separator, else we're done */
+		else if (*s != ssymbol)
 		{
 			/* round off */
 			if (isdigit((unsigned char) *s) && *s >= '5')
