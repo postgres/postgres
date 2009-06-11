@@ -1,12 +1,17 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.100 2008/11/03 15:56:47 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.101 2009/06/11 22:21:44 momjian Exp $
 
 # Known bugs:
 #
-# Blank line is added after, seen as a function definition, no space
+# Blank line is added after parentheses; seen as a function definition, no space
 # after *:
 #	y = (int) x *y;
+#
+# Structure/union pointers in function prototypes and definitions have an extra
+# space after the asterisk:
+#
+#	void x(struct xxc * a);
 
 if [ "$#" -lt 2 ]
 then	echo "Usage:  $(basename $0) typedefs file [...]" 1>&2
