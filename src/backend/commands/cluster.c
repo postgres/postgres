@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.185 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.186 2009/06/11 20:46:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -741,7 +741,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 		if (isNull)
 			reloptions = (Datum) 0;
 	}
-	AlterTableCreateToastTable(OIDNewHeap, reloptions, false);
+	AlterTableCreateToastTable(OIDNewHeap, InvalidOid, reloptions, false);
 
 	if (OidIsValid(toastid))
 		ReleaseSysCache(tuple);

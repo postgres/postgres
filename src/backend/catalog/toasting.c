@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.16 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.17 2009/06/11 20:46:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,11 @@ static bool needs_toast_table(Relation rel);
  *		then create a toast table for it.  (With the force option, make
  *		a toast table even if it appears unnecessary.)
  *
+ * The caller can also specify the OID to be used for the toast table.
+ * Usually, toastOid should be InvalidOid to allow a free OID to be assigned.
+ * (This option, as well as the force option, is not used by core Postgres,
+ * but is provided to support pg_migrator.)
+ *
  * reloptions for the toast table can be passed, too.  Pass (Datum) 0
  * for default reloptions.
  *
@@ -51,7 +56,8 @@ static bool needs_toast_table(Relation rel);
  * to end with CommandCounterIncrement if it makes any changes.
  */
 void
-AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool force)
+AlterTableCreateToastTable(Oid relOid, Oid toastOid,
+						   Datum reloptions, bool force)
 {
 	Relation	rel;
 
@@ -63,7 +69,7 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool force)
 	rel = heap_open(relOid, AccessExclusiveLock);
 
 	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, force);
+	(void) create_toast_table(rel, toastOid, InvalidOid, reloptions, force);
 
 	heap_close(rel, NoLock);
 }
@@ -101,8 +107,8 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * create_toast_table --- internal workhorse
  *
  * rel is already opened and exclusive-locked
- * toastOid and toastIndexOid are normally InvalidOid, but during
- * bootstrap they can be nonzero to specify hand-assigned OIDs
+ * toastOid and toastIndexOid are normally InvalidOid, but
+ * either or both can be nonzero to specify caller-assigned OIDs
  */
 static bool
 create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
