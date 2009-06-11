@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.321 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.322 2009/06/11 19:00:14 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2090,7 +2090,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
 
     <para>
      On AIX 4.3.2, you need <filename>libm.a</filename> that is in the
-     fileset bos.adt.libm.  Try the following command:
+     fileset <literal>bos.adt.libm</>.  Try the following command:
 <screen>
 $ lslpp -l bos.adt.libm
 </screen>
@@ -2120,11 +2120,11 @@ $ lslpp -l bos.adt.libm
 
     <para>
      AIX 5.3 has a problem
-     where <structname>sockadr_storage</structname> is not defined to
+     where <structname>sockaddr_storage</structname> is not defined to
      be large enough.  In version 5.3, IBM increased the size of
      <structname>sockaddr_un</structname>, the address structure for
      Unix-domain sockets, but did not correspondingly increase the
-     size of <structname>sockadr_storage</structname>.  The result of
+     size of <structname>sockaddr_storage</structname>.  The result of
      this is that attempts to use Unix-domain sockets with PostgreSQL
      lead to libpq overflowing the data structure.  TCP/IP connections
      work OK, but not Unix-domain sockets, which prevents the
@@ -2142,7 +2142,66 @@ $ lslpp -l bos.adt.libm
    </sect3>
 
    <sect3>
-    <title>Memory Management</title>
+    <title>Internet address issues</title>
+
+    <para>
+     PostgreSQL relies on the system's <function>getaddrinfo</> function
+     to parse IP addresses in <varname>listen_addresses</>,
+     <filename>pg_hba.conf</>, etc.  Older versions of AIX have assorted
+     bugs in this function.  If you have problems related to these settings,
+     updating to the latest fix pack for your AIX release should fix it.
+    </para>
+
+    <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
+
+    <para>
+     One user reports:
+    </para>
+
+    <para>
+     When implementing PostgreSQL version 8.1 on AIX 5.3, we
+     periodically ran into problems where the statistics collector
+     would <quote>mysteriously</quote> not come up successfully.  This
+     appears to be the result of unexpected behaviour in the IPv6
+     implementation.  It looks like PostgreSQL and IPv6 do not play
+     very well together at this time on AIX.
+    </para>
+
+    <para>
+     Any of the following actions <quote>fix</quote> the problem.
+     <itemizedlist>
+      <listitem>
+       <para>
+        Delete the IPv6 address for localhost:
+<screen>
+(as root)
+# ifconfig lo0 inet6 ::1/0 delete
+</screen>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove IPv6 from net services.  The
+        file <filename>/etc/netsvc.conf</filename> on AIX is roughly
+        equivalent to <filename>/etc/nsswitch.conf</filename> on
+        Solaris/Linux.  The default, on AIX, is thus:
+<programlisting>
+hosts=local,bind
+</programlisting>
+        Replace this with:
+<programlisting>
+hosts=local4,bind4
+</programlisting>
+        to deactivate searching for IPv6 addresses.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Memory management</title>
     <!-- http://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
 
     <para>
@@ -2291,52 +2350,6 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
        </publisher>
      </biblioentry>
     </bibliography>
-   </sect3>
-
-   <sect3>
-    <title>Statistics Collector Issues</title>
-    <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
-
-    <para>
-     When implementing PostgreSQL version 8.1 on AIX 5.3, we
-     periodically ran into problems where the statistics collector
-     would <quote>mysteriously</quote> not come up successfully.  This
-     appears to be the result of unexpected behaviour in the IPv6
-     implementation.  It looks like PostgreSQL and IPv6 do not play
-     very well together at this time on AIX.
-    </para>
-
-    <para>
-     Any of the following actions <quote>fix</quote> the problem.
-     <itemizedlist>
-      <listitem>
-       <para>
-        Delete the IPv6 address for localhost:
-<screen>
-(as root)
-# ifconfig lo0 inet6 ::1/0 delete
-</screen>
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Remove IPv6 from net services.  The
-        file <filename>/etc/netsvc.conf</filename> on AIX is roughly
-        equivalent to <filename>/etc/nsswitch.conf</filename> on
-        Solaris/Linux.  The default, on AIX, is thus:
-<programlisting>
-hosts=local,bind
-</programlisting>
-        Replace this with:
-<programlisting>
-hosts=local4,bind4
-</programlisting>
-        to deactivate searching for IPv6 addresses.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
    </sect3>
   </sect2>
 
