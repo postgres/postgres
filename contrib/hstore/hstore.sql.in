@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.10 2009/03/25 22:19:01 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/hstore/hstore.sql.in,v 1.11 2009/06/11 18:30:03 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -127,7 +127,7 @@ CREATE OPERATOR ~ (
 CREATE OR REPLACE FUNCTION tconvert(text,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE; -- not STRICT
 
 CREATE OPERATOR => (
 	LEFTARG = text,
@@ -187,12 +187,12 @@ CREATE TYPE ghstore (
 CREATE OR REPLACE FUNCTION ghstore_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION ghstore_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION ghstore_penalty(internal,internal,internal)
 RETURNS internal
@@ -202,22 +202,22 @@ LANGUAGE C IMMUTABLE STRICT;
 CREATE OR REPLACE FUNCTION ghstore_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION ghstore_union(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION ghstore_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION ghstore_consistent(internal,internal,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 -- register the opclass for indexing (not as default)
 CREATE OPERATOR CLASS gist_hstore_ops
@@ -242,17 +242,17 @@ AS
 CREATE OR REPLACE FUNCTION gin_extract_hstore(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gin_extract_hstore_query(internal, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gin_consistent_hstore(internal, int2, internal, int4, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR CLASS gin_hstore_ops
 DEFAULT FOR TYPE hstore USING gin

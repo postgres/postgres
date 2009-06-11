@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/seg/seg.sql.in,v 1.18 2008/04/18 18:43:08 alvherre Exp $ */
+/* $PostgreSQL: pgsql/contrib/seg/seg.sql.in,v 1.19 2009/06/11 18:30:03 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -330,37 +330,37 @@ CREATE OPERATOR ~ (
 CREATE OR REPLACE FUNCTION gseg_consistent(internal,seg,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_compress(internal)
 RETURNS internal 
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_decompress(internal)
 RETURNS internal 
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_union(internal, internal)
 RETURNS seg 
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gseg_same(seg, seg, internal)
 RETURNS internal 
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 
 -- Create the operator classes for indexing

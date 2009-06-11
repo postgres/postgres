@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.31 2009/06/07 20:09:34 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/intarray/_int.sql.in,v 1.32 2009/06/11 18:30:03 tgl Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -326,17 +326,17 @@ CREATE OPERATOR & (
 CREATE OR REPLACE FUNCTION g_int_consistent(internal,_int4,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_int_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_int_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_int_penalty(internal,internal,internal)
 RETURNS internal
@@ -346,17 +346,17 @@ LANGUAGE C IMMUTABLE STRICT;
 CREATE OR REPLACE FUNCTION g_int_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_int_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_int_same(_int4, _int4, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 
 -- Create the operator class for indexing
@@ -403,17 +403,17 @@ CREATE TYPE intbig_gkey (
 CREATE OR REPLACE FUNCTION g_intbig_consistent(internal,internal,int,oid,internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_intbig_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_intbig_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_intbig_penalty(internal,internal,internal)
 RETURNS internal
@@ -423,17 +423,17 @@ LANGUAGE C IMMUTABLE STRICT;
 CREATE OR REPLACE FUNCTION g_intbig_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_intbig_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION g_intbig_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 -- register the opclass for indexing (not as default)
 
@@ -461,12 +461,12 @@ AS
 CREATE OR REPLACE FUNCTION ginint4_queryextract(internal, internal, int2, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION ginint4_consistent(internal, int2, internal, int4, internal, internal)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR CLASS gin__int_ops
 FOR TYPE _int4 USING gin
