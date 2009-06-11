@@ -1,4 +1,7 @@
-# @(#)leapseconds	8.7
+# <pre>
+# @(#)leapseconds	8.8
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # Allowance for leapseconds added to each timezone file.
 
