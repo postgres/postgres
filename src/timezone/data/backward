@@ -1,4 +1,7 @@
-# @(#)backward	8.7
+# <pre>
+# @(#)backward	8.8
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.

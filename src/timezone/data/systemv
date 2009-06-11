@@ -1,4 +1,7 @@
-# @(#)systemv	8.1
+# <pre>
+# @(#)systemv	8.2
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # Old rules, should the need arise.
 # No attempt is made to handle Newfoundland, since it cannot be expressed
