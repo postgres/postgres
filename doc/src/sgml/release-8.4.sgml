@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.9 2009/06/08 14:57:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.10 2009/06/11 21:44:26 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -6,7 +6,7 @@
 
   <note>
    <title>Release date</title>
-   <simpara>2009-??-??, ITEMS CURRENT AS OF 2009-05-14</simpara>
+   <simpara>2009-??-??, ITEMS CURRENT AS OF 2009-06-11</simpara>
   </note>
 
   <sect2>
@@ -924,6 +924,14 @@
 
       <listitem>
        <para>
+        When archiving is enabled, rotate the last WAL segment at shutdown
+        so that all transactions can be archived immediately
+        (Guillaume Smet, Heikki)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Delay <quote>smart</> shutdown while a continuous archiving base backup
         is in progress (Laurenz Albe)
        </para>
@@ -1793,7 +1801,8 @@
 
       <listitem>
        <para>
-        Make parsing of <type>interval</> literals more standard-compliant (Tom)
+        Make parsing of <type>interval</> literals more standard-compliant
+        (Tom, Ron Mayer)
        </para>
 
        <para>
@@ -2051,6 +2060,13 @@
 
       <listitem>
        <para>
+        Allow the second argument of <function>pg_get_expr()</> to be zero
+        when deparsing an expression that does not contain variables (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Modify <function>pg_relation_size()</> to use <literal>regclass</>
         (Heikki)
        </para>
@@ -2108,8 +2124,22 @@
       <listitem>
        <para>
         Fix the behavior of information schema columns
-        <literal>is_insertable_into</> and <literal>is_updatable</> to
+        <structfield>is_insertable_into</> and <structfield>is_updatable</> to
         be consistent (Peter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve the behavior of information schema
+        <structfield>datetime_precision</> columns (Peter)
+       </para>
+
+       <para>
+        These columns now show zero for <type>date</> columns, and 6
+        (the default precision) for <type>time</>, <type>timestamp</>, and
+        <type>interval</> without a declared precision, rather than showing
+        null as formerly.
        </para>
       </listitem>
 
@@ -3282,8 +3312,27 @@
 
      <listitem>
       <para>
+       Enable <filename>contrib/dblink</> to use connection information
+       stored in the SQL/MED catalogs (Joe Conway)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Improve <filename>contrib/dblink</>'s reporting of errors from
        the remote server (Joe Conway)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <filename>contrib/dblink</> set <varname>client_encoding</>
+       to match the local database's encoding (Joe Conway)
+      </para>
+
+      <para>
+       This prevents encoding problems when communicating with a remote
+       database that uses a different encoding.
       </para>
      </listitem>
 
