@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstatindex.c,v 1.12 2009/03/31 22:54:31 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstatindex.c,v 1.13 2009/06/11 14:48:52 momjian Exp $
  *
  *
  * pgstatindex
@@ -76,7 +76,7 @@ typedef struct BTIndexStat
 	uint64		free_space;
 
 	uint64		fragments;
-}	BTIndexStat;
+} BTIndexStat;
 
 /* ------------------------------------------------------
  * pgstatindex()
@@ -91,8 +91,8 @@ pgstatindex(PG_FUNCTION_ARGS)
 	Relation	rel;
 	RangeVar   *relrv;
 	Datum		result;
-	BlockNumber	nblocks;
-	BlockNumber	blkno;
+	BlockNumber nblocks;
+	BlockNumber blkno;
 	BTIndexStat indexStat;
 
 	if (!superuser())
@@ -108,9 +108,9 @@ pgstatindex(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(rel));
 
 	/*
-	 * Reject attempts to read non-local temporary relations; we would
-	 * be likely to get wrong data since we have no visibility into the
-	 * owning session's local buffers.
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
 	 */
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,

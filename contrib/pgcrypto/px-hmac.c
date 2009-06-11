@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-hmac.c,v 1.7 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-hmac.c,v 1.8 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -37,19 +37,19 @@
 #define HMAC_OPAD 0x5C
 
 static unsigned
-hmac_result_size(PX_HMAC * h)
+hmac_result_size(PX_HMAC *h)
 {
 	return px_md_result_size(h->md);
 }
 
 static unsigned
-hmac_block_size(PX_HMAC * h)
+hmac_block_size(PX_HMAC *h)
 {
 	return px_md_block_size(h->md);
 }
 
 static void
-hmac_init(PX_HMAC * h, const uint8 *key, unsigned klen)
+hmac_init(PX_HMAC *h, const uint8 *key, unsigned klen)
 {
 	unsigned	bs,
 				hlen,
@@ -84,7 +84,7 @@ hmac_init(PX_HMAC * h, const uint8 *key, unsigned klen)
 }
 
 static void
-hmac_reset(PX_HMAC * h)
+hmac_reset(PX_HMAC *h)
 {
 	PX_MD	   *md = h->md;
 	unsigned	bs = px_md_block_size(md);
@@ -94,13 +94,13 @@ hmac_reset(PX_HMAC * h)
 }
 
 static void
-hmac_update(PX_HMAC * h, const uint8 *data, unsigned dlen)
+hmac_update(PX_HMAC *h, const uint8 *data, unsigned dlen)
 {
 	px_md_update(h->md, data, dlen);
 }
 
 static void
-hmac_finish(PX_HMAC * h, uint8 *dst)
+hmac_finish(PX_HMAC *h, uint8 *dst)
 {
 	PX_MD	   *md = h->md;
 	unsigned	bs,
@@ -124,7 +124,7 @@ hmac_finish(PX_HMAC * h, uint8 *dst)
 }
 
 static void
-hmac_free(PX_HMAC * h)
+hmac_free(PX_HMAC *h)
 {
 	unsigned	bs;
 
@@ -142,7 +142,7 @@ hmac_free(PX_HMAC * h)
 /* PUBLIC FUNCTIONS */
 
 int
-px_find_hmac(const char *name, PX_HMAC ** res)
+px_find_hmac(const char *name, PX_HMAC **res)
 {
 	int			err;
 	PX_MD	   *md;

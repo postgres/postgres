@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_gist.c,v 1.22 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/intarray/_int_gist.c,v 1.23 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -42,6 +42,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		retval;

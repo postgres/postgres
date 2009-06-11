@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_intbig_gist.c,v 1.19 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/intarray/_intbig_gist.c,v 1.20 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -78,7 +78,7 @@ _intbig_out(PG_FUNCTION_ARGS)
 ** intbig functions
 *********************************************************************/
 static bool
-_intbig_overlap(GISTTYPE * a, ArrayType *b)
+_intbig_overlap(GISTTYPE *a, ArrayType *b)
 {
 	int			num = ARRNELEMS(b);
 	int4	   *ptr = ARRPTR(b);
@@ -96,7 +96,7 @@ _intbig_overlap(GISTTYPE * a, ArrayType *b)
 }
 
 static bool
-_intbig_contains(GISTTYPE * a, ArrayType *b)
+_intbig_contains(GISTTYPE *a, ArrayType *b)
 {
 	int			num = ARRNELEMS(b);
 	int4	   *ptr = ARRPTR(b);
@@ -243,7 +243,7 @@ hemdistsign(BITVECP a, BITVECP b)
 }
 
 static int
-hemdist(GISTTYPE * a, GISTTYPE * b)
+hemdist(GISTTYPE *a, GISTTYPE *b)
 {
 	if (ISALLTRUE(a))
 	{
@@ -265,7 +265,7 @@ g_intbig_decompress(PG_FUNCTION_ARGS)
 }
 
 static int4
-unionkey(BITVECP sbase, GISTTYPE * add)
+unionkey(BITVECP sbase, GISTTYPE *add)
 {
 	int4		i;
 	BITVECP		sadd = GETSIGN(add);
@@ -506,6 +506,7 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		retval;

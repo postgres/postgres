@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.121 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.122 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,12 +40,12 @@ typedef struct
 } locate_windowfunc_context;
 
 static bool contain_aggs_of_level_walker(Node *node,
-						contain_aggs_of_level_context *context);
+							 contain_aggs_of_level_context *context);
 static bool locate_agg_of_level_walker(Node *node,
-						locate_agg_of_level_context *context);
+						   locate_agg_of_level_context *context);
 static bool contain_windowfuncs_walker(Node *node, void *context);
 static bool locate_windowfunc_walker(Node *node,
-									 locate_windowfunc_context *context);
+						 locate_windowfunc_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -68,7 +68,7 @@ checkExprHasAggs(Node *node)
  *	specified query level.
  *
  * The objective of this routine is to detect whether there are aggregates
- * belonging to the given query level.  Aggregates belonging to subqueries
+ * belonging to the given query level.	Aggregates belonging to subqueries
  * or outer queries do NOT cause a true result.  We must recurse into
  * subqueries to detect outer-reference aggregates that logically belong to
  * the specified query level.
@@ -123,7 +123,7 @@ contain_aggs_of_level_walker(Node *node,
  *	  Find the parse location of any aggregate of the specified query level.
  *
  * Returns -1 if no such agg is in the querytree, or if they all have
- * unknown parse location.  (The former case is probably caller error,
+ * unknown parse location.	(The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
  * Note: it might seem appropriate to merge this functionality into
@@ -136,7 +136,7 @@ locate_agg_of_level(Node *node, int levelsup)
 {
 	locate_agg_of_level_context context;
 
-	context.agg_location = -1;		/* in case we find nothing */
+	context.agg_location = -1;	/* in case we find nothing */
 	context.sublevels_up = levelsup;
 
 	/*
@@ -207,7 +207,7 @@ contain_windowfuncs_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, WindowFunc))
-		return true;		/* abort the tree traversal and return true */
+		return true;			/* abort the tree traversal and return true */
 	/* Mustn't recurse into subselects */
 	return expression_tree_walker(node, contain_windowfuncs_walker,
 								  (void *) context);
@@ -218,7 +218,7 @@ contain_windowfuncs_walker(Node *node, void *context)
  *	  Find the parse location of any windowfunc of the current query level.
  *
  * Returns -1 if no such windowfunc is in the querytree, or if they all have
- * unknown parse location.  (The former case is probably caller error,
+ * unknown parse location.	(The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
  * Note: it might seem appropriate to merge this functionality into
@@ -231,7 +231,7 @@ locate_windowfunc(Node *node)
 {
 	locate_windowfunc_context context;
 
-	context.win_location = -1;		/* in case we find nothing */
+	context.win_location = -1;	/* in case we find nothing */
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree; if
@@ -1169,7 +1169,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				 * If generating an expansion for a var of a named rowtype
 				 * (ie, this is a plain relation RTE), then we must include
 				 * dummy items for dropped columns.  If the var is RECORD (ie,
-				 * this is a JOIN), then omit dropped columns.  Either way,
+				 * this is a JOIN), then omit dropped columns.	Either way,
 				 * attach column names to the RowExpr for use of ruleutils.c.
 				 */
 				expandRTE(context->target_rte,

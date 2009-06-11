@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal-sha2.c,v 1.2 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal-sha2.c,v 1.3 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -36,27 +36,27 @@
 #include "px.h"
 #include "sha2.h"
 
-void		init_sha224(PX_MD * h);
-void		init_sha256(PX_MD * h);
-void		init_sha384(PX_MD * h);
-void		init_sha512(PX_MD * h);
+void		init_sha224(PX_MD *h);
+void		init_sha256(PX_MD *h);
+void		init_sha384(PX_MD *h);
+void		init_sha512(PX_MD *h);
 
 /* SHA224 */
 
 static unsigned
-int_sha224_len(PX_MD * h)
+int_sha224_len(PX_MD *h)
 {
 	return SHA224_DIGEST_LENGTH;
 }
 
 static unsigned
-int_sha224_block_len(PX_MD * h)
+int_sha224_block_len(PX_MD *h)
 {
 	return SHA224_BLOCK_LENGTH;
 }
 
 static void
-int_sha224_update(PX_MD * h, const uint8 *data, unsigned dlen)
+int_sha224_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	SHA224_CTX *ctx = (SHA224_CTX *) h->p.ptr;
 
@@ -64,7 +64,7 @@ int_sha224_update(PX_MD * h, const uint8 *data, unsigned dlen)
 }
 
 static void
-int_sha224_reset(PX_MD * h)
+int_sha224_reset(PX_MD *h)
 {
 	SHA224_CTX *ctx = (SHA224_CTX *) h->p.ptr;
 
@@ -72,7 +72,7 @@ int_sha224_reset(PX_MD * h)
 }
 
 static void
-int_sha224_finish(PX_MD * h, uint8 *dst)
+int_sha224_finish(PX_MD *h, uint8 *dst)
 {
 	SHA224_CTX *ctx = (SHA224_CTX *) h->p.ptr;
 
@@ -80,7 +80,7 @@ int_sha224_finish(PX_MD * h, uint8 *dst)
 }
 
 static void
-int_sha224_free(PX_MD * h)
+int_sha224_free(PX_MD *h)
 {
 	SHA224_CTX *ctx = (SHA224_CTX *) h->p.ptr;
 
@@ -92,19 +92,19 @@ int_sha224_free(PX_MD * h)
 /* SHA256 */
 
 static unsigned
-int_sha256_len(PX_MD * h)
+int_sha256_len(PX_MD *h)
 {
 	return SHA256_DIGEST_LENGTH;
 }
 
 static unsigned
-int_sha256_block_len(PX_MD * h)
+int_sha256_block_len(PX_MD *h)
 {
 	return SHA256_BLOCK_LENGTH;
 }
 
 static void
-int_sha256_update(PX_MD * h, const uint8 *data, unsigned dlen)
+int_sha256_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
@@ -112,7 +112,7 @@ int_sha256_update(PX_MD * h, const uint8 *data, unsigned dlen)
 }
 
 static void
-int_sha256_reset(PX_MD * h)
+int_sha256_reset(PX_MD *h)
 {
 	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
@@ -120,7 +120,7 @@ int_sha256_reset(PX_MD * h)
 }
 
 static void
-int_sha256_finish(PX_MD * h, uint8 *dst)
+int_sha256_finish(PX_MD *h, uint8 *dst)
 {
 	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
@@ -128,7 +128,7 @@ int_sha256_finish(PX_MD * h, uint8 *dst)
 }
 
 static void
-int_sha256_free(PX_MD * h)
+int_sha256_free(PX_MD *h)
 {
 	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
@@ -140,19 +140,19 @@ int_sha256_free(PX_MD * h)
 /* SHA384 */
 
 static unsigned
-int_sha384_len(PX_MD * h)
+int_sha384_len(PX_MD *h)
 {
 	return SHA384_DIGEST_LENGTH;
 }
 
 static unsigned
-int_sha384_block_len(PX_MD * h)
+int_sha384_block_len(PX_MD *h)
 {
 	return SHA384_BLOCK_LENGTH;
 }
 
 static void
-int_sha384_update(PX_MD * h, const uint8 *data, unsigned dlen)
+int_sha384_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
@@ -160,7 +160,7 @@ int_sha384_update(PX_MD * h, const uint8 *data, unsigned dlen)
 }
 
 static void
-int_sha384_reset(PX_MD * h)
+int_sha384_reset(PX_MD *h)
 {
 	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
@@ -168,7 +168,7 @@ int_sha384_reset(PX_MD * h)
 }
 
 static void
-int_sha384_finish(PX_MD * h, uint8 *dst)
+int_sha384_finish(PX_MD *h, uint8 *dst)
 {
 	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
@@ -176,7 +176,7 @@ int_sha384_finish(PX_MD * h, uint8 *dst)
 }
 
 static void
-int_sha384_free(PX_MD * h)
+int_sha384_free(PX_MD *h)
 {
 	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
@@ -188,19 +188,19 @@ int_sha384_free(PX_MD * h)
 /* SHA512 */
 
 static unsigned
-int_sha512_len(PX_MD * h)
+int_sha512_len(PX_MD *h)
 {
 	return SHA512_DIGEST_LENGTH;
 }
 
 static unsigned
-int_sha512_block_len(PX_MD * h)
+int_sha512_block_len(PX_MD *h)
 {
 	return SHA512_BLOCK_LENGTH;
 }
 
 static void
-int_sha512_update(PX_MD * h, const uint8 *data, unsigned dlen)
+int_sha512_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
 	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
@@ -208,7 +208,7 @@ int_sha512_update(PX_MD * h, const uint8 *data, unsigned dlen)
 }
 
 static void
-int_sha512_reset(PX_MD * h)
+int_sha512_reset(PX_MD *h)
 {
 	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
@@ -216,7 +216,7 @@ int_sha512_reset(PX_MD * h)
 }
 
 static void
-int_sha512_finish(PX_MD * h, uint8 *dst)
+int_sha512_finish(PX_MD *h, uint8 *dst)
 {
 	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
@@ -224,7 +224,7 @@ int_sha512_finish(PX_MD * h, uint8 *dst)
 }
 
 static void
-int_sha512_free(PX_MD * h)
+int_sha512_free(PX_MD *h)
 {
 	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
@@ -236,7 +236,7 @@ int_sha512_free(PX_MD * h)
 /* init functions */
 
 void
-init_sha224(PX_MD * md)
+init_sha224(PX_MD *md)
 {
 	SHA224_CTX *ctx;
 
@@ -256,7 +256,7 @@ init_sha224(PX_MD * md)
 }
 
 void
-init_sha256(PX_MD * md)
+init_sha256(PX_MD *md)
 {
 	SHA256_CTX *ctx;
 
@@ -276,7 +276,7 @@ init_sha256(PX_MD * md)
 }
 
 void
-init_sha384(PX_MD * md)
+init_sha384(PX_MD *md)
 {
 	SHA384_CTX *ctx;
 
@@ -296,7 +296,7 @@ init_sha384(PX_MD * md)
 }
 
 void
-init_sha512(PX_MD * md)
+init_sha512(PX_MD *md)
 {
 	SHA512_CTX *ctx;
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.5 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/mingwcompat.c,v 1.6 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,8 @@ LoadKernel32()
  * kernel32.dll·
  */
 typedef
-BOOL(WINAPI * __RegisterWaitForSingleObject)
-(PHANDLE, HANDLE, WAITORTIMERCALLBACK, PVOID, ULONG, ULONG);
+BOOL		(WINAPI * __RegisterWaitForSingleObject)
+			(PHANDLE, HANDLE, WAITORTIMERCALLBACK, PVOID, ULONG, ULONG);
 static __RegisterWaitForSingleObject _RegisterWaitForSingleObject = NULL;
 
 BOOL		WINAPI

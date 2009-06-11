@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/catalog.h,v 1.43 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/catalog.h,v 1.44 2009/06/11 14:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ extern bool IsReservedName(const char *name);
 extern bool IsSharedRelation(Oid relationId);
 
 extern Oid	GetNewOid(Relation relation);
-extern Oid	GetNewOidWithIndex(Relation relation, Oid indexId,
-							   AttrNumber oidcolumn);
+extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
+				   AttrNumber oidcolumn);
 extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared,
 				  Relation pg_class);
 

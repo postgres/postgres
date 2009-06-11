@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.146 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.147 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,30 +104,37 @@ GetCCHashEqFuncs(Oid keytype, PGFunction *hashfunc, RegProcedure *eqfunc)
 	{
 		case BOOLOID:
 			*hashfunc = hashchar;
+
 			*eqfunc = F_BOOLEQ;
 			break;
 		case CHAROID:
 			*hashfunc = hashchar;
+
 			*eqfunc = F_CHAREQ;
 			break;
 		case NAMEOID:
 			*hashfunc = hashname;
+
 			*eqfunc = F_NAMEEQ;
 			break;
 		case INT2OID:
 			*hashfunc = hashint2;
+
 			*eqfunc = F_INT2EQ;
 			break;
 		case INT2VECTOROID:
 			*hashfunc = hashint2vector;
+
 			*eqfunc = F_INT2VECTOREQ;
 			break;
 		case INT4OID:
 			*hashfunc = hashint4;
+
 			*eqfunc = F_INT4EQ;
 			break;
 		case TEXTOID:
 			*hashfunc = hashtext;
+
 			*eqfunc = F_TEXTEQ;
 			break;
 		case OIDOID:
@@ -140,15 +147,18 @@ GetCCHashEqFuncs(Oid keytype, PGFunction *hashfunc, RegProcedure *eqfunc)
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
 			*hashfunc = hashoid;
+
 			*eqfunc = F_OIDEQ;
 			break;
 		case OIDVECTOROID:
 			*hashfunc = hashoidvector;
+
 			*eqfunc = F_OIDVECTOREQ;
 			break;
 		default:
 			elog(FATAL, "type %u not supported as catcache key", keytype);
 			*hashfunc = NULL;	/* keep compiler quiet */
+
 			*eqfunc = InvalidOid;
 			break;
 	}

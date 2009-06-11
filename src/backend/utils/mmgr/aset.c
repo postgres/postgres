@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.78 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.79 2009/06/11 14:49:06 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -305,8 +305,7 @@ randomize_mem(char *ptr, size_t size)
 	}
 	save_ctr = ctr;
 }
-
-#endif /* RANDOMIZE_ALLOCATED_MEMORY */
+#endif   /* RANDOMIZE_ALLOCATED_MEMORY */
 
 
 /*

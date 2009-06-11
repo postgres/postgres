@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.273 2009/05/13 20:27:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.274 2009/06/11 14:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,7 +456,7 @@ GetCurrentSubTransactionId(void)
  *
  * "used" must be TRUE if the caller intends to use the command ID to mark
  * inserted/updated/deleted tuples.  FALSE means the ID is being fetched
- * for read-only purposes (ie, as a snapshot validity cutoff).  See
+ * for read-only purposes (ie, as a snapshot validity cutoff).	See
  * CommandCounterIncrement() for discussion.
  */
 CommandId
@@ -566,7 +566,8 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	 */
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
-		int low, high;
+		int			low,
+					high;
 
 		if (s->state == TRANS_ABORT)
 			continue;
@@ -579,8 +580,8 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 		high = s->nChildXids - 1;
 		while (low <= high)
 		{
-			int				middle;
-			TransactionId	probe;
+			int			middle;
+			TransactionId probe;
 
 			middle = low + (high - low) / 2;
 			probe = s->childXids[middle];
@@ -604,33 +605,31 @@ void
 CommandCounterIncrement(void)
 {
 	/*
-	 * If the current value of the command counter hasn't been "used" to
-	 * mark tuples, we need not increment it, since there's no need to
-	 * distinguish a read-only command from others.  This helps postpone
-	 * command counter overflow, and keeps no-op CommandCounterIncrement
-	 * operations cheap.
+	 * If the current value of the command counter hasn't been "used" to mark
+	 * tuples, we need not increment it, since there's no need to distinguish
+	 * a read-only command from others.  This helps postpone command counter
+	 * overflow, and keeps no-op CommandCounterIncrement operations cheap.
 	 */
 	if (currentCommandIdUsed)
 	{
 		currentCommandId += 1;
-		if (currentCommandId == FirstCommandId)	/* check for overflow */
+		if (currentCommandId == FirstCommandId) /* check for overflow */
 		{
 			currentCommandId -= 1;
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-		  errmsg("cannot have more than 2^32-1 commands in a transaction")));
+					 errmsg("cannot have more than 2^32-1 commands in a transaction")));
 		}
 		currentCommandIdUsed = false;
 
 		/* Propagate new command ID into static snapshots */
 		SnapshotSetCommandId(currentCommandId);
-		
+
 		/*
-		 * Make any catalog changes done by the just-completed command
-		 * visible in the local syscache.  We obviously don't need to do
-		 * this after a read-only command.  (But see hacks in inval.c
-		 * to make real sure we don't think a command that queued inval
-		 * messages was read-only.)
+		 * Make any catalog changes done by the just-completed command visible
+		 * in the local syscache.  We obviously don't need to do this after a
+		 * read-only command.  (But see hacks in inval.c to make real sure we
+		 * don't think a command that queued inval messages was read-only.)
 		 */
 		AtCommit_LocalCache();
 	}
@@ -638,11 +637,11 @@ CommandCounterIncrement(void)
 	/*
 	 * Make any other backends' catalog changes visible to me.
 	 *
-	 * XXX this is probably in the wrong place: CommandCounterIncrement
-	 * should be purely a local operation, most likely.  However fooling
-	 * with this will affect asynchronous cross-backend interactions,
-	 * which doesn't seem like a wise thing to do in late beta, so save
-	 * improving this for another day - tgl 2007-11-30
+	 * XXX this is probably in the wrong place: CommandCounterIncrement should
+	 * be purely a local operation, most likely.  However fooling with this
+	 * will affect asynchronous cross-backend interactions, which doesn't seem
+	 * like a wise thing to do in late beta, so save improving this for
+	 * another day - tgl 2007-11-30
 	 */
 	AtStart_Cache();
 }
@@ -1086,14 +1085,14 @@ AtSubCommit_childXids(void)
 	/* Allocate or enlarge the parent array if necessary */
 	if (s->parent->maxChildXids < new_nChildXids)
 	{
-		int				new_maxChildXids;
-		TransactionId  *new_childXids;
+		int			new_maxChildXids;
+		TransactionId *new_childXids;
 
 		/*
 		 * Make it 2x what's needed right now, to avoid having to enlarge it
-		 * repeatedly. But we can't go above MaxAllocSize.  (The latter
-		 * limit is what ensures that we don't need to worry about integer
-		 * overflow here or in the calculation of new_nChildXids.)
+		 * repeatedly. But we can't go above MaxAllocSize.  (The latter limit
+		 * is what ensures that we don't need to worry about integer overflow
+		 * here or in the calculation of new_nChildXids.)
 		 */
 		new_maxChildXids = Min(new_nChildXids * 2,
 							   (int) (MaxAllocSize / sizeof(TransactionId)));
@@ -1111,13 +1110,13 @@ AtSubCommit_childXids(void)
 		 */
 		if (s->parent->childXids == NULL)
 			new_childXids =
-				MemoryContextAlloc(TopTransactionContext, 
+				MemoryContextAlloc(TopTransactionContext,
 								   new_maxChildXids * sizeof(TransactionId));
 		else
-			new_childXids = repalloc(s->parent->childXids, 
-									 new_maxChildXids * sizeof(TransactionId));
+			new_childXids = repalloc(s->parent->childXids,
+								   new_maxChildXids * sizeof(TransactionId));
 
-		s->parent->childXids  = new_childXids;
+		s->parent->childXids = new_childXids;
 		s->parent->maxChildXids = new_maxChildXids;
 	}
 
@@ -1126,9 +1125,9 @@ AtSubCommit_childXids(void)
 	 *
 	 * Note: We rely on the fact that the XID of a child always follows that
 	 * of its parent.  By copying the XID of this subtransaction before the
-	 * XIDs of its children, we ensure that the array stays ordered.  Likewise,
-	 * all XIDs already in the array belong to subtransactions started and
-	 * subcommitted before us, so their XIDs must precede ours.
+	 * XIDs of its children, we ensure that the array stays ordered.
+	 * Likewise, all XIDs already in the array belong to subtransactions
+	 * started and subcommitted before us, so their XIDs must precede ours.
 	 */
 	s->parent->childXids[s->parent->nChildXids] = s->transactionId;
 
@@ -1801,15 +1800,15 @@ PrepareTransaction(void)
 	/* NOTIFY and flatfiles will be handled below */
 
 	/*
-	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table
-	 * in this transaction.  Having the prepared xact hold locks on another
+	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table in
+	 * this transaction.  Having the prepared xact hold locks on another
 	 * backend's temp table seems a bad idea --- for instance it would prevent
-	 * the backend from exiting.  There are other problems too, such as how
-	 * to clean up the source backend's local buffers and ON COMMIT state
-	 * if the prepared xact includes a DROP of a temp table.
+	 * the backend from exiting.  There are other problems too, such as how to
+	 * clean up the source backend's local buffers and ON COMMIT state if the
+	 * prepared xact includes a DROP of a temp table.
 	 *
-	 * We must check this after executing any ON COMMIT actions, because
-	 * they might still access a temp relation.
+	 * We must check this after executing any ON COMMIT actions, because they
+	 * might still access a temp relation.
 	 *
 	 * XXX In principle this could be relaxed to allow some useful special
 	 * cases, such as a temp table created and dropped all within the
@@ -2021,8 +2020,8 @@ AbortTransaction(void)
 	/*
 	 * Reset user ID which might have been changed transiently.  We need this
 	 * to clean up in case control escaped out of a SECURITY DEFINER function
-	 * or other local change of CurrentUserId; therefore, the prior value
-	 * of SecurityDefinerContext also needs to be restored.
+	 * or other local change of CurrentUserId; therefore, the prior value of
+	 * SecurityDefinerContext also needs to be restored.
 	 *
 	 * (Note: it is not necessary to restore session authorization or role
 	 * settings here because those can only be changed via GUC, and GUC will
@@ -3749,8 +3748,8 @@ CommitSubTransaction(void)
 	/* Must CCI to ensure commands of subtransaction are seen as done */
 	CommandCounterIncrement();
 
-	/* 
-	 * Prior to 8.4 we marked subcommit in clog at this point.  We now only
+	/*
+	 * Prior to 8.4 we marked subcommit in clog at this point.	We now only
 	 * perform that step, if required, as part of the atomic update of the
 	 * whole transaction tree at top level commit or abort.
 	 */
@@ -3868,8 +3867,8 @@ AbortSubTransaction(void)
 	s->state = TRANS_ABORT;
 
 	/*
-	 * Reset user ID which might have been changed transiently.  (See notes
-	 * in AbortTransaction.)
+	 * Reset user ID which might have been changed transiently.  (See notes in
+	 * AbortTransaction.)
 	 */
 	SetUserIdAndContext(s->prevUser, s->prevSecDefCxt);
 
@@ -4089,7 +4088,7 @@ ShowTransactionStateRec(TransactionState s)
 
 	if (s->nChildXids > 0)
 	{
-		int i;
+		int			i;
 
 		appendStringInfo(&buf, "%u", s->childXids[0]);
 		for (i = 1; i < s->nChildXids; i++)
@@ -4241,7 +4240,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid)
 	for (i = 0; i < xlrec->nrels; i++)
 	{
 		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
-		ForkNumber fork;
+		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
@@ -4284,7 +4283,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	for (i = 0; i < xlrec->nrels; i++)
 	{
 		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
-		ForkNumber fork;
+		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
@@ -4353,7 +4352,8 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
 		}
@@ -4380,7 +4380,8 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
 		}

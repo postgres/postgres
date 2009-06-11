@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.374 2009/05/18 16:15:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.375 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,9 +176,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	/*
 	 * ssl options are allowed even without client SSL support because the
-	 * client can still handle SSL modes "disable" and "allow". Other parameters
-	 * have no effect on non-SSL connections, so there is no reason to exclude them
-	 * since none of them are mandatory.
+	 * client can still handle SSL modes "disable" and "allow". Other
+	 * parameters have no effect on non-SSL connections, so there is no reason
+	 * to exclude them since none of them are mandatory.
 	 */
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
@@ -566,7 +566,7 @@ connectOptions2(PGconn *conn)
  *
  * Parse an empty string like PQconnectdb() would do and return the
  * resulting connection options array, ie, all the default values that are
- * available from the environment etc.  On error (eg out of memory),
+ * available from the environment etc.	On error (eg out of memory),
  * NULL is returned.
  *
  * Using this function, an application may determine all possible options
@@ -949,7 +949,11 @@ connectDBComplete(PGconn *conn)
 		switch (flag)
 		{
 			case PGRES_POLLING_OK:
-				/* Reset stored error messages since we now have a working connection */
+
+				/*
+				 * Reset stored error messages since we now have a working
+				 * connection
+				 */
 				resetPQExpBuffer(&conn->errorMessage);
 				return 1;		/* success! */
 
@@ -1330,7 +1334,10 @@ keep_going:						/* We will come back to here until there is
 														EnvironmentOptions);
 				if (!startpacket)
 				{
-					/* will not appendbuffer here, since it's likely to also run out of memory */
+					/*
+					 * will not appendbuffer here, since it's likely to also
+					 * run out of memory
+					 */
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("out of memory\n"));
 					goto error_return;
@@ -1407,7 +1414,8 @@ keep_going:						/* We will come back to here until there is
 					else if (SSLok == 'N')
 					{
 						if (conn->sslmode[0] == 'r' ||	/* "require" */
-							conn->sslmode[0] == 'v')    /* "verify-ca" or "verify-full" */
+							conn->sslmode[0] == 'v')	/* "verify-ca" or
+														 * "verify-full" */
 						{
 							/* Require SSL, but server does not want it */
 							appendPQExpBuffer(&conn->errorMessage,
@@ -1425,7 +1433,8 @@ keep_going:						/* We will come back to here until there is
 						if (conn->Pfdebug)
 							fprintf(conn->Pfdebug, "received error from server, attempting fallback to pre-7.0\n");
 						if (conn->sslmode[0] == 'r' ||	/* "require" */
-							conn->sslmode[0] == 'v')    /* "verify-ca" or "verify-full" */
+							conn->sslmode[0] == 'v')	/* "verify-ca" or
+														 * "verify-full" */
 						{
 							/* Require SSL, but server is too old */
 							appendPQExpBuffer(&conn->errorMessage,
@@ -2070,7 +2079,7 @@ freePGconn(PGconn *conn)
  *	 - properly close a connection to the backend
  *
  * This should reset or release all transient state, but NOT the connection
- * parameters.  On exit, the PGconn should be in condition to start a fresh
+ * parameters.	On exit, the PGconn should be in condition to start a fresh
  * connection with the same parameters (see PQreset()).
  */
 static void
@@ -2206,10 +2215,10 @@ PQreset(PGconn *conn)
 		if (connectDBStart(conn) && connectDBComplete(conn))
 		{
 			/*
-			 * Notify event procs of successful reset.  We treat an event
-			 * proc failure as disabling the connection ... good idea?
+			 * Notify event procs of successful reset.	We treat an event proc
+			 * failure as disabling the connection ... good idea?
 			 */
-			int i;
+			int			i;
 
 			for (i = 0; i < conn->nEvents; i++)
 			{
@@ -2266,10 +2275,10 @@ PQresetPoll(PGconn *conn)
 		if (status == PGRES_POLLING_OK)
 		{
 			/*
-			 * Notify event procs of successful reset.  We treat an event
-			 * proc failure as disabling the connection ... good idea?
+			 * Notify event procs of successful reset.	We treat an event proc
+			 * failure as disabling the connection ... good idea?
 			 */
-			int i;
+			int			i;
 
 			for (i = 0; i < conn->nEvents; i++)
 			{
@@ -3139,7 +3148,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
  *		PQconninfoParse
  *
  * Parse a string like PQconnectdb() would do and return the
- * resulting connection options array.  NULL is returned on failure.
+ * resulting connection options array.	NULL is returned on failure.
  * The result contains only options specified directly in the string,
  * not any possible default values.
  *

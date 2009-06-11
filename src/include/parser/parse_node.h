@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.61 2009/01/22 20:16:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.62 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@
  * to make an RTE before you can access a CTE.
  *
  * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
- * visible due to scope rules.  This is used to help improve error messages.
+ * visible due to scope rules.	This is used to help improve error messages.
  *
  * p_windowdefs: list of WindowDefs representing WINDOW and OVER clauses.
  * We collect these while transforming expressions and then transform them
@@ -122,7 +122,7 @@ extern void setup_parser_errposition_callback(ParseCallbackState *pcbstate,
 extern void cancel_parser_errposition_callback(ParseCallbackState *pcbstate);
 
 extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno,
-					 int location);
+		 int location);
 extern Oid	transformArrayType(Oid arrayType);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,

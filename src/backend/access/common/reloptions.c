@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.27 2009/05/24 22:22:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.28 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static relopt_bool boolRelOpts[] =
 		true
 	},
 	/* list terminator */
-	{ { NULL } }
+	{{NULL}}
 };
 
 static relopt_int intRelOpts[] =
@@ -158,7 +158,7 @@ static relopt_int intRelOpts[] =
 		}, 150000000, 0, 2000000000
 	},
 	/* list terminator */
-	{ { NULL } }
+	{{NULL}}
 };
 
 static relopt_real realRelOpts[] =
@@ -180,21 +180,21 @@ static relopt_real realRelOpts[] =
 		0.1, 0.0, 100.0
 	},
 	/* list terminator */
-	{ { NULL } }
+	{{NULL}}
 };
 
 static relopt_string stringRelOpts[] =
 {
 	/* list terminator */
-	{ { NULL } }
+	{{NULL}}
 };
 
 static relopt_gen **relOpts = NULL;
 static bits32 last_assigned_kind = RELOPT_KIND_LAST_DEFAULT;
 
-static int		num_custom_options = 0;
+static int	num_custom_options = 0;
 static relopt_gen **custom_options = NULL;
-static bool		need_initialization = true;
+static bool need_initialization = true;
 
 static void initialize_reloptions(void);
 static void parse_one_reloption(relopt_value *option, char *text_str,
@@ -202,15 +202,15 @@ static void parse_one_reloption(relopt_value *option, char *text_str,
 
 /*
  * initialize_reloptions
- * 		initialization routine, must be called before parsing
+ *		initialization routine, must be called before parsing
  *
  * Initialize the relOpts array and fill each variable's type and name length.
  */
 static void
 initialize_reloptions(void)
 {
-	int		i;
-	int		j = 0;
+	int			i;
+	int			j = 0;
 
 	for (i = 0; boolRelOpts[i].gen.name; i++)
 		j++;
@@ -272,8 +272,8 @@ initialize_reloptions(void)
 
 /*
  * add_reloption_kind
- * 		Create a new relopt_kind value, to be used in custom reloptions by
- * 		user-defined AMs.
+ *		Create a new relopt_kind value, to be used in custom reloptions by
+ *		user-defined AMs.
  */
 relopt_kind
 add_reloption_kind(void)
@@ -282,24 +282,24 @@ add_reloption_kind(void)
 	if (last_assigned_kind >= RELOPT_KIND_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("user-defined relation parameter types limit exceeded")));
+			errmsg("user-defined relation parameter types limit exceeded")));
 	last_assigned_kind <<= 1;
 	return (relopt_kind) last_assigned_kind;
 }
 
 /*
  * add_reloption
- * 		Add an already-created custom reloption to the list, and recompute the
- * 		main parser table.
+ *		Add an already-created custom reloption to the list, and recompute the
+ *		main parser table.
  */
 static void
 add_reloption(relopt_gen *newoption)
 {
-	static int		max_custom_options = 0;
+	static int	max_custom_options = 0;
 
 	if (num_custom_options >= max_custom_options)
 	{
-		MemoryContext	oldcxt;
+		MemoryContext oldcxt;
 
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -312,7 +312,7 @@ add_reloption(relopt_gen *newoption)
 		{
 			max_custom_options *= 2;
 			custom_options = repalloc(custom_options,
-									  max_custom_options * sizeof(relopt_gen *));
+								  max_custom_options * sizeof(relopt_gen *));
 		}
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -323,15 +323,15 @@ add_reloption(relopt_gen *newoption)
 
 /*
  * allocate_reloption
- * 		Allocate a new reloption and initialize the type-agnostic fields
- * 		(for types other than string)
+ *		Allocate a new reloption and initialize the type-agnostic fields
+ *		(for types other than string)
  */
 static relopt_gen *
 allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 {
-	MemoryContext	oldcxt;
-	size_t			size;
-	relopt_gen	   *newoption;
+	MemoryContext oldcxt;
+	size_t		size;
+	relopt_gen *newoption;
 
 	Assert(type != RELOPT_TYPE_STRING);
 
@@ -350,7 +350,7 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 			break;
 		default:
 			elog(ERROR, "unsupported option type");
-			return NULL;	/* keep compiler quiet */
+			return NULL;		/* keep compiler quiet */
 	}
 
 	newoption = palloc(size);
@@ -371,12 +371,12 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 
 /*
  * add_bool_reloption
- * 		Add a new boolean reloption
+ *		Add a new boolean reloption
  */
 void
 add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
 {
-	relopt_bool	   *newoption;
+	relopt_bool *newoption;
 
 	newoption = (relopt_bool *) allocate_reloption(kinds, RELOPT_TYPE_BOOL,
 												   name, desc);
@@ -387,13 +387,13 @@ add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
 
 /*
  * add_int_reloption
- * 		Add a new integer reloption
+ *		Add a new integer reloption
  */
 void
 add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
 				  int min_val, int max_val)
 {
-	relopt_int	   *newoption;
+	relopt_int *newoption;
 
 	newoption = (relopt_int *) allocate_reloption(kinds, RELOPT_TYPE_INT,
 												  name, desc);
@@ -406,13 +406,13 @@ add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
 
 /*
  * add_real_reloption
- * 		Add a new float reloption
+ *		Add a new float reloption
  */
 void
 add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
-				  double min_val, double max_val)
+				   double min_val, double max_val)
 {
-	relopt_real	   *newoption;
+	relopt_real *newoption;
 
 	newoption = (relopt_real *) allocate_reloption(kinds, RELOPT_TYPE_REAL,
 												   name, desc);
@@ -428,7 +428,7 @@ add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
  *		Add a new string reloption
  *
  * "validator" is an optional function pointer that can be used to test the
- * validity of the values.  It must elog(ERROR) when the argument string is
+ * validity of the values.	It must elog(ERROR) when the argument string is
  * not acceptable for the variable.  Note that the default value must pass
  * the validation.
  */
@@ -436,9 +436,9 @@ void
 add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
 					 validate_string_relopt validator)
 {
-	MemoryContext	oldcxt;
-	relopt_string  *newoption;
-	int				default_len = 0;
+	MemoryContext oldcxt;
+	relopt_string *newoption;
+	int			default_len = 0;
 
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -495,7 +495,7 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
  * Note that this is not responsible for determining whether the options
  * are valid, but it does check that namespaces for all the options given are
  * listed in validnsps.  The NULL namespace is always valid and needs not be
- * explicitely listed.  Passing a NULL pointer means that only the NULL
+ * explicitely listed.	Passing a NULL pointer means that only the NULL
  * namespace is valid.
  *
  * Both oldOptions and the result are text arrays (or NULL for "default"),
@@ -538,7 +538,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			/* Search for a match in defList */
 			foreach(cell, defList)
 			{
-				DefElem	   *def = (DefElem *) lfirst(cell);
+				DefElem    *def = (DefElem *) lfirst(cell);
 				int			kw_len;
 
 				/* ignore if not in the same namespace */
@@ -574,7 +574,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 	 */
 	foreach(cell, defList)
 	{
-		DefElem	   *def = (DefElem *) lfirst(cell);
+		DefElem    *def = (DefElem *) lfirst(cell);
 
 		if (isReset)
 		{
@@ -590,13 +590,13 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			Size		len;
 
 			/*
-			 * Error out if the namespace is not valid.  A NULL namespace
-			 * is always valid.
+			 * Error out if the namespace is not valid.  A NULL namespace is
+			 * always valid.
 			 */
 			if (def->defnamespace != NULL)
 			{
-				bool	valid = false;
-				int		i;
+				bool		valid = false;
+				int			i;
 
 				if (validnsps)
 				{
@@ -719,10 +719,10 @@ untransformRelOptions(Datum options)
 bytea *
 extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 {
-	bytea  *options;
-	bool	isnull;
-	Datum	datum;
-	Form_pg_class	classForm;
+	bytea	   *options;
+	bool		isnull;
+	Datum		datum;
+	Form_pg_class classForm;
 
 	datum = fastgetattr(tuple,
 						Anum_pg_class_reloptions,
@@ -768,7 +768,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
  * is returned.
  *
  * Note: values of type int, bool and real are allocated as part of the
- * returned array.  Values of type string are allocated separately and must
+ * returned array.	Values of type string are allocated separately and must
  * be freed by the caller.
  */
 relopt_value *
@@ -894,31 +894,31 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				parsed = parse_bool(value, &option->values.bool_val);
 				if (validate && !parsed)
 					ereport(ERROR,
-							(errmsg("invalid value for boolean option \"%s\": %s",
-									option->gen->name, value)));
+					   (errmsg("invalid value for boolean option \"%s\": %s",
+							   option->gen->name, value)));
 			}
 			break;
 		case RELOPT_TYPE_INT:
 			{
-				relopt_int	*optint = (relopt_int *) option->gen;
+				relopt_int *optint = (relopt_int *) option->gen;
 
 				parsed = parse_int(value, &option->values.int_val, 0, NULL);
 				if (validate && !parsed)
 					ereport(ERROR,
-							(errmsg("invalid value for integer option \"%s\": %s",
-									option->gen->name, value)));
+					   (errmsg("invalid value for integer option \"%s\": %s",
+							   option->gen->name, value)));
 				if (validate && (option->values.int_val < optint->min ||
 								 option->values.int_val > optint->max))
 					ereport(ERROR,
-							(errmsg("value %s out of bounds for option \"%s\"",
-									value, option->gen->name),
-							 errdetail("Valid values are between \"%d\" and \"%d\".",
-									   optint->min, optint->max)));
+						  (errmsg("value %s out of bounds for option \"%s\"",
+								  value, option->gen->name),
+					 errdetail("Valid values are between \"%d\" and \"%d\".",
+							   optint->min, optint->max)));
 			}
 			break;
 		case RELOPT_TYPE_REAL:
 			{
-				relopt_real	*optreal = (relopt_real *) option->gen;
+				relopt_real *optreal = (relopt_real *) option->gen;
 
 				parsed = parse_real(value, &option->values.real_val);
 				if (validate && !parsed)
@@ -928,15 +928,15 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 				if (validate && (option->values.real_val < optreal->min ||
 								 option->values.real_val > optreal->max))
 					ereport(ERROR,
-							(errmsg("value %s out of bounds for option \"%s\"",
-									value, option->gen->name),
-							 errdetail("Valid values are between \"%f\" and \"%f\".",
-									   optreal->min, optreal->max)));
+						  (errmsg("value %s out of bounds for option \"%s\"",
+								  value, option->gen->name),
+					 errdetail("Valid values are between \"%f\" and \"%f\".",
+							   optreal->min, optreal->max)));
 			}
 			break;
 		case RELOPT_TYPE_STRING:
 			{
-				relopt_string   *optstring = (relopt_string *) option->gen;
+				relopt_string *optstring = (relopt_string *) option->gen;
 
 				option->values.string_val = value;
 				nofree = true;
@@ -947,7 +947,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 			break;
 		default:
 			elog(ERROR, "unsupported reloption type %d", option->gen->type);
-			parsed = true; /* quiet compiler */
+			parsed = true;		/* quiet compiler */
 			break;
 	}
 
@@ -967,8 +967,8 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
 void *
 allocateReloptStruct(Size base, relopt_value *options, int numoptions)
 {
-	Size	size = base;
-	int		i;
+	Size		size = base;
+	int			i;
 
 	for (i = 0; i < numoptions; i++)
 		if (options[i].gen->type == RELOPT_TYPE_STRING)
@@ -994,21 +994,21 @@ fillRelOptions(void *rdopts, Size basesize,
 			   bool validate,
 			   const relopt_parse_elt *elems, int numelems)
 {
-	int		i;
-	int		offset = basesize;
+	int			i;
+	int			offset = basesize;
 
 	for (i = 0; i < numoptions; i++)
 	{
-		int		j;
-		bool	found = false;
+		int			j;
+		bool		found = false;
 
 		for (j = 0; j < numelems; j++)
 		{
 			if (pg_strcasecmp(options[i].gen->name, elems[j].optname) == 0)
 			{
 				relopt_string *optstring;
-				char   *itempos = ((char *) rdopts) + elems[j].offset;
-				char   *string_val;
+				char	   *itempos = ((char *) rdopts) + elems[j].offset;
+				char	   *string_val;
 
 				switch (options[i].gen->type)
 				{
@@ -1069,31 +1069,31 @@ fillRelOptions(void *rdopts, Size basesize,
 bytea *
 default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 {
-	relopt_value   *options;
-	StdRdOptions   *rdopts;
-	int				numoptions;
+	relopt_value *options;
+	StdRdOptions *rdopts;
+	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
 		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, enabled)},
 		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_threshold)},
 		{"autovacuum_analyze_threshold", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_threshold)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_threshold)},
 		{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_cost_delay)},
 		{"autovacuum_vacuum_cost_limit", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_limit)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_cost_limit)},
 		{"autovacuum_freeze_min_age", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_min_age)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, freeze_min_age)},
 		{"autovacuum_freeze_max_age", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_max_age)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, freeze_max_age)},
 		{"autovacuum_freeze_table_age", RELOPT_TYPE_INT,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, freeze_table_age)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, freeze_table_age)},
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_scale_factor)},
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
-			offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_scale_factor)}
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);

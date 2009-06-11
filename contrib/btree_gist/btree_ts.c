@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_ts.c,v 1.16 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_ts.c,v 1.17 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -9,7 +9,7 @@ typedef struct
 {
 	Timestamp	lower;
 	Timestamp	upper;
-}	tsKEY;
+} tsKEY;
 
 /*
 ** timestamp ops
@@ -192,6 +192,7 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	Timestamp	query = PG_GETARG_TIMESTAMP(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	tsKEY	   *kkk = (tsKEY *) DatumGetPointer(entry->key);
@@ -200,8 +201,8 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	key.lower = (GBT_NUMKEY *) & kkk->lower;
-	key.upper = (GBT_NUMKEY *) & kkk->upper;
+	key.lower = (GBT_NUMKEY *) &kkk->lower;
+	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
@@ -212,8 +213,9 @@ Datum
 gbt_tstz_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	TimestampTz	query = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz query = PG_GETARG_TIMESTAMPTZ(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	char	   *kkk = (char *) DatumGetPointer(entry->key);
@@ -223,8 +225,8 @@ gbt_tstz_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	key.lower = (GBT_NUMKEY *) & kkk[0];
-	key.upper = (GBT_NUMKEY *) & kkk[MAXALIGN(tinfo.size)];
+	key.lower = (GBT_NUMKEY *) &kkk[0];
+	key.upper = (GBT_NUMKEY *) &kkk[MAXALIGN(tinfo.size)];
 	qqq = tstz_to_ts_gmt(query);
 
 	PG_RETURN_BOOL(

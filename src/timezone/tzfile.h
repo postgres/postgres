@@ -6,7 +6,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.7 2008/02/16 21:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.8 2009/06/11 14:49:15 momjian Exp $
  */
 
 /*
@@ -133,16 +133,16 @@ struct tzhead
 
 /*
  * Since everything in isleap is modulo 400 (or a factor of 400), we know that
- *    isleap(y) == isleap(y % 400)
+ *	  isleap(y) == isleap(y % 400)
  * and so
- *    isleap(a + b) == isleap((a + b) % 400)
+ *	  isleap(a + b) == isleap((a + b) % 400)
  * or
- *    isleap(a + b) == isleap(a % 400 + b % 400)
+ *	  isleap(a + b) == isleap(a % 400 + b % 400)
  * This is true even if % means modulo rather than Fortran remainder
  * (which is allowed by C89 but not C99).
  * We use this to avoid addition overflow problems.
  */
 
-#define isleap_sum(a, b)      isleap((a) % 400 + (b) % 400)
+#define isleap_sum(a, b)	  isleap((a) % 400 + (b) % 400)
 
 #endif   /* !defined TZFILE_H */

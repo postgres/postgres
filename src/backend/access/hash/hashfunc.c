@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.58 2009/02/09 21:18:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.59 2009/06/11 14:48:53 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -225,35 +225,35 @@ hashvarlena(PG_FUNCTION_ARGS)
  * are sometimes the same for one pair and different for another pair.
  * This was tested for:
  * * pairs that differed by one bit, by two bits, in any combination
- *   of top bits of (a,b,c), or in any combination of bottom bits of
- *   (a,b,c).
+ *	 of top bits of (a,b,c), or in any combination of bottom bits of
+ *	 (a,b,c).
  * * "differ" is defined as +, -, ^, or ~^.  For + and -, I transformed
- *   the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
- *   is commonly produced by subtraction) look like a single 1-bit
- *   difference.
+ *	 the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
+ *	 is commonly produced by subtraction) look like a single 1-bit
+ *	 difference.
  * * the base values were pseudorandom, all zero but one bit set, or
- *   all zero plus a counter that starts at zero.
- * 
+ *	 all zero plus a counter that starts at zero.
+ *
  * This does not achieve avalanche.  There are input bits of (a,b,c)
  * that fail to affect some output bits of (a,b,c), especially of a.  The
  * most thoroughly mixed value is c, but it doesn't really even achieve
- * avalanche in c. 
- * 
+ * avalanche in c.
+ *
  * This allows some parallelism.  Read-after-writes are good at doubling
  * the number of bits affected, so the goal of mixing pulls in the opposite
- * direction from the goal of parallelism.  I did what I could.  Rotates
+ * direction from the goal of parallelism.	I did what I could.  Rotates
  * seem to cost as much as shifts on every machine I could lay my hands on,
  * and rotates are much kinder to the top and bottom bits, so I used rotates.
  *----------
  */
 #define mix(a,b,c) \
 { \
-  a -= c;  a ^= rot(c, 4);  c += b; \
-  b -= a;  b ^= rot(a, 6);  a += c; \
-  c -= b;  c ^= rot(b, 8);  b += a; \
-  a -= c;  a ^= rot(c,16);  c += b; \
-  b -= a;  b ^= rot(a,19);  a += c; \
-  c -= b;  c ^= rot(b, 4);  b += a; \
+  a -= c;  a ^= rot(c, 4);	c += b; \
+  b -= a;  b ^= rot(a, 6);	a += c; \
+  c -= b;  c ^= rot(b, 8);	b += a; \
+  a -= c;  a ^= rot(c,16);	c += b; \
+  b -= a;  b ^= rot(a,19);	a += c; \
+  c -= b;  c ^= rot(b, 4);	b += a; \
 }
 
 /*----------
@@ -262,20 +262,20 @@ hashvarlena(PG_FUNCTION_ARGS)
  * Pairs of (a,b,c) values differing in only a few bits will usually
  * produce values of c that look totally different.  This was tested for
  * * pairs that differed by one bit, by two bits, in any combination
- *   of top bits of (a,b,c), or in any combination of bottom bits of
- *   (a,b,c).
+ *	 of top bits of (a,b,c), or in any combination of bottom bits of
+ *	 (a,b,c).
  * * "differ" is defined as +, -, ^, or ~^.  For + and -, I transformed
- *   the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
- *   is commonly produced by subtraction) look like a single 1-bit
- *   difference.
+ *	 the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
+ *	 is commonly produced by subtraction) look like a single 1-bit
+ *	 difference.
  * * the base values were pseudorandom, all zero but one bit set, or
- *   all zero plus a counter that starts at zero.
- *     
+ *	 all zero plus a counter that starts at zero.
+ *
  * The use of separate functions for mix() and final() allow for a
  * substantial performance increase since final() does not need to
  * do well in reverse, but is does need to affect all output bits.
  * mix(), on the other hand, does not need to affect all output
- * bits (affecting 32 bits is enough).  The original hash function had
+ * bits (affecting 32 bits is enough).	The original hash function had
  * a single mixing operation that had to satisfy both sets of requirements
  * and was slower as a result.
  *----------
@@ -374,9 +374,9 @@ hash_any(register const unsigned char *k, register int keylen)
 				/* fall through */
 			case 1:
 				a += ((uint32) k[0] << 24);
-			/* case 0: nothing left to add */
+				/* case 0: nothing left to add */
 		}
-#else /* !WORDS_BIGENDIAN */
+#else							/* !WORDS_BIGENDIAN */
 		switch (len)
 		{
 			case 11:
@@ -413,9 +413,9 @@ hash_any(register const unsigned char *k, register int keylen)
 				/* fall through */
 			case 1:
 				a += k[0];
-			/* case 0: nothing left to add */
+				/* case 0: nothing left to add */
 		}
-#endif /* WORDS_BIGENDIAN */
+#endif   /* WORDS_BIGENDIAN */
 	}
 	else
 	{
@@ -428,11 +428,11 @@ hash_any(register const unsigned char *k, register int keylen)
 			a += (k[3] + ((uint32) k[2] << 8) + ((uint32) k[1] << 16) + ((uint32) k[0] << 24));
 			b += (k[7] + ((uint32) k[6] << 8) + ((uint32) k[5] << 16) + ((uint32) k[4] << 24));
 			c += (k[11] + ((uint32) k[10] << 8) + ((uint32) k[9] << 16) + ((uint32) k[8] << 24));
-#else /* !WORDS_BIGENDIAN */
+#else							/* !WORDS_BIGENDIAN */
 			a += (k[0] + ((uint32) k[1] << 8) + ((uint32) k[2] << 16) + ((uint32) k[3] << 24));
 			b += (k[4] + ((uint32) k[5] << 8) + ((uint32) k[6] << 16) + ((uint32) k[7] << 24));
 			c += (k[8] + ((uint32) k[9] << 8) + ((uint32) k[10] << 16) + ((uint32) k[11] << 24));
-#endif /* WORDS_BIGENDIAN */
+#endif   /* WORDS_BIGENDIAN */
 			mix(a, b, c);
 			k += 12;
 			len -= 12;
@@ -465,9 +465,9 @@ hash_any(register const unsigned char *k, register int keylen)
 				a += ((uint32) k[1] << 16);
 			case 1:
 				a += ((uint32) k[0] << 24);
-			/* case 0: nothing left to add */
+				/* case 0: nothing left to add */
 		}
-#else /* !WORDS_BIGENDIAN */
+#else							/* !WORDS_BIGENDIAN */
 		switch (len)			/* all the case statements fall through */
 		{
 			case 11:
@@ -493,9 +493,9 @@ hash_any(register const unsigned char *k, register int keylen)
 				a += ((uint32) k[1] << 8);
 			case 1:
 				a += k[0];
-			/* case 0: nothing left to add */
+				/* case 0: nothing left to add */
 		}
-#endif /* WORDS_BIGENDIAN */
+#endif   /* WORDS_BIGENDIAN */
 	}
 
 	final(a, b, c);

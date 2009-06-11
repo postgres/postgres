@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.393 2009/04/04 21:12:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.394 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,8 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_REFERENCES	(1<<5)
 #define ACL_TRIGGER		(1<<6)
 #define ACL_EXECUTE		(1<<7)	/* for functions */
-#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and servers */
+#define ACL_USAGE		(1<<8)	/* for languages, namespaces, FDWs, and
+								 * servers */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define ACL_CONNECT		(1<<11) /* for databases */
@@ -113,7 +114,7 @@ typedef struct Query
 	IntoClause *intoClause;		/* target for SELECT INTO / CREATE TABLE AS */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
-	bool		hasWindowFuncs;	/* has window functions in tlist */
+	bool		hasWindowFuncs; /* has window functions in tlist */
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
@@ -184,7 +185,7 @@ typedef struct TypeName
 /*
  * ColumnRef - specifies a reference to a column, or possibly a whole tuple
  *
- * The "fields" list must be nonempty.  It can contain string Value nodes
+ * The "fields" list must be nonempty.	It can contain string Value nodes
  * (representing names) and A_Star nodes (representing occurrence of a '*').
  * Currently, A_Star must appear only as the last list element --- the grammar
  * is responsible for enforcing this!
@@ -384,12 +385,12 @@ typedef struct SortBy
 typedef struct WindowDef
 {
 	NodeTag		type;
-	char	   *name;				/* window's own name */
-	char	   *refname;			/* referenced window name, if any */
+	char	   *name;			/* window's own name */
+	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY expression list */
-	List	   *orderClause;		/* ORDER BY (list of SortBy) */
-	int			frameOptions;		/* frame_clause options, see below */
-	int			location;			/* parse location, or -1 if none/unknown */
+	List	   *orderClause;	/* ORDER BY (list of SortBy) */
+	int			frameOptions;	/* frame_clause options, see below */
+	int			location;		/* parse location, or -1 if none/unknown */
 } WindowDef;
 
 /*
@@ -400,16 +401,16 @@ typedef struct WindowDef
  * the convenience of gram.y, even though some of them are useless/invalid.
  * We will need more bits (and fields) to cover the full SQL:2008 option set.
  */
-#define FRAMEOPTION_NONDEFAULT					0x00001	/* any specified? */
-#define FRAMEOPTION_RANGE						0x00002	/* RANGE behavior */
-#define FRAMEOPTION_ROWS						0x00004	/* ROWS behavior */
-#define FRAMEOPTION_BETWEEN						0x00008	/* BETWEEN given? */
-#define FRAMEOPTION_START_UNBOUNDED_PRECEDING	0x00010	/* start is U. P. */
-#define FRAMEOPTION_END_UNBOUNDED_PRECEDING		0x00020	/* (disallowed) */
-#define FRAMEOPTION_START_UNBOUNDED_FOLLOWING	0x00040	/* (disallowed) */
-#define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080	/* end is U. F. */
-#define FRAMEOPTION_START_CURRENT_ROW			0x00100	/* start is C. R. */
-#define FRAMEOPTION_END_CURRENT_ROW				0x00200	/* end is C. R. */
+#define FRAMEOPTION_NONDEFAULT					0x00001 /* any specified? */
+#define FRAMEOPTION_RANGE						0x00002 /* RANGE behavior */
+#define FRAMEOPTION_ROWS						0x00004 /* ROWS behavior */
+#define FRAMEOPTION_BETWEEN						0x00008 /* BETWEEN given? */
+#define FRAMEOPTION_START_UNBOUNDED_PRECEDING	0x00010 /* start is U. P. */
+#define FRAMEOPTION_END_UNBOUNDED_PRECEDING		0x00020 /* (disallowed) */
+#define FRAMEOPTION_START_UNBOUNDED_FOLLOWING	0x00040 /* (disallowed) */
+#define FRAMEOPTION_END_UNBOUNDED_FOLLOWING		0x00080 /* end is U. F. */
+#define FRAMEOPTION_START_CURRENT_ROW			0x00100 /* start is C. R. */
+#define FRAMEOPTION_END_CURRENT_ROW				0x00200 /* end is C. R. */
 
 #define FRAMEOPTION_DEFAULTS \
 	(FRAMEOPTION_RANGE | FRAMEOPTION_START_UNBOUNDED_PRECEDING | \
@@ -505,7 +506,7 @@ typedef struct IndexElem
 /*
  * DefElem - a generic "name = value" option definition
  *
- * In some contexts the name can be qualified.  Also, certain SQL commands
+ * In some contexts the name can be qualified.	Also, certain SQL commands
  * allow a SET/ADD/DROP action to be attached to option settings, so it's
  * convenient to carry a field for that too.  (Note: currently, it is our
  * practice that the grammar allows namespace and action only in statements
@@ -699,7 +700,7 @@ typedef struct RangeTblEntry
 	 */
 	char	   *ctename;		/* name of the WITH list item */
 	Index		ctelevelsup;	/* number of query levels up */
-	bool		self_reference;	/* is this a recursive self-reference? */
+	bool		self_reference; /* is this a recursive self-reference? */
 	List	   *ctecoltypes;	/* OID list of column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of column typmods */
 
@@ -724,7 +725,7 @@ typedef struct RangeTblEntry
  * You might think that ORDER BY is only interested in defining ordering,
  * and GROUP/DISTINCT are only interested in defining equality.  However,
  * one way to implement grouping is to sort and then apply a "uniq"-like
- * filter.  So it's also interesting to keep track of possible sort operators
+ * filter.	So it's also interesting to keep track of possible sort operators
  * for GROUP/DISTINCT, and in particular to try to sort for the grouping
  * in a way that will also yield a requested ORDER BY ordering.  So we need
  * to be able to compare ORDER BY and GROUP/DISTINCT lists, which motivates
@@ -742,10 +743,10 @@ typedef struct RangeTblEntry
  * here, but it's cheap to get it along with the sortop, and requiring it
  * to be valid eases comparisons to grouping items.)
  *
- * In a grouping item, eqop must be valid.  If the eqop is a btree equality
+ * In a grouping item, eqop must be valid.	If the eqop is a btree equality
  * operator, then sortop should be set to a compatible ordering operator.
  * We prefer to set eqop/sortop/nulls_first to match any ORDER BY item that
- * the query presents for the same tlist item.  If there is none, we just
+ * the query presents for the same tlist item.	If there is none, we just
  * use the default ordering op for the datatype.
  *
  * If the tlist item's type has a hash opclass but no btree opclass, then
@@ -766,9 +767,9 @@ typedef struct SortGroupClause
 {
 	NodeTag		type;
 	Index		tleSortGroupRef;	/* reference into targetlist */
-	Oid			eqop;				/* the equality operator ('=' op) */
-	Oid			sortop;				/* the ordering operator ('<' op), or 0 */
-	bool		nulls_first;		/* do NULLs come before normal values? */
+	Oid			eqop;			/* the equality operator ('=' op) */
+	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
+	bool		nulls_first;	/* do NULLs come before normal values? */
 } SortGroupClause;
 
 /*
@@ -788,13 +789,13 @@ typedef struct SortGroupClause
 typedef struct WindowClause
 {
 	NodeTag		type;
-	char	   *name;				/* window name (NULL in an OVER clause) */
-	char	   *refname;			/* referenced window name, if any */
+	char	   *name;			/* window name (NULL in an OVER clause) */
+	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
-	List	   *orderClause;		/* ORDER BY list */
-	int			frameOptions;		/* frame_clause options, see WindowDef */
-	Index		winref;				/* ID referenced by window functions */
-	bool		copiedOrder;		/* did we copy orderClause from refname? */
+	List	   *orderClause;	/* ORDER BY list */
+	int			frameOptions;	/* frame_clause options, see WindowDef */
+	Index		winref;			/* ID referenced by window functions */
+	bool		copiedOrder;	/* did we copy orderClause from refname? */
 } WindowClause;
 
 /*
@@ -822,7 +823,7 @@ typedef struct RowMarkClause
 
 /*
  * WithClause -
- *     representation of WITH clause
+ *	   representation of WITH clause
  *
  * Note: WithClause does not propagate into the Query representation;
  * but CommonTableExpr does.
@@ -837,7 +838,7 @@ typedef struct WithClause
 
 /*
  * CommonTableExpr -
- *     representation of WITH list element
+ *	   representation of WITH list element
  *
  * We don't currently support the SEARCH or CYCLE clause.
  */
@@ -982,7 +983,7 @@ typedef struct SelectStmt
  * range table.  Its setOperations field shows the tree of set operations,
  * with leaf SelectStmt nodes replaced by RangeTblRef nodes, and internal
  * nodes replaced by SetOperationStmt nodes.  Information about the output
- * column types is added, too.  (Note that the child nodes do not necessarily
+ * column types is added, too.	(Note that the child nodes do not necessarily
  * produce these types directly, but we've checked that their output types
  * can be coerced to the output column type.)  Also, if it's not UNION ALL,
  * information about the types' sort/group semantics is provided in the form
@@ -1241,7 +1242,7 @@ typedef struct AccessPriv
  *
  * Note: because of the parsing ambiguity with the GRANT <privileges>
  * statement, granted_roles is a list of AccessPriv; the execution code
- * should complain if any column lists appear.  grantee_roles is a list
+ * should complain if any column lists appear.	grantee_roles is a list
  * of role names, as Value strings.
  * ----------------------
  */
@@ -2177,7 +2178,7 @@ typedef struct VacuumStmt
 	bool		analyze;		/* do ANALYZE step */
 	bool		verbose;		/* print progress info */
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
-	int			freeze_table_age; /* age at which to scan whole table */
+	int			freeze_table_age;		/* age at which to scan whole table */
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumStmt;

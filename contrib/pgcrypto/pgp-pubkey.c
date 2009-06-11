@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubkey.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubkey.c,v 1.5 2009/06/11 14:48:52 momjian Exp $
  */
 #include "postgres.h"
 
@@ -35,7 +35,7 @@
 #include "pgp.h"
 
 int
-pgp_key_alloc(PGP_PubKey ** pk_p)
+pgp_key_alloc(PGP_PubKey **pk_p)
 {
 	PGP_PubKey *pk;
 
@@ -46,7 +46,7 @@ pgp_key_alloc(PGP_PubKey ** pk_p)
 }
 
 void
-pgp_key_free(PGP_PubKey * pk)
+pgp_key_free(PGP_PubKey *pk)
 {
 	if (pk == NULL)
 		return;
@@ -82,7 +82,7 @@ pgp_key_free(PGP_PubKey * pk)
 }
 
 static int
-calc_key_id(PGP_PubKey * pk)
+calc_key_id(PGP_PubKey *pk)
 {
 	int			res;
 	PX_MD	   *md;
@@ -156,7 +156,7 @@ calc_key_id(PGP_PubKey * pk)
 }
 
 int
-_pgp_read_public_key(PullFilter * pkt, PGP_PubKey ** pk_p)
+_pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 {
 	int			res;
 	PGP_PubKey *pk;
@@ -251,7 +251,7 @@ out:
 #define HIDE_SHA1 254
 
 static int
-check_key_sha1(PullFilter * src, PGP_PubKey * pk)
+check_key_sha1(PullFilter *src, PGP_PubKey *pk)
 {
 	int			res;
 	uint8		got_sha1[20];
@@ -297,7 +297,7 @@ err:
 }
 
 static int
-check_key_cksum(PullFilter * src, PGP_PubKey * pk)
+check_key_cksum(PullFilter *src, PGP_PubKey *pk)
 {
 	int			res;
 	unsigned	got_cksum,
@@ -335,7 +335,7 @@ check_key_cksum(PullFilter * src, PGP_PubKey * pk)
 }
 
 static int
-process_secret_key(PullFilter * pkt, PGP_PubKey ** pk_p,
+process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 				   const uint8 *key, int key_len)
 {
 	int			res;
@@ -456,7 +456,7 @@ process_secret_key(PullFilter * pkt, PGP_PubKey ** pk_p,
 }
 
 static int
-internal_read_key(PullFilter * src, PGP_PubKey ** pk_p,
+internal_read_key(PullFilter *src, PGP_PubKey **pk_p,
 				  const uint8 *psw, int psw_len, int pubtype)
 {
 	PullFilter *pkt = NULL;
@@ -563,7 +563,7 @@ internal_read_key(PullFilter * src, PGP_PubKey ** pk_p,
 }
 
 int
-pgp_set_pubkey(PGP_Context * ctx, MBuf * keypkt,
+pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt,
 			   const uint8 *key, int key_len, int pubtype)
 {
 	int			res;

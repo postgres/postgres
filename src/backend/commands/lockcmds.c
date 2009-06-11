@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.24 2009/05/12 16:43:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.25 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/lsyscache.h"
 
 static void LockTableRecurse(Oid reloid, RangeVar *rv,
-							 LOCKMODE lockmode, bool nowait, bool recurse);
+				 LOCKMODE lockmode, bool nowait, bool recurse);
 
 
 /*
@@ -67,9 +67,9 @@ LockTableRecurse(Oid reloid, RangeVar *rv,
 	AclResult	aclresult;
 
 	/*
-	 * Acquire the lock.  We must do this first to protect against
-	 * concurrent drops.  Note that a lock against an already-dropped
-	 * relation's OID won't fail.
+	 * Acquire the lock.  We must do this first to protect against concurrent
+	 * drops.  Note that a lock against an already-dropped relation's OID
+	 * won't fail.
 	 */
 	if (nowait)
 	{
@@ -148,8 +148,8 @@ LockTableRecurse(Oid reloid, RangeVar *rv,
 	 */
 	if (recurse)
 	{
-		List   *children = find_inheritance_children(reloid, NoLock);
-		ListCell *lc;
+		List	   *children = find_inheritance_children(reloid, NoLock);
+		ListCell   *lc;
 
 		foreach(lc, children)
 		{

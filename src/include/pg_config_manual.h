@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.38 2009/02/26 16:02:39 petere Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.39 2009/06/11 14:49:08 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -188,7 +188,7 @@
 /*
  * Define this to cause palloc()'d memory to be filled with random data, to
  * facilitate catching code that depends on the contents of uninitialized
- * memory.  Caution: this is horrendously expensive.
+ * memory.	Caution: this is horrendously expensive.
  */
 /* #define RANDOMIZE_ALLOCATED_MEMORY */
 

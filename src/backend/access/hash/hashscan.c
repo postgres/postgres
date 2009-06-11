@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.46 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.47 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,8 @@ ReleaseResources_hash(void)
 	/*
 	 * Release all HashScanList items belonging to the current ResourceOwner.
 	 * Note that we do not release the underlying IndexScanDesc; that's in
-	 * executor memory and will go away on its own (in fact quite possibly
-	 * has gone away already, so we mustn't try to touch it here).
+	 * executor memory and will go away on its own (in fact quite possibly has
+	 * gone away already, so we mustn't try to touch it here).
 	 *
 	 * Note: this should be a no-op during normal query shutdown. However, in
 	 * an abort situation ExecutorEnd is not called and so there may be open

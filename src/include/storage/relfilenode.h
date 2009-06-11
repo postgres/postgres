@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.22 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.23 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ typedef enum ForkNumber
 	MAIN_FORKNUM = 0,
 	FSM_FORKNUM,
 	VISIBILITYMAP_FORKNUM
+
 	/*
 	 * NOTE: if you add a new fork, change MAX_FORKNUM below and update the
 	 * forkNames array in catalog.c

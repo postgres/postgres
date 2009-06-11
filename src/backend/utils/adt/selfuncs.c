@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.260 2009/04/19 19:46:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.261 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@
  *		float8 oprjoin (internal, oid, internal, int2, internal);
  *
  * (Before Postgres 8.4, join estimators had only the first four of these
- * parameters.  That signature is still allowed, but deprecated.)  The
+ * parameters.	That signature is still allowed, but deprecated.)  The
  * relationship between jointype and sjinfo is explained in the comments for
  * clause_selectivity() --- the short version is that jointype is usually
  * best ignored in favor of examining sjinfo.
@@ -135,7 +135,7 @@ static double ineq_histogram_selectivity(VariableStatData *vardata,
 static double eqjoinsel_inner(Oid operator,
 				VariableStatData *vardata1, VariableStatData *vardata2);
 static double eqjoinsel_semi(Oid operator,
-				VariableStatData *vardata1, VariableStatData *vardata2);
+			   VariableStatData *vardata1, VariableStatData *vardata2);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -159,7 +159,7 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 static char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
-					 Oid sortop, Datum *min, Datum *max);
+				   Oid sortop, Datum *min, Datum *max);
 static Selectivity prefix_selectivity(VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
@@ -228,17 +228,17 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 	double		selec;
 
 	/*
-	 * If the constant is NULL, assume operator is strict and
-	 * return zero, ie, operator will never return TRUE.
+	 * If the constant is NULL, assume operator is strict and return zero, ie,
+	 * operator will never return TRUE.
 	 */
 	if (constisnull)
 		return 0.0;
 
 	/*
 	 * If we matched the var to a unique index, assume there is exactly one
-	 * match regardless of anything else.  (This is slightly bogus, since
-	 * the index's equality operator might be different from ours, but it's
-	 * more likely to be right than ignoring the information.)
+	 * match regardless of anything else.  (This is slightly bogus, since the
+	 * index's equality operator might be different from ours, but it's more
+	 * likely to be right than ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
 		return 1.0 / vardata->rel->tuples;
@@ -257,10 +257,10 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 
 		/*
 		 * Is the constant "=" to any of the column's most common values?
-		 * (Although the given operator may not really be "=", we will
-		 * assume that seeing whether it returns TRUE is an appropriate
-		 * test.  If you don't like this, maybe you shouldn't be using
-		 * eqsel for your operator...)
+		 * (Although the given operator may not really be "=", we will assume
+		 * that seeing whether it returns TRUE is an appropriate test.	If you
+		 * don't like this, maybe you shouldn't be using eqsel for your
+		 * operator...)
 		 */
 		if (get_attstatsslot(vardata->statsTuple,
 							 vardata->atttype, vardata->atttypmod,
@@ -299,17 +299,16 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		{
 			/*
 			 * Constant is "=" to this common value.  We know selectivity
-			 * exactly (or as exactly as ANALYZE could calculate it,
-			 * anyway).
+			 * exactly (or as exactly as ANALYZE could calculate it, anyway).
 			 */
 			selec = numbers[i];
 		}
 		else
 		{
 			/*
-			 * Comparison is against a constant that is neither NULL nor
-			 * any of the common values.  Its selectivity cannot be more
-			 * than this:
+			 * Comparison is against a constant that is neither NULL nor any
+			 * of the common values.  Its selectivity cannot be more than
+			 * this:
 			 */
 			double		sumcommon = 0.0;
 			double		otherdistinct;
@@ -320,18 +319,17 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			CLAMP_PROBABILITY(selec);
 
 			/*
-			 * and in fact it's probably a good deal less. We approximate
-			 * that all the not-common values share this remaining
-			 * fraction equally, so we divide by the number of other
-			 * distinct values.
+			 * and in fact it's probably a good deal less. We approximate that
+			 * all the not-common values share this remaining fraction
+			 * equally, so we divide by the number of other distinct values.
 			 */
 			otherdistinct = get_variable_numdistinct(vardata) - nnumbers;
 			if (otherdistinct > 1)
 				selec /= otherdistinct;
 
 			/*
-			 * Another cross-check: selectivity shouldn't be estimated as
-			 * more than the least common "most common value".
+			 * Another cross-check: selectivity shouldn't be estimated as more
+			 * than the least common "most common value".
 			 */
 			if (nnumbers > 0 && selec > numbers[nnumbers - 1])
 				selec = numbers[nnumbers - 1];
@@ -368,9 +366,9 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 
 	/*
 	 * If we matched the var to a unique index, assume there is exactly one
-	 * match regardless of anything else.  (This is slightly bogus, since
-	 * the index's equality operator might be different from ours, but it's
-	 * more likely to be right than ignoring the information.)
+	 * match regardless of anything else.  (This is slightly bogus, since the
+	 * index's equality operator might be different from ours, but it's more
+	 * likely to be right than ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
 		return 1.0 / vardata->rel->tuples;
@@ -391,8 +389,8 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		 * result averaged over all possible values whether common or
 		 * uncommon.  (Essentially, we are assuming that the not-yet-known
 		 * comparison value is equally likely to be any of the possible
-		 * values, regardless of their frequency in the table.	Is that a
-		 * good idea?)
+		 * values, regardless of their frequency in the table.	Is that a good
+		 * idea?)
 		 */
 		selec = 1.0 - stats->stanullfrac;
 		ndistinct = get_variable_numdistinct(vardata);
@@ -400,8 +398,8 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 			selec /= ndistinct;
 
 		/*
-		 * Cross-check: selectivity should never be estimated as more than
-		 * the most common value's.
+		 * Cross-check: selectivity should never be estimated as more than the
+		 * most common value's.
 		 */
 		if (get_attstatsslot(vardata->statsTuple,
 							 vardata->atttype, vardata->atttypmod,
@@ -610,7 +608,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  * essentially using the histogram just as a representative sample.  However,
  * small histograms are unlikely to be all that representative, so the caller
  * should be prepared to fall back on some other estimation approach when the
- * histogram is missing or very small.  It may also be prudent to combine this
+ * histogram is missing or very small.	It may also be prudent to combine this
  * approach with another one when the histogram is small.
  *
  * If the actual histogram size is not at least min_hist_size, we won't bother
@@ -1169,7 +1167,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 * selectivity of the fixed prefix and remainder of pattern
 		 * separately, then combine the two to get an estimate of the
 		 * selectivity for the part of the column population represented by
-		 * the histogram.  (For small histograms, we combine these approaches.)
+		 * the histogram.  (For small histograms, we combine these
+		 * approaches.)
 		 *
 		 * We then add up data for any most-common-values values; these are
 		 * not in the histogram population, and we can get exact answers for
@@ -1205,7 +1204,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 			restsel = pattern_selectivity(rest, ptype);
 			heursel = prefixsel * restsel;
 
-			if (selec < 0)			/* fewer than 10 histogram entries? */
+			if (selec < 0)		/* fewer than 10 histogram entries? */
 				selec = heursel;
 			else
 			{
@@ -1214,7 +1213,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 				 * histogram and heuristic selectivities, putting increasingly
 				 * more trust in the histogram for larger sizes.
 				 */
-				double	hist_weight = hist_size / 100.0;
+				double		hist_weight = hist_size / 100.0;
 
 				selec = selec * hist_weight + heursel * (1.0 - hist_weight);
 			}
@@ -1863,22 +1862,22 @@ rowcomparesel(PlannerInfo *root,
 
 	/*
 	 * Decide if it's a join clause.  This should match clausesel.c's
-	 * treat_as_join_clause(), except that we intentionally consider only
-	 * the leading columns and not the rest of the clause.
+	 * treat_as_join_clause(), except that we intentionally consider only the
+	 * leading columns and not the rest of the clause.
 	 */
 	if (varRelid != 0)
 	{
 		/*
-		 * Caller is forcing restriction mode (eg, because we are examining
-		 * an inner indexscan qual).
+		 * Caller is forcing restriction mode (eg, because we are examining an
+		 * inner indexscan qual).
 		 */
 		is_join_clause = false;
 	}
 	else if (sjinfo == NULL)
 	{
 		/*
-		 * It must be a restriction clause, since it's being evaluated at
-		 * a scan node.
+		 * It must be a restriction clause, since it's being evaluated at a
+		 * scan node.
 		 */
 		is_join_clause = false;
 	}
@@ -1918,6 +1917,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
+
 #ifdef NOT_USED
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
 #endif
@@ -2163,11 +2163,11 @@ eqjoinsel_inner(Oid operator,
 		 * end up with the same answer anyway.
 		 *
 		 * An additional hack we use here is to clamp the nd1 and nd2 values
-		 * to not more than what we are estimating the input relation sizes
-		 * to be, providing a crude correction for the selectivity of
-		 * restriction clauses on those relations.  (We don't do that in the
-		 * other path since there we are comparing the nd values to stats for
-		 * the whole relations.)
+		 * to not more than what we are estimating the input relation sizes to
+		 * be, providing a crude correction for the selectivity of restriction
+		 * clauses on those relations.	(We don't do that in the other path
+		 * since there we are comparing the nd values to stats for the whole
+		 * relations.)
 		 */
 		double		nullfrac1 = stats1 ? stats1->stanullfrac : 0.0;
 		double		nullfrac2 = stats2 ? stats2->stanullfrac : 0.0;
@@ -2307,13 +2307,13 @@ eqjoinsel_semi(Oid operator,
 
 		/*
 		 * Now we need to estimate the fraction of relation 1 that has at
-		 * least one join partner.  We know for certain that the matched
-		 * MCVs do, so that gives us a lower bound, but we're really in the
-		 * dark about everything else.  Our crude approach is: if nd1 <= nd2
-		 * then assume all non-null rel1 rows have join partners, else assume
-		 * for the uncertain rows that a fraction nd2/nd1 have join partners.
-		 * We can discount the known-matched MCVs from the distinct-values
-		 * counts before doing the division.
+		 * least one join partner.	We know for certain that the matched MCVs
+		 * do, so that gives us a lower bound, but we're really in the dark
+		 * about everything else.  Our crude approach is: if nd1 <= nd2 then
+		 * assume all non-null rel1 rows have join partners, else assume for
+		 * the uncertain rows that a fraction nd2/nd1 have join partners. We
+		 * can discount the known-matched MCVs from the distinct-values counts
+		 * before doing the division.
 		 */
 		nd1 -= nmatches;
 		nd2 -= nmatches;
@@ -2321,10 +2321,10 @@ eqjoinsel_semi(Oid operator,
 			selec = Max(matchfreq1, 1.0 - nullfrac1);
 		else
 		{
-			double	uncertain = 1.0 - matchfreq1 - nullfrac1;
+			double		uncertain = 1.0 - matchfreq1 - nullfrac1;
 
 			CLAMP_PROBABILITY(uncertain);
-			selec = matchfreq1 + (nd2/nd1) * uncertain;
+			selec = matchfreq1 + (nd2 / nd1) * uncertain;
 		}
 	}
 	else
@@ -2343,7 +2343,7 @@ eqjoinsel_semi(Oid operator,
 		if (nd1 <= nd2 || nd2 <= 0)
 			selec = 1.0 - nullfrac1;
 		else
-			selec = (nd2/nd1) * (1.0 - nullfrac1);
+			selec = (nd2 / nd1) * (1.0 - nullfrac1);
 	}
 
 	if (have_mcvs1)
@@ -2572,8 +2572,8 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 * Look up the various operators we need.  If we don't find them all, it
 	 * probably means the opfamily is broken, but we just fail silently.
 	 *
-	 * Note: we expect that pg_statistic histograms will be sorted by the
-	 * '<' operator, regardless of which sort direction we are considering.
+	 * Note: we expect that pg_statistic histograms will be sorted by the '<'
+	 * operator, regardless of which sort direction we are considering.
 	 */
 	switch (strategy)
 	{
@@ -2721,9 +2721,9 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 
 	/*
 	 * Only one of the two "end" fractions can really be less than 1.0;
-	 * believe the smaller estimate and reset the other one to exactly 1.0.
-	 * If we get exactly equal estimates (as can easily happen with
-	 * self-joins), believe neither.
+	 * believe the smaller estimate and reset the other one to exactly 1.0. If
+	 * we get exactly equal estimates (as can easily happen with self-joins),
+	 * believe neither.
 	 */
 	if (*leftend > *rightend)
 		*leftend = 1.0;
@@ -2733,8 +2733,8 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 		*leftend = *rightend = 1.0;
 
 	/*
-	 * Also, the fraction of the left variable that will be scanned before
-	 * the first join pair is found is the fraction that's < the right-side
+	 * Also, the fraction of the left variable that will be scanned before the
+	 * first join pair is found is the fraction that's < the right-side
 	 * minimum value.  But only believe non-default estimates, else stick with
 	 * our own default.
 	 */
@@ -2751,9 +2751,9 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 
 	/*
 	 * Only one of the two "start" fractions can really be more than zero;
-	 * believe the larger estimate and reset the other one to exactly 0.0.
-	 * If we get exactly equal estimates (as can easily happen with
-	 * self-joins), believe neither.
+	 * believe the larger estimate and reset the other one to exactly 0.0. If
+	 * we get exactly equal estimates (as can easily happen with self-joins),
+	 * believe neither.
 	 */
 	if (*leftstart < *rightstart)
 		*leftstart = 0.0;
@@ -2764,8 +2764,8 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 
 	/*
 	 * If the sort order is nulls-first, we're going to have to skip over any
-	 * nulls too.  These would not have been counted by scalarineqsel, and
-	 * we can safely add in this fraction regardless of whether we believe
+	 * nulls too.  These would not have been counted by scalarineqsel, and we
+	 * can safely add in this fraction regardless of whether we believe
 	 * scalarineqsel's results or not.  But be sure to clamp the sum to 1.0!
 	 */
 	if (nulls_first)
@@ -2898,7 +2898,7 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  * is as follows:
  *	1.	Expressions yielding boolean are assumed to contribute two groups,
  *		independently of their content, and are ignored in the subsequent
- *		steps.  This is mainly because tests like "col IS NULL" break the
+ *		steps.	This is mainly because tests like "col IS NULL" break the
  *		heuristic used in step 2 especially badly.
  *	2.	Reduce the given expressions to a list of unique Vars used.  For
  *		example, GROUP BY a, a + b is treated the same as GROUP BY a, b.
@@ -2946,7 +2946,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 	Assert(groupExprs != NIL);
 
 	/*
-	 * Count groups derived from boolean grouping expressions.  For other
+	 * Count groups derived from boolean grouping expressions.	For other
 	 * expressions, find the unique Vars used, treating an expression as a Var
 	 * if we can find stats for it.  For each one, record the statistical
 	 * estimate of number of distinct values (total in its table, without
@@ -3655,7 +3655,9 @@ convert_string_datum(Datum value, Oid typid)
 #if _MSC_VER == 1400			/* VS.Net 2005 */
 
 		/*
-		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99694
+		 *
+		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?
+		 * FeedbackID=99694
 		 */
 		{
 			char		x[1];
@@ -3958,10 +3960,10 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
 
 	if (vardata1->rel &&
 		bms_is_subset(vardata1->rel->relids, sjinfo->syn_righthand))
-		*join_is_reversed = true;				/* var1 is on RHS */
+		*join_is_reversed = true;		/* var1 is on RHS */
 	else if (vardata2->rel &&
 			 bms_is_subset(vardata2->rel->relids, sjinfo->syn_lefthand))
-		*join_is_reversed = true;				/* var2 is on LHS */
+		*join_is_reversed = true;		/* var2 is on LHS */
 	else
 		*join_is_reversed = false;
 }
@@ -4036,8 +4038,8 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
 		{
 			/*
-			 * The hook took control of acquiring a stats tuple.  If it
-			 * did supply a tuple, it'd better have supplied a freefunc.
+			 * The hook took control of acquiring a stats tuple.  If it did
+			 * supply a tuple, it'd better have supplied a freefunc.
 			 */
 			if (HeapTupleIsValid(vardata->statsTuple) &&
 				!vardata->freefunc)
@@ -4169,10 +4171,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 						/*
 						 * Has it got stats?  We only consider stats for
-						 * non-partial indexes, since partial indexes
-						 * probably don't reflect whole-relation statistics;
-						 * the above check for uniqueness is the only info
-						 * we take from a partial index.
+						 * non-partial indexes, since partial indexes probably
+						 * don't reflect whole-relation statistics; the above
+						 * check for uniqueness is the only info we take from
+						 * a partial index.
 						 *
 						 * An index stats hook, however, must make its own
 						 * decisions about what to do with partial indexes.
@@ -4194,7 +4196,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						{
 							vardata->statsTuple =
 								SearchSysCache(STATRELATT,
-											   ObjectIdGetDatum(index->indexoid),
+										   ObjectIdGetDatum(index->indexoid),
 											   Int16GetDatum(pos + 1),
 											   0, 0);
 							vardata->freefunc = ReleaseSysCache;
@@ -4281,9 +4283,9 @@ get_variable_numdistinct(VariableStatData *vardata)
 
 	/*
 	 * If there is a unique index for the variable, assume it is unique no
-	 * matter what pg_statistic says; the statistics could be out of date,
-	 * or we might have found a partial unique index that proves the var
-	 * is unique for this query.
+	 * matter what pg_statistic says; the statistics could be out of date, or
+	 * we might have found a partial unique index that proves the var is
+	 * unique for this query.
 	 */
 	if (vardata->isunique)
 		stadistinct = -1.0;
@@ -4817,7 +4819,7 @@ prefix_selectivity(VariableStatData *vardata,
 	Oid			cmpopr;
 	FmgrInfo	opproc;
 	Const	   *greaterstrcon;
-	Selectivity	eq_sel;
+	Selectivity eq_sel;
 
 	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
 								 BTGreaterEqualStrategyNumber);
@@ -4868,17 +4870,17 @@ prefix_selectivity(VariableStatData *vardata,
 	}
 
 	/*
-	 * If the prefix is long then the two bounding values might be too
-	 * close together for the histogram to distinguish them usefully,
-	 * resulting in a zero estimate (plus or minus roundoff error).
-	 * To avoid returning a ridiculously small estimate, compute the
-	 * estimated selectivity for "variable = 'foo'", and clamp to that.
-	 * (Obviously, the resultant estimate should be at least that.)
+	 * If the prefix is long then the two bounding values might be too close
+	 * together for the histogram to distinguish them usefully, resulting in a
+	 * zero estimate (plus or minus roundoff error). To avoid returning a
+	 * ridiculously small estimate, compute the estimated selectivity for
+	 * "variable = 'foo'", and clamp to that. (Obviously, the resultant
+	 * estimate should be at least that.)
 	 *
 	 * We apply this even if we couldn't make a greater string.  That case
 	 * suggests that the prefix is near the maximum possible, and thus
-	 * probably off the end of the histogram, and thus we probably got a
-	 * very small estimate from the >= condition; so we still need to clamp.
+	 * probably off the end of the histogram, and thus we probably got a very
+	 * small estimate from the >= condition; so we still need to clamp.
 	 */
 	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
 								 BTEqualStrategyNumber);

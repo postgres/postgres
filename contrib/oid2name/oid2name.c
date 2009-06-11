@@ -5,7 +5,7 @@
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  *
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.35 2009/02/27 09:30:21 petere Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.36 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -24,7 +24,7 @@ typedef struct
 	char	  **array;
 	int			num;
 	int			alloc;
-}	eary;
+} eary;
 
 /* these are the opts structures for command line params */
 struct options
@@ -51,8 +51,8 @@ static void help(const char *progname);
 void		get_opts(int, char **, struct options *);
 void	   *myalloc(size_t size);
 char	   *mystrdup(const char *str);
-void		add_one_elt(char *eltname, eary * eary);
-char	   *get_comma_elts(eary * eary);
+void		add_one_elt(char *eltname, eary *eary);
+char	   *get_comma_elts(eary *eary);
 PGconn	   *sql_conn(struct options *);
 int			sql_exec(PGconn *, const char *sql, bool quiet);
 void		sql_exec_dumpalldbs(PGconn *, struct options *);
@@ -230,18 +230,19 @@ mystrdup(const char *str)
  * Add one element to a (possibly empty) eary struct.
  */
 void
-add_one_elt(char *eltname, eary * eary)
+add_one_elt(char *eltname, eary *eary)
 {
 	if (eary->alloc == 0)
 	{
-		eary->alloc = 8;
-		eary->array = (char **) myalloc(8 * sizeof(char *));
+		eary	  ->alloc = 8;
+		eary	  ->array = (char **) myalloc(8 * sizeof(char *));
 	}
 	else if (eary->num >= eary->alloc)
 	{
-		eary->alloc *= 2;
-		eary->array = (char **)
-			realloc(eary->array, eary->alloc * sizeof(char *));
+		eary	  ->alloc *= 2;
+		eary	  ->array = (char **)
+		realloc(eary->array, eary->alloc * sizeof(char *));
+
 		if (!eary->array)
 		{
 			fprintf(stderr, "out of memory");
@@ -249,8 +250,8 @@ add_one_elt(char *eltname, eary * eary)
 		}
 	}
 
-	eary->array[eary->num] = mystrdup(eltname);
-	eary->num++;
+	eary	  ->array[eary->num] = mystrdup(eltname);
+	eary	  ->num++;
 }
 
 /*
@@ -261,7 +262,7 @@ add_one_elt(char *eltname, eary * eary)
  * SQL statement.
  */
 char *
-get_comma_elts(eary * eary)
+get_comma_elts(eary *eary)
 {
 	char	   *ret,
 			   *ptr;
@@ -310,8 +311,8 @@ sql_conn(struct options * my_opts)
 		new_pass = false;
 		conn = PQsetdbLogin(my_opts->hostname,
 							my_opts->port,
-							NULL,	/* options */
-							NULL,	/* tty */
+							NULL,		/* options */
+							NULL,		/* tty */
 							my_opts->dbname,
 							my_opts->username,
 							password);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.123 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.124 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,9 +287,9 @@ typedef struct xl_btree_split
 	 * than BlockNumber for alignment reasons: SizeOfBtreeSplit is only 16-bit
 	 * aligned.)
 	 *
-	 * If level > 0, an IndexTuple representing the HIKEY of the left page 
-	 * follows.  We don't need this on leaf pages, because it's the same
-	 * as the leftmost key in the new right page.  Also, it's suppressed if
+	 * If level > 0, an IndexTuple representing the HIKEY of the left page
+	 * follows.  We don't need this on leaf pages, because it's the same as
+	 * the leftmost key in the new right page.	Also, it's suppressed if
 	 * XLogInsert chooses to store the left page's whole page image.
 	 *
 	 * In the _L variants, next are OffsetNumber newitemoff and the new item.

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.34 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.35 2009/06/11 14:49:08 momjian Exp $
  *
  * XXX this file does not really belong in psql/.  Perhaps move to libpq?
  * It also seems that the mbvalidate function is redundant with existing
@@ -277,7 +277,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
 	}
 	if (linewidth > width)
 		width = linewidth;
-	format_size += 1;		/* For NUL char */
+	format_size += 1;			/* For NUL char */
 
 	/* Set results */
 	if (result_width)
@@ -289,14 +289,14 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding,
 }
 
 /*
- *  Format a string into one or more "struct lineptr" lines.
- *  lines[i].ptr == NULL indicates the end of the array.
+ *	Format a string into one or more "struct lineptr" lines.
+ *	lines[i].ptr == NULL indicates the end of the array.
  *
  * This MUST be kept in sync with pg_wcssize!
  */
 void
 pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
-			 struct lineptr *lines, int count)
+			 struct lineptr * lines, int count)
 {
 	int			w,
 				chlen = 0;
@@ -378,12 +378,12 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 		len -= chlen;
 	}
 	lines->width = linewidth;
-	*ptr++ = '\0';			/* Terminate formatted string */
+	*ptr++ = '\0';				/* Terminate formatted string */
 
 	if (count <= 0)
-		exit(1);	/* Screwup */
+		exit(1);				/* Screwup */
 
-	(lines+1)->ptr = NULL;	/* terminate line array */
+	(lines + 1)->ptr = NULL;	/* terminate line array */
 }
 
 unsigned char *

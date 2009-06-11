@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.153 2009/05/07 20:13:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.154 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 */
 		foreach(l, (List *) f->quals)
 		{
-			Node   *qual = (Node *) lfirst(l);
+			Node	   *qual = (Node *) lfirst(l);
 
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, JOIN_INNER,
@@ -430,8 +430,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * we mustn't add it to join_info_list just yet, because we don't want
 		 * distribute_qual_to_rels to think it is an outer join below us.
 		 *
-		 * Semijoins are a bit of a hybrid: we build a SpecialJoinInfo,
-		 * but we want ojscope = NULL for distribute_qual_to_rels.
+		 * Semijoins are a bit of a hybrid: we build a SpecialJoinInfo, but we
+		 * want ojscope = NULL for distribute_qual_to_rels.
 		 */
 		if (j->jointype != JOIN_INNER)
 		{
@@ -455,7 +455,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		/* Process the qual clauses */
 		foreach(l, (List *) j->quals)
 		{
-			Node   *qual = (Node *) lfirst(l);
+			Node	   *qual = (Node *) lfirst(l);
 
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, j->jointype,
@@ -629,9 +629,9 @@ make_outerjoininfo(PlannerInfo *root,
 		 * min_lefthand.  (We must use its full syntactic relset, not just its
 		 * min_lefthand + min_righthand.  This is because there might be other
 		 * OJs below this one that this one can commute with, but we cannot
-		 * commute with them if we don't with this one.)  Also, if the
-		 * current join is an antijoin, we must preserve ordering regardless
-		 * of strictness.
+		 * commute with them if we don't with this one.)  Also, if the current
+		 * join is an antijoin, we must preserve ordering regardless of
+		 * strictness.
 		 *
 		 * Note: I believe we have to insist on being strict for at least one
 		 * rel in the lower OJ's min_righthand, not its whole syn_righthand.
@@ -882,7 +882,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * We can't use such a clause to deduce equivalence (the left and
 		 * right sides might be unequal above the join because one of them has
 		 * gone to NULL) ... but we might be able to use it for more limited
-		 * deductions, if it is mergejoinable.  So consider adding it to the
+		 * deductions, if it is mergejoinable.	So consider adding it to the
 		 * lists of set-aside outer-join clauses.
 		 */
 		is_pushed_down = false;
@@ -937,8 +937,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 			/*
 			 * It's possible that this is an IS NULL clause that's redundant
 			 * with a lower antijoin; if so we can just discard it.  We need
-			 * not test in any of the other cases, because this will only
-			 * be possible for pushed-down, delayed clauses.
+			 * not test in any of the other cases, because this will only be
+			 * possible for pushed-down, delayed clauses.
 			 */
 			if (check_redundant_nullability_qual(root, clause))
 				return;
@@ -1122,8 +1122,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  */
 static bool
 check_outerjoin_delay(PlannerInfo *root,
-					  Relids *relids_p,				/* in/out parameter */
-					  Relids *nullable_relids_p,	/* output parameter */
+					  Relids *relids_p, /* in/out parameter */
+					  Relids *nullable_relids_p,		/* output parameter */
 					  bool is_pushed_down)
 {
 	Relids		relids;
@@ -1215,8 +1215,8 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
 	forced_null_rel = forced_null_var->varno;
 
 	/*
-	 * If the Var comes from the nullable side of a lower antijoin, the
-	 * IS NULL condition is necessarily true.
+	 * If the Var comes from the nullable side of a lower antijoin, the IS
+	 * NULL condition is necessarily true.
 	 */
 	foreach(lc, root->join_info_list)
 	{
@@ -1393,7 +1393,7 @@ build_implied_join_equality(Oid opno,
 									 true,		/* is_pushed_down */
 									 false,		/* outerjoin_delayed */
 									 false,		/* pseudoconstant */
-									 qualscope,	/* required_relids */
+									 qualscope, /* required_relids */
 									 NULL);		/* nullable_relids */
 
 	/* Set mergejoinability info always, and hashjoinability if enabled */

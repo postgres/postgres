@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.43 2009/05/26 01:39:49 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.44 2009/06/11 14:49:13 momjian Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -25,10 +25,10 @@ typedef double fsec_t;
 #define USE_SQL_DATES					2
 #define USE_GERMAN_DATES				3
 
-#define INTSTYLE_POSTGRES             0
-#define INTSTYLE_POSTGRES_VERBOSE     1
-#define INTSTYLE_SQL_STANDARD         2
-#define INTSTYLE_ISO_8601             3
+#define INTSTYLE_POSTGRES			  0
+#define INTSTYLE_POSTGRES_VERBOSE	  1
+#define INTSTYLE_SQL_STANDARD		  2
+#define INTSTYLE_ISO_8601			  3
 
 #define INTERVAL_FULL_RANGE (0x7FFF)
 #define INTERVAL_MASK(b) (1 << (b))
@@ -188,7 +188,7 @@ typedef double fsec_t;
  */
 /* Copy&pasted these values from src/include/utils/datetime.h */
 #define DTK_M(t)		(0x01 << (t))
-#define DTK_ALL_SECS_M     (DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
+#define DTK_ALL_SECS_M	   (DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
 
@@ -340,7 +340,7 @@ int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
 int			DecodeUnits(int field, char *lowtoken, int *val);
 bool		CheckDateTokenTables(void);
 int			EncodeDateOnly(struct tm *, int, char *, bool);
-int		GetEpochTime(struct tm *);
+int			GetEpochTime(struct tm *);
 int			ParseDateTime(char *, char *, char **, int *, int *, char **);
 int			DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, bool);
 void		j2date(int, int *, int *, int *);

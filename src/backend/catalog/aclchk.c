@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.153 2009/02/06 21:15:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.154 2009/06/11 14:48:54 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -62,13 +62,13 @@ static void ExecGrant_Tablespace(InternalGrant *grantStmt);
 
 static List *objectNamesToOids(GrantObjectType objtype, List *objnames);
 static void expand_col_privileges(List *colnames, Oid table_oid,
-								  AclMode this_privileges,
-								  AclMode *col_privileges,
-								  int num_col_privileges);
+					  AclMode this_privileges,
+					  AclMode *col_privileges,
+					  int num_col_privileges);
 static void expand_all_col_privileges(Oid table_oid, Form_pg_class classForm,
-									  AclMode this_privileges,
-									  AclMode *col_privileges,
-									  int num_col_privileges);
+						  AclMode this_privileges,
+						  AclMode *col_privileges,
+						  int num_col_privileges);
 static AclMode string_to_privilege(const char *privname);
 static const char *privilege_to_string(AclMode privilege);
 static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
@@ -77,7 +77,7 @@ static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
 						 AclObjectKind objkind, const char *objname,
 						 AttrNumber att_number, const char *colname);
 static AclMode pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum,
-						  Oid roleid, AclMode mask, AclMaskHow how);
+		   Oid roleid, AclMode mask, AclMaskHow how);
 
 
 #ifdef ACLDEBUG
@@ -127,7 +127,7 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 		AclItem aclitem;
 		Acl		   *newer_acl;
 
-		aclitem.ai_grantee = lfirst_oid(j);
+		aclitem.	ai_grantee = lfirst_oid(j);
 
 		/*
 		 * Grant options can only be granted to individual roles, not PUBLIC.
@@ -140,7 +140,7 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("grant options can only be granted to roles")));
 
-		aclitem.ai_grantor = grantorId;
+		aclitem.	ai_grantor = grantorId;
 
 		/*
 		 * The asymmetry in the conditions here comes from the spec.  In
@@ -314,8 +314,8 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	}
 
 	/*
-	 * Convert stmt->privileges, a list of AccessPriv nodes, into an
-	 * AclMode bitmask.  Note: objtype can't be ACL_OBJECT_COLUMN.
+	 * Convert stmt->privileges, a list of AccessPriv nodes, into an AclMode
+	 * bitmask.  Note: objtype can't be ACL_OBJECT_COLUMN.
 	 */
 	switch (stmt->objtype)
 	{
@@ -389,8 +389,8 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			AclMode		priv;
 
 			/*
-			 * If it's a column-level specification, we just set it aside
-			 * in col_privs for the moment; but insist it's for a relation.
+			 * If it's a column-level specification, we just set it aside in
+			 * col_privs for the moment; but insist it's for a relation.
 			 */
 			if (privnode->cols)
 			{
@@ -402,7 +402,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				continue;
 			}
 
-			if (privnode->priv_name == NULL)		/* parser mistake? */
+			if (privnode->priv_name == NULL)	/* parser mistake? */
 				elog(ERROR, "AccessPriv node must specify privilege or columns");
 			priv = string_to_privilege(privnode->priv_name);
 
@@ -421,7 +421,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 /*
  * ExecGrantStmt_oids
  *
- * "Internal" entrypoint for granting and revoking privileges.  This is
+ * "Internal" entrypoint for granting and revoking privileges.	This is
  * exported for pg_shdepend.c to use in revoking privileges when dropping
  * a role.
  */
@@ -586,8 +586,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_FDW:
 			foreach(cell, objnames)
 			{
-				char   *fdwname = strVal(lfirst(cell));
-				Oid		fdwid = GetForeignDataWrapperOidByName(fdwname, false);
+				char	   *fdwname = strVal(lfirst(cell));
+				Oid			fdwid = GetForeignDataWrapperOidByName(fdwname, false);
 
 				objects = lappend_oid(objects, fdwid);
 			}
@@ -595,8 +595,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_FOREIGN_SERVER:
 			foreach(cell, objnames)
 			{
-				char   *srvname = strVal(lfirst(cell));
-				Oid		srvid = GetForeignServerOidByName(srvname, false);
+				char	   *srvname = strVal(lfirst(cell));
+				Oid			srvid = GetForeignServerOidByName(srvname, false);
 
 				objects = lappend_oid(objects, srvid);
 			}
@@ -637,7 +637,7 @@ expand_col_privileges(List *colnames, Oid table_oid,
 							colname, get_rel_name(table_oid))));
 		attnum -= FirstLowInvalidHeapAttributeNumber;
 		if (attnum <= 0 || attnum >= num_col_privileges)
-			elog(ERROR, "column number out of range");		/* safety check */
+			elog(ERROR, "column number out of range");	/* safety check */
 		col_privileges[attnum] |= this_privileges;
 	}
 }
@@ -705,24 +705,24 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 					AttrNumber attnum, Oid ownerId, AclMode col_privileges,
 					Relation attRelation, const Acl *old_rel_acl)
 {
-	HeapTuple			attr_tuple;
-	Form_pg_attribute	pg_attribute_tuple;
-	Acl				   *old_acl;
-	Acl				   *new_acl;
-	Acl				   *merged_acl;
-	Datum				aclDatum;
-	bool				isNull;
-	Oid					grantorId;
-	AclMode				avail_goptions;
-	bool				need_update;
-	HeapTuple			newtuple;
-	Datum				values[Natts_pg_attribute];
-	bool				nulls[Natts_pg_attribute];
-	bool				replaces[Natts_pg_attribute];
-	int					noldmembers;
-	int					nnewmembers;
-	Oid		   		   *oldmembers;
-	Oid		   		   *newmembers;
+	HeapTuple	attr_tuple;
+	Form_pg_attribute pg_attribute_tuple;
+	Acl		   *old_acl;
+	Acl		   *new_acl;
+	Acl		   *merged_acl;
+	Datum		aclDatum;
+	bool		isNull;
+	Oid			grantorId;
+	AclMode		avail_goptions;
+	bool		need_update;
+	HeapTuple	newtuple;
+	Datum		values[Natts_pg_attribute];
+	bool		nulls[Natts_pg_attribute];
+	bool		replaces[Natts_pg_attribute];
+	int			noldmembers;
+	int			nnewmembers;
+	Oid		   *oldmembers;
+	Oid		   *newmembers;
 
 	attr_tuple = SearchSysCache(ATTNUM,
 								ObjectIdGetDatum(relOid),
@@ -734,8 +734,8 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	pg_attribute_tuple = (Form_pg_attribute) GETSTRUCT(attr_tuple);
 
 	/*
-	 * Get working copy of existing ACL. If there's no ACL,
-	 * substitute the proper default.
+	 * Get working copy of existing ACL. If there's no ACL, substitute the
+	 * proper default.
 	 */
 	aclDatum = SysCacheGetAttr(ATTNUM, attr_tuple, Anum_pg_attribute_attacl,
 							   &isNull);
@@ -747,8 +747,8 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	/*
 	 * In select_best_grantor we should consider existing table-level ACL bits
 	 * as well as the per-column ACL.  Build a new ACL that is their
-	 * concatenation.  (This is a bit cheap and dirty compared to merging
-	 * them properly with no duplications, but it's all we need here.)
+	 * concatenation.  (This is a bit cheap and dirty compared to merging them
+	 * properly with no duplications, but it's all we need here.)
 	 */
 	merged_acl = aclconcat(old_rel_acl, old_acl);
 
@@ -760,12 +760,12 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	pfree(merged_acl);
 
 	/*
-	 * Restrict the privileges to what we can actually grant, and emit
-	 * the standards-mandated warning and error messages.  Note: we don't
-	 * track whether the user actually used the ALL PRIVILEGES(columns)
-	 * syntax for each column; we just approximate it by whether all the
-	 * possible privileges are specified now.  Since the all_privs flag only
-	 * determines whether a warning is issued, this seems close enough.
+	 * Restrict the privileges to what we can actually grant, and emit the
+	 * standards-mandated warning and error messages.  Note: we don't track
+	 * whether the user actually used the ALL PRIVILEGES(columns) syntax for
+	 * each column; we just approximate it by whether all the possible
+	 * privileges are specified now.  Since the all_privs flag only determines
+	 * whether a warning is issued, this seems close enough.
 	 */
 	col_privileges =
 		restrict_and_check_grant(istmt->is_grant, avail_goptions,
@@ -778,8 +778,8 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	/*
 	 * Generate new ACL.
 	 *
-	 * We need the members of both old and new ACLs so we can correct
-	 * the shared dependency information.
+	 * We need the members of both old and new ACLs so we can correct the
+	 * shared dependency information.
 	 */
 	noldmembers = aclmembers(old_acl, &oldmembers);
 
@@ -797,11 +797,11 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 	MemSet(replaces, false, sizeof(replaces));
 
 	/*
-	 * If the updated ACL is empty, we can set attacl to null, and maybe
-	 * even avoid an update of the pg_attribute row.  This is worth testing
-	 * because we'll come through here multiple times for any relation-level
-	 * REVOKE, even if there were never any column GRANTs.  Note we are
-	 * assuming that the "default" ACL state for columns is empty.
+	 * If the updated ACL is empty, we can set attacl to null, and maybe even
+	 * avoid an update of the pg_attribute row.  This is worth testing because
+	 * we'll come through here multiple times for any relation-level REVOKE,
+	 * even if there were never any column GRANTs.	Note we are assuming that
+	 * the "default" ACL state for columns is empty.
 	 */
 	if (ACL_NUM(new_acl) > 0)
 	{
@@ -857,7 +857,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 		Form_pg_class pg_class_tuple;
 		bool		isNull;
 		AclMode		this_privileges;
-		AclMode	   *col_privileges;
+		AclMode    *col_privileges;
 		int			num_col_privileges;
 		bool		have_col_privileges;
 		Acl		   *old_acl;
@@ -954,7 +954,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 
 		/*
 		 * Set up array in which we'll accumulate any column privilege bits
-		 * that need modification.  The array is indexed such that entry [0]
+		 * that need modification.	The array is indexed such that entry [0]
 		 * corresponds to FirstLowInvalidHeapAttributeNumber.
 		 */
 		num_col_privileges = pg_class_tuple->relnatts - FirstLowInvalidHeapAttributeNumber + 1;
@@ -1025,7 +1025,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 				restrict_and_check_grant(istmt->is_grant, avail_goptions,
 										 istmt->all_privs, this_privileges,
 										 relOid, grantorId,
-										 pg_class_tuple->relkind == RELKIND_SEQUENCE
+								  pg_class_tuple->relkind == RELKIND_SEQUENCE
 										 ? ACL_KIND_SEQUENCE : ACL_KIND_CLASS,
 										 NameStr(pg_class_tuple->relname),
 										 0, NULL);
@@ -1081,7 +1081,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 		 */
 		foreach(cell_colprivs, istmt->col_privs)
 		{
-			AccessPriv	   *col_privs = (AccessPriv *) lfirst(cell_colprivs);
+			AccessPriv *col_privs = (AccessPriv *) lfirst(cell_colprivs);
 
 			if (col_privs->priv_name == NULL)
 				this_privileges = ACL_ALL_RIGHTS_COLUMN;
@@ -1099,8 +1099,8 @@ ExecGrant_Relation(InternalGrant *istmt)
 			{
 				/*
 				 * The only column privilege allowed on sequences is SELECT.
-				 * This is a warning not error because we do it that way
-				 * for relation-level privileges.
+				 * This is a warning not error because we do it that way for
+				 * relation-level privileges.
 				 */
 				ereport(WARNING,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
@@ -1119,7 +1119,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 
 		if (have_col_privileges)
 		{
-			AttrNumber i;
+			AttrNumber	i;
 
 			for (i = 0; i < num_col_privileges; i++)
 			{
@@ -1385,7 +1385,8 @@ ExecGrant_Fdw(InternalGrant *istmt)
 	heap_close(relation, RowExclusiveLock);
 }
 
-static void ExecGrant_ForeignServer(InternalGrant *istmt)
+static void
+ExecGrant_ForeignServer(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
@@ -1450,7 +1451,7 @@ static void ExecGrant_ForeignServer(InternalGrant *istmt)
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, istmt->privileges,
-									 srvid, grantorId, ACL_KIND_FOREIGN_SERVER,
+								   srvid, grantorId, ACL_KIND_FOREIGN_SERVER,
 									 NameStr(pg_server_tuple->srvname),
 									 0, NULL);
 
@@ -2274,7 +2275,7 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum, Oid roleid,
  *
  * Note: this considers only privileges granted specifically on the column.
  * It is caller's responsibility to take relation-level privileges into account
- * as appropriate.  (For the same reason, we have no special case for
+ * as appropriate.	(For the same reason, we have no special case for
  * superuser-ness here.)
  */
 AclMode
@@ -2316,9 +2317,9 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 							   &isNull);
 
 	/*
-	 * Here we hard-wire knowledge that the default ACL for a column
-	 * grants no privileges, so that we can fall out quickly in the
-	 * very common case where attacl is null.
+	 * Here we hard-wire knowledge that the default ACL for a column grants no
+	 * privileges, so that we can fall out quickly in the very common case
+	 * where attacl is null.
 	 */
 	if (isNull)
 	{
@@ -2328,11 +2329,11 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 
 	/*
 	 * Must get the relation's ownerId from pg_class.  Since we already found
-	 * a pg_attribute entry, the only likely reason for this to fail is that
-	 * a concurrent DROP of the relation committed since then (which could
-	 * only happen if we don't have lock on the relation).  We prefer to
-	 * report "no privileges" rather than failing in such a case, so as to
-	 * avoid unwanted failures in has_column_privilege() tests.
+	 * a pg_attribute entry, the only likely reason for this to fail is that a
+	 * concurrent DROP of the relation committed since then (which could only
+	 * happen if we don't have lock on the relation).  We prefer to report "no
+	 * privileges" rather than failing in such a case, so as to avoid unwanted
+	 * failures in has_column_privilege() tests.
 	 */
 	classTuple = SearchSysCache(RELOID,
 								ObjectIdGetDatum(table_oid),
@@ -2804,7 +2805,7 @@ pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				 (errmsg("foreign-data wrapper with OID %u does not exist",
+				(errmsg("foreign-data wrapper with OID %u does not exist",
 						fdw_oid)));
 	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
 
@@ -2844,7 +2845,7 @@ pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
  */
 AclMode
 pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-			   			  AclMode mask, AclMaskHow how)
+						  AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
 	HeapTuple	tuple;
@@ -2867,7 +2868,7 @@ pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
-				 (errmsg("foreign server with OID %u does not exist",
+				(errmsg("foreign server with OID %u does not exist",
 						srv_oid)));
 	srvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
 
@@ -2944,16 +2945,16 @@ AclResult
 pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 						  AclMaskHow how)
 {
-	AclResult		result;
-	HeapTuple		classTuple;
-	Form_pg_class	classForm;
-	AttrNumber		nattrs;
-	AttrNumber		curr_att;
+	AclResult	result;
+	HeapTuple	classTuple;
+	Form_pg_class classForm;
+	AttrNumber	nattrs;
+	AttrNumber	curr_att;
 
 	/*
 	 * Must fetch pg_class row to check number of attributes.  As in
-	 * pg_attribute_aclmask, we prefer to return "no privileges" instead
-	 * of throwing an error if we get any unexpected lookup errors.
+	 * pg_attribute_aclmask, we prefer to return "no privileges" instead of
+	 * throwing an error if we get any unexpected lookup errors.
 	 */
 	classTuple = SearchSysCache(RELOID,
 								ObjectIdGetDatum(table_oid),
@@ -2967,8 +2968,8 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 	ReleaseSysCache(classTuple);
 
 	/*
-	 * Initialize result in case there are no non-dropped columns.  We want
-	 * to report failure in such cases for either value of 'how'.
+	 * Initialize result in case there are no non-dropped columns.	We want to
+	 * report failure in such cases for either value of 'how'.
 	 */
 	result = ACLCHECK_NO_PRIV;
 
@@ -2993,8 +2994,8 @@ pg_attribute_aclcheck_all(Oid table_oid, Oid roleid, AclMode mode,
 
 		/*
 		 * Here we hard-wire knowledge that the default ACL for a column
-		 * grants no privileges, so that we can fall out quickly in the
-		 * very common case where attacl is null.
+		 * grants no privileges, so that we can fall out quickly in the very
+		 * common case where attacl is null.
 		 */
 		if (heap_attisnull(attTuple, Anum_pg_attribute_attacl))
 			attmask = 0;
@@ -3466,8 +3467,8 @@ pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("foreign server with OID %u does not exist",
-					  srv_oid)));
+				 errmsg("foreign server with OID %u does not exist",
+						srv_oid)));
 
 	ownerId = ((Form_pg_foreign_server) GETSTRUCT(tuple))->srvowner;
 

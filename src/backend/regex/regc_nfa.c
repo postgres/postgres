@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_nfa.c,v 1.6 2008/02/14 17:33:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_nfa.c,v 1.7 2009/06/11 14:49:01 momjian Exp $
  *
  *
  * One or two things that technically ought to be in here
@@ -93,7 +93,7 @@ newnfa(struct vars * v,
  * TooManyStates - checks if the max states exceeds the compile-time value
  */
 static int
-TooManyStates(struct nfa *nfa)
+TooManyStates(struct nfa * nfa)
 {
 	struct nfa *parent = nfa->parent;
 	size_t		sz = nfa->size;
@@ -112,7 +112,7 @@ TooManyStates(struct nfa *nfa)
  * IncrementSize - increases the tracked size of the NFA and its parents.
  */
 static void
-IncrementSize(struct nfa *nfa)
+IncrementSize(struct nfa * nfa)
 {
 	struct nfa *parent = nfa->parent;
 
@@ -128,7 +128,7 @@ IncrementSize(struct nfa *nfa)
  * DecrementSize - decreases the tracked size of the NFA and its parents.
  */
 static void
-DecrementSize(struct nfa *nfa)
+DecrementSize(struct nfa * nfa)
 {
 	struct nfa *parent = nfa->parent;
 
@@ -856,7 +856,8 @@ pull(struct nfa * nfa,
 
 	/*
 	 * DGP 2007-11-15: Cloning a state with a circular constraint on its list
-	 * of outs can lead to trouble [Tcl Bug 1810038], so get rid of them first.
+	 * of outs can lead to trouble [Tcl Bug 1810038], so get rid of them
+	 * first.
 	 */
 	for (a = from->outs; a != NULL; a = nexta)
 	{
@@ -998,12 +999,12 @@ push(struct nfa * nfa,
 	}
 
 	/*
-	 * DGP 2007-11-15: Here we duplicate the same protections as appear
-	 * in pull() above to avoid troubles with cloning a state with a
-	 * circular constraint on its list of ins.  It is not clear whether
-	 * this is necessary, or is protecting against a "can't happen".
-	 * Any test case that actually leads to a freearc() call here would
-	 * be a welcome addition to the test suite.
+	 * DGP 2007-11-15: Here we duplicate the same protections as appear in
+	 * pull() above to avoid troubles with cloning a state with a circular
+	 * constraint on its list of ins.  It is not clear whether this is
+	 * necessary, or is protecting against a "can't happen". Any test case
+	 * that actually leads to a freearc() call here would be a welcome
+	 * addition to the test suite.
 	 */
 	for (a = to->ins; a != NULL; a = nexta)
 	{
@@ -1143,7 +1144,7 @@ fixempties(struct nfa * nfa,
 	{
 		progress = 0;
 		for (s = nfa->states; s != NULL && !NISERR() &&
-				 s->no != FREESTATE; s = nexts)
+			 s->no != FREESTATE; s = nexts)
 		{
 			nexts = s->next;
 			for (a = s->outs; a != NULL && !NISERR(); a = nexta)

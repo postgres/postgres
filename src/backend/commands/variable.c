@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.129 2009/01/01 17:23:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.130 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 
 		/*
 		 * Try to parse it.  XXX an invalid interval format will result in
-		 * ereport(ERROR), which is not desirable for GUC.  We did what we
+		 * ereport(ERROR), which is not desirable for GUC.	We did what we
 		 * could to guard against this in flatten_set_variable_args, but a
 		 * string coming in from postgresql.conf might contain anything.
 		 */
@@ -290,7 +290,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		{
 			ereport(GUC_complaint_elevel(source),
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid interval value for time zone: day not allowed")));
+			errmsg("invalid interval value for time zone: day not allowed")));
 			pfree(interval);
 			return NULL;
 		}
@@ -843,7 +843,7 @@ assign_role(const char *value, bool doit, GucSource source)
 		/*
 		 * Disallow SET ROLE inside a security definer context.  We need to do
 		 * this because when we exit the context, GUC won't be notified,
-		 * leaving things out of sync.  Note that this test is arranged so
+		 * leaving things out of sync.	Note that this test is arranged so
 		 * that restoring a previously saved setting isn't prevented.
 		 *
 		 * XXX it would be nice to allow this case in future, with the

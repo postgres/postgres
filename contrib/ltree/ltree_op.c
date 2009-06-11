@@ -1,7 +1,7 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.19 2008/05/12 00:00:43 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.20 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -58,7 +58,7 @@ Datum		text2ltree(PG_FUNCTION_ARGS);
 Datum		ltreeparentsel(PG_FUNCTION_ARGS);
 
 int
-ltree_compare(const ltree * a, const ltree * b)
+ltree_compare(const ltree *a, const ltree *b)
 {
 	ltree_level *al = LTREE_FIRST(a);
 	ltree_level *bl = LTREE_FIRST(b);
@@ -152,7 +152,7 @@ nlevel(PG_FUNCTION_ARGS)
 }
 
 bool
-inner_isparent(const ltree * c, const ltree * p)
+inner_isparent(const ltree *c, const ltree *p)
 {
 	ltree_level *cl = LTREE_FIRST(c);
 	ltree_level *pl = LTREE_FIRST(p);
@@ -201,7 +201,7 @@ ltree_risparent(PG_FUNCTION_ARGS)
 
 
 static ltree *
-inner_subltree(ltree * t, int4 startpos, int4 endpos)
+inner_subltree(ltree *t, int4 startpos, int4 endpos)
 {
 	char	   *start = NULL,
 			   *end = NULL;
@@ -283,7 +283,7 @@ subpath(PG_FUNCTION_ARGS)
 }
 
 static ltree *
-ltree_concat(ltree * a, ltree * b)
+ltree_concat(ltree *a, ltree *b)
 {
 	ltree	   *r;
 
@@ -422,7 +422,7 @@ ltree_textadd(PG_FUNCTION_ARGS)
 }
 
 ltree *
-lca_inner(ltree ** a, int len)
+lca_inner(ltree **a, int len)
 {
 	int			tmp,
 				num = ((*a)->numlevel) ? (*a)->numlevel - 1 : 0;
@@ -626,11 +626,11 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 		else if (hist_size < 100)
 		{
 			/*
-			 * For histogram sizes from 10 to 100, we combine the
-			 * histogram and default selectivities, putting increasingly
-			 * more trust in the histogram for larger sizes.
+			 * For histogram sizes from 10 to 100, we combine the histogram
+			 * and default selectivities, putting increasingly more trust in
+			 * the histogram for larger sizes.
 			 */
-			double	hist_weight = hist_size / 100.0;
+			double		hist_weight = hist_size / 100.0;
 
 			selec = selec * hist_weight +
 				DEFAULT_PARENT_SEL * (1.0 - hist_weight);

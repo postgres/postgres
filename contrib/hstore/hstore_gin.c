@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.5 2009/03/25 22:19:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.6 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -122,6 +122,7 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	HStore	   *query = PG_GETARG_HS(2);
+
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
@@ -132,8 +133,8 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 		int			i;
 
 		/*
-		 * Index lost information about correspondence of keys
-		 * and values, so we need recheck
+		 * Index lost information about correspondence of keys and values, so
+		 * we need recheck
 		 */
 		*recheck = true;
 		for (i = 0; res && i < 2 * query->size; i++)

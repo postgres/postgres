@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.59 2009/06/04 18:33:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.60 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@
 typedef struct
 {
 	RelFileNode rnode;
-	ForkNumber forknum;
+	ForkNumber	forknum;
 	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */
 } BgWriterRequest;
@@ -424,16 +424,16 @@ BackgroundWriterMain(void)
 		 */
 		if (do_checkpoint)
 		{
-			bool	ckpt_performed = false;
-			bool	do_restartpoint;
+			bool		ckpt_performed = false;
+			bool		do_restartpoint;
 
 			/* use volatile pointer to prevent code rearrangement */
 			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
 
 			/*
-			 * Check if we should perform a checkpoint or a restartpoint.
-			 * As a side-effect, RecoveryInProgress() initializes
-			 * TimeLineID if it's not set yet.
+			 * Check if we should perform a checkpoint or a restartpoint. As a
+			 * side-effect, RecoveryInProgress() initializes TimeLineID if
+			 * it's not set yet.
 			 */
 			do_restartpoint = RecoveryInProgress();
 
@@ -460,7 +460,7 @@ BackgroundWriterMain(void)
 				elapsed_secs < CheckPointWarning)
 				ereport(LOG,
 						(errmsg_plural("checkpoints are occurring too frequently (%d second apart)",
-									   "checkpoints are occurring too frequently (%d seconds apart)",
+				"checkpoints are occurring too frequently (%d seconds apart)",
 									   elapsed_secs,
 									   elapsed_secs),
 						 errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
@@ -812,8 +812,8 @@ bg_quickdie(SIGNAL_ARGS)
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm
-	 * in being doubly sure.)
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 	exit(2);
 }
@@ -952,25 +952,25 @@ RequestCheckpoint(int flags)
 
 	/*
 	 * Send signal to request checkpoint.  It's possible that the bgwriter
-	 * hasn't started yet, or is in process of restarting, so we will retry
-	 * a few times if needed.  Also, if not told to wait for the checkpoint
-	 * to occur, we consider failure to send the signal to be nonfatal and
-	 * merely LOG it.
+	 * hasn't started yet, or is in process of restarting, so we will retry a
+	 * few times if needed.  Also, if not told to wait for the checkpoint to
+	 * occur, we consider failure to send the signal to be nonfatal and merely
+	 * LOG it.
 	 */
-	for (ntries = 0; ; ntries++)
+	for (ntries = 0;; ntries++)
 	{
 		if (BgWriterShmem->bgwriter_pid == 0)
 		{
-			if (ntries >= 20)		/* max wait 2.0 sec */
+			if (ntries >= 20)	/* max wait 2.0 sec */
 			{
 				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-					 "could not request checkpoint because bgwriter not running");
+				"could not request checkpoint because bgwriter not running");
 				break;
 			}
 		}
 		else if (kill(BgWriterShmem->bgwriter_pid, SIGINT) != 0)
 		{
-			if (ntries >= 20)		/* max wait 2.0 sec */
+			if (ntries >= 20)	/* max wait 2.0 sec */
 			{
 				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
 					 "could not signal for checkpoint: %m");

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.14 2007/04/06 05:36:50 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.15 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -136,7 +136,7 @@ static const uint8 md5_paddat[MD5_BUFLEN] = {
 static void md5_calc(uint8 *, md5_ctxt *);
 
 void
-md5_init(md5_ctxt * ctxt)
+md5_init(md5_ctxt *ctxt)
 {
 	ctxt->md5_n = 0;
 	ctxt->md5_i = 0;
@@ -148,7 +148,7 @@ md5_init(md5_ctxt * ctxt)
 }
 
 void
-md5_loop(md5_ctxt * ctxt, const uint8 *input, unsigned len)
+md5_loop(md5_ctxt *ctxt, const uint8 *input, unsigned len)
 {
 	unsigned int gap,
 				i;
@@ -175,7 +175,7 @@ md5_loop(md5_ctxt * ctxt, const uint8 *input, unsigned len)
 }
 
 void
-md5_pad(md5_ctxt * ctxt)
+md5_pad(md5_ctxt *ctxt)
 {
 	unsigned int gap;
 
@@ -213,7 +213,7 @@ md5_pad(md5_ctxt * ctxt)
 }
 
 void
-md5_result(uint8 *digest, md5_ctxt * ctxt)
+md5_result(uint8 *digest, md5_ctxt *ctxt)
 {
 	/* 4 byte words */
 #ifndef WORDS_BIGENDIAN
@@ -243,7 +243,7 @@ static uint32 X[16];
 #endif
 
 static void
-md5_calc(uint8 *b64, md5_ctxt * ctxt)
+md5_calc(uint8 *b64, md5_ctxt *ctxt)
 {
 	uint32		A = ctxt->md5_sta;
 	uint32		B = ctxt->md5_stb;

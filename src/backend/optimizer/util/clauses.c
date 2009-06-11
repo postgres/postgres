@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.276 2009/02/25 03:30:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.277 2009/06/11 14:48:59 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -98,8 +98,8 @@ static Expr *simplify_function(Oid funcid,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
 static List *add_function_defaults(List *args, Oid result_type,
-								   HeapTuple func_tuple,
-								   eval_const_expressions_context *context);
+					  HeapTuple func_tuple,
+					  eval_const_expressions_context *context);
 static Expr *evaluate_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List *args,
 				  HeapTuple func_tuple,
@@ -114,9 +114,9 @@ static Node *substitute_actual_parameters_mutator(Node *node,
 static void sql_inline_error_callback(void *arg);
 static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
 static Query *substitute_actual_srf_parameters(Query *expr,
-											   int nargs, List *args);
+								 int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
-							substitute_actual_srf_parameters_context *context);
+						  substitute_actual_srf_parameters_context *context);
 static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
 
 
@@ -612,7 +612,8 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
 		lists->numWindowFuncs++;
 
 		/*
-		 * Complain if the window function's arguments contain window functions
+		 * Complain if the window function's arguments contain window
+		 * functions
 		 */
 		if (contain_window_function((Node *) wfunc->args))
 			ereport(ERROR,
@@ -1557,8 +1558,8 @@ find_forced_null_vars(Node *node)
 
 		/*
 		 * We don't bother considering the OR case, because it's fairly
-		 * unlikely anyone would write "v1 IS NULL OR v1 IS NULL".
-		 * Likewise, the NOT case isn't worth expending code on.
+		 * unlikely anyone would write "v1 IS NULL OR v1 IS NULL". Likewise,
+		 * the NOT case isn't worth expending code on.
 		 */
 		if (expr->boolop == AND_EXPR)
 		{
@@ -1594,7 +1595,7 @@ find_forced_null_var(Node *node)
 
 		if (expr->nulltesttype == IS_NULL)
 		{
-			Var	   *var = (Var *) expr->arg;
+			Var		   *var = (Var *) expr->arg;
 
 			if (var && IsA(var, Var) &&
 				var->varlevelsup == 0)
@@ -1608,7 +1609,7 @@ find_forced_null_var(Node *node)
 
 		if (expr->booltesttype == IS_UNKNOWN)
 		{
-			Var	   *var = (Var *) expr->arg;
+			Var		   *var = (Var *) expr->arg;
 
 			if (var && IsA(var, Var) &&
 				var->varlevelsup == 0)
@@ -2013,7 +2014,7 @@ eval_const_expressions(PlannerInfo *root, Node *node)
 	if (root)
 	{
 		context.boundParams = root->glob->boundParams;	/* bound Params */
-		context.glob = root->glob; /* for inlined-function dependencies */
+		context.glob = root->glob;		/* for inlined-function dependencies */
 	}
 	else
 	{
@@ -2453,9 +2454,9 @@ eval_const_expressions_mutator(Node *node,
 
 		/*
 		 * CoerceViaIO represents calling the source type's output function
-		 * then the result type's input function.  So, try to simplify it
-		 * as though it were a stack of two such function calls.  First we
-		 * need to know what the functions are.
+		 * then the result type's input function.  So, try to simplify it as
+		 * though it were a stack of two such function calls.  First we need
+		 * to know what the functions are.
 		 */
 		getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
 		getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
@@ -2505,8 +2506,8 @@ eval_const_expressions_mutator(Node *node,
 		ArrayCoerceExpr *newexpr;
 
 		/*
-		 * Reduce constants in the ArrayCoerceExpr's argument, then build
-		 * a new ArrayCoerceExpr.
+		 * Reduce constants in the ArrayCoerceExpr's argument, then build a
+		 * new ArrayCoerceExpr.
 		 */
 		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
 													  context);
@@ -2925,7 +2926,7 @@ eval_const_expressions_mutator(Node *node,
 		newbtest->booltesttype = btest->booltesttype;
 		return (Node *) newbtest;
 	}
-	if (IsA(node, PlaceHolderVar) && context->estimate)
+	if (IsA(node, PlaceHolderVar) &&context->estimate)
 	{
 		/*
 		 * In estimation mode, just strip the PlaceHolderVar node altogether;
@@ -3266,7 +3267,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
  *
  * It is possible for some of the defaulted arguments to be polymorphic;
  * therefore we can't assume that the default expressions have the correct
- * data types already.  We have to re-resolve polymorphics and do coercion
+ * data types already.	We have to re-resolve polymorphics and do coercion
  * just like the parser did.
  */
 static List *
@@ -3594,7 +3595,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	/*
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
-	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * fail at runtime anyway.	Note that check_sql_fn_retval will also insert
 	 * a RelabelType if needed to make the tlist expression match the declared
 	 * type of the function.
 	 *
@@ -3695,8 +3696,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	MemoryContextDelete(mycxt);
 
 	/*
-	 * Since there is now no trace of the function in the plan tree, we
-	 * must explicitly record the plan's dependency on the function.
+	 * Since there is now no trace of the function in the plan tree, we must
+	 * explicitly record the plan's dependency on the function.
 	 */
 	if (context->glob)
 		record_plan_function_dependency(context->glob, funcid);
@@ -3825,7 +3826,7 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
 	fix_opfuncids((Node *) expr);
 
 	/*
-	 * Prepare expr for execution.  (Note: we can't use ExecPrepareExpr
+	 * Prepare expr for execution.	(Note: we can't use ExecPrepareExpr
 	 * because it'd result in recursively invoking eval_const_expressions.)
 	 */
 	exprstate = ExecInitExpr(expr, NULL);
@@ -3908,10 +3909,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	Assert(rte->rtekind == RTE_FUNCTION);
 
 	/*
-	 * It doesn't make a lot of sense for a SQL SRF to refer to itself
-	 * in its own FROM clause, since that must cause infinite recursion
-	 * at runtime.  It will cause this code to recurse too, so check
-	 * for stack overflow.  (There's no need to do more.)
+	 * It doesn't make a lot of sense for a SQL SRF to refer to itself in its
+	 * own FROM clause, since that must cause infinite recursion at runtime.
+	 * It will cause this code to recurse too, so check for stack overflow.
+	 * (There's no need to do more.)
 	 */
 	check_stack_depth();
 
@@ -3922,8 +3923,8 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 
 	/*
 	 * The function must be declared to return a set, else inlining would
-	 * change the results if the contained SELECT didn't return exactly
-	 * one row.
+	 * change the results if the contained SELECT didn't return exactly one
+	 * row.
 	 */
 	if (!fexpr->funcretset)
 		return NULL;
@@ -3932,7 +3933,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * Refuse to inline if the arguments contain any volatile functions or
 	 * sub-selects.  Volatile functions are rejected because inlining may
 	 * result in the arguments being evaluated multiple times, risking a
-	 * change in behavior.  Sub-selects are rejected partly for implementation
+	 * change in behavior.	Sub-selects are rejected partly for implementation
 	 * reasons (pushing them down another level might change their behavior)
 	 * and partly because they're likely to be expensive and so multiple
 	 * evaluation would be bad.
@@ -3957,7 +3958,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 
 	/*
 	 * Forget it if the function is not SQL-language or has other showstopper
-	 * properties.  In particular it mustn't be declared STRICT, since we
+	 * properties.	In particular it mustn't be declared STRICT, since we
 	 * couldn't enforce that.  It also mustn't be VOLATILE, because that is
 	 * supposed to cause it to be executed with its own snapshot, rather than
 	 * sharing the snapshot of the calling query.  (The nargs check is just
@@ -4017,16 +4018,16 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	src = TextDatumGetCString(tmp);
 
 	/*
-	 * Parse, analyze, and rewrite (unlike inline_function(), we can't
-	 * skip rewriting here).  We can fail as soon as we find more than
-	 * one query, though.
+	 * Parse, analyze, and rewrite (unlike inline_function(), we can't skip
+	 * rewriting here).  We can fail as soon as we find more than one query,
+	 * though.
 	 */
 	raw_parsetree_list = pg_parse_query(src);
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
 	querytree_list = pg_analyze_and_rewrite(linitial(raw_parsetree_list), src,
-							  argtypes, funcform->pronargs);
+											argtypes, funcform->pronargs);
 	if (list_length(querytree_list) != 1)
 		goto fail;
 	querytree = linitial(querytree_list);
@@ -4043,13 +4044,13 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	/*
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
-	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * fail at runtime anyway.	Note that check_sql_fn_retval will also insert
 	 * RelabelType(s) if needed to make the tlist expression(s) match the
 	 * declared type of the function.
 	 *
-	 * If the function returns a composite type, don't inline unless the
-	 * check shows it's returning a whole tuple result; otherwise what
-	 * it's returning is a single composite column which is not what we need.
+	 * If the function returns a composite type, don't inline unless the check
+	 * shows it's returning a whole tuple result; otherwise what it's
+	 * returning is a single composite column which is not what we need.
 	 */
 	if (!check_sql_fn_retval(fexpr->funcid, fexpr->funcresulttype,
 							 querytree_list,
@@ -4076,8 +4077,8 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 												 fexpr->args);
 
 	/*
-	 * Copy the modified query out of the temporary memory context,
-	 * and clean up.
+	 * Copy the modified query out of the temporary memory context, and clean
+	 * up.
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
@@ -4088,8 +4089,8 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	ReleaseSysCache(func_tuple);
 
 	/*
-	 * Since there is now no trace of the function in the plan tree, we
-	 * must explicitly record the plan's dependency on the function.
+	 * Since there is now no trace of the function in the plan tree, we must
+	 * explicitly record the plan's dependency on the function.
 	 */
 	record_plan_function_dependency(root->glob, fexpr->funcid);
 
@@ -4128,9 +4129,9 @@ substitute_actual_srf_parameters(Query *expr, int nargs, List *args)
 
 static Node *
 substitute_actual_srf_parameters_mutator(Node *node,
-							substitute_actual_srf_parameters_context *context)
+						   substitute_actual_srf_parameters_context *context)
 {
-	Node   *result;
+	Node	   *result;
 
 	if (node == NULL)
 		return NULL;
@@ -4138,7 +4139,7 @@ substitute_actual_srf_parameters_mutator(Node *node,
 	{
 		context->sublevels_up++;
 		result = (Node *) query_tree_mutator((Query *) node,
-									  substitute_actual_srf_parameters_mutator,
+									substitute_actual_srf_parameters_mutator,
 											 (void *) context,
 											 0);
 		context->sublevels_up--;
@@ -4154,8 +4155,8 @@ substitute_actual_srf_parameters_mutator(Node *node,
 				elog(ERROR, "invalid paramid: %d", param->paramid);
 
 			/*
-			 * Since the parameter is being inserted into a subquery,
-			 * we must adjust levels.
+			 * Since the parameter is being inserted into a subquery, we must
+			 * adjust levels.
 			 */
 			result = copyObject(list_nth(context->args, param->paramid - 1));
 			IncrementVarSublevelsUp(result, context->sublevels_up, 0);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.97 2009/02/06 23:43:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.98 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,8 @@ clauselist_selectivity(PlannerInfo *root,
 	ListCell   *l;
 
 	/*
-	 * If there's exactly one clause, then no use in trying to match up
-	 * pairs, so just go directly to clause_selectivity().
+	 * If there's exactly one clause, then no use in trying to match up pairs,
+	 * so just go directly to clause_selectivity().
 	 */
 	if (list_length(clauses) == 1)
 		return clause_selectivity(root, (Node *) linitial(clauses),
@@ -410,30 +410,30 @@ treat_as_join_clause(Node *clause, RestrictInfo *rinfo,
 	if (varRelid != 0)
 	{
 		/*
-		 * Caller is forcing restriction mode (eg, because we are examining
-		 * an inner indexscan qual).
+		 * Caller is forcing restriction mode (eg, because we are examining an
+		 * inner indexscan qual).
 		 */
 		return false;
 	}
 	else if (sjinfo == NULL)
 	{
 		/*
-		 * It must be a restriction clause, since it's being evaluated at
-		 * a scan node.
+		 * It must be a restriction clause, since it's being evaluated at a
+		 * scan node.
 		 */
 		return false;
 	}
 	else
 	{
 		/*
-		 * Otherwise, it's a join if there's more than one relation used.
-		 * We can optimize this calculation if an rinfo was passed.
+		 * Otherwise, it's a join if there's more than one relation used. We
+		 * can optimize this calculation if an rinfo was passed.
 		 *
-		 * XXX  Since we know the clause is being evaluated at a join,
-		 * the only way it could be single-relation is if it was delayed
-		 * by outer joins.  Although we can make use of the restriction
-		 * qual estimators anyway, it seems likely that we ought to account
-		 * for the probability of injected nulls somehow.
+		 * XXX	Since we know the clause is being evaluated at a join, the
+		 * only way it could be single-relation is if it was delayed by outer
+		 * joins.  Although we can make use of the restriction qual estimators
+		 * anyway, it seems likely that we ought to account for the
+		 * probability of injected nulls somehow.
 		 */
 		if (rinfo)
 			return (bms_membership(rinfo->clause_relids) == BMS_MULTIPLE);
@@ -467,7 +467,7 @@ treat_as_join_clause(Node *clause, RestrictInfo *rinfo,
  * if the clause isn't a join clause.
  *
  * sjinfo is NULL for a non-join clause, otherwise it provides additional
- * context information about the join being performed.  There are some
+ * context information about the join being performed.	There are some
  * special cases:
  *	1. For a special (not INNER) join, sjinfo is always a member of
  *	   root->join_info_list.
@@ -525,7 +525,7 @@ clause_selectivity(PlannerInfo *root,
 		 * contains only vars of that relid --- otherwise varRelid will affect
 		 * the result, so mustn't cache.  Outer join quals might be examined
 		 * with either their join's actual jointype or JOIN_INNER, so we need
-		 * two cache variables to remember both cases.  Note: we assume the
+		 * two cache variables to remember both cases.	Note: we assume the
 		 * result won't change if we are switching the input relations or
 		 * considering a unique-ified case, so we only need one cache variable
 		 * for all non-JOIN_INNER cases.
@@ -571,8 +571,8 @@ clause_selectivity(PlannerInfo *root,
 		{
 			/*
 			 * A Var at the top of a clause must be a bool Var. This is
-			 * equivalent to the clause reln.attribute = 't', so we
-			 * compute the selectivity as if that is what we have.
+			 * equivalent to the clause reln.attribute = 't', so we compute
+			 * the selectivity as if that is what we have.
 			 */
 			s1 = restriction_selectivity(root,
 										 BooleanEqualOperator,

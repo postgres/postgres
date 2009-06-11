@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-openssl.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-openssl.c,v 1.5 2009/06/11 14:48:52 momjian Exp $
  */
 #include "postgres.h"
 
@@ -37,7 +37,7 @@
 #include "pgp.h"
 
 static BIGNUM *
-mpi_to_bn(PGP_MPI * n)
+mpi_to_bn(PGP_MPI *n)
 {
 	BIGNUM	   *bn = BN_bin2bn(n->data, n->bytes, NULL);
 
@@ -99,8 +99,8 @@ decide_k_bits(int p_bits)
 }
 
 int
-pgp_elgamal_encrypt(PGP_PubKey * pk, PGP_MPI * _m,
-					PGP_MPI ** c1_p, PGP_MPI ** c2_p)
+pgp_elgamal_encrypt(PGP_PubKey *pk, PGP_MPI *_m,
+					PGP_MPI **c1_p, PGP_MPI **c2_p)
 {
 	int			res = PXE_PGP_MATH_FAILED;
 	int			k_bits;
@@ -162,8 +162,8 @@ err:
 }
 
 int
-pgp_elgamal_decrypt(PGP_PubKey * pk, PGP_MPI * _c1, PGP_MPI * _c2,
-					PGP_MPI ** msg_p)
+pgp_elgamal_decrypt(PGP_PubKey *pk, PGP_MPI *_c1, PGP_MPI *_c2,
+					PGP_MPI **msg_p)
 {
 	int			res = PXE_PGP_MATH_FAILED;
 	BIGNUM	   *c1 = mpi_to_bn(_c1);
@@ -213,7 +213,7 @@ err:
 }
 
 int
-pgp_rsa_encrypt(PGP_PubKey * pk, PGP_MPI * _m, PGP_MPI ** c_p)
+pgp_rsa_encrypt(PGP_PubKey *pk, PGP_MPI *_m, PGP_MPI **c_p)
 {
 	int			res = PXE_PGP_MATH_FAILED;
 	BIGNUM	   *m = mpi_to_bn(_m);
@@ -249,7 +249,7 @@ err:
 }
 
 int
-pgp_rsa_decrypt(PGP_PubKey * pk, PGP_MPI * _c, PGP_MPI ** m_p)
+pgp_rsa_decrypt(PGP_PubKey *pk, PGP_MPI *_c, PGP_MPI **m_p)
 {
 	int			res = PXE_PGP_MATH_FAILED;
 	BIGNUM	   *c = mpi_to_bn(_c);

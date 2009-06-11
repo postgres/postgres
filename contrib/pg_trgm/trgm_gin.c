@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.7 2009/03/25 22:19:01 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_gin.c,v 1.8 2009/06/11 14:48:51 momjian Exp $
  */
 #include "trgm.h"
 
@@ -52,11 +52,11 @@ gin_extract_trgm(PG_FUNCTION_ARGS)
 			/*
 			 * Function called from query extracting
 			 */
-			Pointer      **extra_data = (Pointer **) PG_GETARG_POINTER(4);
+			Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
 
-			*extra_data = (Pointer*) palloc0(sizeof(Pointer)*(*nentries));
+			*extra_data = (Pointer *) palloc0(sizeof(Pointer) * (*nentries));
 
-			*(int32*)(*extra_data) = trglen;
+			*(int32 *) (*extra_data) = trglen;
 		}
 	}
 
@@ -67,8 +67,9 @@ Datum
 gin_trgm_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
+
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
-	/* text	   *query = PG_GETARG_TEXT_P(2); */
+	/* text    *query = PG_GETARG_TEXT_P(2); */
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
@@ -80,7 +81,7 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-	trglen = *(int32*)extra_data;
+	trglen = *(int32 *) extra_data;
 
 	for (i = 0; i < trglen; i++)
 		if (check[i])

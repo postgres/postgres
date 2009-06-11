@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.73 2009/05/03 23:13:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.74 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 /*
  * We have to use postgres.h not postgres_fe.h here, because there's so much
  * backend-only stuff in the XLOG include files we need.  But we need a
- * frontend-ish environment otherwise.  Hence this ugly hack.
+ * frontend-ish environment otherwise.	Hence this ugly hack.
  */
 #define FRONTEND 1
 
@@ -823,7 +823,7 @@ KillExistingArchiveStatus(void)
 	struct dirent *xlde;
 	char		path[MAXPGPATH];
 
-#define ARCHSTATDIR	XLOGDIR "/archive_status"
+#define ARCHSTATDIR XLOGDIR "/archive_status"
 
 	xldir = opendir(ARCHSTATDIR);
 	if (xldir == NULL)
@@ -838,7 +838,7 @@ KillExistingArchiveStatus(void)
 	{
 		if (strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			(strcmp(xlde->d_name + 24, ".ready") == 0 ||
-			 strcmp(xlde->d_name + 24, ".done")  == 0))
+			 strcmp(xlde->d_name + 24, ".done") == 0))
 		{
 			snprintf(path, MAXPGPATH, "%s/%s", ARCHSTATDIR, xlde->d_name);
 			if (unlink(path) < 0)

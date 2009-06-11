@@ -8,7 +8,7 @@
  * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.12 2009/06/08 16:22:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.13 2009/06/11 14:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ Datum		get_raw_page_fork(PG_FUNCTION_ARGS);
 Datum		page_header(PG_FUNCTION_ARGS);
 
 static bytea *get_raw_page_internal(text *relname, ForkNumber forknum,
-									BlockNumber blkno);
+					  BlockNumber blkno);
 
 
 /*
@@ -121,9 +121,9 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 						RelationGetRelationName(rel))));
 
 	/*
-	 * Reject attempts to read non-local temporary relations; we would
-	 * be likely to get wrong data since we have no visibility into the
-	 * owning session's local buffers.
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
 	 */
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.221 2009/01/22 20:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.222 2009/06/11 14:48:58 momjian Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -107,7 +107,7 @@
 #define READ_LOCATION_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	token = pg_strtok(&length);		/* get field value */ \
-	local_node->fldname = -1		/* set field to "unknown" */
+	local_node->fldname = -1	/* set field to "unknown" */
 
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
@@ -148,7 +148,8 @@ static Datum readDatum(bool typbyval);
 static Bitmapset *
 _readBitmapset(void)
 {
-	Bitmapset *result = NULL;
+	Bitmapset  *result = NULL;
+
 	READ_TEMP_LOCALS();
 
 	token = pg_strtok(&length);
@@ -165,8 +166,8 @@ _readBitmapset(void)
 
 	for (;;)
 	{
-		int		val;
-		char   *endptr;
+		int			val;
+		char	   *endptr;
 
 		token = pg_strtok(&length);
 		if (token == NULL)

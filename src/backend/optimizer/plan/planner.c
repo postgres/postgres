@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.255 2009/04/28 21:31:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.256 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 
 
 /* GUC parameter */
-double cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
+double		cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
 
 /* Hook for plugins to get control in planner() */
 planner_hook_type planner_hook = NULL;
@@ -84,18 +84,18 @@ static void locate_grouping_columns(PlannerInfo *root,
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
 static List *add_volatile_sort_exprs(List *window_tlist, List *tlist,
-									 List *activeWindows);
+						List *activeWindows);
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
-									  List *tlist, bool canonicalize);
+						 List *tlist, bool canonicalize);
 static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
-									   List *tlist,
-									   int numSortCols, AttrNumber *sortColIdx,
-									   int *partNumCols,
-									   AttrNumber **partColIdx,
-									   Oid **partOperators,
-									   int *ordNumCols,
-									   AttrNumber **ordColIdx,
-									   Oid **ordOperators);
+						   List *tlist,
+						   int numSortCols, AttrNumber *sortColIdx,
+						   int *partNumCols,
+						   AttrNumber **partColIdx,
+						   Oid **partOperators,
+						   int *ordNumCols,
+						   AttrNumber **ordColIdx,
+						   Oid **ordOperators);
 
 
 /*****************************************************************************
@@ -171,10 +171,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		tuple_fraction = cursor_tuple_fraction;
 
 		/*
-		 * We document cursor_tuple_fraction as simply being a fraction,
-		 * which means the edge cases 0 and 1 have to be treated specially
-		 * here.  We convert 1 to 0 ("all the tuples") and 0 to a very small
-		 * fraction.
+		 * We document cursor_tuple_fraction as simply being a fraction, which
+		 * means the edge cases 0 and 1 have to be treated specially here.	We
+		 * convert 1 to 0 ("all the tuples") and 0 to a very small fraction.
 		 */
 		if (tuple_fraction >= 1.0)
 			tuple_fraction = 0.0;
@@ -297,8 +296,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->non_recursive_plan = NULL;
 
 	/*
-	 * If there is a WITH list, process each WITH query and build an
-	 * initplan SubPlan structure for it.
+	 * If there is a WITH list, process each WITH query and build an initplan
+	 * SubPlan structure for it.
 	 */
 	if (parse->cteList)
 		SS_process_ctes(root);
@@ -313,8 +312,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		pull_up_sublinks(root);
 
 	/*
-	 * Scan the rangetable for set-returning functions, and inline them
-	 * if possible (producing subqueries that might get pulled up next).
+	 * Scan the rangetable for set-returning functions, and inline them if
+	 * possible (producing subqueries that might get pulled up next).
 	 * Recursion issues here are handled in the same way as for SubLinks.
 	 */
 	inline_set_returning_functions(root);
@@ -329,8 +328,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we can
 	 * avoid the expense of doing flatten_join_alias_vars().  Also check for
-	 * outer joins --- if none, we can skip reduce_outer_joins().
-	 * This must be done after we have done pull_up_subqueries, of course.
+	 * outer joins --- if none, we can skip reduce_outer_joins(). This must be
+	 * done after we have done pull_up_subqueries, of course.
 	 */
 	root->hasJoinRTEs = false;
 	hasOuterJoins = false;
@@ -528,7 +527,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * Simplify constant expressions.
 	 *
 	 * Note: one essential effect here is to insert the current actual values
-	 * of any default arguments for functions.  To ensure that happens, we
+	 * of any default arguments for functions.	To ensure that happens, we
 	 * *must* process all expressions here.  Previous PG versions sometimes
 	 * skipped const-simplification if it didn't seem worth the trouble, but
 	 * we can't do that anymore.
@@ -797,8 +796,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * If there's a top-level ORDER BY, assume we have to fetch all the
 		 * tuples.	This might be too simplistic given all the hackery below
-		 * to possibly avoid the sort; but the odds of accurate estimates
-		 * here are pretty low anyway.
+		 * to possibly avoid the sort; but the odds of accurate estimates here
+		 * are pretty low anyway.
 		 */
 		if (parse->sortClause)
 			tuple_fraction = 0.0;
@@ -908,9 +907,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Calculate pathkeys that represent grouping/ordering requirements.
 		 * Stash them in PlannerInfo so that query_planner can canonicalize
-		 * them after EquivalenceClasses have been formed.  The sortClause
-		 * is certainly sort-able, but GROUP BY and DISTINCT might not be,
-		 * in which case we just leave their pathkeys empty.
+		 * them after EquivalenceClasses have been formed.	The sortClause is
+		 * certainly sort-able, but GROUP BY and DISTINCT might not be, in
+		 * which case we just leave their pathkeys empty.
 		 */
 		if (parse->groupClause &&
 			grouping_is_sortable(parse->groupClause))
@@ -982,7 +981,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Note: if we have both ORDER BY and GROUP BY, and ORDER BY is a
 		 * superset of GROUP BY, it would be tempting to request sort by ORDER
 		 * BY --- but that might just leave us failing to exploit an available
-		 * sort order at all.  Needs more thought.  The choice for DISTINCT
+		 * sort order at all.  Needs more thought.	The choice for DISTINCT
 		 * versus ORDER BY is much easier, since we know that the parser
 		 * ensured that one is a superset of the other.
 		 */
@@ -1012,12 +1011,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		if (parse->groupClause)
 		{
-			bool	can_hash;
-			bool	can_sort;
+			bool		can_hash;
+			bool		can_sort;
 
 			/*
 			 * Executor doesn't support hashed aggregation with DISTINCT
-			 * aggregates.  (Doing so would imply storing *all* the input
+			 * aggregates.	(Doing so would imply storing *all* the input
 			 * values in the hash table, which seems like a certain loser.)
 			 */
 			can_hash = (agg_counts.numDistinctAggs == 0 &&
@@ -1079,16 +1078,17 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * Normal case --- create a plan according to query_planner's
 			 * results.
 			 */
-			bool	need_sort_for_grouping = false;
+			bool		need_sort_for_grouping = false;
 
 			result_plan = create_plan(root, best_path);
 			current_pathkeys = best_path->pathkeys;
 
 			/* Detect if we'll need an explicit sort for grouping */
 			if (parse->groupClause && !use_hashed_grouping &&
-				!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
+			  !pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 			{
 				need_sort_for_grouping = true;
+
 				/*
 				 * Always override query_planner's tlist, so that we don't
 				 * sort useless data from a "physical" tlist.
@@ -1275,9 +1275,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		}						/* end of non-minmax-aggregate case */
 
 		/*
-		 * Since each window function could require a different sort order,
-		 * we stack up a WindowAgg node for each window, with sort steps
-		 * between them as needed.
+		 * Since each window function could require a different sort order, we
+		 * stack up a WindowAgg node for each window, with sort steps between
+		 * them as needed.
 		 */
 		if (activeWindows)
 		{
@@ -1286,12 +1286,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/*
 			 * If the top-level plan node is one that cannot do expression
-			 * evaluation, we must insert a Result node to project the
-			 * desired tlist.  (In some cases this might not really be
-			 * required, but it's not worth trying to avoid it.)  Note that
-			 * on second and subsequent passes through the following loop,
-			 * the top-level node will be a WindowAgg which we know can
-			 * project; so we only need to check once.
+			 * evaluation, we must insert a Result node to project the desired
+			 * tlist.  (In some cases this might not really be required, but
+			 * it's not worth trying to avoid it.)  Note that on second and
+			 * subsequent passes through the following loop, the top-level
+			 * node will be a WindowAgg which we know can project; so we only
+			 * need to check once.
 			 */
 			if (!is_projection_capable_plan(result_plan))
 			{
@@ -1302,21 +1302,20 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 
 			/*
-			 * The "base" targetlist for all steps of the windowing process
-			 * is a flat tlist of all Vars and Aggs needed in the result.
-			 * (In some cases we wouldn't need to propagate all of these
-			 * all the way to the top, since they might only be needed as
-			 * inputs to WindowFuncs.  It's probably not worth trying to
-			 * optimize that though.)  We also need any volatile sort
-			 * expressions, because make_sort_from_pathkeys won't add those
-			 * on its own, and anyway we want them evaluated only once at
-			 * the bottom of the stack.  As we climb up the stack, we add
-			 * outputs for the WindowFuncs computed at each level.  Also,
-			 * each input tlist has to present all the columns needed to
-			 * sort the data for the next WindowAgg step.  That's handled
-			 * internally by make_sort_from_pathkeys, but we need the
-			 * copyObject steps here to ensure that each plan node has
-			 * a separately modifiable tlist.
+			 * The "base" targetlist for all steps of the windowing process is
+			 * a flat tlist of all Vars and Aggs needed in the result. (In
+			 * some cases we wouldn't need to propagate all of these all the
+			 * way to the top, since they might only be needed as inputs to
+			 * WindowFuncs.  It's probably not worth trying to optimize that
+			 * though.)  We also need any volatile sort expressions, because
+			 * make_sort_from_pathkeys won't add those on its own, and anyway
+			 * we want them evaluated only once at the bottom of the stack.
+			 * As we climb up the stack, we add outputs for the WindowFuncs
+			 * computed at each level.	Also, each input tlist has to present
+			 * all the columns needed to sort the data for the next WindowAgg
+			 * step.  That's handled internally by make_sort_from_pathkeys,
+			 * but we need the copyObject steps here to ensure that each plan
+			 * node has a separately modifiable tlist.
 			 */
 			window_tlist = flatten_tlist(tlist);
 			if (parse->hasAggs)
@@ -1392,7 +1391,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				{
 					/* Add the current WindowFuncs to the running tlist */
 					window_tlist = add_to_flat_tlist(window_tlist,
-											wflists->windowFuncs[wc->winref]);
+										   wflists->windowFuncs[wc->winref]);
 				}
 				else
 				{
@@ -1404,7 +1403,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *)
 					make_windowagg(root,
 								   (List *) copyObject(window_tlist),
-								   list_length(wflists->windowFuncs[wc->winref]),
+							   list_length(wflists->windowFuncs[wc->winref]),
 								   wc->winref,
 								   partNumCols,
 								   partColIdx,
@@ -1423,11 +1422,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 */
 	if (parse->distinctClause)
 	{
-		double	dNumDistinctRows;
-		long	numDistinctRows;
-		bool	use_hashed_distinct;
-		bool	can_sort;
-		bool	can_hash;
+		double		dNumDistinctRows;
+		long		numDistinctRows;
+		bool		use_hashed_distinct;
+		bool		can_sort;
+		bool		can_hash;
 
 		/*
 		 * If there was grouping or aggregation, use the current number of
@@ -1472,7 +1471,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("could not implement DISTINCT"),
 						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-				use_hashed_distinct = false; /* keep compiler quiet */
+				use_hashed_distinct = false;	/* keep compiler quiet */
 			}
 		}
 
@@ -1483,10 +1482,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 											result_plan->targetlist,
 											NIL,
 											AGG_HASHED,
-											list_length(parse->distinctClause),
-											extract_grouping_cols(parse->distinctClause,
-																  result_plan->targetlist),
-											extract_grouping_ops(parse->distinctClause),
+										  list_length(parse->distinctClause),
+								 extract_grouping_cols(parse->distinctClause,
+													result_plan->targetlist),
+								 extract_grouping_ops(parse->distinctClause),
 											numDistinctRows,
 											0,
 											result_plan);
@@ -1502,11 +1501,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * rigorous of DISTINCT and ORDER BY, to avoid a second sort
 			 * below.  However, for regular DISTINCT, don't sort now if we
 			 * don't have to --- sorting afterwards will likely be cheaper,
-			 * and also has the possibility of optimizing via LIMIT.  But
-			 * for DISTINCT ON, we *must* force the final sort now, else
-			 * it won't have the desired behavior.
+			 * and also has the possibility of optimizing via LIMIT.  But for
+			 * DISTINCT ON, we *must* force the final sort now, else it won't
+			 * have the desired behavior.
 			 */
-			List   *needed_pathkeys;
+			List	   *needed_pathkeys;
 
 			if (parse->hasDistinctOn &&
 				list_length(root->distinct_pathkeys) <
@@ -1530,7 +1529,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 				result_plan = (Plan *) make_sort_from_pathkeys(root,
 															   result_plan,
-															   current_pathkeys,
+															current_pathkeys,
 															   -1.0);
 			}
 
@@ -1551,7 +1550,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			result_plan = (Plan *) make_sort_from_pathkeys(root,
 														   result_plan,
-														   root->sort_pathkeys,
+														 root->sort_pathkeys,
 														   limit_tuples);
 			current_pathkeys = root->sort_pathkeys;
 		}
@@ -1883,12 +1882,12 @@ preprocess_groupclause(PlannerInfo *root)
 		return;
 
 	/*
-	 * Add any remaining GROUP BY items to the new list, but only if we
-	 * were able to make a complete match.  In other words, we only
-	 * rearrange the GROUP BY list if the result is that one list is a
-	 * prefix of the other --- otherwise there's no possibility of a
-	 * common sort.  Also, give up if there are any non-sortable GROUP BY
-	 * items, since then there's no hope anyway.
+	 * Add any remaining GROUP BY items to the new list, but only if we were
+	 * able to make a complete match.  In other words, we only rearrange the
+	 * GROUP BY list if the result is that one list is a prefix of the other
+	 * --- otherwise there's no possibility of a common sort.  Also, give up
+	 * if there are any non-sortable GROUP BY items, since then there's no
+	 * hope anyway.
 	 */
 	foreach(gl, parse->groupClause)
 	{
@@ -1962,11 +1961,10 @@ choose_hashed_grouping(PlannerInfo *root,
 
 	/*
 	 * When we have both GROUP BY and DISTINCT, use the more-rigorous of
-	 * DISTINCT and ORDER BY as the assumed required output sort order.
-	 * This is an oversimplification because the DISTINCT might get
-	 * implemented via hashing, but it's not clear that the case is common
-	 * enough (or that our estimates are good enough) to justify trying to
-	 * solve it exactly.
+	 * DISTINCT and ORDER BY as the assumed required output sort order. This
+	 * is an oversimplification because the DISTINCT might get implemented via
+	 * hashing, but it's not clear that the case is common enough (or that our
+	 * estimates are good enough) to justify trying to solve it exactly.
 	 */
 	if (list_length(root->distinct_pathkeys) >
 		list_length(root->sort_pathkeys))
@@ -2056,7 +2054,7 @@ choose_hashed_grouping(PlannerInfo *root,
  * differences that it doesn't seem worth trying to unify the two functions.
  *
  * But note that making the two choices independently is a bit bogus in
- * itself.  If the two could be combined into a single choice operation
+ * itself.	If the two could be combined into a single choice operation
  * it'd probably be better, but that seems far too unwieldy to be practical,
  * especially considering that the combination of GROUP BY and DISTINCT
  * isn't very common in real queries.  By separating them, we are giving
@@ -2098,8 +2096,8 @@ choose_hashed_distinct(PlannerInfo *root,
 	 * comparison.
 	 *
 	 * We need to consider input_plan + hashagg [+ final sort] versus
-	 * input_plan [+ sort] + group [+ final sort] where brackets indicate
-	 * a step that may not be needed.
+	 * input_plan [+ sort] + group [+ final sort] where brackets indicate a
+	 * step that may not be needed.
 	 *
 	 * These path variables are dummies that just hold cost fields; we don't
 	 * make actual Paths for these steps.
@@ -2108,16 +2106,17 @@ choose_hashed_distinct(PlannerInfo *root,
 			 numDistinctCols, dNumDistinctRows,
 			 input_plan->startup_cost, input_plan->total_cost,
 			 input_plan->plan_rows);
+
 	/*
-	 * Result of hashed agg is always unsorted, so if ORDER BY is present
-	 * we need to charge for the final sort.
+	 * Result of hashed agg is always unsorted, so if ORDER BY is present we
+	 * need to charge for the final sort.
 	 */
 	if (root->parse->sortClause)
 		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
 				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
 
 	/*
-	 * Now for the GROUP case.  See comments in grouping_planner about the
+	 * Now for the GROUP case.	See comments in grouping_planner about the
 	 * sorting choices here --- this code should match that code.
 	 */
 	sorted_p.startup_cost = input_plan->startup_cost;
@@ -2398,10 +2397,10 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 	 * are otherwise distinct (eg, different names or framing clauses).
 	 *
 	 * There is room to be much smarter here, for example detecting whether
-	 * one window's sort keys are a prefix of another's (so that sorting
-	 * for the latter would do for the former), or putting windows first
-	 * that match a sort order available for the underlying query.  For the
-	 * moment we are content with meeting the spec.
+	 * one window's sort keys are a prefix of another's (so that sorting for
+	 * the latter would do for the former), or putting windows first that
+	 * match a sort order available for the underlying query.  For the moment
+	 * we are content with meeting the spec.
 	 */
 	result = NIL;
 	while (actives != NIL)
@@ -2469,12 +2468,12 @@ add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
 	}
 
 	/*
-	 * Now scan the original tlist to find the referenced expressions.
-	 * Any that are volatile must be added to window_tlist.
+	 * Now scan the original tlist to find the referenced expressions. Any
+	 * that are volatile must be added to window_tlist.
 	 *
-	 * Note: we know that the input window_tlist contains no items marked
-	 * with ressortgrouprefs, so we don't have to worry about collisions
-	 * of the reference numbers.
+	 * Note: we know that the input window_tlist contains no items marked with
+	 * ressortgrouprefs, so we don't have to worry about collisions of the
+	 * reference numbers.
 	 */
 	foreach(lc, tlist)
 	{
@@ -2524,7 +2523,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not implement window ORDER BY"),
-				 errdetail("Window ordering columns must be of sortable datatypes.")));
+		errdetail("Window ordering columns must be of sortable datatypes.")));
 
 	/* Okay, make the combined pathkeys */
 	window_sortclauses = list_concat(list_copy(wc->partitionClause),
@@ -2545,7 +2544,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  * This depends on the behavior of make_pathkeys_for_window()!
  *
  * We are given the target WindowClause and an array of the input column
- * numbers associated with the resulting pathkeys.  In the easy case, there
+ * numbers associated with the resulting pathkeys.	In the easy case, there
  * are the same number of pathkey columns as partitioning + ordering columns
  * and we just have to copy some data around.  However, it's possible that
  * some of the original partitioning + ordering columns were eliminated as
@@ -2553,11 +2552,11 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  * though the parser gets rid of obvious duplicates.  A typical scenario is a
  * window specification "PARTITION BY x ORDER BY y" coupled with a clause
  * "WHERE x = y" that causes the two sort columns to be recognized as
- * redundant.)  In that unusual case, we have to work a lot harder to
+ * redundant.)	In that unusual case, we have to work a lot harder to
  * determine which keys are significant.
  *
  * The method used here is a bit brute-force: add the sort columns to a list
- * one at a time and note when the resulting pathkey list gets longer.  But
+ * one at a time and note when the resulting pathkey list gets longer.	But
  * it's a sufficiently uncommon case that a faster way doesn't seem worth
  * the amount of code refactoring that'd be needed.
  *----------
@@ -2659,7 +2658,7 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
  * Currently, we disallow sublinks in standalone expressions, so there's no
  * real "planning" involved here.  (That might not always be true though.)
  * What we must do is run eval_const_expressions to ensure that any function
- * default arguments get inserted.  The fact that constant subexpressions
+ * default arguments get inserted.	The fact that constant subexpressions
  * get simplified is a side-effect that is useful when the expression will
  * get evaluated more than once.  Also, we must fix operator function IDs.
  *

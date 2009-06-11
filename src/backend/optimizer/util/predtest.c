@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.26 2009/05/11 17:56:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.27 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ static Node *extract_not_arg(Node *clause);
 static bool list_member_strip(List *list, Expr *datum);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
 					  bool refute_it);
-static Oid get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it);
+static Oid	get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it);
 static void InvalidateOprProofCacheCallBack(Datum arg, int cacheid, ItemPointer tuplePtr);
 
 
@@ -134,7 +134,7 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 
 	/*
 	 * If either input is a single-element list, replace it with its lone
-	 * member; this avoids one useless level of AND-recursion.  We only need
+	 * member; this avoids one useless level of AND-recursion.	We only need
 	 * to worry about this at top level, since eval_const_expressions should
 	 * have gotten rid of any trivial ANDs or ORs below that.
 	 */
@@ -192,7 +192,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 
 	/*
 	 * If either input is a single-element list, replace it with its lone
-	 * member; this avoids one useless level of AND-recursion.  We only need
+	 * member; this avoids one useless level of AND-recursion.	We only need
 	 * to worry about this at top level, since eval_const_expressions should
 	 * have gotten rid of any trivial ANDs or ORs below that.
 	 */
@@ -652,13 +652,14 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 		case CLASS_ATOM:
 
 #ifdef NOT_USED
+
 			/*
 			 * If A is a NOT-clause, A R=> B if B => A's arg
 			 *
 			 * Unfortunately not: this would only prove that B is not-TRUE,
 			 * not that it's not NULL either.  Keep this code as a comment
-			 * because it would be useful if we ever had a need for the
-			 * weak form of refutation.
+			 * because it would be useful if we ever had a need for the weak
+			 * form of refutation.
 			 */
 			not_arg = extract_not_arg(clause);
 			if (not_arg &&
@@ -738,7 +739,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
  * This function also implements enforcement of MAX_SAOP_ARRAY_SIZE: if a
  * ScalarArrayOpExpr's array has too many elements, we just classify it as an
  * atom.  (This will result in its being passed as-is to the simple_clause
- * functions, which will fail to prove anything about it.)  Note that we
+ * functions, which will fail to prove anything about it.)	Note that we
  * cannot just stop after considering MAX_SAOP_ARRAY_SIZE elements; in general
  * that would result in wrong proofs, rather than failing to prove anything.
  */
@@ -1484,8 +1485,8 @@ typedef struct OprProofCacheEntry
 
 	bool		have_implic;	/* do we know the implication result? */
 	bool		have_refute;	/* do we know the refutation result? */
-	Oid			implic_test_op;	/* OID of the operator, or 0 if none */
-	Oid			refute_test_op;	/* OID of the operator, or 0 if none */
+	Oid			implic_test_op; /* OID of the operator, or 0 if none */
+	Oid			refute_test_op; /* OID of the operator, or 0 if none */
 } OprProofCacheEntry;
 
 static HTAB *OprProofCacheHash = NULL;

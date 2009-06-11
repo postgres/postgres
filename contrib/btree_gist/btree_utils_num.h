@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.h,v 1.13 2008/06/19 00:46:02 alvherre Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.h,v 1.14 2009/06/11 14:48:50 momjian Exp $
  */
 #ifndef __BTREE_UTILS_NUM_H__
 #define __BTREE_UTILS_NUM_H__
@@ -17,7 +17,7 @@ typedef struct
 {
 	const GBT_NUMKEY *lower,
 			   *upper;
-}	GBT_NUMKEY_R;
+} GBT_NUMKEY_R;
 
 
 /* for sorting */
@@ -25,7 +25,7 @@ typedef struct
 {
 	int			i;
 	GBT_NUMKEY *t;
-}	Nsrt;
+} Nsrt;
 
 
 /* type description */
@@ -46,7 +46,7 @@ typedef struct
 	bool		(*f_le) (const void *, const void *);	/* less equal */
 	bool		(*f_lt) (const void *, const void *);	/* less then */
 	int			(*f_cmp) (const void *, const void *);	/* key compare function */
-}	gbtree_ninfo;
+} gbtree_ninfo;
 
 
 /*
@@ -92,24 +92,24 @@ typedef struct
 #endif
 
 
-extern bool gbt_num_consistent(const GBT_NUMKEY_R * key, const void *query,
+extern bool gbt_num_consistent(const GBT_NUMKEY_R *key, const void *query,
 				   const StrategyNumber *strategy, bool is_leaf,
-				   const gbtree_ninfo * tinfo);
+				   const gbtree_ninfo *tinfo);
 
 extern GIST_SPLITVEC *gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
-				  const gbtree_ninfo * tinfo);
+				  const gbtree_ninfo *tinfo);
 
 extern GISTENTRY *gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry,
-				 const gbtree_ninfo * tinfo);
+				 const gbtree_ninfo *tinfo);
 
 
-extern void *gbt_num_union(GBT_NUMKEY * out, const GistEntryVector *entryvec,
-			  const gbtree_ninfo * tinfo);
+extern void *gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec,
+			  const gbtree_ninfo *tinfo);
 
-extern bool gbt_num_same(const GBT_NUMKEY * a, const GBT_NUMKEY * b,
-			 const gbtree_ninfo * tinfo);
+extern bool gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b,
+			 const gbtree_ninfo *tinfo);
 
-extern void gbt_num_bin_union(Datum *u, GBT_NUMKEY * e,
-				  const gbtree_ninfo * tinfo);
+extern void gbt_num_bin_union(Datum *u, GBT_NUMKEY *e,
+				  const gbtree_ninfo *tinfo);
 
 #endif

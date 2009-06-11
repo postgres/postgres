@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-encrypt.c,v 1.3 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-encrypt.c,v 1.4 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -66,7 +66,7 @@ render_newlen(uint8 *h, int len)
 }
 
 static int
-write_tag_only(PushFilter * dst, int tag)
+write_tag_only(PushFilter *dst, int tag)
 {
 	uint8		hdr = 0xC0 | tag;
 
@@ -74,7 +74,7 @@ write_tag_only(PushFilter * dst, int tag)
 }
 
 static int
-write_normal_header(PushFilter * dst, int tag, int len)
+write_normal_header(PushFilter *dst, int tag, int len)
 {
 	uint8		hdr[8];
 	uint8	   *h = hdr;
@@ -90,7 +90,7 @@ write_normal_header(PushFilter * dst, int tag, int len)
  */
 
 static int
-mdc_init(PushFilter * dst, void *init_arg, void **priv_p)
+mdc_init(PushFilter *dst, void *init_arg, void **priv_p)
 {
 	int			res;
 	PX_MD	   *md;
@@ -104,7 +104,7 @@ mdc_init(PushFilter * dst, void *init_arg, void **priv_p)
 }
 
 static int
-mdc_write(PushFilter * dst, void *priv, const uint8 *data, int len)
+mdc_write(PushFilter *dst, void *priv, const uint8 *data, int len)
 {
 	PX_MD	   *md = priv;
 
@@ -113,7 +113,7 @@ mdc_write(PushFilter * dst, void *priv, const uint8 *data, int len)
 }
 
 static int
-mdc_flush(PushFilter * dst, void *priv)
+mdc_flush(PushFilter *dst, void *priv)
 {
 	int			res;
 	uint8		pkt[2 + MDC_DIGEST_LEN];
@@ -156,7 +156,7 @@ struct EncStat
 };
 
 static int
-encrypt_init(PushFilter * next, void *init_arg, void **priv_p)
+encrypt_init(PushFilter *next, void *init_arg, void **priv_p)
 {
 	struct EncStat *st;
 	PGP_Context *ctx = init_arg;
@@ -188,7 +188,7 @@ encrypt_init(PushFilter * next, void *init_arg, void **priv_p)
 }
 
 static int
-encrypt_process(PushFilter * next, void *priv, const uint8 *data, int len)
+encrypt_process(PushFilter *next, void *priv, const uint8 *data, int len)
 {
 	int			res;
 	struct EncStat *st = priv;
@@ -236,7 +236,7 @@ struct PktStreamStat
 };
 
 static int
-pkt_stream_init(PushFilter * next, void *init_arg, void **priv_p)
+pkt_stream_init(PushFilter *next, void *init_arg, void **priv_p)
 {
 	struct PktStreamStat *st;
 
@@ -249,7 +249,7 @@ pkt_stream_init(PushFilter * next, void *init_arg, void **priv_p)
 }
 
 static int
-pkt_stream_process(PushFilter * next, void *priv, const uint8 *data, int len)
+pkt_stream_process(PushFilter *next, void *priv, const uint8 *data, int len)
 {
 	int			res;
 	uint8		hdr[8];
@@ -275,7 +275,7 @@ pkt_stream_process(PushFilter * next, void *priv, const uint8 *data, int len)
 }
 
 static int
-pkt_stream_flush(PushFilter * next, void *priv)
+pkt_stream_flush(PushFilter *next, void *priv)
 {
 	int			res;
 	uint8		hdr[8];
@@ -308,7 +308,7 @@ static const PushFilterOps pkt_stream_filter = {
 };
 
 int
-pgp_create_pkt_writer(PushFilter * dst, int tag, PushFilter ** res_p)
+pgp_create_pkt_writer(PushFilter *dst, int tag, PushFilter **res_p)
 {
 	int			res;
 
@@ -324,7 +324,7 @@ pgp_create_pkt_writer(PushFilter * dst, int tag, PushFilter ** res_p)
  */
 
 static int
-crlf_process(PushFilter * dst, void *priv, const uint8 *data, int len)
+crlf_process(PushFilter *dst, void *priv, const uint8 *data, int len)
 {
 	const uint8 *data_end = data + len;
 	const uint8 *p2,
@@ -371,7 +371,7 @@ static const PushFilterOps crlf_filter = {
  * Initialize literal data packet
  */
 static int
-init_litdata_packet(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
+init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 {
 	int			res;
 	int			hdrlen;
@@ -426,7 +426,7 @@ init_litdata_packet(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
  * Initialize compression filter
  */
 static int
-init_compress(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
+init_compress(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 {
 	int			res;
 	uint8		type = ctx->compress_algo;
@@ -454,7 +454,7 @@ init_compress(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
  * Initialize encdata packet
  */
 static int
-init_encdata_packet(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
+init_encdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 {
 	int			res;
 	int			tag;
@@ -475,7 +475,7 @@ init_encdata_packet(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
  * write prefix
  */
 static int
-write_prefix(PGP_Context * ctx, PushFilter * dst)
+write_prefix(PGP_Context *ctx, PushFilter *dst)
 {
 	uint8		prefix[PGP_MAX_BLOCK + 2];
 	int			res,
@@ -499,7 +499,7 @@ write_prefix(PGP_Context * ctx, PushFilter * dst)
  */
 
 static int
-symencrypt_sesskey(PGP_Context * ctx, uint8 *dst)
+symencrypt_sesskey(PGP_Context *ctx, uint8 *dst)
 {
 	int			res;
 	PGP_CFB    *cfb;
@@ -519,7 +519,7 @@ symencrypt_sesskey(PGP_Context * ctx, uint8 *dst)
 
 /* 5.3: Symmetric-Key Encrypted Session-Key */
 static int
-write_symenc_sesskey(PGP_Context * ctx, PushFilter * dst)
+write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 {
 	uint8		pkt[256];
 	int			pktlen;
@@ -560,7 +560,7 @@ write_symenc_sesskey(PGP_Context * ctx, PushFilter * dst)
  * key setup
  */
 static int
-init_s2k_key(PGP_Context * ctx)
+init_s2k_key(PGP_Context *ctx)
 {
 	int			res;
 
@@ -576,7 +576,7 @@ init_s2k_key(PGP_Context * ctx)
 }
 
 static int
-init_sess_key(PGP_Context * ctx)
+init_sess_key(PGP_Context *ctx)
 {
 	int			res;
 
@@ -600,7 +600,7 @@ init_sess_key(PGP_Context * ctx)
  * combine
  */
 int
-pgp_encrypt(PGP_Context * ctx, MBuf * src, MBuf * dst)
+pgp_encrypt(PGP_Context *ctx, MBuf *src, MBuf *dst)
 {
 	int			res;
 	int			len;

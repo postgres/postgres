@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.20 2009/06/06 02:39:40 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.21 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -46,23 +46,23 @@
  * Attributes of an index tuple are different for single and multicolumn index.
  * For single-column case, index tuple stores only value to be indexed.
  * For multicolumn case, it stores two attributes: column number of value
- * and value. 
+ * and value.
  */
 IndexTuple
 GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key, ItemPointerData *ipd, uint32 nipd)
 {
-	bool		isnull[2] = {FALSE,FALSE};
+	bool		isnull[2] = {FALSE, FALSE};
 	IndexTuple	itup;
 
-	if ( ginstate->oneCol )
+	if (ginstate->oneCol)
 		itup = index_form_tuple(ginstate->origTupdesc, &key, isnull);
 	else
 	{
-		Datum 	datums[2];
+		Datum		datums[2];
 
 		datums[0] = UInt16GetDatum(attnum);
 		datums[1] = key;
-		itup = index_form_tuple(ginstate->tupdesc[attnum-1], datums, isnull); 
+		itup = index_form_tuple(ginstate->tupdesc[attnum - 1], datums, isnull);
 	}
 
 	GinSetOrigSizePosting(itup, IndexTupleSize(itup));
@@ -136,12 +136,12 @@ entryIsMoveRight(GinBtree btree, Page page)
 	if (GinPageRightMost(page))
 		return FALSE;
 
-	itup = getRightMostTuple(page);	
+	itup = getRightMostTuple(page);
 
 	if (compareAttEntries(btree->ginstate,
-					btree->entryAttnum, btree->entryValue,
-					gintuple_get_attrnum(btree->ginstate, itup),
-					gin_index_getattr(btree->ginstate, itup)) > 0)
+						  btree->entryAttnum, btree->entryValue,
+						  gintuple_get_attrnum(btree->ginstate, itup),
+						  gin_index_getattr(btree->ginstate, itup)) > 0)
 		return TRUE;
 
 	return FALSE;
@@ -187,10 +187,10 @@ entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
 		else
 		{
 			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, mid));
-			result = compareAttEntries(btree->ginstate, 
-									btree->entryAttnum, btree->entryValue,
-									gintuple_get_attrnum(btree->ginstate, itup),
-									gin_index_getattr(btree->ginstate, itup));
+			result = compareAttEntries(btree->ginstate,
+									   btree->entryAttnum, btree->entryValue,
+								 gintuple_get_attrnum(btree->ginstate, itup),
+								   gin_index_getattr(btree->ginstate, itup));
 		}
 
 		if (result == 0)
@@ -252,10 +252,10 @@ entryLocateLeafEntry(GinBtree btree, GinBtreeStack *stack)
 		int			result;
 
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, mid));
-		result = compareAttEntries(btree->ginstate, 
-								btree->entryAttnum, btree->entryValue,
-								gintuple_get_attrnum(btree->ginstate, itup),
-								gin_index_getattr(btree->ginstate, itup));
+		result = compareAttEntries(btree->ginstate,
+								   btree->entryAttnum, btree->entryValue,
+								 gintuple_get_attrnum(btree->ginstate, itup),
+								   gin_index_getattr(btree->ginstate, itup));
 		if (result == 0)
 		{
 			stack->off = mid;

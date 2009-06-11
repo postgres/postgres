@@ -1,7 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.12 2008/03/25 22:42:41 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.13 2009/06/11 14:48:51 momjian Exp $
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
@@ -224,7 +224,7 @@ typedef struct
 	int			free_string_on_destroy;
 }
 
-			metastring;
+metastring;
 
 /*
  * remaining perl module funcs unchanged except for declaring them static
@@ -258,7 +258,7 @@ NewMetaString(char *init_str)
 
 
 static void
-DestroyMetaString(metastring * s)
+DestroyMetaString(metastring *s)
 {
 	if (s == NULL)
 		return;
@@ -271,7 +271,7 @@ DestroyMetaString(metastring * s)
 
 
 static void
-IncreaseBuffer(metastring * s, int chars_needed)
+IncreaseBuffer(metastring *s, int chars_needed)
 {
 	META_REALLOC(s->str, (s->bufsize + chars_needed + 10), char);
 	assert(s->str != NULL);
@@ -280,7 +280,7 @@ IncreaseBuffer(metastring * s, int chars_needed)
 
 
 static void
-MakeUpper(metastring * s)
+MakeUpper(metastring *s)
 {
 	char	   *i;
 
@@ -290,7 +290,7 @@ MakeUpper(metastring * s)
 
 
 static int
-IsVowel(metastring * s, int pos)
+IsVowel(metastring *s, int pos)
 {
 	char		c;
 
@@ -307,7 +307,7 @@ IsVowel(metastring * s, int pos)
 
 
 static int
-SlavoGermanic(metastring * s)
+SlavoGermanic(metastring *s)
 {
 	if ((char *) strstr(s->str, "W"))
 		return 1;
@@ -323,7 +323,7 @@ SlavoGermanic(metastring * s)
 
 
 static char
-GetAt(metastring * s, int pos)
+GetAt(metastring *s, int pos)
 {
 	if ((pos < 0) || (pos >= s->length))
 		return '\0';
@@ -333,7 +333,7 @@ GetAt(metastring * s, int pos)
 
 
 static void
-SetAt(metastring * s, int pos, char c)
+SetAt(metastring *s, int pos, char c)
 {
 	if ((pos < 0) || (pos >= s->length))
 		return;
@@ -346,7 +346,7 @@ SetAt(metastring * s, int pos, char c)
    Caveats: the START value is 0 based
 */
 static int
-StringAt(metastring * s, int start, int length,...)
+StringAt(metastring *s, int start, int length,...)
 {
 	char	   *test;
 	char	   *pos;
@@ -373,7 +373,7 @@ StringAt(metastring * s, int start, int length,...)
 
 
 static void
-MetaphAdd(metastring * s, char *new_str)
+MetaphAdd(metastring *s, char *new_str)
 {
 	int			add_length;
 

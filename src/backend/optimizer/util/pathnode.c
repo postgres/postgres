@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.151 2009/03/26 17:15:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.152 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -797,7 +797,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	in_operators = NIL;
 	uniq_exprs = NIL;
 	all_btree = true;
-	all_hash = enable_hashagg;		/* don't consider hash if not enabled */
+	all_hash = enable_hashagg;	/* don't consider hash if not enabled */
 	foreach(lc, sjinfo->join_quals)
 	{
 		OpExpr	   *op = (OpExpr *) lfirst(lc);
@@ -904,8 +904,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		goto no_unique_path;
 
 	/*
-	 * If we get here, we can unique-ify using at least one of sorting
-	 * and hashing.  Start building the result Path object.
+	 * If we get here, we can unique-ify using at least one of sorting and
+	 * hashing.  Start building the result Path object.
 	 */
 	pathnode = makeNode(UniquePath);
 
@@ -972,8 +972,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 				  -1.0);
 
 		/*
-		 * Charge one cpu_operator_cost per comparison per input tuple.
-		 * We assume all columns get compared at most of the tuples. (XXX
+		 * Charge one cpu_operator_cost per comparison per input tuple. We
+		 * assume all columns get compared at most of the tuples. (XXX
 		 * probably this is an overestimate.)  This should agree with
 		 * make_unique.
 		 */
@@ -1030,7 +1030,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	return pathnode;
 
-no_unique_path:					/* failure exit */
+no_unique_path:			/* failure exit */
 
 	/* Mark the SpecialJoinInfo as not unique-able */
 	sjinfo->join_quals = NIL;
@@ -1404,27 +1404,27 @@ create_mergejoin_path(PlannerInfo *root,
 	 * selected as the input of a mergejoin, and they don't support
 	 * mark/restore at present.
 	 *
-	 * Note: Sort supports mark/restore, so no materialize is really needed
-	 * in that case; but one may be desirable anyway to optimize the sort.
-	 * However, since we aren't representing the sort step separately in
-	 * the Path tree, we can't explicitly represent the materialize either.
-	 * So that case is not handled here.  Instead, cost_mergejoin has to
-	 * factor in the cost and create_mergejoin_plan has to add the plan node.
+	 * Note: Sort supports mark/restore, so no materialize is really needed in
+	 * that case; but one may be desirable anyway to optimize the sort.
+	 * However, since we aren't representing the sort step separately in the
+	 * Path tree, we can't explicitly represent the materialize either. So
+	 * that case is not handled here.  Instead, cost_mergejoin has to factor
+	 * in the cost and create_mergejoin_plan has to add the plan node.
 	 */
 	if (innersortkeys == NIL &&
 		!ExecSupportsMarkRestore(inner_path->pathtype))
 	{
-		Path   *mpath;
+		Path	   *mpath;
 
 		mpath = (Path *) create_material_path(inner_path->parent, inner_path);
 
 		/*
-		 * We expect the materialize won't spill to disk (it could only do
-		 * so if there were a whole lot of duplicate tuples, which is a case
-		 * cost_mergejoin will avoid choosing anyway).  Therefore
-		 * cost_material's cost estimate is bogus and we should charge
-		 * just cpu_tuple_cost per tuple.  (Keep this estimate in sync with
-		 * similar ones in cost_mergejoin and create_mergejoin_plan.)
+		 * We expect the materialize won't spill to disk (it could only do so
+		 * if there were a whole lot of duplicate tuples, which is a case
+		 * cost_mergejoin will avoid choosing anyway).	Therefore
+		 * cost_material's cost estimate is bogus and we should charge just
+		 * cpu_tuple_cost per tuple.  (Keep this estimate in sync with similar
+		 * ones in cost_mergejoin and create_mergejoin_plan.)
 		 */
 		mpath->startup_cost = inner_path->startup_cost;
 		mpath->total_cost = inner_path->total_cost;
@@ -1480,16 +1480,17 @@ create_hashjoin_path(PlannerInfo *root,
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
+
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
-	 * unpredictable due to possible batching.  XXX If the inner relation is
+	 * unpredictable due to possible batching.	XXX If the inner relation is
 	 * small enough, we could instruct the executor that it must not batch,
 	 * and then we could assume that the output inherits the outer relation's
-	 * ordering, which might save a sort step.  However there is considerable
-	 * downside if our estimate of the inner relation size is badly off.
-	 * For the moment we don't risk it.  (Note also that if we wanted to take
-	 * this seriously, joinpath.c would have to consider many more paths for
-	 * the outer rel than it does now.)
+	 * ordering, which might save a sort step.	However there is considerable
+	 * downside if our estimate of the inner relation size is badly off. For
+	 * the moment we don't risk it.  (Note also that if we wanted to take this
+	 * seriously, joinpath.c would have to consider many more paths for the
+	 * outer rel than it does now.)
 	 */
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;

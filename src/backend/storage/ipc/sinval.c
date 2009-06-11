@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.89 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.90 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
  * NOTE: it is entirely possible for this routine to be invoked recursively
  * as a consequence of processing inside the invalFunction or resetFunction.
  * Furthermore, such a recursive call must guarantee that all outstanding
- * inval messages have been processed before it exits.  This is the reason
+ * inval messages have been processed before it exits.	This is the reason
  * for the strange-looking choice to use a statically allocated buffer array
  * and counters; it's so that a recursive call can process messages already
  * sucked out of sinvaladt.c.
@@ -77,9 +77,10 @@ ReceiveSharedInvalidMessages(
 {
 #define MAXINVALMSGS 32
 	static SharedInvalidationMessage messages[MAXINVALMSGS];
+
 	/*
-	 * We use volatile here to prevent bugs if a compiler doesn't realize
-	 * that recursion is a possibility ...
+	 * We use volatile here to prevent bugs if a compiler doesn't realize that
+	 * recursion is a possibility ...
 	 */
 	static volatile int nextmsg = 0;
 	static volatile int nummsgs = 0;
@@ -121,18 +122,18 @@ ReceiveSharedInvalidMessages(
 		}
 
 		/*
-		 * We only need to loop if the last SIGetDataEntries call (which
-		 * might have been within a recursive call) returned a full buffer.
+		 * We only need to loop if the last SIGetDataEntries call (which might
+		 * have been within a recursive call) returned a full buffer.
 		 */
 	} while (nummsgs == MAXINVALMSGS);
 
 	/*
 	 * We are now caught up.  If we received a catchup signal, reset that
-	 * flag, and call SICleanupQueue().  This is not so much because we
-	 * need to flush dead messages right now, as that we want to pass on
-	 * the catchup signal to the next slowest backend.  "Daisy chaining" the
-	 * catchup signal this way avoids creating spikes in system load for
-	 * what should be just a background maintenance activity.
+	 * flag, and call SICleanupQueue().  This is not so much because we need
+	 * to flush dead messages right now, as that we want to pass on the
+	 * catchup signal to the next slowest backend.	"Daisy chaining" the
+	 * catchup signal this way avoids creating spikes in system load for what
+	 * should be just a background maintenance activity.
 	 */
 	if (catchupInterruptOccurred)
 	{

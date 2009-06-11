@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.222 2009/04/04 21:12:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.223 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,7 +425,6 @@ typedef struct Node
 	_result->type = (tag); \
 	_result; \
 })
-
 #else
 
 /*
@@ -443,7 +442,6 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
 	newNodeMacroHolder->type = (tag), \
 	newNodeMacroHolder \
 )
-
 #endif   /* __GNUC__ */
 
 
@@ -523,8 +521,8 @@ typedef enum CmdType
 typedef enum JoinType
 {
 	/*
-	 * The canonical kinds of joins according to the SQL JOIN syntax.
-	 * Only these codes can appear in parser output (e.g., JoinExpr nodes).
+	 * The canonical kinds of joins according to the SQL JOIN syntax. Only
+	 * these codes can appear in parser output (e.g., JoinExpr nodes).
 	 */
 	JOIN_INNER,					/* matching tuple pairs only */
 	JOIN_LEFT,					/* pairs + unmatched LHS tuples */
@@ -532,13 +530,13 @@ typedef enum JoinType
 	JOIN_RIGHT,					/* pairs + unmatched RHS tuples */
 
 	/*
-	 * Semijoins and anti-semijoins (as defined in relational theory) do
-	 * not appear in the SQL JOIN syntax, but there are standard idioms for
-	 * representing them (e.g., using EXISTS).  The planner recognizes these
+	 * Semijoins and anti-semijoins (as defined in relational theory) do not
+	 * appear in the SQL JOIN syntax, but there are standard idioms for
+	 * representing them (e.g., using EXISTS).	The planner recognizes these
 	 * cases and converts them to joins.  So the planner and executor must
 	 * support these codes.  NOTE: in JOIN_SEMI output, it is unspecified
-	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row
-	 * is guaranteed to be null-extended.
+	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row is
+	 * guaranteed to be null-extended.
 	 */
 	JOIN_SEMI,					/* 1 copy of each LHS row that has match(es) */
 	JOIN_ANTI,					/* 1 copy of each LHS row that has no match */
@@ -558,7 +556,7 @@ typedef enum JoinType
 /*
  * OUTER joins are those for which pushed-down quals must behave differently
  * from the join's own quals.  This is in fact everything except INNER and
- * SEMI joins.  However, this macro must also exclude the JOIN_UNIQUE symbols
+ * SEMI joins.	However, this macro must also exclude the JOIN_UNIQUE symbols
  * since those are temporary proxies for what will eventually be an INNER
  * join.
  *

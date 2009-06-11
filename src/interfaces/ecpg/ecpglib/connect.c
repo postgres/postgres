@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.53 2009/01/15 11:52:55 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.54 2009/06/11 14:49:13 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -270,7 +270,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-	int i;
+	int			i;
 	char	   *dbname = name ? ecpg_strdup(name, lineno) : NULL,
 			   *host = NULL,
 			   *tmp,
@@ -477,29 +477,31 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			 options ? "with options " : "", options ? options : "",
 			 user ? "for user " : "", user ? user : "");
 
-	connect_string = ecpg_alloc(	  strlen_or_null(host)
-					+ strlen_or_null(port)
-					+ strlen_or_null(options)
-					+ strlen_or_null(realname)
-					+ strlen_or_null(user)
-					+ strlen_or_null(passwd)
-					+ sizeof(" host = port = dbname = user = password ="), lineno);
+	connect_string = ecpg_alloc(strlen_or_null(host)
+								+ strlen_or_null(port)
+								+ strlen_or_null(options)
+								+ strlen_or_null(realname)
+								+ strlen_or_null(user)
+								+ strlen_or_null(passwd)
+			  + sizeof(" host = port = dbname = user = password ="), lineno);
 
-	if (options) /* replace '&' if tehre are any */
+	if (options)				/* replace '&' if tehre are any */
 		for (i = 0; options[i]; i++)
 			if (options[i] == '&')
 				options[i] = ' ';
 
-	sprintf(connect_string,"%s%s %s%s %s%s %s%s %s%s %s",
-			 realname ? "dbname=" : "", realname ? realname : "",
-			 host ? "host=" : "", host ? host : "",
-			 port ? "port=" : "", port ? port : "",
-			 user ? "user=" : "", user ? user : "",
-			 passwd ? "password=" : "", passwd ? passwd : "",
-			 options ? options : "");
-	
-	/* this is deprecated
-	 * this->connection = PQsetdbLogin(host, port, options, NULL, realname, user, passwd);*/
+	sprintf(connect_string, "%s%s %s%s %s%s %s%s %s%s %s",
+			realname ? "dbname=" : "", realname ? realname : "",
+			host ? "host=" : "", host ? host : "",
+			port ? "port=" : "", port ? port : "",
+			user ? "user=" : "", user ? user : "",
+			passwd ? "password=" : "", passwd ? passwd : "",
+			options ? options : "");
+
+	/*
+	 * this is deprecated this->connection = PQsetdbLogin(host, port, options,
+	 * NULL, realname, user, passwd);
+	 */
 	this->connection = PQconnectdb(connect_string);
 
 	ecpg_free(connect_string);
@@ -589,12 +591,14 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	return true;
 }
 
-PGconn* ECPGget_PGconn(const char *connection_name)
+PGconn *
+ECPGget_PGconn(const char *connection_name)
 {
-	struct connection * con;
+	struct connection *con;
 
-	con=ecpg_get_connection(connection_name);
-	if (con==NULL) return NULL;    
+	con = ecpg_get_connection(connection_name);
+	if (con == NULL)
+		return NULL;
 
 	return con->connection;
 }

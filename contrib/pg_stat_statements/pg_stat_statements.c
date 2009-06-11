@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.2 2009/01/05 13:35:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.3 2009/06/11 14:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ typedef struct Counters
  */
 typedef struct pgssEntry
 {
-	pgssHashKey	key;			/* hash key of entry - MUST BE FIRST */
+	pgssHashKey key;			/* hash key of entry - MUST BE FIRST */
 	Counters	counters;		/* the statistics for this query */
 	slock_t		mutex;			/* protects the counters only */
 	char		query[1];		/* VARIABLE LENGTH ARRAY - MUST BE LAST */
@@ -106,15 +106,17 @@ typedef struct pgssSharedState
 /*---- Local variables ----*/
 
 /* Current nesting depth of ExecutorRun calls */
-static int						nested_level = 0;
+static int	nested_level = 0;
+
 /* Saved hook values in case of unload */
-static shmem_startup_hook_type	prev_shmem_startup_hook = NULL;
-static ExecutorStart_hook_type	prev_ExecutorStart = NULL;
-static ExecutorRun_hook_type	prev_ExecutorRun = NULL;
-static ExecutorEnd_hook_type	prev_ExecutorEnd = NULL;
+static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
+static ExecutorStart_hook_type prev_ExecutorStart = NULL;
+static ExecutorRun_hook_type prev_ExecutorRun = NULL;
+static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+
 /* Links to shared memory state */
-static pgssSharedState		   *pgss = NULL;
-static HTAB					   *pgss_hash = NULL;
+static pgssSharedState *pgss = NULL;
+static HTAB *pgss_hash = NULL;
 
 /*---- GUC variables ----*/
 
@@ -143,11 +145,11 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 
 /*---- Function declarations ----*/
 
-void	_PG_init(void);
-void	_PG_fini(void);
+void		_PG_init(void);
+void		_PG_fini(void);
 
-Datum	pg_stat_statements_reset(PG_FUNCTION_ARGS);
-Datum	pg_stat_statements(PG_FUNCTION_ARGS);
+Datum		pg_stat_statements_reset(PG_FUNCTION_ARGS);
+Datum		pg_stat_statements(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
@@ -156,14 +158,14 @@ static void pgss_shmem_startup(void);
 static void pgss_shmem_shutdown(int code, Datum arg);
 static void pgss_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pgss_ExecutorRun(QueryDesc *queryDesc,
-							 ScanDirection direction,
-							 long count);
+				 ScanDirection direction,
+				 long count);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
-static int pgss_match_fn(const void *key1, const void *key2, Size keysize);
+static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
 static void pgss_store(const char *query,
-					   const Instrumentation *instr, uint32 rows);
-static Size	pgss_memsize(void);
+		   const Instrumentation *instr, uint32 rows);
+static Size pgss_memsize(void);
 static pgssEntry *entry_alloc(pgssHashKey *key);
 static void entry_dealloc(void);
 static void entry_reset(void);
@@ -177,11 +179,11 @@ _PG_init(void)
 {
 	/*
 	 * In order to create our shared memory area, we have to be loaded via
-	 * shared_preload_libraries.  If not, fall out without hooking into
-	 * any of the main system.  (We don't throw error here because it seems
-	 * useful to allow the pg_stat_statements functions to be created even
-	 * when the module isn't active.  The functions must protect themselves
-	 * against being called then, however.)
+	 * shared_preload_libraries.  If not, fall out without hooking into any of
+	 * the main system.  (We don't throw error here because it seems useful to
+	 * allow the pg_stat_statements functions to be created even when the
+	 * module isn't active.  The functions must protect themselves against
+	 * being called then, however.)
 	 */
 	if (!process_shared_preload_libraries_in_progress)
 		return;
@@ -190,7 +192,7 @@ _PG_init(void)
 	 * Define (or redefine) custom GUC variables.
 	 */
 	DefineCustomIntVariable("pg_stat_statements.max",
-							"Sets the maximum number of statements tracked by pg_stat_statements.",
+	  "Sets the maximum number of statements tracked by pg_stat_statements.",
 							NULL,
 							&pgss_max,
 							1000,
@@ -202,7 +204,7 @@ _PG_init(void)
 							NULL);
 
 	DefineCustomEnumVariable("pg_stat_statements.track",
-							 "Selects which statements are tracked by pg_stat_statements.",
+			   "Selects which statements are tracked by pg_stat_statements.",
 							 NULL,
 							 &pgss_track,
 							 PGSS_TRACK_TOP,
@@ -213,7 +215,7 @@ _PG_init(void)
 							 NULL);
 
 	DefineCustomBoolVariable("pg_stat_statements.save",
-							 "Save pg_stat_statements statistics across server shutdowns.",
+			   "Save pg_stat_statements statistics across server shutdowns.",
 							 NULL,
 							 &pgss_save,
 							 true,
@@ -265,7 +267,7 @@ _PG_fini(void)
 static void
 pgss_shmem_startup(void)
 {
-    bool		found;
+	bool		found;
 	HASHCTL		info;
 	FILE	   *file;
 	uint32		header;
@@ -294,7 +296,7 @@ pgss_shmem_startup(void)
 		elog(ERROR, "out of shared memory");
 
 	if (!found)
-    {
+	{
 		/* First time through ... */
 		pgss->lock = LWLockAssign();
 		pgss->query_size = pgstat_track_activity_query_size;
@@ -305,7 +307,7 @@ pgss_shmem_startup(void)
 
 	memset(&info, 0, sizeof(info));
 	info.keysize = sizeof(pgssHashKey);
-	info.entrysize = offsetof(pgssEntry, query) + query_size;
+	info.entrysize = offsetof(pgssEntry, query) +query_size;
 	info.hash = pgss_hash_fn;
 	info.match = pgss_match_fn;
 	pgss_hash = ShmemInitHash("pg_stat_statements hash",
@@ -318,8 +320,8 @@ pgss_shmem_startup(void)
 	LWLockRelease(AddinShmemInitLock);
 
 	/*
-	 * If we're in the postmaster (or a standalone backend...), set up a
-	 * shmem exit hook to dump the statistics to disk.
+	 * If we're in the postmaster (or a standalone backend...), set up a shmem
+	 * exit hook to dump the statistics to disk.
 	 */
 	if (!IsUnderPostmaster)
 		on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
@@ -327,8 +329,8 @@ pgss_shmem_startup(void)
 	/*
 	 * Attempt to load old statistics from the dump file.
 	 *
-	 * Note: we don't bother with locks here, because there should be no
-	 * other processes running when this is called.
+	 * Note: we don't bother with locks here, because there should be no other
+	 * processes running when this is called.
 	 */
 	if (!pgss_save)
 		return;
@@ -352,7 +354,7 @@ pgss_shmem_startup(void)
 	for (i = 0; i < num; i++)
 	{
 		pgssEntry	temp;
-		pgssEntry   *entry;
+		pgssEntry  *entry;
 
 		if (fread(&temp, offsetof(pgssEntry, mutex), 1, file) != 1)
 			goto error;
@@ -413,10 +415,10 @@ error:
 static void
 pgss_shmem_shutdown(int code, Datum arg)
 {
-	FILE			   *file;
-	HASH_SEQ_STATUS		hash_seq;
-	int32				num_entries;
-	pgssEntry		   *entry;
+	FILE	   *file;
+	HASH_SEQ_STATUS hash_seq;
+	int32		num_entries;
+	pgssEntry  *entry;
 
 	/* Don't try to dump during a crash. */
 	if (code)
@@ -443,7 +445,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 	hash_seq_init(&hash_seq, pgss_hash);
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
 	{
-		int		len = entry->key.query_len;
+		int			len = entry->key.query_len;
 
 		if (fwrite(entry, offsetof(pgssEntry, mutex), 1, file) != 1 ||
 			fwrite(entry->query, 1, len, file) != len)
@@ -482,9 +484,9 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	if (pgss_enabled())
 	{
 		/*
-		 * Set up to track total elapsed time in ExecutorRun.  Make sure
-		 * the space is allocated in the per-query context so it will go
-		 * away at ExecutorEnd.
+		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
+		 * space is allocated in the per-query context so it will go away at
+		 * ExecutorEnd.
 		 */
 		if (queryDesc->totaltime == NULL)
 		{
@@ -529,8 +531,8 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 	if (queryDesc->totaltime && pgss_enabled())
 	{
 		/*
-		 * Make sure stats accumulation is done.  (Note: it's okay if
-		 * several levels of hook all do this.)
+		 * Make sure stats accumulation is done.  (Note: it's okay if several
+		 * levels of hook all do this.)
 		 */
 		InstrEndLoop(queryDesc->totaltime);
 
@@ -585,9 +587,9 @@ pgss_match_fn(const void *key1, const void *key2, Size keysize)
 static void
 pgss_store(const char *query, const Instrumentation *instr, uint32 rows)
 {
-	pgssHashKey	key;
+	pgssHashKey key;
 	double		usage;
-	pgssEntry   *entry;
+	pgssEntry  *entry;
 
 	Assert(query != NULL);
 
@@ -658,15 +660,15 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 Datum
 pg_stat_statements(PG_FUNCTION_ARGS)
 {
-	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc			tupdesc;
-	Tuplestorestate    *tupstore;
-	MemoryContext		per_query_ctx;
-	MemoryContext		oldcontext;
-	Oid					userid = GetUserId();
-	bool				is_superuser = superuser();
-	HASH_SEQ_STATUS		hash_seq;
-	pgssEntry		   *entry;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	Oid			userid = GetUserId();
+	bool		is_superuser = superuser();
+	HASH_SEQ_STATUS hash_seq;
+	pgssEntry  *entry;
 
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
@@ -727,7 +729,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 
 		if (is_superuser || entry->key.userid == userid)
 		{
-			char   *qstr;
+			char	   *qstr;
 
 			qstr = (char *)
 				pg_do_encoding_conversion((unsigned char *) entry->query,
@@ -777,11 +779,11 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 static Size
 pgss_memsize(void)
 {
-	Size	size;
-	Size	entrysize;
+	Size		size;
+	Size		entrysize;
 
 	size = MAXALIGN(sizeof(pgssSharedState));
-	entrysize = offsetof(pgssEntry, query) + pgstat_track_activity_query_size;
+	entrysize = offsetof(pgssEntry, query) +pgstat_track_activity_query_size;
 	size = add_size(size, hash_estimate_size(pgss_max, entrysize));
 
 	return size;
@@ -792,7 +794,7 @@ pgss_memsize(void)
  * caller must hold an exclusive lock on pgss->lock
  *
  * Note: despite needing exclusive lock, it's not an error for the target
- * entry to already exist.  This is because pgss_store releases and
+ * entry to already exist.	This is because pgss_store releases and
  * reacquires lock after failing to find a match; so someone else could
  * have made the entry while we waited to get exclusive lock.
  */
@@ -800,7 +802,7 @@ static pgssEntry *
 entry_alloc(pgssHashKey *key)
 {
 	pgssEntry  *entry;
-	bool	found;
+	bool		found;
 
 	/* Caller must have clipped query properly */
 	Assert(key->query_len < pgss->query_size);
@@ -837,8 +839,8 @@ entry_alloc(pgssHashKey *key)
 static int
 entry_cmp(const void *lhs, const void *rhs)
 {
-	double	l_usage = (*(const pgssEntry **)lhs)->counters.usage;
-	double	r_usage = (*(const pgssEntry **)rhs)->counters.usage;
+	double		l_usage = (*(const pgssEntry **) lhs)->counters.usage;
+	double		r_usage = (*(const pgssEntry **) rhs)->counters.usage;
 
 	if (l_usage < r_usage)
 		return -1;
@@ -855,11 +857,11 @@ entry_cmp(const void *lhs, const void *rhs)
 static void
 entry_dealloc(void)
 {
-	HASH_SEQ_STATUS		hash_seq;
-	pgssEntry		  **entries;
-	pgssEntry		   *entry;
-	int					nvictims;
-	int					i;
+	HASH_SEQ_STATUS hash_seq;
+	pgssEntry **entries;
+	pgssEntry  *entry;
+	int			nvictims;
+	int			i;
 
 	/* Sort entries by usage and deallocate USAGE_DEALLOC_PERCENT of them. */
 
@@ -891,8 +893,8 @@ entry_dealloc(void)
 static void
 entry_reset(void)
 {
-	HASH_SEQ_STATUS		hash_seq;
-	pgssEntry		   *entry;
+	HASH_SEQ_STATUS hash_seq;
+	pgssEntry  *entry;
 
 	LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
 

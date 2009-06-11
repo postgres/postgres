@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.17 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.18 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 typedef struct
 {
 	TransactionId new_prune_xid;	/* new prune hint value for page */
-	int			nredirected;		/* numbers of entries in arrays below */
+	int			nredirected;	/* numbers of entries in arrays below */
 	int			ndead;
 	int			nunused;
 	/* arrays that accumulate indexes of items to be changed */
@@ -159,21 +159,21 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 
 	/*
 	 * Our strategy is to scan the page and make lists of items to change,
-	 * then apply the changes within a critical section.  This keeps as
-	 * much logic as possible out of the critical section, and also ensures
-	 * that WAL replay will work the same as the normal case.
+	 * then apply the changes within a critical section.  This keeps as much
+	 * logic as possible out of the critical section, and also ensures that
+	 * WAL replay will work the same as the normal case.
 	 *
-	 * First, inform inval.c that upcoming CacheInvalidateHeapTuple calls
-	 * are nontransactional.
+	 * First, inform inval.c that upcoming CacheInvalidateHeapTuple calls are
+	 * nontransactional.
 	 */
 	if (redirect_move)
 		BeginNonTransactionalInvalidation();
 
 	/*
-	 * Initialize the new pd_prune_xid value to zero (indicating no
-	 * prunable tuples).  If we find any tuples which may soon become
-	 * prunable, we will save the lowest relevant XID in new_prune_xid.
-	 * Also initialize the rest of our working state.
+	 * Initialize the new pd_prune_xid value to zero (indicating no prunable
+	 * tuples).  If we find any tuples which may soon become prunable, we will
+	 * save the lowest relevant XID in new_prune_xid. Also initialize the rest
+	 * of our working state.
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
@@ -204,9 +204,9 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	}
 
 	/*
-	 * Send invalidation messages for any tuples we are about to move.
-	 * It is safe to do this now, even though we could theoretically still
-	 * fail before making the actual page update, because a useless cache
+	 * Send invalidation messages for any tuples we are about to move. It is
+	 * safe to do this now, even though we could theoretically still fail
+	 * before making the actual page update, because a useless cache
 	 * invalidation doesn't hurt anything.  Also, no one else can reload the
 	 * tuples while we have exclusive buffer lock, so it's not too early to
 	 * send the invals.  This avoids sending the invals while inside the
@@ -222,9 +222,8 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	if (prstate.nredirected > 0 || prstate.ndead > 0 || prstate.nunused > 0)
 	{
 		/*
-		 * Apply the planned item changes, then repair page fragmentation,
-		 * and update the page's hint bit about whether it has free line
-		 * pointers.
+		 * Apply the planned item changes, then repair page fragmentation, and
+		 * update the page's hint bit about whether it has free line pointers.
 		 */
 		heap_page_prune_execute(buffer,
 								prstate.redirected, prstate.nredirected,
@@ -268,8 +267,8 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	{
 		/*
 		 * If we didn't prune anything, but have found a new value for the
-		 * pd_prune_xid field, update it and mark the buffer dirty.
-		 * This is treated as a non-WAL-logged hint.
+		 * pd_prune_xid field, update it and mark the buffer dirty. This is
+		 * treated as a non-WAL-logged hint.
 		 *
 		 * Also clear the "page is full" flag if it is set, since there's no
 		 * point in repeating the prune/defrag process until something else
@@ -334,8 +333,8 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
  * OldestXmin is the cutoff XID used to identify dead tuples.
  *
  * We don't actually change the page here, except perhaps for hint-bit updates
- * caused by HeapTupleSatisfiesVacuum.  We just add entries to the arrays in
- * prstate showing the changes to be made.  Items to be redirected are added
+ * caused by HeapTupleSatisfiesVacuum.	We just add entries to the arrays in
+ * prstate showing the changes to be made.	Items to be redirected are added
  * to the redirected[] array (two entries per redirection); items to be set to
  * LP_DEAD state are added to nowdead[]; and items to be set to LP_UNUSED
  * state are added to nowunused[].
@@ -598,19 +597,19 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	else if (redirect_move && ItemIdIsRedirected(rootlp))
 	{
 		/*
-		 * If we desire to eliminate LP_REDIRECT items by moving tuples,
-		 * make a redirection entry for each redirected root item; this
-		 * will cause heap_page_prune_execute to actually do the move.
-		 * (We get here only when there are no DEAD tuples in the chain;
-		 * otherwise the redirection entry was made above.)
+		 * If we desire to eliminate LP_REDIRECT items by moving tuples, make
+		 * a redirection entry for each redirected root item; this will cause
+		 * heap_page_prune_execute to actually do the move. (We get here only
+		 * when there are no DEAD tuples in the chain; otherwise the
+		 * redirection entry was made above.)
 		 */
 		heap_prune_record_redirect(prstate, rootoffnum, chainitems[1]);
 		redirect_target = chainitems[1];
 	}
 
 	/*
-	 * If we are going to implement a redirect by moving tuples, we have
-	 * to issue a cache invalidation against the redirection target tuple,
+	 * If we are going to implement a redirect by moving tuples, we have to
+	 * issue a cache invalidation against the redirection target tuple,
 	 * because its CTID will be effectively changed by the move.  Note that
 	 * CacheInvalidateHeapTuple only queues the request, it doesn't send it;
 	 * if we fail before reaching EndNonTransactionalInvalidation, nothing
@@ -693,7 +692,7 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
  * buffer, and is inside a critical section.
  *
  * This is split out because it is also used by heap_xlog_clean()
- * to replay the WAL record when needed after a crash.  Note that the
+ * to replay the WAL record when needed after a crash.	Note that the
  * arguments are identical to those of log_heap_clean().
  */
 void

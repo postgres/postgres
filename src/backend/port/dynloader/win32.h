@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/port/dynloader/win32.h,v 1.4 2008/05/17 01:28:23 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/win32.h,v 1.5 2009/06/11 14:49:00 momjian Exp $
  */
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H

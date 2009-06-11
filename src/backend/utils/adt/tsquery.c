@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.19 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.20 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ struct TSQueryParserStateData
 #define WAITSINGLEOPERAND 4
 
 /*
- * subroutine to parse the modifiers (weight and prefix flag currently) 
+ * subroutine to parse the modifiers (weight and prefix flag currently)
  * part, like ':1AB' of a query.
  */
 static char *
@@ -642,7 +642,7 @@ infix(INFIX *in, bool first)
 		{
 			*(in->cur) = ':';
 			in->cur++;
-			if ( curpol->prefix )
+			if (curpol->prefix)
 			{
 				*(in->cur) = '*';
 				in->cur++;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.106 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.107 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,7 +422,7 @@ do { \
  * the MINIMAL_TUPLE_OFFSET distance.  t_len does not include that, however.
  *
  * MINIMAL_TUPLE_DATA_OFFSET is the offset to the first useful (non-pad) data
- * other than the length word.  tuplesort.c and tuplestore.c use this to avoid
+ * other than the length word.	tuplesort.c and tuplestore.c use this to avoid
  * writing the padding to disk.
  */
 #define MINIMAL_TUPLE_OFFSET \
@@ -601,7 +601,7 @@ typedef struct xl_heaptid
 typedef struct xl_heap_delete
 {
 	xl_heaptid	target;			/* deleted tuple id */
-	bool all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
+	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
 } xl_heap_delete;
 
 #define SizeOfHeapDelete	(offsetof(xl_heap_delete, all_visible_cleared) + sizeof(bool))
@@ -627,7 +627,7 @@ typedef struct xl_heap_header
 typedef struct xl_heap_insert
 {
 	xl_heaptid	target;			/* inserted tuple id */
-	bool all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
+	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
 	/* xl_heap_header & TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_insert;
 
@@ -638,8 +638,8 @@ typedef struct xl_heap_update
 {
 	xl_heaptid	target;			/* deleted tuple id */
 	ItemPointerData newtid;		/* new inserted tuple id */
-	bool all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
-	bool new_all_visible_cleared; /* same for the page of newtid */
+	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
+	bool		new_all_visible_cleared;		/* same for the page of newtid */
 	/* NEW TUPLE xl_heap_header (PLUS xmax & xmin IF MOVE OP) */
 	/* and TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
@@ -834,6 +834,7 @@ extern HeapTuple heap_modify_tuple(HeapTuple tuple,
 				  bool *doReplace);
 extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 				  Datum *values, bool *isnull);
+
 /* these three are deprecated versions of the three above: */
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *values, char *nulls);

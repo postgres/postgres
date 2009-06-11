@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.248 2009/06/09 22:00:57 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.249 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWindowFunc(WindowFuncExprState *wfunc,
-			   ExprContext *econtext,
-			   bool *isNull, ExprDoneCond *isDone);
+				   ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
@@ -78,7 +78,7 @@ static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static void init_fcache(Oid foid, FuncExprState *fcache,
-						MemoryContext fcacheCxt, bool needDescForSets);
+			MemoryContext fcacheCxt, bool needDescForSets);
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
@@ -617,7 +617,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("table row type and query-specified row type do not match"),
 						 errdetail_plural("Table row contains %d attribute, but query expects %d.",
-										  "Table row contains %d attributes, but query expects %d.",
+				   "Table row contains %d attributes, but query expects %d.",
 										  slot_tupdesc->natts,
 										  slot_tupdesc->natts,
 										  var_tupdesc->natts)));
@@ -1044,10 +1044,10 @@ init_fcache(Oid foid, FuncExprState *fcache,
 	if (list_length(fcache->args) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg_plural("cannot pass more than %d argument to a function",
-							   "cannot pass more than %d arguments to a function",
-							   FUNC_MAX_ARGS,
-							   FUNC_MAX_ARGS)));
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS)));
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);
@@ -1237,7 +1237,7 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
  *		ExecPrepareTuplestoreResult
  *
  * Subroutine for ExecMakeFunctionResult: prepare to extract rows from a
- * tuplestore function result.  We must set up a funcResultSlot (unless
+ * tuplestore function result.	We must set up a funcResultSlot (unless
  * already done in a previous call cycle) and verify that the function
  * returned the expected tuple descriptor.
  */
@@ -1268,9 +1268,8 @@ ExecPrepareTuplestoreResult(FuncExprState *fcache,
 	}
 
 	/*
-	 * If function provided a tupdesc, cross-check it.	We only really
-	 * need to do this for functions returning RECORD, but might as well
-	 * do it always.
+	 * If function provided a tupdesc, cross-check it.	We only really need to
+	 * do this for functions returning RECORD, but might as well do it always.
 	 */
 	if (resultDesc)
 	{
@@ -1316,7 +1315,7 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function return row and query-specified return row do not match"),
 				 errdetail_plural("Returned row contains %d attribute, but query expects %d.",
-								  "Returned row contains %d attributes, but query expects %d.",
+				"Returned row contains %d attributes, but query expects %d.",
 								  src_tupdesc->natts,
 								  src_tupdesc->natts, dst_tupdesc->natts)));
 
@@ -1353,7 +1352,7 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
  * init_fcache is presumed already run on the FuncExprState.
  *
  * This function handles the most general case, wherein the function or
- * one of its arguments might (or might not) return a set.  If we find
+ * one of its arguments might (or might not) return a set.	If we find
  * no sets involved, we will change the FuncExprState's function pointer
  * to use a simpler method on subsequent calls.
  */
@@ -1379,13 +1378,13 @@ restart:
 	check_stack_depth();
 
 	/*
-	 * If a previous call of the function returned a set result in the form
-	 * of a tuplestore, continue reading rows from the tuplestore until it's
+	 * If a previous call of the function returned a set result in the form of
+	 * a tuplestore, continue reading rows from the tuplestore until it's
 	 * empty.
 	 */
 	if (fcache->funcResultStore)
 	{
-		Assert(isDone);				/* it was provided before ... */
+		Assert(isDone);			/* it was provided before ... */
 		if (tuplestore_gettupleslot(fcache->funcResultStore, true, false,
 									fcache->funcResultSlot))
 		{
@@ -1420,10 +1419,10 @@ restart:
 	 * For non-set-returning functions, we just use a local-variable
 	 * FunctionCallInfoData.  For set-returning functions we keep the callinfo
 	 * record in fcache->setArgs so that it can survive across multiple
-	 * value-per-call invocations.  (The reason we don't just do the latter
-	 * all the time is that plpgsql expects to be able to use simple expression
-	 * trees re-entrantly.  Which might not be a good idea, but the penalty
-	 * for not doing so is high.)
+	 * value-per-call invocations.	(The reason we don't just do the latter
+	 * all the time is that plpgsql expects to be able to use simple
+	 * expression trees re-entrantly.  Which might not be a good idea, but the
+	 * penalty for not doing so is high.)
 	 */
 	if (fcache->func.fn_retset)
 		fcinfo = &fcache->setArgs;
@@ -1534,7 +1533,7 @@ restart:
 				*isDone = rsinfo.isDone;
 
 				pgstat_end_function_usage(&fcusage,
-										  rsinfo.isDone != ExprMultipleResult);
+										rsinfo.isDone != ExprMultipleResult);
 			}
 			else
 			{
@@ -1564,7 +1563,7 @@ restart:
 						{
 							RegisterExprContextCallback(econtext,
 														ShutdownFuncExpr,
-														PointerGetDatum(fcache));
+													PointerGetDatum(fcache));
 							fcache->shutdown_reg = true;
 						}
 					}
@@ -2043,9 +2042,8 @@ no_function_result:
 	}
 
 	/*
-	 * If function provided a tupdesc, cross-check it.	We only really
-	 * need to do this for functions returning RECORD, but might as well
-	 * do it always.
+	 * If function provided a tupdesc, cross-check it.	We only really need to
+	 * do this for functions returning RECORD, but might as well do it always.
 	 */
 	if (rsinfo.setDesc)
 	{
@@ -3229,41 +3227,41 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			break;
 
 		case IS_XMLFOREST:
-		{
-			StringInfoData buf;
-
-			initStringInfo(&buf);
-			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
 			{
-				ExprState  *e = (ExprState *) lfirst(arg);
-				char	   *argname = strVal(lfirst(narg));
+				StringInfoData buf;
 
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (!isnull)
+				initStringInfo(&buf);
+				forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
 				{
-					appendStringInfo(&buf, "<%s>%s</%s>",
-									 argname,
-									 map_sql_value_to_xml_value(value, exprType((Node *) e->expr), true),
-									 argname);
-					*isNull = false;
+					ExprState  *e = (ExprState *) lfirst(arg);
+					char	   *argname = strVal(lfirst(narg));
+
+					value = ExecEvalExpr(e, econtext, &isnull, NULL);
+					if (!isnull)
+					{
+						appendStringInfo(&buf, "<%s>%s</%s>",
+										 argname,
+										 map_sql_value_to_xml_value(value, exprType((Node *) e->expr), true),
+										 argname);
+						*isNull = false;
+					}
+				}
+
+				if (*isNull)
+				{
+					pfree(buf.data);
+					return (Datum) 0;
+				}
+				else
+				{
+					text	   *result;
+
+					result = cstring_to_text_with_len(buf.data, buf.len);
+					pfree(buf.data);
+
+					return PointerGetDatum(result);
 				}
 			}
-
-			if (*isNull)
-			{
-				pfree(buf.data);
-				return (Datum) 0;
-			}
-			else
-			{
-				text	   *result;
-
-				result = cstring_to_text_with_len(buf.data, buf.len);
-				pfree(buf.data);
-
-				return PointerGetDatum(result);
-			}
-		}
 			break;
 
 		case IS_XMLELEMENT:
@@ -4095,9 +4093,9 @@ ExecEvalExprSwitchContext(ExprState *expression,
  *
  * Any Aggref, WindowFunc, or SubPlan nodes found in the tree are added to the
  * lists of such nodes held by the parent PlanState. Otherwise, we do very
- * little initialization here other than building the state-node tree.  Any
+ * little initialization here other than building the state-node tree.	Any
  * nontrivial work associated with initializing runtime info for a node should
- * happen during the first actual evaluation of that node.  (This policy lets
+ * happen during the first actual evaluation of that node.	(This policy lets
  * us avoid work if the node is never actually evaluated.)
  *
  * Note: there is no ExecEndExpr function; we assume that any resource
@@ -4209,7 +4207,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					if (nfuncs != winstate->numfuncs)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
-						errmsg("window function calls cannot be nested")));
+						  errmsg("window function calls cannot be nested")));
 				}
 				else
 				{
@@ -5156,11 +5154,11 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	numSimpleVars = projInfo->pi_numSimpleVars;
 	if (numSimpleVars > 0)
 	{
-		Datum  *values = slot->tts_values;
-		bool   *isnull = slot->tts_isnull;
-		int	   *varSlotOffsets = projInfo->pi_varSlotOffsets;
-		int	   *varNumbers = projInfo->pi_varNumbers;
-		int		i;
+		Datum	   *values = slot->tts_values;
+		bool	   *isnull = slot->tts_isnull;
+		int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
+		int		   *varNumbers = projInfo->pi_varNumbers;
+		int			i;
 
 		if (projInfo->pi_directMap)
 		{
@@ -5178,7 +5176,7 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 		else
 		{
 			/* we have to pay attention to varOutputCols[] */
-			int	   *varOutputCols = projInfo->pi_varOutputCols;
+			int		   *varOutputCols = projInfo->pi_varOutputCols;
 
 			for (i = 0; i < numSimpleVars; i++)
 			{
@@ -5195,9 +5193,9 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 
 	/*
 	 * If there are any generic expressions, evaluate them.  It's possible
-	 * that there are set-returning functions in such expressions; if so
-	 * and we have reached the end of the set, we return the result slot,
-	 * which we already marked empty.
+	 * that there are set-returning functions in such expressions; if so and
+	 * we have reached the end of the set, we return the result slot, which we
+	 * already marked empty.
 	 */
 	if (projInfo->pi_targetlist)
 	{

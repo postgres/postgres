@@ -1,7 +1,7 @@
 /*
  * in/out function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.17 2008/06/30 18:30:48 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.18 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -32,10 +32,10 @@ Datum		lquery_out(PG_FUNCTION_ARGS);
 typedef struct
 {
 	char	   *start;
-	int			len;  /* length in bytes */ 
+	int			len;			/* length in bytes */
 	int			flag;
-	int			wlen; /* length in characters */
-}	nodeitem;
+	int			wlen;			/* length in characters */
+} nodeitem;
 
 #define LTPRS_WAITNAME	0
 #define LTPRS_WAITDELIM 1
@@ -52,16 +52,16 @@ ltree_in(PG_FUNCTION_ARGS)
 	int			state = LTPRS_WAITNAME;
 	ltree	   *result;
 	ltree_level *curlevel;
-	int 		charlen;
-	int			pos=0;
+	int			charlen;
+	int			pos = 0;
 
 	ptr = buf;
 	while (*ptr)
 	{
 		charlen = pg_mblen(ptr);
-		if ( charlen == 1 && t_iseq(ptr, '.') )
+		if (charlen == 1 && t_iseq(ptr, '.'))
 			num++;
-		ptr+=charlen;
+		ptr += charlen;
 	}
 
 	list = lptr = (nodeitem *) palloc(sizeof(nodeitem) * (num + 1));
@@ -83,7 +83,7 @@ ltree_in(PG_FUNCTION_ARGS)
 		}
 		else if (state == LTPRS_WAITDELIM)
 		{
-			if ( charlen == 1 && t_iseq(ptr, '.') )
+			if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				lptr->len = ptr - lptr->start;
 				if (lptr->wlen > 255)
@@ -92,7 +92,7 @@ ltree_in(PG_FUNCTION_ARGS)
 							 errmsg("name of level is too long"),
 							 errdetail("Name length is %d, must "
 									   "be < 256, in position %d.",
-									 lptr->wlen, pos)));
+									   lptr->wlen, pos)));
 
 				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 				lptr++;
@@ -105,7 +105,7 @@ ltree_in(PG_FUNCTION_ARGS)
 			/* internal error */
 			elog(ERROR, "internal error in parser");
 
-		ptr+=charlen;
+		ptr += charlen;
 		lptr->wlen++;
 		pos++;
 	}
@@ -209,14 +209,14 @@ lquery_in(PG_FUNCTION_ARGS)
 	bool		hasnot = false;
 	bool		wasbad = false;
 	int			charlen;
-	int			pos=0;
+	int			pos = 0;
 
 	ptr = buf;
 	while (*ptr)
 	{
 		charlen = pg_mblen(ptr);
 
-		if ( charlen == 1 )
+		if (charlen == 1)
 		{
 			if (t_iseq(ptr, '.'))
 				num++;
@@ -224,7 +224,7 @@ lquery_in(PG_FUNCTION_ARGS)
 				numOR++;
 		}
 
-		ptr+=charlen;
+		ptr += charlen;
 	}
 
 	num++;
@@ -243,7 +243,7 @@ lquery_in(PG_FUNCTION_ARGS)
 				state = LQPRS_WAITDELIM;
 				curqlevel->numvar = 1;
 			}
-			else if (charlen==1 && t_iseq(ptr, '!'))
+			else if (charlen == 1 && t_iseq(ptr, '!'))
 			{
 				GETVAR(curqlevel) = lptr = (nodeitem *) palloc0(sizeof(nodeitem) * (numOR + 1));
 				lptr->start = ptr + 1;
@@ -252,7 +252,7 @@ lquery_in(PG_FUNCTION_ARGS)
 				curqlevel->flag |= LQL_NOT;
 				hasnot = true;
 			}
-			else if (charlen==1 && t_iseq(ptr, '*'))
+			else if (charlen == 1 && t_iseq(ptr, '*'))
 				state = LQPRS_WAITOPEN;
 			else
 				UNCHAR;
@@ -271,28 +271,28 @@ lquery_in(PG_FUNCTION_ARGS)
 		}
 		else if (state == LQPRS_WAITDELIM)
 		{
-			if (charlen==1 && t_iseq(ptr, '@'))
+			if (charlen == 1 && t_iseq(ptr, '@'))
 			{
 				if (lptr->start == ptr)
 					UNCHAR;
 				lptr->flag |= LVAR_INCASE;
 				curqlevel->flag |= LVAR_INCASE;
 			}
-			else if (charlen==1 && t_iseq(ptr, '*'))
+			else if (charlen == 1 && t_iseq(ptr, '*'))
 			{
 				if (lptr->start == ptr)
 					UNCHAR;
 				lptr->flag |= LVAR_ANYEND;
 				curqlevel->flag |= LVAR_ANYEND;
 			}
-			else if (charlen==1 && t_iseq(ptr, '%'))
+			else if (charlen == 1 && t_iseq(ptr, '%'))
 			{
 				if (lptr->start == ptr)
 					UNCHAR;
 				lptr->flag |= LVAR_SUBLEXEME;
 				curqlevel->flag |= LVAR_SUBLEXEME;
 			}
-			else if (charlen==1 && t_iseq(ptr, '|'))
+			else if (charlen == 1 && t_iseq(ptr, '|'))
 			{
 				lptr->len = ptr - lptr->start -
 					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
@@ -304,11 +304,11 @@ lquery_in(PG_FUNCTION_ARGS)
 							 errmsg("name of level is too long"),
 							 errdetail("Name length is %d, must "
 									   "be < 256, in position %d.",
-									 lptr->wlen, pos)));
+									   lptr->wlen, pos)));
 
 				state = LQPRS_WAITVAR;
 			}
-			else if (charlen==1 && t_iseq(ptr, '.'))
+			else if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				lptr->len = ptr - lptr->start -
 					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
@@ -320,7 +320,7 @@ lquery_in(PG_FUNCTION_ARGS)
 							 errmsg("name of level is too long"),
 							 errdetail("Name length is %d, must "
 									   "be < 256, in position %d.",
-									 lptr->wlen, pos)));
+									   lptr->wlen, pos)));
 
 				state = LQPRS_WAITLEVEL;
 				curqlevel = NEXTLEV(curqlevel);
@@ -335,9 +335,9 @@ lquery_in(PG_FUNCTION_ARGS)
 		}
 		else if (state == LQPRS_WAITOPEN)
 		{
-			if (charlen==1 && t_iseq(ptr, '{'))
+			if (charlen == 1 && t_iseq(ptr, '{'))
 				state = LQPRS_WAITFNUM;
-			else if (charlen==1 && t_iseq(ptr, '.'))
+			else if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				curqlevel->low = 0;
 				curqlevel->high = 0xffff;
@@ -349,7 +349,7 @@ lquery_in(PG_FUNCTION_ARGS)
 		}
 		else if (state == LQPRS_WAITFNUM)
 		{
-			if (charlen==1 && t_iseq(ptr, ','))
+			if (charlen == 1 && t_iseq(ptr, ','))
 				state = LQPRS_WAITSNUM;
 			else if (t_isdigit(ptr))
 			{
@@ -366,7 +366,7 @@ lquery_in(PG_FUNCTION_ARGS)
 				curqlevel->high = atoi(ptr);
 				state = LQPRS_WAITCLOSE;
 			}
-			else if (charlen==1 && t_iseq(ptr, '}'))
+			else if (charlen == 1 && t_iseq(ptr, '}'))
 			{
 				curqlevel->high = 0xffff;
 				state = LQPRS_WAITEND;
@@ -376,26 +376,26 @@ lquery_in(PG_FUNCTION_ARGS)
 		}
 		else if (state == LQPRS_WAITCLOSE)
 		{
-			if (charlen==1 && t_iseq(ptr, '}'))
+			if (charlen == 1 && t_iseq(ptr, '}'))
 				state = LQPRS_WAITEND;
 			else if (!t_isdigit(ptr))
 				UNCHAR;
 		}
 		else if (state == LQPRS_WAITND)
 		{
-			if (charlen==1 && t_iseq(ptr, '}'))
+			if (charlen == 1 && t_iseq(ptr, '}'))
 			{
 				curqlevel->high = curqlevel->low;
 				state = LQPRS_WAITEND;
 			}
-			else if (charlen==1 && t_iseq(ptr, ','))
+			else if (charlen == 1 && t_iseq(ptr, ','))
 				state = LQPRS_WAITSNUM;
 			else if (!t_isdigit(ptr))
 				UNCHAR;
 		}
 		else if (state == LQPRS_WAITEND)
 		{
-			if (charlen==1 && t_iseq(ptr, '.'))
+			if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				state = LQPRS_WAITLEVEL;
 				curqlevel = NEXTLEV(curqlevel);
@@ -407,8 +407,8 @@ lquery_in(PG_FUNCTION_ARGS)
 			/* internal error */
 			elog(ERROR, "internal error in parser");
 
-		ptr+=charlen;
-		if ( state == LQPRS_WAITDELIM )
+		ptr += charlen;
+		if (state == LQPRS_WAITDELIM)
 			lptr->wlen++;
 		pos++;
 	}

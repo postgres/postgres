@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.285 2009/05/20 08:48:10 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.286 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ typedef struct AlteredTableInfo
 	List	   *constraints;	/* List of NewConstraint */
 	List	   *newvals;		/* List of NewColumnValue */
 	bool		new_notnull;	/* T if we added new NOT NULL constraints */
-	bool		new_changeoids;	/* T if we added/dropped the OID column */
+	bool		new_changeoids; /* T if we added/dropped the OID column */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
 	/* Objects to rebuild after completing ALTER TYPE operations */
 	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
@@ -187,35 +187,35 @@ struct dropmsgstrings
 
 static const struct dropmsgstrings dropmsgstringarray[] = {
 	{RELKIND_RELATION,
-	 ERRCODE_UNDEFINED_TABLE,
-	 gettext_noop("table \"%s\" does not exist"),
-	 gettext_noop("table \"%s\" does not exist, skipping"),
-	 gettext_noop("\"%s\" is not a table"),
-	 gettext_noop("Use DROP TABLE to remove a table.")},
+		ERRCODE_UNDEFINED_TABLE,
+		gettext_noop("table \"%s\" does not exist"),
+		gettext_noop("table \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not a table"),
+	gettext_noop("Use DROP TABLE to remove a table.")},
 	{RELKIND_SEQUENCE,
-	 ERRCODE_UNDEFINED_TABLE,
-	 gettext_noop("sequence \"%s\" does not exist"),
-	 gettext_noop("sequence \"%s\" does not exist, skipping"),
-	 gettext_noop("\"%s\" is not a sequence"),
-	 gettext_noop("Use DROP SEQUENCE to remove a sequence.")},
+		ERRCODE_UNDEFINED_TABLE,
+		gettext_noop("sequence \"%s\" does not exist"),
+		gettext_noop("sequence \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not a sequence"),
+	gettext_noop("Use DROP SEQUENCE to remove a sequence.")},
 	{RELKIND_VIEW,
-	 ERRCODE_UNDEFINED_TABLE,
-	 gettext_noop("view \"%s\" does not exist"),
-	 gettext_noop("view \"%s\" does not exist, skipping"),
-	 gettext_noop("\"%s\" is not a view"),
-	 gettext_noop("Use DROP VIEW to remove a view.")},
+		ERRCODE_UNDEFINED_TABLE,
+		gettext_noop("view \"%s\" does not exist"),
+		gettext_noop("view \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not a view"),
+	gettext_noop("Use DROP VIEW to remove a view.")},
 	{RELKIND_INDEX,
-	 ERRCODE_UNDEFINED_OBJECT,
-	 gettext_noop("index \"%s\" does not exist"),
-	 gettext_noop("index \"%s\" does not exist, skipping"),
-	 gettext_noop("\"%s\" is not an index"),
-	 gettext_noop("Use DROP INDEX to remove an index.")},
+		ERRCODE_UNDEFINED_OBJECT,
+		gettext_noop("index \"%s\" does not exist"),
+		gettext_noop("index \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not an index"),
+	gettext_noop("Use DROP INDEX to remove an index.")},
 	{RELKIND_COMPOSITE_TYPE,
-	 ERRCODE_UNDEFINED_OBJECT,
-	 gettext_noop("type \"%s\" does not exist"),
-	 gettext_noop("type \"%s\" does not exist, skipping"),
-	 gettext_noop("\"%s\" is not a type"),
-	 gettext_noop("Use DROP TYPE to remove a type.")},
+		ERRCODE_UNDEFINED_OBJECT,
+		gettext_noop("type \"%s\" does not exist"),
+		gettext_noop("type \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not a type"),
+	gettext_noop("Use DROP TYPE to remove a type.")},
 	{'\0', 0, NULL, NULL, NULL, NULL}
 };
 
@@ -256,7 +256,7 @@ static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing);
 static void ATRewriteCatalogs(List **wqueue);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
-					  AlterTableCmd *cmd);
+		  AlterTableCmd *cmd);
 static void ATRewriteTables(List **wqueue);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
@@ -272,7 +272,7 @@ static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
 static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
-				AlterTableCmd *cmd);
+			  AlterTableCmd *cmd);
 static void ATExecDropNotNull(Relation rel, const char *colName);
 static void ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName);
@@ -290,17 +290,17 @@ static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			   IndexStmt *stmt, bool is_rebuild);
 static void ATExecAddConstraint(List **wqueue,
-								AlteredTableInfo *tab, Relation rel,
-								Node *newConstraint, bool recurse);
+					AlteredTableInfo *tab, Relation rel,
+					Node *newConstraint, bool recurse);
 static void ATAddCheckConstraint(List **wqueue,
-								 AlteredTableInfo *tab, Relation rel,
-								 Constraint *constr,
-								 bool recurse, bool recursing);
+					 AlteredTableInfo *tab, Relation rel,
+					 Constraint *constr,
+					 bool recurse, bool recursing);
 static void ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						  FkConstraint *fkconstraint);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
-								 DropBehavior behavior, 
-								 bool recurse, bool recursing);
+					 DropBehavior behavior,
+					 bool recurse, bool recursing);
 static void ATPrepAlterColumnType(List **wqueue,
 					  AlteredTableInfo *tab, Relation rel,
 					  bool recurse, bool recursing,
@@ -324,7 +324,7 @@ static void ATExecEnableDisableRule(Relation rel, char *rulename,
 static void ATExecAddInherit(Relation rel, RangeVar *parent);
 static void ATExecDropInherit(Relation rel, RangeVar *parent);
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
-							   ForkNumber forkNum, bool istemp);
+				   ForkNumber forkNum, bool istemp);
 
 
 /* ----------------------------------------------------------------
@@ -353,7 +353,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	Datum		reloptions;
 	ListCell   *listptr;
 	AttrNumber	attnum;
-	static char	   *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -435,7 +435,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 							 &inheritOids, &old_constraints, &parentOidCount);
 
 	/*
-	 * Create a tuple descriptor from the relation schema.  Note that this
+	 * Create a tuple descriptor from the relation schema.	Note that this
 	 * deals with column names, types, and NOT NULL constraints, but not
 	 * default values or CHECK constraints; we handle those below.
 	 */
@@ -448,9 +448,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * Find columns with default values and prepare for insertion of the
 	 * defaults.  Pre-cooked (that is, inherited) defaults go into a list of
 	 * CookedConstraint structs that we'll pass to heap_create_with_catalog,
-	 * while raw defaults go into a list of RawColumnDefault structs that
-	 * will be processed by AddRelationNewConstraints.  (We can't deal with
-	 * raw expressions until we can do transformExpr.)
+	 * while raw defaults go into a list of RawColumnDefault structs that will
+	 * be processed by AddRelationNewConstraints.  (We can't deal with raw
+	 * expressions until we can do transformExpr.)
 	 *
 	 * We can set the atthasdef flags now in the tuple descriptor; this just
 	 * saves StoreAttrDefault from having to do an immediate update of the
@@ -495,9 +495,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	}
 
 	/*
-	 * Create the relation.  Inherited defaults and constraints are passed
-	 * in for immediate handling --- since they don't need parsing, they
-	 * can be stored immediately.
+	 * Create the relation.  Inherited defaults and constraints are passed in
+	 * for immediate handling --- since they don't need parsing, they can be
+	 * stored immediately.
 	 */
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
@@ -606,7 +606,7 @@ DropErrorMsgWrongType(const char *relname, char wrongkind, char rightkind)
 	ereport(ERROR,
 			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			 errmsg(rentry->nota_msg, relname),
-			 (wentry->kind != '\0') ? errhint("%s", _(wentry->drophint_msg)) : 0));
+	   (wentry->kind != '\0') ? errhint("%s", _(wentry->drophint_msg)) : 0));
 }
 
 /*
@@ -622,8 +622,8 @@ RemoveRelations(DropStmt *drop)
 
 	/*
 	 * First we identify all the relations, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the relations depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the relations depends on another.
 	 */
 
 	/* Determine required relkind */
@@ -648,7 +648,7 @@ RemoveRelations(DropStmt *drop)
 		default:
 			elog(ERROR, "unrecognized drop object type: %d",
 				 (int) drop->removeType);
-			relkind = 0;	/* keep compiler quiet */
+			relkind = 0;		/* keep compiler quiet */
 			break;
 	}
 
@@ -862,11 +862,11 @@ ExecuteTruncate(TruncateStmt *stmt)
 #endif
 
 	/*
-	 * If we are asked to restart sequences, find all the sequences,
-	 * lock them (we only need AccessShareLock because that's all that
-	 * ALTER SEQUENCE takes), and check permissions.  We want to do this
-	 * early since it's pointless to do all the truncation work only to fail
-	 * on sequence permissions.
+	 * If we are asked to restart sequences, find all the sequences, lock them
+	 * (we only need AccessShareLock because that's all that ALTER SEQUENCE
+	 * takes), and check permissions.  We want to do this early since it's
+	 * pointless to do all the truncation work only to fail on sequence
+	 * permissions.
 	 */
 	if (stmt->restart_seqs)
 	{
@@ -878,8 +878,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 			foreach(seqcell, seqlist)
 			{
-				Oid		seq_relid = lfirst_oid(seqcell);
-				Relation seq_rel;
+				Oid			seq_relid = lfirst_oid(seqcell);
+				Relation	seq_rel;
 
 				seq_rel = relation_open(seq_relid, AccessShareLock);
 
@@ -899,8 +899,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 	AfterTriggerBeginQuery();
 
 	/*
-	 * To fire triggers, we'll need an EState as well as a ResultRelInfo
-	 * for each relation.
+	 * To fire triggers, we'll need an EState as well as a ResultRelInfo for
+	 * each relation.
 	 */
 	estate = CreateExecutorState();
 	resultRelInfos = (ResultRelInfo *)
@@ -912,7 +912,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 		InitResultRelInfo(resultRelInfo,
 						  rel,
-						  0,			/* dummy rangetable index */
+						  0,	/* dummy rangetable index */
 						  CMD_DELETE,	/* don't need any index info */
 						  false);
 		resultRelInfo++;
@@ -922,9 +922,9 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 	/*
 	 * Process all BEFORE STATEMENT TRUNCATE triggers before we begin
-	 * truncating (this is because one of them might throw an error).
-	 * Also, if we were to allow them to prevent statement execution,
-	 * that would need to be handled here.
+	 * truncating (this is because one of them might throw an error). Also, if
+	 * we were to allow them to prevent statement execution, that would need
+	 * to be handled here.
 	 */
 	resultRelInfo = resultRelInfos;
 	foreach(cell, rels)
@@ -996,18 +996,18 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 	/*
 	 * Lastly, restart any owned sequences if we were asked to.  This is done
-	 * last because it's nontransactional: restarts will not roll back if
-	 * we abort later.  Hence it's important to postpone them as long as
+	 * last because it's nontransactional: restarts will not roll back if we
+	 * abort later.  Hence it's important to postpone them as long as
 	 * possible.  (This is also a big reason why we locked and
 	 * permission-checked the sequences beforehand.)
 	 */
 	if (stmt->restart_seqs)
 	{
-		List   *options = list_make1(makeDefElem("restart", NULL));
+		List	   *options = list_make1(makeDefElem("restart", NULL));
 
 		foreach(cell, seq_relids)
 		{
-			Oid		seq_relid = lfirst_oid(cell);
+			Oid			seq_relid = lfirst_oid(cell);
 
 			AlterSequenceInternal(seq_relid, options);
 		}
@@ -1361,7 +1361,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 		/*
 		 * Now copy the CHECK constraints of this parent, adjusting attnos
-		 * using the completed newattno[] map.  Identically named constraints
+		 * using the completed newattno[] map.	Identically named constraints
 		 * are merged if possible, else we throw error.
 		 */
 		if (constr && constr->num_check > 0)
@@ -1387,7 +1387,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 					cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 					cooked->contype = CONSTR_CHECK;
 					cooked->name = pstrdup(name);
-					cooked->attnum = 0;		/* not used for constraints */
+					cooked->attnum = 0; /* not used for constraints */
 					cooked->expr = expr;
 					cooked->is_local = false;
 					cooked->inhcount = 1;
@@ -2052,8 +2052,8 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 						RelationGetRelationName(targetrelation))));
 
 	/*
-	 * Don't allow ALTER TABLE on composite types.
-	 * We want people to use ALTER TYPE for that.
+	 * Don't allow ALTER TABLE on composite types. We want people to use ALTER
+	 * TYPE for that.
 	 */
 	if (relkind == RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
@@ -2089,8 +2089,8 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 	Form_pg_class relform;
 
 	/*
-	 * Grab an exclusive lock on the target table, index, sequence or
-	 * view, which we will NOT release until end of transaction.
+	 * Grab an exclusive lock on the target table, index, sequence or view,
+	 * which we will NOT release until end of transaction.
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
@@ -2166,7 +2166,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
  * We also reject these commands if there are any pending AFTER trigger events
  * for the rel.  This is certainly necessary for the rewriting variants of
  * ALTER TABLE, because they don't preserve tuple TIDs and so the pending
- * events would try to fetch the wrong tuples.  It might be overly cautious
+ * events would try to fetch the wrong tuples.	It might be overly cautious
  * in other cases, but again it seems better to err on the side of paranoia.
  *
  * REINDEX calls this with "rel" referencing the index to be rebuilt; here
@@ -2184,7 +2184,7 @@ CheckTableNotInUse(Relation rel, const char *stmt)
 	if (rel->rd_refcnt != expected_refcnt)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 /* translator: first %s is a SQL command, eg ALTER TABLE */
+		/* translator: first %s is a SQL command, eg ALTER TABLE */
 				 errmsg("cannot %s \"%s\" because "
 						"it is being used by active queries in this session",
 						stmt, RelationGetRelationName(rel))));
@@ -2193,7 +2193,7 @@ CheckTableNotInUse(Relation rel, const char *stmt)
 		AfterTriggerPendingOnRel(RelationGetRelid(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
-				 /* translator: first %s is a SQL command, eg ALTER TABLE */
+		/* translator: first %s is a SQL command, eg ALTER TABLE */
 				 errmsg("cannot %s \"%s\" because "
 						"it has pending trigger events",
 						stmt, RelationGetRelationName(rel))));
@@ -2220,7 +2220,7 @@ CheckTableNotInUse(Relation rel, const char *stmt)
  * expressions that need to be evaluated with respect to the old table
  * schema.
  *
- * ATRewriteCatalogs performs phase 2 for each affected table.  (Note that
+ * ATRewriteCatalogs performs phase 2 for each affected table.	(Note that
  * phases 2 and 3 normally do no explicit recursion, since phase 1 already
  * did it --- although some subcommands have to recurse in phase 2 instead.)
  * Certain subcommands need to be performed before others to avoid
@@ -2244,9 +2244,10 @@ AlterTable(AlterTableStmt *stmt)
 	switch (stmt->relkind)
 	{
 		case OBJECT_TABLE:
+
 			/*
-			 * For mostly-historical reasons, we allow ALTER TABLE to apply
-			 * to all relation types.
+			 * For mostly-historical reasons, we allow ALTER TABLE to apply to
+			 * all relation types.
 			 */
 			break;
 
@@ -2363,7 +2364,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepAddColumn(wqueue, rel, recurse, cmd);
 			pass = AT_PASS_ADD_COL;
 			break;
-		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
+		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
+										 * VIEW */
 			ATSimplePermissions(rel, true);
 			/* Performs own recursion */
 			ATPrepAddColumn(wqueue, rel, recurse, cmd);
@@ -2597,7 +2599,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
-		case AT_AddColumnToView: /* add column via CREATE OR REPLACE VIEW */
+		case AT_AddColumnToView:		/* add column via CREATE OR REPLACE
+										 * VIEW */
 			ATExecAddColumn(tab, rel, (ColumnDef *) cmd->def, false);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
@@ -3539,8 +3542,8 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			if (isOid && childatt->attnum != ObjectIdAttributeNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("child table \"%s\" has a conflicting \"%s\" column",
-							RelationGetRelationName(rel), colDef->colname)));
+				 errmsg("child table \"%s\" has a conflicting \"%s\" column",
+						RelationGetRelationName(rel), colDef->colname)));
 
 			/* Bump the existing child att's inhcount */
 			childatt->attinhcount++;
@@ -3690,10 +3693,10 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
 	 *
-	 * We skip this step completely for views.  For a view, we can only get
+	 * We skip this step completely for views.	For a view, we can only get
 	 * here from CREATE OR REPLACE VIEW, which historically doesn't set up
-	 * defaults, not even for domain-typed columns.  And in any case we mustn't
-	 * invoke Phase 3 on a view, since it has no storage.
+	 * defaults, not even for domain-typed columns.  And in any case we
+	 * mustn't invoke Phase 3 on a view, since it has no storage.
 	 */
 	if (relkind != RELKIND_VIEW && attribute.attnum > 0)
 	{
@@ -3715,7 +3718,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 													COERCION_ASSIGNMENT,
 													COERCE_IMPLICIT_CAST,
 													-1);
-			if (defval == NULL)		/* should not happen */
+			if (defval == NULL) /* should not happen */
 				elog(ERROR, "failed to coerce base type to domain");
 		}
 
@@ -3740,8 +3743,8 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	}
 
 	/*
-	 * If we are adding an OID column, we have to tell Phase 3 to rewrite
-	 * the table to fix that.
+	 * If we are adding an OID column, we have to tell Phase 3 to rewrite the
+	 * table to fix that.
 	 */
 	if (isOid)
 		tab->new_changeoids = true;
@@ -3773,7 +3776,7 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 /*
  * ALTER TABLE SET WITH OIDS
  *
- * Basically this is an ADD COLUMN for the special OID column.  We have
+ * Basically this is an ADD COLUMN for the special OID column.	We have
  * to cons up a ColumnDef node because the ADD COLUMN code needs one.
  */
 static void
@@ -4295,8 +4298,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	performDeletion(&object, behavior);
 
 	/*
-	 * If we dropped the OID column, must adjust pg_class.relhasoids and
-	 * tell Phase 3 to physically get rid of the column.
+	 * If we dropped the OID column, must adjust pg_class.relhasoids and tell
+	 * Phase 3 to physically get rid of the column.
 	 */
 	if (attnum == ObjectIdAttributeNumber)
 	{
@@ -4410,8 +4413,8 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
 
 				/*
-				 * Note that we currently never recurse for FK constraints,
-				 * so the "recurse" flag is silently ignored.
+				 * Note that we currently never recurse for FK constraints, so
+				 * the "recurse" flag is silently ignored.
 				 *
 				 * Assign or validate constraint name
 				 */
@@ -4473,8 +4476,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * Call AddRelationNewConstraints to do the work, making sure it works on
-	 * a copy of the Constraint so transformExpr can't modify the original.
-	 * It returns a list of cooked constraints.
+	 * a copy of the Constraint so transformExpr can't modify the original. It
+	 * returns a list of cooked constraints.
 	 *
 	 * If the constraint ends up getting merged with a pre-existing one, it's
 	 * omitted from the returned list, which is what we want: we do not need
@@ -4584,7 +4587,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	pkrel = heap_openrv(fkconstraint->pktable, AccessExclusiveLock);
 
 	/*
-	 * Validity checks (permission checks wait till we have the column numbers)
+	 * Validity checks (permission checks wait till we have the column
+	 * numbers)
 	 */
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -4810,8 +4814,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  NULL,		/* no check constraint */
 									  NULL,
 									  NULL,
-									  true, /* islocal */
-									  0); /* inhcount */
+									  true,		/* islocal */
+									  0);		/* inhcount */
 
 	/*
 	 * Create the triggers that will enforce the constraint.
@@ -5400,9 +5404,9 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		/* Don't drop inherited constraints */
 		if (con->coninhcount > 0 && !recursing)
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot drop inherited constraint \"%s\" of relation \"%s\"",
-						constrName, RelationGetRelationName(rel))));
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot drop inherited constraint \"%s\" of relation \"%s\"",
+							constrName, RelationGetRelationName(rel))));
 
 		/* Right now only CHECK constraints can be inherited */
 		if (con->contype == CONSTRAINT_CHECK)
@@ -5459,7 +5463,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
-			HeapTuple copy_tuple;
+			HeapTuple	copy_tuple;
 
 			con = (Form_pg_constraint) GETSTRUCT(tuple);
 
@@ -5472,7 +5476,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 			found = true;
 
-			if (con->coninhcount <= 0)		/* shouldn't happen */
+			if (con->coninhcount <= 0)	/* shouldn't happen */
 				elog(ERROR, "relation %u has non-inherited constraint \"%s\"",
 					 childrelid, constrName);
 
@@ -5482,9 +5486,9 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 			if (recurse)
 			{
 				/*
-				 * If the child constraint has other definition sources,
-				 * just decrement its inheritance count; if not, recurse
-				 * to delete it.
+				 * If the child constraint has other definition sources, just
+				 * decrement its inheritance count; if not, recurse to delete
+				 * it.
 				 */
 				if (con->coninhcount == 1 && !con->conislocal)
 				{
@@ -5506,9 +5510,9 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 			else
 			{
 				/*
-				 * If we were told to drop ONLY in this table (no
-				 * recursion), we need to mark the inheritors' constraints
-				 * as locally defined rather than inherited.
+				 * If we were told to drop ONLY in this table (no recursion),
+				 * we need to mark the inheritors' constraints as locally
+				 * defined rather than inherited.
 				 */
 				con->coninhcount--;
 				con->conislocal = true;
@@ -5528,9 +5532,9 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		if (!found)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
-							constrName,
-							RelationGetRelationName(childrel))));
+				errmsg("constraint \"%s\" of relation \"%s\" does not exist",
+					   constrName,
+					   RelationGetRelationName(childrel))));
 
 		heap_close(childrel, NoLock);
 	}
@@ -5628,7 +5632,7 @@ ATPrepAlterColumnType(List **wqueue,
 		if (pstate->p_hasWindowFuncs)
 			ereport(ERROR,
 					(errcode(ERRCODE_WINDOWING_ERROR),
-			errmsg("cannot use window function in transform expression")));
+			  errmsg("cannot use window function in transform expression")));
 	}
 	else
 	{
@@ -5745,8 +5749,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		if (defaultexpr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("default for column \"%s\" cannot be cast to type %s",
-				   colName, format_type_be(targettype))));
+				errmsg("default for column \"%s\" cannot be cast to type %s",
+					   colName, format_type_be(targettype))));
 	}
 	else
 		defaultexpr = NULL;
@@ -6536,7 +6540,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	Datum		repl_val[Natts_pg_class];
 	bool		repl_null[Natts_pg_class];
 	bool		repl_repl[Natts_pg_class];
-	static char	   *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	if (defList == NIL)
 		return;					/* nothing to do */
@@ -6555,7 +6559,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 
 	/* Generate new proposed reloptions (text array) */
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
-									 defList, NULL, validnsps, false, isReset);
+								   defList, NULL, validnsps, false, isReset);
 
 	/* Validate */
 	switch (rel->rd_rel->relkind)
@@ -6591,7 +6595,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 	repl_repl[Anum_pg_class_reloptions - 1] = true;
 
 	newtuple = heap_modify_tuple(tuple, RelationGetDescr(pgclass),
-								repl_val, repl_null, repl_repl);
+								 repl_val, repl_null, repl_repl);
 
 	simple_heap_update(pgclass, &newtuple->t_self, newtuple);
 
@@ -6619,7 +6623,7 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 		datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
 
 		newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
-										 defList, "toast", validnsps, false, isReset);
+								defList, "toast", validnsps, false, isReset);
 
 		(void) heap_reloptions(RELKIND_TOASTVALUE, newOptions, true);
 
@@ -6749,11 +6753,11 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	RelationOpenSmgr(rel);
 
 	/*
-	 * Create and copy all forks of the relation, and schedule unlinking
-	 * of old physical files.
+	 * Create and copy all forks of the relation, and schedule unlinking of
+	 * old physical files.
 	 *
 	 * NOTE: any conflict in relfilenode value will be caught in
-	 *		 RelationCreateStorage().
+	 * RelationCreateStorage().
 	 */
 	RelationCreateStorage(newrnode, rel->rd_istemp);
 
@@ -7163,11 +7167,11 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 
 	while (HeapTupleIsValid(parent_tuple = systable_getnext(parent_scan)))
 	{
-		Form_pg_constraint	parent_con = (Form_pg_constraint) GETSTRUCT(parent_tuple);
-		SysScanDesc			child_scan;
-		ScanKeyData			child_key;
-		HeapTuple			child_tuple;
-		bool				found = false;
+		Form_pg_constraint parent_con = (Form_pg_constraint) GETSTRUCT(parent_tuple);
+		SysScanDesc child_scan;
+		ScanKeyData child_key;
+		HeapTuple	child_tuple;
+		bool		found = false;
 
 		if (parent_con->contype != CONSTRAINT_CHECK)
 			continue;
@@ -7182,8 +7186,8 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 
 		while (HeapTupleIsValid(child_tuple = systable_getnext(child_scan)))
 		{
-			Form_pg_constraint	child_con = (Form_pg_constraint) GETSTRUCT(child_tuple);
-			HeapTuple child_copy;
+			Form_pg_constraint child_con = (Form_pg_constraint) GETSTRUCT(child_tuple);
+			HeapTuple	child_copy;
 
 			if (child_con->contype != CONSTRAINT_CHECK)
 				continue;
@@ -7344,8 +7348,8 @@ ATExecDropInherit(Relation rel, RangeVar *parent)
 	heap_close(catalogRelation, RowExclusiveLock);
 
 	/*
-	 * Likewise, find inherited check constraints and disinherit them.
-	 * To do this, we first need a list of the names of the parent's check
+	 * Likewise, find inherited check constraints and disinherit them. To do
+	 * this, we first need a list of the names of the parent's check
 	 * constraints.  (We cheat a bit by only checking for name matches,
 	 * assuming that the expressions will match.)
 	 */
@@ -7380,14 +7384,14 @@ ATExecDropInherit(Relation rel, RangeVar *parent)
 	while (HeapTupleIsValid(constraintTuple = systable_getnext(scan)))
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(constraintTuple);
-		bool	match;
-		ListCell *lc;
+		bool		match;
+		ListCell   *lc;
 
 		if (con->contype != CONSTRAINT_CHECK)
 			continue;
 
 		match = false;
-		foreach (lc, connames)
+		foreach(lc, connames)
 		{
 			if (strcmp(NameStr(con->conname), (char *) lfirst(lc)) == 0)
 			{
@@ -7401,6 +7405,7 @@ ATExecDropInherit(Relation rel, RangeVar *parent)
 			/* Decrement inhcount and possibly set islocal to true */
 			HeapTuple	copyTuple = heap_copytuple(constraintTuple);
 			Form_pg_constraint copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
+
 			if (copy_con->coninhcount <= 0)		/* shouldn't happen */
 				elog(ERROR, "relation %u has non-inherited constraint \"%s\"",
 					 RelationGetRelid(rel), NameStr(copy_con->conname));
@@ -7484,9 +7489,10 @@ AlterTableNamespace(RangeVar *relation, const char *newschema,
 	switch (stmttype)
 	{
 		case OBJECT_TABLE:
+
 			/*
-			 * For mostly-historical reasons, we allow ALTER TABLE to apply
-			 * to all relation types.
+			 * For mostly-historical reasons, we allow ALTER TABLE to apply to
+			 * all relation types.
 			 */
 			break;
 

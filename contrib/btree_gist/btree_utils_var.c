@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.20 2008/06/19 00:46:02 alvherre Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_var.c,v 1.21 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 
@@ -38,7 +38,7 @@ gbt_var_decompress(PG_FUNCTION_ARGS)
 
 /* Returns a better readable representaion of variable key ( sets pointer ) */
 GBT_VARKEY_R
-gbt_var_key_readable(const GBT_VARKEY * k)
+gbt_var_key_readable(const GBT_VARKEY *k)
 {
 
 	GBT_VARKEY_R r;
@@ -53,7 +53,7 @@ gbt_var_key_readable(const GBT_VARKEY * k)
 
 
 GBT_VARKEY *
-gbt_var_key_copy(const GBT_VARKEY_R * u, bool force_node)
+gbt_var_key_copy(const GBT_VARKEY_R *u, bool force_node)
 {
 	GBT_VARKEY *r = NULL;
 
@@ -75,7 +75,7 @@ gbt_var_key_copy(const GBT_VARKEY_R * u, bool force_node)
 
 
 static GBT_VARKEY *
-gbt_var_leaf2node(GBT_VARKEY * leaf, const gbtree_vinfo * tinfo)
+gbt_var_leaf2node(GBT_VARKEY *leaf, const gbtree_vinfo *tinfo)
 {
 	GBT_VARKEY *out = leaf;
 
@@ -90,7 +90,7 @@ gbt_var_leaf2node(GBT_VARKEY * leaf, const gbtree_vinfo * tinfo)
  * returns the common prefix length of a node key
 */
 static int32
-gbt_var_node_cp_len(const GBT_VARKEY * node, const gbtree_vinfo * tinfo)
+gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 {
 
 	GBT_VARKEY_R r = gbt_var_key_readable(node);
@@ -141,7 +141,7 @@ gbt_var_node_cp_len(const GBT_VARKEY * node, const gbtree_vinfo * tinfo)
  * returns true, if query matches prefix ( common prefix )
 */
 static bool
-gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo * tinfo)
+gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo *tinfo)
 {
 
 	bool		out = FALSE;
@@ -186,7 +186,7 @@ gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo * tin
 */
 
 static bool
-gbt_var_node_pf_match(const GBT_VARKEY_R * node, const bytea *query, const gbtree_vinfo * tinfo)
+gbt_var_node_pf_match(const GBT_VARKEY_R *node, const bytea *query, const gbtree_vinfo *tinfo)
 {
 
 	return (tinfo->trnc && (
@@ -202,7 +202,7 @@ gbt_var_node_pf_match(const GBT_VARKEY_R * node, const bytea *query, const gbtre
 *  cpf_length .. common prefix length
 */
 static GBT_VARKEY *
-gbt_var_node_truncate(const GBT_VARKEY * node, int32 cpf_length, const gbtree_vinfo * tinfo)
+gbt_var_node_truncate(const GBT_VARKEY *node, int32 cpf_length, const gbtree_vinfo *tinfo)
 {
 	GBT_VARKEY *out = NULL;
 	GBT_VARKEY_R r = gbt_var_key_readable(node);
@@ -231,7 +231,7 @@ gbt_var_node_truncate(const GBT_VARKEY * node, int32 cpf_length, const gbtree_vi
 
 
 void
-gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
+gbt_var_bin_union(Datum *u, GBT_VARKEY *e, const gbtree_vinfo *tinfo)
 {
 
 	GBT_VARKEY *nk = NULL;
@@ -279,7 +279,7 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
 
 
 GISTENTRY *
-gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
+gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 {
 
 	GISTENTRY  *retval;
@@ -307,7 +307,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
 
 
 GBT_VARKEY *
-gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo * tinfo)
+gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo *tinfo)
 {
 
 	int			i = 0,
@@ -346,7 +346,7 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo *
 
 
 bool
-gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo * tinfo)
+gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo *tinfo)
 {
 
 	GBT_VARKEY *t1 = (GBT_VARKEY *) DatumGetPointer(d1);
@@ -371,7 +371,7 @@ gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo * 
 
 
 float *
-gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree_vinfo * tinfo)
+gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree_vinfo *tinfo)
 {
 
 	GBT_VARKEY *orge = (GBT_VARKEY *) DatumGetPointer(o->key);
@@ -449,7 +449,7 @@ gbt_vsrt_cmp(const void *a, const void *b, void *arg)
 }
 
 GIST_SPLITVEC *
-gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtree_vinfo * tinfo)
+gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtree_vinfo *tinfo)
 {
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;
@@ -541,11 +541,11 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
  */
 bool
 gbt_var_consistent(
-				   GBT_VARKEY_R * key,
+				   GBT_VARKEY_R *key,
 				   const void *query,
 				   const StrategyNumber *strategy,
 				   bool is_leaf,
-				   const gbtree_vinfo * tinfo
+				   const gbtree_vinfo *tinfo
 )
 {
 	bool		retval = FALSE;

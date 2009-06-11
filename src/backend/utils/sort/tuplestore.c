@@ -29,7 +29,7 @@
  * When the caller requests backward-scan capability, we write the temp file
  * in a format that allows either forward or backward scan.  Otherwise, only
  * forward scan is allowed.  A request for backward scan must be made before
- * putting any tuples into the tuplestore.  Rewind is normally allowed but
+ * putting any tuples into the tuplestore.	Rewind is normally allowed but
  * can be turned off via tuplestore_set_eflags; turning off rewind for all
  * read pointers enables truncation of the tuplestore at the oldest read point
  * for minimal memory usage.  (The caller must explicitly call tuplestore_trim
@@ -47,7 +47,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.47 2009/03/27 18:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.48 2009/06/11 14:49:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ typedef enum
  *
  * Special case: if eof_reached is true, then the pointer's read position is
  * implicitly equal to the write position, and current/file/offset aren't
- * maintained.  This way we need not update all the read pointers each time
+ * maintained.	This way we need not update all the read pointers each time
  * we write.
  */
 typedef struct
@@ -161,7 +161,7 @@ struct Tuplestorestate
 	int			readptrsize;	/* allocated length of readptrs array */
 
 	int			writepos_file;	/* file# (valid if READFILE state) */
-	off_t		writepos_offset; /* offset (valid if READFILE state) */
+	off_t		writepos_offset;	/* offset (valid if READFILE state) */
 };
 
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
@@ -363,7 +363,7 @@ tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags)
 	/* Make room for another read pointer if needed */
 	if (state->readptrcount >= state->readptrsize)
 	{
-		int		newcnt = state->readptrsize * 2;
+		int			newcnt = state->readptrsize * 2;
 
 		state->readptrs = (TSReadPointer *)
 			repalloc(state->readptrs, newcnt * sizeof(TSReadPointer));
@@ -460,9 +460,10 @@ tuplestore_select_read_pointer(Tuplestorestate *state, int ptr)
 			/* no work */
 			break;
 		case TSS_READFILE:
+
 			/*
-			 * First, save the current read position in the pointer about
-			 * to become inactive.
+			 * First, save the current read position in the pointer about to
+			 * become inactive.
 			 */
 			if (!oldptr->eof_reached)
 				BufFileTell(state->myfile,
@@ -635,10 +636,11 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			 */
 			PrepareTempTablespaces();
 			state->myfile = BufFileCreateTemp(state->interXact);
+
 			/*
-			 * Freeze the decision about whether trailing length words
-			 * will be used.  We can't change this choice once data is on
-			 * tape, even though callers might drop the requirement.
+			 * Freeze the decision about whether trailing length words will be
+			 * used.  We can't change this choice once data is on tape, even
+			 * though callers might drop the requirement.
 			 */
 			state->backward = (state->eflags & EXEC_FLAG_BACKWARD) != 0;
 			state->status = TSS_WRITEFILE;
@@ -647,9 +649,9 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 		case TSS_WRITEFILE:
 
 			/*
-			 * Update read pointers as needed; see API spec above.
-			 * Note: BufFileTell is quite cheap, so not worth trying
-			 * to avoid multiple calls.
+			 * Update read pointers as needed; see API spec above. Note:
+			 * BufFileTell is quite cheap, so not worth trying to avoid
+			 * multiple calls.
 			 */
 			readptr = state->readptrs;
 			for (i = 0; i < state->readptrcount; readptr++, i++)
@@ -754,7 +756,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 						Assert(!state->truncated);
 						return NULL;
 					}
-					readptr->current--;	/* last returned tuple */
+					readptr->current--; /* last returned tuple */
 				}
 				if (readptr->current <= 0)
 				{
@@ -996,7 +998,7 @@ tuplestore_rescan(Tuplestorestate *state)
 }
 
 /*
- * tuplestore_copy_read_pointer	- copy a read pointer's state to another
+ * tuplestore_copy_read_pointer - copy a read pointer's state to another
  */
 void
 tuplestore_copy_read_pointer(Tuplestorestate *state,
@@ -1015,8 +1017,8 @@ tuplestore_copy_read_pointer(Tuplestorestate *state,
 	if (dptr->eflags != sptr->eflags)
 	{
 		/* Possible change of overall eflags, so copy and then recompute */
-		int		eflags;
-		int		i;
+		int			eflags;
+		int			i;
 
 		*dptr = *sptr;
 		eflags = state->readptrs[0].eflags;
@@ -1034,6 +1036,7 @@ tuplestore_copy_read_pointer(Tuplestorestate *state,
 			/* no work */
 			break;
 		case TSS_READFILE:
+
 			/*
 			 * This case is a bit tricky since the active read pointer's
 			 * position corresponds to the seek point, not what is in its
@@ -1093,7 +1096,8 @@ tuplestore_trim(Tuplestorestate *state)
 	int			i;
 
 	/*
-	 * Truncation is disallowed if any read pointer requires rewind capability.
+	 * Truncation is disallowed if any read pointer requires rewind
+	 * capability.
 	 */
 	if (state->eflags & EXEC_FLAG_REWIND)
 		return;
@@ -1115,14 +1119,13 @@ tuplestore_trim(Tuplestorestate *state)
 
 	/*
 	 * Note: you might think we could remove all the tuples before the oldest
-	 * "current", since that one is the next to be returned.  However,
-	 * since tuplestore_gettuple returns a direct pointer to our
-	 * internal copy of the tuple, it's likely that the caller has
-	 * still got the tuple just before "current" referenced in a slot.
-	 * So we keep one extra tuple before the oldest "current".  (Strictly
-	 * speaking, we could require such callers to use the "copy" flag to
-	 * tuplestore_gettupleslot, but for efficiency we allow this one case
-	 * to not use "copy".)
+	 * "current", since that one is the next to be returned.  However, since
+	 * tuplestore_gettuple returns a direct pointer to our internal copy of
+	 * the tuple, it's likely that the caller has still got the tuple just
+	 * before "current" referenced in a slot. So we keep one extra tuple
+	 * before the oldest "current".  (Strictly speaking, we could require such
+	 * callers to use the "copy" flag to tuplestore_gettupleslot, but for
+	 * efficiency we allow this one case to not use "copy".)
 	 */
 	nremove = oldest - 1;
 	if (nremove <= 0)
@@ -1222,9 +1225,11 @@ static void
 writetup_heap(Tuplestorestate *state, void *tup)
 {
 	MinimalTuple tuple = (MinimalTuple) tup;
+
 	/* the part of the MinimalTuple we'll write: */
 	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
 	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
+
 	/* total on-disk footprint: */
 	unsigned int tuplen = tupbodylen + sizeof(int);
 
@@ -1255,7 +1260,7 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	/* read in the tuple proper */
 	tuple->t_len = tuplen;
 	if (BufFileRead(state->myfile, (void *) tupbody,
-					 tupbodylen) != (size_t) tupbodylen)
+					tupbodylen) != (size_t) tupbodylen)
 		elog(ERROR, "unexpected end of data");
 	if (state->backward)		/* need trailing length word? */
 		if (BufFileRead(state->myfile, (void *) &tuplen,

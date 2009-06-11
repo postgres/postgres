@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.38 2009/01/09 18:50:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.39 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,7 +309,7 @@ pqParseInput3(PGconn *conn)
 						if (conn->result == NULL)
 						{
 							conn->result = PQmakeEmptyPGresult(conn,
-															PGRES_COMMAND_OK);
+														   PGRES_COMMAND_OK);
 							if (!conn->result)
 								return;
 						}
@@ -1378,7 +1378,7 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 	for (;;)
 	{
 		/*
-		 * Collect the next input message.  To make life simpler for async
+		 * Collect the next input message.	To make life simpler for async
 		 * callers, we keep returning 0 until the next message is fully
 		 * available, even if it is not Copy Data.
 		 */
@@ -1387,13 +1387,13 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		{
 			/*
 			 * On end-of-copy, exit COPY_OUT mode and let caller read status
-			 * with PQgetResult().  The normal case is that it's Copy Done,
-			 * but we let parseInput read that.  If error, we expect the
-			 * state was already changed.
+			 * with PQgetResult().	The normal case is that it's Copy Done,
+			 * but we let parseInput read that.  If error, we expect the state
+			 * was already changed.
 			 */
 			if (msgLength == -1)
 				conn->asyncStatus = PGASYNC_BUSY;
-			return msgLength;		/* end-of-copy or error */
+			return msgLength;	/* end-of-copy or error */
 		}
 		if (msgLength == 0)
 		{

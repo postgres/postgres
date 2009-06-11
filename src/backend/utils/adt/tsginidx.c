@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.15 2009/03/25 22:19:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.16 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,42 +22,43 @@
 Datum
 gin_cmp_tslexeme(PG_FUNCTION_ARGS)
 {
-	text    *a = PG_GETARG_TEXT_PP(0);
-	text    *b = PG_GETARG_TEXT_PP(1);
-	int     cmp;
+	text	   *a = PG_GETARG_TEXT_PP(0);
+	text	   *b = PG_GETARG_TEXT_PP(1);
+	int			cmp;
 
 	cmp = tsCompareString(
-					VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
-					VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
-					false );
+						  VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
+						  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
+						  false);
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
-	PG_RETURN_INT32( cmp );
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+	PG_RETURN_INT32(cmp);
 }
 
 Datum
 gin_cmp_prefix(PG_FUNCTION_ARGS)
 {
-	text    *a = PG_GETARG_TEXT_PP(0);
-	text    *b = PG_GETARG_TEXT_PP(1);
+	text	   *a = PG_GETARG_TEXT_PP(0);
+	text	   *b = PG_GETARG_TEXT_PP(1);
+
 #ifdef NOT_USED
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
-	Pointer  extra_data = PG_GETARG_POINTER(3);
+	Pointer		extra_data = PG_GETARG_POINTER(3);
 #endif
-	int		cmp;
+	int			cmp;
 
 	cmp = tsCompareString(
-					VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
-					VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
-					true );
+						  VARDATA_ANY(a), VARSIZE_ANY_EXHDR(a),
+						  VARDATA_ANY(b), VARSIZE_ANY_EXHDR(b),
+						  true);
 
-	if ( cmp < 0 )
-		cmp = 1;  /* prevent continue scan */
+	if (cmp < 0)
+		cmp = 1;				/* prevent continue scan */
 
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
-	PG_RETURN_INT32( cmp );
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
+	PG_RETURN_INT32(cmp);
 }
 
 Datum
@@ -95,11 +96,12 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 {
 	TSQuery		query = PG_GETARG_TSQUERY(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
+
 	/* StrategyNumber strategy = PG_GETARG_UINT16(2); */
-	bool      **ptr_partialmatch = (bool**) PG_GETARG_POINTER(3);
-	Pointer	  **extra_data = (Pointer **) PG_GETARG_POINTER(4);
+	bool	  **ptr_partialmatch = (bool **) PG_GETARG_POINTER(3);
+	Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
 	Datum	   *entries = NULL;
-	bool       *partialmatch;
+	bool	   *partialmatch;
 
 	*nentries = 0;
 
@@ -109,7 +111,7 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 					j = 0,
 					len;
 		QueryItem  *item;
-		bool		use_fullscan=false;
+		bool		use_fullscan = false;
 		int		   *map_item_operand;
 
 		item = clean_NOT(GETQUERY(query), &len);
@@ -126,15 +128,14 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 				(*nentries)++;
 
 		entries = (Datum *) palloc(sizeof(Datum) * (*nentries));
-		partialmatch = *ptr_partialmatch = (bool*) palloc(sizeof(bool) * (*nentries));
+		partialmatch = *ptr_partialmatch = (bool *) palloc(sizeof(bool) * (*nentries));
 
 		/*
-		 * Make map to convert item's number to corresponding
-		 * operand's (the same, entry's) number. Entry's number
-		 * is used in check array in consistent method. We use
-		 * the same map for each entry.
+		 * Make map to convert item's number to corresponding operand's (the
+		 * same, entry's) number. Entry's number is used in check array in
+		 * consistent method. We use the same map for each entry.
 		 */
-		*extra_data = (Pointer*) palloc0(sizeof(Pointer)*(*nentries));
+		*extra_data = (Pointer *) palloc0(sizeof(Pointer) * (*nentries));
 		map_item_operand = palloc0(sizeof(int) * (query->size + 1));
 
 		for (i = 0; i < query->size; i++)
@@ -145,15 +146,15 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 
 				txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
 											   val->length);
-				(*extra_data)[j] = (Pointer)map_item_operand;
+				(*extra_data)[j] = (Pointer) map_item_operand;
 				map_item_operand[i] = j;
 				partialmatch[j] = val->prefix;
 				entries[j++] = PointerGetDatum(txt);
 			}
 
-		if ( use_fullscan )
+		if (use_fullscan)
 		{
-			(*extra_data)[j] = (Pointer)map_item_operand;
+			(*extra_data)[j] = (Pointer) map_item_operand;
 			map_item_operand[i] = j;
 			entries[j++] = PointerGetDatum(cstring_to_text_with_len("", 0));
 		}
@@ -185,7 +186,7 @@ checkcondition_gin(void *checkval, QueryOperand *val)
 		*(gcv->need_recheck) = true;
 
 	/* convert item's number to corresponding entry's (operand's) number */
-	j = gcv->map_item_operand[ ((QueryItem *) val) - gcv->first_item ];
+	j = gcv->map_item_operand[((QueryItem *) val) - gcv->first_item];
 
 	/* return presence of current entry in indexed value */
 	return gcv->check[j];
@@ -195,10 +196,12 @@ Datum
 gin_tsquery_consistent(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
+
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
 	TSQuery		query = PG_GETARG_TSQUERY(2);
+
 	/* int32	nkeys = PG_GETARG_INT32(3); */
-	Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4);
+	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = FALSE;
 
@@ -216,7 +219,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 		 */
 		gcv.first_item = item = GETQUERY(query);
 		gcv.check = check;
-		gcv.map_item_operand = (int*)(extra_data[0]);
+		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = recheck;
 
 		res = TS_execute(

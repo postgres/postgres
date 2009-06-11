@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm.h,v 1.10 2008/11/12 13:43:54 teodor Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm.h,v 1.11 2009/06/11 14:48:51 momjian Exp $
  */
 #ifndef __TRGM_H__
 #define __TRGM_H__
@@ -31,7 +31,7 @@ typedef char trgm[3];
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
 } while(0);
 
-uint32 trgm2int(trgm *ptr);
+uint32		trgm2int(trgm *ptr);
 
 #ifdef KEEPONLYALNUM
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && (isalnum( *(unsigned char*)(a) ) || *(unsigned char*)(a)==' ') )
@@ -45,7 +45,7 @@ typedef struct
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint8		flag;
 	char		data[1];
-}	TRGM;
+} TRGM;
 
 #define TRGMHDRSIZE		  (VARHDRSZ + sizeof(uint8))
 
@@ -87,6 +87,6 @@ typedef char *BITVECP;
 extern float4 trgm_limit;
 
 TRGM	   *generate_trgm(char *str, int slen);
-float4		cnt_sml(TRGM * trg1, TRGM * trg2);
+float4		cnt_sml(TRGM *trg1, TRGM *trg2);
 
 #endif

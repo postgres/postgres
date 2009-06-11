@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.131 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.132 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,8 +367,8 @@ ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys)
 	/*
 	 * Note we advance the rightmost array key most quickly, since it will
 	 * correspond to the lowest-order index column among the available
-	 * qualifications.  This is hypothesized to result in better locality
-	 * of access in the index.
+	 * qualifications.	This is hypothesized to result in better locality of
+	 * access in the index.
 	 */
 	for (j = numArrayKeys - 1; j >= 0; j--)
 	{
@@ -716,8 +716,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 	extra_scan_keys = n_scan_keys;
 
 	/*
-	 * for each opclause in the given qual, convert the opclause into
-	 * a single scan key
+	 * for each opclause in the given qual, convert the opclause into a single
+	 * scan key
 	 */
 	j = 0;
 	foreach(qual_cell, quals)
@@ -727,8 +727,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 		Oid			opno;		/* operator's OID */
 		RegProcedure opfuncid;	/* operator proc id used in scan */
 		Oid			opfamily;	/* opfamily of index column */
-		int			op_strategy; /* operator's strategy number */
-		Oid			op_lefttype; /* operator's declared input types */
+		int			op_strategy;	/* operator's strategy number */
+		Oid			op_lefttype;	/* operator's declared input types */
 		Oid			op_righttype;
 		Expr	   *leftop;		/* expr on lhs of operator */
 		Expr	   *rightop;	/* expr on rhs ... */
@@ -805,8 +805,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			ScanKeyEntryInitialize(this_scan_key,
 								   flags,
 								   varattno,	/* attribute number to scan */
-								   op_strategy,	/* op's strategy */
-								   op_righttype, /* strategy subtype */
+								   op_strategy, /* op's strategy */
+								   op_righttype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
 		}
@@ -983,8 +983,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			ScanKeyEntryInitialize(this_scan_key,
 								   0,	/* flags */
 								   varattno,	/* attribute number to scan */
-								   op_strategy,	/* op's strategy */
-								   op_righttype, /* strategy subtype */
+								   op_strategy, /* op's strategy */
+								   op_righttype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
 								   (Datum) 0);	/* constant */
 		}
@@ -1015,7 +1015,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			ScanKeyEntryInitialize(this_scan_key,
 								   SK_ISNULL | SK_SEARCHNULL,
 								   varattno,	/* attribute number to scan */
-								   InvalidStrategy,	/* no strategy */
+								   InvalidStrategy,		/* no strategy */
 								   InvalidOid,	/* no strategy subtype */
 								   InvalidOid,	/* no reg proc for this */
 								   (Datum) 0);	/* constant */

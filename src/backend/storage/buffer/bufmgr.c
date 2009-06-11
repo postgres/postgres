@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.251 2009/04/03 18:17:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.252 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,9 +81,9 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
 static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
-					ForkNumber forkNum, BlockNumber blockNum,
-					ReadBufferMode mode , BufferAccessStrategy strategy,
-					bool *hit);
+				  ForkNumber forkNum, BlockNumber blockNum,
+				  ReadBufferMode mode, BufferAccessStrategy strategy,
+				  bool *hit);
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -106,7 +106,7 @@ static void AtProcExit_Buffers(int code, Datum arg);
  * PrefetchBuffer -- initiate asynchronous read of a block of a relation
  *
  * This is named by analogy to ReadBuffer but doesn't actually allocate a
- * buffer.  Instead it tries to ensure that a future ReadBuffer for the given
+ * buffer.	Instead it tries to ensure that a future ReadBuffer for the given
  * block will not be delayed by the I/O.  Prefetching is optional.
  * No-op if prefetching isn't compiled in.
  */
@@ -126,16 +126,16 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		if (RELATION_IS_OTHER_TEMP(reln))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot access temporary tables of other sessions")));
+				errmsg("cannot access temporary tables of other sessions")));
 
 		/* pass it off to localbuf.c */
 		LocalPrefetchBuffer(reln->rd_smgr, forkNum, blockNum);
 	}
 	else
 	{
-		BufferTag	newTag;			/* identity of requested block */
-		uint32		newHash;		/* hash value for newTag */
-		LWLockId	newPartitionLock;		/* buffer partition lock for it */
+		BufferTag	newTag;		/* identity of requested block */
+		uint32		newHash;	/* hash value for newTag */
+		LWLockId	newPartitionLock;	/* buffer partition lock for it */
 		int			buf_id;
 
 		/* create a tag so we can lookup the buffer */
@@ -156,17 +156,17 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 
 		/*
 		 * If the block *is* in buffers, we do nothing.  This is not really
-		 * ideal: the block might be just about to be evicted, which would
-		 * be stupid since we know we are going to need it soon.  But the
-		 * only easy answer is to bump the usage_count, which does not seem
-		 * like a great solution: when the caller does ultimately touch the
-		 * block, usage_count would get bumped again, resulting in too much
-		 * favoritism for blocks that are involved in a prefetch sequence.
-		 * A real fix would involve some additional per-buffer state, and
-		 * it's not clear that there's enough of a problem to justify that.
+		 * ideal: the block might be just about to be evicted, which would be
+		 * stupid since we know we are going to need it soon.  But the only
+		 * easy answer is to bump the usage_count, which does not seem like a
+		 * great solution: when the caller does ultimately touch the block,
+		 * usage_count would get bumped again, resulting in too much
+		 * favoritism for blocks that are involved in a prefetch sequence. A
+		 * real fix would involve some additional per-buffer state, and it's
+		 * not clear that there's enough of a problem to justify that.
 		 */
 	}
-#endif /* USE_PREFETCH */
+#endif   /* USE_PREFETCH */
 }
 
 
@@ -202,7 +202,7 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * for non-critical data, where the caller is prepared to repair errors.
  *
  * In RBM_ZERO mode, if the page isn't in buffer cache already, it's filled
- * with zeros instead of reading it from disk.  Useful when the caller is
+ * with zeros instead of reading it from disk.	Useful when the caller is
  * going to fill the page from scratch, since this saves I/O and avoids
  * unnecessary failure if the page-on-disk has corrupt page headers.
  * Caution: do not use this mode to read a page that is beyond the relation's
@@ -216,16 +216,16 @@ Buffer
 ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 				   ReadBufferMode mode, BufferAccessStrategy strategy)
 {
-	bool hit;
-	Buffer buf;
+	bool		hit;
+	Buffer		buf;
 
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(reln);
 
 	/*
-	 * Reject attempts to read non-local temporary relations; we would
-	 * be likely to get wrong data since we have no visibility into the
-	 * owning session's local buffers.
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
 	 */
 	if (RELATION_IS_OTHER_TEMP(reln))
 		ereport(ERROR,
@@ -233,8 +233,8 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 				 errmsg("cannot access temporary tables of other sessions")));
 
 	/*
-	 * Read the buffer, and update pgstat counters to reflect a cache
-	 * hit or miss.
+	 * Read the buffer, and update pgstat counters to reflect a cache hit or
+	 * miss.
 	 */
 	pgstat_count_buffer_read(reln);
 	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_istemp, forkNum, blockNum,
@@ -256,9 +256,10 @@ ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
 						  ForkNumber forkNum, BlockNumber blockNum,
 						  ReadBufferMode mode, BufferAccessStrategy strategy)
 {
-	bool hit;
+	bool		hit;
 
 	SMgrRelation smgr = smgropen(rnode);
+
 	return ReadBuffer_common(smgr, isTemp, forkNum, blockNum, mode, strategy,
 							 &hit);
 }
@@ -357,9 +358,9 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
-					(errmsg("unexpected data beyond EOF in block %u of relation %s",
-							blockNum, relpath(smgr->smgr_rnode, forkNum)),
-					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
+			 (errmsg("unexpected data beyond EOF in block %u of relation %s",
+					 blockNum, relpath(smgr->smgr_rnode, forkNum)),
+			  errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
 		 * We *must* do smgrextend before succeeding, else the page will not
@@ -439,9 +440,9 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
-							 errmsg("invalid page header in block %u of relation %s",
-									blockNum,
-									relpath(smgr->smgr_rnode, forkNum))));
+					 errmsg("invalid page header in block %u of relation %s",
+							blockNum,
+							relpath(smgr->smgr_rnode, forkNum))));
 			}
 		}
 	}
@@ -631,17 +632,17 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-												  smgr->smgr_rnode.spcNode,
-												  smgr->smgr_rnode.dbNode,
-												  smgr->smgr_rnode.relNode);
+													smgr->smgr_rnode.spcNode,
+													 smgr->smgr_rnode.dbNode,
+												   smgr->smgr_rnode.relNode);
 
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-													 smgr->smgr_rnode.spcNode,
+													smgr->smgr_rnode.spcNode,
 													 smgr->smgr_rnode.dbNode,
-													 smgr->smgr_rnode.relNode);
+												   smgr->smgr_rnode.relNode);
 			}
 			else
 			{
@@ -983,7 +984,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 					 Relation relation,
 					 BlockNumber blockNum)
 {
-	ForkNumber forkNum = MAIN_FORKNUM;
+	ForkNumber	forkNum = MAIN_FORKNUM;
 	volatile BufferDesc *bufHdr;
 
 	if (BufferIsValid(buffer))
@@ -2708,7 +2709,8 @@ AbortBufferIO(void)
 			if (sv_flags & BM_IO_ERROR)
 			{
 				/* Buffer is pinned, so we can read tag without spinlock */
-				char *path = relpath(buf->tag.rnode, buf->tag.forkNum);
+				char	   *path = relpath(buf->tag.rnode, buf->tag.forkNum);
+
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
 						 errmsg("could not write block %u of %s",
@@ -2732,7 +2734,8 @@ buffer_write_error_callback(void *arg)
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
 	{
-		char *path = relpath(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+		char	   *path = relpath(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+
 		errcontext("writing block %u of relation %s",
 				   bufHdr->tag.blockNum, path);
 		pfree(path);

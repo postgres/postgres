@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.50 2009/05/20 16:49:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.51 2009/06/11 14:49:13 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -1132,7 +1132,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-	int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -1640,7 +1640,7 @@ DecodePosixTimezone(char *str, int *tzp)
  */
 int
 ParseDateTime(char *timestr, char *lowstr,
-	  char **field, int *ftype, int *numfields, char **endstr)
+			  char **field, int *ftype, int *numfields, char **endstr)
 {
 	int			nf = 0;
 	char	   *lp = lowstr;
@@ -1928,7 +1928,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * time
 						 */
 						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], fmask,
-							   &tmask, tm, fsec, &is2digits)) < 0)
+										  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 
 						/*
@@ -2116,7 +2116,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-							   &tmask, tm, fsec, &is2digits)) < 0)
+										  &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 
 							if (tmask != DTK_TIME_M)
@@ -2154,13 +2154,13 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * Example: 20011223 or 040506
 						 */
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-							   &tmask, tm, fsec, &is2digits)) < 0)
+										  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					else if (flen > 4)
 					{
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-							   &tmask, tm, fsec, &is2digits)) < 0)
+										  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					/* otherwise it is a single date/time field... */
@@ -2580,10 +2580,10 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 	int			scan_type;
 
 	char	   *pstr,
-			*pfmt,
-			*tmp;
-	int		err = 1;
-	unsigned int	j;
+			   *pfmt,
+			   *tmp;
+	int			err = 1;
+	unsigned int j;
 	struct tm	tm;
 
 	pfmt = fmt;

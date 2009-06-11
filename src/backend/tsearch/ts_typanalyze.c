@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.6 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_typanalyze.c,v 1.7 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,21 +31,21 @@ typedef struct
 /* A hash table entry for the Lossy Counting algorithm */
 typedef struct
 {
-	LexemeHashKey	key;		/* This is 'e' from the LC algorithm. */
-	int				frequency;	/* This is 'f'. */
-	int				delta;		/* And this is 'delta'. */
+	LexemeHashKey key;			/* This is 'e' from the LC algorithm. */
+	int			frequency;		/* This is 'f'. */
+	int			delta;			/* And this is 'delta'. */
 } TrackItem;
 
 static void compute_tsvector_stats(VacAttrStats *stats,
-								   AnalyzeAttrFetchFunc fetchfunc,
-								   int samplerows,
-								   double totalrows);
+					   AnalyzeAttrFetchFunc fetchfunc,
+					   int samplerows,
+					   double totalrows);
 static void prune_lexemes_hashtable(HTAB *lexemes_tab, int b_current);
 static uint32 lexeme_hash(const void *key, Size keysize);
-static int lexeme_match(const void *key1, const void *key2, Size keysize);
-static int lexeme_compare(const void *key1, const void *key2);
-static int trackitem_compare_frequencies_desc(const void *e1, const void *e2);
-static int trackitem_compare_lexemes(const void *e1, const void *e2);
+static int	lexeme_match(const void *key1, const void *key2, Size keysize);
+static int	lexeme_compare(const void *key1, const void *key2);
+static int	trackitem_compare_frequencies_desc(const void *e1, const void *e2);
+static int	trackitem_compare_lexemes(const void *e1, const void *e2);
 
 
 /*
@@ -94,7 +94,7 @@ ts_typanalyze(PG_FUNCTION_ARGS)
  *	The Lossy Counting (aka LC) algorithm goes like this:
  *	Let D be a set of triples (e, f, d), where e is an element value, f is
  *	that element's frequency (occurrence count) and d is the maximum error in
- *	f.  We start with D empty and process the elements in batches of size
+ *	f.	We start with D empty and process the elements in batches of size
  *	w. (The batch size is also known as "bucket size".) Let the current batch
  *	number be b_current, starting with 1. For each element e we either
  *	increment its f count, if it's already in D, or insert a new triple into D
@@ -114,29 +114,32 @@ compute_tsvector_stats(VacAttrStats *stats,
 					   int samplerows,
 					   double totalrows)
 {
-	int				num_mcelem;
-	int				null_cnt = 0;
-	double			total_width = 0;
+	int			num_mcelem;
+	int			null_cnt = 0;
+	double		total_width = 0;
+
 	/* This is D from the LC algorithm. */
-	HTAB			*lexemes_tab;
-	HASHCTL			hash_ctl;
-	HASH_SEQ_STATUS	scan_status;
+	HTAB	   *lexemes_tab;
+	HASHCTL		hash_ctl;
+	HASH_SEQ_STATUS scan_status;
+
 	/* This is the current bucket number from the LC algorithm */
-	int				b_current;
+	int			b_current;
+
 	/* This is 'w' from the LC algorithm */
-	int				bucket_width;
-	int vector_no,
-		lexeme_no;
-	LexemeHashKey 	hash_key;
-	TrackItem		*item;
+	int			bucket_width;
+	int			vector_no,
+				lexeme_no;
+	LexemeHashKey hash_key;
+	TrackItem  *item;
 
 	/* We want statistics_target * 10 lexemes in the MCELEM array */
 	num_mcelem = stats->attr->attstattarget * 10;
 
 	/*
-	 * We set bucket width equal to the target number of result lexemes.
-	 * This is probably about right but perhaps might need to be scaled
-	 * up or down a bit?
+	 * We set bucket width equal to the target number of result lexemes. This
+	 * is probably about right but perhaps might need to be scaled up or down
+	 * a bit?
 	 */
 	bucket_width = num_mcelem;
 
@@ -154,7 +157,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 	lexemes_tab = hash_create("Analyzed lexemes table",
 							  bucket_width * 4,
 							  &hash_ctl,
-							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	b_current = 1;
@@ -165,9 +168,9 @@ compute_tsvector_stats(VacAttrStats *stats,
 	{
 		Datum		value;
 		bool		isnull;
-		TSVector 	vector;
-		WordEntry	*curentryptr;
-		char		*lexemesptr;
+		TSVector	vector;
+		WordEntry  *curentryptr;
+		char	   *lexemesptr;
 		int			j;
 
 		vacuum_delay_point();
@@ -198,7 +201,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		/*
 		 * We loop through the lexemes in the tsvector and add them to our
-		 * tracking hashtable.  Note: the hashtable entries will point into
+		 * tracking hashtable.	Note: the hashtable entries will point into
 		 * the (detoasted) tsvector value, therefore we cannot free that
 		 * storage until we're done.
 		 */
@@ -206,7 +209,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		curentryptr = ARRPTR(vector);
 		for (j = 0; j < vector->size; j++)
 		{
-			bool			found;
+			bool		found;
 
 			/* Construct a hash key */
 			hash_key.lexeme = lexemesptr + curentryptr->pos;
@@ -247,9 +250,10 @@ compute_tsvector_stats(VacAttrStats *stats,
 	{
 		int			nonnull_cnt = samplerows - null_cnt;
 		int			i;
-		TrackItem	**sort_table;
+		TrackItem **sort_table;
 		int			track_len;
-		int			minfreq, maxfreq;
+		int			minfreq,
+					maxfreq;
 
 		stats->stats_valid = true;
 		/* Do the simple null-frac and average width stats */
@@ -281,7 +285,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		/* Suppress any single-occurrence items */
 		while (track_len > 0)
 		{
-			if (sort_table[track_len-1]->frequency > 1)
+			if (sort_table[track_len - 1]->frequency > 1)
 				break;
 			track_len--;
 		}
@@ -293,9 +297,9 @@ compute_tsvector_stats(VacAttrStats *stats,
 		/* Generate MCELEM slot entry */
 		if (num_mcelem > 0)
 		{
-			MemoryContext	old_context;
-			Datum			*mcelem_values;
-			float4			*mcelem_freqs;
+			MemoryContext old_context;
+			Datum	   *mcelem_values;
+			float4	   *mcelem_freqs;
 
 			/* Grab the minimal and maximal frequencies that will get stored */
 			minfreq = sort_table[num_mcelem - 1]->frequency;
@@ -305,15 +309,15 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 * We want to store statistics sorted on the lexeme value using
 			 * first length, then byte-for-byte comparison. The reason for
 			 * doing length comparison first is that we don't care about the
-			 * ordering so long as it's consistent, and comparing lengths first
-			 * gives us a chance to avoid a strncmp() call.
+			 * ordering so long as it's consistent, and comparing lengths
+			 * first gives us a chance to avoid a strncmp() call.
 			 *
-			 * This is different from what we do with scalar statistics -- they
-			 * get sorted on frequencies. The rationale is that we usually
-			 * search through most common elements looking for a specific
-			 * value, so we can grab its frequency.  When values are presorted
-			 * we can employ binary search for that.  See ts_selfuncs.c for a
-			 * real usage scenario.
+			 * This is different from what we do with scalar statistics --
+			 * they get sorted on frequencies. The rationale is that we
+			 * usually search through most common elements looking for a
+			 * specific value, so we can grab its frequency.  When values are
+			 * presorted we can employ binary search for that.	See
+			 * ts_selfuncs.c for a real usage scenario.
 			 */
 			qsort(sort_table, num_mcelem, sizeof(TrackItem *),
 				  trackitem_compare_lexemes);
@@ -332,11 +336,11 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 			for (i = 0; i < num_mcelem; i++)
 			{
-				TrackItem *item = sort_table[i];
+				TrackItem  *item = sort_table[i];
 
 				mcelem_values[i] =
 					PointerGetDatum(cstring_to_text_with_len(item->key.lexeme,
-															 item->key.length));
+														  item->key.length));
 				mcelem_freqs[i] = (double) item->frequency / (double) nonnull_cnt;
 			}
 			mcelem_freqs[i++] = (double) minfreq / (double) nonnull_cnt;
@@ -352,7 +356,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 			stats->numvalues[0] = num_mcelem;
 			/* We are storing text values */
 			stats->statypid[0] = TEXTOID;
-			stats->statyplen[0] = -1; /* typlen, -1 for varlena */
+			stats->statyplen[0] = -1;	/* typlen, -1 for varlena */
 			stats->statypbyval[0] = false;
 			stats->statypalign[0] = 'i';
 		}
@@ -362,13 +366,13 @@ compute_tsvector_stats(VacAttrStats *stats,
 		/* We found only nulls; assume the column is entirely null */
 		stats->stats_valid = true;
 		stats->stanullfrac = 1.0;
-		stats->stawidth = 0;		/* "unknown" */
-		stats->stadistinct = 0.0;	/* "unknown" */
+		stats->stawidth = 0;	/* "unknown" */
+		stats->stadistinct = 0.0;		/* "unknown" */
 	}
 
 	/*
-	 * We don't need to bother cleaning up any of our temporary palloc's.
-	 * The hashtable should also go away, as it used a child memory context.
+	 * We don't need to bother cleaning up any of our temporary palloc's. The
+	 * hashtable should also go away, as it used a child memory context.
 	 */
 }
 
@@ -379,8 +383,8 @@ compute_tsvector_stats(VacAttrStats *stats,
 static void
 prune_lexemes_hashtable(HTAB *lexemes_tab, int b_current)
 {
-	HASH_SEQ_STATUS	scan_status;
-	TrackItem		*item;
+	HASH_SEQ_STATUS scan_status;
+	TrackItem  *item;
 
 	hash_seq_init(&scan_status, lexemes_tab);
 	while ((item = (TrackItem *) hash_seq_search(&scan_status)) != NULL)
@@ -423,8 +427,8 @@ lexeme_match(const void *key1, const void *key2, Size keysize)
 static int
 lexeme_compare(const void *key1, const void *key2)
 {
-	const LexemeHashKey	*d1 = (const LexemeHashKey *) key1;
-	const LexemeHashKey	*d2 = (const LexemeHashKey *) key2;
+	const LexemeHashKey *d1 = (const LexemeHashKey *) key1;
+	const LexemeHashKey *d2 = (const LexemeHashKey *) key2;
 
 	/* First, compare by length */
 	if (d1->length > d2->length)
@@ -441,8 +445,8 @@ lexeme_compare(const void *key1, const void *key2)
 static int
 trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 {
-	const TrackItem * const *t1 = (const TrackItem * const *) e1;
-	const TrackItem * const *t2 = (const TrackItem * const *) e2;
+	const TrackItem *const * t1 = (const TrackItem *const *) e1;
+	const TrackItem *const * t2 = (const TrackItem *const *) e2;
 
 	return (*t2)->frequency - (*t1)->frequency;
 }
@@ -453,8 +457,8 @@ trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 static int
 trackitem_compare_lexemes(const void *e1, const void *e2)
 {
-	const TrackItem * const *t1 = (const TrackItem * const *) e1;
-	const TrackItem * const *t2 = (const TrackItem * const *) e2;
+	const TrackItem *const * t1 = (const TrackItem *const *) e1;
+	const TrackItem *const * t2 = (const TrackItem *const *) e2;
 
 	return lexeme_compare(&(*t1)->key, &(*t2)->key);
 }

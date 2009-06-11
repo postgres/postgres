@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.104 2009/01/01 17:23:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.105 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ printtup_create_DR(CommandDest dest)
 {
 	DR_printtup *self = (DR_printtup *) palloc0(sizeof(DR_printtup));
 
-	self->pub.receiveSlot = printtup;			/* might get changed later */
+	self->pub.receiveSlot = printtup;	/* might get changed later */
 	self->pub.rStartup = printtup_startup;
 	self->pub.rShutdown = printtup_shutdown;
 	self->pub.rDestroy = printtup_destroy;

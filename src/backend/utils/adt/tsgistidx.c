@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.10 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.11 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,10 +307,10 @@ checkcondition_arr(void *checkval, QueryOperand *val)
 
 	/* Loop invariant: StopLow <= val < StopHigh */
 
-	/* 
-	 * we are not able to find a a prefix by hash value 
+	/*
+	 * we are not able to find a a prefix by hash value
 	 */
-	if ( val->prefix )
+	if (val->prefix)
 		return true;
 
 	while (StopLow < StopHigh)
@@ -330,11 +330,11 @@ checkcondition_arr(void *checkval, QueryOperand *val)
 static bool
 checkcondition_bit(void *checkval, QueryOperand *val)
 {
-	/* 
-	 * we are not able to find a a prefix in signature tree 
+	/*
+	 * we are not able to find a a prefix in signature tree
 	 */
-	if ( val->prefix )
-		return true; 
+	if (val->prefix)
+		return true;
 	return GETBIT(checkval, HASHVAL(val->valcrc));
 }
 
@@ -343,6 +343,7 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TSQuery		query = PG_GETARG_TSQUERY(1);
+
 	/* StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2); */
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.214 2009/06/04 18:33:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.215 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ int			Log_destination = LOG_DESTINATION_STDERR;
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
  * sequence-number prefix we add, and of course it doesn't count the prefix
- * added by syslog itself.  On many implementations it seems that the hard
+ * added by syslog itself.	On many implementations it seems that the hard
  * limit is approximately 2K bytes including both those prefixes.
  */
 #ifndef PG_SYSLOG_LIMIT
@@ -298,8 +298,8 @@ errstart(int elevel, const char *filename, int lineno,
 		MemoryContextReset(ErrorContext);
 
 		/*
-		 * Infinite error recursion might be due to something broken
-		 * in a context traceback routine.	Abandon them too.  We also abandon
+		 * Infinite error recursion might be due to something broken in a
+		 * context traceback routine.  Abandon them too.  We also abandon
 		 * attempting to print the error statement (which, if long, could
 		 * itself be the source of the recursive failure).
 		 */
@@ -785,7 +785,7 @@ errmsg_internal(const char *fmt,...)
  */
 int
 errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n, ...)
+			  unsigned long n,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -850,7 +850,7 @@ errdetail_log(const char *fmt,...)
  */
 int
 errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n, ...)
+				 unsigned long n,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -1637,7 +1637,7 @@ setup_formatted_log_time(void)
 	tz = log_timezone ? log_timezone : gmt_timezone;
 
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-				/* leave room for milliseconds... */
+	/* leave room for milliseconds... */
 				"%Y-%m-%d %H:%M:%S     %Z",
 				pg_localtime(&stamp_time, tz));
 
@@ -1852,7 +1852,7 @@ static void
 write_csvlog(ErrorData *edata)
 {
 	StringInfoData buf;
-	bool	print_stmt = false;
+	bool		print_stmt = false;
 
 	/* static counter for line numbers */
 	static long log_line_number = 0;
@@ -1934,7 +1934,7 @@ write_csvlog(ErrorData *edata)
 		psdisp = get_ps_display(&displen);
 		appendStringInfo(&msgbuf, "%.*s", displen, psdisp);
 		appendCSVLiteral(&buf, msgbuf.data);
-	
+
 		pfree(msgbuf.data);
 	}
 	appendStringInfoChar(&buf, ',');
@@ -2006,7 +2006,7 @@ write_csvlog(ErrorData *edata)
 	/* file error location */
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
 	{
-		StringInfoData	msgbuf;
+		StringInfoData msgbuf;
 
 		initStringInfo(&msgbuf);
 

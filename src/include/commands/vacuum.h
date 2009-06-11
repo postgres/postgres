@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.84 2009/01/16 13:27:24 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.85 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,9 +94,9 @@ typedef struct VacAttrStats
 	Datum	   *stavalues[STATISTIC_NUM_SLOTS];
 
 	/*
-	 * These fields describe the stavalues[n] element types. They will
-	 * be initialized to be the same as the column's that's underlying the
-	 * slot, but a custom typanalyze function might want to store an array of
+	 * These fields describe the stavalues[n] element types. They will be
+	 * initialized to be the same as the column's that's underlying the slot,
+	 * but a custom typanalyze function might want to store an array of
 	 * something other than the analyzed column's elements. It should then
 	 * overwrite these fields.
 	 */

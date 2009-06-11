@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.107 2009/01/22 20:16:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.108 2009/06/11 14:49:13 momjian Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -264,7 +264,7 @@ extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern void ExecGrantStmt_oids(InternalGrant *istmt);
 
 extern AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
-				Oid roleid, AclMode mask, AclMaskHow how);
+					 Oid roleid, AclMode mask, AclMaskHow how);
 extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,
 				 AclMode mask, AclMaskHow how);
 extern AclMode pg_database_aclmask(Oid db_oid, Oid roleid,
@@ -278,14 +278,14 @@ extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 					  AclMode mask, AclMaskHow how);
 extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
-					  AclMode mask, AclMaskHow how);
+								AclMode mask, AclMaskHow how);
 extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-					  AclMode mask, AclMaskHow how);
+						  AclMode mask, AclMaskHow how);
 
 extern AclResult pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
-									   Oid roleid, AclMode mode);
+					  Oid roleid, AclMode mode);
 extern AclResult pg_attribute_aclcheck_all(Oid table_oid, Oid roleid,
-										   AclMode mode, AclMaskHow how);
+						  AclMode mode, AclMaskHow how);
 extern AclResult pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode);
 extern AclResult pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode);
 extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
@@ -299,7 +299,7 @@ extern void aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 			   const char *objectname);
 
 extern void aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
-			   const char *objectname, const char *colname);
+				   const char *objectname, const char *colname);
 
 /* ownercheck routines just return true (owner) or false (not) */
 extern bool pg_class_ownercheck(Oid class_oid, Oid roleid);

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.15 2008/04/21 01:11:43 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.16 2009/06/11 14:48:51 momjian Exp $ */
 
 #include "postgres.h"
 
@@ -91,7 +91,7 @@ geo_distance_internal(Point *pt1, Point *pt2)
  *	 distance between the points in miles on earth's surface
  *
  * If float8 is passed-by-value, the oldstyle version-0 calling convention
- * is unportable, so we use version-1.  However, if it's passed-by-reference,
+ * is unportable, so we use version-1.	However, if it's passed-by-reference,
  * continue to use oldstyle.  This is just because we'd like earthdistance
  * to serve as a canary for any unintentional breakage of version-0 functions
  * with float8 results.
@@ -100,6 +100,7 @@ geo_distance_internal(Point *pt1, Point *pt2)
 #ifdef USE_FLOAT8_BYVAL
 
 Datum		geo_distance(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(geo_distance);
 
 Datum
@@ -112,8 +113,7 @@ geo_distance(PG_FUNCTION_ARGS)
 	result = geo_distance_internal(pt1, pt2);
 	PG_RETURN_FLOAT8(result);
 }
-
-#else /* !USE_FLOAT8_BYVAL */
+#else							/* !USE_FLOAT8_BYVAL */
 
 double	   *geo_distance(Point *pt1, Point *pt2);
 
@@ -126,4 +126,4 @@ geo_distance(Point *pt1, Point *pt2)
 	return resultp;
 }
 
-#endif /* USE_FLOAT8_BYVAL */
+#endif   /* USE_FLOAT8_BYVAL */

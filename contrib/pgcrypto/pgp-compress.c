@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.7 2007/11/15 21:14:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.8 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -69,7 +69,7 @@ z_free(void *priv, void *addr)
 }
 
 static int
-compress_init(PushFilter * next, void *init_arg, void **priv_p)
+compress_init(PushFilter *next, void *init_arg, void **priv_p)
 {
 	int			res;
 	struct ZipStat *st;
@@ -107,7 +107,7 @@ compress_init(PushFilter * next, void *init_arg, void **priv_p)
 
 /* cant handle zero-len incoming data, but shouldnt */
 static int
-compress_process(PushFilter * next, void *priv, const uint8 *data, int len)
+compress_process(PushFilter *next, void *priv, const uint8 *data, int len)
 {
 	int			res,
 				n_out;
@@ -140,7 +140,7 @@ compress_process(PushFilter * next, void *priv, const uint8 *data, int len)
 }
 
 static int
-compress_flush(PushFilter * next, void *priv)
+compress_flush(PushFilter *next, void *priv)
 {
 	int			res,
 				zres,
@@ -185,7 +185,7 @@ static const PushFilterOps
 };
 
 int
-pgp_compress_filter(PushFilter ** res, PGP_Context * ctx, PushFilter * dst)
+pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst)
 {
 	return pushf_create(res, &compress_filter, ctx, dst);
 }
@@ -204,7 +204,7 @@ struct DecomprData
 };
 
 static int
-decompress_init(void **priv_p, void *arg, PullFilter * src)
+decompress_init(void **priv_p, void *arg, PullFilter *src)
 {
 	PGP_Context *ctx = arg;
 	struct DecomprData *dec;
@@ -237,7 +237,7 @@ decompress_init(void **priv_p, void *arg, PullFilter * src)
 }
 
 static int
-decompress_read(void *priv, PullFilter * src, int len,
+decompress_read(void *priv, PullFilter *src, int len,
 				uint8 **data_p, uint8 *buf, int buflen)
 {
 	int			res;
@@ -308,20 +308,20 @@ static const PullFilterOps
 };
 
 int
-pgp_decompress_filter(PullFilter ** res, PGP_Context * ctx, PullFilter * src)
+pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src)
 {
 	return pullf_create(res, &decompress_filter, ctx, src);
 }
 #else							/* !HAVE_ZLIB */
 
 int
-pgp_compress_filter(PushFilter ** res, PGP_Context * ctx, PushFilter * dst)
+pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst)
 {
 	return PXE_PGP_UNSUPPORTED_COMPR;
 }
 
 int
-pgp_decompress_filter(PullFilter ** res, PGP_Context * ctx, PullFilter * src)
+pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src)
 {
 	return PXE_PGP_UNSUPPORTED_COMPR;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.149 2009/01/22 20:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.150 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
 static bool extract_query_dependencies_walker(Node *node,
-											  PlannerGlobal *context);
+								  PlannerGlobal *context);
 
 
 /*****************************************************************************
@@ -349,7 +349,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			break;
 		case T_CteScan:
 			{
-				CteScan *splan = (CteScan *) plan;
+				CteScan    *splan = (CteScan *) plan;
 
 				splan->scan.scanrelid += rtoffset;
 				splan->scan.plan.targetlist =
@@ -713,13 +713,13 @@ fix_expr_common(PlannerGlobal *glob, Node *node)
 	{
 		set_sa_opfuncid((ScalarArrayOpExpr *) node);
 		record_plan_function_dependency(glob,
-										((ScalarArrayOpExpr *) node)->opfuncid);
+									 ((ScalarArrayOpExpr *) node)->opfuncid);
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
 		if (OidIsValid(((ArrayCoerceExpr *) node)->elemfuncid))
 			record_plan_function_dependency(glob,
-											((ArrayCoerceExpr *) node)->elemfuncid);
+									 ((ArrayCoerceExpr *) node)->elemfuncid);
 	}
 	else if (IsA(node, Const))
 	{
@@ -759,8 +759,8 @@ fix_scan_expr(PlannerGlobal *glob, Node *node, int rtoffset)
 		 * If rtoffset == 0, we don't need to change any Vars, and if there
 		 * are no placeholders anywhere we won't need to remove them.  Then
 		 * it's OK to just scribble on the input node tree instead of copying
-		 * (since the only change, filling in any unset opfuncid fields,
-		 * is harmless).  This saves just enough cycles to be noticeable on
+		 * (since the only change, filling in any unset opfuncid fields, is
+		 * harmless).  This saves just enough cycles to be noticeable on
 		 * trivial queries.
 		 */
 		(void) fix_scan_expr_walker(node, &context);
@@ -1633,11 +1633,11 @@ set_returning_clause_references(PlannerGlobal *glob,
 	 * entries, while leaving result-rel Vars as-is.
 	 *
 	 * PlaceHolderVars will also be sought in the targetlist, but no
-	 * more-complex expressions will be.  Note that it is not possible for
-	 * a PlaceHolderVar to refer to the result relation, since the result
-	 * is never below an outer join.  If that case could happen, we'd have
-	 * to be prepared to pick apart the PlaceHolderVar and evaluate its
-	 * contained expression instead.
+	 * more-complex expressions will be.  Note that it is not possible for a
+	 * PlaceHolderVar to refer to the result relation, since the result is
+	 * never below an outer join.  If that case could happen, we'd have to be
+	 * prepared to pick apart the PlaceHolderVar and evaluate its contained
+	 * expression instead.
 	 */
 	itlist = build_tlist_index_other_vars(topplan->targetlist, resultRelation);
 
@@ -1734,8 +1734,8 @@ record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
 	 * we just assume they'll never change (or at least not in ways that'd
 	 * invalidate plans using them).  For this purpose we can consider a
 	 * built-in function to be one with OID less than FirstBootstrapObjectId.
-	 * Note that the OID generator guarantees never to generate such an
-	 * OID after startup, even at OID wraparound.
+	 * Note that the OID generator guarantees never to generate such an OID
+	 * after startup, even at OID wraparound.
 	 */
 	if (funcid >= (Oid) FirstBootstrapObjectId)
 	{

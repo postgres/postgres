@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.169 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.170 2009/06/11 14:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *		removing any LP_DEAD tuples.
  *
  *		On entry, *buf and *offsetptr point to the first legal position
- *		where the new tuple could be inserted.  The caller should hold an
+ *		where the new tuple could be inserted.	The caller should hold an
  *		exclusive lock on *buf.  *offsetptr can also be set to
  *		InvalidOffsetNumber, in which case the function will search for the
  *		right location within the page if needed.  On exit, they point to the
@@ -951,7 +951,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 		if (sopaque->btpo_prev != ropaque->btpo_prev)
 			elog(PANIC, "right sibling's left-link doesn't match: "
-				 "block %u links to %u instead of expected %u in index \"%s\"",
+			   "block %u links to %u instead of expected %u in index \"%s\"",
 				 ropaque->btpo_next, sopaque->btpo_prev, ropaque->btpo_prev,
 				 RelationGetRelationName(rel));
 

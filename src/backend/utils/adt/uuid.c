@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.10 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.11 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ string_to_uuid(const char *source, pg_uuid_t *uuid)
 {
 	const char *src = source;
 	bool		braces = false;
-	int	i;
+	int			i;
 
 	if (src[0] == '{')
 	{

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.96 2009/01/02 20:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.97 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		if (pstate->p_hasWindowFuncs)
 			ereport(ERROR,
 					(errcode(ERRCODE_WINDOWING_ERROR),
-			  errmsg("cannot use window function in EXECUTE parameter")));
+				 errmsg("cannot use window function in EXECUTE parameter")));
 
 		given_type_id = exprType(expr);
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.113 2009/03/31 17:59:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.114 2009/06/11 14:49:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -56,7 +56,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
 	bool		relhasrules;	/* has (or has had) any rules */
-	bool		relhastriggers;	/* has (or has had) any TRIGGERs */
+	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) derived classes */
 	TransactionId relfrozenxid; /* all Xids < this are frozen in this rel */
 

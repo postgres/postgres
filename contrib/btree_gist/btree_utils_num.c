@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.c,v 1.11 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_utils_num.c,v 1.12 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -8,7 +8,7 @@
 
 
 GISTENTRY *
-gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo)
+gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo *tinfo)
 {
 	if (entry->leafkey)
 	{
@@ -94,7 +94,7 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 */
 
 void *
-gbt_num_union(GBT_NUMKEY * out, const GistEntryVector *entryvec, const gbtree_ninfo * tinfo)
+gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_ninfo *tinfo)
 {
 	int			i,
 				numranges;
@@ -132,7 +132,7 @@ gbt_num_union(GBT_NUMKEY * out, const GistEntryVector *entryvec, const gbtree_ni
 */
 
 bool
-gbt_num_same(const GBT_NUMKEY * a, const GBT_NUMKEY * b, const gbtree_ninfo * tinfo)
+gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo)
 {
 
 	GBT_NUMKEY_R b1,
@@ -154,7 +154,7 @@ gbt_num_same(const GBT_NUMKEY * a, const GBT_NUMKEY * b, const gbtree_ninfo * ti
 
 
 void
-gbt_num_bin_union(Datum *u, GBT_NUMKEY * e, const gbtree_ninfo * tinfo)
+gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
 {
 
 	GBT_NUMKEY_R rd;
@@ -189,11 +189,11 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY * e, const gbtree_ninfo * tinfo)
 
 bool
 gbt_num_consistent(
-				   const GBT_NUMKEY_R * key,
+				   const GBT_NUMKEY_R *key,
 				   const void *query,
 				   const StrategyNumber *strategy,
 				   bool is_leaf,
-				   const gbtree_ninfo * tinfo
+				   const gbtree_ninfo *tinfo
 )
 {
 
@@ -235,7 +235,7 @@ gbt_num_consistent(
 
 GIST_SPLITVEC *
 gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
-				  const gbtree_ninfo * tinfo)
+				  const gbtree_ninfo *tinfo)
 {
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;

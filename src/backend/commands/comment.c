@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.106 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.107 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(description), values,
-										nulls, replaces);
+										 nulls, replaces);
 			simple_heap_update(description, &oldtuple->t_self, newtuple);
 		}
 
@@ -263,7 +263,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	if (newtuple == NULL && comment != NULL)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(description),
-								  values, nulls);
+								   values, nulls);
 		simple_heap_insert(description, newtuple);
 	}
 
@@ -344,7 +344,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(shdescription),
-										values, nulls, replaces);
+										 values, nulls, replaces);
 			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
 		}
 
@@ -358,7 +358,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	if (newtuple == NULL && comment != NULL)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(shdescription),
-								  values, nulls);
+								   values, nulls);
 		simple_heap_insert(shdescription, newtuple);
 	}
 

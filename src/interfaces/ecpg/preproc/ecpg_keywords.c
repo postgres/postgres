@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.39 2008/10/21 08:38:16 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.40 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,11 @@
  */
 static const ScanKeyword ScanECPGKeywords[] = {
 	/* name, value, category */
-	/* category is not needed in ecpg, it is only here so we can share
-	 * the data structure with the backend */
+
+	/*
+	 * category is not needed in ecpg, it is only here so we can share the
+	 * data structure with the backend
+	 */
 	{"allocate", SQL_ALLOCATE, 0},
 	{"autocommit", SQL_AUTOCOMMIT, 0},
 	{"bool", SQL_BOOL, 0},
@@ -60,7 +63,7 @@ static const ScanKeyword ScanECPGKeywords[] = {
 	{"section", SQL_SECTION, 0},
 	{"short", SQL_SHORT, 0},
 	{"signed", SQL_SIGNED, 0},
-	{"sql", SQL_SQL, 0},			/* strange thing, used for into sql descriptor
+	{"sql", SQL_SQL, 0},		/* strange thing, used for into sql descriptor
 								 * MYDESC; */
 	{"sqlerror", SQL_SQLERROR, 0},
 	{"sqlprint", SQL_SQLPRINT, 0},

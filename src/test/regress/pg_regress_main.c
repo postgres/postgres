@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.5 2009/01/01 17:24:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.6 2009/06/11 14:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,10 @@ psql_start_test(const char *testname,
 	char		psql_cmd[MAXPGPATH * 3];
 
 	/*
-	 * Look for files in the output dir first, consistent with a vpath
-	 * search.  This is mainly to create more reasonable error
-	 * messages if the file is not found.  It also allows local test
-	 * overrides when running pg_regress outside of the source tree.
+	 * Look for files in the output dir first, consistent with a vpath search.
+	 * This is mainly to create more reasonable error messages if the file is
+	 * not found.  It also allows local test overrides when running pg_regress
+	 * outside of the source tree.
 	 */
 	snprintf(infile, sizeof(infile), "%s/sql/%s.sql",
 			 outputdir, testname);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.80 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.81 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ gistgettuple(PG_FUNCTION_ARGS)
 
 	so = (GISTScanOpaque) scan->opaque;
 
-    if (dir != ForwardScanDirection)
+	if (dir != ForwardScanDirection)
 		elog(ERROR, "GiST doesn't support other scan directions than forward");
 
 	/*
@@ -101,8 +101,8 @@ Datum
 gistgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
-	int64	   ntids;
+	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	int64		ntids;
 
 	ntids = gistnext(scan, tbm);
 
@@ -136,10 +136,10 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 
 	so = (GISTScanOpaque) scan->opaque;
 
-	if ( so->qual_ok == false )
+	if (so->qual_ok == false)
 		return 0;
 
-	if ( so->curbuf == InvalidBuffer ) 
+	if (so->curbuf == InvalidBuffer)
 	{
 		if (ItemPointerIsValid(&so->curpos) == false)
 		{
@@ -155,7 +155,7 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 			stk->block = GIST_ROOT_BLKNO;
 
 			pgstat_count_index_scan(scan->indexRelation);
-		} 
+		}
 		else
 		{
 			/* scan is finished */
@@ -164,25 +164,25 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 	}
 
 	/*
-	 * check stored pointers from last visit 
+	 * check stored pointers from last visit
 	 */
-	if ( so->nPageData > 0 ) 
+	if (so->nPageData > 0)
 	{
 		/*
 		 * gistgetmulti never should go here
 		 */
-		Assert( tbm == NULL );
+		Assert(tbm == NULL);
 
-		if ( so->curPageData < so->nPageData )
+		if (so->curPageData < so->nPageData)
 		{
-			scan->xs_ctup.t_self = so->pageData[ so->curPageData ].heapPtr;
-			scan->xs_recheck = so->pageData[ so->curPageData ].recheck;
+			scan->xs_ctup.t_self = so->pageData[so->curPageData].heapPtr;
+			scan->xs_recheck = so->pageData[so->curPageData].recheck;
 
 			ItemPointerSet(&so->curpos,
-							BufferGetBlockNumber(so->curbuf),
-							so->pageData[ so->curPageData ].pageOffset);
+						   BufferGetBlockNumber(so->curbuf),
+						   so->pageData[so->curPageData].pageOffset);
 
-			so->curPageData ++;
+			so->curPageData++;
 
 			return 1;
 		}
@@ -227,7 +227,7 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 		if (!XLogRecPtrIsInvalid(so->stack->parentlsn) &&
 			XLByteLT(so->stack->parentlsn, opaque->nsn) &&
 			opaque->rightlink != InvalidBlockNumber /* sanity check */ &&
-			(so->stack->next == NULL || so->stack->next->block != opaque->rightlink)		/* check if already
+			(so->stack->next == NULL || so->stack->next->block != opaque->rightlink)	/* check if already
 				added */ )
 		{
 			/* detect page split, follow right link to add pages */
@@ -272,12 +272,12 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 			if (!OffsetNumberIsValid(n))
 			{
 				/*
-				 * If we was called from gistgettuple and current buffer contains
-				 * something matched then make a recursive call - it will return
-				 * ItemPointer from so->pageData. But we save buffer pinned to 
-				 * support tuple's killing
+				 * If we was called from gistgettuple and current buffer
+				 * contains something matched then make a recursive call - it
+				 * will return ItemPointer from so->pageData. But we save
+				 * buffer pinned to support tuple's killing
 				 */
-				if ( !tbm && so->nPageData > 0 )
+				if (!tbm && so->nPageData > 0)
 				{
 					LockBuffer(so->curbuf, GIST_UNLOCK);
 					return gistnext(scan, NULL);
@@ -324,12 +324,12 @@ gistnext(IndexScanDesc scan, TIDBitmap *tbm)
 					ntids++;
 					if (tbm != NULL)
 						tbm_add_tuples(tbm, &it->t_tid, 1, scan->xs_recheck);
-					else 
+					else
 					{
-						so->pageData[ so->nPageData ].heapPtr = it->t_tid;
-						so->pageData[ so->nPageData ].pageOffset = n;
-						so->pageData[ so->nPageData ].recheck = scan->xs_recheck;
-						so->nPageData ++;
+						so->pageData[so->nPageData].heapPtr = it->t_tid;
+						so->pageData[so->nPageData].pageOffset = n;
+						so->pageData[so->nPageData].recheck = scan->xs_recheck;
+						so->nPageData++;
 					}
 				}
 			}
@@ -437,8 +437,8 @@ gistindex_keytest(IndexTuple tuple,
 			/*
 			 * Call the Consistent function to evaluate the test.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, the comparison operator's strategy number and
-			 * subtype from pg_amop, and the recheck flag.
+			 * datum, the comparison operator's strategy number and subtype
+			 * from pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
 			 * always be zero, but might as well pass it for possible future

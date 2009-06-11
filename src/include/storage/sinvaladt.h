@@ -8,14 +8,14 @@
  * must be delivered to all already-running backends before it can be
  * forgotten.  (If we run out of space, we instead deliver a "RESET"
  * message to backends that have fallen too far behind.)
- * 
+ *
  * The struct type SharedInvalidationMessage, defining the contents of
  * a single message, is defined in sinval.h.
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinvaladt.h,v 1.50 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinvaladt.h,v 1.51 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern void SharedInvalBackendInit(void);
 extern bool BackendIdIsActive(int backendID);
 
 extern void SIInsertDataEntries(const SharedInvalidationMessage *data, int n);
-extern int SIGetDataEntries(SharedInvalidationMessage *data, int datasize);
+extern int	SIGetDataEntries(SharedInvalidationMessage *data, int datasize);
 extern void SICleanupQueue(bool callerHasWriteLock, int minFree);
 
 extern LocalTransactionId GetNextLocalTransactionId(void);

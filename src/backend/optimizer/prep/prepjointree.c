@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.65 2009/04/28 21:31:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.66 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,16 +52,16 @@ static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
 static Node *pull_up_simple_union_all(PlannerInfo *root, Node *jtnode,
 						 RangeTblEntry *rte);
 static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
-						  int parentRTindex, Query *setOpQuery,
-						  int childRToffset);
+						   int parentRTindex, Query *setOpQuery,
+						   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
-							 List **translated_vars);
+							List **translated_vars);
 static bool is_simple_subquery(Query *subquery);
 static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
 							List *colTypes);
 static List *insert_targetlist_placeholders(PlannerInfo *root, List *tlist,
-											int varno, bool wrap_non_vars);
+							   int varno, bool wrap_non_vars);
 static bool is_safe_append_member(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno, RangeTblEntry *rte,
 					   List *subtlist, List *subtlist_with_phvs,
@@ -74,7 +74,7 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 						 List *nonnullable_vars,
 						 List *forced_null_vars);
 static void substitute_multiple_relids(Node *node,
-									   int varno, Relids subrelids);
+						   int varno, Relids subrelids);
 static void fix_append_rel_relids(List *append_rel_list, int varno,
 					  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
@@ -87,7 +87,7 @@ static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
  *
  * A clause "foo op ANY (sub-SELECT)" can be processed by pulling the
  * sub-SELECT up to become a rangetable entry and treating the implied
- * comparisons as quals of a semijoin.  However, this optimization *only*
+ * comparisons as quals of a semijoin.	However, this optimization *only*
  * works at the top level of WHERE or a JOIN/ON clause, because we cannot
  * distinguish whether the ANY ought to return FALSE or NULL in cases
  * involving NULL inputs.  Also, in an outer join's ON clause we can only
@@ -104,7 +104,7 @@ static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
  * transformations if any are found.
  *
  * This routine has to run before preprocess_expression(), so the quals
- * clauses are not yet reduced to implicit-AND format.  That means we need
+ * clauses are not yet reduced to implicit-AND format.	That means we need
  * to recursively search through explicit AND clauses, which are
  * probably only binary ANDs.  We stop as soon as we hit a non-AND item.
  */
@@ -162,8 +162,8 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		/* First, recurse to process children and collect their relids */
 		foreach(l, f->fromlist)
 		{
-			Node   *newchild;
-			Relids	childrelids;
+			Node	   *newchild;
+			Relids		childrelids;
 
 			newchild = pull_up_sublinks_jointree_recurse(root,
 														 lfirst(l),
@@ -181,8 +181,8 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 
 		/*
 		 * Note that the result will be either newf, or a stack of JoinExprs
-		 * with newf at the base.  We rely on subsequent optimization steps
-		 * to flatten this and rearrange the joins as needed.
+		 * with newf at the base.  We rely on subsequent optimization steps to
+		 * flatten this and rearrange the joins as needed.
 		 *
 		 * Although we could include the pulled-up subqueries in the returned
 		 * relids, there's no need since upper quals couldn't refer to their
@@ -199,8 +199,8 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		Node	   *jtlink;
 
 		/*
-		 * Make a modifiable copy of join node, but don't bother copying
-		 * its subnodes (yet).
+		 * Make a modifiable copy of join node, but don't bother copying its
+		 * subnodes (yet).
 		 */
 		j = (JoinExpr *) palloc(sizeof(JoinExpr));
 		memcpy(j, jtnode, sizeof(JoinExpr));
@@ -214,19 +214,19 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 
 		/*
 		 * Now process qual, showing appropriate child relids as available,
-		 * and attach any pulled-up jointree items at the right place.
-		 * In the inner-join case we put new JoinExprs above the existing one
-		 * (much as for a FromExpr-style join).  In outer-join cases the
-		 * new JoinExprs must go into the nullable side of the outer join.
-		 * The point of the available_rels machinations is to ensure that we
-		 * only pull up quals for which that's okay.
+		 * and attach any pulled-up jointree items at the right place. In the
+		 * inner-join case we put new JoinExprs above the existing one (much
+		 * as for a FromExpr-style join).  In outer-join cases the new
+		 * JoinExprs must go into the nullable side of the outer join. The
+		 * point of the available_rels machinations is to ensure that we only
+		 * pull up quals for which that's okay.
 		 *
 		 * XXX for the moment, we refrain from pulling up IN/EXISTS clauses
-		 * appearing in LEFT or RIGHT join conditions.  Although it is
+		 * appearing in LEFT or RIGHT join conditions.	Although it is
 		 * semantically valid to do so under the above conditions, we end up
 		 * with a query in which the semijoin or antijoin must be evaluated
-		 * below the outer join, which could perform far worse than leaving
-		 * it as a sublink that is executed only for row pairs that meet the
+		 * below the outer join, which could perform far worse than leaving it
+		 * as a sublink that is executed only for row pairs that meet the
 		 * other join conditions.  Fixing this seems to require considerable
 		 * restructuring of the executor, but maybe someday it can happen.
 		 *
@@ -238,7 +238,7 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 			case JOIN_INNER:
 				j->quals = pull_up_sublinks_qual_recurse(root, j->quals,
 														 bms_union(leftrelids,
-																  rightrelids),
+																rightrelids),
 														 &jtlink);
 				break;
 			case JOIN_LEFT:
@@ -267,7 +267,7 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		/*
 		 * Although we could include the pulled-up subqueries in the returned
 		 * relids, there's no need since upper quals couldn't refer to their
-		 * outputs anyway.  But we *do* need to include the join's own rtindex
+		 * outputs anyway.	But we *do* need to include the join's own rtindex
 		 * because we haven't yet collapsed join alias variables, so upper
 		 * levels would mistakenly think they couldn't use references to this
 		 * join.
@@ -416,7 +416,7 @@ inline_set_returning_functions(PlannerInfo *root)
 
 		if (rte->rtekind == RTE_FUNCTION)
 		{
-			Query  *funcquery;
+			Query	   *funcquery;
 
 			/* Check safety of expansion, and expand if possible */
 			funcquery = inline_set_returning_function(root, rte);
@@ -495,10 +495,10 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 		 * Alternatively, is it a simple UNION ALL subquery?  If so, flatten
 		 * into an "append relation".
 		 *
-		 * It's safe to do this regardless of whether this query is
-		 * itself an appendrel member.	(If you're thinking we should try to
-		 * flatten the two levels of appendrel together, you're right; but we
-		 * handle that in set_append_rel_pathlist, not here.)
+		 * It's safe to do this regardless of whether this query is itself an
+		 * appendrel member.  (If you're thinking we should try to flatten the
+		 * two levels of appendrel together, you're right; but we handle that
+		 * in set_append_rel_pathlist, not here.)
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
 			is_simple_union_all(rte->subquery))
@@ -637,10 +637,10 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * pull_up_subqueries' processing is complete for its jointree and
 	 * rangetable.
 	 *
-	 * Note: we should pass NULL for containing-join info even if we are within
-	 * an outer join in the upper query; the lower query starts with a clean
-	 * slate for outer-join semantics.  Likewise, we say we aren't handling an
-	 * appendrel member.
+	 * Note: we should pass NULL for containing-join info even if we are
+	 * within an outer join in the upper query; the lower query starts with a
+	 * clean slate for outer-join semantics.  Likewise, we say we aren't
+	 * handling an appendrel member.
 	 */
 	subquery->jointree = (FromExpr *)
 		pull_up_subqueries(subroot, (Node *) subquery->jointree, NULL, NULL);
@@ -673,8 +673,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
-	 * to upper query's.  We have to fix the subquery's append_rel_list
-	 * as well.
+	 * to upper query's.  We have to fix the subquery's append_rel_list as
+	 * well.
 	 */
 	rtoffset = list_length(parse->rtable);
 	OffsetVarNodes((Node *) subquery, rtoffset, 0);
@@ -691,15 +691,15 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * The subquery's targetlist items are now in the appropriate form to
 	 * insert into the top query, but if we are under an outer join then
 	 * non-nullable items may have to be turned into PlaceHolderVars.  If we
-	 * are dealing with an appendrel member then anything that's not a
-	 * simple Var has to be turned into a PlaceHolderVar.
+	 * are dealing with an appendrel member then anything that's not a simple
+	 * Var has to be turned into a PlaceHolderVar.
 	 */
 	subtlist = subquery->targetList;
 	if (lowest_outer_join != NULL || containing_appendrel != NULL)
 		subtlist_with_phvs = insert_targetlist_placeholders(root,
 															subtlist,
 															varno,
-															containing_appendrel != NULL);
+											   containing_appendrel != NULL);
 	else
 		subtlist_with_phvs = subtlist;
 
@@ -709,7 +709,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * replace any of the jointree structure. (This'd be a lot cleaner if we
 	 * could use query_tree_mutator.)  We have to use PHVs in the targetList,
 	 * returningList, and havingQual, since those are certainly above any
-	 * outer join.  resolvenew_in_jointree tracks its location in the jointree
+	 * outer join.	resolvenew_in_jointree tracks its location in the jointree
 	 * and uses PHVs or not appropriately.
 	 */
 	parse->targetList = (List *)
@@ -730,11 +730,11 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 				   subtlist_with_phvs, CMD_SELECT, 0);
 
 	/*
-	 * Replace references in the translated_vars lists of appendrels.
-	 * When pulling up an appendrel member, we do not need PHVs in the list
-	 * of the parent appendrel --- there isn't any outer join between.
-	 * Elsewhere, use PHVs for safety.  (This analysis could be made tighter
-	 * but it seems unlikely to be worth much trouble.)
+	 * Replace references in the translated_vars lists of appendrels. When
+	 * pulling up an appendrel member, we do not need PHVs in the list of the
+	 * parent appendrel --- there isn't any outer join between. Elsewhere, use
+	 * PHVs for safety.  (This analysis could be made tighter but it seems
+	 * unlikely to be worth much trouble.)
 	 */
 	foreach(lc, root->append_rel_list)
 	{
@@ -753,9 +753,9 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 *
 	 * You might think that we could avoid using PHVs for alias vars of joins
 	 * below lowest_outer_join, but that doesn't work because the alias vars
-	 * could be referenced above that join; we need the PHVs to be present
-	 * in such references after the alias vars get flattened.  (It might be
-	 * worth trying to be smarter here, someday.)
+	 * could be referenced above that join; we need the PHVs to be present in
+	 * such references after the alias vars get flattened.	(It might be worth
+	 * trying to be smarter here, someday.)
 	 */
 	foreach(lc, parse->rtable)
 	{
@@ -789,9 +789,9 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * will be adjusted, so having created them with the subquery's varno is
 	 * correct.
 	 *
-	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed.
-	 * We already checked that this won't require introducing multiple
-	 * subrelids into the single-slot AppendRelInfo structs.
+	 * Likewise, relids appearing in AppendRelInfo nodes have to be fixed. We
+	 * already checked that this won't require introducing multiple subrelids
+	 * into the single-slot AppendRelInfo structs.
 	 */
 	if (parse->hasSubLinks || root->glob->lastPHId != 0 ||
 		root->append_rel_list)
@@ -822,9 +822,10 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * Miscellaneous housekeeping.
 	 */
 	parse->hasSubLinks |= subquery->hasSubLinks;
+
 	/*
-	 * subquery won't be pulled up if it hasAggs or hasWindowFuncs, so no
-	 * work needed on those flags
+	 * subquery won't be pulled up if it hasAggs or hasWindowFuncs, so no work
+	 * needed on those flags
 	 */
 
 	/*
@@ -859,10 +860,10 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	/*
 	 * Append child RTEs to parent rtable.
 	 *
-	 * Upper-level vars in subquery are now one level closer to their
-	 * parent than before.	We don't have to worry about offsetting
-	 * varnos, though, because any such vars must refer to stuff above the
-	 * level of the query we are pulling into.
+	 * Upper-level vars in subquery are now one level closer to their parent
+	 * than before.  We don't have to worry about offsetting varnos, though,
+	 * because any such vars must refer to stuff above the level of the query
+	 * we are pulling into.
 	 */
 	rtable = copyObject(subquery->rtable);
 	IncrementVarSublevelsUp_rtable(rtable, -1, 1);
@@ -1049,11 +1050,11 @@ is_simple_subquery(Query *subquery)
 	 * query_planner() will correctly generate a Result plan for a jointree
 	 * that's totally empty, but I don't think the right things happen if an
 	 * empty FromExpr appears lower down in a jointree.  It would pose a
-	 * problem for the PlaceHolderVar mechanism too, since we'd have no
-	 * way to identify where to evaluate a PHV coming out of the subquery.
-	 * Not worth working hard on this, just to collapse SubqueryScan/Result
-	 * into Result; especially since the SubqueryScan can often be optimized
-	 * away by setrefs.c anyway.
+	 * problem for the PlaceHolderVar mechanism too, since we'd have no way to
+	 * identify where to evaluate a PHV coming out of the subquery. Not worth
+	 * working hard on this, just to collapse SubqueryScan/Result into Result;
+	 * especially since the SubqueryScan can often be optimized away by
+	 * setrefs.c anyway.
 	 */
 	if (subquery->jointree->fromlist == NIL)
 		return false;
@@ -1167,8 +1168,8 @@ insert_targetlist_placeholders(PlannerInfo *root, List *tlist,
 		}
 
 		/*
-		 * Simple Vars always escape being wrapped.  This is common enough
-		 * to deserve a fast path even if we aren't doing wrap_non_vars.
+		 * Simple Vars always escape being wrapped.  This is common enough to
+		 * deserve a fast path even if we aren't doing wrap_non_vars.
 		 */
 		if (tle->expr && IsA(tle->expr, Var) &&
 			((Var *) tle->expr)->varlevelsup == 0)
@@ -1180,8 +1181,8 @@ insert_targetlist_placeholders(PlannerInfo *root, List *tlist,
 		if (!wrap_non_vars)
 		{
 			/*
-			 * If it contains a Var of current level, and does not contain
-			 * any non-strict constructs, then it's certainly nullable and we
+			 * If it contains a Var of current level, and does not contain any
+			 * non-strict constructs, then it's certainly nullable and we
 			 * don't need to insert a PlaceHolderVar.  (Note: in future maybe
 			 * we should insert PlaceHolderVars anyway, when a tlist item is
 			 * expensive to evaluate?
@@ -1248,7 +1249,7 @@ is_safe_append_member(Query *subquery)
  * but there's no other way...
  *
  * If we are above lowest_outer_join then use subtlist_with_phvs; at or
- * below it, use subtlist.  (When no outer joins are in the picture,
+ * below it, use subtlist.	(When no outer joins are in the picture,
  * these will be the same list.)
  */
 static void
@@ -1328,7 +1329,7 @@ resolvenew_in_jointree(Node *jtnode, int varno, RangeTblEntry *rte,
  *		SELECT ... FROM a LEFT JOIN b ON (a.x = b.y) WHERE b.y IS NULL;
  * If the join clause is strict for b.y, then only null-extended rows could
  * pass the upper WHERE, and we can conclude that what the query is really
- * specifying is an anti-semijoin.  We change the join type from JOIN_LEFT
+ * specifying is an anti-semijoin.	We change the join type from JOIN_LEFT
  * to JOIN_ANTI.  The IS NULL clause then becomes redundant, and must be
  * removed to prevent bogus selectivity calculations, but we leave it to
  * distribute_qual_to_rels to get rid of such clauses.
@@ -1533,6 +1534,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 				break;
 			case JOIN_SEMI:
 			case JOIN_ANTI:
+
 				/*
 				 * These could only have been introduced by pull_up_sublinks,
 				 * so there's no way that upper quals could refer to their
@@ -1565,14 +1567,14 @@ reduce_outer_joins_pass2(Node *jtnode,
 		}
 
 		/*
-		 * See if we can reduce JOIN_LEFT to JOIN_ANTI.  This is the case
-		 * if the join's own quals are strict for any var that was forced
-		 * null by higher qual levels.  NOTE: there are other ways that we
-		 * could detect an anti-join, in particular if we were to check
-		 * whether Vars coming from the RHS must be non-null because of
-		 * table constraints.  That seems complicated and expensive though
-		 * (in particular, one would have to be wary of lower outer joins).
-		 * For the moment this seems sufficient.
+		 * See if we can reduce JOIN_LEFT to JOIN_ANTI.  This is the case if
+		 * the join's own quals are strict for any var that was forced null by
+		 * higher qual levels.	NOTE: there are other ways that we could
+		 * detect an anti-join, in particular if we were to check whether Vars
+		 * coming from the RHS must be non-null because of table constraints.
+		 * That seems complicated and expensive though (in particular, one
+		 * would have to be wary of lower outer joins). For the moment this
+		 * seems sufficient.
 		 */
 		if (jointype == JOIN_LEFT)
 		{
@@ -1582,8 +1584,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 			computed_local_nonnullable_vars = true;
 
 			/*
-			 * It's not sufficient to check whether local_nonnullable_vars
-			 * and forced_null_vars overlap: we need to know if the overlap
+			 * It's not sufficient to check whether local_nonnullable_vars and
+			 * forced_null_vars overlap: we need to know if the overlap
 			 * includes any RHS variables.
 			 */
 			overlap = list_intersection(local_nonnullable_vars,
@@ -1621,11 +1623,11 @@ reduce_outer_joins_pass2(Node *jtnode,
 			 * side, because an outer join never eliminates any rows from its
 			 * non-nullable side.  Also, there is no point in passing upper
 			 * constraints into the nullable side, since if there were any
-			 * we'd have been able to reduce the join.  (In the case of
-			 * upper forced-null constraints, we *must not* pass them into
-			 * the nullable side --- they either applied here, or not.)
-			 * The upshot is that we pass either the local or the upper
-			 * constraints, never both, to the children of an outer join.
+			 * we'd have been able to reduce the join.  (In the case of upper
+			 * forced-null constraints, we *must not* pass them into the
+			 * nullable side --- they either applied here, or not.) The upshot
+			 * is that we pass either the local or the upper constraints,
+			 * never both, to the children of an outer join.
 			 *
 			 * At a FULL join we just punt and pass nothing down --- is it
 			 * possible to be smarter?
@@ -1640,7 +1642,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 				{
 					/* OK to merge upper and local constraints */
 					local_nonnullable_rels = bms_add_members(local_nonnullable_rels,
-															 nonnullable_rels);
+														   nonnullable_rels);
 					local_nonnullable_vars = list_concat(local_nonnullable_vars,
 														 nonnullable_vars);
 					local_forced_null_vars = list_concat(local_forced_null_vars,
@@ -1663,7 +1665,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 					pass_nonnullable_vars = local_nonnullable_vars;
 					pass_forced_null_vars = local_forced_null_vars;
 				}
-				else if (jointype != JOIN_FULL)		/* ie, LEFT/SEMI/ANTI */
+				else if (jointype != JOIN_FULL) /* ie, LEFT/SEMI/ANTI */
 				{
 					/* can't pass local constraints to non-nullable side */
 					pass_nonnullable_rels = nonnullable_rels;
@@ -1722,7 +1724,7 @@ reduce_outer_joins_pass2(Node *jtnode,
  * top query could (yet) contain such a reference.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * nodes in-place.  This should be OK since the tree was copied by ResolveNew
+ * nodes in-place.	This should be OK since the tree was copied by ResolveNew
  * earlier.  Avoid scribbling on the original values of the bitmapsets, though,
  * because expression_tree_mutator doesn't copy those.
  */

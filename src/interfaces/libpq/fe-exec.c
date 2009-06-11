@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.202 2009/05/27 14:16:51 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.203 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
 static int PQsendDescribe(PGconn *conn, char desc_type,
 			   const char *desc_target);
-static int check_field_number(const PGresult *res, int field_num);
+static int	check_field_number(const PGresult *res, int field_num);
 
 
 /* ----------------
@@ -218,7 +218,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 int
 PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
 {
-	int i;
+	int			i;
 
 	/* If attrs already exist, they cannot be overwritten. */
 	if (!res || res->numAttributes > 0)
@@ -262,29 +262,29 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
  * Returns a deep copy of the provided 'src' PGresult, which cannot be NULL.
  * The 'flags' argument controls which portions of the result will or will
  * NOT be copied.  The created result is always put into the
- * PGRES_TUPLES_OK status.  The source result error message is not copied,
+ * PGRES_TUPLES_OK status.	The source result error message is not copied,
  * although cmdStatus is.
  *
- * To set custom attributes, use PQsetResultAttrs.  That function requires
+ * To set custom attributes, use PQsetResultAttrs.	That function requires
  * that there are no attrs contained in the result, so to use that
  * function you cannot use the PG_COPYRES_ATTRS or PG_COPYRES_TUPLES
  * options with this function.
  *
  * Options:
- *   PG_COPYRES_ATTRS - Copy the source result's attributes
+ *	 PG_COPYRES_ATTRS - Copy the source result's attributes
  *
- *   PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
- *   copying the attrs, seeeing how the attrs are needed by the tuples.
+ *	 PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
+ *	 copying the attrs, seeeing how the attrs are needed by the tuples.
  *
- *   PG_COPYRES_EVENTS - Copy the source result's events.
+ *	 PG_COPYRES_EVENTS - Copy the source result's events.
  *
- *   PG_COPYRES_NOTICEHOOKS - Copy the source result's notice hooks.
+ *	 PG_COPYRES_NOTICEHOOKS - Copy the source result's notice hooks.
  */
 PGresult *
 PQcopyResult(const PGresult *src, int flags)
 {
-	PGresult *dest;
-	int i;
+	PGresult   *dest;
+	int			i;
 
 	if (!src)
 		return NULL;
@@ -293,7 +293,7 @@ PQcopyResult(const PGresult *src, int flags)
 	if (!dest)
 		return NULL;
 
-	/* Always copy these over.  Is cmdStatus really useful here? */
+	/* Always copy these over.	Is cmdStatus really useful here? */
 	dest->client_encoding = src->client_encoding;
 	strcpy(dest->cmdStatus, src->cmdStatus);
 
@@ -310,7 +310,8 @@ PQcopyResult(const PGresult *src, int flags)
 	/* Wants to copy tuples? */
 	if (flags & PG_COPYRES_TUPLES)
 	{
-		int tup, field;
+		int			tup,
+					field;
 
 		for (tup = 0; tup < src->ntups; tup++)
 		{
@@ -373,8 +374,8 @@ PQcopyResult(const PGresult *src, int flags)
 static PGEvent *
 dupEvents(PGEvent *events, int count)
 {
-	PGEvent *newEvents;
-	int i;
+	PGEvent    *newEvents;
+	int			i;
 
 	if (!events || count <= 0)
 		return NULL;
@@ -424,7 +425,7 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	/* need to grow the tuple table? */
 	if (res->ntups >= res->tupArrSize)
 	{
-		int n = res->tupArrSize ? res->tupArrSize * 2 : 128;
+		int			n = res->tupArrSize ? res->tupArrSize * 2 : 128;
 		PGresAttValue **tups;
 
 		if (res->tuples)
@@ -445,7 +446,7 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	if (tup_num == res->ntups && !res->tuples[tup_num])
 	{
 		PGresAttValue *tup;
-		int i;
+		int			i;
 
 		tup = (PGresAttValue *)
 			pqResultAlloc(res, res->numAttributes * sizeof(PGresAttValue),
@@ -661,7 +662,7 @@ void
 PQclear(PGresult *res)
 {
 	PGresult_data *block;
-	int i;
+	int			i;
 
 	if (!res)
 		return;
@@ -1600,7 +1601,7 @@ PQgetResult(PGconn *conn)
 
 	if (res)
 	{
-		int i;
+		int			i;
 
 		for (i = 0; i < res->nEvents; i++)
 		{
@@ -3115,7 +3116,7 @@ PQescapeByteaInternal(PGconn *conn,
 	{
 		if (*vp < 0x20 || *vp > 0x7e)
 		{
-			int		val = *vp;
+			int			val = *vp;
 
 			if (!std_strings)
 				*rp++ = '\\';
@@ -3219,11 +3220,11 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 						(ISOCTDIGIT(strtext[i + 1])) &&
 						(ISOCTDIGIT(strtext[i + 2])))
 					{
-						int			byte;
+						int byte;
 
 						byte = OCTVAL(strtext[i++]);
-						byte = (byte << 3) + OCTVAL(strtext[i++]);
-						byte = (byte << 3) + OCTVAL(strtext[i++]);
+						byte = (byte <<3) +OCTVAL(strtext[i++]);
+						byte = (byte <<3) +OCTVAL(strtext[i++]);
 						buffer[j++] = byte;
 					}
 				}

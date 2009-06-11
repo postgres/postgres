@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.36 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.37 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,9 @@ typedef struct GISTSTATE
 
 typedef struct ItemResult
 {
-	ItemPointerData		heapPtr;
-	OffsetNumber		pageOffset; /* offset in index page */
-	bool				recheck;
+	ItemPointerData heapPtr;
+	OffsetNumber pageOffset;	/* offset in index page */
+	bool		recheck;
 } ItemResult;
 
 /*
@@ -73,15 +73,15 @@ typedef struct GISTScanOpaqueData
 {
 	GISTSearchStack *stack;
 	GISTSearchStack *markstk;
-	bool        qual_ok;        /* false if qual can never be satisfied */
+	bool		qual_ok;		/* false if qual can never be satisfied */
 	GISTSTATE  *giststate;
 	MemoryContext tempCxt;
 	Buffer		curbuf;
 	ItemPointerData curpos;
 
-	ItemResult		pageData[BLCKSZ/sizeof(IndexTupleData)];
-	OffsetNumber	nPageData;
-	OffsetNumber	curPageData;
+	ItemResult	pageData[BLCKSZ / sizeof(IndexTupleData)];
+	OffsetNumber nPageData;
+	OffsetNumber curPageData;
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
@@ -283,7 +283,7 @@ extern bool gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber tode
 extern void gistcheckpage(Relation rel, Buffer buf);
 extern Buffer gistNewBuffer(Relation r);
 extern void gistfillbuffer(Page page, IndexTuple *itup, int len,
-						   OffsetNumber off);
+			   OffsetNumber off);
 extern IndexTuple *gistextractpage(Page page, int *len /* out */ );
 extern IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,

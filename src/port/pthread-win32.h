@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/port/pthread-win32.h,v 1.5 2008/05/21 14:20:48 mha Exp $ 
+ * $PostgreSQL: pgsql/src/port/pthread-win32.h,v 1.6 2009/06/11 14:49:15 momjian Exp $
  */
 #ifndef __PTHREAD_H
 #define __PTHREAD_H

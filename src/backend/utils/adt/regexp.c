@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.81 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.82 2009/06/11 14:49:04 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -40,7 +40,7 @@
 
 
 /* GUC-settable flavor parameter */
-int	regex_flavor = REG_ADVANCED;
+int			regex_flavor = REG_ADVANCED;
 
 
 /* all the options of interest for regex functions */
@@ -582,10 +582,10 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * It is possible to have a match to the whole pattern but no match
-	 * for a subexpression; for example 'foo(bar)?' is considered to match
-	 * 'foo' but there is no subexpression match.  So this extra test for
-	 * match failure is not redundant.
+	 * It is possible to have a match to the whole pattern but no match for a
+	 * subexpression; for example 'foo(bar)?' is considered to match 'foo' but
+	 * there is no subexpression match.  So this extra test for match failure
+	 * is not redundant.
 	 */
 	if (so < 0 || eo < 0)
 		PG_RETURN_NULL();

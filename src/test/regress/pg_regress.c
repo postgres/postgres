@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.62 2009/04/23 00:23:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ psql_command(const char *database, const char *query,...)
 __attribute__((format(printf, 2, 3)));
 
 #ifdef WIN32
-typedef		BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 
 /* Windows API define missing from MingW headers */
 #define DISABLE_MAX_PRIVILEGE	0x1
@@ -285,7 +285,7 @@ stop_postmaster(void)
 		{
 			fprintf(stderr, _("\n%s: could not stop postmaster: exit code was %d\n"),
 					progname, r);
-			exit(2);   /* not exit_nicely(), that would be recursive */
+			exit(2);			/* not exit_nicely(), that would be recursive */
 		}
 
 		postmaster_running = false;
@@ -407,7 +407,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 {
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];
-	struct stat	st;
+	struct stat st;
 	int			ret;
 	char	  **name;
 	char	  **names;
@@ -420,8 +420,8 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 	if (ret != 0 || !S_ISDIR(st.st_mode))
 	{
 		/*
-		 * No warning, to avoid noise in tests that do not have
-		 * these directories; for example, ecpg, contrib and src/pl.
+		 * No warning, to avoid noise in tests that do not have these
+		 * directories; for example, ecpg, contrib and src/pl.
 		 */
 		return;
 	}
@@ -434,11 +434,12 @@ convert_sourcefiles_in(char *source_subdir, char *dest_subdir, char *suffix)
 	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
 
 #ifdef WIN32
+
 	/*
 	 * On Windows only, clean out the test tablespace dir, or create it if it
-	 * doesn't exist.  On other platforms we expect the Makefile to take
-	 * care of that.  (We don't migrate that functionality in here because
-	 * it'd be harder to cope with platform-specific issues such as SELinux.)
+	 * doesn't exist.  On other platforms we expect the Makefile to take care
+	 * of that.  (We don't migrate that functionality in here because it'd be
+	 * harder to cope with platform-specific issues such as SELinux.)
 	 *
 	 * XXX it would be better if pg_regress.c had nothing at all to do with
 	 * testtablespace, and this were handled by a .BAT file or similar on
@@ -704,10 +705,10 @@ initialize_environment(void)
 	}
 
 	/*
-	 * Set translation-related settings to English; otherwise psql
-	 * will produce translated messages and produce diffs.  (XXX If we
-	 * ever support translation of pg_regress, this needs to be moved
-	 * elsewhere, where psql is actually called.)
+	 * Set translation-related settings to English; otherwise psql will
+	 * produce translated messages and produce diffs.  (XXX If we ever support
+	 * translation of pg_regress, this needs to be moved elsewhere, where psql
+	 * is actually called.)
 	 */
 	unsetenv("LANGUAGE");
 	unsetenv("LC_ALL");
@@ -728,14 +729,14 @@ initialize_environment(void)
 	putenv("PGDATESTYLE=Postgres, MDY");
 
 	/*
-	 * Likewise set intervalstyle to ensure consistent results.  This is a
-	 * bit more painful because we must use PGOPTIONS, and we want to preserve
-	 * the user's ability to set other variables through that.
+	 * Likewise set intervalstyle to ensure consistent results.  This is a bit
+	 * more painful because we must use PGOPTIONS, and we want to preserve the
+	 * user's ability to set other variables through that.
 	 */
 	{
 		const char *my_pgoptions = "-c intervalstyle=postgres_verbose";
 		const char *old_pgoptions = getenv("PGOPTIONS");
-		char   *new_pgoptions;
+		char	   *new_pgoptions;
 
 		if (!old_pgoptions)
 			old_pgoptions = "";
@@ -1021,16 +1022,16 @@ spawn_process(const char *cmdline)
 	sprintf(cmdline2, "cmd /c %s", cmdline);
 
 	if (!CreateProcessAsUser(restrictedToken,
-						NULL,
-						cmdline2,
-						NULL,
-						NULL,
-						TRUE,
-						CREATE_SUSPENDED,
-						NULL,
-						NULL,
-						&si,
-						&pi))
+							 NULL,
+							 cmdline2,
+							 NULL,
+							 NULL,
+							 TRUE,
+							 CREATE_SUSPENDED,
+							 NULL,
+							 NULL,
+							 &si,
+							 &pi))
 	{
 		fprintf(stderr, _("could not start process for \"%s\": %lu\n"),
 				cmdline2, GetLastError());
@@ -1043,7 +1044,7 @@ spawn_process(const char *cmdline)
 
 	free(cmdline2);
 
-    ResumeThread(pi.hThread);
+	ResumeThread(pi.hThread);
 	CloseHandle(pi.hThread);
 	return pi.hProcess;
 #endif
@@ -1328,7 +1329,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-wait_for_tests(PID_TYPE *pids, int *statuses, char **names, int num_tests)
+wait_for_tests(PID_TYPE * pids, int *statuses, char **names, int num_tests)
 {
 	int			tests_left;
 	int			i;
@@ -1346,6 +1347,7 @@ wait_for_tests(PID_TYPE *pids, int *statuses, char **names, int num_tests)
 
 #ifndef WIN32
 		int			exit_status;
+
 		p = wait(&exit_status);
 
 		if (p == INVALID_PID)
@@ -1808,13 +1810,13 @@ create_role(const char *rolename, const _stringlist * granted_dbs)
 static char *
 make_absolute_path(const char *in)
 {
-	char *result;
+	char	   *result;
 
 	if (is_absolute_path(in))
 		result = strdup(in);
 	else
 	{
-		static char		cwdbuf[MAXPGPATH];
+		static char cwdbuf[MAXPGPATH];
 
 		if (!cwdbuf[0])
 		{
@@ -2013,10 +2015,11 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	}
 
 	if (temp_install && !port_specified_by_user)
+
 		/*
-		 * To reduce chances of interference with parallel
-		 * installations, use a port number starting in the private
-		 * range (49152-65535) calculated from the version number.
+		 * To reduce chances of interference with parallel installations, use
+		 * a port number starting in the private range (49152-65535)
+		 * calculated from the version number.
 		 */
 		port = 0xC000 | (PG_VERSION_NUM & 0x3FFF);
 
@@ -2095,12 +2098,12 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		}
 
 		/*
-		 * Adjust the default postgresql.conf as needed for regression testing.
-		 * The user can specify a file to be appended; in any case we set
-		 * max_prepared_transactions to enable testing of prepared xacts.
+		 * Adjust the default postgresql.conf as needed for regression
+		 * testing. The user can specify a file to be appended; in any case we
+		 * set max_prepared_transactions to enable testing of prepared xacts.
 		 * (Note: to reduce the probability of unexpected shmmax failures,
-		 * don't set max_prepared_transactions any higher than actually
-		 * needed by the prepared_xacts regression test.)
+		 * don't set max_prepared_transactions any higher than actually needed
+		 * by the prepared_xacts regression test.)
 		 */
 		snprintf(buf, sizeof(buf), "%s/data/postgresql.conf", temp_install);
 		pg_conf = fopen(buf, "a");
@@ -2152,7 +2155,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 					exit_nicely(2);
 				}
 
-				fprintf(stderr, _("port %d apparently in use, trying %d\n"), port, port+1);
+				fprintf(stderr, _("port %d apparently in use, trying %d\n"), port, port + 1);
 				port++;
 				sprintf(s, "%d", port);
 				doputenv("PGPORT", s);

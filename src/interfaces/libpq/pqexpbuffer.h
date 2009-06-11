@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.h,v 1.22 2009/01/01 17:24:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.h,v 1.23 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
  *				more space.  We must always have maxlen > len.
  *
  * An exception occurs if we failed to allocate enough memory for the string
- * buffer.  In that case data points to a statically allocated empty string,
+ * buffer.	In that case data points to a statically allocated empty string,
  * and len = maxlen = 0.
  *-------------------------
  */
@@ -56,7 +56,7 @@ typedef PQExpBufferData *PQExpBuffer;
  * are no-ops.
  *------------------------
  */
-#define PQExpBufferBroken(str)  \
+#define PQExpBufferBroken(str)	\
 	((str) == NULL || (str)->maxlen == 0)
 
 /*------------------------
@@ -126,7 +126,7 @@ extern void resetPQExpBuffer(PQExpBuffer str);
  * Make sure there is enough space for 'needed' more bytes in the buffer
  * ('needed' does not include the terminating null).
  *
- * Returns 1 if OK, 0 if failed to enlarge buffer.  (In the latter case
+ * Returns 1 if OK, 0 if failed to enlarge buffer.	(In the latter case
  * the buffer is left in "broken" state.)
  */
 extern int	enlargePQExpBuffer(PQExpBuffer str, size_t needed);

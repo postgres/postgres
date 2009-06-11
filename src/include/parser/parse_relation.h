@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.63 2009/01/22 20:16:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.64 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,8 @@ extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 int location,
 					 int *sublevels_up);
 extern CommonTableExpr *scanNameSpaceForCTE(ParseState *pstate,
-											const char *refname,
-											Index *ctelevelsup);
+					const char *refname,
+					Index *ctelevelsup);
 extern void checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 						List *namespace2);
 extern int RTERangeTablePosn(ParseState *pstate,
@@ -35,7 +35,7 @@ extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 					   int varno,
 					   int sublevels_up);
 extern CommonTableExpr *GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte,
-									 int rtelevelsup);
+			 int rtelevelsup);
 extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname, int location);
 extern Node *colNameToVar(ParseState *pstate, char *colname, bool localonly,
@@ -47,9 +47,9 @@ extern Node *qualifiedNameToVar(ParseState *pstate,
 				   bool implicitRTEOK,
 				   int location);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,
-								 RangeTblEntry *rte);
+					 RangeTblEntry *rte);
 extern Relation parserOpenTable(ParseState *pstate, const RangeVar *relation,
-								int lockmode);
+				int lockmode);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,

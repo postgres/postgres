@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.16 2009/01/22 20:16:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.17 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ void
 RemoveTSParsers(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell		*cell;
+	ListCell   *cell;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -284,14 +284,14 @@ RemoveTSParsers(DropStmt *drop)
 
 	/*
 	 * First we identify all the objects, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the objects depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the objects depends on another.
 	 */
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
 	{
-		List		*names = (List *) lfirst(cell);
+		List	   *names = (List *) lfirst(cell);
 		Oid			prsOid;
 		ObjectAddress object;
 
@@ -309,8 +309,8 @@ RemoveTSParsers(DropStmt *drop)
 			else
 			{
 				ereport(NOTICE,
-					(errmsg("text search parser \"%s\" does not exist, skipping",
-							NameListToString(names))));
+				(errmsg("text search parser \"%s\" does not exist, skipping",
+						NameListToString(names))));
 			}
 			continue;
 		}
@@ -636,18 +636,18 @@ void
 RemoveTSDictionaries(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell		*cell;
+	ListCell   *cell;
 
 	/*
 	 * First we identify all the objects, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the objects depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the objects depends on another.
 	 */
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
 	{
-		List		*names = (List *) lfirst(cell);
+		List	   *names = (List *) lfirst(cell);
 		Oid			dictOid;
 		ObjectAddress object;
 		HeapTuple	tup;
@@ -661,14 +661,14 @@ RemoveTSDictionaries(DropStmt *drop)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("text search dictionary \"%s\" does not exist",
-								NameListToString(names))));
+					   errmsg("text search dictionary \"%s\" does not exist",
+							  NameListToString(names))));
 			}
 			else
 			{
 				ereport(NOTICE,
-				(errmsg("text search dictionary \"%s\" does not exist, skipping",
-						NameListToString(names))));
+						(errmsg("text search dictionary \"%s\" does not exist, skipping",
+								NameListToString(names))));
 			}
 			continue;
 		}
@@ -676,7 +676,7 @@ RemoveTSDictionaries(DropStmt *drop)
 		tup = SearchSysCache(TSDICTOID,
 							 ObjectIdGetDatum(dictOid),
 							 0, 0, 0);
-		if (!HeapTupleIsValid(tup)) /* should not happen */
+		if (!HeapTupleIsValid(tup))		/* should not happen */
 			elog(ERROR, "cache lookup failed for text search dictionary %u",
 				 dictOid);
 
@@ -824,7 +824,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	repl_repl[Anum_pg_ts_dict_dictinitoption - 1] = true;
 
 	newtup = heap_modify_tuple(tup, RelationGetDescr(rel),
-							  repl_val, repl_null, repl_repl);
+							   repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &newtup->t_self, newtup);
 
@@ -1127,7 +1127,7 @@ void
 RemoveTSTemplates(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell		*cell;
+	ListCell   *cell;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -1136,14 +1136,14 @@ RemoveTSTemplates(DropStmt *drop)
 
 	/*
 	 * First we identify all the objects, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the objects depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the objects depends on another.
 	 */
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
 	{
-		List		*names = (List *) lfirst(cell);
+		List	   *names = (List *) lfirst(cell);
 		Oid			tmplOid;
 		ObjectAddress object;
 
@@ -1534,18 +1534,18 @@ void
 RemoveTSConfigurations(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell		*cell;
+	ListCell   *cell;
 
 	/*
 	 * First we identify all the objects, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the objects depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the objects depends on another.
 	 */
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
 	{
-		List		*names = (List *) lfirst(cell);
+		List	   *names = (List *) lfirst(cell);
 		Oid			cfgOid;
 		Oid			namespaceId;
 		ObjectAddress object;
@@ -1559,8 +1559,8 @@ RemoveTSConfigurations(DropStmt *drop)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("text search configuration \"%s\" does not exist",
-								NameListToString(names))));
+					errmsg("text search configuration \"%s\" does not exist",
+						   NameListToString(names))));
 			}
 			else
 			{
@@ -1923,8 +1923,8 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 				repl_repl[Anum_pg_ts_config_map_mapdict - 1] = true;
 
 				newtup = heap_modify_tuple(maptup,
-										  RelationGetDescr(relMap),
-										  repl_val, repl_null, repl_repl);
+										   RelationGetDescr(relMap),
+										   repl_val, repl_null, repl_repl);
 				simple_heap_update(relMap, &newtup->t_self, newtup);
 
 				CatalogUpdateIndexes(relMap, newtup);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.342 2009/06/02 06:18:06 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.343 2009/06/11 14:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
 bool		fullPageWrites = true;
 bool		log_checkpoints = false;
-int 		sync_method = DEFAULT_SYNC_METHOD;
+int			sync_method = DEFAULT_SYNC_METHOD;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -122,7 +122,7 @@ CheckpointStatsData CheckpointStats;
 TimeLineID	ThisTimeLineID = 0;
 
 /*
- * Are we doing recovery from XLOG? 
+ * Are we doing recovery from XLOG?
  *
  * This is only ever true in the startup process, even if the system is still
  * in recovery. Prior to 8.4, all activity during recovery were carried out
@@ -336,9 +336,8 @@ typedef struct XLogCtlData
 	bool		SharedRecoveryInProgress;
 
 	/*
-	 * During recovery, we keep a copy of the latest checkpoint record
-	 * here.  Used by the background writer when it wants to create
-	 * a restartpoint.
+	 * During recovery, we keep a copy of the latest checkpoint record here.
+	 * Used by the background writer when it wants to create a restartpoint.
 	 *
 	 * Protected by info_lck.
 	 */
@@ -422,8 +421,9 @@ static XLogRecPtr ReadRecPtr;	/* start of last record read */
 static XLogRecPtr EndRecPtr;	/* end+1 of last record read */
 static XLogRecord *nextRecord = NULL;
 static TimeLineID lastPageTLI = 0;
-static XLogRecPtr minRecoveryPoint; /* local copy of ControlFile->minRecoveryPoint */
-static bool	updateMinRecoveryPoint = true;
+static XLogRecPtr minRecoveryPoint;		/* local copy of
+										 * ControlFile->minRecoveryPoint */
+static bool updateMinRecoveryPoint = true;
 
 static bool InRedo = false;
 
@@ -432,6 +432,7 @@ static bool InRedo = false;
  */
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
+
 /*
  * Flag set when executing a restore command, to tell SIGTERM signal handler
  * that it's safe to just proc_exit.
@@ -482,6 +483,7 @@ static void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 static void WriteControlFile(void);
 static void ReadControlFile(void);
 static char *str_time(pg_time_t tnow);
+
 #ifdef WAL_DEBUG
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
@@ -490,7 +492,7 @@ static void pg_start_backup_callback(int code, Datum arg);
 static bool read_backup_label(XLogRecPtr *checkPointLoc,
 				  XLogRecPtr *minRecoveryLoc);
 static void rm_redo_error_callback(void *arg);
-static int get_sync_bit(int method);
+static int	get_sync_bit(int method);
 
 
 /*
@@ -1260,9 +1262,9 @@ XLogArchiveIsBusy(const char *xlog)
 		return false;
 
 	/*
-	 * Check to see if the WAL file has been removed by checkpoint,
-	 * which implies it has already been archived, and explains why we
-	 * can't see a status file for it.
+	 * Check to see if the WAL file has been removed by checkpoint, which
+	 * implies it has already been archived, and explains why we can't see a
+	 * status file for it.
 	 */
 	snprintf(archiveStatusPath, MAXPGPATH, XLOGDIR "/%s", xlog);
 	if (stat(archiveStatusPath, &stat_buf) != 0 &&
@@ -1775,8 +1777,8 @@ XLogSetAsyncCommitLSN(XLogRecPtr asyncCommitLSN)
  * Advance minRecoveryPoint in control file.
  *
  * If we crash during recovery, we must reach this point again before the
- * database is consistent. 
- * 
+ * database is consistent.
+ *
  * If 'force' is true, 'lsn' argument is ignored. Otherwise, minRecoveryPoint
  * is is only updated if it's not already greater than or equal to 'lsn'.
  */
@@ -1802,7 +1804,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
-		XLogRecPtr newMinRecoveryPoint;
+		XLogRecPtr	newMinRecoveryPoint;
 
 		/*
 		 * To avoid having to update the control file too often, we update it
@@ -2567,7 +2569,7 @@ XLogFileClose(void)
 
 	/*
 	 * WAL segment files will not be re-read in normal operation, so we advise
-	 * the OS to release any cached pages.  But do not do so if WAL archiving
+	 * the OS to release any cached pages.	But do not do so if WAL archiving
 	 * is active, because archiver process could use the cache to read the WAL
 	 * segment.  Also, don't bother with it if we are using O_DIRECT, since
 	 * the kernel is presumably not caching in that case.
@@ -2663,19 +2665,19 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 
 	/*
 	 * Calculate the archive file cutoff point for use during log shipping
-	 * replication. All files earlier than this point can be deleted
-	 * from the archive, though there is no requirement to do so.
+	 * replication. All files earlier than this point can be deleted from the
+	 * archive, though there is no requirement to do so.
 	 *
 	 * We initialise this with the filename of an InvalidXLogRecPtr, which
-	 * will prevent the deletion of any WAL files from the archive
-	 * because of the alphabetic sorting property of WAL filenames.
+	 * will prevent the deletion of any WAL files from the archive because of
+	 * the alphabetic sorting property of WAL filenames.
 	 *
 	 * Once we have successfully located the redo pointer of the checkpoint
 	 * from which we start recovery we never request a file prior to the redo
-	 * pointer of the last restartpoint. When redo begins we know that we
-	 * have successfully located it, so there is no need for additional
-	 * status flags to signify the point when we can begin deleting WAL files
-	 * from the archive.
+	 * pointer of the last restartpoint. When redo begins we know that we have
+	 * successfully located it, so there is no need for additional status
+	 * flags to signify the point when we can begin deleting WAL files from
+	 * the archive.
 	 */
 	if (InRedo)
 	{
@@ -2821,9 +2823,9 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * On SIGTERM, assume we have received a fast shutdown request, and exit
 	 * cleanly. It's pure chance whether we receive the SIGTERM first, or the
 	 * child process. If we receive it first, the signal handler will call
-	 * proc_exit, otherwise we do it here. If we or the child process
-	 * received SIGTERM for any other reason than a fast shutdown request,
-	 * postmaster will perform an immediate shutdown when it sees us exiting
+	 * proc_exit, otherwise we do it here. If we or the child process received
+	 * SIGTERM for any other reason than a fast shutdown request, postmaster
+	 * will perform an immediate shutdown when it sees us exiting
 	 * unexpectedly.
 	 *
 	 * Per the Single Unix Spec, shells report exit status > 128 when a called
@@ -2871,19 +2873,19 @@ ExecuteRecoveryEndCommand(void)
 
 	/*
 	 * Calculate the archive file cutoff point for use during log shipping
-	 * replication. All files earlier than this point can be deleted
-	 * from the archive, though there is no requirement to do so.
+	 * replication. All files earlier than this point can be deleted from the
+	 * archive, though there is no requirement to do so.
 	 *
 	 * We initialise this with the filename of an InvalidXLogRecPtr, which
-	 * will prevent the deletion of any WAL files from the archive
-	 * because of the alphabetic sorting property of WAL filenames. 
+	 * will prevent the deletion of any WAL files from the archive because of
+	 * the alphabetic sorting property of WAL filenames.
 	 *
 	 * Once we have successfully located the redo pointer of the checkpoint
 	 * from which we start recovery we never request a file prior to the redo
-	 * pointer of the last restartpoint. When redo begins we know that we
-	 * have successfully located it, so there is no need for additional
-	 * status flags to signify the point when we can begin deleting WAL files
-	 * from the archive. 
+	 * pointer of the last restartpoint. When redo begins we know that we have
+	 * successfully located it, so there is no need for additional status
+	 * flags to signify the point when we can begin deleting WAL files from
+	 * the archive.
 	 */
 	if (InRedo)
 	{
@@ -2948,14 +2950,14 @@ ExecuteRecoveryEndCommand(void)
 	{
 		/*
 		 * If the failure was due to any sort of signal, it's best to punt and
-		 * abort recovery. See also detailed comments on signals in 
+		 * abort recovery. See also detailed comments on signals in
 		 * RestoreArchivedFile().
 		 */
 		signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
 
 		ereport(signaled ? FATAL : WARNING,
 				(errmsg("recovery_end_command \"%s\": return code %d",
-								xlogRecoveryEndCmd, rc)));
+						xlogRecoveryEndCmd, rc)));
 	}
 }
 
@@ -3101,12 +3103,12 @@ static void
 ValidateXLOGDirectoryStructure(void)
 {
 	char		path[MAXPGPATH];
-	struct stat	stat_buf;
+	struct stat stat_buf;
 
 	/* Check for pg_xlog; if it doesn't exist, error out */
 	if (stat(XLOGDIR, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
-		ereport(FATAL, 
+		ereport(FATAL,
 				(errmsg("required WAL directory \"%s\" does not exist",
 						XLOGDIR)));
 
@@ -3116,7 +3118,7 @@ ValidateXLOGDirectoryStructure(void)
 	{
 		/* Check for weird cases where it exists but isn't a directory */
 		if (!S_ISDIR(stat_buf.st_mode))
-			ereport(FATAL, 
+			ereport(FATAL,
 					(errmsg("required WAL directory \"%s\" does not exist",
 							path)));
 	}
@@ -3125,7 +3127,7 @@ ValidateXLOGDirectoryStructure(void)
 		ereport(LOG,
 				(errmsg("creating missing WAL directory \"%s\"", path)));
 		if (mkdir(path, 0700) < 0)
-			ereport(FATAL, 
+			ereport(FATAL,
 					(errmsg("could not create missing directory \"%s\": %m",
 							path)));
 	}
@@ -3187,7 +3189,7 @@ CleanupBackupHistory(void)
  * ignoring them as already applied, but that's not a huge drawback.
  *
  * If 'cleanup' is true, a cleanup lock is used when restoring blocks.
- * Otherwise, a normal exclusive lock is used.  At the moment, that's just
+ * Otherwise, a normal exclusive lock is used.	At the moment, that's just
  * pro forma, because there can't be any regular backends in the system
  * during recovery.  The 'cleanup' argument applies to all backup blocks
  * in the WAL record, that suffices for now.
@@ -4283,8 +4285,8 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized with PG_CONTROL_VERSION %d (0x%08x),"
-						   " but the server was compiled with PG_CONTROL_VERSION %d (0x%08x).",
-						   ControlFile->pg_control_version, ControlFile->pg_control_version,
+		 " but the server was compiled with PG_CONTROL_VERSION %d (0x%08x).",
+			ControlFile->pg_control_version, ControlFile->pg_control_version,
 						   PG_CONTROL_VERSION, PG_CONTROL_VERSION),
 				 errhint("This could be a problem of mismatched byte ordering.  It looks like you need to initdb.")));
 
@@ -4309,8 +4311,8 @@ ReadControlFile(void)
 
 	/*
 	 * Do compatibility checking immediately.  If the database isn't
-	 * compatible with the backend executable, we want to abort before we
-	 * can possibly do any damage.
+	 * compatible with the backend executable, we want to abort before we can
+	 * possibly do any damage.
 	 */
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
 		ereport(FATAL,
@@ -4402,14 +4404,14 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized without USE_FLOAT4_BYVAL"
-						   " but the server was compiled with USE_FLOAT4_BYVAL."),
+					  " but the server was compiled with USE_FLOAT4_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #else
 	if (ControlFile->float4ByVal != false)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with USE_FLOAT4_BYVAL"
-						   " but the server was compiled without USE_FLOAT4_BYVAL."),
+		errdetail("The database cluster was initialized with USE_FLOAT4_BYVAL"
+				  " but the server was compiled without USE_FLOAT4_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #endif
 
@@ -4418,14 +4420,14 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
 				 errdetail("The database cluster was initialized without USE_FLOAT8_BYVAL"
-						   " but the server was compiled with USE_FLOAT8_BYVAL."),
+					  " but the server was compiled with USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #else
 	if (ControlFile->float8ByVal != false)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with USE_FLOAT8_BYVAL"
-						   " but the server was compiled without USE_FLOAT8_BYVAL."),
+		errdetail("The database cluster was initialized with USE_FLOAT8_BYVAL"
+				  " but the server was compiled without USE_FLOAT8_BYVAL."),
 				 errhint("It looks like you need to recompile or initdb.")));
 #endif
 }
@@ -4848,9 +4850,9 @@ readRecoveryCommandFile(void)
 			 * does nothing if a recovery_target is not also set
 			 */
 			if (!parse_bool(tok2, &recoveryTargetInclusive))
-				  ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					  errmsg("parameter \"recovery_target_inclusive\" requires a Boolean value")));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("parameter \"recovery_target_inclusive\" requires a Boolean value")));
 			ereport(LOG,
 					(errmsg("recovery_target_inclusive = %s", tok2)));
 		}
@@ -5204,8 +5206,8 @@ StartupXLOG(void)
 
 	/*
 	 * Verify that pg_xlog and pg_xlog/archive_status exist.  In cases where
-	 * someone has performed a copy for PITR, these directories may have
-	 * been excluded and need to be re-created.
+	 * someone has performed a copy for PITR, these directories may have been
+	 * excluded and need to be re-created.
 	 */
 	ValidateXLOGDirectoryStructure();
 
@@ -5437,6 +5439,7 @@ StartupXLOG(void)
 			bool		recoveryApply = true;
 			bool		reachedMinRecoveryPoint = false;
 			ErrorContextCallback errcontext;
+
 			/* use volatile pointer to prevent code rearrangement */
 			volatile XLogCtlData *xlogctl = XLogCtl;
 
@@ -5454,7 +5457,7 @@ StartupXLOG(void)
 			else
 				ereport(LOG,
 						(errmsg("redo starts at %X/%X, consistency will be reached at %X/%X",
-						ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
+								ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
 						minRecoveryPoint.xlogid, minRecoveryPoint.xrecoff)));
 
 			/*
@@ -5512,17 +5515,17 @@ StartupXLOG(void)
 					proc_exit(1);
 
 				/*
-				 * Have we reached our safe starting point? If so, we can
-				 * tell postmaster that the database is consistent now.
+				 * Have we reached our safe starting point? If so, we can tell
+				 * postmaster that the database is consistent now.
 				 */
-				if (!reachedMinRecoveryPoint && 
-					 XLByteLE(minRecoveryPoint, EndRecPtr))
+				if (!reachedMinRecoveryPoint &&
+					XLByteLE(minRecoveryPoint, EndRecPtr))
 				{
 					reachedMinRecoveryPoint = true;
 					if (InArchiveRecovery)
 					{
 						ereport(LOG,
-								(errmsg("consistent recovery state reached")));
+							  (errmsg("consistent recovery state reached")));
 						if (IsUnderPostmaster)
 							SendPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT);
 					}
@@ -5554,9 +5557,8 @@ StartupXLOG(void)
 				}
 
 				/*
-				 * Update shared replayEndRecPtr before replaying this
-				 * record, so that XLogFlush will update minRecoveryPoint
-				 * correctly.
+				 * Update shared replayEndRecPtr before replaying this record,
+				 * so that XLogFlush will update minRecoveryPoint correctly.
 				 */
 				SpinLockAcquire(&xlogctl->info_lck);
 				xlogctl->replayEndRecPtr = EndRecPtr;
@@ -5819,9 +5821,9 @@ bool
 RecoveryInProgress(void)
 {
 	/*
-	 * We check shared state each time only until we leave recovery mode.
-	 * We can't re-enter recovery, so we rely on the local state variable
-	 * after that.
+	 * We check shared state each time only until we leave recovery mode. We
+	 * can't re-enter recovery, so we rely on the local state variable after
+	 * that.
 	 */
 	if (!LocalRecoveryInProgress)
 		return false;
@@ -6114,11 +6116,11 @@ ShutdownXLOG(int code, Datum arg)
 static void
 LogCheckpointStart(int flags, bool restartpoint)
 {
-	char *msg;
+	char	   *msg;
 
 	/*
-	 * XXX: This is hopelessly untranslatable. We could call gettext_noop
-	 * for the main message, but what about all the flags?
+	 * XXX: This is hopelessly untranslatable. We could call gettext_noop for
+	 * the main message, but what about all the flags?
 	 */
 	if (restartpoint)
 		msg = "restartpoint starting:%s%s%s%s%s%s";
@@ -6561,7 +6563,7 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 
 /*
  * This is used during WAL recovery to establish a point from which recovery
- * can roll forward without replaying the entire recovery log.  This function
+ * can roll forward without replaying the entire recovery log.	This function
  * is called each time a checkpoint record is read from XLOG. It is stored
  * in shared memory, so that it can be used as a restartpoint later on.
  */
@@ -6569,6 +6571,7 @@ static void
 RecoveryRestartPoint(const CheckPoint *checkPoint)
 {
 	int			rmid;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
@@ -6592,8 +6595,8 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	}
 
 	/*
-	 * Copy the checkpoint record to shared memory, so that bgwriter can
-	 * use it the next time it wants to perform a restartpoint.
+	 * Copy the checkpoint record to shared memory, so that bgwriter can use
+	 * it the next time it wants to perform a restartpoint.
 	 */
 	SpinLockAcquire(&xlogctl->info_lck);
 	XLogCtl->lastCheckPointRecPtr = ReadRecPtr;
@@ -6613,8 +6616,9 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 bool
 CreateRestartPoint(int flags)
 {
-	XLogRecPtr lastCheckPointRecPtr;
-	CheckPoint lastCheckPoint;
+	XLogRecPtr	lastCheckPointRecPtr;
+	CheckPoint	lastCheckPoint;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
@@ -6630,14 +6634,14 @@ CreateRestartPoint(int flags)
 	memcpy(&lastCheckPoint, &XLogCtl->lastCheckPoint, sizeof(CheckPoint));
 	SpinLockRelease(&xlogctl->info_lck);
 
-	/* 
+	/*
 	 * Check that we're still in recovery mode. It's ok if we exit recovery
 	 * mode after this check, the restart point is valid anyway.
 	 */
 	if (!RecoveryInProgress())
 	{
 		ereport(DEBUG2,
-				(errmsg("skipping restartpoint, recovery has already ended")));
+			  (errmsg("skipping restartpoint, recovery has already ended")));
 		LWLockRelease(CheckpointLock);
 		return false;
 	}
@@ -6653,16 +6657,17 @@ CreateRestartPoint(int flags)
 	 * possible in case of immediate shutdown, though.
 	 *
 	 * We don't explicitly advance minRecoveryPoint when we do create a
-	 * restartpoint. It's assumed that flushing the buffers will do that
-	 * as a side-effect.
+	 * restartpoint. It's assumed that flushing the buffers will do that as a
+	 * side-effect.
 	 */
 	if (XLogRecPtrIsInvalid(lastCheckPointRecPtr) ||
 		XLByteLE(lastCheckPoint.redo, ControlFile->checkPointCopy.redo))
 	{
-		XLogRecPtr InvalidXLogRecPtr = {0, 0};
+		XLogRecPtr	InvalidXLogRecPtr = {0, 0};
+
 		ereport(DEBUG2,
 				(errmsg("skipping restartpoint, already performed at %X/%X",
-						lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
+				  lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
 
 		UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
 		LWLockRelease(CheckpointLock);
@@ -6694,9 +6699,9 @@ CreateRestartPoint(int flags)
 	LWLockRelease(ControlFileLock);
 
 	/*
-	 * Currently, there is no need to truncate pg_subtrans during recovery.
-	 * If we did do that, we will need to have called StartupSUBTRANS()
-	 * already and then TruncateSUBTRANS() would go here.
+	 * Currently, there is no need to truncate pg_subtrans during recovery. If
+	 * we did do that, we will need to have called StartupSUBTRANS() already
+	 * and then TruncateSUBTRANS() would go here.
 	 */
 
 	/* All real work is done, but log before releasing lock. */
@@ -6705,12 +6710,12 @@ CreateRestartPoint(int flags)
 
 	ereport((log_checkpoints ? LOG : DEBUG2),
 			(errmsg("recovery restart point at %X/%X",
-					lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
+				  lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
 
 	if (recoveryLastXTime)
 		ereport((log_checkpoints ? LOG : DEBUG2),
-			(errmsg("last completed transaction was at log time %s",
-					timestamptz_to_str(recoveryLastXTime))));
+				(errmsg("last completed transaction was at log time %s",
+						timestamptz_to_str(recoveryLastXTime))));
 
 	LWLockRelease(CheckpointLock);
 	return true;
@@ -6828,9 +6833,9 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 								 (int) checkPoint.ThisTimeLineID))
 				ereport(PANIC,
 						(errmsg("unexpected timeline ID %u (after %u) in checkpoint record",
-                               checkPoint.ThisTimeLineID, ThisTimeLineID)));
-           /* Following WAL records should be run with new TLI */
-           ThisTimeLineID = checkPoint.ThisTimeLineID;
+								checkPoint.ThisTimeLineID, ThisTimeLineID)));
+			/* Following WAL records should be run with new TLI */
+			ThisTimeLineID = checkPoint.ThisTimeLineID;
 		}
 
 		RecoveryRestartPoint(&checkPoint);
@@ -6948,12 +6953,12 @@ get_sync_bit(int method)
 
 	switch (method)
 	{
-		/*
-		 * enum values for all sync options are defined even if they are not
-		 * supported on the current platform.  But if not, they are not
-		 * included in the enum option array, and therefore will never be seen
-		 * here.
-		 */
+			/*
+			 * enum values for all sync options are defined even if they are
+			 * not supported on the current platform.  But if not, they are
+			 * not included in the enum option array, and therefore will never
+			 * be seen here.
+			 */
 		case SYNC_METHOD_FSYNC:
 		case SYNC_METHOD_FSYNC_WRITETHROUGH:
 		case SYNC_METHOD_FDATASYNC:
@@ -6969,7 +6974,7 @@ get_sync_bit(int method)
 		default:
 			/* can't happen (unless we are out of sync with option array) */
 			elog(ERROR, "unrecognized wal_sync_method: %d", method);
-			return 0; /* silence warning */
+			return 0;			/* silence warning */
 	}
 }
 
@@ -7146,8 +7151,8 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		 * have different checkpoint positions and hence different history
 		 * file names, even if nothing happened in between.
 		 *
-		 * We use CHECKPOINT_IMMEDIATE only if requested by user (via
-		 * passing fast = true).  Otherwise this can take awhile.
+		 * We use CHECKPOINT_IMMEDIATE only if requested by user (via passing
+		 * fast = true).  Otherwise this can take awhile.
 		 */
 		RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT |
 						  (fast ? CHECKPOINT_IMMEDIATE : 0));
@@ -7376,9 +7381,9 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	 * property of the WAL files ensures any earlier WAL files are safely
 	 * archived as well.
 	 *
-	 * We wait forever, since archive_command is supposed to work and
-	 * we assume the admin wanted his backup to work completely. If you
-	 * don't wish to wait, you can set statement_timeout.
+	 * We wait forever, since archive_command is supposed to work and we
+	 * assume the admin wanted his backup to work completely. If you don't
+	 * wish to wait, you can set statement_timeout.
 	 */
 	XLByteToPrevSeg(stoppoint, _logId, _logSeg);
 	XLogFileName(lastxlogfilename, ThisTimeLineID, _logId, _logSeg);
@@ -7399,7 +7404,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 
 		if (++waits >= seconds_before_warning)
 		{
-			seconds_before_warning *= 2;     /* This wraps in >10 years... */
+			seconds_before_warning *= 2;		/* This wraps in >10 years... */
 			ereport(WARNING,
 					(errmsg("pg_stop_backup still waiting for archive to complete (%d seconds elapsed)",
 							waits)));
@@ -7775,7 +7780,7 @@ CancelBackup(void)
 		ereport(LOG,
 				(errmsg("online backup mode cancelled"),
 				 errdetail("\"%s\" was renamed to \"%s\".",
-						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 	}
 	else
 	{
@@ -7783,12 +7788,12 @@ CancelBackup(void)
 				(errcode_for_file_access(),
 				 errmsg("online backup mode was not cancelled"),
 				 errdetail("Could not rename \"%s\" to \"%s\": %m.",
-						BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+						   BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
 	}
 }
 
 /* ------------------------------------------------------
- *  Startup Process main entry point and signal handlers
+ *	Startup Process main entry point and signal handlers
  * ------------------------------------------------------
  */
 
@@ -7818,8 +7823,8 @@ startupproc_quickdie(SIGNAL_ARGS)
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm
-	 * in being doubly sure.)
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 	exit(2);
 }
@@ -7858,10 +7863,10 @@ StartupProcessMain(void)
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
 	 */
-	pqsignal(SIGHUP, StartupProcSigHupHandler);	 /* reload config file */
-	pqsignal(SIGINT, SIG_IGN);					/* ignore query cancel */
-	pqsignal(SIGTERM, StartupProcShutdownHandler); /* request shutdown */
-	pqsignal(SIGQUIT, startupproc_quickdie);		/* hard crash time */
+	pqsignal(SIGHUP, StartupProcSigHupHandler); /* reload config file */
+	pqsignal(SIGINT, SIG_IGN);	/* ignore query cancel */
+	pqsignal(SIGTERM, StartupProcShutdownHandler);		/* request shutdown */
+	pqsignal(SIGQUIT, startupproc_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
@@ -7881,13 +7886,13 @@ StartupProcessMain(void)
 	 */
 	PG_SETMASK(&UnBlockSig);
 
-	StartupXLOG();	
+	StartupXLOG();
 
 	BuildFlatFiles(false);
 
 	/*
-	 * Exit normally. Exit code 0 tells postmaster that we completed
-	 * recovery successfully.
+	 * Exit normally. Exit code 0 tells postmaster that we completed recovery
+	 * successfully.
 	 */
 	proc_exit(0);
 }

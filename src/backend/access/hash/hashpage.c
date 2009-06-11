@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.79 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.80 2009/06/11 14:48:53 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -361,8 +361,8 @@ _hash_metapinit(Relation rel, double num_tuples)
 	/*
 	 * Choose the number of initial bucket pages to match the fill factor
 	 * given the estimated number of tuples.  We round up the result to the
-	 * next power of 2, however, and always force at least 2 bucket pages.
-	 * The upper limit is determined by considerations explained in
+	 * next power of 2, however, and always force at least 2 bucket pages. The
+	 * upper limit is determined by considerations explained in
 	 * _hash_expandtable().
 	 */
 	dnumbuckets = num_tuples / ffactor;
@@ -421,8 +421,8 @@ _hash_metapinit(Relation rel, double num_tuples)
 
 	/*
 	 * We initialize the index with N buckets, 0 .. N-1, occupying physical
-	 * blocks 1 to N.  The first freespace bitmap page is in block N+1.
-	 * Since N is a power of 2, we can set the masks this way:
+	 * blocks 1 to N.  The first freespace bitmap page is in block N+1. Since
+	 * N is a power of 2, we can set the masks this way:
 	 */
 	metap->hashm_maxbucket = metap->hashm_lowmask = num_buckets - 1;
 	metap->hashm_highmask = (num_buckets << 1) - 1;
@@ -438,8 +438,8 @@ _hash_metapinit(Relation rel, double num_tuples)
 	/*
 	 * Release buffer lock on the metapage while we initialize buckets.
 	 * Otherwise, we'll be in interrupt holdoff and the CHECK_FOR_INTERRUPTS
-	 * won't accomplish anything.  It's a bad idea to hold buffer locks
-	 * for long intervals in any case, since that can block the bgwriter.
+	 * won't accomplish anything.  It's a bad idea to hold buffer locks for
+	 * long intervals in any case, since that can block the bgwriter.
 	 */
 	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
 
@@ -552,8 +552,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	 * _hash_alloc_buckets() would fail, but if we supported buckets smaller
 	 * than a disk block then this would be an independent constraint.
 	 *
-	 * If you change this, see also the maximum initial number of buckets
-	 * in _hash_metapinit().
+	 * If you change this, see also the maximum initial number of buckets in
+	 * _hash_metapinit().
 	 */
 	if (metap->hashm_maxbucket >= (uint32) 0x7FFFFFFE)
 		goto fail;
@@ -839,8 +839,8 @@ _hash_splitbucket(Relation rel,
 		}
 
 		/*
-		 * Fetch the item's hash key (conveniently stored in the item)
-		 * and determine which bucket it now belongs in.
+		 * Fetch the item's hash key (conveniently stored in the item) and
+		 * determine which bucket it now belongs in.
 		 */
 		itup = (IndexTuple) PageGetItem(opage, PageGetItemId(opage, ooffnum));
 		bucket = _hash_hashkey2bucket(_hash_get_indextuple_hashkey(itup),

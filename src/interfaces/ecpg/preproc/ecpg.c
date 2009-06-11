@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.109 2009/02/25 13:03:07 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.110 2009/06/11 14:49:13 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -36,7 +36,7 @@ help(const char *progname)
 	printf(_("%s is the PostgreSQL embedded SQL preprocessor for C programs.\n\n"),
 		   progname);
 	printf(_("Usage:\n"
-		   "  %s [OPTION]... FILE...\n\n"),
+			 "  %s [OPTION]... FILE...\n\n"),
 		   progname);
 	printf(_("Options:\n"));
 	printf(_("  -c             automatically generate C code from embedded SQL code;\n"
@@ -52,13 +52,13 @@ help(const char *progname)
 	printf(_("  -I DIRECTORY   search DIRECTORY for include files\n"));
 	printf(_("  -o OUTFILE     write result to OUTFILE\n"));
 	printf(_("  -r OPTION      specify run-time behavior; OPTION can be:\n"
-			 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"));
+	 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"));
 	printf(_("  --regression   run in regression testing mode\n"));
 	printf(_("  -t             turn on autocommit of transactions\n"));
 	printf(_("  --help         show this help, then exit\n"));
 	printf(_("  --version      output version information, then exit\n"));
 	printf(_("\nIf no output file is specified, the name is formed by adding .c to the\n"
-		   "input file name, after stripping off .pgc if present.\n"));
+			 "input file name, after stripping off .pgc if present.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
@@ -455,10 +455,9 @@ main(int argc, char *const argv[])
 				/* and parse the source */
 				base_yyparse();
 
-				/* 
-				 * Check whether all cursors were indeed opened.  It
-				 * does not really make sense to declare a cursor but
-				 * not open it.
+				/*
+				 * Check whether all cursors were indeed opened.  It does not
+				 * really make sense to declare a cursor but not open it.
 				 */
 				for (ptr = cur; ptr != NULL; ptr = ptr->next)
 					if (!(ptr->opened))

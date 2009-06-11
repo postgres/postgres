@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.200 2009/06/01 23:55:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.201 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 
 /* Set at postmaster start */
 TimestampTz PgStartTime;
+
 /* Set at configuration reload */
 TimestampTz PgReloadTime;
 
@@ -56,8 +57,8 @@ typedef struct
 
 typedef struct
 {
-	TimestampTz	current;
-	TimestampTz	finish;
+	TimestampTz current;
+	TimestampTz finish;
 	Interval	step;
 	int			step_sign;
 } generate_series_timestamptz_fctx;
@@ -631,7 +632,7 @@ interval_in(PG_FUNCTION_ARGS)
 
 	/* if those functions think it's a bad format, try ISO8601 style */
 	if (dterr == DTERR_BAD_FORMAT)
-	    dterr = DecodeISO8601Interval(str,
+		dterr = DecodeISO8601Interval(str,
 									  &dtype, tm, &fsec);
 
 	if (dterr != 0)
@@ -750,7 +751,7 @@ intervaltypmodin(PG_FUNCTION_ARGS)
 	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
-	 * tl[0] - interval range (fields bitmask)  tl[1] - precision (optional)
+	 * tl[0] - interval range (fields bitmask)	tl[1] - precision (optional)
 	 *
 	 * Note we must validate tl[0] even though it's normally guaranteed
 	 * correct by the grammar --- consider SELECT 'foo'::"interval"(1000).
@@ -963,22 +964,22 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		int			precision = INTERVAL_PRECISION(typmod);
 
 		/*
-		 * Our interpretation of intervals with a limited set of fields
-		 * is that fields to the right of the last one specified are zeroed
-		 * out, but those to the left of it remain valid.  Thus for example
-		 * there is no operational difference between INTERVAL YEAR TO MONTH
-		 * and INTERVAL MONTH.  In some cases we could meaningfully enforce
-		 * that higher-order fields are zero; for example INTERVAL DAY could
-		 * reject nonzero "month" field.  However that seems a bit pointless
-		 * when we can't do it consistently.  (We cannot enforce a range limit
-		 * on the highest expected field, since we do not have any equivalent
-		 * of SQL's <interval leading field precision>.)
+		 * Our interpretation of intervals with a limited set of fields is
+		 * that fields to the right of the last one specified are zeroed out,
+		 * but those to the left of it remain valid.  Thus for example there
+		 * is no operational difference between INTERVAL YEAR TO MONTH and
+		 * INTERVAL MONTH.	In some cases we could meaningfully enforce that
+		 * higher-order fields are zero; for example INTERVAL DAY could reject
+		 * nonzero "month" field.  However that seems a bit pointless when we
+		 * can't do it consistently.  (We cannot enforce a range limit on the
+		 * highest expected field, since we do not have any equivalent of
+		 * SQL's <interval leading field precision>.)
 		 *
 		 * Note: before PG 8.4 we interpreted a limited set of fields as
 		 * actually causing a "modulo" operation on a given value, potentially
-		 * losing high-order as well as low-order information.  But there is
+		 * losing high-order as well as low-order information.	But there is
 		 * no support for such behavior in the standard, and it seems fairly
-		 * undesirable on data consistency grounds anyway.  Now we only
+		 * undesirable on data consistency grounds anyway.	Now we only
 		 * perform truncation or rounding of low-order fields.
 		 */
 		if (range == INTERVAL_FULL_RANGE)
@@ -1137,7 +1138,7 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 		strcpy(str, EARLY);
 	else if (TIMESTAMP_IS_NOEND(dt))
 		strcpy(str, LATE);
-	else						/* shouldn't happen */
+	else	/* shouldn't happen */
 		elog(ERROR, "invalid argument for EncodeSpecialTimestamp");
 }
 
@@ -4394,7 +4395,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	/*
-	 * Look up the requested timezone.  First we look in the date token table
+	 * Look up the requested timezone.	First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's
@@ -4438,7 +4439,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("time zone \"%s\" not recognized", tzname)));
-			result = 0;				/* keep compiler quiet */
+			result = 0;			/* keep compiler quiet */
 		}
 	}
 
@@ -4568,7 +4569,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	/*
-	 * Look up the requested timezone.  First we look in the date token table
+	 * Look up the requested timezone.	First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's
@@ -4611,7 +4612,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("time zone \"%s\" not recognized", tzname)));
-			result = 0;				/* keep compiler quiet */
+			result = 0;			/* keep compiler quiet */
 		}
 	}
 
@@ -4659,16 +4660,16 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	generate_series_timestamp_fctx *fctx;
-	Timestamp result;
+	Timestamp	result;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		Timestamp start = PG_GETARG_TIMESTAMP(0);
-		Timestamp finish = PG_GETARG_TIMESTAMP(1);
-		Interval *step = PG_GETARG_INTERVAL_P(2);
+		Timestamp	start = PG_GETARG_TIMESTAMP(0);
+		Timestamp	finish = PG_GETARG_TIMESTAMP(1);
+		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
-		Interval interval_zero;
+		Interval	interval_zero;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -4718,9 +4719,9 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 	{
 		/* increment current in preparation for next iteration */
 		fctx->current = DatumGetTimestamp(
-			DirectFunctionCall2(timestamp_pl_interval,
-								TimestampGetDatum(fctx->current),
-								PointerGetDatum(&fctx->step)));
+								   DirectFunctionCall2(timestamp_pl_interval,
+											TimestampGetDatum(fctx->current),
+											  PointerGetDatum(&fctx->step)));
 
 		/* do when there is more left to send */
 		SRF_RETURN_NEXT(funcctx, TimestampGetDatum(result));
@@ -4747,9 +4748,9 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 	{
 		TimestampTz start = PG_GETARG_TIMESTAMPTZ(0);
 		TimestampTz finish = PG_GETARG_TIMESTAMPTZ(1);
-		Interval *step = PG_GETARG_INTERVAL_P(2);
+		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
-		Interval interval_zero;
+		Interval	interval_zero;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -4799,9 +4800,9 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 	{
 		/* increment current in preparation for next iteration */
 		fctx->current = DatumGetTimestampTz(
-			DirectFunctionCall2(timestamptz_pl_interval,
-								TimestampTzGetDatum(fctx->current),
-								PointerGetDatum(&fctx->step)));
+								 DirectFunctionCall2(timestamptz_pl_interval,
+										  TimestampTzGetDatum(fctx->current),
+											  PointerGetDatum(&fctx->step)));
 
 		/* do when there is more left to send */
 		SRF_RETURN_NEXT(funcctx, TimestampTzGetDatum(result));

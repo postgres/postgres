@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.41 2009/02/02 20:07:37 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.42 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,8 +133,8 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	AH->StartBlobPtr = _StartBlob;
 	AH->EndBlobPtr = _EndBlob;
 	AH->EndBlobsPtr = _EndBlobs;
-	AH->ClonePtr = _Clone;	
-	AH->DeClonePtr = _DeClone;	
+	AH->ClonePtr = _Clone;
+	AH->DeClonePtr = _DeClone;
 
 	/*
 	 * Set up some special context used in compressing data.
@@ -842,28 +842,28 @@ _CloseArchive(ArchiveHandle *AH)
  * is because on Windows, this is used within a multithreading context,
  * and we don't want a thread closing the parent file handle.)
  */
-static void 
+static void
 _ReopenArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	pgoff_t		tpos;
 
 	if (AH->mode == archModeWrite)
-		die_horribly(AH,modulename,"can only reopen input archives\n");
+		die_horribly(AH, modulename, "can only reopen input archives\n");
 	if (AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0)
-		die_horribly(AH,modulename,"cannot reopen stdin\n");
+		die_horribly(AH, modulename, "cannot reopen stdin\n");
 	if (!ctx->hasSeek)
-		die_horribly(AH,modulename,"cannot reopen non-seekable file\n");
+		die_horribly(AH, modulename, "cannot reopen non-seekable file\n");
 
 	errno = 0;
 	tpos = ftello(AH->FH);
 	if (errno)
-		die_horribly(AH, modulename, "could not determine seek position in archive file: %s\n", 
+		die_horribly(AH, modulename, "could not determine seek position in archive file: %s\n",
 					 strerror(errno));
 
 #ifndef WIN32
 	if (fclose(AH->FH) != 0)
-		die_horribly(AH, modulename, "could not close archive file: %s\n", 
+		die_horribly(AH, modulename, "could not close archive file: %s\n",
 					 strerror(errno));
 #endif
 
@@ -873,7 +873,7 @@ _ReopenArchive(ArchiveHandle *AH)
 					 AH->fSpec, strerror(errno));
 
 	if (fseeko(AH->FH, tpos, SEEK_SET) != 0)
-		die_horribly(AH, modulename, "could not set seek position in archive file: %s\n", 
+		die_horribly(AH, modulename, "could not set seek position in archive file: %s\n",
 					 strerror(errno));
 }
 
@@ -1085,8 +1085,8 @@ _Clone(ArchiveHandle *AH)
 		die_horribly(AH, modulename, "out of memory\n");
 
 	/*
-	 * Note: we do not make a local lo_buf because we expect at most one
-	 * BLOBS entry per archive, so no parallelism is possible.  Likewise,
+	 * Note: we do not make a local lo_buf because we expect at most one BLOBS
+	 * entry per archive, so no parallelism is possible.  Likewise,
 	 * TOC-entry-local state isn't an issue because any one TOC entry is
 	 * touched by just one worker child.
 	 */
@@ -1096,7 +1096,7 @@ static void
 _DeClone(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	
+
 	free(ctx->zlibOut);
 	free(ctx->zlibIn);
 	free(ctx->zp);

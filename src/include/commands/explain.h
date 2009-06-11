@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.38 2009/01/02 20:42:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.39 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +39,11 @@ extern void ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
 				  TupOutputState *tstate);
 
 extern void ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
-						   const char *queryString,
-						   ParamListInfo params,
-						   TupOutputState *tstate);
+			   const char *queryString,
+			   ParamListInfo params,
+			   TupOutputState *tstate);
 
 extern void ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
-							 bool analyze, bool verbose);
+				 bool analyze, bool verbose);
 
 #endif   /* EXPLAIN_H */

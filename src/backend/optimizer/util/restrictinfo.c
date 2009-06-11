@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.59 2009/05/09 22:51:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.60 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,9 +593,9 @@ select_nonredundant_join_clauses(PlannerInfo *root,
 		 * OK because we're only trying to prove we can dispense with some
 		 * join quals; failing to prove that doesn't result in an incorrect
 		 * plan.  It's quite unlikely that a join qual could be proven
-		 * redundant by an index predicate anyway.  (Also, if we did manage
-		 * to prove it, we'd have to have a special case for update targets;
-		 * see notes about EvalPlanQual testing in create_indexscan_plan().)
+		 * redundant by an index predicate anyway.	(Also, if we did manage to
+		 * prove it, we'd have to have a special case for update targets; see
+		 * notes about EvalPlanQual testing in create_indexscan_plan().)
 		 */
 		BitmapHeapPath *innerpath = (BitmapHeapPath *) inner_path;
 
@@ -614,10 +614,10 @@ select_nonredundant_join_clauses(PlannerInfo *root,
 	}
 
 	/*
-	 * XXX the inner path of a nestloop could also be an append relation
-	 * whose elements use join quals.  However, they might each use different
-	 * quals; we could only remove join quals that are enforced by all the
-	 * appendrel members.  For the moment we don't bother to try.
+	 * XXX the inner path of a nestloop could also be an append relation whose
+	 * elements use join quals.  However, they might each use different quals;
+	 * we could only remove join quals that are enforced by all the appendrel
+	 * members.  For the moment we don't bother to try.
 	 */
 
 	return restrictinfo_list;

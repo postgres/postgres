@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.48 2009/01/15 11:52:55 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -241,10 +241,10 @@ void
 ecpg_log(const char *format,...)
 {
 	va_list		ap;
-	struct sqlca_t	*sqlca = ECPGget_sqlca();
+	struct sqlca_t *sqlca = ECPGget_sqlca();
 	const char *intl_format;
 	int			bufsize;
-	char		*fmt;
+	char	   *fmt;
 
 	if (!simple_debug)
 		return;
@@ -253,8 +253,8 @@ ecpg_log(const char *format,...)
 	intl_format = ecpg_gettext(format);
 
 	/*
-	 * Insert PID into the format, unless ecpg_internal_regression_mode is
-	 * set (regression tests want unchanging output).
+	 * Insert PID into the format, unless ecpg_internal_regression_mode is set
+	 * (regression tests want unchanging output).
 	 */
 	bufsize = strlen(intl_format) + 100;
 	fmt = (char *) malloc(bufsize);
@@ -426,11 +426,11 @@ win32_pthread_mutex(volatile pthread_mutex_t *mutex)
 {
 	if (mutex->handle == NULL)
 	{
-		while (InterlockedExchange((LONG *) & mutex->initlock, 1) == 1)
+		while (InterlockedExchange((LONG *) &mutex->initlock, 1) == 1)
 			Sleep(0);
 		if (mutex->handle == NULL)
 			mutex->handle = CreateMutex(NULL, FALSE, NULL);
-		InterlockedExchange((LONG *) & mutex->initlock, 0);
+		InterlockedExchange((LONG *) &mutex->initlock, 0);
 	}
 }
 
@@ -451,7 +451,6 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 	}
 }
 #endif   /* ENABLE_THREAD_SAFETY */
-
 #endif   /* WIN32 */
 
 #ifdef ENABLE_NLS

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.26 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.27 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,8 @@ quote_literal(PG_FUNCTION_ARGS)
 
 /*
  * quote_nullable -
- *    Returns a properly quoted literal, with null values returned
- *    as the text string 'NULL'.
+ *	  Returns a properly quoted literal, with null values returned
+ *	  as the text string 'NULL'.
  */
 Datum
 quote_nullable(PG_FUNCTION_ARGS)

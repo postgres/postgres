@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.100 2009/06/04 18:33:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.101 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,13 @@
 #define COMMERROR	16			/* Client communication problems; same as LOG
 								 * for server reporting, but never sent to
 								 * client. */
-#define INFO		17			/* Messages specifically requested by user
-								 * (eg VACUUM VERBOSE output); always sent to
+#define INFO		17			/* Messages specifically requested by user (eg
+								 * VACUUM VERBOSE output); always sent to
 								 * client regardless of client_min_messages,
 								 * but by default not sent to server log. */
 #define NOTICE		18			/* Helpful messages to users about query
-								 * operation; sent to client and server log
-								 * by default. */
+								 * operation; sent to client and server log by
+								 * default. */
 #define WARNING		19			/* Warnings.  NOTICE is for expected messages
 								 * like implicit sequence creation by SERIAL.
 								 * WARNING is for unexpected messages. */
@@ -134,7 +134,7 @@ __attribute__((format(printf, 1, 2)));
 
 extern int
 errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n, ...)
+			  unsigned long n,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 4)))
@@ -154,7 +154,7 @@ __attribute__((format(printf, 1, 2)));
 
 extern int
 errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n, ...)
+				 unsigned long n,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 4)))

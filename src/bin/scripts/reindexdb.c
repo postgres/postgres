@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.17 2009/02/26 16:02:39 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.18 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 static void
 reindex_one_database(const char *name, const char *dbname, const char *type,
 					 const char *host, const char *port, const char *username,
-					 enum trivalue prompt_password, const char *progname, bool echo)
+			  enum trivalue prompt_password, const char *progname, bool echo)
 {
 	PQExpBufferData sql;
 

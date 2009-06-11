@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.59 2009/01/05 17:14:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.60 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,10 @@ bool
 _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
 	/*
-	 * Currently, we can't check any of the scan conditions since we do
-	 * not have the original index entry value to supply to the sk_func.
-	 * Always return true; we expect that hashgettuple already set the
-	 * recheck flag to make the main indexscan code do it.
+	 * Currently, we can't check any of the scan conditions since we do not
+	 * have the original index entry value to supply to the sk_func. Always
+	 * return true; we expect that hashgettuple already set the recheck flag
+	 * to make the main indexscan code do it.
 	 */
 #ifdef NOT_USED
 	TupleDesc	tupdesc = RelationGetDescr(scan->indexRelation);
@@ -240,8 +240,8 @@ _hash_get_indextuple_hashkey(IndexTuple itup)
 	char	   *attp;
 
 	/*
-	 * We assume the hash key is the first attribute and can't be null,
-	 * so this can be done crudely but very very cheaply ...
+	 * We assume the hash key is the first attribute and can't be null, so
+	 * this can be done crudely but very very cheaply ...
 	 */
 	attp = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
 	return *((uint32 *) attp);
@@ -253,10 +253,10 @@ _hash_get_indextuple_hashkey(IndexTuple itup)
 IndexTuple
 _hash_form_tuple(Relation index, Datum *values, bool *isnull)
 {
-	IndexTuple		itup;
-	uint32			hashkey;
-	Datum			hashkeydatum;
-	TupleDesc		hashdesc;
+	IndexTuple	itup;
+	uint32		hashkey;
+	Datum		hashkeydatum;
+	TupleDesc	hashdesc;
 
 	if (isnull[0])
 		hashkeydatum = (Datum) 0;
@@ -280,14 +280,14 @@ _hash_form_tuple(Relation index, Datum *values, bool *isnull)
  *
  * Returns the offset of the first index entry having hashkey >= hash_value,
  * or the page's max offset plus one if hash_value is greater than all
- * existing hash keys in the page.  This is the appropriate place to start
+ * existing hash keys in the page.	This is the appropriate place to start
  * a search, or to insert a new item.
  */
 OffsetNumber
 _hash_binsearch(Page page, uint32 hash_value)
 {
-	OffsetNumber	upper;
-	OffsetNumber	lower;
+	OffsetNumber upper;
+	OffsetNumber lower;
 
 	/* Loop invariant: lower <= desired place <= upper */
 	upper = PageGetMaxOffsetNumber(page) + 1;
@@ -295,9 +295,9 @@ _hash_binsearch(Page page, uint32 hash_value)
 
 	while (upper > lower)
 	{
-		OffsetNumber	off;
-		IndexTuple		itup;
-		uint32			hashkey;
+		OffsetNumber off;
+		IndexTuple	itup;
+		uint32		hashkey;
 
 		off = (upper + lower) / 2;
 		Assert(OffsetNumberIsValid(off));
@@ -324,8 +324,8 @@ _hash_binsearch(Page page, uint32 hash_value)
 OffsetNumber
 _hash_binsearch_last(Page page, uint32 hash_value)
 {
-	OffsetNumber	upper;
-	OffsetNumber	lower;
+	OffsetNumber upper;
+	OffsetNumber lower;
 
 	/* Loop invariant: lower <= desired place <= upper */
 	upper = PageGetMaxOffsetNumber(page);
@@ -333,9 +333,9 @@ _hash_binsearch_last(Page page, uint32 hash_value)
 
 	while (upper > lower)
 	{
-		IndexTuple		itup;
-		OffsetNumber	off;
-		uint32			hashkey;
+		IndexTuple	itup;
+		OffsetNumber off;
+		uint32		hashkey;
 
 		off = (upper + lower + 1) / 2;
 		Assert(OffsetNumberIsValid(off));

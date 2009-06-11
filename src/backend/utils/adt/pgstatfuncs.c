@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.53 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.54 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 {
-	Oid	funcid = PG_GETARG_OID(0);
+	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
@@ -343,7 +343,7 @@ pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_function_time(PG_FUNCTION_ARGS)
 {
-	Oid	funcid = PG_GETARG_OID(0);
+	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
@@ -354,7 +354,7 @@ pg_stat_get_function_time(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_function_self_time(PG_FUNCTION_ARGS)
 {
-	Oid	funcid = PG_GETARG_OID(0);
+	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
@@ -410,10 +410,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		MemoryContext oldcontext;
-		TupleDesc tupdesc;
-		
+		TupleDesc	tupdesc;
+
 		funcctx = SRF_FIRSTCALL_INIT();
-		
+
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		tupdesc = CreateTemplateTupleDesc(10, false);
@@ -441,33 +441,34 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			/*
 			 * Get one backend - locate by pid.
 			 *
-			 * We lookup the backend early, so we can return zero rows if it doesn't
-			 * exist, instead of returning a single row full of NULLs.
+			 * We lookup the backend early, so we can return zero rows if it
+			 * doesn't exist, instead of returning a single row full of NULLs.
 			 */
-			int		pid = PG_GETARG_INT32(0);
-			int		i;
-			int		n = pgstat_fetch_stat_numbackends();
-			
+			int			pid = PG_GETARG_INT32(0);
+			int			i;
+			int			n = pgstat_fetch_stat_numbackends();
+
 			for (i = 1; i <= n; i++)
 			{
 				PgBackendStatus *be = pgstat_fetch_stat_beentry(i);
+
 				if (be)
 				{
 					if (be->st_procpid == pid)
 					{
-						*(int *)(funcctx->user_fctx) = i;
+						*(int *) (funcctx->user_fctx) = i;
 						break;
 					}
 				}
 			}
 
-			if (*(int *)(funcctx->user_fctx) == 0)
+			if (*(int *) (funcctx->user_fctx) == 0)
 				/* Pid not found, return zero rows */
 				funcctx->max_calls = 0;
 			else
 				funcctx->max_calls = 1;
 		}
-		
+
 		MemoryContextSwitchTo(oldcontext);
 	}
 
@@ -477,26 +478,26 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-		Datum			values[10];
-		bool			nulls[10];
-		HeapTuple		tuple;
+		Datum		values[10];
+		bool		nulls[10];
+		HeapTuple	tuple;
 		PgBackendStatus *beentry;
-		SockAddr		zero_clientaddr;
+		SockAddr	zero_clientaddr;
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
-		
-		if (*(int *)(funcctx->user_fctx) > 0)
+
+		if (*(int *) (funcctx->user_fctx) > 0)
 			/* Get specific pid slot */
-			beentry = pgstat_fetch_stat_beentry(*(int *)(funcctx->user_fctx));
+			beentry = pgstat_fetch_stat_beentry(*(int *) (funcctx->user_fctx));
 		else
 			/* Get the next one in the list */
-			beentry = pgstat_fetch_stat_beentry(funcctx->call_cntr+1); /* 1-based index */
+			beentry = pgstat_fetch_stat_beentry(funcctx->call_cntr + 1);		/* 1-based index */
 		if (!beentry)
 		{
-			int i;
+			int			i;
 
-			for (i = 0; i < sizeof(nulls)/sizeof(nulls[0]); i++)
+			for (i = 0; i < sizeof(nulls) / sizeof(nulls[0]); i++)
 				nulls[i] = true;
 
 			nulls[3] = false;
@@ -543,7 +544,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			/* A zeroed client addr means we don't know */
 			memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
 			if (memcmp(&(beentry->st_clientaddr), &zero_clientaddr,
-									  sizeof(zero_clientaddr) == 0))
+					   sizeof(zero_clientaddr) == 0))
 			{
 				nulls[8] = true;
 				nulls[9] = true;
@@ -554,9 +555,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 #ifdef HAVE_IPV6
 					|| beentry->st_clientaddr.addr.ss_family == AF_INET6
 #endif
-				   )
+					)
 				{
-					char        remote_host[NI_MAXHOST];
+					char		remote_host[NI_MAXHOST];
 					char		remote_port[NI_MAXSERV];
 					int			ret;
 
@@ -576,16 +577,17 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[8] = DirectFunctionCall1(inet_in,
-													   CStringGetDatum(remote_host));
+											   CStringGetDatum(remote_host));
 						values[9] = Int32GetDatum(atoi(remote_port));
 					}
 				}
 				else if (beentry->st_clientaddr.addr.ss_family == AF_UNIX)
 				{
 					/*
-					 * Unix sockets always reports NULL for host and -1 for port, so it's
-					 * possible to tell the difference to connections we have no
-					 * permissions to view, or with errors.
+					 * Unix sockets always reports NULL for host and -1 for
+					 * port, so it's possible to tell the difference to
+					 * connections we have no permissions to view, or with
+					 * errors.
 					 */
 					nulls[8] = true;
 					values[9] = DatumGetInt32(-1);

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/port/dynloader/univel.h,v 1.23 2009/01/01 17:23:46 momjian Exp $ 
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/univel.h,v 1.24 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  *

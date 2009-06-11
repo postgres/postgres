@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.99 2009/04/14 00:06:35 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.100 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ main(int argc, char **argv)
 	char	   *inputFileSpec;
 	static int	disable_triggers = 0;
 	static int	no_data_for_failed_tables = 0;
-	static int  outputNoTablespaces = 0;
+	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
 
 	struct option cmdopts[] = {
@@ -278,9 +278,10 @@ main(int argc, char **argv)
 				break;
 
 			case 0:
-				/* 
-				 * This covers the long options without a short equivalent, 
-				 * including those equivalent to -X xxx. 
+
+				/*
+				 * This covers the long options without a short equivalent,
+				 * including those equivalent to -X xxx.
 				 */
 				break;
 
@@ -415,7 +416,7 @@ usage(const char *progname)
 	printf(_("  -I, --index=NAME         restore named index\n"));
 	printf(_("  -j, --jobs=NUM           use this many parallel jobs to restore\n"));
 	printf(_("  -L, --use-list=FILENAME  use table of contents from this file for\n"
-		 "                           selecting/ordering output\n"));
+			 "                           selecting/ordering output\n"));
 	printf(_("  -n, --schema=NAME        restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"
@@ -432,8 +433,8 @@ usage(const char *progname)
 	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
 	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
 	printf(_("  --use-set-session-authorization\n"
-		 "                           use SET SESSION AUTHORIZATION commands instead of\n"
-		 "                           ALTER OWNER commands to set ownership\n"));
+			 "                           use SET SESSION AUTHORIZATION commands instead of\n"
+	  "                           ALTER OWNER commands to set ownership\n"));
 	printf(_("  -1, --single-transaction\n"
 			 "                           restore as a single transaction\n"));
 

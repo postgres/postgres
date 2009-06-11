@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.5 2009/03/25 15:03:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.6 2009/06/11 14:48:52 momjian Exp $
  */
 
 enum PGP_S2K_TYPE
@@ -224,91 +224,91 @@ struct PGP_PubKey
 	int			can_encrypt;
 };
 
-int			pgp_init(PGP_Context ** ctx);
-int			pgp_encrypt(PGP_Context * ctx, MBuf * src, MBuf * dst);
-int			pgp_decrypt(PGP_Context * ctx, MBuf * src, MBuf * dst);
-int			pgp_free(PGP_Context * ctx);
+int			pgp_init(PGP_Context **ctx);
+int			pgp_encrypt(PGP_Context *ctx, MBuf *src, MBuf *dst);
+int			pgp_decrypt(PGP_Context *ctx, MBuf *src, MBuf *dst);
+int			pgp_free(PGP_Context *ctx);
 
 int			pgp_get_digest_code(const char *name);
 int			pgp_get_cipher_code(const char *name);
 const char *pgp_get_digest_name(int code);
 const char *pgp_get_cipher_name(int code);
 
-int			pgp_set_cipher_algo(PGP_Context * ctx, const char *name);
-int			pgp_set_s2k_mode(PGP_Context * ctx, int type);
-int			pgp_set_s2k_cipher_algo(PGP_Context * ctx, const char *name);
-int			pgp_set_s2k_digest_algo(PGP_Context * ctx, const char *name);
-int			pgp_set_convert_crlf(PGP_Context * ctx, int doit);
-int			pgp_disable_mdc(PGP_Context * ctx, int disable);
-int			pgp_set_sess_key(PGP_Context * ctx, int use);
-int			pgp_set_compress_algo(PGP_Context * ctx, int algo);
-int			pgp_set_compress_level(PGP_Context * ctx, int level);
-int			pgp_set_text_mode(PGP_Context * ctx, int mode);
-int			pgp_set_unicode_mode(PGP_Context * ctx, int mode);
-int			pgp_get_unicode_mode(PGP_Context * ctx);
+int			pgp_set_cipher_algo(PGP_Context *ctx, const char *name);
+int			pgp_set_s2k_mode(PGP_Context *ctx, int type);
+int			pgp_set_s2k_cipher_algo(PGP_Context *ctx, const char *name);
+int			pgp_set_s2k_digest_algo(PGP_Context *ctx, const char *name);
+int			pgp_set_convert_crlf(PGP_Context *ctx, int doit);
+int			pgp_disable_mdc(PGP_Context *ctx, int disable);
+int			pgp_set_sess_key(PGP_Context *ctx, int use);
+int			pgp_set_compress_algo(PGP_Context *ctx, int algo);
+int			pgp_set_compress_level(PGP_Context *ctx, int level);
+int			pgp_set_text_mode(PGP_Context *ctx, int mode);
+int			pgp_set_unicode_mode(PGP_Context *ctx, int mode);
+int			pgp_get_unicode_mode(PGP_Context *ctx);
 
-int			pgp_set_symkey(PGP_Context * ctx, const uint8 *key, int klen);
-int pgp_set_pubkey(PGP_Context * ctx, MBuf * keypkt,
+int			pgp_set_symkey(PGP_Context *ctx, const uint8 *key, int klen);
+int pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt,
 			   const uint8 *key, int klen, int pubtype);
 
-int			pgp_get_keyid(MBuf * pgp_data, char *dst);
+int			pgp_get_keyid(MBuf *pgp_data, char *dst);
 
 /* internal functions */
 
-int			pgp_load_digest(int c, PX_MD ** res);
-int			pgp_load_cipher(int c, PX_Cipher ** res);
+int			pgp_load_digest(int c, PX_MD **res);
+int			pgp_load_cipher(int c, PX_Cipher **res);
 int			pgp_get_cipher_key_size(int c);
 int			pgp_get_cipher_block_size(int c);
 
-int			pgp_s2k_fill(PGP_S2K * s2k, int mode, int digest_algo);
-int			pgp_s2k_read(PullFilter * src, PGP_S2K * s2k);
-int			pgp_s2k_process(PGP_S2K * s2k, int cipher, const uint8 *key, int klen);
+int			pgp_s2k_fill(PGP_S2K *s2k, int mode, int digest_algo);
+int			pgp_s2k_read(PullFilter *src, PGP_S2K *s2k);
+int			pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int klen);
 
 typedef struct PGP_CFB PGP_CFB;
 int
-pgp_cfb_create(PGP_CFB ** ctx_p, int algo,
+pgp_cfb_create(PGP_CFB **ctx_p, int algo,
 			   const uint8 *key, int key_len, int recync, uint8 *iv);
-void		pgp_cfb_free(PGP_CFB * ctx);
-int			pgp_cfb_encrypt(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst);
-int			pgp_cfb_decrypt(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst);
+void		pgp_cfb_free(PGP_CFB *ctx);
+int			pgp_cfb_encrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
+int			pgp_cfb_decrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
 
 int			pgp_armor_encode(const uint8 *src, unsigned len, uint8 *dst);
 int			pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst);
 unsigned	pgp_armor_enc_len(unsigned len);
 unsigned	pgp_armor_dec_len(unsigned len);
 
-int			pgp_compress_filter(PushFilter ** res, PGP_Context * ctx, PushFilter * dst);
-int			pgp_decompress_filter(PullFilter ** res, PGP_Context * ctx, PullFilter * src);
+int			pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst);
+int			pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src);
 
-int			pgp_key_alloc(PGP_PubKey ** pk_p);
-void		pgp_key_free(PGP_PubKey * pk);
-int			_pgp_read_public_key(PullFilter * pkt, PGP_PubKey ** pk_p);
+int			pgp_key_alloc(PGP_PubKey **pk_p);
+void		pgp_key_free(PGP_PubKey *pk);
+int			_pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p);
 
-int			pgp_parse_pubenc_sesskey(PGP_Context * ctx, PullFilter * pkt);
-int pgp_create_pkt_reader(PullFilter ** pf_p, PullFilter * src, int len,
-					  int pkttype, PGP_Context * ctx);
-int pgp_parse_pkt_hdr(PullFilter * src, uint8 *tag, int *len_p,
+int			pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt);
+int pgp_create_pkt_reader(PullFilter **pf_p, PullFilter *src, int len,
+					  int pkttype, PGP_Context *ctx);
+int pgp_parse_pkt_hdr(PullFilter *src, uint8 *tag, int *len_p,
 				  int allow_ctx);
 
-int			pgp_skip_packet(PullFilter * pkt);
-int			pgp_expect_packet_end(PullFilter * pkt);
+int			pgp_skip_packet(PullFilter *pkt);
+int			pgp_expect_packet_end(PullFilter *pkt);
 
-int			pgp_write_pubenc_sesskey(PGP_Context * ctx, PushFilter * dst);
-int			pgp_create_pkt_writer(PushFilter * dst, int tag, PushFilter ** res_p);
+int			pgp_write_pubenc_sesskey(PGP_Context *ctx, PushFilter *dst);
+int			pgp_create_pkt_writer(PushFilter *dst, int tag, PushFilter **res_p);
 
-int			pgp_mpi_alloc(int bits, PGP_MPI ** mpi);
-int			pgp_mpi_create(uint8 *data, int bits, PGP_MPI ** mpi);
-int			pgp_mpi_free(PGP_MPI * mpi);
-int			pgp_mpi_read(PullFilter * src, PGP_MPI ** mpi);
-int			pgp_mpi_write(PushFilter * dst, PGP_MPI * n);
-int			pgp_mpi_hash(PX_MD * md, PGP_MPI * n);
-unsigned	pgp_mpi_cksum(unsigned cksum, PGP_MPI * n);
+int			pgp_mpi_alloc(int bits, PGP_MPI **mpi);
+int			pgp_mpi_create(uint8 *data, int bits, PGP_MPI **mpi);
+int			pgp_mpi_free(PGP_MPI *mpi);
+int			pgp_mpi_read(PullFilter *src, PGP_MPI **mpi);
+int			pgp_mpi_write(PushFilter *dst, PGP_MPI *n);
+int			pgp_mpi_hash(PX_MD *md, PGP_MPI *n);
+unsigned	pgp_mpi_cksum(unsigned cksum, PGP_MPI *n);
 
-int pgp_elgamal_encrypt(PGP_PubKey * pk, PGP_MPI * m,
-					PGP_MPI ** c1, PGP_MPI ** c2);
-int pgp_elgamal_decrypt(PGP_PubKey * pk, PGP_MPI * c1, PGP_MPI * c2,
-					PGP_MPI ** m);
-int			pgp_rsa_encrypt(PGP_PubKey * pk, PGP_MPI * m, PGP_MPI ** c);
-int			pgp_rsa_decrypt(PGP_PubKey * pk, PGP_MPI * c, PGP_MPI ** m);
+int pgp_elgamal_encrypt(PGP_PubKey *pk, PGP_MPI *m,
+					PGP_MPI **c1, PGP_MPI **c2);
+int pgp_elgamal_decrypt(PGP_PubKey *pk, PGP_MPI *c1, PGP_MPI *c2,
+					PGP_MPI **m);
+int			pgp_rsa_encrypt(PGP_PubKey *pk, PGP_MPI *m, PGP_MPI **c);
+int			pgp_rsa_decrypt(PGP_PubKey *pk, PGP_MPI *c, PGP_MPI **m);
 
 extern struct PullFilterOps pgp_decrypt_filter;

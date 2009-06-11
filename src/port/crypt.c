@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/crypt.c,v 1.15 2006/03/11 04:38:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/port/crypt.c,v 1.16 2009/06/11 14:49:15 momjian Exp $ */
 /*	$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ typedef union
 #if defined(B64)
 	B64			b64;
 #endif
-}	C_block;
+} C_block;
 
 /*
  * Convert twenty-four-bit long in host-order

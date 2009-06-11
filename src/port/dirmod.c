@@ -10,7 +10,7 @@
  *	Win32 (NT4 and newer).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.57 2009/05/04 09:30:06 mha Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.58 2009/06/11 14:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ typedef struct
 	WORD		PrintNameOffset;
 	WORD		PrintNameLength;
 	WCHAR		PathBuffer[1];
-}	REPARSE_JUNCTION_DATA_BUFFER;
+} REPARSE_JUNCTION_DATA_BUFFER;
 
 #define REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE   \
 		FIELD_OFFSET(REPARSE_JUNCTION_DATA_BUFFER, SubstituteNameOffset)
@@ -260,7 +260,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 					  NULL, GetLastError(),
 					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-					  (LPSTR) & msg, 0, NULL);
+					  (LPSTR) &msg, 0, NULL);
 #ifndef FRONTEND
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -291,7 +291,7 @@ pgsymlink(const char *oldpath, const char *newpath)
  * must call pgfnames_cleanup later to free the memory allocated by this
  * function.
  */
-char **
+char	  **
 pgfnames(const char *path)
 {
 	DIR		   *dir;
@@ -412,11 +412,11 @@ rmtree(const char *path, bool rmtopdir)
 		 * delete it anyway.
 		 *
 		 * This is not an academic possibility. One scenario where this
-		 * happens is when bgwriter has a pending unlink request for a file
-		 * in a database that's being dropped. In dropdb(), we call
+		 * happens is when bgwriter has a pending unlink request for a file in
+		 * a database that's being dropped. In dropdb(), we call
 		 * ForgetDatabaseFsyncRequests() to flush out any such pending unlink
-		 * requests, but because that's asynchronous, it's not guaranteed
-		 * that the bgwriter receives the message in time.
+		 * requests, but because that's asynchronous, it's not guaranteed that
+		 * the bgwriter receives the message in time.
 		 */
 		if (lstat(pathbuf, &statbuf) != 0)
 		{
@@ -492,10 +492,10 @@ rmtree(const char *path, bool rmtopdir)
  * field when run. So we define our own version that uses the Win32 API
  * to update this field.
  */
-int 
-pgwin32_safestat(const char *path, struct stat *buf)
+int
+pgwin32_safestat(const char *path, struct stat * buf)
 {
-	int r;
+	int			r;
 	WIN32_FILE_ATTRIBUTE_DATA attr;
 
 	r = stat(path, buf);
@@ -509,8 +509,8 @@ pgwin32_safestat(const char *path, struct stat *buf)
 	}
 
 	/*
-	 * XXX no support for large files here, but we don't do that in
-	 * general on Win32 yet.
+	 * XXX no support for large files here, but we don't do that in general on
+	 * Win32 yet.
 	 */
 	buf->st_size = attr.nFileSizeLow;
 

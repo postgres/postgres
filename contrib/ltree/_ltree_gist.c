@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/ltree/_ltree_gist.c,v 1.25 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/ltree/_ltree_gist.c,v 1.26 2009/06/11 14:48:51 momjian Exp $
  *
  *
  * GiST support for ltree[]
@@ -59,7 +59,7 @@ static const uint8 number_of_ones[256] = {
 
 
 static void
-hashing(BITVECP sign, ltree * t)
+hashing(BITVECP sign, ltree *t)
 {
 	int			tlen = t->numlevel;
 	ltree_level *cur = LTREE_FIRST(t);
@@ -173,7 +173,7 @@ _ltree_same(PG_FUNCTION_ARGS)
 }
 
 static int4
-unionkey(BITVECP sbase, ltree_gist * add)
+unionkey(BITVECP sbase, ltree_gist *add)
 {
 	int4		i;
 	BITVECP		sadd = LTG_SIGN(add);
@@ -245,7 +245,7 @@ hemdistsign(BITVECP a, BITVECP b)
 }
 
 static int
-hemdist(ltree_gist * a, ltree_gist * b)
+hemdist(ltree_gist *a, ltree_gist *b)
 {
 	if (LTG_ISALLTRUE(a))
 	{
@@ -448,7 +448,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 }
 
 static bool
-gist_te(ltree_gist * key, ltree * query)
+gist_te(ltree_gist *key, ltree *query)
 {
 	ltree_level *curq = LTREE_FIRST(query);
 	BITVECP		sign = LTG_SIGN(key);
@@ -471,13 +471,13 @@ gist_te(ltree_gist * key, ltree * query)
 }
 
 static bool
-checkcondition_bit(void *checkval, ITEM * val)
+checkcondition_bit(void *checkval, ITEM *val)
 {
 	return (FLG_CANLOOKSIGN(val->flag)) ? GETBIT(checkval, AHASHVAL(val->val)) : true;
 }
 
 static bool
-gist_qtxt(ltree_gist * key, ltxtquery * query)
+gist_qtxt(ltree_gist *key, ltxtquery *query)
 {
 	if (LTG_ISALLTRUE(key))
 		return true;
@@ -490,7 +490,7 @@ gist_qtxt(ltree_gist * key, ltxtquery * query)
 }
 
 static bool
-gist_qe(ltree_gist * key, lquery * query)
+gist_qe(ltree_gist *key, lquery *query)
 {
 	lquery_level *curq = LQUERY_FIRST(query);
 	BITVECP		sign = LTG_SIGN(key);
@@ -529,7 +529,7 @@ gist_qe(ltree_gist * key, lquery * query)
 }
 
 static bool
-_arrq_cons(ltree_gist * key, ArrayType *_query)
+_arrq_cons(ltree_gist *key, ArrayType *_query)
 {
 	lquery	   *query = (lquery *) ARR_DATA_PTR(_query);
 	int			num = ArrayGetNItems(ARR_NDIM(_query), ARR_DIMS(_query));
@@ -559,6 +559,7 @@ _ltree_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	char	   *query = (char *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	ltree_gist *key = (ltree_gist *) DatumGetPointer(entry->key);

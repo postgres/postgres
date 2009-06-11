@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.67 2009/01/20 18:59:37 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.68 2009/06/11 14:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,8 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 	 */
 	if (log_min_messages <= DEBUG1 || client_min_messages <= DEBUG1)
 	{
-		char *path = relpath(node, forkno);
+		char	   *path = relpath(node, forkno);
+
 		if (present)
 			elog(DEBUG1, "page %u of relation %s is uninitialized",
 				 blkno, path);
@@ -132,7 +133,8 @@ forget_invalid_pages(RelFileNode node, ForkNumber forkno, BlockNumber minblkno)
 		{
 			if (log_min_messages <= DEBUG2 || client_min_messages <= DEBUG2)
 			{
-				char *path = relpath(hentry->key.node, forkno);
+				char	   *path = relpath(hentry->key.node, forkno);
+
 				elog(DEBUG2, "page %u of relation %s has been dropped",
 					 hentry->key.blkno, path);
 				pfree(path);
@@ -164,7 +166,8 @@ forget_invalid_pages_db(Oid dbid)
 		{
 			if (log_min_messages <= DEBUG2 || client_min_messages <= DEBUG2)
 			{
-				char *path = relpath(hentry->key.node, hentry->key.forkno);
+				char	   *path = relpath(hentry->key.node, hentry->key.forkno);
+
 				elog(DEBUG2, "page %u of relation %s has been dropped",
 					 hentry->key.blkno, path);
 				pfree(path);
@@ -197,7 +200,8 @@ XLogCheckInvalidPages(void)
 	 */
 	while ((hentry = (xl_invalid_page *) hash_seq_search(&status)) != NULL)
 	{
-		char *path = relpath(hentry->key.node, hentry->key.forkno);
+		char	   *path = relpath(hentry->key.node, hentry->key.forkno);
+
 		if (hentry->present)
 			elog(WARNING, "page %u of relation %s was uninitialized",
 				 hentry->key.blkno, path);
@@ -237,7 +241,8 @@ XLogCheckInvalidPages(void)
 Buffer
 XLogReadBuffer(RelFileNode rnode, BlockNumber blkno, bool init)
 {
-	Buffer buf;
+	Buffer		buf;
+
 	buf = XLogReadBufferExtended(rnode, MAIN_FORKNUM, blkno,
 								 init ? RBM_ZERO : RBM_NORMAL);
 	if (BufferIsValid(buf))
@@ -344,8 +349,8 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
  */
 typedef struct
 {
-	RelationData		reldata;	/* Note: this must be first */
-	FormData_pg_class	pgc;
+	RelationData reldata;		/* Note: this must be first */
+	FormData_pg_class pgc;
 } FakeRelCacheEntryData;
 
 typedef FakeRelCacheEntryData *FakeRelCacheEntry;
@@ -354,10 +359,10 @@ typedef FakeRelCacheEntryData *FakeRelCacheEntry;
  * Create a fake relation cache entry for a physical relation
  *
  * It's often convenient to use the same functions in XLOG replay as in the
- * main codepath, but those functions typically work with a relcache entry. 
- * We don't have a working relation cache during XLOG replay, but this 
- * function can be used to create a fake relcache entry instead. Only the 
- * fields related to physical storage, like rd_rel, are initialized, so the 
+ * main codepath, but those functions typically work with a relcache entry.
+ * We don't have a working relation cache during XLOG replay, but this
+ * function can be used to create a fake relcache entry instead. Only the
+ * fields related to physical storage, like rd_rel, are initialized, so the
  * fake entry is only usable in low-level operations like ReadBuffer().
  *
  * Caller must free the returned entry with FreeFakeRelcacheEntry().
@@ -366,7 +371,7 @@ Relation
 CreateFakeRelcacheEntry(RelFileNode rnode)
 {
 	FakeRelCacheEntry fakeentry;
-	Relation rel;
+	Relation	rel;
 
 	/* Allocate the Relation struct and all related space in one block. */
 	fakeentry = palloc0(sizeof(FakeRelCacheEntryData));
@@ -381,9 +386,9 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	/*
 	 * We set up the lockRelId in case anything tries to lock the dummy
 	 * relation.  Note that this is fairly bogus since relNode may be
-	 * different from the relation's OID.  It shouldn't really matter
-	 * though, since we are presumably running by ourselves and can't have
-	 * any lock conflicts ...
+	 * different from the relation's OID.  It shouldn't really matter though,
+	 * since we are presumably running by ourselves and can't have any lock
+	 * conflicts ...
 	 */
 	rel->rd_lockInfo.lockRelId.dbId = rnode.dbNode;
 	rel->rd_lockInfo.lockRelId.relId = rnode.relNode;
@@ -427,10 +432,9 @@ XLogDropDatabase(Oid dbid)
 {
 	/*
 	 * This is unnecessarily heavy-handed, as it will close SMgrRelation
-	 * objects for other databases as well. DROP DATABASE occurs seldom
-	 * enough that it's not worth introducing a variant of smgrclose for
-	 * just this purpose. XXX: Or should we rather leave the smgr entries
-	 * dangling?
+	 * objects for other databases as well. DROP DATABASE occurs seldom enough
+	 * that it's not worth introducing a variant of smgrclose for just this
+	 * purpose. XXX: Or should we rather leave the smgr entries dangling?
 	 */
 	smgrcloseall();
 

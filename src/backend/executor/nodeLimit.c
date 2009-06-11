@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.38 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.39 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,8 +247,8 @@ recompute_limits(LimitState *node)
 			node->offset = DatumGetInt64(val);
 			if (node->offset < 0)
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE),
-						 errmsg("OFFSET must not be negative")));
+				 (errcode(ERRCODE_INVALID_ROW_COUNT_IN_RESULT_OFFSET_CLAUSE),
+				  errmsg("OFFSET must not be negative")));
 		}
 	}
 	else

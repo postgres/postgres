@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.39 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.40 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,8 +348,8 @@ pgarch_MainLoop(void)
 		 * If we've gotten SIGTERM, we normally just sit and do nothing until
 		 * SIGUSR2 arrives.  However, that means a random SIGTERM would
 		 * disable archiving indefinitely, which doesn't seem like a good
-		 * idea.  If more than 60 seconds pass since SIGTERM, exit anyway,
-		 * so that the postmaster can start a new archiver if needed.
+		 * idea.  If more than 60 seconds pass since SIGTERM, exit anyway, so
+		 * that the postmaster can start a new archiver if needed.
 		 */
 		if (got_SIGTERM)
 		{
@@ -432,10 +432,10 @@ pgarch_ArchiverCopyLoop(void)
 		{
 			/*
 			 * Do not initiate any more archive commands after receiving
-			 * SIGTERM, nor after the postmaster has died unexpectedly.
-			 * The first condition is to try to keep from having init
-			 * SIGKILL the command, and the second is to avoid conflicts
-			 * with another archiver spawned by a newer postmaster.
+			 * SIGTERM, nor after the postmaster has died unexpectedly. The
+			 * first condition is to try to keep from having init SIGKILL the
+			 * command, and the second is to avoid conflicts with another
+			 * archiver spawned by a newer postmaster.
 			 */
 			if (got_SIGTERM || !PostmasterIsAlive(true))
 				return;
@@ -549,7 +549,7 @@ pgarch_archiveXlog(char *xlog)
 		 * Per the Single Unix Spec, shells report exit status > 128 when a
 		 * called command died on a signal.
 		 */
-		int		lev = (WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128) ? FATAL : LOG;
+		int			lev = (WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128) ? FATAL : LOG;
 
 		if (WIFEXITED(rc))
 		{
@@ -563,16 +563,16 @@ pgarch_archiveXlog(char *xlog)
 		{
 #if defined(WIN32)
 			ereport(lev,
-					(errmsg("archive command was terminated by exception 0x%X",
-							WTERMSIG(rc)),
-					 errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
+				  (errmsg("archive command was terminated by exception 0x%X",
+						  WTERMSIG(rc)),
+				   errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
+				   errdetail("The failed archive command was: %s",
+							 xlogarchcmd)));
 #elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
 			ereport(lev,
 					(errmsg("archive command was terminated by signal %d: %s",
 							WTERMSIG(rc),
-							WTERMSIG(rc) < NSIG ? sys_siglist[WTERMSIG(rc)] : "(unknown)"),
+			  WTERMSIG(rc) < NSIG ? sys_siglist[WTERMSIG(rc)] : "(unknown)"),
 					 errdetail("The failed archive command was: %s",
 							   xlogarchcmd)));
 #else
@@ -586,10 +586,10 @@ pgarch_archiveXlog(char *xlog)
 		else
 		{
 			ereport(lev,
-					(errmsg("archive command exited with unrecognized status %d",
-							rc),
-					 errdetail("The failed archive command was: %s",
-							   xlogarchcmd)));
+				(errmsg("archive command exited with unrecognized status %d",
+						rc),
+				 errdetail("The failed archive command was: %s",
+						   xlogarchcmd)));
 		}
 
 		snprintf(activitymsg, sizeof(activitymsg), "failed on %s", xlog);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.15 2009/06/06 02:39:40 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.16 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -47,7 +47,7 @@ MergeItemPointers(ItemPointerData *dst,
 
 	while (aptr - a < na && bptr - b < nb)
 	{
-		int		cmp = compareItemPointers(aptr, bptr);
+		int			cmp = compareItemPointers(aptr, bptr);
 
 		if (cmp > 0)
 			*dptr++ = *bptr++;

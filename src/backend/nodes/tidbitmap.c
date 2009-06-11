@@ -19,7 +19,7 @@
  * of lossiness.  In theory we could fall back to page ranges at some
  * point, but for now that seems useless complexity.
  *
- * We also support the notion of candidate matches, or rechecking.  This
+ * We also support the notion of candidate matches, or rechecking.	This
  * means we know that a search need visit only some tuples on a page,
  * but we are not certain that all of those tuples are real matches.
  * So the eventual heap scan must recheck the quals for these tuples only,
@@ -32,7 +32,7 @@
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.18 2009/03/24 20:17:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.19 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ struct TIDBitmap
 
 /*
  * When iterating over a bitmap in sorted order, a TBMIterator is used to
- * track our progress.  There can be several iterators scanning the same
+ * track our progress.	There can be several iterators scanning the same
  * bitmap concurrently.  Note that the bitmap becomes read-only as soon as
  * any iterator is created.
  */
@@ -511,10 +511,10 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 	else if (tbm_page_is_lossy(b, apage->blockno))
 	{
 		/*
-		 * Some of the tuples in 'a' might not satisfy the quals for 'b',
-		 * but because the page 'b' is lossy, we don't know which ones.
-		 * Therefore we mark 'a' as requiring rechecks, to indicate that
-		 * at most those tuples set in 'a' are matches.
+		 * Some of the tuples in 'a' might not satisfy the quals for 'b', but
+		 * because the page 'b' is lossy, we don't know which ones. Therefore
+		 * we mark 'a' as requiring rechecks, to indicate that at most those
+		 * tuples set in 'a' are matches.
 		 */
 		apage->recheck = true;
 		return false;
@@ -573,7 +573,7 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	 * needs of the TBMIterateResult sub-struct.
 	 */
 	iterator = (TBMIterator *) palloc(sizeof(TBMIterator) +
-									  MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+								 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
 	iterator->tbm = tbm;
 
 	/*
@@ -584,10 +584,10 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	iterator->schunkbit = 0;
 
 	/*
-	 * If we have a hashtable, create and fill the sorted page lists,
-	 * unless we already did that for a previous iterator.  Note that the
-	 * lists are attached to the bitmap not the iterator, so they can be
-	 * used by more than one iterator.
+	 * If we have a hashtable, create and fill the sorted page lists, unless
+	 * we already did that for a previous iterator.  Note that the lists are
+	 * attached to the bitmap not the iterator, so they can be used by more
+	 * than one iterator.
 	 */
 	if (tbm->status == TBM_HASH && !tbm->iterating)
 	{
@@ -644,7 +644,7 @@ tbm_begin_iterate(TIDBitmap *tbm)
 TBMIterateResult *
 tbm_iterate(TBMIterator *iterator)
 {
-	TIDBitmap *tbm = iterator->tbm;
+	TIDBitmap  *tbm = iterator->tbm;
 	TBMIterateResult *output = &(iterator->output);
 
 	Assert(tbm->iterating);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.172 2009/04/16 20:42:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.173 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ typedef struct PlannerInfo
 
 	Index		query_level;	/* 1 at the outermost Query */
 
-	struct PlannerInfo *parent_root; /* NULL at outermost Query */
+	struct PlannerInfo *parent_root;	/* NULL at outermost Query */
 
 	/*
 	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
@@ -161,19 +161,19 @@ typedef struct PlannerInfo
 	List	   *full_join_clauses;		/* list of RestrictInfos for
 										 * mergejoinable full join clauses */
 
-	List	   *join_info_list;		/* list of SpecialJoinInfos */
+	List	   *join_info_list; /* list of SpecialJoinInfos */
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 
-	List	   *placeholder_list;	/* list of PlaceHolderInfos */
+	List	   *placeholder_list;		/* list of PlaceHolderInfos */
 
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
 								 * actual pathkeys afterwards */
 
-	List	   *group_pathkeys;		/* groupClause pathkeys, if any */
+	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *window_pathkeys;	/* pathkeys of bottom window, if any */
-	List	   *distinct_pathkeys;	/* distinctClause pathkeys, if any */
-	List	   *sort_pathkeys;		/* sortClause pathkeys, if any */
+	List	   *distinct_pathkeys;		/* distinctClause pathkeys, if any */
+	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
 	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 
@@ -190,7 +190,7 @@ typedef struct PlannerInfo
 	bool		hasRecursion;	/* true if planning a recursive WITH item */
 
 	/* These fields are used only when hasRecursion is true: */
-	int			wt_param_id;			/* PARAM_EXEC ID for the work table */
+	int			wt_param_id;	/* PARAM_EXEC ID for the work table */
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
 } PlannerInfo;
 
@@ -442,7 +442,7 @@ typedef struct IndexOptInfo
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearchnulls;	/* can AM search for NULL index entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
-	bool		amhasgetbitmap;	/* does AM have amgetbitmap interface? */
+	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
 } IndexOptInfo;
 
 
@@ -845,7 +845,7 @@ typedef struct HashPath
 {
 	JoinPath	jpath;
 	List	   *path_hashclauses;		/* join clauses used for hashing */
-	int			num_batches;			/* number of batches expected */
+	int			num_batches;	/* number of batches expected */
 } HashPath;
 
 /*
@@ -916,7 +916,7 @@ typedef struct HashPath
  * if we decide that it can be pushed down into the nullable side of the join.
  * In that case it acts as a plain filter qual for wherever it gets evaluated.
  * (In short, is_pushed_down is only false for non-degenerate outer join
- * conditions.  Possibly we should rename it to reflect that meaning?)
+ * conditions.	Possibly we should rename it to reflect that meaning?)
  *
  * RestrictInfo nodes also contain an outerjoin_delayed flag, which is true
  * if the clause's applicability must be delayed due to any outer joins
@@ -926,7 +926,7 @@ typedef struct HashPath
  * forced null by some outer join below the clause.  outerjoin_delayed = true
  * is subtly different from nullable_relids != NULL: a clause might reference
  * some nullable rels and yet not be outerjoin_delayed because it also
- * references all the other rels of the outer join(s).  A clause that is not
+ * references all the other rels of the outer join(s).	A clause that is not
  * outerjoin_delayed can be enforced anywhere it is computable.
  *
  * In general, the referenced clause might be arbitrarily complex.	The
@@ -977,7 +977,7 @@ typedef struct RestrictInfo
 
 	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
 
-	bool		outerjoin_delayed;	/* TRUE if delayed by lower outer join */
+	bool		outerjoin_delayed;		/* TRUE if delayed by lower outer join */
 
 	bool		can_join;		/* see comment above */
 
@@ -1005,10 +1005,10 @@ typedef struct RestrictInfo
 	/* cache space for cost and selectivity */
 	QualCost	eval_cost;		/* eval cost of clause; -1 if not yet set */
 	Selectivity norm_selec;		/* selectivity for "normal" (JOIN_INNER)
-								 * semantics; -1 if not yet set; >1 means
-								 * a redundant clause */
-	Selectivity outer_selec;	/* selectivity for outer join semantics;
-								 * -1 if not yet set */
+								 * semantics; -1 if not yet set; >1 means a
+								 * redundant clause */
+	Selectivity outer_selec;	/* selectivity for outer join semantics; -1 if
+								 * not yet set */
 
 	/* valid if clause is mergejoinable, else NIL */
 	List	   *mergeopfamilies;	/* opfamilies containing clause operator */
@@ -1089,8 +1089,8 @@ typedef struct InnerIndexscanInfo
 
 /*
  * Placeholder node for an expression to be evaluated below the top level
- * of a plan tree.  This is used during planning to represent the contained
- * expression.  At the end of the planning process it is replaced by either
+ * of a plan tree.	This is used during planning to represent the contained
+ * expression.	At the end of the planning process it is replaced by either
  * the contained expression or a Var referring to a lower-level evaluation of
  * the contained expression.  Typically the evaluation occurs below an outer
  * join, and Var references above the outer join might thereby yield NULL
@@ -1116,7 +1116,7 @@ typedef struct PlaceHolderVar
  * One-sided outer joins constrain the order of joining partially but not
  * completely.	We flatten such joins into the planner's top-level list of
  * relations to join, but record information about each outer join in a
- * SpecialJoinInfo struct.  These structs are kept in the PlannerInfo node's
+ * SpecialJoinInfo struct.	These structs are kept in the PlannerInfo node's
  * join_info_list.
  *
  * Similarly, semijoins and antijoins created by flattening IN (subselect)
@@ -1241,7 +1241,7 @@ typedef struct AppendRelInfo
 	 * used to translate Vars referencing the parent rel into references to
 	 * the child.  A list element is NULL if it corresponds to a dropped
 	 * column of the parent (this is only possible for inheritance cases, not
-	 * UNION ALL).  The list elements are always simple Vars for inheritance
+	 * UNION ALL).	The list elements are always simple Vars for inheritance
 	 * cases, but can be arbitrary expressions in UNION ALL cases.
 	 *
 	 * Notice we only store entries for user columns (attno > 0).  Whole-row
@@ -1265,7 +1265,7 @@ typedef struct AppendRelInfo
  * For each distinct placeholder expression generated during planning, we
  * store a PlaceHolderInfo node in the PlannerInfo node's placeholder_list.
  * This stores info that is needed centrally rather than in each copy of the
- * PlaceHolderVar.  The phid fields identify which PlaceHolderInfo goes with
+ * PlaceHolderVar.	The phid fields identify which PlaceHolderInfo goes with
  * each PlaceHolderVar.  Note that phid is unique throughout a planner run,
  * not just within a query level --- this is so that we need not reassign ID's
  * when pulling a subquery into its parent.

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.148 2009/04/05 19:59:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.149 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,7 +370,7 @@ typedef struct ScalarArrayOpExpr
  *
  * Notice the arguments are given as a List.  For NOT, of course the list
  * must always have exactly one element.  For AND and OR, the executor can
- * handle any number of arguments.  The parser generally treats AND and OR
+ * handle any number of arguments.	The parser generally treats AND and OR
  * as binary and so it typically only produces two-element lists, but the
  * optimizer will flatten trees of AND and OR nodes to produce longer lists
  * when possible.  There are also a few special cases where more arguments
@@ -506,7 +506,7 @@ typedef struct SubPlan
 	char	   *plan_name;		/* A name assigned during planning */
 	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
-	int32		firstColTypmod;	/* Typmod of first column of subplan result */
+	int32		firstColTypmod; /* Typmod of first column of subplan result */
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
 								 * table (implies we are doing "IN") */
@@ -1045,9 +1045,9 @@ typedef struct CurrentOfExpr
  * risks confusing ExecGetJunkAttribute!
  *
  * ressortgroupref is used in the representation of ORDER BY, GROUP BY, and
- * DISTINCT items.  Targetlist entries with ressortgroupref=0 are not
+ * DISTINCT items.	Targetlist entries with ressortgroupref=0 are not
  * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY,
- * GROUP BY, and/or DISTINCT target value.  No two entries in a targetlist
+ * GROUP BY, and/or DISTINCT target value.	No two entries in a targetlist
  * may have the same nonzero ressortgroupref --- but there is no particular
  * meaning to the nonzero values, except as tags.  (For example, one must
  * not assume that lower ressortgroupref means a more significant sort key.)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.148 2009/03/04 09:12:49 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.149 2009/06/11 14:49:01 momjian Exp $
  *
  * NOTES:
  *
@@ -128,13 +128,13 @@ static int	max_safe_fds = 32;	/* default if not changed */
  * Flag to tell whether it's worth scanning VfdCache looking for temp files to
  * close
  */
-static bool		have_xact_temporary_files = false;
+static bool have_xact_temporary_files = false;
 
 typedef struct vfd
 {
 	int			fd;				/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-	SubTransactionId create_subid;	/* for TEMPORARY fds, creating subxact */
+	SubTransactionId create_subid;		/* for TEMPORARY fds, creating subxact */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
@@ -364,6 +364,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	int			used = 0;
 	int			highestfd = 0;
 	int			j;
+
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
 	int			getrlimit_status;
@@ -373,14 +374,14 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	fd = (int *) palloc(size * sizeof(int));
 
 #ifdef HAVE_GETRLIMIT
-# ifdef RLIMIT_NOFILE            /* most platforms use RLIMIT_NOFILE */
+#ifdef RLIMIT_NOFILE			/* most platforms use RLIMIT_NOFILE */
 	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
-# else                           /* but BSD doesn't ... */
+#else	/* but BSD doesn't ... */
 	getrlimit_status = getrlimit(RLIMIT_OFILE, &rlim);
-# endif /* RLIMIT_NOFILE */
+#endif   /* RLIMIT_NOFILE */
 	if (getrlimit_status != 0)
 		ereport(WARNING, (errmsg("getrlimit failed: %m")));
-#endif /* HAVE_GETRLIMIT */
+#endif   /* HAVE_GETRLIMIT */
 
 	/* dup until failure or probe limit reached */
 	for (;;)
@@ -388,7 +389,11 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 		int			thisfd;
 
 #ifdef HAVE_GETRLIMIT
-		/* don't go beyond RLIMIT_NOFILE; causes irritating kernel logs on some platforms */
+
+		/*
+		 * don't go beyond RLIMIT_NOFILE; causes irritating kernel logs on
+		 * some platforms
+		 */
 		if (getrlimit_status == 0 && highestfd >= rlim.rlim_cur - 1)
 			break;
 #endif
@@ -1069,7 +1074,7 @@ FilePrefetch(File file, off_t offset, int amount)
 	int			returnCode;
 
 	Assert(FileIsValid(file));
-	
+
 	DO_DB(elog(LOG, "FilePrefetch: %d (%s) " INT64_FORMAT " %d",
 			   file, VfdCache[file].fileName,
 			   (int64) offset, amount));

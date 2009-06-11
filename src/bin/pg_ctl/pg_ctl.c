@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.110 2009/04/05 04:19:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.111 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ static void pgwin32_SetServiceStatus(DWORD);
 static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
-static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_service);
+static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service);
 
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
@@ -412,10 +412,10 @@ test_postmaster_connection(bool do_checkpoint)
 	/*
 	 * Look in post_opts for a -p switch.
 	 *
-	 * This parsing code is not amazingly bright; it could for instance
-	 * get fooled if ' -p' occurs within a quoted argument value.  Given
-	 * that few people pass complicated settings in post_opts, it's
-	 * probably good enough.
+	 * This parsing code is not amazingly bright; it could for instance get
+	 * fooled if ' -p' occurs within a quoted argument value.  Given that few
+	 * people pass complicated settings in post_opts, it's probably good
+	 * enough.
 	 */
 	for (p = post_opts; *p;)
 	{
@@ -447,8 +447,8 @@ test_postmaster_connection(bool do_checkpoint)
 	/*
 	 * Search config file for a 'port' option.
 	 *
-	 * This parsing code isn't amazingly bright either, but it should be
-	 * okay for valid port settings.
+	 * This parsing code isn't amazingly bright either, but it should be okay
+	 * for valid port settings.
 	 */
 	if (!*portstr)
 	{
@@ -528,7 +528,7 @@ test_postmaster_connection(bool do_checkpoint)
 				 */
 				status.dwWaitHint += 6000;
 				status.dwCheckPoint++;
-				SetServiceStatus(hStatus, (LPSERVICE_STATUS) & status);
+				SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
 			}
 
 			else
@@ -569,7 +569,7 @@ read_post_opts(void)
 {
 	if (post_opts == NULL)
 	{
-		post_opts = "";		/* default */
+		post_opts = "";			/* default */
 		if (ctl_command == RESTART_COMMAND)
 		{
 			char	  **optlines;
@@ -603,8 +603,9 @@ read_post_opts(void)
 				 */
 				if ((arg1 = strstr(optline, " \"")) != NULL)
 				{
-					*arg1 = '\0';	/* terminate so we get only program name */
-					post_opts = arg1 + 1; /* point past whitespace */
+					*arg1 = '\0';		/* terminate so we get only program
+										 * name */
+					post_opts = arg1 + 1;		/* point past whitespace */
 				}
 				if (postgres_path == NULL)
 					postgres_path = optline;
@@ -717,7 +718,7 @@ do_stop(void)
 {
 	int			cnt;
 	pgpid_t		pid;
-	struct stat	statbuf;
+	struct stat statbuf;
 
 	pid = get_pgpid();
 
@@ -792,7 +793,7 @@ do_restart(void)
 {
 	int			cnt;
 	pgpid_t		pid;
-	struct stat	statbuf;
+	struct stat statbuf;
 
 	pid = get_pgpid();
 
@@ -1142,7 +1143,7 @@ static void
 pgwin32_SetServiceStatus(DWORD currentState)
 {
 	status.dwCurrentState = currentState;
-	SetServiceStatus(hStatus, (LPSERVICE_STATUS) & status);
+	SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
 }
 
 static void WINAPI
@@ -1178,7 +1179,7 @@ pgwin32_ServiceHandler(DWORD request)
 }
 
 static void WINAPI
-pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
+pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 {
 	PROCESS_INFORMATION pi;
 	DWORD		ret;
@@ -1286,12 +1287,12 @@ pgwin32_doRunAsService(void)
  * also load the couple of functions that *do* exist in minwg headers but not
  * on NT4. That way, we don't break on NT4.
  */
-typedef		BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-typedef		BOOL(WINAPI * __IsProcessInJob) (HANDLE, HANDLE, PBOOL);
-typedef		HANDLE(WINAPI * __CreateJobObject) (LPSECURITY_ATTRIBUTES, LPCTSTR);
-typedef		BOOL(WINAPI * __SetInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
-typedef		BOOL(WINAPI * __AssignProcessToJobObject) (HANDLE, HANDLE);
-typedef		BOOL(WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
+typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+typedef BOOL (WINAPI * __IsProcessInJob) (HANDLE, HANDLE, PBOOL);
+typedef HANDLE (WINAPI * __CreateJobObject) (LPSECURITY_ATTRIBUTES, LPCTSTR);
+typedef BOOL (WINAPI * __SetInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
+typedef BOOL (WINAPI * __AssignProcessToJobObject) (HANDLE, HANDLE);
+typedef BOOL (WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
 
 /* Windows API define missing from MingW headers */
 #define DISABLE_MAX_PRIVILEGE	0x1
@@ -1309,7 +1310,7 @@ typedef		BOOL(WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS,
  * automatically destroyed when pg_ctl exits.
  */
 static int
-CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_service)
+CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_service)
 {
 	int			r;
 	BOOL		b;
@@ -1464,11 +1465,13 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_se
 						osv.dwOSVersionInfoSize = sizeof(osv);
 						if (!GetVersionEx(&osv) ||
 							osv.dwMajorVersion < 6 ||
-							(osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
+						(osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
 						{
 							/*
-							 * On Windows 7 (and presumably later), JOB_OBJECT_UILIMIT_HANDLES prevents us from
-							 * starting as a service. So we only enable it on Vista and earlier (version <= 6.0)
+							 * On Windows 7 (and presumably later),
+							 * JOB_OBJECT_UILIMIT_HANDLES prevents us from
+							 * starting as a service. So we only enable it on
+							 * Vista and earlier (version <= 6.0)
 							 */
 							uiRestrictions.UIRestrictionsClass |= JOB_OBJECT_UILIMIT_HANDLES;
 						}
@@ -1486,9 +1489,9 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo, bool as_se
 	}
 
 #ifndef __CYGWIN__
-    AddUserToDacl(processInfo->hProcess);
+	AddUserToDacl(processInfo->hProcess);
 #endif
-    
+
 	CloseHandle(restrictedToken);
 
 	ResumeThread(processInfo->hThread);
@@ -1520,7 +1523,7 @@ do_help(void)
 	printf(_("  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
 	printf(_("  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-		 "                 [-o \"OPTIONS\"]\n"), progname);
+			 "                 [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);

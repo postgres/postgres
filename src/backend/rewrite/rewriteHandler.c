@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.185 2009/01/27 12:40:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.186 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,7 +381,7 @@ rewriteRuleAction(Query *parsetree,
 					break;
 			}
 			if (sub_action->hasSubLinks)
-				break;		/* no need to keep scanning rtable */
+				break;			/* no need to keep scanning rtable */
 		}
 	}
 
@@ -501,7 +501,7 @@ rewriteRuleAction(Query *parsetree,
 		 */
 		if (parsetree->hasSubLinks && !rule_action->hasSubLinks)
 			rule_action->hasSubLinks =
-					checkExprHasSubLink((Node *) rule_action->returningList);
+				checkExprHasSubLink((Node *) rule_action->returningList);
 	}
 
 	return rule_action;
@@ -1261,7 +1261,7 @@ markQueryForLocking(Query *qry, Node *jtnode, bool forUpdate, bool noWait)
 				if (strcmp(cte->ctename, rte->ctename) == 0)
 					break;
 			}
-			if (lc == NULL)				/* shouldn't happen */
+			if (lc == NULL)		/* shouldn't happen */
 				elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
 			/* should be analyzed by now */
 			Assert(IsA(cte->ctequery, Query));

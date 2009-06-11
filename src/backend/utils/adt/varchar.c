@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.130 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.131 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,7 +595,7 @@ varchar(PG_FUNCTION_ARGS)
 							 maxlen)));
 	}
 
-	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data, 
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data,
 															 maxmblen));
 }
 

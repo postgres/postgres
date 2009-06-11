@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.98 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.99 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@ static Datum ExecSubPlan(SubPlanState *node,
 			bool *isNull,
 			ExprDoneCond *isDone);
 static Datum ExecAlternativeSubPlan(AlternativeSubPlanState *node,
-			ExprContext *econtext,
-			bool *isNull,
-			ExprDoneCond *isDone);
+					   ExprContext *econtext,
+					   bool *isNull,
+					   ExprDoneCond *isDone);
 static Datum ExecHashSubPlan(SubPlanState *node,
 				ExprContext *econtext,
 				bool *isNull);
@@ -1073,8 +1073,8 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	 *
 	 * CTE subplans are never executed via parameter recalculation; instead
 	 * they get run when called by nodeCtescan.c.  So don't mark the output
-	 * parameter of a CTE subplan as dirty, but do set the chgParam bit
-	 * for it so that dependent plan nodes will get told to rescan.
+	 * parameter of a CTE subplan as dirty, but do set the chgParam bit for it
+	 * so that dependent plan nodes will get told to rescan.
 	 */
 	foreach(l, subplan->setParam)
 	{
@@ -1099,8 +1099,8 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 {
 	AlternativeSubPlanState *asstate = makeNode(AlternativeSubPlanState);
 	double		num_calls;
-	SubPlan	   *subplan1;
-	SubPlan	   *subplan2;
+	SubPlan    *subplan1;
+	SubPlan    *subplan2;
 	Cost		cost1;
 	Cost		cost2;
 
@@ -1108,18 +1108,18 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 	asstate->xprstate.expr = (Expr *) asplan;
 
 	/*
-	 * Initialize subplans.  (Can we get away with only initializing the
-	 * one we're going to use?)
+	 * Initialize subplans.  (Can we get away with only initializing the one
+	 * we're going to use?)
 	 */
 	asstate->subplans = (List *) ExecInitExpr((Expr *) asplan->subplans,
 											  parent);
 
 	/*
-	 * Select the one to be used.  For this, we need an estimate of the
-	 * number of executions of the subplan.  We use the number of output
-	 * rows expected from the parent plan node.  This is a good estimate
-	 * if we are in the parent's targetlist, and an underestimate (but
-	 * probably not by more than a factor of 2) if we are in the qual.
+	 * Select the one to be used.  For this, we need an estimate of the number
+	 * of executions of the subplan.  We use the number of output rows
+	 * expected from the parent plan node.	This is a good estimate if we are
+	 * in the parent's targetlist, and an underestimate (but probably not by
+	 * more than a factor of 2) if we are in the qual.
 	 */
 	num_calls = parent->plan->plan_rows;
 
@@ -1157,8 +1157,8 @@ ExecAlternativeSubPlan(AlternativeSubPlanState *node,
 					   ExprDoneCond *isDone)
 {
 	/* Just pass control to the active subplan */
-	SubPlanState   *activesp = (SubPlanState *) list_nth(node->subplans,
-														 node->active);
+	SubPlanState *activesp = (SubPlanState *) list_nth(node->subplans,
+													   node->active);
 
 	Assert(IsA(activesp, SubPlanState));
 

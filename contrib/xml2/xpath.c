@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.22 2009/01/07 13:44:36 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.23 2009/06/11 14:48:53 momjian Exp $
  *
  * Parser interface for DOM-based parser (libxml) rather than
  * stream-based SAX-type parser
@@ -36,15 +36,15 @@ void		elog_error(int level, char *explain, int force);
 void		pgxml_parser_init(void);
 
 static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
-				   xmlChar * toptagname, xmlChar * septagname,
-				   xmlChar * plainsep);
+				   xmlChar *toptagname, xmlChar *septagname,
+				   xmlChar *plainsep);
 
-text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar * toptag,
-					 xmlChar * septag, xmlChar * plainsep);
+text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
+					 xmlChar *septag, xmlChar *plainsep);
 
 xmlChar    *pgxml_texttoxmlchar(text *textstring);
 
-static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar * xpath);
+static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
 
 
 Datum		xml_is_well_formed(PG_FUNCTION_ARGS);
@@ -216,11 +216,11 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 }
 
 static xmlChar
-*
+		   *
 pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
-				   xmlChar * toptagname,
-				   xmlChar * septagname,
-				   xmlChar * plainsep)
+				   xmlChar *toptagname,
+				   xmlChar *septagname,
+				   xmlChar *plainsep)
 {
 	/* Function translates a nodeset into a text representation */
 
@@ -510,7 +510,7 @@ xpath_bool(PG_FUNCTION_ARGS)
 /* Core function to evaluate XPath query */
 
 xmlXPathObjectPtr
-pgxml_xpath(text *document, xmlChar * xpath)
+pgxml_xpath(text *document, xmlChar *xpath)
 {
 
 	xmlDocPtr	doctree;
@@ -566,9 +566,9 @@ pgxml_xpath(text *document, xmlChar * xpath)
 text
 		   *
 pgxml_result_to_text(xmlXPathObjectPtr res,
-					 xmlChar * toptag,
-					 xmlChar * septag,
-					 xmlChar * plainsep)
+					 xmlChar *toptag,
+					 xmlChar *septag,
+					 xmlChar *plainsep)
 {
 	xmlChar    *xpresstr;
 	text	   *xpres;
@@ -814,7 +814,7 @@ xpath_table(PG_FUNCTION_ARGS)
 		/* Parse the document */
 		if (xmldoc)
 			doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
-		else					/* treat NULL as not well-formed */
+		else	/* treat NULL as not well-formed */
 			doctree = NULL;
 
 		if (doctree == NULL)

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.91 2009/05/11 08:06:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.92 2009/06/11 14:48:58 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -730,7 +730,7 @@ initialize_SSL(void)
 		 * Load and verify certificate and private key
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context,
-										  SERVER_CERT_FILE) != 1)
+											   SERVER_CERT_FILE) != 1)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("could not load server certificate file \"%s\": %s",
@@ -754,14 +754,14 @@ initialize_SSL(void)
 		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("private key file \"%s\" has group or world access",
-							SERVER_PRIVATE_KEY_FILE),
-					 errdetail("Permissions should be u=rw (0600) or less.")));
+				  errmsg("private key file \"%s\" has group or world access",
+						 SERVER_PRIVATE_KEY_FILE),
+				   errdetail("Permissions should be u=rw (0600) or less.")));
 #endif
 
 		if (SSL_CTX_use_PrivateKey_file(SSL_context,
-										 SERVER_PRIVATE_KEY_FILE,
-										 SSL_FILETYPE_PEM) != 1)
+										SERVER_PRIVATE_KEY_FILE,
+										SSL_FILETYPE_PEM) != 1)
 			ereport(FATAL,
 					(errmsg("could not load private key file \"%s\": %s",
 							SERVER_PRIVATE_KEY_FILE, SSLerrmessage())));
@@ -781,29 +781,32 @@ initialize_SSL(void)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
 	/*
-	 * Attempt to load CA store, so we can verify client certificates if needed.
+	 * Attempt to load CA store, so we can verify client certificates if
+	 * needed.
 	 */
 	if (access(ROOT_CERT_FILE, R_OK))
 	{
 		ssl_loaded_verify_locations = false;
 
 		/*
-		 * If root certificate file simply not found. Don't log an error here, because
-		 * it's quite likely the user isn't planning on using client certificates.
-		 * If we can't access it for other reasons, it is an error.
+		 * If root certificate file simply not found. Don't log an error here,
+		 * because it's quite likely the user isn't planning on using client
+		 * certificates. If we can't access it for other reasons, it is an
+		 * error.
 		 */
 		if (errno != ENOENT)
 		{
 			ereport(FATAL,
-					(errmsg("could not access root certificate file \"%s\": %m",
-							ROOT_CERT_FILE)));
+				 (errmsg("could not access root certificate file \"%s\": %m",
+						 ROOT_CERT_FILE)));
 		}
 	}
 	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1)
 	{
 		/*
-		 * File was there, but we could not load it. This means the file is somehow
-		 * broken, and we cannot do verification at all - so abort here.
+		 * File was there, but we could not load it. This means the file is
+		 * somehow broken, and we cannot do verification at all - so abort
+		 * here.
 		 */
 		ssl_loaded_verify_locations = false;
 		ereport(FATAL,
@@ -843,8 +846,9 @@ initialize_SSL(void)
 			}
 
 			/*
-			 * Always ask for SSL client cert, but don't fail if it's not presented. We'll fail later in this case,
-			 * based on what we find in pg_hba.conf.
+			 * Always ask for SSL client cert, but don't fail if it's not
+			 * presented. We'll fail later in this case, based on what we find
+			 * in pg_hba.conf.
 			 */
 			SSL_CTX_set_verify(SSL_context,
 							   (SSL_VERIFY_PEER |

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.11 2008/06/19 00:46:03 alvherre Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.12 2009/06/11 14:48:52 momjian Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -57,7 +57,7 @@ typedef struct
 	Relation	rel;
 	HeapScanDesc scan;
 	int			ncolumns;
-}	MyData;
+} MyData;
 
 Datum
 pgrowlocks(PG_FUNCTION_ARGS)

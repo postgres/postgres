@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_bool.c,v 1.15 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/intarray/_int_bool.c,v 1.16 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -54,13 +54,13 @@ typedef struct
 	NODE	   *str;
 	/* number in str */
 	int4		num;
-}	WORKSTATE;
+} WORKSTATE;
 
 /*
  * get token from query string
  */
 static int4
-gettoken(WORKSTATE * state, int4 *val)
+gettoken(WORKSTATE *state, int4 *val)
 {
 	char		nnn[16],
 			   *curnnn;
@@ -143,7 +143,7 @@ gettoken(WORKSTATE * state, int4 *val)
  * push new one in polish notation reverse view
  */
 static void
-pushquery(WORKSTATE * state, int4 type, int4 val)
+pushquery(WORKSTATE *state, int4 type, int4 val)
 {
 	NODE	   *tmp = (NODE *) palloc(sizeof(NODE));
 
@@ -160,7 +160,7 @@ pushquery(WORKSTATE * state, int4 type, int4 val)
  * make polish notation of query
  */
 static int4
-makepol(WORKSTATE * state)
+makepol(WORKSTATE *state)
 {
 	int4		val,
 				type;
@@ -239,7 +239,7 @@ typedef struct
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_arr(void *checkval, ITEM * item)
+checkcondition_arr(void *checkval, ITEM *item)
 {
 	int4	   *StopLow = ((CHKVAL *) checkval)->arrb;
 	int4	   *StopHigh = ((CHKVAL *) checkval)->arre;
@@ -261,7 +261,7 @@ checkcondition_arr(void *checkval, ITEM * item)
 }
 
 static bool
-checkcondition_bit(void *checkval, ITEM * item)
+checkcondition_bit(void *checkval, ITEM *item)
 {
 	return GETBIT(checkval, HASHVAL(item->val));
 }
@@ -270,7 +270,7 @@ checkcondition_bit(void *checkval, ITEM * item)
  * check for boolean condition
  */
 static bool
-execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM * item))
+execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *item))
 {
 
 	if (curitem->type == VAL)
@@ -302,7 +302,7 @@ execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *che
  * signconsistent & execconsistent called by *_consistent
  */
 bool
-signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot)
+signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot)
 {
 	return execute(
 				   GETQUERY(query) + query->size - 1,
@@ -312,7 +312,7 @@ signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot)
 }
 
 bool
-execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot)
+execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot)
 {
 	CHKVAL		chkval;
 
@@ -333,7 +333,7 @@ typedef struct
 } GinChkVal;
 
 static bool
-checkcondition_gin(void *checkval, ITEM * item)
+checkcondition_gin(void *checkval, ITEM *item)
 {
 	GinChkVal  *gcv = (GinChkVal *) checkval;
 
@@ -341,7 +341,7 @@ checkcondition_gin(void *checkval, ITEM * item)
 }
 
 bool
-ginconsistent(QUERYTYPE * query, bool *check)
+ginconsistent(QUERYTYPE *query, bool *check)
 {
 	GinChkVal	gcv;
 	ITEM	   *items = GETQUERY(query);
@@ -408,7 +408,7 @@ boolop(PG_FUNCTION_ARGS)
 }
 
 static void
-findoprnd(ITEM * ptr, int4 *pos)
+findoprnd(ITEM *ptr, int4 *pos)
 {
 #ifdef BS_DEBUG
 	elog(DEBUG3, (ptr[*pos].type == OPR) ?
@@ -618,7 +618,7 @@ bqarr_out(PG_FUNCTION_ARGS)
 }
 
 static int4
-countdroptree(ITEM * q, int4 pos)
+countdroptree(ITEM *q, int4 pos)
 {
 	if (q[pos].type == VAL)
 		return 1;
@@ -634,7 +634,7 @@ countdroptree(ITEM * q, int4 pos)
  * we can modify query tree for clearing
  */
 int4
-shorterquery(ITEM * q, int4 len)
+shorterquery(ITEM *q, int4 len)
 {
 	int4		index,
 				posnot,

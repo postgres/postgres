@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * foreign.c
- *        support for foreign-data wrappers, servers and user mappings.
+ *		  support for foreign-data wrappers, servers and user mappings.
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *        $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.3 2009/02/24 10:06:32 petere Exp $
+ *		  $PostgreSQL: pgsql/src/backend/foreign/foreign.c,v 1.4 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,16 +36,16 @@ extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
 
 /*
- * GetForeignDataWrapper -  look up the foreign-data wrapper by OID.
+ * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
  */
 ForeignDataWrapper *
 GetForeignDataWrapper(Oid fdwid)
 {
-	Form_pg_foreign_data_wrapper	fdwform;
-	ForeignDataWrapper			   *fdw;
-	Datum							datum;
-	HeapTuple						tp;
-	bool							isnull;
+	Form_pg_foreign_data_wrapper fdwform;
+	ForeignDataWrapper *fdw;
+	Datum		datum;
+	HeapTuple	tp;
+	bool		isnull;
 
 	tp = SearchSysCache(FOREIGNDATAWRAPPEROID,
 						ObjectIdGetDatum(fdwid),
@@ -82,7 +82,7 @@ GetForeignDataWrapper(Oid fdwid)
 Oid
 GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
 {
-	Oid fdwId;
+	Oid			fdwId;
 
 	fdwId = GetSysCacheOid(FOREIGNDATAWRAPPERNAME,
 						   CStringGetDatum(fdwname),
@@ -91,7 +91,7 @@ GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
 	if (!OidIsValid(fdwId) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("foreign-data wrapper \"%s\" does not exist", fdwname)));
+			 errmsg("foreign-data wrapper \"%s\" does not exist", fdwname)));
 
 	return fdwId;
 }
@@ -104,7 +104,7 @@ GetForeignDataWrapperOidByName(const char *fdwname, bool missing_ok)
 ForeignDataWrapper *
 GetForeignDataWrapperByName(const char *fdwname, bool missing_ok)
 {
-	Oid	fdwId = GetForeignDataWrapperOidByName(fdwname, missing_ok);
+	Oid			fdwId = GetForeignDataWrapperOidByName(fdwname, missing_ok);
 
 	if (!OidIsValid(fdwId) && missing_ok)
 		return NULL;
@@ -119,11 +119,11 @@ GetForeignDataWrapperByName(const char *fdwname, bool missing_ok)
 ForeignServer *
 GetForeignServer(Oid serverid)
 {
-	Form_pg_foreign_server	serverform;
-	ForeignServer		   *server;
-	HeapTuple 				tp;
-	Datum					datum;
-	bool 					isnull;
+	Form_pg_foreign_server serverform;
+	ForeignServer *server;
+	HeapTuple	tp;
+	Datum		datum;
+	bool		isnull;
 
 	tp = SearchSysCache(FOREIGNSERVEROID,
 						ObjectIdGetDatum(serverid),
@@ -175,7 +175,7 @@ GetForeignServer(Oid serverid)
 Oid
 GetForeignServerOidByName(const char *srvname, bool missing_ok)
 {
-	Oid	serverid;
+	Oid			serverid;
 
 	serverid = GetSysCacheOid(FOREIGNSERVERNAME,
 							  CStringGetDatum(srvname),
@@ -184,7 +184,7 @@ GetForeignServerOidByName(const char *srvname, bool missing_ok)
 	if (!OidIsValid(serverid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("server \"%s\" does not exist", srvname)));
+				 errmsg("server \"%s\" does not exist", srvname)));
 
 	return serverid;
 }
@@ -196,7 +196,7 @@ GetForeignServerOidByName(const char *srvname, bool missing_ok)
 ForeignServer *
 GetForeignServerByName(const char *srvname, bool missing_ok)
 {
-    Oid	serverid = GetForeignServerOidByName(srvname, missing_ok);
+	Oid			serverid = GetForeignServerOidByName(srvname, missing_ok);
 
 	if (!OidIsValid(serverid) && missing_ok)
 		return NULL;
@@ -214,11 +214,11 @@ GetForeignServerByName(const char *srvname, bool missing_ok)
 UserMapping *
 GetUserMapping(Oid userid, Oid serverid)
 {
-	Form_pg_user_mapping	umform;
+	Form_pg_user_mapping umform;
 	Datum		datum;
-	HeapTuple 	tp;
+	HeapTuple	tp;
 	bool		isnull;
-	UserMapping	*um;
+	UserMapping *um;
 
 	tp = SearchSysCache(USERMAPPINGUSERSERVER,
 						ObjectIdGetDatum(userid),
@@ -237,8 +237,8 @@ GetUserMapping(Oid userid, Oid serverid)
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("user mapping not found for \"%s\"",
-				MappingUserName(userid))));
+				 errmsg("user mapping not found for \"%s\"",
+						MappingUserName(userid))));
 
 	umform = (Form_pg_user_mapping) GETSTRUCT(tp);
 
@@ -270,7 +270,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	Datum		values[2];
-	bool		nulls[2] = { 0 };
+	bool		nulls[2] = {0};
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
@@ -296,12 +296,12 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
-	foreach (cell, options)
+	foreach(cell, options)
 	{
-		DefElem	   *def = lfirst(cell);
+		DefElem    *def = lfirst(cell);
 
 		values[0] = CStringGetTextDatum(def->defname);
-		values[1] = CStringGetTextDatum(((Value *)def->arg)->val.str);
+		values[1] = CStringGetTextDatum(((Value *) def->arg)->val.str);
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
@@ -319,7 +319,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 Datum
 pg_options_to_table(PG_FUNCTION_ARGS)
 {
-	Datum array = PG_GETARG_DATUM(0);
+	Datum		array = PG_GETARG_DATUM(0);
 
 	deflist_to_tuplestore((ReturnSetInfo *) fcinfo->resultinfo, untransformRelOptions(array));
 
@@ -330,9 +330,10 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 /*
  * Describes the valid options for postgresql FDW, server, and user mapping.
  */
-struct ConnectionOption {
-	const char	   *optname;
-	Oid				optcontext;		/* Oid of catalog in which option may appear */
+struct ConnectionOption
+{
+	const char *optname;
+	Oid			optcontext;		/* Oid of catalog in which option may appear */
 };
 
 /*
@@ -341,21 +342,21 @@ struct ConnectionOption {
  * The list is small - don't bother with bsearch if it stays so.
  */
 static struct ConnectionOption libpq_conninfo_options[] = {
-	{ "authtype",			ForeignServerRelationId		},
-	{ "service",			ForeignServerRelationId		},
-	{ "user",				UserMappingRelationId		},
-	{ "password",			UserMappingRelationId		},
-	{ "connect_timeout", 	ForeignServerRelationId		},
-	{ "dbname",				ForeignServerRelationId		},
-	{ "host",				ForeignServerRelationId		},
-	{ "hostaddr",			ForeignServerRelationId		},
-	{ "port",				ForeignServerRelationId		},
-	{ "tty",				ForeignServerRelationId		},
-	{ "options",			ForeignServerRelationId		},
-	{ "requiressl",			ForeignServerRelationId		},
-	{ "sslmode",			ForeignServerRelationId		},
-	{ "gsslib",				ForeignServerRelationId		},
-	{ NULL,					InvalidOid					}
+	{"authtype", ForeignServerRelationId},
+	{"service", ForeignServerRelationId},
+	{"user", UserMappingRelationId},
+	{"password", UserMappingRelationId},
+	{"connect_timeout", ForeignServerRelationId},
+	{"dbname", ForeignServerRelationId},
+	{"host", ForeignServerRelationId},
+	{"hostaddr", ForeignServerRelationId},
+	{"port", ForeignServerRelationId},
+	{"tty", ForeignServerRelationId},
+	{"options", ForeignServerRelationId},
+	{"requiressl", ForeignServerRelationId},
+	{"sslmode", ForeignServerRelationId},
+	{"gsslib", ForeignServerRelationId},
+	{NULL, InvalidOid}
 };
 
 
@@ -387,19 +388,19 @@ is_conninfo_option(const char *option, Oid context)
 Datum
 postgresql_fdw_validator(PG_FUNCTION_ARGS)
 {
-	List* options_list = untransformRelOptions(PG_GETARG_DATUM(0));
-	Oid catalog = PG_GETARG_OID(1);
+	List	   *options_list = untransformRelOptions(PG_GETARG_DATUM(0));
+	Oid			catalog = PG_GETARG_OID(1);
 
-	ListCell *cell;
+	ListCell   *cell;
 
-	foreach (cell, options_list)
+	foreach(cell, options_list)
 	{
 		DefElem    *def = lfirst(cell);
 
 		if (!is_conninfo_option(def->defname, catalog))
 		{
-			struct ConnectionOption  *opt;
-			StringInfoData		buf;
+			struct ConnectionOption *opt;
+			StringInfoData buf;
 
 			/*
 			 * Unknown option specified, complain about it. Provide a hint
@@ -414,7 +415,7 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid option \"%s\"", def->defname),
-					 errhint("Valid options in this context are: %s", buf.data)));
+				errhint("Valid options in this context are: %s", buf.data)));
 
 			PG_RETURN_BOOL(false);
 		}

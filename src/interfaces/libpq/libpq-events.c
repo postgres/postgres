@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.c,v 1.4 2009/01/01 17:24:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/libpq-events.c,v 1.5 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ int
 PQregisterEventProc(PGconn *conn, PGEventProc proc,
 					const char *name, void *passThrough)
 {
-	int i;
+	int			i;
 	PGEventRegister regevt;
 
 	if (!proc || !conn || !name || !*name)
@@ -54,8 +54,8 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 
 	if (conn->nEvents >= conn->eventArraySize)
 	{
-		PGEvent *e;
-		int newSize;
+		PGEvent    *e;
+		int			newSize;
 
 		newSize = conn->eventArraySize ? conn->eventArraySize * 2 : 8;
 		if (conn->events)
@@ -97,7 +97,7 @@ PQregisterEventProc(PGconn *conn, PGEventProc proc,
 int
 PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data)
 {
-	int i;
+	int			i;
 
 	if (!conn || !proc)
 		return FALSE;
@@ -120,7 +120,7 @@ PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data)
 void *
 PQinstanceData(const PGconn *conn, PGEventProc proc)
 {
-	int i;
+	int			i;
 
 	if (!conn || !proc)
 		return NULL;
@@ -141,7 +141,7 @@ PQinstanceData(const PGconn *conn, PGEventProc proc)
 int
 PQresultSetInstanceData(PGresult *result, PGEventProc proc, void *data)
 {
-	int i;
+	int			i;
 
 	if (!result || !proc)
 		return FALSE;
@@ -164,7 +164,7 @@ PQresultSetInstanceData(PGresult *result, PGEventProc proc, void *data)
 void *
 PQresultInstanceData(const PGresult *result, PGEventProc proc)
 {
-	int i;
+	int			i;
 
 	if (!result || !proc)
 		return NULL;
@@ -184,7 +184,7 @@ PQresultInstanceData(const PGresult *result, PGEventProc proc)
 int
 PQfireResultCreateEvents(PGconn *conn, PGresult *res)
 {
-	int i;
+	int			i;
 
 	if (!res)
 		return FALSE;

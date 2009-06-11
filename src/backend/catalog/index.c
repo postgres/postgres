@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.317 2009/06/06 22:13:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.318 2009/06/11 14:48:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -745,8 +745,8 @@ index_create(Oid heapRelationId,
 										   NULL,		/* no check constraint */
 										   NULL,
 										   NULL,
-										   true, /* islocal */
-										   0); /* inhcount */
+										   true,		/* islocal */
+										   0);	/* inhcount */
 
 			referenced.classId = ConstraintRelationId;
 			referenced.objectId = conOid;
@@ -1383,8 +1383,8 @@ index_build(Relation heapRelation,
 	Assert(RegProcedureIsValid(procedure));
 
 	/*
-	 * Switch to the table owner's userid, so that any index functions are
-	 * run as that user.
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.
 	 */
 	GetUserIdAndContext(&save_userid, &save_secdefcxt);
 	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
@@ -1544,9 +1544,9 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
 								snapshot,		/* snapshot */
-								0,				/* number of keys */
-								NULL,			/* scan key */
-								true,			/* buffer access strategy OK */
+								0,		/* number of keys */
+								NULL,	/* scan key */
+								true,	/* buffer access strategy OK */
 								allow_sync);	/* syncscan OK? */
 
 	reltuples = 0;
@@ -1926,8 +1926,8 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	indexInfo->ii_Concurrent = true;
 
 	/*
-	 * Switch to the table owner's userid, so that any index functions are
-	 * run as that user.
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.
 	 */
 	GetUserIdAndContext(&save_userid, &save_secdefcxt);
 	SetUserIdAndContext(heapRelation->rd_rel->relowner, true);
@@ -2050,10 +2050,10 @@ validate_index_heapscan(Relation heapRelation,
 	 */
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
 								snapshot,		/* snapshot */
-								0,				/* number of keys */
-								NULL,			/* scan key */
-								true,			/* buffer access strategy OK */
-								false);			/* syncscan not OK */
+								0,		/* number of keys */
+								NULL,	/* scan key */
+								true,	/* buffer access strategy OK */
+								false); /* syncscan not OK */
 
 	/*
 	 * Scan all tuples matching the snapshot.
@@ -2267,11 +2267,11 @@ reindex_index(Oid indexId)
 	if (RELATION_IS_OTHER_TEMP(iRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot reindex temporary tables of other sessions")));
+			   errmsg("cannot reindex temporary tables of other sessions")));
 
 	/*
-	 * Also check for active uses of the index in the current transaction;
-	 * we don't want to reindex underneath an open indexscan.
+	 * Also check for active uses of the index in the current transaction; we
+	 * don't want to reindex underneath an open indexscan.
 	 */
 	CheckTableNotInUse(iRel, "REINDEX INDEX");
 

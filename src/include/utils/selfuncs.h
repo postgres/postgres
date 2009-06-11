@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.48 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.49 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,14 +100,14 @@ typedef enum
 
 /* Hooks for plugins to get control when we ask for stats */
 typedef bool (*get_relation_stats_hook_type) (PlannerInfo *root,
-											  RangeTblEntry *rte,
-											  AttrNumber attnum,
-											  VariableStatData *vardata);
+														  RangeTblEntry *rte,
+														  AttrNumber attnum,
+												  VariableStatData *vardata);
 extern PGDLLIMPORT get_relation_stats_hook_type get_relation_stats_hook;
 typedef bool (*get_index_stats_hook_type) (PlannerInfo *root,
-										   Oid indexOid,
-										   AttrNumber indexattnum,
-										   VariableStatData *vardata);
+													   Oid indexOid,
+													   AttrNumber indexattnum,
+												  VariableStatData *vardata);
 extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,

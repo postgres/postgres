@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.141 2009/01/22 20:16:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.142 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ bool		add_missing_from;
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
 						const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
-											int location);
+					  int location);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
-								 int rtindex, AttrNumber col);
+					 int rtindex, AttrNumber col);
 static bool isLockedRel(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
@@ -194,13 +194,13 @@ CommonTableExpr *
 scanNameSpaceForCTE(ParseState *pstate, const char *refname,
 					Index *ctelevelsup)
 {
-	Index	levelsup;
+	Index		levelsup;
 
 	for (levelsup = 0;
 		 pstate != NULL;
 		 pstate = pstate->parentParseState, levelsup++)
 	{
-		ListCell *lc;
+		ListCell   *lc;
 
 		foreach(lc, pstate->p_ctenamespace)
 		{
@@ -226,7 +226,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
 {
 	for (; pstate != NULL; pstate = pstate->parentParseState)
 	{
-		ListCell *lc;
+		ListCell   *lc;
 
 		foreach(lc, pstate->p_future_ctes)
 		{
@@ -264,9 +264,9 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 	Index		levelsup;
 
 	/*
-	 * If it's an unqualified name, check for possible CTE matches.
-	 * A CTE hides any real relation matches.  If no CTE, look for
-	 * a matching relation.
+	 * If it's an unqualified name, check for possible CTE matches. A CTE
+	 * hides any real relation matches.  If no CTE, look for a matching
+	 * relation.
 	 */
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, refname, &ctelevelsup);
@@ -616,15 +616,15 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 		rte->requiredPerms |= ACL_SELECT;
 		/* Must offset the attnum to fit in a bitmapset */
 		rte->selectedCols = bms_add_member(rte->selectedCols,
-									col - FirstLowInvalidHeapAttributeNumber);
+								   col - FirstLowInvalidHeapAttributeNumber);
 	}
 	else if (rte->rtekind == RTE_JOIN)
 	{
 		if (col == InvalidAttrNumber)
 		{
 			/*
-			 * A whole-row reference to a join has to be treated as
-			 * whole-row references to the two inputs.
+			 * A whole-row reference to a join has to be treated as whole-row
+			 * references to the two inputs.
 			 */
 			JoinExpr   *j;
 
@@ -639,13 +639,13 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 			/* Note: we can't see FromExpr here */
 			if (IsA(j->larg, RangeTblRef))
 			{
-				int		varno = ((RangeTblRef *) j->larg)->rtindex;
+				int			varno = ((RangeTblRef *) j->larg)->rtindex;
 
 				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
 			}
 			else if (IsA(j->larg, JoinExpr))
 			{
-				int		varno = ((JoinExpr *) j->larg)->rtindex;
+				int			varno = ((JoinExpr *) j->larg)->rtindex;
 
 				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
 			}
@@ -654,13 +654,13 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 					 (int) nodeTag(j->larg));
 			if (IsA(j->rarg, RangeTblRef))
 			{
-				int		varno = ((RangeTblRef *) j->rarg)->rtindex;
+				int			varno = ((RangeTblRef *) j->rarg)->rtindex;
 
 				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
 			}
 			else if (IsA(j->rarg, JoinExpr))
 			{
-				int		varno = ((JoinExpr *) j->rarg)->rtindex;
+				int			varno = ((JoinExpr *) j->rarg)->rtindex;
 
 				markRTEForSelectPriv(pstate, NULL, varno, InvalidAttrNumber);
 			}
@@ -676,10 +676,10 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 			 * The aliasvar could be either a Var or a COALESCE expression,
 			 * but in the latter case we should already have marked the two
 			 * referent variables as being selected, due to their use in the
-			 * JOIN clause.  So we need only be concerned with the simple
-			 * Var case.
+			 * JOIN clause.  So we need only be concerned with the simple Var
+			 * case.
 			 */
-			Var	   *aliasvar;
+			Var		   *aliasvar;
 
 			Assert(col > 0 && col <= list_length(rte->joinaliasvars));
 			aliasvar = (Var *) list_nth(rte->joinaliasvars, col - 1);
@@ -700,7 +700,7 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 void
 markVarForSelectPriv(ParseState *pstate, Var *var, RangeTblEntry *rte)
 {
-	Index	lv;
+	Index		lv;
 
 	Assert(IsA(var, Var));
 	/* Find the appropriate pstate if it's an uplevel Var */
@@ -1325,8 +1325,8 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	int			numaliases;
 
 	/*
-	 * Fail if join has too many columns --- we must be able to reference
-	 * any of the columns with an AttrNumber.
+	 * Fail if join has too many columns --- we must be able to reference any
+	 * of the columns with an AttrNumber.
 	 */
 	if (list_length(aliasvars) > MaxAttrNumber)
 		ereport(ERROR,
@@ -1816,8 +1816,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				varattno = 0;
 				forboth(lct, rte->ctecoltypes, lcm, rte->ctecoltypmods)
 				{
-					Oid		coltype = lfirst_oid(lct);
-					int32	coltypmod = lfirst_int(lcm);
+					Oid			coltype = lfirst_oid(lct);
+					int32		coltypmod = lfirst_int(lcm);
 
 					varattno++;
 
@@ -1971,7 +1971,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 		markVarForSelectPriv(pstate, varnode, rte);
 	}
 
-	Assert(name == NULL && var == NULL);	/* lists not the same length? */
+	Assert(name == NULL && var == NULL);		/* lists not the same length? */
 
 	return te_list;
 }
@@ -2457,8 +2457,8 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		if (rte)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-							relation->relname),
+			errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+				   relation->relname),
 					 (badAlias ?
 			errhint("Perhaps you meant to reference the table alias \"%s\".",
 					badAlias) :

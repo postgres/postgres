@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.90 2009/03/11 23:19:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.91 2009/06/11 14:49:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,9 +451,9 @@ static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
 			 int tapenum, unsigned int len);
 static void reversedirection_heap(Tuplesortstate *state);
 static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
-				 Tuplesortstate *state);
+					   Tuplesortstate *state);
 static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
-				 Tuplesortstate *state);
+					  Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_index(Tuplesortstate *state, int tapenum,
 			   SortTuple *stup);
@@ -578,7 +578,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	state->nKeys = nkeys;
 
 	TRACE_POSTGRESQL_SORT_START(HEAP_SORT,
-								false, /* no unique check */
+								false,	/* no unique check */
 								nkeys,
 								workMem,
 								randomAccess);
@@ -681,7 +681,7 @@ tuplesort_begin_index_hash(Relation indexRel,
 #ifdef TRACE_SORT
 	if (trace_sort)
 		elog(LOG,
-			 "begin index sort: hash_mask = 0x%x, workMem = %d, randomAccess = %c",
+		"begin index sort: hash_mask = 0x%x, workMem = %d, randomAccess = %c",
 			 hash_mask,
 			 workMem, randomAccess ? 't' : 'f');
 #endif
@@ -727,7 +727,7 @@ tuplesort_begin_datum(Oid datumType,
 	state->nKeys = 1;			/* always a one-column sort */
 
 	TRACE_POSTGRESQL_SORT_START(DATUM_SORT,
-								false, /* no unique check */
+								false,	/* no unique check */
 								1,
 								workMem,
 								randomAccess);
@@ -844,8 +844,8 @@ tuplesort_end(Tuplesortstate *state)
 #else
 
 	/*
-	 * If you disabled TRACE_SORT, you can still probe sort__done, but
-	 * you ain't getting space-used stats.
+	 * If you disabled TRACE_SORT, you can still probe sort__done, but you
+	 * ain't getting space-used stats.
 	 */
 	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, 0L);
 #endif
@@ -2653,9 +2653,11 @@ static void
 writetup_heap(Tuplesortstate *state, int tapenum, SortTuple *stup)
 {
 	MinimalTuple tuple = (MinimalTuple) stup->tuple;
+
 	/* the part of the MinimalTuple we'll write: */
 	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
 	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
+
 	/* total on-disk footprint: */
 	unsigned int tuplen = tupbodylen + sizeof(int);
 
@@ -2842,8 +2844,8 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-	 * Fetch hash keys and mask off bits we don't want to sort by.
-	 * We know that the first column of the index tuple is the hash key.
+	 * Fetch hash keys and mask off bits we don't want to sort by. We know
+	 * that the first column of the index tuple is the hash key.
 	 */
 	Assert(!a->isnull1);
 	hash1 = DatumGetUInt32(a->datum1) & state->hash_mask;

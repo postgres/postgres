@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/rewrite/rewriteManip.h,v 1.49 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/rewrite/rewriteManip.h,v 1.50 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ extern void ChangeVarNodes(Node *node, int old_varno, int new_varno,
 extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 						int min_sublevels_up);
 extern void IncrementVarSublevelsUp_rtable(List *rtable,
-							   int delta_sublevels_up,	int min_sublevels_up);
+							   int delta_sublevels_up, int min_sublevels_up);
 
 extern bool rangeTableEntry_used(Node *node, int rt_index,
 					 int sublevels_up);

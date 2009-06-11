@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.32 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.33 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,8 @@ extern Tuplesortstate *tuplesort_begin_index_btree(Relation indexRel,
 							bool enforceUnique,
 							int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_index_hash(Relation indexRel,
-							uint32 hash_mask,
-							int workMem, bool randomAccess);
+						   uint32 hash_mask,
+						   int workMem, bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 					  Oid sortOperator, bool nullsFirstFlag,
 					  int workMem, bool randomAccess);

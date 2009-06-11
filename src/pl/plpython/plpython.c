@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.121 2009/06/04 18:33:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.122 2009/06/11 14:49:14 momjian Exp $
  *
  *********************************************************************
  */
@@ -87,19 +87,19 @@ typedef struct PLyDatumToOb
 	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
 	bool		typbyval;
-}	PLyDatumToOb;
+} PLyDatumToOb;
 
 typedef struct PLyTupleToOb
 {
 	PLyDatumToOb *atts;
 	int			natts;
-}	PLyTupleToOb;
+} PLyTupleToOb;
 
 typedef union PLyTypeInput
 {
 	PLyDatumToOb d;
 	PLyTupleToOb r;
-}	PLyTypeInput;
+} PLyTypeInput;
 
 /* convert PyObject to a Postgresql Datum or tuple.
  * output from Python
@@ -110,19 +110,19 @@ typedef struct PLyObToDatum
 	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
 	bool		typbyval;
-}	PLyObToDatum;
+} PLyObToDatum;
 
 typedef struct PLyObToTuple
 {
 	PLyObToDatum *atts;
 	int			natts;
-}	PLyObToTuple;
+} PLyObToTuple;
 
 typedef union PLyTypeOutput
 {
 	PLyObToDatum d;
 	PLyObToTuple r;
-}	PLyTypeOutput;
+} PLyTypeOutput;
 
 /* all we need to move Postgresql data to Python objects,
  * and vis versa
@@ -137,7 +137,7 @@ typedef struct PLyTypeInfo
 	 * is_rowtype can be: -1  not known yet (initial state) 0  scalar datatype
 	 * 1  rowtype 2  rowtype, but I/O functions not set up yet
 	 */
-}	PLyTypeInfo;
+} PLyTypeInfo;
 
 
 /* cached procedure data */
@@ -160,7 +160,7 @@ typedef struct PLyProcedure
 	PyObject   *globals;		/* data saved across calls, global scope */
 	PyObject   *me;				/* PyCObject containing pointer to this
 								 * PLyProcedure */
-}	PLyProcedure;
+} PLyProcedure;
 
 
 /* Python objects */
@@ -172,16 +172,16 @@ typedef struct PLyPlanObject
 	Oid		   *types;
 	Datum	   *values;
 	PLyTypeInfo *args;
-}	PLyPlanObject;
+} PLyPlanObject;
 
 typedef struct PLyResultObject
 {
 	PyObject_HEAD
 	/* HeapTuple *tuples; */
-	PyObject * nrows;			/* number of rows returned by query */
+	PyObject   *nrows;			/* number of rows returned by query */
 	PyObject   *rows;			/* data rows, or None if no data returned */
 	PyObject   *status;			/* query status, SPI_OK_*, or SPI_ERR_* */
-}	PLyResultObject;
+} PLyResultObject;
 
 
 /* function declarations */
@@ -205,11 +205,14 @@ static void PLy_init_interp(void);
 static void PLy_init_plpy(void);
 
 /* call PyErr_SetString with a vprint interface and translation support */
-static void PLy_exception_set(PyObject *, const char *,...)
+static void
+PLy_exception_set(PyObject *, const char *,...)
 __attribute__((format(printf, 2, 3)));
+
 /* same, with pluralized message */
-static void PLy_exception_set_plural(PyObject *, const char *, const char *,
-									 unsigned long n,...)
+static void
+PLy_exception_set_plural(PyObject *, const char *, const char *,
+						 unsigned long n,...)
 __attribute__((format(printf, 2, 5)))
 __attribute__((format(printf, 3, 5)));
 
@@ -217,7 +220,8 @@ __attribute__((format(printf, 3, 5)));
 static char *PLy_procedure_name(PLyProcedure *);
 
 /* some utility functions */
-static void PLy_elog(int, const char *,...)
+static void
+PLy_elog(int, const char *,...)
 __attribute__((format(printf, 2, 3)));
 static char *PLy_traceback(int *);
 
@@ -243,7 +247,7 @@ static PLyProcedure *PLy_procedure_get(FunctionCallInfo fcinfo,
 				  Oid tgreloid);
 
 static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid tgreloid,
-										  char *key);
+					 char *key);
 
 static void PLy_procedure_compile(PLyProcedure *, const char *);
 static char *PLy_procedure_munge_source(const char *, const char *);
@@ -391,7 +395,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
  * to take no arguments and return an argument of type trigger.
  */
 static HeapTuple
-PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
+PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
 	HeapTuple	rv = NULL;
 	PyObject   *volatile plargs = NULL;
@@ -467,7 +471,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 }
 
 static HeapTuple
-PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
+PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 				 HeapTuple otup)
 {
 	PyObject   *volatile plntup;
@@ -493,7 +497,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	PG_TRY();
 	{
 		if ((plntup = PyDict_GetItemString(pltd, "new")) == NULL)
-			ereport(ERROR, 
+			ereport(ERROR,
 					(errmsg("TD[\"new\"] deleted, cannot modify row")));
 		if (!PyDict_Check(plntup))
 			ereport(ERROR,
@@ -603,7 +607,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 }
 
 static PyObject *
-PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *rv)
+PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *rv)
 {
 	TriggerData *tdata = (TriggerData *) fcinfo->context;
 	PyObject   *pltname,
@@ -783,7 +787,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 
 /* function handler and friends */
 static Datum
-PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
+PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
 	Datum		rv;
 	PyObject   *volatile plargs = NULL;
@@ -845,7 +849,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("returned object cannot be iterated"),
-					errdetail("PL/Python set-returning functions must return an iterable object.")));
+							 errdetail("PL/Python set-returning functions must return an iterable object.")));
 			}
 
 			/* Fetch next from iterator */
@@ -891,7 +895,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			if (plrv != Py_None)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-					   errmsg("PL/Python function with return type \"void\" did not return None")));
+						 errmsg("PL/Python function with return type \"void\" did not return None")));
 
 			fcinfo->isnull = false;
 			rv = (Datum) 0;
@@ -964,7 +968,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 }
 
 static PyObject *
-PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
+PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 {
 	PyObject   *rv;
 
@@ -994,7 +998,7 @@ PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 }
 
 static PyObject *
-PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
+PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
 	PyObject   *volatile arg = NULL;
 	PyObject   *volatile args = NULL;
@@ -1060,7 +1064,7 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				PLy_elog(ERROR, "PyList_SetItem() failed for PL/Python function \"%s\" while setting up arguments", proc->proname);
 
 			if (proc->argnames && proc->argnames[i] &&
-				PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1)
+			PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1)
 				PLy_elog(ERROR, "PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up arguments", proc->proname);
 			arg = NULL;
 		}
@@ -1079,7 +1083,7 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 
 
 static void
-PLy_function_delete_args(PLyProcedure * proc)
+PLy_function_delete_args(PLyProcedure *proc)
 {
 	int			i;
 
@@ -1149,9 +1153,9 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 	{
 		/*
 		 * Input/output conversion for trigger tuples.	Use the result
-		 * TypeInfo variable to store the tuple conversion info.  We
-		 * do this over again on each call to cover the possibility that
-		 * the relation's tupdesc changed since the trigger was last called.
+		 * TypeInfo variable to store the tuple conversion info.  We do this
+		 * over again on each call to cover the possibility that the
+		 * relation's tupdesc changed since the trigger was last called.
 		 * PLy_input_tuple_funcs and PLy_output_tuple_funcs are responsible
 		 * for not doing repetitive work.
 		 */
@@ -1243,8 +1247,8 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						   errmsg("PL/Python functions cannot return type %s",
-								  format_type_be(procStruct->prorettype))));
+						  errmsg("PL/Python functions cannot return type %s",
+								 format_type_be(procStruct->prorettype))));
 			}
 
 			if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE)
@@ -1264,19 +1268,19 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 
 		/*
 		 * Now get information required for input conversion of the
-		 * procedure's arguments.  Note that we ignore output arguments
-		 * here --- since we don't support returning record, and that was
-		 * already checked above, there's no need to worry about multiple
-		 * output arguments.
+		 * procedure's arguments.  Note that we ignore output arguments here
+		 * --- since we don't support returning record, and that was already
+		 * checked above, there's no need to worry about multiple output
+		 * arguments.
 		 */
 		if (procStruct->pronargs)
 		{
-			Oid		*types;
-			char   **names,
-					*modes;
-			int		 i,
-					 pos,
-					 total;
+			Oid		   *types;
+			char	  **names,
+					   *modes;
+			int			i,
+						pos,
+						total;
 
 			/* extract argument type info from the pg_proc tuple */
 			total = get_func_arg_info(procTup, &types, &names, &modes);
@@ -1322,7 +1326,7 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 						/* Disallow pseudotype argument */
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("PL/Python functions cannot accept type %s",
+						  errmsg("PL/Python functions cannot accept type %s",
 								 format_type_be(types[i]))));
 						break;
 					case TYPTYPE_COMPOSITE:
@@ -1375,7 +1379,7 @@ PLy_procedure_create(HeapTuple procTup, Oid tgreloid, char *key)
 }
 
 static void
-PLy_procedure_compile(PLyProcedure * proc, const char *src)
+PLy_procedure_compile(PLyProcedure *proc, const char *src)
 {
 	PyObject   *crv = NULL;
 	char	   *msrc;
@@ -1465,7 +1469,7 @@ PLy_procedure_munge_source(const char *name, const char *src)
 }
 
 static void
-PLy_procedure_delete(PLyProcedure * proc)
+PLy_procedure_delete(PLyProcedure *proc)
 {
 	int			i;
 
@@ -1498,7 +1502,7 @@ PLy_procedure_delete(PLyProcedure * proc)
  * PostgreSQL, and vice versa.
  */
 static void
-PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
+PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 {
 	int			i;
 
@@ -1540,7 +1544,7 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 }
 
 static void
-PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
+PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 {
 	int			i;
 
@@ -1580,7 +1584,7 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 }
 
 static void
-PLy_output_datum_func(PLyTypeInfo * arg, HeapTuple typeTup)
+PLy_output_datum_func(PLyTypeInfo *arg, HeapTuple typeTup)
 {
 	if (arg->is_rowtype > 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Tuple");
@@ -1589,7 +1593,7 @@ PLy_output_datum_func(PLyTypeInfo * arg, HeapTuple typeTup)
 }
 
 static void
-PLy_output_datum_func2(PLyObToDatum * arg, HeapTuple typeTup)
+PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -1600,7 +1604,7 @@ PLy_output_datum_func2(PLyObToDatum * arg, HeapTuple typeTup)
 }
 
 static void
-PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, HeapTuple typeTup)
+PLy_input_datum_func(PLyTypeInfo *arg, Oid typeOid, HeapTuple typeTup)
 {
 	if (arg->is_rowtype > 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for Tuple");
@@ -1609,7 +1613,7 @@ PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, HeapTuple typeTup)
 }
 
 static void
-PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, HeapTuple typeTup)
+PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -1644,7 +1648,7 @@ PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, HeapTuple typeTup)
 }
 
 static void
-PLy_typeinfo_init(PLyTypeInfo * arg)
+PLy_typeinfo_init(PLyTypeInfo *arg)
 {
 	arg->is_rowtype = -1;
 	arg->in.r.natts = arg->out.r.natts = 0;
@@ -1653,7 +1657,7 @@ PLy_typeinfo_init(PLyTypeInfo * arg)
 }
 
 static void
-PLy_typeinfo_dealloc(PLyTypeInfo * arg)
+PLy_typeinfo_dealloc(PLyTypeInfo *arg)
 {
 	if (arg->is_rowtype == 1)
 	{
@@ -1718,7 +1722,7 @@ PLyString_FromString(const char *src)
 }
 
 static PyObject *
-PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
+PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 {
 	PyObject   *volatile dict;
 	int			i;
@@ -1775,7 +1779,7 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 
 
 static HeapTuple
-PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
+PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 {
 	TupleDesc	desc;
 	HeapTuple	tuple;
@@ -1831,7 +1835,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("key \"%s\" not found in mapping", key),
 						 errhint("To return null in a column, "
-					  "add the value None to the mapping with the key named after the column.")));
+								 "add the value None to the mapping with the key named after the column.")));
 
 			Py_XDECREF(value);
 			value = NULL;
@@ -1855,7 +1859,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 
 
 static HeapTuple
-PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
+PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 {
 	TupleDesc	desc;
 	HeapTuple	tuple;
@@ -1874,7 +1878,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	if (PySequence_Length(sequence) != desc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		errmsg("length of returned sequence did not match number of columns in row")));
+				 errmsg("length of returned sequence did not match number of columns in row")));
 
 	if (info->is_rowtype == 2)
 		PLy_output_tuple_funcs(info, desc);
@@ -1937,7 +1941,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 
 
 static HeapTuple
-PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
+PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 {
 	TupleDesc	desc;
 	HeapTuple	tuple;
@@ -1990,7 +1994,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("attribute \"%s\" does not exist in Python object", key),
 						 errhint("To return null in a column, "
-								 "let the returned object have an attribute named "
+						   "let the returned object have an attribute named "
 								 "after column with value None.")));
 
 			Py_XDECREF(value);
@@ -2175,7 +2179,7 @@ PLy_plan_new(void)
 
 
 static void
-PLy_plan_dealloc(PyObject * arg)
+PLy_plan_dealloc(PyObject *arg)
 {
 	PLyPlanObject *ob = (PLyPlanObject *) arg;
 
@@ -2197,13 +2201,13 @@ PLy_plan_dealloc(PyObject * arg)
 
 
 static PyObject *
-PLy_plan_getattr(PyObject * self, char *name)
+PLy_plan_getattr(PyObject *self, char *name)
 {
 	return Py_FindMethod(PLy_plan_methods, self, name);
 }
 
 static PyObject *
-PLy_plan_status(PyObject * self, PyObject * args)
+PLy_plan_status(PyObject *self, PyObject *args)
 {
 	if (PyArg_ParseTuple(args, ""))
 	{
@@ -2238,7 +2242,7 @@ PLy_result_new(void)
 }
 
 static void
-PLy_result_dealloc(PyObject * arg)
+PLy_result_dealloc(PyObject *arg)
 {
 	PLyResultObject *ob = (PLyResultObject *) arg;
 
@@ -2250,13 +2254,13 @@ PLy_result_dealloc(PyObject * arg)
 }
 
 static PyObject *
-PLy_result_getattr(PyObject * self, char *name)
+PLy_result_getattr(PyObject *self, char *name)
 {
 	return Py_FindMethod(PLy_result_methods, self, name);
 }
 
 static PyObject *
-PLy_result_nrows(PyObject * self, PyObject * args)
+PLy_result_nrows(PyObject *self, PyObject *args)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
 
@@ -2265,7 +2269,7 @@ PLy_result_nrows(PyObject * self, PyObject * args)
 }
 
 static PyObject *
-PLy_result_status(PyObject * self, PyObject * args)
+PLy_result_status(PyObject *self, PyObject *args)
 {
 	PLyResultObject *ob = (PLyResultObject *) self;
 
@@ -2274,7 +2278,7 @@ PLy_result_status(PyObject * self, PyObject * args)
 }
 
 static Py_ssize_t
-PLy_result_length(PyObject * arg)
+PLy_result_length(PyObject *arg)
 {
 	PLyResultObject *ob = (PLyResultObject *) arg;
 
@@ -2282,7 +2286,7 @@ PLy_result_length(PyObject * arg)
 }
 
 static PyObject *
-PLy_result_item(PyObject * arg, Py_ssize_t idx)
+PLy_result_item(PyObject *arg, Py_ssize_t idx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2294,7 +2298,7 @@ PLy_result_item(PyObject * arg, Py_ssize_t idx)
 }
 
 static int
-PLy_result_ass_item(PyObject * arg, Py_ssize_t idx, PyObject * item)
+PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2305,7 +2309,7 @@ PLy_result_ass_item(PyObject * arg, Py_ssize_t idx, PyObject * item)
 }
 
 static PyObject *
-PLy_result_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx)
+PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2318,7 +2322,7 @@ PLy_result_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx)
 }
 
 static int
-PLy_result_ass_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject * slice)
+PLy_result_ass_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2329,7 +2333,7 @@ PLy_result_ass_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject 
 
 /* SPI interface */
 static PyObject *
-PLy_spi_prepare(PyObject * self, PyObject * args)
+PLy_spi_prepare(PyObject *self, PyObject *args)
 {
 	PLyPlanObject *plan;
 	PyObject   *list = NULL;
@@ -2355,7 +2359,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 	if (list && (!PySequence_Check(list)))
 	{
 		PLy_exception_set(PLy_exc_spi_error,
-						  "second argument of plpy.prepare must be a sequence");
+					   "second argument of plpy.prepare must be a sequence");
 		return NULL;
 	}
 
@@ -2470,7 +2474,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
  * execute(plan=plan, values=(foo, bar), limit=5)
  */
 static PyObject *
-PLy_spi_execute(PyObject * self, PyObject * args)
+PLy_spi_execute(PyObject *self, PyObject *args)
 {
 	char	   *query;
 	PyObject   *plan;
@@ -2498,7 +2502,7 @@ PLy_spi_execute(PyObject * self, PyObject * args)
 }
 
 static PyObject *
-PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
+PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 {
 	volatile int nargs;
 	int			i,
@@ -2530,8 +2534,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 					 PLy_procedure_name(PLy_curr_procedure));
 		sv = PyString_AsString(so);
 		PLy_exception_set_plural(PLy_exc_spi_error,
-								 "Expected sequence of %d argument, got %d: %s",
-								 "Expected sequence of %d arguments, got %d: %s",
+							  "Expected sequence of %d argument, got %d: %s",
+							 "Expected sequence of %d arguments, got %d: %s",
 								 plan->nargs,
 								 plan->nargs, nargs, sv);
 		Py_DECREF(so);
@@ -2737,7 +2741,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 			FlushErrorState();
 			if (!PyErr_Occurred())
 				PLy_exception_set(PLy_exc_error,
-								  "unrecognized error in PLy_spi_execute_fetch_result");
+					   "unrecognized error in PLy_spi_execute_fetch_result");
 			Py_DECREF(result);
 			PLy_typeinfo_dealloc(&args);
 			return NULL;
@@ -2844,50 +2848,50 @@ PLy_init_plpy(void)
 static PyObject *PLy_output(volatile int, PyObject *, PyObject *);
 
 static PyObject *
-PLy_debug(PyObject * self, PyObject * args)
+PLy_debug(PyObject *self, PyObject *args)
 {
 	return PLy_output(DEBUG2, self, args);
 }
 
 static PyObject *
-PLy_log(PyObject * self, PyObject * args)
+PLy_log(PyObject *self, PyObject *args)
 {
 	return PLy_output(LOG, self, args);
 }
 
 static PyObject *
-PLy_info(PyObject * self, PyObject * args)
+PLy_info(PyObject *self, PyObject *args)
 {
 	return PLy_output(INFO, self, args);
 }
 
 static PyObject *
-PLy_notice(PyObject * self, PyObject * args)
+PLy_notice(PyObject *self, PyObject *args)
 {
 	return PLy_output(NOTICE, self, args);
 }
 
 static PyObject *
-PLy_warning(PyObject * self, PyObject * args)
+PLy_warning(PyObject *self, PyObject *args)
 {
 	return PLy_output(WARNING, self, args);
 }
 
 static PyObject *
-PLy_error(PyObject * self, PyObject * args)
+PLy_error(PyObject *self, PyObject *args)
 {
 	return PLy_output(ERROR, self, args);
 }
 
 static PyObject *
-PLy_fatal(PyObject * self, PyObject * args)
+PLy_fatal(PyObject *self, PyObject *args)
 {
 	return PLy_output(FATAL, self, args);
 }
 
 
 static PyObject *
-PLy_output(volatile int level, PyObject * self, PyObject * args)
+PLy_output(volatile int level, PyObject *self, PyObject *args)
 {
 	PyObject   *so;
 	char	   *volatile sv;
@@ -2940,7 +2944,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
  * NB: this returns the SQL name, not the internal Python procedure name
  */
 static char *
-PLy_procedure_name(PLyProcedure * proc)
+PLy_procedure_name(PLyProcedure *proc)
 {
 	if (proc == NULL)
 		return "<unknown procedure>";
@@ -2951,7 +2955,7 @@ PLy_procedure_name(PLyProcedure * proc)
  * Call PyErr_SetString with a vprint interface and translation support
  */
 static void
-PLy_exception_set(PyObject * exc, const char *fmt,...)
+PLy_exception_set(PyObject *exc, const char *fmt,...)
 {
 	char		buf[1024];
 	va_list		ap;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.89 2009/04/16 20:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.90 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,10 +96,10 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	 * enforced at the relation scan level.
 	 *
 	 * We must also ignore clauses that are marked !is_pushed_down (ie they
-	 * are themselves outer-join clauses).  It would be safe to extract an
+	 * are themselves outer-join clauses).	It would be safe to extract an
 	 * index condition from such a clause if we are within the nullable rather
 	 * than the non-nullable side of its join, but we haven't got enough
-	 * context here to tell which applies.  OR clauses in outer-join quals
+	 * context here to tell which applies.	OR clauses in outer-join quals
 	 * aren't exactly common, so we'll let that case go unoptimized for now.
 	 */
 	foreach(i, rel->joininfo)

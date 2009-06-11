@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.28 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.29 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ typedef struct FuncCallContext
 	 *
 	 * tuple_desc is for use when returning tuples (i.e. composite data types)
 	 * and is only needed if you are going to build the tuples with
-	 * heap_form_tuple() rather than with BuildTupleFromCStrings().	Note that
+	 * heap_form_tuple() rather than with BuildTupleFromCStrings(). Note that
 	 * the TupleDesc pointer stored here should usually have been run through
 	 * BlessTupleDesc() first.
 	 */

@@ -28,29 +28,29 @@
  *
  * Summary of visibility functions:
  *
- *   HeapTupleSatisfiesMVCC()
- *        visible to supplied snapshot, excludes current command
- *   HeapTupleSatisfiesNow()
- *        visible to instant snapshot, excludes current command
- *   HeapTupleSatisfiesUpdate()
- *        like HeapTupleSatisfiesNow(), but with user-supplied command
- *        counter and more complex result
- *   HeapTupleSatisfiesSelf()
- *        visible to instant snapshot and current command
- *   HeapTupleSatisfiesDirty()
- *        like HeapTupleSatisfiesSelf(), but includes open transactions
- *   HeapTupleSatisfiesVacuum()
- *        visible to any running transaction, used by VACUUM
- *   HeapTupleSatisfiesToast()
- *        visible unless part of interrupted vacuum, used for TOAST
- *   HeapTupleSatisfiesAny()
- *        all tuples are visible
+ *	 HeapTupleSatisfiesMVCC()
+ *		  visible to supplied snapshot, excludes current command
+ *	 HeapTupleSatisfiesNow()
+ *		  visible to instant snapshot, excludes current command
+ *	 HeapTupleSatisfiesUpdate()
+ *		  like HeapTupleSatisfiesNow(), but with user-supplied command
+ *		  counter and more complex result
+ *	 HeapTupleSatisfiesSelf()
+ *		  visible to instant snapshot and current command
+ *	 HeapTupleSatisfiesDirty()
+ *		  like HeapTupleSatisfiesSelf(), but includes open transactions
+ *	 HeapTupleSatisfiesVacuum()
+ *		  visible to any running transaction, used by VACUUM
+ *	 HeapTupleSatisfiesToast()
+ *		  visible unless part of interrupted vacuum, used for TOAST
+ *	 HeapTupleSatisfiesAny()
+ *		  all tuples are visible
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.112 2009/03/09 13:08:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.113 2009/06/11 14:49:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

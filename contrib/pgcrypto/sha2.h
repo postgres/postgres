@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.h,v 1.4 2006/07/13 04:15:25 neilc Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.h,v 1.5 2009/06/11 14:48:52 momjian Exp $ */
 /*	$OpenBSD: sha2.h,v 1.2 2004/04/28 23:11:57 millert Exp $	*/
 
 /*
@@ -70,13 +70,13 @@ typedef struct _SHA256_CTX
 	uint32		state[8];
 	uint64		bitcount;
 	uint8		buffer[SHA256_BLOCK_LENGTH];
-}	SHA256_CTX;
+} SHA256_CTX;
 typedef struct _SHA512_CTX
 {
 	uint64		state[8];
 	uint64		bitcount[2];
 	uint8		buffer[SHA512_BLOCK_LENGTH];
-}	SHA512_CTX;
+} SHA512_CTX;
 
 typedef SHA256_CTX SHA224_CTX;
 typedef SHA512_CTX SHA384_CTX;

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/timetravel.c,v 1.30 2009/01/07 13:44:36 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/spi/timetravel.c,v 1.31 2009/06/11 14:48:52 momjian Exp $
  *
  *
  * timetravel.c --	function to get time travel feature
@@ -29,7 +29,7 @@ typedef struct
 {
 	char	   *ident;
 	SPIPlanPtr	splan;
-}	EPlan;
+} EPlan;
 
 static EPlan *Plans = NULL;		/* for UPDATE/DELETE */
 static int	nPlans = 0;
@@ -38,12 +38,12 @@ typedef struct _TTOffList
 {
 	struct _TTOffList *next;
 	char		name[1];
-}	TTOffList;
+} TTOffList;
 
 static TTOffList TTOff = {NULL, {0}};
 
 static int	findTTStatus(char *name);
-static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
+static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
 
 /*
  * timetravel () --
@@ -517,7 +517,7 @@ currabstime()
 */
 
 static EPlan *
-find_plan(char *ident, EPlan ** eplan, int *nplans)
+find_plan(char *ident, EPlan **eplan, int *nplans)
 {
 	EPlan	   *newp;
 	int			i;

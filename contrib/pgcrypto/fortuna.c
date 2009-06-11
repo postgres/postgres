@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.8 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.9 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -176,7 +176,7 @@ md_result(MD_CTX * ctx, uint8 *dst)
  * initialize state
  */
 static void
-init_state(FState * st)
+init_state(FState *st)
 {
 	int			i;
 
@@ -190,7 +190,7 @@ init_state(FState * st)
  * It just needs to change without repeating.
  */
 static void
-inc_counter(FState * st)
+inc_counter(FState *st)
 {
 	uint32	   *val = (uint32 *) st->counter;
 
@@ -207,7 +207,7 @@ inc_counter(FState * st)
  * This is called 'cipher in counter mode'.
  */
 static void
-encrypt_counter(FState * st, uint8 *dst)
+encrypt_counter(FState *st, uint8 *dst)
 {
 	ciph_encrypt(&st->ciph, st->counter, dst);
 	inc_counter(st);
@@ -219,7 +219,7 @@ encrypt_counter(FState * st, uint8 *dst)
  * microseconds.
  */
 static int
-enough_time_passed(FState * st)
+enough_time_passed(FState *st)
 {
 	int			ok;
 	struct timeval tv;
@@ -252,7 +252,7 @@ enough_time_passed(FState * st)
  * generate new key from all the pools
  */
 static void
-reseed(FState * st)
+reseed(FState *st)
 {
 	unsigned	k;
 	unsigned	n;
@@ -298,7 +298,7 @@ reseed(FState * st)
  * Pick a random pool.	This uses key bytes as random source.
  */
 static unsigned
-get_rand_pool(FState * st)
+get_rand_pool(FState *st)
 {
 	unsigned	rnd;
 
@@ -318,7 +318,7 @@ get_rand_pool(FState * st)
  * update pools
  */
 static void
-add_entropy(FState * st, const uint8 *data, unsigned len)
+add_entropy(FState *st, const uint8 *data, unsigned len)
 {
 	unsigned	pos;
 	uint8		hash[BLOCK];
@@ -349,7 +349,7 @@ add_entropy(FState * st, const uint8 *data, unsigned len)
  * Just take 2 next blocks as new key
  */
 static void
-rekey(FState * st)
+rekey(FState *st)
 {
 	encrypt_counter(st, st->key);
 	encrypt_counter(st, st->key + CIPH_BLOCK);
@@ -363,7 +363,7 @@ rekey(FState * st)
  * entropy over all of the components.
  */
 static void
-startup_tricks(FState * st)
+startup_tricks(FState *st)
 {
 	int			i;
 	uint8		buf[BLOCK];
@@ -388,7 +388,7 @@ startup_tricks(FState * st)
 }
 
 static void
-extract_data(FState * st, unsigned count, uint8 *dst)
+extract_data(FState *st, unsigned count, uint8 *dst)
 {
 	unsigned	n;
 	unsigned	block_nr = 0;

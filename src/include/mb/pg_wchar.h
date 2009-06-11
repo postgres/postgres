@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.90 2009/04/24 08:43:51 mha Exp $
+ * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.91 2009/06/11 14:49:11 momjian Exp $
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -383,8 +383,8 @@ extern int	pg_mic_mblen(const unsigned char *mbstr);
 extern int	pg_mbstrlen(const char *mbstr);
 extern int	pg_mbstrlen_with_len(const char *mbstr, int len);
 extern int	pg_mbcliplen(const char *mbstr, int len, int limit);
-extern int	pg_encoding_mbcliplen(int encoding, const char *mbstr,
-								  int len, int limit);
+extern int pg_encoding_mbcliplen(int encoding, const char *mbstr,
+					  int len, int limit);
 extern int	pg_mbcharcliplen(const char *mbstr, int len, int imit);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
@@ -434,10 +434,10 @@ extern int pg_verify_mbstr_len(int encoding, const char *mbstr, int len,
 					bool noError);
 
 extern void check_encoding_conversion_args(int src_encoding,
-										   int dest_encoding,
-										   int len,
-										   int expected_src_encoding,
-										   int expected_dest_encoding);
+							   int dest_encoding,
+							   int len,
+							   int expected_src_encoding,
+							   int expected_dest_encoding);
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,

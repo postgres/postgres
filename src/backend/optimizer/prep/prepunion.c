@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.170 2009/05/12 03:11:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.171 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ static void make_inh_translation_list(Relation oldrelation,
 						  Index newvarno,
 						  List **translated_vars);
 static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
-									  List *translated_vars);
+					List *translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   AppendRelInfo *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
@@ -220,9 +220,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 								   &subroot);
 
 		/*
-		 * Estimate number of groups if caller wants it.  If the subquery
-		 * used grouping or aggregation, its output is probably mostly
-		 * unique anyway; otherwise do statistical estimation.
+		 * Estimate number of groups if caller wants it.  If the subquery used
+		 * grouping or aggregation, its output is probably mostly unique
+		 * anyway; otherwise do statistical estimation.
 		 */
 		if (pNumGroups)
 		{
@@ -231,7 +231,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 				*pNumGroups = subplan->plan_rows;
 			else
 				*pNumGroups = estimate_num_groups(subroot,
-												  get_tlist_exprs(subquery->targetList, false),
+								get_tlist_exprs(subquery->targetList, false),
 												  subplan->plan_rows);
 		}
 
@@ -361,7 +361,7 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 	}
 	else
 	{
-		double	dNumGroups;
+		double		dNumGroups;
 
 		/* Identify the grouping semantics */
 		groupList = generate_setop_grouplist(setOp, tlist);
@@ -374,8 +374,8 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 					 errdetail("All column datatypes must be hashable.")));
 
 		/*
-		 * For the moment, take the number of distinct groups as equal to
-		 * the total input size, ie, the worst case.
+		 * For the moment, take the number of distinct groups as equal to the
+		 * total input size, ie, the worst case.
 		 */
 		dNumGroups = lplan->plan_rows + rplan->plan_rows * 10;
 
@@ -460,9 +460,9 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 		plan = make_union_unique(op, plan, root, tuple_fraction, sortClauses);
 
 	/*
-	 * Estimate number of groups if caller wants it.  For now we just
-	 * assume the output is unique --- this is certainly true for the
-	 * UNION case, and we want worst-case estimates anyway.
+	 * Estimate number of groups if caller wants it.  For now we just assume
+	 * the output is unique --- this is certainly true for the UNION case, and
+	 * we want worst-case estimates anyway.
 	 */
 	if (pNumGroups)
 		*pNumGroups = plan->plan_rows;
@@ -555,8 +555,8 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	 * Estimate number of distinct groups that we'll need hashtable entries
 	 * for; this is the size of the left-hand input for EXCEPT, or the smaller
 	 * input for INTERSECT.  Also estimate the number of eventual output rows.
-	 * In non-ALL cases, we estimate each group produces one output row;
-	 * in ALL cases use the relevant relation size.  These are worst-case
+	 * In non-ALL cases, we estimate each group produces one output row; in
+	 * ALL cases use the relevant relation size.  These are worst-case
 	 * estimates, of course, but we need to be conservative.
 	 */
 	if (op->op == SETOP_EXCEPT)
@@ -578,7 +578,7 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 	 */
 	use_hash = choose_hashed_setop(root, groupList, plan,
 								   dNumGroups, dNumOutputRows, tuple_fraction,
-								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
+					   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
 
 	if (!use_hash)
 		plan = (Plan *) make_sort_from_sortclauses(root, groupList, plan);
@@ -687,12 +687,12 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 	}
 
 	/*
-	 * XXX for the moment, take the number of distinct groups as equal to
-	 * the total input size, ie, the worst case.  This is too conservative,
-	 * but we don't want to risk having the hashtable overrun memory; also,
-	 * it's not clear how to get a decent estimate of the true size.  One
-	 * should note as well the propensity of novices to write UNION rather
-	 * than UNION ALL even when they don't expect any duplicates...
+	 * XXX for the moment, take the number of distinct groups as equal to the
+	 * total input size, ie, the worst case.  This is too conservative, but we
+	 * don't want to risk having the hashtable overrun memory; also, it's not
+	 * clear how to get a decent estimate of the true size.  One should note
+	 * as well the propensity of novices to write UNION rather than UNION ALL
+	 * even when they don't expect any duplicates...
 	 */
 	dNumGroups = plan->plan_rows;
 
@@ -763,7 +763,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 /* translator: %s is UNION, INTERSECT, or EXCEPT */
+		/* translator: %s is UNION, INTERSECT, or EXCEPT */
 				 errmsg("could not implement %s", construct),
 				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 
@@ -1260,16 +1260,16 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		appinfos = lappend(appinfos, appinfo);
 
 		/*
-		 * Translate the column permissions bitmaps to the child's attnums
-		 * (we have to build the translated_vars list before we can do this).
-		 * But if this is the parent table, leave copyObject's result alone.
+		 * Translate the column permissions bitmaps to the child's attnums (we
+		 * have to build the translated_vars list before we can do this). But
+		 * if this is the parent table, leave copyObject's result alone.
 		 */
 		if (childOID != parentOID)
 		{
 			childrte->selectedCols = translate_col_privs(rte->selectedCols,
-														 appinfo->translated_vars);
+												   appinfo->translated_vars);
 			childrte->modifiedCols = translate_col_privs(rte->modifiedCols,
-														 appinfo->translated_vars);
+												   appinfo->translated_vars);
 		}
 
 		/*
@@ -1420,7 +1420,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
  *	  parent rel's attribute numbering to the child's.
  *
  * The only surprise here is that we don't translate a parent whole-row
- * reference into a child whole-row reference.  That would mean requiring
+ * reference into a child whole-row reference.	That would mean requiring
  * permissions on all child columns, which is overly strict, since the
  * query is really only going to reference the inherited columns.  Instead
  * we set the per-column bits for all inherited columns.
@@ -1435,12 +1435,12 @@ translate_col_privs(const Bitmapset *parent_privs,
 	ListCell   *lc;
 
 	/* System attributes have the same numbers in all tables */
-	for (attno = FirstLowInvalidHeapAttributeNumber+1; attno < 0; attno++)
+	for (attno = FirstLowInvalidHeapAttributeNumber + 1; attno < 0; attno++)
 	{
 		if (bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
 						  parent_privs))
 			child_privs = bms_add_member(child_privs,
-										 attno - FirstLowInvalidHeapAttributeNumber);
+								 attno - FirstLowInvalidHeapAttributeNumber);
 	}
 
 	/* Check if parent has whole-row reference */
@@ -1451,7 +1451,7 @@ translate_col_privs(const Bitmapset *parent_privs,
 	attno = InvalidAttrNumber;
 	foreach(lc, translated_vars)
 	{
-		Var	   *var = (Var *) lfirst(lc);
+		Var		   *var = (Var *) lfirst(lc);
 
 		attno++;
 		if (var == NULL)		/* ignore dropped columns */
@@ -1461,7 +1461,7 @@ translate_col_privs(const Bitmapset *parent_privs,
 			bms_is_member(attno - FirstLowInvalidHeapAttributeNumber,
 						  parent_privs))
 			child_privs = bms_add_member(child_privs,
-										 var->varattno - FirstLowInvalidHeapAttributeNumber);
+						 var->varattno - FirstLowInvalidHeapAttributeNumber);
 	}
 
 	return child_privs;

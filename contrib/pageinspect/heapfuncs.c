@@ -18,7 +18,7 @@
  * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.6 2009/01/01 17:23:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.7 2009/06/11 14:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ typedef struct heap_page_items_state
 	TupleDesc	tupd;
 	Page		page;
 	uint16		offset;
-}	heap_page_items_state;
+} heap_page_items_state;
 
 Datum
 heap_page_items(PG_FUNCTION_ARGS)
@@ -189,7 +189,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 						(((char *) tuphdr->t_bits) -((char *) tuphdr));
 
 					values[11] = CStringGetTextDatum(
-						bits_to_text(tuphdr->t_bits, bits_len * 8));
+								 bits_to_text(tuphdr->t_bits, bits_len * 8));
 				}
 				else
 					nulls[11] = true;

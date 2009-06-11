@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.174 2009/04/08 09:50:48 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.175 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +363,7 @@ SetSessionUserId(Oid userid, bool is_superuser)
  * ever throw any kind of error.  This is because they are used by
  * StartTransaction and AbortTransaction to save/restore the settings,
  * and during the first transaction within a backend, the value to be saved
- * and perhaps restored is indeed invalid.  We have to be able to get
+ * and perhaps restored is indeed invalid.	We have to be able to get
  * through AbortTransaction without asserting in case InitPostgres fails.
  */
 void
@@ -1170,7 +1170,7 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 
 	/*
 	 * Choose notice level: avoid repeat messages when re-loading a library
-	 * that was preloaded into the postmaster.  (Only possible in EXEC_BACKEND
+	 * that was preloaded into the postmaster.	(Only possible in EXEC_BACKEND
 	 * configurations)
 	 */
 #ifdef EXEC_BACKEND
@@ -1238,7 +1238,7 @@ pg_bindtextdomain(const char *domain)
 #ifdef ENABLE_NLS
 	if (my_exec_path[0] != '\0')
 	{
-		char	locale_path[MAXPGPATH];
+		char		locale_path[MAXPGPATH];
 
 		get_locale_path(my_exec_path, locale_path);
 		bindtextdomain(domain, locale_path);

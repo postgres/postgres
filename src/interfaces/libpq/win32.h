@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/libpq/win32.h,v 1.29 2008/05/17 01:28:25 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/interfaces/libpq/win32.h,v 1.30 2009/06/11 14:49:14 momjian Exp $
  */
 #ifndef __win32_h_included
 #define __win32_h_included

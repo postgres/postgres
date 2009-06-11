@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.77 2009/06/06 22:13:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.78 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,8 @@ extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Snapshot snapshot,
 				int nkeys, ScanKey key);
 extern IndexScanDesc index_beginscan_bitmap(Relation indexRelation,
-					  Snapshot snapshot,
-					  int nkeys, ScanKey key);
+					   Snapshot snapshot,
+					   int nkeys, ScanKey key);
 extern void index_rescan(IndexScanDesc scan, ScanKey key);
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
@@ -149,11 +149,11 @@ extern HeapTuple systable_getnext(SysScanDesc sysscan);
 extern bool systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup);
 extern void systable_endscan(SysScanDesc sysscan);
 extern SysScanDesc systable_beginscan_ordered(Relation heapRelation,
-											  Relation indexRelation,
-											  Snapshot snapshot,
-											  int nkeys, ScanKey key);
+						   Relation indexRelation,
+						   Snapshot snapshot,
+						   int nkeys, ScanKey key);
 extern HeapTuple systable_getnext_ordered(SysScanDesc sysscan,
-										  ScanDirection direction);
+						 ScanDirection direction);
 extern void systable_endscan_ordered(SysScanDesc sysscan);
 
 #endif   /* GENAM_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.135 2009/04/19 18:52:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.136 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,8 +415,8 @@ do_compile(FunctionCallInfo fcinfo,
 					argdtype->ttype != PLPGSQL_TTYPE_ROW)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/pgSQL functions cannot accept type %s",
-									format_type_be(argtypeid))));
+						   errmsg("PL/pgSQL functions cannot accept type %s",
+								  format_type_be(argtypeid))));
 
 				/* Build variable and add to datum list */
 				argvariable = plpgsql_build_variable(buf, 0,
@@ -534,8 +534,8 @@ do_compile(FunctionCallInfo fcinfo,
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/pgSQL functions cannot return type %s",
-									format_type_be(rettypeid))));
+						   errmsg("PL/pgSQL functions cannot return type %s",
+								  format_type_be(rettypeid))));
 			}
 
 			if (typeStruct->typrelid != InvalidOid ||
@@ -787,8 +787,8 @@ plpgsql_parse_word(const char *word)
 	plpgsql_convert_ident(word, cp, 1);
 
 	/*
-	 * Recognize tg_argv when compiling triggers
-	 * (XXX this sucks, it should be a regular variable in the namestack)
+	 * Recognize tg_argv when compiling triggers (XXX this sucks, it should be
+	 * a regular variable in the namestack)
 	 */
 	if (plpgsql_curr_compile->fn_is_trigger)
 	{
@@ -977,8 +977,8 @@ plpgsql_parse_tripword(const char *word)
 	plpgsql_convert_ident(word, cp, 3);
 
 	/*
-	 * Do a lookup on the compiler's namestack.
-	 * Must find a qualified reference.
+	 * Do a lookup on the compiler's namestack. Must find a qualified
+	 * reference.
 	 */
 	ns = plpgsql_ns_lookup(cp[0], cp[1], cp[2], &nnames);
 	if (ns == NULL || nnames != 2)
@@ -1168,8 +1168,8 @@ plpgsql_parse_dblwordtype(char *word)
 	pfree(cp[2]);
 
 	/*
-	 * Do a lookup on the compiler's namestack.  Ensure we scan all levels.
-	 * We don't need to check number of names matched, because we will only
+	 * Do a lookup on the compiler's namestack.  Ensure we scan all levels. We
+	 * don't need to check number of names matched, because we will only
 	 * consider scalar variables.
 	 */
 	old_nsstate = plpgsql_ns_setlocal(false);
@@ -1755,8 +1755,8 @@ build_datatype(HeapTuple typeTup, int32 typmod)
 }
 
 /*
- *  plpgsql_recognize_err_condition
- * 		Check condition name and translate it to SQLSTATE.
+ *	plpgsql_recognize_err_condition
+ *		Check condition name and translate it to SQLSTATE.
  *
  * Note: there are some cases where the same condition name has multiple
  * entries in the table.  We arbitrarily return the first match.

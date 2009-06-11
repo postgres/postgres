@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubdec.c,v 1.5 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubdec.c,v 1.6 2009/06/11 14:48:52 momjian Exp $
  */
 #include "postgres.h"
 
@@ -95,7 +95,7 @@ control_cksum(uint8 *msg, int msglen)
 }
 
 static int
-decrypt_elgamal(PGP_PubKey * pk, PullFilter * pkt, PGP_MPI ** m_p)
+decrypt_elgamal(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 {
 	int			res;
 	PGP_MPI    *c1 = NULL;
@@ -122,7 +122,7 @@ out:
 }
 
 static int
-decrypt_rsa(PGP_PubKey * pk, PullFilter * pkt, PGP_MPI ** m_p)
+decrypt_rsa(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 {
 	int			res;
 	PGP_MPI    *c;
@@ -148,7 +148,7 @@ static const uint8
 			any_key[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 int
-pgp_parse_pubenc_sesskey(PGP_Context * ctx, PullFilter * pkt)
+pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 {
 	int			ver;
 	int			algo;

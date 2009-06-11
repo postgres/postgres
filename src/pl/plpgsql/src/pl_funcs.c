@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.78 2009/04/19 21:50:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.79 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
  *
  * Note that this only searches for variables, not labels.
  *
- * name1 must be non-NULL.  Pass NULL for name2 and/or name3 if parsing a name
+ * name1 must be non-NULL.	Pass NULL for name2 and/or name3 if parsing a name
  * with fewer than three components.
  *
  * If names_used isn't NULL, *names_used receives the number of names
@@ -412,7 +412,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 			if (*s != '"')		/* should not happen if lexer checked */
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("unterminated \" in identifier: %s", sstart)));
+					   errmsg("unterminated \" in identifier: %s", sstart)));
 			s++;
 			*cp = '\0';
 			/* Truncate to NAMEDATALEN */
@@ -722,7 +722,7 @@ dump_if(PLpgSQL_stmt_if *stmt)
 static void
 dump_case(PLpgSQL_stmt_case *stmt)
 {
-	ListCell	*l;
+	ListCell   *l;
 
 	dump_ind();
 	printf("CASE %d ", stmt->t_varno);
@@ -828,7 +828,7 @@ static void
 dump_forc(PLpgSQL_stmt_forc *stmt)
 {
 	dump_ind();
-	printf("FORC %s ",  stmt->rec->refname);
+	printf("FORC %s ", stmt->rec->refname);
 	printf("curvar=%d\n", stmt->curvar);
 
 	dump_indent += 2;

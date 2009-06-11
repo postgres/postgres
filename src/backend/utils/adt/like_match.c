@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.25 2009/05/24 18:10:37 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.26 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,8 @@ MatchText(char *t, int tlen, char *p, int plen)
 			if (plen <= 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
-						 errmsg("LIKE pattern must not end with escape character")));
-			if (TCHAR(*p) != TCHAR(*t))
+				 errmsg("LIKE pattern must not end with escape character")));
+			if (TCHAR (*p) != TCHAR (*t))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -135,9 +135,9 @@ MatchText(char *t, int tlen, char *p, int plen)
 				} while (tlen > 0 && plen > 0 && *p == '_');
 
 				/*
-				 * If we are at the end of the pattern, succeed: % followed
-				 * by n _'s matches any string of at least n characters, and
-				 * we have now found there are at least n characters.
+				 * If we are at the end of the pattern, succeed: % followed by
+				 * n _'s matches any string of at least n characters, and we
+				 * have now found there are at least n characters.
 				 */
 				if (plen <= 0)
 					return LIKE_TRUE;
@@ -155,13 +155,13 @@ MatchText(char *t, int tlen, char *p, int plen)
 			}
 			else
 			{
-				char		firstpat = TCHAR(*p);
+				char		firstpat = TCHAR (*p);
 
 				if (*p == '\\')
 				{
 					if (plen < 2)
 						return LIKE_FALSE;
-					firstpat = TCHAR(p[1]);
+					firstpat = TCHAR (p[1]);
 				}
 
 				while (tlen > 0)
@@ -170,7 +170,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 					 * Optimization to prevent most recursion: don't recurse
 					 * unless first pattern byte matches first text byte.
 					 */
-					if (TCHAR(*t) == firstpat)
+					if (TCHAR (*t) == firstpat)
 					{
 						int			matched = MatchText(t, tlen, p, plen);
 
@@ -195,7 +195,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 			NextByte(p, plen);
 			continue;
 		}
-		else if (TCHAR(*p) != TCHAR(*t))
+		else if (TCHAR (*p) != TCHAR (*t))
 		{
 			/* non-wildcard pattern char fails to match text char */
 			return LIKE_FALSE;
@@ -220,8 +220,9 @@ MatchText(char *t, int tlen, char *p, int plen)
 	if (tlen > 0)
 		return LIKE_FALSE;		/* end of pattern, but not of text */
 
-	/* End of text string.  Do we have matching pattern remaining? */
-	while (plen > 0 && *p == '%')	/* allow multiple %'s at end of pattern */
+	/* End of text string.	Do we have matching pattern remaining? */
+	while (plen > 0 && *p == '%')		/* allow multiple %'s at end of
+										 * pattern */
 		NextByte(p, plen);
 
 	if (plen <= 0)
@@ -351,4 +352,5 @@ do_like_escape(text *pat, text *esc)
 
 #ifdef MATCH_LOWER
 #undef MATCH_LOWER
+
 #endif

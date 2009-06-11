@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.9 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_locale.h,v 1.10 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ extern char *lowerstr(const char *str);
 extern char *lowerstr_with_len(const char *str, int len);
 
 extern bool tsearch_readline_begin(tsearch_readline_state *stp,
-								   const char *filename);
+					   const char *filename);
 extern char *tsearch_readline(tsearch_readline_state *stp);
 extern void tsearch_readline_end(tsearch_readline_state *stp);
 

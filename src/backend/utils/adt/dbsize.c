@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.23 2009/01/01 17:23:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.24 2009/06/11 14:49:03 momjian Exp $
  *
  */
 
@@ -294,7 +294,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	rel = relation_open(relOid, AccessShareLock);
 
 	size = calculate_relation_size(&(rel->rd_node),
-							   forkname_to_number(text_to_cstring(forkName)));
+							  forkname_to_number(text_to_cstring(forkName)));
 
 	relation_close(rel, AccessShareLock);
 

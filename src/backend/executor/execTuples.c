@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.106 2009/03/30 04:08:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.107 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,9 +756,9 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
 
 	/*
 	 * Note: we may now have a situation where we have a local minimal tuple
-	 * attached to a virtual or non-local physical tuple.  There seems no
-	 * harm in that at the moment, but if any materializes, we should change
-	 * this function to force the slot into minimal-tuple-only state.
+	 * attached to a virtual or non-local physical tuple.  There seems no harm
+	 * in that at the moment, but if any materializes, we should change this
+	 * function to force the slot into minimal-tuple-only state.
 	 */
 
 	return slot->tts_mintuple;
@@ -843,9 +843,9 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	slot->tts_buffer = InvalidBuffer;
 
 	/*
-	 * Mark extracted state invalid.  This is important because the slot
-	 * is not supposed to depend any more on the previous external data;
-	 * we mustn't leave any dangling pass-by-reference datums in tts_values.
+	 * Mark extracted state invalid.  This is important because the slot is
+	 * not supposed to depend any more on the previous external data; we
+	 * mustn't leave any dangling pass-by-reference datums in tts_values.
 	 * However, we have not actually invalidated any such datums, if there
 	 * happen to be any previously fetched from the slot.  (Note in particular
 	 * that we have not pfree'd tts_mintuple, if there is one.)
@@ -854,9 +854,9 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 
 	/*
 	 * On the same principle of not depending on previous remote storage,
-	 * forget the mintuple if it's not local storage.  (If it is local storage,
-	 * we must not pfree it now, since callers might have already fetched
-	 * datum pointers referencing it.)
+	 * forget the mintuple if it's not local storage.  (If it is local
+	 * storage, we must not pfree it now, since callers might have already
+	 * fetched datum pointers referencing it.)
 	 */
 	if (!slot->tts_shouldFreeMin)
 		slot->tts_mintuple = NULL;

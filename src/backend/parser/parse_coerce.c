@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.176 2009/05/12 03:11:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.177 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,10 +200,10 @@ coerce_type(ParseState *pstate, Node *node,
 		 * For most types we pass typmod -1 to the input routine, because
 		 * existing input routines follow implicit-coercion semantics for
 		 * length checks, which is not always what we want here.  Any length
-		 * constraint will be applied later by our caller.  An exception
+		 * constraint will be applied later by our caller.	An exception
 		 * however is the INTERVAL type, for which we *must* pass the typmod
-		 * or it won't be able to obey the bizarre SQL-spec input rules.
-		 * (Ugly as sin, but so is this part of the spec...)
+		 * or it won't be able to obey the bizarre SQL-spec input rules. (Ugly
+		 * as sin, but so is this part of the spec...)
 		 */
 		if (baseTypeId == INTERVALOID)
 			inputTypeMod = baseTypeMod;
@@ -226,8 +226,8 @@ coerce_type(ParseState *pstate, Node *node,
 			newcon->location = location;
 
 		/*
-		 * Set up to point at the constant's text if the input routine
-		 * throws an error.
+		 * Set up to point at the constant's text if the input routine throws
+		 * an error.
 		 */
 		setup_parser_errposition_callback(&pcbstate, pstate, con->location);
 
@@ -510,9 +510,10 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 			continue;
 
 #ifdef NOT_USED					/* not implemented yet */
+
 		/*
-		 * If input is record[] and target is a composite array type,
-		 * assume we can coerce (may need tighter checking here)
+		 * If input is record[] and target is a composite array type, assume
+		 * we can coerce (may need tighter checking here)
 		 */
 		if (inputTypeId == RECORDARRAYOID &&
 			is_complex_array(targetTypeId))
@@ -984,7 +985,7 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 
 	if (inputTypeId != BOOLOID)
 	{
-		Node	*newnode;
+		Node	   *newnode;
 
 		newnode = coerce_to_target_type(pstate, node, inputTypeId,
 										BOOLOID, -1,
@@ -995,8 +996,8 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 			/* translator: first %s is name of a SQL construct, eg WHERE */
-					 errmsg("argument of %s must be type boolean, not type %s",
-							constructName, format_type_be(inputTypeId)),
+				   errmsg("argument of %s must be type boolean, not type %s",
+						  constructName, format_type_be(inputTypeId)),
 					 parser_errposition(pstate, exprLocation(node))));
 		node = newnode;
 	}
@@ -1031,7 +1032,7 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 
 	if (inputTypeId != targetTypeId)
 	{
-		Node	*newnode;
+		Node	   *newnode;
 
 		newnode = coerce_to_target_type(pstate, node, inputTypeId,
 										targetTypeId, -1,
@@ -1104,7 +1105,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 {
 	Node	   *pexpr;
 	Oid			ptype;
-	TYPCATEGORY	pcategory;
+	TYPCATEGORY pcategory;
 	bool		pispreferred;
 	ListCell   *lc;
 
@@ -1122,8 +1123,8 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 	{
 		for_each_cell(lc, lc)
 		{
-			Node   *nexpr = (Node *) lfirst(lc);
-			Oid		ntype = exprType(nexpr);
+			Node	   *nexpr = (Node *) lfirst(lc);
+			Oid			ntype = exprType(nexpr);
 
 			if (ntype != ptype)
 				break;
@@ -1137,9 +1138,9 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 	}
 
 	/*
-	 * Nope, so set up for the full algorithm.  Note that at this point,
-	 * lc points to the first list item with type different from pexpr's;
-	 * we need not re-examine any items the previous loop advanced over.
+	 * Nope, so set up for the full algorithm.	Note that at this point, lc
+	 * points to the first list item with type different from pexpr's; we need
+	 * not re-examine any items the previous loop advanced over.
 	 */
 	ptype = getBaseType(ptype);
 	get_type_category_preferred(ptype, &pcategory, &pispreferred);
@@ -1152,7 +1153,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 		/* move on to next one if no new information... */
 		if (ntype != UNKNOWNOID && ntype != ptype)
 		{
-			TYPCATEGORY	ncategory;
+			TYPCATEGORY ncategory;
 			bool		nispreferred;
 
 			get_type_category_preferred(ntype, &ncategory, &nispreferred);
@@ -1422,14 +1423,14 @@ check_generic_type_consistency(Oid *actual_arg_types,
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types
  * to be polymorphic, and we should not return a polymorphic result type
- * either.  When allow_poly is true, it is okay to have polymorphic "actual"
+ * either.	When allow_poly is true, it is okay to have polymorphic "actual"
  * arg types, and we can return ANYARRAY or ANYELEMENT as the result.  (This
  * case is currently used only to check compatibility of an aggregate's
  * declaration with the underlying transfn.)
  *
  * A special case is that we could see ANYARRAY as an actual_arg_type even
  * when allow_poly is false (this is possible only because pg_statistic has
- * columns shown as anyarray in the catalogs).  We allow this to match a
+ * columns shown as anyarray in the catalogs).	We allow this to match a
  * declared ANYARRAY argument, but only if there is no ANYELEMENT argument
  * or result (since we can't determine a specific element type to match to
  * ANYELEMENT).  Note this means that functions taking ANYARRAY had better
@@ -1995,8 +1996,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 
 		/*
 		 * If we still haven't found a possibility, consider automatic casting
-		 * using I/O functions.  We allow assignment casts to string types
-		 * and explicit casts from string types to be handled this way. (The
+		 * using I/O functions.  We allow assignment casts to string types and
+		 * explicit casts from string types to be handled this way. (The
 		 * CoerceViaIO mechanism is a lot more general than that, but this is
 		 * all we want to allow in the absence of a pg_cast entry.) It would
 		 * probably be better to insist on explicit casts in both directions,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.70 2009/01/08 00:13:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.71 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,8 @@ current_database(PG_FUNCTION_ARGS)
 
 /*
  * current_query()
- *  Expose the current query to the user (useful in stored procedures)
- *  We might want to use ActivePortal->sourceText someday. 
+ *	Expose the current query to the user (useful in stored procedures)
+ *	We might want to use ActivePortal->sourceText someday.
  */
 Datum
 current_query(PG_FUNCTION_ARGS)
@@ -322,7 +322,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 		tupdesc = CreateTemplateTupleDesc(3, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
 						   TEXTOID, -1, 0);
-  		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "catcode",
 						   CHAROID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "catdesc",
 						   TEXTOID, -1, 0);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.44 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.45 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,8 +600,8 @@ RenameConstraintById(Oid conId, const char *newname)
 	con = (Form_pg_constraint) GETSTRUCT(tuple);
 
 	/*
-	 * We need to check whether the name is already in use --- note that
-	 * there currently is not a unique index that would catch this.
+	 * We need to check whether the name is already in use --- note that there
+	 * currently is not a unique index that would catch this.
 	 */
 	if (OidIsValid(con->conrelid) &&
 		ConstraintNameIsUsed(CONSTRAINT_RELATION,
@@ -610,8 +610,8 @@ RenameConstraintById(Oid conId, const char *newname)
 							 newname))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("constraint \"%s\" for relation \"%s\" already exists",
-						newname, get_rel_name(con->conrelid))));
+			   errmsg("constraint \"%s\" for relation \"%s\" already exists",
+					  newname, get_rel_name(con->conrelid))));
 	if (OidIsValid(con->contypid) &&
 		ConstraintNameIsUsed(CONSTRAINT_DOMAIN,
 							 con->contypid,

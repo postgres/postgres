@@ -8,16 +8,16 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.72 2009/01/20 18:59:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.73 2009/06/11 14:49:01 momjian Exp $
  *
  *
  * NOTES:
  *
- *  Free Space Map keeps track of the amount of free space on pages, and
- *  allows quickly searching for a page with enough free space. The FSM is
- *  stored in a dedicated relation fork of all heap relations, and those
- *  index access methods that need it (see also indexfsm.c). See README for
- *  more information.
+ *	Free Space Map keeps track of the amount of free space on pages, and
+ *	allows quickly searching for a page with enough free space. The FSM is
+ *	stored in a dedicated relation fork of all heap relations, and those
+ *	index access methods that need it (see also indexfsm.c). See README for
+ *	more information.
  *
  *-------------------------------------------------------------------------
  */
@@ -49,10 +49,10 @@
  * look like this
  *
  *
- * Range     Category
- * 0    - 31   0
- * 32   - 63   1
- * ...    ...  ...
+ * Range	 Category
+ * 0	- 31   0
+ * 32	- 63   1
+ * ...	  ...  ...
  * 8096 - 8127 253
  * 8128 - 8163 254
  * 8164 - 8192 255
@@ -86,12 +86,12 @@
  */
 typedef struct
 {
-	int level;		/* level */
-	int logpageno;	/* page number within the level */
+	int			level;			/* level */
+	int			logpageno;		/* page number within the level */
 } FSMAddress;
 
 /* Address of the root page. */
-static const FSMAddress FSM_ROOT_ADDRESS = { FSM_ROOT_LEVEL, 0 };
+static const FSMAddress FSM_ROOT_ADDRESS = {FSM_ROOT_LEVEL, 0};
 
 /* functions to navigate the tree */
 static FSMAddress fsm_get_child(FSMAddress parent, uint16 slot);
@@ -106,11 +106,11 @@ static void fsm_extend(Relation rel, BlockNumber fsm_nblocks);
 /* functions to convert amount of free space to a FSM category */
 static uint8 fsm_space_avail_to_cat(Size avail);
 static uint8 fsm_space_needed_to_cat(Size needed);
-static Size  fsm_space_cat_to_avail(uint8 cat);
+static Size fsm_space_cat_to_avail(uint8 cat);
 
 /* workhorse functions for various operations */
 static int fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
-							  uint8 newValue, uint8 minValue);
+				   uint8 newValue, uint8 minValue);
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
 
@@ -133,7 +133,8 @@ static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
 BlockNumber
 GetPageWithFreeSpace(Relation rel, Size spaceNeeded)
 {
-	uint8 min_cat = fsm_space_needed_to_cat(spaceNeeded);
+	uint8		min_cat = fsm_space_needed_to_cat(spaceNeeded);
+
 	return fsm_search(rel, min_cat);
 }
 
@@ -259,7 +260,7 @@ GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk)
 void
 FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 {
-	BlockNumber	new_nfsmblocks;
+	BlockNumber new_nfsmblocks;
 	FSMAddress	first_removed_address;
 	uint16		first_removed_slot;
 	Buffer		buf;
@@ -278,15 +279,15 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 
 	/*
 	 * Zero out the tail of the last remaining FSM page. If the slot
-	 * representing the first removed heap block is at a page boundary, as
-	 * the first slot on the FSM page that first_removed_address points to,
-	 * we can just truncate that page altogether.
+	 * representing the first removed heap block is at a page boundary, as the
+	 * first slot on the FSM page that first_removed_address points to, we can
+	 * just truncate that page altogether.
 	 */
 	if (first_removed_slot > 0)
 	{
 		buf = fsm_readbuf(rel, first_removed_address, false);
 		if (!BufferIsValid(buf))
-			return; /* nothing to do; the FSM was already smaller */
+			return;				/* nothing to do; the FSM was already smaller */
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		fsm_truncate_avail(BufferGetPage(buf), first_removed_slot);
 		MarkBufferDirty(buf);
@@ -298,15 +299,15 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	{
 		new_nfsmblocks = fsm_logical_to_physical(first_removed_address);
 		if (smgrnblocks(rel->rd_smgr, FSM_FORKNUM) <= new_nfsmblocks)
-			return; /* nothing to do; the FSM was already smaller */
+			return;				/* nothing to do; the FSM was already smaller */
 	}
 
 	/* Truncate the unused FSM pages */
 	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_istemp);
 
 	/*
-	 * Need to invalidate the relcache entry, because rd_fsm_nblocks
-	 * seen by other backends is no longer valid.
+	 * Need to invalidate the relcache entry, because rd_fsm_nblocks seen by
+	 * other backends is no longer valid.
 	 */
 	if (!InRecovery)
 		CacheInvalidateRelcache(rel);
@@ -320,7 +321,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 void
 FreeSpaceMapVacuum(Relation rel)
 {
-	bool dummy;
+	bool		dummy;
 
 	/*
 	 * Traverse the tree in depth-first order. The tree is stored physically
@@ -337,7 +338,7 @@ FreeSpaceMapVacuum(Relation rel)
 static uint8
 fsm_space_avail_to_cat(Size avail)
 {
-	int cat;
+	int			cat;
 
 	Assert(avail < BLCKSZ);
 
@@ -377,12 +378,12 @@ fsm_space_cat_to_avail(uint8 cat)
 static uint8
 fsm_space_needed_to_cat(Size needed)
 {
-	int cat;
+	int			cat;
 
 	/* Can't ask for more space than the highest category represents */
 	if (needed > MaxFSMRequestSize)
-			elog(ERROR, "invalid FSM request size %lu",
-				 (unsigned long) needed);
+		elog(ERROR, "invalid FSM request size %lu",
+			 (unsigned long) needed);
 
 	if (needed == 0)
 		return 1;
@@ -402,8 +403,8 @@ static BlockNumber
 fsm_logical_to_physical(FSMAddress addr)
 {
 	BlockNumber pages;
-	int leafno;
-	int l;
+	int			leafno;
+	int			l;
 
 	/*
 	 * Calculate the logical page number of the first leaf page below the
@@ -422,8 +423,8 @@ fsm_logical_to_physical(FSMAddress addr)
 	}
 
 	/*
-	 * If the page we were asked for wasn't at the bottom level, subtract
-	 * the additional lower level pages we counted above.
+	 * If the page we were asked for wasn't at the bottom level, subtract the
+	 * additional lower level pages we counted above.
 	 */
 	pages -= addr.level;
 
@@ -437,7 +438,7 @@ fsm_logical_to_physical(FSMAddress addr)
 static FSMAddress
 fsm_get_location(BlockNumber heapblk, uint16 *slot)
 {
-	FSMAddress addr;
+	FSMAddress	addr;
 
 	addr.level = FSM_BOTTOM_LEVEL;
 	addr.logpageno = heapblk / SlotsPerFSMPage;
@@ -463,7 +464,7 @@ fsm_get_heap_blk(FSMAddress addr, uint16 slot)
 static FSMAddress
 fsm_get_parent(FSMAddress child, uint16 *slot)
 {
-	FSMAddress parent;
+	FSMAddress	parent;
 
 	Assert(child.level < FSM_ROOT_LEVEL);
 
@@ -481,7 +482,7 @@ fsm_get_parent(FSMAddress child, uint16 *slot)
 static FSMAddress
 fsm_get_child(FSMAddress parent, uint16 slot)
 {
-	FSMAddress child;
+	FSMAddress	child;
 
 	Assert(parent.level > FSM_BOTTOM_LEVEL);
 
@@ -501,7 +502,7 @@ static Buffer
 fsm_readbuf(Relation rel, FSMAddress addr, bool extend)
 {
 	BlockNumber blkno = fsm_logical_to_physical(addr);
-	Buffer buf;
+	Buffer		buf;
 
 	RelationOpenSmgr(rel);
 
@@ -545,20 +546,20 @@ static void
 fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 {
 	BlockNumber fsm_nblocks_now;
-	Page pg;
+	Page		pg;
 
 	pg = (Page) palloc(BLCKSZ);
 	PageInit(pg, BLCKSZ, 0);
 
 	/*
-	 * We use the relation extension lock to lock out other backends
-	 * trying to extend the FSM at the same time. It also locks out
-	 * extension of the main fork, unnecessarily, but extending the
-	 * FSM happens seldom enough that it doesn't seem worthwhile to
-	 * have a separate lock tag type for it.
+	 * We use the relation extension lock to lock out other backends trying to
+	 * extend the FSM at the same time. It also locks out extension of the
+	 * main fork, unnecessarily, but extending the FSM happens seldom enough
+	 * that it doesn't seem worthwhile to have a separate lock tag type for
+	 * it.
 	 *
-	 * Note that another backend might have extended or created the
-	 * relation before we get the lock.
+	 * Note that another backend might have extended or created the relation
+	 * before we get the lock.
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 
@@ -631,14 +632,14 @@ fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 static BlockNumber
 fsm_search(Relation rel, uint8 min_cat)
 {
-	int restarts = 0;
-	FSMAddress addr = FSM_ROOT_ADDRESS;
+	int			restarts = 0;
+	FSMAddress	addr = FSM_ROOT_ADDRESS;
 
 	for (;;)
 	{
-		int slot;
-		Buffer buf;
-		uint8 max_avail = 0;
+		int			slot;
+		Buffer		buf;
+		uint8		max_avail = 0;
 
 		/* Read the FSM page. */
 		buf = fsm_readbuf(rel, addr, false);
@@ -678,8 +679,8 @@ fsm_search(Relation rel, uint8 min_cat)
 		}
 		else
 		{
-			uint16 parentslot;
-			FSMAddress parent;
+			uint16		parentslot;
+			FSMAddress	parent;
 
 			/*
 			 * At lower level, failure can happen if the value in the upper-
@@ -697,11 +698,11 @@ fsm_search(Relation rel, uint8 min_cat)
 			fsm_set_and_search(rel, parent, parentslot, max_avail, 0);
 
 			/*
-			 * If the upper pages are badly out of date, we might need to
-			 * loop quite a few times, updating them as we go. Any
-			 * inconsistencies should eventually be corrected and the loop
-			 * should end. Looping indefinitely is nevertheless scary, so
-			 * provide an emergency valve.
+			 * If the upper pages are badly out of date, we might need to loop
+			 * quite a few times, updating them as we go. Any inconsistencies
+			 * should eventually be corrected and the loop should end. Looping
+			 * indefinitely is nevertheless scary, so provide an emergency
+			 * valve.
 			 */
 			if (restarts++ > 10000)
 				return InvalidBlockNumber;
@@ -719,9 +720,9 @@ fsm_search(Relation rel, uint8 min_cat)
 static uint8
 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 {
-	Buffer buf;
-	Page page;
-	uint8 max_avail;
+	Buffer		buf;
+	Page		page;
+	uint8		max_avail;
 
 	/* Read the page if it exists, or return EOF */
 	buf = fsm_readbuf(rel, addr, false);
@@ -736,17 +737,17 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 	page = BufferGetPage(buf);
 
 	/*
-	 * Recurse into children, and fix the information stored about them
-	 * at this level.
+	 * Recurse into children, and fix the information stored about them at
+	 * this level.
 	 */
 	if (addr.level > FSM_BOTTOM_LEVEL)
 	{
-		int slot;
-		bool eof = false;
+		int			slot;
+		bool		eof = false;
 
 		for (slot = 0; slot < SlotsPerFSMPage; slot++)
 		{
-			int child_avail;
+			int			child_avail;
 
 			/* After we hit end-of-file, just clear the rest of the slots */
 			if (!eof)

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * pg_proc_fn.h
- * 	 prototypes for functions in catalog/pg_proc.c
+ *	 prototypes for functions in catalog/pg_proc.c
  *
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc_fn.h,v 1.6 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc_fn.h,v 1.7 2009/06/11 14:49:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

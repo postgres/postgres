@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.147 2009/02/06 21:15:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.148 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ static int	oidComparator(const void *arg1, const void *arg2);
 
 static AclMode convert_priv_string(text *priv_type_text);
 static AclMode convert_any_priv_string(text *priv_type_text,
-									   const priv_map *privileges);
+						const priv_map *privileges);
 
 static Oid	convert_table_name(text *tablename);
 static AclMode convert_table_priv_string(text *priv_type_text);
@@ -386,7 +386,7 @@ allocacl(int n)
 Acl *
 aclcopy(const Acl *orig_acl)
 {
-	Acl *result_acl;
+	Acl		   *result_acl;
 
 	result_acl = allocacl(ACL_NUM(orig_acl));
 
@@ -406,7 +406,7 @@ aclcopy(const Acl *orig_acl)
 Acl *
 aclconcat(const Acl *left_acl, const Acl *right_acl)
 {
-	Acl *result_acl;
+	Acl		   *result_acl;
 
 	result_acl = allocacl(ACL_NUM(left_acl) + ACL_NUM(right_acl));
 
@@ -1682,23 +1682,23 @@ static AclMode
 convert_table_priv_string(text *priv_type_text)
 {
 	static const priv_map table_priv_map[] = {
-		{ "SELECT", ACL_SELECT },
-		{ "SELECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SELECT) },
-		{ "INSERT", ACL_INSERT },
-		{ "INSERT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_INSERT) },
-		{ "UPDATE", ACL_UPDATE },
-		{ "UPDATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_UPDATE) },
-		{ "DELETE", ACL_DELETE },
-		{ "DELETE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_DELETE) },
-		{ "TRUNCATE", ACL_TRUNCATE },
-		{ "TRUNCATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_TRUNCATE) },
-		{ "REFERENCES", ACL_REFERENCES },
-		{ "REFERENCES WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_REFERENCES) },
-		{ "TRIGGER", ACL_TRIGGER },
-		{ "TRIGGER WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_TRIGGER) },
-		{ "RULE", 0 },			/* ignore old RULE privileges */
-		{ "RULE WITH GRANT OPTION", 0 },
-		{ NULL, 0 }
+		{"SELECT", ACL_SELECT},
+		{"SELECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SELECT)},
+		{"INSERT", ACL_INSERT},
+		{"INSERT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_INSERT)},
+		{"UPDATE", ACL_UPDATE},
+		{"UPDATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_UPDATE)},
+		{"DELETE", ACL_DELETE},
+		{"DELETE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_DELETE)},
+		{"TRUNCATE", ACL_TRUNCATE},
+		{"TRUNCATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_TRUNCATE)},
+		{"REFERENCES", ACL_REFERENCES},
+		{"REFERENCES WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_REFERENCES)},
+		{"TRIGGER", ACL_TRIGGER},
+		{"TRIGGER WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_TRIGGER)},
+		{"RULE", 0},			/* ignore old RULE privileges */
+		{"RULE WITH GRANT OPTION", 0},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, table_priv_map);
@@ -1928,7 +1928,7 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 	 * existence of the pg_class row before risking calling pg_class_aclcheck.
 	 * Note: it might seem there's a race condition against concurrent DROP,
 	 * but really it's safe because there will be no syscache flush between
-	 * here and there.  So if we see the row in the syscache, so will
+	 * here and there.	So if we see the row in the syscache, so will
 	 * pg_class_aclcheck.
 	 */
 	if (!SearchSysCacheExists(RELOID,
@@ -2314,15 +2314,15 @@ static AclMode
 convert_column_priv_string(text *priv_type_text)
 {
 	static const priv_map column_priv_map[] = {
-		{ "SELECT", ACL_SELECT },
-		{ "SELECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SELECT) },
-		{ "INSERT", ACL_INSERT },
-		{ "INSERT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_INSERT) },
-		{ "UPDATE", ACL_UPDATE },
-		{ "UPDATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_UPDATE) },
-		{ "REFERENCES", ACL_REFERENCES },
-		{ "REFERENCES WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_REFERENCES) },
-		{ NULL, 0 }
+		{"SELECT", ACL_SELECT},
+		{"SELECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SELECT)},
+		{"INSERT", ACL_INSERT},
+		{"INSERT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_INSERT)},
+		{"UPDATE", ACL_UPDATE},
+		{"UPDATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_UPDATE)},
+		{"REFERENCES", ACL_REFERENCES},
+		{"REFERENCES WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_REFERENCES)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, column_priv_map);
@@ -2524,15 +2524,15 @@ static AclMode
 convert_database_priv_string(text *priv_type_text)
 {
 	static const priv_map database_priv_map[] = {
-		{ "CREATE", ACL_CREATE },
-		{ "CREATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ "TEMPORARY", ACL_CREATE_TEMP },
-		{ "TEMPORARY WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP) },
-		{ "TEMP", ACL_CREATE_TEMP },
-		{ "TEMP WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP) },
-		{ "CONNECT", ACL_CONNECT },
-		{ "CONNECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CONNECT) },
-		{ NULL, 0 }
+		{"CREATE", ACL_CREATE},
+		{"CREATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{"TEMPORARY", ACL_CREATE_TEMP},
+		{"TEMPORARY WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP)},
+		{"TEMP", ACL_CREATE_TEMP},
+		{"TEMP WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP)},
+		{"CONNECT", ACL_CONNECT},
+		{"CONNECT WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CONNECT)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, database_priv_map);
@@ -2713,9 +2713,9 @@ static AclMode
 convert_foreign_data_wrapper_priv_string(text *priv_type_text)
 {
 	static const priv_map foreign_data_wrapper_priv_map[] = {
-		{ "USAGE", ACL_USAGE },
-		{ "USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE) },
-		{ NULL, 0 }
+		{"USAGE", ACL_USAGE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, foreign_data_wrapper_priv_map);
@@ -2919,9 +2919,9 @@ static AclMode
 convert_function_priv_string(text *priv_type_text)
 {
 	static const priv_map function_priv_map[] = {
-		{ "EXECUTE", ACL_EXECUTE },
-		{ "EXECUTE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_EXECUTE) },
-		{ NULL, 0 }
+		{"EXECUTE", ACL_EXECUTE},
+		{"EXECUTE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_EXECUTE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, function_priv_map);
@@ -3125,9 +3125,9 @@ static AclMode
 convert_language_priv_string(text *priv_type_text)
 {
 	static const priv_map language_priv_map[] = {
-		{ "USAGE", ACL_USAGE },
-		{ "USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE) },
-		{ NULL, 0 }
+		{"USAGE", ACL_USAGE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, language_priv_map);
@@ -3331,11 +3331,11 @@ static AclMode
 convert_schema_priv_string(text *priv_type_text)
 {
 	static const priv_map schema_priv_map[] = {
-		{ "CREATE", ACL_CREATE },
-		{ "CREATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ "USAGE", ACL_USAGE },
-		{ "USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE) },
-		{ NULL, 0 }
+		{"CREATE", ACL_CREATE},
+		{"CREATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{"USAGE", ACL_USAGE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, schema_priv_map);
@@ -3515,9 +3515,9 @@ static AclMode
 convert_server_priv_string(text *priv_type_text)
 {
 	static const priv_map server_priv_map[] = {
-		{ "USAGE", ACL_USAGE },
-		{ "USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE) },
-		{ NULL, 0 }
+		{"USAGE", ACL_USAGE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_USAGE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, server_priv_map);
@@ -3705,9 +3705,9 @@ static AclMode
 convert_tablespace_priv_string(text *priv_type_text)
 {
 	static const priv_map tablespace_priv_map[] = {
-		{ "CREATE", ACL_CREATE },
-		{ "CREATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ NULL, 0 }
+		{"CREATE", ACL_CREATE},
+		{"CREATE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, tablespace_priv_map);
@@ -3881,13 +3881,13 @@ static AclMode
 convert_role_priv_string(text *priv_type_text)
 {
 	static const priv_map role_priv_map[] = {
-		{ "USAGE", ACL_USAGE },
-		{ "MEMBER", ACL_CREATE },
-		{ "USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ "USAGE WITH ADMIN OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ "MEMBER WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ "MEMBER WITH ADMIN OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE) },
-		{ NULL, 0 }
+		{"USAGE", ACL_USAGE},
+		{"MEMBER", ACL_CREATE},
+		{"USAGE WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{"USAGE WITH ADMIN OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{"MEMBER WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{"MEMBER WITH ADMIN OPTION", ACL_GRANT_OPTION_FOR(ACL_CREATE)},
+		{NULL, 0}
 	};
 
 	return convert_any_priv_string(priv_type_text, role_priv_map);

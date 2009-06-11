@@ -8,15 +8,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/fsmpage.c,v 1.4 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/fsmpage.c,v 1.5 2009/06/11 14:49:01 momjian Exp $
  *
  * NOTES:
  *
- *  The public functions in this file form an API that hides the internal
- *  structure of a FSM page. This allows freespace.c to treat each FSM page
- *  as a black box with SlotsPerPage "slots". fsm_set_avail() and
- *  fsm_get_avail() let you get/set the value of a slot, and
- *  fsm_search_avail() lets you search for a slot with value >= X.
+ *	The public functions in this file form an API that hides the internal
+ *	structure of a FSM page. This allows freespace.c to treat each FSM page
+ *	as a black box with SlotsPerPage "slots". fsm_set_avail() and
+ *	fsm_get_avail() let you get/set the value of a slot, and
+ *	fsm_search_avail() lets you search for a slot with value >= X.
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,9 @@ rightneighbor(int x)
 	x++;
 
 	/*
-	 * Check if we stepped to the leftmost node at next level, and correct
-	 * if so. The leftmost nodes at each level are numbered x = 2^level - 1,
-	 * so check if (x + 1) is a power of two, using a standard
+	 * Check if we stepped to the leftmost node at next level, and correct if
+	 * so. The leftmost nodes at each level are numbered x = 2^level - 1, so
+	 * check if (x + 1) is a power of two, using a standard
 	 * twos-complement-arithmetic trick.
 	 */
 	if (((x + 1) & x) == 0)
@@ -62,9 +62,9 @@ rightneighbor(int x)
 bool
 fsm_set_avail(Page page, int slot, uint8 value)
 {
-	int nodeno = NonLeafNodesPerPage + slot;
-	FSMPage fsmpage = (FSMPage) PageGetContents(page);
-	uint8 oldvalue;
+	int			nodeno = NonLeafNodesPerPage + slot;
+	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
+	uint8		oldvalue;
 
 	Assert(slot < LeafNodesPerPage);
 
@@ -77,14 +77,14 @@ fsm_set_avail(Page page, int slot, uint8 value)
 	fsmpage->fp_nodes[nodeno] = value;
 
 	/*
-	 * Propagate up, until we hit the root or a node that doesn't
-	 * need to be updated.
+	 * Propagate up, until we hit the root or a node that doesn't need to be
+	 * updated.
 	 */
 	do
 	{
-		uint8 newvalue = 0;
-		int lchild;
-		int rchild;
+		uint8		newvalue = 0;
+		int			lchild;
+		int			rchild;
 
 		nodeno = parentof(nodeno);
 		lchild = leftchild(nodeno);
@@ -103,8 +103,8 @@ fsm_set_avail(Page page, int slot, uint8 value)
 	} while (nodeno > 0);
 
 	/*
-	 * sanity check: if the new value is (still) higher than the value
-	 * at the top, the tree is corrupt.  If so, rebuild.
+	 * sanity check: if the new value is (still) higher than the value at the
+	 * top, the tree is corrupt.  If so, rebuild.
 	 */
 	if (value > fsmpage->fp_nodes[0])
 		fsm_rebuild_page(page);
@@ -121,7 +121,7 @@ fsm_set_avail(Page page, int slot, uint8 value)
 uint8
 fsm_get_avail(Page page, int slot)
 {
-	FSMPage fsmpage = (FSMPage) PageGetContents(page);
+	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
 
 	Assert(slot < LeafNodesPerPage);
 
@@ -137,7 +137,7 @@ fsm_get_avail(Page page, int slot)
 uint8
 fsm_get_max_avail(Page page)
 {
-	FSMPage fsmpage = (FSMPage) PageGetContents(page);
+	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
 
 	return fsmpage->fp_nodes[0];
 }
@@ -158,16 +158,17 @@ int
 fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 				 bool exclusive_lock_held)
 {
-	Page page = BufferGetPage(buf);
-	FSMPage fsmpage = (FSMPage) PageGetContents(page);
-	int nodeno;
-	int target;
-	uint16 slot;
+	Page		page = BufferGetPage(buf);
+	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
+	int			nodeno;
+	int			target;
+	uint16		slot;
 
- restart:
+restart:
+
 	/*
-	 * Check the root first, and exit quickly if there's no leaf with
-	 * enough free space
+	 * Check the root first, and exit quickly if there's no leaf with enough
+	 * free space
 	 */
 	if (fsmpage->fp_nodes[0] < minvalue)
 		return -1;
@@ -184,13 +185,13 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 
 	/*----------
 	 * Start the search from the target slot.  At every step, move one
-	 * node to the right, then climb up to the parent.  Stop when we reach
+	 * node to the right, then climb up to the parent.	Stop when we reach
 	 * a node with enough free space (as we must, since the root has enough
 	 * space).
 	 *
 	 * The idea is to gradually expand our "search triangle", that is, all
 	 * nodes covered by the current node, and to be sure we search to the
-	 * right from the start point.  At the first step, only the target slot
+	 * right from the start point.	At the first step, only the target slot
 	 * is examined.  When we move up from a left child to its parent, we are
 	 * adding the right-hand subtree of that parent to the search triangle.
 	 * When we move right then up from a right child, we are dropping the
@@ -207,11 +208,11 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 	 *
 	 * For example, consider this tree:
 	 *
-	 *         7
-	 *     7       6
-	 *   5   7   6   5
-	 *  4 5 5 7 2 6 5 2
-	 *              T
+	 *		   7
+	 *	   7	   6
+	 *	 5	 7	 6	 5
+	 *	4 5 5 7 2 6 5 2
+	 *				T
 	 *
 	 * Assume that the target node is the node indicated by the letter T,
 	 * and we're searching for a node with value of 6 or higher. The search
@@ -230,8 +231,8 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 			break;
 
 		/*
-		 * Move to the right, wrapping around on same level if necessary,
-		 * then climb up.
+		 * Move to the right, wrapping around on same level if necessary, then
+		 * climb up.
 		 */
 		nodeno = parentof(rightneighbor(nodeno));
 	}
@@ -243,7 +244,7 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 	 */
 	while (nodeno < NonLeafNodesPerPage)
 	{
-		int childnodeno = leftchild(nodeno);
+		int			childnodeno = leftchild(nodeno);
 
 		if (childnodeno < NodesPerPage &&
 			fsmpage->fp_nodes[childnodeno] >= minvalue)
@@ -260,17 +261,16 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 		else
 		{
 			/*
-			 * Oops. The parent node promised that either left or right
-			 * child has enough space, but neither actually did. This can
-			 * happen in case of a "torn page", IOW if we crashed earlier
-			 * while writing the page to disk, and only part of the page
-			 * made it to disk.
+			 * Oops. The parent node promised that either left or right child
+			 * has enough space, but neither actually did. This can happen in
+			 * case of a "torn page", IOW if we crashed earlier while writing
+			 * the page to disk, and only part of the page made it to disk.
 			 *
 			 * Fix the corruption and restart.
 			 */
-			RelFileNode	rnode;
+			RelFileNode rnode;
 			ForkNumber	forknum;
-			BlockNumber	blknum;
+			BlockNumber blknum;
 
 			BufferGetTag(buf, &rnode, &forknum, &blknum);
 			elog(DEBUG1, "fixing corrupt FSM block %u, relation %u/%u/%u",
@@ -312,9 +312,9 @@ fsm_search_avail(Buffer buf, uint8 minvalue, bool advancenext,
 bool
 fsm_truncate_avail(Page page, int nslots)
 {
-	FSMPage fsmpage = (FSMPage) PageGetContents(page);
-	uint8 *ptr;
-	bool changed = false;
+	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
+	uint8	   *ptr;
+	bool		changed = false;
 
 	Assert(nslots >= 0 && nslots < LeafNodesPerPage);
 
@@ -341,9 +341,9 @@ fsm_truncate_avail(Page page, int nslots)
 bool
 fsm_rebuild_page(Page page)
 {
-	FSMPage fsmpage = (FSMPage) PageGetContents(page);
-	bool	changed = false;
-	int		nodeno;
+	FSMPage		fsmpage = (FSMPage) PageGetContents(page);
+	bool		changed = false;
+	int			nodeno;
 
 	/*
 	 * Start from the lowest non-leaf level, at last node, working our way
@@ -351,9 +351,9 @@ fsm_rebuild_page(Page page)
 	 */
 	for (nodeno = NonLeafNodesPerPage - 1; nodeno >= 0; nodeno--)
 	{
-		int lchild = leftchild(nodeno);
-		int rchild = lchild + 1;
-		uint8 newvalue = 0;
+		int			lchild = leftchild(nodeno);
+		int			rchild = lchild + 1;
+		uint8		newvalue = 0;
 
 		/* The first few nodes we examine might have zero or one child. */
 		if (lchild < NodesPerPage)

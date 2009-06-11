@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.45 2009/04/23 23:25:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.46 2009/06/11 14:48:58 momjian Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -78,8 +78,7 @@ pg_getaddrinfo_all(const char *hostname, const char *servname,
 	/* NULL has special meaning to getaddrinfo(). */
 	rc = getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
 					 servname, hintp, result);
-
-#else /* _AIX */
+#else							/* _AIX */
 
 	/*
 	 * Various versions of AIX have various bugs in getaddrinfo()'s handling
@@ -113,7 +112,7 @@ pg_getaddrinfo_all(const char *hostname, const char *servname,
 			}
 		}
 	}
-#endif /* _AIX */
+#endif   /* _AIX */
 
 	return rc;
 }

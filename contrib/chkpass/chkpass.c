@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.20 2008/03/25 22:42:41 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.21 2009/06/11 14:48:50 momjian Exp $
  * best viewed with tabs set to 4
  */
 
@@ -37,7 +37,7 @@ PG_MODULE_MAGIC;
 typedef struct chkpass
 {
 	char		password[16];
-}	chkpass;
+} chkpass;
 
 /*
  * Various forward declarations:

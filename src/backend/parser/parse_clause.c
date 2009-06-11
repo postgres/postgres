@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.188 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.189 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 #define DISTINCT_ON_CLAUSE 2
 #define PARTITION_CLAUSE 3
 
-static const char * const clauseText[] = {
+static const char *const clauseText[] = {
 	"ORDER BY",
 	"GROUP BY",
 	"DISTINCT ON",
@@ -75,8 +75,8 @@ static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List **tlist, int clause);
-static int	get_matching_location(int sortgroupref,
-								  List *sortgrouprefs, List *exprs);
+static int get_matching_location(int sortgroupref,
+					  List *sortgrouprefs, List *exprs);
 static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist, SortBy *sortby,
 					bool resolveUnknown);
@@ -414,7 +414,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 		 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
 				rt_fetch(varno, pstate->p_rtable)->eref->aliasname),
 				 parser_errposition(pstate,
-									locate_var_of_relation(result, varno, 0))));
+								 locate_var_of_relation(result, varno, 0))));
 	}
 	bms_free(clause_varnos);
 
@@ -493,7 +493,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery in FROM cannot have SELECT INTO"),
 				 parser_errposition(pstate,
-									exprLocation((Node *) query->intoClause))));
+								 exprLocation((Node *) query->intoClause))));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -515,7 +515,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("subquery in FROM cannot refer to other relations of same query level"),
 					 parser_errposition(pstate,
-										locate_var_of_level((Node *) query, 1))));
+								   locate_var_of_level((Node *) query, 1))));
 	}
 
 	/*
@@ -584,7 +584,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		checkExprHasWindowFuncs(funcexpr))
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("cannot use window function in function expression in FROM"),
+		 errmsg("cannot use window function in function expression in FROM"),
 				 parser_errposition(pstate,
 									locate_windowfunc(funcexpr))));
 
@@ -649,7 +649,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 	if (IsA(n, RangeVar))
 	{
 		/* Plain relation reference, or perhaps a CTE reference */
-		RangeVar *rv = (RangeVar *) n;
+		RangeVar   *rv = (RangeVar *) n;
 		RangeTblRef *rtr;
 		RangeTblEntry *rte = NULL;
 		int			rtindex;
@@ -658,7 +658,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		if (!rv->schemaname)
 		{
 			CommonTableExpr *cte;
-			Index	levelsup;
+			Index		levelsup;
 
 			cte = scanNameSpaceForCTE(pstate, rv->relname, &levelsup);
 			if (cte)
@@ -1432,11 +1432,11 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		 * info from the (first) matching ORDER BY item.  This means that if
 		 * you write something like "GROUP BY foo ORDER BY foo USING <<<", the
 		 * GROUP BY operation silently takes on the equality semantics implied
-		 * by the ORDER BY.  There are two reasons to do this: it improves
-		 * the odds that we can implement both GROUP BY and ORDER BY with a
-		 * single sort step, and it allows the user to choose the equality
-		 * semantics used by GROUP BY, should she be working with a datatype
-		 * that has more than one equality operator.
+		 * by the ORDER BY.  There are two reasons to do this: it improves the
+		 * odds that we can implement both GROUP BY and ORDER BY with a single
+		 * sort step, and it allows the user to choose the equality semantics
+		 * used by GROUP BY, should she be working with a datatype that has
+		 * more than one equality operator.
 		 */
 		if (tle->ressortgroupref > 0)
 		{
@@ -1456,8 +1456,8 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		}
 
 		/*
-		 * If no match in ORDER BY, just add it to the result using
-		 * default sort/group semantics.
+		 * If no match in ORDER BY, just add it to the result using default
+		 * sort/group semantics.
 		 */
 		if (!found)
 			result = addTargetToGroupList(pstate, tle,
@@ -1516,10 +1516,10 @@ transformWindowDefinitions(ParseState *pstate,
 
 	foreach(lc, windowdefs)
 	{
-		WindowDef	 *windef = (WindowDef *) lfirst(lc);
+		WindowDef  *windef = (WindowDef *) lfirst(lc);
 		WindowClause *refwc = NULL;
-		List		 *partitionClause;
-		List		 *orderClause;
+		List	   *partitionClause;
+		List	   *orderClause;
 		WindowClause *wc;
 
 		winref++;
@@ -1550,8 +1550,8 @@ transformWindowDefinitions(ParseState *pstate,
 
 		/*
 		 * Transform PARTITION and ORDER specs, if any.  These are treated
-		 * exactly like top-level GROUP BY and ORDER BY clauses, including
-		 * the special handling of nondefault operator semantics.
+		 * exactly like top-level GROUP BY and ORDER BY clauses, including the
+		 * special handling of nondefault operator semantics.
 		 */
 		orderClause = transformSortClause(pstate,
 										  windef->orderClause,
@@ -1573,19 +1573,19 @@ transformWindowDefinitions(ParseState *pstate,
 		/*
 		 * Per spec, a windowdef that references a previous one copies the
 		 * previous partition clause (and mustn't specify its own).  It can
-		 * specify its own ordering clause. but only if the previous one
-		 * had none.  It always specifies its own frame clause, and the
-		 * previous one must not have a frame clause.  (Yeah, it's bizarre
-		 * that each of these cases works differently, but SQL:2008 says so;
-		 * see 7.11 <window clause> syntax rule 10 and general rule 1.)
+		 * specify its own ordering clause. but only if the previous one had
+		 * none.  It always specifies its own frame clause, and the previous
+		 * one must not have a frame clause.  (Yeah, it's bizarre that each of
+		 * these cases works differently, but SQL:2008 says so; see 7.11
+		 * <window clause> syntax rule 10 and general rule 1.)
 		 */
 		if (refwc)
 		{
 			if (partitionClause)
 				ereport(ERROR,
 						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("cannot override PARTITION BY clause of window \"%s\"",
-								windef->refname),
+				errmsg("cannot override PARTITION BY clause of window \"%s\"",
+					   windef->refname),
 						 parser_errposition(pstate, windef->location)));
 			wc->partitionClause = copyObject(refwc->partitionClause);
 		}
@@ -1596,8 +1596,8 @@ transformWindowDefinitions(ParseState *pstate,
 			if (orderClause && refwc->orderClause)
 				ereport(ERROR,
 						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("cannot override ORDER BY clause of window \"%s\"",
-								windef->refname),
+				   errmsg("cannot override ORDER BY clause of window \"%s\"",
+						  windef->refname),
 						 parser_errposition(pstate, windef->location)));
 			if (orderClause)
 			{
@@ -1652,19 +1652,19 @@ transformDistinctClause(ParseState *pstate,
 	ListCell   *tlitem;
 
 	/*
-	 * The distinctClause should consist of all ORDER BY items followed
-	 * by all other non-resjunk targetlist items.  There must not be any
-	 * resjunk ORDER BY items --- that would imply that we are sorting
-	 * by a value that isn't necessarily unique within a DISTINCT group,
-	 * so the results wouldn't be well-defined.  This construction
-	 * ensures we follow the rule that sortClause and distinctClause match;
-	 * in fact the sortClause will always be a prefix of distinctClause.
+	 * The distinctClause should consist of all ORDER BY items followed by all
+	 * other non-resjunk targetlist items.	There must not be any resjunk
+	 * ORDER BY items --- that would imply that we are sorting by a value that
+	 * isn't necessarily unique within a DISTINCT group, so the results
+	 * wouldn't be well-defined.  This construction ensures we follow the rule
+	 * that sortClause and distinctClause match; in fact the sortClause will
+	 * always be a prefix of distinctClause.
 	 *
-	 * Note a corner case: the same TLE could be in the ORDER BY list
-	 * multiple times with different sortops.  We have to include it in
-	 * the distinctClause the same way to preserve the prefix property.
-	 * The net effect will be that the TLE value will be made unique
-	 * according to both sortops.
+	 * Note a corner case: the same TLE could be in the ORDER BY list multiple
+	 * times with different sortops.  We have to include it in the
+	 * distinctClause the same way to preserve the prefix property. The net
+	 * effect will be that the TLE value will be made unique according to both
+	 * sortops.
 	 */
 	foreach(slitem, sortClause)
 	{
@@ -1681,8 +1681,8 @@ transformDistinctClause(ParseState *pstate,
 	}
 
 	/*
-	 * Now add any remaining non-resjunk tlist items, using default
-	 * sort/group semantics for their data types.
+	 * Now add any remaining non-resjunk tlist items, using default sort/group
+	 * semantics for their data types.
 	 */
 	foreach(tlitem, *targetlist)
 	{
@@ -1724,11 +1724,11 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 
 	/*
 	 * Add all the DISTINCT ON expressions to the tlist (if not already
-	 * present, they are added as resjunk items).  Assign sortgroupref
-	 * numbers to them, and make a list of these numbers.  (NB: we rely
-	 * below on the sortgrouprefs list being one-for-one with the original
-	 * distinctlist.  Also notice that we could have duplicate DISTINCT ON
-	 * expressions and hence duplicate entries in sortgrouprefs.)
+	 * present, they are added as resjunk items).  Assign sortgroupref numbers
+	 * to them, and make a list of these numbers.  (NB: we rely below on the
+	 * sortgrouprefs list being one-for-one with the original distinctlist.
+	 * Also notice that we could have duplicate DISTINCT ON expressions and
+	 * hence duplicate entries in sortgrouprefs.)
 	 */
 	foreach(lc, distinctlist)
 	{
@@ -1743,12 +1743,12 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 	}
 
 	/*
-	 * If the user writes both DISTINCT ON and ORDER BY, adopt the
-	 * sorting semantics from ORDER BY items that match DISTINCT ON
-	 * items, and also adopt their column sort order.  We insist that
-	 * the distinctClause and sortClause match, so throw error if we
-	 * find the need to add any more distinctClause items after we've
-	 * skipped an ORDER BY item that wasn't in DISTINCT ON.
+	 * If the user writes both DISTINCT ON and ORDER BY, adopt the sorting
+	 * semantics from ORDER BY items that match DISTINCT ON items, and also
+	 * adopt their column sort order.  We insist that the distinctClause and
+	 * sortClause match, so throw error if we find the need to add any more
+	 * distinctClause items after we've skipped an ORDER BY item that wasn't
+	 * in DISTINCT ON.
 	 */
 	skipped_sortitem = false;
 	foreach(lc, sortClause)
@@ -1762,9 +1762,9 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions"),
 						 parser_errposition(pstate,
-											get_matching_location(scl->tleSortGroupRef,
-																  sortgrouprefs,
-																  distinctlist))));
+								  get_matching_location(scl->tleSortGroupRef,
+														sortgrouprefs,
+														distinctlist))));
 			else
 				result = lappend(result, copyObject(scl));
 		}
@@ -1774,8 +1774,8 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 
 	/*
 	 * Now add any remaining DISTINCT ON items, using default sort/group
-	 * semantics for their data types.  (Note: this is pretty questionable;
-	 * if the ORDER BY list doesn't include all the DISTINCT ON items and more
+	 * semantics for their data types.	(Note: this is pretty questionable; if
+	 * the ORDER BY list doesn't include all the DISTINCT ON items and more
 	 * besides, you certainly aren't using DISTINCT ON in the intended way,
 	 * and you probably aren't going to get consistent results.  It might be
 	 * better to throw an error or warning here.  But historically we've
@@ -1870,9 +1870,9 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	 * Rather than clutter the API of get_sort_group_operators and the other
 	 * functions we're about to use, make use of error context callback to
 	 * mark any error reports with a parse position.  We point to the operator
-	 * location if present, else to the expression being sorted.  (NB: use
-	 * the original untransformed expression here; the TLE entry might well
-	 * point at a duplicate expression in the regular SELECT list.)
+	 * location if present, else to the expression being sorted.  (NB: use the
+	 * original untransformed expression here; the TLE entry might well point
+	 * at a duplicate expression in the regular SELECT list.)
 	 */
 	location = sortby->location;
 	if (location < 0)

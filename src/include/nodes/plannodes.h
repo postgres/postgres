@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.109 2009/03/21 00:04:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.110 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,7 +636,7 @@ typedef struct Limit
  *
  * We track the objects on which a PlannedStmt depends in two ways:
  * relations are recorded as a simple list of OIDs, and everything else
- * is represented as a list of PlanInvalItems.  A PlanInvalItem is designed
+ * is represented as a list of PlanInvalItems.	A PlanInvalItem is designed
  * to be used with the syscache invalidation mechanism, so it identifies a
  * system catalog entry by cache ID and tuple TID.
  */

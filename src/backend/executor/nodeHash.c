@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.120 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.121 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +41,11 @@
 
 static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
 static void ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node,
-								  int mcvsToUse);
+					  int mcvsToUse);
 static void ExecHashSkewTableInsert(HashJoinTable hashtable,
-									TupleTableSlot *slot,
-									uint32 hashvalue,
-									int bucketNumber);
+						TupleTableSlot *slot,
+						uint32 hashvalue,
+						int bucketNumber);
 static void ExecHashRemoveNextSkewBucket(HashJoinTable hashtable);
 
 
@@ -108,7 +108,7 @@ MultiExecHash(HashState *node)
 		if (ExecHashGetHashValue(hashtable, econtext, hashkeys, false, false,
 								 &hashvalue))
 		{
-			int		bucketNumber;
+			int			bucketNumber;
 
 			bucketNumber = ExecHashGetSkewBucket(hashtable, hashvalue);
 			if (bucketNumber != INVALID_SKEW_BUCKET_NO)
@@ -373,7 +373,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 
 	/*
 	 * Set up for skew optimization, if possible and there's a need for more
-	 * than one batch.  (In a one-batch join, there's no point in it.)
+	 * than one batch.	(In a one-batch join, there's no point in it.)
 	 */
 	if (nbatch > 1)
 		ExecHashBuildSkewHash(hashtable, node, num_skew_mcvs);
@@ -446,14 +446,14 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		skew_table_bytes = hash_table_bytes * SKEW_WORK_MEM_PERCENT / 100;
 
 		*num_skew_mcvs = skew_table_bytes / (
-			/* size of a hash tuple */
-			tupsize +
-			/* worst-case size of skewBucket[] per MCV */
-			(8 * sizeof(HashSkewBucket *)) +
-			/* size of skewBucketNums[] entry */
-			sizeof(int) +
-			/* size of skew bucket struct itself */
-			SKEW_BUCKET_OVERHEAD
+		/* size of a hash tuple */
+											 tupsize +
+		/* worst-case size of skewBucket[] per MCV */
+											 (8 * sizeof(HashSkewBucket *)) +
+		/* size of skewBucketNums[] entry */
+											 sizeof(int) +
+		/* size of skew bucket struct itself */
+											 SKEW_BUCKET_OVERHEAD
 			);
 
 		if (*num_skew_mcvs > 0)
@@ -983,11 +983,11 @@ ExecReScanHash(HashState *node, ExprContext *exprCtxt)
 static void
 ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 {
-	HeapTupleData	*statsTuple;
-	Datum			*values;
-	int				nvalues;
-	float4			*numbers;
-	int				nnumbers;
+	HeapTupleData *statsTuple;
+	Datum	   *values;
+	int			nvalues;
+	float4	   *numbers;
+	int			nnumbers;
 
 	/* Do nothing if planner didn't identify the outer relation's join key */
 	if (!OidIsValid(node->skewTable))
@@ -1040,11 +1040,12 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 		 *
 		 * skewBucket[] is an open addressing hashtable with a power of 2 size
 		 * that is greater than the number of MCV values.  (This ensures there
-		 * will be at least one null entry, so searches will always terminate.)
+		 * will be at least one null entry, so searches will always
+		 * terminate.)
 		 *
-		 * Note: this code could fail if mcvsToUse exceeds INT_MAX/8, but
-		 * that is not currently possible since we limit pg_statistic entries
-		 * to much less than that.
+		 * Note: this code could fail if mcvsToUse exceeds INT_MAX/8, but that
+		 * is not currently possible since we limit pg_statistic entries to
+		 * much less than that.
 		 */
 		nbuckets = 2;
 		while (nbuckets <= mcvsToUse)
@@ -1056,9 +1057,9 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 		hashtable->skewBucketLen = nbuckets;
 
 		/*
-		 * We allocate the bucket memory in the hashtable's batch context.
-		 * It is only needed during the first batch, and this ensures it
-		 * will be automatically removed once the first batch is done.
+		 * We allocate the bucket memory in the hashtable's batch context. It
+		 * is only needed during the first batch, and this ensures it will be
+		 * automatically removed once the first batch is done.
 		 */
 		hashtable->skewBucket = (HashSkewBucket **)
 			MemoryContextAllocZero(hashtable->batchCxt,
@@ -1075,18 +1076,18 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 		/*
 		 * Create a skew bucket for each MCV hash value.
 		 *
-		 * Note: it is very important that we create the buckets in order
-		 * of decreasing MCV frequency.  If we have to remove some buckets,
-		 * they must be removed in reverse order of creation (see notes in
-		 * ExecHashRemoveNextSkewBucket) and we want the least common MCVs
-		 * to be removed first.
+		 * Note: it is very important that we create the buckets in order of
+		 * decreasing MCV frequency.  If we have to remove some buckets, they
+		 * must be removed in reverse order of creation (see notes in
+		 * ExecHashRemoveNextSkewBucket) and we want the least common MCVs to
+		 * be removed first.
 		 */
 		hashfunctions = hashtable->outer_hashfunctions;
 
 		for (i = 0; i < mcvsToUse; i++)
 		{
-			uint32 hashvalue;
-			int bucket;
+			uint32		hashvalue;
+			int			bucket;
 
 			hashvalue = DatumGetUInt32(FunctionCall1(&hashfunctions[0],
 													 values[i]));
@@ -1094,7 +1095,7 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			/*
 			 * While we have not hit a hole in the hashtable and have not hit
 			 * the desired bucket, we have collided with some previous hash
-			 * value, so try the next bucket location.  NB: this code must
+			 * value, so try the next bucket location.	NB: this code must
 			 * match ExecHashGetSkewBucket.
 			 */
 			bucket = hashvalue & (nbuckets - 1);
@@ -1103,8 +1104,8 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 				bucket = (bucket + 1) & (nbuckets - 1);
 
 			/*
-			 * If we found an existing bucket with the same hashvalue,
-			 * leave it alone.  It's okay for two MCVs to share a hashvalue.
+			 * If we found an existing bucket with the same hashvalue, leave
+			 * it alone.  It's okay for two MCVs to share a hashvalue.
 			 */
 			if (hashtable->skewBucket[bucket] != NULL)
 				continue;
@@ -1141,8 +1142,8 @@ ExecHashGetSkewBucket(HashJoinTable hashtable, uint32 hashvalue)
 	int			bucket;
 
 	/*
-	 * Always return INVALID_SKEW_BUCKET_NO if not doing skew optimization
-	 * (in particular, this happens after the initial batch is done).
+	 * Always return INVALID_SKEW_BUCKET_NO if not doing skew optimization (in
+	 * particular, this happens after the initial batch is done).
 	 */
 	if (!hashtable->skewEnabled)
 		return INVALID_SKEW_BUCKET_NO;
@@ -1154,8 +1155,8 @@ ExecHashGetSkewBucket(HashJoinTable hashtable, uint32 hashvalue)
 
 	/*
 	 * While we have not hit a hole in the hashtable and have not hit the
-	 * desired bucket, we have collided with some other hash value, so try
-	 * the next bucket location.
+	 * desired bucket, we have collided with some other hash value, so try the
+	 * next bucket location.
 	 */
 	while (hashtable->skewBucket[bucket] != NULL &&
 		   hashtable->skewBucket[bucket]->hashvalue != hashvalue)
@@ -1222,11 +1223,11 @@ ExecHashSkewTableInsert(HashJoinTable hashtable,
 static void
 ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 {
-	int bucketToRemove;
+	int			bucketToRemove;
 	HashSkewBucket *bucket;
-	uint32 hashvalue;
-	int bucketno;
-	int batchno;
+	uint32		hashvalue;
+	int			bucketno;
+	int			batchno;
 	HashJoinTuple hashTuple;
 
 	/* Locate the bucket to remove */
@@ -1236,8 +1237,8 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 	/*
 	 * Calculate which bucket and batch the tuples belong to in the main
 	 * hashtable.  They all have the same hash value, so it's the same for all
-	 * of them.  Also note that it's not possible for nbatch to increase
-	 * while we are processing the tuples.
+	 * of them.  Also note that it's not possible for nbatch to increase while
+	 * we are processing the tuples.
 	 */
 	hashvalue = bucket->hashvalue;
 	ExecHashGetBucketAndBatch(hashtable, hashvalue, &bucketno, &batchno);
@@ -1248,7 +1249,7 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 	{
 		HashJoinTuple nextHashTuple = hashTuple->next;
 		MinimalTuple tuple;
-		Size	tupleSize;
+		Size		tupleSize;
 
 		/*
 		 * This code must agree with ExecHashTableInsert.  We do not use
@@ -1286,12 +1287,12 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 	 *
 	 * NOTE: this is not nearly as simple as it looks on the surface, because
 	 * of the possibility of collisions in the hashtable.  Suppose that hash
-	 * values A and B collide at a particular hashtable entry, and that A
-	 * was entered first so B gets shifted to a different table entry.  If
-	 * we were to remove A first then ExecHashGetSkewBucket would mistakenly
-	 * start reporting that B is not in the hashtable, because it would hit
-	 * the NULL before finding B.  However, we always remove entries in the
-	 * reverse order of creation, so this failure cannot happen.
+	 * values A and B collide at a particular hashtable entry, and that A was
+	 * entered first so B gets shifted to a different table entry.	If we were
+	 * to remove A first then ExecHashGetSkewBucket would mistakenly start
+	 * reporting that B is not in the hashtable, because it would hit the NULL
+	 * before finding B.  However, we always remove entries in the reverse
+	 * order of creation, so this failure cannot happen.
 	 */
 	hashtable->skewBucket[bucketToRemove] = NULL;
 	hashtable->nSkewBuckets--;

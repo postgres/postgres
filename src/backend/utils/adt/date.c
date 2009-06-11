@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.145 2009/05/26 01:29:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.146 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ EncodeSpecialDate(DateADT dt, char *str)
 		strcpy(str, EARLY);
 	else if (DATE_IS_NOEND(dt))
 		strcpy(str, LATE);
-	else						/* shouldn't happen */
+	else	/* shouldn't happen */
 		elog(ERROR, "invalid argument for EncodeSpecialDate");
 }
 
@@ -2552,7 +2552,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	pg_tz	   *tzp;
 
 	/*
-	 * Look up the requested timezone.  First we look in the date token table
+	 * Look up the requested timezone.	First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's

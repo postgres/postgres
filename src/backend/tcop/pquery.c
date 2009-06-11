@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.130 2009/03/27 18:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.131 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;		/* plan */
 	qd->utilitystmt = plannedstmt->utilityStmt; /* in case DECLARE CURSOR */
-	qd->sourceText = sourceText;		/* query text */
+	qd->sourceText = sourceText;	/* query text */
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	/* RI check snapshot */
 	qd->crosscheck_snapshot = RegisterSnapshot(crosscheck_snapshot);
@@ -106,7 +106,7 @@ CreateUtilityQueryDesc(Node *utilitystmt,
 	qd->operation = CMD_UTILITY;	/* operation */
 	qd->plannedstmt = NULL;
 	qd->utilitystmt = utilitystmt;		/* utility command */
-	qd->sourceText = sourceText;		/* query text */
+	qd->sourceText = sourceText;	/* query text */
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
@@ -871,7 +871,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 
 	if (log_executor_stats && portal->strategy != PORTAL_MULTI_QUERY)
 		ShowUsage("EXECUTOR STATISTICS");
-	
+
 	TRACE_POSTGRESQL_QUERY_EXECUTE_DONE();
 
 	return result;
@@ -1156,7 +1156,7 @@ static void
 PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 				 DestReceiver *dest, char *completionTag)
 {
-	bool	active_snapshot_set;
+	bool		active_snapshot_set;
 
 	elog(DEBUG3, "ProcessUtility");
 
@@ -1201,7 +1201,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 
 	/*
 	 * Some utility commands may pop the ActiveSnapshot stack from under us,
-	 * so we only pop the stack if we actually see a snapshot set.  Note that
+	 * so we only pop the stack if we actually see a snapshot set.	Note that
 	 * the set of utility commands that do this must be the same set
 	 * disallowed to run inside a transaction; otherwise, we could be popping
 	 * a snapshot that belongs to some other operation.

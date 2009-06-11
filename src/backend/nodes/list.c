@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.71 2009/01/01 17:23:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.72 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -793,7 +793,7 @@ list_union_oid(List *list1, List *list2)
  * "intersection" if list1 is known unique beforehand.
  *
  * This variant works on lists of pointers, and determines list
- * membership via equal().  Note that the list1 member will be pointed
+ * membership via equal().	Note that the list1 member will be pointed
  * to in the result.
  */
 List *

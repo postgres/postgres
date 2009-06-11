@@ -8,10 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.3 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.4 2009/06/11 14:48:54 momjian Exp $
  *
  * INTERFACE ROUTINES
- *		visibilitymap_clear	- clear a bit in the visibility map
+ *		visibilitymap_clear - clear a bit in the visibility map
  *		visibilitymap_pin	- pin a map page for setting a bit
  *		visibilitymap_set	- set a bit in a previously pinned page
  *		visibilitymap_test	- test if a bit is set
@@ -144,7 +144,7 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk)
 
 	mapBuffer = vm_readbuf(rel, mapBlock, false);
 	if (!BufferIsValid(mapBuffer))
-		return; /* nothing to do */
+		return;					/* nothing to do */
 
 	LockBuffer(mapBuffer, BUFFER_LOCK_EXCLUSIVE);
 	map = PageGetContents(BufferGetPage(mapBuffer));
@@ -295,10 +295,11 @@ void
 visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 {
 	BlockNumber newnblocks;
+
 	/* last remaining block, byte, and bit */
 	BlockNumber truncBlock = HEAPBLK_TO_MAPBLOCK(nheapblocks);
-	uint32		truncByte  = HEAPBLK_TO_MAPBYTE(nheapblocks);
-	uint8		truncBit   = HEAPBLK_TO_MAPBIT(nheapblocks);
+	uint32		truncByte = HEAPBLK_TO_MAPBYTE(nheapblocks);
+	uint8		truncBit = HEAPBLK_TO_MAPBIT(nheapblocks);
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_truncate %s %d", RelationGetRelationName(rel), nheapblocks);
@@ -315,14 +316,14 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	 * Unless the new size is exactly at a visibility map page boundary, the
 	 * tail bits in the last remaining map page, representing truncated heap
 	 * blocks, need to be cleared. This is not only tidy, but also necessary
-	 * because we don't get a chance to clear the bits if the heap is
-	 * extended again.
+	 * because we don't get a chance to clear the bits if the heap is extended
+	 * again.
 	 */
 	if (truncByte != 0 || truncBit != 0)
 	{
-		Buffer mapBuffer;
-		Page page;
-		char *map;
+		Buffer		mapBuffer;
+		Page		page;
+		char	   *map;
 
 		newnblocks = truncBlock + 1;
 
@@ -344,11 +345,8 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 		/*
 		 * Mask out the unwanted bits of the last remaining byte.
 		 *
-		 * ((1 << 0) - 1) = 00000000
-		 * ((1 << 1) - 1) = 00000001
-		 * ...
-		 * ((1 << 6) - 1) = 00111111
-		 * ((1 << 7) - 1) = 01111111
+		 * ((1 << 0) - 1) = 00000000 ((1 << 1) - 1) = 00000001 ... ((1 << 6) -
+		 * 1) = 00111111 ((1 << 7) - 1) = 01111111
 		 */
 		map[truncByte] &= (1 << truncBit) - 1;
 
@@ -368,8 +366,8 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 				 rel->rd_istemp);
 
 	/*
-	 * Need to invalidate the relcache entry, because rd_vm_nblocks
-	 * seen by other backends is no longer valid.
+	 * Need to invalidate the relcache entry, because rd_vm_nblocks seen by
+	 * other backends is no longer valid.
 	 */
 	if (!InRecovery)
 		CacheInvalidateRelcache(rel);
@@ -386,7 +384,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 static Buffer
 vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 {
-	Buffer buf;
+	Buffer		buf;
 
 	RelationOpenSmgr(rel);
 
@@ -433,20 +431,20 @@ static void
 vm_extend(Relation rel, BlockNumber vm_nblocks)
 {
 	BlockNumber vm_nblocks_now;
-	Page pg;
+	Page		pg;
 
 	pg = (Page) palloc(BLCKSZ);
 	PageInit(pg, BLCKSZ, 0);
 
 	/*
-	 * We use the relation extension lock to lock out other backends trying
-	 * to extend the visibility map at the same time. It also locks out
-	 * extension of the main fork, unnecessarily, but extending the
-	 * visibility map happens seldom enough that it doesn't seem worthwhile to
-	 * have a separate lock tag type for it.
+	 * We use the relation extension lock to lock out other backends trying to
+	 * extend the visibility map at the same time. It also locks out extension
+	 * of the main fork, unnecessarily, but extending the visibility map
+	 * happens seldom enough that it doesn't seem worthwhile to have a
+	 * separate lock tag type for it.
 	 *
-	 * Note that another backend might have extended or created the
-	 * relation before we get the lock.
+	 * Note that another backend might have extended or created the relation
+	 * before we get the lock.
 	 */
 	LockRelationForExtension(rel, ExclusiveLock);
 

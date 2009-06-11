@@ -36,7 +36,7 @@
  * destroyed by calling its rDestroy method.
  *
  * In some cases, receiver objects require additional parameters that must
- * be passed to them after calling CreateDestReceiver.  Since the set of
+ * be passed to them after calling CreateDestReceiver.	Since the set of
  * parameters varies for different receiver types, this is not handled by
  * this module, but by direct calls from the calling code to receiver type
  * specific functions.
@@ -60,7 +60,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.57 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.58 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

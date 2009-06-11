@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeRecursiveunion.c,v 1.3 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeRecursiveunion.c,v 1.4 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ typedef struct RUHashEntryData
 static void
 build_hash_table(RecursiveUnionState *rustate)
 {
-	RecursiveUnion	   *node = (RecursiveUnion *) rustate->ps.plan;
+	RecursiveUnion *node = (RecursiveUnion *) rustate->ps.plan;
 
 	Assert(node->numCols > 0);
 	Assert(node->numGroups > 0);
@@ -58,7 +58,7 @@ build_hash_table(RecursiveUnionState *rustate)
  *		ExecRecursiveUnion(node)
  *
  *		Scans the recursive query sequentially and returns the next
- *      qualifying tuple.
+ *		qualifying tuple.
  *
  * 1. evaluate non recursive term and assign the result to RT
  *
@@ -151,8 +151,8 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 		}
 
 		/* Else, tuple is good; stash it in intermediate table ... */
- 		node->intermediate_empty = false;
- 		tuplestore_puttupleslot(node->intermediate_table, slot);
+		node->intermediate_empty = false;
+		tuplestore_puttupleslot(node->intermediate_table, slot);
 		/* ... and return it */
 		return slot;
 	}
@@ -240,8 +240,8 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	ExecInitResultTupleSlot(estate, &rustate->ps);
 
 	/*
-	 * Initialize result tuple type and projection info.  (Note: we have
-	 * to set up the result type before initializing child nodes, because
+	 * Initialize result tuple type and projection info.  (Note: we have to
+	 * set up the result type before initializing child nodes, because
 	 * nodeWorktablescan.c expects it to be valid.)
 	 */
 	ExecAssignResultTypeFromTL(&rustate->ps);
@@ -254,8 +254,8 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	innerPlanState(rustate) = ExecInitNode(innerPlan(node), estate, eflags);
 
 	/*
-	 * If hashing, precompute fmgr lookup data for inner loop, and create
-	 * the hash table.
+	 * If hashing, precompute fmgr lookup data for inner loop, and create the
+	 * hash table.
 	 */
 	if (node->numCols > 0)
 	{
@@ -322,15 +322,15 @@ ExecRecursiveUnionReScan(RecursiveUnionState *node, ExprContext *exprCtxt)
 	RecursiveUnion *plan = (RecursiveUnion *) node->ps.plan;
 
 	/*
-	 * Set recursive term's chgParam to tell it that we'll modify the
-	 * working table and therefore it has to rescan.
+	 * Set recursive term's chgParam to tell it that we'll modify the working
+	 * table and therefore it has to rescan.
 	 */
 	innerPlan->chgParam = bms_add_member(innerPlan->chgParam, plan->wtParam);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.  Because of above, we only have to do this to
-	 * the non-recursive term.
+	 * first ExecProcNode.	Because of above, we only have to do this to the
+	 * non-recursive term.
 	 */
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan, exprCtxt);

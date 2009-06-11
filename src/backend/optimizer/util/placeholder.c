@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.4 2009/04/19 19:46:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.5 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 	phinfo->ph_var = copyObject(phv);
 	phinfo->ph_eval_at = pull_varnos((Node *) phv);
 	/* ph_eval_at may change later, see fix_placeholder_eval_levels */
-	phinfo->ph_needed = NULL;		/* initially it's unused */
+	phinfo->ph_needed = NULL;	/* initially it's unused */
 	/* for the moment, estimate width using just the datatype info */
 	phinfo->ph_width = get_typavgwidth(exprType((Node *) phv->phexpr),
 									   exprTypmod((Node *) phv->phexpr));
@@ -88,7 +88,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
  *
  * The initial eval_at level set by find_placeholder_info was the set of
  * rels used in the placeholder's expression (or the whole subselect if
- * the expr is variable-free).  If the subselect contains any outer joins
+ * the expr is variable-free).	If the subselect contains any outer joins
  * that can null any of those rels, we must delay evaluation to above those
  * joins.
  *
@@ -153,11 +153,11 @@ fix_placeholder_eval_levels(PlannerInfo *root)
 		/*
 		 * Now that we know where to evaluate the placeholder, make sure that
 		 * any vars or placeholders it uses will be available at that join
-		 * level.  NOTE: this could cause more PlaceHolderInfos to be added
-		 * to placeholder_list.  That is okay because we'll process them
-		 * before falling out of the foreach loop.  Also, it could cause
-		 * the ph_needed sets of existing list entries to expand, which
-		 * is also okay because this loop doesn't examine those.
+		 * level.  NOTE: this could cause more PlaceHolderInfos to be added to
+		 * placeholder_list.  That is okay because we'll process them before
+		 * falling out of the foreach loop.  Also, it could cause the
+		 * ph_needed sets of existing list entries to expand, which is also
+		 * okay because this loop doesn't examine those.
 		 */
 		if (bms_membership(eval_at) == BMS_MULTIPLE)
 		{
@@ -173,7 +173,7 @@ fix_placeholder_eval_levels(PlannerInfo *root)
 	 * Now, if any placeholder can be computed at a base rel and is needed
 	 * above it, add it to that rel's targetlist.  (This is essentially the
 	 * same logic as in add_placeholders_to_joinrel, but we can't do that part
-	 * until joinrels are formed.)  We have to do this as a separate step
+	 * until joinrels are formed.)	We have to do this as a separate step
 	 * because the ph_needed values aren't stable until the previous loop
 	 * finishes.
 	 */

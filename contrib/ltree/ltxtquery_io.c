@@ -1,7 +1,7 @@
 /*
  * txtquery io
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.16 2008/06/30 18:30:48 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.17 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -51,30 +51,30 @@ typedef struct
 	int4		sumlen;
 	char	   *op;
 	char	   *curop;
-}	QPRS_STATE;
+} QPRS_STATE;
 
 /*
  * get token from query string
  */
 static int4
-gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint16 *flag)
+gettoken_query(QPRS_STATE *state, int4 *val, int4 *lenval, char **strval, uint16 *flag)
 {
-	int charlen;
+	int			charlen;
 
-	for(;;)	
+	for (;;)
 	{
 		charlen = pg_mblen(state->buf);
 
 		switch (state->state)
 		{
 			case WAITOPERAND:
-				if (charlen==1 && t_iseq(state->buf, '!'))
+				if (charlen == 1 && t_iseq(state->buf, '!'))
 				{
 					(state->buf)++;
 					*val = (int4) '!';
 					return OPR;
 				}
-				else if (charlen==1 && t_iseq(state->buf, '('))
+				else if (charlen == 1 && t_iseq(state->buf, '('))
 				{
 					state->count++;
 					(state->buf)++;
@@ -101,11 +101,11 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 								 errmsg("modificators syntax error")));
 					*lenval += charlen;
 				}
-				else if (charlen==1 && t_iseq(state->buf, '%'))
+				else if (charlen == 1 && t_iseq(state->buf, '%'))
 					*flag |= LVAR_SUBLEXEME;
-				else if (charlen==1 && t_iseq(state->buf, '@'))
+				else if (charlen == 1 && t_iseq(state->buf, '@'))
 					*flag |= LVAR_INCASE;
-				else if (charlen==1 && t_iseq(state->buf, '*'))
+				else if (charlen == 1 && t_iseq(state->buf, '*'))
 					*flag |= LVAR_ANYEND;
 				else
 				{
@@ -114,14 +114,14 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 				}
 				break;
 			case WAITOPERATOR:
-				if (charlen==1 && ( t_iseq(state->buf, '&') || t_iseq(state->buf, '|') ))
+				if (charlen == 1 && (t_iseq(state->buf, '&') || t_iseq(state->buf, '|')))
 				{
 					state->state = WAITOPERAND;
 					*val = (int4) *(state->buf);
 					(state->buf)++;
 					return OPR;
 				}
-				else if (charlen==1 && t_iseq(state->buf, ')'))
+				else if (charlen == 1 && t_iseq(state->buf, ')'))
 				{
 					(state->buf)++;
 					state->count--;
@@ -129,7 +129,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 				}
 				else if (*(state->buf) == '\0')
 					return (state->count) ? ERR : END;
-				else if (charlen==1 && !t_iseq(state->buf, ' '))
+				else if (charlen == 1 && !t_iseq(state->buf, ' '))
 					return ERR;
 				break;
 			default:
@@ -146,7 +146,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
  * push new one in polish notation reverse view
  */
 static void
-pushquery(QPRS_STATE * state, int4 type, int4 val, int4 distance, int4 lenval, uint16 flag)
+pushquery(QPRS_STATE *state, int4 type, int4 val, int4 distance, int4 lenval, uint16 flag)
 {
 	NODE	   *tmp = (NODE *) palloc(sizeof(NODE));
 
@@ -172,7 +172,7 @@ pushquery(QPRS_STATE * state, int4 type, int4 val, int4 distance, int4 lenval, u
  * This function is used for query_txt parsing
  */
 static void
-pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, uint16 flag)
+pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 {
 	if (lenval > 0xffff)
 		ereport(ERROR,
@@ -203,7 +203,7 @@ pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, uint16 flag
  * make polish notaion of query
  */
 static int4
-makepol(QPRS_STATE * state)
+makepol(QPRS_STATE *state)
 {
 	int4		val = 0,
 				type;
@@ -275,7 +275,7 @@ makepol(QPRS_STATE * state)
 }
 
 static void
-findoprnd(ITEM * ptr, int4 *pos)
+findoprnd(ITEM *ptr, int4 *pos)
 {
 	if (ptr[*pos].type == VAL || ptr[*pos].type == VALTRUE)
 	{

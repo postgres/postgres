@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.30 2009/05/20 16:13:18 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.31 2009/06/11 14:49:13 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -382,7 +382,8 @@ ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free *
 {
 	stmtCacheEntry *entry;
 	struct connection *con;
- 	struct prepared_statement *this, *prev;
+	struct prepared_statement *this,
+			   *prev;
 
 	entry = &stmtCacheEntries[entNo];
 	if (!entry->stmtID[0])		/* return if the entry isn't in use     */
@@ -390,7 +391,7 @@ ecpg_freeStmtCacheEntry(int lineno, int compat, int entNo)		/* entry # to free *
 
 	con = ecpg_get_connection(entry->connection);
 
-	/* free the 'prepared_statement' list entry       */
+	/* free the 'prepared_statement' list entry		  */
 	this = find_prepared_statement(entry->stmtID, con, &prev);
 	if (this && !deallocate_one(lineno, compat, con, prev, this))
 		return (-1);
@@ -415,7 +416,7 @@ static int
 AddStmtToCache(int lineno,		/* line # of statement		*/
 			   char *stmtID,	/* statement ID				*/
 			   const char *connection,	/* connection				*/
-			   int compat, 			/* compatibility level */
+			   int compat,		/* compatibility level */
 			   const char *ecpgQuery)	/* query					*/
 {
 	int			ix,

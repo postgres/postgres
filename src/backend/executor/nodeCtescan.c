@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.4 2009/03/27 18:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.5 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ CteScanNext(CteScanState *node)
 	 * If we can fetch another tuple from the tuplestore, return it.
 	 *
 	 * Note: we have to use copy=true in the tuplestore_gettupleslot call,
-	 * because we are sharing the tuplestore with other nodes that might
-	 * write into the tuplestore before we get called again.
+	 * because we are sharing the tuplestore with other nodes that might write
+	 * into the tuplestore before we get called again.
 	 */
 	if (!eof_tuplestore)
 	{
@@ -111,16 +111,16 @@ CteScanNext(CteScanState *node)
 		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
 		 * our read pointer is certainly in EOF state, its read position will
 		 * move forward over the added tuple.  This is what we want.  Also,
-		 * any other readers will *not* move past the new tuple, which is
-		 * what they want.
+		 * any other readers will *not* move past the new tuple, which is what
+		 * they want.
 		 */
 		tuplestore_puttupleslot(tuplestorestate, cteslot);
 
 		/*
-		 * We MUST copy the CTE query's output tuple into our own slot.
-		 * This is because other CteScan nodes might advance the CTE query
-		 * before we are called again, and our output tuple must stay
-		 * stable over that.
+		 * We MUST copy the CTE query's output tuple into our own slot. This
+		 * is because other CteScan nodes might advance the CTE query before
+		 * we are called again, and our output tuple must stay stable over
+		 * that.
 		 */
 		return ExecCopySlot(slot, cteslot);
 	}
@@ -193,10 +193,10 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 													 node->ctePlanId - 1);
 
 	/*
-	 * The Param slot associated with the CTE query is used to hold a
-	 * pointer to the CteState of the first CteScan node that initializes
-	 * for this CTE.  This node will be the one that holds the shared
-	 * state for all the CTEs.
+	 * The Param slot associated with the CTE query is used to hold a pointer
+	 * to the CteState of the first CteScan node that initializes for this
+	 * CTE.  This node will be the one that holds the shared state for all the
+	 * CTEs.
 	 */
 	prmdata = &(estate->es_param_exec_vals[node->cteParam]);
 	Assert(prmdata->execPlan == NULL);
@@ -315,8 +315,8 @@ ExecCteScanReScan(CteScanState *node, ExprContext *exprCtxt)
 	if (node->leader == node)
 	{
 		/*
-		 * The leader is responsible for clearing the tuplestore if a new
-		 * scan of the underlying CTE is required.
+		 * The leader is responsible for clearing the tuplestore if a new scan
+		 * of the underlying CTE is required.
 		 */
 		if (node->cteplanstate->chgParam != NULL)
 		{

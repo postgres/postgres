@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.125 2009/01/22 20:16:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.126 2009/06/11 14:48:53 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -55,8 +55,8 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	 * pointers.
 	 *
 	 * Note: Only the fixed part of pg_attribute rows is included in tuple
-	 * descriptors, so we only need ATTRIBUTE_FIXED_PART_SIZE space
-	 * per attr.  That might need alignment padding, however.
+	 * descriptors, so we only need ATTRIBUTE_FIXED_PART_SIZE space per attr.
+	 * That might need alignment padding, however.
 	 */
 	attroffset = sizeof(struct tupleDesc) + natts * sizeof(Form_pg_attribute);
 	attroffset = MAXALIGN(attroffset);

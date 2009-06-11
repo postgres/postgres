@@ -5,7 +5,7 @@
  *	  a Tuplestore.
  *
  * Optionally, we can force detoasting (but not decompression) of out-of-line
- * toasted values.  This is to support cursors WITH HOLD, which must retain
+ * toasted values.	This is to support cursors WITH HOLD, which must retain
  * data even if the underlying table is dropped.
  *
  *
@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.22 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.23 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,8 +121,8 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 
 	/*
 	 * Fetch back any out-of-line datums.  We build the new datums array in
-	 * myState->outvalues[] (but we can re-use the slot's isnull array).
-	 * Also, remember the fetched values to free afterwards.
+	 * myState->outvalues[] (but we can re-use the slot's isnull array). Also,
+	 * remember the fetched values to free afterwards.
 	 */
 	nfree = 0;
 	for (i = 0; i < natts; i++)
@@ -136,7 +136,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(val)))
 			{
 				val = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
-														DatumGetPointer(val)));
+													  DatumGetPointer(val)));
 				myState->tofree[nfree++] = val;
 			}
 		}

@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.86 2009/05/07 22:01:18 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.87 2009/06/11 14:48:51 momjian Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -110,14 +110,14 @@ char	   *pgtty = NULL;
 char	   *login = NULL;
 char	   *dbName;
 
-volatile bool timer_exceeded = false;		/* flag from signal handler */
+volatile bool timer_exceeded = false;	/* flag from signal handler */
 
 /* variable definitions */
 typedef struct
 {
 	char	   *name;			/* variable name */
 	char	   *value;			/* its value */
-}	Variable;
+} Variable;
 
 #define MAX_FILES		128		/* max number of SQL script files allowed */
 
@@ -141,7 +141,7 @@ typedef struct
 	struct timeval txn_begin;	/* used for measuring latencies */
 	int			use_file;		/* index in sql_files for this client */
 	bool		prepared[MAX_FILES];
-}	CState;
+} CState;
 
 /*
  * queries read from files
@@ -152,21 +152,21 @@ typedef struct
 
 typedef enum QueryMode
 {
-	QUERY_SIMPLE,	/* simple query */
-	QUERY_EXTENDED,	/* extended query */
-	QUERY_PREPARED,	/* extended query with prepared statements */
+	QUERY_SIMPLE,				/* simple query */
+	QUERY_EXTENDED,				/* extended query */
+	QUERY_PREPARED,				/* extended query with prepared statements */
 	NUM_QUERYMODE
 } QueryMode;
 
-static QueryMode	querymode = QUERY_SIMPLE;
-static const char *QUERYMODE[] = { "simple", "extended", "prepared" };
+static QueryMode querymode = QUERY_SIMPLE;
+static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
 
 typedef struct
 {
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
 	int			argc;			/* number of commands */
 	char	   *argv[MAX_ARGS]; /* command list */
-}	Command;
+} Command;
 
 Command   **sql_files[MAX_FILES];		/* SQL script files */
 int			num_files;			/* number of script files */
@@ -221,10 +221,11 @@ static void setalarm(int seconds);
 
 /* Calculate total time */
 static void
-addTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+addTime(struct timeval * t1, struct timeval * t2, struct timeval * result)
 {
-	int sec = t1->tv_sec + t2->tv_sec;
-	int usec = t1->tv_usec + t2->tv_usec;
+	int			sec = t1->tv_sec + t2->tv_sec;
+	int			usec = t1->tv_usec + t2->tv_usec;
+
 	if (usec >= 1000000)
 	{
 		usec -= 1000000;
@@ -236,10 +237,11 @@ addTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
 
 /* Calculate time difference */
 static void
-diffTime(struct timeval *t1, struct timeval *t2, struct timeval *result)
+diffTime(struct timeval * t1, struct timeval * t2, struct timeval * result)
 {
-	int sec = t1->tv_sec - t2->tv_sec;
-	int usec = t1->tv_usec - t2->tv_usec;
+	int			sec = t1->tv_sec - t2->tv_sec;
+	int			usec = t1->tv_usec - t2->tv_usec;
+
 	if (usec < 0)
 	{
 		usec += 1000000;
@@ -260,7 +262,7 @@ usage(const char *progname)
 		   "  -F NUM       fill factor\n"
 		   "  -s NUM       scaling factor\n"
 		   "\nBenchmarking options:\n"
-		   "  -c NUM       number of concurrent database clients (default: 1)\n"
+		"  -c NUM       number of concurrent database clients (default: 1)\n"
 		   "  -C           establish new connection for each transaction\n"
 		   "  -D VARNAME=VALUE\n"
 		   "               define variable for use by custom script\n"
@@ -272,7 +274,7 @@ usage(const char *progname)
 		   "  -N           do not update tables \"pgbench_tellers\" and \"pgbench_branches\"\n"
 		   "  -s NUM       report this scale factor in output\n"
 		   "  -S           perform SELECT-only transactions\n"
-		   "  -t NUM       number of transactions each client runs (default: 10)\n"
+	 "  -t NUM       number of transactions each client runs (default: 10)\n"
 		   "  -T NUM       duration of benchmark test in seconds\n"
 		   "  -v           vacuum all four standard tables before tests\n"
 		   "\nCommon options:\n"
@@ -362,7 +364,7 @@ doConnect(void)
 
 /* throw away response from backend */
 static void
-discard_response(CState * state)
+discard_response(CState *state)
 {
 	PGresult   *res;
 
@@ -376,7 +378,7 @@ discard_response(CState * state)
 
 /* check to see if the SQL result was good */
 static int
-check(CState * state, PGresult *res, int n)
+check(CState *state, PGresult *res, int n)
 {
 	CState	   *st = &state[n];
 
@@ -405,7 +407,7 @@ compareVariables(const void *v1, const void *v2)
 }
 
 static char *
-getVariable(CState * st, char *name)
+getVariable(CState *st, char *name)
 {
 	Variable	key,
 			   *var;
@@ -427,7 +429,7 @@ getVariable(CState * st, char *name)
 }
 
 static int
-putVariable(CState * st, char *name, char *value)
+putVariable(CState *st, char *name, char *value)
 {
 	Variable	key,
 			   *var;
@@ -493,8 +495,8 @@ putVariable(CState * st, char *name, char *value)
 static char *
 parseVariable(const char *sql, int *eaten)
 {
-	int		i = 0;
-	char   *name;
+	int			i = 0;
+	char	   *name;
 
 	do
 	{
@@ -516,12 +518,12 @@ parseVariable(const char *sql, int *eaten)
 static char *
 replaceVariable(char **sql, char *param, int len, char *value)
 {
-	int	valueln = strlen(value);
+	int			valueln = strlen(value);
 
 	if (valueln > len)
 	{
-		char   *tmp;
-		size_t	offset = param - *sql;
+		char	   *tmp;
+		size_t		offset = param - *sql;
 
 		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
 		if (tmp == NULL)
@@ -541,7 +543,7 @@ replaceVariable(char **sql, char *param, int len, char *value)
 }
 
 static char *
-assignVariables(CState * st, char *sql)
+assignVariables(CState *st, char *sql)
 {
 	char	   *p,
 			   *name,
@@ -550,12 +552,15 @@ assignVariables(CState * st, char *sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-		int		eaten;
+		int			eaten;
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
 		{
-			while (*p == ':') { p++; }
+			while (*p == ':')
+			{
+				p++;
+			}
 			continue;
 		}
 
@@ -577,10 +582,10 @@ assignVariables(CState * st, char *sql)
 static void
 getQueryParams(CState *st, const Command *command, const char **params)
 {
-	int		i;
+	int			i;
 
 	for (i = 0; i < command->argc - 1; i++)
-		params[i] = getVariable(st, command->argv[i+1]);
+		params[i] = getVariable(st, command->argv[i + 1]);
 }
 
 #define MAX_PREPARE_NAME		32
@@ -591,7 +596,7 @@ preparedStatementName(char *buffer, int file, int state)
 }
 
 static void
-doCustom(CState * state, int n, int debug)
+doCustom(CState *state, int n, int debug)
 {
 	PGresult   *res;
 	CState	   *st = &state[n];
@@ -694,7 +699,9 @@ top:
 
 	if (st->con == NULL)
 	{
-		struct timeval t1, t2, t3;
+		struct timeval t1,
+					t2,
+					t3;
 
 		gettimeofday(&t1, NULL);
 		if ((st->con = doConnect()) == NULL)
@@ -716,8 +723,8 @@ top:
 
 	if (commands[st->state]->type == SQL_COMMAND)
 	{
-		const Command  *command = commands[st->state];
-		int				r;
+		const Command *command = commands[st->state];
+		int			r;
 
 		if (querymode == QUERY_SIMPLE)
 		{
@@ -738,15 +745,15 @@ top:
 		}
 		else if (querymode == QUERY_EXTENDED)
 		{
-			const char		 *sql = command->argv[0];
-			const char		 *params[MAX_ARGS];
+			const char *sql = command->argv[0];
+			const char *params[MAX_ARGS];
 
 			getQueryParams(st, command, params);
 
 			if (debug)
 				fprintf(stderr, "client %d sending %s\n", n, sql);
 			r = PQsendQueryParams(st->con, sql, command->argc - 1,
-				NULL, params, NULL, NULL, 0);
+								  NULL, params, NULL, NULL, 0);
 		}
 		else if (querymode == QUERY_PREPARED)
 		{
@@ -755,7 +762,7 @@ top:
 
 			if (!st->prepared[st->use_file])
 			{
-				int		j;
+				int			j;
 
 				for (j = 0; commands[j] != NULL; j++)
 				{
@@ -766,7 +773,7 @@ top:
 						continue;
 					preparedStatementName(name, st->use_file, j);
 					res = PQprepare(st->con, name,
-						commands[j]->argv[0], commands[j]->argc - 1, NULL);
+						  commands[j]->argv[0], commands[j]->argc - 1, NULL);
 					if (PQresultStatus(res) != PGRES_COMMAND_OK)
 						fprintf(stderr, "%s", PQerrorMessage(st->con));
 					PQclear(res);
@@ -780,9 +787,9 @@ top:
 			if (debug)
 				fprintf(stderr, "client %d sending %s\n", n, name);
 			r = PQsendQueryPrepared(st->con, name, command->argc - 1,
-				params, NULL, NULL, 0);
+									params, NULL, NULL, 0);
 		}
-		else /* unknown sql mode */
+		else	/* unknown sql mode */
 			r = 0;
 
 		if (r == 0)
@@ -984,7 +991,7 @@ top:
 
 /* discard connections */
 static void
-disconnect_all(CState * state)
+disconnect_all(CState *state)
 {
 	int			i;
 
@@ -1002,12 +1009,11 @@ init(void)
 	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
 	 * fields in these table declarations were intended to comply with that.
-	 * But because they default to NULLs, they don't actually take any
-	 * space.  We could fix that by giving them non-null default values.
-	 * However, that would completely break comparability of pgbench
-	 * results with prior versions.  Since pgbench has never pretended
-	 * to be fully TPC-B compliant anyway, we stick with the historical
-	 * behavior.
+	 * But because they default to NULLs, they don't actually take any space.
+	 * We could fix that by giving them non-null default values. However, that
+	 * would completely break comparability of pgbench results with prior
+	 * versions.  Since pgbench has never pretended to be fully TPC-B
+	 * compliant anyway, we stick with the historical behavior.
 	 */
 	static char *DDLs[] = {
 		"drop table if exists pgbench_branches",
@@ -1146,14 +1152,17 @@ parseQuery(Command *cmd, const char *raw_sql)
 	p = sql;
 	while ((p = strchr(p, ':')) != NULL)
 	{
-		char	var[12];
-		char   *name;
-		int		eaten;
+		char		var[12];
+		char	   *name;
+		int			eaten;
 
 		name = parseVariable(p, &eaten);
 		if (name == NULL)
 		{
-			while (*p == ':') { p++; }
+			while (*p == ':')
+			{
+				p++;
+			}
 			continue;
 		}
 
@@ -1442,7 +1451,7 @@ process_builtin(char *tb)
 /* print out results */
 static void
 printResults(
-			 int ttype, CState * state,
+			 int ttype, CState *state,
 			 struct timeval * start_time, struct timeval * end_time)
 {
 	double		t1,
@@ -1506,8 +1515,8 @@ main(int argc, char **argv)
 
 	CState	   *state;			/* status of clients */
 
-	struct timeval start_time;			/* start up time */
-	struct timeval end_time;			/* end time */
+	struct timeval start_time;	/* start up time */
+	struct timeval end_time;	/* end time */
 
 	int			i;
 
@@ -1787,10 +1796,10 @@ main(int argc, char **argv)
 	{
 		if (duration <= 0)
 			printf("pghost: %s pgport: %s nclients: %d nxacts: %d dbName: %s\n",
-			   pghost, pgport, nclients, nxacts, dbName);
+				   pghost, pgport, nclients, nxacts, dbName);
 		else
 			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
-			   pghost, pgport, nclients, duration, dbName);
+				   pghost, pgport, nclients, duration, dbName);
 	}
 
 	/* opening connection... */
@@ -1828,7 +1837,7 @@ main(int argc, char **argv)
 		/* warn if we override user-given -s switch */
 		if (scale_given)
 			fprintf(stderr,
-					"Scale option ignored, using pgbench_branches table count = %d\n",
+			"Scale option ignored, using pgbench_branches table count = %d\n",
 					scale);
 	}
 
@@ -1879,7 +1888,8 @@ main(int argc, char **argv)
 
 	if (is_connect == 0)
 	{
-		struct timeval t, now;
+		struct timeval t,
+					now;
 
 		/* make connections to the database */
 		for (i = 0; i < nclients; i++)
@@ -1972,7 +1982,8 @@ main(int argc, char **argv)
 				if (this_usec > 0 && (min_usec == 0 || this_usec < min_usec))
 					min_usec = this_usec;
 
-				FD_SET(sock, &input_mask);
+				FD_SET		(sock, &input_mask);
+
 				if (maxsock < sock)
 					maxsock = sock;
 			}
@@ -1985,7 +1996,8 @@ main(int argc, char **argv)
 					disconnect_all(state);
 					exit(1);
 				}
-				FD_SET(sock, &input_mask);
+				FD_SET		(sock, &input_mask);
+
 				if (maxsock < sock)
 					maxsock = sock;
 			}
@@ -2069,8 +2081,7 @@ setalarm(int seconds)
 	pqsignal(SIGALRM, handle_sig_alarm);
 	alarm(seconds);
 }
-
-#else  /* WIN32 */
+#else							/* WIN32 */
 
 static VOID CALLBACK
 win32_timer_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
@@ -2081,12 +2092,12 @@ win32_timer_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 static void
 setalarm(int seconds)
 {
-	HANDLE	queue;
-	HANDLE	timer;
+	HANDLE		queue;
+	HANDLE		timer;
 
 	/* This function will be called at most once, so we can cheat a bit. */
 	queue = CreateTimerQueue();
-	if (seconds > ((DWORD)-1) / 1000 ||
+	if (seconds > ((DWORD) -1) / 1000 ||
 		!CreateTimerQueueTimer(&timer, queue,
 							   win32_timer_callback, NULL, seconds * 1000, 0,
 							   WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE))
@@ -2096,4 +2107,4 @@ setalarm(int seconds)
 	}
 }
 
-#endif  /* WIN32 */
+#endif   /* WIN32 */

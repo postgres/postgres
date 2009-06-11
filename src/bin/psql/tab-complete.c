@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.183 2009/04/08 04:05:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.184 2009/06/11 14:49:08 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -125,7 +125,7 @@ static int	completion_max_records;
  * Communication variables set by COMPLETE_WITH_FOO macros and then used by
  * the completion callback functions.  Ugly but there is no better way.
  */
-static const char *completion_charp;			/* to pass a string */
+static const char *completion_charp;	/* to pass a string */
 static const char *const * completion_charpp;	/* to pass a list of strings */
 static const char *completion_info_charp;		/* to pass a second string */
 static const char *completion_info_charp2;		/* to pass a third string */
@@ -693,7 +693,7 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const list_ALTER[] =
 		{"AGGREGATE", "CONVERSION", "DATABASE", "DOMAIN", "FOREIGN DATA WRAPPER", "FUNCTION",
-		"GROUP", "INDEX", "LANGUAGE", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
+			"GROUP", "INDEX", "LANGUAGE", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
 		"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE", "USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
@@ -1673,8 +1673,8 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const list_privileg[] =
 		{"SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES",
-		 "TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
-		 "ALL", NULL};
+			"TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
+		"ALL", NULL};
 
 		COMPLETE_WITH_LIST(list_privileg);
 	}
@@ -1755,8 +1755,8 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_ATTR(prev_wd, "");
 
 	/*
-	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or
-	 * "TABLE" or "DEFAULT VALUES"
+	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or "TABLE" or
+	 * "DEFAULT VALUES"
 	 */
 	else if (pg_strcasecmp(prev3_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev2_wd, "INTO") == 0)
@@ -1766,7 +1766,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_INSERT);
 	}
-	/* Complete INSERT INTO <table> (attribs) with "VALUES" or "SELECT" or "TABLE" */
+
+	/*
+	 * Complete INSERT INTO <table> (attribs) with "VALUES" or "SELECT" or
+	 * "TABLE"
+	 */
 	else if (pg_strcasecmp(prev4_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "INTO") == 0 &&
 			 prev_wd[strlen(prev_wd) - 1] == ')')

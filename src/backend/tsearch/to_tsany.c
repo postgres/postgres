@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.13 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.14 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,13 +32,13 @@ get_current_ts_config(PG_FUNCTION_ARGS)
 static int
 compareWORD(const void *a, const void *b)
 {
-	int res;
+	int			res;
 
 	res = tsCompareString(
-					((ParsedWord *) a)->word, ((ParsedWord *) a)->len,
-					((ParsedWord *) b)->word, ((ParsedWord *) b)->len,
-					false );
-	
+						  ((ParsedWord *) a)->word, ((ParsedWord *) a)->len,
+						  ((ParsedWord *) b)->word, ((ParsedWord *) b)->len,
+						  false);
+
 	if (res == 0)
 	{
 		if (((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos)
@@ -162,7 +162,7 @@ make_tsvector(ParsedText *prs)
 	if (lenstr > MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 	errmsg("string is too long for tsvector (%d bytes, max %d bytes)", lenstr, MAXSTRPOS)));
+				 errmsg("string is too long for tsvector (%d bytes, max %d bytes)", lenstr, MAXSTRPOS)));
 
 	totallen = CALCDATASIZE(prs->curwords, lenstr);
 	in = (TSVector) palloc0(totallen);
@@ -301,8 +301,8 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 				while (count < prs.curwords && pos == prs.words[count].pos.pos && variant == prs.words[count].nvariant)
 				{
 
-					pushValue(state, prs.words[count].word, prs.words[count].len, weight, 
-							(  (prs.words[count].flags & TSL_PREFIX) || prefix  ) ? true : false );
+					pushValue(state, prs.words[count].word, prs.words[count].len, weight,
+							  ((prs.words[count].flags & TSL_PREFIX) || prefix) ? true : false);
 					pfree(prs.words[count].word);
 					if (cnt)
 						pushOperator(state, OP_AND);
@@ -351,15 +351,16 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
 
-	if ( len != query->size ) {
-		char 		*oldoperand = GETOPERAND(query);
-		int4 lenoperand = VARSIZE(query) - (oldoperand - (char*)query);
+	if (len != query->size)
+	{
+		char	   *oldoperand = GETOPERAND(query);
+		int4		lenoperand = VARSIZE(query) - (oldoperand - (char *) query);
 
-		Assert( len < query->size );
+		Assert(len < query->size);
 
 		query->size = len;
-		memcpy((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char*)query) );
-		SET_VARSIZE(query, COMPUTESIZE( len, lenoperand )); 
+		memcpy((void *) GETOPERAND(query), oldoperand, VARSIZE(query) - (oldoperand - (char *) query));
+		SET_VARSIZE(query, COMPUTESIZE(len, lenoperand));
 	}
 
 	pfree(res);
@@ -401,15 +402,16 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
 
-	if ( len != query->size ) {
-		char 		*oldoperand = GETOPERAND(query);
-		int4 lenoperand = VARSIZE(query) - (oldoperand - (char*)query);
+	if (len != query->size)
+	{
+		char	   *oldoperand = GETOPERAND(query);
+		int4		lenoperand = VARSIZE(query) - (oldoperand - (char *) query);
 
-		Assert( len < query->size );
+		Assert(len < query->size);
 
 		query->size = len;
-		memcpy((void *) GETOPERAND(query), oldoperand, lenoperand );
-		SET_VARSIZE(query, COMPUTESIZE( len, lenoperand )); 
+		memcpy((void *) GETOPERAND(query), oldoperand, lenoperand);
+		SET_VARSIZE(query, COMPUTESIZE(len, lenoperand));
 	}
 
 	pfree(res);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_foreign_server.h,v 1.2 2009/01/01 17:23:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_foreign_server.h,v 1.3 2009/06/11 14:49:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -24,7 +24,7 @@
  *		typedef struct FormData_pg_foreign_server
  * ----------------
  */
-#define ForeignServerRelationId	1417
+#define ForeignServerRelationId 1417
 
 CATALOG(pg_foreign_server,1417)
 {

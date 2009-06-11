@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.353 2009/04/19 19:46:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.354 2009/06/11 14:48:54 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -83,10 +83,10 @@ static Oid AddNewRelationType(const char *typeName,
 				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
-						  bool is_local, int inhcount);
+			  bool is_local, int inhcount);
 static void StoreConstraints(Relation rel, List *cooked_constraints);
 static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
-										bool allow_merge, bool is_local);
+							bool allow_merge, bool is_local);
 static void SetRelationNumChecks(Relation rel, int numchecks);
 static Node *cookConstraint(ParseState *pstate,
 			   Node *raw_constraint,
@@ -113,37 +113,37 @@ static List *insert_ordered_unique_oid(List *list, Oid datum);
 static FormData_pg_attribute a1 = {
 	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', 's', true, false, false, true, 0, { 0 }
+	false, 'p', 's', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a2 = {
 	0, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, { 0 }
+	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a3 = {
 	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, { 0 }
+	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a4 = {
 	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, { 0 }
+	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a5 = {
 	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, { 0 }
+	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a6 = {
 	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, { 0 }
+	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 /*
@@ -155,7 +155,7 @@ static FormData_pg_attribute a6 = {
 static FormData_pg_attribute a7 = {
 	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', 'i', true, false, false, true, 0, { 0 }
+	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static const Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
@@ -478,7 +478,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
  * Caller has already opened and locked pg_attribute.  new_attribute is the
  * attribute to insert (but we ignore its attacl, if indeed it has one).
  *
- * indstate is the index state for CatalogIndexInsert.  It can be passed as
+ * indstate is the index state for CatalogIndexInsert.	It can be passed as
  * NULL, in which case we'll fetch the necessary info.  (Don't do this when
  * inserting multiple attributes, because it's a tad more expensive.)
  *
@@ -530,6 +530,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 
 	heap_freetuple(tup);
 }
+
 /* --------------------------------
  *		AddNewAttributeTuples
  *
@@ -798,7 +799,7 @@ AddNewRelationType(const char *typeName,
 				   ownerid,		/* owner's ID */
 				   -1,			/* internal size (varlena) */
 				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
-				   TYPCATEGORY_COMPOSITE, /* type-category (ditto) */
+				   TYPCATEGORY_COMPOSITE,		/* type-category (ditto) */
 				   false,		/* composite types are never preferred */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_RECORD_IN, /* input procedure */
@@ -979,7 +980,7 @@ heap_create_with_catalog(const char *relname,
 				   ownerid,		/* owner's ID */
 				   -1,			/* Internal size (varlena) */
 				   TYPTYPE_BASE,	/* Not composite - typelem is */
-				   TYPCATEGORY_ARRAY, /* type-category (array) */
+				   TYPCATEGORY_ARRAY,	/* type-category (array) */
 				   false,		/* array types are never preferred */
 				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_ARRAY_IN,	/* array input proc */
@@ -1671,8 +1672,8 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  expr, /* Tree form check constraint */
 						  ccbin,	/* Binary form check constraint */
 						  ccsrc,	/* Source form check constraint */
-						  is_local,	/* conislocal */
-						  inhcount); /* coninhcount */
+						  is_local,		/* conislocal */
+						  inhcount);	/* coninhcount */
 
 	pfree(ccbin);
 	pfree(ccsrc);
@@ -1889,10 +1890,10 @@ AddRelationNewConstraints(Relation rel,
 			checknames = lappend(checknames, ccname);
 
 			/*
-			 * Check against pre-existing constraints.  If we are allowed
-			 * to merge with an existing constraint, there's no more to
-			 * do here.  (We omit the duplicate constraint from the result,
-			 * which is what ATAddCheckConstraint wants.)
+			 * Check against pre-existing constraints.	If we are allowed to
+			 * merge with an existing constraint, there's no more to do here.
+			 * (We omit the duplicate constraint from the result, which is
+			 * what ATAddCheckConstraint wants.)
 			 */
 			if (MergeWithExistingConstraint(rel, ccname, expr,
 											allow_merge, is_local))
@@ -2010,8 +2011,8 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 			/* Found it.  Conflicts if not identical check constraint */
 			if (con->contype == CONSTRAINT_CHECK)
 			{
-				Datum	val;
-				bool	isnull;
+				Datum		val;
+				bool		isnull;
 
 				val = fastgetattr(tup,
 								  Anum_pg_constraint_conbin,
@@ -2029,8 +2030,8 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 					   ccname, RelationGetRelationName(rel))));
 			/* OK to update the tuple */
 			ereport(NOTICE,
-					(errmsg("merging constraint \"%s\" with inherited definition",
-							ccname)));
+			   (errmsg("merging constraint \"%s\" with inherited definition",
+					   ccname)));
 			tup = heap_copytuple(tup);
 			con = (Form_pg_constraint) GETSTRUCT(tup);
 			if (is_local)
@@ -2152,7 +2153,7 @@ cookDefault(ParseState *pstate,
 	if (pstate->p_hasWindowFuncs)
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),
-			 errmsg("cannot use window function in default expression")));
+				 errmsg("cannot use window function in default expression")));
 
 	/*
 	 * Coerce the expression to the correct type and typmod, if given. This
@@ -2212,8 +2213,8 @@ cookConstraint(ParseState *pstate,
 	if (list_length(pstate->p_rtable) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("only table \"%s\" can be referenced in check constraint",
-						relname)));
+			errmsg("only table \"%s\" can be referenced in check constraint",
+				   relname)));
 
 	/*
 	 * No subplans or aggregates, either...
@@ -2225,7 +2226,7 @@ cookConstraint(ParseState *pstate,
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in check constraint")));
+			   errmsg("cannot use aggregate function in check constraint")));
 	if (pstate->p_hasWindowFuncs)
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),

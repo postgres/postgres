@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.61 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.62 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,10 +63,10 @@ TidListCreate(TidScanState *tidstate)
 	ListCell   *l;
 
 	/*
-	 * We silently discard any TIDs that are out of range at the time of
-	 * scan start.  (Since we hold at least AccessShareLock on the table,
-	 * it won't be possible for someone to truncate away the blocks we
-	 * intend to visit.)
+	 * We silently discard any TIDs that are out of range at the time of scan
+	 * start.  (Since we hold at least AccessShareLock on the table, it won't
+	 * be possible for someone to truncate away the blocks we intend to
+	 * visit.)
 	 */
 	nblocks = RelationGetNumberOfBlocks(tidstate->ss.ss_currentRelation);
 

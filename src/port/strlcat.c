@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/port/strlcat.c,v 1.3 2008/05/17 01:28:25 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/port/strlcat.c,v 1.4 2009/06/11 14:49:15 momjian Exp $
  *
  *	$OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $	*/
 

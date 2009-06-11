@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_text.c,v 1.11 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_text.c,v 1.12 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_var.h"
@@ -135,6 +135,7 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	void	   *query = (void *) DatumGetTextP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		retval;
@@ -161,6 +162,7 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	void	   *query = (void *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		retval;

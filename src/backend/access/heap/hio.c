@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.75 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.76 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static Buffer
 ReadBufferBI(Relation relation, BlockNumber targetBlock,
 			 BulkInsertState bistate)
 {
-	Buffer buffer;
+	Buffer		buffer;
 
 	/* If not bulk-insert, exactly like ReadBuffer */
 	if (!bistate)
@@ -118,7 +118,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  *	happen if space is freed in that page after heap_update finds there's not
  *	enough there).	In that case, the page will be pinned and locked only once.
  *
- *	We normally use FSM to help us find free space.	 However,
+ *	We normally use FSM to help us find free space.  However,
  *	if HEAP_INSERT_SKIP_FSM is specified, we just append a new empty page to
  *	the end of the relation if the tuple won't fit on the current target page.
  *	This can save some cycles when we know the relation is new and doesn't
@@ -133,7 +133,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  *	for additional constraints needed for safe usage of this behavior.)
  *
  *	The caller can also provide a BulkInsertState object to optimize many
- *	insertions into the same relation.  This keeps a pin on the current
+ *	insertions into the same relation.	This keeps a pin on the current
  *	insertion target page (to save pin/unpin cycles) and also passes a
  *	BULKWRITE buffer selection strategy object to the buffer manager.
  *	Passing NULL for bistate selects the default behavior.
@@ -186,7 +186,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 	/*
 	 * We first try to put the tuple on the same page we last inserted a tuple
-	 * on, as cached in the BulkInsertState or relcache entry.  If that
+	 * on, as cached in the BulkInsertState or relcache entry.	If that
 	 * doesn't work, we ask the Free Space Map to locate a suitable page.
 	 * Since the FSM's info might be out of date, we have to be prepared to
 	 * loop around and retry multiple times. (To insure this isn't an infinite

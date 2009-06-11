@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.2 2009/05/12 03:11:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_inherits.c,v 1.3 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +82,8 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 
 			/*
 			 * Now that we have the lock, double-check to see if the relation
-			 * really exists or not.  If not, assume it was dropped while
-			 * we waited to acquire lock, and ignore it.
+			 * really exists or not.  If not, assume it was dropped while we
+			 * waited to acquire lock, and ignore it.
 			 */
 			if (!SearchSysCacheExists(RELOID,
 									  ObjectIdGetDatum(inhrelid),
@@ -235,10 +235,10 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 		HeapTuple	inhtup;
 
 		/*
-		 * If we've seen this relid already, skip it.  This avoids extra
-		 * work in multiple-inheritance scenarios, and also protects us
-		 * from an infinite loop in case there is a cycle in pg_inherits
-		 * (though theoretically that shouldn't happen).
+		 * If we've seen this relid already, skip it.  This avoids extra work
+		 * in multiple-inheritance scenarios, and also protects us from an
+		 * infinite loop in case there is a cycle in pg_inherits (though
+		 * theoretically that shouldn't happen).
 		 */
 		if (list_member_oid(visited, this_relid))
 			continue;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.205 2009/04/21 15:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.206 2009/06/11 14:49:07 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -57,7 +57,7 @@ static backslashResult exec_command(const char *cmd,
 			 PsqlScanState scan_state,
 			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
-					bool *edited);
+		bool *edited);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
@@ -327,7 +327,8 @@ exec_command(const char *cmd,
 	else if (cmd[0] == 'd')
 	{
 		char	   *pattern;
-		bool		show_verbose, show_system;
+		bool		show_verbose,
+					show_system;
 
 		/* We don't do SQLID reduction on the pattern yet */
 		pattern = psql_scan_slash_option(scan_state,
@@ -375,7 +376,7 @@ exec_command(const char *cmd,
 					case 'n':
 					case 't':
 					case 'w':
-						success =  describeFunctions(&cmd[2], pattern, show_verbose, show_system);
+						success = describeFunctions(&cmd[2], pattern, show_verbose, show_system);
 						break;
 					default:
 						status = PSQL_CMD_UNKNOWN;
@@ -432,7 +433,7 @@ exec_command(const char *cmd,
 				}
 				break;
 			case 'e':			/* SQL/MED subsystem */
-				switch(cmd[2])
+				switch (cmd[2])
 				{
 					case 's':
 						success = listForeignServers(pattern, show_verbose);
@@ -530,7 +531,7 @@ exec_command(const char *cmd,
 
 		if (status != PSQL_CMD_ERROR)
 		{
-			bool edited = false;
+			bool		edited = false;
 
 			if (!do_edit(0, query_buf, &edited))
 				status = PSQL_CMD_ERROR;
@@ -989,7 +990,8 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "timing") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-											     OT_NORMAL, NULL, false);
+												 OT_NORMAL, NULL, false);
+
 		if (opt)
 			pset.timing = ParseVariableBool(opt);
 		else
@@ -1292,7 +1294,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
 	SyncVariables();
-	connection_warnings(); /* Must be after SyncVariables */
+	connection_warnings();		/* Must be after SyncVariables */
 
 	/* Tell the user about the new connection */
 	if (!pset.quiet)
@@ -1341,17 +1343,17 @@ connection_warnings(void)
 				server_version = server_ver_str;
 			}
 
-			printf(_("%s (%s, server %s)\n"), 
-			pset.progname, PG_VERSION, server_version);
+			printf(_("%s (%s, server %s)\n"),
+				   pset.progname, PG_VERSION, server_version);
 		}
 		else
 			printf("%s (%s)\n", pset.progname, PG_VERSION);
 
 		if (pset.sversion / 100 != client_ver / 100)
 			printf(_("WARNING: %s version %d.%d, server version %d.%d.\n"
-				 "         Some psql features might not work.\n"),
-				pset.progname, client_ver / 10000, (client_ver / 100) % 100,
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+					 "         Some psql features might not work.\n"),
+				 pset.progname, client_ver / 10000, (client_ver / 100) % 100,
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 
 #ifdef WIN32
 		checkWin32Codepage();
@@ -1381,10 +1383,11 @@ printSSLInfo(void)
 	printf(_("SSL connection (cipher: %s, bits: %i)\n"),
 		   SSL_get_cipher(ssl), sslbits);
 #else
+
 	/*
-	 * If psql is compiled without SSL but is using a libpq with SSL,
-	 * we cannot figure out the specifics about the connection. But
-	 * we know it's SSL secured.
+	 * If psql is compiled without SSL but is using a libpq with SSL, we
+	 * cannot figure out the specifics about the connection. But we know it's
+	 * SSL secured.
 	 */
 	if (PQgetssl(pset.db))
 		printf(_("SSL connection (unknown cipher)\n"));
@@ -1410,7 +1413,7 @@ checkWin32Codepage(void)
 	{
 		printf(_("WARNING: Console code page (%u) differs from Windows code page (%u)\n"
 				 "         8-bit characters might not work correctly. See psql reference\n"
-			     "         page \"Notes for Windows users\" for details.\n"),
+				 "         page \"Notes for Windows users\" for details.\n"),
 			   concp, wincp);
 	}
 }
@@ -2028,7 +2031,7 @@ lookup_function_oid(PGconn *conn, const char *desc, Oid *foid)
 {
 	bool		result = true;
 	PQExpBuffer query;
-	PGresult *res;
+	PGresult   *res;
 
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT ");
@@ -2060,7 +2063,7 @@ get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf)
 {
 	bool		result = true;
 	PQExpBuffer query;
-	PGresult *res;
+	PGresult   *res;
 
 	query = createPQExpBuffer();
 	printfPQExpBuffer(query, "SELECT pg_catalog.pg_get_functiondef(%u)", oid);

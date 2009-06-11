@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.29 2009/06/09 18:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.30 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,7 +474,7 @@ create_singleton_array(FunctionCallInfo fcinfo,
 Datum
 array_agg_transfn(PG_FUNCTION_ARGS)
 {
-	Oid arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	MemoryContext aggcontext;
 	ArrayBuildState *state;
 	Datum		elem;
@@ -504,10 +504,9 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 							 aggcontext);
 
 	/*
-	 * The transition type for array_agg() is declared to be "internal",
-	 * which is a pass-by-value type the same size as a pointer.  So we
-	 * can safely pass the ArrayBuildState pointer through nodeAgg.c's
-	 * machinations.
+	 * The transition type for array_agg() is declared to be "internal", which
+	 * is a pass-by-value type the same size as a pointer.	So we can safely
+	 * pass the ArrayBuildState pointer through nodeAgg.c's machinations.
 	 */
 	PG_RETURN_POINTER(state);
 }
@@ -521,12 +520,12 @@ array_agg_finalfn(PG_FUNCTION_ARGS)
 	int			lbs[1];
 
 	/*
-	 * Test for null before Asserting we are in right context.  This is
-	 * to avoid possible Assert failure in 8.4beta installations, where
-	 * it is possible for users to create NULL constants of type internal.
+	 * Test for null before Asserting we are in right context.	This is to
+	 * avoid possible Assert failure in 8.4beta installations, where it is
+	 * possible for users to create NULL constants of type internal.
 	 */
 	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();   /* returns null iff no input values */
+		PG_RETURN_NULL();		/* returns null iff no input values */
 
 	/* cannot be called directly because of internal-type argument */
 	Assert(fcinfo->context &&

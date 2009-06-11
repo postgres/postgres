@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.77 2009/01/27 12:40:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.78 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,9 +126,9 @@ RemoveRewriteRuleById(Oid ruleOid)
 		elog(ERROR, "could not find tuple for rule %u", ruleOid);
 
 	/*
-	 * We had better grab AccessExclusiveLock to ensure that no queries
-	 * are going on that might depend on this rule.  (Note: a weaker lock
-	 * would suffice if it's not an ON SELECT rule.)
+	 * We had better grab AccessExclusiveLock to ensure that no queries are
+	 * going on that might depend on this rule.  (Note: a weaker lock would
+	 * suffice if it's not an ON SELECT rule.)
 	 */
 	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
 	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);

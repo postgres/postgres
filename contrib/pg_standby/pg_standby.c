@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.22 2009/05/14 20:31:09 heikki Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.23 2009/06/11 14:48:51 momjian Exp $
  *
  *
  * pg_standby.c
@@ -91,7 +91,7 @@ char		exclusiveCleanupFileName[MAXPGPATH];		/* the file we need to
 #define SmartFailover	1
 #define FastFailover	2
 
-static int Failover = NoFailover;
+static int	Failover = NoFailover;
 
 #define RESTORE_COMMAND_COPY 0
 #define RESTORE_COMMAND_LINK 1
@@ -205,10 +205,10 @@ CustomizableNextWALFileReady()
 
 			/*
 			 * Windows 'cp' sets the final file size before the copy is
-			 * complete, and not yet ready to be opened by pg_standby.
-			 * So we wait for sleeptime secs before attempting to restore.
-			 * If that is not enough, we will rely on the retry/holdoff
-			 * mechanism.  GNUWin32's cp does not have this problem.
+			 * complete, and not yet ready to be opened by pg_standby. So we
+			 * wait for sleeptime secs before attempting to restore. If that
+			 * is not enough, we will rely on the retry/holdoff mechanism.
+			 * GNUWin32's cp does not have this problem.
 			 */
 			pg_usleep(sleeptime * 1000000L);
 #endif
@@ -327,10 +327,10 @@ SetWALFileNameForCleanup(void)
 	if (restartWALFileName)
 	{
 		/*
-		 * Don't do cleanup if the restartWALFileName provided
-		 * is later than the xlog file requested. This is an error
-		 * and we must not remove these files from archive.
-		 * This shouldn't happen, but better safe than sorry.
+		 * Don't do cleanup if the restartWALFileName provided is later than
+		 * the xlog file requested. This is an error and we must not remove
+		 * these files from archive. This shouldn't happen, but better safe
+		 * than sorry.
 		 */
 		if (strcmp(restartWALFileName, nextWALFileName) > 0)
 			return false;
@@ -376,15 +376,15 @@ SetWALFileNameForCleanup(void)
  * CheckForExternalTrigger()
  *
  *	  Is there a trigger file? Sets global 'Failover' variable to indicate
- *    what kind of a trigger file it was. A "fast" trigger file is turned
- *    into a "smart" file as a side-effect.
+ *	  what kind of a trigger file it was. A "fast" trigger file is turned
+ *	  into a "smart" file as a side-effect.
  */
 static void
 CheckForExternalTrigger(void)
 {
-	char	buf[32];
-	int		fd;
-	int		len;
+	char		buf[32];
+	int			fd;
+	int			len;
 
 	/*
 	 * Look for a trigger file, if that option has been selected
@@ -397,10 +397,10 @@ CheckForExternalTrigger(void)
 
 	/*
 	 * An empty trigger file performs smart failover. There's a little race
-	 * condition here: if the writer of the trigger file has just created
-	 * the file, but not yet written anything to it, we'll treat that as
-	 * smart shutdown even if the other process was just about to write "fast"
-	 * to it. But that's fine: we'll restore one more WAL file, and when we're
+	 * condition here: if the writer of the trigger file has just created the
+	 * file, but not yet written anything to it, we'll treat that as smart
+	 * shutdown even if the other process was just about to write "fast" to
+	 * it. But that's fine: we'll restore one more WAL file, and when we're
 	 * invoked next time, we'll see the word "fast" and fail over immediately.
 	 */
 	if (stat_buf.st_size == 0)
@@ -418,7 +418,7 @@ CheckForExternalTrigger(void)
 		fflush(stderr);
 		return;
 	}
-	
+
 	if ((len = read(fd, buf, sizeof(buf))) < 0)
 	{
 		fprintf(stderr, "WARNING: could not read \"%s\": %s\n",
@@ -428,7 +428,7 @@ CheckForExternalTrigger(void)
 		return;
 	}
 	buf[len] = '\0';
-	
+
 	if (strncmp(buf, "smart", 5) == 0)
 	{
 		Failover = SmartFailover;
@@ -437,7 +437,7 @@ CheckForExternalTrigger(void)
 		close(fd);
 		return;
 	}
-	
+
 	if (strncmp(buf, "fast", 4) == 0)
 	{
 		Failover = FastFailover;
@@ -446,8 +446,8 @@ CheckForExternalTrigger(void)
 		fflush(stderr);
 
 		/*
-		 * Turn it into a "smart" trigger by truncating the file. Otherwise
-		 * if the server asks us again to restore a segment that was restored
+		 * Turn it into a "smart" trigger by truncating the file. Otherwise if
+		 * the server asks us again to restore a segment that was restored
 		 * restored already, we would return "not found" and upset the server.
 		 */
 		if (ftruncate(fd, 0) < 0)
@@ -461,7 +461,7 @@ CheckForExternalTrigger(void)
 		return;
 	}
 	close(fd);
-	
+
 	fprintf(stderr, "WARNING: invalid content in \"%s\"\n", triggerPath);
 	fflush(stderr);
 	return;
@@ -514,7 +514,7 @@ usage(void)
 	printf("Usage:\n");
 	printf("  %s [OPTION]... ARCHIVELOCATION NEXTWALFILE XLOGFILEPATH [RESTARTWALFILE]\n", progname);
 	printf("\n"
-		   "with main intended use as a restore_command in the recovery.conf:\n"
+		"with main intended use as a restore_command in the recovery.conf:\n"
 		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
 		   "e.g.\n"
 		   "  restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p %%r'\n");
@@ -577,16 +577,16 @@ main(int argc, char **argv)
 	 * You can send SIGUSR1 to trigger failover.
 	 *
 	 * Postmaster uses SIGQUIT to request immediate shutdown. The default
-	 * action is to core dump, but we don't want that, so trap it and
-	 * commit suicide without core dump.
+	 * action is to core dump, but we don't want that, so trap it and commit
+	 * suicide without core dump.
 	 *
-	 * We used to use SIGINT and SIGQUIT to trigger failover, but that
-	 * turned out to be a bad idea because postmaster uses SIGQUIT to
-	 * request immediate shutdown. We still trap SIGINT, but that may
-	 * change in a future release.
+	 * We used to use SIGINT and SIGQUIT to trigger failover, but that turned
+	 * out to be a bad idea because postmaster uses SIGQUIT to request
+	 * immediate shutdown. We still trap SIGINT, but that may change in a
+	 * future release.
 	 */
 	(void) signal(SIGUSR1, sighandler);
-	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
+	(void) signal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
 #ifndef WIN32
 	(void) signal(SIGQUIT, sigquit_handler);
 #endif
@@ -777,9 +777,9 @@ main(int argc, char **argv)
 		{
 			/*
 			 * Once we have restored this file successfully we can remove some
-			 * prior WAL files. If this restore fails we musn't remove any file
-			 * because some of them will be requested again immediately after
-			 * the failed restore, or when we restart recovery.
+			 * prior WAL files. If this restore fails we musn't remove any
+			 * file because some of them will be requested again immediately
+			 * after the failed restore, or when we restart recovery.
 			 */
 			if (RestoreWALFileForRecovery())
 			{

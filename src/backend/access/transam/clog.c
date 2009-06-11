@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.52 2009/01/20 18:59:37 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.53 2009/06/11 14:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ static bool CLOGPagePrecedes(int page1, int page2);
 static void WriteZeroPageXlogRec(int pageno);
 static void WriteTruncateXlogRec(int pageno);
 static void TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
-					   	   TransactionId *subxids, XidStatus status,
+						   TransactionId *subxids, XidStatus status,
 						   XLogRecPtr lsn, int pageno);
 static void TransactionIdSetStatusBit(TransactionId xid, XidStatus status,
 						  XLogRecPtr lsn, int slotno);
@@ -112,10 +112,10 @@ static void set_status_by_pages(int nsubxids, TransactionId *subxids,
  * the same CLOG page as xid.  If they all are, then the lock will be grabbed
  * only once, and the status will be set to committed directly.  Otherwise
  * we must
- *   1. set sub-committed all subxids that are not on the same page as the
- *      main xid
- *   2. atomically set committed the main xid and the subxids on the same page
- *   3. go over the first bunch again and set them committed
+ *	 1. set sub-committed all subxids that are not on the same page as the
+ *		main xid
+ *	 2. atomically set committed the main xid and the subxids on the same page
+ *	 3. go over the first bunch again and set them committed
  * Note that as far as concurrent checkers are concerned, main transaction
  * commit as a whole is still atomic.
  *
@@ -126,13 +126,13 @@ static void set_status_by_pages(int nsubxids, TransactionId *subxids,
  *					page2: set t2,t3 as sub-committed
  *					page3: set t4 as sub-committed
  *		2. update page1:
- *					set t1 as sub-committed, 
+ *					set t1 as sub-committed,
  *					then set t as committed,
 					then set t1 as committed
  *		3. update pages2-3:
  *					page2: set t2,t3 as committed
  *					page3: set t4 as committed
- * 
+ *
  * NB: this is a low-level routine and is NOT the preferred entry point
  * for most uses; functions in transam.c are the intended callers.
  *
@@ -142,16 +142,17 @@ static void set_status_by_pages(int nsubxids, TransactionId *subxids,
  */
 void
 TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
-				TransactionId *subxids, XidStatus status, XLogRecPtr lsn)
+					TransactionId *subxids, XidStatus status, XLogRecPtr lsn)
 {
-	int		pageno = TransactionIdToPage(xid); /* get page of parent */
-	int 	i;
+	int			pageno = TransactionIdToPage(xid);		/* get page of parent */
+	int			i;
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
 		   status == TRANSACTION_STATUS_ABORTED);
 
 	/*
-	 * See how many subxids, if any, are on the same page as the parent, if any.
+	 * See how many subxids, if any, are on the same page as the parent, if
+	 * any.
 	 */
 	for (i = 0; i < nsubxids; i++)
 	{
@@ -172,14 +173,14 @@ TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
 	}
 	else
 	{
-		int		nsubxids_on_first_page = i;
+		int			nsubxids_on_first_page = i;
 
 		/*
 		 * If this is a commit then we care about doing this correctly (i.e.
-		 * using the subcommitted intermediate status).  By here, we know we're
-		 * updating more than one page of clog, so we must mark entries that
-		 * are *not* on the first page so that they show as subcommitted before
-		 * we then return to update the status to fully committed.
+		 * using the subcommitted intermediate status).  By here, we know
+		 * we're updating more than one page of clog, so we must mark entries
+		 * that are *not* on the first page so that they show as subcommitted
+		 * before we then return to update the status to fully committed.
 		 *
 		 * To avoid touching the first page twice, skip marking subcommitted
 		 * for the subxids on that first page.
@@ -217,13 +218,13 @@ static void
 set_status_by_pages(int nsubxids, TransactionId *subxids,
 					XidStatus status, XLogRecPtr lsn)
 {
-	int		pageno = TransactionIdToPage(subxids[0]);
-	int		offset = 0;
-	int		i = 0;
+	int			pageno = TransactionIdToPage(subxids[0]);
+	int			offset = 0;
+	int			i = 0;
 
 	while (i < nsubxids)
 	{
-		int		num_on_page = 0;
+		int			num_on_page = 0;
 
 		while (TransactionIdToPage(subxids[i]) == pageno && i < nsubxids)
 		{
@@ -251,7 +252,7 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 						   XLogRecPtr lsn, int pageno)
 {
 	int			slotno;
-	int 		i;
+	int			i;
 
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
 		   status == TRANSACTION_STATUS_ABORTED ||
@@ -275,9 +276,9 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	 *
 	 * If we update more than one xid on this page while it is being written
 	 * out, we might find that some of the bits go to disk and others don't.
-	 * If we are updating commits on the page with the top-level xid that could
-	 * break atomicity, so we subcommit the subxids first before we mark the
-	 * top-level commit.
+	 * If we are updating commits on the page with the top-level xid that
+	 * could break atomicity, so we subcommit the subxids first before we mark
+	 * the top-level commit.
 	 */
 	if (TransactionIdIsValid(xid))
 	{
@@ -336,7 +337,7 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 		curval == TRANSACTION_STATUS_COMMITTED)
 		return;
 
-	/* 
+	/*
 	 * Current state change should be from 0 or subcommitted to target state
 	 * or we should already be there when replaying changes during recovery.
 	 */

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.77 2009/01/03 17:08:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.78 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,12 @@ typedef void (*shmem_startup_hook_type) (void);
  * Note: the macro arguments are multiply evaluated, so avoid side-effects.
  *----------
  */
-#define PG_ENSURE_ERROR_CLEANUP(cleanup_function, arg)  \
+#define PG_ENSURE_ERROR_CLEANUP(cleanup_function, arg)	\
 	do { \
 		on_shmem_exit(cleanup_function, arg); \
 		PG_TRY()
 
-#define PG_END_ENSURE_ERROR_CLEANUP(cleanup_function, arg)  \
+#define PG_END_ENSURE_ERROR_CLEANUP(cleanup_function, arg)	\
 		cancel_shmem_exit(cleanup_function, arg); \
 		PG_CATCH(); \
 		{ \

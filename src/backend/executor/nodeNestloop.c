@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.52 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.53 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,8 +225,8 @@ ExecNestLoop(NestLoopState *node)
 			}
 
 			/*
-			 * In a semijoin, we'll consider returning the first match,
-			 * but after that we're done with this outer tuple.
+			 * In a semijoin, we'll consider returning the first match, but
+			 * after that we're done with this outer tuple.
 			 */
 			if (node->js.jointype == JOIN_SEMI)
 				node->nl_NeedNewOuter = true;

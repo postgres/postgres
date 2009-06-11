@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.75 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.76 2009/06/11 14:48:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,11 +94,13 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * Next, if any of keys is a NULL and that key is not marked with
 		 * SK_SEARCHNULL then nothing can be found.
 		 */
-		for (i = 0; i < scan->numberOfKeys; i++) {
+		for (i = 0; i < scan->numberOfKeys; i++)
+		{
 			scan->keyData[i].sk_func = so->giststate->consistentFn[scan->keyData[i].sk_attno - 1];
 
-			if ( scan->keyData[i].sk_flags & SK_ISNULL ) {
-				if ( (scan->keyData[i].sk_flags & SK_SEARCHNULL) == 0 )
+			if (scan->keyData[i].sk_flags & SK_ISNULL)
+			{
+				if ((scan->keyData[i].sk_flags & SK_SEARCHNULL) == 0)
 					so->qual_ok = false;
 			}
 		}

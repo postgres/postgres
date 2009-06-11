@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.29 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.30 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 
 		doscan = ExecIndexAdvanceArrayKeys(node->biss_ArrayKeys,
 										   node->biss_NumArrayKeys);
-		if (doscan)			/* reset index scan */
+		if (doscan)				/* reset index scan */
 			index_rescan(node->biss_ScanDesc, node->biss_ScanKeys);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.107 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.108 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef struct OprCacheKey
 typedef struct OprCacheEntry
 {
 	/* the hash lookup key MUST BE FIRST */
-	OprCacheKey	key;
+	OprCacheKey key;
 
 	Oid			opr_oid;		/* OID of the resolved operator */
 } OprCacheEntry;
@@ -76,7 +76,7 @@ static void op_error(ParseState *pstate, List *op, char oprkind,
 		 Oid arg1, Oid arg2,
 		 FuncDetailCode fdresult, int location);
 static bool make_oper_cache_key(OprCacheKey *key, List *opname,
-								Oid ltypeId, Oid rtypeId);
+					Oid ltypeId, Oid rtypeId);
 static Oid	find_oper_cache_entry(OprCacheKey *key);
 static void make_oper_cache_entry(OprCacheKey *key, Oid opr_oid);
 static void InvalidateOprCacheCallBack(Datum arg, int cacheid, ItemPointer tuplePtr);
@@ -194,7 +194,7 @@ get_sort_group_operators(Oid argtype,
 	 * are consistent, ie all from the same opclass.
 	 */
 	typentry = lookup_type_cache(argtype,
-					TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
+					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
 	lt_opr = typentry->lt_opr;
 	eq_opr = typentry->eq_opr;
 	gt_opr = typentry->gt_opr;
@@ -202,8 +202,8 @@ get_sort_group_operators(Oid argtype,
 	/*
 	 * If the datatype is an array, then we can use array_lt and friends ...
 	 * but only if there are suitable operators for the element type.  (This
-	 * check is not in the raw typcache.c code ... should it be?)  Testing
-	 * all three operator IDs here should be redundant.
+	 * check is not in the raw typcache.c code ... should it be?)  Testing all
+	 * three operator IDs here should be redundant.
 	 */
 	if (lt_opr == ARRAY_LT_OP ||
 		eq_opr == ARRAY_EQ_OP ||
@@ -214,7 +214,7 @@ get_sort_group_operators(Oid argtype,
 		if (OidIsValid(elem_type))
 		{
 			typentry = lookup_type_cache(elem_type,
-					TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
+					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
 			if (!OidIsValid(typentry->lt_opr))
 				lt_opr = InvalidOid;	/* element type has no "<" */
 			if (!OidIsValid(typentry->eq_opr))
@@ -223,7 +223,7 @@ get_sort_group_operators(Oid argtype,
 				gt_opr = InvalidOid;	/* element type has no ">" */
 		}
 		else
-			lt_opr = eq_opr = gt_opr = InvalidOid;	/* bogus array type? */
+			lt_opr = eq_opr = gt_opr = InvalidOid;		/* bogus array type? */
 	}
 
 	/* Report errors if needed */
@@ -388,7 +388,7 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 	 bool noError, int location)
 {
 	Oid			operOid;
-	OprCacheKey	key;
+	OprCacheKey key;
 	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
@@ -538,7 +538,7 @@ Operator
 right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
 	Oid			operOid;
-	OprCacheKey	key;
+	OprCacheKey key;
 	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
@@ -620,7 +620,7 @@ Operator
 left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
 	Oid			operOid;
-	OprCacheKey	key;
+	OprCacheKey key;
 	bool		key_ok;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
@@ -1003,7 +1003,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
  * mapping is pretty expensive to compute, especially for ambiguous operators;
  * this is mainly because there are a *lot* of instances of popular operator
  * names such as "=", and we have to check each one to see which is the
- * best match.  So once we have identified the correct mapping, we save it
+ * best match.	So once we have identified the correct mapping, we save it
  * in a cache that need only be flushed on pg_operator or pg_cast change.
  * (pg_cast must be considered because changes in the set of implicit casts
  * affect the set of applicable operators for any given input datatype.)
@@ -1056,7 +1056,7 @@ make_oper_cache_key(OprCacheKey *key, List *opname, Oid ltypeId, Oid rtypeId)
 	{
 		/* get the active search path */
 		if (fetch_search_path_array(key->search_path,
-									MAX_CACHED_PATH_LEN) > MAX_CACHED_PATH_LEN)
+								  MAX_CACHED_PATH_LEN) > MAX_CACHED_PATH_LEN)
 			return false;		/* oops, didn't fit */
 	}
 
@@ -1087,7 +1087,7 @@ find_oper_cache_entry(OprCacheKey *key)
 		ctl.entrysize = sizeof(OprCacheEntry);
 		ctl.hash = tag_hash;
 		OprCacheHash = hash_create("Operator lookup cache", 256,
-									&ctl, HASH_ELEM | HASH_FUNCTION);
+								   &ctl, HASH_ELEM | HASH_FUNCTION);
 
 		/* Arrange to flush cache on pg_operator and pg_cast changes */
 		CacheRegisterSyscacheCallback(OPERNAMENSP,

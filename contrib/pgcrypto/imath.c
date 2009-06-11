@@ -27,7 +27,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.7 2007/07/15 22:43:40 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.8 2009/06/11 14:48:52 momjian Exp $ */
 
 #include "postgres.h"
 #include "px.h"
@@ -195,7 +195,7 @@ static void s_clamp(mp_int z);
 static void s_fake(mp_int z, int value, mp_digit vbuf[]);
 
 /* Compare two runs of digits of given length, returns <0, 0, >0 */
-static int	s_cdig(mp_digit * da, mp_digit * db, mp_size len);
+static int	s_cdig(mp_digit *da, mp_digit *db, mp_size len);
 
 /* Pack the unsigned digits of v into array t */
 static int	s_vpack(int v, mp_digit t[]);
@@ -208,26 +208,26 @@ static int	s_vcmp(mp_int a, int v);
 
 /* Unsigned magnitude addition; assumes dc is big enough.
    Carry out is returned (no memory allocated). */
-static mp_digit s_uadd(mp_digit * da, mp_digit * db, mp_digit * dc,
+static mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b);
 
 /* Unsigned magnitude subtraction.	Assumes dc is big enough. */
-static void s_usub(mp_digit * da, mp_digit * db, mp_digit * dc,
+static void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b);
 
 /* Unsigned recursive multiplication.  Assumes dc is big enough. */
-static int s_kmul(mp_digit * da, mp_digit * db, mp_digit * dc,
+static int s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b);
 
 /* Unsigned magnitude multiplication.  Assumes dc is big enough. */
-static void s_umul(mp_digit * da, mp_digit * db, mp_digit * dc,
+static void s_umul(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b);
 
 /* Unsigned recursive squaring.  Assumes dc is big enough. */
-static int	s_ksqr(mp_digit * da, mp_digit * dc, mp_size size_a);
+static int	s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a);
 
 /* Unsigned magnitude squaring.  Assumes dc is big enough. */
-static void s_usqr(mp_digit * da, mp_digit * dc, mp_size size_a);
+static void s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a);
 
 /* Single digit addition.  Assumes a is big enough. */
 static void s_dadd(mp_int a, mp_digit b);
@@ -236,7 +236,7 @@ static void s_dadd(mp_int a, mp_digit b);
 static void s_dmul(mp_int a, mp_digit b);
 
 /* Single digit multiplication on buffers; assumes dc is big enough. */
-static void s_dbmul(mp_digit * da, mp_digit b, mp_digit * dc,
+static void s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc,
 		mp_size size_a);
 
 /* Single digit division.  Replaces a with the quotient,
@@ -310,7 +310,7 @@ static mp_result s_tobin(mp_int z, unsigned char *buf, int *limpos, int pad);
 #if 0
 /* Dump a representation of the mp_int to standard output */
 void		s_print(char *tag, mp_int z);
-void		s_print_buf(char *tag, mp_digit * buf, mp_size num);
+void		s_print_buf(char *tag, mp_digit *buf, mp_size num);
 #endif
 
 /* {{{ get_default_precision() */
@@ -2294,7 +2294,7 @@ s_alloc(mp_size num)
 /* {{{ s_realloc(old, num) */
 
 static mp_digit *
-s_realloc(mp_digit * old, mp_size num)
+s_realloc(mp_digit *old, mp_size num)
 {
 	mp_digit   *new = px_realloc(old, num * sizeof(mp_digit));
 
@@ -2375,7 +2375,7 @@ s_fake(mp_int z, int value, mp_digit vbuf[])
 /* {{{ s_cdig(da, db, len) */
 
 static int
-s_cdig(mp_digit * da, mp_digit * db, mp_size len)
+s_cdig(mp_digit *da, mp_digit *db, mp_size len)
 {
 	mp_digit   *dat = da + len - 1,
 			   *dbt = db + len - 1;
@@ -2460,7 +2460,7 @@ s_vcmp(mp_int a, int v)
 /* {{{ s_uadd(da, db, dc, size_a, size_b) */
 
 static mp_digit
-s_uadd(mp_digit * da, mp_digit * db, mp_digit * dc,
+s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b)
 {
 	mp_size		pos;
@@ -2476,7 +2476,7 @@ s_uadd(mp_digit * da, mp_digit * db, mp_digit * dc,
 	/* Add corresponding digits until the shorter number runs out */
 	for (pos = 0; pos < size_b; ++pos, ++da, ++db, ++dc)
 	{
-		w = w + (mp_word) * da + (mp_word) * db;
+		w = w + (mp_word) *da + (mp_word) *db;
 		*dc = LOWER_HALF(w);
 		w = UPPER_HALF(w);
 	}
@@ -2499,7 +2499,7 @@ s_uadd(mp_digit * da, mp_digit * db, mp_digit * dc,
 /* {{{ s_usub(da, db, dc, size_a, size_b) */
 
 static void
-s_usub(mp_digit * da, mp_digit * db, mp_digit * dc,
+s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b)
 {
 	mp_size		pos;
@@ -2512,7 +2512,7 @@ s_usub(mp_digit * da, mp_digit * db, mp_digit * dc,
 	for (pos = 0; pos < size_b; ++pos, ++da, ++db, ++dc)
 	{
 		w = ((mp_word) MP_DIGIT_MAX + 1 +		/* MP_RADIX */
-			 (mp_word) * da) - w - (mp_word) * db;
+			 (mp_word) *da) - w - (mp_word) *db;
 
 		*dc = LOWER_HALF(w);
 		w = (UPPER_HALF(w) == 0);
@@ -2522,7 +2522,7 @@ s_usub(mp_digit * da, mp_digit * db, mp_digit * dc,
 	for ( /* */ ; pos < size_a; ++pos, ++da, ++dc)
 	{
 		w = ((mp_word) MP_DIGIT_MAX + 1 +		/* MP_RADIX */
-			 (mp_word) * da) - w;
+			 (mp_word) *da) - w;
 
 		*dc = LOWER_HALF(w);
 		w = (UPPER_HALF(w) == 0);
@@ -2537,7 +2537,7 @@ s_usub(mp_digit * da, mp_digit * db, mp_digit * dc,
 /* {{{ s_kmul(da, db, dc, size_a, size_b) */
 
 static int
-s_kmul(mp_digit * da, mp_digit * db, mp_digit * dc,
+s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b)
 {
 	mp_size		bot_size;
@@ -2638,7 +2638,7 @@ s_kmul(mp_digit * da, mp_digit * db, mp_digit * dc,
 /* {{{ s_umul(da, db, dc, size_a, size_b) */
 
 static void
-s_umul(mp_digit * da, mp_digit * db, mp_digit * dc,
+s_umul(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b)
 {
 	mp_size		a,
@@ -2656,7 +2656,7 @@ s_umul(mp_digit * da, mp_digit * db, mp_digit * dc,
 		w = 0;
 		for (b = 0; b < size_b; ++b, ++dbt, ++dct)
 		{
-			w = (mp_word) * da * (mp_word) * dbt + w + (mp_word) * dct;
+			w = (mp_word) *da * (mp_word) *dbt + w + (mp_word) *dct;
 
 			*dct = LOWER_HALF(w);
 			w = UPPER_HALF(w);
@@ -2671,7 +2671,7 @@ s_umul(mp_digit * da, mp_digit * db, mp_digit * dc,
 /* {{{ s_ksqr(da, dc, size_a) */
 
 static int
-s_ksqr(mp_digit * da, mp_digit * dc, mp_size size_a)
+s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 {
 	if (multiply_threshold && size_a > multiply_threshold)
 	{
@@ -2736,7 +2736,7 @@ s_ksqr(mp_digit * da, mp_digit * dc, mp_size size_a)
 /* {{{ s_usqr(da, dc, size_a) */
 
 static void
-s_usqr(mp_digit * da, mp_digit * dc, mp_size size_a)
+s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 {
 	mp_size		i,
 				j;
@@ -2751,7 +2751,7 @@ s_usqr(mp_digit * da, mp_digit * dc, mp_size size_a)
 			continue;
 
 		/* Take care of the first digit, no rollover */
-		w = (mp_word) * dat * (mp_word) * dat + (mp_word) * dct;
+		w = (mp_word) *dat * (mp_word) *dat + (mp_word) *dct;
 		*dct = LOWER_HALF(w);
 		w = UPPER_HALF(w);
 		++dat;
@@ -2759,8 +2759,8 @@ s_usqr(mp_digit * da, mp_digit * dc, mp_size size_a)
 
 		for (j = i + 1; j < size_a; ++j, ++dat, ++dct)
 		{
-			mp_word		t = (mp_word) * da * (mp_word) * dat;
-			mp_word		u = w + (mp_word) * dct,
+			mp_word		t = (mp_word) *da * (mp_word) *dat;
+			mp_word		u = w + (mp_word) *dct,
 						ov = 0;
 
 			/* Check if doubling t will overflow a word */
@@ -2808,13 +2808,13 @@ s_dadd(mp_int a, mp_digit b)
 	mp_digit   *da = MP_DIGITS(a);
 	mp_size		ua = MP_USED(a);
 
-	w = (mp_word) * da + b;
+	w = (mp_word) *da + b;
 	*da++ = LOWER_HALF(w);
 	w = UPPER_HALF(w);
 
 	for (ua -= 1; ua > 0; --ua, ++da)
 	{
-		w = (mp_word) * da + w;
+		w = (mp_word) *da + w;
 
 		*da = LOWER_HALF(w);
 		w = UPPER_HALF(w);
@@ -2840,7 +2840,7 @@ s_dmul(mp_int a, mp_digit b)
 
 	while (ua > 0)
 	{
-		w = (mp_word) * da * b + w;
+		w = (mp_word) *da * b + w;
 		*da++ = LOWER_HALF(w);
 		w = UPPER_HALF(w);
 		--ua;
@@ -2858,13 +2858,13 @@ s_dmul(mp_int a, mp_digit b)
 /* {{{ s_dbmul(da, b, dc, size_a) */
 
 static void
-s_dbmul(mp_digit * da, mp_digit b, mp_digit * dc, mp_size size_a)
+s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a)
 {
 	mp_word		w = 0;
 
 	while (size_a > 0)
 	{
-		w = (mp_word) * da++ * (mp_word) b + w;
+		w = (mp_word) *da++ * (mp_word) b + w;
 
 		*dc++ = LOWER_HALF(w);
 		w = UPPER_HALF(w);
@@ -3085,13 +3085,13 @@ s_qsub(mp_int z, mp_size p2)
 
 	for (pos = 0, zp = MP_DIGITS(z); pos < tdig; ++pos, ++zp)
 	{
-		w = ((mp_word) MP_DIGIT_MAX + 1) - w - (mp_word) * zp;
+		w = ((mp_word) MP_DIGIT_MAX + 1) - w - (mp_word) *zp;
 
 		*zp = LOWER_HALF(w);
 		w = UPPER_HALF(w) ? 0 : 1;
 	}
 
-	w = ((mp_word) MP_DIGIT_MAX + 1 + hi) - w - (mp_word) * zp;
+	w = ((mp_word) MP_DIGIT_MAX + 1 + hi) - w - (mp_word) *zp;
 	*zp = LOWER_HALF(w);
 
 	assert(UPPER_HALF(w) != 0); /* no borrow out should be possible */
@@ -3663,7 +3663,7 @@ s_print(char *tag, mp_int z)
 }
 
 void
-s_print_buf(char *tag, mp_digit * buf, mp_size num)
+s_print_buf(char *tag, mp_digit *buf, mp_size num)
 {
 	int			i;
 

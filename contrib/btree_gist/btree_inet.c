@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_inet.c,v 1.9 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_inet.c,v 1.10 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -11,7 +11,7 @@ typedef struct inetkey
 {
 	double		lower;
 	double		upper;
-}	inetKEY;
+} inetKEY;
 
 /*
 ** inet ops
@@ -118,6 +118,7 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	double		query = convert_network_to_scalar(PG_GETARG_DATUM(1), INETOID);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	inetKEY    *kkk = (inetKEY *) DatumGetPointer(entry->key);
@@ -126,8 +127,8 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are inexact */
 	*recheck = true;
 
-	key.lower = (GBT_NUMKEY *) & kkk->lower;
-	key.upper = (GBT_NUMKEY *) & kkk->upper;
+	key.lower = (GBT_NUMKEY *) &kkk->lower;
+	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &query,
 									  &strategy, GIST_LEAF(entry), &tinfo));

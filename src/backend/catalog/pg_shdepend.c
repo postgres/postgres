@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.33 2009/06/04 18:33:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.34 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,18 +56,18 @@ static int getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2,
 static Oid	classIdGetDbId(Oid classId);
 static void shdepLockAndCheckObject(Oid classId, Oid objectId);
 static void shdepChangeDep(Relation sdepRel,
-						   Oid classid, Oid objid, int32 objsubid,
-						   Oid refclassid, Oid refobjid,
-						   SharedDependencyType deptype);
+			   Oid classid, Oid objid, int32 objsubid,
+			   Oid refclassid, Oid refobjid,
+			   SharedDependencyType deptype);
 static void shdepAddDependency(Relation sdepRel,
-							   Oid classId, Oid objectId, int32 objsubId,
-							   Oid refclassId, Oid refobjId,
-							   SharedDependencyType deptype);
+				   Oid classId, Oid objectId, int32 objsubId,
+				   Oid refclassId, Oid refobjId,
+				   SharedDependencyType deptype);
 static void shdepDropDependency(Relation sdepRel,
-								Oid classId, Oid objectId, int32 objsubId,
-								bool drop_subobjects,
-								Oid refclassId, Oid refobjId,
-								SharedDependencyType deptype);
+					Oid classId, Oid objectId, int32 objsubId,
+					bool drop_subobjects,
+					Oid refclassId, Oid refobjId,
+					SharedDependencyType deptype);
 static void storeObjectDescription(StringInfo descs, objectType type,
 					   ObjectAddress *object,
 					   SharedDependencyType deptype,
@@ -216,7 +216,7 @@ shdepChangeDep(Relation sdepRel,
 		/* Caller screwed up if multiple matches */
 		if (oldtup)
 			elog(ERROR,
-				 "multiple pg_shdepend entries for object %u/%u/%d deptype %c",
+			   "multiple pg_shdepend entries for object %u/%u/%d deptype %c",
 				 classid, objid, objsubid, deptype);
 		oldtup = heap_copytuple(scantup);
 	}
@@ -450,7 +450,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 								   SHARED_DEPENDENCY_ACL);
 			else
 				shdepDropDependency(sdepRel, classId, objectId, objsubId,
-									false, /* exact match on objsubId */
+									false,		/* exact match on objsubId */
 									AuthIdRelationId, roleid,
 									SHARED_DEPENDENCY_ACL);
 		}
@@ -664,7 +664,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	if (numNotReportedDbs > 0)
 		appendStringInfo(&descs, ngettext("\nand objects in %d other database "
 										  "(see server log for list)",
-										  "\nand objects in %d other databases "
+									   "\nand objects in %d other databases "
 										  "(see server log for list)",
 										  numNotReportedDbs),
 						 numNotReportedDbs);

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.430 2009/04/16 20:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.431 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ _copyAppend(Append *from)
 static RecursiveUnion *
 _copyRecursiveUnion(RecursiveUnion *from)
 {
-	RecursiveUnion	   *newnode = makeNode(RecursiveUnion);
+	RecursiveUnion *newnode = makeNode(RecursiveUnion);
 
 	/*
 	 * copy node superclass fields
@@ -455,7 +455,7 @@ _copyValuesScan(ValuesScan *from)
 static CteScan *
 _copyCteScan(CteScan *from)
 {
-	CteScan *newnode = makeNode(CteScan);
+	CteScan    *newnode = makeNode(CteScan);
 
 	/*
 	 * copy node superclass fields
@@ -1916,7 +1916,7 @@ _copyFuncCall(FuncCall *from)
 static A_Star *
 _copyAStar(A_Star *from)
 {
-	A_Star  *newnode = makeNode(A_Star);
+	A_Star	   *newnode = makeNode(A_Star);
 
 	return newnode;
 }
@@ -1946,7 +1946,7 @@ _copyA_Indirection(A_Indirection *from)
 static A_ArrayExpr *
 _copyA_ArrayExpr(A_ArrayExpr *from)
 {
-	A_ArrayExpr  *newnode = makeNode(A_ArrayExpr);
+	A_ArrayExpr *newnode = makeNode(A_ArrayExpr);
 
 	COPY_NODE_FIELD(elements);
 	COPY_LOCATION_FIELD(location);
@@ -2382,7 +2382,7 @@ _copyClusterStmt(ClusterStmt *from)
 
 	COPY_NODE_FIELD(relation);
 	COPY_STRING_FIELD(indexname);
-	COPY_SCALAR_FIELD(verbose) ;
+	COPY_SCALAR_FIELD(verbose);
 
 	return newnode;
 }

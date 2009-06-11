@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-cfb.c,v 1.3 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-cfb.c,v 1.4 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -35,7 +35,7 @@
 #include "px.h"
 #include "pgp.h"
 
-typedef int (*mix_data_t) (PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst);
+typedef int (*mix_data_t) (PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
 
 struct PGP_CFB
 {
@@ -50,7 +50,7 @@ struct PGP_CFB
 };
 
 int
-pgp_cfb_create(PGP_CFB ** ctx_p, int algo, const uint8 *key, int key_len,
+pgp_cfb_create(PGP_CFB **ctx_p, int algo, const uint8 *key, int key_len,
 			   int resync, uint8 *iv)
 {
 	int			res;
@@ -82,7 +82,7 @@ pgp_cfb_create(PGP_CFB ** ctx_p, int algo, const uint8 *key, int key_len,
 }
 
 void
-pgp_cfb_free(PGP_CFB * ctx)
+pgp_cfb_free(PGP_CFB *ctx)
 {
 	px_cipher_free(ctx->ciph);
 	memset(ctx, 0, sizeof(*ctx));
@@ -93,7 +93,7 @@ pgp_cfb_free(PGP_CFB * ctx)
  * Data processing for normal CFB.	(PGP_PKT_SYMENCRYPTED_DATA_MDC)
  */
 static int
-mix_encrypt_normal(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
+mix_encrypt_normal(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst)
 {
 	int			i;
 
@@ -104,7 +104,7 @@ mix_encrypt_normal(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
 }
 
 static int
-mix_decrypt_normal(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
+mix_decrypt_normal(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst)
 {
 	int			i;
 
@@ -124,7 +124,7 @@ mix_decrypt_normal(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
  * thus its all concentrated here.
  */
 static int
-mix_encrypt_resync(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
+mix_encrypt_resync(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst)
 {
 	int			i,
 				n;
@@ -156,7 +156,7 @@ mix_encrypt_resync(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
 }
 
 static int
-mix_decrypt_resync(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
+mix_decrypt_resync(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst)
 {
 	int			i,
 				n;
@@ -196,7 +196,7 @@ mix_decrypt_resync(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
  * common code for both encrypt and decrypt.
  */
 static int
-cfb_process(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst,
+cfb_process(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst,
 			mix_data_t mix_data)
 {
 	int			n;
@@ -249,7 +249,7 @@ cfb_process(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst,
  */
 
 int
-pgp_cfb_encrypt(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
+pgp_cfb_encrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst)
 {
 	mix_data_t	mix = ctx->resync ? mix_encrypt_resync : mix_encrypt_normal;
 
@@ -257,7 +257,7 @@ pgp_cfb_encrypt(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
 }
 
 int
-pgp_cfb_decrypt(PGP_CFB * ctx, const uint8 *data, int len, uint8 *dst)
+pgp_cfb_decrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst)
 {
 	mix_data_t	mix = ctx->resync ? mix_decrypt_resync : mix_decrypt_normal;
 

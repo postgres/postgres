@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/snapshot.h,v 1.4 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/snapshot.h,v 1.5 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct SnapshotData *Snapshot;
  * function.
  */
 typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
-									   Snapshot snapshot, Buffer buffer);
+										   Snapshot snapshot, Buffer buffer);
 
 typedef struct SnapshotData
 {
@@ -75,4 +75,4 @@ typedef enum
 	HeapTupleBeingUpdated
 } HTSU_Result;
 
-#endif /* SNAPSHOT_H */
+#endif   /* SNAPSHOT_H */

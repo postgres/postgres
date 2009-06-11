@@ -1,6 +1,6 @@
 /*	$OpenBSD: rijndael.c,v 1.6 2000/12/09 18:51:34 markus Exp $ */
 
-/* $PostgreSQL: pgsql/contrib/pgcrypto/rijndael.c,v 1.13 2007/04/06 05:36:50 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/rijndael.c,v 1.14 2009/06/11 14:48:52 momjian Exp $ */
 
 /* This is an independent implementation of the encryption algorithm:	*/
 /*																		*/
@@ -302,7 +302,7 @@ do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];		   \
 } while (0)
 
 rijndael_ctx *
-rijndael_set_key(rijndael_ctx * ctx, const u4byte * in_key, const u4byte key_len,
+rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
 				 int encrypt)
 {
 	u4byte		i,
@@ -384,7 +384,7 @@ do { \
 } while (0)
 
 void
-rijndael_encrypt(rijndael_ctx * ctx, const u4byte * in_blk, u4byte * out_blk)
+rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 {
 	u4byte		k_len = ctx->k_len;
 	u4byte	   *e_key = ctx->e_key;
@@ -448,7 +448,7 @@ do { \
 } while (0)
 
 void
-rijndael_decrypt(rijndael_ctx * ctx, const u4byte * in_blk, u4byte * out_blk)
+rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 {
 	u4byte		b0[4],
 				b1[4],
@@ -501,7 +501,7 @@ rijndael_decrypt(rijndael_ctx * ctx, const u4byte * in_blk, u4byte * out_blk)
  */
 
 void
-aes_set_key(rijndael_ctx * ctx, const uint8 *key, unsigned keybits, int enc)
+aes_set_key(rijndael_ctx *ctx, const uint8 *key, unsigned keybits, int enc)
 {
 	uint32	   *k;
 
@@ -510,7 +510,7 @@ aes_set_key(rijndael_ctx * ctx, const uint8 *key, unsigned keybits, int enc)
 }
 
 void
-aes_ecb_encrypt(rijndael_ctx * ctx, uint8 *data, unsigned len)
+aes_ecb_encrypt(rijndael_ctx *ctx, uint8 *data, unsigned len)
 {
 	unsigned	bs = 16;
 	uint32	   *d;
@@ -526,7 +526,7 @@ aes_ecb_encrypt(rijndael_ctx * ctx, uint8 *data, unsigned len)
 }
 
 void
-aes_ecb_decrypt(rijndael_ctx * ctx, uint8 *data, unsigned len)
+aes_ecb_decrypt(rijndael_ctx *ctx, uint8 *data, unsigned len)
 {
 	unsigned	bs = 16;
 	uint32	   *d;
@@ -542,7 +542,7 @@ aes_ecb_decrypt(rijndael_ctx * ctx, uint8 *data, unsigned len)
 }
 
 void
-aes_cbc_encrypt(rijndael_ctx * ctx, uint8 *iva, uint8 *data, unsigned len)
+aes_cbc_encrypt(rijndael_ctx *ctx, uint8 *iva, uint8 *data, unsigned len)
 {
 	uint32	   *iv = (uint32 *) iva;
 	uint32	   *d = (uint32 *) data;
@@ -564,7 +564,7 @@ aes_cbc_encrypt(rijndael_ctx * ctx, uint8 *iva, uint8 *data, unsigned len)
 }
 
 void
-aes_cbc_decrypt(rijndael_ctx * ctx, uint8 *iva, uint8 *data, unsigned len)
+aes_cbc_decrypt(rijndael_ctx *ctx, uint8 *iva, uint8 *data, unsigned len)
 {
 	uint32	   *d = (uint32 *) data;
 	unsigned	bs = 16;

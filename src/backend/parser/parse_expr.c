@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.240 2009/01/22 20:16:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.241 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,10 +147,10 @@ transformExpr(ParseState *pstate, Node *expr)
 				TypeCast   *tc = (TypeCast *) expr;
 
 				/*
-				 * If the subject of the typecast is an ARRAY[] construct
-				 * and the target type is an array type, we invoke
-				 * transformArrayExpr() directly so that we can pass down
-				 * the type information.  This avoids some cases where
+				 * If the subject of the typecast is an ARRAY[] construct and
+				 * the target type is an array type, we invoke
+				 * transformArrayExpr() directly so that we can pass down the
+				 * type information.  This avoids some cases where
 				 * transformArrayExpr() might not infer the correct type.
 				 */
 				if (IsA(tc->arg, A_ArrayExpr))
@@ -173,8 +173,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 
 					/*
-					 * Corner case: ARRAY[] cast to a non-array type.
-					 * Fall through to do it the standard way.
+					 * Corner case: ARRAY[] cast to a non-array type. Fall
+					 * through to do it the standard way.
 					 */
 				}
 
@@ -961,10 +961,10 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 * We try to generate a ScalarArrayOpExpr from IN/NOT IN, but this is only
 	 * possible if the inputs are all scalars (no RowExprs) and there is a
 	 * suitable array type available.  If not, we fall back to a boolean
-	 * condition tree with multiple copies of the lefthand expression.
-	 * Also, any IN-list items that contain Vars are handled as separate
-	 * boolean conditions, because that gives the planner more scope for
-	 * optimization on such clauses.
+	 * condition tree with multiple copies of the lefthand expression. Also,
+	 * any IN-list items that contain Vars are handled as separate boolean
+	 * conditions, because that gives the planner more scope for optimization
+	 * on such clauses.
 	 *
 	 * First step: transform all the inputs, and detect whether any are
 	 * RowExprs or contain Vars.
@@ -985,8 +985,8 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	}
 
 	/*
-	 * ScalarArrayOpExpr is only going to be useful if there's more than
-	 * one non-Var righthand item.  Also, it won't work for RowExprs.
+	 * ScalarArrayOpExpr is only going to be useful if there's more than one
+	 * non-Var righthand item.	Also, it won't work for RowExprs.
 	 */
 	if (!haveRowExpr && list_length(rnonvars) > 1)
 	{
@@ -995,7 +995,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		Oid			array_type;
 
 		/*
-		 * Try to select a common type for the array elements.  Note that
+		 * Try to select a common type for the array elements.	Note that
 		 * since the LHS' type is first in the list, it will be preferred when
 		 * there is doubt (eg, when all the RHS items are unknown literals).
 		 *
@@ -1266,7 +1266,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery cannot have SELECT INTO"),
 				 parser_errposition(pstate,
-									exprLocation((Node *) qtree->intoClause))));
+								 exprLocation((Node *) qtree->intoClause))));
 
 	sublink->subselect = (Node *) qtree;
 
@@ -1398,12 +1398,12 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	Oid			coerce_type;
 	bool		coerce_hard;
 
-	/* 
-	 * Transform the element expressions 
+	/*
+	 * Transform the element expressions
 	 *
-	 * Assume that the array is one-dimensional unless we find an
-	 * array-type element expression.
-	 */ 
+	 * Assume that the array is one-dimensional unless we find an array-type
+	 * element expression.
+	 */
 	newa->multidims = false;
 	foreach(element, a->elements)
 	{
@@ -1411,8 +1411,8 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		Node	   *newe;
 
 		/*
-		 * If an element is itself an A_ArrayExpr, recurse directly so that
-		 * we can pass down any target type we were given.
+		 * If an element is itself an A_ArrayExpr, recurse directly so that we
+		 * can pass down any target type we were given.
 		 */
 		if (IsA(e, A_ArrayExpr))
 		{
@@ -1428,9 +1428,10 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		else
 		{
 			newe = transformExpr(pstate, e);
+
 			/*
-			 * Check for sub-array expressions, if we haven't already
-			 * found one.
+			 * Check for sub-array expressions, if we haven't already found
+			 * one.
 			 */
 			if (!newa->multidims && type_is_array(exprType(newe)))
 				newa->multidims = true;
@@ -1439,7 +1440,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		newelems = lappend(newelems, newe);
 	}
 
-	/* 
+	/*
 	 * Select a target type for the elements.
 	 *
 	 * If we haven't been given a target array type, we must try to deduce a
@@ -1473,8 +1474,8 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 			if (!OidIsValid(element_type))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("could not find element type for data type %s",
-								format_type_be(array_type)),
+					   errmsg("could not find element type for data type %s",
+							  format_type_be(array_type)),
 						 parser_errposition(pstate, a->location)));
 		}
 		else
@@ -1492,7 +1493,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	}
 
 	/*
-	 * Coerce elements to target type 
+	 * Coerce elements to target type
 	 *
 	 * If the array has been explicitly cast, then the elements are in turn
 	 * explicitly coerced.
@@ -1500,7 +1501,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	 * If the array's type was merely derived from the common type of its
 	 * elements, then the elements are implicitly coerced to the common type.
 	 * This is consistent with other uses of select_common_type().
-	 */ 
+	 */
 	foreach(element, newelems)
 	{
 		Node	   *e = (Node *) lfirst(element);
@@ -1508,9 +1509,9 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 
 		if (coerce_hard)
 		{
-			newe = coerce_to_target_type(pstate, e, 
+			newe = coerce_to_target_type(pstate, e,
 										 exprType(e),
-										 coerce_type, 
+										 coerce_type,
 										 typmod,
 										 COERCION_EXPLICIT,
 										 COERCE_EXPLICIT_CAST,
@@ -1671,8 +1672,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
-					 ? errmsg("unnamed XML attribute value must be a column reference")
-					 : errmsg("unnamed XML element value must be a column reference"),
+			? errmsg("unnamed XML attribute value must be a column reference")
+			: errmsg("unnamed XML element value must be a column reference"),
 					 parser_errposition(pstate, r->location)));
 			argname = NULL;		/* keep compiler quiet */
 		}
@@ -1687,8 +1688,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 				if (strcmp(argname, strVal(lfirst(lc2))) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("XML attribute name \"%s\" appears more than once",
-									argname),
+					errmsg("XML attribute name \"%s\" appears more than once",
+						   argname),
 							 parser_errposition(pstate, r->location)));
 			}
 		}

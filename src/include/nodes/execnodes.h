@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.204 2009/04/08 21:51:38 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.205 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,8 @@
 #include "access/heapam.h"
 #include "access/skey.h"
 #include "nodes/params.h"
-#include "nodes/plannodes.h"    
-#include "nodes/tidbitmap.h"    
+#include "nodes/plannodes.h"
+#include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
 #include "utils/rel.h"
 #include "utils/snapshot.h"
@@ -120,8 +120,8 @@ typedef struct ExprContext
 	ParamListInfo ecxt_param_list_info; /* for other param types */
 
 	/*
-	 * Values to substitute for Aggref nodes in the expressions of an Agg node,
-	 * or for WindowFunc nodes within a WindowAgg node.
+	 * Values to substitute for Aggref nodes in the expressions of an Agg
+	 * node, or for WindowFunc nodes within a WindowAgg node.
 	 */
 	Datum	   *ecxt_aggvalues; /* precomputed values for aggs/windowfuncs */
 	bool	   *ecxt_aggnulls;	/* null flags for aggs/windowfuncs */
@@ -383,8 +383,8 @@ typedef struct EState
 
 
 /*
- * es_rowMarks is a list of these structs.  See RowMarkClause for details
- * about rti and prti.  toidAttno is not used in a "plain" rowmark.
+ * es_rowMarks is a list of these structs.	See RowMarkClause for details
+ * about rti and prti.	toidAttno is not used in a "plain" rowmark.
  */
 typedef struct ExecRowMark
 {
@@ -578,19 +578,20 @@ typedef struct FuncExprState
 	FmgrInfo	func;
 
 	/*
-	 * For a set-returning function (SRF) that returns a tuplestore, we
-	 * keep the tuplestore here and dole out the result rows one at a time.
-	 * The slot holds the row currently being returned.
+	 * For a set-returning function (SRF) that returns a tuplestore, we keep
+	 * the tuplestore here and dole out the result rows one at a time. The
+	 * slot holds the row currently being returned.
 	 */
 	Tuplestorestate *funcResultStore;
 	TupleTableSlot *funcResultSlot;
 
 	/*
 	 * In some cases we need to compute a tuple descriptor for the function's
-	 * output.  If so, it's stored here.
+	 * output.	If so, it's stored here.
 	 */
 	TupleDesc	funcResultDesc;
-	bool		funcReturnsTuple;	/* valid when funcResultDesc isn't NULL */
+	bool		funcReturnsTuple;		/* valid when funcResultDesc isn't
+										 * NULL */
 
 	/*
 	 * We need to store argument values across calls when evaluating a SRF
@@ -949,8 +950,8 @@ typedef struct PlanState
 	TupleTableSlot *ps_ResultTupleSlot; /* slot for my result tuples */
 	ExprContext *ps_ExprContext;	/* node's expression-evaluation context */
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
-	bool		ps_TupFromTlist;	/* state flag for processing set-valued
-									 * functions in targetlist */
+	bool		ps_TupFromTlist;/* state flag for processing set-valued
+								 * functions in targetlist */
 } PlanState;
 
 /* ----------------
@@ -1018,7 +1019,7 @@ typedef struct RecursiveUnionState
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 	TupleHashTable hashtable;	/* hash table for tuples already seen */
-	MemoryContext tableContext;	/* memory context containing hash table */
+	MemoryContext tableContext; /* memory context containing hash table */
 } RecursiveUnionState;
 
 /* ----------------
@@ -1166,7 +1167,7 @@ typedef struct BitmapIndexScanState
  *		tbmres			   current-page data
  *		prefetch_iterator  iterator for prefetching ahead of current page
  *		prefetch_pages	   # pages prefetch iterator is ahead of current
- *		prefetch_target	   target prefetch distance
+ *		prefetch_target    target prefetch distance
  * ----------------
  */
 typedef struct BitmapHeapScanState
@@ -1283,7 +1284,7 @@ typedef struct CteScanState
 	/* Link to the "leader" CteScanState (possibly this same node) */
 	struct CteScanState *leader;
 	/* The remaining fields are only valid in the "leader" CteScanState */
-	Tuplestorestate *cte_table;	/* rows already read from the CTE query */
+	Tuplestorestate *cte_table; /* rows already read from the CTE query */
 	bool		eof_cte;		/* reached end of CTE query? */
 } CteScanState;
 
@@ -1291,7 +1292,7 @@ typedef struct CteScanState
  *	 WorkTableScanState information
  *
  *		WorkTableScan nodes are used to scan the work table created by
- *		a RecursiveUnion node.  We locate the RecursiveUnion node
+ *		a RecursiveUnion node.	We locate the RecursiveUnion node
  *		during executor startup.
  * ----------------
  */
@@ -1526,35 +1527,36 @@ typedef struct WindowStatePerAggData *WindowStatePerAgg;
 
 typedef struct WindowAggState
 {
-	ScanState	ss;					/* its first field is NodeTag */
+	ScanState	ss;				/* its first field is NodeTag */
 
 	/* these fields are filled in by ExecInitExpr: */
-	List	   *funcs;				/* all WindowFunc nodes in targetlist */
-	int			numfuncs;			/* total number of window functions */
-	int			numaggs;			/* number that are plain aggregates */
+	List	   *funcs;			/* all WindowFunc nodes in targetlist */
+	int			numfuncs;		/* total number of window functions */
+	int			numaggs;		/* number that are plain aggregates */
 
-	WindowStatePerFunc perfunc;		/* per-window-function information */
-	WindowStatePerAgg peragg;		/* per-plain-aggregate information */
+	WindowStatePerFunc perfunc; /* per-window-function information */
+	WindowStatePerAgg peragg;	/* per-plain-aggregate information */
 	FmgrInfo   *partEqfunctions;	/* equality funcs for partition columns */
-	FmgrInfo   *ordEqfunctions;		/* equality funcs for ordering columns */
-	Tuplestorestate	   *buffer;		/* stores rows of current partition */
-	int			current_ptr;		/* read pointer # for current */
-	int			agg_ptr;			/* read pointer # for aggregates */
-	int64		spooled_rows;		/* total # of rows in buffer */
-	int64		currentpos;			/* position of current row in partition */
-	int64		frametailpos;		/* current frame tail position */
-	int64		aggregatedupto;		/* rows before this one are aggregated */
+	FmgrInfo   *ordEqfunctions; /* equality funcs for ordering columns */
+	Tuplestorestate *buffer;	/* stores rows of current partition */
+	int			current_ptr;	/* read pointer # for current */
+	int			agg_ptr;		/* read pointer # for aggregates */
+	int64		spooled_rows;	/* total # of rows in buffer */
+	int64		currentpos;		/* position of current row in partition */
+	int64		frametailpos;	/* current frame tail position */
+	int64		aggregatedupto; /* rows before this one are aggregated */
 
-	MemoryContext wincontext;		/* context for partition-lifespan data */
-	ExprContext *tmpcontext;		/* short-term evaluation context */
+	MemoryContext wincontext;	/* context for partition-lifespan data */
+	ExprContext *tmpcontext;	/* short-term evaluation context */
 
-	bool		all_done;			/* true if the scan is finished */
-	bool		partition_spooled;	/* true if all tuples in current partition
-									 * have been spooled into tuplestore */
-	bool		more_partitions;	/* true if there's more partitions after
-									 * this one */
-	bool		frametail_valid;	/* true if frametailpos is known up to date
-									 * for current row */
+	bool		all_done;		/* true if the scan is finished */
+	bool		partition_spooled;		/* true if all tuples in current
+										 * partition have been spooled into
+										 * tuplestore */
+	bool		more_partitions;/* true if there's more partitions after this
+								 * one */
+	bool		frametail_valid;/* true if frametailpos is known up to date
+								 * for current row */
 
 	TupleTableSlot *first_part_slot;	/* first tuple of current or next
 										 * partition */
@@ -1620,7 +1622,7 @@ typedef struct SetOpState
 	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
 	/* these fields are used in SETOP_HASHED mode: */
 	TupleHashTable hashtable;	/* hash table with one entry per group */
-	MemoryContext tableContext;	/* memory context containing hash table */
+	MemoryContext tableContext; /* memory context containing hash table */
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
 } SetOpState;

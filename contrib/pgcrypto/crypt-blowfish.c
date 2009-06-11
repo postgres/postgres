@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-blowfish.c,v 1.13 2007/11/15 21:14:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-blowfish.c,v 1.14 2009/06/11 14:48:52 momjian Exp $
  *
  * This code comes from John the Ripper password cracker, with reentrant
  * and crypt(3) interfaces added, but optimizations specific to password
@@ -59,7 +59,7 @@ typedef struct
 {
 	BF_word		S[4][0x100];
 	BF_key		P;
-}	BF_ctx;
+} BF_ctx;
 
 /*
  * Magic IV for 64 Blowfish encryptions that we do at the end.
@@ -367,7 +367,7 @@ do { \
 } while (0)
 
 static int
-BF_decode(BF_word * dst, const char *src, int size)
+BF_decode(BF_word *dst, const char *src, int size)
 {
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned char *end = dptr + size;
@@ -399,7 +399,7 @@ BF_decode(BF_word * dst, const char *src, int size)
 }
 
 static void
-BF_encode(char *dst, const BF_word * src, int size)
+BF_encode(char *dst, const BF_word *src, int size)
 {
 	unsigned char *sptr = (unsigned char *) src;
 	unsigned char *end = sptr + size;
@@ -436,7 +436,7 @@ BF_encode(char *dst, const BF_word * src, int size)
 }
 
 static void
-BF_swap(BF_word * x, int count)
+BF_swap(BF_word *x, int count)
 {
 	/* Swap on little-endian hardware, else do nothing */
 #ifndef WORDS_BIGENDIAN
@@ -518,7 +518,7 @@ BF_swap(BF_word * x, int count)
 
 #if BF_ASM
 
-extern void _BF_body_r(BF_ctx * ctx);
+extern void _BF_body_r(BF_ctx *ctx);
 
 #define BF_body() \
 	_BF_body_r(&data.ctx);

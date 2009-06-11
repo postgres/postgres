@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_op.c,v 1.11 2008/11/12 13:43:54 teodor Exp $ 
+ * $PostgreSQL: pgsql/contrib/pg_trgm/trgm_op.c,v 1.12 2009/06/11 14:48:51 momjian Exp $
  */
 #include "trgm.h"
 #include <ctype.h>
@@ -39,7 +39,7 @@ comp_trgm(const void *a, const void *b)
 }
 
 static int
-unique_array(trgm * a, int len)
+unique_array(trgm *a, int len)
 {
 	trgm	   *curend,
 			   *tmp;
@@ -59,7 +59,7 @@ unique_array(trgm * a, int len)
 }
 
 #ifdef KEEPONLYALNUM
-#define	iswordchr(c)	(t_isalpha(c) || t_isdigit(c))
+#define iswordchr(c)	(t_isalpha(c) || t_isdigit(c))
 #else
 #define iswordchr(c)	(!t_isspace(c))
 #endif
@@ -68,12 +68,12 @@ unique_array(trgm * a, int len)
  * Finds first word in string, returns pointer to the word,
  * endword points to the character after word
  */
-static char*
-find_word(char *str, int lenstr, char **endword, int *charlen) 
+static char *
+find_word(char *str, int lenstr, char **endword, int *charlen)
 {
-	char *beginword = str;
+	char	   *beginword = str;
 
-	while( beginword - str < lenstr && !iswordchr(beginword) )
+	while (beginword - str < lenstr && !iswordchr(beginword))
 		beginword += pg_mblen(beginword);
 
 	if (beginword - str >= lenstr)
@@ -81,7 +81,7 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
 
 	*endword = beginword;
 	*charlen = 0;
-	while( *endword - str < lenstr && iswordchr(*endword) ) 
+	while (*endword - str < lenstr && iswordchr(*endword))
 	{
 		*endword += pg_mblen(*endword);
 		(*charlen)++;
@@ -92,11 +92,11 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
 
 #ifdef USE_WIDE_UPPER_LOWER
 static void
-cnt_trigram(trgm *tptr, char *str, int bytelen) 
+cnt_trigram(trgm *tptr, char *str, int bytelen)
 {
-	if ( bytelen == 3 ) 
+	if (bytelen == 3)
 	{
-		CPTRGM(tptr, str);		
+		CPTRGM(tptr, str);
 	}
 	else
 	{
@@ -107,8 +107,7 @@ cnt_trigram(trgm *tptr, char *str, int bytelen)
 		FIN_CRC32(crc);
 
 		/*
-		 * use only 3 upper bytes from crc, hope, it's
-		 * good enough hashing
+		 * use only 3 upper bytes from crc, hope, it's good enough hashing
 		 */
 		CPTRGM(tptr, &crc);
 	}
@@ -118,37 +117,37 @@ cnt_trigram(trgm *tptr, char *str, int bytelen)
 /*
  * Adds trigramm from words (already padded).
  */
-static trgm*
-make_trigrams( trgm *tptr, char *str, int bytelen, int charlen )
+static trgm *
+make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
 {
-	char	*ptr = str;
+	char	   *ptr = str;
 
-	if ( charlen < 3 )
+	if (charlen < 3)
 		return tptr;
 
 #ifdef USE_WIDE_UPPER_LOWER
 	if (pg_database_encoding_max_length() > 1)
 	{
-		int lenfirst 	= pg_mblen(str),
-			lenmiddle 	= pg_mblen(str + lenfirst),
-			lenlast		= pg_mblen(str + lenfirst + lenmiddle);
+		int			lenfirst = pg_mblen(str),
+					lenmiddle = pg_mblen(str + lenfirst),
+					lenlast = pg_mblen(str + lenfirst + lenmiddle);
 
-		while( (ptr - str) + lenfirst + lenmiddle + lenlast <= bytelen ) 
+		while ((ptr - str) + lenfirst + lenmiddle + lenlast <= bytelen)
 		{
 			cnt_trigram(tptr, ptr, lenfirst + lenmiddle + lenlast);
 
 			ptr += lenfirst;
 			tptr++;
 
-			lenfirst 	= lenmiddle;
-			lenmiddle 	= lenlast;
-			lenlast 	= pg_mblen(ptr + lenfirst + lenmiddle);
+			lenfirst = lenmiddle;
+			lenmiddle = lenlast;
+			lenlast = pg_mblen(ptr + lenfirst + lenmiddle);
 		}
 	}
 	else
 #endif
 	{
-		Assert( bytelen == charlen );
+		Assert(bytelen == charlen);
 
 		while (ptr - str < bytelen - 2 /* number of trigrams = strlen - 2 */ )
 		{
@@ -157,7 +156,7 @@ make_trigrams( trgm *tptr, char *str, int bytelen, int charlen )
 			tptr++;
 		}
 	}
-	
+
 	return tptr;
 }
 
@@ -170,9 +169,10 @@ generate_trgm(char *str, int slen)
 	int			len,
 				charlen,
 				bytelen;
-	char		*bword, *eword;
+	char	   *bword,
+			   *eword;
 
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, TRGMHDRSIZE);
 
@@ -191,7 +191,7 @@ generate_trgm(char *str, int slen)
 	}
 
 	eword = str;
-	while( (bword=find_word(eword, slen - (eword-str), &eword, &charlen)) != NULL ) 
+	while ((bword = find_word(eword, slen - (eword - str), &eword, &charlen)) != NULL)
 	{
 #ifdef IGNORECASE
 		bword = lowerstr_with_len(bword, eword - bword);
@@ -205,14 +205,14 @@ generate_trgm(char *str, int slen)
 #ifdef IGNORECASE
 		pfree(bword);
 #endif
-		buf[LPADDING+bytelen] = ' ';
-		buf[LPADDING+bytelen+1] = ' ';
+		buf[LPADDING + bytelen] = ' ';
+		buf[LPADDING + bytelen + 1] = ' ';
 
 		/*
 		 * count trigrams
 		 */
-		tptr = make_trigrams( tptr, buf, bytelen + LPADDING + RPADDING, 
-										 charlen + LPADDING + RPADDING );
+		tptr = make_trigrams(tptr, buf, bytelen + LPADDING + RPADDING,
+							 charlen + LPADDING + RPADDING);
 	}
 
 	pfree(buf);
@@ -234,13 +234,13 @@ generate_trgm(char *str, int slen)
 uint32
 trgm2int(trgm *ptr)
 {
-	uint32	val = 0;
+	uint32		val = 0;
 
-	val |= *( ((unsigned char*)ptr) );
+	val |= *(((unsigned char *) ptr));
 	val <<= 8;
-	val |= *( ((unsigned char*)ptr) + 1 );
+	val |= *(((unsigned char *) ptr) + 1);
 	val <<= 8;
-	val |= *( ((unsigned char*)ptr) + 2 );
+	val |= *(((unsigned char *) ptr) + 2);
 
 	return val;
 }
@@ -262,9 +262,9 @@ show_trgm(PG_FUNCTION_ARGS)
 
 	for (i = 0, ptr = GETARR(trg); i < ARRNELEM(trg); i++, ptr++)
 	{
-		text	   *item = (text *) palloc(VARHDRSZ + Max(12, pg_database_encoding_max_length()*3) );
+		text	   *item = (text *) palloc(VARHDRSZ + Max(12, pg_database_encoding_max_length() * 3));
 
-		if ( pg_database_encoding_max_length() > 1 && !ISPRINTABLETRGM(ptr) )
+		if (pg_database_encoding_max_length() > 1 && !ISPRINTABLETRGM(ptr))
 		{
 			snprintf(VARDATA(item), 12, "0x%06x", trgm2int(ptr));
 			SET_VARSIZE(item, VARHDRSZ + strlen(VARDATA(item)));
@@ -297,7 +297,7 @@ show_trgm(PG_FUNCTION_ARGS)
 }
 
 float4
-cnt_sml(TRGM * trg1, TRGM * trg2)
+cnt_sml(TRGM *trg1, TRGM *trg2)
 {
 	trgm	   *ptr1,
 			   *ptr2;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.77 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.78 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@
  * normal behavior is that at most one such interrupt is in flight at a time;
  * when a backend completes processing a catchup interrupt, it executes
  * SICleanupQueue, which will signal the next-furthest-behind backend if
- * needed.  This avoids undue contention from multiple backends all trying
+ * needed.	This avoids undue contention from multiple backends all trying
  * to catch up at once.  However, the furthest-back backend might be stuck
  * in a state where it can't catch up.  Eventually it will get reset, so it
  * won't cause any more problems for anyone but itself.  But we don't want
@@ -88,7 +88,7 @@
  * the writer wants to change maxMsgNum while readers need to read it.
  * We deal with that by having a spinlock that readers must take for just
  * long enough to read maxMsgNum, while writers take it for just long enough
- * to write maxMsgNum.  (The exact rule is that you need the spinlock to
+ * to write maxMsgNum.	(The exact rule is that you need the spinlock to
  * read maxMsgNum if you are not holding SInvalWriteLock, and you need the
  * spinlock to write maxMsgNum unless you are holding both locks.)
  *
@@ -146,8 +146,8 @@ typedef struct ProcState
 	/*
 	 * Next LocalTransactionId to use for each idle backend slot.  We keep
 	 * this here because it is indexed by BackendId and it is convenient to
-	 * copy the value to and from local memory when MyBackendId is set.
-	 * It's meaningless in an active ProcState entry.
+	 * copy the value to and from local memory when MyBackendId is set. It's
+	 * meaningless in an active ProcState entry.
 	 */
 	LocalTransactionId nextLXID;
 } ProcState;
@@ -235,8 +235,8 @@ CreateSharedInvalidationState(void)
 	/* Mark all backends inactive, and initialize nextLXID */
 	for (i = 0; i < shmInvalBuffer->maxBackends; i++)
 	{
-		shmInvalBuffer->procState[i].procPid = 0;			/* inactive */
-		shmInvalBuffer->procState[i].nextMsgNum = 0;		/* meaningless */
+		shmInvalBuffer->procState[i].procPid = 0;		/* inactive */
+		shmInvalBuffer->procState[i].nextMsgNum = 0;	/* meaningless */
 		shmInvalBuffer->procState[i].resetState = false;
 		shmInvalBuffer->procState[i].signaled = false;
 		shmInvalBuffer->procState[i].nextLXID = InvalidLocalTransactionId;
@@ -255,11 +255,11 @@ SharedInvalBackendInit(void)
 	SISeg	   *segP = shmInvalBuffer;
 
 	/*
-	 * This can run in parallel with read operations, and for that matter
-	 * with write operations; but not in parallel with additions and removals
-	 * of backends, nor in parallel with SICleanupQueue.  It doesn't seem
-	 * worth having a third lock, so we choose to use SInvalWriteLock to
-	 * serialize additions/removals.
+	 * This can run in parallel with read operations, and for that matter with
+	 * write operations; but not in parallel with additions and removals of
+	 * backends, nor in parallel with SICleanupQueue.  It doesn't seem worth
+	 * having a third lock, so we choose to use SInvalWriteLock to serialize
+	 * additions/removals.
 	 */
 	LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
 
@@ -394,7 +394,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 	SISeg	   *segP = shmInvalBuffer;
 
 	/*
-	 * N can be arbitrarily large.  We divide the work into groups of no more
+	 * N can be arbitrarily large.	We divide the work into groups of no more
 	 * than WRITE_QUANTUM messages, to be sure that we don't hold the lock for
 	 * an unreasonably long time.  (This is not so much because we care about
 	 * letting in other writers, as that some just-caught-up backend might be
@@ -404,9 +404,9 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 	 */
 	while (n > 0)
 	{
-		int		nthistime = Min(n, WRITE_QUANTUM);
-		int		numMsgs;
-		int		max;
+		int			nthistime = Min(n, WRITE_QUANTUM);
+		int			numMsgs;
+		int			max;
 
 		n -= nthistime;
 
@@ -416,7 +416,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		 * If the buffer is full, we *must* acquire some space.  Clean the
 		 * queue and reset anyone who is preventing space from being freed.
 		 * Otherwise, clean the queue only when it's exceeded the next
-		 * fullness threshold.  We have to loop and recheck the buffer state
+		 * fullness threshold.	We have to loop and recheck the buffer state
 		 * after any call of SICleanupQueue.
 		 */
 		for (;;)
@@ -458,9 +458,9 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
  *		get next SI message(s) for current backend, if there are any
  *
  * Possible return values:
- *	0:   no SI message available
+ *	0:	 no SI message available
  *	n>0: next n SI messages have been extracted into data[]
- * -1:   SI reset message extracted
+ * -1:	 SI reset message extracted
  *
  * If the return value is less than the array size "datasize", the caller
  * can assume that there are no more SI messages after the one(s) returned.
@@ -470,11 +470,11 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
  * executing on behalf of other backends, since each instance will modify only
  * fields of its own backend's ProcState, and no instance will look at fields
  * of other backends' ProcStates.  We express this by grabbing SInvalReadLock
- * in shared mode.  Note that this is not exactly the normal (read-only)
+ * in shared mode.	Note that this is not exactly the normal (read-only)
  * interpretation of a shared lock! Look closely at the interactions before
  * allowing SInvalReadLock to be grabbed in shared mode for any other reason!
  *
- * NB: this can also run in parallel with SIInsertDataEntries.  It is not
+ * NB: this can also run in parallel with SIInsertDataEntries.	It is not
  * guaranteed that we will return any messages added after the routine is
  * entered.
  *
@@ -488,7 +488,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	ProcState  *stateP;
 	int			max;
 	int			n;
-	
+
 	LWLockAcquire(SInvalReadLock, LW_SHARED);
 
 	segP = shmInvalBuffer;
@@ -557,7 +557,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  *
  * Caution: because we transiently release write lock when we have to signal
  * some other backend, it is NOT guaranteed that there are still minFree
- * free message slots at exit.  Caller must recheck and perhaps retry.
+ * free message slots at exit.	Caller must recheck and perhaps retry.
  */
 void
 SICleanupQueue(bool callerHasWriteLock, int minFree)
@@ -576,9 +576,9 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	LWLockAcquire(SInvalReadLock, LW_EXCLUSIVE);
 
 	/*
-	 * Recompute minMsgNum = minimum of all backends' nextMsgNum, identify
-	 * the furthest-back backend that needs signaling (if any), and reset
-	 * any backends that are too far back.
+	 * Recompute minMsgNum = minimum of all backends' nextMsgNum, identify the
+	 * furthest-back backend that needs signaling (if any), and reset any
+	 * backends that are too far back.
 	 */
 	min = segP->maxMsgNum;
 	minsig = min - SIG_THRESHOLD;
@@ -587,15 +587,15 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	for (i = 0; i < segP->lastBackend; i++)
 	{
 		ProcState  *stateP = &segP->procState[i];
-		int		n = stateP->nextMsgNum;
+		int			n = stateP->nextMsgNum;
 
 		/* Ignore if inactive or already in reset state */
 		if (stateP->procPid == 0 || stateP->resetState)
 			continue;
 
 		/*
-		 * If we must free some space and this backend is preventing it,
-		 * force him into reset state and then ignore until he catches up.
+		 * If we must free some space and this backend is preventing it, force
+		 * him into reset state and then ignore until he catches up.
 		 */
 		if (n < lowbound)
 		{
@@ -619,8 +619,8 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 
 	/*
 	 * When minMsgNum gets really large, decrement all message counters so as
-	 * to forestall overflow of the counters.  This happens seldom enough
-	 * that folding it into the previous loop would be a loser.
+	 * to forestall overflow of the counters.  This happens seldom enough that
+	 * folding it into the previous loop would be a loser.
 	 */
 	if (min >= MSGNUMWRAPAROUND)
 	{
@@ -649,7 +649,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	 */
 	if (needSig)
 	{
-		pid_t	his_pid = needSig->procPid;
+		pid_t		his_pid = needSig->procPid;
 
 		needSig->signaled = true;
 		LWLockRelease(SInvalReadLock);

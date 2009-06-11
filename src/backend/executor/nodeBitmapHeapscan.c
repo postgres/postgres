@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.34 2009/01/12 16:00:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.35 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,17 +114,17 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	}
 
 	/*
-	 * If we haven't yet performed the underlying index scan, do it, and
-	 * begin the iteration over the bitmap.
+	 * If we haven't yet performed the underlying index scan, do it, and begin
+	 * the iteration over the bitmap.
 	 *
 	 * For prefetching, we use *two* iterators, one for the pages we are
 	 * actually scanning and another that runs ahead of the first for
-	 * prefetching.  node->prefetch_pages tracks exactly how many pages
-	 * ahead the prefetch iterator is.  Also, node->prefetch_target tracks
-	 * the desired prefetch distance, which starts small and increases up
-	 * to the GUC-controlled maximum, target_prefetch_pages.  This is to
-	 * avoid doing a lot of prefetching in a scan that stops after a few
-	 * tuples because of a LIMIT.
+	 * prefetching.  node->prefetch_pages tracks exactly how many pages ahead
+	 * the prefetch iterator is.  Also, node->prefetch_target tracks the
+	 * desired prefetch distance, which starts small and increases up to the
+	 * GUC-controlled maximum, target_prefetch_pages.  This is to avoid doing
+	 * a lot of prefetching in a scan that stops after a few tuples because of
+	 * a LIMIT.
 	 */
 	if (tbm == NULL)
 	{
@@ -144,7 +144,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			node->prefetch_pages = 0;
 			node->prefetch_target = -1;
 		}
-#endif /* USE_PREFETCH */
+#endif   /* USE_PREFETCH */
 	}
 
 	for (;;)
@@ -178,7 +178,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				if (tbmpre == NULL || tbmpre->blockno != tbmres->blockno)
 					elog(ERROR, "prefetch and main iterators are out of sync");
 			}
-#endif /* USE_PREFETCH */
+#endif   /* USE_PREFETCH */
 
 			/*
 			 * Ignore any claimed entries past what we think is the end of the
@@ -203,21 +203,22 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			scan->rs_cindex = 0;
 
 #ifdef USE_PREFETCH
+
 			/*
-			 * Increase prefetch target if it's not yet at the max.  Note
-			 * that we will increase it to zero after fetching the very
-			 * first page/tuple, then to one after the second tuple is
-			 * fetched, then it doubles as later pages are fetched.
+			 * Increase prefetch target if it's not yet at the max.  Note that
+			 * we will increase it to zero after fetching the very first
+			 * page/tuple, then to one after the second tuple is fetched, then
+			 * it doubles as later pages are fetched.
 			 */
 			if (node->prefetch_target >= target_prefetch_pages)
-				/* don't increase any further */ ;
+				 /* don't increase any further */ ;
 			else if (node->prefetch_target >= target_prefetch_pages / 2)
 				node->prefetch_target = target_prefetch_pages;
 			else if (node->prefetch_target > 0)
 				node->prefetch_target *= 2;
 			else
 				node->prefetch_target++;
-#endif /* USE_PREFETCH */
+#endif   /* USE_PREFETCH */
 		}
 		else
 		{
@@ -227,13 +228,14 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			scan->rs_cindex++;
 
 #ifdef USE_PREFETCH
+
 			/*
 			 * Try to prefetch at least a few pages even before we get to the
 			 * second page if we don't stop reading after the first tuple.
 			 */
 			if (node->prefetch_target < target_prefetch_pages)
 				node->prefetch_target++;
-#endif /* USE_PREFETCH */
+#endif   /* USE_PREFETCH */
 		}
 
 		/*
@@ -246,12 +248,13 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		}
 
 #ifdef USE_PREFETCH
+
 		/*
-		 * We issue prefetch requests *after* fetching the current page
-		 * to try to avoid having prefetching interfere with the main I/O.
-		 * Also, this should happen only when we have determined there is
-		 * still something to do on the current page, else we may uselessly
-		 * prefetch the same page we are just about to request for real.
+		 * We issue prefetch requests *after* fetching the current page to try
+		 * to avoid having prefetching interfere with the main I/O. Also, this
+		 * should happen only when we have determined there is still something
+		 * to do on the current page, else we may uselessly prefetch the same
+		 * page we are just about to request for real.
 		 */
 		if (prefetch_iterator)
 		{
@@ -270,7 +273,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
 			}
 		}
-#endif /* USE_PREFETCH */
+#endif   /* USE_PREFETCH */
 
 		/*
 		 * Okay to fetch the tuple

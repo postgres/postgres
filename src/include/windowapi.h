@@ -21,7 +21,7 @@
  *
  * Portions Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/windowapi.h,v 1.2 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/windowapi.h,v 1.3 2009/06/11 14:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,14 +51,14 @@ extern void WinSetMarkPosition(WindowObject winobj, int64 markpos);
 extern bool WinRowsArePeers(WindowObject winobj, int64 pos1, int64 pos2);
 
 extern Datum WinGetFuncArgInPartition(WindowObject winobj, int argno,
-									  int relpos, int seektype, bool set_mark,
-									  bool *isnull, bool *isout);
+						 int relpos, int seektype, bool set_mark,
+						 bool *isnull, bool *isout);
 
 extern Datum WinGetFuncArgInFrame(WindowObject winobj, int argno,
-								  int relpos, int seektype, bool set_mark,
-								  bool *isnull, bool *isout);
+					 int relpos, int seektype, bool set_mark,
+					 bool *isnull, bool *isout);
 
 extern Datum WinGetFuncArgCurrent(WindowObject winobj, int argno,
-								  bool *isnull);
+					 bool *isnull);
 
 #endif   /* WINDOWAPI_H */

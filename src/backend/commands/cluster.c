@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.184 2009/05/07 22:58:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.185 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,9 +631,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 
 	/*
 	 * At this point, everything is kosher except that the toast table's name
-	 * corresponds to the temporary table.  The name is irrelevant to
-	 * the backend because it's referenced by OID, but users looking at the
-	 * catalogs could be confused.  Rename it to prevent this problem.
+	 * corresponds to the temporary table.	The name is irrelevant to the
+	 * backend because it's referenced by OID, but users looking at the
+	 * catalogs could be confused.	Rename it to prevent this problem.
 	 *
 	 * Note no lock required on the relation, because we already hold an
 	 * exclusive lock on it.
@@ -679,10 +679,10 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 
 	/*
 	 * Need to make a copy of the tuple descriptor, since
-	 * heap_create_with_catalog modifies it.  Note that the NewHeap will
-	 * not receive any of the defaults or constraints associated with the
-	 * OldHeap; we don't need 'em, and there's no reason to spend cycles
-	 * inserting them into the catalogs only to delete them.
+	 * heap_create_with_catalog modifies it.  Note that the NewHeap will not
+	 * receive any of the defaults or constraints associated with the OldHeap;
+	 * we don't need 'em, and there's no reason to spend cycles inserting them
+	 * into the catalogs only to delete them.
 	 */
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
@@ -811,8 +811,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 						  &OldestXmin, &FreezeXid, NULL);
 
 	/*
-	 * FreezeXid will become the table's new relfrozenxid, and that mustn't
-	 * go backwards, so take the max.
+	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
+	 * backwards, so take the max.
 	 */
 	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
 		FreezeXid = OldHeap->rd_rel->relfrozenxid;

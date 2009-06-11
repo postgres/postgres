@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/fsmfuncs.c,v 1.2 2009/01/01 17:23:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/fsmfuncs.c,v 1.3 2009/06/11 14:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "miscadmin.h"
 #include "funcapi.h"
 
-Datum fsm_page_contents(PG_FUNCTION_ARGS);
+Datum		fsm_page_contents(PG_FUNCTION_ARGS);
 
 /*
  * Dumps the contents of a FSM page.
@@ -50,7 +50,7 @@ fsm_page_contents(PG_FUNCTION_ARGS)
 
 	initStringInfo(&sinfo);
 
-	for(i=0; i < NodesPerPage; i++)
+	for (i = 0; i < NodesPerPage; i++)
 	{
 		if (fsmpage->fp_nodes[i] != 0)
 			appendStringInfo(&sinfo, "%d: %d\n", i, fsmpage->fp_nodes[i]);

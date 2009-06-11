@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.158 2009/04/02 22:39:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.159 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,8 +584,8 @@ ExecBuildProjectionInfo(List *targetList,
 
 	/*
 	 * We separate the target list elements into simple Var references and
-	 * expressions which require the full ExecTargetList machinery.  To be
-	 * a simple Var, a Var has to be a user attribute and not mismatch the
+	 * expressions which require the full ExecTargetList machinery.  To be a
+	 * simple Var, a Var has to be a user attribute and not mismatch the
 	 * inputDesc.  (Note: if there is a type mismatch then ExecEvalVar will
 	 * probably throw an error at runtime, but we leave that to it.)
 	 */
@@ -621,7 +621,7 @@ ExecBuildProjectionInfo(List *targetList,
 
 			varNumbers[numSimpleVars] = attnum;
 			varOutputCols[numSimpleVars] = tle->resno;
-			if (tle->resno != numSimpleVars+1)
+			if (tle->resno != numSimpleVars + 1)
 				directMap = false;
 
 			switch (variable->varno)
@@ -683,7 +683,7 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 		return false;
 	if (IsA(node, Var))
 	{
-		Var	   *variable = (Var *) node;
+		Var		   *variable = (Var *) node;
 		AttrNumber	attnum = variable->varattno;
 
 		switch (variable->varno)
@@ -705,9 +705,10 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 		}
 		return false;
 	}
+
 	/*
-	 * Don't examine the arguments of Aggrefs or WindowFuncs, because those
-	 * do not represent expressions to be evaluated within the overall
+	 * Don't examine the arguments of Aggrefs or WindowFuncs, because those do
+	 * not represent expressions to be evaluated within the overall
 	 * targetlist's econtext.
 	 */
 	if (IsA(node, Aggref))

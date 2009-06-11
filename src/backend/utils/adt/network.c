@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.73 2008/03/25 22:42:44 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.74 2009/06/11 14:49:03 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -319,7 +319,7 @@ inet_to_cidr(PG_FUNCTION_ARGS)
 	inet	   *src = PG_GETARG_INET_P(0);
 	inet	   *dst;
 	int			bits;
-	int			byte;
+	int byte;
 	int			nbits;
 	int			maxbytes;
 
@@ -335,19 +335,20 @@ inet_to_cidr(PG_FUNCTION_ARGS)
 
 	/* zero out any bits to the right of the netmask */
 	byte = bits / 8;
+
 	nbits = bits % 8;
 	/* clear the first byte, this might be a partial byte */
 	if (nbits != 0)
 	{
-		ip_addr(dst)[byte] &= ~(0xFF >> nbits);
-		byte++;
+		ip_addr(dst)[byte] &=~(0xFF >> nbits);
+		byte	  ++;
 	}
 	/* clear remaining bytes */
 	maxbytes = ip_addrsize(dst);
-	while (byte < maxbytes)
+	while (byte <maxbytes)
 	{
 		ip_addr(dst)[byte] = 0;
-		byte++;
+		byte	  ++;
 	}
 
 	PG_RETURN_INET_P(dst);
@@ -383,7 +384,7 @@ cidr_set_masklen(PG_FUNCTION_ARGS)
 	inet	   *src = PG_GETARG_INET_P(0);
 	int			bits = PG_GETARG_INT32(1);
 	inet	   *dst;
-	int			byte;
+	int byte;
 	int			nbits;
 	int			maxbytes;
 
@@ -403,19 +404,20 @@ cidr_set_masklen(PG_FUNCTION_ARGS)
 
 	/* zero out any bits to the right of the new netmask */
 	byte = bits / 8;
+
 	nbits = bits % 8;
 	/* clear the first byte, this might be a partial byte */
 	if (nbits != 0)
 	{
-		ip_addr(dst)[byte] &= ~(0xFF >> nbits);
-		byte++;
+		ip_addr(dst)[byte] &=~(0xFF >> nbits);
+		byte	  ++;
 	}
 	/* clear remaining bytes */
 	maxbytes = ip_addrsize(dst);
-	while (byte < maxbytes)
+	while (byte <maxbytes)
 	{
 		ip_addr(dst)[byte] = 0;
-		byte++;
+		byte	  ++;
 	}
 
 	PG_RETURN_INET_P(dst);
@@ -714,7 +716,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int			byte;
+	int byte;
 	int			bits;
 	int			maxbytes;
 	unsigned char mask;
@@ -733,7 +735,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 	a = ip_addr(ip);
 	b = ip_addr(dst);
 
-	for (byte = 0; byte < maxbytes; byte++)
+	for (byte = 0; byte <maxbytes; byte ++)
 	{
 		if (bits >= 8)
 		{
@@ -748,7 +750,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 			bits = 0;
 		}
 
-		b[byte] = a[byte] | mask;
+		b[byte] = a[byte] |mask;
 	}
 
 	ip_family(dst) = ip_family(ip);
@@ -763,7 +765,7 @@ network_network(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int			byte;
+	int byte;
 	int			bits;
 	unsigned char mask;
 	unsigned char *a,
@@ -777,6 +779,7 @@ network_network(PG_FUNCTION_ARGS)
 	b = ip_addr(dst);
 
 	byte = 0;
+
 	while (bits)
 	{
 		if (bits >= 8)
@@ -790,8 +793,8 @@ network_network(PG_FUNCTION_ARGS)
 			bits = 0;
 		}
 
-		b[byte] = a[byte] & mask;
-		byte++;
+		b[byte] = a[byte] &mask;
+		byte	  ++;
 	}
 
 	ip_family(dst) = ip_family(ip);
@@ -806,7 +809,7 @@ network_netmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int			byte;
+	int byte;
 	int			bits;
 	unsigned char mask;
 	unsigned char *b;
@@ -818,6 +821,7 @@ network_netmask(PG_FUNCTION_ARGS)
 	b = ip_addr(dst);
 
 	byte = 0;
+
 	while (bits)
 	{
 		if (bits >= 8)
@@ -832,7 +836,7 @@ network_netmask(PG_FUNCTION_ARGS)
 		}
 
 		b[byte] = mask;
-		byte++;
+		byte	  ++;
 	}
 
 	ip_family(dst) = ip_family(ip);
@@ -847,7 +851,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
-	int			byte;
+	int byte;
 	int			bits;
 	int			maxbytes;
 	unsigned char mask;
@@ -865,6 +869,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 	b = ip_addr(dst);
 
 	byte = maxbytes - 1;
+
 	while (bits)
 	{
 		if (bits >= 8)
@@ -879,7 +884,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 		}
 
 		b[byte] = mask;
-		byte--;
+		byte	  --;
 	}
 
 	ip_family(dst) = ip_family(ip);
@@ -989,7 +994,7 @@ bitncmp(void *l, void *r, int n)
 static bool
 addressOK(unsigned char *a, int bits, int family)
 {
-	int			byte;
+	int byte;
 	int			nbits;
 	int			maxbits;
 	int			maxbytes;
@@ -1011,17 +1016,18 @@ addressOK(unsigned char *a, int bits, int family)
 		return true;
 
 	byte = bits / 8;
+
 	nbits = bits % 8;
 	mask = 0xff;
 	if (bits != 0)
 		mask >>= nbits;
 
-	while (byte < maxbytes)
+	while (byte <maxbytes)
 	{
-		if ((a[byte] & mask) != 0)
+		if ((a[byte] &mask) != 0)
 			return false;
 		mask = 0xff;
-		byte++;
+		byte	  ++;
 	}
 
 	return true;
@@ -1390,7 +1396,7 @@ inetmi(PG_FUNCTION_ARGS)
 		 * two's complement, too bad.
 		 */
 		int			nb = ip_addrsize(ip);
-		int			byte = 0;
+		int byte = 0;
 		unsigned char *pip = ip_addr(ip);
 		unsigned char *pip2 = ip_addr(ip2);
 		int			carry = 1;
@@ -1401,9 +1407,9 @@ inetmi(PG_FUNCTION_ARGS)
 
 			carry = pip[nb] + (~pip2[nb] & 0xFF) + carry;
 			lobyte = carry & 0xFF;
-			if (byte < sizeof(int64))
+			if (byte <sizeof(int64))
 			{
-				res |= ((int64) lobyte) << (byte * 8);
+				res |= ((int64) lobyte) << (byte *8);
 			}
 			else
 			{
@@ -1418,15 +1424,15 @@ inetmi(PG_FUNCTION_ARGS)
 							 errmsg("result is out of range")));
 			}
 			carry >>= 8;
-			byte++;
+			byte	  ++;
 		}
 
 		/*
 		 * If input is narrower than int64, overflow is not possible, but we
 		 * have to do proper sign extension.
 		 */
-		if (carry == 0 && byte < sizeof(int64))
-			res |= ((int64) -1) << (byte * 8);
+		if (carry == 0 && byte <sizeof(int64))
+			res |= ((int64) -1) << (byte *8);
 	}
 
 	PG_RETURN_INT64(res);

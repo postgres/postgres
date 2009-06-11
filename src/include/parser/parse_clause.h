@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.54 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.55 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,13 +33,13 @@ extern List *transformSortClause(ParseState *pstate, List *orderlist,
 					List **targetlist, bool resolveUnknown);
 
 extern List *transformWindowDefinitions(ParseState *pstate,
-										List *windowdefs,
-										List **targetlist);
+						   List *windowdefs,
+						   List **targetlist);
 
 extern List *transformDistinctClause(ParseState *pstate,
 						List **targetlist, List *sortClause);
 extern List *transformDistinctOnClause(ParseState *pstate, List *distinctlist,
-						List **targetlist, List *sortClause);
+						  List **targetlist, List *sortClause);
 
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
 extern bool targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList);

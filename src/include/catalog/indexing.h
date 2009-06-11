@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.107 2009/02/09 20:57:59 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.108 2009/06/11 14:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,7 @@ DECLARE_UNIQUE_INDEX(pg_foreign_data_wrapper_name_index, 548, on pg_foreign_data
 #define ForeignDataWrapperNameIndexId	548
 
 DECLARE_UNIQUE_INDEX(pg_foreign_server_oid_index, 113, on pg_foreign_server using btree(oid oid_ops));
-#define ForeignServerOidIndexId	113
+#define ForeignServerOidIndexId 113
 
 DECLARE_UNIQUE_INDEX(pg_foreign_server_name_index, 549, on pg_foreign_server using btree(srvname name_ops));
 #define ForeignServerNameIndexId	549

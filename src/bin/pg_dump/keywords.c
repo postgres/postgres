@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/keywords.c,v 1.2 2009/03/08 16:53:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/keywords.c,v 1.3 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "parser/keywords.h"
 
 /*
- * We don't need the token number, so leave it out to avoid requiring other 
+ * We don't need the token number, so leave it out to avoid requiring other
  * backend headers.
  */
 #define PG_KEYWORD(a,b,c) {a,0,c},

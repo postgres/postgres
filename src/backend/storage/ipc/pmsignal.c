@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.27 2009/05/05 19:59:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.28 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  * have three possible states: UNUSED, ASSIGNED, ACTIVE.  An UNUSED slot is
  * available for assignment.  An ASSIGNED slot is associated with a postmaster
  * child process, but either the process has not touched shared memory yet,
- * or it has successfully cleaned up after itself.  A ACTIVE slot means the
+ * or it has successfully cleaned up after itself.	A ACTIVE slot means the
  * process is actively using shared memory.  The slots are assigned to
  * child processes at random, and postmaster.c is responsible for tracking
  * which one goes with which PID.
@@ -57,8 +57,8 @@ struct PMSignalData
 	/* per-reason flags */
 	sig_atomic_t PMSignalFlags[NUM_PMSIGNALS];
 	/* per-child-process flags */
-	int			num_child_flags;		/* # of entries in PMChildFlags[] */
-	int			next_child_flag;		/* next slot to try to assign */
+	int			num_child_flags;	/* # of entries in PMChildFlags[] */
+	int			next_child_flag;	/* next slot to try to assign */
 	sig_atomic_t PMChildFlags[1];		/* VARIABLE LENGTH ARRAY */
 };
 
@@ -181,6 +181,7 @@ ReleasePostmasterChildSlot(int slot)
 
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
+
 	/*
 	 * Note: the slot state might already be unused, because the logic in
 	 * postmaster.c is such that this might get called twice when a child

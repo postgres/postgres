@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.96 2009/01/07 22:40:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.97 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,8 @@
 
 typedef enum
 {
-	CONSTRAINT_EXCLUSION_OFF,			/* do not use c_e */
-	CONSTRAINT_EXCLUSION_ON,			/* apply c_e to all rels */
+	CONSTRAINT_EXCLUSION_OFF,	/* do not use c_e */
+	CONSTRAINT_EXCLUSION_ON,	/* apply c_e to all rels */
 	CONSTRAINT_EXCLUSION_PARTITION		/* apply c_e to otherrels only */
 } ConstraintExclusionType;
 
@@ -101,11 +101,11 @@ extern void cost_group(Path *path, PlannerInfo *root,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples);
 extern void cost_nestloop(NestPath *path, PlannerInfo *root,
-						  SpecialJoinInfo *sjinfo);
+			  SpecialJoinInfo *sjinfo);
 extern void cost_mergejoin(MergePath *path, PlannerInfo *root,
-						   SpecialJoinInfo *sjinfo);
+			   SpecialJoinInfo *sjinfo);
 extern void cost_hashjoin(HashPath *path, PlannerInfo *root,
-						  SpecialJoinInfo *sjinfo);
+			  SpecialJoinInfo *sjinfo);
 extern void cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);
@@ -118,7 +118,7 @@ extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 extern void set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel,
-								   Plan *cteplan);
+					   Plan *cteplan);
 
 /*
  * prototypes for clausesel.c

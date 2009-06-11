@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.239 2009/04/16 20:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.240 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,14 +179,14 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 									 true, NULL, SAOP_FORBID, ST_ANYSCAN);
 
 	/*
-	 * Submit all the ones that can form plain IndexScan plans to add_path.
-	 * (A plain IndexPath always represents a plain IndexScan plan; however
-	 * some of the indexes might support only bitmap scans, and those we
-	 * mustn't submit to add_path here.)  Also, pick out the ones that might
-	 * be useful as bitmap scans.  For that, we must discard indexes that
-	 * don't support bitmap scans, and we also are only interested in paths
-	 * that have some selectivity; we should discard anything that was
-	 * generated solely for ordering purposes.
+	 * Submit all the ones that can form plain IndexScan plans to add_path. (A
+	 * plain IndexPath always represents a plain IndexScan plan; however some
+	 * of the indexes might support only bitmap scans, and those we mustn't
+	 * submit to add_path here.)  Also, pick out the ones that might be useful
+	 * as bitmap scans.  For that, we must discard indexes that don't support
+	 * bitmap scans, and we also are only interested in paths that have some
+	 * selectivity; we should discard anything that was generated solely for
+	 * ordering purposes.
 	 */
 	bitindexpaths = NIL;
 	foreach(l, indexpaths)
@@ -1628,13 +1628,13 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 
 			/*
 			 * If it's a btree index, we can reject it if its opfamily isn't
-			 * compatible with the EC, since no clause generated from the
-			 * EC could be used with the index.  For non-btree indexes,
-			 * we can't easily tell whether clauses generated from the EC
-			 * could be used with the index, so only check for expression
-			 * match.  This might mean we return "true" for a useless index,
-			 * but that will just cause some wasted planner cycles; it's
-			 * better than ignoring useful indexes.
+			 * compatible with the EC, since no clause generated from the EC
+			 * could be used with the index.  For non-btree indexes, we can't
+			 * easily tell whether clauses generated from the EC could be used
+			 * with the index, so only check for expression match.	This might
+			 * mean we return "true" for a useless index, but that will just
+			 * cause some wasted planner cycles; it's better than ignoring
+			 * useful indexes.
 			 */
 			if ((index->relam != BTREE_AM_OID ||
 				 list_member_oid(ec->ec_opfamilies, curFamily)) &&
@@ -2223,9 +2223,9 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 	 * want to apply.  (A hash index, for example, will not support ">=".)
 	 * Currently, only btree supports the operators we need.
 	 *
-	 * Note: actually, in the Pattern_Prefix_Exact case, we only need "="
-	 * so a hash index would work.  Currently it doesn't seem worth checking
-	 * for that, however.
+	 * Note: actually, in the Pattern_Prefix_Exact case, we only need "=" so a
+	 * hash index would work.  Currently it doesn't seem worth checking for
+	 * that, however.
 	 *
 	 * We insist on the opfamily being the specific one we expect, else we'd
 	 * do the wrong thing if someone were to make a reverse-sort opfamily with
@@ -2460,7 +2460,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 	/*
 	 * LIKE and regex operators are not members of any btree index opfamily,
 	 * but they can be members of opfamilies for more exotic index types such
-	 * as GIN.  Therefore, we should only do expansion if the operator is
+	 * as GIN.	Therefore, we should only do expansion if the operator is
 	 * actually not in the opfamily.  But checking that requires a syscache
 	 * lookup, so it's best to first see if the operator is one we are
 	 * interested in.

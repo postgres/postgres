@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.c,v 1.59 2009/01/07 13:44:36 tgl Exp $ 
+ * $PostgreSQL: pgsql/contrib/tablefunc/tablefunc.c,v 1.60 2009/06/11 14:48:52 momjian Exp $
  *
  *
  * tablefunc
@@ -93,7 +93,7 @@ typedef struct
 	float8		stddev;			/* stddev of the distribution */
 	float8		carry_val;		/* hold second generated value */
 	bool		use_carry;		/* use second generated value */
-}	normal_rand_fctx;
+} normal_rand_fctx;
 
 #define xpfree(var_) \
 	do { \
@@ -124,7 +124,7 @@ typedef struct crosstab_cat_desc
 {
 	char	   *catname;		/* full category name */
 	int			attidx;			/* zero based */
-}	crosstab_cat_desc;
+} crosstab_cat_desc;
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
 #define INIT_CATS				64
@@ -163,7 +163,7 @@ typedef struct crosstab_hashent
 {
 	char		internal_catname[MAX_CATNAME_LEN];
 	crosstab_cat_desc *catdesc;
-}	crosstab_HashEnt;
+} crosstab_HashEnt;
 
 /*
  * normal_rand - return requested number of random values
@@ -440,8 +440,8 @@ crosstab(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Check that return tupdesc is compatible with the data we got from
-	 * SPI, at least based on number and type of attributes
+	 * Check that return tupdesc is compatible with the data we got from SPI,
+	 * at least based on number and type of attributes
 	 */
 	if (!compatCrosstabTupleDescs(tupdesc, spi_tupdesc))
 		ereport(ERROR,
@@ -465,8 +465,8 @@ crosstab(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Generate attribute metadata needed later to produce tuples from raw
-	 * C strings
+	 * Generate attribute metadata needed later to produce tuples from raw C
+	 * strings
 	 */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
@@ -488,8 +488,8 @@ crosstab(PG_FUNCTION_ARGS)
 		values = (char **) palloc0((1 + num_categories) * sizeof(char *));
 
 		/*
-		 * now loop through the sql results and assign each value in
-		 * sequence to the next category
+		 * now loop through the sql results and assign each value in sequence
+		 * to the next category
 		 */
 		for (i = 0; i < num_categories; i++)
 		{
@@ -507,16 +507,16 @@ crosstab(PG_FUNCTION_ARGS)
 			rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 
 			/*
-			 * If this is the first pass through the values for this
-			 * rowid, set the first column to rowid
+			 * If this is the first pass through the values for this rowid,
+			 * set the first column to rowid
 			 */
 			if (i == 0)
 			{
 				xpstrdup(values[0], rowid);
 
 				/*
-				 * Check to see if the rowid is the same as that of the
-				 * last tuple sent -- if so, skip this tuple entirely
+				 * Check to see if the rowid is the same as that of the last
+				 * tuple sent -- if so, skip this tuple entirely
 				 */
 				if (!firstpass && xstreq(lastrowid, rowid))
 				{
@@ -533,18 +533,18 @@ crosstab(PG_FUNCTION_ARGS)
 			if (xstreq(rowid, values[0]))
 			{
 				/*
-				 * Get the next category item value, which is always
-				 * attribute number three.
+				 * Get the next category item value, which is always attribute
+				 * number three.
 				 *
-				 * Be careful to assign the value to the array index based
-				 * on which category we are presently processing.
+				 * Be careful to assign the value to the array index based on
+				 * which category we are presently processing.
 				 */
 				values[1 + i] = SPI_getvalue(spi_tuple, spi_tupdesc, 3);
 
 				/*
 				 * increment the counter since we consume a row for each
-				 * category, but not for last pass because the outer loop
-				 * will do that for us
+				 * category, but not for last pass because the outer loop will
+				 * do that for us
 				 */
 				if (i < (num_categories - 1))
 					call_cntr++;
@@ -553,9 +553,9 @@ crosstab(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * We'll fill in NULLs for the missing values, but we need
-				 * to decrement the counter since this sql result row
-				 * doesn't belong to the current output tuple.
+				 * We'll fill in NULLs for the missing values, but we need to
+				 * decrement the counter since this sql result row doesn't
+				 * belong to the current output tuple.
 				 */
 				call_cntr--;
 				xpfree(rowid);
@@ -690,7 +690,7 @@ crosstab_hash(PG_FUNCTION_ARGS)
 												crosstab_hash,
 												tupdesc,
 												per_query_ctx,
-												rsinfo->allowedModes & SFRM_Materialize_Random);
+							 rsinfo->allowedModes & SFRM_Materialize_Random);
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
@@ -1059,7 +1059,7 @@ connectby_text(PG_FUNCTION_ARGS)
 								  show_branch,
 								  show_serial,
 								  per_query_ctx,
-								  rsinfo->allowedModes & SFRM_Materialize_Random,
+							  rsinfo->allowedModes & SFRM_Materialize_Random,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
 
@@ -1139,7 +1139,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 								  show_branch,
 								  show_serial,
 								  per_query_ctx,
-								  rsinfo->allowedModes & SFRM_Materialize_Random,
+							  rsinfo->allowedModes & SFRM_Materialize_Random,
 								  attinmeta);
 	rsinfo->setDesc = tupdesc;
 
@@ -1603,7 +1603,7 @@ quote_literal_cstr(char *rawstr)
 
 	rawstr_text = cstring_to_text(rawstr);
 	result_text = DatumGetTextP(DirectFunctionCall1(quote_literal,
-													PointerGetDatum(rawstr_text)));
+											  PointerGetDatum(rawstr_text)));
 	result = text_to_cstring(result_text);
 
 	return result;

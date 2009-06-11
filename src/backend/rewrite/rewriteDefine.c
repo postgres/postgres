@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.137 2009/05/13 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.138 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ InsertRule(char *rulname,
 		replaces[Anum_pg_rewrite_ev_action - 1] = true;
 
 		tup = heap_modify_tuple(oldtup, RelationGetDescr(pg_rewrite_desc),
-							   values, nulls, replaces);
+								values, nulls, replaces);
 
 		simple_heap_update(pg_rewrite_desc, &tup->t_self, tup);
 
@@ -388,9 +388,9 @@ DefineQueryRewrite(char *rulename,
 		 *
 		 * If so, check that the relation is empty because the storage for the
 		 * relation is going to be deleted.  Also insist that the rel not have
-		 * any triggers, indexes, or child tables.  (Note: these tests are
-		 * too strict, because they will reject relations that once had such
-		 * but don't anymore.  But we don't really care, because this whole
+		 * any triggers, indexes, or child tables.	(Note: these tests are too
+		 * strict, because they will reject relations that once had such but
+		 * don't anymore.  But we don't really care, because this whole
 		 * business of converting relations to views is just a kluge to allow
 		 * loading ancient pg_dump files.)
 		 */

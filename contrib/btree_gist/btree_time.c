@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_time.c,v 1.15 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_time.c,v 1.16 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -10,7 +10,7 @@ typedef struct
 {
 	TimeADT		lower;
 	TimeADT		upper;
-}	timeKEY;
+} timeKEY;
 
 /*
 ** time ops
@@ -175,6 +175,7 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeADT		query = PG_GETARG_TIMEADT(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
@@ -183,8 +184,8 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	key.lower = (GBT_NUMKEY *) & kkk->lower;
-	key.upper = (GBT_NUMKEY *) & kkk->upper;
+	key.lower = (GBT_NUMKEY *) &kkk->lower;
+	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
@@ -197,6 +198,7 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeTzADT  *query = PG_GETARG_TIMETZADT_P(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
@@ -212,8 +214,8 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	qqq = (query->time + query->zone);
 #endif
 
-	key.lower = (GBT_NUMKEY *) & kkk->lower;
-	key.upper = (GBT_NUMKEY *) & kkk->upper;
+	key.lower = (GBT_NUMKEY *) &kkk->lower;
+	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo)
@@ -244,15 +246,15 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
-										  TimeADTGetDatumFast(newentry->upper),
-									   TimeADTGetDatumFast(origentry->upper)));
+										TimeADTGetDatumFast(newentry->upper),
+									 TimeADTGetDatumFast(origentry->upper)));
 	res = INTERVAL_TO_SEC(intr);
 	res = Max(res, 0);
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
-										 TimeADTGetDatumFast(origentry->lower),
-										TimeADTGetDatumFast(newentry->lower)));
+									   TimeADTGetDatumFast(origentry->lower),
+									  TimeADTGetDatumFast(newentry->lower)));
 	res2 = INTERVAL_TO_SEC(intr);
 	res2 = Max(res2, 0);
 
@@ -264,8 +266,8 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 	{
 		intr = DatumGetIntervalP(DirectFunctionCall2(
 													 time_mi_time,
-										 TimeADTGetDatumFast(origentry->upper),
-									   TimeADTGetDatumFast(origentry->lower)));
+									   TimeADTGetDatumFast(origentry->upper),
+									 TimeADTGetDatumFast(origentry->lower)));
 		*result += FLT_MIN;
 		*result += (float) (res / (res + INTERVAL_TO_SEC(intr)));
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.119 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.120 2009/06/11 14:49:05 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -368,7 +368,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		256
 	},
-	{ForeignDataWrapperRelationId,                  /* FOREIGNDATAWRAPPERNAME */
+	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPERNAME */
 		ForeignDataWrapperNameIndexId,
 		0,
 		1,
@@ -380,7 +380,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{ForeignDataWrapperRelationId,                  /* FOREIGNDATAWRAPPEROID */
+	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPEROID */
 		ForeignDataWrapperOidIndexId,
 		0,
 		1,
@@ -392,7 +392,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{ForeignServerRelationId,                       /* FOREIGNSERVERNAME */
+	{ForeignServerRelationId,	/* FOREIGNSERVERNAME */
 		ForeignServerNameIndexId,
 		0,
 		1,
@@ -404,7 +404,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		32
 	},
-	{ForeignServerRelationId,                       /* FOREIGNSERVEROID */
+	{ForeignServerRelationId,	/* FOREIGNSERVEROID */
 		ForeignServerOidIndexId,
 		0,
 		1,
@@ -728,7 +728,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		1024
 	},
-	{UserMappingRelationId,                  /* USERMAPPINGOID */
+	{UserMappingRelationId,		/* USERMAPPINGOID */
 		UserMappingOidIndexId,
 		0,
 		1,
@@ -740,7 +740,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
-	{UserMappingRelationId,                  /* USERMAPPINGUSERSERVER */
+	{UserMappingRelationId,		/* USERMAPPINGUSERSERVER */
 		UserMappingUserServerIndexId,
 		0,
 		2,

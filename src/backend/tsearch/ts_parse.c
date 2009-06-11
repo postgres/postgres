@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.11 2009/01/15 16:33:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.12 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,8 +464,8 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
 	for (i = 0; i < query->size; i++)
 	{
 		if (item->type == QI_VAL &&
-			tsCompareString( GETOPERAND(query) + item->operand.distance, item->operand.length,
-							 buf, buflen, item->operand.prefix ) == 0 )
+			tsCompareString(GETOPERAND(query) + item->operand.distance, item->operand.length,
+							buf, buflen, item->operand.prefix) == 0)
 		{
 			if (word->item)
 			{
@@ -584,9 +584,9 @@ generateHeadline(HeadlineParsedText *prs)
 {
 	text	   *out;
 	char	   *ptr;
-	int			len          = 128;
-	int	   		numfragments = 0;
-	int2	   		infrag       = 0;
+	int			len = 128;
+	int			numfragments = 0;
+	int2		infrag = 0;
 
 	HeadlineWordEntry *wrd = prs->words;
 
@@ -611,15 +611,15 @@ generateHeadline(HeadlineParsedText *prs)
 
 				/* start of a new fragment */
 				infrag = 1;
-				numfragments ++;
-				/* add a fragment delimitor if this is after the first one */ 
+				numfragments++;
+				/* add a fragment delimitor if this is after the first one */
 				if (numfragments > 1)
 				{
 					memcpy(ptr, prs->fragdelim, prs->fragdelimlen);
 					ptr += prs->fragdelimlen;
-				}	
+				}
 
-			}	
+			}
 			if (wrd->replace)
 			{
 				*ptr = ' ';
@@ -646,7 +646,7 @@ generateHeadline(HeadlineParsedText *prs)
 			if (infrag)
 				infrag = 0;
 			pfree(wrd->word);
-		}	
+		}
 
 		wrd++;
 	}

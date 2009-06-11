@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.52 2009/04/23 00:23:45 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.53 2009/06/11 14:48:54 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -233,7 +233,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("prepared transactions are disabled"),
-				 errhint("Set max_prepared_transactions to a nonzero value.")));
+			  errhint("Set max_prepared_transactions to a nonzero value.")));
 
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.6 2009/05/15 15:56:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.7 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,8 +302,8 @@ wal_quickdie(SIGNAL_ARGS)
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm
-	 * in being doubly sure.)
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 	exit(2);
 }

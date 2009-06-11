@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.97 2009/06/09 19:36:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.98 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ int			Log_autovacuum_min_duration = -1;
 #define STATS_READ_DELAY 1000
 
 /* the minimum allowed time between two awakenings of the launcher */
-#define MIN_AUTOVAC_SLEEPTIME 100.0 /* milliseconds */
+#define MIN_AUTOVAC_SLEEPTIME 100.0		/* milliseconds */
 
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
@@ -168,8 +168,8 @@ typedef struct av_relation
 	Oid			ar_toastrelid;	/* hash key - must be first */
 	Oid			ar_relid;
 	bool		ar_hasrelopts;
-	AutoVacOpts	ar_reloptions;	/* copy of AutoVacOpts from the main table's
-								   reloptions, or NULL if none */
+	AutoVacOpts ar_reloptions;	/* copy of AutoVacOpts from the main table's
+								 * reloptions, or NULL if none */
 } av_relation;
 
 /* struct to keep track of tables to vacuum and/or analyze, after rechecking */
@@ -362,7 +362,7 @@ StartAutoVacLauncher(void)
 	{
 		case -1:
 			ereport(LOG,
-					(errmsg("could not fork autovacuum launcher process: %m")));
+				 (errmsg("could not fork autovacuum launcher process: %m")));
 			return 0;
 
 #ifndef EXEC_BACKEND
@@ -1000,8 +1000,8 @@ rebuild_database_list(Oid newdb)
 		qsort(dbary, nelems, sizeof(avl_dbase), db_comparator);
 
 		/*
-		 * Determine the time interval between databases in the schedule.
-		 * If we see that the configured naptime would take us to sleep times
+		 * Determine the time interval between databases in the schedule. If
+		 * we see that the configured naptime would take us to sleep times
 		 * lower than our min sleep time (which launcher_determine_sleep is
 		 * coded not to allow), silently use a larger naptime (but don't touch
 		 * the GUC variable).
@@ -1362,8 +1362,8 @@ avl_quickdie(SIGNAL_ARGS)
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm
-	 * in being doubly sure.)
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
 	exit(2);
 }
@@ -1849,7 +1849,7 @@ do_autovacuum(void)
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
 	BufferAccessStrategy bstrategy;
-	ScanKeyData	key;
+	ScanKeyData key;
 	TupleDesc	pg_class_desc;
 
 	/*
@@ -1881,8 +1881,8 @@ do_autovacuum(void)
 	pgstat_vacuum_stat();
 
 	/*
-	 * Find the pg_database entry and select the default freeze ages. We
-	 * use zero in template and nonconnectable databases, else the system-wide
+	 * Find the pg_database entry and select the default freeze ages. We use
+	 * zero in template and nonconnectable databases, else the system-wide
 	 * default.
 	 */
 	tuple = SearchSysCache(DATABASEOID,
@@ -1930,12 +1930,12 @@ do_autovacuum(void)
 	/*
 	 * Scan pg_class to determine which tables to vacuum.
 	 *
-	 * We do this in two passes: on the first one we collect the list of
-	 * plain relations, and on the second one we collect TOAST tables.
-	 * The reason for doing the second pass is that during it we want to use
-	 * the main relation's pg_class.reloptions entry if the TOAST table does
-	 * not have any, and we cannot obtain it unless we know beforehand what's
-	 * the main table OID.
+	 * We do this in two passes: on the first one we collect the list of plain
+	 * relations, and on the second one we collect TOAST tables. The reason
+	 * for doing the second pass is that during it we want to use the main
+	 * relation's pg_class.reloptions entry if the TOAST table does not have
+	 * any, and we cannot obtain it unless we know beforehand what's the main
+	 * table OID.
 	 *
 	 * We need to check TOAST tables separately because in cases with short,
 	 * wide tables there might be proportionally much more activity in the
@@ -1949,8 +1949,8 @@ do_autovacuum(void)
 	relScan = heap_beginscan(classRel, SnapshotNow, 1, &key);
 
 	/*
-	 * On the first pass, we collect main tables to vacuum, and also the
-	 * main table relid to TOAST relid mapping.
+	 * On the first pass, we collect main tables to vacuum, and also the main
+	 * table relid to TOAST relid mapping.
 	 */
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
@@ -1998,7 +1998,7 @@ do_autovacuum(void)
 
 					ereport(LOG,
 							(errmsg("autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\"",
-									get_namespace_name(classForm->relnamespace),
+								 get_namespace_name(classForm->relnamespace),
 									NameStr(classForm->relname),
 									get_database_name(MyDatabaseId))));
 					object.classId = RelationRelationId;
@@ -2010,7 +2010,7 @@ do_autovacuum(void)
 				{
 					ereport(LOG,
 							(errmsg("autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\"",
-									get_namespace_name(classForm->relnamespace),
+								 get_namespace_name(classForm->relnamespace),
 									NameStr(classForm->relname),
 									get_database_name(MyDatabaseId))));
 				}
@@ -2065,7 +2065,7 @@ do_autovacuum(void)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 		PgStat_StatTabEntry *tabentry;
-		Oid         relid;
+		Oid			relid;
 		AutoVacOpts *relopts = NULL;
 		bool		dovacuum;
 		bool		doanalyze;
@@ -2080,14 +2080,14 @@ do_autovacuum(void)
 		relid = HeapTupleGetOid(tuple);
 
 		/*
-		 * fetch reloptions -- if this toast table does not have them,
-		 * try the main rel
+		 * fetch reloptions -- if this toast table does not have them, try the
+		 * main rel
 		 */
 		relopts = extract_autovac_opts(tuple, pg_class_desc);
 		if (relopts == NULL)
 		{
-			av_relation		*hentry;
-			bool			found;
+			av_relation *hentry;
+			bool		found;
 
 			hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
 			if (found && hentry->ar_hasrelopts)
@@ -2187,10 +2187,10 @@ do_autovacuum(void)
 		 * It could have changed if something else processed the table while
 		 * we weren't looking.
 		 *
-		 * Note: we have a special case in pgstat code to ensure that the stats
-		 * we read are as up-to-date as possible, to avoid the problem that
-		 * somebody just finished vacuuming this table.  The window to the race
-		 * condition is not closed but it is very small.
+		 * Note: we have a special case in pgstat code to ensure that the
+		 * stats we read are as up-to-date as possible, to avoid the problem
+		 * that somebody just finished vacuuming this table.  The window to
+		 * the race condition is not closed but it is very small.
 		 */
 		MemoryContextSwitchTo(AutovacMemCxt);
 		tab = table_recheck_autovac(relid, table_toast_map, pg_class_desc);
@@ -2231,7 +2231,7 @@ do_autovacuum(void)
 
 		/*
 		 * Save the relation name for a possible error message, to avoid a
-		 * catalog lookup in case of an error.  If any of these return NULL,
+		 * catalog lookup in case of an error.	If any of these return NULL,
 		 * then the relation has been dropped since last we checked; skip it.
 		 * Note: they must live in a long-lived memory context because we call
 		 * vacuum and analyze in different transactions.
@@ -2307,8 +2307,8 @@ deleted:
 	}
 
 	/*
-	 * We leak table_toast_map here (among other things), but since we're going
-	 * away soon, it's not a problem.
+	 * We leak table_toast_map here (among other things), but since we're
+	 * going away soon, it's not a problem.
 	 */
 
 	/*
@@ -2339,7 +2339,7 @@ extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 	relopts = extractRelOptions(tup, pg_class_desc, InvalidOid);
 	if (relopts == NULL)
 		return NULL;
-	
+
 	av = palloc(sizeof(AutoVacOpts));
 	memcpy(av, &(((StdRdOptions *) relopts)->autovacuum), sizeof(AutoVacOpts));
 	pfree(relopts);
@@ -2392,7 +2392,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
 	bool		wraparound;
-	AutoVacOpts	*avopts;
+	AutoVacOpts *avopts;
 
 	/* use fresh stats */
 	autovac_refresh_stats();
@@ -2408,16 +2408,16 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		return NULL;
 	classForm = (Form_pg_class) GETSTRUCT(classTup);
 
-	/* 
+	/*
 	 * Get the applicable reloptions.  If it is a TOAST table, try to get the
 	 * main table reloptions if the toast table itself doesn't have.
 	 */
 	avopts = extract_autovac_opts(classTup, pg_class_desc);
-	if (classForm->relkind == RELKIND_TOASTVALUE && 
+	if (classForm->relkind == RELKIND_TOASTVALUE &&
 		avopts == NULL && table_toast_map != NULL)
 	{
-		av_relation		*hentry;
-		bool			found;
+		av_relation *hentry;
+		bool		found;
 
 		hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
 		if (found && hentry->ar_hasrelopts)
@@ -2516,7 +2516,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
  *
  * A table whose autovacuum_enabled option is false is
  * automatically skipped (unless we have to vacuum it due to freeze_max_age).
- * Thus autovacuum can be disabled for specific tables.	Also, when the stats
+ * Thus autovacuum can be disabled for specific tables. Also, when the stats
  * collector does not have data about a table, it will be skipped.
  *
  * A table whose vac_base_thresh value is < 0 takes the base value from the
@@ -2684,8 +2684,8 @@ static void
 autovac_report_activity(autovac_table *tab)
 {
 #define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 56)
-	char	activity[MAX_AUTOVAC_ACTIV_LEN];
-	int		len;
+	char		activity[MAX_AUTOVAC_ACTIV_LEN];
+	int			len;
 
 	/* Report the command and possible options */
 	if (tab->at_dovacuum)
@@ -2703,7 +2703,7 @@ autovac_report_activity(autovac_table *tab)
 
 	snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
 			 " %s.%s%s", tab->at_nspname, tab->at_relname,
-				 tab->at_wraparound ? " (to prevent wraparound)" : "");
+			 tab->at_wraparound ? " (to prevent wraparound)" : "");
 
 	/* Set statement_timestamp() to current time for pg_stat_activity */
 	SetCurrentStatementStartTimestamp();

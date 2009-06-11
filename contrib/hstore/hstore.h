@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.7 2009/03/15 22:05:17 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore.h,v 1.8 2009/06/11 14:48:51 momjian Exp $
  */
 #ifndef __HSTORE_H__
 #define __HSTORE_H__
@@ -14,7 +14,7 @@ typedef struct
 	uint32
 				valisnull:1,
 				pos:31;
-}	HEntry;
+} HEntry;
 
 /* these are determined by the sizes of the keylen and vallen fields */
 /* in struct HEntry and struct Pairs */
@@ -27,7 +27,7 @@ typedef struct
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	char		data[1];
-}	HStore;
+} HStore;
 
 #define HSHRDSIZE	(VARHDRSZ + sizeof(int4))
 #define CALCDATASIZE(x, lenstr) ( (x) * sizeof(HEntry) + HSHRDSIZE + (lenstr) )
@@ -45,15 +45,15 @@ typedef struct
 	uint16		vallen;
 	bool		isnull;
 	bool		needfree;
-}	Pairs;
+} Pairs;
 
 int			comparePairs(const void *a, const void *b);
-int			uniquePairs(Pairs * a, int4 l, int4 *buflen);
+int			uniquePairs(Pairs *a, int4 l, int4 *buflen);
 
-size_t      hstoreCheckKeyLen(size_t len);
-size_t      hstoreCheckValLen(size_t len);
+size_t		hstoreCheckKeyLen(size_t len);
+size_t		hstoreCheckValLen(size_t len);
 
 #define HStoreContainsStrategyNumber	7
 #define HStoreExistsStrategyNumber		9
 
-#endif /* __HSTORE_H__ */
+#endif   /* __HSTORE_H__ */

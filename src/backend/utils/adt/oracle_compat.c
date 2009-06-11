@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.83 2009/01/01 17:23:49 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.84 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,9 @@ static text *dotrim(const char *string, int stringlen,
 Datum
 lower(PG_FUNCTION_ARGS)
 {
-	text	*in_string = PG_GETARG_TEXT_PP(0);
-	char	*out_string;
-	text	*result;
+	text	   *in_string = PG_GETARG_TEXT_PP(0);
+	char	   *out_string;
+	text	   *result;
 
 	out_string = str_tolower(VARDATA_ANY(in_string),
 							 VARSIZE_ANY_EXHDR(in_string));
@@ -72,9 +72,9 @@ lower(PG_FUNCTION_ARGS)
 Datum
 upper(PG_FUNCTION_ARGS)
 {
-	text	*in_string = PG_GETARG_TEXT_PP(0);
-	char	*out_string;
-	text	*result;
+	text	   *in_string = PG_GETARG_TEXT_PP(0);
+	char	   *out_string;
+	text	   *result;
 
 	out_string = str_toupper(VARDATA_ANY(in_string),
 							 VARSIZE_ANY_EXHDR(in_string));
@@ -105,9 +105,9 @@ upper(PG_FUNCTION_ARGS)
 Datum
 initcap(PG_FUNCTION_ARGS)
 {
-	text	*in_string = PG_GETARG_TEXT_PP(0);
-	char	*out_string;
-	text	*result;
+	text	   *in_string = PG_GETARG_TEXT_PP(0);
+	char	   *out_string;
+	text	   *result;
 
 	out_string = str_initcap(VARDATA_ANY(in_string),
 							 VARSIZE_ANY_EXHDR(in_string));

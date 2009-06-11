@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.5 2009/01/20 18:59:37 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.6 2009/06/11 14:48:55 momjian Exp $
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -109,8 +109,8 @@ RelationCreateStorage(RelFileNode rnode, bool istemp)
 	if (!istemp)
 	{
 		/*
-		 * Make an XLOG entry showing the file creation.  If we abort, the file
-		 * will be dropped at abort time.
+		 * Make an XLOG entry showing the file creation.  If we abort, the
+		 * file will be dropped at abort time.
 		 */
 		xlrec.rnode = rnode;
 
@@ -175,8 +175,8 @@ RelationDropStorage(Relation rel)
 void
 RelationTruncate(Relation rel, BlockNumber nblocks)
 {
-	bool fsm;
-	bool vm;
+	bool		fsm;
+	bool		vm;
 
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(rel);
@@ -195,13 +195,13 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 		visibilitymap_truncate(rel, nblocks);
 
 	/*
-	 * We WAL-log the truncation before actually truncating, which
-	 * means trouble if the truncation fails. If we then crash, the WAL
-	 * replay likely isn't going to succeed in the truncation either, and
-	 * cause a PANIC. It's tempting to put a critical section here, but
-	 * that cure would be worse than the disease. It would turn a usually
-	 * harmless failure to truncate, that could spell trouble at WAL replay,
-	 * into a certain PANIC.
+	 * We WAL-log the truncation before actually truncating, which means
+	 * trouble if the truncation fails. If we then crash, the WAL replay
+	 * likely isn't going to succeed in the truncation either, and cause a
+	 * PANIC. It's tempting to put a critical section here, but that cure
+	 * would be worse than the disease. It would turn a usually harmless
+	 * failure to truncate, that could spell trouble at WAL replay, into a
+	 * certain PANIC.
 	 */
 	if (!rel->rd_istemp)
 	{
@@ -223,11 +223,11 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE, &rdata);
 
 		/*
-		 * Flush, because otherwise the truncation of the main relation
-		 * might hit the disk before the WAL record, and the truncation of
-		 * the FSM or visibility map. If we crashed during that window, we'd
-		 * be left with a truncated heap, but the FSM or visibility map would
-		 * still contain entries for the non-existent heap pages.
+		 * Flush, because otherwise the truncation of the main relation might
+		 * hit the disk before the WAL record, and the truncation of the FSM
+		 * or visibility map. If we crashed during that window, we'd be left
+		 * with a truncated heap, but the FSM or visibility map would still
+		 * contain entries for the non-existent heap pages.
 		 */
 		if (fsm || vm)
 			XLogFlush(lsn);
@@ -270,7 +270,7 @@ smgrDoPendingDeletes(bool isCommit)
 			/* do deletion if called for */
 			if (pending->atCommit == isCommit)
 			{
-				int i;
+				int			i;
 
 				/* schedule unlinking old files */
 				SMgrRelation srel;
@@ -431,11 +431,12 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		/* Also tell xlogutils.c about it */
 		XLogTruncateRelation(xlrec->rnode, MAIN_FORKNUM, xlrec->blkno);
- 
+
 		/* Truncate FSM too */
 		if (smgrexists(reln, FSM_FORKNUM))
 		{
-			Relation rel = CreateFakeRelcacheEntry(xlrec->rnode);
+			Relation	rel = CreateFakeRelcacheEntry(xlrec->rnode);
+
 			FreeSpaceMapTruncateRel(rel, xlrec->blkno);
 			FreeFakeRelcacheEntry(rel);
 		}
@@ -453,7 +454,7 @@ smgr_desc(StringInfo buf, uint8 xl_info, char *rec)
 	if (info == XLOG_SMGR_CREATE)
 	{
 		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
-		char *path = relpath(xlrec->rnode, MAIN_FORKNUM);
+		char	   *path = relpath(xlrec->rnode, MAIN_FORKNUM);
 
 		appendStringInfo(buf, "file create: %s", path);
 		pfree(path);
@@ -461,7 +462,7 @@ smgr_desc(StringInfo buf, uint8 xl_info, char *rec)
 	else if (info == XLOG_SMGR_TRUNCATE)
 	{
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
-		char *path = relpath(xlrec->rnode, MAIN_FORKNUM);
+		char	   *path = relpath(xlrec->rnode, MAIN_FORKNUM);
 
 		appendStringInfo(buf, "file truncate: %s to %u blocks", path,
 						 xlrec->blkno);

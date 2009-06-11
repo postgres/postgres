@@ -12,7 +12,7 @@
 
 
 static HEntry *
-findkey(HStore * hs, char *key, int keylen)
+findkey(HStore *hs, char *key, int keylen)
 {
 	HEntry	   *StopLow = ARRPTR(hs);
 	HEntry	   *StopHigh = StopLow + hs->size;
@@ -407,10 +407,10 @@ typedef struct
 {
 	HStore	   *hs;
 	int			i;
-}	AKStore;
+} AKStore;
 
 static void
-setup_firstcall(FuncCallContext *funcctx, HStore * hs)
+setup_firstcall(FuncCallContext *funcctx, HStore *hs)
 {
 	MemoryContext oldcontext;
 	AKStore    *st;

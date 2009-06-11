@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.97 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.98 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ typedef struct
 
 typedef struct
 {
-	int			numWindowFuncs;	/* total number of WindowFuncs found */
+	int			numWindowFuncs; /* total number of WindowFuncs found */
 	Index		maxWinRef;		/* windowFuncs[] is indexed 0 .. maxWinRef */
 	List	  **windowFuncs;	/* lists of WindowFuncs for each winref */
 } WindowFuncLists;
@@ -89,6 +89,6 @@ extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 
 extern Query *inline_set_returning_function(PlannerInfo *root,
-											RangeTblEntry *rte);
+							  RangeTblEntry *rte);
 
 #endif   /* CLAUSES_H */

@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.49 2009/04/04 17:40:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.50 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -829,8 +829,8 @@ GetSnapshotData(Snapshot snapshot)
 	snapshot->curcid = GetCurrentCommandId(false);
 
 	/*
-	 * This is a new snapshot, so set both refcounts are zero, and mark it
-	 * as not copied in persistent memory.
+	 * This is a new snapshot, so set both refcounts are zero, and mark it as
+	 * not copied in persistent memory.
 	 */
 	snapshot->active_count = 0;
 	snapshot->regd_count = 0;
@@ -1038,7 +1038,7 @@ IsBackendPid(int pid)
  * some snapshot we have.  Since we examine the procarray with only shared
  * lock, there are race conditions: a backend could set its xmin just after
  * we look.  Indeed, on multiprocessors with weak memory ordering, the
- * other backend could have set its xmin *before* we look.  We know however
+ * other backend could have set its xmin *before* we look.	We know however
  * that such a backend must have held shared ProcArrayLock overlapping our
  * own hold of ProcArrayLock, else we would see its xmin update.  Therefore,
  * any snapshot the other backend is taking concurrently with our scan cannot
@@ -1133,9 +1133,9 @@ CountActiveBackends(void)
 		 *
 		 * If someone just decremented numProcs, 'proc' could also point to a
 		 * PGPROC entry that's no longer in the array. It still points to a
-		 * PGPROC struct, though, because freed PGPPROC entries just go to
-		 * the free list and are recycled. Its contents are nonsense in that
-		 * case, but that's acceptable for this function.
+		 * PGPROC struct, though, because freed PGPPROC entries just go to the
+		 * free list and are recycled. Its contents are nonsense in that case,
+		 * but that's acceptable for this function.
 		 */
 		if (proc != NULL)
 			continue;
@@ -1235,7 +1235,8 @@ bool
 CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 {
 	ProcArrayStruct *arrayP = procArray;
-#define MAXAUTOVACPIDS  10		/* max autovacs to SIGTERM per iteration */
+
+#define MAXAUTOVACPIDS	10		/* max autovacs to SIGTERM per iteration */
 	int			autovac_pids[MAXAUTOVACPIDS];
 	int			tries;
 
@@ -1280,10 +1281,10 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 			return false;		/* no conflicting backends, so done */
 
 		/*
-		 * Send SIGTERM to any conflicting autovacuums before sleeping.
-		 * We postpone this step until after the loop because we don't
-		 * want to hold ProcArrayLock while issuing kill().
-		 * We have no idea what might block kill() inside the kernel...
+		 * Send SIGTERM to any conflicting autovacuums before sleeping. We
+		 * postpone this step until after the loop because we don't want to
+		 * hold ProcArrayLock while issuing kill(). We have no idea what might
+		 * block kill() inside the kernel...
 		 */
 		for (index = 0; index < nautovacs; index++)
 			(void) kill(autovac_pids[index], SIGTERM);	/* ignore any error */

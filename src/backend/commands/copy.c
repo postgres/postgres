@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.311 2009/06/03 15:06:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.312 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,7 @@ typedef struct
  * function call overhead in tight COPY loops.
  *
  * We must use "if (1)" because the usual "do {...} while(0)" wrapper would
- * prevent the continue/break processing from working.  We end the "if (1)"
+ * prevent the continue/break processing from working.	We end the "if (1)"
  * with "else ((void) 0)" to ensure the "if" does not unintentionally match
  * any "else" in the calling code, and to avoid any compiler warnings about
  * empty statements.  See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
@@ -859,7 +859,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	if (strlen(cstate->delim) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY delimiter must be a single one-byte character")));
+			  errmsg("COPY delimiter must be a single one-byte character")));
 
 	/* Disallow end-of-line characters */
 	if (strchr(cstate->delim, '\r') != NULL ||
@@ -879,8 +879,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	 * backslash because it would be ambiguous.  We can't allow the other
 	 * cases because data characters matching the delimiter must be
 	 * backslashed, and certain backslash combinations are interpreted
-	 * non-literally by COPY IN.  Disallowing all lower case ASCII letters
-	 * is more than strictly necessary, but seems best for consistency and
+	 * non-literally by COPY IN.  Disallowing all lower case ASCII letters is
+	 * more than strictly necessary, but seems best for consistency and
 	 * future-proofing.  Likewise we disallow all digits though only octal
 	 * digits are actually dangerous.
 	 */
@@ -1670,7 +1670,7 @@ CopyFrom(CopyState cstate)
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
 	CommandId	mycid = GetCurrentCommandId(true);
-	int			hi_options = 0;	/* start with default heap_insert options */
+	int			hi_options = 0; /* start with default heap_insert options */
 	BulkInsertState bistate;
 
 	Assert(cstate->rel);
@@ -2454,10 +2454,10 @@ CopyReadLineText(CopyState cstate)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 								 !cstate->csv_mode ?
-								 errmsg("literal carriage return found in data") :
-								 errmsg("unquoted carriage return found in data"),
+							errmsg("literal carriage return found in data") :
+							errmsg("unquoted carriage return found in data"),
 								 !cstate->csv_mode ?
-								 errhint("Use \"\\r\" to represent carriage return.") :
+						errhint("Use \"\\r\" to represent carriage return.") :
 								 errhint("Use quoted CSV field to represent carriage return.")));
 
 					/*
@@ -2474,7 +2474,7 @@ CopyReadLineText(CopyState cstate)
 						 errmsg("literal carriage return found in data") :
 						 errmsg("unquoted carriage return found in data"),
 						 !cstate->csv_mode ?
-						 errhint("Use \"\\r\" to represent carriage return.") :
+					   errhint("Use \"\\r\" to represent carriage return.") :
 						 errhint("Use quoted CSV field to represent carriage return.")));
 			/* If reach here, we have found the line terminator */
 			break;
@@ -2491,7 +2491,7 @@ CopyReadLineText(CopyState cstate)
 						 errmsg("unquoted newline found in data"),
 						 !cstate->csv_mode ?
 						 errhint("Use \"\\n\" to represent newline.") :
-						 errhint("Use quoted CSV field to represent newline.")));
+					 errhint("Use quoted CSV field to represent newline.")));
 			cstate->eol_type = EOL_NL;	/* in case not set yet */
 			/* If reach here, we have found the line terminator */
 			break;
@@ -2847,9 +2847,9 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		*output_ptr++ = '\0';
 
 		/*
-		 * If we de-escaped a non-7-bit-ASCII char, make sure we still
-		 * have valid data for the db encoding. Avoid calling strlen here for
-		 * the sake of efficiency.
+		 * If we de-escaped a non-7-bit-ASCII char, make sure we still have
+		 * valid data for the db encoding. Avoid calling strlen here for the
+		 * sake of efficiency.
 		 */
 		if (saw_non_ascii)
 		{
@@ -2945,12 +2945,12 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 		start_ptr = cur_ptr;
 		fieldvals[fieldno] = output_ptr;
 
-		/* Scan data for field,
+		/*
+		 * Scan data for field,
 		 *
-		 * The loop starts in "not quote" mode and then toggles between 
-		 * that and "in quote" mode. 
-		 * The loop exits normally if it is in "not quote" mode and a
-		 * delimiter or line end is seen.
+		 * The loop starts in "not quote" mode and then toggles between that
+		 * and "in quote" mode. The loop exits normally if it is in "not
+		 * quote" mode and a delimiter or line end is seen.
 		 */
 		for (;;)
 		{
@@ -2994,8 +2994,8 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 				if (c == escapec)
 				{
 					/*
-					 * peek at the next char if available, and escape it if it is
-					 * an escape char or a quote char
+					 * peek at the next char if available, and escape it if it
+					 * is an escape char or a quote char
 					 */
 					if (cur_ptr < line_end_ptr)
 					{
@@ -3009,10 +3009,11 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 						}
 					}
 				}
+
 				/*
-				 * end of quoted field. Must do this test after testing for escape
-				 * in case quote char and escape char are the same (which is the
-				 * common case).
+				 * end of quoted field. Must do this test after testing for
+				 * escape in case quote char and escape char are the same
+				 * (which is the common case).
 				 */
 				if (c == quotec)
 					break;
@@ -3021,7 +3022,7 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 				*output_ptr++ = c;
 			}
 		}
-	endfield:
+endfield:
 
 		/* Terminate attribute value in output area */
 		*output_ptr++ = '\0';
@@ -3144,11 +3145,11 @@ CopyAttributeOutText(CopyState cstate, char *string)
 			if ((unsigned char) c < (unsigned char) 0x20)
 			{
 				/*
-				 * \r and \n must be escaped, the others are traditional.
-				 * We prefer to dump these using the C-like notation, rather
-				 * than a backslash and the literal character, because it
-				 * makes the dump file a bit more proof against Microsoftish
-				 * data mangling.
+				 * \r and \n must be escaped, the others are traditional. We
+				 * prefer to dump these using the C-like notation, rather than
+				 * a backslash and the literal character, because it makes the
+				 * dump file a bit more proof against Microsoftish data
+				 * mangling.
 				 */
 				switch (c)
 				{
@@ -3182,7 +3183,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				DUMPSOFAR();
 				CopySendChar(cstate, '\\');
 				CopySendChar(cstate, c);
-				start = ++ptr;			/* do not include char in next run */
+				start = ++ptr;	/* do not include char in next run */
 			}
 			else if (c == '\\' || c == delimc)
 			{
@@ -3204,11 +3205,11 @@ CopyAttributeOutText(CopyState cstate, char *string)
 			if ((unsigned char) c < (unsigned char) 0x20)
 			{
 				/*
-				 * \r and \n must be escaped, the others are traditional.
-				 * We prefer to dump these using the C-like notation, rather
-				 * than a backslash and the literal character, because it
-				 * makes the dump file a bit more proof against Microsoftish
-				 * data mangling.
+				 * \r and \n must be escaped, the others are traditional. We
+				 * prefer to dump these using the C-like notation, rather than
+				 * a backslash and the literal character, because it makes the
+				 * dump file a bit more proof against Microsoftish data
+				 * mangling.
 				 */
 				switch (c)
 				{
@@ -3242,7 +3243,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				DUMPSOFAR();
 				CopySendChar(cstate, '\\');
 				CopySendChar(cstate, c);
-				start = ++ptr;			/* do not include char in next run */
+				start = ++ptr;	/* do not include char in next run */
 			}
 			else if (c == '\\' || c == delimc)
 			{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.42 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.43 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,7 @@ typedef struct
 #define DateADTGetDatum(X)	  Int32GetDatum(X)
 #define TimeADTGetDatum(X)	  Int64GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
-
-#else  /* !HAVE_INT64_TIMESTAMP */
+#else							/* !HAVE_INT64_TIMESTAMP */
 
 #define MAX_TIME_PRECISION 10
 
@@ -80,7 +79,6 @@ typedef struct
 #define DateADTGetDatum(X)	  Int32GetDatum(X)
 #define TimeADTGetDatum(X)	  Float8GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
-
 #endif   /* HAVE_INT64_TIMESTAMP */
 
 #define PG_GETARG_DATEADT(n)	 DatumGetDateADT(PG_GETARG_DATUM(n))

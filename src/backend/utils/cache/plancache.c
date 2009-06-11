@@ -12,7 +12,7 @@
  *
  * The plan cache manager itself is principally responsible for tracking
  * whether cached plans should be invalidated because of schema changes in
- * the objects they depend on.  When (and if) the next demand for a cached
+ * the objects they depend on.	When (and if) the next demand for a cached
  * plan occurs, the query will be replanned.  Note that this could result
  * in an error, for example if a column referenced by the query is no
  * longer present.	The creator of a cached plan can specify whether it
@@ -21,7 +21,7 @@
  * caller to notice changes and cope with them.
  *
  * Currently, we track exactly the dependencies of plans on relations and
- * user-defined functions.  On relcache invalidation events or pg_proc
+ * user-defined functions.	On relcache invalidation events or pg_proc
  * syscache invalidation events, we invalidate just those plans that depend
  * on the particular object being modified.  (Note: this scheme assumes
  * that any table modification that requires replanning will generate a
@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.26 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.27 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	MemoryContext source_context;
 	MemoryContext oldcxt;
 
-	Assert(query_string != NULL);				/* required as of 8.4 */
+	Assert(query_string != NULL);		/* required as of 8.4 */
 
 	/*
 	 * Make a dedicated memory context for the CachedPlanSource and its
@@ -220,7 +220,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	OverrideSearchPath *search_path;
 	MemoryContext oldcxt;
 
-	Assert(query_string != NULL);				/* required as of 8.4 */
+	Assert(query_string != NULL);		/* required as of 8.4 */
 
 	/*
 	 * Fetch current search_path into given context, but do any recalculation
@@ -475,8 +475,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 
 		/*
 		 * If a snapshot is already set (the normal case), we can just use
-		 * that for parsing/planning.  But if it isn't, install one.  Note:
-		 * no point in checking whether parse analysis requires a snapshot;
+		 * that for parsing/planning.  But if it isn't, install one.  Note: no
+		 * point in checking whether parse analysis requires a snapshot;
 		 * utility commands don't have invalidatable plans, so we'd not get
 		 * here for such a command.
 		 */
@@ -609,8 +609,8 @@ CachedPlanIsValid(CachedPlanSource *plansource)
 		Assert(plan->refcount > 0);
 
 		/*
-		 * Although we don't want to acquire locks here, it still seems
-		 * useful to check for expiration of a transient plan.
+		 * Although we don't want to acquire locks here, it still seems useful
+		 * to check for expiration of a transient plan.
 		 */
 		if (TransactionIdIsValid(plan->saved_xmin) &&
 			!TransactionIdEquals(plan->saved_xmin, TransactionXmin))
@@ -990,7 +990,7 @@ PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr)
 					{
 						/* Invalidate the plan! */
 						plan->dead = true;
-						break;		/* out of invalItems scan */
+						break;	/* out of invalItems scan */
 					}
 				}
 				if (plan->dead)

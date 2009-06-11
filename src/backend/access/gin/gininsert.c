@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.21 2009/06/06 02:39:40 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.22 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -100,15 +100,15 @@ static IndexTuple
 addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 		  IndexTuple old, ItemPointerData *items, uint32 nitem, bool isBuild)
 {
-	Datum			key = gin_index_getattr(ginstate, old);
-	OffsetNumber	attnum = gintuple_get_attrnum(ginstate, old);
-	IndexTuple		res = GinFormTuple(ginstate, attnum, key,
-									   NULL, nitem + GinGetNPosting(old));
+	Datum		key = gin_index_getattr(ginstate, old);
+	OffsetNumber attnum = gintuple_get_attrnum(ginstate, old);
+	IndexTuple	res = GinFormTuple(ginstate, attnum, key,
+								   NULL, nitem + GinGetNPosting(old));
 
 	if (res)
 	{
 		/* good, small enough */
-		uint32 newnitem;
+		uint32		newnitem;
 
 		newnitem = MergeItemPointers(GinGetPosting(res),
 									 GinGetPosting(old), GinGetNPosting(old),
@@ -236,15 +236,15 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 {
 	GinBuildState *buildstate = (GinBuildState *) state;
 	MemoryContext oldCtx;
-	int 		  i;
+	int			i;
 
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	for(i=0; i<buildstate->ginstate.origTupdesc->natts;i++)
-		if ( !isnull[i] )
-			buildstate->indtuples += ginHeapTupleBulkInsert(buildstate, 
-														(OffsetNumber)(i+1), values[i], 
-														&htup->t_self);
+	for (i = 0; i < buildstate->ginstate.origTupdesc->natts; i++)
+		if (!isnull[i])
+			buildstate->indtuples += ginHeapTupleBulkInsert(buildstate,
+										   (OffsetNumber) (i + 1), values[i],
+															&htup->t_self);
 
 	/* If we've maxed out our available memory, dump everything to the index */
 	/* Also dump if the tree seems to be getting too unbalanced */
@@ -254,7 +254,7 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 		ItemPointerData *list;
 		Datum		entry;
 		uint32		nlist;
-		OffsetNumber  attnum;
+		OffsetNumber attnum;
 
 		while ((list = ginGetEntry(&buildstate->accum, &attnum, &entry, &nlist)) != NULL)
 		{
@@ -279,7 +279,8 @@ ginbuild(PG_FUNCTION_ARGS)
 	IndexBuildResult *result;
 	double		reltuples;
 	GinBuildState buildstate;
-	Buffer		RootBuffer, MetaBuffer;
+	Buffer		RootBuffer,
+				MetaBuffer;
 	ItemPointerData *list;
 	Datum		entry;
 	uint32		nlist;
@@ -316,7 +317,7 @@ ginbuild(PG_FUNCTION_ARGS)
 		rdata.next = NULL;
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_INDEX, &rdata);
-		
+
 		page = BufferGetPage(RootBuffer);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
@@ -420,7 +421,7 @@ gininsert(PG_FUNCTION_ARGS)
 	MemoryContext oldCtx;
 	MemoryContext insertCtx;
 	uint32		res = 0;
-	int 		i;
+	int			i;
 
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "Gin insert temporary context",
@@ -432,24 +433,24 @@ gininsert(PG_FUNCTION_ARGS)
 
 	initGinState(&ginstate, index);
 
-	if ( GinGetUseFastUpdate(index) )
+	if (GinGetUseFastUpdate(index))
 	{
-		GinTupleCollector	collector;
+		GinTupleCollector collector;
 
 		memset(&collector, 0, sizeof(GinTupleCollector));
-		for(i=0; i<ginstate.origTupdesc->natts;i++)
-			if ( !isnull[i] )
+		for (i = 0; i < ginstate.origTupdesc->natts; i++)
+			if (!isnull[i])
 				res += ginHeapTupleFastCollect(index, &ginstate, &collector,
-												(OffsetNumber)(i+1), values[i], ht_ctid);
+								 (OffsetNumber) (i + 1), values[i], ht_ctid);
 
 		ginHeapTupleFastInsert(index, &ginstate, &collector);
 	}
 	else
 	{
-		for(i=0; i<ginstate.origTupdesc->natts;i++)
-			if ( !isnull[i] ) 
-				res += ginHeapTupleInsert(index, &ginstate, 
-												(OffsetNumber)(i+1), values[i], ht_ctid);
+		for (i = 0; i < ginstate.origTupdesc->natts; i++)
+			if (!isnull[i])
+				res += ginHeapTupleInsert(index, &ginstate,
+								 (OffsetNumber) (i + 1), values[i], ht_ctid);
 
 	}
 

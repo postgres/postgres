@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.67 2009/01/01 17:24:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.68 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 static int	lo_initialize(PGconn *conn);
 
 static Oid
-lo_import_internal(PGconn *conn, const char *filename, const Oid oid);
+			lo_import_internal(PGconn *conn, const char *filename, const Oid oid);
 
 /*
  * lo_open

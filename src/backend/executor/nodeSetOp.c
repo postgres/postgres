@@ -5,7 +5,7 @@
  *
  * The input of a SetOp node consists of tuples from two relations,
  * which have been combined into one dataset, with a junk attribute added
- * that shows which relation each tuple came from.  In SETOP_SORTED mode,
+ * that shows which relation each tuple came from.	In SETOP_SORTED mode,
  * the input has furthermore been sorted according to all the grouping
  * columns (ie, all the non-junk attributes).  The SetOp node scans each
  * group of identical tuples to determine how many came from each input
@@ -18,7 +18,7 @@
  * relation is the left-hand one for EXCEPT, and tries to make the smaller
  * input relation come first for INTERSECT.  We build a hash table in memory
  * with one entry for each group of identical tuples, and count the number of
- * tuples in the group from each relation.  After seeing all the input, we
+ * tuples in the group from each relation.	After seeing all the input, we
  * scan the hashtable and generate the correct output using those counts.
  * We can avoid making hashtable entries for any tuples appearing only in the
  * second input relation, since they cannot result in any output.
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.30 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.31 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,15 +266,15 @@ setop_retrieve_direct(SetOpState *setopstate)
 		}
 
 		/*
-		 * Store the copied first input tuple in the tuple table slot
-		 * reserved for it.  The tuple will be deleted when it is cleared
-		 * from the slot.
+		 * Store the copied first input tuple in the tuple table slot reserved
+		 * for it.	The tuple will be deleted when it is cleared from the
+		 * slot.
 		 */
 		ExecStoreTuple(setopstate->grp_firstTuple,
 					   resultTupleSlot,
 					   InvalidBuffer,
 					   true);
-		setopstate->grp_firstTuple = NULL;	/* don't keep two pointers */
+		setopstate->grp_firstTuple = NULL;		/* don't keep two pointers */
 
 		/* Initialize working state for a new input tuple group */
 		initialize_counts(pergroup);
@@ -318,8 +318,8 @@ setop_retrieve_direct(SetOpState *setopstate)
 		}
 
 		/*
-		 * Done scanning input tuple group.  See if we should emit any
-		 * copies of result tuple, and if so return the first copy.
+		 * Done scanning input tuple group.  See if we should emit any copies
+		 * of result tuple, and if so return the first copy.
 		 */
 		set_output_count(setopstate, pergroup);
 
@@ -533,8 +533,8 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	/*
 	 * initialize child nodes
 	 *
-	 * If we are hashing then the child plan does not need
-	 * to handle REWIND efficiently; see ExecReScanSetOp.
+	 * If we are hashing then the child plan does not need to handle REWIND
+	 * efficiently; see ExecReScanSetOp.
 	 */
 	if (node->strategy == SETOP_HASHED)
 		eflags &= ~EXEC_FLAG_REWIND;

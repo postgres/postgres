@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.42 2009/01/01 17:23:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.43 2009/06/11 14:48:56 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -188,9 +188,9 @@ DefineOperator(List *names, List *parameters)
 	functionOid = LookupFuncName(functionName, nargs, typeId, false);
 
 	/*
-	 * We require EXECUTE rights for the function.  This isn't strictly
-	 * necessary, since EXECUTE will be checked at any attempted use of
-	 * the operator, but it seems like a good idea anyway.
+	 * We require EXECUTE rights for the function.	This isn't strictly
+	 * necessary, since EXECUTE will be checked at any attempted use of the
+	 * operator, but it seems like a good idea anyway.
 	 */
 	aclresult = pg_proc_aclcheck(functionOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
@@ -237,9 +237,9 @@ DefineOperator(List *names, List *parameters)
 		typeId[4] = INTERNALOID;	/* SpecialJoinInfo */
 
 		/*
-		 * As of Postgres 8.4, the preferred signature for join estimators
-		 * has 5 arguments, but we still allow the old 4-argument form.
-		 * Try the preferred form first.
+		 * As of Postgres 8.4, the preferred signature for join estimators has
+		 * 5 arguments, but we still allow the old 4-argument form. Try the
+		 * preferred form first.
 		 */
 		joinOid = LookupFuncName(joinName, 5, typeId, true);
 		if (!OidIsValid(joinOid))
@@ -252,8 +252,8 @@ DefineOperator(List *names, List *parameters)
 		if (get_func_rettype(joinOid) != FLOAT8OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("join estimator function %s must return type \"float8\"",
-							NameListToString(joinName))));
+			 errmsg("join estimator function %s must return type \"float8\"",
+					NameListToString(joinName))));
 
 		/* Require EXECUTE rights for the estimator */
 		aclresult = pg_proc_aclcheck(joinOid, GetUserId(), ACL_EXECUTE);
@@ -271,7 +271,7 @@ DefineOperator(List *names, List *parameters)
 				   oprNamespace,	/* namespace */
 				   typeId1,		/* left type id */
 				   typeId2,		/* right type id */
-				   functionOid,	/* function for operator */
+				   functionOid, /* function for operator */
 				   commutatorName,		/* optional commutator operator name */
 				   negatorName, /* optional negator operator name */
 				   restrictionOid,		/* optional restrict. sel. procedure */

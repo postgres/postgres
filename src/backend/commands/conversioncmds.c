@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.38 2009/02/27 16:35:26 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.39 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,8 +87,8 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	if (get_func_rettype(funcoid) != VOIDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("encoding conversion function %s must return type \"void\"",
-						NameListToString(func_name))));
+		  errmsg("encoding conversion function %s must return type \"void\"",
+				 NameListToString(func_name))));
 
 	/* Check we have EXECUTE rights for the function */
 	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
@@ -97,10 +97,10 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 					   NameListToString(func_name));
 
 	/*
-	 * Check that the conversion function is suitable for the requested
-	 * source and target encodings. We do that by calling the function with
-	 * an empty string; the conversion function should throw an error if it
-	 * can't perform the requested conversion.
+	 * Check that the conversion function is suitable for the requested source
+	 * and target encodings. We do that by calling the function with an empty
+	 * string; the conversion function should throw an error if it can't
+	 * perform the requested conversion.
 	 */
 	OidFunctionCall5(funcoid,
 					 Int32GetDatum(from_encoding),
@@ -124,19 +124,19 @@ void
 DropConversionsCommand(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell *cell;
+	ListCell   *cell;
 
 	/*
 	 * First we identify all the conversions, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the conversions depends on another.
-	 * (Not that that is very likely, but we may as well do this consistently.)
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the conversions depends on another. (Not that
+	 * that is very likely, but we may as well do this consistently.)
 	 */
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
 	{
-		List		*name = (List *) lfirst(cell);
+		List	   *name = (List *) lfirst(cell);
 		Oid			conversionOid;
 		HeapTuple	tuple;
 		Form_pg_conversion con;

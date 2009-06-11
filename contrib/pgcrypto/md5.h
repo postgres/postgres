@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.h,v 1.9 2005/10/15 02:49:06 momjian Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.h,v 1.10 2009/06/11 14:48:52 momjian Exp $ */
 /*	   $KAME: md5.h,v 1.3 2000/02/22 14:01:18 itojun Exp $	   */
 
 /*
@@ -59,7 +59,7 @@ typedef struct
 
 	unsigned int md5_i;
 	uint8		md5_buf[MD5_BUFLEN];
-}	md5_ctxt;
+} md5_ctxt;
 
 extern void md5_init(md5_ctxt *);
 extern void md5_loop(md5_ctxt *, const uint8 *, unsigned int);

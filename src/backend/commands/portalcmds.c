@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.78 2009/01/01 17:23:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.79 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,8 +352,8 @@ PersistHoldablePortal(Portal portal)
 		ExecutorRewind(queryDesc);
 
 		/*
-		 * Change the destination to output to the tuplestore.  Note we
-		 * tell the tuplestore receiver to detoast all data passed through it.
+		 * Change the destination to output to the tuplestore.	Note we tell
+		 * the tuplestore receiver to detoast all data passed through it.
 		 */
 		queryDesc->dest = CreateDestReceiver(DestTuplestore);
 		SetTuplestoreDestReceiverParams(queryDesc->dest,

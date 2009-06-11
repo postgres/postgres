@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.45 2009/01/01 17:24:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.46 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,8 @@ struct config_generic
 	GucSource	reset_source;	/* source of the reset_value */
 	GucSource	source;			/* source of the current actual value */
 	GucStack   *stack;			/* stacked prior values */
-	char	   *sourcefile;		/* file this settings is from (NULL if not file) */
+	char	   *sourcefile;		/* file this settings is from (NULL if not
+								 * file) */
 	int			sourceline;		/* line in source file */
 };
 
@@ -218,9 +219,9 @@ extern struct config_generic **get_guc_variables(void);
 extern void build_guc_variables(void);
 
 /* search in enum options */
-extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
-extern bool config_enum_lookup_by_name(struct config_enum *record,
-									  const char *value, int *retval);
+extern const char *config_enum_lookup_by_value(struct config_enum * record, int val);
+extern bool config_enum_lookup_by_name(struct config_enum * record,
+						   const char *value, int *retval);
 
 
 #endif   /* GUC_TABLES_H */

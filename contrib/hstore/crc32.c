@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/crc32.c,v 1.3 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/hstore/crc32.c,v 1.4 2009/06/11 14:48:51 momjian Exp $
  *
  * Both POSIX and CRC32 checksums */
 

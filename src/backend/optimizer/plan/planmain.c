@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.114 2009/01/01 17:23:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.115 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,13 +289,13 @@ query_planner(PlannerInfo *root, List *tlist,
 		/*
 		 * If both GROUP BY and ORDER BY are specified, we will need two
 		 * levels of sort --- and, therefore, certainly need to read all the
-		 * tuples --- unless ORDER BY is a subset of GROUP BY.  Likewise if
-		 * we have both DISTINCT and GROUP BY, or if we have a window
+		 * tuples --- unless ORDER BY is a subset of GROUP BY.	Likewise if we
+		 * have both DISTINCT and GROUP BY, or if we have a window
 		 * specification not compatible with the GROUP BY.
 		 */
 		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys) ||
 			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys) ||
-			!pathkeys_contained_in(root->window_pathkeys, root->group_pathkeys))
+		 !pathkeys_contained_in(root->window_pathkeys, root->group_pathkeys))
 			tuple_fraction = 0.0;
 	}
 	else if (parse->hasAggs || root->hasHavingQual)

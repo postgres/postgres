@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.31 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.32 2009/06/11 14:49:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,8 +312,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		while (owner->nsnapshots > 0)
 		{
 			if (isCommit)
-				PrintSnapshotLeakWarning(owner->snapshots[owner->nsnapshots -1]);
-			UnregisterSnapshot(owner->snapshots[owner->nsnapshots -1]);
+				PrintSnapshotLeakWarning(owner->snapshots[owner->nsnapshots - 1]);
+			UnregisterSnapshot(owner->snapshots[owner->nsnapshots - 1]);
 		}
 
 		/* Clean up index scans too */
@@ -1005,7 +1005,7 @@ void
 ResourceOwnerForgetSnapshot(ResourceOwner owner, Snapshot snapshot)
 {
 	Snapshot   *snapshots = owner->snapshots;
-	int			ns1 = owner->nsnapshots -1;
+	int			ns1 = owner->nsnapshots - 1;
 	int			i;
 
 	for (i = ns1; i >= 0; i--)

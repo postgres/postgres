@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.44 2009/01/01 17:23:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.45 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		/*
 		 * First call
 		 */
-		ReturnSetInfo  *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
-		MemoryContext	multi_call_ctx;
+		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		MemoryContext multi_call_ctx;
 
 		/*
 		 * Create a suitably long-lived context to hold cross-call data

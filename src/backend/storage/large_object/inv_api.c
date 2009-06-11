@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.137 2009/01/01 17:23:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.138 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,12 +248,12 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 	else if (flags & INV_READ)
 	{
 		/*
-		 * We must register the snapshot in TopTransaction's resowner,
-		 * because it must stay alive until the LO is closed rather than until
-		 * the current portal shuts down.
+		 * We must register the snapshot in TopTransaction's resowner, because
+		 * it must stay alive until the LO is closed rather than until the
+		 * current portal shuts down.
 		 */
 		retval->snapshot = RegisterSnapshotOnOwner(GetActiveSnapshot(),
-												   TopTransactionResourceOwner);
+												TopTransactionResourceOwner);
 		retval->flags = IFS_RDLOCK;
 	}
 	else
@@ -641,7 +641,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			replace[Anum_pg_largeobject_data - 1] = true;
 			newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
-									  values, nulls, replace);
+									   values, nulls, replace);
 			simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 			CatalogIndexInsert(indstate, newtup);
 			heap_freetuple(newtup);
@@ -810,7 +810,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 		replace[Anum_pg_largeobject_data - 1] = true;
 		newtup = heap_modify_tuple(oldtuple, RelationGetDescr(lo_heap_r),
-								  values, nulls, replace);
+								   values, nulls, replace);
 		simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 		CatalogIndexInsert(indstate, newtup);
 		heap_freetuple(newtup);

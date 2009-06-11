@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.92 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.93 2009/06/11 14:48:54 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1073,8 +1073,8 @@ toast_compress_datum(Datum value)
 	Assert(!VARATT_IS_COMPRESSED(DatumGetPointer(value)));
 
 	/*
-	 * No point in wasting a palloc cycle if value size is out of the
-	 * allowed range for compression
+	 * No point in wasting a palloc cycle if value size is out of the allowed
+	 * range for compression
 	 */
 	if (valsize < PGLZ_strategy_default->min_input_size ||
 		valsize > PGLZ_strategy_default->max_input_size)
@@ -1087,10 +1087,10 @@ toast_compress_datum(Datum value)
 	 * because it might be satisfied with having saved as little as one byte
 	 * in the compressed data --- which could turn into a net loss once you
 	 * consider header and alignment padding.  Worst case, the compressed
-	 * format might require three padding bytes (plus header, which is included
-	 * in VARSIZE(tmp)), whereas the uncompressed format would take only one
-	 * header byte and no padding if the value is short enough.  So we insist
-	 * on a savings of more than 2 bytes to ensure we have a gain.
+	 * format might require three padding bytes (plus header, which is
+	 * included in VARSIZE(tmp)), whereas the uncompressed format would take
+	 * only one header byte and no padding if the value is short enough.  So
+	 * we insist on a savings of more than 2 bytes to ensure we have a gain.
 	 */
 	if (pglz_compress(VARDATA_ANY(DatumGetPointer(value)), valsize,
 					  (PGLZ_Header *) tmp, PGLZ_strategy_default) &&
@@ -1130,7 +1130,7 @@ toast_save_datum(Relation rel, Datum value, int options)
 	struct
 	{
 		struct varlena hdr;
-		char		data[TOAST_MAX_CHUNK_SIZE];	/* make struct big enough */
+		char		data[TOAST_MAX_CHUNK_SIZE]; /* make struct big enough */
 		int32		align_it;	/* ensure struct is aligned well enough */
 	}			chunk_data;
 	int32		chunk_size;
@@ -1295,8 +1295,8 @@ toast_delete_datum(Relation rel, Datum value)
 
 	/*
 	 * Find all the chunks.  (We don't actually care whether we see them in
-	 * sequence or not, but since we've already locked the index we might
-	 * as well use systable_beginscan_ordered.)
+	 * sequence or not, but since we've already locked the index we might as
+	 * well use systable_beginscan_ordered.)
 	 */
 	toastscan = systable_beginscan_ordered(toastrel, toastidx,
 										   SnapshotToast, 1, &toastkey);
@@ -1598,7 +1598,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 */
 	nextidx = startchunk;
 	toastscan = systable_beginscan_ordered(toastrel, toastidx,
-										   SnapshotToast, nscankeys, toastkey);
+										 SnapshotToast, nscankeys, toastkey);
 	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*

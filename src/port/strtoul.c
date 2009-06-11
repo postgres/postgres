@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/port/strtoul.c,v 1.4 2008/05/17 01:28:25 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/port/strtoul.c,v 1.5 2009/06/11 14:49:15 momjian Exp $
  *
  *
  * Copyright (c) 1990, 1993

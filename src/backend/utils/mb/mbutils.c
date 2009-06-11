@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.86 2009/04/24 08:43:50 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.87 2009/06/11 14:49:05 momjian Exp $
  */
 #include "postgres.h"
 
@@ -30,7 +30,7 @@
 /*
  * We maintain a simple linked list caching the fmgr lookup info for the
  * currently selected conversion functions, as well as any that have been
- * selected previously in the current session.  (We remember previous
+ * selected previously in the current session.	(We remember previous
  * settings because we must be able to restore a previous setting during
  * transaction rollback, without doing any fresh catalog accesses.)
  *
@@ -40,7 +40,7 @@ typedef struct ConvProcInfo
 {
 	int			s_encoding;		/* server and client encoding IDs */
 	int			c_encoding;
-	FmgrInfo	to_server_info;	/* lookup info for conversion procs */
+	FmgrInfo	to_server_info; /* lookup info for conversion procs */
 	FmgrInfo	to_client_info;
 } ConvProcInfo;
 
@@ -119,9 +119,9 @@ SetClientEncoding(int encoding, bool doit)
 	{
 		/*
 		 * If we're in a live transaction, it's safe to access the catalogs,
-		 * so look up the functions.  We repeat the lookup even if the info
-		 * is already cached, so that we can react to changes in the contents
-		 * of pg_conversion.
+		 * so look up the functions.  We repeat the lookup even if the info is
+		 * already cached, so that we can react to changes in the contents of
+		 * pg_conversion.
 		 */
 		Oid			to_server_proc,
 					to_client_proc;
@@ -168,8 +168,8 @@ SetClientEncoding(int encoding, bool doit)
 		ToClientConvProc = &convinfo->to_client_info;
 
 		/*
-		 * Remove any older entry for the same encoding pair (this is just
-		 * to avoid memory leakage).
+		 * Remove any older entry for the same encoding pair (this is just to
+		 * avoid memory leakage).
 		 */
 		foreach(lc, ConvProcList)
 		{
@@ -191,10 +191,10 @@ SetClientEncoding(int encoding, bool doit)
 	else
 	{
 		/*
-		 * If we're not in a live transaction, the only thing we can do
-		 * is restore a previous setting using the cache.  This covers all
-		 * transaction-rollback cases.  The only case it might not work for
-		 * is trying to change client_encoding on the fly by editing
+		 * If we're not in a live transaction, the only thing we can do is
+		 * restore a previous setting using the cache.	This covers all
+		 * transaction-rollback cases.	The only case it might not work for is
+		 * trying to change client_encoding on the fly by editing
 		 * postgresql.conf and SIGHUP'ing.  Which would probably be a stupid
 		 * thing to do anyway.
 		 */
@@ -275,7 +275,7 @@ pg_get_client_encoding_name(void)
  *
  * CAUTION: although the presence of a length argument means that callers
  * can pass non-null-terminated strings, care is required because the same
- * string will be passed back if no conversion occurs.  Such callers *must*
+ * string will be passed back if no conversion occurs.	Such callers *must*
  * check whether result == src and handle that case differently.
  *
  * Note: we try to avoid raising error, since that could get us into
@@ -622,21 +622,22 @@ perform_default_encoding_conversion(const char *src, int len, bool is_client_to_
 size_t
 wchar2char(char *to, const wchar_t *from, size_t tolen)
 {
-	size_t result;
-	
+	size_t		result;
+
 	if (tolen == 0)
 		return 0;
 
 #ifdef WIN32
+
 	/*
-	 * On Windows, the "Unicode" locales assume UTF16 not UTF8 encoding,
-	 * and for some reason mbstowcs and wcstombs won't do this for us,
-	 * so we use MultiByteToWideChar().
+	 * On Windows, the "Unicode" locales assume UTF16 not UTF8 encoding, and
+	 * for some reason mbstowcs and wcstombs won't do this for us, so we use
+	 * MultiByteToWideChar().
 	 */
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
 		result = WideCharToMultiByte(CP_UTF8, 0, from, -1, to, tolen,
-								NULL, NULL);
+									 NULL, NULL);
 		/* A zero return is failure */
 		if (result <= 0)
 			result = -1;
@@ -650,7 +651,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen)
 	else
 #endif   /* WIN32 */
 	{
-		Assert( !lc_ctype_is_c() );
+		Assert(!lc_ctype_is_c());
 		result = wcstombs(to, from, tolen);
 	}
 	return result;
@@ -701,7 +702,7 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 		/* mbstowcs requires ending '\0' */
 		char	   *str = pnstrdup(from, fromlen);
 
-		Assert( !lc_ctype_is_c() );
+		Assert(!lc_ctype_is_c());
 		result = mbstowcs(to, str, tolen);
 		pfree(str);
 	}
@@ -722,11 +723,10 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen)
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 				 errmsg("invalid multibyte character for locale"),
 				 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
-	}	
+	}
 
 	return result;
 }
-
 #endif
 
 /* convert a multibyte string to a wchar */
@@ -907,19 +907,18 @@ void
 pg_bind_textdomain_codeset(const char *domainname)
 {
 #if defined(ENABLE_NLS)
-	int		encoding = GetDatabaseEncoding();
-	int     i;
+	int			encoding = GetDatabaseEncoding();
+	int			i;
 
 	/*
-	 * gettext() uses the codeset specified by LC_CTYPE by default,
-	 * so if that matches the database encoding we don't need to do
-	 * anything. In CREATE DATABASE, we enforce or trust that the
-	 * locale's codeset matches database encoding, except for the C
-	 * locale. In C locale, we bind gettext() explicitly to the right
-	 * codeset.
+	 * gettext() uses the codeset specified by LC_CTYPE by default, so if that
+	 * matches the database encoding we don't need to do anything. In CREATE
+	 * DATABASE, we enforce or trust that the locale's codeset matches
+	 * database encoding, except for the C locale. In C locale, we bind
+	 * gettext() explicitly to the right codeset.
 	 *
-	 * On Windows, though, gettext() tends to get confused so we always
-	 * bind it.
+	 * On Windows, though, gettext() tends to get confused so we always bind
+	 * it.
 	 */
 #ifndef WIN32
 	const char *ctype = setlocale(LC_CTYPE, NULL);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.101 2009/01/12 05:10:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.102 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
 extern void LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
-								BlockNumber blockNum);
+					BlockNumber blockNum);
 extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 				 BlockNumber blockNum, bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);

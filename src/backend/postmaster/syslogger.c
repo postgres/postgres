@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.50 2009/03/18 08:44:49 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.51 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,8 @@ SysLoggerMain(int argc, char *argv[])
 		 * Wait for some data, timing out after 1 second
 		 */
 		FD_ZERO(&rfds);
-		FD_SET(syslogPipe[0], &rfds);
+		FD_SET		(syslogPipe[0], &rfds);
+
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 
@@ -1194,7 +1195,7 @@ logfile_getname(pg_time_t timestamp, char *suffix)
 
 	/* treat it as a strftime pattern */
 	pg_strftime(filename + len, MAXPGPATH - len, Log_filename,
-		pg_localtime(&timestamp, log_timezone));
+				pg_localtime(&timestamp, log_timezone));
 
 	if (suffix != NULL)
 	{

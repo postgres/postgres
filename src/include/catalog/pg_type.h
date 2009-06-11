@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.204 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.205 2009/06/11 14:49:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -70,12 +70,12 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	/*
 	 * typcategory and typispreferred help the parser distinguish preferred
 	 * and non-preferred coercions.  The category can be any single ASCII
-	 * character (but not \0).  The categories used for built-in types are
+	 * character (but not \0).	The categories used for built-in types are
 	 * identified by the TYPCATEGORY macros below.
 	 */
 	char		typcategory;	/* arbitrary type classification */
 
-	bool		typispreferred;	/* is type "preferred" within its category? */
+	bool		typispreferred; /* is type "preferred" within its category? */
 
 	/*
 	 * If typisdefined is false, the entry is only a placeholder (forward
@@ -644,7 +644,7 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p P f t \054 0 0 0 anyenum_in
 #define  TYPCATEGORY_GEOMETRIC	'G'
 #define  TYPCATEGORY_NETWORK	'I'		/* think INET */
 #define  TYPCATEGORY_NUMERIC	'N'
-#define  TYPCATEGORY_PSEUDOTYPE	'P'
+#define  TYPCATEGORY_PSEUDOTYPE 'P'
 #define  TYPCATEGORY_STRING		'S'
 #define  TYPCATEGORY_TIMESPAN	'T'
 #define  TYPCATEGORY_USER		'U'

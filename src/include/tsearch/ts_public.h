@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.13 2009/01/15 16:33:59 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.14 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef struct
 	char	   *fragdelim;
 	int2		startsellen;
 	int2		stopsellen;
-	int2		fragdelimlen;         
+	int2		fragdelimlen;
 } HeadlineParsedText;
 
 /*

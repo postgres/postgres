@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.170 2009/04/23 07:19:09 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.171 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef struct
 	int			len2;
 	/* Skip table for Boyer-Moore-Horspool search algorithm: */
 	int			skiptablemask;	/* mask for ANDing with skiptable subscripts */
-	int			skiptable[256];	/* skip distance for given mismatched char */
+	int			skiptable[256]; /* skip distance for given mismatched char */
 } TextPositionState;
 
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
@@ -121,7 +121,7 @@ text_to_cstring(const text *t)
 
 	if (tunpacked != t)
 		pfree(tunpacked);
-	
+
 	return result;
 }
 
@@ -150,7 +150,7 @@ text_to_cstring_buffer(const text *src, char *dst, size_t dst_len)
 		dst_len--;
 		if (dst_len >= src_len)
 			dst_len = src_len;
-		else					/* ensure truncation is encoding-safe */
+		else	/* ensure truncation is encoding-safe */
 			dst_len = pg_mbcliplen(VARDATA_ANY(srcunpacked), src_len, dst_len);
 		memcpy(dst, VARDATA_ANY(srcunpacked), dst_len);
 		dst[dst_len] = '\0';
@@ -186,10 +186,10 @@ byteain(PG_FUNCTION_ARGS)
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	char	   *tp;
 	char	   *rp;
-	int			byte;
+	int byte;
 	bytea	   *result;
 
-	for (byte = 0, tp = inputText; *tp != '\0'; byte++)
+	for (byte = 0, tp = inputText; *tp != '\0'; byte ++)
 	{
 		if (tp[0] != '\\')
 			tp++;
@@ -212,7 +212,8 @@ byteain(PG_FUNCTION_ARGS)
 		}
 	}
 
-	byte += VARHDRSZ;
+	byte	  +=VARHDRSZ;
+
 	result = (bytea *) palloc(byte);
 	SET_VARSIZE(result, byte);
 
@@ -228,10 +229,11 @@ byteain(PG_FUNCTION_ARGS)
 				 (tp[3] >= '0' && tp[3] <= '7'))
 		{
 			byte = VAL(tp[1]);
-			byte <<= 3;
-			byte += VAL(tp[2]);
-			byte <<= 3;
-			*rp++ = byte + VAL(tp[3]);
+			byte	 <<=3;
+			byte	  +=VAL(tp[2]);
+			byte	 <<=3;
+			*rp++ = byte +VAL(tp[3]);
+
 			tp += 4;
 		}
 		else if ((tp[0] == '\\') &&
@@ -920,23 +922,23 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 	 * searched (t1) and the "needle" is the pattern being sought (t2).
 	 *
 	 * If the needle is empty or bigger than the haystack then there is no
-	 * point in wasting cycles initializing the table.  We also choose not
-	 * to use B-M-H for needles of length 1, since the skip table can't
-	 * possibly save anything in that case.
+	 * point in wasting cycles initializing the table.	We also choose not to
+	 * use B-M-H for needles of length 1, since the skip table can't possibly
+	 * save anything in that case.
 	 */
 	if (len1 >= len2 && len2 > 1)
 	{
-		int		searchlength = len1 - len2;
-		int     skiptablemask;
-		int     last;
-		int     i;
+		int			searchlength = len1 - len2;
+		int			skiptablemask;
+		int			last;
+		int			i;
 
 		/*
 		 * First we must determine how much of the skip table to use.  The
 		 * declaration of TextPositionState allows up to 256 elements, but for
 		 * short search problems we don't really want to have to initialize so
 		 * many elements --- it would take too long in comparison to the
-		 * actual search time.  So we choose a useful skip table size based on
+		 * actual search time.	So we choose a useful skip table size based on
 		 * the haystack length minus the needle length.  The closer the needle
 		 * length is to the haystack length the less useful skipping becomes.
 		 *
@@ -968,10 +970,11 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 			state->skiptable[i] = len2;
 
 		/*
-		 * Now examine the needle.  For each character except the last one,
+		 * Now examine the needle.	For each character except the last one,
 		 * set the corresponding table element to the appropriate skip
 		 * distance.  Note that when two characters share the same skip table
-		 * entry, the one later in the needle must determine the skip distance.
+		 * entry, the one later in the needle must determine the skip
+		 * distance.
 		 */
 		last = len2 - 1;
 
@@ -1021,7 +1024,7 @@ text_position_next(int start_pos, TextPositionState *state)
 		if (needle_len == 1)
 		{
 			/* No point in using B-M-H for a one-character needle */
-			char	nchar = *needle;
+			char		nchar = *needle;
 
 			hptr = &haystack[start_pos];
 			while (hptr < haystack_end)
@@ -1047,18 +1050,19 @@ text_position_next(int start_pos, TextPositionState *state)
 				p = hptr;
 				while (*nptr == *p)
 				{
-					/* Matched it all?  If so, return 1-based position */
+					/* Matched it all?	If so, return 1-based position */
 					if (nptr == needle)
 						return p - haystack + 1;
 					nptr--, p--;
 				}
+
 				/*
 				 * No match, so use the haystack char at hptr to decide how
-				 * far to advance.  If the needle had any occurrence of that
+				 * far to advance.	If the needle had any occurrence of that
 				 * character (or more precisely, one sharing the same
 				 * skiptable entry) before its last character, then we advance
 				 * far enough to align the last such needle character with
-				 * that haystack position.  Otherwise we can advance by the
+				 * that haystack position.	Otherwise we can advance by the
 				 * whole needle length.
 				 */
 				hptr += state->skiptable[(unsigned char) *hptr & skiptablemask];
@@ -1102,18 +1106,19 @@ text_position_next(int start_pos, TextPositionState *state)
 				p = hptr;
 				while (*nptr == *p)
 				{
-					/* Matched it all?  If so, return 1-based position */
+					/* Matched it all?	If so, return 1-based position */
 					if (nptr == needle)
 						return p - haystack + 1;
 					nptr--, p--;
 				}
+
 				/*
 				 * No match, so use the haystack char at hptr to decide how
-				 * far to advance.  If the needle had any occurrence of that
+				 * far to advance.	If the needle had any occurrence of that
 				 * character (or more precisely, one sharing the same
 				 * skiptable entry) before its last character, then we advance
 				 * far enough to align the last such needle character with
-				 * that haystack position.  Otherwise we can advance by the
+				 * that haystack position.	Otherwise we can advance by the
 				 * whole needle length.
 				 */
 				hptr += state->skiptable[*hptr & skiptablemask];
@@ -1764,7 +1769,7 @@ byteaGetByte(PG_FUNCTION_ARGS)
 	bytea	   *v = PG_GETARG_BYTEA_PP(0);
 	int32		n = PG_GETARG_INT32(1);
 	int			len;
-	int			byte;
+	int byte;
 
 	len = VARSIZE_ANY_EXHDR(v);
 
@@ -1795,7 +1800,7 @@ byteaGetBit(PG_FUNCTION_ARGS)
 	int			byteNo,
 				bitNo;
 	int			len;
-	int			byte;
+	int byte;
 
 	len = VARSIZE_ANY_EXHDR(v);
 
@@ -1810,7 +1815,7 @@ byteaGetBit(PG_FUNCTION_ARGS)
 
 	byte = ((unsigned char *) VARDATA_ANY(v))[byteNo];
 
-	if (byte & (1 << bitNo))
+	if (byte &(1 << bitNo))
 		PG_RETURN_INT32(1);
 	else
 		PG_RETURN_INT32(0);

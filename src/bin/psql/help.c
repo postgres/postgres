@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.149 2009/04/22 14:58:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.150 2009/06/11 14:49:08 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -118,12 +118,12 @@ usage(void)
 	printf(_("\nOutput format options:\n"));
 	printf(_("  -A, --no-align           unaligned table output mode\n"));
 	printf(_("  -F, --field-separator=STRING\n"
-			 "                           set field separator (default: \"%s\")\n"),
+	   "                           set field separator (default: \"%s\")\n"),
 		   DEFAULT_FIELD_SEP);
 	printf(_("  -H, --html               HTML table output mode\n"));
 	printf(_("  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"));
 	printf(_("  -R, --record-separator=STRING\n"
-			 "                           set record separator (default: newline)\n"));
+	"                           set record separator (default: newline)\n"));
 	printf(_("  -t, --tuples-only        print rows only\n"));
 	printf(_("  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"));
 	printf(_("  -x, --expanded           turn on expanded table output\n"));
@@ -243,7 +243,7 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("Connection\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-					  "                         connect to new database (currently \"%s\")\n"),
+	"                         connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
@@ -320,7 +320,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		for (i = 0; i < nrows; i++)
 		{
 			fprintf(output, "  ");
-			for (j = 0; j < ncolumns-1; j++)
+			for (j = 0; j < ncolumns - 1; j++)
 				fprintf(output, "%-*s",
 						QL_MAX_CMD_LEN + 1,
 						VALUE_OR_NULL(QL_HELP[i + j * nrows].cmd));

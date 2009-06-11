@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.182 2009/04/19 19:46:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.183 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,9 @@ static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_values_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					RangeTblEntry *rte);
 static void set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel,
-							 RangeTblEntry *rte);
+				 RangeTblEntry *rte);
 static void set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel,
-								   RangeTblEntry *rte);
+					   RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 						  bool *differentTypes);
@@ -292,13 +292,13 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * Initialize to compute size estimates for whole append relation.
 	 *
-	 * We handle width estimates by weighting the widths of different
-	 * child rels proportionally to their number of rows.  This is sensible
-	 * because the use of width estimates is mainly to compute the total
-	 * relation "footprint" if we have to sort or hash it.  To do this,
-	 * we sum the total equivalent size (in "double" arithmetic) and then
-	 * divide by the total rowcount estimate.  This is done separately for
-	 * the total rel width and each attribute.
+	 * We handle width estimates by weighting the widths of different child
+	 * rels proportionally to their number of rows.  This is sensible because
+	 * the use of width estimates is mainly to compute the total relation
+	 * "footprint" if we have to sort or hash it.  To do this, we sum the
+	 * total equivalent size (in "double" arithmetic) and then divide by the
+	 * total rowcount estimate.  This is done separately for the total rel
+	 * width and each attribute.
 	 *
 	 * Note: if you consider changing this logic, beware that child rels could
 	 * have zero rows and/or width, if they were excluded by constraints.
@@ -377,11 +377,11 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * Note: we could compute appropriate attr_needed data for the
-		 * child's variables, by transforming the parent's attr_needed
-		 * through the translated_vars mapping.  However, currently there's
-		 * no need because attr_needed is only examined for base relations
-		 * not otherrels.  So we just leave the child's attr_needed empty.
+		 * Note: we could compute appropriate attr_needed data for the child's
+		 * variables, by transforming the parent's attr_needed through the
+		 * translated_vars mapping.  However, currently there's no need
+		 * because attr_needed is only examined for base relations not
+		 * otherrels.  So we just leave the child's attr_needed empty.
 		 */
 
 		/*
@@ -438,7 +438,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	rel->rows = parent_rows;
 	if (parent_rows > 0)
 	{
-		int		i;
+		int			i;
 
 		rel->width = rint(parent_size / parent_rows);
 		for (i = 0; i < nattrs; i++)
@@ -681,6 +681,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		if (!cteroot)			/* shouldn't happen */
 			elog(ERROR, "bad levelsup for CTE \"%s\"", rte->ctename);
 	}
+
 	/*
 	 * Note: cte_plan_ids can be shorter than cteList, if we are still working
 	 * on planning the CTEs (ie, this is a side-reference from another CTE).
@@ -726,8 +727,8 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/*
 	 * We need to find the non-recursive term's plan, which is in the plan
-	 * level that's processing the recursive UNION, which is one level
-	 * *below* where the CTE comes from.
+	 * level that's processing the recursive UNION, which is one level *below*
+	 * where the CTE comes from.
 	 */
 	levelsup = rte->ctelevelsup;
 	if (levelsup == 0)			/* shouldn't happen */
@@ -1087,7 +1088,7 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
  * of rows returned.  (This condition is vacuous for DISTINCT, because then
  * there are no non-DISTINCT output columns, so we needn't check.  But note
  * we are assuming that the qual can't distinguish values that the DISTINCT
- * operator sees as equal.  This is a bit shaky but we have no way to test
+ * operator sees as equal.	This is a bit shaky but we have no way to test
  * for the case, and it's unlikely enough that we shouldn't refuse the
  * optimization just because it could theoretically happen.)
  *
@@ -1113,8 +1114,8 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		return false;
 
 	/*
-	 * It would be unsafe to push down window function calls, but at least
-	 * for the moment we could never see any in a qual anyhow.
+	 * It would be unsafe to push down window function calls, but at least for
+	 * the moment we could never see any in a qual anyhow.
 	 */
 	Assert(!contain_window_function(qual));
 

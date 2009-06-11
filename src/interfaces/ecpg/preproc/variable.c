@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.48 2009/03/26 22:26:08 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -497,8 +497,8 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 
 	if (pointer_len > 2)
 		mmerror(PARSE_ERROR, ET_FATAL, ngettext("multilevel pointers (more than 2 levels) are not supported; found %d level",
-		                                        "multilevel pointers (more than 2 levels) are not supported; found %d levels", pointer_len),
-			pointer_len);
+												"multilevel pointers (more than 2 levels) are not supported; found %d levels", pointer_len),
+				pointer_len);
 
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
 		mmerror(PARSE_ERROR, ET_FATAL, "pointer to pointer is not supported for this data type");

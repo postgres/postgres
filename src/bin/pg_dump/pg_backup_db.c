@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.83 2009/02/26 16:02:38 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.84 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
  *
  * Note: it's not really all that sensible to use a single-entry password
  * cache if the username keeps changing.  In current usage, however, the
- * username never does change, so one savedPassword is sufficient.  We do
+ * username never does change, so one savedPassword is sufficient.	We do
  * update the cache on the off chance that the password has changed since the
  * start of the run.
  */
@@ -290,7 +290,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, const char *qry, const char *desc)
 	char		errStmt[DB_MAX_ERR_STMT];
 
 #ifdef NOT_USED
-	 fprintf(stderr, "Executing: '%s'\n\n", qry);
+	fprintf(stderr, "Executing: '%s'\n\n", qry);
 #endif
 	res = PQexec(conn, qry);
 

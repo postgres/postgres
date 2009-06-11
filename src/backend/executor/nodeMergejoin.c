@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.96 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.97 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -774,8 +774,8 @@ ExecMergeJoin(MergeJoinState *node)
 					}
 
 					/*
-					 * In a semijoin, we'll consider returning the first match,
-					 * but after that we're done with this outer tuple.
+					 * In a semijoin, we'll consider returning the first
+					 * match, but after that we're done with this outer tuple.
 					 */
 					if (node->js.jointype == JOIN_SEMI)
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;

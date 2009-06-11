@@ -8,9 +8,9 @@
  * (tracked by separate refcounts on each snapshot), its memory can be freed.
  *
  * These arrangements let us reset MyProc->xmin when there are no snapshots
- * referenced by this transaction.  (One possible improvement would be to be
+ * referenced by this transaction.	(One possible improvement would be to be
  * able to advance Xmin when the snapshot with the earliest Xmin is no longer
- * referenced.  That's a bit harder though, it requires more locking, and
+ * referenced.	That's a bit harder though, it requires more locking, and
  * anyway it should be rather uncommon to keep snapshots referenced for too
  * long.)
  *
@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.9 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.10 2009/06/11 14:49:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@ static SnapshotData CurrentSnapshotData = {HeapTupleSatisfiesMVCC};
 static SnapshotData SecondarySnapshotData = {HeapTupleSatisfiesMVCC};
 
 /* Pointers to valid snapshots */
-static Snapshot	CurrentSnapshot = NULL;
-static Snapshot	SecondarySnapshot = NULL;
+static Snapshot CurrentSnapshot = NULL;
+static Snapshot SecondarySnapshot = NULL;
 
 /*
  * These are updated by GetSnapshotData.  We initialize them this way
@@ -59,7 +59,7 @@ static Snapshot	SecondarySnapshot = NULL;
  * mode, we don't want it to say that BootstrapTransactionId is in progress.
  *
  * RecentGlobalXmin is initialized to InvalidTransactionId, to ensure that no
- * one tries to use a stale value.  Readers should ensure that it has been set
+ * one tries to use a stale value.	Readers should ensure that it has been set
  * to something else before using it.
  */
 TransactionId TransactionXmin = FirstNormalTransactionId;
@@ -82,7 +82,7 @@ typedef struct ActiveSnapshotElt
 } ActiveSnapshotElt;
 
 /* Top of the stack of active snapshots */
-static ActiveSnapshotElt	*ActiveSnapshot = NULL;
+static ActiveSnapshotElt *ActiveSnapshot = NULL;
 
 /*
  * How many snapshots is resowner.c tracking for us?
@@ -91,22 +91,22 @@ static ActiveSnapshotElt	*ActiveSnapshot = NULL;
  * smarter about advancing our MyProc->xmin we will need to be more
  * sophisticated about this, perhaps keeping our own list of snapshots.
  */
-static int				RegisteredSnapshots = 0;
+static int	RegisteredSnapshots = 0;
 
 /* first GetTransactionSnapshot call in a transaction? */
-bool					FirstSnapshotSet = false;
+bool		FirstSnapshotSet = false;
 
 /*
  * Remembers whether this transaction registered a serializable snapshot at
  * start.  We cannot trust FirstSnapshotSet in combination with
  * IsXactIsoLevelSerializable, because GUC may be reset before us.
  */
-static bool				registered_serializable = false;
+static bool registered_serializable = false;
 
 
 static Snapshot CopySnapshot(Snapshot snapshot);
 static void FreeSnapshot(Snapshot snapshot);
-static void	SnapshotResetXmin(void);
+static void SnapshotResetXmin(void);
 
 
 /*
@@ -130,14 +130,14 @@ GetTransactionSnapshot(void)
 		FirstSnapshotSet = true;
 
 		/*
-		 * In serializable mode, the first snapshot must live until end of xact
-		 * regardless of what the caller does with it, so we must register it
-		 * internally here and unregister it at end of xact.
+		 * In serializable mode, the first snapshot must live until end of
+		 * xact regardless of what the caller does with it, so we must
+		 * register it internally here and unregister it at end of xact.
 		 */
 		if (IsXactIsoLevelSerializable)
 		{
 			CurrentSnapshot = RegisterSnapshotOnOwner(CurrentSnapshot,
-													  TopTransactionResourceOwner);
+												TopTransactionResourceOwner);
 			registered_serializable = true;
 		}
 
@@ -171,7 +171,7 @@ GetLatestSnapshot(void)
 
 /*
  * SnapshotSetCommandId
- * 		Propagate CommandCounterIncrement into the static snapshots, if set
+ *		Propagate CommandCounterIncrement into the static snapshots, if set
  */
 void
 SnapshotSetCommandId(CommandId curcid)
@@ -253,7 +253,7 @@ FreeSnapshot(Snapshot snapshot)
 
 /*
  * PushActiveSnapshot
- * 		Set the given snapshot as the current active snapshot
+ *		Set the given snapshot as the current active snapshot
  *
  * If this is the first use of this snapshot, create a new long-lived copy with
  * active refcount=1.  Otherwise, only increment the refcount.
@@ -261,7 +261,7 @@ FreeSnapshot(Snapshot snapshot)
 void
 PushActiveSnapshot(Snapshot snap)
 {
-	ActiveSnapshotElt	*newactive;
+	ActiveSnapshotElt *newactive;
 
 	Assert(snap != InvalidSnapshot);
 
@@ -278,7 +278,7 @@ PushActiveSnapshot(Snapshot snap)
 
 /*
  * PushUpdatedSnapshot
- * 		As above, except we set the snapshot's CID to the current CID.
+ *		As above, except we set the snapshot's CID to the current CID.
  */
 void
 PushUpdatedSnapshot(Snapshot snapshot)
@@ -304,7 +304,7 @@ PushUpdatedSnapshot(Snapshot snapshot)
 void
 PopActiveSnapshot(void)
 {
-	ActiveSnapshotElt	*newstack;
+	ActiveSnapshotElt *newstack;
 
 	newstack = ActiveSnapshot->as_next;
 
@@ -324,7 +324,7 @@ PopActiveSnapshot(void)
 
 /*
  * GetActiveSnapshot
- * 		Return the topmost snapshot in the Active stack.
+ *		Return the topmost snapshot in the Active stack.
  */
 Snapshot
 GetActiveSnapshot(void)
@@ -336,7 +336,7 @@ GetActiveSnapshot(void)
 
 /*
  * ActiveSnapshotSet
- * 		Return whether there is at least one snapshot in the Active stack
+ *		Return whether there is at least one snapshot in the Active stack
  */
 bool
 ActiveSnapshotSet(void)
@@ -346,7 +346,7 @@ ActiveSnapshotSet(void)
 
 /*
  * RegisterSnapshot
- * 		Register a snapshot as being in use by the current resource owner
+ *		Register a snapshot as being in use by the current resource owner
  *
  * If InvalidSnapshot is passed, it is not registered.
  */
@@ -361,12 +361,12 @@ RegisterSnapshot(Snapshot snapshot)
 
 /*
  * RegisterSnapshotOnOwner
- * 		As above, but use the specified resource owner
+ *		As above, but use the specified resource owner
  */
 Snapshot
 RegisterSnapshotOnOwner(Snapshot snapshot, ResourceOwner owner)
 {
-	Snapshot		snap;
+	Snapshot	snap;
 
 	if (snapshot == InvalidSnapshot)
 		return InvalidSnapshot;
@@ -402,7 +402,7 @@ UnregisterSnapshot(Snapshot snapshot)
 
 /*
  * UnregisterSnapshotFromOwner
- * 		As above, but use the specified resource owner
+ *		As above, but use the specified resource owner
  */
 void
 UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner)
@@ -442,7 +442,7 @@ SnapshotResetXmin(void)
 void
 AtSubCommit_Snapshot(int level)
 {
-	ActiveSnapshotElt	*active;
+	ActiveSnapshotElt *active;
 
 	/*
 	 * Relabel the active snapshots set in this subtransaction as though they
@@ -458,7 +458,7 @@ AtSubCommit_Snapshot(int level)
 
 /*
  * AtSubAbort_Snapshot
- * 		Clean up snapshots after a subtransaction abort
+ *		Clean up snapshots after a subtransaction abort
  */
 void
 AtSubAbort_Snapshot(int level)
@@ -466,7 +466,7 @@ AtSubAbort_Snapshot(int level)
 	/* Forget the active snapshots set by this subtransaction */
 	while (ActiveSnapshot && ActiveSnapshot->as_level >= level)
 	{
-		ActiveSnapshotElt	*next;
+		ActiveSnapshotElt *next;
 
 		next = ActiveSnapshot->as_next;
 
@@ -500,8 +500,8 @@ void
 AtEarlyCommit_Snapshot(void)
 {
 	/*
-	 * On a serializable transaction we must unregister our private refcount to
-	 * the serializable snapshot.
+	 * On a serializable transaction we must unregister our private refcount
+	 * to the serializable snapshot.
 	 */
 	if (registered_serializable)
 		UnregisterSnapshotFromOwner(CurrentSnapshot,
@@ -512,7 +512,7 @@ AtEarlyCommit_Snapshot(void)
 
 /*
  * AtEOXact_Snapshot
- * 		Snapshot manager's cleanup function for end of transaction
+ *		Snapshot manager's cleanup function for end of transaction
  */
 void
 AtEOXact_Snapshot(bool isCommit)
@@ -520,7 +520,7 @@ AtEOXact_Snapshot(bool isCommit)
 	/* On commit, complain about leftover snapshots */
 	if (isCommit)
 	{
-		ActiveSnapshotElt	*active;
+		ActiveSnapshotElt *active;
 
 		if (RegisteredSnapshots != 0)
 			elog(WARNING, "%d registered snapshots seem to remain after cleanup",

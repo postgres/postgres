@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.181 2009/05/27 21:08:22 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.182 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include <sys/ucred.h>
 #endif
 #ifdef HAVE_UCRED_H
-# include <ucred.h>
+#include <ucred.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -36,7 +36,7 @@
 #include "storage/ipc.h"
 
 /*----------------------------------------------------------------
- * Global authentication functions 
+ * Global authentication functions
  *----------------------------------------------------------------
  */
 static void sendAuthRequest(Port *port, AuthRequest areq);
@@ -55,7 +55,7 @@ static int	recv_and_check_password_packet(Port *port);
 /* Standard TCP port number for Ident service.	Assigned by IANA */
 #define IDENT_PORT 113
 
-static int  authident(hbaPort *port);
+static int	authident(hbaPort *port);
 
 
 /*----------------------------------------------------------------
@@ -101,17 +101,17 @@ static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 
 /* Correct header from the Platform SDK */
 typedef
-ULONG(*__ldap_start_tls_sA) (
-							 IN PLDAP ExternalHandle,
-							 OUT PULONG ServerReturnValue,
-							 OUT LDAPMessage ** result,
-							 IN PLDAPControlA * ServerControls,
-							 IN PLDAPControlA * ClientControls
+ULONG		(*__ldap_start_tls_sA) (
+												IN PLDAP ExternalHandle,
+												OUT PULONG ServerReturnValue,
+												OUT LDAPMessage **result,
+										   IN PLDAPControlA * ServerControls,
+											IN PLDAPControlA * ClientControls
 );
 #endif
 
 static int	CheckLDAPAuth(Port *port);
-#endif /* USE_LDAP */
+#endif   /* USE_LDAP */
 
 /*----------------------------------------------------------------
  * Cert authentication
@@ -136,7 +136,7 @@ bool		pg_krb_caseins_users;
  *----------------------------------------------------------------
  */
 #ifdef KRB5
-static int pg_krb5_recvauth(Port *port);
+static int	pg_krb5_recvauth(Port *port);
 
 #include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
@@ -151,7 +151,7 @@ static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_keytab pg_krb5_keytab;
 static krb5_principal pg_krb5_server;
-#endif /* KRB5 */
+#endif   /* KRB5 */
 
 
 /*----------------------------------------------------------------
@@ -165,8 +165,8 @@ static krb5_principal pg_krb5_server;
 #include <gssapi/gssapi.h>
 #endif
 
-static int pg_GSS_recvauth(Port *port);
-#endif /* ENABLE_GSS */
+static int	pg_GSS_recvauth(Port *port);
+#endif   /* ENABLE_GSS */
 
 
 /*----------------------------------------------------------------
@@ -174,10 +174,10 @@ static int pg_GSS_recvauth(Port *port);
  *----------------------------------------------------------------
  */
 #ifdef ENABLE_SSPI
-typedef		SECURITY_STATUS
+typedef SECURITY_STATUS
 			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
 													   PCtxtHandle, void **);
-static int pg_SSPI_recvauth(Port *port);
+static int	pg_SSPI_recvauth(Port *port);
 #endif
 
 
@@ -282,10 +282,9 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
-	 * This is the first point where we have access to the hba record for
-	 * the current connection, so perform any verifications based on the
-	 * hba options field that should be done *before* the authentication
-	 * here.
+	 * This is the first point where we have access to the hba record for the
+	 * current connection, so perform any verifications based on the hba
+	 * options field that should be done *before* the authentication here.
 	 */
 	if (port->hba->clientcert)
 	{
@@ -301,12 +300,13 @@ ClientAuthentication(Port *port)
 		{
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					 errmsg("connection requires a valid client certificate")));
+				  errmsg("connection requires a valid client certificate")));
 		}
 #else
+
 		/*
-		 * hba.c makes sure hba->clientcert can't be set unless OpenSSL
-		 * is present.
+		 * hba.c makes sure hba->clientcert can't be set unless OpenSSL is
+		 * present.
 		 */
 		Assert(false);
 #endif
@@ -738,9 +738,9 @@ pg_krb5_recvauth(Port *port)
 	if (cp)
 	{
 		/*
-		 * If we are not going to include the realm in the username that is passed
-		 * to the ident map, destructively modify it here to remove the realm. Then
-		 * advance past the separator to check the realm.
+		 * If we are not going to include the realm in the username that is
+		 * passed to the ident map, destructively modify it here to remove the
+		 * realm. Then advance past the separator to check the realm.
 		 */
 		if (!port->hba->include_realm)
 			*cp = '\0';
@@ -766,7 +766,7 @@ pg_krb5_recvauth(Port *port)
 			}
 		}
 	}
-	else if (port->hba->krb_realm&& strlen(port->hba->krb_realm))
+	else if (port->hba->krb_realm && strlen(port->hba->krb_realm))
 	{
 		elog(DEBUG2,
 			 "krb5 did not return realm but realm matching was requested");
@@ -867,8 +867,8 @@ pg_GSS_recvauth(Port *port)
 	/*
 	 * GSS auth is not supported for protocol versions before 3, because it
 	 * relies on the overall message length word to determine the GSS payload
-	 * size in AuthenticationGSSContinue and PasswordMessage messages.
-	 * (This is, in fact, a design error in our GSS support, because protocol
+	 * size in AuthenticationGSSContinue and PasswordMessage messages. (This
+	 * is, in fact, a design error in our GSS support, because protocol
 	 * messages are supposed to be parsable without relying on the length
 	 * word; but it's not worth changing it now.)
 	 */
@@ -887,8 +887,8 @@ pg_GSS_recvauth(Port *port)
 		 */
 		if (getenv("KRB5_KTNAME") == NULL)
 		{
-			size_t	kt_len = strlen(pg_krb_server_keyfile) + 14;
-			char   *kt_path = malloc(kt_len);
+			size_t		kt_len = strlen(pg_krb_server_keyfile) + 14;
+			char	   *kt_path = malloc(kt_len);
 
 			if (!kt_path)
 			{
@@ -1030,9 +1030,9 @@ pg_GSS_recvauth(Port *port)
 		char	   *cp = strchr(gbuf.value, '@');
 
 		/*
-		 * If we are not going to include the realm in the username that is passed
-		 * to the ident map, destructively modify it here to remove the realm. Then
-		 * advance past the separator to check the realm.
+		 * If we are not going to include the realm in the username that is
+		 * passed to the ident map, destructively modify it here to remove the
+		 * realm. Then advance past the separator to check the realm.
 		 */
 		if (!port->hba->include_realm)
 			*cp = '\0';
@@ -1128,8 +1128,8 @@ pg_SSPI_recvauth(Port *port)
 	/*
 	 * SSPI auth is not supported for protocol versions before 3, because it
 	 * relies on the overall message length word to determine the SSPI payload
-	 * size in AuthenticationGSSContinue and PasswordMessage messages.
-	 * (This is, in fact, a design error in our SSPI support, because protocol
+	 * size in AuthenticationGSSContinue and PasswordMessage messages. (This
+	 * is, in fact, a design error in our SSPI support, because protocol
 	 * messages are supposed to be parsable without relying on the length
 	 * word; but it's not worth changing it now.)
 	 */
@@ -1355,8 +1355,8 @@ pg_SSPI_recvauth(Port *port)
 	 */
 	if (port->hba->include_realm)
 	{
-		char   *namebuf;
-		int		retval;
+		char	   *namebuf;
+		int			retval;
 
 		namebuf = palloc(strlen(accountname) + strlen(domainname) + 2);
 		sprintf(namebuf, "%s@%s", accountname, domainname);
@@ -1697,9 +1697,9 @@ ident_unix(int sock, char *ident_user)
 	/* Solaris > 10 */
 	uid_t		uid;
 	struct passwd *pass;
-	ucred_t	   *ucred;
+	ucred_t    *ucred;
 
-	ucred = NULL; /* must be initialized to NULL */
+	ucred = NULL;				/* must be initialized to NULL */
 	if (getpeerucred(sock, &ucred) == -1)
 	{
 		ereport(LOG,
@@ -1712,7 +1712,7 @@ ident_unix(int sock, char *ident_user)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not get effective UID from peer credentials: %m")));
+		   errmsg("could not get effective UID from peer credentials: %m")));
 		return false;
 	}
 
@@ -1722,8 +1722,8 @@ ident_unix(int sock, char *ident_user)
 	if (pass == NULL)
 	{
 		ereport(LOG,
-			(errmsg("local user with ID %d does not exist",
-					(int) uid)));
+				(errmsg("local user with ID %d does not exist",
+						(int) uid)));
 		return false;
 	}
 
@@ -2050,7 +2050,7 @@ CheckLDAPAuth(Port *port)
 	int			ldapversion = LDAP_VERSION3;
 	char		fulluser[NAMEDATALEN + 256 + 1];
 
-	if (!port->hba->ldapserver|| port->hba->ldapserver[0] == '\0')
+	if (!port->hba->ldapserver || port->hba->ldapserver[0] == '\0')
 	{
 		ereport(LOG,
 				(errmsg("LDAP server not specified")));
@@ -2188,4 +2188,5 @@ CheckCertAuth(Port *port)
 	/* Just pass the certificate CN to the usermap check */
 	return check_usermap(port->hba->usermap, port->user_name, port->peer_cn, false);
 }
+
 #endif

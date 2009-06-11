@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.23 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.24 2009/06/11 14:49:08 momjian Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -32,8 +32,8 @@ typedef int XidStatus;
 #define NUM_CLOG_BUFFERS	8
 
 
-extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids, 
-					TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
+extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
+				   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
 extern XidStatus TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn);
 
 extern Size CLOGShmemSize(void);

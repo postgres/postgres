@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.92 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.93 2009/06/11 14:49:08 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -340,7 +340,7 @@ extern uint32 _hash_log2(uint32 num);
 extern void _hash_checkpage(Relation rel, Buffer buf, int flags);
 extern uint32 _hash_get_indextuple_hashkey(IndexTuple itup);
 extern IndexTuple _hash_form_tuple(Relation index,
-								   Datum *values, bool *isnull);
+				 Datum *values, bool *isnull);
 extern OffsetNumber _hash_binsearch(Page page, uint32 hash_value);
 extern OffsetNumber _hash_binsearch_last(Page page, uint32 hash_value);
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.116 2009/01/12 05:10:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.117 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,21 +42,21 @@ typedef struct f_smgr
 	void		(*smgr_shutdown) (void);		/* may be NULL */
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
-								bool isRedo);
+											bool isRedo);
 	bool		(*smgr_exists) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_unlink) (RelFileNode rnode, ForkNumber forknum,
-								bool isRedo);
+											bool isRedo);
 	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
 							BlockNumber blocknum, char *buffer, bool isTemp);
 	void		(*smgr_prefetch) (SMgrRelation reln, ForkNumber forknum,
-								  BlockNumber blocknum);
+											  BlockNumber blocknum);
 	void		(*smgr_read) (SMgrRelation reln, ForkNumber forknum,
-							  BlockNumber blocknum, char *buffer);
-	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum, 
-						   BlockNumber blocknum, char *buffer, bool isTemp);
+										  BlockNumber blocknum, char *buffer);
+	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
+							BlockNumber blocknum, char *buffer, bool isTemp);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
-								  BlockNumber nblocks, bool isTemp);
+										   BlockNumber nblocks, bool isTemp);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
 	void		(*smgr_sync) (void);	/* may be NULL */
@@ -82,8 +82,8 @@ static HTAB *SMgrRelationHash = NULL;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
-static void smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum, 
-								 int which, bool isTemp, bool isRedo);
+static void smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
+					 int which, bool isTemp, bool isRedo);
 
 
 /*
@@ -156,14 +156,14 @@ smgropen(RelFileNode rnode)
 	/* Initialize it if not present before */
 	if (!found)
 	{
-		int forknum;
+		int			forknum;
 
 		/* hash_search already filled in the lookup key */
 		reln->smgr_owner = NULL;
 		reln->smgr_which = 0;	/* we only have md.c at present */
 
 		/* mark it not open */
-		for(forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 			reln->md_fd[forknum] = NULL;
 	}
 
@@ -209,7 +209,7 @@ void
 smgrclose(SMgrRelation reln)
 {
 	SMgrRelation *owner;
-	ForkNumber forknum;
+	ForkNumber	forknum;
 
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		(*(smgrsw[reln->smgr_which].smgr_close)) (reln, forknum);
@@ -286,9 +286,9 @@ void
 smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	/*
-	 * Exit quickly in WAL replay mode if we've already opened the file. 
-	 * If it's open, it surely must exist.
-	 */ 
+	 * Exit quickly in WAL replay mode if we've already opened the file. If
+	 * it's open, it surely must exist.
+	 */
 	if (isRedo && reln->md_fd[forknum] != NULL)
 		return;
 
@@ -334,7 +334,7 @@ smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
  * Shared subroutine that actually does the unlink ...
  */
 static void
-smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum, 
+smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
 					 int which, bool isTemp, bool isRedo)
 {
 	/*
@@ -370,7 +370,7 @@ smgr_internal_unlink(RelFileNode rnode, ForkNumber forknum,
  *		causes intervening file space to become filled with zeroes.
  */
 void
-smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   char *buffer, bool isTemp)
 {
 	(*(smgrsw[reln->smgr_which].smgr_extend)) (reln, forknum, blocknum,
@@ -395,7 +395,7 @@ smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum)
  *		return pages in the format that POSTGRES expects.
  */
 void
-smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 char *buffer)
 {
 	(*(smgrsw[reln->smgr_which].smgr_read)) (reln, forknum, blocknum, buffer);
@@ -417,7 +417,7 @@ smgrread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *		made to fsync the write before checkpointing.
  */
 void
-smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, 
+smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		  char *buffer, bool isTemp)
 {
 	(*(smgrsw[reln->smgr_which].smgr_write)) (reln, forknum, blocknum,
@@ -527,4 +527,3 @@ smgrpostckpt(void)
 			(*(smgrsw[i].smgr_post_ckpt)) ();
 	}
 }
-

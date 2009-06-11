@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/port/ultrix4.h,v 1.12 2008/05/17 01:28:24 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/include/port/ultrix4.h,v 1.13 2009/06/11 14:49:11 momjian Exp $
  */
 #define NOFIXADE
 #define NEED_STRDUP

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.24 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.25 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef struct RecordCompareData
 	int32		record1_typmod;
 	Oid			record2_type;
 	int32		record2_typmod;
-	ColumnCompareData columns[1];	/* VARIABLE LENGTH ARRAY */
+	ColumnCompareData columns[1];		/* VARIABLE LENGTH ARRAY */
 } RecordCompareData;
 
 
@@ -822,7 +822,7 @@ record_cmp(FunctionCallInfo fcinfo)
 	{
 		fcinfo->flinfo->fn_extra =
 			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-							   sizeof(RecordCompareData) - sizeof(ColumnCompareData)
+						sizeof(RecordCompareData) - sizeof(ColumnCompareData)
 							   + ncols * sizeof(ColumnCompareData));
 		my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 		my_extra->ncolumns = ncols;
@@ -854,8 +854,8 @@ record_cmp(FunctionCallInfo fcinfo)
 
 	/*
 	 * Scan corresponding columns, allowing for dropped columns in different
-	 * places in the two rows.  i1 and i2 are physical column indexes,
-	 * j is the logical column index.
+	 * places in the two rows.	i1 and i2 are physical column indexes, j is
+	 * the logical column index.
 	 */
 	i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
@@ -890,7 +890,7 @@ record_cmp(FunctionCallInfo fcinfo)
 					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
 							format_type_be(tupdesc1->attrs[i1]->atttypid),
 							format_type_be(tupdesc2->attrs[i2]->atttypid),
-							j+1)));
+							j + 1)));
 
 		/*
 		 * Lookup the comparison function if not done already
@@ -904,8 +904,8 @@ record_cmp(FunctionCallInfo fcinfo)
 			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not identify a comparison function for type %s",
-								format_type_be(typentry->type_id))));
+				errmsg("could not identify a comparison function for type %s",
+					   format_type_be(typentry->type_id))));
 			my_extra->columns[j].typentry = typentry;
 		}
 
@@ -957,8 +957,8 @@ record_cmp(FunctionCallInfo fcinfo)
 
 	/*
 	 * If we didn't break out of the loop early, check for column count
-	 * mismatch.  (We do not report such mismatch if we found unequal
-	 * column values; is that a feature or a bug?)
+	 * mismatch.  (We do not report such mismatch if we found unequal column
+	 * values; is that a feature or a bug?)
 	 */
 	if (result == 0)
 	{
@@ -1048,7 +1048,7 @@ record_eq(PG_FUNCTION_ARGS)
 	{
 		fcinfo->flinfo->fn_extra =
 			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-							   sizeof(RecordCompareData) - sizeof(ColumnCompareData)
+						sizeof(RecordCompareData) - sizeof(ColumnCompareData)
 							   + ncols * sizeof(ColumnCompareData));
 		my_extra = (RecordCompareData *) fcinfo->flinfo->fn_extra;
 		my_extra->ncolumns = ncols;
@@ -1080,8 +1080,8 @@ record_eq(PG_FUNCTION_ARGS)
 
 	/*
 	 * Scan corresponding columns, allowing for dropped columns in different
-	 * places in the two rows.  i1 and i2 are physical column indexes,
-	 * j is the logical column index.
+	 * places in the two rows.	i1 and i2 are physical column indexes, j is
+	 * the logical column index.
 	 */
 	i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
@@ -1116,7 +1116,7 @@ record_eq(PG_FUNCTION_ARGS)
 					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
 							format_type_be(tupdesc1->attrs[i1]->atttypid),
 							format_type_be(tupdesc2->attrs[i2]->atttypid),
-							j+1)));
+							j + 1)));
 
 		/*
 		 * Lookup the equality function if not done already
@@ -1130,8 +1130,8 @@ record_eq(PG_FUNCTION_ARGS)
 			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("could not identify an equality operator for type %s",
-								format_type_be(typentry->type_id))));
+				errmsg("could not identify an equality operator for type %s",
+					   format_type_be(typentry->type_id))));
 			my_extra->columns[j].typentry = typentry;
 		}
 
@@ -1168,8 +1168,8 @@ record_eq(PG_FUNCTION_ARGS)
 
 	/*
 	 * If we didn't break out of the loop early, check for column count
-	 * mismatch.  (We do not report such mismatch if we found unequal
-	 * column values; is that a feature or a bug?)
+	 * mismatch.  (We do not report such mismatch if we found unequal column
+	 * values; is that a feature or a bug?)
 	 */
 	if (result)
 	{

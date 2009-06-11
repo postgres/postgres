@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.10 2008/05/04 16:42:41 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.11 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -79,7 +79,7 @@ PG_FUNCTION_INFO_V1(pg_dearmor);
  * Mix a block of data into RNG.
  */
 static void
-add_block_entropy(PX_MD * md, text *data)
+add_block_entropy(PX_MD *md, text *data)
 {
 	uint8		sha1[20];
 
@@ -215,7 +215,7 @@ fill_expect(struct debug_expect * ex, int text_mode)
 	} while (0)
 
 static void
-check_expect(PGP_Context * ctx, struct debug_expect * ex)
+check_expect(PGP_Context *ctx, struct debug_expect * ex)
 {
 	EX_CHECK(cipher_algo);
 	EX_CHECK(s2k_mode);
@@ -235,7 +235,7 @@ show_debug(const char *msg)
 }
 
 static int
-set_arg(PGP_Context * ctx, char *key, char *val,
+set_arg(PGP_Context *ctx, char *key, char *val,
 		struct debug_expect * ex)
 {
 	int			res = 0;
@@ -362,7 +362,7 @@ downcase_convert(const uint8 *s, int len)
 }
 
 static int
-parse_args(PGP_Context * ctx, uint8 *args, int arg_len,
+parse_args(PGP_Context *ctx, uint8 *args, int arg_len,
 		   struct debug_expect * ex)
 {
 	char	   *str = downcase_convert(args, arg_len);
@@ -407,7 +407,7 @@ create_mbuf_from_vardata(text *data)
 }
 
 static void
-init_work(PGP_Context ** ctx_p, int is_text,
+init_work(PGP_Context **ctx_p, int is_text,
 		  text *args, struct debug_expect * ex)
 {
 	int			err = pgp_init(ctx_p);

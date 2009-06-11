@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.149 2009/06/06 03:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.150 2009/06/11 14:49:14 momjian Exp $
  *
  **********************************************************************/
 
@@ -199,7 +199,7 @@ _PG_init(void)
 	pg_bindtextdomain(TEXTDOMAIN);
 
 	DefineCustomBoolVariable("plperl.use_strict",
-	  gettext_noop("If true, trusted and untrusted Perl code will be compiled in strict mode."),
+							 gettext_noop("If true, trusted and untrusted Perl code will be compiled in strict mode."),
 							 NULL,
 							 &plperl_use_strict,
 							 false,
@@ -273,7 +273,7 @@ _PG_init(void)
 #define SAFE_MODULE \
 	"require Safe; $Safe::VERSION"
 
-/* 
+/*
  * The temporary enabling of the caller opcode here is to work around a
  * bug in perl 5.10, which unkindly changed the way its Safe.pm works, without
  * notice. It is quite safe, as caller is informational only, and in any case
@@ -398,7 +398,7 @@ plperl_init_interp(void)
 	static char *embedding[3] = {
 		"", "-e", PERLBOOT
 	};
-	int nargs = 3;
+	int			nargs = 3;
 
 #ifdef WIN32
 
@@ -455,7 +455,7 @@ plperl_init_interp(void)
 	/* only call this the first time through, as per perlembed man page */
 	if (interp_state == INTERP_NONE)
 	{
-		char *dummy_env[1] = { NULL }; 
+		char	   *dummy_env[1] = {NULL};
 
 		PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
 	}
@@ -548,17 +548,16 @@ plperl_safe_init(void)
 		eval_pv(SAFE_OK, FALSE);
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
-			/* 
-			 * Fill in just enough information to set up this perl
-			 * function in the safe container and call it.
-			 * For some reason not entirely clear, it prevents errors that
-			 * can arise from the regex code later trying to load
-			 * utf8 modules.
+			/*
+			 * Fill in just enough information to set up this perl function in
+			 * the safe container and call it. For some reason not entirely
+			 * clear, it prevents errors that can arise from the regex code
+			 * later trying to load utf8 modules.
 			 */
-			plperl_proc_desc desc;			
+			plperl_proc_desc desc;
 			FunctionCallInfoData fcinfo;
-			SV *ret;
-			SV *func;
+			SV		   *ret;
+			SV		   *func;
 
 			/* make sure we don't call ourselves recursively */
 			plperl_safe_init_done = true;
@@ -576,7 +575,7 @@ plperl_safe_init(void)
 
 			fcinfo.arg[0] = CStringGetTextDatum("a");
 			fcinfo.argnull[0] = false;
-			
+
 			/* and make the call */
 			ret = plperl_call_perl_func(&desc, &fcinfo);
 		}
@@ -1457,7 +1456,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					   errmsg("ignoring modified row in DELETE trigger")));
+						 errmsg("ignoring modified row in DELETE trigger")));
 				trv = NULL;
 			}
 		}
@@ -1465,8 +1464,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					 errmsg("result of PL/Perl trigger function must be undef, "
-							"\"SKIP\", or \"MODIFY\"")));
+				  errmsg("result of PL/Perl trigger function must be undef, "
+						 "\"SKIP\", or \"MODIFY\"")));
 			trv = NULL;
 		}
 		retval = PointerGetDatum(trv);
@@ -1979,7 +1978,7 @@ plperl_return_next(SV *sv)
 
 	if (prodesc->fn_retistuple)
 	{
-		HeapTuple tuple;
+		HeapTuple	tuple;
 
 		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
 										  current_call_data->attinmeta);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.52 2009/01/01 17:23:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.53 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,8 +87,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 * temporarily set the current user so that the object(s) will be created
 	 * with the correct ownership.
 	 *
-	 * (The setting will be restored at the end of this routine, or in case
-	 * of error, transaction abort will clean things up.)
+	 * (The setting will be restored at the end of this routine, or in case of
+	 * error, transaction abort will clean things up.)
 	 */
 	if (saved_uid != owner_uid)
 		SetUserIdAndContext(owner_uid, true);
@@ -155,12 +155,12 @@ void
 RemoveSchemas(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell		*cell;
+	ListCell   *cell;
 
 	/*
 	 * First we identify all the schemas, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the schemas depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the schemas depends on another.
 	 */
 	objects = new_object_addresses();
 

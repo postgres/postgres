@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.17 2009/05/21 20:09:36 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.18 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,9 +85,9 @@ compareentry(const void *va, const void *vb, void *arg)
 	const WordEntryIN *b = (const WordEntryIN *) vb;
 	char	   *BufferStr = (char *) arg;
 
-	return tsCompareString( &BufferStr[a->entry.pos], a->entry.len,
-							&BufferStr[b->entry.pos], b->entry.len,
-							false );
+	return tsCompareString(&BufferStr[a->entry.pos], a->entry.len,
+						   &BufferStr[b->entry.pos], b->entry.len,
+						   false);
 }
 
 /*
@@ -219,7 +219,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 	 errmsg("string is too long for tsvector (%ld bytes, max %ld bytes)",
+					 errmsg("string is too long for tsvector (%ld bytes, max %ld bytes)",
 							(long) (cur - tmpbuf), (long) MAXSTRPOS)));
 
 		/*
@@ -544,8 +544,8 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	SET_VARSIZE(vec, hdrlen + datalen);
 
 	if (needSort)
-		qsort_arg((void *) ARRPTR(vec), vec->size, sizeof(WordEntry), 	
-					compareentry, (void*)STRPTR(vec));
+		qsort_arg((void *) ARRPTR(vec), vec->size, sizeof(WordEntry),
+				  compareentry, (void *) STRPTR(vec));
 
 	PG_RETURN_TSVECTOR(vec);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.141 2009/03/22 18:06:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.142 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,13 +580,14 @@ pg_SSPI_continue(PGconn *conn)
 		}
 
 		/*
-		 * If the negotiation is complete, there may be zero bytes to send. The server is
-		 * at this point not expecting any more data, so don't send it.
+		 * If the negotiation is complete, there may be zero bytes to send.
+		 * The server is at this point not expecting any more data, so don't
+		 * send it.
 		 */
 		if (outbuf.pBuffers[0].cbBuffer > 0)
 		{
 			if (pqPacketSend(conn, 'p',
-					   outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
+				   outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
 			{
 				FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
 				return STATUS_ERROR;
@@ -914,7 +915,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 
 		case AUTH_REQ_CRYPT:
 			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("Crypt authentication not supported\n"));
+					  libpq_gettext("Crypt authentication not supported\n"));
 			return STATUS_ERROR;
 
 		case AUTH_REQ_MD5:
@@ -971,12 +972,11 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 #endif
 
 	/*
-	 * Some users are using configure
-	 * --enable-thread-safety-force, so we might as well do the locking within
-	 * our library to protect pqGetpwuid(). In fact, application developers
-	 * can use getpwuid() in their application if they use the locking call we
-	 * provide, or install their own locking function using
-	 * PQregisterThreadLock().
+	 * Some users are using configure --enable-thread-safety-force, so we
+	 * might as well do the locking within our library to protect
+	 * pqGetpwuid(). In fact, application developers can use getpwuid() in
+	 * their application if they use the locking call we provide, or install
+	 * their own locking function using PQregisterThreadLock().
 	 */
 	pglock_thread();
 

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/examples/testlibpq2.c,v 1.14 2008/05/17 01:28:26 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/test/examples/testlibpq2.c,v 1.15 2009/06/11 14:49:15 momjian Exp $
  *
  *
  * testlibpq2.c
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 			break;				/* shouldn't happen */
 
 		FD_ZERO(&input_mask);
-		FD_SET(sock, &input_mask);
+		FD_SET		(sock, &input_mask);
 
 		if (select(sock + 1, &input_mask, NULL, NULL, NULL) < 0)
 		{

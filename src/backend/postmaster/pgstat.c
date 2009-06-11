@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.188 2009/06/06 22:13:51 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.189 2009/06/11 14:49:01 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -217,6 +217,7 @@ static PgStat_GlobalStats globalStats;
 
 /* Last time the collector successfully wrote the stats file */
 static TimestampTz last_statwrite;
+
 /* Latest statistics request time from backends */
 static TimestampTz last_statrequest;
 
@@ -425,7 +426,8 @@ retry1:
 		for (;;)				/* need a loop to handle EINTR */
 		{
 			FD_ZERO(&rset);
-			FD_SET(pgStatSock, &rset);
+			FD_SET		(pgStatSock, &rset);
+
 			tv.tv_sec = 0;
 			tv.tv_usec = 500000;
 			sel_res = select(pgStatSock + 1, &rset, NULL, NULL, &tv);
@@ -1213,14 +1215,14 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 		return;
 
 	/*
-	 * Unlike VACUUM, ANALYZE might be running inside a transaction that
-	 * has already inserted and/or deleted rows in the target table.
-	 * ANALYZE will have counted such rows as live or dead respectively.
-	 * Because we will report our counts of such rows at transaction end,
-	 * we should subtract off these counts from what we send to the collector
-	 * now, else they'll be double-counted after commit.  (This approach also
-	 * ensures that the collector ends up with the right numbers if we abort
-	 * instead of committing.)
+	 * Unlike VACUUM, ANALYZE might be running inside a transaction that has
+	 * already inserted and/or deleted rows in the target table. ANALYZE will
+	 * have counted such rows as live or dead respectively. Because we will
+	 * report our counts of such rows at transaction end, we should subtract
+	 * off these counts from what we send to the collector now, else they'll
+	 * be double-counted after commit.	(This approach also ensures that the
+	 * collector ends up with the right numbers if we abort instead of
+	 * committing.)
 	 */
 	if (rel->pgstat_info != NULL)
 	{
@@ -1241,7 +1243,7 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
 	msg.m_databaseid = rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = RelationGetRelid(rel);
-	msg.m_autovacuum = IsAutoVacuumWorkerProcess();	/* is this autovacuum? */
+	msg.m_autovacuum = IsAutoVacuumWorkerProcess();		/* is this autovacuum? */
 	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
@@ -1294,7 +1296,7 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 						   PgStat_FunctionCallUsage *fcu)
 {
 	PgStat_BackendFunctionEntry *htabent;
-	bool 		found;
+	bool		found;
 
 	if (pgstat_track_functions <= fcinfo->flinfo->fn_stats)
 	{
@@ -1374,8 +1376,8 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 	 * Compute the new total f_time as the total elapsed time added to the
 	 * pre-call value of f_time.  This is necessary to avoid double-counting
 	 * any time taken by recursive calls of myself.  (We do not need any
-	 * similar kluge for self time, since that already excludes any
-	 * recursive calls.)
+	 * similar kluge for self time, since that already excludes any recursive
+	 * calls.)
 	 */
 	INSTR_TIME_ADD(f_total, fcu->save_f_time);
 
@@ -2068,7 +2070,7 @@ pgstat_fetch_global(void)
 
 static PgBackendStatus *BackendStatusArray = NULL;
 static PgBackendStatus *MyBEEntry = NULL;
-static char			   *BackendActivityBuffer = NULL;
+static char *BackendActivityBuffer = NULL;
 
 
 /*
@@ -2111,7 +2113,7 @@ CreateSharedBackendStatus(void)
 
 	/* Create or attach to the shared activity buffer */
 	size = mul_size(pgstat_track_activity_query_size, MaxBackends);
-	BackendActivityBuffer = (char*)
+	BackendActivityBuffer = (char *)
 		ShmemInitStruct("Backend Activity Buffer", size, &found);
 
 	if (!found)
@@ -2120,7 +2122,8 @@ CreateSharedBackendStatus(void)
 
 		/* Initialize st_activity pointers. */
 		buffer = BackendActivityBuffer;
-		for (i = 0; i < MaxBackends; i++) {
+		for (i = 0; i < MaxBackends; i++)
+		{
 			BackendStatusArray[i].st_activity = buffer;
 			buffer += pgstat_track_activity_query_size;
 		}
@@ -2350,7 +2353,7 @@ pgstat_read_current_status(void)
 	volatile PgBackendStatus *beentry;
 	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
-	char			*localactivity;
+	char	   *localactivity;
 	int			i;
 
 	Assert(!pgStatRunningInCollector);
@@ -2386,6 +2389,7 @@ pgstat_read_current_status(void)
 			if (localentry->st_procpid > 0)
 			{
 				memcpy(localentry, (char *) beentry, sizeof(PgBackendStatus));
+
 				/*
 				 * strcpy is safe even if the string is modified concurrently,
 				 * because there's always a \0 at the end of the buffer.
@@ -2421,12 +2425,12 @@ pgstat_read_current_status(void)
  * pgstat_get_backend_current_activity() -
  *
  *	Return a string representing the current activity of the backend with
- *	the specified PID.  This looks directly at the BackendStatusArray,
+ *	the specified PID.	This looks directly at the BackendStatusArray,
  *	and so will provide current information regardless of the age of our
  *	transaction's snapshot of the status array.
  *
  *	It is the caller's responsibility to invoke this only for backends whose
- *	state is expected to remain stable while the result is in use.  The
+ *	state is expected to remain stable while the result is in use.	The
  *	only current use is in deadlock reporting, where we can expect that
  *	the target backend is blocked on a lock.  (There are corner cases
  *	where the target's wait could get aborted while we are looking at it,
@@ -2452,11 +2456,11 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 		 * must follow the protocol of retrying if st_changecount changes
 		 * while we examine the entry, or if it's odd.  (This might be
 		 * unnecessary, since fetching or storing an int is almost certainly
-		 * atomic, but let's play it safe.)  We use a volatile pointer here
-		 * to ensure the compiler doesn't try to get cute.
+		 * atomic, but let's play it safe.)  We use a volatile pointer here to
+		 * ensure the compiler doesn't try to get cute.
 		 */
 		volatile PgBackendStatus *vbeentry = beentry;
-		bool	found;
+		bool		found;
 
 		for (;;)
 		{
@@ -2664,7 +2668,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 *
 	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
 	 * after every message; instead, do it only when select()/poll() is
-	 * interrupted by timeout.  In essence, we'll stay alive as long as
+	 * interrupted by timeout.	In essence, we'll stay alive as long as
 	 * backends keep sending us stuff often, even if the postmaster is gone.
 	 */
 	for (;;)
@@ -2722,7 +2726,7 @@ PgstatCollectorMain(int argc, char *argv[])
 		got_data = (input_fd.revents != 0);
 #else							/* !HAVE_POLL */
 
-		FD_SET(pgStatSock, &rfds);
+		FD_SET		(pgStatSock, &rfds);
 
 		/*
 		 * timeout struct is modified by select() on some operating systems,
@@ -2821,9 +2825,9 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_bgwriter((PgStat_MsgBgWriter *) &msg, len);
 					break;
 
- 				case PGSTAT_MTYPE_FUNCSTAT:
- 					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
- 					break;
+				case PGSTAT_MTYPE_FUNCSTAT:
+					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
+					break;
 
 				case PGSTAT_MTYPE_FUNCPURGE:
 					pgstat_recv_funcpurge((PgStat_MsgFuncpurge *) &msg, len);
@@ -2949,8 +2953,8 @@ pgstat_write_statsfile(bool permanent)
 	PgStat_StatFuncEntry *funcentry;
 	FILE	   *fpout;
 	int32		format_id;
-	const char *tmpfile = permanent?PGSTAT_STAT_PERMANENT_TMPFILE:pgstat_stat_tmpname;
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+	const char *tmpfile = permanent ? PGSTAT_STAT_PERMANENT_TMPFILE : pgstat_stat_tmpname;
+	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
 
 	/*
 	 * Open the statistics temp file to write out the current values.
@@ -2989,8 +2993,8 @@ pgstat_write_statsfile(bool permanent)
 	{
 		/*
 		 * Write out the DB entry including the number of live backends. We
-		 * don't write the tables or functions pointers, since they're of
-		 * no use to any other process.
+		 * don't write the tables or functions pointers, since they're of no
+		 * use to any other process.
 		 */
 		fputc('D', fpout);
 		fwrite(dbentry, offsetof(PgStat_StatDBEntry, tables), 1, fpout);
@@ -3098,7 +3102,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
 
 	/*
 	 * The tables will live in pgStatLocalContext.
@@ -3220,6 +3224,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 												 PGSTAT_FUNCTION_HASH_SIZE,
 												 &hash_ctl,
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+
 				/*
 				 * Arrange that following records add entries to this
 				 * database's hash tables.
@@ -3287,7 +3292,7 @@ pgstat_read_statsfile(Oid onlydb, bool permanent)
 					break;
 
 				funcentry = (PgStat_StatFuncEntry *) hash_search(funchash,
-													(void *) &funcbuf.functionid,
+												(void *) &funcbuf.functionid,
 														 HASH_ENTER, &found);
 
 				if (found)
@@ -3335,7 +3340,7 @@ pgstat_read_statsfile_timestamp(bool permanent, TimestampTz *ts)
 	PgStat_GlobalStats myGlobalStats;
 	FILE	   *fpin;
 	int32		format_id;
-	const char *statfile = permanent?PGSTAT_STAT_PERMANENT_FILENAME:pgstat_stat_filename;
+	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
 
 	/*
 	 * Try to open the status file.
@@ -3386,14 +3391,14 @@ backend_read_statsfile(void)
 
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
-	 * before now.  This indirectly ensures that the collector needn't write
+	 * before now.	This indirectly ensures that the collector needn't write
 	 * the file more often than PGSTAT_STAT_INTERVAL.  In an autovacuum
 	 * worker, however, we want a lower delay to avoid using stale data, so we
 	 * use PGSTAT_RETRY_DELAY (since the number of worker is low, this
 	 * shouldn't be a problem).
 	 *
 	 * Note that we don't recompute min_ts after sleeping; so we might end up
-	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
+	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.	In practice
 	 * that shouldn't happen, though, as long as the sleep time is less than
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
@@ -3407,7 +3412,8 @@ backend_read_statsfile(void)
 
 	/*
 	 * Loop until fresh enough stats file is available or we ran out of time.
-	 * The stats inquiry message is sent repeatedly in case collector drops it.
+	 * The stats inquiry message is sent repeatedly in case collector drops
+	 * it.
 	 */
 	for (count = 0; count < PGSTAT_POLL_LOOP_COUNT; count++)
 	{
@@ -3871,8 +3877,8 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++, funcmsg++)
 	{
 		funcentry = (PgStat_StatFuncEntry *) hash_search(dbentry->functions,
-												  (void *) &(funcmsg->f_id),
-													   HASH_ENTER, &found);
+												   (void *) &(funcmsg->f_id),
+														 HASH_ENTER, &found);
 
 		if (!found)
 		{

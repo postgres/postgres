@@ -1,7 +1,7 @@
 /*
  * txtquery operations with ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_op.c,v 1.9 2008/06/30 18:30:48 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_op.c,v 1.10 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -16,7 +16,7 @@ PG_FUNCTION_INFO_V1(ltxtq_rexec);
  * check for boolean condition
  */
 bool
-ltree_execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM * val))
+ltree_execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *val))
 {
 	if (curitem->type == VAL)
 		return (*chkcond) (checkval, curitem);
@@ -50,7 +50,7 @@ typedef struct
 } CHKVAL;
 
 static bool
-checkcondition_str(void *checkval, ITEM * val)
+checkcondition_str(void *checkval, ITEM *val)
 {
 	ltree_level *level = LTREE_FIRST(((CHKVAL *) checkval)->node);
 	int			tlen = ((CHKVAL *) checkval)->node->numlevel;

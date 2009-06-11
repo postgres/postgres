@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.38 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.39 2009/06/11 14:49:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -240,7 +240,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 /*
  * A "most common elements" slot is similar to a "most common values" slot,
  * except that it stores the most common non-null *elements* of the column
- * values.  This is useful when the column datatype is an array or some other
+ * values.	This is useful when the column datatype is an array or some other
  * type with identifiable elements (for instance, tsvector).  staop contains
  * the equality operator appropriate to the element type.  stavalues contains
  * the most common element values, and stanumbers their frequencies.  Unlike

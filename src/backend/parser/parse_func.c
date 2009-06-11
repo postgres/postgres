@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.215 2009/06/04 18:33:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.216 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,10 +85,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (list_length(fargs) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg_plural("cannot pass more than %d argument to a function",
-							   "cannot pass more than %d arguments to a function",
-							   FUNC_MAX_ARGS,
-							   FUNC_MAX_ARGS),
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS),
 				 parser_errposition(pstate, location)));
 
 	/*
@@ -198,7 +198,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("OVER specified, but %s is not a window function nor an aggregate function",
-					 		NameListToString(funcname)),
+							NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 	}
 	else if (!(fdresult == FUNCDETAIL_AGGREGATE ||
@@ -245,22 +245,22 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * If there are default arguments, we have to include their types in
 	 * actual_arg_types for the purpose of checking generic type consistency.
 	 * However, we do NOT put them into the generated parse node, because
-	 * their actual values might change before the query gets run.  The
+	 * their actual values might change before the query gets run.	The
 	 * planner has to insert the up-to-date values at plan time.
 	 */
 	nargsplusdefs = nargs;
 	foreach(l, argdefaults)
 	{
-		Node	*expr = (Node *) lfirst(l);
+		Node	   *expr = (Node *) lfirst(l);
 
 		/* probably shouldn't happen ... */
 		if (nargsplusdefs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg_plural("cannot pass more than %d argument to a function",
-								   "cannot pass more than %d arguments to a function",
-								   FUNC_MAX_ARGS,
-								   FUNC_MAX_ARGS),
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS),
 					 parser_errposition(pstate, location)));
 
 		actual_arg_types[nargsplusdefs++] = exprType(expr);
@@ -286,9 +286,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 */
 	if (nvargs > 0 && declared_arg_types[nargs - 1] != ANYOID)
 	{
-		ArrayExpr *newa = makeNode(ArrayExpr);
-		int 	non_var_args = nargs - nvargs;
-		List	*vargs;
+		ArrayExpr  *newa = makeNode(ArrayExpr);
+		int			non_var_args = nargs - nvargs;
+		List	   *vargs;
 
 		Assert(non_var_args >= 0);
 		vargs = list_copy_tail(fargs, non_var_args);
@@ -303,7 +303,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("could not find array type for data type %s",
 							format_type_be(newa->element_typeid)),
-					 parser_errposition(pstate, exprLocation((Node *) vargs))));
+				  parser_errposition(pstate, exprLocation((Node *) vargs))));
 		newa->multidims = false;
 		newa->location = exprLocation((Node *) vargs);
 
@@ -386,7 +386,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_distinct)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("DISTINCT is not implemented for window functions"),
+				  errmsg("DISTINCT is not implemented for window functions"),
 					 parser_errposition(pstate, location)));
 
 		/*
@@ -528,7 +528,7 @@ func_select_candidate(int nargs,
 	int			nbestMatch,
 				nmatch;
 	Oid			input_base_typeids[FUNC_MAX_ARGS];
-	TYPCATEGORY	slot_category[FUNC_MAX_ARGS],
+	TYPCATEGORY slot_category[FUNC_MAX_ARGS],
 				current_category;
 	bool		current_is_preferred;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
@@ -538,10 +538,10 @@ func_select_candidate(int nargs,
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg_plural("cannot pass more than %d argument to a function",
-							   "cannot pass more than %d arguments to a function",
-							   FUNC_MAX_ARGS,
-							   FUNC_MAX_ARGS)));
+			 errmsg_plural("cannot pass more than %d argument to a function",
+						   "cannot pass more than %d arguments to a function",
+						   FUNC_MAX_ARGS,
+						   FUNC_MAX_ARGS)));
 
 	/*
 	 * If any input types are domains, reduce them to their base types. This
@@ -830,7 +830,7 @@ func_get_detail(List *funcname,
 	*nvargs = 0;
 	*true_typeids = NULL;
 	if (argdefaults)
-	  *argdefaults = NIL;
+		*argdefaults = NIL;
 
 	/* Get list of possible candidates from namespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs,
@@ -968,8 +968,8 @@ func_get_detail(List *funcname,
 
 		/*
 		 * If expanding variadics or defaults, the "best candidate" might
-		 * represent multiple equivalently good functions; treat this case
-		 * as ambiguous.
+		 * represent multiple equivalently good functions; treat this case as
+		 * ambiguous.
 		 */
 		if (!OidIsValid(best_candidate->oid))
 			return FUNCDETAIL_MULTIPLE;

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.324 2009/05/07 22:58:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.325 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,9 @@
 
 
 /* Hooks for plugins to get control in ExecutorStart/Run/End() */
-ExecutorStart_hook_type	ExecutorStart_hook = NULL;
-ExecutorRun_hook_type	ExecutorRun_hook = NULL;
-ExecutorEnd_hook_type	ExecutorEnd_hook = NULL;
+ExecutorStart_hook_type ExecutorStart_hook = NULL;
+ExecutorRun_hook_type ExecutorRun_hook = NULL;
+ExecutorEnd_hook_type ExecutorEnd_hook = NULL;
 
 typedef struct evalPlanQual
 {
@@ -552,17 +552,17 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 		}
 
 		/*
-		 * Basically the same for the mod columns, with either INSERT or UPDATE
-		 * privilege as specified by remainingPerms.
+		 * Basically the same for the mod columns, with either INSERT or
+		 * UPDATE privilege as specified by remainingPerms.
 		 */
 		remainingPerms &= ~ACL_SELECT;
 		if (remainingPerms != 0)
 		{
 			/*
-			 * When the query doesn't explicitly change any columns, allow
-			 * the query if we have permission on any column of the rel.  This
-			 * is to handle SELECT FOR UPDATE as well as possible corner cases
-			 * in INSERT and UPDATE.
+			 * When the query doesn't explicitly change any columns, allow the
+			 * query if we have permission on any column of the rel.  This is
+			 * to handle SELECT FOR UPDATE as well as possible corner cases in
+			 * INSERT and UPDATE.
 			 */
 			if (bms_is_empty(rte->modifiedCols))
 			{
@@ -843,9 +843,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
-	 * filter if there are any junk attrs in the tlist.  UPDATE and
-	 * DELETE always need a filter, since there's always a junk 'ctid'
-	 * attribute present --- no need to look first.
+	 * filter if there are any junk attrs in the tlist.  UPDATE and DELETE
+	 * always need a filter, since there's always a junk 'ctid' attribute
+	 * present --- no need to look first.
 	 *
 	 * This section of code is also a convenient place to verify that the
 	 * output of an INSERT or UPDATE matches the target table(s).
@@ -1194,7 +1194,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 						 errdetail("Table has type %s at ordinal position %d, but query expects %s.",
 								   format_type_be(attr->atttypid),
 								   attno,
-								   format_type_be(exprType((Node *) tle->expr)))));
+							 format_type_be(exprType((Node *) tle->expr)))));
 		}
 		else
 		{
@@ -1215,7 +1215,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 	if (attno != resultDesc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("table row type and query-specified row type do not match"),
+		  errmsg("table row type and query-specified row type do not match"),
 				 errdetail("Query has too few columns.")));
 }
 
@@ -1547,7 +1547,7 @@ lnext:	;
 					/* if child rel, must check whether it produced this row */
 					if (erm->rti != erm->prti)
 					{
-						Oid		tableoid;
+						Oid			tableoid;
 
 						datum = ExecGetJunkAttribute(slot,
 													 erm->toidAttNo,
@@ -1774,8 +1774,8 @@ ExecInsert(TupleTableSlot *slot,
 	 * rowtype.
 	 *
 	 * XXX if we ever wanted to allow users to assign their own OIDs to new
-	 * rows, this'd be the place to do it.  For the moment, we make a point
-	 * of doing this before calling triggers, so that a user-supplied trigger
+	 * rows, this'd be the place to do it.  For the moment, we make a point of
+	 * doing this before calling triggers, so that a user-supplied trigger
 	 * could hack the OID if desired.
 	 */
 	if (resultRelationDesc->rd_rel->relhasoids)
@@ -2847,7 +2847,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			intoRelationId;
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
-	static char	   *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	Assert(into);
 
@@ -2970,8 +2970,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	myState->rel = intoRelationDesc;
 
 	/*
-	 * We can skip WAL-logging the insertions, unless PITR is in use.  We
-	 * can skip the FSM in any case.
+	 * We can skip WAL-logging the insertions, unless PITR is in use.  We can
+	 * skip the FSM in any case.
 	 */
 	myState->hi_options = HEAP_INSERT_SKIP_FSM |
 		(XLogArchivingActive() ? 0 : HEAP_INSERT_SKIP_WAL);

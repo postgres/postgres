@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.29 2009/04/07 15:53:54 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.30 2009/06/11 14:48:51 momjian Exp $
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -90,8 +90,8 @@ soundex_code(char letter)
  */
 #define MAX_LEVENSHTEIN_STRLEN		255
 
-static int	levenshtein_internal(const char *s, const char *t,
-								 int ins_c, int del_c, int sub_c);
+static int levenshtein_internal(const char *s, const char *t,
+					 int ins_c, int del_c, int sub_c);
 
 
 /*
@@ -186,18 +186,20 @@ getcode(char c)
 
 /*
  * levenshtein_internal - Calculates Levenshtein distance metric
- *                        between supplied strings. Generally
- *                        (1, 1, 1) penalty costs suffices common
- *                        cases, but your mileage may vary.
+ *						  between supplied strings. Generally
+ *						  (1, 1, 1) penalty costs suffices common
+ *						  cases, but your mileage may vary.
  */
 static int
 levenshtein_internal(const char *s, const char *t,
 					 int ins_c, int del_c, int sub_c)
 {
-	int		 m, n;
-	int		*prev;
-	int		*curr;
-	int		 i, j;
+	int			m,
+				n;
+	int		   *prev;
+	int		   *curr;
+	int			i,
+				j;
 	const char *x;
 	const char *y;
 
@@ -205,9 +207,8 @@ levenshtein_internal(const char *s, const char *t,
 	n = strlen(t);
 
 	/*
-	 * If either m or n is 0, the answer is the other value. This makes
-	 * sense since it would take that many insertions to build a matching
-	 * string
+	 * If either m or n is 0, the answer is the other value. This makes sense
+	 * since it would take that many insertions to build a matching string
 	 */
 	if (!m)
 		return n;
@@ -230,10 +231,10 @@ levenshtein_internal(const char *s, const char *t,
 	++n;
 
 	/*
-	 * Instead of building an (m+1)x(n+1) array, we'll use two
-	 * different arrays of size m+1 for storing accumulated values.
-	 * At each step one represents the "previous" row and one is the
-	 * "current" row of the notional large array.
+	 * Instead of building an (m+1)x(n+1) array, we'll use two different
+	 * arrays of size m+1 for storing accumulated values. At each step one
+	 * represents the "previous" row and one is the "current" row of the
+	 * notional large array.
 	 */
 	prev = (int *) palloc(2 * m * sizeof(int));
 	curr = prev + m;
@@ -245,24 +246,24 @@ levenshtein_internal(const char *s, const char *t,
 	/* Loop through rows of the notional array */
 	for (y = t, j = 1; j < n; y++, j++)
 	{
-		int *temp;
+		int		   *temp;
 
 		/*
-		 * First cell must increment sequentially, as we're on the
-		 * j'th row of the (m+1)x(n+1) array.
+		 * First cell must increment sequentially, as we're on the j'th row of
+		 * the (m+1)x(n+1) array.
 		 */
 		curr[0] = j;
-		
+
 		for (x = s, i = 1; i < m; x++, i++)
 		{
-			int	ins;
-			int	del;
-			int	sub;
+			int			ins;
+			int			del;
+			int			sub;
 
 			/* Calculate costs for probable operations. */
-			ins = prev[i] + ins_c;						/* Insertion    */
-			del = curr[i-1] + del_c;					/* Deletion     */
-			sub = prev[i-1] + ((*x == *y) ? 0 : sub_c);	/* Substitution */
+			ins = prev[i] + ins_c;		/* Insertion	*/
+			del = curr[i - 1] + del_c;	/* Deletion		*/
+			sub = prev[i - 1] + ((*x == *y) ? 0 : sub_c);		/* Substitution */
 
 			/* Take the one with minimum cost. */
 			curr[i] = Min(ins, del);
@@ -276,10 +277,10 @@ levenshtein_internal(const char *s, const char *t,
 	}
 
 	/*
-	 * Because the final value was swapped from the previous row to
-	 * the current row, that's where we'll find it.
+	 * Because the final value was swapped from the previous row to the
+	 * current row, that's where we'll find it.
 	 */
-	return prev[m-1];
+	return prev[m - 1];
 }
 
 
@@ -287,11 +288,11 @@ PG_FUNCTION_INFO_V1(levenshtein_with_costs);
 Datum
 levenshtein_with_costs(PG_FUNCTION_ARGS)
 {
-	char	*src = TextDatumGetCString(PG_GETARG_DATUM(0));
-	char	*dst = TextDatumGetCString(PG_GETARG_DATUM(1));
-	int		 ins_c = PG_GETARG_INT32(2);
-	int		 del_c = PG_GETARG_INT32(3);
-	int		 sub_c = PG_GETARG_INT32(4);
+	char	   *src = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	   *dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+	int			ins_c = PG_GETARG_INT32(2);
+	int			del_c = PG_GETARG_INT32(3);
+	int			sub_c = PG_GETARG_INT32(4);
 
 	PG_RETURN_INT32(levenshtein_internal(src, dst, ins_c, del_c, sub_c));
 }
@@ -301,8 +302,8 @@ PG_FUNCTION_INFO_V1(levenshtein);
 Datum
 levenshtein(PG_FUNCTION_ARGS)
 {
-	char	*src = TextDatumGetCString(PG_GETARG_DATUM(0));
-	char	*dst = TextDatumGetCString(PG_GETARG_DATUM(1));
+	char	   *src = TextDatumGetCString(PG_GETARG_DATUM(0));
+	char	   *dst = TextDatumGetCString(PG_GETARG_DATUM(1));
 
 	PG_RETURN_INT32(levenshtein_internal(src, dst, 1, 1, 1));
 }
@@ -417,9 +418,9 @@ Lookahead(char *word, int how_far)
 
 
 static int
-_metaphone(char *word,				/* IN */
+_metaphone(char *word,			/* IN */
 		   int max_phonemes,
-		   char **phoned_word)		/* OUT */
+		   char **phoned_word)	/* OUT */
 {
 	int			w_idx = 0;		/* point in the phonization we're at. */
 	int			p_idx = 0;		/* end of the phoned phrase */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.39 2009/01/22 20:16:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.40 2009/06/11 14:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,7 @@ extern void recordSharedDependencyOn(ObjectAddress *depender,
 						 SharedDependencyType deptype);
 
 extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId,
-											 int32 objectSubId);
+								 int32 objectSubId);
 
 extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
 
@@ -235,7 +235,7 @@ extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
 					  int nnewmembers, Oid *newmembers);
 
 extern bool checkSharedDependencies(Oid classId, Oid objectId,
-									char **detail_msg, char **detail_log_msg);
+						char **detail_msg, char **detail_log_msg);
 
 extern void copyTemplateDependencies(Oid templateDbId, Oid newDbId);
 

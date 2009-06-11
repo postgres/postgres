@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.6 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.7 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ RS_isRegis(const char *str)
 		if (state == RS_IN_WAIT)
 		{
 			if (t_isalpha(c))
-				/* okay */ ;
+				 /* okay */ ;
 			else if (t_iseq(c, '['))
 				state = RS_IN_ONEOF;
 			else
@@ -56,7 +56,7 @@ RS_isRegis(const char *str)
 		else if (state == RS_IN_ONEOF_IN || state == RS_IN_NONEOF)
 		{
 			if (t_isalpha(c))
-				/* okay */ ;
+				 /* okay */ ;
 			else if (t_iseq(c, ']'))
 				state = RS_IN_WAIT;
 			else
@@ -115,7 +115,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 				ptr->type = RSF_ONEOF;
 				state = RS_IN_ONEOF;
 			}
-			else				/* shouldn't get here */
+			else	/* shouldn't get here */
 				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else if (state == RS_IN_ONEOF)
@@ -131,7 +131,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 				ptr->len = pg_mblen(c);
 				state = RS_IN_ONEOF_IN;
 			}
-			else				/* shouldn't get here */
+			else	/* shouldn't get here */
 				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else if (state == RS_IN_ONEOF_IN || state == RS_IN_NONEOF)
@@ -143,7 +143,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 			}
 			else if (t_iseq(c, ']'))
 				state = RS_IN_WAIT;
-			else				/* shouldn't get here */
+			else	/* shouldn't get here */
 				elog(ERROR, "invalid regis pattern: \"%s\"", str);
 		}
 		else
@@ -151,7 +151,7 @@ RS_compile(Regis *r, bool issuffix, const char *str)
 		c += pg_mblen(c);
 	}
 
-	if (state != RS_IN_WAIT)		/* shouldn't get here */
+	if (state != RS_IN_WAIT)	/* shouldn't get here */
 		elog(ERROR, "invalid regis pattern: \"%s\"", str);
 
 	ptr = r->node;

@@ -10,7 +10,7 @@
  *	must be replaced with recv/send.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/pipe.c,v 1.14 2009/01/01 17:24:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/pipe.c,v 1.15 2009/06/11 14:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ pgpipe(int handles[2])
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(0);
 	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+	if (bind(s, (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		ereport(LOG, (errmsg_internal("pgpipe failed to bind: %ui", WSAGetLastError())));
 		closesocket(s);
@@ -49,7 +49,7 @@ pgpipe(int handles[2])
 		closesocket(s);
 		return -1;
 	}
-	if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR)
+	if (getsockname(s, (SOCKADDR *) &serv_addr, &len) == SOCKET_ERROR)
 	{
 		ereport(LOG, (errmsg_internal("pgpipe failed to getsockname: %ui", WSAGetLastError())));
 		closesocket(s);
@@ -62,13 +62,13 @@ pgpipe(int handles[2])
 		return -1;
 	}
 
-	if (connect(handles[1], (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+	if (connect(handles[1], (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		ereport(LOG, (errmsg_internal("pgpipe failed to connect socket: %ui", WSAGetLastError())));
 		closesocket(s);
 		return -1;
 	}
-	if ((handles[0] = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET)
+	if ((handles[0] = accept(s, (SOCKADDR *) &serv_addr, &len)) == INVALID_SOCKET)
 	{
 		ereport(LOG, (errmsg_internal("pgpipe failed to accept socket: %ui", WSAGetLastError())));
 		closesocket(handles[1]);

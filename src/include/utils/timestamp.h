@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.79 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.80 2009/06/11 14:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,14 +47,12 @@ typedef int64 Timestamp;
 typedef int64 TimestampTz;
 typedef int64 TimeOffset;
 typedef int32 fsec_t;			/* fractional seconds (in microseconds) */
-
 #else
 
 typedef double Timestamp;
 typedef double TimestampTz;
 typedef double TimeOffset;
 typedef double fsec_t;			/* fractional seconds (in seconds) */
-
 #endif
 
 typedef struct
@@ -127,8 +125,7 @@ typedef struct
 
 #define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
 #define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
-
-#else  /* !HAVE_INT64_TIMESTAMP */
+#else							/* !HAVE_INT64_TIMESTAMP */
 
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
 #define DatumGetTimestampTz(X)	((TimestampTz) DatumGetFloat8(X))
@@ -153,7 +150,6 @@ typedef struct
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
 #endif
-
 #endif   /* HAVE_INT64_TIMESTAMP */
 
 
@@ -195,6 +191,7 @@ typedef struct
 
 /* Set at postmaster start */
 extern TimestampTz PgStartTime;
+
 /* Set at configuration reload */
 extern TimestampTz PgReloadTime;
 

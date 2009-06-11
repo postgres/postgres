@@ -6,7 +6,7 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.12 2008/02/16 21:16:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.13 2009/06/11 14:49:15 momjian Exp $
  */
 
 /*
@@ -85,7 +85,7 @@ extern const char *scheck(const char *string, const char *format);
 
 #ifndef TYPE_INTEGRAL
 #define TYPE_INTEGRAL(type) (((type) 0.5) != 0.5)
-#endif /* !defined TYPE_INTEGRAL */
+#endif   /* !defined TYPE_INTEGRAL */
 
 #ifndef INT_STRLEN_MAXIMUM
 /*
@@ -102,24 +102,24 @@ extern const char *scheck(const char *string, const char *format);
 #define _(msgid) (msgid)
 
 #ifndef YEARSPERREPEAT
-#define YEARSPERREPEAT          400     /* years before a Gregorian repeat */
-#endif /* !defined YEARSPERREPEAT */
+#define YEARSPERREPEAT			400		/* years before a Gregorian repeat */
+#endif   /* !defined YEARSPERREPEAT */
 
 /*
 ** The Gregorian year averages 365.2425 days, which is 31556952 seconds.
 */
 
 #ifndef AVGSECSPERYEAR
-#define AVGSECSPERYEAR          31556952L
-#endif /* !defined AVGSECSPERYEAR */
+#define AVGSECSPERYEAR			31556952L
+#endif   /* !defined AVGSECSPERYEAR */
 
 #ifndef SECSPERREPEAT
-#define SECSPERREPEAT           ((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
-#endif /* !defined SECSPERREPEAT */
+#define SECSPERREPEAT			((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
+#endif   /* !defined SECSPERREPEAT */
 
 #ifndef SECSPERREPEAT_BITS
-#define SECSPERREPEAT_BITS      34      /* ceil(log2(SECSPERREPEAT)) */
-#endif /* !defined SECSPERREPEAT_BITS */
+#define SECSPERREPEAT_BITS		34		/* ceil(log2(SECSPERREPEAT)) */
+#endif   /* !defined SECSPERREPEAT_BITS */
 
 /*
  * UNIX was a registered trademark of The Open Group in 2003.

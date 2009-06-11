@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.100 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.101 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 
 /* Returns true for JOIN_LEFT and JOIN_ANTI jointypes */
-#define HASHJOIN_IS_OUTER(hjstate)  ((hjstate)->hj_NullInnerTupleSlot != NULL)
+#define HASHJOIN_IS_OUTER(hjstate)	((hjstate)->hj_NullInnerTupleSlot != NULL)
 
 static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *outerNode,
 						  HashJoinState *hjstate,
@@ -210,8 +210,8 @@ ExecHashJoin(HashJoinState *node)
 
 			/*
 			 * Now we've got an outer tuple and the corresponding hash bucket,
-			 * but it might not belong to the current batch, or it might
-			 * match a skew bucket.
+			 * but it might not belong to the current batch, or it might match
+			 * a skew bucket.
 			 */
 			if (batchno != hashtable->curbatch &&
 				node->hj_CurSkewBucketNo == INVALID_SKEW_BUCKET_NO)
@@ -656,13 +656,13 @@ start_over:
 			BufFileClose(hashtable->outerBatchFile[curbatch]);
 		hashtable->outerBatchFile[curbatch] = NULL;
 	}
-	else						/* we just finished the first batch */
+	else	/* we just finished the first batch */
 	{
 		/*
-		 * Reset some of the skew optimization state variables, since we
-		 * no longer need to consider skew tuples after the first batch.
-		 * The memory context reset we are about to do will release the
-		 * skew hashtable itself.
+		 * Reset some of the skew optimization state variables, since we no
+		 * longer need to consider skew tuples after the first batch. The
+		 * memory context reset we are about to do will release the skew
+		 * hashtable itself.
 		 */
 		hashtable->skewEnabled = false;
 		hashtable->skewBucket = NULL;

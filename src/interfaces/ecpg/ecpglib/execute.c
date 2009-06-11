@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.84 2009/05/20 16:49:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.85 2009/06/11 14:49:13 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -128,9 +128,9 @@ next_insert(char *text, int pos, bool questionmarks)
 				int			i;
 
 				for (i = p + 1; isdigit((unsigned char) text[i]); i++)
-					/* empty loop body */ ;
+					 /* empty loop body */ ;
 				if (!isalpha((unsigned char) text[i]) &&
-					isascii((unsigned char) text[i]) && text[i] != '_')
+					isascii((unsigned char) text[i]) &&text[i] != '_')
 					/* not dollar delimited quote */
 					return p;
 			}
@@ -353,7 +353,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 	{
 		int			len = 0;
 
-		if (!PQfformat(results, act_field)) 
+		if (!PQfformat(results, act_field))
 		{
 			switch (var->type)
 			{
@@ -364,7 +364,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 						/* special mode for handling char**foo=0 */
 						for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 							len += strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-						len *= var->offset; /* should be 1, but YMNK */
+						len *= var->offset;		/* should be 1, but YMNK */
 						len += (ntuples + 1) * sizeof(char *);
 					}
 					else
@@ -759,7 +759,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 			case ECPGt_unsigned_char:
 				{
 					/* set slen to string length if type is char * */
-					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : (unsigned int)var->varcharsize;
+					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : (unsigned int) var->varcharsize;
 
 					if (!(newcopy = ecpg_alloc(slen + 1, lineno)))
 						return false;
@@ -1061,7 +1061,7 @@ free_params(const char **paramValues, int nParams, bool print, int lineno)
 static bool
 insert_tobeinserted(int position, int ph_len, struct statement * stmt, char *tobeinserted)
 {
-	char	*newcopy;
+	char	   *newcopy;
 
 	if (!(newcopy = (char *) ecpg_alloc(strlen(stmt->command)
 										+ strlen(tobeinserted)
@@ -1075,8 +1075,8 @@ insert_tobeinserted(int position, int ph_len, struct statement * stmt, char *tob
 	strcpy(newcopy + position - 1, tobeinserted);
 
 	/*
-	 * The strange thing in the second argument is the rest of the
-	 * string from the old string
+	 * The strange thing in the second argument is the rest of the string from
+	 * the old string
 	 */
 	strcat(newcopy,
 		   stmt->command
@@ -1113,7 +1113,7 @@ ecpg_execute(struct statement * stmt)
 	var = stmt->inlist;
 	while (var)
 	{
-		char *tobeinserted;
+		char	   *tobeinserted;
 		int			counter = 1;
 
 		tobeinserted = NULL;
@@ -1183,24 +1183,24 @@ ecpg_execute(struct statement * stmt)
 		if ((position = next_insert(stmt->command, position, stmt->questionmarks) + 1) == 0)
 		{
 			/*
-			 * We have an argument but we dont have the matched up
-			 * placeholder in the string
+			 * We have an argument but we dont have the matched up placeholder
+			 * in the string
 			 */
 			ecpg_raise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS,
-					ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
+					   ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
 					   NULL);
 			free_params(paramValues, nParams, false, stmt->lineno);
 			return false;
 		}
 
-		/* 
+		/*
 		 * if var->type=ECPGt_char_variable we have a dynamic cursor we have
 		 * to simulate a dynamic cursor because there is no backend
 		 * functionality for it
 		 */
 		if (var->type == ECPGt_char_variable)
 		{
-			int	ph_len = (stmt->command[position] == '?') ? strlen("?") : strlen("$1");
+			int			ph_len = (stmt->command[position] == '?') ? strlen("?") : strlen("$1");
 
 			if (!insert_tobeinserted(position, ph_len, stmt, tobeinserted))
 			{
@@ -1209,11 +1209,13 @@ ecpg_execute(struct statement * stmt)
 			}
 			tobeinserted = NULL;
 		}
+
 		/*
 		 * if the placeholder is '$0' we have to replace it on the client side
-		 * this is for places we want to support variables at that are not supported in the backend
+		 * this is for places we want to support variables at that are not
+		 * supported in the backend
 		 */
-		else if (stmt->command[position] == '0' ) 
+		else if (stmt->command[position] == '0')
 		{
 			if (!insert_tobeinserted(position, 2, stmt, tobeinserted))
 			{
@@ -1345,7 +1347,7 @@ ecpg_execute(struct statement * stmt)
 					desc->result = results;
 					clear_result = false;
 					ecpg_log("ecpg_execute on line %d: putting result (%d tuples) into descriptor %s\n",
-							stmt->lineno, PQntuples(results), (const char *) var->pointer);
+							 stmt->lineno, PQntuples(results), (const char *) var->pointer);
 				}
 				var = var->next;
 			}

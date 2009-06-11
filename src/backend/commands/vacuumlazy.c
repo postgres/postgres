@@ -29,7 +29,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.120 2009/06/06 22:13:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.121 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ typedef struct LVRelStats
 	bool		scanned_all;	/* have we scanned all pages (this far)? */
 	/* Overall statistics about rel */
 	BlockNumber rel_pages;
-	double		old_rel_tuples;	/* previous value of pg_class.reltuples */
+	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		rel_tuples;		/* counts only tuples on scanned pages */
 	BlockNumber pages_removed;
 	double		tuples_deleted;
@@ -175,14 +175,14 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
-	vacrelstats->scanned_all = true; /* will be cleared if we skip a page */
+	vacrelstats->scanned_all = true;	/* will be cleared if we skip a page */
 	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
 	vacrelstats->num_index_scans = 0;
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
 	vacrelstats->hasindex = (nindexes > 0);
- 
+
 	/* Do the vacuuming */
 	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all);
 
@@ -208,9 +208,9 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * Update statistics in pg_class.  But only if we didn't skip any pages;
 	 * the tuple count only includes tuples from the pages we've visited, and
 	 * we haven't frozen tuples in unvisited pages either.  The page count is
-	 * accurate in any case, but because we use the reltuples / relpages
-	 * ratio in the planner, it's better to not update relpages either if we
-	 * can't update reltuples.
+	 * accurate in any case, but because we use the reltuples / relpages ratio
+	 * in the planner, it's better to not update relpages either if we can't
+	 * update reltuples.
 	 */
 	if (vacrelstats->scanned_all)
 		vac_update_relstats(onerel,
@@ -279,7 +279,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	int			i;
 	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
-	BlockNumber	all_visible_streak;
+	BlockNumber all_visible_streak;
 
 	pg_rusage_init(&ru0);
 
@@ -318,8 +318,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		bool		all_visible;
 
 		/*
-		 * Skip pages that don't require vacuuming according to the
-		 * visibility map. But only if we've seen a streak of at least
+		 * Skip pages that don't require vacuuming according to the visibility
+		 * map. But only if we've seen a streak of at least
 		 * SKIP_PAGES_THRESHOLD pages marked as clean. Since we're reading
 		 * sequentially, the OS should be doing readahead for us and there's
 		 * no gain in skipping a page now and then. You need a longer run of
@@ -558,9 +558,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 							all_visible = false;
 							break;
 						}
+
 						/*
-						 * The inserter definitely committed. But is it
-						 * old enough that everyone sees it as committed?
+						 * The inserter definitely committed. But is it old
+						 * enough that everyone sees it as committed?
 						 */
 						xmin = HeapTupleHeaderGetXmin(tuple.t_data);
 						if (!TransactionIdPrecedes(xmin, OldestXmin))
@@ -922,8 +923,8 @@ lazy_cleanup_index(Relation indrel,
 		return;
 
 	/*
-	 * Now update statistics in pg_class, but only if the index says the
-	 * count is accurate.
+	 * Now update statistics in pg_class, but only if the index says the count
+	 * is accurate.
 	 */
 	if (!stats->estimated_count)
 		vac_update_relstats(indrel,

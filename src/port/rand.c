@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/port/rand.c,v 1.5 2008/05/17 01:28:25 adunstan Exp $ 
+ * $PostgreSQL: pgsql/src/port/rand.c,v 1.6 2009/06/11 14:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.31 2009/01/01 17:23:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.32 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,8 +427,8 @@ getOwnedSequences(Oid relid)
 {
 	List	   *result = NIL;
 	Relation	depRel;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	HeapTuple	tup;
 
 	depRel = heap_open(DependRelationId, AccessShareLock);
@@ -571,8 +571,8 @@ get_index_constraint(Oid indexId)
 		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
-		 * We assume any internal dependency on a constraint
-		 * must be what we are looking for.
+		 * We assume any internal dependency on a constraint must be what we
+		 * are looking for.
 		 */
 		if (deprec->refclassid == ConstraintRelationId &&
 			deprec->refobjsubid == 0 &&

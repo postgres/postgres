@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_macaddr.c,v 1.7 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_macaddr.c,v 1.8 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_num.h"
@@ -10,7 +10,7 @@ typedef struct
 {
 	macaddr		lower;
 	macaddr		upper;
-}	macKEY;
+} macKEY;
 
 /*
 ** OID ops
@@ -122,6 +122,7 @@ gbt_macad_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	macaddr    *query = (macaddr *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	macKEY	   *kkk = (macKEY *) DatumGetPointer(entry->key);
@@ -130,8 +131,8 @@ gbt_macad_consistent(PG_FUNCTION_ARGS)
 	/* All cases served by this function are exact */
 	*recheck = false;
 
-	key.lower = (GBT_NUMKEY *) & kkk->lower;
-	key.upper = (GBT_NUMKEY *) & kkk->upper;
+	key.lower = (GBT_NUMKEY *) &kkk->lower;
+	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
 	PG_RETURN_BOOL(
 				   gbt_num_consistent(&key, (void *) query, &strategy, GIST_LEAF(entry), &tinfo)

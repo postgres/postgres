@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.82 2009/01/23 12:43:32 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.83 2009/06/11 14:49:13 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -242,7 +242,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			switch (type->u.element->type)
 			{
 				case ECPGt_array:
-					mmerror(PARSE_ERROR, ET_ERROR, "nested arrays are not supported (except strings)");		/* array of array */
+					mmerror(PARSE_ERROR, ET_ERROR, "nested arrays are not supported (except strings)"); /* array of array */
 					break;
 				case ECPGt_struct:
 				case ECPGt_union:
@@ -327,9 +327,10 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
 	else
 	{
-		char *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
-		char *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
-		char *var_name, *ptr; 
+		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
+		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
+		char	   *var_name,
+				   *ptr;
 
 		switch (type)
 		{
@@ -354,7 +355,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				/* remove trailing [] is name is array element */
 				var_name = mm_strdup(name);
 				ptr = strchr(var_name, '[');
-				if (ptr) *ptr = '\0';
+				if (ptr)
+					*ptr = '\0';
 				if (lineno)
 					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, lineno);
 				else

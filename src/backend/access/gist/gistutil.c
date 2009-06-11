@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.33 2009/01/05 17:14:28 alvherre Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.34 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -43,7 +43,8 @@ gistfillbuffer(Page page, IndexTuple *itup, int len, OffsetNumber off)
 
 	for (i = 0; i < len; i++)
 	{
-		Size sz = IndexTupleSize(itup[i]);
+		Size		sz = IndexTupleSize(itup[i]);
+
 		l = PageAddItem(page, (Item) itup[i], sz, off, false, false);
 		if (l == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to GiST index page, item %d out of %d, size %d bytes",

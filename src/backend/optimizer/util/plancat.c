@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.157 2009/05/12 00:56:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.158 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,7 +525,7 @@ get_relation_constraints(PlannerInfo *root,
 		/* Add NOT NULL constraints in expression form, if requested */
 		if (include_notnull && constr->has_not_null)
 		{
-			int		natts = relation->rd_att->natts;
+			int			natts = relation->rd_att->natts;
 
 			for (i = 1; i <= natts; i++)
 			{
@@ -533,7 +533,7 @@ get_relation_constraints(PlannerInfo *root,
 
 				if (att->attnotnull && !att->attisdropped)
 				{
-					NullTest *ntest = makeNode(NullTest);
+					NullTest   *ntest = makeNode(NullTest);
 
 					ntest->arg = (Expr *) makeVar(varno,
 												  i,
@@ -604,7 +604,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 		return false;
 
 	/*
-	 * OK to fetch the constraint expressions.  Include "col IS NOT NULL"
+	 * OK to fetch the constraint expressions.	Include "col IS NOT NULL"
 	 * expressions for attnotnull columns, in case we can refute those.
 	 */
 	constraint_pred = get_relation_constraints(root, rte->relid, rel, true);
@@ -865,10 +865,10 @@ has_unique_index(RelOptInfo *rel, AttrNumber attno)
 		/*
 		 * Note: ignore partial indexes, since they don't allow us to conclude
 		 * that all attr values are distinct, *unless* they are marked predOK
-		 * which means we know the index's predicate is satisfied by the query.
-		 * We don't take any interest in expressional indexes either. Also, a
-		 * multicolumn unique index doesn't allow us to conclude that just the
-		 * specified attr is unique.
+		 * which means we know the index's predicate is satisfied by the
+		 * query. We don't take any interest in expressional indexes either.
+		 * Also, a multicolumn unique index doesn't allow us to conclude that
+		 * just the specified attr is unique.
 		 */
 		if (index->unique &&
 			index->ncolumns == 1 &&

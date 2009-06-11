@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.307 2009/05/07 22:58:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.308 2009/06/11 14:49:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,8 +148,8 @@ check_xact_readonly(Node *parsetree)
 
 	/*
 	 * Note: Commands that need to do more complicated checking are handled
-	 * elsewhere, in particular COPY and plannable statements do their
-	 * own checking.
+	 * elsewhere, in particular COPY and plannable statements do their own
+	 * checking.
 	 */
 
 	switch (nodeTag(parsetree))
@@ -252,7 +252,7 @@ ProcessUtility(Node *parsetree,
 			   DestReceiver *dest,
 			   char *completionTag)
 {
-	Assert(queryString != NULL);				/* required as of 8.4 */
+	Assert(queryString != NULL);	/* required as of 8.4 */
 
 	check_xact_readonly(parsetree);
 
@@ -423,8 +423,8 @@ ProcessUtility(Node *parsetree,
 
 					if (IsA(stmt, CreateStmt))
 					{
-						Datum	toast_options;
-						static char   *validnsps[] = HEAP_RELOPT_NAMESPACES;
+						Datum		toast_options;
+						static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 						/* Create the table itself */
 						relOid = DefineRelation((CreateStmt *) stmt,
@@ -438,7 +438,7 @@ ProcessUtility(Node *parsetree,
 
 						/* parse and validate reloptions for the toast table */
 						toast_options = transformRelOptions((Datum) 0,
-															((CreateStmt *)stmt)->options,
+											  ((CreateStmt *) stmt)->options,
 															"toast",
 															validnsps,
 															true, false);
@@ -1000,6 +1000,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_LockStmt:
+
 			/*
 			 * Since the lock would just get dropped immediately, LOCK TABLE
 			 * outside a transaction block is presumed to be user error.

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.104 2009/05/15 15:56:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.105 2009/06/11 14:49:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ static int	on_proc_exit_index,
  *		-cim 2/6/90
  *
  *		Unfortunately, we can't really guarantee that add-on code
- *		obeys the rule of not calling exit() directly.  So, while
+ *		obeys the rule of not calling exit() directly.	So, while
  *		this is the preferred way out of the system, we also register
  *		an atexit callback that will make sure cleanup happens.
  * ----------------------------------------------------------------
@@ -113,10 +113,10 @@ proc_exit(int code)
 		 *
 		 * Note that we do this here instead of in an on_proc_exit() callback
 		 * because we want to ensure that this code executes last - we don't
-		 * want to interfere with any other on_proc_exit() callback.  For
-		 * the same reason, we do not include it in proc_exit_prepare ...
-		 * so if you are exiting in the "wrong way" you won't drop your profile
-		 * in a nice place.
+		 * want to interfere with any other on_proc_exit() callback.  For the
+		 * same reason, we do not include it in proc_exit_prepare ... so if
+		 * you are exiting in the "wrong way" you won't drop your profile in a
+		 * nice place.
 		 */
 		char		gprofDirName[32];
 
@@ -229,8 +229,7 @@ atexit_callback(void)
 	/* ... too bad we don't know the real exit code ... */
 	proc_exit_prepare(-1);
 }
-
-#else  /* assume we have on_exit instead */
+#else							/* assume we have on_exit instead */
 
 static void
 atexit_callback(int exitstatus, void *arg)
@@ -238,8 +237,7 @@ atexit_callback(int exitstatus, void *arg)
 	/* Clean up everything that must be cleaned up */
 	proc_exit_prepare(exitstatus);
 }
-
-#endif /* HAVE_ATEXIT */
+#endif   /* HAVE_ATEXIT */
 
 /* ----------------------------------------------------------------
  *		on_proc_exit

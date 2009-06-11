@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.10 2009/04/02 17:57:05 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.11 2009/06/11 14:48:51 momjian Exp $
  */
 #include "postgres.h"
 
@@ -20,7 +20,7 @@ typedef struct
 	Pairs	   *pairs;
 	int			pcur;
 	int			plen;
-}	HSParser;
+} HSParser;
 
 #define RESIZEPRSBUF \
 do { \
@@ -41,7 +41,7 @@ do { \
 #define GV_WAITESCESCIN 4
 
 static bool
-get_val(HSParser * state, bool ignoreeq, bool *escaped)
+get_val(HSParser *state, bool ignoreeq, bool *escaped)
 {
 	int			st = GV_WAITVAL;
 
@@ -165,7 +165,7 @@ get_val(HSParser * state, bool ignoreeq, bool *escaped)
 
 
 static void
-parse_hstore(HSParser * state)
+parse_hstore(HSParser *state)
 {
 	int			st = WKEY;
 	bool		escaped = false;
@@ -287,7 +287,7 @@ comparePairs(const void *a, const void *b)
 }
 
 int
-uniquePairs(Pairs * a, int4 l, int4 *buflen)
+uniquePairs(Pairs *a, int4 l, int4 *buflen)
 {
 	Pairs	   *ptr,
 			   *res;
@@ -328,7 +328,7 @@ uniquePairs(Pairs * a, int4 l, int4 *buflen)
 }
 
 static void
-freeHSParse(HSParser * state)
+freeHSParse(HSParser *state)
 {
 	int			i;
 
@@ -447,7 +447,7 @@ hstore_out(PG_FUNCTION_ARGS)
 	HStore	   *in = PG_GETARG_HS(0);
 	int			buflen,
 				i,
-				nnulls=0;
+				nnulls = 0;
 	char	   *out,
 			   *ptr;
 	char	   *base = STRPTR(in);
@@ -465,11 +465,11 @@ hstore_out(PG_FUNCTION_ARGS)
 		if (entries[i].valisnull)
 			nnulls++;
 
-	buflen = (4 /* " */ + 2 /* => */ ) * ( in->size - nnulls ) +
-		( 2 /* " */ + 2 /* => */ + 4 /* NULL */ ) * nnulls  +
-		2 /* ,  */ * ( in->size - 1 ) +
-		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0)) + 
-		1 /* \0 */;
+	buflen = (4 /* " */ + 2 /* => */ ) * (in->size - nnulls) +
+		(2 /* " */ + 2 /* => */ + 4 /* NULL */ ) * nnulls +
+		2 /* ,	*/ * (in->size - 1) +
+		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0)) +
+		1 /* \0 */ ;
 
 	out = ptr = palloc(buflen);
 	for (i = 0; i < in->size; i++)

@@ -12,11 +12,11 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/genbki.h,v 1.2 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/genbki.h,v 1.3 2009/06/11 14:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef GENBKI_H 
+#ifndef GENBKI_H
 #define GENBKI_H
 
 /* Introduces a catalog's structure definition */

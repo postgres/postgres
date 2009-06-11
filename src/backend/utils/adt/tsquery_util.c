@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.10 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.11 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ QTNodeCompare(QTNode *an, QTNode *bn)
 			return (ao->valcrc > bo->valcrc) ? -1 : 1;
 		}
 
-		return tsCompareString( an->word, ao->length, bn->word, bo->length, false);
+		return tsCompareString(an->word, ao->length, bn->word, bo->length, false);
 	}
 }
 

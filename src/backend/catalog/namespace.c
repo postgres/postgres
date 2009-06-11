@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.117 2009/03/31 22:12:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.118 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -573,7 +573,7 @@ TypeIsVisible(Oid typid)
  * and the returned nvargs will always be zero.
  *
  * If expand_defaults is true, functions that could match after insertion of
- * default argument values will also be retrieved.  In this case the returned
+ * default argument values will also be retrieved.	In this case the returned
  * structs could have nargs > passed-in nargs, and ndargs is set to the number
  * of additional args (which can be retrieved from the function's
  * proargdefaults entry).
@@ -726,7 +726,7 @@ FuncnameGetCandidates(List *names, int nargs,
 			   pronargs * sizeof(Oid));
 		if (variadic)
 		{
-			int		i;
+			int			i;
 
 			newResult->nvargs = effective_nargs - pronargs + 1;
 			/* Expand variadic argument into N copies of element type */
@@ -774,7 +774,7 @@ FuncnameGetCandidates(List *names, int nargs,
 			}
 			else
 			{
-				int		cmp_nargs = newResult->nargs - newResult->ndargs;
+				int			cmp_nargs = newResult->nargs - newResult->ndargs;
 
 				for (prevResult = resultList;
 					 prevResult;
@@ -791,13 +791,13 @@ FuncnameGetCandidates(List *names, int nargs,
 			if (prevResult)
 			{
 				/*
-				 * We have a match with a previous result.  Decide which one
+				 * We have a match with a previous result.	Decide which one
 				 * to keep, or mark it ambiguous if we can't decide.  The
 				 * logic here is preference > 0 means prefer the old result,
 				 * preference < 0 means prefer the new, preference = 0 means
 				 * ambiguous.
 				 */
-				int		preference;
+				int			preference;
 
 				if (pathpos != prevResult->pathpos)
 				{
@@ -810,9 +810,9 @@ FuncnameGetCandidates(List *names, int nargs,
 				{
 					/*
 					 * With variadic functions we could have, for example,
-					 * both foo(numeric) and foo(variadic numeric[]) in
-					 * the same namespace; if so we prefer the
-					 * non-variadic match on efficiency grounds.
+					 * both foo(numeric) and foo(variadic numeric[]) in the
+					 * same namespace; if so we prefer the non-variadic match
+					 * on efficiency grounds.
 					 */
 					preference = 1;
 				}
@@ -858,7 +858,7 @@ FuncnameGetCandidates(List *names, int nargs,
 								break;
 							}
 						}
-						Assert(prevPrevResult);		/* assert we found it */
+						Assert(prevPrevResult); /* assert we found it */
 					}
 					pfree(prevResult);
 					/* fall through to add newResult to list */
@@ -2865,8 +2865,8 @@ InitTempTableNamespace(void)
 	}
 
 	/*
-	 * If the corresponding toast-table namespace doesn't exist yet, create it.
-	 * (We assume there is no need to clean it out if it does exist, since
+	 * If the corresponding toast-table namespace doesn't exist yet, create
+	 * it. (We assume there is no need to clean it out if it does exist, since
 	 * dropping a parent table should make its toast table go away.)
 	 */
 	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
@@ -3230,7 +3230,7 @@ fetch_search_path(bool includeImplicit)
 
 /*
  * Fetch the active search path into a caller-allocated array of OIDs.
- * Returns the number of path entries.  (If this is more than sarray_len,
+ * Returns the number of path entries.	(If this is more than sarray_len,
  * then the data didn't fit and is not all stored.)
  *
  * The returned list always includes the implicitly-prepended namespaces,

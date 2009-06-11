@@ -33,7 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.10 2007/11/15 21:14:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.11 2009/06/11 14:48:52 momjian Exp $
  */
 
 #include "postgres.h"
@@ -250,7 +250,7 @@ static const uint64 sha512_initial_hash_value[8] = {
 
 /*** SHA-256: *********************************************************/
 void
-SHA256_Init(SHA256_CTX * context)
+SHA256_Init(SHA256_CTX *context)
 {
 	if (context == NULL)
 		return;
@@ -286,7 +286,7 @@ SHA256_Init(SHA256_CTX * context)
 } while(0)
 
 static void
-SHA256_Transform(SHA256_CTX * context, const uint8 *data)
+SHA256_Transform(SHA256_CTX *context, const uint8 *data)
 {
 	uint32		a,
 				b,
@@ -357,7 +357,7 @@ SHA256_Transform(SHA256_CTX * context, const uint8 *data)
 #else							/* SHA2_UNROLL_TRANSFORM */
 
 static void
-SHA256_Transform(SHA256_CTX * context, const uint8 *data)
+SHA256_Transform(SHA256_CTX *context, const uint8 *data)
 {
 	uint32		a,
 				b,
@@ -447,7 +447,7 @@ SHA256_Transform(SHA256_CTX * context, const uint8 *data)
 #endif   /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA256_Update(SHA256_CTX * context, const uint8 *data, size_t len)
+SHA256_Update(SHA256_CTX *context, const uint8 *data, size_t len)
 {
 	size_t		freespace,
 				usedspace;
@@ -500,7 +500,7 @@ SHA256_Update(SHA256_CTX * context, const uint8 *data, size_t len)
 }
 
 static void
-SHA256_Last(SHA256_CTX * context)
+SHA256_Last(SHA256_CTX *context)
 {
 	unsigned int usedspace;
 
@@ -548,7 +548,7 @@ SHA256_Last(SHA256_CTX * context)
 }
 
 void
-SHA256_Final(uint8 digest[], SHA256_CTX * context)
+SHA256_Final(uint8 digest[], SHA256_CTX *context)
 {
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL)
@@ -576,7 +576,7 @@ SHA256_Final(uint8 digest[], SHA256_CTX * context)
 
 /*** SHA-512: *********************************************************/
 void
-SHA512_Init(SHA512_CTX * context)
+SHA512_Init(SHA512_CTX *context)
 {
 	if (context == NULL)
 		return;
@@ -615,7 +615,7 @@ SHA512_Init(SHA512_CTX * context)
 } while(0)
 
 static void
-SHA512_Transform(SHA512_CTX * context, const uint8 *data)
+SHA512_Transform(SHA512_CTX *context, const uint8 *data)
 {
 	uint64		a,
 				b,
@@ -683,7 +683,7 @@ SHA512_Transform(SHA512_CTX * context, const uint8 *data)
 #else							/* SHA2_UNROLL_TRANSFORM */
 
 static void
-SHA512_Transform(SHA512_CTX * context, const uint8 *data)
+SHA512_Transform(SHA512_CTX *context, const uint8 *data)
 {
 	uint64		a,
 				b,
@@ -773,7 +773,7 @@ SHA512_Transform(SHA512_CTX * context, const uint8 *data)
 #endif   /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA512_Update(SHA512_CTX * context, const uint8 *data, size_t len)
+SHA512_Update(SHA512_CTX *context, const uint8 *data, size_t len)
 {
 	size_t		freespace,
 				usedspace;
@@ -826,7 +826,7 @@ SHA512_Update(SHA512_CTX * context, const uint8 *data, size_t len)
 }
 
 static void
-SHA512_Last(SHA512_CTX * context)
+SHA512_Last(SHA512_CTX *context)
 {
 	unsigned int usedspace;
 
@@ -876,7 +876,7 @@ SHA512_Last(SHA512_CTX * context)
 }
 
 void
-SHA512_Final(uint8 digest[], SHA512_CTX * context)
+SHA512_Final(uint8 digest[], SHA512_CTX *context)
 {
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL)
@@ -905,7 +905,7 @@ SHA512_Final(uint8 digest[], SHA512_CTX * context)
 
 /*** SHA-384: *********************************************************/
 void
-SHA384_Init(SHA384_CTX * context)
+SHA384_Init(SHA384_CTX *context)
 {
 	if (context == NULL)
 		return;
@@ -915,13 +915,13 @@ SHA384_Init(SHA384_CTX * context)
 }
 
 void
-SHA384_Update(SHA384_CTX * context, const uint8 *data, size_t len)
+SHA384_Update(SHA384_CTX *context, const uint8 *data, size_t len)
 {
 	SHA512_Update((SHA512_CTX *) context, data, len);
 }
 
 void
-SHA384_Final(uint8 digest[], SHA384_CTX * context)
+SHA384_Final(uint8 digest[], SHA384_CTX *context)
 {
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL)
@@ -949,7 +949,7 @@ SHA384_Final(uint8 digest[], SHA384_CTX * context)
 
 /*** SHA-224: *********************************************************/
 void
-SHA224_Init(SHA224_CTX * context)
+SHA224_Init(SHA224_CTX *context)
 {
 	if (context == NULL)
 		return;
@@ -959,13 +959,13 @@ SHA224_Init(SHA224_CTX * context)
 }
 
 void
-SHA224_Update(SHA224_CTX * context, const uint8 *data, size_t len)
+SHA224_Update(SHA224_CTX *context, const uint8 *data, size_t len)
 {
 	SHA256_Update((SHA256_CTX *) context, data, len);
 }
 
 void
-SHA224_Final(uint8 digest[], SHA224_CTX * context)
+SHA224_Final(uint8 digest[], SHA224_CTX *context)
 {
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL)

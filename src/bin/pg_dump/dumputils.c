@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.45 2009/03/11 03:33:29 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.46 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ static bool parseAclItem(const char *item, const char *type,
 			 PQExpBuffer privs, PQExpBuffer privswgo);
 static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
-				   const char *subname);
+	   const char *subname);
 
 #ifdef WIN32
 static bool parallel_init_done = false;
@@ -40,7 +40,7 @@ void
 init_parallel_dump_utils(void)
 {
 #ifdef WIN32
-	if (! parallel_init_done)
+	if (!parallel_init_done)
 	{
 		tls_index = TlsAlloc();
 		parallel_init_done = true;
@@ -49,17 +49,17 @@ init_parallel_dump_utils(void)
 }
 
 /*
- *  Quotes input string if it's not a legitimate SQL identifier as-is.
+ *	Quotes input string if it's not a legitimate SQL identifier as-is.
  *
- *  Note that the returned string must be used before calling fmtId again,
- *  since we re-use the same return buffer each time.  Non-reentrant but
- *  reduces memory leakage. (On Windows the memory leakage will be one buffer
- *  per thread, which is at least better than one per call).
+ *	Note that the returned string must be used before calling fmtId again,
+ *	since we re-use the same return buffer each time.  Non-reentrant but
+ *	reduces memory leakage. (On Windows the memory leakage will be one buffer
+ *	per thread, which is at least better than one per call).
  */
 const char *
 fmtId(const char *rawid)
 {
-	/* 
+	/*
 	 * The Tls code goes awry if we use a static var, so we provide for both
 	 * static and auto, and omit any use of the static var when using Tls.
 	 */
@@ -71,7 +71,7 @@ fmtId(const char *rawid)
 
 #ifdef WIN32
 	if (parallel_init_done)
-		id_return = (PQExpBuffer) TlsGetValue(tls_index); /* 0 when not set */
+		id_return = (PQExpBuffer) TlsGetValue(tls_index);		/* 0 when not set */
 	else
 		id_return = s_id_return;
 #else
@@ -87,15 +87,15 @@ fmtId(const char *rawid)
 	{
 		/* new buffer */
 		id_return = createPQExpBuffer();
-#ifdef WIN32		
+#ifdef WIN32
 		if (parallel_init_done)
-			TlsSetValue(tls_index,id_return);
+			TlsSetValue(tls_index, id_return);
 		else
 			s_id_return = id_return;
 #else
 		s_id_return = id_return;
 #endif
-		
+
 	}
 
 	/*
@@ -555,7 +555,7 @@ buildACLCommands(const char *name, const char *subname,
 										  fmtId(grantee->data));
 					if (privswgo->len > 0)
 						appendPQExpBuffer(firstsql,
-							"GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+							  "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
 										  privswgo->data, type, name,
 										  fmtId(grantee->data));
 				}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.112 2009/04/19 21:50:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.113 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,7 +405,7 @@ typedef struct					/* CASE statement */
 	int			lineno;
 	PLpgSQL_expr *t_expr;		/* test expression, or NULL if none */
 	int			t_varno;		/* var to store test expression value into */
-	List	   *case_when_list;	/* List of PLpgSQL_case_when structs */
+	List	   *case_when_list; /* List of PLpgSQL_case_when structs */
 	bool		have_else;		/* flag needed because list could be empty */
 	List	   *else_stmts;		/* List of statements */
 } PLpgSQL_stmt_case;
@@ -588,7 +588,7 @@ typedef struct
 
 typedef struct
 {								/* RAISE statement option */
-	int 		opt_type;
+	int			opt_type;
 	PLpgSQL_expr *expr;
 } PLpgSQL_raise_option;
 
@@ -822,9 +822,9 @@ extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
 					   bool add2namespace);
 extern PLpgSQL_rec *plpgsql_build_record(const char *refname, int lineno,
-										 bool add2namespace);
-extern int	plpgsql_recognize_err_condition(const char *condname,
-											bool allow_sqlstate);
+					 bool add2namespace);
+extern int plpgsql_recognize_err_condition(const char *condname,
+								bool allow_sqlstate);
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
 extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);
@@ -871,7 +871,7 @@ extern void plpgsql_ns_push(const char *label);
 extern void plpgsql_ns_pop(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup(const char *name1, const char *name2,
-										 const char *name3, int *names_used);
+				  const char *name3, int *names_used);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(const char *name);
 extern void plpgsql_ns_rename(char *oldname, char *newname);
 

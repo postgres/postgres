@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.21 2009/03/24 20:17:11 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.22 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -16,7 +16,7 @@
 #include "access/genam.h"
 #include "access/gin.h"
 #include "access/reloptions.h"
-#include "catalog/pg_type.h" 
+#include "catalog/pg_type.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
@@ -25,44 +25,44 @@
 void
 initGinState(GinState *state, Relation index)
 {
-	int i;
+	int			i;
 
 	state->origTupdesc = index->rd_att;
 
 	state->oneCol = (index->rd_att->natts == 1) ? true : false;
 
-	for(i=0;i<index->rd_att->natts;i++)
+	for (i = 0; i < index->rd_att->natts; i++)
 	{
-		state->tupdesc[i] = CreateTemplateTupleDesc(2,false);
+		state->tupdesc[i] = CreateTemplateTupleDesc(2, false);
 
-		TupleDescInitEntry( state->tupdesc[i], (AttrNumber) 1, NULL,
-							INT2OID, -1, 0);
-		TupleDescInitEntry( state->tupdesc[i], (AttrNumber) 2, NULL,
-							index->rd_att->attrs[i]->atttypid,
-							index->rd_att->attrs[i]->atttypmod,
-							index->rd_att->attrs[i]->attndims
-							);
+		TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 1, NULL,
+						   INT2OID, -1, 0);
+		TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 2, NULL,
+						   index->rd_att->attrs[i]->atttypid,
+						   index->rd_att->attrs[i]->atttypmod,
+						   index->rd_att->attrs[i]->attndims
+			);
 
 		fmgr_info_copy(&(state->compareFn[i]),
-						index_getprocinfo(index, i+1, GIN_COMPARE_PROC),
-						CurrentMemoryContext);
+					   index_getprocinfo(index, i + 1, GIN_COMPARE_PROC),
+					   CurrentMemoryContext);
 		fmgr_info_copy(&(state->extractValueFn[i]),
-						index_getprocinfo(index, i+1, GIN_EXTRACTVALUE_PROC),
-						CurrentMemoryContext);
+					   index_getprocinfo(index, i + 1, GIN_EXTRACTVALUE_PROC),
+					   CurrentMemoryContext);
 		fmgr_info_copy(&(state->extractQueryFn[i]),
-						index_getprocinfo(index, i+1, GIN_EXTRACTQUERY_PROC),
-						CurrentMemoryContext);
+					   index_getprocinfo(index, i + 1, GIN_EXTRACTQUERY_PROC),
+					   CurrentMemoryContext);
 		fmgr_info_copy(&(state->consistentFn[i]),
-						index_getprocinfo(index, i+1, GIN_CONSISTENT_PROC),
-						CurrentMemoryContext);
+					   index_getprocinfo(index, i + 1, GIN_CONSISTENT_PROC),
+					   CurrentMemoryContext);
 
 		/*
 		 * Check opclass capability to do partial match.
 		 */
-		if ( index_getprocid(index, i+1, GIN_COMPARE_PARTIAL_PROC) != InvalidOid )
+		if (index_getprocid(index, i + 1, GIN_COMPARE_PARTIAL_PROC) != InvalidOid)
 		{
 			fmgr_info_copy(&(state->comparePartialFn[i]),
-						   index_getprocinfo(index, i+1, GIN_COMPARE_PARTIAL_PROC),
+				   index_getprocinfo(index, i + 1, GIN_COMPARE_PARTIAL_PROC),
 						   CurrentMemoryContext);
 
 			state->canPartialMatch[i] = true;
@@ -82,21 +82,21 @@ gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple)
 {
 	OffsetNumber colN = FirstOffsetNumber;
 
-	if ( !ginstate->oneCol )
+	if (!ginstate->oneCol)
 	{
-		Datum   res;
-		bool    isnull;
+		Datum		res;
+		bool		isnull;
 
 		/*
-		 * First attribute is always int16, so we can safely use any
-		 * tuple descriptor to obtain first attribute of tuple
+		 * First attribute is always int16, so we can safely use any tuple
+		 * descriptor to obtain first attribute of tuple
 		 */
 		res = index_getattr(tuple, FirstOffsetNumber, ginstate->tupdesc[0],
 							&isnull);
 		Assert(!isnull);
 
 		colN = DatumGetUInt16(res);
-		Assert( colN >= FirstOffsetNumber && colN <= ginstate->origTupdesc->natts );
+		Assert(colN >= FirstOffsetNumber && colN <= ginstate->origTupdesc->natts);
 	}
 
 	return colN;
@@ -108,10 +108,10 @@ gintuple_get_attrnum(GinState *ginstate, IndexTuple tuple)
 Datum
 gin_index_getattr(GinState *ginstate, IndexTuple tuple)
 {
-	bool    isnull;
-	Datum   res;
+	bool		isnull;
+	Datum		res;
 
-	if ( ginstate->oneCol )
+	if (ginstate->oneCol)
 	{
 		/*
 		 * Single column index doesn't store attribute numbers in tuples
@@ -122,8 +122,8 @@ gin_index_getattr(GinState *ginstate, IndexTuple tuple)
 	else
 	{
 		/*
-		 * Since the datum type depends on which index column it's from,
-		 * we must be careful to use the right tuple descriptor here.
+		 * Since the datum type depends on which index column it's from, we
+		 * must be careful to use the right tuple descriptor here.
 		 */
 		OffsetNumber colN = gintuple_get_attrnum(ginstate, tuple);
 
@@ -216,8 +216,8 @@ GinInitBuffer(Buffer b, uint32 f)
 void
 GinInitMetabuffer(Buffer b)
 {
-	GinMetaPageData	*metadata;
-	Page 			 page = BufferGetPage(b);
+	GinMetaPageData *metadata;
+	Page		page = BufferGetPage(b);
 
 	GinInitPage(page, GIN_META, BufferGetPageSize(b));
 
@@ -234,7 +234,7 @@ compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b)
 {
 	return DatumGetInt32(
 						 FunctionCall2(
-									   &ginstate->compareFn[attnum-1],
+									   &ginstate->compareFn[attnum - 1],
 									   a, b
 									   )
 		);
@@ -242,12 +242,12 @@ compareEntries(GinState *ginstate, OffsetNumber attnum, Datum a, Datum b)
 
 int
 compareAttEntries(GinState *ginstate, OffsetNumber attnum_a, Datum a,
-									  OffsetNumber attnum_b, Datum b)
+				  OffsetNumber attnum_b, Datum b)
 {
-	if ( attnum_a == attnum_b )
-		return compareEntries( ginstate, attnum_a, a, b);
+	if (attnum_a == attnum_b)
+		return compareEntries(ginstate, attnum_a, a, b);
 
-	return ( attnum_a < attnum_b ) ? -1 : 1;
+	return (attnum_a < attnum_b) ? -1 : 1;
 }
 
 typedef struct
@@ -275,7 +275,7 @@ extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nen
 	Datum	   *entries;
 
 	entries = (Datum *) DatumGetPointer(FunctionCall2(
-												   &ginstate->extractValueFn[attnum-1],
+									   &ginstate->extractValueFn[attnum - 1],
 													  value,
 													PointerGetDatum(nentries)
 													  ));
@@ -288,7 +288,7 @@ extractEntriesS(GinState *ginstate, OffsetNumber attnum, Datum value, int32 *nen
 	{
 		cmpEntriesData arg;
 
-		arg.cmpDatumFunc = &ginstate->compareFn[attnum-1];
+		arg.cmpDatumFunc = &ginstate->compareFn[attnum - 1];
 		arg.needUnique = needUnique;
 		qsort_arg(entries, *nentries, sizeof(Datum),
 				  (qsort_arg_comparator) cmpEntries, (void *) &arg);
@@ -348,7 +348,7 @@ ginoptions(PG_FUNCTION_ARGS)
 	rdopts = allocateReloptStruct(sizeof(GinOptions), options, numoptions);
 
 	fillRelOptions((void *) rdopts, sizeof(GinOptions), options, numoptions,
-					validate, tab, lengthof(tab));
+				   validate, tab, lengthof(tab));
 
 	pfree(options);
 

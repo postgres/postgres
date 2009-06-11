@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/commands/comment.h,v 1.23 2009/01/01 17:23:58 momjian Exp $ 
+ * $PostgreSQL: pgsql/src/include/commands/comment.h,v 1.24 2009/06/11 14:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  *

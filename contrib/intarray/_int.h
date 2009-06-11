@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int.h,v 1.16 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/intarray/_int.h,v 1.17 2009/06/11 14:48:51 momjian Exp $
  */
 #ifndef ___INT_H__
 #define ___INT_H__
@@ -78,7 +78,7 @@ typedef struct
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		flag;
 	char		data[1];
-}	GISTTYPE;
+} GISTTYPE;
 
 #define ALLISTRUE		0x04
 
@@ -131,14 +131,14 @@ typedef struct ITEM
 	int2		type;
 	int2		left;
 	int4		val;
-}	ITEM;
+} ITEM;
 
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	char		data[1];
-}	QUERYTYPE;
+} QUERYTYPE;
 
 #define HDRSIZEQT	(VARHDRSZ + sizeof(int4))
 #define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
@@ -151,10 +151,10 @@ typedef struct
 #define OPEN	4
 #define CLOSE	5
 
-bool		signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot);
-bool		execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot);
-bool		ginconsistent(QUERYTYPE * query, bool *check);
-int4		shorterquery(ITEM * q, int4 len);
+bool		signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot);
+bool		execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot);
+bool		ginconsistent(QUERYTYPE *query, bool *check);
+int4		shorterquery(ITEM *q, int4 len);
 
 int			compASC(const void *a, const void *b);
 
@@ -165,4 +165,4 @@ if (ARRNELEMS(a) > 1)											\
 		qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),		\
 				(direction) ? compASC : compDESC )
 
-#endif /* ___INT_H__ */
+#endif   /* ___INT_H__ */

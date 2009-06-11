@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.36 2008/05/29 18:46:40 tgl Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.37 2009/06/11 14:48:50 momjian Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -134,14 +134,14 @@ Datum		cube_enlarge(PG_FUNCTION_ARGS);
 /*
 ** For internal use only
 */
-int32		cube_cmp_v0(NDBOX * a, NDBOX * b);
-bool		cube_contains_v0(NDBOX * a, NDBOX * b);
-bool		cube_overlap_v0(NDBOX * a, NDBOX * b);
-NDBOX	   *cube_union_v0(NDBOX * a, NDBOX * b);
-void		rt_cube_size(NDBOX * a, double *sz);
-NDBOX	   *g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep);
-bool		g_cube_leaf_consistent(NDBOX * key, NDBOX * query, StrategyNumber strategy);
-bool		g_cube_internal_consistent(NDBOX * key, NDBOX * query, StrategyNumber strategy);
+int32		cube_cmp_v0(NDBOX *a, NDBOX *b);
+bool		cube_contains_v0(NDBOX *a, NDBOX *b);
+bool		cube_overlap_v0(NDBOX *a, NDBOX *b);
+NDBOX	   *cube_union_v0(NDBOX *a, NDBOX *b);
+void		rt_cube_size(NDBOX *a, double *sz);
+NDBOX	   *g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep);
+bool		g_cube_leaf_consistent(NDBOX *key, NDBOX *query, StrategyNumber strategy);
+bool		g_cube_internal_consistent(NDBOX *key, NDBOX *query, StrategyNumber strategy);
 
 /*
 ** Auxiliary funxtions
@@ -201,7 +201,7 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	dur = ARRPTR(ur);
 	dll = ARRPTR(ll);
 
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = dim;
@@ -237,7 +237,7 @@ cube_a_f8(PG_FUNCTION_ARGS)
 
 	dur = ARRPTR(ur);
 
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = dim;
@@ -270,7 +270,7 @@ cube_subset(PG_FUNCTION_ARGS)
 	dx = (int4 *) ARR_DATA_PTR(idx);
 
 	dim = ARRNELEMS(idx);
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = dim;
@@ -359,6 +359,7 @@ g_cube_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	NDBOX	   *query = PG_GETARG_NDBOX(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		res;
@@ -652,8 +653,8 @@ g_cube_same(PG_FUNCTION_ARGS)
 ** SUPPORT ROUTINES
 */
 bool
-g_cube_leaf_consistent(NDBOX * key,
-					   NDBOX * query,
+g_cube_leaf_consistent(NDBOX *key,
+					   NDBOX *query,
 					   StrategyNumber strategy)
 {
 	bool		retval;
@@ -684,8 +685,8 @@ g_cube_leaf_consistent(NDBOX * key,
 }
 
 bool
-g_cube_internal_consistent(NDBOX * key,
-						   NDBOX * query,
+g_cube_internal_consistent(NDBOX *key,
+						   NDBOX *query,
 						   StrategyNumber strategy)
 {
 	bool		retval;
@@ -714,7 +715,7 @@ g_cube_internal_consistent(NDBOX * key,
 }
 
 NDBOX *
-g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep)
+g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep)
 {
 	NDBOX	   *retval;
 
@@ -727,7 +728,7 @@ g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep)
 
 /* cube_union_v0 */
 NDBOX *
-cube_union_v0(NDBOX * a, NDBOX * b)
+cube_union_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
 	NDBOX	   *result;
@@ -887,7 +888,7 @@ cube_size(PG_FUNCTION_ARGS)
 }
 
 void
-rt_cube_size(NDBOX * a, double *size)
+rt_cube_size(NDBOX *a, double *size)
 {
 	int			i,
 				j;
@@ -906,7 +907,7 @@ rt_cube_size(NDBOX * a, double *size)
 /* make up a metric in which one box will be 'lower' than the other
    -- this can be useful for sorting and to determine uniqueness */
 int32
-cube_cmp_v0(NDBOX * a, NDBOX * b)
+cube_cmp_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
 	int			dim;
@@ -1093,7 +1094,7 @@ cube_ge(PG_FUNCTION_ARGS)
 /* Contains */
 /* Box(A) CONTAINS Box(B) IFF pt(A) < pt(B) */
 bool
-cube_contains_v0(NDBOX * a, NDBOX * b)
+cube_contains_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
 
@@ -1163,7 +1164,7 @@ cube_contained(PG_FUNCTION_ARGS)
 /* Overlap */
 /* Box(A) Overlap Box(B) IFF (pt(a)LL < pt(B)UR) && (pt(b)LL < pt(a)UR) */
 bool
-cube_overlap_v0(NDBOX * a, NDBOX * b)
+cube_overlap_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
 
@@ -1374,7 +1375,7 @@ cube_enlarge(PG_FUNCTION_ARGS)
 		dim = n;
 	if (a->dim > dim)
 		dim = a->dim;
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * dim * 2;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = dim;
@@ -1415,7 +1416,7 @@ cube_f8(PG_FUNCTION_ARGS)
 	NDBOX	   *result;
 	int			size;
 
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = 1;
@@ -1433,7 +1434,7 @@ cube_f8_f8(PG_FUNCTION_ARGS)
 	NDBOX	   *result;
 	int			size;
 
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = 1;
@@ -1454,7 +1455,7 @@ cube_c_f8(PG_FUNCTION_ARGS)
 	int			size;
 	int			i;
 
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * (c->dim + 1) *2;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = c->dim + 1;
@@ -1481,7 +1482,7 @@ cube_c_f8_f8(PG_FUNCTION_ARGS)
 	int			size;
 	int			i;
 
-	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
+	size = offsetof(NDBOX, x[0]) +sizeof(double) * (c->dim + 1) *2;
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
 	result->dim = c->dim + 1;

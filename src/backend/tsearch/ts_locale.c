@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.12 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.13 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ t_isprint(const char *ptr)
 
 
 /*
- * Set up to read a file using tsearch_readline().  This facility is
+ * Set up to read a file using tsearch_readline().	This facility is
  * better than just reading the file directly because it provides error
  * context pointing to the specific line where a problem is detected.
  *
@@ -159,10 +159,10 @@ tsearch_readline_callback(void *arg)
 
 	/*
 	 * We can't include the text of the config line for errors that occur
-	 * during t_readline() itself.  This is only partly a consequence of
-	 * our arms-length use of that routine: the major cause of such
-	 * errors is encoding violations, and we daren't try to print error
-	 * messages containing badly-encoded data.
+	 * during t_readline() itself.	This is only partly a consequence of our
+	 * arms-length use of that routine: the major cause of such errors is
+	 * encoding violations, and we daren't try to print error messages
+	 * containing badly-encoded data.
 	 */
 	if (stp->curline)
 		errcontext("line %d of configuration file \"%s\": \"%s\"",
@@ -285,7 +285,7 @@ lowerstr_with_len(const char *str, int len)
 		if (wlen < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("conversion from wchar_t to server encoding failed: %m")));
+			errmsg("conversion from wchar_t to server encoding failed: %m")));
 		Assert(wlen < len);
 	}
 	else

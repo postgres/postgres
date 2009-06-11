@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.62 2009/01/01 17:24:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static int	resolve_symlinks(char *path);
 static char *pipe_read_line(char *cmd, char *line, int maxsize);
 
 #ifdef WIN32
-static BOOL GetUserSid(PSID * ppSidUser, HANDLE hToken);
+static BOOL GetUserSid(PSID *ppSidUser, HANDLE hToken);
 #endif
 
 /*
@@ -736,7 +736,7 @@ AddUserToDacl(HANDLE hProcess)
 	}
 
 	/* Get the ACL info */
-	if (!GetAclInformation(ptdd->DefaultDacl, (LPVOID) & asi,
+	if (!GetAclInformation(ptdd->DefaultDacl, (LPVOID) &asi,
 						   (DWORD) sizeof(ACL_SIZE_INFORMATION),
 						   AclSizeInformation))
 	{
@@ -752,7 +752,7 @@ AddUserToDacl(HANDLE hProcess)
 	}
 
 	/* Figure out the size of the new ACL */
-	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(psidUser) - sizeof(DWORD);
+	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(psidUser) -sizeof(DWORD);
 
 	/* Allocate the ACL buffer & initialize it */
 	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);
@@ -771,7 +771,7 @@ AddUserToDacl(HANDLE hProcess)
 	/* Loop through the existing ACEs, and build the new ACL */
 	for (i = 0; i < (int) asi.AceCount; i++)
 	{
-		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) & pace))
+		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) &pace))
 		{
 			log_error("could not get ACE: %lu", GetLastError());
 			goto cleanup;
@@ -794,7 +794,7 @@ AddUserToDacl(HANDLE hProcess)
 	/* Set the new DACL in the token */
 	tddNew.DefaultDacl = pacl;
 
-	if (!SetTokenInformation(hToken, tic, (LPVOID) & tddNew, dwNewAclSize))
+	if (!SetTokenInformation(hToken, tic, (LPVOID) &tddNew, dwNewAclSize))
 	{
 		log_error("could not set token information: %lu", GetLastError());
 		goto cleanup;
@@ -824,7 +824,7 @@ cleanup:
  * Get the SID for the current user
  */
 static BOOL
-GetUserSid(PSID * ppSidUser, HANDLE hToken)
+GetUserSid(PSID *ppSidUser, HANDLE hToken)
 {
 	DWORD		dwLength;
 	PTOKEN_USER pTokenUser = NULL;

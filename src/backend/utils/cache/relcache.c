@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.286 2009/03/31 22:12:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.287 2009/06/11 14:49:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1129,7 +1129,7 @@ IndexSupportInitialize(oidvector *indclass,
  * Note there is no provision for flushing the cache.  This is OK at the
  * moment because there is no way to ALTER any interesting properties of an
  * existing opclass --- all you can do is drop it, which will result in
- * a useless but harmless dead entry in the cache.  To support altering
+ * a useless but harmless dead entry in the cache.	To support altering
  * opclass membership (not the same as opfamily membership!), we'd need to
  * be able to flush this cache as well as the contents of relcache entries
  * for indexes.
@@ -1196,10 +1196,10 @@ LookupOpclassInfo(Oid operatorClassOid,
 
 	/*
 	 * When testing for cache-flush hazards, we intentionally disable the
-	 * operator class cache and force reloading of the info on each call.
-	 * This is helpful because we want to test the case where a cache flush
-	 * occurs while we are loading the info, and it's very hard to provoke
-	 * that if this happens only once per opclass per backend.
+	 * operator class cache and force reloading of the info on each call. This
+	 * is helpful because we want to test the case where a cache flush occurs
+	 * while we are loading the info, and it's very hard to provoke that if
+	 * this happens only once per opclass per backend.
 	 */
 #if defined(CLOBBER_CACHE_ALWAYS)
 	opcentry->valid = false;
@@ -1402,8 +1402,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_rel->relisshared = false;
 
 	/*
-	 * Likewise, we must know if a relation is temp ... but formrdesc is
-	 * not used for any temp relations.
+	 * Likewise, we must know if a relation is temp ... but formrdesc is not
+	 * used for any temp relations.
 	 */
 	relation->rd_rel->relistemp = false;
 
@@ -1657,6 +1657,7 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
+
 	/*
 	 * Must reset targblock, fsm_nblocks and vm_nblocks in case rel was
 	 * truncated
@@ -2792,7 +2793,7 @@ AttrDefaultFetch(Relation relation)
 					 RelationGetRelationName(relation));
 			else
 				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
-													TextDatumGetCString(val));
+												   TextDatumGetCString(val));
 			break;
 		}
 

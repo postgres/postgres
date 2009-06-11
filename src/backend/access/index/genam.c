@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.73 2009/01/01 17:23:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.74 2009/06/11 14:48:54 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -197,7 +197,7 @@ systable_beginscan(Relation heapRelation,
 		/* Change attribute numbers to be index column numbers. */
 		for (i = 0; i < nkeys; i++)
 		{
-			int j;
+			int			j;
 
 			for (j = 0; j < irel->rd_index->indnatts; j++)
 			{
@@ -241,12 +241,13 @@ systable_getnext(SysScanDesc sysscan)
 	if (sysscan->irel)
 	{
 		htup = index_getnext(sysscan->iscan, ForwardScanDirection);
+
 		/*
-		 * We currently don't need to support lossy index operators for
-		 * any system catalog scan.  It could be done here, using the
-		 * scan keys to drive the operator calls, if we arranged to save
-		 * the heap attnums during systable_beginscan(); this is practical
-		 * because we still wouldn't need to support indexes on expressions.
+		 * We currently don't need to support lossy index operators for any
+		 * system catalog scan.  It could be done here, using the scan keys to
+		 * drive the operator calls, if we arranged to save the heap attnums
+		 * during systable_beginscan(); this is practical because we still
+		 * wouldn't need to support indexes on expressions.
 		 */
 		if (htup && sysscan->iscan->xs_recheck)
 			elog(ERROR, "system catalog scans with lossy index conditions are not implemented");
@@ -326,7 +327,7 @@ systable_endscan(SysScanDesc sysscan)
  * index order.  Also, for largely historical reasons, the index to use
  * is opened and locked by the caller, not here.
  *
- * Currently we do not support non-index-based scans here.  (In principle
+ * Currently we do not support non-index-based scans here.	(In principle
  * we could do a heapscan and sort, but the uses are in places that
  * probably don't need to still work with corrupted catalog indexes.)
  * For the moment, therefore, these functions are merely the thinnest of
@@ -360,7 +361,7 @@ systable_beginscan_ordered(Relation heapRelation,
 	/* Change attribute numbers to be index column numbers. */
 	for (i = 0; i < nkeys; i++)
 	{
-		int j;
+		int			j;
 
 		for (j = 0; j < indexRelation->rd_index->indnatts; j++)
 		{

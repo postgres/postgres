@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.26 2009/01/01 17:24:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.27 2009/06/11 14:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,11 +47,12 @@ markPQExpBufferBroken(PQExpBuffer str)
 {
 	if (str->data != oom_buffer)
 		free(str->data);
+
 	/*
-	 * Casting away const here is a bit ugly, but it seems preferable to
-	 * not marking oom_buffer const.  We want to do that to encourage the
-	 * compiler to put oom_buffer in read-only storage, so that anyone who
-	 * tries to scribble on a broken PQExpBuffer will get a failure.
+	 * Casting away const here is a bit ugly, but it seems preferable to not
+	 * marking oom_buffer const.  We want to do that to encourage the compiler
+	 * to put oom_buffer in read-only storage, so that anyone who tries to
+	 * scribble on a broken PQExpBuffer will get a failure.
 	 */
 	str->data = (char *) oom_buffer;
 	str->len = 0;
@@ -126,7 +127,7 @@ termPQExpBuffer(PQExpBuffer str)
 	if (str->data != oom_buffer)
 		free(str->data);
 	/* just for luck, make the buffer validly empty. */
-	str->data = (char *) oom_buffer;		/* see comment above */
+	str->data = (char *) oom_buffer;	/* see comment above */
 	str->maxlen = 0;
 	str->len = 0;
 }
@@ -160,7 +161,7 @@ resetPQExpBuffer(PQExpBuffer str)
  * Make sure there is enough space for 'needed' more bytes in the buffer
  * ('needed' does not include the terminating null).
  *
- * Returns 1 if OK, 0 if failed to enlarge buffer.  (In the latter case
+ * Returns 1 if OK, 0 if failed to enlarge buffer.	(In the latter case
  * the buffer is left in "broken" state.)
  */
 int

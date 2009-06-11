@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.15 2008/08/14 12:56:41 heikki Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.16 2009/06/11 14:48:51 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -37,7 +37,7 @@ typedef struct
 	bool		isvalid;
 	bool		isdirty;
 	uint16		usagecount;
-}	BufferCachePagesRec;
+} BufferCachePagesRec;
 
 
 /*
@@ -47,7 +47,7 @@ typedef struct
 {
 	TupleDesc	tupdesc;
 	BufferCachePagesRec *record;
-}	BufferCachePagesContext;
+} BufferCachePagesContext;
 
 
 /*

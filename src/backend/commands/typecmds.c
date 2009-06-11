@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.133 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.134 2009/06/11 14:48:56 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -115,23 +115,23 @@ DefineType(List *names, List *parameters)
 	bool		byValue = false;
 	char		alignment = 'i';	/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
-	DefElem	   *likeTypeEl = NULL;
-	DefElem	   *internalLengthEl = NULL;
-	DefElem	   *inputNameEl = NULL;
-	DefElem	   *outputNameEl = NULL;
-	DefElem	   *receiveNameEl = NULL;
-	DefElem	   *sendNameEl = NULL;
-	DefElem	   *typmodinNameEl = NULL;
-	DefElem	   *typmodoutNameEl = NULL;
-	DefElem	   *analyzeNameEl = NULL;
-	DefElem	   *categoryEl = NULL;
-	DefElem	   *preferredEl = NULL;
-	DefElem	   *delimiterEl = NULL;
-	DefElem	   *elemTypeEl = NULL;
-	DefElem	   *defaultValueEl = NULL;
-	DefElem	   *byValueEl = NULL;
-	DefElem	   *alignmentEl = NULL;
-	DefElem	   *storageEl = NULL;
+	DefElem    *likeTypeEl = NULL;
+	DefElem    *internalLengthEl = NULL;
+	DefElem    *inputNameEl = NULL;
+	DefElem    *outputNameEl = NULL;
+	DefElem    *receiveNameEl = NULL;
+	DefElem    *sendNameEl = NULL;
+	DefElem    *typmodinNameEl = NULL;
+	DefElem    *typmodoutNameEl = NULL;
+	DefElem    *analyzeNameEl = NULL;
+	DefElem    *categoryEl = NULL;
+	DefElem    *preferredEl = NULL;
+	DefElem    *delimiterEl = NULL;
+	DefElem    *elemTypeEl = NULL;
+	DefElem    *defaultValueEl = NULL;
+	DefElem    *byValueEl = NULL;
+	DefElem    *alignmentEl = NULL;
+	DefElem    *storageEl = NULL;
 	Oid			inputOid;
 	Oid			outputOid;
 	Oid			receiveOid = InvalidOid;
@@ -150,8 +150,8 @@ DefineType(List *names, List *parameters)
 	 * As of Postgres 8.4, we require superuser privilege to create a base
 	 * type.  This is simple paranoia: there are too many ways to mess up the
 	 * system with an incorrect type definition (for instance, representation
-	 * parameters that don't match what the C code expects).  In practice
-	 * it takes superuser privilege to create the I/O functions, and so the
+	 * parameters that don't match what the C code expects).  In practice it
+	 * takes superuser privilege to create the I/O functions, and so the
 	 * former requirement that you own the I/O functions pretty much forced
 	 * superuserness anyway.  We're just making doubly sure here.
 	 *
@@ -277,13 +277,13 @@ DefineType(List *names, List *parameters)
 	}
 
 	/*
-	 * Now interpret the options; we do this separately so that LIKE can
-	 * be overridden by other options regardless of the ordering in the
-	 * parameter list.
+	 * Now interpret the options; we do this separately so that LIKE can be
+	 * overridden by other options regardless of the ordering in the parameter
+	 * list.
 	 */
 	if (likeTypeEl)
 	{
-		Type	 likeType;
+		Type		likeType;
 		Form_pg_type likeForm;
 
 		likeType = typenameType(NULL, defGetTypeName(likeTypeEl), NULL);
@@ -319,8 +319,8 @@ DefineType(List *names, List *parameters)
 		if (category < 32 || category > 126)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid type category \"%s\": must be simple ASCII",
-							p)));
+				 errmsg("invalid type category \"%s\": must be simple ASCII",
+						p)));
 	}
 	if (preferredEl)
 		preferred = defGetBoolean(preferredEl);
@@ -351,8 +351,8 @@ DefineType(List *names, List *parameters)
 
 		/*
 		 * Note: if argument was an unquoted identifier, parser will have
-		 * applied translations to it, so be prepared to recognize
-		 * translated type names as well as the nominal form.
+		 * applied translations to it, so be prepared to recognize translated
+		 * type names as well as the nominal form.
 		 */
 		if (pg_strcasecmp(a, "double") == 0 ||
 			pg_strcasecmp(a, "float8") == 0 ||
@@ -536,7 +536,7 @@ DefineType(List *names, List *parameters)
 				   typeNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
-				   GetUserId(),	/* owner's ID */
+				   GetUserId(), /* owner's ID */
 				   internalLength,		/* internal size */
 				   TYPTYPE_BASE,	/* type-type (base type) */
 				   category,	/* type-category */
@@ -578,7 +578,7 @@ DefineType(List *names, List *parameters)
 			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
-			   TYPCATEGORY_ARRAY, /* type-category (array) */
+			   TYPCATEGORY_ARRAY,		/* type-category (array) */
 			   false,			/* array types are never preferred */
 			   delimiter,		/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
@@ -616,18 +616,18 @@ void
 RemoveTypes(DropStmt *drop)
 {
 	ObjectAddresses *objects;
-	ListCell		*cell;
+	ListCell   *cell;
 
 	/*
 	 * First we identify all the types, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted
-	 * DROP RESTRICT errors if one of the types depends on another.
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the types depends on another.
 	 */
 	objects = new_object_addresses();
 
 	foreach(cell, drop->objects)
 	{
-		List       *names = (List *) lfirst(cell);
+		List	   *names = (List *) lfirst(cell);
 		TypeName   *typename;
 		Oid			typeoid;
 		HeapTuple	tup;
@@ -1020,7 +1020,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   domainNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
-				   GetUserId(),	/* owner's ID */
+				   GetUserId(), /* owner's ID */
 				   internalLength,		/* internal size */
 				   TYPTYPE_DOMAIN,		/* type-type (domain type) */
 				   category,	/* type-category */
@@ -1134,7 +1134,7 @@ DefineEnum(CreateEnumStmt *stmt)
 				   enumNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
-				   GetUserId(),	/* owner's ID */
+				   GetUserId(), /* owner's ID */
 				   sizeof(Oid), /* internal size */
 				   TYPTYPE_ENUM,	/* type-type (enum type) */
 				   TYPCATEGORY_ENUM,	/* type-category (enum type) */
@@ -1176,7 +1176,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   GetUserId(),		/* owner's ID */
 			   -1,				/* internal size (always varlena) */
 			   TYPTYPE_BASE,	/* type-type (base type) */
-			   TYPCATEGORY_ARRAY, /* type-category (array) */
+			   TYPCATEGORY_ARRAY,		/* type-category (array) */
 			   false,			/* array types are never preferred */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
@@ -1610,8 +1610,8 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	}
 
 	newtuple = heap_modify_tuple(tup, RelationGetDescr(rel),
-								new_record, new_record_nulls,
-								new_record_repl);
+								 new_record, new_record_nulls,
+								 new_record_repl);
 
 	simple_heap_update(rel, &tup->t_self, newtuple);
 
@@ -2472,8 +2472,8 @@ RenameType(List *names, const char *newTypeName)
 
 	/*
 	 * If it's a composite type, we need to check that it really is a
-	 * free-standing composite type, and not a table's rowtype. We
-	 * want people to use ALTER TABLE not ALTER TYPE for that case.
+	 * free-standing composite type, and not a table's rowtype. We want people
+	 * to use ALTER TABLE not ALTER TYPE for that case.
 	 */
 	if (typTup->typtype == TYPTYPE_COMPOSITE &&
 		get_rel_relkind(typTup->typrelid) != RELKIND_COMPOSITE_TYPE)
@@ -2493,7 +2493,7 @@ RenameType(List *names, const char *newTypeName)
 				 errhint("You can alter type %s, which will alter the array type as well.",
 						 format_type_be(typTup->typelem))));
 
-	/* 
+	/*
 	 * If type is composite we need to rename associated pg_class entry too.
 	 * RenameRelationInternal will call RenameTypeInternal automatically.
 	 */

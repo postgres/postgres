@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.114 2009/06/04 19:17:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.115 2009/06/11 14:49:08 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -45,9 +45,9 @@ static char *grouping;
 static char *thousands_sep;
 
 /* Local functions */
-static int strlen_max_width(unsigned char *str, int *target_width, int encoding);
+static int	strlen_max_width(unsigned char *str, int *target_width, int encoding);
 static void IsPagerNeeded(const printTableContent *cont, const int extra_lines,
-						  FILE **fout, bool *is_pager);
+			  FILE **fout, bool *is_pager);
 
 
 static void *
@@ -404,7 +404,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	int			encoding = cont->opt->encoding;
 	unsigned short opt_border = cont->opt->border;
 
-	unsigned int col_count = 0, cell_count = 0;
+	unsigned int col_count = 0,
+				cell_count = 0;
 
 	unsigned int i,
 				j;
@@ -413,22 +414,22 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			   *max_width,
 			   *width_wrap,
 			   *width_average;
-	unsigned int *max_nl_lines,	/* value split by newlines */
-				*curr_nl_line,
-				*max_bytes;
+	unsigned int *max_nl_lines, /* value split by newlines */
+			   *curr_nl_line,
+			   *max_bytes;
 	unsigned char **format_buf;
 	unsigned int width_total;
 	unsigned int total_header_width;
 	unsigned int extra_row_output_lines = 0;
 	unsigned int extra_output_lines = 0;
 
-	const char * const *ptr;
+	const char *const * ptr;
 
 	struct lineptr **col_lineptrs;		/* pointers to line pointer per column */
 
 	bool	   *header_done;	/* Have all header lines been output? */
 	int		   *bytes_output;	/* Bytes output for column value */
-	int			output_columns = 0;	/* Width of interactive console */
+	int			output_columns = 0;		/* Width of interactive console */
 	bool		is_pager = false;
 
 	if (cancel_pressed)
@@ -519,8 +520,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	/* If we have rows, compute average */
 	if (col_count != 0 && cell_count != 0)
 	{
-		int rows = cell_count / col_count;
-		
+		int			rows = cell_count / col_count;
+
 		for (i = 0; i < col_count; i++)
 			width_average[i] /= rows;
 	}
@@ -543,15 +544,15 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	/*
 	 * At this point: max_width[] contains the max width of each column,
 	 * max_nl_lines[] contains the max number of lines in each column,
-	 * max_bytes[] contains the maximum storage space for formatting
-	 * strings, width_total contains the giant width sum.  Now we allocate
-	 * some memory for line pointers.
+	 * max_bytes[] contains the maximum storage space for formatting strings,
+	 * width_total contains the giant width sum.  Now we allocate some memory
+	 * for line pointers.
 	 */
 	for (i = 0; i < col_count; i++)
 	{
 		/* Add entry for ptr == NULL array termination */
 		col_lineptrs[i] = pg_local_calloc(max_nl_lines[i] + 1,
-											sizeof(**col_lineptrs));
+										  sizeof(**col_lineptrs));
 
 		format_buf[i] = pg_local_malloc(max_bytes[i] + 1);
 
@@ -588,7 +589,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
 		 * ratio.  Slighly bias against wider columns. (Increases chance a
 		 * narrow column will fit in its cell.)  If available columns is
-		 * positive...  and greater than the width of the unshrinkable column
+		 * positive...	and greater than the width of the unshrinkable column
 		 * headers
 		 */
 		if (output_columns > 0 && output_columns >= total_header_width)
@@ -600,17 +601,17 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				int			worst_col = -1;
 
 				/*
-				 *	Find column that has the highest ratio of its maximum
-				 *	width compared to its average width.  This tells us which
-				 *	column will produce the fewest wrapped values if shortened.
-				 *	width_wrap starts as equal to max_width.
+				 * Find column that has the highest ratio of its maximum width
+				 * compared to its average width.  This tells us which column
+				 * will produce the fewest wrapped values if shortened.
+				 * width_wrap starts as equal to max_width.
 				 */
 				for (i = 0; i < col_count; i++)
 				{
 					if (width_average[i] && width_wrap[i] > width_header[i])
 					{
 						/* Penalize wide columns by 1% of their width */
-						double ratio;
+						double		ratio;
 
 						ratio = (double) width_wrap[i] / width_average[i] +
 							max_width[i] * 0.01;
@@ -640,7 +641,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		fout = PageOutput(INT_MAX, cont->opt->pager);	/* force pager */
 		is_pager = true;
 	}
-	
+
 	/* Check if newlines or our wrapping now need the pager */
 	if (!is_pager)
 	{
@@ -650,22 +651,21 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			int			width,
 						nl_lines,
 						bytes_required;
-	
+
 			pg_wcssize((unsigned char *) *ptr, strlen(*ptr), encoding,
 					   &width, &nl_lines, &bytes_required);
 			if (opt_numeric_locale && cont->align[i] == 'r')
 				width += additional_numeric_locale_len(*ptr);
-	
+
 			/*
-			 *	A row can have both wrapping and newlines that cause
-			 *	it to display across multiple lines.  We check
-			 *	for both cases below.
+			 * A row can have both wrapping and newlines that cause it to
+			 * display across multiple lines.  We check for both cases below.
 			 */
 			if (width > 0 && width_wrap[i])
 			{
 				unsigned int extra_lines;
 
-				extra_lines = (width-1) / width_wrap[i] + nl_lines;
+				extra_lines = (width - 1) / width_wrap[i] + nl_lines;
 				if (extra_lines > extra_row_output_lines)
 					extra_row_output_lines = extra_lines;
 			}
@@ -681,14 +681,15 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		}
 		IsPagerNeeded(cont, extra_output_lines, &fout, &is_pager);
 	}
-	
+
 	/* time to output */
 	if (cont->opt->start_table)
 	{
 		/* print title */
 		if (cont->title && !opt_tuples_only)
 		{
-			int			width, height;
+			int			width,
+						height;
 
 			pg_wcssize((unsigned char *) cont->title, strlen(cont->title),
 					   encoding, &width, &height, NULL);
@@ -777,8 +778,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			break;
 
 		/*
-		 * Format each cell.  Format again, if it's a numeric formatting locale
-		 * (e.g. 123,456 vs. 123456)
+		 * Format each cell.  Format again, if it's a numeric formatting
+		 * locale (e.g. 123,456 vs. 123456)
 		 */
 		for (j = 0; j < col_count; j++)
 		{
@@ -800,9 +801,9 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		memset(bytes_output, 0, col_count * sizeof(int));
 
 		/*
-		 *	Each time through this loop, one display line is output.
-		 *	It can either be a full value or a partial value if embedded
-		 *	newlines exist or if 'format=wrapping' mode is enabled.
+		 * Each time through this loop, one display line is output. It can
+		 * either be a full value or a partial value if embedded newlines
+		 * exist or if 'format=wrapping' mode is enabled.
 		 */
 		do
 		{
@@ -819,9 +820,9 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 			{
 				/* We have a valid array element, so index it */
 				struct lineptr *this_line = &col_lineptrs[j][curr_nl_line[j]];
-				int		bytes_to_output;
-				int		chars_to_output = width_wrap[j];
-				bool	finalspaces = (opt_border == 2 || j < col_count - 1);
+				int			bytes_to_output;
+				int			chars_to_output = width_wrap[j];
+				bool		finalspaces = (opt_border == 2 || j < col_count - 1);
 
 				if (!this_line->ptr)
 				{
@@ -837,15 +838,15 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 										 &chars_to_output, encoding);
 
 					/*
-					 *	If we exceeded width_wrap, it means the display width
-					 *	of a single character was wider than our target width.
-					 *	In that case, we have to pretend we are only printing
-					 *	the target display width and make the best of it.
+					 * If we exceeded width_wrap, it means the display width
+					 * of a single character was wider than our target width.
+					 * In that case, we have to pretend we are only printing
+					 * the target display width and make the best of it.
 					 */
 					if (chars_to_output > width_wrap[j])
 						chars_to_output = width_wrap[j];
 
-					if (cont->aligns[j] == 'r')		/* Right aligned cell */
+					if (cont->aligns[j] == 'r') /* Right aligned cell */
 					{
 						/* spaces first */
 						fprintf(fout, "%*s", width_wrap[j] - chars_to_output, "");
@@ -882,16 +883,16 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					if (opt_border == 0)
 						fputc(' ', fout);
 					/* Next value is beyond past newlines? */
-					else if (col_lineptrs[j+1][curr_nl_line[j+1]].ptr == NULL)
+					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
 						fputs("   ", fout);
 					/* In wrapping of value? */
-					else if (bytes_output[j+1] != 0)
+					else if (bytes_output[j + 1] != 0)
 						fputs(" ; ", fout);
 					/* After first newline value */
-					else if (curr_nl_line[j+1] != 0)
+					else if (curr_nl_line[j + 1] != 0)
 						fputs(" : ", fout);
 					else
-					/* Ordinary line */
+						/* Ordinary line */
 						fputs(" | ", fout);
 				}
 			}
@@ -2019,7 +2020,7 @@ printTableAddHeader(printTableContent *const content, const char *header,
 					const bool translate, const char align)
 {
 #ifndef ENABLE_NLS
-	(void) translate;		/* unused parameter */
+	(void) translate;			/* unused parameter */
 #endif
 
 	if (content->header >= content->headers + content->ncolumns)
@@ -2056,7 +2057,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
 				  const bool translate)
 {
 #ifndef ENABLE_NLS
-	(void) translate;		/* unused parameter */
+	(void) translate;			/* unused parameter */
 #endif
 
 	if (content->cell >= content->cells + (content->ncolumns * content->nrows))
@@ -2084,7 +2085,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
  * strdup'd, so there is no need to keep the original footer string around.
  *
  * Footers are never translated by the function.  If you want the footer
- * translated you must do so yourself, before calling printTableAddFooter.  The
+ * translated you must do so yourself, before calling printTableAddFooter.	The
  * reason this works differently to headers and cells is that footers tend to
  * be made of up individually translated components, rather than being
  * translated as a whole.
@@ -2208,7 +2209,7 @@ void
 printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 {
 	bool		is_pager = false;
-	
+
 	if (cancel_pressed)
 		return;
 
@@ -2218,7 +2219,7 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 	/* print_aligned_text() handles the pager itself */
 	if ((cont->opt->format != PRINT_ALIGNED &&
 		 cont->opt->format != PRINT_WRAPPED) ||
-		 cont->opt->expanded)
+		cont->opt->expanded)
 		IsPagerNeeded(cont, 0, &fout, &is_pager);
 
 	/* print the stuff */
@@ -2321,8 +2322,8 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	{
 		for (c = 0; c < cont.ncolumns; c++)
 		{
-			char		*cell;
-			bool		 translate;
+			char	   *cell;
+			bool		translate;
 
 			if (PQgetisnull(result, r, c))
 				cell = opt->nullPrint ? opt->nullPrint : "";
@@ -2337,7 +2338,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	/* set footers */
 	if (opt->footers)
 	{
-		char		**footer;
+		char	  **footer;
 
 		for (footer = opt->footers; *footer; footer++)
 			printTableAddFooter(&cont, *footer);
@@ -2388,7 +2389,7 @@ setDecimalLocale(void)
 
 /*
  * Compute the byte distance to the end of the string or *target_width
- * display character positions, whichever comes first.  Update *target_width
+ * display character positions, whichever comes first.	Update *target_width
  * to be the number of display character positions actually filled.
  */
 static int
@@ -2396,27 +2397,27 @@ strlen_max_width(unsigned char *str, int *target_width, int encoding)
 {
 	unsigned char *start = str;
 	unsigned char *end = str + strlen((char *) str);
-	int curr_width = 0;
+	int			curr_width = 0;
 
 	while (str < end)
 	{
-		int char_width = PQdsplen((char *) str, encoding);
+		int			char_width = PQdsplen((char *) str, encoding);
 
 		/*
-		 *	If the display width of the new character causes
-		 *	the string to exceed its target width, skip it
-		 *	and return.  However, if this is the first character
-		 *	of the string (curr_width == 0), we have to accept it.
+		 * If the display width of the new character causes the string to
+		 * exceed its target width, skip it and return.  However, if this is
+		 * the first character of the string (curr_width == 0), we have to
+		 * accept it.
 		 */
 		if (*target_width < curr_width + char_width && curr_width != 0)
 			break;
 
 		curr_width += char_width;
-			
+
 		str += PQmblen((char *) str, encoding);
 	}
 
 	*target_width = curr_width;
-	
+
 	return str - start;
 }

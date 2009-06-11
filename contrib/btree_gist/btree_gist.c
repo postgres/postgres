@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.c,v 1.12 2008/05/17 01:28:19 adunstan Exp $ 
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.c,v 1.13 2009/06/11 14:48:50 momjian Exp $
  */
 #include "btree_gist.h"
 

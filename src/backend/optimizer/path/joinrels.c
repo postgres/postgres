@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.99 2009/02/27 22:41:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.100 2009/06/11 14:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	ListCell   *l;
 
 	/*
-	 * Ensure output params are set on failure return.  This is just to
+	 * Ensure output params are set on failure return.	This is just to
 	 * suppress uninitialized-variable warnings from overly anal compilers.
 	 */
 	*sjinfo_p = NULL;
@@ -361,7 +361,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 	/*
 	 * If we have any special joins, the proposed join might be illegal; and
-	 * in any case we have to determine its join type.  Scan the join info
+	 * in any case we have to determine its join type.	Scan the join info
 	 * list for conflicts.
 	 */
 	match_sjinfo = NULL;
@@ -569,7 +569,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 
 	/*
 	 * If it's a plain inner join, then we won't have found anything in
-	 * join_info_list.  Make up a SpecialJoinInfo so that selectivity
+	 * join_info_list.	Make up a SpecialJoinInfo so that selectivity
 	 * estimation functions will know what's being joined.
 	 */
 	if (sjinfo == NULL)
@@ -595,8 +595,8 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 							 &restrictlist);
 
 	/*
-	 * If we've already proven this join is empty, we needn't consider
-	 * any more paths for it.
+	 * If we've already proven this join is empty, we needn't consider any
+	 * more paths for it.
 	 */
 	if (is_dummy_rel(joinrel))
 	{
@@ -605,19 +605,19 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	}
 
 	/*
-	 * Consider paths using each rel as both outer and inner.  Depending
-	 * on the join type, a provably empty outer or inner rel might mean
-	 * the join is provably empty too; in which case throw away any
-	 * previously computed paths and mark the join as dummy.  (We do it
-	 * this way since it's conceivable that dummy-ness of a multi-element
-	 * join might only be noticeable for certain construction paths.)
+	 * Consider paths using each rel as both outer and inner.  Depending on
+	 * the join type, a provably empty outer or inner rel might mean the join
+	 * is provably empty too; in which case throw away any previously computed
+	 * paths and mark the join as dummy.  (We do it this way since it's
+	 * conceivable that dummy-ness of a multi-element join might only be
+	 * noticeable for certain construction paths.)
 	 *
 	 * Also, a provably constant-false join restriction typically means that
-	 * we can skip evaluating one or both sides of the join.  We do this
-	 * by marking the appropriate rel as dummy.
+	 * we can skip evaluating one or both sides of the join.  We do this by
+	 * marking the appropriate rel as dummy.
 	 *
-	 * We need only consider the jointypes that appear in join_info_list,
-	 * plus JOIN_INNER.
+	 * We need only consider the jointypes that appear in join_info_list, plus
+	 * JOIN_INNER.
 	 */
 	switch (sjinfo->jointype)
 	{
@@ -665,6 +665,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 								 restrictlist);
 			break;
 		case JOIN_SEMI:
+
 			/*
 			 * We might have a normal semijoin, or a case where we don't have
 			 * enough rels to do the semijoin but can unique-ify the RHS and
@@ -971,12 +972,12 @@ restriction_is_constant_false(List *restrictlist)
 	 */
 	foreach(lc, restrictlist)
 	{
-		RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		Assert(IsA(rinfo, RestrictInfo));
 		if (rinfo->clause && IsA(rinfo->clause, Const))
 		{
-			Const  *con = (Const *) rinfo->clause;
+			Const	   *con = (Const *) rinfo->clause;
 
 			/* constant NULL is as good as constant FALSE for our purposes */
 			if (con->constisnull)

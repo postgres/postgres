@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.14 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.15 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,9 @@ cnt_length(TSVector t)
 }
 
 
-#define	WordECompareQueryItem(e,q,p,i,m) \
+#define WordECompareQueryItem(e,q,p,i,m) \
 	tsCompareString((q) + (i)->distance, (i)->length,	\
-					(e) + (p)->pos,	(p)->len, (m))
+					(e) + (p)->pos, (p)->len, (m))
 
 
 /*
@@ -90,7 +90,7 @@ find_wordentry(TSVector t, TSQuery q, QueryOperand *item, int32 *nitem)
 	WordEntry  *StopMiddle = StopHigh;
 	int			difference;
 
-	*nitem=0;
+	*nitem = 0;
 
 	/* Loop invariant: StopLow <= item < StopHigh */
 	while (StopLow < StopHigh)
@@ -100,7 +100,7 @@ find_wordentry(TSVector t, TSQuery q, QueryOperand *item, int32 *nitem)
 		if (difference == 0)
 		{
 			StopHigh = StopMiddle;
-			*nitem=1;
+			*nitem = 1;
 			break;
 		}
 		else if (difference > 0)
@@ -109,22 +109,22 @@ find_wordentry(TSVector t, TSQuery q, QueryOperand *item, int32 *nitem)
 			StopHigh = StopMiddle;
 	}
 
-	if ( item->prefix == true )
+	if (item->prefix == true)
 	{
-		if ( StopLow >= StopHigh )
+		if (StopLow >= StopHigh)
 			StopMiddle = StopHigh;
 
-		*nitem=0;
+		*nitem = 0;
 
-		while( StopMiddle < (WordEntry *) STRPTR(t) && 
-				WordECompareQueryItem(STRPTR(t), GETOPERAND(q), StopMiddle, item, true) == 0 )
+		while (StopMiddle < (WordEntry *) STRPTR(t) &&
+			   WordECompareQueryItem(STRPTR(t), GETOPERAND(q), StopMiddle, item, true) == 0)
 		{
 			(*nitem)++;
 			StopMiddle++;
 		}
 	}
 
-	return ( *nitem > 0 ) ? StopHigh : NULL;
+	return (*nitem > 0) ? StopHigh : NULL;
 }
 
 
@@ -237,7 +237,7 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 		if (!entry)
 			continue;
 
-		while( entry - firstentry < nitem )
+		while (entry - firstentry < nitem)
 		{
 			if (entry->haspos)
 				pos[i] = _POSVECPTR(t, entry);
@@ -260,7 +260,7 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 						if (dist || (dist == 0 && (pos[i] == &POSNULL || pos[k] == &POSNULL)))
 						{
 							float		curw;
-	
+
 							if (!dist)
 								dist = MAXENTRYPOS;
 							curw = sqrt(wpos(post[l]) * wpos(ct[p]) * word_distance(dist));
@@ -304,7 +304,7 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 		if (!entry)
 			continue;
 
-		while( entry - firstentry < nitem )
+		while (entry - firstentry < nitem)
 		{
 			if (entry->haspos)
 			{
@@ -650,7 +650,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 		if (!entry)
 			continue;
 
-		while( entry - firstentry < nitem )
+		while (entry - firstentry < nitem)
 		{
 			if (entry->haspos)
 			{
@@ -674,22 +674,22 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 				if (j == 0)
 				{
 					int			k;
-	
+
 					doc[cur].nitem = 0;
 					doc[cur].item = (QueryItem **) palloc(sizeof(QueryItem *) * qr->query->size);
-	
+
 					for (k = 0; k < qr->query->size; k++)
 					{
 						QueryOperand *kptr = &item[k].operand;
 						QueryOperand *iptr = &item[i].operand;
-	
+
 						if (k == i ||
 							(item[k].type == QI_VAL &&
 							 compareQueryOperand(&kptr, &iptr, operand) == 0))
 						{
 							/*
-							 * if k == i, we've already checked above that it's
-							 * type == Q_VAL
+							 * if k == i, we've already checked above that
+							 * it's type == Q_VAL
 							 */
 							doc[cur].item[doc[cur].nitem] = item + k;
 							doc[cur].nitem++;

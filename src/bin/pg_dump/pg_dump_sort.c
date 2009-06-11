@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.24 2009/01/18 20:44:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.25 2009/06/11 14:49:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -955,7 +955,7 @@ repairDependencyLoop(DumpableObject **loop,
 	/*
 	 * If all the objects are TABLE_DATA items, what we must have is a
 	 * circular set of foreign key constraints (or a single self-referential
-	 * table).  Print an appropriate complaint and break the loop arbitrarily.
+	 * table).	Print an appropriate complaint and break the loop arbitrarily.
 	 */
 	for (i = 0; i < nLoop; i++)
 	{
@@ -971,7 +971,7 @@ repairDependencyLoop(DumpableObject **loop,
 		write_msg(NULL, "Consider using a full dump instead of a --data-only dump to avoid this problem.\n");
 		if (nLoop > 1)
 			removeObjectDependency(loop[0], loop[1]->dumpId);
-		else						/* must be a self-dependency */
+		else	/* must be a self-dependency */
 			removeObjectDependency(loop[0], loop[0]->dumpId);
 		return;
 	}
@@ -991,7 +991,7 @@ repairDependencyLoop(DumpableObject **loop,
 
 	if (nLoop > 1)
 		removeObjectDependency(loop[0], loop[1]->dumpId);
-	else						/* must be a self-dependency */
+	else	/* must be a self-dependency */
 		removeObjectDependency(loop[0], loop[0]->dumpId);
 }
 

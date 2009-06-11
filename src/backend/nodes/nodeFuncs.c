@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.39 2009/03/10 22:09:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.40 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ exprType(Node *expr)
 /*
  *	exprTypmod -
  *	  returns the type-specific modifier of the expression's result type,
- *	  if it can be determined.  In many cases, it can't and we return -1.
+ *	  if it can be determined.	In many cases, it can't and we return -1.
  */
 int32
 exprTypmod(Node *expr)
@@ -680,7 +680,7 @@ exprLocation(Node *expr)
 		case T_DistinctExpr:	/* struct-equivalent to OpExpr */
 		case T_NullIfExpr:		/* struct-equivalent to OpExpr */
 			{
-				OpExpr   *opexpr = (OpExpr *) expr;
+				OpExpr	   *opexpr = (OpExpr *) expr;
 
 				/* consider both operator name and leftmost arg */
 				loc = leftmostLoc(opexpr->location,
@@ -711,7 +711,7 @@ exprLocation(Node *expr)
 			break;
 		case T_SubLink:
 			{
-				SubLink *sublink = (SubLink *) expr;
+				SubLink    *sublink = (SubLink *) expr;
 
 				/* check the testexpr, if any, and the operator/keyword */
 				loc = leftmostLoc(exprLocation(sublink->testexpr),
@@ -792,7 +792,7 @@ exprLocation(Node *expr)
 			break;
 		case T_XmlExpr:
 			{
-				XmlExpr   *xexpr = (XmlExpr *) expr;
+				XmlExpr    *xexpr = (XmlExpr *) expr;
 
 				/* consider both function name and leftmost arg */
 				loc = leftmostLoc(xexpr->location,
@@ -846,7 +846,7 @@ exprLocation(Node *expr)
 			break;
 		case T_A_Expr:
 			{
-				A_Expr *aexpr = (A_Expr *) expr;
+				A_Expr	   *aexpr = (A_Expr *) expr;
 
 				/* use leftmost of operator or left operand (if any) */
 				/* we assume right operand can't be to left of operator */
@@ -865,7 +865,7 @@ exprLocation(Node *expr)
 			break;
 		case T_FuncCall:
 			{
-				FuncCall *fc = (FuncCall *) expr;
+				FuncCall   *fc = (FuncCall *) expr;
 
 				/* consider both function name and leftmost arg */
 				loc = leftmostLoc(fc->location,
@@ -882,11 +882,11 @@ exprLocation(Node *expr)
 			break;
 		case T_TypeCast:
 			{
-				TypeCast *tc = (TypeCast *) expr;
+				TypeCast   *tc = (TypeCast *) expr;
 
 				/*
-				 * This could represent CAST(), ::, or TypeName 'literal',
-				 * so any of the components might be leftmost.
+				 * This could represent CAST(), ::, or TypeName 'literal', so
+				 * any of the components might be leftmost.
 				 */
 				loc = exprLocation(tc->arg);
 				loc = leftmostLoc(loc, tc->typename->location);
@@ -1265,7 +1265,7 @@ expression_tree_walker(Node *node,
 			break;
 		case T_WindowClause:
 			{
-				WindowClause    *wc = (WindowClause *) node;
+				WindowClause *wc = (WindowClause *) node;
 
 				if (walker(wc->partitionClause, context))
 					return true;
@@ -1278,8 +1278,8 @@ expression_tree_walker(Node *node,
 				CommonTableExpr *cte = (CommonTableExpr *) node;
 
 				/*
-				 * Invoke the walker on the CTE's Query node, so it
-				 * can recurse into the sub-query if it wants to.
+				 * Invoke the walker on the CTE's Query node, so it can
+				 * recurse into the sub-query if it wants to.
 				 */
 				return walker(cte->ctequery, context);
 			}
@@ -1423,7 +1423,7 @@ range_table_walker(List *rtable,
 		{
 			case RTE_RELATION:
 			case RTE_SPECIAL:
- 			case RTE_CTE:
+			case RTE_CTE:
 				/* nothing to do */
 				break;
 			case RTE_SUBQUERY:
@@ -1904,8 +1904,8 @@ expression_tree_mutator(Node *node,
 			return node;
 		case T_WindowClause:
 			{
-				WindowClause    *wc = (WindowClause *) node;
-				WindowClause    *newnode;
+				WindowClause *wc = (WindowClause *) node;
+				WindowClause *newnode;
 
 				FLATCOPY(newnode, wc, WindowClause);
 				MUTATE(newnode->partitionClause, wc->partitionClause, List *);
@@ -1921,8 +1921,8 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, cte, CommonTableExpr);
 
 				/*
-				 * Also invoke the mutator on the CTE's Query node, so it
-				 * can recurse into the sub-query if it wants to.
+				 * Also invoke the mutator on the CTE's Query node, so it can
+				 * recurse into the sub-query if it wants to.
 				 */
 				MUTATE(newnode->ctequery, cte->ctequery, Node *);
 				return (Node *) newnode;
@@ -2070,7 +2070,7 @@ query_tree_mutator(Query *query,
 	MUTATE(query->limitCount, query->limitCount, Node *);
 	if (!(flags & QTW_IGNORE_CTE_SUBQUERIES))
 		MUTATE(query->cteList, query->cteList, List *);
-	else						/* else copy CTE list as-is */
+	else	/* else copy CTE list as-is */
 		query->cteList = copyObject(query->cteList);
 	query->rtable = range_table_mutator(query->rtable,
 										mutator, context, flags);
@@ -2198,7 +2198,7 @@ query_or_expression_tree_mutator(Node *node,
  * that could appear under it, but not other statement types.
  */
 bool
-raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
+			raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 {
 	ListCell   *temp;
 
@@ -2356,7 +2356,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_A_Expr:
 			{
-				A_Expr *expr = (A_Expr *) node;
+				A_Expr	   *expr = (A_Expr *) node;
 
 				if (walker(expr->lexpr, context))
 					return true;
@@ -2370,7 +2370,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_FuncCall:
 			{
-				FuncCall *fcall = (FuncCall *) node;
+				FuncCall   *fcall = (FuncCall *) node;
 
 				if (walker(fcall->args, context))
 					return true;
@@ -2381,7 +2381,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_A_Indices:
 			{
-				A_Indices *indices = (A_Indices *) node;
+				A_Indices  *indices = (A_Indices *) node;
 
 				if (walker(indices->lidx, context))
 					return true;
@@ -2403,7 +2403,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			return walker(((A_ArrayExpr *) node)->elements, context);
 		case T_ResTarget:
 			{
-				ResTarget *rt = (ResTarget *) node;
+				ResTarget  *rt = (ResTarget *) node;
 
 				if (walker(rt->indirection, context))
 					return true;
@@ -2413,7 +2413,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_TypeCast:
 			{
-				TypeCast *tc = (TypeCast *) node;
+				TypeCast   *tc = (TypeCast *) node;
 
 				if (walker(tc->arg, context))
 					return true;
@@ -2425,7 +2425,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			return walker(((SortBy *) node)->node, context);
 		case T_WindowDef:
 			{
-				WindowDef *wd = (WindowDef *) node;
+				WindowDef  *wd = (WindowDef *) node;
 
 				if (walker(wd->partitionClause, context))
 					return true;
@@ -2455,7 +2455,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_TypeName:
 			{
-				TypeName *tn = (TypeName *) node;
+				TypeName   *tn = (TypeName *) node;
 
 				if (walker(tn->typmods, context))
 					return true;
@@ -2466,7 +2466,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_ColumnDef:
 			{
-				ColumnDef *coldef = (ColumnDef *) node;
+				ColumnDef  *coldef = (ColumnDef *) node;
 
 				if (walker(coldef->typename, context))
 					return true;

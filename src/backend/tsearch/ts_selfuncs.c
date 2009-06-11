@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.3 2009/06/03 18:42:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_selfuncs.c,v 1.4 2009/06/11 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,23 +33,23 @@
 /* lookup table type for binary searching through MCELEMs */
 typedef struct
 {
-	text   *element;
-	float4	frequency;
+	text	   *element;
+	float4		frequency;
 } TextFreq;
 
 /* type of keys for bsearch'ing through an array of TextFreqs */
 typedef struct
 {
-	char	*lexeme;
-	int		length;
+	char	   *lexeme;
+	int			length;
 } LexemeKey;
 
 static Selectivity tsquerysel(VariableStatData *vardata, Datum constval);
 static Selectivity mcelem_tsquery_selec(TSQuery query,
-										Datum *mcelem, int nmcelem,
-										float4 *numbers, int nnumbers);
+					 Datum *mcelem, int nmcelem,
+					 float4 *numbers, int nnumbers);
 static Selectivity tsquery_opr_selec(QueryItem *item, char *operand,
-								 TextFreq *lookup, int length, float4 minfreq);
+				  TextFreq *lookup, int length, float4 minfreq);
 static int	compare_lexeme_textfreq(const void *e1, const void *e2);
 
 
@@ -63,6 +63,7 @@ Datum
 tsmatchsel(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			operator = PG_GETARG_OID(1);
 #endif
@@ -71,7 +72,7 @@ tsmatchsel(PG_FUNCTION_ARGS)
 	VariableStatData vardata;
 	Node	   *other;
 	bool		varonleft;
-	Selectivity	selec;
+	Selectivity selec;
 
 	/*
 	 * If expression is not variable = something or something = variable, then
@@ -145,8 +146,8 @@ tsmatchjoinsel(PG_FUNCTION_ARGS)
 static Selectivity
 tsquerysel(VariableStatData *vardata, Datum constval)
 {
-	Selectivity			selec;
-	TSQuery				query;
+	Selectivity selec;
+	TSQuery		query;
 
 	/* The caller made sure the const is a TSQuery, so get it now */
 	query = DatumGetTSQuery(constval);
@@ -157,11 +158,11 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 
 	if (HeapTupleIsValid(vardata->statsTuple))
 	{
-		Form_pg_statistic	stats;
-		Datum				*values;
-		int					nvalues;
-		float4				*numbers;
-		int					nnumbers;
+		Form_pg_statistic stats;
+		Datum	   *values;
+		int			nvalues;
+		float4	   *numbers;
+		int			nnumbers;
 
 		stats = (Form_pg_statistic) GETSTRUCT(vardata->statsTuple);
 
@@ -202,10 +203,10 @@ static Selectivity
 mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 					 float4 *numbers, int nnumbers)
 {
-	float4			minfreq;
-	TextFreq		*lookup;
-	Selectivity		selec;
-	int				i;
+	float4		minfreq;
+	TextFreq   *lookup;
+	Selectivity selec;
+	int			i;
 
 	/*
 	 * There should be two more Numbers than Values, because the last two
@@ -221,8 +222,8 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	for (i = 0; i < nmcelem; i++)
 	{
 		/*
-		 * The text Datums came from an array, so it cannot be compressed
-		 * or stored out-of-line -- it's safe to use VARSIZE_ANY*.
+		 * The text Datums came from an array, so it cannot be compressed or
+		 * stored out-of-line -- it's safe to use VARSIZE_ANY*.
 		 */
 		Assert(!VARATT_IS_COMPRESSED(mcelem[i]) && !VARATT_IS_EXTERNAL(mcelem[i]));
 		lookup[i].element = (text *) DatumGetPointer(mcelem[i]);
@@ -246,15 +247,15 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 /*
  * Traverse the tsquery in preorder, calculating selectivity as:
  *
- *   selec(left_oper) * selec(right_oper) in AND nodes,
+ *	 selec(left_oper) * selec(right_oper) in AND nodes,
  *
- *   selec(left_oper) + selec(right_oper) -
- *      selec(left_oper) * selec(right_oper) in OR nodes,
+ *	 selec(left_oper) + selec(right_oper) -
+ *		selec(left_oper) * selec(right_oper) in OR nodes,
  *
- *   1 - select(oper) in NOT nodes
+ *	 1 - select(oper) in NOT nodes
  *
- *   freq[val] in VAL nodes, if the value is in MCELEM
- *   min(freq[MCELEM]) / 2 in VAL nodes, if it is not
+ *	 freq[val] in VAL nodes, if the value is in MCELEM
+ *	 min(freq[MCELEM]) / 2 in VAL nodes, if it is not
  *
  *
  * The MCELEM array is already sorted (see ts_typanalyze.c), so we can use
@@ -265,8 +266,10 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 				  TextFreq *lookup, int length, float4 minfreq)
 {
 	LexemeKey	key;
-	TextFreq	*searchres;
-	Selectivity	selec, s1, s2;
+	TextFreq   *searchres;
+	Selectivity selec,
+				s1,
+				s2;
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
@@ -307,13 +310,13 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 	switch (item->operator.oper)
 	{
 		case OP_NOT:
-			selec =  1.0 - tsquery_opr_selec(item + 1, operand,
-											 lookup, length, minfreq);
+			selec = 1.0 - tsquery_opr_selec(item + 1, operand,
+											lookup, length, minfreq);
 			break;
 
 		case OP_AND:
 			s1 = tsquery_opr_selec(item + 1, operand,
-									 lookup, length, minfreq);
+								   lookup, length, minfreq);
 			s2 = tsquery_opr_selec(item + item->operator.left, operand,
 								   lookup, length, minfreq);
 			selec = s1 * s2;
@@ -348,10 +351,10 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 static int
 compare_lexeme_textfreq(const void *e1, const void *e2)
 {
-	const LexemeKey	*key = (const LexemeKey *) e1;
-	const TextFreq	*t = (const TextFreq *) e2;
-	int				len1,
-					len2;
+	const LexemeKey *key = (const LexemeKey *) e1;
+	const TextFreq *t = (const TextFreq *) e2;
+	int			len1,
+				len2;
 
 	len1 = key->length;
 	len2 = VARSIZE_ANY_EXHDR(t->element);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.15 2009/03/24 20:17:10 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.16 2009/06/11 14:48:53 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -84,7 +84,7 @@ ginInsertData(BuildAccumulator *accum, EntryAccumulator *entry, ItemPointer heap
 static Datum
 getDatumCopy(BuildAccumulator *accum, OffsetNumber attnum, Datum value)
 {
-	Form_pg_attribute att = accum->ginstate->origTupdesc->attrs[ attnum - 1 ];
+	Form_pg_attribute att = accum->ginstate->origTupdesc->attrs[attnum - 1];
 	Datum		res;
 
 	if (att->attbyval)
@@ -161,8 +161,8 @@ ginInsertEntry(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum
  * then calls itself for each parts
  */
 static void
-ginChooseElem(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum, 
-										Datum *entries, uint32 nentry,
+ginChooseElem(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum,
+			  Datum *entries, uint32 nentry,
 			  uint32 low, uint32 high, uint32 offset)
 {
 	uint32		pos;
@@ -187,8 +187,8 @@ ginChooseElem(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum,
  * next middle on left part and middle of right part.
  */
 void
-ginInsertRecordBA(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum, 
-						Datum *entries, int32 nentry)
+ginInsertRecordBA(BuildAccumulator *accum, ItemPointer heapptr, OffsetNumber attnum,
+				  Datum *entries, int32 nentry)
 {
 	uint32		i,
 				nbit = 0,

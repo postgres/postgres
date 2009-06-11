@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.7 2009/04/05 04:19:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.8 2009/06/11 14:49:15 momjian Exp $
  */
 
 #include "c.h"
@@ -40,6 +40,7 @@
 
 #ifndef HAVE_INT_OPTRESET
 int			optreset;
+
 /* else the "extern" was provided by getopt_long.h */
 #endif
 

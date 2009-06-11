@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.186 2009/01/30 17:24:47 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.187 2009/06/11 14:48:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,7 +684,7 @@ AlterRole(AlterRoleStmt *stmt)
 	}
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
-								 new_record_nulls, new_record_repl);
+								  new_record_nulls, new_record_repl);
 	simple_heap_update(pg_authid_rel, &tuple->t_self, new_tuple);
 
 	/* Update indexes */
@@ -802,7 +802,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	}
 
 	newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
-								repl_val, repl_null, repl_repl);
+								 repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);
@@ -1143,7 +1143,7 @@ GrantRole(GrantRoleStmt *stmt)
 		if (rolename == NULL || priv->cols != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-					 errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
+			errmsg("column names cannot be included in GRANT/REVOKE ROLE")));
 
 		roleid = get_roleid_checked(rolename);
 		if (stmt->is_grant)
@@ -1366,8 +1366,8 @@ AddRoleMems(const char *rolename, Oid roleid,
 			new_record_repl[Anum_pg_auth_members_grantor - 1] = true;
 			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
 			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
-									 new_record,
-									 new_record_nulls, new_record_repl);
+									  new_record,
+									  new_record_nulls, new_record_repl);
 			simple_heap_update(pg_authmem_rel, &tuple->t_self, tuple);
 			CatalogUpdateIndexes(pg_authmem_rel, tuple);
 			ReleaseSysCache(authmem_tuple);
@@ -1375,7 +1375,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		else
 		{
 			tuple = heap_form_tuple(pg_authmem_dsc,
-								   new_record, new_record_nulls);
+									new_record, new_record_nulls);
 			simple_heap_insert(pg_authmem_rel, tuple);
 			CatalogUpdateIndexes(pg_authmem_rel, tuple);
 		}
@@ -1485,8 +1485,8 @@ DelRoleMems(const char *rolename, Oid roleid,
 			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
 
 			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
-									 new_record,
-									 new_record_nulls, new_record_repl);
+									  new_record,
+									  new_record_nulls, new_record_repl);
 			simple_heap_update(pg_authmem_rel, &tuple->t_self, tuple);
 			CatalogUpdateIndexes(pg_authmem_rel, tuple);
 		}

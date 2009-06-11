@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.94 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.95 2009/06/11 14:49:08 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -26,9 +26,10 @@ int
 MainLoop(FILE *source)
 {
 	PsqlScanState scan_state;	/* lexer working state */
-	volatile PQExpBuffer query_buf;	/* buffer for query being accumulated */
+	volatile PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the new
-								 * buffer yet, use this one for \e, etc. */
+										 * buffer yet, use this one for \e,
+										 * etc. */
 	PQExpBuffer history_buf;	/* earlier lines of a multi-line command, not
 								 * yet saved to readline history */
 	char	   *line;			/* current line of input */
@@ -183,7 +184,7 @@ MainLoop(FILE *source)
 			printf(_("Type:  \\copyright for distribution terms\n"
 					 "       \\h for help with SQL commands\n"
 					 "       \\? for help with psql commands\n"
-					 "       \\g or terminate with semicolon to execute query\n"
+				  "       \\g or terminate with semicolon to execute query\n"
 					 "       \\q to quit\n"));
 
 			fflush(stdout);

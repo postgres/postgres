@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.7 2009/04/04 21:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/foreigncmds.c,v 1.8 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,8 @@
 static Datum
 optionListToArray(List *options)
 {
-	ArrayBuildState    *astate = NULL;
-	ListCell		   *cell;
+	ArrayBuildState *astate = NULL;
+	ListCell   *cell;
 
 	foreach(cell, options)
 	{
@@ -76,7 +76,7 @@ optionListToArray(List *options)
 
 
 /*
- * Transform a list of DefElem into text array format.  This is substantially
+ * Transform a list of DefElem into text array format.	This is substantially
  * the same thing as optionListToArray(), except we recognize SET/ADD/DROP
  * actions for modifying an existing list of options, which is passed in
  * Datum form as oldOptions.  Also, if fdwvalidator isn't InvalidOid
@@ -92,23 +92,23 @@ transformGenericOptions(Datum oldOptions,
 						List *options,
 						Oid fdwvalidator)
 {
-	List	 *resultOptions = untransformRelOptions(oldOptions);
-	ListCell *optcell;
-	Datum	  result;
+	List	   *resultOptions = untransformRelOptions(oldOptions);
+	ListCell   *optcell;
+	Datum		result;
 
 	foreach(optcell, options)
 	{
-		DefElem	   *od = lfirst(optcell);
+		DefElem    *od = lfirst(optcell);
 		ListCell   *cell;
 		ListCell   *prev = NULL;
 
 		/*
-		 * Find the element in resultOptions.  We need this for
-		 * validation in all cases.  Also identify the previous element.
+		 * Find the element in resultOptions.  We need this for validation in
+		 * all cases.  Also identify the previous element.
 		 */
-		foreach (cell, resultOptions)
+		foreach(cell, resultOptions)
 		{
-			DefElem	*def = lfirst(cell);
+			DefElem    *def = lfirst(cell);
 
 			if (strcmp(def->defname, od->defname) == 0)
 				break;
@@ -117,10 +117,10 @@ transformGenericOptions(Datum oldOptions,
 		}
 
 		/*
-		 * It is possible to perform multiple SET/DROP actions on the
-		 * same option.  The standard permits this, as long as the
-		 * options to be added are unique.  Note that an unspecified
-		 * action is taken to be ADD.
+		 * It is possible to perform multiple SET/DROP actions on the same
+		 * option.	The standard permits this, as long as the options to be
+		 * added are unique.  Note that an unspecified action is taken to be
+		 * ADD.
 		 */
 		switch (od->defaction)
 		{
@@ -174,16 +174,16 @@ transformGenericOptions(Datum oldOptions,
 static Oid
 GetUserOidFromMapping(const char *username, bool missing_ok)
 {
-    if (!username)
-        /* PUBLIC user mapping */
-        return InvalidOid;
+	if (!username)
+		/* PUBLIC user mapping */
+		return InvalidOid;
 
-    if (strcmp(username, "current_user") == 0)
-        /* map to the owner */
-        return GetUserId();
+	if (strcmp(username, "current_user") == 0)
+		/* map to the owner */
+		return GetUserId();
 
-    /* map to provided user */
-    return missing_ok ? get_roleid(username) : get_roleid_checked(username);
+	/* map to provided user */
+	return missing_ok ? get_roleid(username) : get_roleid_checked(username);
 }
 
 
@@ -201,7 +201,7 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 	Oid			fdwId;
 	Form_pg_foreign_data_wrapper form;
 
-    /* Must be a superuser to change a FDW owner */
+	/* Must be a superuser to change a FDW owner */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -209,13 +209,13 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 						name),
 				 errhint("Must be superuser to change owner of a foreign-data wrapper.")));
 
-    /* New owner must also be a superuser */
+	/* New owner must also be a superuser */
 	if (!superuser_arg(newOwnerId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to change owner of foreign-data wrapper \"%s\"",
 						name),
-				 errhint("The owner of a foreign-data wrapper must be a superuser.")));
+		errhint("The owner of a foreign-data wrapper must be a superuser.")));
 
 	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
@@ -226,7 +226,7 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("foreign-data wrapper \"%s\" does not exist", name)));
+				 errmsg("foreign-data wrapper \"%s\" does not exist", name)));
 
 	fdwId = HeapTupleGetOid(tup);
 	form = (Form_pg_foreign_data_wrapper) GETSTRUCT(tup);
@@ -268,9 +268,9 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 							 0, 0, 0);
 
 	if (!HeapTupleIsValid(tup))
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_OBJECT),
-                errmsg("server \"%s\" does not exist", name)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("server \"%s\" does not exist", name)));
 
 	srvId = HeapTupleGetOid(tup);
 	form = (Form_pg_foreign_server) GETSTRUCT(tup);
@@ -334,22 +334,22 @@ lookup_fdw_validator_func(List *validator)
 void
 CreateForeignDataWrapper(CreateFdwStmt *stmt)
 {
-	Relation		rel;
-	Datum			values[Natts_pg_foreign_data_wrapper];
-	bool			nulls[Natts_pg_foreign_data_wrapper];
-	HeapTuple		tuple;
-	Oid				fdwId;
-	Oid				fdwvalidator;
-	Datum			fdwoptions;
-	Oid				ownerId;
+	Relation	rel;
+	Datum		values[Natts_pg_foreign_data_wrapper];
+	bool		nulls[Natts_pg_foreign_data_wrapper];
+	HeapTuple	tuple;
+	Oid			fdwId;
+	Oid			fdwvalidator;
+	Datum		fdwoptions;
+	Oid			ownerId;
 
 	/* Must be super user */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to create foreign-data wrapper \"%s\"",
-						stmt->fdwname),
-				 errhint("Must be superuser to create a foreign-data wrapper.")));
+			errmsg("permission denied to create foreign-data wrapper \"%s\"",
+				   stmt->fdwname),
+			errhint("Must be superuser to create a foreign-data wrapper.")));
 
 	/* For now the owner cannot be specified on create. Use effective user ID. */
 	ownerId = GetUserId();
@@ -440,9 +440,9 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to alter foreign-data wrapper \"%s\"",
-						stmt->fdwname),
-				 errhint("Must be superuser to alter a foreign-data wrapper.")));
+			 errmsg("permission denied to alter foreign-data wrapper \"%s\"",
+					stmt->fdwname),
+			 errhint("Must be superuser to alter a foreign-data wrapper.")));
 
 	tp = SearchSysCacheCopy(FOREIGNDATAWRAPPERNAME,
 							CStringGetDatum(stmt->fdwname),
@@ -451,7 +451,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("foreign-data wrapper \"%s\" does not exist", stmt->fdwname)));
+		errmsg("foreign-data wrapper \"%s\" does not exist", stmt->fdwname)));
 
 	fdwId = HeapTupleGetOid(tp);
 
@@ -467,18 +467,17 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 
 		/*
 		 * It could be that the options for the FDW, SERVER and USER MAPPING
-		 * are no longer valid with the new validator.  Warn about this.
+		 * are no longer valid with the new validator.	Warn about this.
 		 */
 		if (stmt->validator)
 			ereport(WARNING,
-					(errmsg("changing the foreign-data wrapper validator can cause "
-							"the options for dependent objects to become invalid")));
+			 (errmsg("changing the foreign-data wrapper validator can cause "
+					 "the options for dependent objects to become invalid")));
 	}
 	else
 	{
 		/*
-		 * Validator is not changed, but we need it for validating
-		 * options.
+		 * Validator is not changed, but we need it for validating options.
 		 */
 		datum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID,
 								tp,
@@ -517,7 +516,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
 	tp = heap_modify_tuple(tp, RelationGetDescr(rel),
-						  repl_val, repl_null, repl_repl);
+						   repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &tp->t_self, tp);
 	CatalogUpdateIndexes(rel, tp);
@@ -533,30 +532,30 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 void
 RemoveForeignDataWrapper(DropFdwStmt *stmt)
 {
-	Oid					fdwId;
-	ObjectAddress		object;
+	Oid			fdwId;
+	ObjectAddress object;
 
 	fdwId = GetForeignDataWrapperOidByName(stmt->fdwname, true);
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("permission denied to drop foreign-data wrapper \"%s\"",
-					stmt->fdwname),
-				errhint("Must be superuser to drop a foreign-data wrapper.")));
+			  errmsg("permission denied to drop foreign-data wrapper \"%s\"",
+					 stmt->fdwname),
+			  errhint("Must be superuser to drop a foreign-data wrapper.")));
 
 	if (!OidIsValid(fdwId))
 	{
 		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("foreign-data wrapper \"%s\" does not exist",
-					stmt->fdwname)));
+					 errmsg("foreign-data wrapper \"%s\" does not exist",
+							stmt->fdwname)));
 
 		/* IF EXISTS specified, just note it */
 		ereport(NOTICE,
-				(errmsg("foreign-data wrapper \"%s\" does not exist, skipping",
-					stmt->fdwname)));
+			  (errmsg("foreign-data wrapper \"%s\" does not exist, skipping",
+					  stmt->fdwname)));
 		return;
 	}
 
@@ -603,16 +602,16 @@ RemoveForeignDataWrapperById(Oid fdwId)
 void
 CreateForeignServer(CreateForeignServerStmt *stmt)
 {
-	Relation		rel;
-	Datum			srvoptions;
-	Datum			values[Natts_pg_foreign_server];
-	bool			nulls[Natts_pg_foreign_server];
-	HeapTuple		tuple;
-	Oid				srvId;
-	Oid				ownerId;
-	AclResult		aclresult;
-	ObjectAddress 	myself;
-	ObjectAddress	referenced;
+	Relation	rel;
+	Datum		srvoptions;
+	Datum		values[Natts_pg_foreign_server];
+	bool		nulls[Natts_pg_foreign_server];
+	HeapTuple	tuple;
+	Oid			srvId;
+	Oid			ownerId;
+	AclResult	aclresult;
+	ObjectAddress myself;
+	ObjectAddress referenced;
 	ForeignDataWrapper *fdw;
 
 	/* For now the owner cannot be specified on create. Use effective user ID. */
@@ -628,8 +627,8 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 						stmt->servername)));
 
 	/*
-	 * Check that the FDW exists and that we have USAGE on it.
-	 * Also get the actual FDW for option validation etc.
+	 * Check that the FDW exists and that we have USAGE on it. Also get the
+	 * actual FDW for option validation etc.
 	 */
 	fdw = GetForeignDataWrapperByName(stmt->fdwname, false);
 
@@ -712,7 +711,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	bool		repl_null[Natts_pg_foreign_server];
 	bool		repl_repl[Natts_pg_foreign_server];
 	Oid			srvId;
-	Form_pg_foreign_server	srvForm;
+	Form_pg_foreign_server srvForm;
 
 	tp = SearchSysCacheCopy(FOREIGNSERVERNAME,
 							CStringGetDatum(stmt->servername),
@@ -721,7 +720,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	if (!HeapTupleIsValid(tp))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("server \"%s\" does not exist", stmt->servername)));
+				 errmsg("server \"%s\" does not exist", stmt->servername)));
 
 	srvId = HeapTupleGetOid(tp);
 	srvForm = (Form_pg_foreign_server) GETSTRUCT(tp);
@@ -754,8 +753,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	if (stmt->options)
 	{
 		ForeignDataWrapper *fdw = GetForeignDataWrapper(srvForm->srvfdw);
-		Datum				datum;
-		bool				isnull;
+		Datum		datum;
+		bool		isnull;
 
 		/* Extract the current srvoptions */
 		datum = SysCacheGetAttr(FOREIGNSERVEROID,
@@ -782,7 +781,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
 
 	tp = heap_modify_tuple(tp, RelationGetDescr(rel),
-						  repl_val, repl_null, repl_repl);
+						   repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &tp->t_self, tp);
 	CatalogUpdateIndexes(rel, tp);
@@ -798,8 +797,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 void
 RemoveForeignServer(DropForeignServerStmt *stmt)
 {
-	Oid				srvId;
-	ObjectAddress	object;
+	Oid			srvId;
+	ObjectAddress object;
 
 	srvId = GetForeignServerOidByName(stmt->servername, true);
 
@@ -809,7 +808,7 @@ RemoveForeignServer(DropForeignServerStmt *stmt)
 		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("server \"%s\" does not exist", stmt->servername)));
+				  errmsg("server \"%s\" does not exist", stmt->servername)));
 
 		/* IF EXISTS specified, just note it */
 		ereport(NOTICE,
@@ -871,7 +870,7 @@ user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
 	{
 		if (umuserid == curuserid)
 		{
-			AclResult			aclresult;
+			AclResult	aclresult;
 
 			aclresult = pg_foreign_server_aclcheck(serverid, curuserid, ACL_USAGE);
 			if (aclresult != ACLCHECK_OK)
@@ -890,16 +889,16 @@ user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
 void
 CreateUserMapping(CreateUserMappingStmt *stmt)
 {
-	Relation			rel;
-	Datum				useoptions;
-	Datum				values[Natts_pg_user_mapping];
-	bool				nulls[Natts_pg_user_mapping];
-	HeapTuple			tuple;
-	Oid					useId;
-	Oid					umId;
-	ObjectAddress 		myself;
-	ObjectAddress		referenced;
-	ForeignServer	   *srv;
+	Relation	rel;
+	Datum		useoptions;
+	Datum		values[Natts_pg_user_mapping];
+	bool		nulls[Natts_pg_user_mapping];
+	HeapTuple	tuple;
+	Oid			useId;
+	Oid			umId;
+	ObjectAddress myself;
+	ObjectAddress referenced;
+	ForeignServer *srv;
 	ForeignDataWrapper *fdw;
 
 	useId = GetUserOidFromMapping(stmt->username, false);
@@ -913,9 +912,9 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	 * Check that the user mapping is unique within server.
 	 */
 	umId = GetSysCacheOid(USERMAPPINGUSERSERVER,
-						   ObjectIdGetDatum(useId),
-						   ObjectIdGetDatum(srv->serverid),
-						   0, 0);
+						  ObjectIdGetDatum(useId),
+						  ObjectIdGetDatum(srv->serverid),
+						  0, 0);
 	if (OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -984,7 +983,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	bool		repl_repl[Natts_pg_user_mapping];
 	Oid			useId;
 	Oid			umId;
-	ForeignServer	*srv;
+	ForeignServer *srv;
 
 	useId = GetUserOidFromMapping(stmt->username, false);
 	srv = GetForeignServerByName(stmt->servername, false);
@@ -996,8 +995,8 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	if (!OidIsValid(umId))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("user mapping \"%s\" does not exist for the server",
-					MappingUserName(useId))));
+				 errmsg("user mapping \"%s\" does not exist for the server",
+						MappingUserName(useId))));
 
 	user_mapping_ddl_aclcheck(useId, srv->serverid, stmt->servername);
 
@@ -1014,9 +1013,9 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 	if (stmt->options)
 	{
-		ForeignDataWrapper		   *fdw;
-		Datum						datum;
-		bool						isnull;
+		ForeignDataWrapper *fdw;
+		Datum		datum;
+		bool		isnull;
 
 		/*
 		 * Process the options.
@@ -1048,7 +1047,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	rel = heap_open(UserMappingRelationId, RowExclusiveLock);
 
 	tp = heap_modify_tuple(tp, RelationGetDescr(rel),
-						  repl_val, repl_null, repl_repl);
+						   repl_val, repl_null, repl_repl);
 
 	simple_heap_update(rel, &tp->t_self, tp);
 	CatalogUpdateIndexes(rel, tp);
@@ -1064,10 +1063,10 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 void
 RemoveUserMapping(DropUserMappingStmt *stmt)
 {
-	ObjectAddress	object;
-	Oid				useId;
-	Oid				umId;
-	ForeignServer  *srv;
+	ObjectAddress object;
+	Oid			useId;
+	Oid			umId;
+	ForeignServer *srv;
 
 	useId = GetUserOidFromMapping(stmt->username, stmt->missing_ok);
 	srv = GetForeignServerByName(stmt->servername, true);
@@ -1075,8 +1074,8 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 	if (stmt->username && !OidIsValid(useId))
 	{
 		/*
-		 * IF EXISTS specified, role not found and not public.
-		 * Notice this and leave.
+		 * IF EXISTS specified, role not found and not public. Notice this and
+		 * leave.
 		 */
 		elog(NOTICE, "role \"%s\" does not exist, skipping", stmt->username);
 		return;
@@ -1087,8 +1086,8 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("server \"%s\" does not exist",
-					stmt->servername)));
+					 errmsg("server \"%s\" does not exist",
+							stmt->servername)));
 		/* IF EXISTS, just note it */
 		ereport(NOTICE, (errmsg("server does not exist, skipping")));
 		return;
@@ -1104,13 +1103,13 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("user mapping \"%s\" does not exist for the server",
-						MappingUserName(useId))));
+				  errmsg("user mapping \"%s\" does not exist for the server",
+						 MappingUserName(useId))));
 
 		/* IF EXISTS specified, just note it */
 		ereport(NOTICE,
-				(errmsg("user mapping \"%s\" does not exist for the server, skipping",
-					MappingUserName(useId))));
+		(errmsg("user mapping \"%s\" does not exist for the server, skipping",
+				MappingUserName(useId))));
 		return;
 	}
 

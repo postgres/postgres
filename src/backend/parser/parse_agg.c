@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.87 2009/01/01 17:23:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.88 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("aggregate function calls cannot be nested"),
 					 parser_errposition(pstate,
-										locate_agg_of_level((Node *) agg->args, 0))));
+							   locate_agg_of_level((Node *) agg->args, 0))));
 	}
 
 	/* It can't contain window functions either */
@@ -111,8 +111,8 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 						WindowDef *windef)
 {
 	/*
-	 * A window function call can't contain another one (but aggs are OK).
-	 * XXX is this required by spec, or just an unimplemented feature?
+	 * A window function call can't contain another one (but aggs are OK). XXX
+	 * is this required by spec, or just an unimplemented feature?
 	 */
 	if (pstate->p_hasWindowFuncs &&
 		checkExprHasWindowFuncs((Node *) wfunc->args))
@@ -120,13 +120,13 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 				(errcode(ERRCODE_WINDOWING_ERROR),
 				 errmsg("window function calls cannot be nested"),
 				 parser_errposition(pstate,
-									locate_windowfunc((Node *) wfunc->args))));
+								  locate_windowfunc((Node *) wfunc->args))));
 
 	/*
-	 * If the OVER clause just specifies a window name, find that
-	 * WINDOW clause (which had better be present).  Otherwise, try to
-	 * match all the properties of the OVER clause, and make a new entry
-	 * in the p_windowdefs list if no luck.
+	 * If the OVER clause just specifies a window name, find that WINDOW
+	 * clause (which had better be present).  Otherwise, try to match all the
+	 * properties of the OVER clause, and make a new entry in the p_windowdefs
+	 * list if no luck.
 	 */
 	if (windef->name)
 	{
@@ -140,7 +140,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 
 		foreach(lc, pstate->p_windowdefs)
 		{
-			WindowDef *refwin = (WindowDef *) lfirst(lc);
+			WindowDef  *refwin = (WindowDef *) lfirst(lc);
 
 			winref++;
 			if (refwin->name && strcmp(refwin->name, windef->name) == 0)
@@ -162,14 +162,14 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 
 		foreach(lc, pstate->p_windowdefs)
 		{
-			WindowDef *refwin = (WindowDef *) lfirst(lc);
+			WindowDef  *refwin = (WindowDef *) lfirst(lc);
 
 			winref++;
 			if (refwin->refname && windef->refname &&
 				strcmp(refwin->refname, windef->refname) == 0)
-				/* matched on refname */ ;
+				 /* matched on refname */ ;
 			else if (!refwin->refname && !windef->refname)
-				/* matched, no refname */ ;
+				 /* matched, no refname */ ;
 			else
 				continue;
 			if (equal(refwin->partitionClause, windef->partitionClause) &&
@@ -242,13 +242,13 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregates not allowed in WHERE clause"),
 				 parser_errposition(pstate,
-									locate_agg_of_level(qry->jointree->quals, 0))));
+							 locate_agg_of_level(qry->jointree->quals, 0))));
 	if (checkExprHasAggs((Node *) qry->jointree->fromlist))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("aggregates not allowed in JOIN conditions"),
 				 parser_errposition(pstate,
-									locate_agg_of_level((Node *) qry->jointree->fromlist, 0))));
+				 locate_agg_of_level((Node *) qry->jointree->fromlist, 0))));
 
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.
@@ -277,10 +277,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * If there are join alias vars involved, we have to flatten them to the
 	 * underlying vars, so that aliased and unaliased vars will be correctly
 	 * taken as equal.	We can skip the expense of doing this if no rangetable
-	 * entries are RTE_JOIN kind.
-	 * We use the planner's flatten_join_alias_vars routine to do the
-	 * flattening; it wants a PlannerInfo root node, which fortunately can be
-	 * mostly dummy.
+	 * entries are RTE_JOIN kind. We use the planner's flatten_join_alias_vars
+	 * routine to do the flattening; it wants a PlannerInfo root node, which
+	 * fortunately can be mostly dummy.
 	 */
 	if (hasJoinRTEs)
 	{
@@ -315,7 +314,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 *
 	 * Note: because we check resjunk tlist elements as well as regular ones,
 	 * this will also find ungrouped variables that came from ORDER BY and
-	 * WINDOW clauses.  For that matter, it's also going to examine the
+	 * WINDOW clauses.	For that matter, it's also going to examine the
 	 * grouping expressions themselves --- but they'll all pass the test ...
 	 */
 	clause = (Node *) qry->targetList;
@@ -346,14 +345,14 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
  *	Check for window functions where they shouldn't be.
  *
  *	We have to forbid window functions in WHERE, JOIN/ON, HAVING, GROUP BY,
- *	and window specifications.  (Other clauses, such as RETURNING and LIMIT,
+ *	and window specifications.	(Other clauses, such as RETURNING and LIMIT,
  *	have already been checked.)  Transformation of all these clauses must
  *	be completed already.
  */
 void
 parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 {
-	ListCell	   *l;
+	ListCell   *l;
 
 	/* This should only be called if we found window functions */
 	Assert(pstate->p_hasWindowFuncs);
@@ -363,13 +362,13 @@ parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 				(errcode(ERRCODE_WINDOWING_ERROR),
 				 errmsg("window functions not allowed in WHERE clause"),
 				 parser_errposition(pstate,
-									locate_windowfunc(qry->jointree->quals))));
+								  locate_windowfunc(qry->jointree->quals))));
 	if (checkExprHasWindowFuncs((Node *) qry->jointree->fromlist))
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),
 				 errmsg("window functions not allowed in JOIN conditions"),
 				 parser_errposition(pstate,
-									locate_windowfunc((Node *) qry->jointree->fromlist))));
+					  locate_windowfunc((Node *) qry->jointree->fromlist))));
 	if (checkExprHasWindowFuncs(qry->havingQual))
 		ereport(ERROR,
 				(errcode(ERRCODE_WINDOWING_ERROR),
@@ -386,14 +385,14 @@ parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 		if (checkExprHasWindowFuncs(expr))
 			ereport(ERROR,
 					(errcode(ERRCODE_WINDOWING_ERROR),
-					 errmsg("window functions not allowed in GROUP BY clause"),
+				   errmsg("window functions not allowed in GROUP BY clause"),
 					 parser_errposition(pstate,
 										locate_windowfunc(expr))));
 	}
 
 	foreach(l, qry->windowClause)
 	{
-		WindowClause   *wc = (WindowClause *) lfirst(l);
+		WindowClause *wc = (WindowClause *) lfirst(l);
 		ListCell   *l2;
 
 		foreach(l2, wc->partitionClause)
@@ -405,7 +404,7 @@ parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 			if (checkExprHasWindowFuncs(expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("window functions not allowed in window definition"),
+				 errmsg("window functions not allowed in window definition"),
 						 parser_errposition(pstate,
 											locate_windowfunc(expr))));
 		}
@@ -418,7 +417,7 @@ parseCheckWindowFuncs(ParseState *pstate, Query *qry)
 			if (checkExprHasWindowFuncs(expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("window functions not allowed in window definition"),
+				 errmsg("window functions not allowed in window definition"),
 						 parser_errposition(pstate,
 											locate_windowfunc(expr))));
 		}

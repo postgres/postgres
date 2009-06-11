@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.4 2009/01/05 13:35:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.5 2009/06/11 14:48:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 PG_MODULE_MAGIC;
 
 /* GUC variables */
-static int	auto_explain_log_min_duration = -1;		/* msec or -1 */
+static int	auto_explain_log_min_duration = -1; /* msec or -1 */
 static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_nested_statements = false;
@@ -28,21 +28,21 @@ static bool auto_explain_log_nested_statements = false;
 static int	nesting_level = 0;
 
 /* Saved hook values in case of unload */
-static ExecutorStart_hook_type	prev_ExecutorStart = NULL;
-static ExecutorRun_hook_type	prev_ExecutorRun = NULL;
-static ExecutorEnd_hook_type	prev_ExecutorEnd = NULL;
+static ExecutorStart_hook_type prev_ExecutorStart = NULL;
+static ExecutorRun_hook_type prev_ExecutorRun = NULL;
+static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 
 #define auto_explain_enabled() \
 	(auto_explain_log_min_duration >= 0 && \
 	 (nesting_level == 0 || auto_explain_log_nested_statements))
 
-void	_PG_init(void);
-void	_PG_fini(void);
+void		_PG_init(void);
+void		_PG_fini(void);
 
 static void explain_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void explain_ExecutorRun(QueryDesc *queryDesc,
-								ScanDirection direction,
-								long count);
+					ScanDirection direction,
+					long count);
 static void explain_ExecutorEnd(QueryDesc *queryDesc);
 
 
@@ -54,8 +54,8 @@ _PG_init(void)
 {
 	/* Define custom GUC variables. */
 	DefineCustomIntVariable("auto_explain.log_min_duration",
-							"Sets the minimum execution time above which plans will be logged.",
-							"Zero prints all plans. -1 turns this feature off.",
+		 "Sets the minimum execution time above which plans will be logged.",
+						 "Zero prints all plans. -1 turns this feature off.",
 							&auto_explain_log_min_duration,
 							-1,
 							-1, INT_MAX / 1000,
@@ -138,9 +138,9 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	if (auto_explain_enabled())
 	{
 		/*
-		 * Set up to track total elapsed time in ExecutorRun.  Make sure
-		 * the space is allocated in the per-query context so it will go
-		 * away at ExecutorEnd.
+		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
+		 * space is allocated in the per-query context so it will go away at
+		 * ExecutorEnd.
 		 */
 		if (queryDesc->totaltime == NULL)
 		{
@@ -184,11 +184,11 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 {
 	if (queryDesc->totaltime && auto_explain_enabled())
 	{
-		double	msec;
+		double		msec;
 
 		/*
-		 * Make sure stats accumulation is done.  (Note: it's okay if
-		 * several levels of hook all do this.)
+		 * Make sure stats accumulation is done.  (Note: it's okay if several
+		 * levels of hook all do this.)
 		 */
 		InstrEndLoop(queryDesc->totaltime);
 
@@ -196,11 +196,11 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 		msec = queryDesc->totaltime->total * 1000.0;
 		if (msec >= auto_explain_log_min_duration)
 		{
-			StringInfoData	buf;
+			StringInfoData buf;
 
 			initStringInfo(&buf);
 			ExplainPrintPlan(&buf, queryDesc,
-							 queryDesc->doInstrument && auto_explain_log_analyze,
+						 queryDesc->doInstrument && auto_explain_log_analyze,
 							 auto_explain_log_verbose);
 
 			/* Remove last line break */

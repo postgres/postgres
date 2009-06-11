@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_sema.c,v 1.8 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_sema.c,v 1.9 2009/06/11 14:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,10 +125,10 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	wh[1] = pgwin32_signal_event;
 
 	/*
-	 * As in other implementations of PGSemaphoreLock, we need to check
-	 * for cancel/die interrupts each time through the loop.  But here,
-	 * there is no hidden magic about whether the syscall will internally
-	 * service a signal --- we do that ourselves.
+	 * As in other implementations of PGSemaphoreLock, we need to check for
+	 * cancel/die interrupts each time through the loop.  But here, there is
+	 * no hidden magic about whether the syscall will internally service a
+	 * signal --- we do that ourselves.
 	 */
 	do
 	{

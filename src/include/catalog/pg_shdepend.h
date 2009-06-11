@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_shdepend.h,v 1.9 2009/01/22 20:16:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_shdepend.h,v 1.10 2009/06/11 14:49:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,8 +43,8 @@ CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 
 	/*
 	 * Identification of the independent (referenced) object.  This is always
-	 * a shared object, so we need no database ID field.  We don't bother
-	 * with a sub-object ID either.
+	 * a shared object, so we need no database ID field.  We don't bother with
+	 * a sub-object ID either.
 	 */
 	Oid			refclassid;		/* OID of table containing object */
 	Oid			refobjid;		/* OID of object itself */
@@ -72,7 +72,7 @@ typedef FormData_pg_shdepend *Form_pg_shdepend;
 #define Anum_pg_shdepend_classid	2
 #define Anum_pg_shdepend_objid		3
 #define Anum_pg_shdepend_objsubid	4
-#define Anum_pg_shdepend_refclassid	5
+#define Anum_pg_shdepend_refclassid 5
 #define Anum_pg_shdepend_refobjid	6
 #define Anum_pg_shdepend_deptype	7
 

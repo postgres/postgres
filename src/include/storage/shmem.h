@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/shmem.h,v 1.55 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/shmem.h,v 1.56 2009/06/11 14:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,8 @@ extern void RequestAddinShmemSpace(Size size);
 typedef struct
 {
 	char		key[SHMEM_INDEX_KEYSIZE];		/* string name */
-	void	   *location;			/* location in shared mem */
-	Size		size;				/* # bytes allocated for the structure */
+	void	   *location;		/* location in shared mem */
+	Size		size;			/* # bytes allocated for the structure */
 } ShmemIndexEnt;
 
 /*

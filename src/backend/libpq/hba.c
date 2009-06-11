@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.185 2009/04/15 21:42:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.186 2009/06/11 14:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -568,12 +568,12 @@ check_db(const char *dbname, const char *role, char *param_str)
 /*
  * Macros used to check and report on invalid configuration options.
  * INVALID_AUTH_OPTION = reports when an option is specified for a method where it's
- *                       not supported.
+ *						 not supported.
  * REQUIRE_AUTH_OPTION = same as INVALID_AUTH_OPTION, except it also checks if the
- *                       method is actually the one specified. Used as a shortcut when
- *                       the option is only valid for one authentication method.
+ *						 method is actually the one specified. Used as a shortcut when
+ *						 the option is only valid for one authentication method.
  * MANDATORY_AUTH_ARG  = check if a required option is set for an authentication method,
- *                       reporting error if it's not.
+ *						 reporting error if it's not.
  */
 #define INVALID_AUTH_OPTION(optname, validmethods) do {\
 	ereport(LOG, \
@@ -642,9 +642,9 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostssl not supported on this platform"),
-					 errhint("compile with --enable-ssl to use SSL connections"),
+				 errhint("compile with --enable-ssl to use SSL connections"),
 					 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+								line_num, HbaFileName)));
 			return false;
 #endif
 		}
@@ -654,12 +654,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			parsedline->conntype = ctHostNoSSL;
 		}
 #endif
-		else 
+		else
 		{
 			/* "host", or "hostnossl" and SSL support not built in */
 			parsedline->conntype = ctHost;
 		}
-	} /* record type */
+	}							/* record type */
 	else
 	{
 		ereport(LOG,
@@ -667,7 +667,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				 errmsg("invalid connection type \"%s\"",
 						token),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 
@@ -679,7 +679,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("end-of-line before database specification"),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 	parsedline->database = pstrdup(lfirst(line_item));
@@ -692,7 +692,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("end-of-line before role specification"),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 	parsedline->role = pstrdup(lfirst(line_item));
@@ -707,7 +707,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("end-of-line before ip address specification"),
 					 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+								line_num, HbaFileName)));
 			return false;
 		}
 		token = pstrdup(lfirst(line_item));
@@ -735,7 +735,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					 errmsg("invalid IP address \"%s\": %s",
 							token, gai_strerror(ret)),
 					 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+								line_num, HbaFileName)));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
@@ -760,7 +760,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						 errmsg("invalid CIDR mask in address \"%s\"",
 								token),
 						 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+									line_num, HbaFileName)));
 				return false;
 			}
 		}
@@ -774,7 +774,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("end-of-line before netmask specification"),
 						 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+									line_num, HbaFileName)));
 				return false;
 			}
 			token = lfirst(line_item);
@@ -787,7 +787,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						 errmsg("invalid IP mask \"%s\": %s",
 								token, gai_strerror(ret)),
 						 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+									line_num, HbaFileName)));
 				if (gai_result)
 					pg_freeaddrinfo_all(hints.ai_family, gai_result);
 				return false;
@@ -805,7 +805,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				return false;
 			}
 		}
-	} /* != ctLocal */
+	}							/* != ctLocal */
 
 	/* Get the authentication method */
 	line_item = lnext(line_item);
@@ -815,7 +815,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("end-of-line before authentication method"),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 	token = lfirst(line_item);
@@ -883,7 +883,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				 errmsg("invalid authentication method \"%s\"",
 						token),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 
@@ -894,7 +894,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				 errmsg("invalid authentication method \"%s\": not supported on this platform",
 						token),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 
@@ -904,9 +904,9 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("krb5 authentication is not supported on local sockets"),
+			 errmsg("krb5 authentication is not supported on local sockets"),
 				 errcontext("line %d of configuration file \"%s\"",
-						line_num, HbaFileName)));
+							line_num, HbaFileName)));
 		return false;
 	}
 
@@ -924,7 +924,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	/* Parse remaining arguments */
 	while ((line_item = lnext(line_item)) != NULL)
 	{
-		char *c;
+		char	   *c;
 
 		token = lfirst(line_item);
 
@@ -945,7 +945,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 		}
 		else
 		{
-			*c++ = '\0'; /* token now holds "name", c holds "value" */
+			*c++ = '\0';		/* token now holds "name", c holds "value" */
 			if (strcmp(token, "map") == 0)
 			{
 				if (parsedline->auth_method != uaIdent &&
@@ -959,16 +959,17 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			else if (strcmp(token, "clientcert") == 0)
 			{
 				/*
-				 * Since we require ctHostSSL, this really can never happen on non-SSL-enabled
-				 * builds, so don't bother checking for USE_SSL.
+				 * Since we require ctHostSSL, this really can never happen on
+				 * non-SSL-enabled builds, so don't bother checking for
+				 * USE_SSL.
 				 */
 				if (parsedline->conntype != ctHostSSL)
 				{
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("clientcert can only be configured for \"hostssl\" rows"),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					return false;
 				}
 				if (strcmp(c, "1") == 0)
@@ -979,8 +980,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 								(errcode(ERRCODE_CONFIG_FILE_ERROR),
 								 errmsg("client certificates can only be checked if a root certificate store is available"),
 								 errdetail("make sure the root certificate store is present and readable"),
-								 errcontext("line %d of configuration file \"%s\"",
-											line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 						return false;
 					}
 					parsedline->clientcert = true;
@@ -992,8 +993,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 						ereport(LOG,
 								(errcode(ERRCODE_CONFIG_FILE_ERROR),
 								 errmsg("clientcert can not be set to 0 when using \"cert\" authentication"),
-								 errcontext("line %d of configuration file \"%s\"",
-											line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 						return false;
 					}
 					parsedline->clientcert = false;
@@ -1026,8 +1027,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid LDAP port number: \"%s\"", c),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					return false;
 				}
 			}
@@ -1069,7 +1070,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("unknown authentication option name: \"%s\"", token),
+				 errmsg("unknown authentication option name: \"%s\"", token),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
 				return false;
@@ -1078,8 +1079,8 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	}
 
 	/*
-	 * Check if the selected authentication method has any mandatory arguments that
-	 * are not set.
+	 * Check if the selected authentication method has any mandatory arguments
+	 * that are not set.
 	 */
 	if (parsedline->auth_method == uaLDAP)
 	{
@@ -1093,7 +1094,7 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 	{
 		parsedline->clientcert = true;
 	}
-	
+
 	return true;
 }
 
@@ -1106,7 +1107,7 @@ static bool
 check_hba(hbaPort *port)
 {
 	ListCell   *line;
-	HbaLine	   *hba;
+	HbaLine    *hba;
 
 	foreach(line, parsed_hba_lines)
 	{
@@ -1150,28 +1151,30 @@ check_hba(hbaPort *port)
 					continue;
 			}
 #ifdef HAVE_IPV6
-			else  if (hba->addr.ss_family == AF_INET &&
-					  port->raddr.addr.ss_family == AF_INET6)
+			else if (hba->addr.ss_family == AF_INET &&
+					 port->raddr.addr.ss_family == AF_INET6)
 			{
 				/*
-				 * Wrong address family.  We allow only one case: if the file has
-				 * IPv4 and the port is IPv6, promote the file address to IPv6 and
-				 * try to match that way.
+				 * Wrong address family.  We allow only one case: if the file
+				 * has IPv4 and the port is IPv6, promote the file address to
+				 * IPv6 and try to match that way.
 				 */
-				struct sockaddr_storage addrcopy, maskcopy;
+				struct sockaddr_storage addrcopy,
+							maskcopy;
+
 				memcpy(&addrcopy, &hba->addr, sizeof(addrcopy));
 				memcpy(&maskcopy, &hba->mask, sizeof(maskcopy));
 				pg_promote_v4_to_v6_addr(&addrcopy);
 				pg_promote_v4_to_v6_mask(&maskcopy);
-				
+
 				if (!pg_range_sockaddr(&port->raddr.addr, &addrcopy, &maskcopy))
 					continue;
 			}
-#endif /* HAVE_IPV6 */
+#endif   /* HAVE_IPV6 */
 			else
 				/* Wrong address family, no IPV6 */
 				continue;
-		} /* != ctLocal */
+		}						/* != ctLocal */
 
 		/* Check database and role */
 		if (!check_db(port->database_name, port->user_name, hba->database))
@@ -1191,8 +1194,8 @@ check_hba(hbaPort *port)
 	port->hba = hba;
 	return true;
 
-	/* XXX:
-	 * Return false only happens if we have a parsing error, which we can 
+	/*
+	 * XXX: Return false only happens if we have a parsing error, which we can
 	 * no longer have (parsing now in postmaster). Consider changing API.
 	 */
 }
@@ -1279,11 +1282,12 @@ free_hba_record(HbaLine *record)
 static void
 clean_hba_list(List *lines)
 {
-	ListCell	*line;
+	ListCell   *line;
 
 	foreach(line, lines)
 	{
-		HbaLine *parsed = (HbaLine *)lfirst(line);
+		HbaLine    *parsed = (HbaLine *) lfirst(line);
+
 		if (parsed)
 			free_hba_record(parsed);
 	}
@@ -1301,11 +1305,12 @@ bool
 load_hba(void)
 {
 	FILE	   *file;
-	List *hba_lines = NIL;
-	List *hba_line_nums = NIL;
-	ListCell   *line, *line_num;
-	List *new_parsed_lines = NIL;
-	bool ok = true;
+	List	   *hba_lines = NIL;
+	List	   *hba_line_nums = NIL;
+	ListCell   *line,
+			   *line_num;
+	List	   *new_parsed_lines = NIL;
+	bool		ok = true;
 
 	file = AllocateFile(HbaFileName, "r");
 	if (file == NULL)
@@ -1314,10 +1319,11 @@ load_hba(void)
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						HbaFileName)));
+
 		/*
 		 * Caller will take care of making this a FATAL error in case this is
-		 * the initial startup. If it happens on reload, we just keep the
-		 * old version around.
+		 * the initial startup. If it happens on reload, we just keep the old
+		 * version around.
 		 */
 		return false;
 	}
@@ -1328,7 +1334,7 @@ load_hba(void)
 	/* Now parse all the lines */
 	forboth(line, hba_lines, line_num, hba_line_nums)
 	{
-		HbaLine *newline;
+		HbaLine    *newline;
 
 		newline = palloc0(sizeof(HbaLine));
 
@@ -1339,9 +1345,9 @@ load_hba(void)
 			pfree(newline);
 
 			/*
-			 * Keep parsing the rest of the file so we can report errors
-			 * on more than the first row. Error has already been reported
-			 * in the parsing function, so no need to log it here.
+			 * Keep parsing the rest of the file so we can report errors on
+			 * more than the first row. Error has already been reported in the
+			 * parsing function, so no need to log it here.
 			 */
 			ok = false;
 			continue;
@@ -1461,10 +1467,10 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 	if (file_ident_user[0] == '/')
 	{
 		/*
-		 * When system username starts with a slash, treat it as a regular expression.
-		 * In this case, we process the system username as a regular expression that
-		 * returns exactly one match. This is replaced for \1 in the database username
-		 * string, if present.
+		 * When system username starts with a slash, treat it as a regular
+		 * expression. In this case, we process the system username as a
+		 * regular expression that returns exactly one match. This is replaced
+		 * for \1 in the database username string, if present.
 		 */
 		int			r;
 		regex_t		re;
@@ -1474,22 +1480,22 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 		char	   *ofs;
 		char	   *regexp_pgrole;
 
-		wstr = palloc((strlen(file_ident_user+1) + 1) * sizeof(pg_wchar));
-		wlen = pg_mb2wchar_with_len(file_ident_user+1, wstr, strlen(file_ident_user+1));
+		wstr = palloc((strlen(file_ident_user + 1) + 1) * sizeof(pg_wchar));
+		wlen = pg_mb2wchar_with_len(file_ident_user + 1, wstr, strlen(file_ident_user + 1));
 
 		/*
-		 * XXX: Major room for optimization: regexps could be compiled when the file is loaded
-		 * and then re-used in every connection.
+		 * XXX: Major room for optimization: regexps could be compiled when
+		 * the file is loaded and then re-used in every connection.
 		 */
 		r = pg_regcomp(&re, wstr, wlen, REG_ADVANCED);
 		if (r)
 		{
-			char errstr[100];
+			char		errstr[100];
 
 			pg_regerror(r, &re, errstr, sizeof(errstr));
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-					 errmsg("invalid regular expression \"%s\": %s", file_ident_user+1, errstr)));
+					 errmsg("invalid regular expression \"%s\": %s", file_ident_user + 1, errstr)));
 
 			pfree(wstr);
 			*error_p = true;
@@ -1500,10 +1506,10 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 		wstr = palloc((strlen(ident_user) + 1) * sizeof(pg_wchar));
 		wlen = pg_mb2wchar_with_len(ident_user, wstr, strlen(ident_user));
 
-		r = pg_regexec(&re, wstr, wlen, 0, NULL, 2, matches,0);
+		r = pg_regexec(&re, wstr, wlen, 0, NULL, 2, matches, 0);
 		if (r)
 		{
-			char errstr[100];
+			char		errstr[100];
 
 			if (r != REG_NOMATCH)
 			{
@@ -1511,7 +1517,7 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 				pg_regerror(r, &re, errstr, sizeof(errstr));
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-						 errmsg("regular expression match for \"%s\" failed: %s", file_ident_user+1, errstr)));
+						 errmsg("regular expression match for \"%s\" failed: %s", file_ident_user + 1, errstr)));
 				*error_p = true;
 			}
 
@@ -1528,14 +1534,18 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 						 errmsg("regular expression \"%s\" has no subexpressions as requested by backreference in \"%s\"",
-								file_ident_user+1, file_pgrole)));
-			/* length: original length minus length of \1 plus length of match plus null terminator */
-			regexp_pgrole = palloc0(strlen(file_pgrole) - 2 + (matches[1].rm_eo-matches[1].rm_so) + 1);
-			strncpy(regexp_pgrole, file_pgrole, (ofs-file_pgrole));
-			memcpy(regexp_pgrole+strlen(regexp_pgrole),
-				   ident_user+matches[1].rm_so,
-				   matches[1].rm_eo-matches[1].rm_so);
-			strcat(regexp_pgrole, ofs+2);
+								file_ident_user + 1, file_pgrole)));
+
+			/*
+			 * length: original length minus length of \1 plus length of match
+			 * plus null terminator
+			 */
+			regexp_pgrole = palloc0(strlen(file_pgrole) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
+			strncpy(regexp_pgrole, file_pgrole, (ofs - file_pgrole));
+			memcpy(regexp_pgrole + strlen(regexp_pgrole),
+				   ident_user + matches[1].rm_so,
+				   matches[1].rm_eo - matches[1].rm_so);
+			strcat(regexp_pgrole, ofs + 2);
 		}
 		else
 		{
@@ -1545,7 +1555,10 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 
 		pg_regfree(&re);
 
-		/* now check if the username actually matched what the user is trying to connect as */
+		/*
+		 * now check if the username actually matched what the user is trying
+		 * to connect as
+		 */
 		if (case_insensitive)
 		{
 			if (pg_strcasecmp(regexp_pgrole, pg_role) == 0)
@@ -1594,8 +1607,8 @@ ident_syntax:
  *	See if the user with ident username "ident_user" is allowed to act
  *	as Postgres user "pgrole" according to usermap "usermap_name".
  *
- *  Special case: Usermap NULL, equivalent to what was previously called
- *  "sameuser" or "samerole", don't look in the usermap
+ *	Special case: Usermap NULL, equivalent to what was previously called
+ *	"sameuser" or "samerole", don't look in the usermap
  *	file.  That's an implied map where "pgrole" must be identical to
  *	"ident_user" in order to be authorized.
  *
@@ -1603,9 +1616,9 @@ ident_syntax:
  */
 int
 check_usermap(const char *usermap_name,
-					const char *pg_role,
-					const char *auth_user,
-					bool case_insensitive)
+			  const char *pg_role,
+			  const char *auth_user,
+			  bool case_insensitive)
 {
 	bool		found_entry = false,
 				error = false;
@@ -1617,7 +1630,8 @@ check_usermap(const char *usermap_name,
 			if (pg_strcasecmp(pg_role, auth_user) == 0)
 				return STATUS_OK;
 		}
-		else {
+		else
+		{
 			if (strcmp(pg_role, auth_user) == 0)
 				return STATUS_OK;
 		}
@@ -1634,7 +1648,7 @@ check_usermap(const char *usermap_name,
 		forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 		{
 			parse_ident_usermap(lfirst(line_cell), lfirst_int(num_cell),
-								usermap_name, pg_role, auth_user, case_insensitive,
+						  usermap_name, pg_role, auth_user, case_insensitive,
 								&found_entry, &error);
 			if (found_entry || error)
 				break;
@@ -1643,11 +1657,11 @@ check_usermap(const char *usermap_name,
 	if (!found_entry && !error)
 	{
 		ereport(LOG,
-				(errmsg("no match in usermap for user \"%s\" authenticated as \"%s\"",
-						pg_role, auth_user),
-				 errcontext("usermap \"%s\"", usermap_name)));
+		(errmsg("no match in usermap for user \"%s\" authenticated as \"%s\"",
+				pg_role, auth_user),
+		 errcontext("usermap \"%s\"", usermap_name)));
 	}
-	return found_entry?STATUS_OK:STATUS_ERROR;
+	return found_entry ? STATUS_OK : STATUS_ERROR;
 }
 
 

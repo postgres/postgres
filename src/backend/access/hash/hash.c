@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.111 2009/06/06 22:13:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.112 2009/06/11 14:48:53 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -52,7 +52,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	Relation	index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
 	IndexBuildResult *result;
-	BlockNumber	relpages;
+	BlockNumber relpages;
 	double		reltuples;
 	uint32		num_buckets;
 	HashBuildState buildstate;
@@ -76,12 +76,12 @@ hashbuild(PG_FUNCTION_ARGS)
 	 * (assuming their hash codes are pretty random) there will be no locality
 	 * of access to the index, and if the index is bigger than available RAM
 	 * then we'll thrash horribly.  To prevent that scenario, we can sort the
-	 * tuples by (expected) bucket number.  However, such a sort is useless
+	 * tuples by (expected) bucket number.	However, such a sort is useless
 	 * overhead when the index does fit in RAM.  We choose to sort if the
 	 * initial index size exceeds NBuffers.
 	 *
-	 * NOTE: this test will need adjustment if a bucket is ever different
-	 * from one page.
+	 * NOTE: this test will need adjustment if a bucket is ever different from
+	 * one page.
 	 */
 	if (num_buckets >= (uint32) NBuffers)
 		buildstate.spool = _h_spoolinit(index, num_buckets);
@@ -285,7 +285,7 @@ Datum
 hashgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
 	int64		ntids = 0;
@@ -294,7 +294,7 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 
 	while (res)
 	{
-		bool	add_tuple;
+		bool		add_tuple;
 
 		/*
 		 * Skip killed tuples if asked to.
@@ -312,7 +312,7 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 			add_tuple = true;
 
 		/* Save tuple ID, and continue scanning */
-		if (add_tuple) 
+		if (add_tuple)
 		{
 			/* Note we mark the tuple ID as requiring recheck */
 			tbm_add_tuples(tbm, &scan->xs_ctup.t_self, 1, true);
@@ -481,7 +481,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	 * each bucket.
 	 */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	metap =  HashPageGetMeta(BufferGetPage(metabuf));
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.6 2009/03/27 18:30:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.7 2009/06/11 14:48:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,10 +73,10 @@ TupleTableSlot *
 ExecWorkTableScan(WorkTableScanState *node)
 {
 	/*
-	 * On the first call, find the ancestor RecursiveUnion's state
-	 * via the Param slot reserved for it.  (We can't do this during node
-	 * init because there are corner cases where we'll get the init call
-	 * before the RecursiveUnion does.)
+	 * On the first call, find the ancestor RecursiveUnion's state via the
+	 * Param slot reserved for it.	(We can't do this during node init because
+	 * there are corner cases where we'll get the init call before the
+	 * RecursiveUnion does.)
 	 */
 	if (node->rustate == NULL)
 	{
@@ -100,8 +100,8 @@ ExecWorkTableScan(WorkTableScanState *node)
 						   ExecGetResultType(&node->rustate->ps));
 
 		/*
-		 * Now we can initialize the projection info.  This must be
-		 * completed before we can call ExecScan().
+		 * Now we can initialize the projection info.  This must be completed
+		 * before we can call ExecScan().
 		 */
 		ExecAssignScanProjectionInfo(&node->ss);
 	}

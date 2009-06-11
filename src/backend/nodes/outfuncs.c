@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.359 2009/04/16 20:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.360 2009/06/11 14:48:58 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -332,7 +332,7 @@ _outAppend(StringInfo str, Append *node)
 static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
-	int i;
+	int			i;
 
 	WRITE_NODE_TYPE("RECURSIVEUNION");
 
@@ -544,7 +544,7 @@ _outHashJoin(StringInfo str, HashJoin *node)
 static void
 _outAgg(StringInfo str, Agg *node)
 {
-	int i;
+	int			i;
 
 	WRITE_NODE_TYPE("AGG");
 
@@ -587,7 +587,7 @@ _outWindowAgg(StringInfo str, WindowAgg *node)
 	WRITE_INT_FIELD(ordNumCols);
 
 	appendStringInfo(str, " :ordColIdx");
-	for (i = 0; i< node->ordNumCols; i++)
+	for (i = 0; i < node->ordNumCols; i++)
 		appendStringInfo(str, " %d", node->ordColIdx[i]);
 
 	appendStringInfo(str, " :ordOperations");

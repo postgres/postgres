@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/windowfuncs.c,v 1.2 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/windowfuncs.c,v 1.3 2009/06/11 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
  */
 typedef struct rank_context
 {
-	int64		rank;				/* current rank */
+	int64		rank;			/* current rank */
 } rank_context;
 
 /*
@@ -29,15 +29,15 @@ typedef struct rank_context
  */
 typedef struct
 {
-	int32		ntile;				/* current result */
+	int32		ntile;			/* current result */
 	int64		rows_per_bucket;	/* row number of current bucket */
-	int64		boundary;			/* how many rows should be in the bucket */
-	int64		remainder;			/* (total rows) % (bucket num) */
+	int64		boundary;		/* how many rows should be in the bucket */
+	int64		remainder;		/* (total rows) % (bucket num) */
 } ntile_context;
 
 static bool rank_up(WindowObject winobj);
 static Datum leadlag_common(FunctionCallInfo fcinfo,
-							bool forward, bool withoffset, bool withdefault);
+			   bool forward, bool withoffset, bool withdefault);
 
 
 /*
@@ -81,7 +81,7 @@ rank_up(WindowObject winobj)
 Datum
 window_row_number(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
+	WindowObject winobj = PG_WINDOW_OBJECT();
 	int64		curpos = WinGetCurrentPosition(winobj);
 
 	WinSetMarkPosition(winobj, curpos);
@@ -97,9 +97,9 @@ window_row_number(PG_FUNCTION_ARGS)
 Datum
 window_rank(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	rank_context   *context;
-	bool			up;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	rank_context *context;
+	bool		up;
 
 	up = rank_up(winobj);
 	context = (rank_context *)
@@ -117,9 +117,9 @@ window_rank(PG_FUNCTION_ARGS)
 Datum
 window_dense_rank(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	rank_context   *context;
-	bool			up;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	rank_context *context;
+	bool		up;
 
 	up = rank_up(winobj);
 	context = (rank_context *)
@@ -139,10 +139,10 @@ window_dense_rank(PG_FUNCTION_ARGS)
 Datum
 window_percent_rank(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	rank_context   *context;
-	bool			up;
-	int64			totalrows = WinGetPartitionRowCount(winobj);
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	rank_context *context;
+	bool		up;
+	int64		totalrows = WinGetPartitionRowCount(winobj);
 
 	Assert(totalrows > 0);
 
@@ -168,10 +168,10 @@ window_percent_rank(PG_FUNCTION_ARGS)
 Datum
 window_cume_dist(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	rank_context   *context;
-	bool			up;
-	int64			totalrows = WinGetPartitionRowCount(winobj);
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	rank_context *context;
+	bool		up;
+	int64		totalrows = WinGetPartitionRowCount(winobj);
 
 	Assert(totalrows > 0);
 
@@ -181,10 +181,10 @@ window_cume_dist(PG_FUNCTION_ARGS)
 	if (up || context->rank == 1)
 	{
 		/*
-		 * The current row is not peer to prior row or is just the first,
-		 * so count up the number of rows that are peer to the current.
+		 * The current row is not peer to prior row or is just the first, so
+		 * count up the number of rows that are peer to the current.
 		 */
-		int64	row;
+		int64		row;
 
 		context->rank = WinGetCurrentPosition(winobj) + 1;
 
@@ -210,8 +210,8 @@ window_cume_dist(PG_FUNCTION_ARGS)
 Datum
 window_ntile(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	ntile_context   *context;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	ntile_context *context;
 
 	context = (ntile_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(ntile_context));
@@ -227,16 +227,15 @@ window_ntile(PG_FUNCTION_ARGS)
 		nbuckets = DatumGetInt32(WinGetFuncArgCurrent(winobj, 0, &isnull));
 
 		/*
-		 * per spec:
-		 * If NT is the null value, then the result is the null value.
+		 * per spec: If NT is the null value, then the result is the null
+		 * value.
 		 */
 		if (isnull)
 			PG_RETURN_NULL();
 
 		/*
-		 * per spec:
-		 * If NT is less than or equal to 0 (zero), then an exception
-		 * condition is raised.
+		 * per spec: If NT is less than or equal to 0 (zero), then an
+		 * exception condition is raised.
 		 */
 		if (nbuckets <= 0)
 			ereport(ERROR,
@@ -251,8 +250,8 @@ window_ntile(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * If the total number is not divisible, add 1 row to
-			 * leading buckets.
+			 * If the total number is not divisible, add 1 row to leading
+			 * buckets.
 			 */
 			context->remainder = total % nbuckets;
 			if (context->remainder != 0)
@@ -287,12 +286,12 @@ static Datum
 leadlag_common(FunctionCallInfo fcinfo,
 			   bool forward, bool withoffset, bool withdefault)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	int32			offset;
-	bool			const_offset;
-	Datum			result;
-	bool			isnull;
-	bool			isout;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	int32		offset;
+	bool		const_offset;
+	Datum		result;
+	bool		isnull;
+	bool		isout;
 
 	if (withoffset)
 	{
@@ -407,9 +406,9 @@ window_lead_with_offset_and_default(PG_FUNCTION_ARGS)
 Datum
 window_first_value(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	Datum			result;
-	bool			isnull;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	Datum		result;
+	bool		isnull;
 
 	result = WinGetFuncArgInFrame(winobj, 0,
 								  0, WINDOW_SEEK_HEAD, true,
@@ -428,9 +427,9 @@ window_first_value(PG_FUNCTION_ARGS)
 Datum
 window_last_value(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	Datum			result;
-	bool			isnull;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	Datum		result;
+	bool		isnull;
 
 	result = WinGetFuncArgInFrame(winobj, 0,
 								  0, WINDOW_SEEK_TAIL, true,
@@ -449,11 +448,11 @@ window_last_value(PG_FUNCTION_ARGS)
 Datum
 window_nth_value(PG_FUNCTION_ARGS)
 {
-	WindowObject	winobj = PG_WINDOW_OBJECT();
-	bool			const_offset;
-	Datum			result;
-	bool			isnull;
-	int32			nth;
+	WindowObject winobj = PG_WINDOW_OBJECT();
+	bool		const_offset;
+	Datum		result;
+	bool		isnull;
+	int32		nth;
 
 	nth = DatumGetInt32(WinGetFuncArgCurrent(winobj, 1, &isnull));
 	if (isnull)

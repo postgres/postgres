@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.146 2009/02/13 17:12:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.147 2009/06/11 14:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@
  *	  transaction.
  *
  * Like NOTIFY, LISTEN and UNLISTEN just add the desired action to a list
- * of pending actions.  If we reach transaction commit, the changes are
+ * of pending actions.	If we reach transaction commit, the changes are
  * applied to pg_listener just before executing any pending NOTIFYs.  This
  * method is necessary because to avoid race conditions, we must hold lock
  * on pg_listener from when we insert a new listener tuple until we commit.
@@ -124,12 +124,12 @@ typedef enum
 typedef struct
 {
 	ListenActionKind action;
-	char		condname[1];				/* actually, as long as needed */
+	char		condname[1];	/* actually, as long as needed */
 } ListenAction;
 
-static List *pendingActions = NIL;			/* list of ListenAction */
+static List *pendingActions = NIL;		/* list of ListenAction */
 
-static List *upperPendingActions = NIL;		/* list of upper-xact lists */
+static List *upperPendingActions = NIL; /* list of upper-xact lists */
 
 /*
  * State for outbound notifies consists of a list of all relnames NOTIFYed
@@ -147,7 +147,7 @@ static List *upperPendingActions = NIL;		/* list of upper-xact lists */
  * condition name, it will get a self-notify at commit.  This is a bit odd
  * but is consistent with our historical behavior.
  */
-static List *pendingNotifies = NIL;				/* list of C strings */
+static List *pendingNotifies = NIL;		/* list of C strings */
 
 static List *upperPendingNotifies = NIL;		/* list of upper-xact lists */
 
@@ -209,10 +209,9 @@ Async_Notify(const char *relname)
 		oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
 		/*
-		 * Ordering of the list isn't important.  We choose to put new
-		 * entries on the front, as this might make duplicate-elimination
-		 * a tad faster when the same condition is signaled many times in
-		 * a row.
+		 * Ordering of the list isn't important.  We choose to put new entries
+		 * on the front, as this might make duplicate-elimination a tad faster
+		 * when the same condition is signaled many times in a row.
 		 */
 		pendingNotifies = lcons(pstrdup(relname), pendingNotifies);
 
@@ -235,10 +234,10 @@ queue_listen(ListenActionKind action, const char *condname)
 	ListenAction *actrec;
 
 	/*
-	 * Unlike Async_Notify, we don't try to collapse out duplicates.
-	 * It would be too complicated to ensure we get the right interactions
-	 * of conflicting LISTEN/UNLISTEN/UNLISTEN_ALL, and it's unlikely that
-	 * there would be any performance benefit anyway in sane applications.
+	 * Unlike Async_Notify, we don't try to collapse out duplicates. It would
+	 * be too complicated to ensure we get the right interactions of
+	 * conflicting LISTEN/UNLISTEN/UNLISTEN_ALL, and it's unlikely that there
+	 * would be any performance benefit anyway in sane applications.
 	 */
 	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
@@ -488,7 +487,7 @@ Exec_Listen(Relation lRel, const char *relname)
 	namestrcpy(&condname, relname);
 	values[Anum_pg_listener_relname - 1] = NameGetDatum(&condname);
 	values[Anum_pg_listener_pid - 1] = Int32GetDatum(MyProcPid);
-	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);	/* no notifies pending */
+	values[Anum_pg_listener_notify - 1] = Int32GetDatum(0);		/* no notifies pending */
 
 	tuple = heap_form_tuple(RelationGetDescr(lRel), values, nulls);
 
@@ -755,9 +754,9 @@ AtSubAbort_Notify(void)
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
-	 * All we have to do is pop the stack --- the actions/notifies made in this
-	 * subxact are no longer interesting, and the space will be freed when
-	 * CurTransactionContext is recycled.
+	 * All we have to do is pop the stack --- the actions/notifies made in
+	 * this subxact are no longer interesting, and the space will be freed
+	 * when CurTransactionContext is recycled.
 	 *
 	 * This routine could be called more than once at a given nesting level if
 	 * there is trouble during subxact abort.  Avoid dumping core by using

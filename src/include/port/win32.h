@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.87 2009/04/19 22:37:13 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.88 2009/06/11 14:49:12 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -292,14 +292,16 @@ extern int	pgwin32_is_service(void);
 extern void _dosmaperr(unsigned long);
 
 /* in port/win32env.c */
-extern int pgwin32_putenv(const char *);
+extern int	pgwin32_putenv(const char *);
 extern void pgwin32_unsetenv(const char *);
+
 #define putenv(x) pgwin32_putenv(x)
 #define unsetenv(x) pgwin32_unsetenv(x)
 
 /* Things that exist in MingW headers, but need to be added to MSVC & BCC */
 #ifdef WIN32_ONLY_COMPILER
 typedef long ssize_t;
+
 #ifndef __BORLANDC__
 typedef unsigned short mode_t;
 #endif
@@ -346,11 +348,10 @@ typedef unsigned short mode_t;
 #ifndef O_RANDOM
 #define O_RANDOM		0x0010	/* File access is primarily random */
 #define O_SEQUENTIAL	0x0020	/* File access is primarily sequential */
-#define O_TEMPORARY	0x0040	/* Temporary file bit */
+#define O_TEMPORARY 0x0040		/* Temporary file bit */
 #define O_SHORT_LIVED	0x1000	/* Temporary storage file, try not to flush */
 #define _O_SHORT_LIVED	O_SHORT_LIVED
-#endif /* ifndef O_RANDOM */
-
-#endif /* __BORLANDC__ */
+#endif   /* ifndef O_RANDOM */
+#endif   /* __BORLANDC__ */
 
 #endif
