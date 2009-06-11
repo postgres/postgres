@@ -1,4 +1,7 @@
-# @(#)solar88	8.1
+# <pre>
+# @(#)solar88	8.2
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # Apparent noon times below are for Riyadh; they're a bit off for other places.
 # Times were computed using formulas in the U.S. Naval Observatory's

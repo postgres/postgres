@@ -1,4 +1,7 @@
-# @(#)factory	8.1
+# <pre>
+# @(#)factory	8.2
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # For companies who don't want to put time zone specification in
 # their installation procedures.  When users run date, they'll get the message.
