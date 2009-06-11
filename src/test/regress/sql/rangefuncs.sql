@@ -351,3 +351,37 @@ reset work_mem;
 select t.a, t, t.a from foo1(10000) t limit 1;
 
 drop function foo1(n integer);
+
+-- test use of SQL functions returning record
+-- this is supported in some cases where the query doesn't specify
+-- the actual record type ...
+
+create function array_to_set(anyarray) returns setof record as $$
+  select i AS "index", $1[i] AS "value" from generate_subscripts($1, 1) i
+$$ language sql strict immutable;
+
+select array_to_set(array['one', 'two']);
+select * from array_to_set(array['one', 'two']) as t(f1 int,f2 text);
+select * from array_to_set(array['one', 'two']); -- fail
+
+create temp table foo(f1 int8, f2 int8);
+
+create function testfoo() returns record as $$
+  insert into foo values (1,2) returning *;
+$$ language sql;
+
+select testfoo();
+select * from testfoo() as t(f1 int8,f2 int8);
+select * from testfoo(); -- fail
+
+drop function testfoo();
+
+create function testfoo() returns setof record as $$
+  insert into foo values (1,2), (3,4) returning *;
+$$ language sql;
+
+select testfoo();
+select * from testfoo() as t(f1 int8,f2 int8);
+select * from testfoo(); -- fail
+
+drop function testfoo();

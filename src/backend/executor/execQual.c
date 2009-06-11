@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.249 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1089,9 +1089,15 @@ init_fcache(Oid foid, FuncExprState *fcache,
 			fcache->funcResultDesc = tupdesc;
 			fcache->funcReturnsTuple = false;
 		}
+		else if (functypclass == TYPEFUNC_RECORD)
+		{
+			/* This will work if function doesn't need an expectedDesc */
+			fcache->funcResultDesc = NULL;
+			fcache->funcReturnsTuple = true;
+		}
 		else
 		{
-			/* Else, we will complain if function wants materialize mode */
+			/* Else, we will fail if function needs an expectedDesc */
 			fcache->funcResultDesc = NULL;
 		}
 
@@ -1252,18 +1258,32 @@ ExecPrepareTuplestoreResult(FuncExprState *fcache,
 	if (fcache->funcResultSlot == NULL)
 	{
 		/* Create a slot so we can read data out of the tuplestore */
+		TupleDesc	slotDesc;
 		MemoryContext oldcontext;
 
-		/* We must have been able to determine the result rowtype */
-		if (fcache->funcResultDesc == NULL)
+		oldcontext = MemoryContextSwitchTo(fcache->func.fn_mcxt);
+
+		/*
+		 * If we were not able to determine the result rowtype from context,
+		 * and the function didn't return a tupdesc, we have to fail.
+		 */
+		if (fcache->funcResultDesc)
+			slotDesc = fcache->funcResultDesc;
+		else if (resultDesc)
+		{
+			/* don't assume resultDesc is long-lived */
+			slotDesc = CreateTupleDescCopy(resultDesc);
+		}
+		else
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("function returning setof record called in "
 							"context that cannot accept type record")));
+			slotDesc = NULL;	/* keep compiler quiet */
+		}
 
-		oldcontext = MemoryContextSwitchTo(fcache->func.fn_mcxt);
-		fcache->funcResultSlot =
-			MakeSingleTupleTableSlot(fcache->funcResultDesc);
+		fcache->funcResultSlot = MakeSingleTupleTableSlot(slotDesc);
 		MemoryContextSwitchTo(oldcontext);
 	}
 
