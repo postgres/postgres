@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.322 2009/06/11 19:00:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.323 2009/06/12 15:53:32 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2053,9 +2053,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    </indexterm>
 
    <para>
-    PostgreSQL on AIX works, but getting it installed properly can be
-    challenging.  Both AIX version 4.3 and 5.3 are supported in
-    theory.  You can use GCC or the native IBM compiler xlc.  In
+    PostgreSQL works on AIX, but getting it installed properly can be
+    challenging.  AIX versions from 4.3.3 to 6.1 are considered supported.
+    You can use GCC or the native IBM compiler xlc.  In
     general, using recent versions of AIX and PostgreSQL helps.  Check
     the build farm for up to date information about which versions of
     AIX are known to work.
@@ -2063,7 +2063,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
 
    <para>
     Use the following <command>configure</command> flags in addition
-    to your own if you have Readline or libz
+    to your own if you have installed Readline or libz
     there: <literal>--with-includes=/usr/local/include
     --with-libraries=/usr/local/lib</literal>.
    </para>
@@ -2085,17 +2085,54 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
     <ulink url="http://www.han.de/~jum/aix/ldd.c"></ulink>.
    </para>
 
-   <sect3>
-    <title>AIX 4.3.2</title>
+   <para>
+    <xref linkend="AIX-fixlevels"> shows the minimum recommended fix levels
+    for various AIX versions.  To check your current fix level, use
+    <command>oslevel -r</command> in AIX 4.3.3 to AIX 5.2 ML 7, or
+    <command>oslevel -s</command> in later versions.
+   </para>
 
-    <para>
-     On AIX 4.3.2, you need <filename>libm.a</filename> that is in the
-     fileset <literal>bos.adt.libm</>.  Try the following command:
-<screen>
-$ lslpp -l bos.adt.libm
-</screen>
-    </para>
-   </sect3>
+   <table id="AIX-fixlevels">
+    <title>
+     Minimum recommended <systemitem class="osname">AIX</systemitem> fix levels
+    </title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>AIX version</entry>
+       <entry>fix level</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>AIX 4.3.3</entry>
+       <entry>Maintenance Level 11 + post ML11 bundle</entry>
+      </row>
+
+      <row>
+       <entry>AIX 5.1</entry>
+       <entry>Maintenance Level 9 + post ML9 bundle</entry>
+      </row>
+
+      <row>
+       <entry>AIX 5.2</entry>
+       <entry>Technology Level 10 Service Pack 3</entry>
+      </row>
+
+      <row>
+       <entry>AIX 5.3</entry>
+       <entry>Technology Level 7</entry>
+      </row>
+
+      <row>
+       <entry>AIX 6.1</entry>
+       <entry>Base Level</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <sect3>
     <title>GCC issues</title>
@@ -2133,11 +2170,11 @@ $ lslpp -l bos.adt.libm
 
     <para>
      The problem was reported to IBM, and is recorded as bug report
-     PMR29657.  If you upgrade to maintenance level 5300-03, that will
-     include this fix.  Use the command <literal>oslevel -r</literal>
-     to determine what maintenance level you are at.  An immediate
-     resolution is to alter <symbol>_SS_MAXSIZE</symbol> to = 1025 in
-     <filename>/usr/include/sys/socket.h</filename>.
+     PMR29657.  If you upgrade to maintenance level 5300-03 or later,
+     that will include this fix.  A quick workaround
+     is to alter <symbol>_SS_MAXSIZE</symbol> to 1025 in
+     <filename>/usr/include/sys/socket.h</filename>.  In either case,
+     recompile PostgreSQL once you have the corrected header file.
     </para>
    </sect3>
 
@@ -2149,7 +2186,8 @@ $ lslpp -l bos.adt.libm
      to parse IP addresses in <varname>listen_addresses</>,
      <filename>pg_hba.conf</>, etc.  Older versions of AIX have assorted
      bugs in this function.  If you have problems related to these settings,
-     updating to the latest fix pack for your AIX release should fix it.
+     updating to the appropriate fix level shown in <xref
+     linkend="AIX-fixlevels"> should take care of it.
     </para>
 
     <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
