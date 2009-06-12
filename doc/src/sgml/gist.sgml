@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.30 2008/04/14 17:05:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.31 2009/06/12 19:48:53 tgl Exp $ -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
@@ -25,16 +25,17 @@
  </para>
 
   <para>
-    Some of the information here is derived from the University of California at
-    Berkeley's GiST Indexing Project
-    <ulink url="http://gist.cs.berkeley.edu/">web site</ulink> and 
+    Some of the information here is derived from the University of California
+    at Berkeley's GiST Indexing Project
+    <ulink url="http://gist.cs.berkeley.edu/">web site</ulink> and
+    Marcel Kornacker's thesis,
     <ulink url="http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz">
-    Marcel Kornacker's thesis, Access Methods for Next-Generation Database Systems</ulink>.
+    Access Methods for Next-Generation Database Systems</ulink>.
     The <acronym>GiST</acronym>
     implementation in <productname>PostgreSQL</productname> is primarily
     maintained by Teodor Sigaev and Oleg Bartunov, and there is more
     information on their
-    <ulink url="http://www.sai.msu.su/~megera/postgres/gist/">website</ulink>.
+    <ulink url="http://www.sai.msu.su/~megera/postgres/gist/">web site</ulink>.
   </para>
 
 </sect1>
@@ -47,11 +48,11 @@
    difficult work.  It was necessary to understand the inner workings of the
    database, such as the lock manager and Write-Ahead Log.  The
    <acronym>GiST</acronym> interface has a high level of abstraction,
-   requiring the access method implementer to only implement the semantics of
+   requiring the access method implementer only to implement the semantics of
    the data type being accessed.  The <acronym>GiST</acronym> layer itself
    takes care of concurrency, logging and searching the tree structure.
  </para>
- 
+
  <para>
    This extensibility should not be confused with the extensibility of the
    other standard search trees in terms of the data they can handle.  For
@@ -62,12 +63,12 @@
    (<literal>&lt;</literal>, <literal>=</literal>, <literal>&gt;</literal>),
    and hash indexes only support equality queries.
  </para>
- 
+
  <para>
    So if you index, say, an image collection with a
    <productname>PostgreSQL</productname> B-tree, you can only issue queries
    such as <quote>is imagex equal to imagey</quote>, <quote>is imagex less
-   than imagey</quote> and <quote>is imagex greater than imagey</quote>?
+   than imagey</quote> and <quote>is imagex greater than imagey</quote>.
    Depending on how you define <quote>equals</quote>, <quote>less than</quote>
    and <quote>greater than</quote> in this context, this could be useful.
    However, by using a <acronym>GiST</acronym> based index, you could create
@@ -89,87 +90,479 @@
 
 <sect1 id="gist-implementation">
  <title>Implementation</title>
- 
+
  <para>
    There are seven methods that an index operator class for
-   <acronym>GiST</acronym> must provide:
+   <acronym>GiST</acronym> must provide. Correctness of the index is ensured
+   by proper implementation of the <function>same</>, <function>consistent</>
+   and <function>union</> methods, while efficiency (size and speed) of the
+   index will depend on the <function>penalty</> and <function>picksplit</>
+   methods.
+   The remaining two methods are <function>compress</> and
+   <function>decompress</>, which allow an index to have internal tree data of
+   a different type than the data it indexes. The leaves are to be of the
+   indexed data type, while the other tree nodes can be of any C struct (but
+   you still have to follow <productname>PostgreSQL</> datatype rules here,
+   see about <literal>varlena</> for variable sized data). If the tree's
+   internal data type exists at the SQL level, the <literal>STORAGE</> option
+   of the <command>CREATE OPERATOR CLASS</> command can be used.
  </para>
 
  <variablelist>
     <varlistentry>
-     <term>consistent</term>
+     <term><function>consistent</></term>
      <listitem>
       <para>
-       Given a predicate <literal>p</literal> on a tree page, and a user
-       query, <literal>q</literal>, this method will return false if it is
-       certain that both <literal>p</literal> and <literal>q</literal> cannot
-       be true for a given data item.  For a true result, a
-       <literal>recheck</> flag must also be returned; this indicates whether
-       the predicate implies the query (<literal>recheck</> = false) or
-       not (<literal>recheck</> = true).
+       Given an index entry <literal>p</> and a query value <literal>q</>,
+       this function determines whether the index entry is
+       <quote>consistent</> with the query; that is, could the predicate
+       <quote><replaceable>indexed_column</>
+       <replaceable>indexable_operator</> <literal>q</></quote> be true for
+       any row represented by the index entry?  For a leaf index entry this is
+       equivalent to testing the indexable condition, while for an internal
+       tree node this determines whether it is necessary to scan the subtree
+       of the index represented by the tree node.  When the result is
+       <literal>true</>, a <literal>recheck</> flag must also be returned.
+       This indicates whether the predicate is certainly true or only possibly
+       true.  If <literal>recheck</> = <literal>false</> then the index has
+       tested the predicate condition exactly, whereas if <literal>recheck</>
+       = <literal>true</> the row is only a candidate match.  In that case the
+       system will automatically evaluate the
+       <replaceable>indexable_operator</> against the actual row value to see
+       if it is really a match.  This convention allows
+       <acronym>GiST</acronym> to support both lossless and lossy index
+       structures.
       </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_consistent(internal, data_type, smallint, oid, internal)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_consistent(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_consistent);
+
+Datum
+my_consistent(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    data_type  *query = PG_GETARG_DATA_TYPE_P(1);
+    StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+    /* Oid subtype = PG_GETARG_OID(3); */
+    bool       *recheck = (bool *) PG_GETARG_POINTER(4);
+    data_type  *key = DatumGetDataType(entry-&gt;key);
+    bool        retval;
+
+    /*
+     * determine return value as a function of strategy, key and query.
+     *
+     * Use GIST_LEAF(entry) to know where you're called in the index tree,
+     * which comes handy when supporting the = operator for example (you could
+     * check for non empty union() in non-leaf nodes and equality in leaf
+     * nodes).
+     */
+
+    *recheck = true;        /* or false if check is exact */
+
+    PG_RETURN_BOOL(retval);
+}
+</programlisting>
+
+       Here, <varname>key</> is an element in the index and <varname>query</>
+       the value being looked up in the index. The <literal>StrategyNumber</>
+       parameter indicates which operator of your operator class is being
+       applied &mdash; it matches one of the operator numbers in the
+       <command>CREATE OPERATOR CLASS</> command.  Depending on what operators
+       you have included in the class, the data type of <varname>query</> could
+       vary with the operator, but the above skeleton assumes it doesn't.
+      </para>
+
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>union</term>
+     <term><function>union</></term>
      <listitem>
       <para>
        This method consolidates information in the tree.  Given a set of
-       entries, this function generates a new predicate that is true for all
-       the entries.
+       entries, this function generates a new index entry that represents
+       all the given entries.
+      </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_union(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_union(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_union);
+
+Datum
+my_union(PG_FUNCTION_ARGS)
+{
+    GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+    GISTENTRY  *ent = entryvec-&gt;vector;
+    data_type  *out,
+               *tmp,
+               *old;
+    int         numranges,
+                i = 0;
+
+    numranges = entryvec-&gt;n;
+    tmp = DatumGetDataType(ent[0].key);
+    out = tmp;
+
+    if (numranges == 1)
+    {
+        out = data_type_deep_copy(tmp);
+
+        PG_RETURN_DATA_TYPE_P(out);
+    }
+
+    for (i = 1; i &lt; numranges; i++)
+    {
+        old = out;
+        tmp = DatumGetDataType(ent[i].key);
+        out = my_union_implementation(out, tmp);
+    }
+
+    PG_RETURN_DATA_TYPE_P(out);
+}
+</programlisting>
+      </para>
+
+      <para>
+        As you can see, in this skeleton we're dealing with a data type
+        where <literal>union(X, Y, Z) = union(union(X, Y), Z)</>. It's easy
+        enough to support data types where this is not the case, by
+        implementing the proper union algorithm in this
+        <acronym>GiST</> support method.
+      </para>
+
+      <para>
+        The <function>union</> implementation function should return a
+        pointer to newly <function>palloc()</>ed memory. You can't just
+        return whatever the input is.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>compress</term>
+     <term><function>compress</></term>
      <listitem>
       <para>
        Converts the data item into a format suitable for physical storage in
        an index page.
       </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_compress(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_compress);
+
+Datum
+my_compress(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    GISTENTRY  *retval;
+
+    if (entry-&gt;leafkey)
+    {
+        /* replace entry-&gt;key with a compressed version */
+        compressed_data_type *compressed_data = palloc(sizeof(compressed_data_type));
+
+        /* fill *compressed_data from entry-&gt;key ... */
+
+        retval = palloc(sizeof(GISTENTRY));
+        gistentryinit(*retval, PointerGetDatum(compressed_data),
+                      entry-&gt;rel, entry-&gt;page, entry-&gt;offset, FALSE);
+    }
+    else
+    {
+        /* typically we needn't do anything with non-leaf entries */
+        retval = entry;
+    }
+
+    PG_RETURN_POINTER(retval);
+}
+</programlisting>
+      </para>
+
+      <para>
+       You have to adapt <replaceable>compressed_data_type</> to the specific
+       type you're converting to in order to compress your leaf nodes, of
+       course.
+      </para>
+
+      <para>
+        Depending on your needs, you could also need to care about
+        compressing <literal>NULL</> values in there, storing for example
+        <literal>(Datum) 0</> like <literal>gist_circle_compress</> does.
+      </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>decompress</term>
+     <term><function>decompress</></term>
      <listitem>
       <para>
        The reverse of the <function>compress</function> method.  Converts the
        index representation of the data item into a format that can be
        manipulated by the database.
       </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_decompress(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_decompress);
+
+Datum
+my_decompress(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_POINTER(PG_GETARG_POINTER(0));
+}
+</programlisting>
+
+        The above skeleton is suitable for the case where no decompression
+        is needed.
+      </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>penalty</term>
+     <term><function>penalty</></term>
      <listitem>
       <para>
        Returns a value indicating the <quote>cost</quote> of inserting the new
-       entry into a particular branch of the tree.  items will be inserted
+       entry into a particular branch of the tree.  Items will be inserted
        down the path of least <function>penalty</function> in the tree.
       </para>
-     </listitem>
-    </varlistentry>
 
-    <varlistentry>
-     <term>picksplit</term>
-     <listitem>
       <para>
-       When a page split is necessary, this function decides which entries on
-       the page are to stay on the old page, and which are to move to the new
-       page.
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_penalty(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;  -- in some cases penalty functions need not be strict
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_penalty(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_penalty);
+
+Datum
+my_penalty(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+    float      *penalty = (float *) PG_GETARG_POINTER(2);
+    data_type  *orig = DatumGetDataType(origentry-&gt;key);
+    data_type  *new = DatumGetDataType(newentry-&gt;key);
+
+    *penalty = my_penalty_implementation(orig, new);
+    PG_RETURN_POINTER(penalty);
+}
+</programlisting>
+      </para>
+
+      <para>
+        The <function>penalty</> function is crucial to good performance of
+        the index. It'll get used at insertion time to determine which branch
+        to follow when choosing where to add the new entry in the tree. At
+        query time, the more balanced the index, the quicker the lookup.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>same</term>
+     <term><function>picksplit</></term>
      <listitem>
       <para>
-       Returns true if two entries are identical, false otherwise.
+       When an index page split is necessary, this function decides which
+       entries on the page are to stay on the old page, and which are to move
+       to the new page.
+      </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_picksplit(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_picksplit);
+
+Datum
+my_picksplit(PG_FUNCTION_ARGS)
+{
+    GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+    OffsetNumber maxoff = entryvec-&gt;n - 1;
+    GISTENTRY  *ent = entryvec-&gt;vector;
+    GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
+    int         i,
+                nbytes;
+    OffsetNumber *left,
+               *right;
+    data_type  *tmp_union;
+    data_type  *unionL;
+    data_type  *unionR;
+    GISTENTRY **raw_entryvec;
+
+    maxoff = entryvec-&gt;n - 1;
+    nbytes = (maxoff + 1) * sizeof(OffsetNumber);
+
+    v-&gt;spl_left = (OffsetNumber *) palloc(nbytes);
+    left = v-&gt;spl_left;
+    v-&gt;spl_nleft = 0;
+
+    v-&gt;spl_right = (OffsetNumber *) palloc(nbytes);
+    right = v-&gt;spl_right;
+    v-&gt;spl_nright = 0;
+
+    unionL = NULL;
+    unionR = NULL;
+
+    /* Initialize the raw entry vector. */
+    raw_entryvec = (GISTENTRY **) malloc(entryvec-&gt;n * sizeof(void *));
+    for (i = FirstOffsetNumber; i &lt;= maxoff; i = OffsetNumberNext(i))
+        raw_entryvec[i] = &amp;(entryvec-&gt;vector[i]);
+
+    for (i = FirstOffsetNumber; i &lt;= maxoff; i = OffsetNumberNext(i))
+    {
+        int         real_index = raw_entryvec[i] - entryvec-&gt;vector;
+
+        tmp_union = DatumGetDataType(entryvec-&gt;vector[real_index].key);
+        Assert(tmp_union != NULL);
+
+        /*
+         * Choose where to put the index entries and update unionL and unionR
+         * accordingly. Append the entries to either v_spl_left or
+         * v_spl_right, and care about the counters.
+         */
+
+        if (my_choice_is_left(unionL, curl, unionR, curr))
+        {
+            if (unionL == NULL)
+                unionL = tmp_union;
+            else
+                unionL = my_union_implementation(unionL, tmp_union);
+
+            *left = real_index;
+            ++left;
+            ++(v-&gt;spl_nleft);
+        }
+        else
+        {
+            /*
+             * Same on the right
+             */
+        }
+    }
+
+    v-&gt;spl_ldatum = DataTypeGetDatum(unionL);
+    v-&gt;spl_rdatum = DataTypeGetDatum(unionR);
+    PG_RETURN_POINTER(v);
+}
+</programlisting>
+      </para>
+
+      <para>
+        Like <function>penalty</>, the <function>picksplit</> function
+        is crucial to good performance of the index.  Designing suitable
+        <function>penalty</> and <function>picksplit</> implementations
+        is where the challenge of implementing well-performing
+        <acronym>GiST</> indexes lies.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>same</></term>
+     <listitem>
+      <para>
+       Returns true if two index entries are identical, false otherwise.
+      </para>
+
+      <para>
+        The <acronym>SQL</> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_same(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+
+        And the matching code in the C module could then follow this skeleton:
+
+<programlisting>
+Datum       my_same(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(my_same);
+
+Datum
+my_same(PG_FUNCTION_ARGS)
+{
+    prefix_range *v1 = PG_GETARG_PREFIX_RANGE_P(0);
+    prefix_range *v2 = PG_GETARG_PREFIX_RANGE_P(1);
+    bool       *result = (bool *) PG_GETARG_POINTER(2);
+
+    *result = my_eq(v1, v2);
+    PG_RETURN_POINTER(result);
+}
+</programlisting>
+
+        For historical reasons, the <function>same</> function doesn't
+        just return a boolean result; instead it has to store the flag
+        at the location indicated by the third argument.
       </para>
      </listitem>
     </varlistentry>
@@ -189,9 +582,9 @@
   R-Tree equivalent functionality for some of the built-in geometric data types
   (see <filename>src/backend/access/gist/gistproc.c</>).  The following
   <filename>contrib</> modules also contain <acronym>GiST</acronym>
-  operator classes: 
+  operator classes:
  </para>
- 
+
  <variablelist>
   <varlistentry>
    <term>btree_gist</term>
