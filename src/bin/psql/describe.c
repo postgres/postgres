@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.216 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.217 2009/06/12 16:17:29 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -2073,7 +2073,7 @@ describeRoles(const char *pattern, bool verbose)
 	return true;
 }
 
-void
+static void
 add_role_attribute(PQExpBuffer buf, const char *const str)
 {
 	if (buf->len > 0)

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.115 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.116 2009/06/12 16:17:29 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -2170,7 +2170,7 @@ printTableCleanup(printTableContent *const content)
  *
  * Setup pager if required
  */
-void
+static void
 IsPagerNeeded(const printTableContent *cont, const int extra_lines, FILE **fout,
 			  bool *is_pager)
 {
