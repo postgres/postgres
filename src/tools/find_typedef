@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.15 2009/06/12 03:04:48 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/find_typedef,v 1.16 2009/06/12 03:09:07 momjian Exp $
 
 # This script attempts to find all typedef's in the postgres binaries
 # by using 'nm' to report all typedef debugging symbols.
@@ -45,7 +45,7 @@ do	# if objdump -W is recognized, only one line of error should appear
 		# the typedef references, not the definitions, so I think it might
 		# be fine
 		objdump -W "$DIR"/* |
-		egrep -A3 'DW_TAG_typedef' |
+		egrep -A3 '\(DW_TAG_typedef\)' |
 		awk ' $2 == "DW_AT_name" {print $NF}'
 	elif [ `readelf -w 2>&1 | wc -l` -gt 1 ]
 	then	# FreeBSD, similar output to Linux
