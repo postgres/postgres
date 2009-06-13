@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.108 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.109 2009/06/13 15:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ get_sort_group_operators(Oid argtype,
 	 * If the datatype is an array, then we can use array_lt and friends ...
 	 * but only if there are suitable operators for the element type.  (This
 	 * check is not in the raw typcache.c code ... should it be?)  Testing all
-	 * three operator IDs here should be redundant.
+	 * three operator IDs here should be redundant, but let's do it anyway.
 	 */
 	if (lt_opr == ARRAY_LT_OP ||
 		eq_opr == ARRAY_EQ_OP ||
@@ -215,12 +215,31 @@ get_sort_group_operators(Oid argtype,
 		{
 			typentry = lookup_type_cache(elem_type,
 					 TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR | TYPECACHE_GT_OPR);
-			if (!OidIsValid(typentry->lt_opr))
-				lt_opr = InvalidOid;	/* element type has no "<" */
+#ifdef NOT_USED
+			/* We should do this ... */
 			if (!OidIsValid(typentry->eq_opr))
-				eq_opr = InvalidOid;	/* element type has no "=" */
-			if (!OidIsValid(typentry->gt_opr))
-				gt_opr = InvalidOid;	/* element type has no ">" */
+			{
+				/* element type is neither sortable nor hashable */
+				lt_opr = eq_opr = gt_opr = InvalidOid;
+			}
+			else if (!OidIsValid(typentry->lt_opr) ||
+					 !OidIsValid(typentry->gt_opr))
+			{
+				/* element type is hashable but not sortable */
+				lt_opr = gt_opr = InvalidOid;
+			}
+#else
+			/*
+			 * ... but for the moment we have to do this.  This is because
+			 * anyarray has sorting but not hashing support.  So, if the
+			 * element type is only hashable, there is nothing we can do
+			 * with the array type.
+			 */
+			if (!OidIsValid(typentry->lt_opr) ||
+				!OidIsValid(typentry->eq_opr) ||
+				!OidIsValid(typentry->gt_opr))
+				lt_opr = eq_opr = gt_opr = InvalidOid;	/* not sortable */
+#endif
 		}
 		else
 			lt_opr = eq_opr = gt_opr = InvalidOid;		/* bogus array type? */
