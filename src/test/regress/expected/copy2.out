@@ -1,4 +1,4 @@
-CREATE TABLE x (
+CREATE TEMP TABLE x (
 	a serial,
 	b int,
 	c text not null default 'stuff',
@@ -172,7 +172,7 @@ I'm null	before trigger fired
 3	after trigger fired
 4	after trigger fired
 5	after trigger fired
-CREATE TABLE y (
+CREATE TEMP TABLE y (
 	col1 text,
 	col2 text
 );
