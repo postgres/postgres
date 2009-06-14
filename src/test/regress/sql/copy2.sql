@@ -1,4 +1,4 @@
-CREATE TABLE x (
+CREATE TEMP TABLE x (
 	a serial,
 	b int,
 	c text not null default 'stuff',
@@ -116,7 +116,7 @@ COPY x TO stdout;
 COPY x (c, e) TO stdout;
 COPY x (b, e) TO stdout WITH NULL 'I''m null';
 
-CREATE TABLE y (
+CREATE TEMP TABLE y (
 	col1 text,
 	col2 text
 );
