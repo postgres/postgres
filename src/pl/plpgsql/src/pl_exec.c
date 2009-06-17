@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.243 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.244 2009/06/17 13:46:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3975,7 +3975,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("type of tgargv[%d] does not match that when preparing the plan",
+							 errmsg("type of tg_argv[%d] does not match that when preparing the plan",
 									tgargno)));
 				break;
 			}
