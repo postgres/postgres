@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.94 2009/05/16 22:51:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.95 2009/06/17 13:59:28 petere Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -603,7 +603,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
 
    <para>
     Tables whose <structfield>relfrozenxid</> value is more than
-    <varname>autovacuum_freeze_max_age</> transactions old are always
+    <xref linkend="guc-autovacuum-freeze-max-age"> transactions old are always
     vacuumed (this also applies to those tables whose freeze max age has
     been modified via storage parameters; see below).  Otherwise, if the
     number of tuples obsoleted since the last
