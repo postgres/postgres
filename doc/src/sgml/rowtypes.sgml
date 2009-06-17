@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.10 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.11 2009/06/17 21:58:49 tgl Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -41,7 +41,7 @@ CREATE TYPE inventory_item AS (
   NULL</>) can presently be included.  Note that the <literal>AS</> keyword
   is essential; without it, the system will think a different kind
   of <command>CREATE TYPE</> command is meant, and you will get odd syntax
-  error.
+  errors.
  </para>
 
  <para>
@@ -68,8 +68,8 @@ SELECT price_extension(item, 10) FROM on_hand;
  </para>
 
  <para>
-  Whenever you create a table, a composite type is automatically
-  created also, with the same name as the table, to represent the table's
+  Whenever you create a table, a composite type is also automatically
+  created, with the same name as the table, to represent the table's
   row type.  For example, had we said:
 <programlisting>
 CREATE TABLE inventory_item (
@@ -250,7 +250,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
    The external text representation of a composite value consists of items that
    are interpreted according to the I/O conversion rules for the individual
    field types, plus decoration that indicates the composite structure.
-   The decoration consists of parentheses
+   The decoration consists of parentheses (<literal>(</> and <literal>)</>)
    around the whole value, plus commas (<literal>,</>) between adjacent
    items.  Whitespace outside the parentheses is ignored, but within the
    parentheses it is considered part of the field value, and might or might not be
@@ -264,7 +264,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
   </para>
 
   <para>
-   As shown previously, when writing a composite value you can use double
+   As shown previously, when writing a composite value you can write double
    quotes around any individual field value.
    You <emphasis>must</> do so if the field value would otherwise
    confuse the composite-value parser.  In particular, fields containing

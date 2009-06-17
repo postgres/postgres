@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.51 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.52 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -389,7 +389,7 @@ text @@ text
 
    <para>
     Text search parsers and templates are built from low-level C functions;
-    therefore C programming ability is required to develop new ones, and
+    therefore it requires C programming ability to develop new ones, and
     superuser privileges to install one into a database.  (There are examples
     of add-on parsers and templates in the <filename>contrib/</> area of the
     <productname>PostgreSQL</> distribution.)  Since dictionaries and
@@ -519,7 +519,7 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(config_name, body));
     recording which configuration was used for each index entry.  This
     would be useful, for example, if the document collection contained
     documents in different languages.  Again,
-    queries that wish to use the index must be phrased to match, e.g.,
+    queries that are meant to use the index must be phrased to match, e.g.,
     <literal>WHERE to_tsvector(config_name, body) @@ 'a &amp; b'</>.
    </para>
 
@@ -860,7 +860,8 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
 
       <term>
        <synopsis>
-        ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
+        ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
+                <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
        </synopsis>
       </term>
 
@@ -1042,7 +1043,7 @@ LIMIT 10;
     Ranking can be expensive since it requires consulting the
     <type>tsvector</type> of each matching document, which can be I/O bound and
     therefore slow. Unfortunately, it is almost impossible to avoid since
-    practical queries often result in a large number of matches.
+    practical queries often result in large numbers of matches.
    </para>
 
   </sect2>
@@ -1068,7 +1069,7 @@ LIMIT 10;
 
    <para>
     <function>ts_headline</function> accepts a document along
-    with a query, and returns an excerpt of
+    with a query, and returns an excerpt from
     the document in which terms from the query are highlighted.  The
     configuration to be used to parse the document can be specified by
     <replaceable>config</replaceable>; if <replaceable>config</replaceable>
@@ -1085,8 +1086,8 @@ LIMIT 10;
     <itemizedlist  spacing="compact" mark="bullet">
      <listitem>
       <para>
-       <literal>StartSel</>, <literal>StopSel</literal>: the strings to delimit
-       query words appearing in the document, to distinguish
+       <literal>StartSel</>, <literal>StopSel</literal>: the strings with
+       which to delimit query words appearing in the document, to distinguish
        them from other excerpted words.  You must double-quote these strings
        if they contain spaces or commas.
       </para>
@@ -1188,7 +1189,7 @@ SELECT id, ts_headline(body, q), rank
 FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
       FROM apod, to_tsquery('stars') q
       WHERE ti @@ q
-      ORDER BY rank DESC 
+      ORDER BY rank DESC
       LIMIT 10) AS foo;
 </programlisting>
    </para>
@@ -1678,9 +1679,9 @@ SELECT title, body FROM messages WHERE tsv @@ to_tsquery('title &amp; body');
    </para>
 
    <para>
-    A limitation of built-in triggers is that they treat all the
+    A limitation of these built-in triggers is that they treat all the
     input columns alike.  To process columns differently &mdash; for
-    example, to weigh title differently from body &mdash; it is necessary
+    example, to weight title differently from body &mdash; it is necessary
     to write a custom trigger.  Here is an example using
     <application>PL/pgSQL</application> as the trigger language:
 
@@ -1722,8 +1723,8 @@ ON messages FOR EACH ROW EXECUTE PROCEDURE messages_trigger();
    </para>
 
    <synopsis>
-    ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>,
-            </optional> OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>,
+    ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>, </optional>
+            OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>,
             OUT <replaceable class="PARAMETER">nentry</replaceable> <type>integer</>) returns <type>setof record</>
    </synopsis>
 
@@ -2087,7 +2088,7 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
    by the parser, each dictionary in the list is consulted in turn,
    until some dictionary recognizes it as a known word.  If it is identified
    as a stop word, or if no dictionary recognizes the token, it will be
-   discarded and not indexed or searched.
+   discarded and not indexed or searched for.
    The general rule for configuring a list of dictionaries
    is to place first the most narrow, most specific dictionary, then the more
    general dictionaries, finishing with a very general dictionary, like
@@ -2439,7 +2440,7 @@ CREATE TEXT SEARCH DICTIONARY thesaurus_simple (
 
 <programlisting>
 ALTER TEXT SEARCH CONFIGURATION russian
-    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart 
+    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart
     WITH thesaurus_simple;
 </programlisting>
    </para>
@@ -2679,9 +2680,9 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
    </para>
 
    <para>
-    As an example, we will create a configuration
-    <literal>pg</literal> by duplicating the built-in
-    <literal>english</> configuration.
+    As an example we will create a configuration
+    <literal>pg</literal>, starting by duplicating the built-in
+    <literal>english</> configuration:
 
 <programlisting>
 CREATE TEXT SEARCH CONFIGURATION public.pg ( COPY = pg_catalog.english );
@@ -3137,7 +3138,7 @@ SELECT plainto_tsquery('supernovae stars');
   </indexterm>
 
   <para>
-   There are two kinds of indexes which can be used to speed up full text
+   There are two kinds of indexes that can be used to speed up full text
    searches.
    Note that indexes are not mandatory for full text searching, but in
    cases where a column is searched on a regular basis, an index is
@@ -3204,7 +3205,7 @@ SELECT plainto_tsquery('supernovae stars');
    to check the actual table row to eliminate such false matches.
    (<productname>PostgreSQL</productname> does this automatically when needed.)
    GiST indexes are lossy because each document is represented in the
-   index using a fixed-length signature. The signature is generated by hashing
+   index by a fixed-length signature. The signature is generated by hashing
    each word into a random bit in an n-bit string, with all these bits OR-ed
    together to produce an n-bit document signature.  When two words hash to
    the same bit position there will be a false match.  If all words in

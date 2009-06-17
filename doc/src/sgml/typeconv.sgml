@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.59 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.60 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -161,7 +161,7 @@ categories</firstterm>, including <type>boolean</type>, <type>numeric</type>,
 user-defined.  (For a list see <xref linkend="catalog-typcategory-table">;
 but note it is also possible to create custom type categories.)  Within each
 category there can be one or more <firstterm>preferred types</firstterm>, which
-are selected when there is ambiguity.  With careful selection
+are preferred when there is a choice of possible types.  With careful selection
 of preferred types and available implicit casts, it is possible to ensure that
 ambiguous expressions (those with multiple candidate parsing solutions) can be
 resolved in a useful way.
@@ -189,7 +189,7 @@ calls in the query.
 <para>
 Additionally, if a query usually requires an implicit conversion for a function, and
 if then the user defines a new function with the correct argument types, the parser
-should use this new function and no longer do implicit conversion using the old function.
+should use this new function and no longer do implicit conversion to use the old function.
 </para>
 </listitem>
 </itemizedlist>
@@ -206,10 +206,12 @@ should use this new function and no longer do implicit conversion using the old 
 </indexterm>
 
   <para>
-   The specific operator invoked is determined by the following
-   steps. Note that this procedure is affected
-   by the precedence of the involved operators.  See <xref
-   linkend="sql-precedence"> for more information.
+   The specific operator that is referenced by an operator expression
+   is determined using the following procedure.
+   Note that this procedure is indirectly affected
+   by the precedence of the involved operators, since that will determine
+   which sub-expressions are taken to be the inputs of which operators.
+   See <xref linkend="sql-precedence"> for more information.
   </para>
 
 <procedure>
@@ -220,7 +222,7 @@ should use this new function and no longer do implicit conversion using the old 
 Select the operators to be considered from the
 <classname>pg_operator</classname> system catalog.  If a non-schema-qualified
 operator name was used (the usual case), the operators
-considered are those with a matching name and argument count that are
+considered are those with the matching name and argument count that are
 visible in the current search path (see <xref linkend="ddl-schemas-path">).
 If a qualified operator name was given, only operators in the specified
 schema are considered.
@@ -250,8 +252,8 @@ operators considered), use it.
 <para>
 If one argument of a binary operator invocation is of the <type>unknown</type> type,
 then assume it is the same type as the other argument for this check.
-Cases involving two <type>unknown</type> types will never find a match at
-this step.
+Invocations involving two <type>unknown</type> inputs, or a unary operator
+with an <type>unknown</type> input, will never find a match at this step.
 </para>
 </step>
 </substeps>
@@ -390,9 +392,9 @@ In this case there is no initial hint for which type to use, since no types
 are specified in the query. So, the parser looks for all candidate operators
 and finds that there are candidates accepting both string-category and
 bit-string-category inputs.  Since string category is preferred when available,
-that category is selected, and the
+that category is selected, and then the
 preferred type for strings, <type>text</type>, is used as the specific
-type to resolve the unknown literals.
+type to resolve the unknown literals as.
 </para>
 </example>
 
@@ -459,8 +461,8 @@ SELECT ~ CAST('20' AS int8) AS "negation";
 </indexterm>
 
   <para>
-   The specific function to be invoked is determined
-   according to the following steps.
+   The specific function that is referenced by a function call
+   is determined using the following procedure.
   </para>
 
 <procedure>
@@ -471,7 +473,7 @@ SELECT ~ CAST('20' AS int8) AS "negation";
 Select the functions to be considered from the
 <classname>pg_proc</classname> system catalog.  If a non-schema-qualified
 function name was used, the functions
-considered are those with a matching name and argument count that are
+considered are those with the matching name and argument count that are
 visible in the current search path (see <xref linkend="ddl-schemas-path">).
 If a qualified function name was given, only functions in the specified
 schema are considered.
@@ -554,7 +556,7 @@ Look for the best match.
 <substeps>
 <step performance="required">
 <para>
-Discard candidate functions in which the input types do not match
+Discard candidate functions for which the input types do not match
 and cannot be converted (using an implicit conversion) to match.
 <type>unknown</type> literals are
 assumed to be convertible to anything for this purpose.  If only one
@@ -615,9 +617,10 @@ Some examples follow.
 <title>Rounding Function Argument Type Resolution</title>
 
 <para>
-There is only one <function>round</function> function which takes two
-arguments;  it takes a first argument of <type>numeric</type> and 
-a second argument of <type>integer</type>.  So the following query automatically converts
+There is only one <function>round</function> function that takes two
+arguments; it takes a first argument of type <type>numeric</type> and
+a second argument of type <type>integer</type>.
+So the following query automatically converts
 the first argument of type <type>integer</type> to
 <type>numeric</type>:
 

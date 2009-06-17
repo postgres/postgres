@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.18 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.19 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -248,10 +248,7 @@ DELETE FROM products WHERE price = 10;
 <programlisting>
 DELETE FROM products;
 </programlisting>
-   then all rows in the table will be deleted!  (<xref
-   linkend="sql-truncate" endterm="sql-truncate-title"> can also be used
-   to delete all rows.)
-   Caveat programmer.
+   then all rows in the table will be deleted!  Caveat programmer.
   </para>
  </sect1>
 </chapter>

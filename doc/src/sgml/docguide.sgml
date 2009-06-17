@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.75 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.76 2009/06/17 21:58:49 tgl Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -358,7 +358,7 @@ CATALOG "dsssl/catalog"
        Create the directory
        <filename>/usr/local/share/sgml/docbook-4.2</filename> and change
        to it. (The exact location is irrelevant, but this one is
-       reasonable within the layout we are following here.):
+       reasonable within the layout we are following here.)
 <screen>
 <prompt>$ </prompt><userinput>mkdir /usr/local/share/sgml/docbook-4.2</userinput>
 <prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook-4.2</userinput>
@@ -421,7 +421,7 @@ perl -pi -e 's/iso-(.*).gml/ISO\1/g' docbook.cat
      To install the style sheets, unzip and untar the distribution and
      move it to a suitable place, for example
      <filename>/usr/local/share/sgml</filename>.  (The archive will
-     automatically create a subdirectory.):
+     automatically create a subdirectory.)
 <screen>
 <prompt>$</prompt> <userinput>gunzip docbook-dsssl-1.<replaceable>xx</>.tar.gz</userinput>
 <prompt>$</prompt> <userinput>tar -C /usr/local/share/sgml -xf docbook-dsssl-1.<replaceable>xx</>.tar</userinput>

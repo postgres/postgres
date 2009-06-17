@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.70 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.71 2009/06/17 21:58:49 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -45,8 +45,9 @@
     table access methods: sequential scans, index scans, and bitmap index
     scans.  If the query requires joining, aggregation, sorting, or other
     operations on the raw rows, then there will be additional nodes
-    above the scan nodes to perform these operations.  Other nodes types
-    are also supported.  The output
+    above the scan nodes to perform these operations.  Again,
+    there is usually more than one possible way to do these operations,
+    so different node types can appear here too.  The output
     of <command>EXPLAIN</command> has one line for each node in the plan
     tree, showing the basic node type plus the cost estimates that the planner
     made for the execution of that plan node.  The first line (topmost node)
@@ -83,24 +84,24 @@ EXPLAIN SELECT * FROM tenk1;
     <itemizedlist>
      <listitem>
       <para>
-       Estimated start-up cost, e.g., time expended before the output scan can start,
-       time to do the sorting in a sort node
+       Estimated start-up cost (time expended before the output scan can start,
+       e.g., time to do the sorting in a sort node)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated total cost if all rows were to be retrieved (though they might
-       not be, e.g., a query with a <literal>LIMIT</> clause will stop
-       short of paying the total cost of the <literal>Limit</> node's
+       Estimated total cost (if all rows are retrieved, though they might
+       not be; e.g., a query with a <literal>LIMIT</> clause will stop
+       short of paying the total cost of the <literal>Limit</> plan node's
        input node)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated number of rows output by this plan node (Again, only if
-       executed to completion.)
+       Estimated number of rows output by this plan node (again, only if
+       executed to completion)
       </para>
      </listitem>
 
@@ -129,18 +130,18 @@ EXPLAIN SELECT * FROM tenk1;
     the cost only reflects things that the planner cares about.
     In particular, the cost does not consider the time spent transmitting
     result rows to the client, which could be an important
-    factor in the total elapsed time; but the planner ignores it because
+    factor in the real elapsed time; but the planner ignores it because
     it cannot change it by altering the plan.  (Every correct plan will
     output the same row set, we trust.)
    </para>
 
    <para>
-    The <command>EXPLAIN</command> <literal>rows=</> value is a little tricky
+    The <literal>rows</> value is a little tricky
     because it is <emphasis>not</emphasis> the
     number of rows processed or scanned by the plan node.  It is usually less,
     reflecting the estimated selectivity of any <literal>WHERE</>-clause
     conditions that are being
-    applied to the node.  Ideally the top-level rows estimate will
+    applied at the node.  Ideally the top-level rows estimate will
     approximate the number of rows actually returned, updated, or deleted
     by the query.
    </para>
@@ -197,7 +198,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
    </para>
 
    <para>
-    The actual number of rows this query would select is 7000, but the <literal>rows=</>
+    The actual number of rows this query would select is 7000, but the <literal>rows</>
     estimate is only approximate.  If you try to duplicate this experiment,
     you will probably get a slightly different estimate; moreover, it will
     change after each <command>ANALYZE</command> command, because the
@@ -234,7 +235,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
 
    <para>
     If the <literal>WHERE</> condition is selective enough, the planner might
-    switch to a <emphasis>simple</> index scan plan:
+    switch to a <quote>simple</> index scan plan:
 
 <programlisting>
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3;
@@ -248,8 +249,8 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 3;
     In this case the table rows are fetched in index order, which makes them
     even more expensive to read, but there are so few that the extra cost
     of sorting the row locations is not worth it.  You'll most often see
-    this plan type in queries that fetch just a single row, and for queries
-    with an <literal>ORDER BY</> condition that matches the index
+    this plan type for queries that fetch just a single row, and for queries
+    that have an <literal>ORDER BY</> condition that matches the index
     order.
    </para>
 
@@ -320,7 +321,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    </para>
 
    <para>
-    In this nested-loop join, the outer scan (upper) is the same bitmap index scan we
+    In this nested-loop join, the outer (upper) scan is the same bitmap index scan we
     saw earlier, and so its cost and row count are the same because we are
     applying the <literal>WHERE</> clause <literal>unique1 &lt; 100</literal>
     at that node.
@@ -409,7 +410,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 </screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of
-    real time, whereas the <literal>cost=</> estimates are expressed in
+    real time, whereas the <literal>cost</> estimates are expressed in
     arbitrary units; so they are unlikely to match up.
     The thing to pay attention to is whether the ratios of actual time and
     estimated costs are consistent.
@@ -419,11 +420,11 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     In some query plans, it is possible for a subplan node to be executed more
     than once.  For example, the inner index scan is executed once per outer
     row in the above nested-loop plan.  In such cases, the
-    <literal>loops=</> value reports the
+    <literal>loops</> value reports the
     total number of executions of the node, and the actual time and rows
     values shown are averages per-execution.  This is done to make the numbers
     comparable with the way that the cost estimates are shown.  Multiply by
-    the <literal>loops=</> value to get the total time actually spent in
+    the <literal>loops</> value to get the total time actually spent in
     the node.
    </para>
 
@@ -780,7 +781,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </indexterm>
 
    <para>
-    When doing <command>INSERT</>s, turn off autocommit and just do
+    When using multiple <command>INSERT</>s, turn off autocommit and just do
     one commit at the end.  (In plain
     SQL, this means issuing <command>BEGIN</command> at the start and
     <command>COMMIT</command> at the end.  Some client libraries might
@@ -824,7 +825,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <para>
     Note that loading a large number of rows using
     <command>COPY</command> is almost always faster than using
-    <command>INSERT</command>, even if the <command>PREPARE ... INSERT</> is used and
+    <command>INSERT</command>, even if <command>PREPARE</> is used and
     multiple insertions are batched into a single transaction.
    </para>
 

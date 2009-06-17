@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.71 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.72 2009/06/17 21:58:49 tgl Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -246,7 +246,7 @@
     committed before the query began; it never sees either uncommitted
     data or changes committed during query execution by concurrent
     transactions.  In effect, a <command>SELECT</command> query sees
-    a snapshot of the database at the instant the query begins to
+    a snapshot of the database as of the instant the query begins to
     run.   However, <command>SELECT</command> does see the effects
     of previous updates executed within its own transaction, even
     though they are not yet committed.  Also note that two successive
@@ -260,7 +260,7 @@
     FOR UPDATE</command>, and <command>SELECT FOR SHARE</command> commands
     behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
-    that were committed before the command start time.  However, such a target
+    that were committed as of the command start time.  However, such a target
     row might have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
     would-be updater will wait for the first updating transaction to commit or
@@ -367,16 +367,17 @@ COMMIT;
     transaction began; it never sees either uncommitted data or changes
     committed
     during transaction execution by concurrent transactions.  (However,
-    <command>SELECT</command> does see the effects of previous updates
+    the query does see the effects of previous updates
     executed within its own transaction, even though they are not yet
     committed.)  This is different from Read Committed in that
-    <command>SELECT</command> in a serializable transaction
-    sees a snapshot as of the start of the <emphasis>transaction</>, not as of the start
+    a query in a serializable transaction
+    sees a snapshot as of the start of the <emphasis>transaction</>,
+    not as of the start
     of the current query within the transaction.  Thus, successive
     <command>SELECT</command> commands within a <emphasis>single</>
-    transaction see the same data, i.e. they never see changes made by
-    transactions that committed after its own transaction started.  (This
-    behavior can be ideal for reporting applications.)
+    transaction see the same data, i.e., they do not see changes made by
+    other transactions that committed after their own transaction started.
+    (This behavior can be ideal for reporting applications.)
    </para>
 
    <para>
@@ -384,7 +385,7 @@ COMMIT;
     FOR UPDATE</command>, and <command>SELECT FOR SHARE</command> commands
     behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
-    that were committed before the transaction start time.  However, such a
+    that were committed as of the transaction start time.  However, such a
     target
     row might have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
@@ -666,9 +667,10 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
        </term>
        <listitem>
         <para>
-         Conflicts all lock modes except <literal>ACCESS SHARE</literal>,
-         <literal>ROW SHARE</literal>, and <literal>SHARE</literal> (it
-         does not conflict with itself).
+         Conflicts with the <literal>ROW EXCLUSIVE</literal>,
+         <literal>SHARE UPDATE EXCLUSIVE</literal>, <literal>SHARE ROW
+         EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
          This mode protects a table against concurrent data changes.
         </para>
 
@@ -685,8 +687,11 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
        </term>
        <listitem>
         <para>
-         Conflicts all lock modes except <literal>ACCESS SHARE</literal>
-         and <literal>ROW SHARE</literal>.
+         Conflicts with the <literal>ROW EXCLUSIVE</literal>,
+         <literal>SHARE UPDATE EXCLUSIVE</literal>,
+         <literal>SHARE</literal>, <literal>SHARE ROW
+         EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
         </para>
 
         <para>
@@ -702,7 +707,11 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
        </term>
        <listitem>
         <para>
-         Conflicts all lock modes except <literal>ACCESS SHARE</literal>.
+         Conflicts with the <literal>ROW SHARE</literal>, <literal>ROW
+         EXCLUSIVE</literal>, <literal>SHARE UPDATE
+         EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
+         ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
          This mode allows only concurrent <literal>ACCESS SHARE</literal> locks,
          i.e., only reads from the table can proceed in parallel with a
          transaction holding this lock mode.
@@ -711,7 +720,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <para>
          This lock mode is not automatically acquired on user tables by any
          <productname>PostgreSQL</productname> command.  However it is
-         acquired during certain internal system catalogs operations.
+         acquired on certain system catalogs in some operations.
         </para>
        </listitem>
       </varlistentry>
@@ -722,7 +731,12 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
        </term>
        <listitem>
         <para>
-         Conflicts with all lock modes.
+         Conflicts with locks of all modes (<literal>ACCESS
+         SHARE</literal>, <literal>ROW SHARE</literal>, <literal>ROW
+         EXCLUSIVE</literal>, <literal>SHARE UPDATE
+         EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
+         ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal>).
          This mode guarantees that the
          holder is the only transaction accessing the table in any way.
         </para>
@@ -749,7 +763,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
    <para>
     Once acquired, a lock is normally held till end of transaction.  But if a
     lock is acquired after establishing a savepoint, the lock is released
-    immediately if the savepoint is rolled back.  This is consistent with
+    immediately if the savepoint is rolled back to.  This is consistent with
     the principle that <command>ROLLBACK</> cancels all effects of the
     commands since the savepoint.  The same holds for locks acquired within a
     <application>PL/pgSQL</> exception block: an error escape from the block
@@ -882,8 +896,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      can be exclusive or shared locks.  An exclusive row-level lock on a
      specific row is automatically acquired when the row is updated or
      deleted.  The lock is held until the transaction commits or rolls
-     back, like table-level locks.  Row-level locks do
-     not affect data querying; they only block <emphasis>writers to the same
+     back, just like table-level locks.  Row-level locks do
+     not affect data querying; they block only <emphasis>writers to the same
      row</emphasis>.
     </para>
 
@@ -918,7 +932,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      used to control read/write access to table pages in the shared buffer
      pool.  These locks are released immediately after a row is fetched or
      updated.  Application developers normally need not be concerned with
-     page-level locks, but they are mentioned for completeness.
+     page-level locks, but they are mentioned here for completeness.
     </para>
 
    </sect2>
@@ -1100,7 +1114,7 @@ SELECT pg_advisory_lock(q.id) FROM
     after the current query began).  The row might have been modified or
     deleted by an already-committed transaction that committed after
     the <command>SELECT</command> started.
-    Even if the row is still valid <emphasis>now</>, it could be changed or
+    Even if the row is still valid <quote>now</>, it could be changed or
     deleted
     before the current transaction does a commit or rollback.
    </para>
@@ -1121,7 +1135,7 @@ SELECT pg_advisory_lock(q.id) FROM
     concurrent updates one must use <command>SELECT FOR UPDATE</command>,
     <command>SELECT FOR SHARE</command>, or an appropriate <command>LOCK
     TABLE</command> statement.  (<command>SELECT FOR UPDATE</command>
-    or <command>SELECT FOR SHARE</command> lock just the
+    and <command>SELECT FOR SHARE</command> lock just the
     returned rows against concurrent updates, while <command>LOCK
     TABLE</command> locks the whole table.)  This should be taken into
     account when porting applications to
@@ -1151,9 +1165,9 @@ SELECT pg_advisory_lock(q.id) FROM
    </para>
 
    <para>
-    Note also that if one is
-    relying on explicit locking to prevent concurrent changes, one should use
-    either Read Committed mode, or in Serializable mode be careful to obtain
+    Note also that if one is relying on explicit locking to prevent concurrent
+    changes, one should either use Read Committed mode, or in Serializable
+    mode be careful to obtain
     locks before performing queries.  A lock obtained by a
     serializable transaction guarantees that no other transactions modifying
     the table are still running, but if the snapshot seen by the
@@ -1162,7 +1176,7 @@ SELECT pg_advisory_lock(q.id) FROM
     frozen at the start of its first query or data-modification command
     (<literal>SELECT</>, <literal>INSERT</>,
     <literal>UPDATE</>, or <literal>DELETE</>), so
-    it is often desirable to obtain locks explicitly before the snapshot is
+    it is possible to obtain locks explicitly before the snapshot is
     frozen.
    </para>
   </sect1>
@@ -1178,7 +1192,7 @@ SELECT pg_advisory_lock(q.id) FROM
    <para>
     Though <productname>PostgreSQL</productname>
     provides nonblocking read/write access to table
-    data, nonblocking read/write access is currently not offered for every
+    data, nonblocking read/write access is not currently offered for every
     index access method implemented
     in <productname>PostgreSQL</productname>.
     The various index types are handled as follows:
@@ -1221,8 +1235,8 @@ SELECT pg_advisory_lock(q.id) FROM
        <para>
         Short-term share/exclusive page-level locks are used for
         read/write access. Locks are released immediately after each
-        index row is fetched or inserted. But note insertion of a GIN-indexed
-        value usually produces several index key insertions
+        index row is fetched or inserted. But note that insertion of a
+        GIN-indexed value usually produces several index key insertions
         per row, so GIN might do substantial work for a single value's
         insertion.
        </para>

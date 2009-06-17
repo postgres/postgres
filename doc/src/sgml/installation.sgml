@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.323 2009/06/12 15:53:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.324 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -85,7 +85,7 @@ su - postgres
 
     <listitem>
      <para>
-      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler (minimum
+      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler (at least
       C89-compliant). Recent
       versions of <productname>GCC</> are recommendable, but
       <productname>PostgreSQL</> is known to build using a wide variety
@@ -118,7 +118,7 @@ su - postgres
       command you type, and allows you to use arrow keys to recall and
       edit previous commands.  This is very helpful and is strongly
       recommended.  If you don't want to use it then you must specify
-      the <option>--without-readline</option> option of
+      the <option>--without-readline</option> option to
       <filename>configure</>. As an alternative, you can often use the
       BSD-licensed <filename>libedit</filename> library, originally
       developed on <productname>NetBSD</productname>. The
@@ -422,11 +422,10 @@ su - postgres
      On systems that have <productname>PostgreSQL</> started at boot time,
      there is probably a start-up file that will accomplish the same thing. For
      example, on a <systemitem class="osname">Red Hat Linux</> system one
-     might find that:
+     might find that this works:
 <screen>
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
-     works.
     </para>
    </step>
 
@@ -471,7 +470,7 @@ su - postgres
 
    <step>
     <para>
-     Start the database server, again the special database user
+     Start the database server, again using the special database user
      account:
 <programlisting>
 <userinput>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</>
@@ -1648,7 +1647,7 @@ All of PostgreSQL is successfully made. Ready to install.
     later on. To reset the source tree to the state in which it was
     distributed, use <command>gmake distclean</>. If you are going to
     build for several platforms within the same source tree you must do
-    this and rebuild for each platform.  (Alternatively, use
+    this and re-configure for each platform.  (Alternatively, use
     a separate build tree for each platform, so that the source tree
     remains unmodified.)
    </para>
@@ -1675,7 +1674,7 @@ All of PostgreSQL is successfully made. Ready to install.
    </indexterm>
 
    <para>
-    On several systems with shared libraries
+    On some systems with shared libraries
     you need to tell the system how to find the newly installed
     shared libraries.  The systems on which this is
     <emphasis>not</emphasis> necessary include <systemitem

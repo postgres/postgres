@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.132 2009/05/05 18:32:17 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.133 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -442,7 +442,7 @@ SELECT 'foo'      'bar';
     </caution>
 
     <para>
-     The zero-byte (null byte) character cannot be in a string constant.
+     The character with the code zero cannot be in a string constant.
     </para>
    </sect3>
 
@@ -929,8 +929,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </para>
 
    <para>
-    Comment are removed from the input stream before further syntax
-    analysis and are effectively replaced by whitespace.
+    A comment is removed from the input stream before further syntax
+    analysis and is effectively replaced by whitespace.
    </para>
   </sect2>
 
@@ -1244,9 +1244,9 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
-      Another value expression in parentheses, useful to group
+      Another value expression in parentheses (used to group
       subexpressions and override
-      precedence.<indexterm><primary>parenthesis</></>
+      precedence<indexterm><primary>parenthesis</></>)
      </para>
     </listitem>
    </itemizedlist>
@@ -1725,7 +1725,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     casts that are marked <quote>OK to apply implicitly</>
     in the system catalogs.  Other casts must be invoked with
     explicit casting syntax.  This restriction is intended to prevent
-    surprising conversions from being silently applied.
+    surprising conversions from being applied silently.
    </para>
 
    <para>
@@ -1805,7 +1805,7 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
 
    <para>
     An array constructor is an expression that builds an
-    array using values for its member elements.  A simple array
+    array value using values for its member elements.  A simple array
     constructor
     consists of the key word <literal>ARRAY</literal>, a left square bracket
     <literal>[</>, a list of expressions (separated by commas) for the
@@ -1936,7 +1936,7 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
    </indexterm>
 
    <para>
-    A row constructor is an expression that builds a row (also
+    A row constructor is an expression that builds a row value (also
     called a composite value) using values
     for its member fields.  A row constructor consists of the key word
     <literal>ROW</literal>, a left parenthesis, zero or more

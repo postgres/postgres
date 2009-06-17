@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.54 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.55 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -133,8 +133,8 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
    <para>
     When a table reference names a table that is the parent of a
-    table inheritance hierarchy, the table reference produces rows
-    not only of that table but all of its descendant tables, unless the
+    table inheritance hierarchy, the table reference produces rows of
+    not only that table but all of its descendant tables, unless the
     key word <literal>ONLY</> precedes the table name.  However, the
     reference produces only the columns that appear in the named table
     &mdash; any columns added in subtables are ignored.
@@ -174,12 +174,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 </synopsis>
 
        <para>
-        Produce every possible combination of rows from 
+        For every possible combination of rows from
         <replaceable>T1</replaceable> and
         <replaceable>T2</replaceable> (i.e., a Cartesian product),
-        with output columns consisting of
-        all <replaceable>T1</replaceable> columns
-        followed by all <replaceable>T2</replaceable> columns.  If
+        the joined table will contain a
+        row consisting of all columns in <replaceable>T1</replaceable>
+        followed by all columns in <replaceable>T2</replaceable>.  If
         the tables have N and M rows respectively, the joined
         table will have N * M rows.
        </para>
@@ -245,7 +245,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         equality of each of these pairs of columns.  Furthermore, the
         output of <literal>JOIN USING</> has one column for each of
         the equated pairs of input columns, followed by the
-        other columns from each table.  Thus, <literal>USING (a, b,
+        remaining columns from each table.  Thus, <literal>USING (a, b,
         c)</literal> is equivalent to <literal>ON (t1.a = t2.a AND
         t1.b = t2.b AND t1.c = t2.c)</literal> with the exception that
         if <literal>ON</> is used there will be two columns
@@ -300,7 +300,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an inner join is performed.  Then, for each row in
            T1 that does not satisfy the join condition with any row in
-           T2, a row is added with null values in columns of
+           T2, a joined row is added with null values in columns of
            T2.  Thus, the joined table always has at least
            one row for each row in T1.
           </para>
@@ -323,7 +323,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an inner join is performed.  Then, for each row in
            T2 that does not satisfy the join condition with any row in
-           T1, a row is added with null values in columns of
+           T1, a joined row is added with null values in columns of
            T1.  This is the converse of a left join: the result table
            will always have a row for each row in T2.
           </para>
@@ -337,9 +337,9 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an inner join is performed.  Then, for each row in
            T1 that does not satisfy the join condition with any row in
-           T2, a row is added with null values in columns of
+           T2, a joined row is added with null values in columns of
            T2.  Also, for each row of T2 that does not satisfy the
-           join condition with any row in T1, a row with null
+           join condition with any row in T1, a joined row with null
            values in the columns of T1 is added.
           </para>
          </listitem>
@@ -575,7 +575,7 @@ FROM <replaceable>table_reference</replaceable> <optional>AS</optional> <replace
     <para>
      When an alias is applied to the output of a <literal>JOIN</>
      clause, the alias hides the original
-     name referenced in the <literal>JOIN</>.  For example:
+     name(s) within the <literal>JOIN</>.  For example:
 <programlisting>
 SELECT a.* FROM my_table AS a JOIN your_table AS b ON ...
 </programlisting>
@@ -686,8 +686,7 @@ SELECT * FROM vw_getfoo;
      In some cases it is useful to define table functions that can
      return different column sets depending on how they are invoked.
      To support this, the table function can be declared as returning
-     the pseudotype <type>record</>, rather than <literal>SET OF</>.  
-     When such a function is used in
+     the pseudotype <type>record</>.  When such a function is used in
      a query, the expected row structure must be specified in the
      query itself, so that the system can know how to parse and plan
      the query.  Consider this example:
@@ -757,11 +756,11 @@ FROM a NATURAL JOIN b WHERE b.val &gt; 5
      probably not as portable to other SQL database management systems,
      even though it is in the SQL standard.  For
      outer joins there is no choice:  they must be done in
-     the <literal>FROM</> clause.  The <literal>ON</>/<literal>USING</>
+     the <literal>FROM</> clause.  The <literal>ON</> or <literal>USING</>
      clause of an outer join is <emphasis>not</> equivalent to a
-     <literal>WHERE</> condition, because it affects the addition
+     <literal>WHERE</> condition, because it results in the addition
      of rows (for unmatched input rows) as well as the removal of rows
-     from the final result.
+     in the final result.
     </para>
    </note>
 
@@ -780,7 +779,7 @@ SELECT ... FROM fdt WHERE c1 BETWEEN (SELECT c3 FROM t2 WHERE c2 = fdt.c1 + 10) 
 
 SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 &gt; fdt.c1)
 </programlisting>
-    <literal>fdt</literal> is the table used in the
+    <literal>fdt</literal> is the table derived in the
     <literal>FROM</> clause. Rows that do not meet the search
     condition of the <literal>WHERE</> clause are eliminated from
     <literal>fdt</literal>. Notice the use of scalar subqueries as
@@ -860,7 +859,7 @@ SELECT <replaceable>select_list</replaceable>
 
    <para>
     In general, if a table is grouped, columns that are not
-    the same in the group cannot be referenced except in aggregate
+    listed in <literal>GROUP BY</> cannot be referenced except in aggregate
     expressions.  An example with aggregate expressions is:
 <screen>
 <prompt>=&gt;</> <userinput>SELECT x, sum(y) FROM test1 GROUP BY x;</>
@@ -880,7 +879,7 @@ SELECT <replaceable>select_list</replaceable>
    <tip>
     <para>
      Grouping without aggregate expressions effectively calculates the
-     set of distinct values in a column.  This can more clearly be achieved
+     set of distinct values in a column.  This can also be achieved
      using the <literal>DISTINCT</> clause (see <xref
      linkend="queries-distinct">).
     </para>
@@ -1088,7 +1087,7 @@ SELECT tbl1.*, tbl2.a FROM ...
     the row's values substituted for any column references.  But the
     expressions in the select list do not have to reference any
     columns in the table expression of the <literal>FROM</> clause;
-    they can be constant arithmetic expressions as well.
+    they can be constant arithmetic expressions, for instance.
    </para>
   </sect2>
 
@@ -1101,8 +1100,8 @@ SELECT tbl1.*, tbl2.a FROM ...
    </indexterm>
 
    <para>
-    The entries in the select list can be assigned names for further
-    processing, perhaps for reference in an <literal>ORDER BY</> clause
+    The entries in the select list can be assigned names for subsequent
+    processing, such as for use in an <literal>ORDER BY</> clause
     or for display by the client application.  For example:
 <programlisting>
 SELECT a AS value, b + c AS sum FROM ...
@@ -1141,7 +1140,7 @@ SELECT a "value", b + c AS sum FROM ...
      The naming of output columns here is different from that done in
      the <literal>FROM</> clause (see <xref
      linkend="queries-table-aliases">).  It is possible 
-     to rename the same column twice, but the name used in
+     to rename the same column twice, but the name assigned in
      the select list is the one that will be passed on.
     </para>
    </note>
@@ -1346,9 +1345,9 @@ SELECT a, b FROM table1 ORDER BY a + b, c;
   <para>
    The <literal>NULLS FIRST</> and <literal>NULLS LAST</> options can be
    used to determine whether nulls appear before or after non-null values
-   in the sort ordering.  The default behavior is for null values sort as
-   if larger than all non-null values (<literal>NULLS FIRST</>), except
-   in <literal>DESC</> ordering, where <literal>NULLS LAST</> is the default.
+   in the sort ordering.  By default, null values sort as if larger than any
+   non-null value; that is, <literal>NULLS FIRST</> is the default for
+   <literal>DESC</> order, and <literal>NULLS LAST</> otherwise.
   </para>
 
   <para>
@@ -1366,7 +1365,7 @@ SELECT a + b AS sum, c FROM table1 ORDER BY sum;
 SELECT a, max(b) FROM table1 GROUP BY a ORDER BY 1;
 </programlisting>
    both of which sort by the first output column.  Note that an output
-   column name has to stand alone, e.g., it cannot be used in an expression
+   column name has to stand alone, that is, it cannot be used in an expression
    &mdash; for example, this is <emphasis>not</> correct:
 <programlisting>
 SELECT a + b AS sum, c FROM table1 ORDER BY sum + c;          -- wrong
@@ -1429,10 +1428,10 @@ SELECT <replaceable>select_list</replaceable>
 
   <para>
    When using <literal>LIMIT</>, it is important to use an
-   <literal>ORDER BY</> clause that constrains the result rows in a
+   <literal>ORDER BY</> clause that constrains the result rows into a
    unique order.  Otherwise you will get an unpredictable subset of
    the query's rows. You might be asking for the tenth through
-   twentieth rows, but tenth through twentieth using what ordering? The
+   twentieth rows, but tenth through twentieth in what ordering? The
    ordering is unknown, unless you specified <literal>ORDER BY</>.
   </para>
 
@@ -1472,7 +1471,7 @@ SELECT <replaceable>select_list</replaceable>
 <synopsis>
 VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ...]
 </synopsis>
-   Each parenthesized list of expressions generates a row in the table expression.
+   Each parenthesized list of expressions generates a row in the table.
    The lists must all have the same number of elements (i.e., the number
    of columns in the table), and corresponding entries in each list must
    have compatible data types.  The actual data type assigned to each column

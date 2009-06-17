@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.49 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.50 2009/06/17 21:58:49 tgl Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -74,7 +74,7 @@
       <para>
        A server process, which manages the database files, accepts
        connections to the database from client applications, and
-       performs database actions on the behalf of the clients.  The
+       performs database actions on behalf of the clients.  The
        database server program is called
        <filename>postgres</filename>.
        <indexterm><primary>postgres</primary></indexterm>
@@ -164,8 +164,8 @@
 createdb: command not found
 </screen>
     then <productname>PostgreSQL</> was not installed properly.  Either it was not
-    installed at all or your shell's search path was not set correctly.  Try
-    calling the command with an absolute path instead:
+    installed at all or your shell's search path was not set to include it.
+    Try calling the command with an absolute path instead:
 <screen>
 <prompt>$</prompt> <userinput>/usr/local/pgsql/bin/createdb mydb</userinput>
 </screen>
@@ -177,8 +177,7 @@ createdb: command not found
    <para>
     Another response could be this:
 <screen>
-createdb: could not connect to database postgres: could not connect
-to server: No such file or directory
+createdb: could not connect to database postgres: could not connect to server: No such file or directory
         Is the server running locally and accepting
         connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
 </screen>

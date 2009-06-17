@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.52 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.53 2009/06/17 21:58:49 tgl Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -53,7 +53,7 @@
 </screen>
 
     The <literal>\i</literal> command reads in commands from the
-    specified file. The <command>psql</command> <literal>-s</> option puts you in
+    specified file. <command>psql</command>'s <literal>-s</> option puts you in
     single step mode which pauses before sending each statement to the
     server.  The commands used in this section are in the file
     <filename>basics.sql</filename>.
@@ -150,7 +150,7 @@ CREATE TABLE weather (
     <type>int</type> is the normal integer type.  <type>real</type> is
     a type for storing single precision floating-point numbers.
     <type>date</type> should be self-explanatory.  (Yes, the column of
-    type <type>date</type> is also named <literal>date</literal>.
+    type <type>date</type> is also named <structfield>date</structfield>.
     This might be convenient or confusing &mdash; you choose.)
    </para>
 
@@ -165,7 +165,7 @@ CREATE TABLE weather (
     and a rich set of geometric types.
     <productname>PostgreSQL</productname> can be customized with an
     arbitrary number of user-defined data types.  Consequently, type
-    names are not special key words in the syntax except where required to
+    names are not key words in the syntax, except where required to
     support special cases in the <acronym>SQL</acronym> standard.
    </para>
 
@@ -291,7 +291,7 @@ COPY weather FROM '/home/user/weather.txt';
     tables from which to retrieve the data), and an optional
     qualification (the part that specifies any restrictions).  For
     example, to retrieve all the rows of table
-    <classname>weather</classname>, type:
+    <structname>weather</structname>, type:
 <programlisting>
 SELECT * FROM weather;
 </programlisting>
@@ -450,9 +450,10 @@ SELECT DISTINCT city
     of the same or different tables at one time is called a
     <firstterm>join</firstterm> query.  As an example, say you wish to
     list all the weather records together with the location of the
-    associated city.  To do that, we need to compare the city column of
-    each row of the <literal>weather</> table with the name column of all rows in
-    the <literal>cities</> table, and select the pairs of rows where these values match.
+    associated city.  To do that, we need to compare the <structfield>city</>
+    column of each row of the <structname>weather</> table with the
+    <structfield>name</> column of all rows in the <structname>cities</>
+    table, and select the pairs of rows where these values match.
     <note>
      <para>
       This  is only a conceptual model.  The join is usually performed
@@ -485,8 +486,8 @@ SELECT *
       <para>
        There is no result row for the city of Hayward.  This is
        because there is no matching entry in the
-       <classname>cities</classname> table for Hayward, so the join
-       ignores the unmatched rows in the <literal>weather</> table.  We will see
+       <structname>cities</structname> table for Hayward, so the join
+       ignores the unmatched rows in the <structname>weather</> table.  We will see
        shortly how this can be fixed.
       </para>
      </listitem>
@@ -494,9 +495,9 @@ SELECT *
      <listitem>
       <para>
        There are two columns containing the city name.  This is
-       correct because the columns from the
-       <classname>weather</classname> and the
-       <classname>cities</classname> tables are concatenated.  In
+       correct because the lists of columns from the
+       <structname>weather</structname> and
+       <structname>cities</structname> tables are concatenated.  In
        practice this is undesirable, though, so you will probably want
        to list the output columns explicitly rather than using
        <literal>*</literal>:
@@ -556,10 +557,10 @@ SELECT *
 
     Now we will figure out how we can get the Hayward records back in.
     What we want the query to do is to scan the
-    <classname>weather</classname> table and for each row to find the
-    matching <classname>cities</classname> row(s).  If no matching row is
+    <structname>weather</structname> table and for each row to find the
+    matching <structname>cities</structname> row(s).  If no matching row is
     found we want some <quote>empty values</quote> to be substituted
-    for the <classname>cities</classname> table's columns.  This kind
+    for the <structname>cities</structname> table's columns.  This kind
     of query is called an <firstterm>outer join</firstterm>.  (The
     joins we have seen so far are inner joins.)  The command looks
     like this:
@@ -603,10 +604,10 @@ SELECT *
     to find all the weather records that are in the temperature range
     of other weather records.  So we need to compare the
     <structfield>temp_lo</> and <structfield>temp_hi</> columns of
-    each <classname>weather</classname> row to the
+    each <structname>weather</structname> row to the
     <structfield>temp_lo</structfield> and
     <structfield>temp_hi</structfield> columns of all other
-    <classname>weather</classname> rows.  We can do this with the
+    <structname>weather</structname> rows.  We can do this with the
     following query:
 
 <programlisting>
@@ -756,7 +757,7 @@ SELECT city, max(temp_lo)
 </screen>
 
     which gives us the same results for only the cities that have all
-    <literal>temp_lo</> values below 40.  Finally, if we only care about
+    <structfield>temp_lo</> values below 40.  Finally, if we only care about
     cities whose
     names begin with <quote><literal>S</literal></quote>, we might do:
 

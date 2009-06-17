@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.86 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.87 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -557,8 +557,8 @@ CREATE TABLE products (
     comparison.  That means even in the presence of a
     unique constraint it is possible to store duplicate
     rows that contain a null value in at least one of the constrained
-    columns.  This behavior conforms to the SQL standard, but there
-    might be other SQL databases might not follow this rule.  So be
+    columns.  This behavior conforms to the SQL standard, but we have
+    heard that other SQL databases might not follow this rule.  So be
     careful when developing applications that are intended to be
     portable.
    </para>
@@ -1802,7 +1802,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     such names, to ensure that you won't suffer a conflict if some
     future version defines a system table named the same as your
     table.  (With the default search path, an unqualified reference to
-    your table name would be resolved as a system table instead.)
+    your table name would then be resolved as the system table instead.)
     System tables will continue to follow the convention of having
     names beginning with <literal>pg_</>, so that they will not
     conflict with unqualified user-table names so long as users avoid
@@ -2571,14 +2571,14 @@ CREATE TRIGGER insert_measurement_trigger
 CREATE OR REPLACE FUNCTION measurement_insert_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF ( NEW.logdate &gt;= DATE '2006-02-01' AND 
+    IF ( NEW.logdate &gt;= DATE '2006-02-01' AND
          NEW.logdate &lt; DATE '2006-03-01' ) THEN
         INSERT INTO measurement_y2006m02 VALUES (NEW.*);
-    ELSIF ( NEW.logdate &gt;= DATE '2006-03-01' AND 
+    ELSIF ( NEW.logdate &gt;= DATE '2006-03-01' AND
             NEW.logdate &lt; DATE '2006-04-01' ) THEN
         INSERT INTO measurement_y2006m03 VALUES (NEW.*);
     ...
-    ELSIF ( NEW.logdate &gt;= DATE '2008-01-01' AND 
+    ELSIF ( NEW.logdate &gt;= DATE '2008-01-01' AND
             NEW.logdate &lt; DATE '2008-02-01' ) THEN
         INSERT INTO measurement_y2008m01 VALUES (NEW.*);
     ELSE
@@ -2709,9 +2709,9 @@ SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     Without constraint exclusion, the above query would scan each of
     the partitions of the <structname>measurement</> table. With constraint
     exclusion enabled, the planner will examine the constraints of each
-    partition and try to determine which partitions need not
-    be scanned because they cannot not contain any rows meeting the query's
-    <literal>WHERE</> clause.  When the planner can determine this, it
+    partition and try to prove that the partition need not
+    be scanned because it could not contain any rows meeting the query's
+    <literal>WHERE</> clause.  When the planner can prove this, it
     excludes the partition from the query plan.
    </para>
 
@@ -2906,7 +2906,7 @@ ANALYZE measurement;
 
     <listitem>
      <para>
-      Keep the partitioning constraints simple or else the planner may not be
+      Keep the partitioning constraints simple, else the planner may not be
       able to prove that partitions don't need to be visited.  Use simple
       equality conditions for list partitioning, or simple
       range tests for range partitioning, as illustrated in the preceding

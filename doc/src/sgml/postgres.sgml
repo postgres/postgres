@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.87 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.88 2009/06/17 21:58:49 tgl Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
@@ -134,7 +134,7 @@
     The first few chapters are written so they can be understood
     without prerequisite knowledge, so new users who need to set
     up their own server can begin their exploration with this part.
-    The rest of this part is about tuning and management; the material
+    The rest of this part is about tuning and management; that material
     assumes that the reader is familiar with the general use of
     the <productname>PostgreSQL</> database system.  Readers are
     encouraged to look at <xref linkend="tutorial"> and <xref

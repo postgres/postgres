@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.28 2009/05/16 22:03:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.29 2009/06/17 21:58:49 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -135,8 +135,9 @@ main file (a/k/a main fork), each table and index has a <firstterm>free space
 map</> (see <xref linkend="storage-fsm">), which stores information about free
 space available in the relation.  The free space map is stored in a file named
 with the filenode number plus the suffix <literal>_fsm</>.  Tables also have a
-visibility map fork, with the suffix <literal>_vm</>, to track which pages are
-known to have no dead tuples and therefore need no vacuuming.
+<firstterm>visibility map</>, stored in a fork with the suffix
+<literal>_vm</>, to track which pages are known to have no dead tuples.
+The visibility map is described further in <xref linkend="storage-vm">.
 </para>
 
 <caution>
@@ -413,6 +414,38 @@ See <filename>src/backend/storage/freespace/README</> for more details on
 how the <acronym>FSM</> is structured, and how it's updated and searched.
 The <filename>contrib/pg_freespacemap</> module can be used to examine the
 information stored in free space maps (see <xref linkend="pgfreespacemap">).
+</para>
+
+</sect1>
+
+<sect1 id="storage-vm">
+
+<title>Visibility Map</title>
+
+<indexterm>
+ <primary>Visibility Map</primary>
+</indexterm>
+<indexterm><primary>VM</><see>Visibility Map</></indexterm>
+
+<para>
+Each heap relation has a Visibility Map
+(VM) to keep track of which pages contain only tuples that are known to be
+visible to all active transactions. It's stored
+alongside the main relation data in a separate relation fork, named after the
+filenode number of the relation, plus a <literal>_vm</> suffix. For example,
+if the filenode of a relation is 12345, the VM is stored in a file called
+<filename>12345_vm</>, in the same directory as the main relation file.
+Note that indexes do not have VMs.
+</para>
+
+<para>
+The visibility map simply stores one bit per heap page. A set bit means
+that all tuples on the page are known to be visible to all transactions.
+This means that the page does not contain any tuples that need to be vacuumed;
+in future it might also be used to avoid visiting the page for visibility
+checks. The map is conservative in the sense that we
+make sure that whenever a bit is set, we know the condition is true, but if
+a bit is not set, it might or might not be true.
 </para>
 
 </sect1>

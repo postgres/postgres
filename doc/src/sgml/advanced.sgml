@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.58 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.59 2009/06/17 21:58:48 tgl Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -19,7 +19,7 @@
    <para>
     This chapter will on occasion refer to examples found in <xref
     linkend="tutorial-sql"> to change or improve them, so it will be
-    good if you have read that chapter.  Some examples from
+    useful to have read that chapter.  Some examples from
     this chapter can also be found in
     <filename>advanced.sql</filename> in the tutorial directory.  This
     file also contains some sample data to load, which is not
@@ -173,7 +173,7 @@ UPDATE branches SET balance = balance + 100.00
    </para>
 
    <para>
-    The details of these commands are not important; the important
+    The details of these commands are not important here; the important
     point is that there are several separate updates involved to accomplish
     this rather simple operation.  Our bank's officers will want to be
     assured that either all these updates happen, or none of them happen.
