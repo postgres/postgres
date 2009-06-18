@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.141 2009/05/02 17:27:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.142 2009/06/18 10:22:08 petere Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2450,7 +2450,7 @@ DECLARE
 
     <note>
      <para>
-      Bound cursors can also be used without explicitly opening them,
+      Bound cursor variables can also be used without explicitly opening the cursor,
       via the <command>FOR</> statement described in
       <xref linkend="plpgsql-cursor-for-loop">.
      </para>
@@ -2460,13 +2460,13 @@ DECLARE
      <title><command>OPEN FOR</command> <replaceable>query</replaceable></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursor</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR <replaceable>query</replaceable>;
+OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR <replaceable>query</replaceable>;
 </synopsis>
 
        <para>
         The cursor variable is opened and given the specified query to
         execute.  The cursor cannot be open already, and it must have been
-        declared as an unbound cursor (that is, as a simple
+        declared as an unbound cursor variable (that is, as a simple
         <type>refcursor</> variable).  The query must be a
         <command>SELECT</command>, or something else that returns rows
         (such as <command>EXPLAIN</>).  The query
@@ -2494,13 +2494,13 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
      <title><command>OPEN FOR EXECUTE</command></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursor</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable>;
+OPEN <replaceable>unbound_cursorvar</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable>;
 </synopsis>
 
          <para>
           The cursor variable is opened and given the specified query to
           execute.  The cursor cannot be open already, and it must have been
-          declared as an unbound cursor (that is, as a simple
+          declared as an unbound cursor variable (that is, as a simple
           <type>refcursor</> variable).  The query is specified as a string
           expression, in the same way as in the <command>EXECUTE</command>
           command.  As usual, this gives flexibility so the query plan can vary
@@ -2524,7 +2524,7 @@ OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident($1);
      <title>Opening a Bound Cursor</title>
 
 <synopsis>
-OPEN <replaceable>bound_cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
+OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
 </synopsis>
 
          <para>
@@ -2850,7 +2850,7 @@ COMMIT;
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>recordvar</replaceable> IN <replaceable>bound_cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional> LOOP
+FOR <replaceable>recordvar</replaceable> IN <replaceable>bound_cursorvar</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>

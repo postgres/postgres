@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.205 2009/06/11 14:49:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.206 2009/06/18 10:22:09 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -520,7 +520,7 @@ DESCR("numeric(precision, decimal), arbitrary precision number");
 #define NUMERICOID		1700
 
 DATA(insert OID = 1790 ( refcursor	   PGNSP PGUID -1 f b U f t \054 0	0 2201 textin textout textrecv textsend - - - i x f 0 -1 0 _null_ _null_ ));
-DESCR("reference cursor (portal name)");
+DESCR("reference to cursor (portal name)");
 #define REFCURSOROID	1790
 
 /* OIDS 2200 - 2299 */

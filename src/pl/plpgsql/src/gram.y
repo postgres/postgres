@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.124 2009/05/01 23:57:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.125 2009/06/18 10:22:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1585,7 +1585,7 @@ stmt_open		: K_OPEN lno cursor_variable
 										(errcode(ERRCODE_SYNTAX_ERROR),
 										 errmsg("syntax error at \"%s\"",
 												yytext),
-										 errdetail("Expected \"FOR\", to open a reference cursor.")));
+										 errdetail("Expected \"FOR\", to open a cursor for an unbound cursor variable.")));
 							}
 
 							tok = yylex();
