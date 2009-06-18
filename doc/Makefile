@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.32 2008/11/14 10:22:45 petere Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.33 2009/06/18 15:10:35 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ ifdef found_html
 	rm -f $(addprefix $(DESTDIR)$(htmldir)/html/, $(shell gunzip -c $(srcdir)/postgres.tar.gz | tar tf -))
 endif
 ifdef found_man
-	rm -f $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c $(srcdir)/man.tar.gz | tar tf - | sed -e 's,man7/,man$(sqlmansectnum)/,' -e 's/.7$$/.$(sqlmansect)/'))
+	rm -f $(filter-out %/, $(addprefix $(DESTDIR)$(mandir)/, $(shell gunzip -c $(srcdir)/man.tar.gz | tar tf - | sed -e 's,man7/,man$(sqlmansectnum)/,' -e 's/.7$$/.$(sqlmansect)/')))
 endif
 
 
