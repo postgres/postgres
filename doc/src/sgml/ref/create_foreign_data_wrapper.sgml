@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.3 2009/02/27 07:20:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_foreign_data_wrapper.sgml,v 1.4 2009/06/18 14:34:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -103,7 +103,9 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    rudimentary.  The purpose of foreign-data wrappers, foreign
    servers, and user mappings is to store this information in a
    standard way so that it can be queried by interested applications.
-   The functionality to actually query external data does not exist
+   One such application is <application>dblink</application>;
+   see <xref linkend="dblink">.  The functionality to actually query
+   external data through a foreign-data wrapper library does not exist
    yet.
   </para>
 

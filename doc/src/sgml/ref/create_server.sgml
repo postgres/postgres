@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.3 2009/02/27 07:20:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.4 2009/06/18 14:34:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -32,6 +32,13 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
   <para>
    <command>CREATE SERVER</command> defines a new foreign server.  The
    user who defines the server becomes its owner.
+  </para>
+
+  <para>
+   A foreign server typically encapsulates connection information that
+   a foreign-data wrapper uses to access an external data resource.
+   Additional user-specific connection information may be specified by
+   means of user mappings.
   </para>
 
   <para>
@@ -96,6 +103,20 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   When using the <application>dblink</application> module
+   (see <xref linkend="dblink">), the foreign server name can be used
+   as an argument of the <xref linkend="contrib-dblink-connect">
+   function to indicate the connection parameters.  See also there for
+   more examples.  It is necessary to have
+   the <literal>USAGE</literal> privilege on the foreign server to be
+   able to use it in this way.
+  </para>
  </refsect1>
 
  <refsect1>

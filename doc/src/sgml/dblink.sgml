@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.7 2009/06/06 21:27:56 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.8 2009/06/18 14:34:36 petere Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -45,8 +45,10 @@
 
    <para>
     The connection string may also be the name of an existing foreign
-    server that utilizes the postgresql_fdw foreign data wrapper library.
-    See the example below, as well as the following:
+    server.  It is recommended to use
+    the <function>postgresql_fdw_validator</function> when defining
+    the corresponding foreign-data wrapper.  See the example below, as
+    well as the following:
     <simplelist type="inline">
      <member><xref linkend="sql-createforeigndatawrapper" endterm="sql-createforeigndatawrapper-title"></member>
      <member><xref linkend="sql-createserver" endterm="sql-createserver-title"></member>
@@ -134,7 +136,7 @@
  --       DETAIL:  Non-superuser cannot connect if the server does not request a password.
  --       HINT:  Target server's authentication method must be changed.
  CREATE USER dblink_regression_test WITH PASSWORD 'secret';
- CREATE FOREIGN DATA WRAPPER postgresql;
+ CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
  CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
 
  CREATE USER MAPPING FOR dblink_regression_test SERVER fdtest OPTIONS (user 'dblink_regression_test', password 'secret');
