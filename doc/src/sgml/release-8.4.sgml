@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.10 2009/06/11 21:44:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.11 2009/06/18 14:42:08 petere Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4">
@@ -32,7 +32,7 @@
 
     <listitem>
      <para>
-      Common Table Expressions and Recursive Joins
+      Common Table Expressions and Recursive Queries
      </para>
     </listitem>
 
