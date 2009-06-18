@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.567 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.568 2009/06/18 10:08:08 heikki Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2924,8 +2924,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *	If the databasename is omitted it is taken to be the user name.
 	 *
 	 *	When started from the postmaster, the format is
-	 *		postgres [secure switches] -p databasename [insecure switches]
-	 *	Switches appearing after -p came from the client (via "options"
+	 *		postgres [secure switches] -y databasename [insecure switches]
+	 *	Switches appearing after -y came from the client (via "options"
 	 *	field of connection request).  For security reasons we restrict
 	 *	what these switches can do.
 	 * ----------------
@@ -2938,7 +2938,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		argc--;
 	}
 
-	/* all options are allowed until '-p' */
+	/* all options are allowed until '-y' */
 	secure = true;
 	ctx = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */

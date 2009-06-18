@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.4 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.5 2009/06/18 10:08:08 heikki Exp $
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear - clear a bit in the visibility map
@@ -98,8 +98,8 @@
 
 /*
  * Size of the bitmap on each visibility map page, in bytes. There's no
- * extra headers, so the whole page minus except for the standard page header
- * is used for the bitmap.
+ * extra headers, so the whole page minus the standard page header is
+ * used for the bitmap.
  */
 #define MAPSIZE (BLCKSZ - MAXALIGN(SizeOfPageHeaderData))
 
