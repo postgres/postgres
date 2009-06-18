@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.664 2009/05/27 20:42:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.665 2009/06/18 01:27:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -53,6 +53,7 @@
 
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_trigger.h"
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -244,7 +245,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <boolean> TriggerActionTime TriggerForSpec opt_trusted opt_restart_seqs
 %type <str>		opt_lancompiler
 
-%type <str>		TriggerEvents
+%type <ival>	TriggerEvents TriggerOneEvent
 %type <value>	TriggerFuncArg
 
 %type <str>		relation_name copy_file_name
@@ -266,7 +267,6 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <privtarget> privilege_target
 %type <funwithargs> function_with_argtypes
 %type <list>	function_with_argtypes_list
-%type <chr> 	TriggerOneEvent
 
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
@@ -3133,7 +3133,7 @@ CreateTrigStmt:
 					n->args = $13;
 					n->before = $4;
 					n->row = $8;
-					memcpy(n->actions, $5, 4);
+					n->events = $5;
 					n->isconstraint  = FALSE;
 					n->deferrable	 = FALSE;
 					n->initdeferred  = FALSE;
@@ -3153,11 +3153,10 @@ CreateTrigStmt:
 					n->args = $18;
 					n->before = FALSE;
 					n->row = TRUE;
-					memcpy(n->actions, $6, 4);
+					n->events = $6;
 					n->isconstraint  = TRUE;
 					n->deferrable = ($10 & 1) != 0;
 					n->initdeferred = ($10 & 2) != 0;
-
 					n->constrrel = $9;
 					$$ = (Node *)n;
 				}
@@ -3170,30 +3169,20 @@ TriggerActionTime:
 
 TriggerEvents:
 			TriggerOneEvent
+				{ $$ = $1; }
+			| TriggerEvents OR TriggerOneEvent
 				{
-					char *e = palloc(4);
-					e[0] = $1; e[1] = '\0';
-					$$ = e;
-				}
-			| TriggerOneEvent OR TriggerOneEvent
-				{
-					char *e = palloc(4);
-					e[0] = $1; e[1] = $3; e[2] = '\0';
-					$$ = e;
-				}
-			| TriggerOneEvent OR TriggerOneEvent OR TriggerOneEvent
-				{
-					char *e = palloc(4);
-					e[0] = $1; e[1] = $3; e[2] = $5; e[3] = '\0';
-					$$ = e;
+					if ($1 & $3)
+						yyerror("duplicate trigger events specified");
+					$$ = $1 | $3;
 				}
 		;
 
 TriggerOneEvent:
-			INSERT									{ $$ = 'i'; }
-			| DELETE_P								{ $$ = 'd'; }
-			| UPDATE								{ $$ = 'u'; }
-			| TRUNCATE								{ $$ = 't'; }
+			INSERT								{ $$ = TRIGGER_TYPE_INSERT; }
+			| DELETE_P							{ $$ = TRIGGER_TYPE_DELETE; }
+			| UPDATE							{ $$ = TRIGGER_TYPE_UPDATE; }
+			| TRUNCATE							{ $$ = TRIGGER_TYPE_TRUNCATE; }
 		;
 
 TriggerForSpec:

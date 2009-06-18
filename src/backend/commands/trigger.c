@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.247 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.248 2009/06/18 01:27:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,6 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
 	Oid			funcoid;
 	Oid			funcrettype;
 	Oid			trigoid;
-	int			i;
 	char		constrtrigname[NAMEDATALEN];
 	char	   *trigname;
 	char	   *constrname;
@@ -150,50 +149,13 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
 		TRIGGER_SETT_BEFORE(tgtype);
 	if (stmt->row)
 		TRIGGER_SETT_ROW(tgtype);
+	tgtype |= stmt->events;
 
-	for (i = 0; stmt->actions[i]; i++)
-	{
-		switch (stmt->actions[i])
-		{
-			case 'i':
-				if (TRIGGER_FOR_INSERT(tgtype))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple INSERT events specified")));
-				TRIGGER_SETT_INSERT(tgtype);
-				break;
-			case 'd':
-				if (TRIGGER_FOR_DELETE(tgtype))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple DELETE events specified")));
-				TRIGGER_SETT_DELETE(tgtype);
-				break;
-			case 'u':
-				if (TRIGGER_FOR_UPDATE(tgtype))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple UPDATE events specified")));
-				TRIGGER_SETT_UPDATE(tgtype);
-				break;
-			case 't':
-				if (TRIGGER_FOR_TRUNCATE(tgtype))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple TRUNCATE events specified")));
-				TRIGGER_SETT_TRUNCATE(tgtype);
-				/* Disallow ROW-level TRUNCATE triggers */
-				if (stmt->row)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("TRUNCATE FOR EACH ROW triggers are not supported")));
-				break;
-			default:
-				elog(ERROR, "unrecognized trigger event: %d",
-					 (int) stmt->actions[i]);
-				break;
-		}
-	}
+	/* Disallow ROW-level TRUNCATE triggers */
+	if (TRIGGER_FOR_ROW(tgtype) && TRIGGER_FOR_TRUNCATE(tgtype))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("TRUNCATE FOR EACH ROW triggers are not supported")));
 
 	/*
 	 * Find and validate the trigger function.

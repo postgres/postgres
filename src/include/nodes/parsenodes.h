@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.394 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.395 2009/06/18 01:27:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1551,7 +1551,8 @@ typedef struct CreateTrigStmt
 	List	   *args;			/* list of (T_String) Values or NIL */
 	bool		before;			/* BEFORE/AFTER */
 	bool		row;			/* ROW/STATEMENT */
-	char		actions[4];		/* 1 to 3 of 'i', 'u', 'd', + trailing \0 */
+	/* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
+	int16		events;			/* INSERT/UPDATE/DELETE/TRUNCATE */
 
 	/* The following are used for referential */
 	/* integrity constraint triggers */
