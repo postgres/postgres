@@ -1,11 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.5 2009/06/18 14:34:36 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user_mapping.sgml,v 1.6 2009/06/19 15:28:25 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEUSERMAPPING">
  <refmeta>
   <refentrytitle id="sql-createusermapping-title">CREATE USER MAPPING</refentrytitle>
+  <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
