@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.5 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.6 2009/06/20 18:45:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,9 +410,8 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * need the current aggregate value.  This is considerably more efficient
 	 * than the naive approach of re-running the entire aggregate calculation
 	 * for each current row.  It does assume that the final function doesn't
-	 * damage the running transition value.  (Some C-coded aggregates do that
-	 * for efficiency's sake --- but they are supposed to do so only when
-	 * their fcinfo->context is an AggState, not a WindowAggState.)
+	 * damage the running transition value, but we have the same assumption
+	 * in nodeAgg.c too (when it rescans an existing hash table).
 	 *
 	 * In many common cases, multiple rows share the same frame and hence the
 	 * same aggregate value. (In particular, if there's no ORDER BY in a RANGE
