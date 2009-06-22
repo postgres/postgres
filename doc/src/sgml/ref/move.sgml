@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.31 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.32 2009/06/22 07:12:50 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -40,7 +40,8 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <r
   </para>
 
   <para>
-   Refer to 
+   The parameters for the <command>MOVE</command> command are identical to 
+   those of the <command>FETCH</command> command; refer to
    <xref linkend="sql-fetch" endterm="sql-fetch-title">
    for details on syntax and usage.
   </para>
