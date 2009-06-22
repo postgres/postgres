@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.159 2009/06/21 20:15:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.160 2009/06/22 04:37:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4396,7 +4396,7 @@ array_fill_with_lower_bounds(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(1) || PG_ARGISNULL(2))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-			   errmsg("dimension array or low bound array must not be null")));
+			   errmsg("dimension array or low bound array cannot be NULL")));
 
 	dims = PG_GETARG_ARRAYTYPE_P(1);
 	lbs = PG_GETARG_ARRAYTYPE_P(2);
@@ -4436,7 +4436,7 @@ array_fill(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(1))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-			   errmsg("dimension array or low bound array must not be null")));
+			   errmsg("dimension array or low bound array cannot be NULL")));
 
 	dims = PG_GETARG_ARRAYTYPE_P(1);
 
