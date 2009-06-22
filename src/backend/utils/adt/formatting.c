@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.157 2009/06/11 14:49:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.158 2009/06/22 17:54:30 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2009, PostgreSQL Global Development Group
@@ -1817,7 +1817,7 @@ from_char_set_int(int *dest, const int value, const FormatNode *node)
  * 'dest'. If 'dest' is NULL, the result is discarded.
  *
  * In fixed-width mode (the node does not have the FM suffix), consume at most
- * 'len' characters.
+ * 'len' characters.  However, any leading whitespace isn't counted in 'len'.
  *
  * We use strtol() to recover the integer value from the source string, in
  * accordance with the given FormatNode.
@@ -1839,6 +1839,11 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
 	char		copy[DCH_MAX_ITEM_SIZ + 1];
 	char	   *init = *src;
 	int			used;
+
+	/*
+	 * Skip any whitespace before parsing the integer.
+	 */
+	*src += strspace_len(*src);
 
 	Assert(len <= DCH_MAX_ITEM_SIZ);
 	used = (int) strlcpy(copy, *src, len + 1);
