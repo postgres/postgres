@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.16 2009/02/18 15:58:41 heikki Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.17 2009/06/22 20:04:28 tgl Exp $
 
 Notes About Shared Buffer Access Rules
 ======================================
@@ -237,7 +237,12 @@ buffer, resulting in excessive WAL flushing.  Allowing VACUUM to update
 
 Bulk writes work similarly to VACUUM.  Currently this applies only to
 COPY IN and CREATE TABLE AS SELECT.  (Might it be interesting to make
-seqscan UPDATE and DELETE use the bulkwrite strategy?)
+seqscan UPDATE and DELETE use the bulkwrite strategy?)  For bulk writes
+we use a ring size of 16MB (but not more than 1/8th of shared_buffers).
+Smaller sizes have been shown to result in the COPY blocking too often
+for WAL flushes.  While it's okay for a background vacuum to be slowed by
+doing its own WAL flushing, we'd prefer that COPY not be subject to that,
+so we let it use up a bit more of the buffer arena.
 
 
 Background Writer's Processing
