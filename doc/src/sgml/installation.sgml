@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.324 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.325 2009/06/23 03:46:00 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -294,11 +294,23 @@ su - postgres
       </indexterm>
 
       GNU <application>Flex</> and <application>Bison</>
-      are needed to build a CVS checkout or if you changed the actual
+      are needed to build from a CVS checkout, or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.4 or later and
       <application>Bison</> 1.875 or later. Other <application>lex</>
       and <application>yacc</> programs cannot be used.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>perl</primary>
+      </indexterm>
+
+      <application>Perl</> is also needed to build from a CVS checkout,
+      or if you changed the input files for any of the build steps that
+      use Perl scripts.  If building on Windows you will need
+      <application>Perl</> in any case.
      </para>
     </listitem>
    </itemizedlist>

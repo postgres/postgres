@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $PostgreSQL: pgsql/config/missing,v 1.4 2006/03/11 04:38:28 momjian Exp $
+# $PostgreSQL: pgsql/config/missing,v 1.5 2009/06/23 03:46:00 tgl Exp $
 
 # This is *not* the GNU `missing' script, although it is similar in
 # concept. You can call it from the makefiles to get consistent
@@ -17,7 +17,7 @@ case $1 in
 WARNING: \`$1' is missing on your system. You should only need it
 if you changed the file \`$input'; these changes will not take effect.
 You can get $1 from a GNU mirror site.
-***"
+***" >&2
             echo "touch $output"
             touch "$output"
             exit 0
@@ -28,8 +28,27 @@ ERROR: \`$1' is missing on your system. It is needed to create the
 file \`$output'. You can either get $1 from a GNU mirror site
 or download an official distribution of PostgreSQL, which contains
 pre-packaged $1 output.
-***"
+***" >&2
             exit 1
         fi
+        ;;
+
+    perl)
+        # `missing perl'
+        echo "\
+***
+ERROR: Perl is missing on your system. It is needed unless you are building
+from an unmodified official distribution of PostgreSQL.
+***" >&2
+        exit 1
+        ;;
+
+    *)
+        # `missing something-or-other'
+        echo "\
+***
+ERROR: \`$1' is missing on your system.
+***" >&2
+        exit 1
         ;;
 esac

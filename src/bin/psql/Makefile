@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.62 2009/03/07 00:13:58 alvherre Exp $
+# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.63 2009/06/23 03:46:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,13 +40,8 @@ dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
-ifdef PERL
 $(srcdir)/sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 	$(PERL) $< $(REFDOCDIR) $@
-else
-$(srcdir)/sql_help.h:
-	@echo "*** Perl is needed to build psql help."
-endif
 
 $(srcdir)/psqlscan.c: psqlscan.l
 ifdef FLEX

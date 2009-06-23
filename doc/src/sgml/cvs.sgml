@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.50 2008/04/21 11:06:13 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.51 2009/06/23 03:46:00 tgl Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -171,6 +171,7 @@ cvs update
    pull requires reasonably up-to-date versions of <application>bison</>
    and <application>flex</>, which are not needed to build from a distribution
    tarball because the files made with them are pre-built in a tarball.
+   You will need Perl as well.
    Otherwise the tool requirements are the same as building from source.
   </para>
  </sect1>

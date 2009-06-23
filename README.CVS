@@ -8,7 +8,7 @@ If you are using CVS, you can view the most recent install instructions at:
 and the current release notes at:
 	http://developer.postgresql.org/docs/postgres/release.html
 
-Users compiling from CVS will also need compatible versions of Bison and
-Flex, as discussed in the install documentation.  Bison and Flex are not
+Users compiling from CVS will also need compatible versions of Bison, Flex,
+and Perl, as discussed in the install documentation.  These programs are not
 needed when using a tarball, since the files they are needed to build are
-already present in the tarball.
+already present in the tarball.  (On Windows, however, you need Perl anyway.)
