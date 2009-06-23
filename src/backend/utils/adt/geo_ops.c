@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.82.2.3 2008/04/11 22:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.82.2.4 2009/06/23 16:25:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2376,18 +2376,16 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 				tmpdist;
 	Point	   *ip;
 
-/*
- * Construct a line perpendicular to the input segment
- * and through the input point
- */
+	/*
+	 * Construct a line perpendicular to the input segment
+	 * and through the input point
+	 */
 	if (lseg->p[1].x == lseg->p[0].x)
 		m = 0;
 	else if (lseg->p[1].y == lseg->p[0].y)
-	{							/* slope is infinite */
-		m = (double) DBL_MAX;
-	}
+		m = (double) DBL_MAX;	/* slope is infinite */
 	else
-		m = ((lseg->p[0].y - lseg->p[1].y) / (lseg->p[1].x - lseg->p[0].x));
+		m = (lseg->p[0].x - lseg->p[1].x) / (lseg->p[1].y - lseg->p[0].y);
 	ln = line_construct_pm(pt, m);
 
 #ifdef GEODEBUG
@@ -2396,13 +2394,14 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 #endif
 
 	/*
-	 * Calculate distance to the line segment or to the endpoints of the
-	 * segment.
+	 * Calculate distance to the line segment or to the nearest endpoint of
+	 * the segment.
 	 */
 
 	/* intersection is on the line segment? */
 	if ((ip = interpt_sl(lseg, ln)) != NULL)
 	{
+		/* yes, so use distance to the intersection point */
 		result = point_dt(pt, ip);
 #ifdef GEODEBUG
 		printf("dist_ps- distance is %f to intersection point is (%f,%f)\n",
@@ -2411,7 +2410,7 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 	}
 	else
 	{
-		/* intersection is not on line segment */
+		/* no, so use distance to the nearer endpoint */
 		result = point_dt(pt, &lseg->p[0]);
 		tmpdist = point_dt(pt, &lseg->p[1]);
 		if (tmpdist < result)
@@ -3631,7 +3630,7 @@ poly_contain(PG_FUNCTION_ARGS)
 		{
 			if (point_inside(&(polyb->p[i]), polya->npts, &(polya->p[0])) == 0)
 			{
-#if GEODEBUG
+#ifdef GEODEBUG
 				printf("poly_contain- point (%f,%f) not in polygon\n", polyb->p[i].x, polyb->p[i].y);
 #endif
 				result = false;
@@ -3644,7 +3643,7 @@ poly_contain(PG_FUNCTION_ARGS)
 			{
 				if (point_inside(&(polya->p[i]), polyb->npts, &(polyb->p[0])) == 1)
 				{
-#if GEODEBUG
+#ifdef GEODEBUG
 					printf("poly_contain- point (%f,%f) in polygon\n", polya->p[i].x, polya->p[i].y);
 #endif
 					result = false;
@@ -3655,7 +3654,7 @@ poly_contain(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-#if GEODEBUG
+#ifdef GEODEBUG
 		printf("poly_contain- bound box ((%f,%f),(%f,%f)) not inside ((%f,%f),(%f,%f))\n",
 			   polyb->boundbox.low.x, polyb->boundbox.low.y, polyb->boundbox.high.x, polyb->boundbox.high.y,
 			   polya->boundbox.low.x, polya->boundbox.low.y, polya->boundbox.high.x, polya->boundbox.high.y);
