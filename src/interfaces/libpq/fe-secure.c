@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.126 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.127 2009/06/23 18:13:23 mha Exp $
  *
  * NOTES
  *
@@ -31,6 +31,7 @@
 #include "libpq-fe.h"
 #include "fe-auth.h"
 #include "pqsignal.h"
+#include "libpq-int.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -62,7 +63,7 @@
 #if (SSLEAY_VERSION_NUMBER >= 0x00907000L)
 #include <openssl/conf.h>
 #endif
-#if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
+#ifdef USE_SSL_ENGINE
 #include <openssl/engine.h>
 #endif
 
@@ -661,7 +662,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	 */
 	if (conn->sslkey && strlen(conn->sslkey) > 0)
 	{
-#if (SSLEAY_VERSION_NUMBER >= 0x00907000L) && !defined(OPENSSL_NO_ENGINE)
+#ifdef USE_SSL_ENGINE
 		if (strchr(conn->sslkey, ':')
 #ifdef WIN32
 			&& conn->sslkey[1] != ':'
@@ -669,15 +670,14 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 			)
 		{
 			/* Colon, but not in second character, treat as engine:key */
-			ENGINE	   *engine_ptr;
 			char	   *engine_str = strdup(conn->sslkey);
 			char	   *engine_colon = strchr(engine_str, ':');
 
 			*engine_colon = '\0';		/* engine_str now has engine name */
 			engine_colon++;		/* engine_colon now has key name */
 
-			engine_ptr = ENGINE_by_id(engine_str);
-			if (engine_ptr == NULL)
+			conn->engine = ENGINE_by_id(engine_str);
+			if (conn->engine == NULL)
 			{
 				char	   *err = SSLerrmessage();
 
@@ -690,7 +690,22 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 				return 0;
 			}
 
-			*pkey = ENGINE_load_private_key(engine_ptr, engine_colon,
+			if (ENGINE_init(conn->engine) == 0)
+			{
+				char	   *err = SSLerrmessage();
+
+				printfPQExpBuffer(&conn->errorMessage,
+					 libpq_gettext("could not initialize SSL engine \"%s\": %s\n"),
+								  engine_str, err);
+				SSLerrfree(err);
+				ENGINE_free(conn->engine);
+				conn->engine = NULL;
+				free(engine_str);
+				ERR_pop_to_mark();
+				return 0;
+			}
+
+			*pkey = ENGINE_load_private_key(conn->engine, engine_colon,
 											NULL, NULL);
 			if (*pkey == NULL)
 			{
@@ -700,6 +715,9 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 								  libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
 								  engine_colon, engine_str, err);
 				SSLerrfree(err);
+				ENGINE_finish(conn->engine);
+				ENGINE_free(conn->engine);
+				conn->engine = NULL;
 				free(engine_str);
 				ERR_pop_to_mark();
 				return 0;
@@ -1217,6 +1235,15 @@ close_SSL(PGconn *conn)
 		X509_free(conn->peer);
 		conn->peer = NULL;
 	}
+
+#ifdef USE_SSL_ENGINE
+	if (conn->engine)
+	{
+		ENGINE_finish(conn->engine);
+		ENGINE_free(conn->engine);
+		conn->engine = NULL;
+	}
+#endif
 }
 
 /*
