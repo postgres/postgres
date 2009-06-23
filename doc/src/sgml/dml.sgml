@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.19 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.20 2009/06/23 20:33:25 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -134,7 +134,9 @@ INSERT INTO products (product_no, name, price) VALUES
   </para>
 
   <para>
-   To perform an update, you need three pieces of information:
+   To update existing rows, use the <xref linkend="sql-update"
+   endterm="sql-update-title"> command.  This requires
+   three pieces of information:
    <orderedlist spacing="compact">
     <listitem>
      <para>The name of the table and column to update</para>
