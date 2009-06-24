@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.10 2009/06/11 14:48:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.11 2009/06/24 15:16:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,7 +369,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	{
 		ereport(DEBUG1,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-			  errmsg("picksplit method for %d column of index \"%s\" failed",
+			  errmsg("picksplit method for column %d of index \"%s\" failed",
 					 attno + 1, RelationGetRelationName(r)),
 				 errhint("The index is not optimal. To optimize it, contact a developer, or try to use the column as the second one in the CREATE INDEX command.")));
 
@@ -397,7 +397,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 
 		if (sv->spl_ldatum_exists || sv->spl_rdatum_exists)
 		{
-			elog(LOG, "PickSplit method of %d columns of index '%s' doesn't support secondary split",
+			elog(LOG, "picksplit method for column %d of index \"%s\" doesn't support secondary split",
 				 attno + 1, RelationGetRelationName(r));
 
 			supportSecondarySplit(r, giststate, attno, sv, v->spl_lattr[attno], v->spl_rattr[attno]);
