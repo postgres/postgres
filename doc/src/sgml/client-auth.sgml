@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.122 2009/05/16 21:17:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.123 2009/06/24 13:46:32 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1261,7 +1261,7 @@ omicron       bryanh            guest1
     </para>
    </note>
     <synopsis>
-ldapserver=ldap.example.net prefix="cn=" suffix="dc=example, dc=net"
+ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
     </synopsis>
 
   </sect2>
