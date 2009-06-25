@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.9 2009/05/14 21:59:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgstandby.sgml,v 2.10 2009/06/25 12:03:11 heikki Exp $ -->
 
 <sect1 id="pgstandby">
  <title>pg_standby</title>
@@ -25,11 +25,6 @@
   <application>pg_standby</application> features include:
  </para>
  <itemizedlist>
-  <listitem>
-   <para>
-    Supports copy or link for restoring WAL files
-   </para>
-  </listitem>
   <listitem>
    <para>
     Written in C, so very portable and easy to install
@@ -172,22 +167,10 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
       </entry>
      </row>
      <row>
-      <entry><literal>-l</></entry>
-      <entry>no</entry>
-      <entry>
-       Use <literal>ln</> command to restore WAL files from archive.
-       Link is more efficient than copy, but the default is copy since link
-       will not work in all scenarios.
-       On Windows, this option uses the <literal>mklink</> command
-       to provide a file-to-file symbolic link. <literal>-l</> will
-       not work on versions of Windows prior to Vista.
-      </entry>
-     </row>
-     <row>
       <entry><literal>-r</> <replaceable>maxretries</></entry>
       <entry>3</entry>
       <entry>
-        Set the maximum number of times to retry the copy or link command if it
+        Set the maximum number of times to retry the copy command if it
         fails. After each failure, we wait for <replaceable>sleeptime</> *
         <replaceable>num_retries</>
         so that the wait time increases progressively.  So by default,
@@ -242,7 +225,7 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
   <programlisting>
 archive_command = 'cp %p .../archive/%f'
 
-restore_command = 'pg_standby -l -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f %p %r 2>>standby.log'
+restore_command = 'pg_standby -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f %p %r 2>>standby.log'
 
 recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
   </programlisting>
@@ -253,11 +236,6 @@ recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'
    This will:
   </para>
   <itemizedlist>
-   <listitem>
-    <para>
-     use the <literal>ln</> command to restore WAL files from archive
-    </para>
-   </listitem>
    <listitem>
     <para>
      produce debugging output in <filename>standby.log</>
