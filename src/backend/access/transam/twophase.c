@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.53 2009/06/11 14:48:54 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.54 2009/06/25 19:05:52 heikki Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1241,10 +1241,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
 			if (smgrexists(srel, fork))
-			{
-				XLogDropRelation(delrels[i], fork);
-				smgrdounlink(srel, fork, false, true);
-			}
+				smgrdounlink(srel, fork, false, false);
 		}
 		smgrclose(srel);
 	}
