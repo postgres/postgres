@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.116 2009/06/19 19:14:25 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.117 2009/06/25 21:15:38 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -72,17 +72,20 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 DEFAULTSECTION = l
 
 fix_man_xrefs = $(PERL) -npi -e 's{\[XRef to GUC-([A-Z0-9-]*)\]}{($$l = $$1) =~ tr/A-Z-/a-z_/, $$l}ge || s{\[XRef to [A-Z0-9-]*\]}{in the documentation}g'
+lowercase = tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'
 
 man: postgres.sgml $(ALLSGML)
-	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
+	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 # One more time, to resolve cross-references
-	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
+	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 	$(fix_man_xrefs) *.1 *.7
 	$(mkinstalldirs) man1 man7
 	$(D2MLINKS) < manpage.links
 	mv *.1 man1/
 	mv *.7 man7/
 	rm *.$(DEFAULTSECTION)
+# manpage.links doesn't handle lowercase, needs fixups
+	cd man7 && for file in `awk '{ print $$2 }' ../manpage.links`; do $(lowercase) <$$file >`echo $$file | $(lowercase)` && rm $$file || exit; done
 
 
 ##
