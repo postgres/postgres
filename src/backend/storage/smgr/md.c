@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.146 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.147 2009/06/25 21:36:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,21 @@ mdinit(void)
 								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 		pendingUnlinks = NIL;
 	}
+}
+
+/*
+ * In archive recovery, we rely on bgwriter to do fsyncs(), but we don't
+ * know that we do archive recovery at process startup when pendingOpsTable
+ * has already been created. Calling this function drops pendingOpsTable
+ * and causes any subsequent requests to be forwarded to bgwriter.
+ */
+void
+SetForwardFsyncRequests(void)
+{
+	/* Perform any pending ops we may have queued up */
+	if (pendingOpsTable)
+		mdsync();
+	pendingOpsTable = NULL;
 }
 
 /*

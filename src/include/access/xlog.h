@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.91 2009/02/18 15:58:41 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.92 2009/06/25 21:36:00 heikki Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -166,6 +166,8 @@ extern bool XLOG_DEBUG;
 /* These indicate the cause of a checkpoint request */
 #define CHECKPOINT_CAUSE_XLOG	0x0010	/* XLOG consumption */
 #define CHECKPOINT_CAUSE_TIME	0x0020	/* Elapsed time */
+#define CHECKPOINT_END_OF_RECOVERY	0x0040	/* Like shutdown checkpoint, but
+											 * issued at end of WAL recovery */
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData

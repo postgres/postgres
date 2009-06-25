@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.67 2009/06/11 14:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.68 2009/06/25 21:36:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,7 @@ extern void mdpreckpt(void);
 extern void mdsync(void);
 extern void mdpostckpt(void);
 
+extern void SetForwardFsyncRequests(void);
 extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 					 BlockNumber segno);
 extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);

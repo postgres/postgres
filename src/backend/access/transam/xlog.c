@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.343 2009/06/11 14:48:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.344 2009/06/25 21:36:00 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4912,11 +4912,17 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 {
 	char		recoveryPath[MAXPGPATH];
 	char		xlogpath[MAXPGPATH];
+	XLogRecPtr	InvalidXLogRecPtr = {0, 0};
 
 	/*
 	 * We are no longer in archive recovery state.
 	 */
 	InArchiveRecovery = false;
+
+	/*
+	 * Update min recovery point one last time.
+	 */
+	UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
 
 	/*
 	 * We should have the ending log segment currently open.  Verify, and then
@@ -5156,6 +5162,7 @@ StartupXLOG(void)
 	XLogRecord *record;
 	uint32		freespace;
 	TransactionId oldestActiveXID;
+	bool		bgwriterLaunched = false;
 
 	XLogCtl->SharedRecoveryInProgress = true;
 
@@ -5472,7 +5479,11 @@ StartupXLOG(void)
 			 * process in addition to postmaster!
 			 */
 			if (InArchiveRecovery && IsUnderPostmaster)
+			{
+				SetForwardFsyncRequests();
 				SendPostmasterSignal(PMSIGNAL_RECOVERY_STARTED);
+				bgwriterLaunched = true;
+			}
 
 			/*
 			 * main redo apply loop
@@ -5709,12 +5720,6 @@ StartupXLOG(void)
 	/* Pre-scan prepared transactions to find out the range of XIDs present */
 	oldestActiveXID = PrescanPreparedTransactions();
 
-	/*
-	 * Allow writing WAL for us, so that we can create a checkpoint record.
-	 * But not yet for other backends!
-	 */
-	LocalRecoveryInProgress = false;
-
 	if (InRecovery)
 	{
 		int			rmid;
@@ -5743,7 +5748,12 @@ StartupXLOG(void)
 		 * the rule that TLI only changes in shutdown checkpoints, which
 		 * allows some extra error checking in xlog_redo.
 		 */
-		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
+		if (bgwriterLaunched)
+			RequestCheckpoint(CHECKPOINT_END_OF_RECOVERY |
+							  CHECKPOINT_IMMEDIATE |
+							  CHECKPOINT_WAIT);
+		else
+			CreateCheckPoint(CHECKPOINT_END_OF_RECOVERY | CHECKPOINT_IMMEDIATE);
 
 		/*
 		 * And finally, execute the recovery_end_command, if any.
@@ -5806,7 +5816,7 @@ StartupXLOG(void)
 	}
 
 	/*
-	 * All done. Allow others to write WAL.
+	 * All done. Allow backends to write WAL.
 	 */
 	XLogCtl->SharedRecoveryInProgress = false;
 }
@@ -6123,12 +6133,13 @@ LogCheckpointStart(int flags, bool restartpoint)
 	 * the main message, but what about all the flags?
 	 */
 	if (restartpoint)
-		msg = "restartpoint starting:%s%s%s%s%s%s";
+		msg = "restartpoint starting:%s%s%s%s%s%s%s";
 	else
-		msg = "checkpoint starting:%s%s%s%s%s%s";
+		msg = "checkpoint starting:%s%s%s%s%s%s%s";
 
 	elog(LOG, msg,
 		 (flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
+		 (flags & CHECKPOINT_END_OF_RECOVERY) ? " end-of-recovery" : "",
 		 (flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
 		 (flags & CHECKPOINT_FORCE) ? " force" : "",
 		 (flags & CHECKPOINT_WAIT) ? " wait" : "",
@@ -6190,10 +6201,12 @@ LogCheckpointEnd(bool restartpoint)
  *
  * flags is a bitwise OR of the following:
  *	CHECKPOINT_IS_SHUTDOWN: checkpoint is for database shutdown.
+ *	CHECKPOINT_END_OF_RECOVERY: checkpoint is for end of WAL recovery.
  *	CHECKPOINT_IMMEDIATE: finish the checkpoint ASAP,
  *		ignoring checkpoint_completion_target parameter.
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
- *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN).
+ *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN and
+ *		CHECKPOINT_END_OF_RECOVERY).
  *
  * Note: flags contains other bits, of interest here only for logging purposes.
  * In particular note that this routine is synchronous and does not pay
@@ -6202,7 +6215,7 @@ LogCheckpointEnd(bool restartpoint)
 void
 CreateCheckPoint(int flags)
 {
-	bool		shutdown = (flags & CHECKPOINT_IS_SHUTDOWN) != 0;
+	bool		shutdown;
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -6212,34 +6225,52 @@ CreateCheckPoint(int flags)
 	uint32		_logSeg;
 	TransactionId *inCommitXids;
 	int			nInCommit;
+	bool		OldInRecovery = InRecovery;
 
-	/* shouldn't happen */
-	if (RecoveryInProgress())
-		elog(ERROR, "can't create a checkpoint during recovery");
+	/*
+	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just
+	 * issued at a different time.
+	 */
+	if (flags & ((CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY) != 0))
+		shutdown = true;
+	else
+		shutdown = false;
+
+	/*
+	 * A startup checkpoint is created before anyone else is allowed to
+	 * write WAL. To allow us to write the checkpoint record, set
+	 * LocalRecoveryInProgress to false. This lets us write WAL, but others
+	 * are still not allowed to do so.
+	 */
+	if (flags & CHECKPOINT_END_OF_RECOVERY)
+	{
+		Assert(RecoveryInProgress());
+		LocalRecoveryInProgress = false;
+		InitXLOGAccess();
+
+		/*
+		 * Before 8.4, end-of-recovery checkpoints were always performed by
+		 * the startup process, and InRecovery was set true. InRecovery is not
+		 * normally set in bgwriter, but we set it here temporarily to avoid
+		 * confusing old code in the end-of-recovery checkpoint code path that
+		 * rely on it.
+		 */
+		InRecovery = true;
+	}
+	else
+	{
+		/* shouldn't happen */
+		if (RecoveryInProgress())
+			elog(ERROR, "can't create a checkpoint during recovery");
+	}
 
 	/*
 	 * Acquire CheckpointLock to ensure only one checkpoint happens at a time.
-	 * During normal operation, bgwriter is the only process that creates
-	 * checkpoints, but at the end of archive recovery, the bgwriter can be
-	 * busy creating a restartpoint while the startup process tries to perform
-	 * the startup checkpoint.
+	 * (This is just pro forma, since in the present system structure there is
+	 * only one process that is allowed to issue checkpoints at any given
+	 * time.)
 	 */
-	if (!LWLockConditionalAcquire(CheckpointLock, LW_EXCLUSIVE))
-	{
-		Assert(InRecovery);
-
-		/*
-		 * A restartpoint is in progress. Wait until it finishes. This can
-		 * cause an extra restartpoint to be performed, but that's OK because
-		 * we're just about to perform a checkpoint anyway. Flushing the
-		 * buffers in this restartpoint can take some time, but that time is
-		 * saved from the upcoming checkpoint so the net effect is zero.
-		 */
-		ereport(DEBUG2, (errmsg("hurrying in-progress restartpoint")));
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT);
-
-		LWLockAcquire(CheckpointLock, LW_EXCLUSIVE);
-	}
+	LWLockAcquire(CheckpointLock, LW_EXCLUSIVE);
 
 	/*
 	 * Prepare to accumulate statistics.
@@ -6298,7 +6329,8 @@ CreateCheckPoint(int flags)
 	 * the end of the last checkpoint record, and its redo pointer must point
 	 * to itself.
 	 */
-	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_FORCE)) == 0)
+	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY |
+				  CHECKPOINT_FORCE)) == 0)
 	{
 		XLogRecPtr	curInsert;
 
@@ -6542,6 +6574,9 @@ CreateCheckPoint(int flags)
 									 CheckpointStats.ckpt_segs_recycled);
 
 	LWLockRelease(CheckpointLock);
+
+	/* Restore old value */
+	InRecovery = OldInRecovery;
 }
 
 /*
