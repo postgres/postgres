@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.146.2.1 2008/07/24 17:52:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.146.2.2 2009/06/25 11:30:10 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,6 +787,13 @@ CheckLDAPAuth(Port *port)
 	passwd = recv_password_packet(port);
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
+
+	if (strlen(passwd) == 0)
+	{
+		ereport(LOG,
+				(errmsg("empty password returned by client")));
+		return STATUS_ERROR;
+	}
 
 	ldap = ldap_init(server, ldapport);
 	if (!ldap)
