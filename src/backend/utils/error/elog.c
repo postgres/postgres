@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.215 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.216 2009/06/25 23:07:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,11 @@
 
 #undef _
 #define _(x) err_gettext(x)
+
+static const char *err_gettext(const char *str)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format_arg(1)));
 
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
