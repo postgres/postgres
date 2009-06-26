@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.70 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.71 2009/06/26 22:08:17 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -1568,6 +1568,17 @@ Commit                                         70
 Total time (ns)                        2312105013
 </screen>
   </para>
+
+  <note>
+   <para>
+    SystemTap uses a different notation for trace scripts than DTrace does,
+    even though the underlying trace points are compatible.  One point worth
+    noting is that at this writing, SystemTap scripts must reference probe
+    names using double underlines in place of hyphens.  This is expected to
+    be fixed in future SystemTap releases.
+   </para>
+  </note>
+
   <para>
    You should remember that DTrace scripts need to be carefully written and
    debugged, otherwise the trace information collected might
@@ -1576,6 +1587,7 @@ Total time (ns)                        2312105013
    discussing information found using dynamic tracing, be sure to enclose
    the script used to allow that too to be checked and discussed.
   </para>
+
   <para>
    More example scripts can be found in the PgFoundry
    <ulink url="http://pgfoundry.org/projects/dtrace/">dtrace project</ulink>.
