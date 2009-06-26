@@ -1,6 +1,6 @@
-# $PostgreSQL: pgsql/src/bin/pg_dump/nls.mk,v 1.20 2009/04/09 19:38:51 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/nls.mk,v 1.21 2009/06/26 19:33:50 petere Exp $
 CATALOG_NAME	:= pg_dump
-AVAIL_LANGUAGES	:= cs de es fr it ja ko nb pt_BR ro ru sk sl sv tr zh_CN zh_TW
+AVAIL_LANGUAGES	:= de es fr ja pt_BR sv tr
 GETTEXT_FILES	:= pg_dump.c common.c pg_backup_archiver.c pg_backup_custom.c \
                    pg_backup_db.c pg_backup_files.c pg_backup_null.c \
                    pg_backup_tar.c pg_restore.c pg_dumpall.c \

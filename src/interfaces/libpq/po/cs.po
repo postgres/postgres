@@ -1,7 +1,7 @@
 # translation of libpq-cs.po to Czech
 # Czech translation of libpq messages
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/cs.po,v 1.6 2009/06/10 23:42:43 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/cs.po,v 1.7 2009/06/26 19:33:51 petere Exp $
 # Karel Žák, 2001-2003, 2004.
 # Zdeněk Kotala, 2009.
 #
@@ -35,7 +35,7 @@ msgstr "nelze obnovit neblokující mód soketu: %s\n"
 
 #: fe-auth.c:403
 msgid "GSSAPI continuation error"
-msgstr ""
+msgstr "Přetrvávající chyba GSSAPI"
 
 #: fe-auth.c:432
 msgid "duplicate GSS authentication request\n"
@@ -47,7 +47,7 @@ msgstr "chyba importu jména GSSAPI"
 
 #: fe-auth.c:538
 msgid "SSPI continuation error"
-msgstr ""
+msgstr "Přetrvávající chyba SSPI"
 
 #: fe-auth.c:549 fe-auth.c:622 fe-auth.c:656 fe-auth.c:753 fe-connect.c:1335
 #: fe-connect.c:2616 fe-connect.c:2833 fe-connect.c:3199 fe-connect.c:3208
@@ -211,37 +211,37 @@ msgstr "neplatný status spojení %c, pravděpodobně indikující porušení pa
 #: fe-connect.c:2224 fe-connect.c:2284
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
-msgstr ""
+msgstr "PGEventProc \"%s\" selhalo během události PGEVT_CONNRESET\n"
 
 #: fe-connect.c:2629
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
-msgstr "naplatný LDAP URL \"%s\": schéma musí být ldap://\n"
+msgstr "naplatné LDAP URL \"%s\": schéma musí být ldap://\n"
 
 #: fe-connect.c:2644
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
-msgstr ""
+msgstr "neplatné LDAP URL \"%s\": chybí rozlišující jméno\n"
 
 #: fe-connect.c:2655 fe-connect.c:2708
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
-msgstr "neplatný LDAP URL \"%s\": musí mít právě jeden atribut\n"
+msgstr "neplatné LDAP URL \"%s\": musí mít právě jeden atribut\n"
 
 #: fe-connect.c:2665 fe-connect.c:2722
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
-msgstr "naplatný LDAP URL \"%s\": musí mít vyhledávací rozsah (base/one/sub)\n"
+msgstr "naplatné LDAP URL \"%s\": musí mít vyhledávací rozsah (base/one/sub)\n"
 
 #: fe-connect.c:2676
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
-msgstr "naplatný LDAP URL \"%s\": není filter\n"
+msgstr "naplatné LDAP URL \"%s\": není filter\n"
 
 #: fe-connect.c:2697
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
-msgstr "naplatný LDAP URL \"%s\": neplatný číslo portu\n"
+msgstr "naplatné LDAP URL \"%s\": neplatný číslo portu\n"
 
 #: fe-connect.c:2731
 msgid "could not create LDAP structure\n"
@@ -665,9 +665,9 @@ msgid ""
 msgstr ""
 
 #: fe-secure.c:551
-#, fuzzy, c-format
+#, c-format
 msgid "server common name \"%s\" does not match host name \"%s\""
-msgstr "jméno serveru \"%s\" nelze přeložit na peer adresu\n"
+msgstr "veřejné jméno serveru \"%s\" nesouhlasí s jménem serveru (host name) \"%s\""
 
 #: fe-secure.c:593
 msgid "could not get home directory to locate client certificate files"

@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-04-08 15:21+0000\n"
-"PO-Revision-Date: 2009-05-05 10:41+0200\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2009-06-11 05:16+0000\n"
+"PO-Revision-Date: 2009-06-25 14:57+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <devrim@gunduz.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -21,23 +21,23 @@ msgstr ""
 #: descriptor.c:64
 #, c-format
 msgid "variable \"%s\" must have a numeric type"
-msgstr ""
+msgstr "\"%s\" değişkeninin sayısal veri tipi olmalı"
 
 #: descriptor.c:124
 #: descriptor.c:146
 #, c-format
 msgid "descriptor \"%s\" does not exist"
-msgstr ""
+msgstr "\"%s\" açıklayıcısı mevcut değil"
 
 #: descriptor.c:161
 #: descriptor.c:210
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
-msgstr ""
+msgstr "\"%d\" açıklayıcı başlık maddesi mevcut değil"
 
 #: descriptor.c:182
 msgid "nullable is always 1"
-msgstr ""
+msgstr "nullable her zaman 1'dir"
 
 #: descriptor.c:185
 msgid "key_member is always 0"
@@ -223,7 +223,7 @@ msgstr "/* açıklama sonlandırılmamış"
 
 #: pgc.l:399
 msgid "invalid bit string literal"
-msgstr ""
+msgstr "geçersiz bit dizini bilgisi"
 
 #: pgc.l:408
 msgid "unterminated bit string literal"
@@ -294,227 +294,232 @@ msgstr "dahili hata: erişilemeyen durum: bunu lütfen <pgsql-bugs@postgresql.or
 #: pgc.l:1297
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
-msgstr ""
+msgstr "Hata: \"%s/%s\" include yolu çok uzun, satır numarası %d; atlanıyor\n"
 
 #: pgc.l:1313
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr " \"%s\" include dosyası %d. satırda açılamadı"
 
-#: preproc.y:72
+#: preproc.y:30
+msgid "syntax error"
+msgstr "söz dizim hatası "
+
+#: preproc.y:78
 #, c-format
 msgid "WARNING: "
 msgstr "UYARI:"
 
-#: preproc.y:76
+#: preproc.y:82
 #, c-format
 msgid "ERROR: "
 msgstr "HATA:"
 
-#: preproc.y:100
+#: preproc.y:106
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "\"%s\" çıktı dosyası kaldırılamadı\n"
 
-#: preproc.y:312
+#: preproc.y:318
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "\"%s\" imleci mevcut değil"
 
-#: preproc.y:340
+#: preproc.y:346
 msgid "initializer not allowed in type definition"
 msgstr "tip tanımlamasında ilklendiriciye izin verilmez"
 
-#: preproc.y:347
-#: preproc.y:10614
+#: preproc.y:353
+#: preproc.y:10620
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "\"%s\" tipi zaten tanımlanmış"
 
-#: preproc.y:370
-#: preproc.y:11213
-#: preproc.y:11728
+#: preproc.y:376
+#: preproc.y:11219
+#: preproc.y:11734
 #: variable.c:584
 msgid "multidimensional arrays for simple data types are not supported"
-msgstr ""
+msgstr "basit veri tipleri için çok boyutlu diziler desteklenmemektedir."
 
-#: preproc.y:1237
+#: preproc.y:1243
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "AT seçeneğine CLOSE DATABASE ifadesinde izin verilmemektedir"
 
-#: preproc.y:1303
-#: preproc.y:1443
+#: preproc.y:1309
+#: preproc.y:1449
 msgid "AT option not allowed in DEALLOCATE statement"
 msgstr "AT seçeneğine DEALLOCATE ifadesinde izin verilmemektedir"
 
-#: preproc.y:1429
+#: preproc.y:1435
 msgid "AT option not allowed in CONNECT statement"
 msgstr "AT seçeneğine CONNECT ifadesinde izin verilmemektedir"
 
-#: preproc.y:1465
+#: preproc.y:1471
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "AT seçeneğine DISCONNECT ifadesinde izin verilmemektedir"
 
-#: preproc.y:1517
+#: preproc.y:1523
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "AT seçeneğine SET CONNECTION ifadesinde izin verilmemektedir"
 
-#: preproc.y:1539
+#: preproc.y:1545
 msgid "AT option not allowed in TYPE statement"
 msgstr "AT seçeneğine TYPE ifadesinde izin verilmemektedir"
 
-#: preproc.y:1548
+#: preproc.y:1554
 msgid "AT option not allowed in VAR statement"
 msgstr "AT seçeneğine VAR ifadesinde izin verilmemektedir"
 
-#: preproc.y:1555
+#: preproc.y:1561
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "AT seçeneğine WHENEVER ifadesinde izin verilmemektedir"
 
-#: preproc.y:1911
-#: preproc.y:2907
-#: preproc.y:3805
-#: preproc.y:3814
-#: preproc.y:4045
-#: preproc.y:5854
-#: preproc.y:5859
-#: preproc.y:5864
-#: preproc.y:8029
-#: preproc.y:8559
-#: preproc.y:8564
+#: preproc.y:1917
+#: preproc.y:2913
+#: preproc.y:3811
+#: preproc.y:3820
+#: preproc.y:4051
+#: preproc.y:5860
+#: preproc.y:5865
+#: preproc.y:5870
+#: preproc.y:8035
+#: preproc.y:8565
+#: preproc.y:8570
 msgid "unsupported feature will be passed to server"
 msgstr "desteklenmeyen  özellik sunucuya aktarılacaktır"
 
-#: preproc.y:2141
+#: preproc.y:2147
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL kodlanmamıştır"
 
-#: preproc.y:2476
-#: preproc.y:2487
+#: preproc.y:2482
+#: preproc.y:2493
 msgid "COPY TO STDIN is not possible"
 msgstr "COPY TO STDIN mümkün değildir"
 
-#: preproc.y:2478
+#: preproc.y:2484
 msgid "COPY FROM STDOUT is not possible"
 msgstr "COPY FROM STDOUT mümkün değildir"
 
-#: preproc.y:2480
+#: preproc.y:2486
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN kodlanmamıştır"
 
-#: preproc.y:3745
-#: preproc.y:3756
+#: preproc.y:3751
+#: preproc.y:3762
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr "INITIALLY DEFERRED olarak tanımlanan kısıtlayıcı DEFERRABLE özelliğine sahip olmalıdır"
 
-#: preproc.y:6563
-#: preproc.y:10230
+#: preproc.y:6569
+#: preproc.y:10236
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "\"%s\" imleci zaten tanımlanmış"
 
-#: preproc.y:6916
+#: preproc.y:6922
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "artık desteklenmeyen LIMIT #,# sözdizimi sunucuya aktarıldı"
 
-#: preproc.y:7158
+#: preproc.y:7164
 msgid "subquery in FROM must have an alias"
 msgstr "FROM öğesindeki subquery bir aliası almalıdır"
 
-#: preproc.y:9919
+#: preproc.y:9925
 msgid "OLD used in query that is not in a rule"
 msgstr "rule olmayan sorgusunda OLD kullanıldı"
 
-#: preproc.y:9926
+#: preproc.y:9932
 msgid "NEW used in query that is not in a rule"
 msgstr "rule olmayan sorgusunda NEW kullanıldı"
 
-#: preproc.y:9958
+#: preproc.y:9964
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS işleminde INTO kullanılamaz"
 
-#: preproc.y:10005
+#: preproc.y:10011
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "\"@\" bekleniyordu; \"%s\" bulundu"
 
-#: preproc.y:10017
+#: preproc.y:10023
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
-msgstr ""
+msgstr "sadece \"tcp\" ve \"unix\" protokolleri ile \"postgresql\" veritabanı tipi desteklenmektedir."
 
-#: preproc.y:10020
+#: preproc.y:10026
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "\"://\" bekleniyordu; \"%s\" bulundu"
 
-#: preproc.y:10025
+#: preproc.y:10031
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "Unix-domain soketleri sadece \"localhost\" üzerinde çalışabilir; ancak  \"%s\" üzerinde çalışamaz."
 
-#: preproc.y:10051
+#: preproc.y:10057
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "\"postgresql\" bekleniyordu; \"%s\" bulundu"
 
-#: preproc.y:10054
+#: preproc.y:10060
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "Geçersiz bağlantı tipi: %s"
 
-#: preproc.y:10063
+#: preproc.y:10069
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "\"@\" or \"://\" bekleniyordu; \"%s\" bulundu"
 
-#: preproc.y:10138
-#: preproc.y:10155
+#: preproc.y:10144
+#: preproc.y:10161
 msgid "invalid data type"
 msgstr "geçersiz veri tipi"
 
-#: preproc.y:10166
-#: preproc.y:10181
+#: preproc.y:10172
+#: preproc.y:10187
 msgid "incomplete statement"
 msgstr "eksik ifade"
 
-#: preproc.y:10169
-#: preproc.y:10184
+#: preproc.y:10175
+#: preproc.y:10190
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "tanımlanmayan imge \"%s\""
 
-#: preproc.y:10433
+#: preproc.y:10439
 msgid "only data types numeric and decimal have precision/scale argument"
-msgstr ""
+msgstr "sadece sayısal ve ondalıklı verip tiplerinin ondalık bilgisi vardır"
 
-#: preproc.y:10445
+#: preproc.y:10451
 msgid "interval specification not allowed here"
 msgstr "aralık belirtimine burada izin verilmiyor"
 
-#: preproc.y:10589
-#: preproc.y:10641
+#: preproc.y:10595
+#: preproc.y:10647
 msgid "too many levels in nested structure/union definition"
-msgstr ""
+msgstr "içiçe gelmiş yapı/birleşme tanımında çok fazla seviye"
 
-#: preproc.y:10772
+#: preproc.y:10778
 msgid "pointers to varchar are not implemented"
-msgstr ""
+msgstr "varcharlara işaretçiler henüz uyarlanmadı"
 
-#: preproc.y:10936
-#: preproc.y:10943
-#: preproc.y:10950
+#: preproc.y:10942
+#: preproc.y:10949
+#: preproc.y:10956
 msgid "using unsupported DESCRIBE statement"
 msgstr "desteklenmeyen DESCRIBE ifadesi kullanılıyor"
 
-#: preproc.y:11181
+#: preproc.y:11187
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "EXEC SQL VAR konutunda ilklendiriciye izin verilmemektedir"
 
-#: preproc.y:11697
+#: preproc.y:11703
 msgid "arrays of indicators are not allowed on input"
 msgstr ""
 
-#: preproc.y:11925
+#. translator: %s is typically the translation of "syntax error"
+#: preproc.y:11930
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "\"%2$s\"  yerinde %1$s"
@@ -532,7 +537,7 @@ msgstr "tanımsız değişken tipi kodu %d"
 
 #: type.c:241
 msgid "indicator for array/pointer has to be array/pointer"
-msgstr ""
+msgstr "array/pointer için gösterici array/pointer olmalıdır"
 
 #: type.c:245
 msgid "nested arrays are not supported (except strings)"
@@ -540,24 +545,24 @@ msgstr ""
 
 #: type.c:278
 msgid "indicator for struct has to be a struct"
-msgstr ""
+msgstr "struct için gösterici (indicator) yine struct olmalı"
 
 #: type.c:287
 #: type.c:295
 #: type.c:303
 msgid "indicator for simple data type has to be simple"
-msgstr ""
+msgstr "basit veri tipinin göstergesi basit olmalı"
 
 #: type.c:613
 #, c-format
 msgid "unrecognized descriptor item code %d"
-msgstr ""
+msgstr "tanımlanmayan açıklayıcı madde kodu %d"
 
 #: variable.c:89
 #: variable.c:112
 #, c-format
 msgid "incorrectly formed variable \"%s\""
-msgstr ""
+msgstr "doğru şekilde oluşturulmamış \"%s\" değişkeni"
 
 #: variable.c:135
 #, c-format
@@ -588,7 +593,7 @@ msgstr "\"%s\" değişkeni bildirilmemiş"
 
 #: variable.c:459
 msgid "indicator variable must have an integer type"
-msgstr ""
+msgstr "belirteç değişkeni tamsayı veri tipine sahip olmalı"
 
 #: variable.c:471
 #, c-format
@@ -614,5 +619,5 @@ msgstr "Bu veri tipi için işaretçiden işaretçiye desteklenmemektedir"
 
 #: variable.c:524
 msgid "multidimensional arrays for structures are not supported"
-msgstr ""
+msgstr "yapılar için çok boyutlu diziler desteklenmemektedir"
 

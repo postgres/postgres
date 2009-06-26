@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-05-29 15:08+0000\n"
-"PO-Revision-Date: 2009-05-31 21:33+0200\n"
+"POT-Creation-Date: 2009-06-11 05:09+0000\n"
+"PO-Revision-Date: 2009-06-11 10:57+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -1211,15 +1211,15 @@ msgstr "ID"
 #: describe.c:759
 #: describe.c:1237
 #: describe.c:2008
-#: describe.c:2136
-#: describe.c:2428
-#: describe.c:2490
-#: describe.c:2626
-#: describe.c:2665
-#: describe.c:2732
-#: describe.c:2791
-#: describe.c:2800
-#: describe.c:2859
+#: describe.c:2139
+#: describe.c:2431
+#: describe.c:2493
+#: describe.c:2629
+#: describe.c:2668
+#: describe.c:2735
+#: describe.c:2794
+#: describe.c:2803
+#: describe.c:2862
 msgid "Description"
 msgstr "Açıklama"
 
@@ -1276,7 +1276,7 @@ msgstr "Hücre tablo içeriğine eklenemedi: %d olan toplan hücre sayısı aç�
 msgid "invalid output format (internal error): %d"
 msgstr "geçersiz çıktı biçimi (iç hata): %d"
 
-#: print.c:2351
+#: print.c:2352
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
@@ -1333,14 +1333,14 @@ msgstr "komut satırı düzenleme desteği mevcuttur"
 #: describe.c:560
 #: describe.c:681
 #: describe.c:756
-#: describe.c:2114
-#: describe.c:2234
-#: describe.c:2289
-#: describe.c:2488
-#: describe.c:2715
-#: describe.c:2787
-#: describe.c:2798
-#: describe.c:2857
+#: describe.c:2117
+#: describe.c:2237
+#: describe.c:2292
+#: describe.c:2491
+#: describe.c:2718
+#: describe.c:2790
+#: describe.c:2801
+#: describe.c:2860
 msgid "Schema"
 msgstr "Şema"
 
@@ -1352,17 +1352,17 @@ msgstr "Şema"
 #: describe.c:611
 #: describe.c:682
 #: describe.c:757
-#: describe.c:2115
-#: describe.c:2235
-#: describe.c:2290
-#: describe.c:2419
-#: describe.c:2489
-#: describe.c:2716
-#: describe.c:2788
-#: describe.c:2799
-#: describe.c:2858
-#: describe.c:3048
-#: describe.c:3107
+#: describe.c:2118
+#: describe.c:2238
+#: describe.c:2293
+#: describe.c:2422
+#: describe.c:2492
+#: describe.c:2719
+#: describe.c:2791
+#: describe.c:2802
+#: describe.c:2861
+#: describe.c:3051
+#: describe.c:3110
 msgid "Name"
 msgstr "Adı"
 
@@ -1393,10 +1393,10 @@ msgstr "Bu sunucu (%d.%d sürümü) tablespace desteklememektedir.\n"
 #: describe.c:146
 #: describe.c:334
 #: describe.c:612
-#: describe.c:2122
-#: describe.c:2420
-#: describe.c:3049
-#: describe.c:3108
+#: describe.c:2125
+#: describe.c:2423
+#: describe.c:3052
+#: describe.c:3111
 msgid "Owner"
 msgstr "Sahibi"
 
@@ -1415,8 +1415,8 @@ msgstr "\\df sadece [antwS+] seçeneklerini alır\n"
 
 #: describe.c:218
 #, c-format
-msgid "\\df does not take a \"w\" option in %d.%d.\n"
-msgstr "\\df %d.%d sürümünde \"w\" seçeneğini almaz.\n"
+msgid "\\df does not take a \"w\" option with server version %d.%d\n"
+msgstr "\\df \"w\" seçeneğini %d.%d sunucu sürümünde almaz\n"
 
 #. translator: "agg" is short for "aggregate"
 #: describe.c:251
@@ -1447,9 +1447,9 @@ msgstr "normal"
 #: describe.c:317
 #: describe.c:684
 #: describe.c:1222
-#: describe.c:2121
-#: describe.c:2236
-#: describe.c:3120
+#: describe.c:2124
+#: describe.c:2239
+#: describe.c:3123
 msgid "Type"
 msgstr "Veri tipi"
 
@@ -1487,7 +1487,7 @@ msgstr "Dahili adı"
 
 #: describe.c:474
 #: describe.c:628
-#: describe.c:2132
+#: describe.c:2135
 msgid "Size"
 msgstr "Boyut"
 
@@ -1537,19 +1537,19 @@ msgstr "Veritabanlarının listesi"
 
 #: describe.c:683
 #: describe.c:851
-#: describe.c:2116
+#: describe.c:2119
 msgid "table"
 msgstr "tablo"
 
 #: describe.c:683
 #: describe.c:852
-#: describe.c:2117
+#: describe.c:2120
 msgid "view"
 msgstr "view"
 
 #: describe.c:683
 #: describe.c:854
-#: describe.c:2119
+#: describe.c:2122
 msgid "sequence"
 msgstr "sequence"
 
@@ -1558,8 +1558,8 @@ msgid "Column access privileges"
 msgstr "Kolon erişim hakları"
 
 #: describe.c:721
-#: describe.c:3215
-#: describe.c:3219
+#: describe.c:3218
+#: describe.c:3222
 msgid "Access privileges"
 msgstr "Erişim hakları"
 
@@ -1584,7 +1584,7 @@ msgid "data type"
 msgstr "veri tipi"
 
 #: describe.c:853
-#: describe.c:2118
+#: describe.c:2121
 msgid "index"
 msgstr "indeks"
 
@@ -1762,21 +1762,21 @@ msgid "Has OIDs"
 msgstr " OIDleri var"
 
 #: describe.c:1820
-#: describe.c:2293
-#: describe.c:2366
+#: describe.c:2296
+#: describe.c:2369
 msgid "yes"
 msgstr "evet"
 
 #: describe.c:1820
-#: describe.c:2293
-#: describe.c:2366
+#: describe.c:2296
+#: describe.c:2369
 msgid "no"
 msgstr "hayır"
 
 #: describe.c:1828
-#: describe.c:3058
-#: describe.c:3122
-#: describe.c:3178
+#: describe.c:3061
+#: describe.c:3125
+#: describe.c:3181
 msgid "Options"
 msgstr "Seçenekler"
 
@@ -1839,202 +1839,202 @@ msgid_plural "%d connections"
 msgstr[0] "%d bağlantı"
 msgstr[1] "1 bağlantı"
 
-#: describe.c:2120
+#: describe.c:2123
 msgid "special"
 msgstr "özel"
 
-#: describe.c:2127
+#: describe.c:2130
 msgid "Table"
 msgstr "Tablo"
 
-#: describe.c:2186
+#: describe.c:2189
 #, c-format
 msgid "No matching relations found.\n"
 msgstr "Eşleşen nesne bulunamadı.\n"
 
-#: describe.c:2188
+#: describe.c:2191
 #, c-format
 msgid "No relations found.\n"
 msgstr "Nesne bulunamadı.\n"
 
-#: describe.c:2193
+#: describe.c:2196
 msgid "List of relations"
 msgstr "Nesnelerin listesi"
 
-#: describe.c:2237
+#: describe.c:2240
 msgid "Modifier"
 msgstr "Düzenleyici"
 
-#: describe.c:2238
+#: describe.c:2241
 msgid "Check"
 msgstr "Check"
 
-#: describe.c:2256
+#: describe.c:2259
 msgid "List of domains"
 msgstr "Domainlerin listesi"
 
-#: describe.c:2291
+#: describe.c:2294
 msgid "Source"
 msgstr "Kaynak"
 
-#: describe.c:2292
+#: describe.c:2295
 msgid "Destination"
 msgstr "Hedef"
 
-#: describe.c:2294
+#: describe.c:2297
 msgid "Default?"
 msgstr "Varsayılan?"
 
-#: describe.c:2312
+#: describe.c:2315
 msgid "List of conversions"
 msgstr "Dönüşümlerin listesi"
 
-#: describe.c:2363
+#: describe.c:2366
 msgid "Source type"
 msgstr "Kaynak tipi"
 
-#: describe.c:2364
+#: describe.c:2367
 msgid "Target type"
 msgstr "Hedef tipi"
 
-#: describe.c:2365
-#: describe.c:2625
+#: describe.c:2368
+#: describe.c:2628
 msgid "Function"
 msgstr "Fonksiyon"
 
-#: describe.c:2366
+#: describe.c:2369
 msgid "in assignment"
 msgstr "in assignment"
 
-#: describe.c:2367
+#: describe.c:2370
 msgid "Implicit?"
 msgstr "Örtülü mü?"
 
-#: describe.c:2393
+#: describe.c:2396
 msgid "List of casts"
 msgstr "Castlerin listesi"
 
-#: describe.c:2448
+#: describe.c:2451
 msgid "List of schemas"
 msgstr "Şemaların listesi"
 
-#: describe.c:2471
-#: describe.c:2704
-#: describe.c:2772
-#: describe.c:2840
+#: describe.c:2474
+#: describe.c:2707
+#: describe.c:2775
+#: describe.c:2843
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
 msgstr "Bu sunucu (%d.%d sürümü) tam metin aramayı desteklememektedir.\n"
 
-#: describe.c:2505
+#: describe.c:2508
 msgid "List of text search parsers"
 msgstr "Metin arama ayrıştıcılarının listesi"
 
-#: describe.c:2548
+#: describe.c:2551
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "\"%s\" adında metin arama ayrıştırıcısı bulunamadı.\n"
 
-#: describe.c:2623
+#: describe.c:2626
 msgid "Start parse"
 msgstr "Ayrıştırmayı başlat"
 
-#: describe.c:2624
+#: describe.c:2627
 msgid "Method"
 msgstr "Yöntem"
 
-#: describe.c:2628
+#: describe.c:2631
 msgid "Get next token"
 msgstr "Sıradaki tokeni al"
 
-#: describe.c:2630
+#: describe.c:2633
 msgid "End parse"
 msgstr "Ayrıştırmayı bitir"
 
-#: describe.c:2632
+#: describe.c:2635
 msgid "Get headline"
 msgstr "Başlığı al"
 
-#: describe.c:2634
+#: describe.c:2637
 msgid "Get token types"
 msgstr "Token tiplerini al"
 
-#: describe.c:2644
+#: describe.c:2647
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Metin arama ayrıştırıcısı \"%s.%s\""
 
-#: describe.c:2646
+#: describe.c:2649
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "\"%s\" metin arama ayrıştırıcısı"
 
-#: describe.c:2664
+#: describe.c:2667
 msgid "Token name"
 msgstr "Token adı"
 
-#: describe.c:2675
+#: describe.c:2678
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "\"%s.%s\" ayrıştırıcısı için token tipleri"
 
-#: describe.c:2677
+#: describe.c:2680
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "\"%s\" ayrıştırıcısı için token tipleri"
 
-#: describe.c:2726
+#: describe.c:2729
 msgid "Template"
 msgstr "Şablon"
 
-#: describe.c:2727
+#: describe.c:2730
 msgid "Init options"
 msgstr "İnit seçenekleri"
 
-#: describe.c:2749
+#: describe.c:2752
 msgid "List of text search dictionaries"
 msgstr "Metin arama sözlüklerinin listesi"
 
-#: describe.c:2789
+#: describe.c:2792
 msgid "Init"
 msgstr "Init"
 
-#: describe.c:2790
+#: describe.c:2793
 msgid "Lexize"
 msgstr "Lexize"
 
-#: describe.c:2817
+#: describe.c:2820
 msgid "List of text search templates"
 msgstr "Metin arama şablonlarının listesi"
 
-#: describe.c:2874
+#: describe.c:2877
 msgid "List of text search configurations"
 msgstr "Metin arama yapılandırmalarının listesi"
 
-#: describe.c:2918
+#: describe.c:2921
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "\"%s\" adında metin arama yapılandırması bulunamadı.\n"
 
-#: describe.c:2984
+#: describe.c:2987
 msgid "Token"
 msgstr "Token"
 
-#: describe.c:2985
+#: describe.c:2988
 msgid "Dictionaries"
 msgstr "Sözlükler"
 
-#: describe.c:2996
+#: describe.c:2999
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Metin arama yapılandırması \"%s.%s\""
 
-#: describe.c:2999
+#: describe.c:3002
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Metin arama yapılandırması \"%s\""
 
-#: describe.c:3003
+#: describe.c:3006
 #, c-format
 msgid ""
 "\n"
@@ -2043,7 +2043,7 @@ msgstr ""
 "\n"
 "Ayrıştırıcı \"%s.%s\""
 
-#: describe.c:3006
+#: describe.c:3009
 #, c-format
 msgid ""
 "\n"
@@ -2052,50 +2052,50 @@ msgstr ""
 "\n"
 "Ayrıştırıcı: \"%s\""
 
-#: describe.c:3038
+#: describe.c:3041
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
 msgstr "Sunucu  (%d.%d sürümü) foreign-data wrapperlarını desteklememektedir.\n"
 
-#: describe.c:3050
+#: describe.c:3053
 msgid "Validator"
 msgstr "Onaylayan"
 
-#: describe.c:3074
+#: describe.c:3077
 msgid "List of foreign-data wrappers"
 msgstr "Foreign-data wrapperlarının listesi"
 
-#: describe.c:3097
+#: describe.c:3100
 #, c-format
 msgid "The server (version %d.%d) does not support foreign servers.\n"
 msgstr "Bu sunucu (%d.%d sürümü) foreign sunucularını desteklemiyor.\n"
 
-#: describe.c:3109
+#: describe.c:3112
 msgid "Foreign-data wrapper"
 msgstr "Foreign-data wrapper"
 
-#: describe.c:3121
+#: describe.c:3124
 msgid "Version"
 msgstr "Sürüm"
 
-#: describe.c:3140
+#: describe.c:3143
 msgid "List of foreign servers"
 msgstr "Foreign sunucuların listesi"
 
-#: describe.c:3163
+#: describe.c:3166
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
 msgstr "Sunucu  (%d.%d sürümü) kullanıcı haritalamasını desteklememektedir.\n"
 
-#: describe.c:3172
+#: describe.c:3175
 msgid "Server"
 msgstr "Sunucu"
 
-#: describe.c:3173
+#: describe.c:3176
 msgid "User name"
 msgstr "Kullanıcı adı"
 
-#: describe.c:3193
+#: describe.c:3196
 msgid "List of user mappings"
 msgstr "Kullanıcı eşlemelerinin listesi"
 
