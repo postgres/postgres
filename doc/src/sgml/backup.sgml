@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.128 2009/06/05 13:40:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.129 2009/06/26 22:06:11 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1108,8 +1108,9 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         last valid restart point. That is the earliest file that must be kept
         to allow a restore to be restartable, so this information can be used
         to truncate the archive to just the minimum required to support
-        restart of the current restore. <literal>%r</> would only be used in a
-        warm-standby configuration (see <xref linkend="warm-standby">).
+        restart from the current restore. <literal>%r</> would typically be
+        used in a warm-standby configuration
+        (see <xref linkend="warm-standby">).
         Write <literal>%%</> to embed an actual <literal>%</> character
         in the command.
        </para>
@@ -1132,19 +1133,23 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter specifies a shell command that will be executed once only
         at the end of recovery. This parameter is optional. The purpose of the
-        recovery_end_command is to provide a mechanism for cleanup following
-        replication or recovery. 
+        <varname>recovery_end_command</> is to provide a mechanism for cleanup
+        following replication or recovery.
         Any <literal>%r</> is replaced by the name of the file
         containing the last valid restart point. That is the earliest file that
         must be kept to allow a restore to be restartable, so this information
         can be used to truncate the archive to just the minimum required to
-        support restart of the current restore. <literal>%r</> would only be
-        used in a warm-standby configuration  (see <xref linkend="warm-standby">). 
+        support restart from the current restore. <literal>%r</> would
+        typically be used in a warm-standby configuration
+        (see <xref linkend="warm-standby">).
         Write <literal>%%</> to embed an actual <literal>%</> character
         in the command.
+       </para>
+       <para>
         If the command returns a non-zero exit status then a WARNING log
-        message will be written, unless signalled in which case we return
-        a FATAL error.
+        message will be written and the database will proceed to start up
+        anyway.  An exception is that if the command was terminated by a
+        signal, the database will not proceed with startup.
        </para>
       </listitem>
      </varlistentry>
