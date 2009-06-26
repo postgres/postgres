@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.92 2009/06/25 21:36:00 heikki Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.93 2009/06/26 20:29:04 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -159,15 +159,15 @@ extern bool XLOG_DEBUG;
 
 /* These directly affect the behavior of CreateCheckPoint and subsidiaries */
 #define CHECKPOINT_IS_SHUTDOWN	0x0001	/* Checkpoint is for shutdown */
-#define CHECKPOINT_IMMEDIATE	0x0002	/* Do it without delays */
-#define CHECKPOINT_FORCE		0x0004	/* Force even if no activity */
-/* These are important to RequestCheckpoint */
-#define CHECKPOINT_WAIT			0x0008	/* Wait for completion */
-/* These indicate the cause of a checkpoint request */
-#define CHECKPOINT_CAUSE_XLOG	0x0010	/* XLOG consumption */
-#define CHECKPOINT_CAUSE_TIME	0x0020	/* Elapsed time */
-#define CHECKPOINT_END_OF_RECOVERY	0x0040	/* Like shutdown checkpoint, but
+#define CHECKPOINT_END_OF_RECOVERY	0x0002	/* Like shutdown checkpoint, but
 											 * issued at end of WAL recovery */
+#define CHECKPOINT_IMMEDIATE	0x0004	/* Do it without delays */
+#define CHECKPOINT_FORCE		0x0008	/* Force even if no activity */
+/* These are important to RequestCheckpoint */
+#define CHECKPOINT_WAIT			0x0010	/* Wait for completion */
+/* These indicate the cause of a checkpoint request */
+#define CHECKPOINT_CAUSE_XLOG	0x0020	/* XLOG consumption */
+#define CHECKPOINT_CAUSE_TIME	0x0040	/* Elapsed time */
 
 /* Checkpoint statistics */
 typedef struct CheckpointStatsData
@@ -202,6 +202,7 @@ extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void xlog_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 extern bool RecoveryInProgress(void);
+extern bool XLogInsertAllowed(void);
 
 extern void UpdateControlFile(void);
 extern Size XLOGShmemSize(void);

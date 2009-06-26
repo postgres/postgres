@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.30 2009/01/20 18:59:37 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.31 2009/06/26 20:29:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1543,7 +1543,7 @@ CheckPointMultiXact(void)
 	 * SimpleLruTruncate would get confused.  It seems best not to risk
 	 * removing any data during recovery anyway, so don't truncate.
 	 */
-	if (!InRecovery)
+	if (!RecoveryInProgress())
 		TruncateMultiXact();
 
 	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_DONE(true);

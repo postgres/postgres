@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.582 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.583 2009/06/26 20:29:04 tgl Exp $
  *
  * NOTES
  *
@@ -227,21 +227,22 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  *
  * After doing all the postmaster initialization work, we enter PM_STARTUP
  * state and the startup process is launched. The startup process begins by
- * reading the control file and other preliminary initialization steps. When
- * it's ready to start WAL redo, it signals postmaster, and we switch to
- * PM_RECOVERY phase. The background writer is launched, while the startup
- * process continues applying WAL.
+ * reading the control file and other preliminary initialization steps.
+ * In a normal startup, or after crash recovery, the startup process exits
+ * with exit code 0 and we switch to PM_RUN state.  However, archive recovery
+ * is handled specially since it takes much longer and we would like to support
+ * hot standby during archive recovery.
  *
+ * When the startup process is ready to start archive recovery, it signals the
+ * postmaster, and we switch to PM_RECOVERY state. The background writer is
+ * launched, while the startup process continues applying WAL.
  * After reaching a consistent point in WAL redo, startup process signals
- * us again, and we switch to PM_RECOVERY_CONSISTENT phase. There's currently
+ * us again, and we switch to PM_RECOVERY_CONSISTENT state. There's currently
  * no difference between PM_RECOVERY and PM_RECOVERY_CONSISTENT, but we
  * could start accepting connections to perform read-only queries at this
  * point, if we had the infrastructure to do that.
- *
- * When WAL redo is finished, the startup process exits with exit code 0
- * and we switch to PM_RUN state. Startup process can also skip the
- * recovery and consistent recovery phases altogether, as it will during
- * normal startup when there's no recovery to be done, for example.
+ * When archive recovery is finished, the startup process exits with exit
+ * code 0 and we switch to PM_RUN state.
  *
  * Normal child backends can only be launched when we are in PM_RUN state.
  * (We also allow it in PM_WAIT_BACKUP state, but only for superusers.)
@@ -269,7 +270,7 @@ typedef enum
 {
 	PM_INIT,					/* postmaster starting */
 	PM_STARTUP,					/* waiting for startup subprocess */
-	PM_RECOVERY,				/* in recovery mode */
+	PM_RECOVERY,				/* in archive recovery mode */
 	PM_RECOVERY_CONSISTENT,		/* consistent recovery mode */
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
@@ -2195,8 +2196,8 @@ reaper(SIGNAL_ARGS)
 
 			/*
 			 * Unexpected exit of startup process (including FATAL exit)
-			 * during PM_STARTUP is treated as catastrophic. There is no other
-			 * processes running yet, so we can just exit.
+			 * during PM_STARTUP is treated as catastrophic. There are no
+			 * other processes running yet, so we can just exit.
 			 */
 			if (pmState == PM_STARTUP && !EXIT_STATUS_0(exitstatus))
 			{
@@ -2247,7 +2248,7 @@ reaper(SIGNAL_ARGS)
 
 			/*
 			 * Crank up the background writer, if we didn't do that already
-			 * when we entered consistent recovery phase.  It doesn't matter
+			 * when we entered consistent recovery state.  It doesn't matter
 			 * if this fails, we'll just try again later.
 			 */
 			if (BgWriterPID == 0)
@@ -4008,7 +4009,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		/*
 		 * Load the flat authorization file into postmaster's cache. The
 		 * startup process won't have recomputed this from the database yet,
-		 * so we it may change following recovery.
+		 * so it may change following recovery.
 		 */
 		load_role();
 
