@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.36 2009/06/26 06:40:57 petere Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.37 2009/06/27 21:06:46 tgl Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ man1/.timestamp: man7/.timestamp
 	@echo timestamp >$@
 
 man7/.timestamp: man.tar.gz
-	gzip -d -c $< | $(TAR) xof -
+	gzip -d -c $< | $(TAR) xf -
 ifneq ($(sqlmansectnum),7)
 	for file in man1/*.1; do \
 	  mv $$file $$file.bak && \
@@ -76,7 +76,7 @@ endif # found_man
 
 install: all installdirs
 ifdef found_html
-	gzip -d -c $(srcdir)/postgres.tar.gz | ( cd $(DESTDIR)$(htmldir)/html && $(TAR) xof - )
+	gzip -d -c $(srcdir)/postgres.tar.gz | ( cd $(DESTDIR)$(htmldir)/html && $(TAR) xf - )
 endif
 ifdef found_man
 	for file in man1/*.1 man$(sqlmansectnum)/*.$(sqlmansect) ; do \
