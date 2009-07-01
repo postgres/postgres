@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.200 2009/03/31 17:59:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.201 2009/07/01 23:57:33 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3030,12 +3030,11 @@
   <table>
    <title><structname>pg_listener</> Columns</title>
 
-   <tgroup cols="4">
+   <tgroup cols="3">
     <thead>
      <row>
       <entry>Name</entry>
       <entry>Type</entry>
-      <entry>References</entry>
       <entry>Description</entry>
      </row>
     </thead>
