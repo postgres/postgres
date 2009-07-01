@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2008-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.2 2009/01/01 17:24:04 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.3 2009/07/01 23:15:55 tgl Exp $
 #################################################################
 
 #
@@ -23,7 +23,7 @@
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
 $major1 = 8;
-$major2 = 4;
+$major2 = 5;
 
 # Validate argument and compute derived variables
 $minor = shift;
