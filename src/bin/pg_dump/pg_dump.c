@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.539 2009/06/11 14:49:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.540 2009/07/02 21:34:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ main(int argc, char **argv)
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
 
-	struct option long_options[] = {
+	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
@@ -1733,7 +1733,7 @@ dumpDatabase(Archive *AH)
 	if (binary_upgrade)
 	{
 		appendPQExpBuffer(creaQry, "\n-- For binary upgrade, set datfrozenxid.\n");
-		appendPQExpBuffer(creaQry, "UPDATE pg_database\n"
+		appendPQExpBuffer(creaQry, "UPDATE pg_catalog.pg_database\n"
 						  "SET datfrozenxid = '%u'\n"
 						  "WHERE	datname = ",
 						  frozenxid);
@@ -4712,8 +4712,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, "
 						   "a.atttypmod, -1 AS attstattarget, a.attstorage, "
 							  "t.typstorage, a.attnotnull, a.atthasdef, "
-							  "false AS attisdropped, 0 AS attlen, "
-							  "' ' AS attalign, false AS attislocal, "
+							  "false AS attisdropped, a.attlen, "
+							  "a.attalign, false AS attislocal, "
 							  "format_type(t.oid,a.atttypmod) AS atttypname "
 							  "FROM pg_attribute a LEFT JOIN pg_type t "
 							  "ON a.atttypid = t.oid "
@@ -4729,7 +4729,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "-1 AS attstattarget, attstorage, "
 							  "attstorage AS typstorage, "
 							  "attnotnull, atthasdef, false AS attisdropped, "
-							  "0 AS attlen, ' ' AS attalign, "
+							  "attlen, attalign, "
 							  "false AS attislocal, "
 							  "(SELECT typname FROM pg_type WHERE oid = atttypid) AS atttypname "
 							  "FROM pg_attribute a "
@@ -4805,20 +4805,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		}
 
 		PQclear(res);
-
-
-		/*
-		 * ALTER TABLE DROP COLUMN clears pg_attribute.atttypid, so we set the
-		 * column data type to 'TEXT;  we will later drop the column.
-		 */
-		if (binary_upgrade)
-		{
-			for (j = 0; j < ntups; j++)
-			{
-				if (tbinfo->attisdropped[j])
-					tbinfo->atttypnames[j] = strdup("TEXT");
-			}
-		}
 
 		/*
 		 * Get info about column defaults
@@ -9783,18 +9769,34 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
-			/* Is this one of the table's own attrs, and not dropped ? */
-			if (!tbinfo->inhAttrs[j] &&
-				(!tbinfo->attisdropped[j] || binary_upgrade))
+			/*
+			 * Normally, dump if it's one of the table's own attrs, and not
+			 * dropped.  But for binary upgrade, dump all the columns.
+			 */
+			if ((!tbinfo->inhAttrs[j] && !tbinfo->attisdropped[j]) ||
+				binary_upgrade)
 			{
 				/* Format properly if not first attr */
 				if (actual_atts > 0)
 					appendPQExpBuffer(q, ",");
 				appendPQExpBuffer(q, "\n    ");
+				actual_atts++;
 
 				/* Attribute name */
 				appendPQExpBuffer(q, "%s ",
 								  fmtId(tbinfo->attnames[j]));
+
+				if (tbinfo->attisdropped[j])
+				{
+					/*
+					 * ALTER TABLE DROP COLUMN clears pg_attribute.atttypid,
+					 * so we will not have gotten a valid type name; insert
+					 * INTEGER as a stopgap.  We'll clean things up later.
+					 */
+					appendPQExpBuffer(q, "INTEGER /* dummy */");
+					/* Skip all the rest, too */
+					continue;
+				}
 
 				/* Attribute type */
 				if (g_fout->remoteVersion >= 70100)
@@ -9811,22 +9813,23 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 
 				/*
-				 * Default value --- suppress if inherited or to be printed
-				 * separately.
+				 * Default value --- suppress if inherited (except in
+				 * binary-upgrade case, where we're not doing normal
+				 * inheritance) or if it's to be printed separately.
 				 */
 				if (tbinfo->attrdefs[j] != NULL &&
-					!tbinfo->inhAttrDef[j] &&
+					(!tbinfo->inhAttrDef[j] || binary_upgrade) &&
 					!tbinfo->attrdefs[j]->separate)
 					appendPQExpBuffer(q, " DEFAULT %s",
 									  tbinfo->attrdefs[j]->adef_expr);
 
 				/*
-				 * Not Null constraint --- suppress if inherited
+				 * Not Null constraint --- suppress if inherited, except
+				 * in binary-upgrade case.
 				 */
-				if (tbinfo->notnull[j] && !tbinfo->inhNotNull[j])
+				if (tbinfo->notnull[j] &&
+					(!tbinfo->inhNotNull[j] || binary_upgrade))
 					appendPQExpBuffer(q, " NOT NULL");
-
-				actual_atts++;
 			}
 		}
 
@@ -9852,7 +9855,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(q, "\n)");
 
-		if (numParents > 0)
+		if (numParents > 0 && !binary_upgrade)
 		{
 			appendPQExpBuffer(q, "\nINHERITS (");
 			for (k = 0; k < numParents; k++)
@@ -9892,8 +9895,16 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		appendPQExpBuffer(q, ";\n");
 
 		/*
-		 * For binary-compatible heap files, we create dropped columns above
-		 * and drop them here.
+		 * To create binary-compatible heap files, we have to ensure the
+		 * same physical column order, including dropped columns, as in the
+		 * original.  Therefore, we create dropped columns above and drop
+		 * them here, also updating their attlen/attalign values so that
+		 * the dropped column can be skipped properly.  (We do not bother
+		 * with restoring the original attbyval setting.)  Also, inheritance
+		 * relationships are set up by doing ALTER INHERIT rather than using
+		 * an INHERITS clause --- the latter would possibly mess up the
+		 * column order.  That also means we have to take care about setting
+		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 */
 		if (binary_upgrade)
 		{
@@ -9901,50 +9912,82 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			{
 				if (tbinfo->attisdropped[j])
 				{
+					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate dropped column.\n");
+					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
+									  "SET attlen = %d, "
+									  "attalign = '%c', attbyval = false\n"
+									  "WHERE attname = ",
+									  tbinfo->attlen[j],
+									  tbinfo->attalign[j]);
+					appendStringLiteralAH(q, tbinfo->attnames[j], fout);
+					appendPQExpBuffer(q, "\n  AND attrelid = ");
+					appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+					appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+
 					appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 									  fmtId(tbinfo->dobj.name));
 					appendPQExpBuffer(q, "DROP COLUMN %s;\n",
 									  fmtId(tbinfo->attnames[j]));
-
-					/*
-					 * ALTER TABLE DROP COLUMN clears pg_attribute.atttypid,
-					 * so we have to set pg_attribute.attlen and
-					 * pg_attribute.attalign values because that is what is
-					 * used to skip over dropped columns in the heap tuples.
-					 * We have atttypmod, but it seems impossible to know the
-					 * correct data type that will yield pg_attribute values
-					 * that match the old installation. See comment in
-					 * backend/catalog/heap.c::RemoveAttributeById()
-					 */
-					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate dropped column's length and alignment.\n");
-					appendPQExpBuffer(q, "UPDATE pg_attribute\n"
-									  "SET attlen = %d, "
-									  "attalign = '%c'\n"
-									  "WHERE	attname = '%s'\n"
-									  "	AND attrelid = \n"
-									  "	(\n"
-									  "		SELECT oid\n"
-									  "		FROM pg_class\n"
-									  "		WHERE	relnamespace = "
-									  "(SELECT oid FROM pg_namespace "
-									  "WHERE nspname = CURRENT_SCHEMA)\n"
-									  "			AND relname = ",
-									  tbinfo->attlen[j],
-									  tbinfo->attalign[j],
-									  tbinfo->attnames[j]);
-					appendStringLiteralAH(q, tbinfo->dobj.name, fout);
-					appendPQExpBuffer(q, "\n	);\n");
+				}
+				else if (!tbinfo->attislocal[j])
+				{
+					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate inherited column.\n");
+					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
+									  "SET attislocal = false\n"
+									  "WHERE attname = ");
+					appendStringLiteralAH(q, tbinfo->attnames[j], fout);
+					appendPQExpBuffer(q, "\n  AND attrelid = ");
+					appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+					appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
 				}
 			}
+
+			for (k = 0; k < tbinfo->ncheck; k++)
+			{
+				ConstraintInfo *constr = &(tbinfo->checkexprs[k]);
+
+				if (constr->separate || constr->conislocal)
+					continue;
+
+				appendPQExpBuffer(q, "\n-- For binary upgrade, set up inherited constraint.\n");
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(q, " ADD CONSTRAINT %s ",
+								  fmtId(constr->dobj.name));
+				appendPQExpBuffer(q, "%s;\n", constr->condef);
+				appendPQExpBuffer(q, "UPDATE pg_catalog.pg_constraint\n"
+								  "SET conislocal = false\n"
+								  "WHERE contype = 'c' AND conname = ");
+				appendStringLiteralAH(q, constr->dobj.name, fout);
+				appendPQExpBuffer(q, "\n  AND conrelid = ");
+				appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+				appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+			}
+
+			if (numParents > 0)
+			{
+				appendPQExpBuffer(q, "\n-- For binary upgrade, set up inheritance this way.\n");
+				for (k = 0; k < numParents; k++)
+				{
+					TableInfo  *parentRel = parents[k];
+
+					appendPQExpBuffer(q, "ALTER TABLE ONLY %s INHERIT ",
+									  fmtId(tbinfo->dobj.name));
+					if (parentRel->dobj.namespace != tbinfo->dobj.namespace)
+						appendPQExpBuffer(q, "%s.",
+										  fmtId(parentRel->dobj.namespace->dobj.name));
+					appendPQExpBuffer(q, "%s;\n",
+									  fmtId(parentRel->dobj.name));
+				}
+			}
+
 			appendPQExpBuffer(q, "\n-- For binary upgrade, set relfrozenxid.\n");
-			appendPQExpBuffer(q, "UPDATE pg_class\n"
+			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u'\n"
-							  "WHERE	relname = ",
+							  "WHERE oid = ",
 							  tbinfo->frozenxid);
-			appendStringLiteralAH(q, tbinfo->dobj.name, fout);
-			appendPQExpBuffer(q, "\n	AND relnamespace = "
-							  "(SELECT oid FROM pg_namespace "
-							  "WHERE nspname = CURRENT_SCHEMA);\n");
+			appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+			appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
 		}
 
 		/* Loop dumping statistics and storage statements */
@@ -10051,8 +10094,8 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	if (!tbinfo->dobj.dump || !adinfo->separate || dataOnly)
 		return;
 
-	/* Don't print inherited defaults, either */
-	if (tbinfo->inhAttrDef[adnum - 1])
+	/* Don't print inherited defaults, either, except for binary upgrade */
+	if (tbinfo->inhAttrDef[adnum - 1] && !binary_upgrade)
 		return;
 
 	q = createPQExpBuffer();
