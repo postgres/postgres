@@ -12,6 +12,9 @@
 /* Define to the return type of 'accept' */
 #undef ACCEPT_TYPE_RETURN
 
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
 /* The normal alignment of `double', in bytes. */
 #undef ALIGNOF_DOUBLE
 
@@ -761,9 +764,17 @@
 /* Define to select Win32-style shared memory. */
 #undef USE_WIN32_SHARED_MEMORY
 
-/* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
-#undef WORDS_BIGENDIAN
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
 
 /* Size of a WAL file block. This need have no particular relation to BLCKSZ.
    XLOG_BLCKSZ must be a power of 2, and if your system supports O_DIRECT I/O,

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.603 2009/07/01 23:15:55 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.604 2009/07/02 18:55:40 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -19,7 +19,7 @@ m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
 AC_INIT([PostgreSQL], [8.5devel], [pgsql-bugs@postgresql.org])
 
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.61], [], [m4_fatal([Autoconf version 2.61 is required.
+m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
 recommended.  You can remove the check from 'configure.in' but it is then
 your responsibility whether the result works or not.])])
@@ -1878,6 +1878,3 @@ AC_CONFIG_HEADERS([src/interfaces/ecpg/include/ecpg_config.h],
                   [echo >src/interfaces/ecpg/include/stamp-h])
 
 AC_OUTPUT
-
-# Warn about unknown options
-PGAC_ARG_CHECK
