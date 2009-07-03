@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.218 2009/06/13 13:43:34 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.219 2009/07/03 18:56:50 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -1814,6 +1814,44 @@ describeOneTableDetails(const char *schemaname,
 		}
 		PQclear(result);
 
+		/* print child tables */
+		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhrelid AND i.inhparent = '%s' ORDER BY c.oid::pg_catalog.regclass;", oid);
+
+		result = PSQLexec(buf.data, false);
+		if (!result)
+			goto error_return;
+		else
+			tuples = PQntuples(result);
+
+		if (!verbose)
+		{
+			/* print the number of child tables, if any */
+			if (tuples > 0)
+			{
+				printfPQExpBuffer(&buf, _("Number of child tables: %d (Use \\d+ to list them.)"), tuples);
+				printTableAddFooter(&cont, buf.data);
+			}
+		}
+		else
+		{
+			/* display the list of child tables*/
+			for (i = 0; i < tuples; i++)
+                	{
+                        	const char *ct = _("Child tables");
+
+                        	if (i == 0)
+                                	printfPQExpBuffer(&buf, "%s: %s", ct, PQgetvalue(result, i, 0));
+                        	else
+                                	printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(ct), "", PQgetvalue(result, i, 0));
+                        	if (i < tuples - 1)
+                                	appendPQExpBuffer(&buf, ",");
+
+                        	printTableAddFooter(&cont, buf.data);
+                	}
+		}
+		PQclear(result);
+
+		/* OIDs and options */
 		if (verbose)
 		{
 			const char *s = _("Has OIDs");
