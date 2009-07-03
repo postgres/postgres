@@ -337,6 +337,7 @@
 					#   %t = timestamp without milliseconds
 					#   %m = timestamp with milliseconds
 					#   %i = command tag
+					#   %e = SQL state
 					#   %c = session ID
 					#   %l = session line number
 					#   %s = session start timestamp

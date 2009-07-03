@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.220 2009/06/17 21:58:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.221 2009/07/03 19:14:25 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3042,6 +3042,11 @@ local0.*    /var/log/postgresql
              <entry><literal>%i</literal></entry>
              <entry>Command tag: type of session's current command</entry>
              <entry>yes</entry>
+            </row>
+            <row>
+             <entry><literal>%e</literal></entry>
+             <entry>SQL state</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%c</literal></entry>

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.216 2009/06/25 23:07:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.217 2009/07/03 19:14:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 	} while (0)
 
 
-static void log_line_prefix(StringInfo buf);
+static void log_line_prefix(StringInfo buf, ErrorData *edata);
 static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
@@ -1677,7 +1677,7 @@ setup_formatted_start_time(void)
  * Format tag info for log lines; append to the provided buffer.
  */
 static void
-log_line_prefix(StringInfo buf)
+log_line_prefix(StringInfo buf, ErrorData *edata)
 {
 	/* static counter for line numbers */
 	static long log_line_number = 0;
@@ -1813,6 +1813,9 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'x':
 				appendStringInfo(buf, "%u", GetTopTransactionIdIfAny());
+				break;
+			case 'e':
+				appendStringInfoString(buf, unpack_sql_state(edata->sqlerrcode));
 				break;
 			case '%':
 				appendStringInfoChar(buf, '%');
@@ -2070,7 +2073,7 @@ send_message_to_server_log(ErrorData *edata)
 
 	formatted_log_time[0] = '\0';
 
-	log_line_prefix(&buf);
+	log_line_prefix(&buf, edata);
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
 
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
@@ -2094,35 +2097,35 @@ send_message_to_server_log(ErrorData *edata)
 	{
 		if (edata->detail_log)
 		{
-			log_line_prefix(&buf);
+			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail_log);
 			appendStringInfoChar(&buf, '\n');
 		}
 		else if (edata->detail)
 		{
-			log_line_prefix(&buf);
+			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->hint)
 		{
-			log_line_prefix(&buf);
+			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("HINT:  "));
 			append_with_tabs(&buf, edata->hint);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->internalquery)
 		{
-			log_line_prefix(&buf);
+			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("QUERY:  "));
 			append_with_tabs(&buf, edata->internalquery);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->context)
 		{
-			log_line_prefix(&buf);
+			log_line_prefix(&buf, edata);
 			appendStringInfoString(&buf, _("CONTEXT:  "));
 			append_with_tabs(&buf, edata->context);
 			appendStringInfoChar(&buf, '\n');
@@ -2132,14 +2135,14 @@ send_message_to_server_log(ErrorData *edata)
 			/* assume no newlines in funcname or filename... */
 			if (edata->funcname && edata->filename)
 			{
-				log_line_prefix(&buf);
+				log_line_prefix(&buf, edata);
 				appendStringInfo(&buf, _("LOCATION:  %s, %s:%d\n"),
 								 edata->funcname, edata->filename,
 								 edata->lineno);
 			}
 			else if (edata->filename)
 			{
-				log_line_prefix(&buf);
+				log_line_prefix(&buf, edata);
 				appendStringInfo(&buf, _("LOCATION:  %s:%d\n"),
 								 edata->filename, edata->lineno);
 			}
@@ -2153,7 +2156,7 @@ send_message_to_server_log(ErrorData *edata)
 		debug_query_string != NULL &&
 		!edata->hide_stmt)
 	{
-		log_line_prefix(&buf);
+		log_line_prefix(&buf, edata);
 		appendStringInfoString(&buf, _("STATEMENT:  "));
 		append_with_tabs(&buf, debug_query_string);
 		appendStringInfoChar(&buf, '\n');
