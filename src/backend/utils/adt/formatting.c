@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.84.4.4 2009/03/12 00:53:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.84.4.5 2009/07/06 19:12:12 heikki Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -1801,7 +1801,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 						tm->tm_hour == 0 ? 12 :
 					  tm->tm_hour < 13 ? tm->tm_hour : tm->tm_hour - 12);
 				if (S_THth(suf))
-					str_numth(p_inout, inout, 0);
+					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				if (S_FM(suf) || S_THth(suf))
 					return strlen(p_inout) - 1;
 				else
