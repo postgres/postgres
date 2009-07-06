@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.219 2009/07/03 18:56:50 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.220 2009/07/06 17:01:42 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -1163,6 +1163,8 @@ describeOneTableDetails(const char *schemaname,
 					  "\n   FROM pg_catalog.pg_attrdef d"
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
 					  "\n  a.attnotnull, a.attnum");
+	if (tableinfo.relkind == 'i')
+		appendPQExpBuffer(&buf, ", pg_get_indexdef(i.indexrelid,a.attnum, TRUE) AS indexdef");
 	if (verbose)
 		appendPQExpBuffer(&buf, ", a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
@@ -1232,6 +1234,9 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == 'S')
 		headers[cols++] = gettext_noop("Value");
 
+	if (tableinfo.relkind == 'i')
+		headers[cols++] = gettext_noop("Definition");
+
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
@@ -1297,10 +1302,15 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.relkind == 'S')
 			printTableAddCell(&cont, seq_values[i], false);
 
+		/* Expression for index */
+		if (tableinfo.relkind == 'i')
+			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
+
 		/* Storage and Description */
 		if (verbose)
 		{
-			char	   *storage = PQgetvalue(res, i, 5);
+			int fnum = (tableinfo.relkind == 'i' ? 6 : 5);
+			char	   *storage  = PQgetvalue(res, i, fnum);
 
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0] == 'p' ? "plain" :
@@ -1309,7 +1319,7 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false);
-			printTableAddCell(&cont, PQgetvalue(res, i, 6), false);
+			printTableAddCell(&cont, PQgetvalue(res, i, fnum + 1), false);
 		}
 	}
 
