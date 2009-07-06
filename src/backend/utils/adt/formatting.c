@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.101.2.5 2009/03/12 00:53:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.101.2.6 2009/07/06 19:12:06 heikki Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -1809,7 +1809,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? 12 :
 					    tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(suf))
-					str_numth(p_inout, inout, 0);
+					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout);
 			}
 			else
