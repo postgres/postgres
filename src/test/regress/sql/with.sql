@@ -469,3 +469,19 @@ WITH RECURSIVE foo(i) AS
    UNION ALL
    SELECT (i+1)::numeric(10,0) FROM foo WHERE i < 10)
 SELECT * FROM foo;
+
+--
+-- test for bug #4902
+--
+with cte(foo) as ( values(42) ) values((select foo from cte));
+with cte(foo) as ( select 42 ) select * from ((select foo from cte)) q;
+
+-- test CTE referencing an outer-level variable (to see that changed-parameter
+-- signaling still works properly after fixing this bug)
+select ( with cte(foo) as ( values(f1) )
+         select (select foo from cte) )
+from int4_tbl;
+
+select ( with cte(foo) as ( values(f1) )
+          values((select foo from cte)) )
+from int4_tbl;

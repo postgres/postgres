@@ -912,3 +912,44 @@ ERROR:  recursive query "foo" column 1 has type numeric(3,0) in non-recursive te
 LINE 2:    (SELECT i::numeric(3,0) FROM (VALUES(1),(2)) t(i)
                    ^
 HINT:  Cast the output of the non-recursive term to the correct type.
+--
+-- test for bug #4902
+--
+with cte(foo) as ( values(42) ) values((select foo from cte));
+ column1 
+---------
+      42
+(1 row)
+
+with cte(foo) as ( select 42 ) select * from ((select foo from cte)) q;
+ foo 
+-----
+  42
+(1 row)
+
+-- test CTE referencing an outer-level variable (to see that changed-parameter
+-- signaling still works properly after fixing this bug)
+select ( with cte(foo) as ( values(f1) )
+         select (select foo from cte) )
+from int4_tbl;
+  ?column?   
+-------------
+           0
+      123456
+     -123456
+  2147483647
+ -2147483647
+(5 rows)
+
+select ( with cte(foo) as ( values(f1) )
+          values((select foo from cte)) )
+from int4_tbl;
+  ?column?   
+-------------
+           0
+      123456
+     -123456
+  2147483647
+ -2147483647
+(5 rows)
+

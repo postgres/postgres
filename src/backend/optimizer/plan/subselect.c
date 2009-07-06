@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.150 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.151 2009/07/06 02:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1916,9 +1916,35 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			break;
 
 		case T_CteScan:
-			context.paramids =
-				bms_add_member(context.paramids,
-							   ((CteScan *) plan)->cteParam);
+			{
+				/*
+				 * You might think we should add the node's cteParam to
+				 * paramids, but we shouldn't because that param is just a
+				 * linkage mechanism for multiple CteScan nodes for the same
+				 * CTE; it is never used for changed-param signaling.  What
+				 * we have to do instead is to find the referenced CTE plan
+				 * and incorporate its external paramids, so that the correct
+				 * things will happen if the CTE references outer-level
+				 * variables.  See test cases for bug #4902.
+				 */
+				int		plan_id = ((CteScan *) plan)->ctePlanId;
+				Plan   *cteplan;
+
+				/* so, do this ... */
+				if (plan_id < 1 || plan_id > list_length(root->glob->subplans))
+					elog(ERROR, "could not find plan for CteScan referencing plan ID %d",
+						 plan_id);
+				cteplan = (Plan *) list_nth(root->glob->subplans, plan_id - 1);
+				context.paramids =
+					bms_add_members(context.paramids, cteplan->extParam);
+
+#ifdef NOT_USED
+				/* ... but not this */
+				context.paramids =
+					bms_add_member(context.paramids,
+								   ((CteScan *) plan)->cteParam);
+#endif
+			}
 			break;
 
 		case T_WorkTableScan:
