@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.183 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.184 2009/07/06 18:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
@@ -318,6 +319,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		int			childRTindex;
 		RangeTblEntry *childRTE;
 		RelOptInfo *childrel;
+		List	   *childquals;
+		Node	   *childqual;
 		Path	   *childpath;
 		ListCell   *parentvars;
 		ListCell   *childvars;
@@ -342,10 +345,34 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * baserestrictinfo quals are needed before we can check for
 		 * constraint exclusion; so do that first and then check to see if we
 		 * can disregard this child.
+		 *
+		 * As of 8.4, the child rel's targetlist might contain non-Var
+		 * expressions, which means that substitution into the quals
+		 * could produce opportunities for const-simplification, and perhaps
+		 * even pseudoconstant quals.  To deal with this, we strip the
+		 * RestrictInfo nodes, do the substitution, do const-simplification,
+		 * and then reconstitute the RestrictInfo layer.
 		 */
-		childrel->baserestrictinfo = (List *)
-			adjust_appendrel_attrs((Node *) rel->baserestrictinfo,
-								   appinfo);
+		childquals = get_all_actual_clauses(rel->baserestrictinfo);
+		childquals = (List *) adjust_appendrel_attrs((Node *) childquals,
+													 appinfo);
+		childqual = eval_const_expressions(root, (Node *)
+										   make_ands_explicit(childquals));
+		if (childqual && IsA(childqual, Const) &&
+			(((Const *) childqual)->constisnull ||
+			 !DatumGetBool(((Const *) childqual)->constvalue)))
+		{
+			/*
+			 * Restriction reduces to constant FALSE or constant NULL after
+			 * substitution, so this child need not be scanned.
+			 */
+			set_dummy_rel_pathlist(childrel);
+			continue;
+		}
+		childquals = make_ands_implicit((Expr *) childqual);
+		childquals = make_restrictinfos_from_actual_clauses(root,
+															childquals);
+		childrel->baserestrictinfo = childquals;
 
 		if (relation_excluded_by_constraints(root, childrel, childRTE))
 		{

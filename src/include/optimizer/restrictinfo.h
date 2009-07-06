@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/restrictinfo.h,v 1.44 2009/05/09 22:51:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/restrictinfo.h,v 1.45 2009/07/06 18:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,11 @@ extern RestrictInfo *make_restrictinfo(Expr *clause,
 extern List *make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 								  bool is_pushed_down,
 								  bool include_predicates);
+extern List *make_restrictinfos_from_actual_clauses(PlannerInfo *root,
+									   List *clause_list);
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
 extern List *get_actual_clauses(List *restrictinfo_list);
+extern List *get_all_actual_clauses(List *restrictinfo_list);
 extern List *extract_actual_clauses(List *restrictinfo_list,
 					   bool pseudoconstant);
 extern void extract_actual_join_clauses(List *restrictinfo_list,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.60 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.61 2009/07/06 18:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,6 +272,57 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 }
 
 /*
+ * make_restrictinfos_from_actual_clauses
+ *
+ * Given a list of implicitly-ANDed restriction clauses, produce a list
+ * of RestrictInfo nodes.  This is used to reconstitute the RestrictInfo
+ * representation after doing transformations of a list of clauses.
+ *
+ * We assume that the clauses are relation-level restrictions and therefore
+ * we don't have to worry about is_pushed_down, outerjoin_delayed, or
+ * nullable_relids (these can be assumed true, false, and NULL, respectively).
+ * We do take care to recognize pseudoconstant clauses properly.
+ */
+List *
+make_restrictinfos_from_actual_clauses(PlannerInfo *root,
+									   List *clause_list)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, clause_list)
+	{
+		Expr   *clause = (Expr *) lfirst(l);
+		bool	pseudoconstant;
+		RestrictInfo *rinfo;
+
+		/*
+		 * It's pseudoconstant if it contains no Vars and no volatile
+		 * functions.  We probably can't see any sublinks here, so
+		 * contain_var_clause() would likely be enough, but for safety
+		 * use contain_vars_of_level() instead.
+		 */
+		pseudoconstant =
+			!contain_vars_of_level((Node *) clause, 0) &&
+			!contain_volatile_functions((Node *) clause);
+		if (pseudoconstant)
+		{
+			/* tell createplan.c to check for gating quals */
+			root->hasPseudoConstantQuals = true;
+		}
+
+		rinfo = make_restrictinfo(clause,
+								  true,
+								  false,
+								  pseudoconstant,
+								  NULL,
+								  NULL);
+		result = lappend(result, rinfo);
+	}
+	return result;
+}
+
+/*
  * make_restrictinfo_internal
  *
  * Common code for the main entry points and the recursive cases.
@@ -475,6 +526,31 @@ get_actual_clauses(List *restrictinfo_list)
 		Assert(IsA(rinfo, RestrictInfo));
 
 		Assert(!rinfo->pseudoconstant);
+
+		result = lappend(result, rinfo->clause);
+	}
+	return result;
+}
+
+/*
+ * get_all_actual_clauses
+ *
+ * Returns a list containing the bare clauses from 'restrictinfo_list'.
+ *
+ * This loses the distinction between regular and pseudoconstant clauses,
+ * so be careful what you use it for.
+ */
+List *
+get_all_actual_clauses(List *restrictinfo_list)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, restrictinfo_list)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		Assert(IsA(rinfo, RestrictInfo));
 
 		result = lappend(result, rinfo->clause);
 	}
