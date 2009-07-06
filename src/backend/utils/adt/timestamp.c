@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.201 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.202 2009/07/06 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3338,13 +3338,13 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 				fsec = (fsec / 1000) * 1000;
 #else
-				fsec = rint(fsec * 1000) / 1000;
+				fsec = floor(fsec * 1000) / 1000;
 #endif
 				break;
 
 			case DTK_MICROSEC:
 #ifndef HAVE_INT64_TIMESTAMP
-				fsec = rint(fsec * 1000000) / 1000000;
+				fsec = floor(fsec * 1000000) / 1000000;
 #endif
 				break;
 
@@ -3494,12 +3494,12 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 				fsec = (fsec / 1000) * 1000;
 #else
-				fsec = rint(fsec * 1000) / 1000;
+				fsec = floor(fsec * 1000) / 1000;
 #endif
 				break;
 			case DTK_MICROSEC:
 #ifndef HAVE_INT64_TIMESTAMP
-				fsec = rint(fsec * 1000000) / 1000000;
+				fsec = floor(fsec * 1000000) / 1000000;
 #endif
 				break;
 
@@ -3591,12 +3591,12 @@ interval_trunc(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 					fsec = (fsec / 1000) * 1000;
 #else
-					fsec = rint(fsec * 1000) / 1000;
+					fsec = floor(fsec * 1000) / 1000;
 #endif
 					break;
 				case DTK_MICROSEC:
 #ifndef HAVE_INT64_TIMESTAMP
-					fsec = rint(fsec * 1000000) / 1000000;
+					fsec = floor(fsec * 1000000) / 1000000;
 #endif
 					break;
 
