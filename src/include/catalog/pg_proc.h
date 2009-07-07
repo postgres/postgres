@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.545 2009/07/07 18:23:14 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.546 2009/07/07 18:49:16 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2279,7 +2279,7 @@ DATA(insert OID = 1597 (  pg_encoding_to_char	   PGNSP PGUID 12 1 0 0 f f f t f 
 DESCR("convert encoding id to encoding name");
 
 DATA(insert OID = 2319 (  pg_encoding_max_length   PGNSP PGUID 12 1 0 0 f f f t f i 1 0 23 "23" _null_ _null_ _null_ _null_ pg_encoding_max_length_sql _null_ _null_ _null_ ));
-DESCR("maximum octet length of a character in an eocidng");
+DESCR("maximum octet length of a character in given encoding");
 
 DATA(insert OID = 1638 (  oidgt				   PGNSP PGUID 12 1 0 0 f f f t f i 2 0 16 "26 26" _null_ _null_ _null_ _null_ oidgt _null_ _null_ _null_ ));
 DESCR("greater-than");
