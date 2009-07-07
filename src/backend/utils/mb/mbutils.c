@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.88 2009/07/07 18:23:14 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.89 2009/07/07 19:28:56 tgl Exp $
  */
 #include "postgres.h"
 
@@ -488,7 +488,7 @@ pg_encoding_max_length_sql(PG_FUNCTION_ARGS)
 	int encoding = PG_GETARG_INT32(0);
 
 	if (PG_VALID_ENCODING(encoding))
-		return pg_wchar_table[encoding].maxmblen;
+		PG_RETURN_INT32(pg_wchar_table[encoding].maxmblen);
 	else
 		PG_RETURN_NULL();
 }
