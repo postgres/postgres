@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.220 2009/07/06 17:01:42 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.221 2009/07/07 16:28:38 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1028,7 +1028,7 @@ describeOneTableDetails(const char *schemaname,
 	char	  **ptr;
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
-	int			cols = 0;
+	int			cols;
 	int			numrows = 0;
 	struct
 	{
@@ -1156,7 +1156,7 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result);
 	}
 
-	/* Get column info (index requires additional checks) */
+	/* Get column info */
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
 	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
 					  "\n  (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)"
@@ -1164,15 +1164,11 @@ describeOneTableDetails(const char *schemaname,
 					  "\n   WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum AND a.atthasdef),"
 					  "\n  a.attnotnull, a.attnum");
 	if (tableinfo.relkind == 'i')
-		appendPQExpBuffer(&buf, ", pg_get_indexdef(i.indexrelid,a.attnum, TRUE) AS indexdef");
+		appendPQExpBuffer(&buf, ",\n  pg_catalog.pg_get_indexdef(a.attrelid, a.attnum, TRUE) AS indexdef");
 	if (verbose)
-		appendPQExpBuffer(&buf, ", a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
+		appendPQExpBuffer(&buf, ",\n  a.attstorage, pg_catalog.col_description(a.attrelid, a.attnum)");
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
-	if (tableinfo.relkind == 'i')
-		appendPQExpBuffer(&buf, ", pg_catalog.pg_index i");
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
-	if (tableinfo.relkind == 'i')
-		appendPQExpBuffer(&buf, " AND a.attrelid = i.indexrelid");
 	appendPQExpBuffer(&buf, "\nORDER BY a.attnum");
 
 	res = PSQLexec(buf.data, false);
@@ -1220,9 +1216,9 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* Set the number of columns, and their names */
-	cols += 2;
 	headers[0] = gettext_noop("Column");
 	headers[1] = gettext_noop("Type");
+	cols = 2;
 
 	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
 	{
@@ -1302,15 +1298,15 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.relkind == 'S')
 			printTableAddCell(&cont, seq_values[i], false);
 
-		/* Expression for index */
+		/* Expression for index column */
 		if (tableinfo.relkind == 'i')
 			printTableAddCell(&cont, PQgetvalue(res, i, 5), false);
 
 		/* Storage and Description */
 		if (verbose)
 		{
-			int fnum = (tableinfo.relkind == 'i' ? 6 : 5);
-			char	   *storage  = PQgetvalue(res, i, fnum);
+			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
+			char	   *storage  = PQgetvalue(res, i, firstvcol);
 
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0] == 'p' ? "plain" :
@@ -1319,7 +1315,7 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false);
-			printTableAddCell(&cont, PQgetvalue(res, i, fnum + 1), false);
+			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1), false);
 		}
 	}
 
@@ -1844,20 +1840,23 @@ describeOneTableDetails(const char *schemaname,
 		}
 		else
 		{
-			/* display the list of child tables*/
+			/* display the list of child tables */
+			const char *ct = _("Child tables");
+
 			for (i = 0; i < tuples; i++)
-                	{
-                        	const char *ct = _("Child tables");
+			{
+				if (i == 0)
+					printfPQExpBuffer(&buf, "%s: %s",
+									  ct, PQgetvalue(result, i, 0));
+				else
+					printfPQExpBuffer(&buf, "%*s  %s",
+									  (int) strlen(ct), "",
+									  PQgetvalue(result, i, 0));
+				if (i < tuples - 1)
+					appendPQExpBuffer(&buf, ",");
 
-                        	if (i == 0)
-                                	printfPQExpBuffer(&buf, "%s: %s", ct, PQgetvalue(result, i, 0));
-                        	else
-                                	printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(ct), "", PQgetvalue(result, i, 0));
-                        	if (i < tuples - 1)
-                                	appendPQExpBuffer(&buf, ",");
-
-                        	printTableAddFooter(&cont, buf.data);
-                	}
+				printTableAddFooter(&cont, buf.data);
+			}
 		}
 		PQclear(result);
 
