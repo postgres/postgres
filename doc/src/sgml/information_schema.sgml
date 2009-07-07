@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.39 2009/06/10 07:03:34 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.40 2009/07/07 18:23:13 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -343,10 +343,10 @@
       <entry><type>cardinal_number</type></entry>
       <entry>
        If <literal>data_type</literal> identifies a character type,
-       the maximum possible length in octets (bytes) of a datum (this
-       should not be of concern to
-       <productname>PostgreSQL</productname> users); null for all
-       other data types.
+       the maximum possible length in octets (bytes) of a datum; null
+       for all other data types.  The maximum octet length depends on
+       the declared character maximum length (see above) and the
+       server encoding.
       </entry>
      </row>
 
@@ -947,9 +947,10 @@
       <entry><type>cardinal_number</type></entry>
       <entry>
        If <literal>data_type</literal> identifies a character type,
-       the maximum possible length in octets (bytes) of a datum (this
-       should not be of concern to <productname>PostgreSQL</productname> users); null for all
-       other data types.
+       the maximum possible length in octets (bytes) of a datum; null
+       for all other data types.  The maximum octet length depends on
+       the declared character maximum length (see above) and the
+       server encoding.
       </entry>
      </row>
 
@@ -1688,9 +1689,9 @@
       <entry><type>cardinal_number</type></entry>
       <entry>
        If the domain has a character type, the maximum possible length
-       in octets (bytes) of a datum (this should not be of concern to
-       <productname>PostgreSQL</productname> users); null for all
-       other data types.
+       in octets (bytes) of a datum; null for all other data types.
+       The maximum octet length depends on the declared character
+       maximum length (see above) and the server encoding.
       </entry>
      </row>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.332 2009/03/09 14:34:34 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.333 2009/07/07 18:23:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -948,6 +948,7 @@ extern Datum pg_convert(PG_FUNCTION_ARGS);
 extern Datum pg_convert_to(PG_FUNCTION_ARGS);
 extern Datum pg_convert_from(PG_FUNCTION_ARGS);
 extern Datum length_in_encoding(PG_FUNCTION_ARGS);
+extern Datum pg_encoding_max_length_sql(PG_FUNCTION_ARGS);
 
 /* format_type.c */
 extern Datum format_type(PG_FUNCTION_ARGS);

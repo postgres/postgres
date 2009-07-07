@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.87 2009/06/11 14:49:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.88 2009/07/07 18:23:14 petere Exp $
  */
 #include "postgres.h"
 
@@ -480,6 +480,17 @@ length_in_encoding(PG_FUNCTION_ARGS)
 	retval = pg_verify_mbstr_len(src_encoding, VARDATA(string), len, false);
 	PG_RETURN_INT32(retval);
 
+}
+
+Datum
+pg_encoding_max_length_sql(PG_FUNCTION_ARGS)
+{
+	int encoding = PG_GETARG_INT32(0);
+
+	if (PG_VALID_ENCODING(encoding))
+		return pg_wchar_table[encoding].maxmblen;
+	else
+		PG_RETURN_NULL();
 }
 
 /*
