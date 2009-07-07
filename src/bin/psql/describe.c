@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.222 2009/07/07 19:05:57 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.223 2009/07/07 20:32:20 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -1821,7 +1821,10 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result);
 
 		/* print child tables */
-		printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhrelid AND i.inhparent = '%s' ORDER BY c.oid::pg_catalog.regclass::text;", oid);
+		if (pset.sversion >= 80300)
+			printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhrelid AND i.inhparent = '%s' ORDER BY c.oid::pg_catalog.regclass::text;", oid);
+		else
+			printfPQExpBuffer(&buf, "SELECT c.oid::pg_catalog.regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhrelid AND i.inhparent = '%s' ORDER BY c.relname;", oid);
 
 		result = PSQLexec(buf.data, false);
 		if (!result)
