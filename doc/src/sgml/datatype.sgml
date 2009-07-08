@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.239 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.240 2009/07/08 17:21:55 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1524,11 +1524,11 @@ SELECT b, char_length(b) FROM test2;
     DAY TO MINUTE
     DAY TO SECOND
     HOUR TO MINUTE
+    HOUR TO SECOND
     MINUTE TO SECOND
 </programlisting>
-    Input falling outside the specified set of fields is silently discarded.
     Note that if both <replaceable>fields</replaceable> and
-    <replaceable>precision</replaceable> are specified, the
+    <replaceable>p</replaceable> are specified, the
     <replaceable>fields</replaceable> must include <literal>SECOND</>,
     since the precision applies only to the seconds.
    </para>
@@ -2468,11 +2468,15 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
 
     <para>
      When writing an interval constant with a <replaceable>fields</>
-     specification, or when assigning to an interval column that was defined
-     with a <replaceable>fields</> specification, the interpretation of
+     specification, or when assigning a string to an interval column that was
+     defined with a <replaceable>fields</> specification, the interpretation of
      unmarked quantities depends on the <replaceable>fields</>.  For
      example <literal>INTERVAL '1' YEAR</> is read as 1 year, whereas
-     <literal>INTERVAL '1'</> means 1 second.
+     <literal>INTERVAL '1'</> means 1 second.  Also, field values
+     <quote>to the right</> of the least significant field allowed by the
+     <replaceable>fields</> specification are silently discarded.  For
+     example, writing <literal>INTERVAL '1 day 2:03:04' HOUR TO MINUTE</>
+     results in dropping the seconds field, but not the day field.
     </para>
 
     <para>
