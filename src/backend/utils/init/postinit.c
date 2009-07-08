@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.191 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.192 2009/07/08 17:53:29 heikki Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -44,6 +44,7 @@
 #include "utils/acl.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
+#include "utils/pg_locale.h"
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
@@ -247,14 +248,14 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	collate = NameStr(dbform->datcollate);
 	ctype = NameStr(dbform->datctype);
 
-	if (setlocale(LC_COLLATE, collate) == NULL)
+	if (pg_perm_setlocale(LC_COLLATE, collate) == NULL)
 		ereport(FATAL,
 			(errmsg("database locale is incompatible with operating system"),
 			 errdetail("The database was initialized with LC_COLLATE \"%s\", "
 					   " which is not recognized by setlocale().", collate),
 			 errhint("Recreate the database with another locale or install the missing locale.")));
 
-	if (setlocale(LC_CTYPE, ctype) == NULL)
+	if (pg_perm_setlocale(LC_CTYPE, ctype) == NULL)
 		ereport(FATAL,
 			(errmsg("database locale is incompatible with operating system"),
 			 errdetail("The database was initialized with LC_CTYPE \"%s\", "
