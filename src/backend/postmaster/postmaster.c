@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.583 2009/06/26 20:29:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.584 2009/07/08 18:55:35 tgl Exp $
  *
  * NOTES
  *
@@ -424,8 +424,6 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 	char		ExtraOptions[MAXPGPATH];
-	char		lc_collate[NAMEDATALEN];
-	char		lc_ctype[NAMEDATALEN];
 } BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
@@ -4475,9 +4473,6 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	strlcpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
 
-	strlcpy(param->lc_collate, setlocale(LC_COLLATE, NULL), NAMEDATALEN);
-	strlcpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), NAMEDATALEN);
-
 	return true;
 }
 
@@ -4680,9 +4675,6 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	strlcpy(pkglib_path, param->pkglib_path, MAXPGPATH);
 
 	strlcpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
-
-	setlocale(LC_COLLATE, param->lc_collate);
-	setlocale(LC_CTYPE, param->lc_ctype);
 }
 
 
