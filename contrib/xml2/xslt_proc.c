@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.15 2009/06/11 14:48:53 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.16 2009/07/10 00:32:00 tgl Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -38,7 +38,8 @@ static void parse_params(const char **params, text *paramstr);
 Datum		xslt_process(PG_FUNCTION_ARGS);
 
 
-#define MAXPARAMS 20
+#define MAXPARAMS 20			/* must be even, see parse_params() */
+
 
 PG_FUNCTION_INFO_V1(xslt_process);
 
@@ -129,12 +130,11 @@ xslt_process(PG_FUNCTION_ARGS)
 }
 
 
-void
+static void
 parse_params(const char **params, text *paramstr)
 {
 	char	   *pos;
 	char	   *pstr;
-
 	int			i;
 	char	   *nvsep = "=";
 	char	   *itsep = ",";
@@ -154,11 +154,13 @@ parse_params(const char **params, text *paramstr)
 		}
 		else
 		{
-			params[i] = NULL;
+			/* No equal sign, so ignore this "parameter" */
+			/* We'll reset params[i] to NULL below the loop */
 			break;
 		}
 		/* Value */
 		i++;
+		/* since MAXPARAMS is even, we still have i < MAXPARAMS */
 		params[i] = pos;
 		pos = strstr(pos, itsep);
 		if (pos != NULL)
@@ -167,9 +169,11 @@ parse_params(const char **params, text *paramstr)
 			pos++;
 		}
 		else
+		{
+			i++;
 			break;
-
+		}
 	}
-	if (i < MAXPARAMS)
-		params[i + 1] = NULL;
+
+	params[i] = NULL;
 }
