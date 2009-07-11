@@ -195,7 +195,7 @@ SELECT null IS DISTINCT FROM null as "no";
  f
 (1 row)
 
--- ANSI SQL 2003 form
+-- negated form
 SELECT 1 IS NOT DISTINCT FROM 2 as "no";
  no 
 ----

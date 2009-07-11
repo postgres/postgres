@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.131 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.132 2009/07/11 21:15:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ anychar_typmodout(int32 typmod)
 
 
 /*
- * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()
+ * CHAR() and VARCHAR() types are part of the SQL standard. CHAR()
  * is for blank-padded string whose length is specified in CREATE TABLE.
  * VARCHAR is for storing string whose length is at most the length specified
  * at CREATE TABLE time.

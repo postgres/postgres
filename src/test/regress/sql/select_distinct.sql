@@ -57,7 +57,7 @@ SELECT 2 IS DISTINCT FROM 2 as "no";
 SELECT 2 IS DISTINCT FROM null as "yes";
 SELECT null IS DISTINCT FROM null as "no";
 
--- ANSI SQL 2003 form
+-- negated form
 SELECT 1 IS NOT DISTINCT FROM 2 as "no";
 SELECT 2 IS NOT DISTINCT FROM 2 as "yes";
 SELECT 2 IS NOT DISTINCT FROM null as "no";

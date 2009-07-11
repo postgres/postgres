@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.206 2009/06/18 10:22:09 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.207 2009/07/11 21:15:32 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -473,10 +473,10 @@ DESCR("varchar(length), non-blank-padded string, variable storage length");
 #define VARCHAROID		1043
 
 DATA(insert OID = 1082 ( date		 PGNSP PGUID	4 t b D f t \054 0	0 1182 date_in date_out date_recv date_send - - - i p f 0 -1 0 _null_ _null_ ));
-DESCR("ANSI SQL date");
+DESCR("date");
 #define DATEOID			1082
 DATA(insert OID = 1083 ( time		 PGNSP PGUID	8 FLOAT8PASSBYVAL b D f t \054 0	0 1183 time_in time_out time_recv time_send timetypmodin timetypmodout - d p f 0 -1 0 _null_ _null_ ));
-DESCR("hh:mm:ss, ANSI SQL time");
+DESCR("time of day");
 #define TIMEOID			1083
 
 /* OIDS 1100 - 1199 */
@@ -498,7 +498,7 @@ DATA(insert OID = 1187 ( _interval	 PGNSP PGUID	-1 f b A f t \054 0 1186 0 array
 /* OIDS 1200 - 1299 */
 DATA(insert OID = 1231 (  _numeric	 PGNSP PGUID -1 f b A f t \054 0	1700 0 array_in array_out array_recv array_send numerictypmodin numerictypmodout - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1266 ( timetz		 PGNSP PGUID 12 f b D f t \054 0	0 1270 timetz_in timetz_out timetz_recv timetz_send timetztypmodin timetztypmodout - d p f 0 -1 0 _null_ _null_ ));
-DESCR("hh:mm:ss, ANSI SQL time");
+DESCR("time of day with time zone");
 #define TIMETZOID		1266
 DATA(insert OID = 1270 ( _timetz	 PGNSP PGUID -1 f b A f t \054 0	1266 0 array_in array_out array_recv array_send timetztypmodin timetztypmodout - d x f 0 -1 0 _null_ _null_ ));
 

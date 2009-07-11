@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.125 2009/06/18 10:22:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.126 2009/07/11 21:15:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +510,7 @@ decl_cursor_arg : decl_varname decl_datatype
 				;
 
 decl_is_for		:	K_IS |		/* Oracle */
-					K_FOR;		/* ANSI */
+					K_FOR;		/* SQL standard */
 
 decl_aliasitem	: any_identifier
 					{

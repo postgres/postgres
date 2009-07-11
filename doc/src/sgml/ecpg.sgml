@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.89 2009/05/18 11:08:24 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.90 2009/07/11 21:15:32 petere Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -3062,7 +3062,7 @@ void dtcurrent(timestamp *ts);
       <term><function>dtcvasc</></term>
       <listitem>
        <para>
-        Parses a timestamp from its textual representation in ANSI standard
+        Parses a timestamp from its textual representation
         into a timestamp variable.
 <synopsis>
 int dtcvasc(char *str, timestamp *ts);
@@ -3087,7 +3087,7 @@ int dtcvasc(char *str, timestamp *ts);
       <term><function>dtcvfmtasc</></term>
       <listitem>
        <para>
-        Parses a timestamp from its textual representation in ANSI standard
+        Parses a timestamp from its textual representation
         using a format mask into a timestamp variable.
 <synopsis>
 dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
@@ -3140,7 +3140,7 @@ int dttoasc(timestamp *ts, char *output);
         The function receives a pointer to the timestamp variable to convert
         (<literal>ts</>) and the string that should hold the result of the
         operation <literal>output</>). It converts <literal>ts</> to its
-        textual representation in the ANSI SQL standard which is defined to
+        textual representation according to the SQL standard, which is
         be <literal>YYYY-MM-DD HH:MM:SS</literal>.
        </para>
        <para>
@@ -3187,7 +3187,7 @@ int intoasc(interval *i, char *str);
         The function receives a pointer to the interval variable to convert
         (<literal>i</>) and the string that should hold the result of the
         operation <literal>str</>). It converts <literal>i</> to its
-        textual representation in the ANSI SQL standard which is defined to
+        textual representation according to the SQL standard, which is
         be <literal>YYYY-MM-DD HH:MM:SS</literal>.
        </para>
        <para>
