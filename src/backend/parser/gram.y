@@ -4,14 +4,14 @@
 /*-------------------------------------------------------------------------
  *
  * gram.y
- *	  POSTGRES SQL YACC rules/actions
+ *	  POSTGRESQL BISON rules/actions
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.666 2009/07/06 02:58:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.667 2009/07/12 17:12:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -58,6 +58,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/gramparse.h"
+#include "parser/parser.h"
 #include "storage/lmgr.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -6807,7 +6808,7 @@ opt_hold: /* EMPTY */						{ $$ = 0; }
  *
  * There is an ambiguity when a sub-SELECT is within an a_expr and there
  * are excess parentheses: do the parentheses belong to the sub-SELECT or
- * to the surrounding a_expr?  We don't really care, but yacc wants to know.
+ * to the surrounding a_expr?  We don't really care, but bison wants to know.
  * To resolve the ambiguity, we are careful to define the grammar so that
  * the decision is staved off as long as possible: as long as we can keep
  * absorbing parentheses into the sub-SELECT, we will do so, and only when
@@ -8204,7 +8205,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 		/*
 		 * These operators must be called out explicitly in order to make use
-		 * of yacc/bison's automatic operator-precedence handling.  All other
+		 * of bison's automatic operator-precedence handling.  All other
 		 * operator names are handled by the generic productions using "Op",
 		 * below; and all those operators will have the same precedence.
 		 *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.288 2009/06/18 01:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.289 2009/07/12 17:12:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,6 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
-#include "parser/gramparse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"

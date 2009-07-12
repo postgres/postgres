@@ -1,23 +1,43 @@
 /*-------------------------------------------------------------------------
  *
  * parser.h
- *		Definitions for the "raw" parser (lex and yacc phases only)
+ *		Definitions for the "raw" parser (flex and bison phases only)
  *
+ * This is the external API for the raw lexing/parsing functions.
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.25 2009/04/19 21:50:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.26 2009/07/12 17:12:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "nodes/pg_list.h"
+#include "nodes/parsenodes.h"
 
+
+typedef enum
+{
+	BACKSLASH_QUOTE_OFF,
+	BACKSLASH_QUOTE_ON,
+	BACKSLASH_QUOTE_SAFE_ENCODING
+} BackslashQuoteType;
+
+/* GUC variables in scan.l (every one of these is a bad idea :-() */
+extern int	backslash_quote;
+extern bool escape_string_warning;
+extern bool standard_conforming_strings;
+
+
+/* Primary entry points for the raw parsing functions */
 extern List *raw_parser(const char *str);
 
 extern char *pg_parse_string_token(const char *token);
+
+/* Utility functions exported by gram.y (perhaps these should be elsewhere) */
+extern List *SystemFuncName(char *name);
+extern TypeName *SystemTypeName(char *name);
 
 #endif   /* PARSER_H */

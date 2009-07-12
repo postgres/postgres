@@ -9,16 +9,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.212 2009/03/08 16:53:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.213 2009/07/12 17:12:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
+#include "parser/gramparse.h"
 #include "parser/keywords.h"
-#include "parser/gram.h"
 
 #define PG_KEYWORD(a,b,c) {a,b,c},
 

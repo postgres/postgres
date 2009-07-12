@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.136 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.137 2009/07/12 17:12:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
-#include "parser/gramparse.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/array.h"

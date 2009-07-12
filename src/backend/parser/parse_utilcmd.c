@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.21 2009/06/11 14:49:00 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.22 2009/07/12 17:12:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,12 +42,12 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
-#include "parser/gramparse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
+#include "parser/parser.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

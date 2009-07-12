@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.505 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.506 2009/07/12 17:12:34 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -44,10 +44,10 @@
 #include "optimizer/geqo.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
-#include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "parser/parser.h"
 #include "parser/scansup.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"

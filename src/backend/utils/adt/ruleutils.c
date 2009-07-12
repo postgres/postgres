@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.300 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.301 2009/07/12 17:12:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,10 +39,10 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
-#include "parser/gramparse.h"
 #include "parser/keywords.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
+#include "parser/parser.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
