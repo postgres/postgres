@@ -6685,20 +6685,22 @@ do
 set dummy $ac_prog; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_prog_BISON+set}" = set; then
+if test "${ac_cv_path_BISON+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$BISON"; then
-  ac_cv_prog_BISON="$BISON" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $BISON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_BISON="$BISON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_BISON="$ac_prog"
+    ac_cv_path_BISON="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -6706,9 +6708,10 @@ done
 done
 IFS=$as_save_IFS
 
+  ;;
+esac
 fi
-fi
-BISON=$ac_cv_prog_BISON
+BISON=$ac_cv_path_BISON
 if test -n "$BISON"; then
   { $as_echo "$as_me:$LINENO: result: $BISON" >&5
 $as_echo "$BISON" >&6; }
@@ -6730,11 +6733,11 @@ $as_echo "$as_me: using $pgac_bison_version" >&6;}
   if echo "$pgac_bison_version" | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'
   then
     { $as_echo "$as_me:$LINENO: WARNING:
-*** The installed version of Bison is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required." >&5
+*** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
+*** Bison version 1.875 or later is required, but this is $pgac_bison_version." >&5
 $as_echo "$as_me: WARNING:
-*** The installed version of Bison is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required." >&2;}
+*** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
+*** Bison version 1.875 or later is required, but this is $pgac_bison_version." >&2;}
     BISON=""
   fi
 fi
@@ -6787,10 +6790,10 @@ else
           else
             { $as_echo "$as_me:$LINENO: WARNING:
 *** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.31 or later is required." >&5
+*** Flex version 2.5.31 or later is required, but this is $pgac_flex_version." >&5
 $as_echo "$as_me: WARNING:
 *** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.31 or later is required." >&2;}
+*** Flex version 2.5.31 or later is required, but this is $pgac_flex_version." >&2;}
           fi
         fi
       fi

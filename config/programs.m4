@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.25 2009/07/13 01:51:56 tgl Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.26 2009/07/13 05:36:53 tgl Exp $
 
 
 # PGAC_PATH_BISON
@@ -10,7 +10,7 @@
 AC_DEFUN([PGAC_PATH_BISON],
 [# Let the user override the search
 if test -z "$BISON"; then
-  AC_CHECK_PROGS(BISON, bison)
+  AC_PATH_PROGS(BISON, bison)
 fi
 
 if test "$BISON"; then
@@ -19,8 +19,8 @@ if test "$BISON"; then
   if echo "$pgac_bison_version" | $AWK '{ if ([$]4 < 1.875) exit 0; else exit 1;}'
   then
     AC_MSG_WARN([
-*** The installed version of Bison is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required.])
+*** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
+*** Bison version 1.875 or later is required, but this is $pgac_bison_version.])
     BISON=""
   fi
 fi
@@ -76,7 +76,7 @@ else
           else
             AC_MSG_WARN([
 *** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.31 or later is required.])
+*** Flex version 2.5.31 or later is required, but this is $pgac_flex_version.])
           fi
         fi
       fi
