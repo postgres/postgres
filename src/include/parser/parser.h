@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.26 2009/07/12 17:12:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.27 2009/07/13 00:42:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef enum
 /* GUC variables in scan.l (every one of these is a bad idea :-() */
 extern int	backslash_quote;
 extern bool escape_string_warning;
-extern bool standard_conforming_strings;
+extern PGDLLIMPORT bool standard_conforming_strings;
 
 
 /* Primary entry points for the raw parsing functions */
