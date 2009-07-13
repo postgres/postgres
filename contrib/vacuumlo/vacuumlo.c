@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.41 2009/02/27 09:30:21 petere Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.42 2009/07/13 22:56:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,11 +155,11 @@ vacuumlo(char *database, struct _param * param)
 	PQclear(res);
 
 	/*
-	 * Vacuum the temp table so that planner will generate decent plans for
+	 * Analyze the temp table so that planner will generate decent plans for
 	 * the DELETEs below.
 	 */
 	buf[0] = '\0';
-	strcat(buf, "VACUUM ANALYZE vacuum_l");
+	strcat(buf, "ANALYZE vacuum_l");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -216,11 +216,6 @@ vacuumlo(char *database, struct _param * param)
 		if (param->verbose)
 			fprintf(stdout, "Checking %s in %s.%s\n", field, schema, table);
 
-		/*
-		 * The "IN" construct used here was horribly inefficient before
-		 * Postgres 7.4, but should be now competitive if not better than the
-		 * bogus join we used before.
-		 */
 		snprintf(buf, BUFSIZE,
 				 "DELETE FROM vacuum_l "
 				 "WHERE lo IN (SELECT \"%s\" FROM \"%s\".\"%s\")",
