@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.24 2008/08/29 13:02:32 petere Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.25 2009/07/13 01:51:56 tgl Exp $
 
 
 # PGAC_PATH_BISON
@@ -42,8 +42,11 @@ AC_SUBST(BISONFLAGS)
 # PGAC_PATH_FLEX
 # --------------
 # Look for Flex, set the output variable FLEX to its path if found.
-# Avoid the buggy version 2.5.3. Also find Flex if its installed
-# under `lex', but do not accept other Lex programs.
+# Reject versions before 2.5.31, as we need a reasonably non-buggy reentrant
+# scanner.  (Note: the well-publicized security problem in 2.5.31 does not
+# affect Postgres, and there are still distros shipping patched 2.5.31,
+# so allow it.)  Also find Flex if its installed under `lex', but do not
+# accept other Lex programs.
 
 AC_DEFUN([PGAC_PATH_FLEX],
 [AC_CACHE_CHECK([for flex], pgac_cv_path_flex,
@@ -65,13 +68,16 @@ else
       then
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          if $pgac_candidate --version | grep ' 2\.5\.3$' >/dev/null 2>&1; then
-            pgac_broken_flex=$pgac_candidate
-            continue
+          pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
+          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 = 2 && [$]2 = 5 && [$]3 >= 31) exit 0; else exit 1;}'
+          then
+            pgac_cv_path_flex=$pgac_candidate
+            break 2
+          else
+            AC_MSG_WARN([
+*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
+*** Flex version 2.5.31 or later is required.])
           fi
-
-          pgac_cv_path_flex=$pgac_candidate
-          break 2
         fi
       fi
     done
@@ -82,14 +88,8 @@ fi
 ])[]dnl AC_CACHE_CHECK
 
 if test x"$pgac_cv_path_flex" = x"no"; then
-  if test -n "$pgac_broken_flex"; then
-    AC_MSG_WARN([
-*** The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
-*** should get version 2.5.4 or later.])
-  fi
-
   AC_MSG_WARN([
-*** Without Flex you will not be able to build PostgreSQL from CVS or
+*** Without Flex you will not be able to build PostgreSQL from CVS nor
 *** change any of the scanner definition files.  You can obtain Flex from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
@@ -98,7 +98,7 @@ if test x"$pgac_cv_path_flex" = x"no"; then
   FLEX=
 else
   FLEX=$pgac_cv_path_flex
-  pgac_flex_version=`$FLEX -V 2>/dev/null`
+  pgac_flex_version=`$FLEX --version 2>/dev/null`
   AC_MSG_NOTICE([using $pgac_flex_version])
 fi
 

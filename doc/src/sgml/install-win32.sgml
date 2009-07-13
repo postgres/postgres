@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.52 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.53 2009/07/13 01:51:56 tgl Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation from Source Code on <productname>Windows</productname></title>
@@ -102,7 +102,8 @@
      <listitem><para>
       Bison and Flex are required to build from CVS, but not required when
       building from a release file. Note that only Bison 1.875 or versions
-      2.2 and later will work. Bison and Flex can be
+      2.2 and later will work. Also, Flex version 2.5.31 or later is required.
+      Bison and Flex can be
       downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
      </para></listitem>
     </varlistentry>

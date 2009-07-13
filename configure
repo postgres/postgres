@@ -6779,13 +6779,19 @@ else
       then
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          if $pgac_candidate --version | grep ' 2\.5\.3$' >/dev/null 2>&1; then
-            pgac_broken_flex=$pgac_candidate
-            continue
+          pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
+          if echo "$pgac_flex_version" | sed 's/[.a-z]/ /g' | $AWK '{ if ($1 = 2 && $2 = 5 && $3 >= 31) exit 0; else exit 1;}'
+          then
+            pgac_cv_path_flex=$pgac_candidate
+            break 2
+          else
+            { $as_echo "$as_me:$LINENO: WARNING:
+*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
+*** Flex version 2.5.31 or later is required." >&5
+$as_echo "$as_me: WARNING:
+*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
+*** Flex version 2.5.31 or later is required." >&2;}
           fi
-
-          pgac_cv_path_flex=$pgac_candidate
-          break 2
         fi
       fi
     done
@@ -6798,23 +6804,14 @@ fi
 { $as_echo "$as_me:$LINENO: result: $pgac_cv_path_flex" >&5
 $as_echo "$pgac_cv_path_flex" >&6; }
 if test x"$pgac_cv_path_flex" = x"no"; then
-  if test -n "$pgac_broken_flex"; then
-    { $as_echo "$as_me:$LINENO: WARNING:
-*** The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
-*** should get version 2.5.4 or later." >&5
-$as_echo "$as_me: WARNING:
-*** The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
-*** should get version 2.5.4 or later." >&2;}
-  fi
-
   { $as_echo "$as_me:$LINENO: WARNING:
-*** Without Flex you will not be able to build PostgreSQL from CVS or
+*** Without Flex you will not be able to build PostgreSQL from CVS nor
 *** change any of the scanner definition files.  You can obtain Flex from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
 *** output is pre-generated.)" >&5
 $as_echo "$as_me: WARNING:
-*** Without Flex you will not be able to build PostgreSQL from CVS or
+*** Without Flex you will not be able to build PostgreSQL from CVS nor
 *** change any of the scanner definition files.  You can obtain Flex from
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
@@ -6823,7 +6820,7 @@ $as_echo "$as_me: WARNING:
   FLEX=
 else
   FLEX=$pgac_cv_path_flex
-  pgac_flex_version=`$FLEX -V 2>/dev/null`
+  pgac_flex_version=`$FLEX --version 2>/dev/null`
   { $as_echo "$as_me:$LINENO: using $pgac_flex_version" >&5
 $as_echo "$as_me: using $pgac_flex_version" >&6;}
 fi
