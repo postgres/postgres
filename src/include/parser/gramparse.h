@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.45 2009/07/12 17:12:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.46 2009/07/13 02:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,19 +36,85 @@
  */
 #include "parser/gram.h"
 
+/*
+ * The YY_EXTRA data that a flex scanner allows us to pass around.  Private
+ * state needed for raw parsing/lexing goes here.
+ */
+typedef struct base_yy_extra_type
+{
+	/*
+	 * The string the lexer is physically scanning.  We keep this mainly so
+	 * that we can cheaply compute the offset of the current token (yytext).
+	 */
+	char	   *scanbuf;
+	Size		scanbuflen;
+
+	/*
+	 * literalbuf is used to accumulate literal values when multiple rules
+	 * are needed to parse a single literal.  Call startlit() to reset buffer
+	 * to empty, addlit() to add text.  NOTE: the string in literalbuf is
+	 * NOT necessarily null-terminated, but there always IS room to add a
+	 * trailing null at offset literallen.  We store a null only when we
+	 * need it.
+	 */
+	char	   *literalbuf;		/* palloc'd expandable buffer */
+	int			literallen;		/* actual current string length */
+	int			literalalloc;	/* current allocated buffer size */
+
+	int			xcdepth;		/* depth of nesting in slash-star comments */
+	char	   *dolqstart;		/* current $foo$ quote start string */
+
+	/* state variables for literal-lexing warnings */
+	bool		warn_on_first_escape;
+	bool		saw_non_ascii;
+
+	/*
+	 * State variables for filtered_base_yylex().
+	 */
+	bool		have_lookahead;		/* is lookahead info valid? */
+	int			lookahead_token;	/* one-token lookahead */
+	YYSTYPE		lookahead_yylval;	/* yylval for lookahead token */
+	YYLTYPE		lookahead_yylloc;	/* yylloc for lookahead token */
+
+	/*
+	 * State variables that belong to the grammar, not the lexer.  It's
+	 * simpler to keep these here than to invent a separate structure.
+	 * These fields are unused/undefined if the lexer is invoked on its own.
+	 */
+
+	List	   *parsetree;		/* final parse result is delivered here */
+
+	bool		QueryIsRule;	/* signals we are parsing CREATE RULE */
+} base_yy_extra_type;
+
+/*
+ * The type of yyscanner is opaque outside scan.l.
+ */
+typedef void *base_yyscan_t;
+
+/*
+ * In principle we should use yyget_extra() to fetch the yyextra field
+ * from a yyscanner struct.  However, flex always puts that field first,
+ * and this is sufficiently performance-critical to make it seem worth
+ * cheating a bit to use an inline macro.
+ */
+#define pg_yyget_extra(yyscanner) (*((base_yy_extra_type **) (yyscanner)))
+
 
 /* from parser.c */
-extern int	filtered_base_yylex(void);
+extern int	filtered_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
+								base_yyscan_t yyscanner);
 
 /* from scan.l */
-extern void scanner_init(const char *str);
-extern void scanner_finish(void);
-extern int	base_yylex(void);
-extern int	scanner_errposition(int location);
-extern void base_yyerror(const char *message);
+extern base_yyscan_t scanner_init(const char *str, base_yy_extra_type *yyext);
+extern void scanner_finish(base_yyscan_t yyscanner);
+extern int	base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
+					   base_yyscan_t yyscanner);
+extern int	scanner_errposition(int location, base_yyscan_t yyscanner);
+extern void scanner_yyerror(const char *message, base_yyscan_t yyscanner);
 
 /* from gram.y */
-extern void parser_init(void);
-extern int	base_yyparse(void);
+extern void parser_init(base_yy_extra_type *yyext);
+extern int	base_yyparse(base_yyscan_t yyscanner);
 
 #endif   /* GRAMPARSE_H */

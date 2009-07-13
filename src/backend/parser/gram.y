@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.667 2009/07/12 17:12:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.668 2009/07/13 02:02:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -92,10 +92,6 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-extern List *parsetree;			/* final parse result is delivered here */
-
-static bool QueryIsRule = FALSE;
-
 /* Private struct for the result of privilege_target production */
 typedef struct PrivTarget
 {
@@ -103,14 +99,14 @@ typedef struct PrivTarget
 	List	   *objs;
 } PrivTarget;
 
-/*
- * If you need access to certain yacc-generated variables and find that
- * they're static by default, uncomment the next line.  (this is not a
- * problem, yet.)
- */
-/*#define __YYSCLASS*/
 
-static Node *makeColumnRef(char *colname, List *indirection, int location);
+#define parser_yyerror(msg)  scanner_yyerror(msg, yyscanner)
+#define parser_errposition(pos)  scanner_errposition(pos, yyscanner)
+
+static void base_yyerror(YYLTYPE *yylloc, base_yyscan_t yyscanner,
+						 const char *msg);
+static Node *makeColumnRef(char *colname, List *indirection,
+						   int location, base_yyscan_t yyscanner);
 static Node *makeTypeCast(Node *arg, TypeName *typename, int location);
 static Node *makeStringConst(char *str, int location);
 static Node *makeStringConstCast(char *str, int location, TypeName *typename);
@@ -120,16 +116,18 @@ static Node *makeBitStringConst(char *str, int location);
 static Node *makeNullAConst(int location);
 static Node *makeAConst(Value *v, int location);
 static Node *makeBoolAConst(bool state, int location);
-static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
-static void check_qualified_name(List *names);
-static List *check_func_name(List *names);
-static List *check_indirection(List *indirection);
+static FuncCall *makeOverlaps(List *largs, List *rargs,
+							  int location, base_yyscan_t yyscanner);
+static void check_qualified_name(List *names, base_yyscan_t yyscanner);
+static List *check_func_name(List *names, base_yyscan_t yyscanner);
+static List *check_indirection(List *indirection, base_yyscan_t yyscanner);
 static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount,
-								WithClause *withClause);
+								WithClause *withClause,
+								base_yyscan_t yyscanner);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
@@ -141,9 +139,13 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %}
 
+%pure-parser
 %expect 0
 %name-prefix="base_yy"
 %locations
+
+%parse-param {base_yyscan_t yyscanner}
+%lex-param   {base_yyscan_t yyscanner}
 
 %union
 {
@@ -576,26 +578,29 @@ static TypeName *TableFuncTypeName(List *columns);
 %%
 
 /*
- *	Handle comment-only lines, and ;; SELECT * FROM pg_class ;;;
- *	psql already handles such cases, but other interfaces don't.
- *	bjm 1999/10/05
+ *	The target production for the whole parse.
  */
-stmtblock:	stmtmulti								{ parsetree = $1; }
+stmtblock:	stmtmulti
+			{
+				pg_yyget_extra(yyscanner)->parsetree = $1;
+			}
 		;
 
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti ';' stmt
-				{ if ($3 != NULL)
-					$$ = lappend($1, $3);
-				  else
-					$$ = $1;
+				{
+					if ($3 != NULL)
+						$$ = lappend($1, $3);
+					else
+						$$ = $1;
 				}
 			| stmt
-					{ if ($1 != NULL)
+				{
+					if ($1 != NULL)
 						$$ = list_make1($1);
-					  else
+					else
 						$$ = NIL;
-					}
+				}
 		;
 
 stmt :
@@ -1190,7 +1195,7 @@ set_rest:	/* Generic SET syntaxes: */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("current database cannot be changed"),
-							 scanner_errposition(@2)));
+							 parser_errposition(@2)));
 					$$ = NULL; /*not reached*/
 				}
 			| SCHEMA Sconst
@@ -1305,7 +1310,7 @@ zone_value:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
-									 scanner_errposition(@3)));
+									 parser_errposition(@3)));
 					}
 					t->typmods = $3;
 					$$ = makeStringConstCast($2, @2, t);
@@ -1320,12 +1325,12 @@ zone_value:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
-									 scanner_errposition(@6)));
+									 parser_errposition(@6)));
 						if (list_length($6) != 1)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("interval precision specified twice"),
-									 scanner_errposition(@1)));
+									 parser_errposition(@1)));
 						t->typmods = lappend($6, makeIntConst($3, @3));
 					}
 					else
@@ -2428,7 +2433,7 @@ key_match:  MATCH FULL
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("MATCH PARTIAL not yet implemented"),
-						 scanner_errposition(@1)));
+						 parser_errposition(@1)));
 				$$ = FKCONSTR_MATCH_PARTIAL;
 			}
 		| MATCH SIMPLE
@@ -2521,7 +2526,7 @@ CreateAsStmt:
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("CREATE TABLE AS cannot specify INTO"),
-								 scanner_errposition(exprLocation((Node *) n->intoClause))));
+								 parser_errposition(exprLocation((Node *) n->intoClause))));
 					$4->rel->istemp = $2;
 					n->intoClause = $4;
 					/* Implement WITH NO DATA by forcing top-level LIMIT 0 */
@@ -3174,7 +3179,7 @@ TriggerEvents:
 			| TriggerEvents OR TriggerOneEvent
 				{
 					if ($1 & $3)
-						yyerror("duplicate trigger events specified");
+						parser_yyerror("duplicate trigger events specified");
 					$$ = $1 | $3;
 				}
 		;
@@ -3245,7 +3250,7 @@ ConstraintAttributeSpec:
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					$$ = $1 | $2;
 				}
 			| ConstraintTimeSpec
@@ -3261,7 +3266,7 @@ ConstraintAttributeSpec:
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					$$ = $1 | $2;
 				}
 			| /*EMPTY*/
@@ -3434,7 +3439,7 @@ DefineStmt:
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
 											NameListToString($3)),
-											scanner_errposition(@3)));
+											parser_errposition(@3)));
 							break;
 					}
 					r->location = @3;
@@ -3638,7 +3643,7 @@ opt_recheck:	RECHECK
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("RECHECK is no longer required"),
 							 errhint("Update your data type."),
-							 scanner_errposition(@1)));
+							 parser_errposition(@1)));
 					$$ = TRUE;
 				}
 			| /*EMPTY*/						{ $$ = FALSE; }
@@ -5043,7 +5048,7 @@ oper_argtypes:
 						   (errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("missing argument"),
 							errhint("Use NONE to denote the missing argument of a unary operator."),
-							scanner_errposition(@3)));
+							parser_errposition(@3)));
 				}
 			| '(' Typename ',' Typename ')'
 					{ $$ = list_make2($2, $4); }
@@ -5600,7 +5605,7 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
  *****************************************************************************/
 
 RuleStmt:	CREATE opt_or_replace RULE name AS
-			{ QueryIsRule=TRUE; }
+			{ pg_yyget_extra(yyscanner)->QueryIsRule = TRUE; }
 			ON event TO qualified_name where_clause
 			DO opt_instead RuleActionList
 				{
@@ -5613,7 +5618,7 @@ RuleStmt:	CREATE opt_or_replace RULE name AS
 					n->instead = $13;
 					n->actions = $14;
 					$$ = (Node *)n;
-					QueryIsRule=FALSE;
+					pg_yyget_extra(yyscanner)->QueryIsRule = FALSE;
 				}
 		;
 
@@ -6605,7 +6610,7 @@ insert_column_item:
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $1;
-					$$->indirection = check_indirection($2);
+					$$->indirection = check_indirection($2, yyscanner);
 					$$->val = NULL;
 					$$->location = @1;
 				}
@@ -6735,7 +6740,7 @@ multiple_set_clause:
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("number of columns does not match number of values"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					forboth(col_cell, $2, val_cell, $5)
 					{
 						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
@@ -6753,7 +6758,7 @@ set_target:
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $1;
-					$$->indirection = check_indirection($2);
+					$$->indirection = check_indirection($2, yyscanner);
 					$$->val = NULL;	/* upper production sets this */
 					$$->location = @1;
 				}
@@ -6863,49 +6868,56 @@ select_no_parens:
 			| select_clause sort_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, NIL,
-										NULL, NULL, NULL);
+										NULL, NULL, NULL,
+										yyscanner);
 					$$ = $1;
 				}
 			| select_clause opt_sort_clause for_locking_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $3,
 										list_nth($4, 0), list_nth($4, 1),
-										NULL);
+										NULL,
+										yyscanner);
 					$$ = $1;
 				}
 			| select_clause opt_sort_clause select_limit opt_for_locking_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $4,
 										list_nth($3, 0), list_nth($3, 1),
-										NULL);
+										NULL,
+										yyscanner);
 					$$ = $1;
 				}
 			| with_clause select_clause
 				{
 					insertSelectOptions((SelectStmt *) $2, NULL, NIL,
 										NULL, NULL,
-										$1);
+										$1,
+										yyscanner);
 					$$ = $2;
 				}
 			| with_clause select_clause sort_clause
 				{
 					insertSelectOptions((SelectStmt *) $2, $3, NIL,
 										NULL, NULL,
-										$1);
+										$1,
+										yyscanner);
 					$$ = $2;
 				}
 			| with_clause select_clause opt_sort_clause for_locking_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $2, $3, $4,
 										list_nth($5, 0), list_nth($5, 1),
-										$1);
+										$1,
+										yyscanner);
 					$$ = $2;
 				}
 			| with_clause select_clause opt_sort_clause select_limit opt_for_locking_clause
 				{
 					insertSelectOptions((SelectStmt *) $2, $3, $5,
 										list_nth($4, 0), list_nth($4, 1),
-										$1);
+										$1,
+										yyscanner);
 					$$ = $2;
 				}
 		;
@@ -7160,7 +7172,7 @@ select_limit:
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("LIMIT #,# syntax is not supported"),
 							 errhint("Use separate LIMIT and OFFSET clauses."),
-							 scanner_errposition(@1)));
+							 parser_errposition(@1)));
 				}
 			/* SQL:2008 syntax variants */
 			| OFFSET select_offset_value2 row_or_rows
@@ -7382,13 +7394,13 @@ table_ref:	relation_expr
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("VALUES in FROM must have an alias"),
 								 errhint("For example, FROM (VALUES ...) [AS] foo."),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("subquery in FROM must have an alias"),
 								 errhint("For example, FROM (SELECT ...) [AS] foo."),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					$$ = NULL;
 				}
 			| select_with_parens alias_clause
@@ -7743,7 +7755,7 @@ SimpleTypename:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("interval precision specified twice"),
-									 scanner_errposition(@1)));
+									 parser_errposition(@1)));
 						$$->typmods = lappend($5, makeIntConst($3, @3));
 					}
 					else
@@ -7869,7 +7881,7 @@ opt_float:	'(' Iconst ')'
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("precision for type float must be at least 1 bit"),
-								 scanner_errposition(@2)));
+								 parser_errposition(@2)));
 					else if ($2 <= 24)
 						$$ = SystemTypeName("float4");
 					else if ($2 <= 53)
@@ -7878,7 +7890,7 @@ opt_float:	'(' Iconst ')'
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("precision for type float must be less than 54 bits"),
-								 scanner_errposition(@2)));
+								 parser_errposition(@2)));
 				}
 			| /*EMPTY*/
 				{
@@ -8394,7 +8406,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| row OVERLAPS row
 				{
-					$$ = (Node *)makeOverlaps($1, $3, @2);
+					$$ = (Node *)makeOverlaps($1, $3, @2, yyscanner);
 				}
 			| a_expr IS TRUE_P
 				{
@@ -8574,7 +8586,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("UNIQUE predicate is not yet implemented"),
-							 scanner_errposition(@1)));
+							 parser_errposition(@1)));
 				}
 			| a_expr IS DOCUMENT_P					%prec IS
 				{
@@ -8681,7 +8693,7 @@ c_expr:		columnref								{ $$ = $1; }
 					{
 						A_Indirection *n = makeNode(A_Indirection);
 						n->arg = (Node *) p;
-						n->indirection = check_indirection($2);
+						n->indirection = check_indirection($2, yyscanner);
 						$$ = (Node *) n;
 					}
 					else
@@ -8693,7 +8705,7 @@ c_expr:		columnref								{ $$ = $1; }
 					{
 						A_Indirection *n = makeNode(A_Indirection);
 						n->arg = $2;
-						n->indirection = check_indirection($4);
+						n->indirection = check_indirection($4, yyscanner);
 						$$ = (Node *)n;
 					}
 					else
@@ -9413,12 +9425,12 @@ frame_extent: frame_bound
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					if ($1 & FRAMEOPTION_START_CURRENT_ROW)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 					$$ = $1 | FRAMEOPTION_END_CURRENT_ROW;
 				}
 			| BETWEEN frame_bound AND frame_bound
@@ -9428,17 +9440,17 @@ frame_extent: frame_bound
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame start cannot be UNBOUNDED FOLLOWING"),
-								 scanner_errposition(@2)));
+								 parser_errposition(@2)));
 					if ($2 & FRAMEOPTION_START_CURRENT_ROW)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("frame start at CURRENT ROW is not implemented"),
-								 scanner_errposition(@2)));
+								 parser_errposition(@2)));
 					if ($4 & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
 						ereport(ERROR,
 								(errcode(ERRCODE_WINDOWING_ERROR),
 								 errmsg("frame end cannot be UNBOUNDED PRECEDING"),
-								 scanner_errposition(@4)));
+								 parser_errposition(@4)));
 					/* shift converts START_ options to END_ options */
 					$$ = FRAMEOPTION_BETWEEN | $2 | ($4 << 1);
 				}
@@ -9742,11 +9754,11 @@ case_arg:	a_expr									{ $$ = $1; }
  */
 columnref:	relation_name
 				{
-					$$ = makeColumnRef($1, NIL, @1);
+					$$ = makeColumnRef($1, NIL, @1, yyscanner);
 				}
 			| relation_name indirection
 				{
-					$$ = makeColumnRef($1, $2, @1);
+					$$ = makeColumnRef($1, $2, @1, yyscanner);
 				}
 		;
 
@@ -9912,7 +9924,7 @@ qualified_name:
 				}
 			| relation_name indirection
 				{
-					check_qualified_name($2);
+					check_qualified_name($2, yyscanner);
 					$$ = makeNode(RangeVar);
 					switch (list_length($2))
 					{
@@ -9931,7 +9943,7 @@ qualified_name:
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
 											NameListToString(lcons(makeString($1), $2))),
-									 scanner_errposition(@1)));
+									 parser_errposition(@1)));
 							break;
 					}
 					$$->location = @1;
@@ -9970,7 +9982,10 @@ file_name:	Sconst									{ $$ = $1; };
 func_name:	type_function_name
 					{ $$ = list_make1(makeString($1)); }
 			| relation_name indirection
-					{ $$ = check_func_name(lcons(makeString($1), $2)); }
+					{
+						$$ = check_func_name(lcons(makeString($1), $2),
+											 yyscanner);
+					}
 		;
 
 
@@ -10036,7 +10051,7 @@ AexprConst: Iconst
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("interval precision specified twice"),
-									 scanner_errposition(@1)));
+									 parser_errposition(@1)));
 						t->typmods = lappend($6, makeIntConst($3, @3));
 					}
 					else
@@ -10552,30 +10567,42 @@ reserved_keyword:
 SpecialRuleRelation:
 			OLD
 				{
-					if (QueryIsRule)
+					if (pg_yyget_extra(yyscanner)->QueryIsRule)
 						$$ = "*OLD*";
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("OLD used in query that is not in a rule"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 				}
 			| NEW
 				{
-					if (QueryIsRule)
+					if (pg_yyget_extra(yyscanner)->QueryIsRule)
 						$$ = "*NEW*";
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("NEW used in query that is not in a rule"),
-								 scanner_errposition(@1)));
+								 parser_errposition(@1)));
 				}
 		;
 
 %%
 
+/*
+ * The signature of this function is required by bison.  However, we
+ * ignore the passed yylloc and instead use the last token position
+ * available from the scanner.
+ */
+static void
+base_yyerror(YYLTYPE *yylloc, base_yyscan_t yyscanner, const char *msg)
+{
+	parser_yyerror(msg);
+}
+
 static Node *
-makeColumnRef(char *colname, List *indirection, int location)
+makeColumnRef(char *colname, List *indirection,
+			  int location, base_yyscan_t yyscanner)
 {
 	/*
 	 * Generate a ColumnRef node, with an A_Indirection node added if there
@@ -10598,13 +10625,14 @@ makeColumnRef(char *colname, List *indirection, int location)
 			{
 				/* easy case - all indirection goes to A_Indirection */
 				c->fields = list_make1(makeString(colname));
-				i->indirection = check_indirection(indirection);
+				i->indirection = check_indirection(indirection, yyscanner);
 			}
 			else
 			{
 				/* got to split the list in two */
 				i->indirection = check_indirection(list_copy_tail(indirection,
-																  nfields));
+																  nfields),
+												   yyscanner);
 				indirection = list_truncate(indirection, nfields);
 				c->fields = lcons(makeString(colname), indirection);
 			}
@@ -10615,7 +10643,7 @@ makeColumnRef(char *colname, List *indirection, int location)
 		{
 			/* We only allow '*' at the end of a ColumnRef */
 			if (lnext(l) != NULL)
-				yyerror("improper use of \"*\"");
+				parser_yyerror("improper use of \"*\"");
 		}
 		nfields++;
 	}
@@ -10744,7 +10772,7 @@ makeBoolAConst(bool state, int location)
  * Create and populate a FuncCall node to support the OVERLAPS operator.
  */
 static FuncCall *
-makeOverlaps(List *largs, List *rargs, int location)
+makeOverlaps(List *largs, List *rargs, int location, base_yyscan_t yyscanner)
 {
 	FuncCall *n = makeNode(FuncCall);
 
@@ -10755,14 +10783,14 @@ makeOverlaps(List *largs, List *rargs, int location)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("wrong number of parameters on left side of OVERLAPS expression"),
-				 scanner_errposition(location)));
+				 parser_errposition(location)));
 	if (list_length(rargs) == 1)
 		rargs = lappend(rargs, rargs);
 	else if (list_length(rargs) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("wrong number of parameters on right side of OVERLAPS expression"),
-				 scanner_errposition(location)));
+				 parser_errposition(location)));
 	n->args = list_concat(largs, rargs);
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
@@ -10778,14 +10806,14 @@ makeOverlaps(List *largs, List *rargs, int location)
  * subscripts and '*', which we then must reject here.
  */
 static void
-check_qualified_name(List *names)
+check_qualified_name(List *names, base_yyscan_t yyscanner)
 {
 	ListCell   *i;
 
 	foreach(i, names)
 	{
 		if (!IsA(lfirst(i), String))
-			yyerror("syntax error");
+			parser_yyerror("syntax error");
 	}
 }
 
@@ -10795,14 +10823,14 @@ check_qualified_name(List *names)
  * and '*', which we then must reject here.
  */
 static List *
-check_func_name(List *names)
+check_func_name(List *names, base_yyscan_t yyscanner)
 {
 	ListCell   *i;
 
 	foreach(i, names)
 	{
 		if (!IsA(lfirst(i), String))
-			yyerror("syntax error");
+			parser_yyerror("syntax error");
 	}
 	return names;
 }
@@ -10813,7 +10841,7 @@ check_func_name(List *names)
  * in the grammar, so do it here.
  */
 static List *
-check_indirection(List *indirection)
+check_indirection(List *indirection, base_yyscan_t yyscanner)
 {
 	ListCell *l;
 
@@ -10822,7 +10850,7 @@ check_indirection(List *indirection)
 		if (IsA(lfirst(l), A_Star))
 		{
 			if (lnext(l) != NULL)
-				yyerror("improper use of \"*\"");
+				parser_yyerror("improper use of \"*\"");
 		}
 	}
 	return indirection;
@@ -10871,7 +10899,8 @@ static void
 insertSelectOptions(SelectStmt *stmt,
 					List *sortClause, List *lockingClause,
 					Node *limitOffset, Node *limitCount,
-					WithClause *withClause)
+					WithClause *withClause,
+					base_yyscan_t yyscanner)
 {
 	Assert(IsA(stmt, SelectStmt));
 
@@ -10885,7 +10914,7 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple ORDER BY clauses not allowed"),
-					 scanner_errposition(exprLocation((Node *) sortClause))));
+					 parser_errposition(exprLocation((Node *) sortClause))));
 		stmt->sortClause = sortClause;
 	}
 	/* We can handle multiple locking clauses, though */
@@ -10896,7 +10925,7 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple OFFSET clauses not allowed"),
-					 scanner_errposition(exprLocation(limitOffset))));
+					 parser_errposition(exprLocation(limitOffset))));
 		stmt->limitOffset = limitOffset;
 	}
 	if (limitCount)
@@ -10905,7 +10934,7 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple LIMIT clauses not allowed"),
-					 scanner_errposition(exprLocation(limitCount))));
+					 parser_errposition(exprLocation(limitCount))));
 		stmt->limitCount = limitCount;
 	}
 	if (withClause)
@@ -10914,7 +10943,7 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple WITH clauses not allowed"),
-					 scanner_errposition(exprLocation((Node *) withClause))));
+					 parser_errposition(exprLocation((Node *) withClause))));
 		stmt->withClause = withClause;
 	}
 }
@@ -11046,9 +11075,10 @@ makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
  * Initialize to parse one query string
  */
 void
-parser_init(void)
+parser_init(base_yy_extra_type *yyext)
 {
-	QueryIsRule = FALSE;
+	yyext->parsetree = NIL;		/* in case grammar forgets to set it */
+	yyext->QueryIsRule = FALSE;
 }
 
 /*
@@ -11101,5 +11131,10 @@ TableFuncTypeName(List *columns)
  * to create the function base_yylex not filtered_base_yylex.
  */
 #undef base_yylex
+
+/* Undefine some other stuff that would conflict in scan.c, too */
+#undef yyerror
+#undef yylval
+#undef yylloc
 
 #include "scan.c"
