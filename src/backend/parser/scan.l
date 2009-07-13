@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.155 2009/07/13 02:02:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.156 2009/07/13 03:11:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1211,13 +1211,13 @@ check_escape_warning(base_yyscan_t yyscanner)
  */
 
 void *
-base_yyalloc(size_t bytes, base_yyscan_t yyscanner)
+base_yyalloc(yy_size_t bytes, base_yyscan_t yyscanner)
 {
 	return palloc(bytes);
 }
 
 void *
-base_yyrealloc(void *ptr, size_t bytes, base_yyscan_t yyscanner)
+base_yyrealloc(void *ptr, yy_size_t bytes, base_yyscan_t yyscanner)
 {
 	if (ptr)
 		return repalloc(ptr, bytes);
