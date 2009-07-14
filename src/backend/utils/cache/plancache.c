@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.15.2.2 2008/12/13 02:00:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.15.2.3 2009/07/14 15:38:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "executor/executor.h"
+#include "executor/spi.h"
 #include "optimizer/clauses.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
@@ -500,9 +501,22 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 
 			if (plansource->fully_planned)
 			{
-				/* Generate plans for queries */
+				/*
+				 * Generate plans for queries.
+				 *
+				 * The planner may try to call SPI-using functions, which
+				 * causes a problem if we're already inside one.  Rather than
+				 * expect all SPI-using code to do SPI_push whenever a replan
+				 * could happen, it seems best to take care of the case here.
+				 */
+				bool	pushed;
+
+				pushed = SPI_push_conditional();
+
 				slist = pg_plan_queries(slist, plansource->cursor_options,
 										NULL, false);
+
+				SPI_pop_conditional(pushed);
 			}
 
 			/*
