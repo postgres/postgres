@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.40 2009/06/11 14:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.41 2009/07/14 20:24:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,79 +75,26 @@ static const ScanKeyword ScanECPGKeywords[] = {
 	{"whenever", SQL_WHENEVER, 0},
 };
 
-/* This is all taken from src/backend/parser/keyword.c and adjusted for our needs. */
-/*
- * Do a binary search using plain strcmp() comparison.
- */
-const ScanKeyword *
-DoLookup(const char *word, const ScanKeyword *low, const ScanKeyword *high)
-{
-	while (low <= high)
-	{
-		const ScanKeyword *middle;
-		int			difference;
-
-		middle = low + (high - low) / 2;
-		difference = strcmp(middle->name, word);
-		if (difference == 0)
-			return middle;
-		else if (difference < 0)
-			low = middle + 1;
-		else
-			high = middle - 1;
-	}
-
-	return NULL;
-}
-
 /*
  * ScanECPGKeywordLookup - see if a given word is a keyword
  *
  * Returns a pointer to the ScanKeyword table entry, or NULL if no match.
- *
- * The match is done case-insensitively.  Note that we deliberately use a
- * dumbed-down case conversion that will only translate 'A'-'Z' into 'a'-'z',
- * even if we are in a locale where tolower() would produce more or different
- * translations.  This is to conform to the SQL99 spec, which says that
- * keywords are to be matched in this way even though non-keyword identifiers
- * receive a different case-normalization mapping.
+ * Keywords are matched using the same case-folding rules as in the backend.
  */
 const ScanKeyword *
 ScanECPGKeywordLookup(const char *text)
 {
-	int			len,
-				i;
-	char		word[NAMEDATALEN];
 	const ScanKeyword *res;
 
 	/* First check SQL symbols defined by the backend. */
-
-	res = ScanKeywordLookup(text);
+	res = ScanKeywordLookup(text, ScanKeywords, NumScanKeywords);
 	if (res)
 		return res;
 
-	len = strlen(text);
-	/* We assume all keywords are shorter than NAMEDATALEN. */
-	if (len >= NAMEDATALEN)
-		return NULL;
+	/* Try ECPG-specific keywords. */
+	res = ScanKeywordLookup(text, ScanECPGKeywords, lengthof(ScanECPGKeywords));
+	if (res)
+		return res;
 
-	/*
-	 * Apply an ASCII-only downcasing. We must not use tolower() since it may
-	 * produce the wrong translation in some locales (eg, Turkish).
-	 */
-	for (i = 0; i < len; i++)
-	{
-		char		ch = text[i];
-
-		if (ch >= 'A' && ch <= 'Z')
-			ch += 'a' - 'A';
-		word[i] = ch;
-	}
-	word[len] = '\0';
-
-	/*
-	 * Now do a binary search using plain strcmp() comparison.
-	 */
-
-	return DoLookup(word, &ScanECPGKeywords[0], endof(ScanECPGKeywords) - 1);
+	return NULL;
 }

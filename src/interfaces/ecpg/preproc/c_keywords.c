@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  *
- * keywords.c
+ * c_keywords.c
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.23 2009/06/11 14:49:13 momjian Exp $
- * §
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.24 2009/07/14 20:24:10 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
@@ -55,8 +55,31 @@ static const ScanKeyword ScanCKeywords[] = {
 	{"year", YEAR_P, 0},
 };
 
+
+/*
+ * Do a binary search using plain strcmp() comparison.  This is much like
+ * ScanKeywordLookup(), except we want case-sensitive matching.
+ */
 const ScanKeyword *
 ScanCKeywordLookup(const char *text)
 {
-	return DoLookup(text, &ScanCKeywords[0], endof(ScanCKeywords) - 1);
+	const ScanKeyword *low = &ScanCKeywords[0];
+	const ScanKeyword *high = &ScanCKeywords[lengthof(ScanCKeywords) - 1];
+
+	while (low <= high)
+	{
+		const ScanKeyword *middle;
+		int			difference;
+
+		middle = low + (high - low) / 2;
+		difference = strcmp(middle->name, text);
+		if (difference == 0)
+			return middle;
+		else if (difference < 0)
+			low = middle + 1;
+		else
+			high = middle - 1;
+	}
+
+	return NULL;
 }

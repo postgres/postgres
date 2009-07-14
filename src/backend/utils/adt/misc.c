@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.71 2009/06/11 14:49:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.72 2009/07/14 20:24:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,7 +334,7 @@ pg_get_keywords(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 
-	if (&ScanKeywords[funcctx->call_cntr] < LastScanKeyword)
+	if (funcctx->call_cntr < NumScanKeywords)
 	{
 		char	   *values[3];
 		HeapTuple	tuple;

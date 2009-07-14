@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.156 2009/07/13 03:11:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.157 2009/07/14 20:24:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,6 +304,10 @@ identifier		{ident_start}{ident_cont}*
 
 typecast		"::"
 
+/* these two token types are used by PL/pgsql, though not in core SQL */
+dot_dot			\.\.
+colon_equals	":="
+
 /*
  * "self" is the set of chars that should be returned as single-character
  * tokens.  "op_chars" is the set of chars that can make up "Op" tokens,
@@ -450,11 +454,21 @@ other			.
 
 					SET_YYLLOC();
 					yyless(1);				/* eat only 'n' this time */
-					/* nchar had better be a keyword! */
-					keyword = ScanKeywordLookup("nchar");
-					Assert(keyword != NULL);
-					yylval->keyword = keyword->name;
-					return keyword->value;
+
+					keyword = ScanKeywordLookup("nchar",
+												yyextra->keywords,
+												yyextra->num_keywords);
+					if (keyword != NULL)
+					{
+						yylval->keyword = keyword->name;
+						return keyword->value;
+					}
+					else
+					{
+						/* If NCHAR isn't a keyword, just return "n" */
+						yylval->str = pstrdup("n");
+						return IDENT;
+					}
 				}
 
 {xqstart}		{
@@ -680,6 +694,16 @@ other			.
 					return TYPECAST;
 				}
 
+{dot_dot}		{
+					SET_YYLLOC();
+					return DOT_DOT;
+				}
+
+{colon_equals}	{
+					SET_YYLLOC();
+					return COLON_EQUALS;
+				}
+
 {self}			{
 					SET_YYLLOC();
 					return yytext[0];
@@ -830,7 +854,9 @@ other			.
 					SET_YYLLOC();
 
 					/* Is it a keyword? */
-					keyword = ScanKeywordLookup(yytext);
+					keyword = ScanKeywordLookup(yytext,
+												yyextra->keywords,
+												yyextra->num_keywords);
 					if (keyword != NULL)
 					{
 						yylval->keyword = keyword->name;
@@ -939,7 +965,10 @@ scanner_yyerror(const char *message, base_yyscan_t yyscanner)
  * Called before any actual parsing is done
  */
 base_yyscan_t
-scanner_init(const char *str, base_yy_extra_type *yyext)
+scanner_init(const char *str,
+			 base_yy_extra_type *yyext,
+			 const ScanKeyword *keywords,
+			 int num_keywords)
 {
 	Size		slen = strlen(str);
 	yyscan_t	scanner;
@@ -948,6 +977,9 @@ scanner_init(const char *str, base_yy_extra_type *yyext)
 		elog(ERROR, "yylex_init() failed: %m");
 
 	base_yyset_extra(yyext, scanner);
+
+	yyext->keywords = keywords;
+	yyext->num_keywords = num_keywords;
 
 	/*
 	 * Make a scan buffer with special termination needed by flex.
