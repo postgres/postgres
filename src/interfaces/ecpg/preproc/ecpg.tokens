@@ -1,5 +1,6 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.tokens,v 1.1 2008/11/14 10:03:33 meskes Exp $ */
-/* special embedded SQL token */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.tokens,v 1.2 2009/07/14 20:34:48 tgl Exp $ */
+
+/* special embedded SQL tokens */
 %token  SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
                 SQL_CALL SQL_CARDINALITY SQL_CONNECT
                 SQL_COUNT 
@@ -15,14 +16,13 @@
                 SQL_SQLPRINT SQL_SQLWARNING SQL_START SQL_STOP
                 SQL_STRUCT SQL_UNSIGNED SQL_VAR SQL_WHENEVER
 
-/* C token */
+/* C tokens */
 %token  S_ADD S_AND S_ANYTHING S_AUTO S_CONST S_DEC S_DIV
                 S_DOTPOINT S_EQUAL S_EXTERN S_INC S_LSHIFT S_MEMPOINT
                 S_MEMBER S_MOD S_MUL S_NEQUAL S_OR S_REGISTER S_RSHIFT
                 S_STATIC S_SUB S_VOLATILE
                 S_TYPEDEF
 
-%token TYPECAST
 %token CSTRING CVARIABLE CPP_LINE IP 
 %token DOLCONST ECONST NCONST UCONST UIDENT
 
