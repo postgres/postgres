@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.33 2007/12/28 11:14:19 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.34 2009/07/14 22:16:38 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -180,6 +180,19 @@
 (define %body-attr%             '())
 (define ($generate-book-lot-list$) '())
 
+
+;; Only build HTML.index or the actual HTML output, not both.  Saves a
+;; *lot* of time.  (overrides docbook.dsl)
+(root
+   (if (not html-index)
+       (make sequence
+         (process-children)
+         (with-mode manifest
+           (process-children)))
+       (with-mode htmlindex
+         (process-children))))
+
+
 ;; Do not combine first section into chapter chunk.
 (define (chunk-skip-first-element-list) '())
 
@@ -201,9 +214,6 @@
 (define %html-header-tags% 
   (list (list "META" '("HTTP-EQUIV" "Content-Type") '("CONTENT" "text/html; charset=ISO-8859-1"))
 	(list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
-
-;; Create an index
-(define html-index #t)
 
 
 ;; Block elements are allowed in PARA in DocBook, but not in P in

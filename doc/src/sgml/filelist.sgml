@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.61 2009/05/02 20:17:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.62 2009/07/14 22:16:38 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -165,3 +165,9 @@
  -->
 <!entity % standalone-ignore  "INCLUDE">
 <!entity % standalone-include "IGNORE">
+
+<!--
+ By default, no index is included.  Use -i include-index on the command line
+ to include it.
+ -->
+<!entity % include-index "IGNORE">
