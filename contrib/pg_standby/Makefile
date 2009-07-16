@@ -1,10 +1,7 @@
-# $PostgreSQL: pgsql/contrib/pg_standby/Makefile,v 1.4 2007/11/10 23:59:51 momjian Exp $
+# $PostgreSQL: pgsql/contrib/pg_standby/Makefile,v 1.5 2009/07/16 09:59:46 heikki Exp $
 
 PROGRAM = pg_standby
 OBJS	= pg_standby.o
-
-PG_CPPFLAGS = -I$(libpq_srcdir)
-PG_LIBS = $(libpq_pgport)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
