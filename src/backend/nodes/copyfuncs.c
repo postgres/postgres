@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.432 2009/06/18 01:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.433 2009/07/16 06:33:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1544,7 +1544,7 @@ _copyJoinExpr(JoinExpr *from)
 	COPY_SCALAR_FIELD(isNatural);
 	COPY_NODE_FIELD(larg);
 	COPY_NODE_FIELD(rarg);
-	COPY_NODE_FIELD(using);
+	COPY_NODE_FIELD(usingClause);
 	COPY_NODE_FIELD(quals);
 	COPY_NODE_FIELD(alias);
 	COPY_SCALAR_FIELD(rtindex);
@@ -1973,7 +1973,7 @@ _copyTypeName(TypeName *from)
 	TypeName   *newnode = makeNode(TypeName);
 
 	COPY_NODE_FIELD(names);
-	COPY_SCALAR_FIELD(typeid);
+	COPY_SCALAR_FIELD(typeOid);
 	COPY_SCALAR_FIELD(setof);
 	COPY_SCALAR_FIELD(pct_type);
 	COPY_NODE_FIELD(typmods);
@@ -2042,7 +2042,7 @@ _copyTypeCast(TypeCast *from)
 	TypeCast   *newnode = makeNode(TypeCast);
 
 	COPY_NODE_FIELD(arg);
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2068,7 +2068,7 @@ _copyColumnDef(ColumnDef *from)
 	ColumnDef  *newnode = makeNode(ColumnDef);
 
 	COPY_STRING_FIELD(colname);
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_SCALAR_FIELD(inhcount);
 	COPY_SCALAR_FIELD(is_local);
 	COPY_SCALAR_FIELD(is_not_null);
@@ -2127,7 +2127,7 @@ _copyXmlSerialize(XmlSerialize *from)
 
 	COPY_SCALAR_FIELD(xmloption);
 	COPY_NODE_FIELD(expr);
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2282,7 +2282,7 @@ _copyAlterDomainStmt(AlterDomainStmt *from)
 	AlterDomainStmt *newnode = makeNode(AlterDomainStmt);
 
 	COPY_SCALAR_FIELD(subtype);
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(def);
 	COPY_SCALAR_FIELD(behavior);
@@ -2712,7 +2712,7 @@ _copyCreateEnumStmt(CreateEnumStmt *from)
 {
 	CreateEnumStmt *newnode = makeNode(CreateEnumStmt);
 
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_NODE_FIELD(vals);
 
 	return newnode;
@@ -2747,7 +2747,7 @@ _copyCreateDomainStmt(CreateDomainStmt *from)
 	CreateDomainStmt *newnode = makeNode(CreateDomainStmt);
 
 	COPY_NODE_FIELD(domainname);
-	COPY_NODE_FIELD(typename);
+	COPY_NODE_FIELD(typeName);
 	COPY_NODE_FIELD(constraints);
 
 	return newnode;

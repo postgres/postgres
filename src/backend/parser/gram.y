@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.669 2009/07/14 20:24:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.670 2009/07/16 06:33:43 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2127,7 +2127,7 @@ columnDef:	ColId Typename ColQualList
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
-					n->typename = $2;
+					n->typeName = $2;
 					n->constraints = $3;
 					n->is_local = true;
 					$$ = (Node *)n;
@@ -2574,7 +2574,7 @@ CreateAsElement:
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
-					n->typename = NULL;
+					n->typeName = NULL;
 					n->inhcount = 0;
 					n->is_local = true;
 					n->is_not_null = false;
@@ -3461,7 +3461,7 @@ DefineStmt:
 			| CREATE TYPE_P any_name AS ENUM_P '(' enum_val_list ')'
 				{
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
-					n->typename = $3;
+					n->typeName = $3;
 					n->vals = $7;
 					$$ = (Node *)n;
 				}
@@ -6144,7 +6144,7 @@ CreateDomainStmt:
 				{
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
 					n->domainname = $3;
-					n->typename = $5;
+					n->typeName = $5;
 					n->constraints = $6;
 					$$ = (Node *)n;
 				}
@@ -6156,7 +6156,7 @@ AlterDomainStmt:
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'T';
-					n->typename = $3;
+					n->typeName = $3;
 					n->def = $4;
 					$$ = (Node *)n;
 				}
@@ -6165,7 +6165,7 @@ AlterDomainStmt:
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'N';
-					n->typename = $3;
+					n->typeName = $3;
 					$$ = (Node *)n;
 				}
 			/* ALTER DOMAIN <domain> SET NOT NULL */
@@ -6173,7 +6173,7 @@ AlterDomainStmt:
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'O';
-					n->typename = $3;
+					n->typeName = $3;
 					$$ = (Node *)n;
 				}
 			/* ALTER DOMAIN <domain> ADD CONSTRAINT ... */
@@ -6181,7 +6181,7 @@ AlterDomainStmt:
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'C';
-					n->typename = $3;
+					n->typeName = $3;
 					n->def = $5;
 					$$ = (Node *)n;
 				}
@@ -6190,7 +6190,7 @@ AlterDomainStmt:
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'X';
-					n->typename = $3;
+					n->typeName = $3;
 					n->name = $6;
 					n->behavior = $7;
 					$$ = (Node *)n;
@@ -7463,7 +7463,7 @@ joined_table:
 					n->isNatural = FALSE;
 					n->larg = $1;
 					n->rarg = $4;
-					n->using = NIL;
+					n->usingClause = NIL;
 					n->quals = NULL;
 					$$ = n;
 				}
@@ -7475,7 +7475,7 @@ joined_table:
 					n->larg = $1;
 					n->rarg = $4;
 					if ($5 != NULL && IsA($5, List))
-						n->using = (List *) $5; /* USING clause */
+						n->usingClause = (List *) $5; /* USING clause */
 					else
 						n->quals = $5; /* ON clause */
 					$$ = n;
@@ -7489,7 +7489,7 @@ joined_table:
 					n->larg = $1;
 					n->rarg = $3;
 					if ($4 != NULL && IsA($4, List))
-						n->using = (List *) $4; /* USING clause */
+						n->usingClause = (List *) $4; /* USING clause */
 					else
 						n->quals = $4; /* ON clause */
 					$$ = n;
@@ -7501,7 +7501,7 @@ joined_table:
 					n->isNatural = TRUE;
 					n->larg = $1;
 					n->rarg = $5;
-					n->using = NIL; /* figure out which columns later... */
+					n->usingClause = NIL; /* figure out which columns later... */
 					n->quals = NULL; /* fill later */
 					$$ = n;
 				}
@@ -7513,7 +7513,7 @@ joined_table:
 					n->isNatural = TRUE;
 					n->larg = $1;
 					n->rarg = $4;
-					n->using = NIL; /* figure out which columns later... */
+					n->usingClause = NIL; /* figure out which columns later... */
 					n->quals = NULL; /* fill later */
 					$$ = n;
 				}
@@ -7684,7 +7684,7 @@ TableFuncElement:	ColId Typename
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
-					n->typename = $2;
+					n->typeName = $2;
 					n->constraints = NIL;
 					n->is_local = true;
 					$$ = (Node *)n;
@@ -9280,7 +9280,7 @@ func_expr:	func_name '(' ')' over_clause
 					XmlSerialize *n = makeNode(XmlSerialize);
 					n->xmloption = $3;
 					n->expr = $4;
-					n->typename = $6;
+					n->typeName = $6;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
@@ -10668,7 +10668,7 @@ makeTypeCast(Node *arg, TypeName *typename, int location)
 {
 	TypeCast *n = makeNode(TypeCast);
 	n->arg = arg;
-	n->typename = typename;
+	n->typeName = typename;
 	n->location = location;
 	return (Node *) n;
 }

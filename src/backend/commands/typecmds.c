@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.134 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.135 2009/07/16 06:33:42 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -759,7 +759,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	bool		saw_default = false;
 	bool		typNotNull = false;
 	bool		nullDefined = false;
-	int32		typNDims = list_length(stmt->typename->arrayBounds);
+	int32		typNDims = list_length(stmt->typeName->arrayBounds);
 	HeapTuple	typeTup;
 	List	   *schema = stmt->constraints;
 	ListCell   *listptr;
@@ -799,7 +799,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	/*
 	 * Look up the base type.
 	 */
-	typeTup = typenameType(NULL, stmt->typename, &basetypeMod);
+	typeTup = typenameType(NULL, stmt->typeName, &basetypeMod);
 	baseType = (Form_pg_type) GETSTRUCT(typeTup);
 	basetypeoid = HeapTupleGetOid(typeTup);
 
@@ -815,7 +815,7 @@ DefineDomain(CreateDomainStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("\"%s\" is not a valid base type for a domain",
-						TypeNameToString(stmt->typename))));
+						TypeNameToString(stmt->typeName))));
 
 	/* passed by value */
 	byValue = baseType->typbyval;
@@ -1097,7 +1097,7 @@ DefineEnum(CreateEnumStmt *stmt)
 	Relation	pg_type;
 
 	/* Convert list of names to a name and namespace */
-	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typename,
+	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
 													  &enumName);
 
 	/* Check we have creation rights in target namespace */

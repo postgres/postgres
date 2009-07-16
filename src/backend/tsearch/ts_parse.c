@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.12 2009/06/11 14:49:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.13 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 				dict = lookup_ts_dictionary_cache(map->dictIds[i]);
 
 				ld->dictState.isend = ld->dictState.getnext = false;
-				ld->dictState.private = NULL;
+				ld->dictState.private_state = NULL;
 				res = (TSLexeme *) DatumGetPointer(FunctionCall4(
 															 &(dict->lexize),
 											 PointerGetDatum(dict->dictData),
@@ -464,18 +464,18 @@ hlfinditem(HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
 	for (i = 0; i < query->size; i++)
 	{
 		if (item->type == QI_VAL &&
-			tsCompareString(GETOPERAND(query) + item->operand.distance, item->operand.length,
-							buf, buflen, item->operand.prefix) == 0)
+			tsCompareString(GETOPERAND(query) + item->qoperand.distance, item->qoperand.length,
+							buf, buflen, item->qoperand.prefix) == 0)
 		{
 			if (word->item)
 			{
 				memcpy(&(prs->words[prs->curwords]), word, sizeof(HeadlineWordEntry));
-				prs->words[prs->curwords].item = &item->operand;
+				prs->words[prs->curwords].item = &item->qoperand;
 				prs->words[prs->curwords].repeated = 1;
 				prs->curwords++;
 			}
 			else
-				word->item = &item->operand;
+				word->item = &item->qoperand;
 		}
 		item++;
 	}

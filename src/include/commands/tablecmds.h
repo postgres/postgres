@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.43 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.44 2009/07/16 06:33:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ extern void find_composite_type_dependencies(Oid typeOid,
 								 const char *origTblName,
 								 const char *origTypeName);
 
-extern AttrNumber *varattnos_map(TupleDesc old, TupleDesc new);
+extern AttrNumber *varattnos_map(TupleDesc olddesc, TupleDesc newdesc);
 extern AttrNumber *varattnos_map_schema(TupleDesc old, List *schema);
 extern void change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 

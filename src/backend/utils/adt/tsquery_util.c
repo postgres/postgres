@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.11 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.12 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,19 +33,19 @@ QT2QTN(QueryItem *in, char *operand)
 		node->child = (QTNode **) palloc0(sizeof(QTNode *) * 2);
 		node->child[0] = QT2QTN(in + 1, operand);
 		node->sign = node->child[0]->sign;
-		if (in->operator.oper == OP_NOT)
+		if (in->qoperator.oper == OP_NOT)
 			node->nchild = 1;
 		else
 		{
 			node->nchild = 2;
-			node->child[1] = QT2QTN(in + in->operator.left, operand);
+			node->child[1] = QT2QTN(in + in->qoperator.left, operand);
 			node->sign |= node->child[1]->sign;
 		}
 	}
 	else if (operand)
 	{
-		node->word = operand + in->operand.distance;
-		node->sign = 1 << (in->operand.valcrc % 32);
+		node->word = operand + in->qoperand.distance;
+		node->sign = 1 << (in->qoperand.valcrc % 32);
 	}
 
 	return node;
@@ -94,8 +94,8 @@ QTNodeCompare(QTNode *an, QTNode *bn)
 
 	if (an->valnode->type == QI_OPR)
 	{
-		QueryOperator *ao = &an->valnode->operator;
-		QueryOperator *bo = &bn->valnode->operator;
+		QueryOperator *ao = &an->valnode->qoperator;
+		QueryOperator *bo = &bn->valnode->qoperator;
 
 		if (ao->oper != bo->oper)
 			return (ao->oper > bo->oper) ? -1 : 1;
@@ -115,8 +115,8 @@ QTNodeCompare(QTNode *an, QTNode *bn)
 	}
 	else
 	{
-		QueryOperand *ao = &an->valnode->operand;
-		QueryOperand *bo = &bn->valnode->operand;
+		QueryOperand *ao = &an->valnode->qoperand;
+		QueryOperand *bo = &bn->valnode->qoperand;
 
 		Assert(an->valnode->type == QI_VAL);
 
@@ -188,7 +188,7 @@ QTNTernary(QTNode *in)
 	{
 		QTNode	   *cc = in->child[i];
 
-		if (cc->valnode->type == QI_OPR && in->valnode->operator.oper == cc->valnode->operator.oper)
+		if (cc->valnode->type == QI_OPR && in->valnode->qoperator.oper == cc->valnode->qoperator.oper)
 		{
 			int			oldnchild = in->nchild;
 
@@ -245,7 +245,7 @@ QTNBinary(QTNode *in)
 		nn->sign = nn->child[0]->sign | nn->child[1]->sign;
 
 		nn->valnode->type = in->valnode->type;
-		nn->valnode->operator.oper = in->valnode->operator.oper;
+		nn->valnode->qoperator.oper = in->valnode->qoperator.oper;
 
 		in->child[0] = nn;
 		in->child[1] = in->child[in->nchild - 1];
@@ -273,7 +273,7 @@ cntsize(QTNode *in, int *sumlen, int *nnode)
 	}
 	else
 	{
-		*sumlen += in->valnode->operand.length + 1;
+		*sumlen += in->valnode->qoperand.length + 1;
 	}
 }
 
@@ -294,10 +294,10 @@ fillQT(QTN2QTState *state, QTNode *in)
 	{
 		memcpy(state->curitem, in->valnode, sizeof(QueryOperand));
 
-		memcpy(state->curoperand, in->word, in->valnode->operand.length);
-		state->curitem->operand.distance = state->curoperand - state->operand;
-		state->curoperand[in->valnode->operand.length] = '\0';
-		state->curoperand += in->valnode->operand.length + 1;
+		memcpy(state->curoperand, in->word, in->valnode->qoperand.length);
+		state->curitem->qoperand.distance = state->curoperand - state->operand;
+		state->curoperand[in->valnode->qoperand.length] = '\0';
+		state->curoperand += in->valnode->qoperand.length + 1;
 		state->curitem++;
 	}
 	else
@@ -315,7 +315,7 @@ fillQT(QTN2QTState *state, QTNode *in)
 
 		if (in->nchild == 2)
 		{
-			curitem->operator.left = state->curitem - curitem;
+			curitem->qoperator.left = state->curitem - curitem;
 			fillQT(state, in->child[1]);
 		}
 	}
@@ -361,9 +361,9 @@ QTNCopy(QTNode *in)
 
 	if (in->valnode->type == QI_VAL)
 	{
-		out->word = palloc(in->valnode->operand.length + 1);
-		memcpy(out->word, in->word, in->valnode->operand.length);
-		out->word[in->valnode->operand.length] = '\0';
+		out->word = palloc(in->valnode->qoperand.length + 1);
+		memcpy(out->word, in->word, in->valnode->qoperand.length);
+		out->word[in->valnode->qoperand.length] = '\0';
 		out->flags |= QTN_WORDFREE;
 	}
 	else

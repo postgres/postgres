@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Check all include files in or below the current directory for C++
+# compatibility.  Typically, run this in PostgreSQL's src/include/ directory.
+# No output if everything is OK, else compiler errors.
+
+set -e
+
+me=`basename $0`
+
+trap 'rm -rf $tmp' 0 1 2 3 15
+tmp=`mktemp -d /tmp/$me.XXXXXX`
+
+{
+echo ' extern "C" {'
+echo '#include "postgres.h"'
+
+# Omit port/, because it's platform specific, and c.h includes it anyway. Omit
+# regex/ and snowball/, because those files came from elsewhere, and they would
+# need extra work if someone cared to fix them.  kwlist.h is not meant to be
+# included directly.  rusagestub.h will be included by ./utils/pg_rusage.h if
+# necessary.
+for file in `find . \( -name port -prune -o -name regex -prune -o -name snowball -prune \) -o -name '*.h' -not -name kwlist.h -not -name rusagestub.h -print`; do
+	f=`echo $file | sed 's,^\./,,'`
+	echo "#include \"$f\""
+done
+
+echo '};'
+} >$tmp/test.cpp
+
+# -fno-operator-names omits the definition of bitand and bitor, which would
+# collide with varbit.h.  Could be fixed, if one were so inclined.
+${CXX:-g++} -I. -fsyntax-only -fno-operator-names -Wall -c $tmp/test.cpp

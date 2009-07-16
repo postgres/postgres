@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.241 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.242 2009/07/16 06:33:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					Oid			elementType;
 					int32		targetTypmod;
 
-					targetType = typenameTypeId(pstate, tc->typename,
+					targetType = typenameTypeId(pstate, tc->typeName,
 												&targetTypmod);
 					elementType = get_element_type(targetType);
 					if (OidIsValid(elementType))
@@ -1773,7 +1773,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 													 XMLOID,
 													 "XMLSERIALIZE"));
 
-	targetType = typenameTypeId(pstate, xs->typename, &targetTypmod);
+	targetType = typenameTypeId(pstate, xs->typeName, &targetTypmod);
 
 	xexpr->xmloption = xs->xmloption;
 	xexpr->location = xs->location;
@@ -2000,7 +2000,7 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 	int32		targetTypmod;
 	int			location;
 
-	targetType = typenameTypeId(pstate, tc->typename, &targetTypmod);
+	targetType = typenameTypeId(pstate, tc->typeName, &targetTypmod);
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
@@ -2012,7 +2012,7 @@ transformTypeCast(ParseState *pstate, TypeCast *tc)
 	 */
 	location = tc->location;
 	if (location < 0)
-		location = tc->typename->location;
+		location = tc->typeName->location;
 
 	result = coerce_to_target_type(pstate, expr, inputType,
 								   targetType, targetTypmod,

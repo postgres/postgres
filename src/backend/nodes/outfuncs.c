@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.360 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.361 2009/07/16 06:33:42 petere Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1259,7 +1259,7 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 	WRITE_BOOL_FIELD(isNatural);
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
-	WRITE_NODE_FIELD(using);
+	WRITE_NODE_FIELD(usingClause);
 	WRITE_NODE_FIELD(quals);
 	WRITE_NODE_FIELD(alias);
 	WRITE_INT_FIELD(rtindex);
@@ -1822,7 +1822,7 @@ _outXmlSerialize(StringInfo str, XmlSerialize *node)
 
 	WRITE_ENUM_FIELD(xmloption, XmlOptionType);
 	WRITE_NODE_FIELD(expr);
-	WRITE_NODE_FIELD(typename);
+	WRITE_NODE_FIELD(typeName);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1832,7 +1832,7 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	WRITE_NODE_TYPE("COLUMNDEF");
 
 	WRITE_STRING_FIELD(colname);
-	WRITE_NODE_FIELD(typename);
+	WRITE_NODE_FIELD(typeName);
 	WRITE_INT_FIELD(inhcount);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
@@ -1847,7 +1847,7 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_NODE_TYPE("TYPENAME");
 
 	WRITE_NODE_FIELD(names);
-	WRITE_OID_FIELD(typeid);
+	WRITE_OID_FIELD(typeOid);
 	WRITE_BOOL_FIELD(setof);
 	WRITE_BOOL_FIELD(pct_type);
 	WRITE_NODE_FIELD(typmods);
@@ -1862,7 +1862,7 @@ _outTypeCast(StringInfo str, TypeCast *node)
 	WRITE_NODE_TYPE("TYPECAST");
 
 	WRITE_NODE_FIELD(arg);
-	WRITE_NODE_FIELD(typename);
+	WRITE_NODE_FIELD(typeName);
 	WRITE_LOCATION_FIELD(location);
 }
 

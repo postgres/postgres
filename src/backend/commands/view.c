@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.116 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.117 2009/07/16 06:33:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 			ColumnDef  *def = makeNode(ColumnDef);
 
 			def->colname = pstrdup(tle->resname);
-			def->typename = makeTypeNameFromOid(exprType((Node *) tle->expr),
+			def->typeName = makeTypeNameFromOid(exprType((Node *) tle->expr),
 											 exprTypmod((Node *) tle->expr));
 			def->inhcount = 0;
 			def->is_local = true;

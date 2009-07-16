@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.11 2009/01/01 17:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.12 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ maketree(QueryItem *in)
 	if (in->type == QI_OPR)
 	{
 		node->right = maketree(in + 1);
-		if (in->operator.oper != OP_NOT)
-			node->left = maketree(in + in->operator.left);
+		if (in->qoperator.oper != OP_NOT)
+			node->left = maketree(in + in->qoperator.left);
 	}
 	return node;
 }
@@ -69,9 +69,9 @@ plainnode(PLAINTREE *state, NODE *node)
 	memcpy((void *) &(state->ptr[state->cur]), (void *) node->valnode, sizeof(QueryItem));
 	if (node->valnode->type == QI_VAL)
 		state->cur++;
-	else if (node->valnode->operator.oper == OP_NOT)
+	else if (node->valnode->qoperator.oper == OP_NOT)
 	{
-		state->ptr[state->cur].operator.left = 1;
+		state->ptr[state->cur].qoperator.left = 1;
 		state->cur++;
 		plainnode(state, node->right);
 	}
@@ -81,7 +81,7 @@ plainnode(PLAINTREE *state, NODE *node)
 
 		state->cur++;
 		plainnode(state, node->right);
-		state->ptr[cur].operator.left = state->cur - cur;
+		state->ptr[cur].qoperator.left = state->cur - cur;
 		plainnode(state, node->left);
 	}
 	pfree(node);
@@ -138,14 +138,14 @@ clean_NOT_intree(NODE *node)
 	if (node->valnode->type == QI_VAL)
 		return node;
 
-	if (node->valnode->operator.oper == OP_NOT)
+	if (node->valnode->qoperator.oper == OP_NOT)
 	{
 		freetree(node);
 		return NULL;
 	}
 
 	/* operator & or | */
-	if (node->valnode->operator.oper == OP_OR)
+	if (node->valnode->qoperator.oper == OP_OR)
 	{
 		if ((node->left = clean_NOT_intree(node->left)) == NULL ||
 			(node->right = clean_NOT_intree(node->right)) == NULL)
@@ -158,7 +158,7 @@ clean_NOT_intree(NODE *node)
 	{
 		NODE	   *res = node;
 
-		Assert(node->valnode->operator.oper == OP_AND);
+		Assert(node->valnode->qoperator.oper == OP_AND);
 
 		node->left = clean_NOT_intree(node->left);
 		node->right = clean_NOT_intree(node->right);
@@ -233,7 +233,7 @@ clean_fakeval_intree(NODE *node, char *result)
 
 	Assert(node->valnode->type == QI_OPR);
 
-	if (node->valnode->operator.oper == OP_NOT)
+	if (node->valnode->qoperator.oper == OP_NOT)
 	{
 		node->right = clean_fakeval_intree(node->right, &rresult);
 		if (!node->right)

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.309 2009/06/11 20:46:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.310 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -665,23 +665,23 @@ ProcessUtility(Node *parsetree,
 						 * Recursively alter column default for table and, if
 						 * requested, for descendants
 						 */
-						AlterDomainDefault(stmt->typename,
+						AlterDomainDefault(stmt->typeName,
 										   stmt->def);
 						break;
 					case 'N':	/* ALTER DOMAIN DROP NOT NULL */
-						AlterDomainNotNull(stmt->typename,
+						AlterDomainNotNull(stmt->typeName,
 										   false);
 						break;
 					case 'O':	/* ALTER DOMAIN SET NOT NULL */
-						AlterDomainNotNull(stmt->typename,
+						AlterDomainNotNull(stmt->typeName,
 										   true);
 						break;
 					case 'C':	/* ADD CONSTRAINT */
-						AlterDomainAddConstraint(stmt->typename,
+						AlterDomainAddConstraint(stmt->typeName,
 												 stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
-						AlterDomainDropConstraint(stmt->typename,
+						AlterDomainDropConstraint(stmt->typeName,
 												  stmt->name,
 												  stmt->behavior);
 						break;

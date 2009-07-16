@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.160 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.161 2009/07/16 06:33:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,53 +141,53 @@ DefineSequence(CreateSeqStmt *seq)
 		switch (i)
 		{
 			case SEQ_COL_NAME:
-				coldef->typename = makeTypeNameFromOid(NAMEOID, -1);
+				coldef->typeName = makeTypeNameFromOid(NAMEOID, -1);
 				coldef->colname = "sequence_name";
 				namestrcpy(&name, seq->sequence->relname);
 				value[i - 1] = NameGetDatum(&name);
 				break;
 			case SEQ_COL_LASTVAL:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "last_value";
 				value[i - 1] = Int64GetDatumFast(new.last_value);
 				break;
 			case SEQ_COL_STARTVAL:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "start_value";
 				value[i - 1] = Int64GetDatumFast(new.start_value);
 				break;
 			case SEQ_COL_INCBY:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "increment_by";
 				value[i - 1] = Int64GetDatumFast(new.increment_by);
 				break;
 			case SEQ_COL_MAXVALUE:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "max_value";
 				value[i - 1] = Int64GetDatumFast(new.max_value);
 				break;
 			case SEQ_COL_MINVALUE:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "min_value";
 				value[i - 1] = Int64GetDatumFast(new.min_value);
 				break;
 			case SEQ_COL_CACHE:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "cache_value";
 				value[i - 1] = Int64GetDatumFast(new.cache_value);
 				break;
 			case SEQ_COL_LOG:
-				coldef->typename = makeTypeNameFromOid(INT8OID, -1);
+				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "log_cnt";
 				value[i - 1] = Int64GetDatum((int64) 1);
 				break;
 			case SEQ_COL_CYCLE:
-				coldef->typename = makeTypeNameFromOid(BOOLOID, -1);
+				coldef->typeName = makeTypeNameFromOid(BOOLOID, -1);
 				coldef->colname = "is_cycled";
 				value[i - 1] = BoolGetDatum(new.is_cycled);
 				break;
 			case SEQ_COL_CALLED:
-				coldef->typename = makeTypeNameFromOid(BOOLOID, -1);
+				coldef->typeName = makeTypeNameFromOid(BOOLOID, -1);
 				coldef->colname = "is_called";
 				value[i - 1] = BoolGetDatum(false);
 				break;

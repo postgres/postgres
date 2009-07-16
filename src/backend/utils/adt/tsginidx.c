@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.16 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.17 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 			if (item[i].type == QI_VAL)
 			{
 				text	   *txt;
-				QueryOperand *val = &item[i].operand;
+				QueryOperand *val = &item[i].qoperand;
 
 				txt = cstring_to_text_with_len(GETOPERAND(query) + val->distance,
 											   val->length);

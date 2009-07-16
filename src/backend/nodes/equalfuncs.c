@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.355 2009/06/18 01:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.356 2009/07/16 06:33:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,7 +704,7 @@ _equalJoinExpr(JoinExpr *a, JoinExpr *b)
 	COMPARE_SCALAR_FIELD(isNatural);
 	COMPARE_NODE_FIELD(larg);
 	COMPARE_NODE_FIELD(rarg);
-	COMPARE_NODE_FIELD(using);
+	COMPARE_NODE_FIELD(usingClause);
 	COMPARE_NODE_FIELD(quals);
 	COMPARE_NODE_FIELD(alias);
 	COMPARE_SCALAR_FIELD(rtindex);
@@ -966,7 +966,7 @@ static bool
 _equalAlterDomainStmt(AlterDomainStmt *a, AlterDomainStmt *b)
 {
 	COMPARE_SCALAR_FIELD(subtype);
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(def);
 	COMPARE_SCALAR_FIELD(behavior);
@@ -1330,7 +1330,7 @@ _equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
 static bool
 _equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
 {
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_NODE_FIELD(vals);
 
 	return true;
@@ -1359,7 +1359,7 @@ static bool
 _equalCreateDomainStmt(CreateDomainStmt *a, CreateDomainStmt *b)
 {
 	COMPARE_NODE_FIELD(domainname);
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_NODE_FIELD(constraints);
 
 	return true;
@@ -1966,7 +1966,7 @@ static bool
 _equalTypeName(TypeName *a, TypeName *b)
 {
 	COMPARE_NODE_FIELD(names);
-	COMPARE_SCALAR_FIELD(typeid);
+	COMPARE_SCALAR_FIELD(typeOid);
 	COMPARE_SCALAR_FIELD(setof);
 	COMPARE_SCALAR_FIELD(pct_type);
 	COMPARE_NODE_FIELD(typmods);
@@ -1981,7 +1981,7 @@ static bool
 _equalTypeCast(TypeCast *a, TypeCast *b)
 {
 	COMPARE_NODE_FIELD(arg);
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2047,7 +2047,7 @@ static bool
 _equalColumnDef(ColumnDef *a, ColumnDef *b)
 {
 	COMPARE_STRING_FIELD(colname);
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_SCALAR_FIELD(inhcount);
 	COMPARE_SCALAR_FIELD(is_local);
 	COMPARE_SCALAR_FIELD(is_not_null);
@@ -2207,7 +2207,7 @@ _equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_NODE_FIELD(expr);
-	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(typeName);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.13 2009/01/01 17:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.14 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,7 +800,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 
 	if (dstate->isend)
 		PG_RETURN_POINTER(NULL);
-	stored = (LexemeInfo *) dstate->private;
+	stored = (LexemeInfo *) dstate->private_state;
 
 	if (stored)
 		curpos = stored->posinsubst + 1;
@@ -859,7 +859,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 		info = NULL;			/* word isn't recognized */
 	}
 
-	dstate->private = (void *) info;
+	dstate->private_state = (void *) info;
 
 	if (!info)
 	{

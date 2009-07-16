@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.149 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.150 2009/07/16 06:33:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1125,8 +1125,8 @@ typedef struct RangeTblRef
 /*----------
  * JoinExpr - for SQL JOIN expressions
  *
- * isNatural, using, and quals are interdependent.	The user can write only
- * one of NATURAL, USING(), or ON() (this is enforced by the grammar).
+ * isNatural, usingClause, and quals are interdependent.  The user can write
+ * only one of NATURAL, USING(), or ON() (this is enforced by the grammar).
  * If he writes NATURAL then parse analysis generates the equivalent USING()
  * list, and from that fills in "quals" with the right equality comparisons.
  * If he writes USING() then "quals" is filled with equality comparisons.
@@ -1152,7 +1152,7 @@ typedef struct JoinExpr
 	bool		isNatural;		/* Natural join? Will need to shape table */
 	Node	   *larg;			/* left subtree */
 	Node	   *rarg;			/* right subtree */
-	List	   *using;			/* USING clause, if any (list of String) */
+	List	   *usingClause;	/* USING clause, if any (list of String) */
 	Node	   *quals;			/* qualifiers on join, if any */
 	Alias	   *alias;			/* user-written alias clause, if any */
 	int			rtindex;		/* RT index assigned for join, or 0 */

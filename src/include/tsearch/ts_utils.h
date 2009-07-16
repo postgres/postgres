@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.17 2009/06/11 14:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.18 2009/07/16 06:33:46 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ extern TSQuery parse_tsquery(char *buf,
 extern void pushValue(TSQueryParserState state,
 		  char *strval, int lenval, int2 weight, bool prefix);
 extern void pushStop(TSQueryParserState state);
-extern void pushOperator(TSQueryParserState state, int8 operator);
+extern void pushOperator(TSQueryParserState state, int8 oper);
 
 /*
  * parse plain text and lexize words

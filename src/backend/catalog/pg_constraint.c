@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.45 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.46 2009/07/16 06:33:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,7 +419,7 @@ ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
  */
 char *
 ChooseConstraintName(const char *name1, const char *name2,
-					 const char *label, Oid namespace,
+					 const char *label, Oid namespaceid,
 					 List *others)
 {
 	int			pass = 0;
@@ -461,7 +461,7 @@ ChooseConstraintName(const char *name1, const char *name2,
 			ScanKeyInit(&skey[1],
 						Anum_pg_constraint_connamespace,
 						BTEqualStrategyNumber, F_OIDEQ,
-						ObjectIdGetDatum(namespace));
+						ObjectIdGetDatum(namespaceid));
 
 			conscan = systable_beginscan(conDesc, ConstraintNameNspIndexId, true,
 										 SnapshotNow, 2, skey);

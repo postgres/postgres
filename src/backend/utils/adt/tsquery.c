@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.20 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.21 2009/07/16 06:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,15 +419,15 @@ findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 	{
 		Assert(ptr[*pos].type == QI_OPR);
 
-		if (ptr[*pos].operator.oper == OP_NOT)
+		if (ptr[*pos].qoperator.oper == OP_NOT)
 		{
-			ptr[*pos].operator.left = 1;
+			ptr[*pos].qoperator.left = 1;
 			(*pos)++;
 			findoprnd_recurse(ptr, pos, nnodes);
 		}
 		else
 		{
-			QueryOperator *curitem = &ptr[*pos].operator;
+			QueryOperator *curitem = &ptr[*pos].qoperator;
 			int			tmp = *pos;
 
 			Assert(curitem->oper == OP_AND || curitem->oper == OP_OR);
@@ -611,7 +611,7 @@ infix(INFIX *in, bool first)
 
 	if (in->curpol->type == QI_VAL)
 	{
-		QueryOperand *curpol = &in->curpol->operand;
+		QueryOperand *curpol = &in->curpol->qoperand;
 		char	   *op = in->op + curpol->distance;
 		int			clen;
 
@@ -671,7 +671,7 @@ infix(INFIX *in, bool first)
 		*(in->cur) = '\0';
 		in->curpol++;
 	}
-	else if (in->curpol->operator.oper == OP_NOT)
+	else if (in->curpol->qoperator.oper == OP_NOT)
 	{
 		bool		isopr = false;
 
@@ -699,7 +699,7 @@ infix(INFIX *in, bool first)
 	}
 	else
 	{
-		int8		op = in->curpol->operator.oper;
+		int8		op = in->curpol->qoperator.oper;
 		INFIX		nrm;
 
 		in->curpol++;
@@ -808,12 +808,12 @@ tsquerysend(PG_FUNCTION_ARGS)
 		switch (item->type)
 		{
 			case QI_VAL:
-				pq_sendint(&buf, item->operand.weight, sizeof(uint8));
-				pq_sendint(&buf, item->operand.prefix, sizeof(uint8));
-				pq_sendstring(&buf, GETOPERAND(query) + item->operand.distance);
+				pq_sendint(&buf, item->qoperand.weight, sizeof(uint8));
+				pq_sendint(&buf, item->qoperand.prefix, sizeof(uint8));
+				pq_sendstring(&buf, GETOPERAND(query) + item->qoperand.distance);
 				break;
 			case QI_OPR:
-				pq_sendint(&buf, item->operator.oper, sizeof(item->operator.oper));
+				pq_sendint(&buf, item->qoperator.oper, sizeof(item->qoperator.oper));
 				break;
 			default:
 				elog(ERROR, "unrecognized tsquery node type: %d", item->type);
@@ -887,11 +887,11 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 			COMP_CRC32(valcrc, val, val_len);
 			FIN_CRC32(valcrc);
 
-			item->operand.weight = weight;
-			item->operand.prefix = (prefix) ? true : false;
-			item->operand.valcrc = (int32) valcrc;
-			item->operand.length = val_len;
-			item->operand.distance = datalen;
+			item->qoperand.weight = weight;
+			item->qoperand.prefix = (prefix) ? true : false;
+			item->qoperand.valcrc = (int32) valcrc;
+			item->qoperand.length = val_len;
+			item->qoperand.distance = datalen;
 
 			/*
 			 * Operand strings are copied to the final struct after this loop;
@@ -912,7 +912,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 			if (i == size - 1)
 				elog(ERROR, "invalid pointer to right operand");
 
-			item->operator.oper = oper;
+			item->qoperator.oper = oper;
 		}
 		else
 			elog(ERROR, "unrecognized tsquery node type: %d", item->type);
@@ -936,8 +936,8 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	{
 		if (item->type == QI_VAL)
 		{
-			memcpy(ptr, operands[i], item->operand.length + 1);
-			ptr += item->operand.length + 1;
+			memcpy(ptr, operands[i], item->qoperand.length + 1);
+			ptr += item->qoperand.length + 1;
 		}
 		item++;
 	}

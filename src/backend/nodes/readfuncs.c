@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.222 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.223 2009/07/16 06:33:42 petere Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -1070,7 +1070,7 @@ _readJoinExpr(void)
 	READ_BOOL_FIELD(isNatural);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
-	READ_NODE_FIELD(using);
+	READ_NODE_FIELD(usingClause);
 	READ_NODE_FIELD(quals);
 	READ_NODE_FIELD(alias);
 	READ_INT_FIELD(rtindex);
