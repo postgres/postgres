@@ -137,6 +137,9 @@
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
 
+/* Define to 1 if you have the `erand48' function. */
+#undef HAVE_ERAND48
+
 /* Define to 1 if you have the `ERR_set_mark' function. */
 #undef HAVE_ERR_SET_MARK
 

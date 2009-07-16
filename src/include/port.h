@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.125 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.126 2009/07/16 17:43:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,10 +316,6 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #define popen(a,b) _popen(a,b)
 #define pclose(a) _pclose(a)
 
-/* Missing rand functions */
-extern long lrand48(void);
-extern void srand48(long seed);
-
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY
 /* Last parameter not used */
@@ -349,6 +345,13 @@ extern char *crypt(const char *key, const char *setting);
 extern int	fseeko(FILE *stream, off_t offset, int whence);
 extern off_t ftello(FILE *stream);
 #endif
+#endif
+
+#ifndef HAVE_ERAND48
+/* we assume all of these are present or missing together */
+extern double erand48(unsigned short xseed[3]);
+extern long lrand48(void);
+extern void srand48(long seed);
 #endif
 
 #ifndef HAVE_FSEEKO

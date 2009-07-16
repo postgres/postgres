@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.604 2009/07/02 18:55:40 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.605 2009/07/16 17:43:52 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1249,7 +1249,7 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
+AC_REPLACE_FUNCS([crypt erand48 getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
@@ -1294,7 +1294,6 @@ if test "$PORTNAME" = "win32"; then
 AC_REPLACE_FUNCS(gettimeofday)
 AC_LIBOBJ(kill)
 AC_LIBOBJ(open)
-AC_LIBOBJ(rand)
 AC_LIBOBJ(win32env)
 AC_LIBOBJ(win32error)
 AC_DEFINE([HAVE_SYMLINK], 1,
