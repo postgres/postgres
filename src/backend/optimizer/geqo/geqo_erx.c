@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_erx.c,v 1.20 2005/10/15 02:49:19 momjian Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_erx.c,v 1.21 2009/07/16 20:55:44 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -36,11 +36,11 @@
 #include "optimizer/geqo_random.h"
 
 
-static int	gimme_edge(Gene gene1, Gene gene2, Edge *edge_table);
-static void remove_gene(Gene gene, Edge edge, Edge *edge_table);
-static Gene gimme_gene(Edge edge, Edge *edge_table);
+static int	gimme_edge(PlannerInfo *root, Gene gene1, Gene gene2, Edge *edge_table);
+static void remove_gene(PlannerInfo *root, Gene gene, Edge edge, Edge *edge_table);
+static Gene gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table);
 
-static Gene edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene);
+static Gene edge_failure(PlannerInfo *root, Gene *gene, int index, Edge *edge_table, int num_gene);
 
 
 /* alloc_edge_table
@@ -50,7 +50,7 @@ static Gene edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene);
  */
 
 Edge *
-alloc_edge_table(int num_gene)
+alloc_edge_table(PlannerInfo *root, int num_gene)
 {
 	Edge	   *edge_table;
 
@@ -70,7 +70,7 @@ alloc_edge_table(int num_gene)
  *
  */
 void
-free_edge_table(Edge *edge_table)
+free_edge_table(PlannerInfo *root, Edge *edge_table)
 {
 	pfree(edge_table);
 }
@@ -89,7 +89,8 @@ free_edge_table(Edge *edge_table)
  *
  */
 float
-gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
+gimme_edge_table(PlannerInfo *root, Gene *tour1, Gene *tour2,
+				 int num_gene, Edge *edge_table)
 {
 	int			i,
 				index1,
@@ -121,11 +122,11 @@ gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
 		 * twice per edge
 		 */
 
-		edge_total += gimme_edge(tour1[index1], tour1[index2], edge_table);
-		gimme_edge(tour1[index2], tour1[index1], edge_table);
+		edge_total += gimme_edge(root, tour1[index1], tour1[index2], edge_table);
+		gimme_edge(root, tour1[index2], tour1[index1], edge_table);
 
-		edge_total += gimme_edge(tour2[index1], tour2[index2], edge_table);
-		gimme_edge(tour2[index2], tour2[index1], edge_table);
+		edge_total += gimme_edge(root, tour2[index1], tour2[index2], edge_table);
+		gimme_edge(root, tour2[index2], tour2[index1], edge_table);
 	}
 
 	/* return average number of edges per index */
@@ -147,7 +148,7 @@ gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
  *			  0 if edge was already registered and edge_table is unchanged
  */
 static int
-gimme_edge(Gene gene1, Gene gene2, Edge *edge_table)
+gimme_edge(PlannerInfo *root, Gene gene1, Gene gene2, Edge *edge_table)
 {
 	int			i;
 	int			edges;
@@ -189,13 +190,13 @@ gimme_edge(Gene gene1, Gene gene2, Edge *edge_table)
  *
  */
 int
-gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene)
+gimme_tour(PlannerInfo *root, Edge *edge_table, Gene *new_gene, int num_gene)
 {
 	int			i;
 	int			edge_failures = 0;
 
-	new_gene[0] = (Gene) geqo_randint(num_gene, 1);		/* choose int between 1
-														 * and num_gene */
+	/* choose int between 1 and num_gene */
+	new_gene[0] = (Gene) geqo_randint(root, num_gene, 1);
 
 	for (i = 1; i < num_gene; i++)
 	{
@@ -204,18 +205,18 @@ gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene)
 		 * table
 		 */
 
-		remove_gene(new_gene[i - 1], edge_table[(int) new_gene[i - 1]], edge_table);
+		remove_gene(root, new_gene[i - 1], edge_table[(int) new_gene[i - 1]], edge_table);
 
 		/* find destination for the newly entered point */
 
 		if (edge_table[new_gene[i - 1]].unused_edges > 0)
-			new_gene[i] = gimme_gene(edge_table[(int) new_gene[i - 1]], edge_table);
+			new_gene[i] = gimme_gene(root, edge_table[(int) new_gene[i - 1]], edge_table);
 
 		else
 		{						/* cope with fault */
 			edge_failures++;
 
-			new_gene[i] = edge_failure(new_gene, i - 1, edge_table, num_gene);
+			new_gene[i] = edge_failure(root, new_gene, i - 1, edge_table, num_gene);
 		}
 
 		/* mark this node as incorporated */
@@ -235,7 +236,7 @@ gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene)
  *
  */
 static void
-remove_gene(Gene gene, Edge edge, Edge *edge_table)
+remove_gene(PlannerInfo *root, Gene gene, Edge edge, Edge *edge_table)
 {
 	int			i,
 				j;
@@ -277,7 +278,7 @@ remove_gene(Gene gene, Edge edge, Edge *edge_table)
  *
  */
 static Gene
-gimme_gene(Edge edge, Edge *edge_table)
+gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 {
 	int			i;
 	Gene		friend;
@@ -340,7 +341,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 
 
 	/* random decision of the possible candidates to use */
-	rand_decision = (int) geqo_randint(minimum_count - 1, 0);
+	rand_decision = geqo_randint(root, minimum_count - 1, 0);
 
 
 	for (i = 0; i < edge.unused_edges; i++)
@@ -368,7 +369,7 @@ gimme_gene(Edge edge, Edge *edge_table)
  *
  */
 static Gene
-edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
+edge_failure(PlannerInfo *root, Gene *gene, int index, Edge *edge_table, int num_gene)
 {
 	int			i;
 	Gene		fail_gene = gene[index];
@@ -401,7 +402,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 	if (four_count != 0)
 	{
 
-		rand_decision = (int) geqo_randint(four_count - 1, 0);
+		rand_decision = geqo_randint(root, four_count - 1, 0);
 
 		for (i = 1; i <= num_gene; i++)
 		{
@@ -423,7 +424,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 	else if (remaining_edges != 0)
 	{
 		/* random decision of the gene with remaining edges */
-		rand_decision = (int) geqo_randint(remaining_edges - 1, 0);
+		rand_decision = geqo_randint(root, remaining_edges - 1, 0);
 
 		for (i = 1; i <= num_gene; i++)
 		{

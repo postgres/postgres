@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_selection.h,v 1.21 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo_selection.h,v 1.22 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,11 @@
 #ifndef GEQO_SELECTION_H
 #define GEQO_SELECTION_H
 
-#include "optimizer/geqo_gene.h"
+#include "optimizer/geqo.h"
 
-extern void geqo_selection(Chromosome *momma, Chromosome *daddy, Pool *pool, double bias);
+
+extern void geqo_selection(PlannerInfo *root,
+						   Chromosome *momma, Chromosome *daddy,
+						   Pool *pool, double bias);
 
 #endif   /* GEQO_SELECTION_H */

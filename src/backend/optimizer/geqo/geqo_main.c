@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.56 2009/01/01 17:23:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.57 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,9 @@
 #include <math.h>
 
 #include "optimizer/geqo_misc.h"
+#include "optimizer/geqo_mutation.h"
 #include "optimizer/geqo_pool.h"
+#include "optimizer/geqo_random.h"
 #include "optimizer/geqo_selection.h"
 
 
@@ -38,6 +40,7 @@ int			Geqo_effort;
 int			Geqo_pool_size;
 int			Geqo_generations;
 double		Geqo_selection_bias;
+double		Geqo_seed;
 
 
 static int	gimme_pool_size(int nr_rel);
@@ -63,7 +66,7 @@ static int	gimme_number_generations(int pool_size);
 RelOptInfo *
 geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 {
-	GeqoEvalData evaldata;
+	GeqoPrivateData private;
 	int			generation;
 	Chromosome *momma;
 	Chromosome *daddy;
@@ -88,9 +91,12 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	int			mutations = 0;
 #endif
 
-/* set up evaldata */
-	evaldata.root = root;
-	evaldata.initial_rels = initial_rels;
+/* set up private information */
+	root->join_search_private = (void *) &private;
+	private.initial_rels = initial_rels;
+
+/* initialize private number generator */
+	geqo_set_seed(root, Geqo_seed);
 
 /* set GA parameters */
 	pool_size = gimme_pool_size(number_of_rels);
@@ -98,13 +104,13 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	status_interval = 10;
 
 /* allocate genetic pool memory */
-	pool = alloc_pool(pool_size, number_of_rels);
+	pool = alloc_pool(root, pool_size, number_of_rels);
 
 /* random initialization of the pool */
-	random_init_pool(pool, &evaldata);
+	random_init_pool(root, pool);
 
 /* sort the pool according to cheapest path as fitness */
-	sort_pool(pool);			/* we have to do it only one time, since all
+	sort_pool(root, pool);		/* we have to do it only one time, since all
 								 * kids replace the worst individuals in
 								 * future (-> geqo_pool.c:spread_chromo ) */
 
@@ -116,49 +122,49 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 #endif
 
 /* allocate chromosome momma and daddy memory */
-	momma = alloc_chromo(pool->string_length);
-	daddy = alloc_chromo(pool->string_length);
+	momma = alloc_chromo(root, pool->string_length);
+	daddy = alloc_chromo(root, pool->string_length);
 
 #if defined (ERX)
 #ifdef GEQO_DEBUG
 	elog(DEBUG2, "using edge recombination crossover [ERX]");
 #endif
 /* allocate edge table memory */
-	edge_table = alloc_edge_table(pool->string_length);
+	edge_table = alloc_edge_table(root, pool->string_length);
 #elif defined(PMX)
 #ifdef GEQO_DEBUG
 	elog(DEBUG2, "using partially matched crossover [PMX]");
 #endif
 /* allocate chromosome kid memory */
-	kid = alloc_chromo(pool->string_length);
+	kid = alloc_chromo(root, pool->string_length);
 #elif defined(CX)
 #ifdef GEQO_DEBUG
 	elog(DEBUG2, "using cycle crossover [CX]");
 #endif
 /* allocate city table memory */
-	kid = alloc_chromo(pool->string_length);
-	city_table = alloc_city_table(pool->string_length);
+	kid = alloc_chromo(root, pool->string_length);
+	city_table = alloc_city_table(root, pool->string_length);
 #elif defined(PX)
 #ifdef GEQO_DEBUG
 	elog(DEBUG2, "using position crossover [PX]");
 #endif
 /* allocate city table memory */
-	kid = alloc_chromo(pool->string_length);
-	city_table = alloc_city_table(pool->string_length);
+	kid = alloc_chromo(root, pool->string_length);
+	city_table = alloc_city_table(root, pool->string_length);
 #elif defined(OX1)
 #ifdef GEQO_DEBUG
 	elog(DEBUG2, "using order crossover [OX1]");
 #endif
 /* allocate city table memory */
-	kid = alloc_chromo(pool->string_length);
-	city_table = alloc_city_table(pool->string_length);
+	kid = alloc_chromo(root, pool->string_length);
+	city_table = alloc_city_table(root, pool->string_length);
 #elif defined(OX2)
 #ifdef GEQO_DEBUG
 	elog(DEBUG2, "using order crossover [OX2]");
 #endif
 /* allocate city table memory */
-	kid = alloc_chromo(pool->string_length);
-	city_table = alloc_city_table(pool->string_length);
+	kid = alloc_chromo(root, pool->string_length);
+	city_table = alloc_city_table(root, pool->string_length);
 #endif
 
 
@@ -168,45 +174,45 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	for (generation = 0; generation < number_generations; generation++)
 	{
 		/* SELECTION: using linear bias function */
-		geqo_selection(momma, daddy, pool, Geqo_selection_bias);
+		geqo_selection(root, momma, daddy, pool, Geqo_selection_bias);
 
 #if defined (ERX)
 		/* EDGE RECOMBINATION CROSSOVER */
-		difference = gimme_edge_table(momma->string, daddy->string, pool->string_length, edge_table);
+		difference = gimme_edge_table(root, momma->string, daddy->string, pool->string_length, edge_table);
 
 		kid = momma;
 
 		/* are there any edge failures ? */
-		edge_failures += gimme_tour(edge_table, kid->string, pool->string_length);
+		edge_failures += gimme_tour(root, edge_table, kid->string, pool->string_length);
 #elif defined(PMX)
 		/* PARTIALLY MATCHED CROSSOVER */
-		pmx(momma->string, daddy->string, kid->string, pool->string_length);
+		pmx(root, momma->string, daddy->string, kid->string, pool->string_length);
 #elif defined(CX)
 		/* CYCLE CROSSOVER */
-		cycle_diffs = cx(momma->string, daddy->string, kid->string, pool->string_length, city_table);
+		cycle_diffs = cx(root, momma->string, daddy->string, kid->string, pool->string_length, city_table);
 		/* mutate the child */
 		if (cycle_diffs == 0)
 		{
 			mutations++;
-			geqo_mutation(kid->string, pool->string_length);
+			geqo_mutation(root, kid->string, pool->string_length);
 		}
 #elif defined(PX)
 		/* POSITION CROSSOVER */
-		px(momma->string, daddy->string, kid->string, pool->string_length, city_table);
+		px(root, momma->string, daddy->string, kid->string, pool->string_length, city_table);
 #elif defined(OX1)
 		/* ORDER CROSSOVER */
-		ox1(momma->string, daddy->string, kid->string, pool->string_length, city_table);
+		ox1(root, momma->string, daddy->string, kid->string, pool->string_length, city_table);
 #elif defined(OX2)
 		/* ORDER CROSSOVER */
-		ox2(momma->string, daddy->string, kid->string, pool->string_length, city_table);
+		ox2(root, momma->string, daddy->string, kid->string, pool->string_length, city_table);
 #endif
 
 
 		/* EVALUATE FITNESS */
-		kid->worth = geqo_eval(kid->string, pool->string_length, &evaldata);
+		kid->worth = geqo_eval(root, kid->string, pool->string_length);
 
 		/* push the kid into the wilderness of life according to its worth */
-		spread_chromo(kid, pool);
+		spread_chromo(root, kid, pool);
 
 
 #ifdef GEQO_DEBUG
@@ -249,7 +255,7 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	 */
 	best_tour = (Gene *) pool->data[0].string;
 
-	best_rel = gimme_tree(best_tour, pool->string_length, &evaldata);
+	best_rel = gimme_tree(root, best_tour, pool->string_length);
 
 	if (best_rel == NULL)
 		elog(ERROR, "failed to make a valid plan");
@@ -260,28 +266,31 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 #endif
 
 	/* ... free memory stuff */
-	free_chromo(momma);
-	free_chromo(daddy);
+	free_chromo(root, momma);
+	free_chromo(root, daddy);
 
 #if defined (ERX)
-	free_edge_table(edge_table);
+	free_edge_table(root, edge_table);
 #elif defined(PMX)
-	free_chromo(kid);
+	free_chromo(root, kid);
 #elif defined(CX)
-	free_chromo(kid);
-	free_city_table(city_table);
+	free_chromo(root, kid);
+	free_city_table(root, city_table);
 #elif defined(PX)
-	free_chromo(kid);
-	free_city_table(city_table);
+	free_chromo(root, kid);
+	free_city_table(root, city_table);
 #elif defined(OX1)
-	free_chromo(kid);
-	free_city_table(city_table);
+	free_chromo(root, kid);
+	free_city_table(root, city_table);
 #elif defined(OX2)
-	free_chromo(kid);
-	free_city_table(city_table);
+	free_chromo(root, kid);
+	free_city_table(root, city_table);
 #endif
 
-	free_pool(pool);
+	free_pool(root, pool);
+
+	/* ... clear root pointer to our private storage */
+	root->join_search_private = NULL;
 
 	return best_rel;
 }

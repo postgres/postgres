@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.221 2009/07/03 19:14:25 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.222 2009/07/16 20:55:44 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2149,7 +2149,23 @@ archive_command = 'copy "%p" "C:\\server\\archivedir\\%f"'  # Windows
        </para>
       </listitem>
      </varlistentry>
-     
+
+     <varlistentry id="guc-geqo-seed" xreflabel="geqo_seed">
+      <term><varname>geqo_seed</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>geqo_seed</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Controls the initial value of the random number generator used
+        by GEQO to select random paths through the join order search space.
+        The value can range from zero (the default) to one.  Varying the
+        value changes the set of join paths explored, and may result in a
+        better or worse best path being found.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
      <sect2 id="runtime-config-query-other">

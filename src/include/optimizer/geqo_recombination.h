@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_recombination.h,v 1.20 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo_recombination.h,v 1.21 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,10 @@
 #ifndef GEQO_RECOMBINATION_H
 #define GEQO_RECOMBINATION_H
 
-#include "optimizer/geqo_gene.h"
+#include "optimizer/geqo.h"
 
-extern void init_tour(Gene *tour, int num_gene);
+
+extern void init_tour(PlannerInfo *root, Gene *tour, int num_gene);
 
 
 /* edge recombination crossover [ERX] */
@@ -38,12 +39,14 @@ typedef struct Edge
 	int			unused_edges;
 } Edge;
 
-extern Edge *alloc_edge_table(int num_gene);
-extern void free_edge_table(Edge *edge_table);
+extern Edge *alloc_edge_table(PlannerInfo *root, int num_gene);
+extern void free_edge_table(PlannerInfo *root, Edge *edge_table);
 
-extern float gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table);
+extern float gimme_edge_table(PlannerInfo *root, Gene *tour1, Gene *tour2,
+							  int num_gene, Edge *edge_table);
 
-extern int	gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene);
+extern int	gimme_tour(PlannerInfo *root, Edge *edge_table, Gene *new_gene,
+					   int num_gene);
 
 
 /* partially matched crossover [PMX] */
@@ -51,7 +54,9 @@ extern int	gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene);
 #define DAD 1					/* indicator for gene from dad */
 #define MOM 0					/* indicator for gene from mom */
 
-extern void pmx(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene);
+extern void pmx(PlannerInfo *root,
+				Gene *tour1, Gene *tour2,
+				Gene *offspring, int num_gene);
 
 
 typedef struct City
@@ -62,19 +67,23 @@ typedef struct City
 	int			select_list;
 } City;
 
-extern City *alloc_city_table(int num_gene);
-extern void free_city_table(City *city_table);
+extern City *alloc_city_table(PlannerInfo *root, int num_gene);
+extern void free_city_table(PlannerInfo *root, City *city_table);
 
 /* cycle crossover [CX] */
-extern int	cx(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table);
+extern int	cx(PlannerInfo *root, Gene *tour1, Gene *tour2,
+			   Gene *offspring, int num_gene, City *city_table);
 
 /* position crossover [PX] */
-extern void px(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table);
+extern void px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring,
+			   int num_gene, City *city_table);
 
 /* order crossover [OX1] according to Davis */
-extern void ox1(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_table);
+extern void ox1(PlannerInfo *root, Gene *mom, Gene *dad, Gene *offspring,
+				int num_gene, City *city_table);
 
 /* order crossover [OX2] according to Syswerda */
-extern void ox2(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_table);
+extern void ox2(PlannerInfo *root, Gene *mom, Gene *dad, Gene *offspring,
+				int num_gene, City *city_table);
 
 #endif   /* GEQO_RECOMBINATION_H */

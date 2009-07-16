@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.173 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.174 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,6 +192,9 @@ typedef struct PlannerInfo
 	/* These fields are used only when hasRecursion is true: */
 	int			wt_param_id;	/* PARAM_EXEC ID for the work table */
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
+
+	/* optional private data for join_search_hook, e.g., GEQO */
+	void	   *join_search_private;
 } PlannerInfo;
 
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.40 2007/07/21 04:02:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.41 2009/07/16 20:55:44 tgl Exp $ -->
 
  <chapter id="geqo">
   <chapterinfo>
@@ -49,7 +49,7 @@
     methods</firstterm> (e.g., nested loop, hash join, merge join in
     <productname>PostgreSQL</productname>) to process individual joins
     and a diversity of <firstterm>indexes</firstterm> (e.g.,
-    B-tree, hash, GiST and GIN in <productname>PostgreSQL</productname>) as 
+    B-tree, hash, GiST and GIN in <productname>PostgreSQL</productname>) as
     access paths for relations.
    </para>
 
@@ -88,8 +88,7 @@
 
    <para>
     The genetic algorithm (<acronym>GA</acronym>) is a heuristic optimization method which
-    operates through
-    nondeterministic, randomized search. The set of possible solutions for the
+    operates through randomized search. The set of possible solutions for the
     optimization problem is considered as a
     <firstterm>population</firstterm> of <firstterm>individuals</firstterm>.
     The degree of adaptation of an individual to its environment is specified
@@ -116,7 +115,7 @@
     According to the <systemitem class="resource">comp.ai.genetic</> <acronym>FAQ</acronym> it cannot be stressed too
     strongly that a <acronym>GA</acronym> is not a pure random search for a solution to a
     problem. A <acronym>GA</acronym> uses stochastic processes, but the result is distinctly
-    non-random (better than random). 
+    non-random (better than random).
    </para>
 
    <figure id="geqo-diagram">
@@ -260,9 +259,13 @@
    <para>
     This process is inherently nondeterministic, because of the randomized
     choices made during both the initial population selection and subsequent
-    <quote>mutation</> of the best candidates.  Hence different plans may
-    be selected from one run to the next, resulting in varying run time
-    and varying output row order.
+    <quote>mutation</> of the best candidates.  To avoid surprising changes
+    of the selected plan, each run of the GEQO algorithm restarts its
+    random number generator with the current <xref linkend="guc-geqo-seed">
+    parameter setting.  As long as <varname>geqo_seed</> and the other
+    GEQO parameters are kept fixed, the same plan will be generated for a
+    given query (and other planner inputs such as statistics).  To experiment
+    with different search paths, try changing <varname>geqo_seed</>.
    </para>
 
   </sect2>
@@ -330,7 +333,7 @@
       url="news://comp.ai.genetic"></ulink>)
      </para>
     </listitem>
-   
+
     <listitem>
      <para>
       <ulink url="http://www.red3d.com/cwr/evolve.html">

@@ -6,7 +6,7 @@
 *	 PX operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_px.c,v 1.10 2003/11/29 22:39:49 pgsql Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_px.c,v 1.11 2009/07/16 20:55:44 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -43,7 +43,8 @@
  *	 position crossover
  */
 void
-px(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
+px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
+   City *city_table)
 {
 
 	int			num_positions;
@@ -57,12 +58,12 @@ px(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
 		city_table[i].used = 0;
 
 	/* choose random positions that will be inherited directly from parent */
-	num_positions = geqo_randint(2 * num_gene / 3, num_gene / 3);
+	num_positions = geqo_randint(root, 2 * num_gene / 3, num_gene / 3);
 
 	/* choose random position */
 	for (i = 0; i < num_positions; i++)
 	{
-		pos = geqo_randint(num_gene - 1, 0);
+		pos = geqo_randint(root, num_gene - 1, 0);
 
 		offspring[pos] = tour1[pos];	/* transfer cities to child */
 		city_table[(int) tour1[pos]].used = 1;	/* mark city used */

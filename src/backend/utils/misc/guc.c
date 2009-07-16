@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.507 2009/07/16 06:33:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.508 2009/07/16 20:55:44 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2025,6 +2025,14 @@ static struct config_real ConfigureNamesReal[] =
 		&Geqo_selection_bias,
 		DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
 		MAX_GEQO_SELECTION_BIAS, NULL, NULL
+	},
+	{
+		{"geqo_seed", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("GEQO: seed for random path selection."),
+			NULL
+		},
+		&Geqo_seed,
+		0.0, 0.0, 1.0, NULL, NULL
 	},
 
 	{

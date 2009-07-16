@@ -213,6 +213,7 @@
 #geqo_pool_size = 0			# selects default based on effort
 #geqo_generations = 0			# selects default based on effort
 #geqo_selection_bias = 2.0		# range 1.5-2.0
+#geqo_seed = 0.0			# range 0.0-1.0
 
 # - Other Planner Options -
 

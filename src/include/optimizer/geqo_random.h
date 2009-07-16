@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_random.h,v 1.21 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo_random.h,v 1.22 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,13 +26,16 @@
 
 #include <math.h>
 
-/* geqo_rand returns a random float value between 0 and 1 inclusive */
+#include "optimizer/geqo.h"
 
-#define geqo_rand() ((double) random() / (double) MAX_RANDOM_VALUE)
+
+extern void geqo_set_seed(PlannerInfo *root, double seed);
+
+/* geqo_rand returns a random float value between 0 and 1 inclusive */
+extern double geqo_rand(PlannerInfo *root);
 
 /* geqo_randint returns integer value between lower and upper inclusive */
-
-#define geqo_randint(upper,lower) \
-	( (int) floor( geqo_rand()*(((upper)-(lower))+0.999999) ) + (lower) )
+#define geqo_randint(root, upper, lower) \
+	( (int) floor( geqo_rand(root)*(((upper)-(lower))+0.999999) ) + (lower) )
 
 #endif   /* GEQO_RANDOM_H */

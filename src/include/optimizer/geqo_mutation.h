@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_mutation.h,v 1.21 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo_mutation.h,v 1.22 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,9 @@
 #ifndef GEQO_MUTATION_H
 #define GEQO_MUTATION_H
 
-#include "optimizer/geqo_gene.h"
+#include "optimizer/geqo.h"
 
-extern void geqo_mutation(Gene *tour, int num_gene);
+
+extern void geqo_mutation(PlannerInfo *root, Gene *tour, int num_gene);
 
 #endif   /* GEQO_MUTATION_H */

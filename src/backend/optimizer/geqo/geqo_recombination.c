@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.15 2005/10/15 02:49:19 momjian Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.16 2009/07/16 20:55:44 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -35,7 +35,7 @@
  *	 and the procedure repeated.
  */
 void
-init_tour(Gene *tour, int num_gene)
+init_tour(PlannerInfo *root, Gene *tour, int num_gene)
 {
 	Gene	   *tmp;
 	int			remainder;
@@ -53,7 +53,7 @@ init_tour(Gene *tour, int num_gene)
 	for (i = 0; i < num_gene; i++)
 	{
 		/* choose value between 0 and remainder inclusive */
-		next = (int) geqo_randint(remainder, 0);
+		next = geqo_randint(root, remainder, 0);
 		/* output that element of the tmp array */
 		tour[i] = tmp[next];
 		/* and delete it */
@@ -81,7 +81,7 @@ init_tour(Gene *tour, int num_gene)
  *	 allocate memory for city table
  */
 City *
-alloc_city_table(int num_gene)
+alloc_city_table(PlannerInfo *root, int num_gene)
 {
 	City	   *city_table;
 
@@ -99,7 +99,7 @@ alloc_city_table(int num_gene)
  *	  deallocate memory of city table
  */
 void
-free_city_table(City *city_table)
+free_city_table(PlannerInfo *root, City *city_table)
 {
 	pfree(city_table);
 }

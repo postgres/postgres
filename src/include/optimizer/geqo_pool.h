@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_pool.h,v 1.25 2009/01/01 17:24:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo_pool.h,v 1.26 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,15 +26,15 @@
 #include "optimizer/geqo.h"
 
 
-extern Pool *alloc_pool(int pool_size, int string_length);
-extern void free_pool(Pool *pool);
+extern Pool *alloc_pool(PlannerInfo *root, int pool_size, int string_length);
+extern void free_pool(PlannerInfo *root, Pool *pool);
 
-extern void random_init_pool(Pool *pool, GeqoEvalData *evaldata);
-extern Chromosome *alloc_chromo(int string_length);
-extern void free_chromo(Chromosome *chromo);
+extern void random_init_pool(PlannerInfo *root, Pool *pool);
+extern Chromosome *alloc_chromo(PlannerInfo *root, int string_length);
+extern void free_chromo(PlannerInfo *root, Chromosome *chromo);
 
-extern void spread_chromo(Chromosome *chromo, Pool *pool);
+extern void spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool);
 
-extern void sort_pool(Pool *pool);
+extern void sort_pool(PlannerInfo *root, Pool *pool);
 
 #endif   /* GEQO_POOL_H */

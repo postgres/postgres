@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.88 2009/01/01 17:23:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.89 2009/07/16 20:55:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static bool desirable_join(PlannerInfo *root,
  * Returns cost of a query tree as an individual of the population.
  */
 Cost
-geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
+geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 {
 	MemoryContext mycontext;
 	MemoryContext oldcxt;
@@ -94,13 +94,13 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * (If we are dealing with enough join rels, which we very likely are, a
 	 * new hash table will get built and used locally.)
 	 */
-	savelength = list_length(evaldata->root->join_rel_list);
-	savehash = evaldata->root->join_rel_hash;
+	savelength = list_length(root->join_rel_list);
+	savehash = root->join_rel_hash;
 
-	evaldata->root->join_rel_hash = NULL;
+	root->join_rel_hash = NULL;
 
 	/* construct the best path for the given combination of relations */
-	joinrel = gimme_tree(tour, num_gene, evaldata);
+	joinrel = gimme_tree(root, tour, num_gene);
 
 	/*
 	 * compute fitness
@@ -117,9 +117,9 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * Restore join_rel_list to its former state, and put back original
 	 * hashtable if any.
 	 */
-	evaldata->root->join_rel_list = list_truncate(evaldata->root->join_rel_list,
-												  savelength);
-	evaldata->root->join_rel_hash = savehash;
+	root->join_rel_list = list_truncate(root->join_rel_list,
+										savelength);
+	root->join_rel_hash = savehash;
 
 	/* release all the memory acquired within gimme_tree */
 	MemoryContextSwitchTo(oldcxt);
@@ -134,7 +134,6 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
  *	  order.
  *
  *	 'tour' is the proposed join order, of length 'num_gene'
- *	 'evaldata' contains the context we need
  *
  * Returns a new join relation whose cheapest path is the best plan for
  * this join order.  NB: will return NULL if join order is invalid.
@@ -153,8 +152,9 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
  * plans.
  */
 RelOptInfo *
-gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
+gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 {
+	GeqoPrivateData *private = (GeqoPrivateData *) root->join_search_private;
 	RelOptInfo **stack;
 	int			stack_depth;
 	RelOptInfo *joinrel;
@@ -193,7 +193,7 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 
 		/* Get the next input relation and push it */
 		cur_rel_index = (int) tour[rel_count];
-		stack[stack_depth] = (RelOptInfo *) list_nth(evaldata->initial_rels,
+		stack[stack_depth] = (RelOptInfo *) list_nth(private->initial_rels,
 													 cur_rel_index - 1);
 		stack_depth++;
 
@@ -211,7 +211,7 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 			 * have exhausted the input, the heuristics can't prevent popping.
 			 */
 			if (rel_count < num_gene - 1 &&
-				!desirable_join(evaldata->root, outer_rel, inner_rel))
+				!desirable_join(root, outer_rel, inner_rel))
 				break;
 
 			/*
@@ -220,7 +220,7 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 			 * root->join_rel_list yet, and so the paths constructed for it
 			 * will only include the ones we want.
 			 */
-			joinrel = make_join_rel(evaldata->root, outer_rel, inner_rel);
+			joinrel = make_join_rel(root, outer_rel, inner_rel);
 
 			/* Can't pop stack here if join order is not valid */
 			if (!joinrel)
