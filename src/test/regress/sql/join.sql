@@ -505,3 +505,20 @@ prepare foo(bool) as
         (select 1 from tenk1 c where c.thousand = b.unique2 and $1));
 execute foo(true);
 execute foo(false);
+
+--
+-- test for sane behavior with noncanonical merge clauses, per bug #4926
+--
+
+begin;
+
+set enable_mergejoin = 1;
+set enable_hashjoin = 0;
+set enable_nestloop = 0;
+
+create temp table a (i integer);
+create temp table b (x integer, y integer);
+
+select * from a left join b on i = x and i = y and x = i;
+
+rollback;
