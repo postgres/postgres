@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.97 2009/02/28 03:51:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.98 2009/07/17 23:19:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -988,12 +988,21 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 		 * no two members have the same EC, so it's not possible for this
 		 * code to enter the same mergeclause into the result list twice.
 		 *
-		 * XXX it's possible that multiple matching clauses might have
-		 * different ECs on the other side, in which case the order we put
-		 * them into our result makes a difference in the pathkeys required
-		 * for the other input path.  However this routine hasn't got any info
-		 * about which order would be best, so for now we disregard that case
-		 * (which is probably a corner case anyway).
+		 * It's possible that multiple matching clauses might have different
+		 * ECs on the other side, in which case the order we put them into our
+		 * result makes a difference in the pathkeys required for the other
+		 * input path.  However this routine hasn't got any info about which
+		 * order would be best, so we don't worry about that.
+		 *
+		 * It's also possible that the selected mergejoin clauses produce
+		 * a noncanonical ordering of pathkeys for the other side, ie, we
+		 * might select clauses that reference b.v1, b.v2, b.v1 in that
+		 * order.  This is not harmful in itself, though it suggests that
+		 * the clauses are partially redundant.  Since it happens only with
+		 * redundant query conditions, we don't bother to eliminate it.
+		 * make_inner_pathkeys_for_merge() has to delete duplicates when
+		 * it constructs the canonical pathkeys list, and we also have to
+		 * deal with the case in create_mergejoin_plan().
 		 *----------
 		 */
 		foreach(j, restrictinfos)

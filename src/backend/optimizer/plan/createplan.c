@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.260 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.261 2009/07/17 23:19:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1620,10 +1620,6 @@ create_mergejoin_plan(PlannerInfo *root,
 	bool	   *mergenullsfirst;
 	MergeJoin  *join_plan;
 	int			i;
-	EquivalenceClass *lastoeclass;
-	EquivalenceClass *lastieclass;
-	PathKey    *opathkey;
-	PathKey    *ipathkey;
 	ListCell   *lc;
 	ListCell   *lop;
 	ListCell   *lip;
@@ -1729,10 +1725,6 @@ create_mergejoin_plan(PlannerInfo *root,
 	mergestrategies = (int *) palloc(nClauses * sizeof(int));
 	mergenullsfirst = (bool *) palloc(nClauses * sizeof(bool));
 
-	lastoeclass = NULL;
-	lastieclass = NULL;
-	opathkey = NULL;
-	ipathkey = NULL;
 	lop = list_head(outerpathkeys);
 	lip = list_head(innerpathkeys);
 	i = 0;
@@ -1741,6 +1733,11 @@ create_mergejoin_plan(PlannerInfo *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 		EquivalenceClass *oeclass;
 		EquivalenceClass *ieclass;
+		PathKey    *opathkey;
+		PathKey    *ipathkey;
+		EquivalenceClass *opeclass;
+		EquivalenceClass *ipeclass;
+		ListCell   *l2;
 
 		/* fetch outer/inner eclass from mergeclause */
 		Assert(IsA(rinfo, RestrictInfo));
@@ -1757,28 +1754,100 @@ create_mergejoin_plan(PlannerInfo *root,
 		Assert(oeclass != NULL);
 		Assert(ieclass != NULL);
 
-		/* should match current or next pathkeys */
-		/* we check this carefully for debugging reasons */
-		if (oeclass != lastoeclass)
+		/*
+		 * For debugging purposes, we check that the eclasses match the
+		 * paths' pathkeys.  In typical cases the merge clauses are one-to-one
+		 * with the pathkeys, but when dealing with partially redundant query
+		 * conditions, we might have clauses that re-reference earlier path
+		 * keys.  The case that we need to reject is where a pathkey is
+		 * entirely skipped over.
+		 *
+		 * lop and lip reference the first as-yet-unused pathkey elements;
+		 * it's okay to match them, or any element before them.  If they're
+		 * NULL then we have found all pathkey elements to be used.
+		 */
+		if (lop)
 		{
-			if (!lop)
-				elog(ERROR, "too few pathkeys for mergeclauses");
 			opathkey = (PathKey *) lfirst(lop);
-			lop = lnext(lop);
-			lastoeclass = opathkey->pk_eclass;
-			if (oeclass != lastoeclass)
-				elog(ERROR, "outer pathkeys do not match mergeclause");
+			opeclass = opathkey->pk_eclass;
+			if (oeclass == opeclass)
+			{
+				/* fast path for typical case */
+				lop = lnext(lop);
+			}
+			else
+			{
+				/* redundant clauses ... must match something before lop */
+				foreach(l2, outerpathkeys)
+				{
+					if (l2 == lop)
+						break;
+					opathkey = (PathKey *) lfirst(l2);
+					opeclass = opathkey->pk_eclass;
+					if (oeclass == opeclass)
+						break;
+				}
+				if (oeclass != opeclass)
+					elog(ERROR, "outer pathkeys do not match mergeclauses");
+			}
 		}
-		if (ieclass != lastieclass)
+		else
 		{
-			if (!lip)
-				elog(ERROR, "too few pathkeys for mergeclauses");
-			ipathkey = (PathKey *) lfirst(lip);
-			lip = lnext(lip);
-			lastieclass = ipathkey->pk_eclass;
-			if (ieclass != lastieclass)
-				elog(ERROR, "inner pathkeys do not match mergeclause");
+			/* redundant clauses ... must match some already-used pathkey */
+			opathkey = NULL;
+			opeclass = NULL;
+			foreach(l2, outerpathkeys)
+			{
+				opathkey = (PathKey *) lfirst(l2);
+				opeclass = opathkey->pk_eclass;
+				if (oeclass == opeclass)
+					break;
+			}
+			if (l2 == NULL)
+				elog(ERROR, "outer pathkeys do not match mergeclauses");
 		}
+
+		if (lip)
+		{
+			ipathkey = (PathKey *) lfirst(lip);
+			ipeclass = ipathkey->pk_eclass;
+			if (ieclass == ipeclass)
+			{
+				/* fast path for typical case */
+				lip = lnext(lip);
+			}
+			else
+			{
+				/* redundant clauses ... must match something before lip */
+				foreach(l2, innerpathkeys)
+				{
+					if (l2 == lip)
+						break;
+					ipathkey = (PathKey *) lfirst(l2);
+					ipeclass = ipathkey->pk_eclass;
+					if (ieclass == ipeclass)
+						break;
+				}
+				if (ieclass != ipeclass)
+					elog(ERROR, "inner pathkeys do not match mergeclauses");
+			}
+		}
+		else
+		{
+			/* redundant clauses ... must match some already-used pathkey */
+			ipathkey = NULL;
+			ipeclass = NULL;
+			foreach(l2, innerpathkeys)
+			{
+				ipathkey = (PathKey *) lfirst(l2);
+				ipeclass = ipathkey->pk_eclass;
+				if (ieclass == ipeclass)
+					break;
+			}
+			if (l2 == NULL)
+				elog(ERROR, "inner pathkeys do not match mergeclauses");
+		}
+
 		/* pathkeys should match each other too (more debugging) */
 		if (opathkey->pk_opfamily != ipathkey->pk_opfamily ||
 			opathkey->pk_strategy != ipathkey->pk_strategy ||
@@ -1792,6 +1861,11 @@ create_mergejoin_plan(PlannerInfo *root,
 		i++;
 	}
 
+	/*
+	 * Note: it is not an error if we have additional pathkey elements
+	 * (i.e., lop or lip isn't NULL here).  The input paths might be
+	 * better-sorted than we need for the current mergejoin.
+	 */
 
 	/*
 	 * Now we can build the mergejoin node.
