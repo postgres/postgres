@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.132 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.133 2009/07/18 19:15:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,7 +423,7 @@ ExecEndIndexScan(IndexScanState *node)
 #ifdef NOT_USED
 	ExecFreeExprContext(&node->ss.ps);
 	if (node->iss_RuntimeContext)
-		FreeExprContext(node->iss_RuntimeContext);
+		FreeExprContext(node->iss_RuntimeContext, true);
 #endif
 
 	/*

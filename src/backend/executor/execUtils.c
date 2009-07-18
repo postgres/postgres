@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.159 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.160 2009/07/18 19:15:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ int			NIndexTupleProcessed;
 
 
 static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
-static void ShutdownExprContext(ExprContext *econtext);
+static void ShutdownExprContext(ExprContext *econtext, bool isCommit);
 
 
 /* ----------------------------------------------------------------
@@ -257,7 +257,8 @@ FreeExecutorState(EState *estate)
 		 * XXX: seems there ought to be a faster way to implement this than
 		 * repeated list_delete(), no?
 		 */
-		FreeExprContext((ExprContext *) linitial(estate->es_exprcontexts));
+		FreeExprContext((ExprContext *) linitial(estate->es_exprcontexts),
+						true);
 		/* FreeExprContext removed the list link for us */
 	}
 
@@ -408,16 +409,21 @@ CreateStandaloneExprContext(void)
  * Since we free the temporary context used for expression evaluation,
  * any previously computed pass-by-reference expression result will go away!
  *
+ * If isCommit is false, we are being called in error cleanup, and should
+ * not call callbacks but only release memory.  (It might be better to call
+ * the callbacks and pass the isCommit flag to them, but that would require
+ * more invasive code changes than currently seems justified.)
+ *
  * Note we make no assumption about the caller's memory context.
  * ----------------
  */
 void
-FreeExprContext(ExprContext *econtext)
+FreeExprContext(ExprContext *econtext, bool isCommit)
 {
 	EState	   *estate;
 
 	/* Call any registered callbacks */
-	ShutdownExprContext(econtext);
+	ShutdownExprContext(econtext, isCommit);
 	/* And clean up the memory used */
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
 	/* Unlink self from owning EState, if any */
@@ -442,7 +448,7 @@ void
 ReScanExprContext(ExprContext *econtext)
 {
 	/* Call any registered callbacks */
-	ShutdownExprContext(econtext);
+	ShutdownExprContext(econtext, true);
 	/* And clean up the memory used */
 	MemoryContextReset(econtext->ecxt_per_tuple_memory);
 }
@@ -1222,9 +1228,12 @@ UnregisterExprContextCallback(ExprContext *econtext,
  *
  * The callback list is emptied (important in case this is only a rescan
  * reset, and not deletion of the ExprContext).
+ *
+ * If isCommit is false, just clean the callback list but don't call 'em.
+ * (See comment for FreeExprContext.)
  */
 static void
-ShutdownExprContext(ExprContext *econtext)
+ShutdownExprContext(ExprContext *econtext, bool isCommit)
 {
 	ExprContext_CB *ecxt_callback;
 	MemoryContext oldcontext;
@@ -1245,7 +1254,8 @@ ShutdownExprContext(ExprContext *econtext)
 	while ((ecxt_callback = econtext->ecxt_callbacks) != NULL)
 	{
 		econtext->ecxt_callbacks = ecxt_callback->next;
-		(*ecxt_callback->function) (ecxt_callback->arg);
+		if (isCommit)
+			(*ecxt_callback->function) (ecxt_callback->arg);
 		pfree(ecxt_callback);
 	}
 

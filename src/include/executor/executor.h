@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.155 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.156 2009/07/18 19:15:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,7 @@ extern EState *CreateExecutorState(void);
 extern void FreeExecutorState(EState *estate);
 extern ExprContext *CreateExprContext(EState *estate);
 extern ExprContext *CreateStandaloneExprContext(void);
-extern void FreeExprContext(ExprContext *econtext);
+extern void FreeExprContext(ExprContext *econtext, bool isCommit);
 extern void ReScanExprContext(ExprContext *econtext);
 
 #define ResetExprContext(econtext) \
