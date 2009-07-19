@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.100 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.101 2009/07/19 20:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,6 +349,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 {
 	SpecialJoinInfo *match_sjinfo;
 	bool		reversed;
+	bool		unique_ified;
 	bool		is_valid_inner;
 	ListCell   *l;
 
@@ -366,6 +367,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	 */
 	match_sjinfo = NULL;
 	reversed = false;
+	unique_ified = false;
 	is_valid_inner = true;
 
 	foreach(l, root->join_info_list)
@@ -450,6 +452,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				return false;	/* invalid join path */
 			match_sjinfo = sjinfo;
 			reversed = false;
+			unique_ified = true;
 		}
 		else if (sjinfo->jointype == JOIN_SEMI &&
 				 bms_equal(sjinfo->syn_righthand, rel1->relids) &&
@@ -461,6 +464,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				return false;	/* invalid join path */
 			match_sjinfo = sjinfo;
 			reversed = true;
+			unique_ified = true;
 		}
 		else
 		{
@@ -510,8 +514,13 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		}
 	}
 
-	/* Fail if violated some SJ's RHS and didn't match to another SJ */
-	if (match_sjinfo == NULL && !is_valid_inner)
+	/*
+	 * Fail if violated some SJ's RHS and didn't match to another SJ.
+	 * However, "matching" to a semijoin we are implementing by
+	 * unique-ification doesn't count (think: it's really an inner join).
+	 */
+	if (!is_valid_inner &&
+		(match_sjinfo == NULL || unique_ified))
 		return false;			/* invalid join path */
 
 	/* Otherwise, it's a valid join */
