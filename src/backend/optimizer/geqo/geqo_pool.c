@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.34 2009/07/16 20:55:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.35 2009/07/19 21:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,37 +92,13 @@ random_init_pool(PlannerInfo *root, Pool *pool)
 {
 	Chromosome *chromo = (Chromosome *) pool->data;
 	int			i;
-	int			bad = 0;
 
-	/*
-	 * We immediately discard any invalid individuals (those that geqo_eval
-	 * returns DBL_MAX for), thereby not wasting pool space on them.
-	 *
-	 * If we fail to make any valid individuals after 10000 tries, give up;
-	 * this probably means something is broken, and we shouldn't just let
-	 * ourselves get stuck in an infinite loop.
-	 */
-	i = 0;
-	while (i < pool->size)
+	for (i = 0; i < pool->size; i++)
 	{
 		init_tour(root, chromo[i].string, pool->string_length);
 		pool->data[i].worth = geqo_eval(root, chromo[i].string,
 										pool->string_length);
-		if (pool->data[i].worth < DBL_MAX)
-			i++;
-		else
-		{
-			bad++;
-			if (i == 0 && bad >= 10000)
-				elog(ERROR, "failed to make a valid plan");
-		}
 	}
-
-#ifdef GEQO_DEBUG
-	if (bad > 0)
-		elog(DEBUG1, "%d invalid tours found while selecting %d pool entries",
-			 bad, pool->size);
-#endif
 }
 
 /*

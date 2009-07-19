@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.57 2009/07/16 20:55:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.58 2009/07/19 21:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,9 +256,6 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	best_tour = (Gene *) pool->data[0].string;
 
 	best_rel = gimme_tree(root, best_tour, pool->string_length);
-
-	if (best_rel == NULL)
-		elog(ERROR, "failed to make a valid plan");
 
 	/* DBG: show the query plan */
 #ifdef NOT_USED

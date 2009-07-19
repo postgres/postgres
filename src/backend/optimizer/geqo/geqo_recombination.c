@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.16 2009/07/16 20:55:44 tgl Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.17 2009/07/19 21:00:43 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -59,18 +59,6 @@ init_tour(PlannerInfo *root, Gene *tour, int num_gene)
 		/* and delete it */
 		tmp[next] = tmp[remainder];
 		remainder--;
-	}
-
-	/*
-	 * Since geqo_eval() will reject tours where tour[0] > tour[1], we may as
-	 * well switch the two to make it a valid tour.
-	 */
-	if (num_gene >= 2 && tour[0] > tour[1])
-	{
-		Gene		gtmp = tour[0];
-
-		tour[0] = tour[1];
-		tour[1] = gtmp;
 	}
 
 	pfree(tmp);
