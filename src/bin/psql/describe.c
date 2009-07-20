@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.224 2009/07/07 21:45:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.225 2009/07/20 03:46:45 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1131,29 +1131,22 @@ describeOneTableDetails(const char *schemaname,
 	 */
 	if (tableinfo.relkind == 'S')
 	{
-		PGresult   *result;
-
-#define SEQ_NUM_COLS 10
-		printfPQExpBuffer(&buf,
-						  "SELECT sequence_name, last_value,\n"
-						  "       start_value, increment_by,\n"
-						  "       max_value, min_value, cache_value,\n"
-						  "       log_cnt, is_cycled, is_called\n"
-						  "FROM %s",
-						  fmtId(schemaname));
+		printfPQExpBuffer(&buf, "SELECT * FROM %s", fmtId(schemaname));
 		/* must be separate because fmtId isn't reentrant */
 		appendPQExpBuffer(&buf, ".%s", fmtId(relationname));
 
-		result = PSQLexec(buf.data, false);
-		if (!result)
+		res = PSQLexec(buf.data, false);
+		if (!res)
 			goto error_return;
 
-		seq_values = pg_malloc_zero((SEQ_NUM_COLS + 1) * sizeof(*seq_values));
+		seq_values = pg_malloc((PQnfields(res) + 1) * sizeof(*seq_values));
 
-		for (i = 0; i < SEQ_NUM_COLS; i++)
-			seq_values[i] = pg_strdup(PQgetvalue(result, 0, i));
+		for (i = 0; i < PQnfields(res); i++)
+			seq_values[i] = pg_strdup(PQgetvalue(res, 0, i));
+		seq_values[i] = NULL;
 
-		PQclear(result);
+		PQclear(res);
+		res = NULL;
 	}
 
 	/* Get column info */
