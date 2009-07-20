@@ -1150,6 +1150,12 @@ alter table gc1 drop column name;
 ERROR:  column "name" of relation "gc1" does not exist
 -- should work and drop the attribute in all tables
 alter table p2 drop column height;
+-- IF EXISTS test
+create table dropColumnExists ();
+alter table dropColumnExists drop column non_existing; --fail
+ERROR:  column "non_existing" of relation "dropcolumnexists" does not exist
+alter table dropColumnExists drop column if exists non_existing; --succeed
+NOTICE:  column "non_existing" of relation "dropcolumnexists" does not exist, skipping
 select relname, attname, attinhcount, attislocal
 from pg_class join pg_attribute on (pg_class.oid = pg_attribute.attrelid)
 where relname in ('p1','p2','c1','gc1') and attnum > 0 and not attisdropped
@@ -1421,6 +1427,10 @@ alter table anothertab alter column atcol1 type boolean
 ERROR:  operator does not exist: boolean <= integer
 HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
 alter table anothertab drop constraint anothertab_chk;
+alter table anothertab drop constraint anothertab_chk; -- fails
+ERROR:  constraint "anothertab_chk" of relation "anothertab" does not exist
+alter table anothertab drop constraint IF EXISTS anothertab_chk; -- succeeds
+NOTICE:  constraint "anothertab_chk" of relation "anothertab" does not exist, skipping
 alter table anothertab alter column atcol1 type boolean
         using case when atcol1 % 2 = 0 then true else false end;
 select * from anothertab;

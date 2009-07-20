@@ -816,6 +816,8 @@ create table dropColumnAnother (d int) inherits (dropColumnChild);
 alter table dropColumnchild drop column a;
 alter table only dropColumnChild drop column b;
 
+
+
 -- these three should work
 alter table only dropColumn drop column e;
 alter table dropColumnChild drop column c;
@@ -912,6 +914,11 @@ alter table c1 drop column name;
 alter table gc1 drop column name;
 -- should work and drop the attribute in all tables
 alter table p2 drop column height;
+
+-- IF EXISTS test
+create table dropColumnExists ();
+alter table dropColumnExists drop column non_existing; --fail
+alter table dropColumnExists drop column if exists non_existing; --succeed
 
 select relname, attname, attinhcount, attislocal
 from pg_class join pg_attribute on (pg_class.oid = pg_attribute.attrelid)
@@ -1057,6 +1064,8 @@ alter table anothertab alter column atcol1 drop default;
 alter table anothertab alter column atcol1 type boolean
         using case when atcol1 % 2 = 0 then true else false end; -- fails
 alter table anothertab drop constraint anothertab_chk;
+alter table anothertab drop constraint anothertab_chk; -- fails
+alter table anothertab drop constraint IF EXISTS anothertab_chk; -- succeeds
 
 alter table anothertab alter column atcol1 type boolean
         using case when atcol1 % 2 = 0 then true else false end;

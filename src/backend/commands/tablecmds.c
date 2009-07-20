@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.290 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.291 2009/07/20 02:42:27 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,7 +285,8 @@ static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue);
 static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
-				 bool recurse, bool recursing);
+				 bool recurse, bool recursing,
+				 bool missing_ok);
 static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			   IndexStmt *stmt, bool is_rebuild);
 static void ATExecAddConstraint(List **wqueue,
@@ -298,8 +299,9 @@ static void ATAddCheckConstraint(List **wqueue,
 static void ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						  FkConstraint *fkconstraint);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
-					 DropBehavior behavior,
-					 bool recurse, bool recursing);
+								 DropBehavior behavior,
+								 bool recurse, bool recursing,
+								 bool missing_ok);
 static void ATPrepAlterColumnType(List **wqueue,
 					  AlteredTableInfo *tab, Relation rel,
 					  bool recurse, bool recursing,
@@ -2620,11 +2622,11 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATExecDropColumn(wqueue, rel, cmd->name,
-							 cmd->behavior, false, false);
+							 cmd->behavior, false, false, cmd->missing_ok);
 			break;
 		case AT_DropColumnRecurse:		/* DROP COLUMN with recursion */
 			ATExecDropColumn(wqueue, rel, cmd->name,
-							 cmd->behavior, true, false);
+							 cmd->behavior, true, false, cmd->missing_ok);
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
 			ATExecAddIndex(tab, rel, (IndexStmt *) cmd->def, false);
@@ -2639,10 +2641,14 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecAddConstraint(wqueue, tab, rel, cmd->def, true);
 			break;
 		case AT_DropConstraint:	/* DROP CONSTRAINT */
-			ATExecDropConstraint(rel, cmd->name, cmd->behavior, false, false);
+			ATExecDropConstraint(rel, cmd->name, cmd->behavior,
+								 false, false,
+								 cmd->missing_ok);
 			break;
 		case AT_DropConstraintRecurse:	/* DROP CONSTRAINT with recursion */
-			ATExecDropConstraint(rel, cmd->name, cmd->behavior, true, false);
+			ATExecDropConstraint(rel, cmd->name, cmd->behavior,
+								 true, false,
+								 cmd->missing_ok);
 			break;
 		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
 			ATExecAlterColumnType(tab, rel, cmd->name, (TypeName *) cmd->def);
@@ -4160,7 +4166,8 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue)
 static void
 ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 DropBehavior behavior,
-				 bool recurse, bool recursing)
+				 bool recurse, bool recursing,
+				 bool missing_ok)
 {
 	HeapTuple	tuple;
 	Form_pg_attribute targetatt;
@@ -4176,11 +4183,21 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	 * get the number of the attribute
 	 */
 	tuple = SearchSysCacheAttName(RelationGetRelid(rel), colName);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column \"%s\" of relation \"%s\" does not exist",
-						colName, RelationGetRelationName(rel))));
+	if (!HeapTupleIsValid(tuple)){
+		if (!missing_ok){
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							colName, RelationGetRelationName(rel))));
+		}
+		else
+		{
+			ereport(NOTICE,
+					(errmsg("column \"%s\" of relation \"%s\" does not exist, skipping",
+							colName, RelationGetRelationName(rel))));
+			return;
+		}
+	}
 	targetatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
 	attnum = targetatt->attnum;
@@ -4246,7 +4263,8 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				{
 					/* Time to delete this child column, too */
 					ATExecDropColumn(wqueue, childrel, colName,
-									 behavior, true, true);
+									 behavior, true, true,
+									 false);
 				}
 				else
 				{
@@ -5360,7 +5378,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 static void
 ATExecDropConstraint(Relation rel, const char *constrName,
 					 DropBehavior behavior,
-					 bool recurse, bool recursing)
+					 bool recurse, bool recursing,
+					 bool missing_ok)
 {
 	List	   *children;
 	ListCell   *child;
@@ -5422,12 +5441,22 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 	systable_endscan(scan);
 
-	if (!found)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
-						constrName, RelationGetRelationName(rel))));
-
+	if (!found){
+		if (!missing_ok){
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
+							constrName, RelationGetRelationName(rel))));
+		}
+		else
+		{
+			ereport(NOTICE,
+					(errmsg("constraint \"%s\" of relation \"%s\" does not exist, skipping",
+							constrName, RelationGetRelationName(rel))));
+			heap_close(conrel, RowExclusiveLock);
+			return;
+		}
+	}
 	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
 	 * routines, we have to do this one level of recursion at a time; we can't
@@ -5490,7 +5519,8 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 				{
 					/* Time to delete this child constraint, too */
 					ATExecDropConstraint(childrel, constrName, behavior,
-										 true, true);
+										 true, true,
+										 false);
 				}
 				else
 				{

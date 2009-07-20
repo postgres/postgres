@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.356 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.357 2009/07/20 02:42:27 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -958,6 +958,7 @@ _equalAlterTableCmd(AlterTableCmd *a, AlterTableCmd *b)
 	COMPARE_NODE_FIELD(def);
 	COMPARE_NODE_FIELD(transform);
 	COMPARE_SCALAR_FIELD(behavior);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }

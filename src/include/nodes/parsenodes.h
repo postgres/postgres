@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.396 2009/07/16 06:33:45 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.397 2009/07/20 02:42:28 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1145,6 +1145,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 								 * index, constraint, or parent table */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
+	bool		missing_ok;		/* skip error if missing? */
 } AlterTableCmd;
 
 

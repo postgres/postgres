@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.106 2009/05/03 20:45:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.107 2009/07/20 02:42:27 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -33,7 +33,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
 where <replaceable class="PARAMETER">action</replaceable> is one of:
 
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
-    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
+    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">type</replaceable> [ USING <replaceable class="PARAMETER">expression</replaceable> ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
@@ -41,7 +41,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
-    DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
@@ -82,7 +82,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DROP COLUMN</literal></term>
+    <term><literal>DROP COLUMN [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
       This form drops a column from a table.  Indexes and
@@ -90,6 +90,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       dropped as well.  You will need to say <literal>CASCADE</> if
       anything outside the table depends on the column, for example,
       foreign key references or views.
+      If <literal>IF EXISTS</literal> is specified and the column 
+      does not exist, no error is thrown. In this case a notice 
+      is issued instead.
      </para>
     </listitem>
    </varlistentry>
@@ -192,10 +195,12 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DROP CONSTRAINT</literal></term>
+    <term><literal>DROP CONSTRAINT [ IF EXISTS ]</literal></term>
     <listitem>
      <para>
       This form drops the specified constraint on a table.
+      If <literal>IF EXISTS</literal> is specified and the constraint
+      does not exist, no error is thrown. In this case a notice is issued instead.
      </para>
     </listitem>
    </varlistentry>
