@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.540 2009/07/02 21:34:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.541 2009/07/20 20:53:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "access/sysattr.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_largeobject.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -1739,6 +1740,7 @@ dumpDatabase(Archive *AH)
 						  frozenxid);
 		appendStringLiteralAH(creaQry, datname, AH);
 		appendPQExpBuffer(creaQry, ";\n");
+
 	}
 
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
@@ -1763,6 +1765,51 @@ dumpDatabase(Archive *AH)
 				 0,				/* # Deps */
 				 NULL,			/* Dumper */
 				 NULL);			/* Dumper Arg */
+
+	/*
+	 *	pg_largeobject comes from the old system intact, so set
+	 *	its relfrozenxid.
+	 */
+	if (binary_upgrade)
+	{
+		PGresult   *lo_res;
+		PQExpBuffer loFrozenQry = createPQExpBuffer();
+		PQExpBuffer loOutQry = createPQExpBuffer();
+		int			i_relfrozenxid;
+		
+		appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid\n"
+							"FROM pg_catalog.pg_class\n"
+							"WHERE oid = %d;\n",
+							LargeObjectRelationId);
+
+		lo_res = PQexec(g_conn, loFrozenQry->data);
+		check_sql_result(lo_res, g_conn, loFrozenQry->data, PGRES_TUPLES_OK);
+
+		if (PQntuples(lo_res) != 1)
+		{
+			write_msg(NULL, "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n");
+			exit_nicely();
+		}
+
+		i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
+
+		appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject relfrozenxid.\n");
+		appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
+						  "SET relfrozenxid = '%u'\n"
+						  "WHERE oid = %d;\n",
+						  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
+						  LargeObjectRelationId);
+		ArchiveEntry(AH, nilCatalogId, createDumpId(),
+					 "pg_largeobject", NULL, NULL, "",
+					 false, "pg_largeobject", SECTION_PRE_DATA,
+					 loOutQry->data, "", NULL,
+					 NULL, 0,
+					 NULL, NULL);
+						  
+		PQclear(lo_res);
+		destroyPQExpBuffer(loFrozenQry);
+		destroyPQExpBuffer(loOutQry);
+	}
 
 	/* Dump DB comment if any */
 	if (g_fout->remoteVersion >= 80200)
