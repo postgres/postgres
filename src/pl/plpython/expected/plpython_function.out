@@ -136,37 +136,67 @@ BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 insert into trigger_test values(1,'insert');
 NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[event] => INSERT',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[level] => ROW',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[name] => show_trigger_data_trig',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ("TD[new] => {'i': 1, 'v': 'insert'}",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[old] => None',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[relid] => bogus:12345',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[table_name] => trigger_test',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[table_schema] => public',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[when] => BEFORE',)
+CONTEXT:  PL/Python function "trigger_data"
 update trigger_test set v = 'update' where i = 1;
 NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[event] => UPDATE',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[level] => ROW',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[name] => show_trigger_data_trig',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ("TD[new] => {'i': 1, 'v': 'update'}",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ("TD[old] => {'i': 1, 'v': 'insert'}",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[relid] => bogus:12345',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[table_name] => trigger_test',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[table_schema] => public',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[when] => BEFORE',)
+CONTEXT:  PL/Python function "trigger_data"
 delete from trigger_test;
 NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[event] => DELETE',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[level] => ROW',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[name] => show_trigger_data_trig',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[new] => None',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ("TD[old] => {'i': 1, 'v': 'update'}",)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[relid] => bogus:12345',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[table_name] => trigger_test',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[table_schema] => public',)
+CONTEXT:  PL/Python function "trigger_data"
 NOTICE:  ('TD[when] => BEFORE',)
+CONTEXT:  PL/Python function "trigger_data"
       
 DROP TRIGGER show_trigger_data_trig on trigger_test;
       

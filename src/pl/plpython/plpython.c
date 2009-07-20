@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.122 2009/06/11 14:49:14 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.123 2009/07/20 08:01:06 petere Exp $
  *
  *********************************************************************
  */
@@ -332,17 +332,32 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 	fmgr_info_cxt(functionId, finfo, TopMemoryContext);
 }
 
+static void
+plpython_error_callback(void *arg)
+{
+	if (PLy_curr_procedure)
+		errcontext("PL/Python function \"%s\"", PLy_procedure_name(PLy_curr_procedure));
+}
+
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 	PLyProcedure *save_curr_proc;
 	PLyProcedure *volatile proc = NULL;
+	ErrorContextCallback plerrcontext;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
 	save_curr_proc = PLy_curr_procedure;
+
+	/*
+     * Setup error traceback support for ereport()
+     */
+    plerrcontext.callback = plpython_error_callback;
+    plerrcontext.previous = error_context_stack;
+    error_context_stack = &plerrcontext;
 
 	PG_TRY();
 	{
@@ -376,6 +391,9 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	/* Pop the error context stack */
+    error_context_stack = plerrcontext.previous;
 
 	PLy_curr_procedure = save_curr_proc;
 
@@ -545,8 +563,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			{
 				plstr = PyObject_Str(plval);
 				if (!plstr)
-					PLy_elog(ERROR, "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row",
-							 proc->proname);
+					PLy_elog(ERROR, "could not compute string representation of Python object, while modifying trigger row");
 				src = PyString_AsString(plstr);
 
 				modvalues[i] =
@@ -942,7 +959,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			fcinfo->isnull = false;
 			plrv_so = PyObject_Str(plrv);
 			if (!plrv_so)
-				PLy_elog(ERROR, "could not create string representation of Python object in PL/Python function \"%s\" while creating return value", proc->proname);
+				PLy_elog(ERROR, "could not create string representation of Python object, while creating return value");
 			plrv_sc = PyString_AsString(plrv_so);
 			rv = InputFunctionCall(&proc->result.out.d.typfunc,
 								   plrv_sc,
@@ -1061,11 +1078,11 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			}
 
 			if (PyList_SetItem(args, i, arg) == -1)
-				PLy_elog(ERROR, "PyList_SetItem() failed for PL/Python function \"%s\" while setting up arguments", proc->proname);
+				PLy_elog(ERROR, "PyList_SetItem() failed, while setting up arguments");
 
 			if (proc->argnames && proc->argnames[i] &&
 			PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1)
-				PLy_elog(ERROR, "PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up arguments", proc->proname);
+				PLy_elog(ERROR, "PyDict_SetItemString() failed, while setting up arguments");
 			arg = NULL;
 		}
 	}
@@ -2460,9 +2477,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 		if (!PyErr_Occurred())
 			PLy_exception_set(PLy_exc_spi_error,
 							  "unrecognized error in PLy_spi_prepare");
-		/* XXX this oughta be replaced with errcontext mechanism */
-		PLy_elog(WARNING, "in PL/Python function \"%s\"",
-				 PLy_procedure_name(PLy_curr_procedure));
+		PLy_elog(WARNING, NULL);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -2530,8 +2545,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		PyObject   *so = PyObject_Str(list);
 
 		if (!so)
-			PLy_elog(ERROR, "PL/Python function \"%s\" could not execute plan",
-					 PLy_procedure_name(PLy_curr_procedure));
+			PLy_elog(ERROR, "could not execute plan");
 		sv = PyString_AsString(so);
 		PLy_exception_set_plural(PLy_exc_spi_error,
 							  "Expected sequence of %d argument, got %d: %s",
@@ -2559,8 +2573,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			{
 				so = PyObject_Str(elem);
 				if (!so)
-					PLy_elog(ERROR, "PL/Python function \"%s\" could not execute plan",
-							 PLy_procedure_name(PLy_curr_procedure));
+					PLy_elog(ERROR, "could not execute plan");
 				Py_DECREF(elem);
 
 				PG_TRY();
@@ -2624,9 +2637,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		if (!PyErr_Occurred())
 			PLy_exception_set(PLy_exc_error,
 							  "unrecognized error in PLy_spi_execute_plan");
-		/* XXX this oughta be replaced with errcontext mechanism */
-		PLy_elog(WARNING, "in PL/Python function \"%s\"",
-				 PLy_procedure_name(PLy_curr_procedure));
+		PLy_elog(WARNING, NULL);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -2671,9 +2682,7 @@ PLy_spi_execute_query(char *query, long limit)
 		if (!PyErr_Occurred())
 			PLy_exception_set(PLy_exc_spi_error,
 							  "unrecognized error in PLy_spi_execute_query");
-		/* XXX this oughta be replaced with errcontext mechanism */
-		PLy_elog(WARNING, "in PL/Python function \"%s\"",
-				 PLy_procedure_name(PLy_curr_procedure));
+		PLy_elog(WARNING, NULL);
 		return NULL;
 	}
 	PG_END_TRY();
@@ -2987,9 +2996,11 @@ PLy_exception_set_plural(PyObject *exc,
 	PyErr_SetString(exc, buf);
 }
 
-/* Emit a PG error or notice, together with any available info about the
- * current Python error.  This should be used to propagate Python errors
- * into PG.
+/* Emit a PG error or notice, together with any available info about
+ * the current Python error, previously set by PLy_exception_set().
+ * This should be used to propagate Python errors into PG.  If fmt is
+ * NULL, the Python error becomes the primary error message, otherwise
+ * it becomes the detail.
  */
 static void
 PLy_elog(int elevel, const char *fmt,...)
@@ -3000,36 +3011,45 @@ PLy_elog(int elevel, const char *fmt,...)
 
 	xmsg = PLy_traceback(&xlevel);
 
-	initStringInfo(&emsg);
-	for (;;)
+	if (fmt)
 	{
-		va_list		ap;
-		bool		success;
+		initStringInfo(&emsg);
+		for(;;)
+		{
+			va_list		ap;
+			bool		success;
 
-		va_start(ap, fmt);
-		success = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
-		va_end(ap);
-		if (success)
-			break;
-		enlargeStringInfo(&emsg, emsg.maxlen);
+			va_start(ap, fmt);
+			success = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
+			va_end(ap);
+			if (success)
+				break;
+			enlargeStringInfo(&emsg, emsg.maxlen);
+		}
 	}
 
 	PG_TRY();
 	{
-		ereport(elevel,
-				(errmsg("PL/Python: %s", emsg.data),
-				 (xmsg) ? errdetail("%s", xmsg) : 0));
+		if (fmt)
+			ereport(elevel,
+					(errmsg("PL/Python: %s", emsg.data),
+					 (xmsg) ? errdetail("%s", xmsg) : 0));
+		else
+			ereport(elevel,
+					(errmsg("PL/Python: %s", xmsg)));
 	}
 	PG_CATCH();
 	{
-		pfree(emsg.data);
+		if (fmt)
+			pfree(emsg.data);
 		if (xmsg)
 			pfree(xmsg);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	pfree(emsg.data);
+	if (fmt)
+		pfree(emsg.data);
 	if (xmsg)
 		pfree(xmsg);
 }

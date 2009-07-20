@@ -38,6 +38,7 @@ SELECT global_test_two();
 --
 SELECT import_fail();
 NOTICE:  ('import socket failed -- No module named foosocket',)
+CONTEXT:  PL/Python function "import_fail"
     import_fail     
 --------------------
  failed as expected
@@ -191,6 +192,7 @@ SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
 
 SELECT test_void_func2(); -- should fail
 ERROR:  PL/Python function with return type "void" did not return None
+CONTEXT:  PL/Python function "test_void_func2"
 SELECT test_return_none(), test_return_none() IS NULL AS "is null";
  test_return_none | is null 
 ------------------+---------

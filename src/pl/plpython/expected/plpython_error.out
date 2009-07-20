@@ -2,17 +2,20 @@
 -- the trigger handler once. the errors and subsequent core dump were
 -- interesting.
 SELECT invalid_type_uncaught('rick');
-WARNING:  PL/Python: in PL/Python function "invalid_type_uncaught"
-DETAIL:  plpy.SPIError: unrecognized error in PLy_spi_prepare
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_prepare
+CONTEXT:  PL/Python function "invalid_type_uncaught"
 ERROR:  type "test" does not exist
+CONTEXT:  PL/Python function "invalid_type_uncaught"
 SELECT invalid_type_caught('rick');
-WARNING:  PL/Python: in PL/Python function "invalid_type_caught"
-DETAIL:  plpy.SPIError: unrecognized error in PLy_spi_prepare
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_prepare
+CONTEXT:  PL/Python function "invalid_type_caught"
 ERROR:  type "test" does not exist
+CONTEXT:  PL/Python function "invalid_type_caught"
 SELECT invalid_type_reraised('rick');
-WARNING:  PL/Python: in PL/Python function "invalid_type_reraised"
-DETAIL:  plpy.SPIError: unrecognized error in PLy_spi_prepare
+WARNING:  PL/Python: plpy.SPIError: unrecognized error in PLy_spi_prepare
+CONTEXT:  PL/Python function "invalid_type_reraised"
 ERROR:  type "test" does not exist
+CONTEXT:  PL/Python function "invalid_type_reraised"
 SELECT valid_type('rick');
  valid_type 
 ------------
@@ -23,16 +26,20 @@ SELECT valid_type('rick');
 -- Test Unicode error handling.
 --
 SELECT unicode_return_error();
-ERROR:  PL/Python: could not create string representation of Python object in PL/Python function "unicode_return_error" while creating return value
+ERROR:  PL/Python: could not create string representation of Python object, while creating return value
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+CONTEXT:  PL/Python function "unicode_return_error"
 INSERT INTO unicode_test (testvalue) VALUES ('test');
-ERROR:  PL/Python: could not compute string representation of Python object in PL/Python function "unicode_trigger_error" while modifying trigger row
+ERROR:  PL/Python: could not compute string representation of Python object, while modifying trigger row
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+CONTEXT:  PL/Python function "unicode_trigger_error"
 SELECT unicode_plan_error1();
-WARNING:  PL/Python: in PL/Python function "unicode_plan_error1"
-DETAIL:  plpy.Error: unrecognized error in PLy_spi_execute_plan
-ERROR:  PL/Python: PL/Python function "unicode_plan_error1" could not execute plan
+WARNING:  PL/Python: plpy.Error: unrecognized error in PLy_spi_execute_plan
+CONTEXT:  PL/Python function "unicode_plan_error1"
+ERROR:  PL/Python: could not execute plan
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+CONTEXT:  PL/Python function "unicode_plan_error1"
 SELECT unicode_plan_error2();
-ERROR:  PL/Python: PL/Python function "unicode_plan_error2" could not execute plan
+ERROR:  PL/Python: could not execute plan
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
+CONTEXT:  PL/Python function "unicode_plan_error2"
