@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.23 2007/10/14 17:07:51 tgl Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.23.2.1 2009/07/20 20:38:58 alvherre Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,6 +39,7 @@ install: all installdirs
 # These headers are needed for server-side development
 	$(INSTALL_DATA) pg_config.h    '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) pg_config_os.h '$(DESTDIR)$(includedir_server)'
+	$(INSTALL_DATA) utils/fmgroids.h '$(DESTDIR)$(includedir_server)/utils'
 # We don't use INSTALL_DATA for performance reasons --- there are a lot of files
 	cp $(srcdir)/*.h '$(DESTDIR)$(includedir_server)'/ || exit; \
 	chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/*.h  || exit; \
