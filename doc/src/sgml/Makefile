@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.118 2009/07/14 22:16:38 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.119 2009/07/20 18:34:58 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -225,7 +225,7 @@ regress_README.html: regress.sgml
 OSX = osx # (may be called sx or sgml2xml on some systems)
 XSLTPROC = xsltproc
 
-postgres.xml: postgres.sgml $(GENERATED_SGML)
+postgres.xml: postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower $< | \
 	  $(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
 	             -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
@@ -301,7 +301,7 @@ clean distclean maintainer-clean:
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.fot
 # index
-	rm -f HTML.index HTML.index.start $(GENERATED_SGML)
+	rm -f HTML.index $(GENERATED_SGML)
 # text
 	rm -f INSTALL HISTORY regress_README
 # XSLT
