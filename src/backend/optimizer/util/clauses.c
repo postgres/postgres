@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.277 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.278 2009/07/20 00:24:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -92,7 +92,7 @@ static List *simplify_or_arguments(List *args,
 static List *simplify_and_arguments(List *args,
 					   eval_const_expressions_context *context,
 					   bool *haveNull, bool *forceFalse);
-static Expr *simplify_boolean_equality(List *args);
+static Expr *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod, List **args,
 				  bool allow_inline,
@@ -2186,12 +2186,14 @@ eval_const_expressions_mutator(Node *node,
 			return (Node *) simple;
 
 		/*
-		 * If the operator is boolean equality, we know how to simplify cases
-		 * involving one constant and one non-constant argument.
+		 * If the operator is boolean equality or inequality, we know how to
+		 * simplify cases involving one constant and one non-constant
+		 * argument.
 		 */
-		if (expr->opno == BooleanEqualOperator)
+		if (expr->opno == BooleanEqualOperator ||
+			expr->opno == BooleanNotEqualOperator)
 		{
-			simple = simplify_boolean_equality(args);
+			simple = simplify_boolean_equality(expr->opno, args);
 			if (simple)			/* successfully simplified it */
 				return (Node *) simple;
 		}
@@ -3165,21 +3167,23 @@ simplify_and_arguments(List *args,
 
 /*
  * Subroutine for eval_const_expressions: try to simplify boolean equality
+ * or inequality condition
  *
- * Input is the list of simplified arguments to the operator.
+ * Inputs are the operator OID and the simplified arguments to the operator.
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the expression.
  *
- * The idea here is to reduce "x = true" to "x" and "x = false" to "NOT x".
+ * The idea here is to reduce "x = true" to "x" and "x = false" to "NOT x",
+ * or similarly "x <> true" to "NOT x" and "x <> false" to "x".
  * This is only marginally useful in itself, but doing it in constant folding
- * ensures that we will recognize the two forms as being equivalent in, for
+ * ensures that we will recognize these forms as being equivalent in, for
  * example, partial index matching.
  *
  * We come here only if simplify_function has failed; therefore we cannot
  * see two constant inputs, nor a constant-NULL input.
  */
 static Expr *
-simplify_boolean_equality(List *args)
+simplify_boolean_equality(Oid opno, List *args)
 {
 	Expr	   *leftop;
 	Expr	   *rightop;
@@ -3190,18 +3194,38 @@ simplify_boolean_equality(List *args)
 	if (leftop && IsA(leftop, Const))
 	{
 		Assert(!((Const *) leftop)->constisnull);
-		if (DatumGetBool(((Const *) leftop)->constvalue))
-			return rightop;		/* true = foo */
+		if (opno == BooleanEqualOperator)
+		{
+			if (DatumGetBool(((Const *) leftop)->constvalue))
+				return rightop;		/* true = foo */
+			else
+				return make_notclause(rightop);		/* false = foo */
+		}
 		else
-			return make_notclause(rightop);		/* false = foo */
+		{
+			if (DatumGetBool(((Const *) leftop)->constvalue))
+				return make_notclause(rightop);		/* true <> foo */
+			else
+				return rightop;		/* false <> foo */
+		}
 	}
 	if (rightop && IsA(rightop, Const))
 	{
 		Assert(!((Const *) rightop)->constisnull);
-		if (DatumGetBool(((Const *) rightop)->constvalue))
-			return leftop;		/* foo = true */
+		if (opno == BooleanEqualOperator)
+		{
+			if (DatumGetBool(((Const *) rightop)->constvalue))
+				return leftop;		/* foo = true */
+			else
+				return make_notclause(leftop);		/* foo = false */
+		}
 		else
-			return make_notclause(leftop);		/* foo = false */
+		{
+			if (DatumGetBool(((Const *) rightop)->constvalue))
+				return make_notclause(leftop);		/* foo <> true */
+			else
+				return leftop;		/* foo <> false */
+		}
 	}
 	return NULL;
 }

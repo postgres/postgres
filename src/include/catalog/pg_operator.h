@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.166 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.167 2009/07/20 00:24:30 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -93,6 +93,7 @@ DATA(insert OID =  82 ( ">="	   PGNSP PGUID b f f	23	20	16 420	37 int48ge scalar
 DATA(insert OID =  58 ( "<"		   PGNSP PGUID b f f	16	16	16	59	1695 boollt scalarltsel scalarltjoinsel ));
 DATA(insert OID =  59 ( ">"		   PGNSP PGUID b f f	16	16	16	58	1694 boolgt scalargtsel scalargtjoinsel ));
 DATA(insert OID =  85 ( "<>"	   PGNSP PGUID b f f	16	16	16	85	91 boolne neqsel neqjoinsel ));
+#define BooleanNotEqualOperator   85
 DATA(insert OID =  91 ( "="		   PGNSP PGUID b t t	16	16	16	91	85 booleq eqsel eqjoinsel ));
 #define BooleanEqualOperator   91
 DATA(insert OID = 1694 (  "<="	   PGNSP PGUID b f f	16	16	16 1695 59 boolle scalarltsel scalarltjoinsel ));
