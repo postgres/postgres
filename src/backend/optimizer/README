@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.49 2009/02/27 22:41:37 tgl Exp $
+$PostgreSQL: pgsql/src/backend/optimizer/README,v 1.50 2009/07/21 02:02:44 tgl Exp $
 
 Optimizer
 =========
@@ -214,10 +214,10 @@ out of the nullable side of an outer join:
 	!= (A leftjoin B on (Pab)) join C on (Pbc)
 
 SEMI joins work a little bit differently.  A semijoin can be reassociated
-into or out of the lefthand side of another semijoin, but not into or out
-of the righthand side.  Likewise, an inner join, left join, or antijoin
-can be reassociated into or out of the lefthand side of a semijoin, but
-not into or out of the righthand side.
+into or out of the lefthand side of another semijoin, left join, or
+antijoin, but not into or out of the righthand side.  Likewise, an inner
+join, left join, or antijoin can be reassociated into or out of the
+lefthand side of a semijoin, but not into or out of the righthand side.
 
 ANTI joins work approximately like LEFT joins, except that identity 3
 fails if the join to C is an antijoin (even if Pbc is strict, and in
