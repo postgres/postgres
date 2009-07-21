@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.20 2009/02/02 20:07:37 adunstan Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.21 2009/07/21 21:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 		if (!str)
 			die_horribly(AH, NULL, "out of memory\n");
 
-		ahprintf(AH, "SELECT lowrite(0, '%s');\n", str);
+		ahprintf(AH, "SELECT pg_catalog.lowrite(0, '%s');\n", str);
 
 		free(str);
 	}
@@ -149,7 +149,12 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	if (oid == 0)
 		die_horribly(AH, NULL, "invalid OID for large object\n");
 
-	ahprintf(AH, "SELECT lo_open(lo_create(%u), %d);\n", oid, INV_WRITE);
+	if (AH->ropt->dropSchema)
+		ahprintf(AH, "SELECT CASE WHEN EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u') THEN pg_catalog.lo_unlink('%u') END;\n",
+				 oid, oid);
+
+	ahprintf(AH, "SELECT pg_catalog.lo_open(pg_catalog.lo_create('%u'), %d);\n",
+			 oid, INV_WRITE);
 
 	AH->WriteDataPtr = _WriteBlobData;
 }
@@ -164,7 +169,7 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	AH->WriteDataPtr = _WriteData;
 
-	ahprintf(AH, "SELECT lo_close(0);\n\n");
+	ahprintf(AH, "SELECT pg_catalog.lo_close(0);\n\n");
 }
 
 /*

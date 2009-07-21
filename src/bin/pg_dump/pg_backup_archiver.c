@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.172 2009/06/11 14:49:07 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.173 2009/07/21 21:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -895,7 +895,7 @@ EndRestoreBlobs(ArchiveHandle *AH)
  * Called by a format handler to initiate restoration of a blob
  */
 void
-StartRestoreBlob(ArchiveHandle *AH, Oid oid)
+StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 {
 	Oid			loOid;
 
@@ -905,6 +905,10 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	AH->lo_buf_used = 0;
 
 	ahlog(AH, 2, "restoring large object with OID %u\n", oid);
+
+	if (drop)
+		ahprintf(AH, "SELECT CASE WHEN EXISTS(SELECT 1 FROM pg_catalog.pg_largeobject WHERE loid = '%u') THEN pg_catalog.lo_unlink('%u') END;\n",
+				 oid, oid);
 
 	if (AH->connection)
 	{
@@ -919,7 +923,8 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	}
 	else
 	{
-		ahprintf(AH, "SELECT lo_open(lo_create(%u), %d);\n", oid, INV_WRITE);
+		ahprintf(AH, "SELECT pg_catalog.lo_open(pg_catalog.lo_create('%u'), %d);\n",
+				 oid, INV_WRITE);
 	}
 
 	AH->writingBlob = 1;
@@ -943,7 +948,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 	}
 	else
 	{
-		ahprintf(AH, "SELECT lo_close(0);\n\n");
+		ahprintf(AH, "SELECT pg_catalog.lo_close(0);\n\n");
 	}
 }
 
@@ -1254,7 +1259,7 @@ dump_lo_buf(ArchiveHandle *AH)
 
 		/* Hack: turn off writingBlob so ahwrite doesn't recurse to here */
 		AH->writingBlob = 0;
-		ahprintf(AH, "SELECT lowrite(0, '%s');\n", str);
+		ahprintf(AH, "SELECT pg_catalog.lowrite(0, '%s');\n", str);
 		AH->writingBlob = 1;
 
 		free(str);
