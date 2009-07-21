@@ -1,4 +1,0 @@
-The FAQ* files in this directory are the master versions, and the
-../../FAQ* text files are created using lynx:
-
-	lynx -force_html -dont_wrap_pre -dump -hiddenlinks=ignore -nolist FAQ*
