@@ -85,6 +85,7 @@
   (interactive)
   (sgml-mode)
 
+  (setq indent-tabs-mode nil)
   (setq sgml-basic-offset 1)
 )
 
