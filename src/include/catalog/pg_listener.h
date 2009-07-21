@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_listener.h,v 1.25 2009/01/01 17:23:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_listener.h,v 1.26 2009/07/21 20:24:51 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -48,8 +48,8 @@ typedef FormData_pg_listener *Form_pg_listener;
  */
 #define Natts_pg_listener						3
 #define Anum_pg_listener_relname				1
-#define Anum_pg_listener_pid					2
-#define Anum_pg_listener_notify					3
+#define Anum_pg_listener_listenerpid			2
+#define Anum_pg_listener_notification			3
 
 /* ----------------
  *		initial contents of pg_listener are NOTHING.
