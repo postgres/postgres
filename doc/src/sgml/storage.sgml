@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.29 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.30 2009/07/22 01:21:22 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -347,7 +347,7 @@ The <acronym>TOAST</> code recognizes four different strategies for storing
       <literal>MAIN</literal> allows compression but not out-of-line
       storage.  (Actually, out-of-line storage will still be performed
       for such columns, but only as a last resort when there is no other
-      way to make the row small enough.)
+      way to make the row small enough to fit on a page.)
      </para>
     </listitem>
    </itemizedlist>

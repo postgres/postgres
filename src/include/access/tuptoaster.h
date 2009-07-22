@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.43 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.44 2009/07/22 01:21:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,19 +25,25 @@
 
 
 /*
+ * Find the maximum size of a tuple if there are to be N tuples per page.
+ */
+#define MaximumBytesPerTuple(tuplesPerPage)	\
+	MAXALIGN_DOWN((BLCKSZ - \
+				   MAXALIGN(SizeOfPageHeaderData + (tuplesPerPage) * sizeof(ItemIdData))) \
+				  / (tuplesPerPage))
+
+/*
  * These symbols control toaster activation.  If a tuple is larger than
  * TOAST_TUPLE_THRESHOLD, we will try to toast it down to no more than
- * TOAST_TUPLE_TARGET bytes.  Both numbers include all tuple header overhead
- * and between-fields alignment padding, but we do *not* consider any
- * end-of-tuple alignment padding; hence the values can be compared directly
- * to a tuple's t_len field.
+ * TOAST_TUPLE_TARGET bytes through compressing compressible fields and
+ * moving EXTENDED and EXTERNAL data out-of-line.
  *
  * The numbers need not be the same, though they currently are.  It doesn't
  * make sense for TARGET to exceed THRESHOLD, but it could be useful to make
  * it be smaller.
  *
  * Currently we choose both values to match the largest tuple size for which
- * TOAST_TUPLES_PER_PAGE tuples can fit on a disk page.
+ * TOAST_TUPLES_PER_PAGE tuples can fit on a heap page.
  *
  * XXX while these can be modified without initdb, some thought needs to be
  * given to needs_toast_table() in toasting.c before unleashing random
@@ -46,12 +52,20 @@
  */
 #define TOAST_TUPLES_PER_PAGE	4
 
-#define TOAST_TUPLE_THRESHOLD	\
-	MAXALIGN_DOWN((BLCKSZ - \
-				   MAXALIGN(SizeOfPageHeaderData + TOAST_TUPLES_PER_PAGE * sizeof(ItemIdData))) \
-				  / TOAST_TUPLES_PER_PAGE)
+#define TOAST_TUPLE_THRESHOLD	MaximumBytesPerTuple(TOAST_TUPLES_PER_PAGE)
 
 #define TOAST_TUPLE_TARGET		TOAST_TUPLE_THRESHOLD
+
+/*
+ * The code will also consider moving MAIN data out-of-line, but only as a
+ * last resort if the previous steps haven't reached the target tuple size.
+ * In this phase we use a different target size, currently equal to the
+ * largest tuple that will fit on a heap page.  This is reasonable since
+ * the user has told us to keep the data in-line if at all possible.
+ */
+#define TOAST_TUPLES_PER_PAGE_MAIN	1
+
+#define TOAST_TUPLE_TARGET_MAIN	MaximumBytesPerTuple(TOAST_TUPLES_PER_PAGE_MAIN)
 
 /*
  * If an index value is larger than TOAST_INDEX_TARGET, we will try to
@@ -72,10 +86,7 @@
  */
 #define EXTERN_TUPLES_PER_PAGE	4		/* tweak only this */
 
-#define EXTERN_TUPLE_MAX_SIZE	\
-	MAXALIGN_DOWN((BLCKSZ - \
-				   MAXALIGN(SizeOfPageHeaderData + EXTERN_TUPLES_PER_PAGE * sizeof(ItemIdData))) \
-				  / EXTERN_TUPLES_PER_PAGE)
+#define EXTERN_TUPLE_MAX_SIZE	MaximumBytesPerTuple(EXTERN_TUPLES_PER_PAGE)
 
 #define TOAST_MAX_CHUNK_SIZE	\
 	(EXTERN_TUPLE_MAX_SIZE -							\

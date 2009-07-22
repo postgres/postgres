@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.93 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.94 2009/07/22 01:21:22 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -796,8 +796,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	}
 
 	/*
-	 * Finally we store attributes of type 'm' external, if possible.
+	 * Finally we store attributes of type 'm' externally.  At this point
+	 * we increase the target tuple size, so that 'm' attributes aren't
+	 * stored externally unless really necessary.
 	 */
+	maxDataLen = TOAST_TUPLE_TARGET_MAIN - hoff;
+
 	while (heap_compute_data_size(tupleDesc,
 								  toast_values, toast_isnull) > maxDataLen &&
 		   rel->rd_rel->reltoastrelid != InvalidOid)
