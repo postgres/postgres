@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.245 2009/07/18 19:15:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.246 2009/07/22 02:31:38 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "executor/spi_priv.h"
 #include "funcapi.h"
+#include "lib/stringinfo.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/scansup.h"
 #include "storage/proc.h"
@@ -2394,11 +2395,11 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 
 	if (stmt->message)
 	{
-		PLpgSQL_dstring ds;
+		StringInfoData	ds;
 		ListCell   *current_param;
 		char	   *cp;
 
-		plpgsql_dstring_init(&ds);
+		initStringInfo(&ds);
 		current_param = list_head(stmt->params);
 
 		for (cp = stmt->message; *cp; cp++)
@@ -2416,7 +2417,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 
 				if (cp[1] == '%')
 				{
-					plpgsql_dstring_append_char(&ds, cp[1]);
+					appendStringInfoChar(&ds, '%');
 					cp++;
 					continue;
 				}
@@ -2435,12 +2436,12 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 					extval = "<NULL>";
 				else
 					extval = convert_value_to_string(paramvalue, paramtypeid);
-				plpgsql_dstring_append(&ds, extval);
+				appendStringInfoString(&ds, extval);
 				current_param = lnext(current_param);
 				exec_eval_cleanup(estate);
 			}
 			else
-				plpgsql_dstring_append_char(&ds, cp[0]);
+				appendStringInfoChar(&ds, cp[0]);
 		}
 
 		/*
@@ -2452,8 +2453,8 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("too many parameters specified for RAISE")));
 
-		err_message = plpgsql_dstring_get(&ds);
-		/* No dstring_free here, the pfree(err_message) does it */
+		err_message = ds.data;
+		/* No pfree(ds.data), the pfree(err_message) does it */
 	}
 
 	foreach(lc, stmt->options)

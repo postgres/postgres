@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.113 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.114 2009/07/22 02:31:38 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,14 +145,6 @@ enum
 /**********************************************************************
  * Node and structure definitions
  **********************************************************************/
-
-
-typedef struct
-{								/* Dynamic string control structure */
-	int			alloc;
-	int			used;			/* Including NUL terminator */
-	char	   *value;
-} PLpgSQL_dstring;
 
 
 typedef struct
@@ -850,16 +842,6 @@ extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);
-
-/* ----------
- * Functions for the dynamic string handling in pl_funcs.c
- * ----------
- */
-extern void plpgsql_dstring_init(PLpgSQL_dstring *ds);
-extern void plpgsql_dstring_free(PLpgSQL_dstring *ds);
-extern void plpgsql_dstring_append(PLpgSQL_dstring *ds, const char *str);
-extern void plpgsql_dstring_append_char(PLpgSQL_dstring *ds, char c);
-extern char *plpgsql_dstring_get(PLpgSQL_dstring *ds);
 
 /* ----------
  * Functions for namestack handling in pl_funcs.c

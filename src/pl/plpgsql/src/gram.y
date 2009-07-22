@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.126 2009/07/11 21:15:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.127 2009/07/22 02:31:38 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "plpgsql.h"
 
 #include "catalog/pg_type.h"
+#include "lib/stringinfo.h"
 #include "parser/parser.h"
 
 
@@ -1978,7 +1979,7 @@ read_sql_construct(int until,
 {
 	int					tok;
 	int					lno;
-	PLpgSQL_dstring		ds;
+	StringInfoData		ds;
 	int					parenlevel = 0;
 	int					nparams = 0;
 	int					params[MAX_EXPR_PARAMS];
@@ -1986,8 +1987,8 @@ read_sql_construct(int until,
 	PLpgSQL_expr		*expr;
 
 	lno = plpgsql_scanner_lineno();
-	plpgsql_dstring_init(&ds);
-	plpgsql_dstring_append(&ds, sqlstart);
+	initStringInfo(&ds);
+	appendStringInfoString(&ds, sqlstart);
 
 	for (;;)
 	{
@@ -2029,7 +2030,7 @@ read_sql_construct(int until,
 		}
 
 		if (plpgsql_SpaceScanned)
-			plpgsql_dstring_append(&ds, " ");
+			appendStringInfoChar(&ds, ' ');
 
 		switch (tok)
 		{
@@ -2037,25 +2038,25 @@ read_sql_construct(int until,
 				snprintf(buf, sizeof(buf), " $%d ",
 						 assign_expr_param(yylval.scalar->dno,
 										   params, &nparams));
-				plpgsql_dstring_append(&ds, buf);
+				appendStringInfoString(&ds, buf);
 				break;
 
 			case T_ROW:
 				snprintf(buf, sizeof(buf), " $%d ",
 						 assign_expr_param(yylval.row->dno,
 										   params, &nparams));
-				plpgsql_dstring_append(&ds, buf);
+				appendStringInfoString(&ds, buf);
 				break;
 
 			case T_RECORD:
 				snprintf(buf, sizeof(buf), " $%d ",
 						 assign_expr_param(yylval.rec->dno,
 										   params, &nparams));
-				plpgsql_dstring_append(&ds, buf);
+				appendStringInfoString(&ds, buf);
 				break;
 
 			default:
-				plpgsql_dstring_append(&ds, yytext);
+				appendStringInfoString(&ds, yytext);
 				break;
 		}
 	}
@@ -2065,12 +2066,12 @@ read_sql_construct(int until,
 
 	expr = palloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
-	expr->query			= pstrdup(plpgsql_dstring_get(&ds));
+	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->nparams		= nparams;
 	while(nparams-- > 0)
 		expr->params[nparams] = params[nparams];
-	plpgsql_dstring_free(&ds);
+	pfree(ds.data);
 
 	if (valid_sql)
 		check_sql_expr(expr->query);
@@ -2082,7 +2083,7 @@ static PLpgSQL_type *
 read_datatype(int tok)
 {
 	int					lno;
-	PLpgSQL_dstring		ds;
+	StringInfoData		ds;
 	char			   *type_name;
 	PLpgSQL_type		*result;
 	bool				needspace = false;
@@ -2100,7 +2101,7 @@ read_datatype(int tok)
 		return yylval.dtype;
 	}
 
-	plpgsql_dstring_init(&ds);
+	initStringInfo(&ds);
 
 	while (tok != ';')
 	{
@@ -2122,16 +2123,16 @@ read_datatype(int tok)
 		else if (tok == ')')
 			parenlevel--;
 		if (needspace)
-			plpgsql_dstring_append(&ds, " ");
+			appendStringInfoChar(&ds, ' ');
 		needspace = true;
-		plpgsql_dstring_append(&ds, yytext);
+		appendStringInfoString(&ds, yytext);
 
 		tok = yylex();
 	}
 
 	plpgsql_push_back_token(tok);
 
-	type_name = plpgsql_dstring_get(&ds);
+	type_name = ds.data;
 
 	if (type_name[0] == '\0')
 		yyerror("missing data type declaration");
@@ -2140,7 +2141,7 @@ read_datatype(int tok)
 
 	result = plpgsql_parse_datatype(type_name);
 
-	plpgsql_dstring_free(&ds);
+	pfree(ds.data);
 
 	return result;
 }
@@ -2148,7 +2149,7 @@ read_datatype(int tok)
 static PLpgSQL_stmt *
 make_execsql_stmt(const char *sqlstart, int lineno)
 {
-	PLpgSQL_dstring		ds;
+	StringInfoData		ds;
 	int					nparams = 0;
 	int					params[MAX_EXPR_PARAMS];
 	char				buf[32];
@@ -2161,8 +2162,8 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 	bool				have_into = false;
 	bool				have_strict = false;
 
-	plpgsql_dstring_init(&ds);
-	plpgsql_dstring_append(&ds, sqlstart);
+	initStringInfo(&ds);
+	appendStringInfoString(&ds, sqlstart);
 
 	/*
 	 * We have to special-case the sequence INSERT INTO, because we don't want
@@ -2196,7 +2197,7 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 		}
 
 		if (plpgsql_SpaceScanned)
-			plpgsql_dstring_append(&ds, " ");
+			appendStringInfoChar(&ds, ' ');
 
 		switch (tok)
 		{
@@ -2204,37 +2205,37 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 				snprintf(buf, sizeof(buf), " $%d ",
 						 assign_expr_param(yylval.scalar->dno,
 										   params, &nparams));
-				plpgsql_dstring_append(&ds, buf);
+				appendStringInfoString(&ds, buf);
 				break;
 
 			case T_ROW:
 				snprintf(buf, sizeof(buf), " $%d ",
 						 assign_expr_param(yylval.row->dno,
 										   params, &nparams));
-				plpgsql_dstring_append(&ds, buf);
+				appendStringInfoString(&ds, buf);
 				break;
 
 			case T_RECORD:
 				snprintf(buf, sizeof(buf), " $%d ",
 						 assign_expr_param(yylval.rec->dno,
 										   params, &nparams));
-				plpgsql_dstring_append(&ds, buf);
+				appendStringInfoString(&ds, buf);
 				break;
 
 			default:
-				plpgsql_dstring_append(&ds, yytext);
+				appendStringInfoString(&ds, yytext);
 				break;
 		}
 	}
 
 	expr = palloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
-	expr->query			= pstrdup(plpgsql_dstring_get(&ds));
+	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->nparams		= nparams;
 	while(nparams-- > 0)
 		expr->params[nparams] = params[nparams];
-	plpgsql_dstring_free(&ds);
+	pfree(ds.data);
 
 	check_sql_expr(expr->query);
 
@@ -3023,8 +3024,7 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 			PLpgSQL_expr *expr = cwt->expr;
 			int		nparams = expr->nparams;
 			PLpgSQL_expr *new_expr;
-			PLpgSQL_dstring ds;
-			char	buff[32];
+			StringInfoData	ds;
 
 			/* Must add the CASE variable as an extra param to expression */
 			if (nparams >= MAX_EXPR_PARAMS)
@@ -3041,22 +3041,19 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 			new_expr->nparams = nparams + 1;
 			new_expr->params[nparams] = t_varno;
 
-			/* And do the string hacking */
-			plpgsql_dstring_init(&ds);
-
-			plpgsql_dstring_append(&ds, "SELECT $");
-			snprintf(buff, sizeof(buff), "%d", nparams + 1);
-			plpgsql_dstring_append(&ds, buff);
-			plpgsql_dstring_append(&ds, " IN (");
-
-			/* copy expression query without SELECT keyword */
+			/* copy expression query without SELECT keyword (expr->query + 7) */
 			Assert(strncmp(expr->query, "SELECT ", 7) == 0);
-			plpgsql_dstring_append(&ds, expr->query + 7);
-			plpgsql_dstring_append_char(&ds, ')');
+			
+			/* And do the string hacking */
+			initStringInfo(&ds);
 
-			new_expr->query = pstrdup(plpgsql_dstring_get(&ds));
+			appendStringInfo(&ds, "SELECT $%d IN(%s)", 
+								nparams + 1,
+								expr->query + 7);
 
-			plpgsql_dstring_free(&ds);
+			new_expr->query = pstrdup(ds.data);
+
+			pfree(ds.data);
 			pfree(expr->query);
 			pfree(expr);
 

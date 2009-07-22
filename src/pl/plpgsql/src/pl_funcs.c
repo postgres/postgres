@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.79 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.80 2009/07/22 02:31:38 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,90 +26,6 @@
  */
 static PLpgSQL_ns *ns_current = NULL;
 static bool ns_localmode = false;
-
-
-/* ----------
- * plpgsql_dstring_init			Dynamic string initialization
- * ----------
- */
-void
-plpgsql_dstring_init(PLpgSQL_dstring *ds)
-{
-	ds->value = palloc(ds->alloc = 512);
-	ds->used = 1;
-	ds->value[0] = '\0';
-}
-
-
-/* ----------
- * plpgsql_dstring_free			Dynamic string destruction
- * ----------
- */
-void
-plpgsql_dstring_free(PLpgSQL_dstring *ds)
-{
-	pfree(ds->value);
-}
-
-static void
-plpgsql_dstring_expand(PLpgSQL_dstring *ds, int needed)
-{
-	/* Don't allow truncating the string */
-	Assert(needed > ds->alloc);
-	Assert(ds->used <= ds->alloc);
-
-	/* Might have to double more than once, if needed is large */
-	do
-	{
-		ds->alloc *= 2;
-	} while (needed > ds->alloc);
-	ds->value = repalloc(ds->value, ds->alloc);
-}
-
-/* ----------
- * plpgsql_dstring_append		Dynamic string extending
- * ----------
- */
-void
-plpgsql_dstring_append(PLpgSQL_dstring *ds, const char *str)
-{
-	int			len = strlen(str);
-	int			needed = ds->used + len;
-
-	if (needed > ds->alloc)
-		plpgsql_dstring_expand(ds, needed);
-
-	memcpy(&(ds->value[ds->used - 1]), str, len);
-	ds->used += len;
-	ds->value[ds->used - 1] = '\0';
-}
-
-/* ----------
- * plpgsql_dstring_append_char	Append a single character
- *								to a dynamic string
- * ----------
- */
-void
-plpgsql_dstring_append_char(PLpgSQL_dstring *ds, char c)
-{
-	if (ds->used == ds->alloc)
-		plpgsql_dstring_expand(ds, ds->used + 1);
-
-	ds->value[ds->used - 1] = c;
-	ds->value[ds->used] = '\0';
-	ds->used++;
-}
-
-
-/* ----------
- * plpgsql_dstring_get			Dynamic string get value
- * ----------
- */
-char *
-plpgsql_dstring_get(PLpgSQL_dstring *ds)
-{
-	return ds->value;
-}
 
 
 /* ----------
