@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.31 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.32 2009/07/22 11:07:02 mha Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -463,7 +463,7 @@ AddStmtToCache(int lineno,		/* line # of statement		*/
 
 /* handle cache and preparation of statments in auto-prepare mode */
 bool
-ecpg_auto_prepare(int lineno, const char *connection_name, int compat, char **name, const char *query)
+ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, char **name, const char *query)
 {
 	int			entNo;
 
