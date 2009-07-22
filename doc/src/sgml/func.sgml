@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.482 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.483 2009/07/22 18:07:26 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9193,8 +9193,9 @@ SELECT NULLIF(value, '(none)') ...
 </programlisting>
   </para>
   <para>
-   If <replaceable>value1</replaceable> is <literal>(none)</>, return a null,
-   otherwise return <replaceable>value1</replaceable>.
+   In this example, if <literal>value</literal> is <literal>(none)</>,
+   null is returned, otherwise the value of <literal>value</literal>
+   is returned.
   </para>
 
   </sect2>
