@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.156 2009/07/18 19:15:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.157 2009/07/22 17:00:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,15 +223,13 @@ extern void UpdateChangedParamSet(PlanState *node, Bitmapset *newchg);
 
 typedef struct TupOutputState
 {
-	/* use "struct" here to allow forward reference */
-	struct AttInMetadata *metadata;
 	TupleTableSlot *slot;
 	DestReceiver *dest;
 } TupOutputState;
 
 extern TupOutputState *begin_tup_output_tupdesc(DestReceiver *dest,
 						 TupleDesc tupdesc);
-extern void do_tup_output(TupOutputState *tstate, char **values);
+extern void do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull);
 extern void do_text_output_multiline(TupOutputState *tstate, char *text);
 extern void end_tup_output(TupOutputState *tstate);
 
@@ -240,11 +238,14 @@ extern void end_tup_output(TupOutputState *tstate);
  *
  * Should only be used with a single-TEXT-attribute tupdesc.
  */
-#define do_text_output_oneline(tstate, text_to_emit) \
+#define do_text_output_oneline(tstate, str_to_emit) \
 	do { \
-		char *values_[1]; \
-		values_[0] = (text_to_emit); \
-		do_tup_output(tstate, values_); \
+		Datum	values_[1]; \
+		bool	isnull_[1]; \
+		values_[0] = PointerGetDatum(cstring_to_text(str_to_emit)); \
+		isnull_[0] = false; \
+		do_tup_output(tstate, values_, isnull_); \
+		pfree(DatumGetPointer(values_[0])); \
 	} while (0)
 
 

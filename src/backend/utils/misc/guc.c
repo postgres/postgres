@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.508 2009/07/16 20:55:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.509 2009/07/22 17:00:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5986,7 +5986,8 @@ ShowAllGUCConfig(DestReceiver *dest)
 	int			i;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
-	char	   *values[3];
+	Datum	    values[3];
+	bool		isnull[3] = { false, false, false };
 
 	/* need a tuple descriptor representing three TEXT columns */
 	tupdesc = CreateTemplateTupleDesc(3, false);
@@ -5997,29 +5998,46 @@ ShowAllGUCConfig(DestReceiver *dest)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "description",
 					   TEXTOID, -1, 0);
 
-
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc);
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *conf = guc_variables[i];
+		char   *setting;
 
 		if ((conf->flags & GUC_NO_SHOW_ALL) ||
 			((conf->flags & GUC_SUPERUSER_ONLY) && !am_superuser))
 			continue;
 
 		/* assign to the values array */
-		values[0] = (char *) conf->name;
-		values[1] = _ShowOption(conf, true);
-		values[2] = (char *) conf->short_desc;
+		values[0] = PointerGetDatum(cstring_to_text(conf->name));
+
+		setting = _ShowOption(conf, true);
+		if (setting)
+		{
+			values[1] = PointerGetDatum(cstring_to_text(setting));
+			isnull[1] = false;
+		}
+		else
+		{
+			values[1] = PointerGetDatum(NULL);
+			isnull[1] = true;
+		}
+
+		values[2] = PointerGetDatum(cstring_to_text(conf->short_desc));
 
 		/* send it to dest */
-		do_tup_output(tstate, values);
+		do_tup_output(tstate, values, isnull);
 
 		/* clean up */
-		if (values[1] != NULL)
-			pfree(values[1]);
+		pfree(DatumGetPointer(values[0]));
+		if (setting)
+		{
+			pfree(setting);
+			pfree(DatumGetPointer(values[1]));
+		}
+		pfree(DatumGetPointer(values[2]));
 	}
 
 	end_tup_output(tstate);
