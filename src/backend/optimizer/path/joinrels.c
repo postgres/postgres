@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.101 2009/07/19 20:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.102 2009/07/23 17:42:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,6 +400,22 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			continue;
 
 		/*
+		 * If it's a semijoin and we already joined the RHS to any other
+		 * rels within either input, then we must have unique-ified the RHS
+		 * at that point (see below).  Therefore the semijoin is no longer
+		 * relevant in this join path.
+		 */
+		if (sjinfo->jointype == JOIN_SEMI)
+		{
+			if (bms_is_subset(sjinfo->syn_righthand, rel1->relids) &&
+				!bms_equal(sjinfo->syn_righthand, rel1->relids))
+				continue;
+			if (bms_is_subset(sjinfo->syn_righthand, rel2->relids) &&
+				!bms_equal(sjinfo->syn_righthand, rel2->relids))
+				continue;
+		}
+
+		/*
 		 * If one input contains min_lefthand and the other contains
 		 * min_righthand, then we can perform the SJ at this join.
 		 *
@@ -491,9 +507,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * We assume that make_outerjoininfo() set things up correctly
 			 * so that we'll only match to some SJ if the join is valid.
 			 * Set flag here to check at bottom of loop.
-			 *
-			 * For a semijoin, assume it's okay if either side fully contains
-			 * the RHS (per the unique-ification case above).
 			 *----------
 			 */
 			if (sjinfo->jointype != JOIN_SEMI &&
@@ -502,12 +515,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			{
 				/* seems OK */
 				Assert(!bms_overlap(joinrelids, sjinfo->min_lefthand));
-			}
-			else if (sjinfo->jointype == JOIN_SEMI &&
-					 (bms_is_subset(sjinfo->syn_righthand, rel1->relids) ||
-					  bms_is_subset(sjinfo->syn_righthand, rel2->relids)))
-			{
-				/* seems OK */
 			}
 			else
 				is_valid_inner = false;
