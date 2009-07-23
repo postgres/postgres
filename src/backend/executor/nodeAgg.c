@@ -55,13 +55,15 @@
  *	  in either case its value need not be preserved.  See int8inc() for an
  *	  example.	Notice that advance_transition_function() is coded to avoid a
  *	  data copy step when the previous transition value pointer is returned.
+ *	  Also, some transition functions make use of the aggcontext to store
+ *	  working state.
  *
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.167 2009/06/17 16:05:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.168 2009/07/23 20:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,18 +273,6 @@ initialize_aggregates(AggState *aggstate,
 									  peraggstate->sortOperator, false,
 									  work_mem, false);
 		}
-
-		/*
-		 * If we are reinitializing after a group boundary, we have to free
-		 * any prior transValue to avoid memory leakage.  We must check not
-		 * only the isnull flag but whether the pointer is NULL; since
-		 * pergroupstate is initialized with palloc0, the initial condition
-		 * has isnull = 0 and null pointer.
-		 */
-		if (!peraggstate->transtypeByVal &&
-			!pergroupstate->transValueIsNull &&
-			DatumGetPointer(pergroupstate->transValue) != NULL)
-			pfree(DatumGetPointer(pergroupstate->transValue));
 
 		/*
 		 * (Re)set transValue to the initial value.
@@ -911,9 +901,14 @@ agg_retrieve_direct(AggState *aggstate)
 		}
 
 		/*
-		 * Clear the per-output-tuple context for each group
+		 * Clear the per-output-tuple context for each group, as well as
+		 * aggcontext (which contains any pass-by-ref transvalues of the
+		 * old group).  We also clear any child contexts of the aggcontext;
+		 * some aggregate functions store working state in such contexts.
 		 */
 		ResetExprContext(econtext);
+
+		MemoryContextResetAndDeleteChildren(aggstate->aggcontext);
 
 		/*
 		 * Initialize working state for a new input tuple group
@@ -1234,7 +1229,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * structures and transition values.  NOTE: the details of what is stored
 	 * in aggcontext and what is stored in the regular per-query memory
 	 * context are driven by a simple decision: we want to reset the
-	 * aggcontext in ExecReScanAgg to recover no-longer-wanted space.
+	 * aggcontext at group boundaries (if not hashing) and in ExecReScanAgg
+	 * to recover no-longer-wanted space.
 	 */
 	aggstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
