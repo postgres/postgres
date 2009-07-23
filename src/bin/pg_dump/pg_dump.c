@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.541 2009/07/20 20:53:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.542 2009/07/23 22:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,7 @@ static void dumpBaseType(Archive *fout, TypeInfo *tinfo);
 static void dumpEnumType(Archive *fout, TypeInfo *tinfo);
 static void dumpDomain(Archive *fout, TypeInfo *tinfo);
 static void dumpCompositeType(Archive *fout, TypeInfo *tinfo);
+static void dumpCompositeTypeColComments(Archive *fout, TypeInfo *tinfo);
 static void dumpShellType(Archive *fout, ShellTypeInfo *stinfo);
 static void dumpProcLang(Archive *fout, ProcLangInfo *plang);
 static void dumpFunc(Archive *fout, FuncInfo *finfo);
@@ -6755,6 +6756,119 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(query);
+
+	/* Dump any per-column comments */
+	dumpCompositeTypeColComments(fout, tinfo);
+}
+
+/*
+ * dumpCompositeTypeColComments
+ *	  writes out to fout the queries to recreate comments on the columns of
+ *	  a user-defined stand-alone composite type
+ */
+static void
+dumpCompositeTypeColComments(Archive *fout, TypeInfo *tinfo)
+{
+	CommentItem *comments;
+	int ncomments;
+	PGresult *res;
+	PQExpBuffer query;
+	PQExpBuffer target;
+	Oid pgClassOid;
+	int i;
+	int ntups;
+	int i_attname;
+	int i_attnum;
+
+	query = createPQExpBuffer();
+
+	/* We assume here that remoteVersion must be at least 70300 */
+	appendPQExpBuffer(query,
+					  "SELECT c.tableoid, a.attname, a.attnum "
+					  "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
+					  "WHERE c.oid = '%u' AND c.oid = a.attrelid "
+					  "  AND NOT a.attisdropped "
+					  "ORDER BY a.attnum ",
+					  tinfo->typrelid);
+
+	/* Fetch column attnames */
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	/* Expecting at least a single result */
+	ntups = PQntuples(res);
+	if (ntups < 1)
+	{
+		write_msg(NULL, "query returned no rows: %s\n", query->data);
+		exit_nicely();
+	}
+
+	pgClassOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "tableoid")));
+
+	/* Search for comments associated with type's pg_class OID */
+	ncomments = findComments(fout,
+							 pgClassOid,
+							 tinfo->typrelid,
+							 &comments);
+
+	/* If no comments exist, we're done */
+	if (ncomments <= 0)
+	{
+		PQclear(res);
+		destroyPQExpBuffer(query);
+		return;
+	}
+
+	/* Build COMMENT ON statements */
+	target = createPQExpBuffer();
+
+	i_attnum = PQfnumber(res, "attnum");
+	i_attname = PQfnumber(res, "attname");
+	while (ncomments > 0)
+	{
+		const char *attname;
+
+		attname = NULL;
+		for (i = 0; i < ntups; i++)
+		{
+			if (atoi(PQgetvalue(res, i, i_attnum)) == comments->objsubid)
+			{
+				attname = PQgetvalue(res, i, i_attname);
+				break;
+			}
+		}
+		if (attname)			/* just in case we don't find it */
+		{
+			const char *descr = comments->descr;
+
+			resetPQExpBuffer(target);
+			appendPQExpBuffer(target, "COLUMN %s.",
+							  fmtId(tinfo->dobj.name));
+			appendPQExpBuffer(target, "%s",
+							  fmtId(attname));
+
+			resetPQExpBuffer(query);
+			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
+			appendStringLiteralAH(query, descr, fout);
+			appendPQExpBuffer(query, ";\n");
+
+			ArchiveEntry(fout, nilCatalogId, createDumpId(),
+						 target->data,
+						 tinfo->dobj.namespace->dobj.name,
+						 NULL, tinfo->rolname,
+						 false, "COMMENT", SECTION_NONE,
+						 query->data, "", NULL,
+						 &(tinfo->dobj.dumpId), 1,
+						 NULL, NULL);
+		}
+
+		comments++;
+		ncomments--;
+	}
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(target);
 }
 
 /*
