@@ -19085,6 +19085,16 @@ esac
 
 fi
 
+# Cygwin's erand48 sometimes hangs, so force use of ours
+if test "$PORTNAME" = "cygwin"; then
+  case " $LIBOBJS " in
+  *" erand48.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS erand48.$ac_objext"
+ ;;
+esac
+
+fi
+
 # Win32 support
 if test "$PORTNAME" = "win32"; then
 
