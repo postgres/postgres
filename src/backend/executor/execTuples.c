@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.108 2009/07/22 17:00:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.109 2009/07/23 21:27:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1215,27 +1215,28 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 
 /*
  * write a single tuple
- *
- * XXX This could be made more efficient, since in reality we probably only
- * need a virtual tuple.
  */
 void
 do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 {
-	TupleDesc	tupdesc = tstate->slot->tts_tupleDescriptor;
-	HeapTuple	tuple;
+	TupleTableSlot *slot = tstate->slot;
+	int			natts = slot->tts_tupleDescriptor->natts;
 
-	/* form a tuple */
-	tuple = heap_form_tuple(tupdesc, values, isnull);
+	/* make sure the slot is clear */
+	ExecClearTuple(slot);
 
-	/* put it in a slot */
-	ExecStoreTuple(tuple, tstate->slot, InvalidBuffer, true);
+	/* insert data */
+	memcpy(slot->tts_values, values, natts * sizeof(Datum));
+	memcpy(slot->tts_isnull, isnull, natts * sizeof(bool));
+
+	/* mark slot as containing a virtual tuple */
+	ExecStoreVirtualTuple(slot);
 
 	/* send the tuple to the receiver */
-	(*tstate->dest->receiveSlot) (tstate->slot, tstate->dest);
+	(*tstate->dest->receiveSlot) (slot, tstate->dest);
 
 	/* clean up */
-	ExecClearTuple(tstate->slot);
+	ExecClearTuple(slot);
 }
 
 /*
