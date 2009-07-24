@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.11 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.12 2009/07/24 20:12:42 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
+static Size UsedShmemSegSize = 0;
 
 static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
 
@@ -233,6 +234,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 
 	/* Save info for possible future use */
 	UsedShmemSegAddr = memAddress;
+	UsedShmemSegSize = size;
 	UsedShmemSegID = (unsigned long) hmap2;
 
 	return hdr;
@@ -256,6 +258,13 @@ PGSharedMemoryReAttach(void)
 
 	Assert(UsedShmemSegAddr != NULL);
 	Assert(IsUnderPostmaster);
+
+	/*
+	 * Release memory region reservation that was made by the postmaster
+	 */
+	if (VirtualFree(UsedShmemSegAddr, 0, MEM_RELEASE) == 0)
+		elog(FATAL, "failed to release reserved memory region (addr=%p): %lu",
+			 UsedShmemSegAddr, GetLastError());
 
 	hdr = (PGShmemHeader *) MapViewOfFileEx((HANDLE) UsedShmemSegID, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0, UsedShmemSegAddr);
 	if (!hdr)
@@ -301,4 +310,54 @@ pgwin32_SharedMemoryDelete(int status, Datum shmId)
 	PGSharedMemoryDetach();
 	if (!CloseHandle((HANDLE) DatumGetInt32(shmId)))
 		elog(LOG, "could not close handle to shared memory: %lu", GetLastError());
+}
+
+/*
+ * pgwin32_ReserveSharedMemoryRegion(hChild)
+ *
+ * Reserve the memory region that will be used for shared memory in a child
+ * process. It is called before the child process starts, to make sure the
+ * memory is available.
+ *
+ * Once the child starts, DLLs loading in different order or threads getting
+ * scheduled differently may allocate memory which can conflict with the
+ * address space we need for our shared memory. By reserving the shared
+ * memory region before the child starts, and freeing it only just before we
+ * attempt to get access to the shared memory forces these allocations to
+ * be given different address ranges that don't conflict.
+ *
+ * NOTE! This function executes in the postmaster, and should for this
+ * reason not use elog(FATAL) since that would take down the postmaster.
+ */
+int
+pgwin32_ReserveSharedMemoryRegion(HANDLE hChild)
+{
+	void *address;
+
+	Assert(UsedShmemSegAddr != NULL);
+	Assert(UsedShmemSegSize != 0);
+
+	address = VirtualAllocEx(hChild, UsedShmemSegAddr, UsedShmemSegSize,
+								MEM_RESERVE, PAGE_READWRITE);
+	if (address == NULL) {
+		/* Don't use FATAL since we're running in the postmaster */
+		elog(LOG, "could not reserve shared memory region (addr=%p) for child %lu: %lu",
+			 UsedShmemSegAddr, hChild, GetLastError());
+		return false;
+	}
+	if (address != UsedShmemSegAddr)
+	{
+		/*
+		 * Should never happen - in theory if allocation granularity causes strange
+		 * effects it could, so check just in case.
+		 *
+		 * Don't use FATAL since we're running in the postmaster.
+		 */
+	    elog(LOG, "reserved shared memory region got incorrect address %p, expected %p",
+			 address, UsedShmemSegAddr);
+		VirtualFreeEx(hChild, address, 0, MEM_RELEASE);
+		return false;
+	}
+
+	return true;
 }

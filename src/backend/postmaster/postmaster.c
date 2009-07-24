@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.584 2009/07/08 18:55:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.585 2009/07/24 20:12:42 mha Exp $
  *
  * NOTES
  *
@@ -3635,13 +3635,32 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		return -1;				/* log made by save_backend_variables */
 	}
 
-	/* Drop the shared memory that is now inherited to the backend */
+	/* Drop the parameter shared memory that is now inherited to the backend */
 	if (!UnmapViewOfFile(param))
 		elog(LOG, "could not unmap view of backend parameter file: error code %d",
 			 (int) GetLastError());
 	if (!CloseHandle(paramHandle))
 		elog(LOG, "could not close handle to backend parameter file: error code %d",
 			 (int) GetLastError());
+
+	/*
+	 * Reserve the memory region used by our main shared memory segment before we
+	 * resume the child process.
+	 */
+	if (!pgwin32_ReserveSharedMemoryRegion(pi.hProcess))
+	{
+		/*
+		 * Failed to reserve the memory, so terminate the newly created
+		 * process and give up.
+		 */
+		if (!TerminateProcess(pi.hProcess, 255))
+			ereport(ERROR,
+					(errmsg_internal("could not terminate process that failed to reserve memory: error code %d",
+									 (int) GetLastError())));
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return -1;			/* logging done made by pgwin32_ReserveSharedMemoryRegion() */
+	}
 
 	/*
 	 * Now that the backend variables are written out, we start the child
