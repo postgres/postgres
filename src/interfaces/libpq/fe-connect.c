@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.375 2009/06/11 14:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.376 2009/07/24 17:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1018,6 +1018,7 @@ PQconnectPoll(PGconn *conn)
 {
 	PGresult   *res;
 	char		sebuf[256];
+	int			optval;
 
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
@@ -1153,6 +1154,46 @@ keep_going:						/* We will come back to here until there is
 					}
 #endif   /* F_SETFD */
 
+					/*----------
+					 * We have three methods of blocking SIGPIPE during
+					 * send() calls to this socket:
+					 *
+					 *  - setsockopt(sock, SO_NOSIGPIPE)
+					 *  - send(sock, ..., MSG_NOSIGNAL)
+					 *  - setting the signal mask to SIG_IGN during send()
+					 *
+					 * The third method requires three syscalls per send,
+					 * so we prefer either of the first two, but they are
+					 * less portable.  The state is tracked in the following
+					 * members of PGconn:
+					 *
+					 * conn->sigpipe_so		- we have set up SO_NOSIGPIPE
+					 * conn->sigpipe_flag	- we're specifying MSG_NOSIGNAL
+					 *
+					 * If we can use SO_NOSIGPIPE, then set sigpipe_so here
+					 * and we're done.  Otherwise, set sigpipe_flag so that
+					 * we will try MSG_NOSIGNAL on sends.  If we get an error
+					 * with MSG_NOSIGNAL, we'll clear that flag and revert to
+					 * signal masking.
+					 *----------
+					 */
+					conn->sigpipe_so = false;
+#ifdef MSG_NOSIGNAL
+					conn->sigpipe_flag = true;
+#else
+					conn->sigpipe_flag = false;
+#endif /* MSG_NOSIGNAL */
+
+#ifdef SO_NOSIGPIPE
+					optval = 1;
+					if (setsockopt(conn->sock, SOL_SOCKET, SO_NOSIGPIPE,
+								   (char *) &optval, sizeof(optval)) == 0)
+					{
+						conn->sigpipe_so = true;
+						conn->sigpipe_flag = false;
+					}
+#endif /* SO_NOSIGPIPE */
+
 					/*
 					 * Start/make connection.  This should not block, since we
 					 * are in nonblock mode.  If it does, well, too bad.
@@ -1214,7 +1255,6 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_STARTED:
 			{
-				int			optval;
 				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
 
 				/*

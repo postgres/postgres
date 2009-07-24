@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.127 2009/06/23 18:13:23 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.128 2009/07/24 17:58:31 tgl Exp $
  *
  * NOTES
  *
@@ -118,44 +118,76 @@ static long win32_ssl_create_mutex = 0;
 
 /*
  * Macros to handle disabling and then restoring the state of SIGPIPE handling.
- * Note that DISABLE_SIGPIPE() must appear at the start of a block.
+ * On Windows, these are all no-ops since there's no SIGPIPEs.
  */
 
 #ifndef WIN32
+
+#define SIGPIPE_MASKED(conn)	((conn)->sigpipe_so || (conn)->sigpipe_flag)
+
 #ifdef ENABLE_THREAD_SAFETY
 
-#define DISABLE_SIGPIPE(failaction) \
-	sigset_t	osigmask; \
-	bool		sigpipe_pending; \
-	bool		got_epipe = false; \
-\
-	if (pq_block_sigpipe(&osigmask, &sigpipe_pending) < 0) \
-		failaction
+struct sigpipe_info
+{
+	sigset_t	oldsigmask;
+	bool		sigpipe_pending;
+	bool		got_epipe;
+};
 
-#define REMEMBER_EPIPE(cond) \
+#define DECLARE_SIGPIPE_INFO(spinfo) struct sigpipe_info spinfo
+
+#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
 	do { \
-		if (cond) \
-			got_epipe = true; \
+		(spinfo).got_epipe = false; \
+		if (!SIGPIPE_MASKED(conn)) \
+		{ \
+			if (pq_block_sigpipe(&(spinfo).oldsigmask, \
+								 &(spinfo).sigpipe_pending) < 0) \
+				failaction; \
+		} \
 	} while (0)
 
-#define RESTORE_SIGPIPE() \
-	pq_reset_sigpipe(&osigmask, sigpipe_pending, got_epipe)
-#else							/* !ENABLE_THREAD_SAFETY */
+#define REMEMBER_EPIPE(spinfo, cond) \
+	do { \
+		if (cond) \
+			(spinfo).got_epipe = true; \
+	} while (0)
 
-#define DISABLE_SIGPIPE(failaction) \
-	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN)
+#define RESTORE_SIGPIPE(conn, spinfo) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			pq_reset_sigpipe(&(spinfo).oldsigmask, (spinfo).sigpipe_pending, \
+							 (spinfo).got_epipe); \
+	} while (0)
 
-#define REMEMBER_EPIPE(cond)
+#else /* !ENABLE_THREAD_SAFETY */
 
-#define RESTORE_SIGPIPE() \
-	pqsignal(SIGPIPE, oldsighandler)
-#endif   /* ENABLE_THREAD_SAFETY */
-#else							/* WIN32 */
+#define DECLARE_SIGPIPE_INFO(spinfo) pqsigfunc spinfo = NULL
 
-#define DISABLE_SIGPIPE(failaction)
-#define REMEMBER_EPIPE(cond)
-#define RESTORE_SIGPIPE()
-#endif   /* WIN32 */
+#define DISABLE_SIGPIPE(conn, spinfo, failaction) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			spinfo = pqsignal(SIGPIPE, SIG_IGN); \
+	} while (0)
+
+#define REMEMBER_EPIPE(spinfo, cond)
+
+#define RESTORE_SIGPIPE(conn, spinfo) \
+	do { \
+		if (!SIGPIPE_MASKED(conn)) \
+			pqsignal(SIGPIPE, spinfo); \
+	} while (0)
+
+#endif	/* ENABLE_THREAD_SAFETY */
+
+#else	/* WIN32 */
+
+#define DECLARE_SIGPIPE_INFO(spinfo)
+#define DISABLE_SIGPIPE(conn, spinfo, failaction)
+#define REMEMBER_EPIPE(spinfo, cond)
+#define RESTORE_SIGPIPE(conn, spinfo)
+
+#endif	/* WIN32 */
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
@@ -231,6 +263,9 @@ pqsecure_open_client(PGconn *conn)
 	/* First time through? */
 	if (conn->ssl == NULL)
 	{
+		/* We cannot use MSG_NOSIGNAL to block SIGPIPE when using SSL */
+		conn->sigpipe_flag = false;
+
 		if (!(conn->ssl = SSL_new(SSL_context)) ||
 			!SSL_set_app_data(conn->ssl, conn) ||
 			!SSL_set_fd(conn->ssl, conn->sock))
@@ -283,9 +318,10 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 	if (conn->ssl)
 	{
 		int			err;
+		DECLARE_SIGPIPE_INFO(spinfo);
 
 		/* SSL_read can write to the socket, so we need to disable SIGPIPE */
-		DISABLE_SIGPIPE(return -1);
+		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
 rloop:
 		n = SSL_read(conn->ssl, ptr, len);
@@ -312,7 +348,7 @@ rloop:
 
 					if (n == -1)
 					{
-						REMEMBER_EPIPE(SOCK_ERRNO == EPIPE);
+						REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
 						printfPQExpBuffer(&conn->errorMessage,
 									libpq_gettext("SSL SYSCALL error: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
@@ -348,7 +384,7 @@ rloop:
 				break;
 		}
 
-		RESTORE_SIGPIPE();
+		RESTORE_SIGPIPE(conn, spinfo);
 	}
 	else
 #endif
@@ -364,13 +400,14 @@ ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
-
-	DISABLE_SIGPIPE(return -1);
+	DECLARE_SIGPIPE_INFO(spinfo);
 
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
 		int			err;
+
+		DISABLE_SIGPIPE(conn, spinfo, return -1);
 
 		n = SSL_write(conn->ssl, ptr, len);
 		err = SSL_get_error(conn->ssl, n);
@@ -396,7 +433,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 
 					if (n == -1)
 					{
-						REMEMBER_EPIPE(SOCK_ERRNO == EPIPE);
+						REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
 						printfPQExpBuffer(&conn->errorMessage,
 									libpq_gettext("SSL SYSCALL error: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
@@ -434,11 +471,41 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	else
 #endif
 	{
-		n = send(conn->sock, ptr, len, 0);
-		REMEMBER_EPIPE(n < 0 && SOCK_ERRNO == EPIPE);
+		int		flags = 0;
+
+#ifdef MSG_NOSIGNAL
+		if (conn->sigpipe_flag)
+			flags |= MSG_NOSIGNAL;
+
+retry_masked:
+
+#endif /* MSG_NOSIGNAL */
+
+		DISABLE_SIGPIPE(conn, spinfo, return -1);
+
+		n = send(conn->sock, ptr, len, flags);
+
+		if (n < 0)
+		{
+			/*
+			 * If we see an EINVAL, it may be because MSG_NOSIGNAL isn't
+			 * available on this machine.  So, clear sigpipe_flag so we don't
+			 * try the flag again, and retry the send().
+			 */
+#ifdef MSG_NOSIGNAL
+			if (flags != 0 && SOCK_ERRNO == EINVAL)
+			{
+				conn->sigpipe_flag = false;
+				flags = 0;
+				goto retry_masked;
+			}
+#endif /* MSG_NOSIGNAL */
+
+			REMEMBER_EPIPE(spinfo, SOCK_ERRNO == EPIPE);
+		}
 	}
 
-	RESTORE_SIGPIPE();
+	RESTORE_SIGPIPE(conn, spinfo);
 
 	return n;
 }
@@ -1220,14 +1287,16 @@ close_SSL(PGconn *conn)
 {
 	if (conn->ssl)
 	{
-		DISABLE_SIGPIPE((void) 0);
+		DECLARE_SIGPIPE_INFO(spinfo);
+
+		DISABLE_SIGPIPE(conn, spinfo, (void) 0);
 		SSL_shutdown(conn->ssl);
 		SSL_free(conn->ssl);
 		conn->ssl = NULL;
 		pqsecure_destroy();
 		/* We have to assume we got EPIPE */
-		REMEMBER_EPIPE(true);
-		RESTORE_SIGPIPE();
+		REMEMBER_EPIPE(spinfo, true);
+		RESTORE_SIGPIPE(conn, spinfo);
 	}
 
 	if (conn->peer)

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.143 2009/06/23 18:13:23 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.144 2009/07/24 17:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,6 +341,8 @@ struct pg_conn
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
 	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
 	bool		password_needed;	/* true if server demanded a password */
+	bool		sigpipe_so;		/* have we masked SIGPIPE via SO_NOSIGPIPE? */
+	bool		sigpipe_flag;	/* can we mask SIGPIPE via MSG_NOSIGNAL? */
 
 	/* Transient state needed while establishing connection */
 	struct addrinfo *addrlist;	/* list of possible backend addresses */
