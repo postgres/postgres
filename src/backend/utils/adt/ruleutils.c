@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.303 2009/07/16 06:33:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.304 2009/07/24 21:08:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,6 @@ static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
-static void appendStringInfoSpaces(StringInfo buf, int count);
 static void appendContextKeyword(deparse_context *context, const char *str,
 					 int indentBefore, int indentAfter, int indentPlus);
 static void get_rule_expr(Node *node, deparse_context *context,
@@ -4171,16 +4170,6 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 	return false;
 }
 
-
-/*
- * appendStringInfoSpaces - append spaces to buffer
- */
-static void
-appendStringInfoSpaces(StringInfo buf, int count)
-{
-	while (count-- > 0)
-		appendStringInfoChar(buf, ' ');
-}
 
 /*
  * appendContextKeyword - append a keyword to buffer

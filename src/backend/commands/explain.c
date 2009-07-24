@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.186 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.187 2009/07/24 21:08:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 
 typedef struct ExplainState
 {
+	StringInfo	str;			/* output buffer */
 	/* options */
 	bool		printTList;		/* print plan targetlists */
 	bool		printAnalyze;	/* print actual times */
@@ -56,23 +57,23 @@ static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				StringInfo buf);
 static double elapsed_time(instr_time *starttime);
-static void explain_outNode(StringInfo str,
-				Plan *plan, PlanState *planstate,
-				Plan *outer_plan,
-				int indent, ExplainState *es);
-static void show_plan_tlist(Plan *plan,
-				StringInfo str, int indent, ExplainState *es);
+static void ExplainNode(Plan *plan, PlanState *planstate,
+				Plan *outer_plan, int indent, ExplainState *es);
+static void show_plan_tlist(Plan *plan, int indent, ExplainState *es);
+static void show_qual(List *qual, const char *qlabel, Plan *plan,
+		  Plan *outer_plan, int indent, bool useprefix, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
-			   int scanrelid, Plan *scan_plan, Plan *outer_plan,
-			   StringInfo str, int indent, ExplainState *es);
+			   Plan *scan_plan, Plan *outer_plan,
+			   int indent, ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
-				StringInfo str, int indent, ExplainState *es);
-static void show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
-			   const char *qlabel,
-			   StringInfo str, int indent, ExplainState *es);
-static void show_sort_info(SortState *sortstate,
-			   StringInfo str, int indent, ExplainState *es);
+				int indent, ExplainState *es);
+static void show_sort_keys(Plan *sortplan, int indent, ExplainState *es);
+static void show_sort_info(SortState *sortstate, int indent, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
+static void ExplainScanTarget(Scan *plan, ExplainState *es);
+static void ExplainMemberNodes(List *plans, PlanState **planstate,
+				   Plan *outer_plan, int indent, ExplainState *es);
+static void ExplainSubPlans(List *plans, int indent, ExplainState *es);
 
 
 /*
@@ -347,14 +348,14 @@ ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
 	Assert(queryDesc->plannedstmt != NULL);
 
 	memset(&es, 0, sizeof(es));
+	es.str = str;
 	es.printTList = verbose;
 	es.printAnalyze = analyze;
 	es.pstmt = queryDesc->plannedstmt;
 	es.rtable = queryDesc->plannedstmt->rtable;
 
-	explain_outNode(str,
-					queryDesc->plannedstmt->planTree, queryDesc->planstate,
-					NULL, 0, &es);
+	ExplainNode(queryDesc->plannedstmt->planTree, queryDesc->planstate,
+				NULL, 0, &es);
 }
 
 /*
@@ -414,8 +415,8 @@ elapsed_time(instr_time *starttime)
 }
 
 /*
- * explain_outNode -
- *	  converts a Plan node into ascii string and appends it to 'str'
+ * ExplainNode -
+ *	  converts a Plan node into ascii string and appends it to es->str
  *
  * planstate points to the executor state node corresponding to the plan node.
  * We need this to get at the instrumentation data (if any) as well as the
@@ -424,19 +425,27 @@ elapsed_time(instr_time *starttime)
  * outer_plan, if not null, references another plan node that is the outer
  * side of a join with the current node.  This is only interesting for
  * deciphering runtime keys of an inner indexscan.
+ *
+ * If indent is positive, we indent the plan output accordingly and put "->"
+ * in front of it.  This should only happen for child plan nodes.
  */
 static void
-explain_outNode(StringInfo str,
-				Plan *plan, PlanState *planstate,
-				Plan *outer_plan,
-				int indent, ExplainState *es)
+ExplainNode(Plan *plan, PlanState *planstate,
+			Plan *outer_plan,
+			int indent, ExplainState *es)
 {
 	const char *pname;
-	int			i;
+
+	if (indent)
+	{
+		Assert(indent >= 2);
+		appendStringInfoSpaces(es->str, 2 * indent - 4);
+		appendStringInfoString(es->str, "->  ");
+	}
 
 	if (plan == NULL)
 	{
-		appendStringInfoChar(str, '\n');
+		appendStringInfoChar(es->str, '\n');
 		return;
 	}
 
@@ -656,141 +665,34 @@ explain_outNode(StringInfo str,
 			break;
 	}
 
-	appendStringInfoString(str, pname);
+	appendStringInfoString(es->str, pname);
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
 			if (ScanDirectionIsBackward(((IndexScan *) plan)->indexorderdir))
-				appendStringInfoString(str, " Backward");
-			appendStringInfo(str, " using %s",
+				appendStringInfoString(es->str, " Backward");
+			appendStringInfo(es->str, " using %s",
 					  explain_get_index_name(((IndexScan *) plan)->indexid));
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
-			if (((Scan *) plan)->scanrelid > 0)
-			{
-				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
-											  es->rtable);
-				char	   *relname;
-
-				/* Assume it's on a real relation */
-				Assert(rte->rtekind == RTE_RELATION);
-
-				/* We only show the rel name, not schema name */
-				relname = get_rel_name(rte->relid);
-
-				appendStringInfo(str, " on %s",
-								 quote_identifier(relname));
-				if (strcmp(rte->eref->aliasname, relname) != 0)
-					appendStringInfo(str, " %s",
-									 quote_identifier(rte->eref->aliasname));
-			}
+		case T_SubqueryScan:
+		case T_FunctionScan:
+		case T_ValuesScan:
+		case T_CteScan:
+		case T_WorkTableScan:
+			ExplainScanTarget((Scan *) plan, es);
 			break;
 		case T_BitmapIndexScan:
-			appendStringInfo(str, " on %s",
+			appendStringInfo(es->str, " on %s",
 				explain_get_index_name(((BitmapIndexScan *) plan)->indexid));
-			break;
-		case T_SubqueryScan:
-			if (((Scan *) plan)->scanrelid > 0)
-			{
-				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
-											  es->rtable);
-
-				appendStringInfo(str, " %s",
-								 quote_identifier(rte->eref->aliasname));
-			}
-			break;
-		case T_FunctionScan:
-			if (((Scan *) plan)->scanrelid > 0)
-			{
-				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
-											  es->rtable);
-				Node	   *funcexpr;
-				char	   *proname;
-
-				/* Assert it's on a RangeFunction */
-				Assert(rte->rtekind == RTE_FUNCTION);
-
-				/*
-				 * If the expression is still a function call, we can get the
-				 * real name of the function.  Otherwise, punt (this can
-				 * happen if the optimizer simplified away the function call,
-				 * for example).
-				 */
-				funcexpr = ((FunctionScan *) plan)->funcexpr;
-				if (funcexpr && IsA(funcexpr, FuncExpr))
-				{
-					Oid			funcid = ((FuncExpr *) funcexpr)->funcid;
-
-					/* We only show the func name, not schema name */
-					proname = get_func_name(funcid);
-				}
-				else
-					proname = rte->eref->aliasname;
-
-				appendStringInfo(str, " on %s",
-								 quote_identifier(proname));
-				if (strcmp(rte->eref->aliasname, proname) != 0)
-					appendStringInfo(str, " %s",
-									 quote_identifier(rte->eref->aliasname));
-			}
-			break;
-		case T_ValuesScan:
-			if (((Scan *) plan)->scanrelid > 0)
-			{
-				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
-											  es->rtable);
-				char	   *valsname;
-
-				/* Assert it's on a values rte */
-				Assert(rte->rtekind == RTE_VALUES);
-
-				valsname = rte->eref->aliasname;
-
-				appendStringInfo(str, " on %s",
-								 quote_identifier(valsname));
-			}
-			break;
-		case T_CteScan:
-			if (((Scan *) plan)->scanrelid > 0)
-			{
-				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
-											  es->rtable);
-
-				/* Assert it's on a non-self-reference CTE */
-				Assert(rte->rtekind == RTE_CTE);
-				Assert(!rte->self_reference);
-
-				appendStringInfo(str, " on %s",
-								 quote_identifier(rte->ctename));
-				if (strcmp(rte->eref->aliasname, rte->ctename) != 0)
-					appendStringInfo(str, " %s",
-									 quote_identifier(rte->eref->aliasname));
-			}
-			break;
-		case T_WorkTableScan:
-			if (((Scan *) plan)->scanrelid > 0)
-			{
-				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
-											  es->rtable);
-
-				/* Assert it's on a self-reference CTE */
-				Assert(rte->rtekind == RTE_CTE);
-				Assert(rte->self_reference);
-
-				appendStringInfo(str, " on %s",
-								 quote_identifier(rte->ctename));
-				if (strcmp(rte->eref->aliasname, rte->ctename) != 0)
-					appendStringInfo(str, " %s",
-									 quote_identifier(rte->eref->aliasname));
-			}
 			break;
 		default:
 			break;
 	}
 
-	appendStringInfo(str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
+	appendStringInfo(es->str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
 					 plan->startup_cost, plan->total_cost,
 					 plan->plan_rows, plan->plan_width);
 
@@ -805,67 +707,46 @@ explain_outNode(StringInfo str,
 	{
 		double		nloops = planstate->instrument->nloops;
 
-		appendStringInfo(str, " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
+		appendStringInfo(es->str,
+						 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
 						 1000.0 * planstate->instrument->startup / nloops,
 						 1000.0 * planstate->instrument->total / nloops,
 						 planstate->instrument->ntuples / nloops,
 						 planstate->instrument->nloops);
 	}
 	else if (es->printAnalyze)
-		appendStringInfo(str, " (never executed)");
-	appendStringInfoChar(str, '\n');
+		appendStringInfoString(es->str, " (never executed)");
+	appendStringInfoChar(es->str, '\n');
 
 	/* target list */
 	if (es->printTList)
-		show_plan_tlist(plan, str, indent, es);
+		show_plan_tlist(plan, indent, es);
 
 	/* quals, sort keys, etc */
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
 			show_scan_qual(((IndexScan *) plan)->indexqualorig,
-						   "Index Cond",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
+						   "Index Cond", plan, outer_plan, indent, es);
 			show_scan_qual(plan->qual,
-						   "Filter",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
+						   "Filter", plan, outer_plan, indent, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
-						   "Index Cond",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
+						   "Index Cond", plan, outer_plan, indent, es);
 			break;
 		case T_BitmapHeapScan:
-			/* XXX do we want to show this in production? */
 			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
-						   "Recheck Cond",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
+						   "Recheck Cond", plan, outer_plan, indent, es);
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_FunctionScan:
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
-			show_scan_qual(plan->qual,
-						   "Filter",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
-			break;
 		case T_SubqueryScan:
 			show_scan_qual(plan->qual,
-						   "Filter",
-						   ((Scan *) plan)->scanrelid,
-						   plan, outer_plan,
-						   str, indent, es);
+						   "Filter", plan, outer_plan, indent, es);
 			break;
 		case T_TidScan:
 			{
@@ -878,69 +759,42 @@ explain_outNode(StringInfo str,
 				if (list_length(tidquals) > 1)
 					tidquals = list_make1(make_orclause(tidquals));
 				show_scan_qual(tidquals,
-							   "TID Cond",
-							   ((Scan *) plan)->scanrelid,
-							   plan, outer_plan,
-							   str, indent, es);
+							   "TID Cond", plan, outer_plan, indent, es);
 				show_scan_qual(plan->qual,
-							   "Filter",
-							   ((Scan *) plan)->scanrelid,
-							   plan, outer_plan,
-							   str, indent, es);
+							   "Filter", plan, outer_plan, indent, es);
 			}
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,
-							"Join Filter", plan,
-							str, indent, es);
-			show_upper_qual(plan->qual,
-							"Filter", plan,
-							str, indent, es);
+							"Join Filter", plan, indent, es);
+			show_upper_qual(plan->qual, "Filter", plan, indent, es);
 			break;
 		case T_MergeJoin:
 			show_upper_qual(((MergeJoin *) plan)->mergeclauses,
-							"Merge Cond", plan,
-							str, indent, es);
+							"Merge Cond", plan, indent, es);
 			show_upper_qual(((MergeJoin *) plan)->join.joinqual,
-							"Join Filter", plan,
-							str, indent, es);
-			show_upper_qual(plan->qual,
-							"Filter", plan,
-							str, indent, es);
+							"Join Filter", plan, indent, es);
+			show_upper_qual(plan->qual, "Filter", plan, indent, es);
 			break;
 		case T_HashJoin:
 			show_upper_qual(((HashJoin *) plan)->hashclauses,
-							"Hash Cond", plan,
-							str, indent, es);
+							"Hash Cond", plan, indent, es);
 			show_upper_qual(((HashJoin *) plan)->join.joinqual,
-							"Join Filter", plan,
-							str, indent, es);
-			show_upper_qual(plan->qual,
-							"Filter", plan,
-							str, indent, es);
+							"Join Filter", plan, indent, es);
+			show_upper_qual(plan->qual, "Filter", plan, indent, es);
 			break;
 		case T_Agg:
 		case T_Group:
-			show_upper_qual(plan->qual,
-							"Filter", plan,
-							str, indent, es);
+			show_upper_qual(plan->qual, "Filter", plan, indent, es);
 			break;
 		case T_Sort:
-			show_sort_keys(plan,
-						   ((Sort *) plan)->numCols,
-						   ((Sort *) plan)->sortColIdx,
-						   "Sort Key",
-						   str, indent, es);
-			show_sort_info((SortState *) planstate,
-						   str, indent, es);
+			show_sort_keys(plan, indent, es);
+			show_sort_info((SortState *) planstate, indent, es);
 			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
-							"One-Time Filter", plan,
-							str, indent, es);
-			show_upper_qual(plan->qual,
-							"Filter", plan,
-							str, indent, es);
+							"One-Time Filter", plan, indent, es);
+			show_upper_qual(plan->qual, "Filter", plan, indent, es);
 			break;
 		default:
 			break;
@@ -948,183 +802,69 @@ explain_outNode(StringInfo str,
 
 	/* initPlan-s */
 	if (plan->initPlan)
-	{
-		ListCell   *lst;
-
-		foreach(lst, planstate->initPlan)
-		{
-			SubPlanState *sps = (SubPlanState *) lfirst(lst);
-			SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
-
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "  %s\n", sp->plan_name);
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "    ->  ");
-			explain_outNode(str,
-							exec_subplan_get_plan(es->pstmt, sp),
-							sps->planstate,
-							NULL,
-							indent + 4, es);
-		}
-	}
+		ExplainSubPlans(planstate->initPlan, indent, es);
 
 	/* lefttree */
 	if (outerPlan(plan))
 	{
-		for (i = 0; i < indent; i++)
-			appendStringInfo(str, "  ");
-		appendStringInfo(str, "  ->  ");
-
 		/*
 		 * Ordinarily we don't pass down our own outer_plan value to our child
 		 * nodes, but in bitmap scan trees we must, since the bottom
 		 * BitmapIndexScan nodes may have outer references.
 		 */
-		explain_outNode(str, outerPlan(plan),
-						outerPlanState(planstate),
-						IsA(plan, BitmapHeapScan) ? outer_plan : NULL,
-						indent + 3, es);
+		ExplainNode(outerPlan(plan), outerPlanState(planstate),
+					IsA(plan, BitmapHeapScan) ? outer_plan : NULL,
+					indent + 3, es);
 	}
 
 	/* righttree */
 	if (innerPlan(plan))
 	{
-		for (i = 0; i < indent; i++)
-			appendStringInfo(str, "  ");
-		appendStringInfo(str, "  ->  ");
-		explain_outNode(str, innerPlan(plan),
-						innerPlanState(planstate),
-						outerPlan(plan),
-						indent + 3, es);
+		ExplainNode(innerPlan(plan), innerPlanState(planstate),
+					outerPlan(plan), indent + 3, es);
 	}
 
-	if (IsA(plan, Append))
+	/* special child plans */
+	switch (nodeTag(plan))
 	{
-		Append	   *appendplan = (Append *) plan;
-		AppendState *appendstate = (AppendState *) planstate;
-		ListCell   *lst;
-		int			j;
+		case T_Append:
+			ExplainMemberNodes(((Append *) plan)->appendplans,
+							   ((AppendState *) planstate)->appendplans,
+							   outer_plan, indent, es);
+			break;
+		case T_BitmapAnd:
+			ExplainMemberNodes(((BitmapAnd *) plan)->bitmapplans,
+							   ((BitmapAndState *) planstate)->bitmapplans,
+							   outer_plan, indent, es);
+			break;
+		case T_BitmapOr:
+			ExplainMemberNodes(((BitmapOr *) plan)->bitmapplans,
+							   ((BitmapOrState *) planstate)->bitmapplans,
+							   outer_plan, indent, es);
+			break;
+		case T_SubqueryScan:
+			{
+				SubqueryScan *subqueryscan = (SubqueryScan *) plan;
+				SubqueryScanState *subquerystate = (SubqueryScanState *) planstate;
 
-		j = 0;
-		foreach(lst, appendplan->appendplans)
-		{
-			Plan	   *subnode = (Plan *) lfirst(lst);
-
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "  ->  ");
-
-			/*
-			 * Ordinarily we don't pass down our own outer_plan value to our
-			 * child nodes, but in an Append we must, since we might be
-			 * looking at an appendrel indexscan with outer references from
-			 * the member scans.
-			 */
-			explain_outNode(str, subnode,
-							appendstate->appendplans[j],
-							outer_plan,
-							indent + 3, es);
-			j++;
-		}
-	}
-
-	if (IsA(plan, BitmapAnd))
-	{
-		BitmapAnd  *bitmapandplan = (BitmapAnd *) plan;
-		BitmapAndState *bitmapandstate = (BitmapAndState *) planstate;
-		ListCell   *lst;
-		int			j;
-
-		j = 0;
-		foreach(lst, bitmapandplan->bitmapplans)
-		{
-			Plan	   *subnode = (Plan *) lfirst(lst);
-
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "  ->  ");
-
-			explain_outNode(str, subnode,
-							bitmapandstate->bitmapplans[j],
-							outer_plan, /* pass down same outer plan */
-							indent + 3, es);
-			j++;
-		}
-	}
-
-	if (IsA(plan, BitmapOr))
-	{
-		BitmapOr   *bitmaporplan = (BitmapOr *) plan;
-		BitmapOrState *bitmaporstate = (BitmapOrState *) planstate;
-		ListCell   *lst;
-		int			j;
-
-		j = 0;
-		foreach(lst, bitmaporplan->bitmapplans)
-		{
-			Plan	   *subnode = (Plan *) lfirst(lst);
-
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "  ->  ");
-
-			explain_outNode(str, subnode,
-							bitmaporstate->bitmapplans[j],
-							outer_plan, /* pass down same outer plan */
-							indent + 3, es);
-			j++;
-		}
-	}
-
-	if (IsA(plan, SubqueryScan))
-	{
-		SubqueryScan *subqueryscan = (SubqueryScan *) plan;
-		SubqueryScanState *subquerystate = (SubqueryScanState *) planstate;
-		Plan	   *subnode = subqueryscan->subplan;
-
-		for (i = 0; i < indent; i++)
-			appendStringInfo(str, "  ");
-		appendStringInfo(str, "  ->  ");
-
-		explain_outNode(str, subnode,
-						subquerystate->subplan,
-						NULL,
-						indent + 3, es);
+				ExplainNode(subqueryscan->subplan, subquerystate->subplan,
+							NULL, indent + 3, es);
+			}
+			break;
+		default:
+			break;
 	}
 
 	/* subPlan-s */
 	if (planstate->subPlan)
-	{
-		ListCell   *lst;
-
-		foreach(lst, planstate->subPlan)
-		{
-			SubPlanState *sps = (SubPlanState *) lfirst(lst);
-			SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
-
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "  %s\n", sp->plan_name);
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "    ->  ");
-			explain_outNode(str,
-							exec_subplan_get_plan(es->pstmt, sp),
-							sps->planstate,
-							NULL,
-							indent + 4, es);
-		}
-	}
+		ExplainSubPlans(planstate->subPlan, indent, es);
 }
 
 /*
  * Show the targetlist of a plan node
  */
 static void
-show_plan_tlist(Plan *plan,
-				StringInfo str, int indent, ExplainState *es)
+show_plan_tlist(Plan *plan, int indent, ExplainState *es)
 {
 	List	   *context;
 	bool		useprefix;
@@ -1149,9 +889,8 @@ show_plan_tlist(Plan *plan,
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Emit line prefix */
-	for (i = 0; i < indent; i++)
-		appendStringInfo(str, "  ");
-	appendStringInfo(str, "  Output: ");
+	appendStringInfoSpaces(es->str, indent * 2);
+	appendStringInfoString(es->str, "  Output: ");
 
 	/* Deparse each non-junk result column */
 	i = 0;
@@ -1162,31 +901,28 @@ show_plan_tlist(Plan *plan,
 		if (tle->resjunk)
 			continue;
 		if (i++ > 0)
-			appendStringInfo(str, ", ");
-		appendStringInfoString(str,
+			appendStringInfoString(es->str, ", ");
+		appendStringInfoString(es->str,
 							   deparse_expression((Node *) tle->expr, context,
 												  useprefix, false));
 	}
 
-	appendStringInfoChar(str, '\n');
+	appendStringInfoChar(es->str, '\n');
 }
 
 /*
- * Show a qualifier expression for a scan plan node
+ * Show a qualifier expression
  *
  * Note: outer_plan is the referent for any OUTER vars in the scan qual;
  * this would be the outer side of a nestloop plan.  Pass NULL if none.
  */
 static void
-show_scan_qual(List *qual, const char *qlabel,
-			   int scanrelid, Plan *scan_plan, Plan *outer_plan,
-			   StringInfo str, int indent, ExplainState *es)
+show_qual(List *qual, const char *qlabel, Plan *plan, Plan *outer_plan,
+		  int indent, bool useprefix, ExplainState *es)
 {
 	List	   *context;
-	bool		useprefix;
 	Node	   *node;
 	char	   *exprstr;
-	int			i;
 
 	/* No work if empty qual */
 	if (qual == NIL)
@@ -1196,19 +932,31 @@ show_scan_qual(List *qual, const char *qlabel,
 	node = (Node *) make_ands_explicit(qual);
 
 	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) scan_plan,
+	context = deparse_context_for_plan((Node *) plan,
 									   (Node *) outer_plan,
 									   es->rtable,
 									   es->pstmt->subplans);
-	useprefix = (outer_plan != NULL || IsA(scan_plan, SubqueryScan));
 
 	/* Deparse the expression */
 	exprstr = deparse_expression(node, context, useprefix, false);
 
-	/* And add to str */
-	for (i = 0; i < indent; i++)
-		appendStringInfo(str, "  ");
-	appendStringInfo(str, "  %s: %s\n", qlabel, exprstr);
+	/* And add to es->str */
+	appendStringInfoSpaces(es->str, indent * 2);
+	appendStringInfo(es->str, "  %s: %s\n", qlabel, exprstr);
+}
+
+/*
+ * Show a qualifier expression for a scan plan node
+ */
+static void
+show_scan_qual(List *qual, const char *qlabel,
+			   Plan *scan_plan, Plan *outer_plan,
+			   int indent, ExplainState *es)
+{
+	bool		useprefix;
+
+	useprefix = (outer_plan != NULL || IsA(scan_plan, SubqueryScan));
+	show_qual(qual, qlabel, scan_plan, outer_plan, indent, useprefix, es);
 }
 
 /*
@@ -1216,55 +964,32 @@ show_scan_qual(List *qual, const char *qlabel,
  */
 static void
 show_upper_qual(List *qual, const char *qlabel, Plan *plan,
-				StringInfo str, int indent, ExplainState *es)
+				int indent, ExplainState *es)
 {
-	List	   *context;
 	bool		useprefix;
-	Node	   *node;
-	char	   *exprstr;
-	int			i;
 
-	/* No work if empty qual */
-	if (qual == NIL)
-		return;
-
-	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) plan,
-									   NULL,
-									   es->rtable,
-									   es->pstmt->subplans);
-	useprefix = list_length(es->rtable) > 1;
-
-	/* Deparse the expression */
-	node = (Node *) make_ands_explicit(qual);
-	exprstr = deparse_expression(node, context, useprefix, false);
-
-	/* And add to str */
-	for (i = 0; i < indent; i++)
-		appendStringInfo(str, "  ");
-	appendStringInfo(str, "  %s: %s\n", qlabel, exprstr);
+	useprefix = (list_length(es->rtable) > 1);
+	show_qual(qual, qlabel, plan, NULL, indent, useprefix, es);
 }
 
 /*
  * Show the sort keys for a Sort node.
  */
 static void
-show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
-			   const char *qlabel,
-			   StringInfo str, int indent, ExplainState *es)
+show_sort_keys(Plan *sortplan, int indent, ExplainState *es)
 {
+	int			nkeys = ((Sort *) sortplan)->numCols;
+	AttrNumber *keycols = ((Sort *) sortplan)->sortColIdx;
 	List	   *context;
 	bool		useprefix;
 	int			keyno;
 	char	   *exprstr;
-	int			i;
 
 	if (nkeys <= 0)
 		return;
 
-	for (i = 0; i < indent; i++)
-		appendStringInfo(str, "  ");
-	appendStringInfo(str, "  %s: ", qlabel);
+	appendStringInfoSpaces(es->str, indent * 2);
+	appendStringInfoString(es->str, "  Sort Key: ");
 
 	/* Set up deparsing context */
 	context = deparse_context_for_plan((Node *) sortplan,
@@ -1284,33 +1009,30 @@ show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 		/* Deparse the expression, showing any top-level cast */
 		exprstr = deparse_expression((Node *) target->expr, context,
 									 useprefix, true);
-		/* And add to str */
+		/* And add to es->str */
 		if (keyno > 0)
-			appendStringInfo(str, ", ");
-		appendStringInfoString(str, exprstr);
+			appendStringInfoString(es->str, ", ");
+		appendStringInfoString(es->str, exprstr);
 	}
 
-	appendStringInfo(str, "\n");
+	appendStringInfoChar(es->str, '\n');
 }
 
 /*
  * If it's EXPLAIN ANALYZE, show tuplesort explain info for a sort node
  */
 static void
-show_sort_info(SortState *sortstate,
-			   StringInfo str, int indent, ExplainState *es)
+show_sort_info(SortState *sortstate, int indent, ExplainState *es)
 {
 	Assert(IsA(sortstate, SortState));
 	if (es->printAnalyze && sortstate->sort_Done &&
 		sortstate->tuplesortstate != NULL)
 	{
 		char	   *sortinfo;
-		int			i;
 
 		sortinfo = tuplesort_explain((Tuplesortstate *) sortstate->tuplesortstate);
-		for (i = 0; i < indent; i++)
-			appendStringInfo(str, "  ");
-		appendStringInfo(str, "  %s\n", sortinfo);
+		appendStringInfoSpaces(es->str, indent * 2);
+		appendStringInfo(es->str, "  %s\n", sortinfo);
 		pfree(sortinfo);
 	}
 }
@@ -1339,4 +1061,120 @@ explain_get_index_name(Oid indexId)
 		result = quote_identifier(result);
 	}
 	return result;
+}
+
+/*
+ * Show the target of a Scan node
+ */
+static void
+ExplainScanTarget(Scan *plan, ExplainState *es)
+{
+	char	   *objectname = NULL;
+	RangeTblEntry *rte;
+
+	if (plan->scanrelid <= 0)	/* Is this still possible? */
+		return;
+	rte = rt_fetch(plan->scanrelid, es->rtable);
+
+	switch (nodeTag(plan))
+	{
+		case T_SeqScan:
+		case T_IndexScan:
+		case T_BitmapHeapScan:
+		case T_TidScan:
+			/* Assert it's on a real relation */
+			Assert(rte->rtekind == RTE_RELATION);
+			objectname = get_rel_name(rte->relid);
+			break;
+		case T_FunctionScan:
+			{
+				Node	   *funcexpr;
+
+				/* Assert it's on a RangeFunction */
+				Assert(rte->rtekind == RTE_FUNCTION);
+
+				/*
+				 * If the expression is still a function call, we can get the
+				 * real name of the function.  Otherwise, punt (this can
+				 * happen if the optimizer simplified away the function call,
+				 * for example).
+				 */
+				funcexpr = ((FunctionScan *) plan)->funcexpr;
+				if (funcexpr && IsA(funcexpr, FuncExpr))
+				{
+					Oid			funcid = ((FuncExpr *) funcexpr)->funcid;
+
+					objectname = get_func_name(funcid);
+				}
+			}
+			break;
+		case T_ValuesScan:
+			Assert(rte->rtekind == RTE_VALUES);
+			break;
+		case T_CteScan:
+			/* Assert it's on a non-self-reference CTE */
+			Assert(rte->rtekind == RTE_CTE);
+			Assert(!rte->self_reference);
+			objectname = rte->ctename;
+			break;
+		case T_WorkTableScan:
+			/* Assert it's on a self-reference CTE */
+			Assert(rte->rtekind == RTE_CTE);
+			Assert(rte->self_reference);
+			objectname = rte->ctename;
+			break;
+		default:
+			break;
+	}
+
+	appendStringInfoString(es->str, " on");
+	if (objectname != NULL)
+		appendStringInfo(es->str, " %s", quote_identifier(objectname));
+	if (objectname == NULL || strcmp(rte->eref->aliasname, objectname) != 0)
+		appendStringInfo(es->str, " %s",
+						 quote_identifier(rte->eref->aliasname));
+}
+
+/*
+ * Explain the constituent plans of an Append, BitmapAnd, or BitmapOr node.
+ *
+ * Ordinarily we don't pass down outer_plan to our child nodes, but in these
+ * cases we must, since the node could be an "inner indexscan" in which case
+ * outer references can appear in the child nodes.
+ */
+static void
+ExplainMemberNodes(List *plans, PlanState **planstate, Plan *outer_plan,
+		           int indent, ExplainState *es)
+{
+	ListCell   *lst;
+	int			j = 0;
+
+	foreach(lst, plans)
+	{
+		Plan	   *subnode = (Plan *) lfirst(lst);
+
+		ExplainNode(subnode, planstate[j],
+					outer_plan, indent + 3, es);
+		j++;
+	}
+}
+
+/*
+ * Explain a list of SubPlans (or initPlans, which also use SubPlan nodes).
+ */
+static void
+ExplainSubPlans(List *plans, int indent, ExplainState *es)
+{
+	ListCell   *lst;
+
+	foreach(lst, plans)
+	{
+		SubPlanState *sps = (SubPlanState *) lfirst(lst);
+		SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
+
+		appendStringInfoSpaces(es->str, indent * 2);
+		appendStringInfo(es->str, "  %s\n", sp->plan_name);
+		ExplainNode(exec_subplan_get_plan(es->pstmt, sp),
+					sps->planstate, NULL, indent + 4, es);
+	}
 }

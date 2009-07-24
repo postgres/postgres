@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.50 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.51 2009/07/24 21:08:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,6 +184,26 @@ appendStringInfoChar(StringInfo str, char ch)
 	str->data[str->len] = ch;
 	str->len++;
 	str->data[str->len] = '\0';
+}
+
+/*
+ * appendStringInfoSpaces
+ *
+ * Append the specified number of spaces to a buffer.
+ */
+void
+appendStringInfoSpaces(StringInfo str, int count)
+{
+	if (count > 0)
+	{
+		/* Make more room if needed */
+		enlargeStringInfo(str, count);
+
+		/* OK, append the spaces */
+		while (--count >= 0)
+			str->data[str->len++] = ' ';
+		str->data[str->len] = '\0';
+	}
 }
 
 /*
