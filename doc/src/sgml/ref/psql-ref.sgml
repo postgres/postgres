@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.225 2009/04/21 17:23:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.226 2009/07/24 19:35:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1124,13 +1124,15 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dg [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dg[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all database roles. If <replaceable
         class="parameter">pattern</replaceable> is specified, only
         those roles whose names match the pattern are listed.
-        (This command is now effectively the same as <literal>\du</>.)
+        (This command is now effectively the same as <literal>\du</literal>).
+        If the form <literal>\dg+</literal> is used, additional information 
+        is shown about each role, including the comment for each role.  
         </para>
         </listitem>
       </varlistentry>
@@ -1247,12 +1249,14 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\du [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\du[+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all database roles. If <replaceable
         class="parameter">pattern</replaceable> is specified, only
         those roles whose names match the pattern are listed.
+        If the form <literal>\du+</literal> is used, additional information
+        is shown about each role, including the comment for each role.
         </para>
         </listitem>
       </varlistentry>
