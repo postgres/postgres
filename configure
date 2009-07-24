@@ -19085,7 +19085,8 @@ esac
 
 fi
 
-# Cygwin's erand48 sometimes hangs, so force use of ours
+# Cygwin's erand48() is broken (always returns zero) in some releases,
+# so force use of ours.
 if test "$PORTNAME" = "cygwin"; then
   case " $LIBOBJS " in
   *" erand48.$ac_objext "* ) ;;
