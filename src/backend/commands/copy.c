@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.313 2009/07/25 00:07:11 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.314 2009/07/25 13:35:32 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -729,9 +729,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
 	uint64		processed;
-
-	/* a dummy list that represents 'all-columns' */
-	List		all_columns = { T_List };
+	bool		force_quote_all = false;
 	
 	/* Allocate workspace and zero all fields */
 	cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
@@ -813,7 +811,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 						 errmsg("conflicting or redundant options")));
 
 			if (IsA(defel->arg, A_Star))
-				force_quote = &all_columns;
+				force_quote_all = true;
 			else
 				force_quote = (List *) defel->arg;
 		}
@@ -1099,7 +1097,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 	/* Convert FORCE QUOTE name list to per-column flags, check validity */
 	cstate->force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
-	if (force_quote == &all_columns)
+	if (force_quote_all)
 	{
 		int		i;
 
