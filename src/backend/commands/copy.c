@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.312 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.313 2009/07/25 00:07:11 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,6 +730,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	int			num_phys_attrs;
 	uint64		processed;
 
+	/* a dummy list that represents 'all-columns' */
+	List		all_columns = { T_List };
+	
 	/* Allocate workspace and zero all fields */
 	cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 
@@ -808,7 +811,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			force_quote = (List *) defel->arg;
+
+			if (IsA(defel->arg, A_Star))
+				force_quote = &all_columns;
+			else
+				force_quote = (List *) defel->arg;
 		}
 		else if (strcmp(defel->defname, "force_notnull") == 0)
 		{
@@ -1092,7 +1099,14 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 	/* Convert FORCE QUOTE name list to per-column flags, check validity */
 	cstate->force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
-	if (force_quote)
+	if (force_quote == &all_columns)
+	{
+		int		i;
+
+		for (i = 0; i < num_phys_attrs; i++)
+			cstate->force_quote_flags[i] = true;
+	}
+	else if (force_quote)
 	{
 		List	   *attnums;
 		ListCell   *cur;

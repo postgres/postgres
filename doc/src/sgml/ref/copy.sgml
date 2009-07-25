@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.85 2009/02/06 21:22:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.86 2009/07/25 00:07:10 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -44,7 +44,7 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
           [ CSV [ HEADER ]
                 [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
-                [ FORCE QUOTE <replaceable class="parameter">column</replaceable> [, ...] ]
+                [ FORCE QUOTE { <replaceable class="parameter">column</replaceable> [, ...] | * } ]
 </synopsis>
  </refsynopsisdiv>
  
@@ -248,7 +248,9 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
      <para>
       In <literal>CSV</> <command>COPY TO</> mode, forces quoting to be
       used for all non-<literal>NULL</> values in each specified column.
-      <literal>NULL</> output is never quoted.
+      <literal>NULL</> output is never quoted. If <literal>*</> is specified,
+      non-<literal>NULL</> values for all columns of the table will be 
+      quoted.
      </para>
     </listitem>
    </varlistentry>

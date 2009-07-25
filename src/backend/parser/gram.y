@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.671 2009/07/20 02:42:28 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.672 2009/07/25 00:07:11 adunstan Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2027,6 +2027,10 @@ copy_opt_item:
 			| FORCE QUOTE columnList
 				{
 					$$ = makeDefElem("force_quote", (Node *)$3);
+				}
+			| FORCE QUOTE '*'
+				{
+					$$ = makeDefElem("force_quote", (Node *)makeNode(A_Star));
 				}
 			| FORCE NOT NULL_P columnList
 				{

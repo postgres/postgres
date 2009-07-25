@@ -128,6 +128,7 @@ INSERT INTO y VALUES ('', NULL);
 COPY y TO stdout WITH CSV;
 COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
 COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
+COPY y TO stdout WITH CSV FORCE QUOTE *;
 
 --test that we read consecutive LFs properly
 
