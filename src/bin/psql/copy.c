@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.80 2009/04/26 15:31:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.81 2009/07/25 17:04:19 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -35,12 +35,12 @@
  *	\copy tablename [(columnlist)] from|to filename
  *	  [ with ] [ binary ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
  *	  [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string
- *		[ force not null column [, ...] | force quote column [, ...] ] ]
+ *		[ force not null column [, ...] | force quote column [, ...] | * ] ]
  *
  *	\copy ( select stmt ) to filename
  *	  [ with ] [ binary ] [ delimiter [as] char ] [ null [as] string ]
  *	  [ csv  [ header ] [ quote [ AS ] string ]  escape [as] string
- *		[ force quote column [, ...] ] ]
+ *		[ force quote column [, ...] | * ] ]
  *
  * Force quote only applies for copy to; force not null only applies for
  * copy from.

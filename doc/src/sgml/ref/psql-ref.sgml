@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.226 2009/07/24 19:35:44 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.227 2009/07/25 17:04:19 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -774,7 +774,7 @@ testdb=&gt;
               [ header ]
               [ quote [ as ] '<replaceable class="parameter">character</replaceable>' ]
               [ escape [ as ] '<replaceable class="parameter">character</replaceable>' ]
-              [ force quote <replaceable class="parameter">column_list</replaceable> ]
+              [ force quote <replaceable class="parameter">column_list</replaceable> | * ]
               [ force not null <replaceable class="parameter">column_list</replaceable> ] ]</literal>
         </term>
 

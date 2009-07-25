@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.314 2009/07/25 13:35:32 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.315 2009/07/25 17:04:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -722,6 +722,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	List	   *attnamelist = stmt->attlist;
 	List	   *force_quote = NIL;
 	List	   *force_notnull = NIL;
+	bool		force_quote_all = false;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	AclMode		relPerms;
 	AclMode		remainingPerms;
@@ -729,8 +730,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
 	uint64		processed;
-	bool		force_quote_all = false;
-	
+
 	/* Allocate workspace and zero all fields */
 	cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 
@@ -805,12 +805,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		}
 		else if (strcmp(defel->defname, "force_quote") == 0)
 		{
-			if (force_quote)
+			if (force_quote || force_quote_all)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-
-			if (IsA(defel->arg, A_Star))
+			if (defel->arg && IsA(defel->arg, A_Star))
 				force_quote_all = true;
 			else
 				force_quote = (List *) defel->arg;
@@ -930,11 +929,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				 errmsg("COPY escape must be a single one-byte character")));
 
 	/* Check force_quote */
-	if (!cstate->csv_mode && force_quote != NIL)
+	if (!cstate->csv_mode && (force_quote != NIL || force_quote_all))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY force quote available only in CSV mode")));
-	if (force_quote != NIL && is_from)
+	if ((force_quote != NIL || force_quote_all) && is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY force quote only available using COPY TO")));
