@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.187 2009/07/24 21:08:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.188 2009/07/26 23:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "access/xact.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
 #include "commands/trigger.h"
@@ -40,20 +41,8 @@ ExplainOneQuery_hook_type ExplainOneQuery_hook = NULL;
 explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 
 
-typedef struct ExplainState
-{
-	StringInfo	str;			/* output buffer */
-	/* options */
-	bool		printTList;		/* print plan targetlists */
-	bool		printAnalyze;	/* print actual times */
-	/* other states */
-	PlannedStmt *pstmt;			/* top of plan */
-	List	   *rtable;			/* range table */
-} ExplainState;
-
-static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
-				const char *queryString,
-				ParamListInfo params, TupOutputState *tstate);
+static void ExplainOneQuery(Query *query, ExplainState *es,
+				const char *queryString, ParamListInfo params);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				StringInfo buf);
 static double elapsed_time(instr_time *starttime);
@@ -84,11 +73,33 @@ void
 ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			 ParamListInfo params, DestReceiver *dest)
 {
+	ExplainState es;
 	Oid		   *param_types;
 	int			num_params;
 	TupOutputState *tstate;
 	List	   *rewritten;
-	ListCell   *l;
+	ListCell   *lc;
+
+	/* Initialize ExplainState. */
+	ExplainInitState(&es);
+
+	/* Parse options list. */
+	foreach(lc, stmt->options)
+	{
+		DefElem *opt = (DefElem *) lfirst(lc);
+
+		if (strcmp(opt->defname, "analyze") == 0)
+			es.analyze = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "verbose") == 0)
+			es.verbose = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "costs") == 0)
+			es.costs = defGetBoolean(opt);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized EXPLAIN option \"%s\"",
+							opt->defname)));
+	}
 
 	/* Convert parameter type data to the form parser wants */
 	getParamListTypes(params, &param_types, &num_params);
@@ -106,28 +117,44 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	rewritten = pg_analyze_and_rewrite((Node *) copyObject(stmt->query),
 									   queryString, param_types, num_params);
 
-	/* prepare for projection of tuples */
-	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
-
 	if (rewritten == NIL)
 	{
 		/* In the case of an INSTEAD NOTHING, tell at least that */
-		do_text_output_oneline(tstate, "Query rewrites to nothing");
+		appendStringInfoString(es.str, "Query rewrites to nothing\n");
 	}
 	else
 	{
+		ListCell   *l;
+
 		/* Explain every plan */
 		foreach(l, rewritten)
 		{
-			ExplainOneQuery((Query *) lfirst(l), stmt,
-							queryString, params, tstate);
+			ExplainOneQuery((Query *) lfirst(l), &es, queryString, params);
 			/* put a blank line between plans */
 			if (lnext(l) != NULL)
-				do_text_output_oneline(tstate, "");
+				appendStringInfoChar(es.str, '\n');
 		}
 	}
 
+	/* output tuples */
+	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
+	do_text_output_multiline(tstate, es.str->data);
 	end_tup_output(tstate);
+
+	pfree(es.str->data);
+}
+
+/*
+ * Initialize ExplainState.
+ */
+void
+ExplainInitState(ExplainState *es)
+{
+	/* Set default options. */
+	memset(es, 0, sizeof(ExplainState));
+	es->costs = true;
+	/* Prepare output buffer. */
+	es->str = makeStringInfo();
 }
 
 /*
@@ -151,20 +178,19 @@ ExplainResultDesc(ExplainStmt *stmt)
  *	  print out the execution plan for one Query
  */
 static void
-ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
-				ParamListInfo params, TupOutputState *tstate)
+ExplainOneQuery(Query *query, ExplainState *es,
+				const char *queryString, ParamListInfo params)
 {
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		ExplainOneUtility(query->utilityStmt, stmt,
-						  queryString, params, tstate);
+		ExplainOneUtility(query->utilityStmt, es, queryString, params);
 		return;
 	}
 
 	/* if an advisor plugin is present, let it manage things */
 	if (ExplainOneQuery_hook)
-		(*ExplainOneQuery_hook) (query, stmt, queryString, params, tstate);
+		(*ExplainOneQuery_hook) (query, es, queryString, params);
 	else
 	{
 		PlannedStmt *plan;
@@ -173,7 +199,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
 		plan = pg_plan_query(query, 0, params);
 
 		/* run it (if needed) and produce output */
-		ExplainOnePlan(plan, stmt, queryString, params, tstate);
+		ExplainOnePlan(plan, es, queryString, params);
 	}
 }
 
@@ -187,21 +213,20 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
  * EXPLAIN EXECUTE case
  */
 void
-ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
-				  const char *queryString, ParamListInfo params,
-				  TupOutputState *tstate)
+ExplainOneUtility(Node *utilityStmt, ExplainState *es,
+				  const char *queryString, ParamListInfo params)
 {
 	if (utilityStmt == NULL)
 		return;
 
 	if (IsA(utilityStmt, ExecuteStmt))
-		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, stmt,
-							queryString, params, tstate);
+		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, es,
+							queryString, params);
 	else if (IsA(utilityStmt, NotifyStmt))
-		do_text_output_oneline(tstate, "NOTIFY");
+		appendStringInfoString(es->str, "NOTIFY\n");
 	else
-		do_text_output_oneline(tstate,
-							   "Utility statements have no plan structure");
+		appendStringInfoString(es->str,
+							   "Utility statements have no plan structure\n");
 }
 
 /*
@@ -219,14 +244,12 @@ ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
  * to call it.
  */
 void
-ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
-			   const char *queryString, ParamListInfo params,
-			   TupOutputState *tstate)
+ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
+			   const char *queryString, ParamListInfo params)
 {
 	QueryDesc  *queryDesc;
 	instr_time	starttime;
 	double		totaltime = 0;
-	StringInfoData buf;
 	int			eflags;
 
 	/*
@@ -238,17 +261,16 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(plannedstmt, queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
-								None_Receiver, params,
-								stmt->analyze);
+								None_Receiver, params, es->analyze);
 
 	INSTR_TIME_SET_CURRENT(starttime);
 
 	/* If analyzing, we need to cope with queued triggers */
-	if (stmt->analyze)
+	if (es->analyze)
 		AfterTriggerBeginQuery();
 
 	/* Select execution options */
-	if (stmt->analyze)
+	if (es->analyze)
 		eflags = 0;				/* default run-to-completion flags */
 	else
 		eflags = EXEC_FLAG_EXPLAIN_ONLY;
@@ -257,7 +279,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
 	ExecutorStart(queryDesc, eflags);
 
 	/* Execute the plan for statistics if asked for */
-	if (stmt->analyze)
+	if (es->analyze)
 	{
 		/* run the plan */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
@@ -267,15 +289,14 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
 	}
 
 	/* Create textual dump of plan tree */
-	initStringInfo(&buf);
-	ExplainPrintPlan(&buf, queryDesc, stmt->analyze, stmt->verbose);
+	ExplainPrintPlan(es, queryDesc);
 
 	/*
 	 * If we ran the command, run any AFTER triggers it queued.  (Note this
 	 * will not include DEFERRED triggers; since those don't run until end of
 	 * transaction, we can't measure them.)  Include into total runtime.
 	 */
-	if (stmt->analyze)
+	if (es->analyze)
 	{
 		INSTR_TIME_SET_CURRENT(starttime);
 		AfterTriggerEndQuery(queryDesc->estate);
@@ -283,7 +304,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
 	}
 
 	/* Print info about runtime of triggers */
-	if (stmt->analyze)
+	if (es->analyze)
 	{
 		ResultRelInfo *rInfo;
 		bool		show_relname;
@@ -295,12 +316,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
 		show_relname = (numrels > 1 || targrels != NIL);
 		rInfo = queryDesc->estate->es_result_relations;
 		for (nr = 0; nr < numrels; rInfo++, nr++)
-			report_triggers(rInfo, show_relname, &buf);
+			report_triggers(rInfo, show_relname, es->str);
 
 		foreach(l, targrels)
 		{
 			rInfo = (ResultRelInfo *) lfirst(l);
-			report_triggers(rInfo, show_relname, &buf);
+			report_triggers(rInfo, show_relname, es->str);
 		}
 	}
 
@@ -317,45 +338,34 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainStmt *stmt,
 	PopActiveSnapshot();
 
 	/* We need a CCI just in case query expanded to multiple plans */
-	if (stmt->analyze)
+	if (es->analyze)
 		CommandCounterIncrement();
 
 	totaltime += elapsed_time(&starttime);
 
-	if (stmt->analyze)
-		appendStringInfo(&buf, "Total runtime: %.3f ms\n",
+	if (es->analyze)
+		appendStringInfo(es->str, "Total runtime: %.3f ms\n",
 						 1000.0 * totaltime);
-	do_text_output_multiline(tstate, buf.data);
-
-	pfree(buf.data);
 }
 
 /*
  * ExplainPrintPlan -
- *	  convert a QueryDesc's plan tree to text and append it to 'str'
+ *	  convert a QueryDesc's plan tree to text and append it to es->str
  *
- * 'analyze' means to include runtime instrumentation results
- * 'verbose' means a verbose printout (currently, it shows targetlists)
+ * The caller should have set up the options fields of *es, as well as
+ * initializing the output buffer es->str.  Other fields in *es are
+ * initialized here.
  *
  * NB: will not work on utility statements
  */
 void
-ExplainPrintPlan(StringInfo str, QueryDesc *queryDesc,
-				 bool analyze, bool verbose)
+ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
-	ExplainState es;
-
 	Assert(queryDesc->plannedstmt != NULL);
-
-	memset(&es, 0, sizeof(es));
-	es.str = str;
-	es.printTList = verbose;
-	es.printAnalyze = analyze;
-	es.pstmt = queryDesc->plannedstmt;
-	es.rtable = queryDesc->plannedstmt->rtable;
-
+	es->pstmt = queryDesc->plannedstmt;
+	es->rtable = queryDesc->plannedstmt->rtable;
 	ExplainNode(queryDesc->plannedstmt->planTree, queryDesc->planstate,
-				NULL, 0, &es);
+				NULL, 0, es);
 }
 
 /*
@@ -692,9 +702,10 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			break;
 	}
 
-	appendStringInfo(es->str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
-					 plan->startup_cost, plan->total_cost,
-					 plan->plan_rows, plan->plan_width);
+	if (es->costs)
+		appendStringInfo(es->str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
+						 plan->startup_cost, plan->total_cost,
+						 plan->plan_rows, plan->plan_width);
 
 	/*
 	 * We have to forcibly clean up the instrumentation state because we
@@ -714,12 +725,12 @@ ExplainNode(Plan *plan, PlanState *planstate,
 						 planstate->instrument->ntuples / nloops,
 						 planstate->instrument->nloops);
 	}
-	else if (es->printAnalyze)
+	else if (es->analyze)
 		appendStringInfoString(es->str, " (never executed)");
 	appendStringInfoChar(es->str, '\n');
 
 	/* target list */
-	if (es->printTList)
+	if (es->verbose)
 		show_plan_tlist(plan, indent, es);
 
 	/* quals, sort keys, etc */
@@ -1025,7 +1036,7 @@ static void
 show_sort_info(SortState *sortstate, int indent, ExplainState *es)
 {
 	Assert(IsA(sortstate, SortState));
-	if (es->printAnalyze && sortstate->sort_Done &&
+	if (es->analyze && sortstate->sort_Done &&
 		sortstate->tuplesortstate != NULL)
 	{
 		char	   *sortinfo;

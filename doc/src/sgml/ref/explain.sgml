@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.44 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.45 2009/07/26 23:34:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,6 +31,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
 EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -89,6 +90,14 @@ ROLLBACK;
 </programlisting>
    </para>
   </important>
+
+  <para>
+   Only the <literal>ANALYZE</literal> and <literal>VERBOSE</literal> options
+   can be specified, and only in that order, without surrounding the option
+   list in parentheses.  Prior to <productname>PostgreSQL</productname> 8.5,
+   the unparenthesized syntax was the only one supported.  It is expected that
+   all new options will be supported only in the parenthesized syntax.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -99,7 +108,8 @@ ROLLBACK;
     <term><literal>ANALYZE</literal></term>
     <listitem>
      <para>
-      Carry out the command and show the actual run times.
+      Carry out the command and show the actual run times.  This
+      parameter defaults to <command>FALSE</command>.
      </para>
     </listitem>
    </varlistentry>
@@ -108,7 +118,33 @@ ROLLBACK;
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Include the output column list for each node in the plan tree.
+      Include the output column list for each node in the plan tree.  This
+      parameter defaults to <command>FALSE</command>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>COSTS</literal></term>
+    <listitem>
+     <para>
+      Include information on the estimated startup and total cost of each
+      plan node, as well as the estimated number of rows and the estimated
+      width of each row.  This parameter defaults to <command>TRUE</command>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">boolean</replaceable></term>
+    <listitem>
+     <para>
+      Specifies whether the selected option should be turned on or off.
+      You can write <literal>TRUE</literal>, <literal>ON</>, or
+      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
+      <literal>OFF</>, or <literal>0</literal> to disable it.  The
+      <replaceable class="parameter">boolean</replaceable> value can also
+      be omitted, in which case <literal>TRUE</literal> is assumed.
      </para>
     </listitem>
    </varlistentry>
@@ -150,14 +186,6 @@ ROLLBACK;
   </para>
 
   <para>
-   Genetic query optimization (<acronym>GEQO</acronym>) randomly tests
-   execution plans.  Therefore, when the number of join relations
-   exceeds <xref linkend="guc-geqo-threshold"> causing genetic query
-   optimization to be used, the execution plan is likely to change
-   each time the statement is executed.
-  </para>
-
-  <para>
    In order to measure the run-time cost of each node in the execution
    plan, the current implementation of <command>EXPLAIN
    ANALYZE</command> can add considerable profiling overhead to query
@@ -196,6 +224,20 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
                          QUERY PLAN
 --------------------------------------------------------------
  Index Scan using fi on foo  (cost=0.00..5.98 rows=1 width=4)
+   Index Cond: (i = 4)
+(2 rows)
+</programlisting>
+  </para>
+
+  <para>
+   Here is the same plan with costs suppressed:
+
+<programlisting>
+EXPLAIN (COSTS FALSE) SELECT * FROM foo WHERE i = 4;
+
+        QUERY PLAN
+----------------------------
+ Index Scan using fi on foo
    Index Cond: (i = 4)
 (2 rows)
 </programlisting>

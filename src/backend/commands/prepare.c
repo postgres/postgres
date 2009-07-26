@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.97 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.98 2009/07/26 23:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "access/xact.h"
 #include "catalog/pg_type.h"
-#include "commands/explain.h"
 #include "commands/prepare.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -641,9 +640,8 @@ DropAllPreparedStatements(void)
  * not the original PREPARE; we get the latter string from the plancache.
  */
 void
-ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
-					const char *queryString,
-					ParamListInfo params, TupOutputState *tstate)
+ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
+					const char *queryString, ParamListInfo params)
 {
 	PreparedStatement *entry;
 	const char *query_string;
@@ -707,20 +705,18 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				pstmt->intoClause = execstmt->into;
 			}
 
-			ExplainOnePlan(pstmt, stmt, query_string,
-						   paramLI, tstate);
+			ExplainOnePlan(pstmt, es, query_string, paramLI);
 		}
 		else
 		{
-			ExplainOneUtility((Node *) pstmt, stmt, query_string,
-							  params, tstate);
+			ExplainOneUtility((Node *) pstmt, es, query_string, params);
 		}
 
 		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
 
 		/* put a blank line between plans */
 		if (!is_last_query)
-			do_text_output_oneline(tstate, "");
+			appendStringInfoChar(es->str, '\n');
 	}
 
 	if (estate)

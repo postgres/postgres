@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.672 2009/07/25 00:07:11 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.673 2009/07/26 23:34:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -321,7 +321,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <list>	opt_interval interval_second
 %type <node>	overlay_placing substr_from substr_for
 
-%type <boolean> opt_instead opt_analyze
+%type <boolean> opt_instead
 %type <boolean> index_opt_unique opt_verbose opt_full
 %type <boolean> opt_freeze opt_default opt_recheck
 %type <defelt>	opt_binary opt_oids copy_delimiter
@@ -368,6 +368,10 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <node>	generic_option_arg
 %type <defelt>	generic_option_elem alter_generic_option_elem
 %type <list>	generic_option_list alter_generic_option_list
+%type <str>		explain_option_name
+%type <node>	explain_option_arg
+%type <defelt>	explain_option_elem
+%type <list>	explain_option_list
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -2710,13 +2714,13 @@ opt_by:		BY				{}
 	  ;
 
 NumericOnly:
-		FCONST									{ $$ = makeFloat($1); }
+			FCONST								{ $$ = makeFloat($1); }
 			| '-' FCONST
 				{
 					$$ = makeFloat($2);
 					doNegateFloat($$);
 				}
-			| SignedIconst                                                  { $$ = makeInteger($1); };
+			| SignedIconst						{ $$ = makeInteger($1); }
 		;
 
 /*****************************************************************************
@@ -6473,16 +6477,41 @@ opt_name_list:
  *
  *		QUERY:
  *				EXPLAIN [ANALYZE] [VERBOSE] query
+ *				EXPLAIN ( options ) query
  *
  *****************************************************************************/
 
-ExplainStmt: EXPLAIN opt_analyze opt_verbose ExplainableStmt
+ExplainStmt:
+		EXPLAIN ExplainableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
-					n->analyze = $2;
-					n->verbose = $3;
+					n->query = $2;
+					n->options = NIL;
+					$$ = (Node *) n;
+				}
+		| EXPLAIN analyze_keyword opt_verbose ExplainableStmt
+				{
+					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = $4;
-					$$ = (Node *)n;
+					n->options = list_make1(makeDefElem("analyze", NULL));
+					if ($3)
+						n->options = lappend(n->options,
+											 makeDefElem("verbose", NULL));
+					$$ = (Node *) n;
+				}
+		| EXPLAIN VERBOSE ExplainableStmt
+				{
+					ExplainStmt *n = makeNode(ExplainStmt);
+					n->query = $3;
+					n->options = list_make1(makeDefElem("verbose", NULL));
+					$$ = (Node *) n;
+				}
+		| EXPLAIN '(' explain_option_list ')' ExplainableStmt
+				{
+					ExplainStmt *n = makeNode(ExplainStmt);
+					n->query = $5;
+					n->options = $3;
+					$$ = (Node *) n;
 				}
 		;
 
@@ -6496,9 +6525,35 @@ ExplainableStmt:
 			| ExecuteStmt					/* by default all are $$=$1 */
 		;
 
-opt_analyze:
-			analyze_keyword			{ $$ = TRUE; }
-			| /* EMPTY */			{ $$ = FALSE; }
+explain_option_list:
+			explain_option_elem
+				{
+					$$ = list_make1($1);
+				}
+			| explain_option_list ',' explain_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+explain_option_elem:
+			explain_option_name explain_option_arg
+				{
+					$$ = makeDefElem($1, $2);
+				}
+		;
+
+explain_option_name:
+			ColId					{ $$ = $1; }
+			| analyze_keyword		{ $$ = "analyze"; }
+			| VERBOSE				{ $$ = "verbose"; }
+		;
+
+explain_option_arg:
+			opt_boolean				{ $$ = (Node *) makeString($1); }
+			| ColId_or_Sconst		{ $$ = (Node *) makeString($1); }
+			| NumericOnly			{ $$ = (Node *) $1; }
+			| /* EMPTY */			{ $$ = NULL; }
 		;
 
 /*****************************************************************************

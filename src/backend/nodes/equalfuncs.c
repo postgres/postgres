@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.357 2009/07/20 02:42:27 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.358 2009/07/26 23:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1467,8 +1467,7 @@ static bool
 _equalExplainStmt(ExplainStmt *a, ExplainStmt *b)
 {
 	COMPARE_NODE_FIELD(query);
-	COMPARE_SCALAR_FIELD(verbose);
-	COMPARE_SCALAR_FIELD(analyze);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }

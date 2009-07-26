@@ -6,14 +6,14 @@
  *
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.30 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.31 2009/07/26 23:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PREPARE_H
 #define PREPARE_H
 
-#include "executor/executor.h"
+#include "commands/explain.h"
 #include "utils/plancache.h"
 #include "utils/timestamp.h"
 
@@ -40,9 +40,8 @@ extern void ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 			 ParamListInfo params,
 			 DestReceiver *dest, char *completionTag);
 extern void DeallocateQuery(DeallocateStmt *stmt);
-extern void ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
-					const char *queryString,
-					ParamListInfo params, TupOutputState *tstate);
+extern void ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
+					const char *queryString, ParamListInfo params);
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,

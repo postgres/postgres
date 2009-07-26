@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.397 2009/07/20 02:42:28 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.398 2009/07/26 23:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2193,8 +2193,7 @@ typedef struct ExplainStmt
 {
 	NodeTag		type;
 	Node	   *query;			/* the query (as a raw parse tree) */
-	bool		verbose;		/* print plan info */
-	bool		analyze;		/* get statistics by executing plan */
+	List	   *options;		/* list of DefElem nodes */
 } ExplainStmt;
 
 /* ----------------------

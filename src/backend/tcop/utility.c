@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.310 2009/07/16 06:33:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.311 2009/07/26 23:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2316,10 +2316,20 @@ GetCommandLogLevel(Node *parsetree)
 		case T_ExplainStmt:
 			{
 				ExplainStmt *stmt = (ExplainStmt *) parsetree;
+				bool		 analyze = false;
+				ListCell	*lc;
 
 				/* Look through an EXPLAIN ANALYZE to the contained stmt */
-				if (stmt->analyze)
+				foreach(lc, stmt->options)
+				{
+					DefElem *opt = (DefElem *) lfirst(lc);
+
+					if (strcmp(opt->defname, "analyze") == 0)
+						analyze = defGetBoolean(opt);
+				}
+				if (analyze)
 					return GetCommandLogLevel(stmt->query);
+
 				/* Plain EXPLAIN isn't so interesting */
 				lev = LOGSTMT_ALL;
 			}

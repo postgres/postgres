@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.5 2009/06/11 14:48:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.6 2009/07/26 23:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,16 +196,17 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 		msec = queryDesc->totaltime->total * 1000.0;
 		if (msec >= auto_explain_log_min_duration)
 		{
-			StringInfoData buf;
+			ExplainState	es;
 
-			initStringInfo(&buf);
-			ExplainPrintPlan(&buf, queryDesc,
-						 queryDesc->doInstrument && auto_explain_log_analyze,
-							 auto_explain_log_verbose);
+			ExplainInitState(&es);
+			es.analyze = (queryDesc->doInstrument && auto_explain_log_analyze);
+			es.verbose = auto_explain_log_verbose;
+
+			ExplainPrintPlan(&es, queryDesc);
 
 			/* Remove last line break */
-			if (buf.len > 0 && buf.data[buf.len - 1] == '\n')
-				buf.data[--buf.len] = '\0';
+			if (es.str->len > 0 && es.str->data[es.str->len - 1] == '\n')
+				es.str->data[--es.str->len] = '\0';
 
 			/*
 			 * Note: we rely on the existing logging of context or
@@ -215,9 +216,9 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			 */
 			ereport(LOG,
 					(errmsg("duration: %.3f ms  plan:\n%s",
-							msec, buf.data)));
+							msec, es.str->data)));
 
-			pfree(buf.data);
+			pfree(es.str->data);
 		}
 	}
 
