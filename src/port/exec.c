@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.64 2009/07/27 08:46:10 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ static int	resolve_symlinks(char *path);
 static char *pipe_read_line(char *cmd, char *line, int maxsize);
 
 #ifdef WIN32
-static BOOL GetUserSid(PSID *ppSidUser, HANDLE hToken);
+static BOOL GetTokenUser(HANDLE hToken, PTOKEN_USER *ppTokenUser);
 #endif
 
 /*
@@ -697,7 +697,7 @@ AddUserToDacl(HANDLE hProcess)
 	DWORD		dwTokenInfoLength = 0;
 	HANDLE		hToken = NULL;
 	PACL		pacl = NULL;
-	PSID		psidUser = NULL;
+	PTOKEN_USER	pTokenUser = NULL;
 	TOKEN_DEFAULT_DACL tddNew;
 	TOKEN_DEFAULT_DACL *ptdd = NULL;
 	TOKEN_INFORMATION_CLASS tic = TokenDefaultDacl;
@@ -744,15 +744,19 @@ AddUserToDacl(HANDLE hProcess)
 		goto cleanup;
 	}
 
-	/* Get the SID for the current user. We need to add this to the ACL. */
-	if (!GetUserSid(&psidUser, hToken))
+	/*
+	 * Get the user token for the current user, which provides us with the
+	 * SID that is needed for creating the ACL.
+	 */
+	if (!GetTokenUser(hToken, &pTokenUser))
 	{
-		log_error("could not get user SID: %lu", GetLastError());
+		log_error("could not get user token: %lu", GetLastError());
 		goto cleanup;
 	}
 
 	/* Figure out the size of the new ACL */
-	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(psidUser) -sizeof(DWORD);
+	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) +
+		GetLengthSid(pTokenUser->User.Sid) -sizeof(DWORD);
 
 	/* Allocate the ACL buffer & initialize it */
 	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);
@@ -785,7 +789,7 @@ AddUserToDacl(HANDLE hProcess)
 	}
 
 	/* Add the new ACE for the current user */
-	if (!AddAccessAllowedAce(pacl, ACL_REVISION, GENERIC_ALL, psidUser))
+	if (!AddAccessAllowedAce(pacl, ACL_REVISION, GENERIC_ALL, pTokenUser->User.Sid))
 	{
 		log_error("could not add access allowed ACE: %lu", GetLastError());
 		goto cleanup;
@@ -803,8 +807,8 @@ AddUserToDacl(HANDLE hProcess)
 	ret = TRUE;
 
 cleanup:
-	if (psidUser)
-		FreeSid(psidUser);
+	if (pTokenUser)
+		LocalFree((HLOCAL) pTokenUser);
 
 	if (pacl)
 		LocalFree((HLOCAL) pacl);
@@ -819,28 +823,31 @@ cleanup:
 }
 
 /*
- * GetUserSid*PSID *ppSidUser, HANDLE hToken)
+ * GetTokenUser(HANDLE hToken, PTOKEN_USER *ppTokenUser)
  *
- * Get the SID for the current user
+ * Get the users token information from a process token.
+ *
+ * The caller of this function is responsible for calling LocalFree() on the
+ * returned TOKEN_USER memory.
  */
 static BOOL
-GetUserSid(PSID *ppSidUser, HANDLE hToken)
+GetTokenUser(HANDLE hToken, PTOKEN_USER *ppTokenUser)
 {
 	DWORD		dwLength;
-	PTOKEN_USER pTokenUser = NULL;
 
+	*ppTokenUser = NULL;
 
 	if (!GetTokenInformation(hToken,
 							 TokenUser,
-							 pTokenUser,
+							 NULL,
 							 0,
 							 &dwLength))
 	{
 		if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
 		{
-			pTokenUser = (PTOKEN_USER) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwLength);
+			*ppTokenUser = (PTOKEN_USER) LocalAlloc(LPTR, dwLength);
 
-			if (pTokenUser == NULL)
+			if (*ppTokenUser == NULL)
 			{
 				log_error("could not allocate %lu bytes of memory", dwLength);
 				return FALSE;
@@ -855,18 +862,18 @@ GetUserSid(PSID *ppSidUser, HANDLE hToken)
 
 	if (!GetTokenInformation(hToken,
 							 TokenUser,
-							 pTokenUser,
+							 *ppTokenUser,
 							 dwLength,
 							 &dwLength))
 	{
-		HeapFree(GetProcessHeap(), 0, pTokenUser);
-		pTokenUser = NULL;
+		LocalFree(*ppTokenUser);
+		*ppTokenUser = NULL;
 
 		log_error("could not get token information: %lu", GetLastError());
 		return FALSE;
 	}
 
-	*ppSidUser = pTokenUser->User.Sid;
+	/* Memory in *ppTokenUser is LocalFree():d by the caller */
 	return TRUE;
 }
 
