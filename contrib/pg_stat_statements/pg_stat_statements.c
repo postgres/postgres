@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.3 2009/06/11 14:48:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.4 2009/07/27 03:34:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ pgss_shmem_startup(void)
 	 * Note: we don't bother with locks here, because there should be no other
 	 * processes running when this is called.
 	 */
-	if (!pgss_save)
+	if (found || !pgss_save)
 		return;
 
 	file = AllocateFile(PGSS_DUMP_FILE, PG_BINARY_R);
