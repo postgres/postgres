@@ -14,7 +14,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.4 2009/07/27 03:34:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_stat_statements/pg_stat_statements.c,v 1.5 2009/07/27 04:09:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,14 +327,16 @@ pgss_shmem_startup(void)
 		on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
 
 	/*
-	 * Attempt to load old statistics from the dump file.
-	 *
-	 * Note: we don't bother with locks here, because there should be no other
-	 * processes running when this is called.
+	 * Attempt to load old statistics from the dump file, if this is the
+	 * first time through and we weren't told not to.
 	 */
 	if (found || !pgss_save)
 		return;
 
+	/*
+	 * Note: we don't bother with locks here, because there should be no other
+	 * processes running when this code is reached.
+	 */
 	file = AllocateFile(PGSS_DUMP_FILE, PG_BINARY_R);
 	if (file == NULL)
 	{
