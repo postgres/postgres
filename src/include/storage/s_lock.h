@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.166 2009/01/01 17:24:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.167 2009/07/27 05:31:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,6 +566,36 @@ typedef int slock_t;
 #define TAS(lock) tas(lock)
 
 #endif /* __m32r__ */
+
+
+#if defined(__sh__)				/* Renesas' SuperH */
+#define HAS_TEST_AND_SET
+
+typedef unsigned char slock_t;
+
+#define TAS(lock) tas(lock)
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register int _res;
+
+	/*
+	 * This asm is coded as if %0 could be any register, but actually SuperH
+	 * restricts the target of xor-immediate to be R0.  That's handled by
+	 * the "z" constraint on _res.
+	 */
+	__asm__ __volatile__(
+		"	tas.b @%2    \n"
+		"	movt  %0     \n"
+		"	xor   #1,%0  \n"
+:		"=z"(_res), "+m"(*lock)
+:		"r"(lock)
+:		"memory", "t");
+	return _res;
+}
+
+#endif	 /* __sh__ */
 
 
 /* These live in s_lock.c, but only for gcc */
