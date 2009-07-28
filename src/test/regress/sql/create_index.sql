@@ -78,6 +78,8 @@ CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
 
 CREATE TEMP TABLE gpolygon_tbl AS
     SELECT polygon(home_base) AS f1 FROM slow_emp4000;
+INSERT INTO gpolygon_tbl VALUES ( '(1000,0,0,1000)' ); 
+INSERT INTO gpolygon_tbl VALUES ( '(0,1000,1000,1000)' ); 
 
 CREATE TEMP TABLE gcircle_tbl AS
     SELECT circle(home_base) AS f1 FROM slow_emp4000;
