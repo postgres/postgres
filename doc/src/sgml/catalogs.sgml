@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.201 2009/07/01 23:57:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.202 2009/07/28 02:56:29 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1746,6 +1746,14 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>The domain this constraint is on; 0 if not a domain constraint</entry>
+     </row>
+
+     <row>
+      <entry><structfield>conindid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The index supporting this constraint, if it's a unique, primary
+       key, or foreign key constraint; else 0</entry>
      </row>
 
      <row>
@@ -4511,6 +4519,13 @@
      </row>
 
      <row>
+      <entry><structfield>tgconstrindid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The index supporting a unique, primary key, or referential integrity constraint</entry>
+     </row>
+
+     <row>
       <entry><structfield>tgconstraint</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.oid</literal></entry>
@@ -4560,6 +4575,7 @@
     When <structfield>tgconstraint</> is nonzero,
     <structfield>tgisconstraint</> must be true, and
     <structfield>tgconstrname</>, <structfield>tgconstrrelid</>,
+    <structfield>tgconstrindid</>,
     <structfield>tgdeferrable</>, <structfield>tginitdeferred</> are redundant
     with the referenced <structname>pg_constraint</> entry.  The reason we
     keep these fields is that we support <quote>stand-alone</> constraint

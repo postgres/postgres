@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.248 2009/06/18 01:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.249 2009/07/28 02:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,9 @@ static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
  * be made to link the trigger to that constraint.	constraintOid is zero when
  * executing a user-entered CREATE TRIGGER command.
  *
+ * indexOid, if nonzero, is the OID of an index associated with the constraint.
+ * We do nothing with this except store it into pg_trigger.tgconstrindid.
+ *
  * If checkPermissions is true we require ACL_TRIGGER permissions on the
  * relation.  If not, the caller already checked permissions.  (This is
  * currently redundant with constraintOid being zero, but it's clearer to
@@ -83,7 +86,9 @@ static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
  * but a foreign-key constraint.  This is a kluge for backwards compatibility.
  */
 Oid
-CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
+CreateTrigger(CreateTrigStmt *stmt,
+			  Oid constraintOid, Oid indexOid,
+			  bool checkPermissions)
 {
 	int16		tgtype;
 	int2vector *tgattr;
@@ -276,6 +281,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
 	values[Anum_pg_trigger_tgconstrname - 1] = DirectFunctionCall1(namein,
 												CStringGetDatum(constrname));
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
+	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
 	values[Anum_pg_trigger_tgconstraint - 1] = ObjectIdGetDatum(constraintOid);
 	values[Anum_pg_trigger_tgdeferrable - 1] = BoolGetDatum(stmt->deferrable);
 	values[Anum_pg_trigger_tginitdeferred - 1] = BoolGetDatum(stmt->initdeferred);
@@ -410,13 +416,15 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
 		referenced.objectId = RelationGetRelid(rel);
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
-		if (constrrelid != InvalidOid)
+		if (OidIsValid(constrrelid))
 		{
 			referenced.classId = RelationRelationId;
 			referenced.objectId = constrrelid;
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 		}
+		/* Not possible to have an index dependency in this case */
+		Assert(!OidIsValid(indexOid));
 	}
 
 	/* Keep lock on target rel until end of xact */
@@ -1122,6 +1130,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgenabled = pg_trigger->tgenabled;
 		build->tgisconstraint = pg_trigger->tgisconstraint;
 		build->tgconstrrelid = pg_trigger->tgconstrrelid;
+		build->tgconstrindid = pg_trigger->tgconstrindid;
 		build->tgconstraint = pg_trigger->tgconstraint;
 		build->tgdeferrable = pg_trigger->tgdeferrable;
 		build->tginitdeferred = pg_trigger->tginitdeferred;
@@ -1466,6 +1475,8 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 			if (trig1->tgisconstraint != trig2->tgisconstraint)
 				return false;
 			if (trig1->tgconstrrelid != trig2->tgconstrrelid)
+				return false;
+			if (trig1->tgconstrindid != trig2->tgconstrindid)
 				return false;
 			if (trig1->tgconstraint != trig2->tgconstraint)
 				return false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.318 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.319 2009/07/28 02:56:29 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -732,6 +732,7 @@ index_create(Oid heapRelationId,
 										   indexInfo->ii_KeyAttrNumbers,
 										   indexInfo->ii_NumIndexAttrs,
 										   InvalidOid,	/* no domain */
+										   indexRelationId,	/* index OID */
 										   InvalidOid,	/* no foreign key */
 										   NULL,
 										   NULL,
@@ -741,7 +742,6 @@ index_create(Oid heapRelationId,
 										   ' ',
 										   ' ',
 										   ' ',
-										   InvalidOid,	/* no associated index */
 										   NULL,		/* no check constraint */
 										   NULL,
 										   NULL,

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.56 2009/05/27 01:18:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.57 2009/07/28 02:56:29 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -486,6 +486,7 @@ typedef struct Trigger
     bool        tgenabled;
     bool        tgisconstraint;
     Oid         tgconstrrelid;
+    Oid         tgconstrindid;
     Oid         tgconstraint;
     bool        tgdeferrable;
     bool        tginitdeferred;
@@ -497,7 +498,7 @@ typedef struct Trigger
 </programlisting>
 
        where <structfield>tgname</> is the trigger's name,
-       <structfield>tgnargs</> is number of arguments in
+       <structfield>tgnargs</> is the number of arguments in
        <structfield>tgargs</>, and <structfield>tgargs</> is an array of
        pointers to the arguments specified in the <command>CREATE
        TRIGGER</command> statement. The other members are for internal use

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.291 2009/07/20 02:42:27 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.292 2009/07/28 02:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,7 @@ typedef struct NewConstraint
 	char	   *name;			/* Constraint name, or NULL if none */
 	ConstrType	contype;		/* CHECK or FOREIGN */
 	Oid			refrelid;		/* PK rel, if FOREIGN */
+	Oid			refindid;		/* OID of PK's index, if FOREIGN */
 	Oid			conid;			/* OID of pg_constraint entry, if FOREIGN */
 	Node	   *qual;			/* Check expr or FkConstraint struct */
 	List	   *qualstate;		/* Execution state for CHECK */
@@ -247,9 +248,10 @@ static Oid transformFkeyCheckAttrs(Relation pkrel,
 						Oid *opclasses);
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
-							 Relation rel, Relation pkrel, Oid constraintOid);
+							 Relation rel, Relation pkrel,
+							 Oid pkindOid, Oid constraintOid);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
-						 Oid constraintOid);
+						 Oid constraintOid, Oid indexOid);
 static void ATController(Relation rel, List *cmds, bool recurse);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing);
@@ -2915,6 +2917,7 @@ ATRewriteTables(List **wqueue)
 				refrel = heap_open(con->refrelid, RowShareLock);
 
 				validateForeignKeyConstraint(fkconstraint, rel, refrel,
+											 con->refindid,
 											 con->conid);
 
 				heap_close(refrel, NoLock);
@@ -4819,6 +4822,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  numfks,
 									  InvalidOid,		/* not a domain
 														 * constraint */
+									  indexOid,
 									  RelationGetRelid(pkrel),
 									  pkattnum,
 									  pfeqoperators,
@@ -4828,7 +4832,6 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  fkconstraint->fk_upd_action,
 									  fkconstraint->fk_del_action,
 									  fkconstraint->fk_matchtype,
-									  indexOid,
 									  NULL,		/* no check constraint */
 									  NULL,
 									  NULL,
@@ -4838,7 +4841,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Create the triggers that will enforce the constraint.
 	 */
-	createForeignKeyTriggers(rel, fkconstraint, constrOid);
+	createForeignKeyTriggers(rel, fkconstraint, constrOid, indexOid);
 
 	/*
 	 * Tell Phase 3 to check that the constraint is satisfied by existing rows
@@ -4852,6 +4855,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		newcon->name = fkconstraint->constr_name;
 		newcon->contype = CONSTR_FOREIGN;
 		newcon->refrelid = RelationGetRelid(pkrel);
+		newcon->refindid = indexOid;
 		newcon->conid = constrOid;
 		newcon->qual = (Node *) fkconstraint;
 
@@ -5141,6 +5145,7 @@ static void
 validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel,
 							 Relation pkrel,
+							 Oid pkindOid,
 							 Oid constraintOid)
 {
 	HeapScanDesc scan;
@@ -5156,6 +5161,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	trig.tgenabled = TRIGGER_FIRES_ON_ORIGIN;
 	trig.tgisconstraint = TRUE;
 	trig.tgconstrrelid = RelationGetRelid(pkrel);
+	trig.tgconstrindid = pkindOid;
 	trig.tgconstraint = constraintOid;
 	trig.tgdeferrable = FALSE;
 	trig.tginitdeferred = FALSE;
@@ -5209,7 +5215,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 
 static void
 CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
-					 Oid constraintOid, bool on_insert)
+					 Oid constraintOid, Oid indexOid, bool on_insert)
 {
 	CreateTrigStmt *fk_trigger;
 
@@ -5237,7 +5243,7 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid, false);
+	(void) CreateTrigger(fk_trigger, constraintOid, indexOid, false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5248,7 +5254,7 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
  */
 static void
 createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
-						 Oid constraintOid)
+						 Oid constraintOid, Oid indexOid)
 {
 	RangeVar   *myRel;
 	CreateTrigStmt *fk_trigger;
@@ -5267,8 +5273,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the CHECK
 	 * action for both INSERTs and UPDATEs on the referencing table.
 	 */
-	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, true);
-	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, false);
+	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, indexOid, true);
+	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, indexOid, false);
 
 	/*
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
@@ -5316,7 +5322,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid, false);
+	(void) CreateTrigger(fk_trigger, constraintOid, indexOid, false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5367,7 +5373,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid, false);
+	(void) CreateTrigger(fk_trigger, constraintOid, indexOid, false);
 }
 
 /*

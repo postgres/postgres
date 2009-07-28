@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.46 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.47 2009/07/28 02:56:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ CreateConstraintEntry(const char *constraintName,
 					  const int16 *constraintKey,
 					  int constraintNKeys,
 					  Oid domainId,
+					  Oid indexRelId,
 					  Oid foreignRelId,
 					  const int16 *foreignKey,
 					  const Oid *pfEqOp,
@@ -58,7 +59,6 @@ CreateConstraintEntry(const char *constraintName,
 					  char foreignUpdateType,
 					  char foreignDeleteType,
 					  char foreignMatchType,
-					  Oid indexRelId,
 					  Node *conExpr,
 					  const char *conBin,
 					  const char *conSrc,
@@ -144,6 +144,7 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_condeferred - 1] = BoolGetDatum(isDeferred);
 	values[Anum_pg_constraint_conrelid - 1] = ObjectIdGetDatum(relId);
 	values[Anum_pg_constraint_contypid - 1] = ObjectIdGetDatum(domainId);
+	values[Anum_pg_constraint_conindid - 1] = ObjectIdGetDatum(indexRelId);
 	values[Anum_pg_constraint_confrelid - 1] = ObjectIdGetDatum(foreignRelId);
 	values[Anum_pg_constraint_confupdtype - 1] = CharGetDatum(foreignUpdateType);
 	values[Anum_pg_constraint_confdeltype - 1] = CharGetDatum(foreignDeleteType);
@@ -273,11 +274,13 @@ CreateConstraintEntry(const char *constraintName,
 		}
 	}
 
-	if (OidIsValid(indexRelId))
+	if (OidIsValid(indexRelId) && constraintType == CONSTRAINT_FOREIGN)
 	{
 		/*
 		 * Register normal dependency on the unique index that supports a
-		 * foreign-key constraint.
+		 * foreign-key constraint.  (Note: for indexes associated with
+		 * unique or primary-key constraints, the dependency runs the other
+		 * way, and is not made here.)
 		 */
 		ObjectAddress relobject;
 

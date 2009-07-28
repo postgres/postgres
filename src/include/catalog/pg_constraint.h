@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.31 2009/07/16 06:33:45 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.32 2009/07/28 02:56:31 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -61,6 +61,16 @@ CATALOG(pg_constraint,2606)
 	 * zero. This is not presently supported, however.
 	 */
 	Oid			contypid;		/* domain this constraint constrains */
+
+	/*
+	 * conindid links to the index supporting the constraint, if any;
+	 * otherwise it's 0.  This is used for unique and primary-key constraints,
+	 * and less obviously for foreign-key constraints (where the index is
+	 * a unique index on the referenced relation's referenced columns).
+	 * Notice that the index is on conrelid in the first case but confrelid
+	 * in the second.
+	 */
+	Oid			conindid;		/* index supporting this constraint */
 
 	/*
 	 * These fields, plus confkey, are only meaningful for a foreign-key
@@ -131,7 +141,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  *		compiler constants for pg_constraint
  * ----------------
  */
-#define Natts_pg_constraint					20
+#define Natts_pg_constraint					21
 #define Anum_pg_constraint_conname			1
 #define Anum_pg_constraint_connamespace		2
 #define Anum_pg_constraint_contype			3
@@ -139,19 +149,20 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 #define Anum_pg_constraint_condeferred		5
 #define Anum_pg_constraint_conrelid			6
 #define Anum_pg_constraint_contypid			7
-#define Anum_pg_constraint_confrelid		8
-#define Anum_pg_constraint_confupdtype		9
-#define Anum_pg_constraint_confdeltype		10
-#define Anum_pg_constraint_confmatchtype	11
-#define Anum_pg_constraint_conislocal		12
-#define Anum_pg_constraint_coninhcount		13
-#define Anum_pg_constraint_conkey			14
-#define Anum_pg_constraint_confkey			15
-#define Anum_pg_constraint_conpfeqop		16
-#define Anum_pg_constraint_conppeqop		17
-#define Anum_pg_constraint_conffeqop		18
-#define Anum_pg_constraint_conbin			19
-#define Anum_pg_constraint_consrc			20
+#define Anum_pg_constraint_conindid			8
+#define Anum_pg_constraint_confrelid		9
+#define Anum_pg_constraint_confupdtype		10
+#define Anum_pg_constraint_confdeltype		11
+#define Anum_pg_constraint_confmatchtype	12
+#define Anum_pg_constraint_conislocal		13
+#define Anum_pg_constraint_coninhcount		14
+#define Anum_pg_constraint_conkey			15
+#define Anum_pg_constraint_confkey			16
+#define Anum_pg_constraint_conpfeqop		17
+#define Anum_pg_constraint_conppeqop		18
+#define Anum_pg_constraint_conffeqop		19
+#define Anum_pg_constraint_conbin			20
+#define Anum_pg_constraint_consrc			21
 
 
 /* Valid values for contype */
@@ -188,6 +199,7 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  const int16 *constraintKey,
 					  int constraintNKeys,
 					  Oid domainId,
+					  Oid indexRelId,
 					  Oid foreignRelId,
 					  const int16 *foreignKey,
 					  const Oid *pfEqOp,
@@ -197,7 +209,6 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  char foreignUpdateType,
 					  char foreignDeleteType,
 					  char foreignMatchType,
-					  Oid indexRelId,
 					  Node *conExpr,
 					  const char *conBin,
 					  const char *conSrc,
