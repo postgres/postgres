@@ -174,12 +174,12 @@ dropvoidsubtree(QTNode * root)
 
 		root->nchild = j;
 
-		if (root->valnode->val == (int4) '!' && root->nchild == 0)
+		if (root->nchild == 0)
 		{
 			QTNFree(root);
 			root = NULL;
 		}
-		else if (root->nchild == 1)
+		else if (root->nchild == 1 && root->valnode->val != (int4) '!')
 		{
 			QTNode	   *nroot = root->child[0];
 
