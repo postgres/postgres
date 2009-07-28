@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.11 2008/01/01 19:45:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.11.2.1 2009/07/28 09:32:45 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,12 +215,12 @@ dropvoidsubtree(QTNode *root)
 
 		root->nchild = j;
 
-		if (root->valnode->operator.oper == OP_NOT && root->nchild == 0)
+		if (root->nchild == 0)
 		{
 			QTNFree(root);
 			root = NULL;
 		}
-		else if (root->nchild == 1)
+		else if (root->nchild == 1 && root->valnode->operator.oper != OP_NOT)
 		{
 			QTNode	   *nroot = root->child[0];
 
