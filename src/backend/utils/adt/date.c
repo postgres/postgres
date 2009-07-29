@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.146 2009/06/11 14:49:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.147 2009/07/29 22:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1701,7 +1701,7 @@ time_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * USECS_PER_SEC + fsec;
+				result = tm->tm_sec * 1000000.0 + fsec;
 #else
 				result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -1709,7 +1709,7 @@ time_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * INT64CONST(1000) + fsec / INT64CONST(1000);
+				result = tm->tm_sec * 1000.0 + fsec / 1000.0;
 #else
 				result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -1717,7 +1717,7 @@ time_part(PG_FUNCTION_ARGS)
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec + fsec / USECS_PER_SEC;
+				result = tm->tm_sec + fsec / 1000000.0;
 #else
 				result = tm->tm_sec + fsec;
 #endif
@@ -2469,7 +2469,7 @@ timetz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * USECS_PER_SEC + fsec;
+				result = tm->tm_sec * 1000000.0 + fsec;
 #else
 				result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -2477,7 +2477,7 @@ timetz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * INT64CONST(1000) + fsec / INT64CONST(1000);
+				result = tm->tm_sec * 1000.0 + fsec / 1000.0;
 #else
 				result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -2485,7 +2485,7 @@ timetz_part(PG_FUNCTION_ARGS)
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec + fsec / USECS_PER_SEC;
+				result = tm->tm_sec + fsec / 1000000.0;
 #else
 				result = tm->tm_sec + fsec;
 #endif
