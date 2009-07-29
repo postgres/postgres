@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.95 2009/07/16 06:33:45 petere Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.96 2009/07/29 20:56:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool unique,
 			bool primary,
 			bool isconstraint,
+			bool deferrable,
+			bool initdeferred,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,

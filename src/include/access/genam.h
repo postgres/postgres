@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.78 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.79 2009/07/29 20:56:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,34 @@ typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
 typedef struct IndexScanDescData *IndexScanDesc;
 typedef struct SysScanDescData *SysScanDesc;
 
+/*
+ * Enumeration specifying the type of uniqueness check to perform in
+ * index_insert().
+ *
+ * UNIQUE_CHECK_YES is the traditional Postgres immediate check, possibly
+ * blocking to see if a conflicting transaction commits.
+ *
+ * For deferrable unique constraints, UNIQUE_CHECK_PARTIAL is specified at
+ * insertion time.  The index AM should test if the tuple is unique, but
+ * should not throw error, block, or prevent the insertion if the tuple
+ * appears not to be unique.  We'll recheck later when it is time for the
+ * constraint to be enforced.  The AM must return true if the tuple is
+ * known unique, false if it is possibly non-unique.  In the "true" case
+ * it is safe to omit the later recheck.
+ *
+ * When it is time to recheck the deferred constraint, a pseudo-insertion
+ * call is made with UNIQUE_CHECK_EXISTING.  The tuple is already in the
+ * index in this case, so it should not be inserted again.  Rather, just
+ * check for conflicting live tuples (possibly blocking).
+ */
+typedef enum IndexUniqueCheck
+{
+	UNIQUE_CHECK_NO,			/* Don't do any uniqueness checking */
+	UNIQUE_CHECK_YES,			/* Enforce uniqueness at insertion time */
+	UNIQUE_CHECK_PARTIAL,		/* Test uniqueness, but no error */
+	UNIQUE_CHECK_EXISTING		/* Check if existing tuple is unique */
+} IndexUniqueCheck;
+
 
 /*
  * generalized index_ interface routines (in indexam.c)
@@ -103,7 +131,7 @@ extern bool index_insert(Relation indexRelation,
 			 Datum *values, bool *isnull,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRelation,
-			 bool check_uniqueness);
+			 IndexUniqueCheck checkUnique);
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Relation indexRelation,

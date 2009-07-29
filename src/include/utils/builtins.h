@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.334 2009/07/16 06:33:46 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.335 2009/07/29 20:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1028,6 +1028,9 @@ extern Datum window_nth_value(PG_FUNCTION_ARGS);
 
 /* access/transam/twophase.c */
 extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
+
+/* commands/constraint.c */
+extern Datum unique_key_recheck(PG_FUNCTION_ARGS);
 
 /* commands/prepare.c */
 extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);

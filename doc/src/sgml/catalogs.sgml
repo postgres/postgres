@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.202 2009/07/28 02:56:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.203 2009/07/29 20:56:17 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2672,6 +2672,14 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, this index represents the primary key of the table
+      (<structfield>indisunique</> should always be true when this is true)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>indimmediate</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, the uniqueness check is enforced immediately on insertion
       (<structfield>indisunique</> should always be true when this is true)</entry>
      </row>
 

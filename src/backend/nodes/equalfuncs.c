@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.358 2009/07/26 23:34:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.359 2009/07/29 20:56:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1160,6 +1160,8 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(primary);
 	COMPARE_SCALAR_FIELD(isconstraint);
+	COMPARE_SCALAR_FIELD(deferrable);
+	COMPARE_SCALAR_FIELD(initdeferred);
 	COMPARE_SCALAR_FIELD(concurrent);
 
 	return true;
@@ -2068,6 +2070,8 @@ _equalConstraint(Constraint *a, Constraint *b)
 	COMPARE_NODE_FIELD(keys);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_STRING_FIELD(indexspace);
+	COMPARE_SCALAR_FIELD(deferrable);
+	COMPARE_SCALAR_FIELD(initdeferred);
 
 	return true;
 }

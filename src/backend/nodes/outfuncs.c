@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.361 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.362 2009/07/29 20:56:19 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1734,6 +1734,8 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
+	WRITE_BOOL_FIELD(deferrable);
+	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_BOOL_FIELD(concurrent);
 }
 
@@ -2285,6 +2287,8 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexspace);
+			WRITE_BOOL_FIELD(deferrable);
+			WRITE_BOOL_FIELD(initdeferred);
 			break;
 
 		case CONSTR_UNIQUE:
@@ -2292,6 +2296,8 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexspace);
+			WRITE_BOOL_FIELD(deferrable);
+			WRITE_BOOL_FIELD(initdeferred);
 			break;
 
 		case CONSTR_CHECK:

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.157 2009/07/22 17:00:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.158 2009/07/29 20:56:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,8 +302,8 @@ extern void ExecCloseScanRelation(Relation scanrel);
 
 extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
-extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
-					  EState *estate, bool is_vacuum);
+extern List *ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
+					  EState *estate, bool is_vacuum_full);
 
 extern void RegisterExprContextCallback(ExprContext *econtext,
 							ExprContextCallbackFunction function,

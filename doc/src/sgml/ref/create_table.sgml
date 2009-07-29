@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.114 2009/02/12 13:25:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.115 2009/07/29 20:56:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,8 +35,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ NOT NULL | 
-  NULL | 
+{ NOT NULL |
+  NULL |
   UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
@@ -423,11 +423,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       contain values that match values in the referenced
       column(s) of some row of the referenced table.  If <replaceable
       class="parameter">refcolumn</replaceable> is omitted, the
-      primary key of the <replaceable
-      class="parameter">reftable</replaceable> is used.  The
-      referenced columns must be the columns of a unique or primary
-      key constraint in the referenced table.  Note that foreign key
-      constraints cannot be defined between temporary tables and
+      primary key of the <replaceable class="parameter">reftable</replaceable>
+      is used.  The referenced columns must be the columns of a non-deferrable
+      unique or primary key constraint in the referenced table.  Note that
+      foreign key constraints cannot be defined between temporary tables and
       permanent tables.
      </para>
 
@@ -534,9 +533,11 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       after every command.  Checking of constraints that are
       deferrable can be postponed until the end of the transaction
       (using the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command).
-      <literal>NOT DEFERRABLE</literal> is the default.  Only foreign
-      key constraints currently accept this clause.  All other
-      constraint types are not deferrable.
+      <literal>NOT DEFERRABLE</literal> is the default.
+      Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>, and
+      <literal>REFERENCES</> (foreign key) constraints accept this
+      clause.  <literal>NOT NULL</> and <literal>CHECK</> constraints are not
+      deferrable.
      </para>
     </listitem>
    </varlistentry>
@@ -1137,6 +1138,23 @@ CREATE TABLE cinemas (
     default behavior in <productname>PostgreSQL</productname> is
     <literal>ON COMMIT PRESERVE ROWS</literal>.  The <literal>ON COMMIT
     DROP</literal> option does not exist in SQL.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Non-deferred Uniqueness Constraints</title>
+
+   <para>
+    When a <literal>UNIQUE</> or <literal>PRIMARY KEY</> constraint is
+    not deferrable, <productname>PostgreSQL</productname> checks for
+    uniqueness immediately whenever a row is inserted or modified.
+    The SQL standard says that uniqueness should be enforced only at
+    the end of the statement; this makes a difference when, for example,
+    a single command updates multiple key values.  To obtain
+    standard-compliant behavior, declare the constraint as
+    <literal>DEFERRABLE</> but not deferred (i.e., <literal>INITIALLY
+    IMMEDIATE</>).  Be aware that this can be significantly slower than
+    immediate uniqueness checking.
    </para>
   </refsect2>
 

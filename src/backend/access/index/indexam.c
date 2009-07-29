@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.114 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.115 2009/07/29 20:56:18 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -185,7 +185,7 @@ index_insert(Relation indexRelation,
 			 bool *isnull,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRelation,
-			 bool check_uniqueness)
+			 IndexUniqueCheck checkUnique)
 {
 	FmgrInfo   *procedure;
 
@@ -201,7 +201,7 @@ index_insert(Relation indexRelation,
 									  PointerGetDatum(isnull),
 									  PointerGetDatum(heap_t_ctid),
 									  PointerGetDatum(heapRelation),
-									  BoolGetDatum(check_uniqueness)));
+									  Int32GetDatum((int32) checkUnique)));
 }
 
 /*

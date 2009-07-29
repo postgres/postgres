@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.225 2009/07/20 03:46:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.226 2009/07/29 20:56:19 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -1321,11 +1321,32 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 				 "SELECT i.indisunique, i.indisprimary, i.indisclustered, ");
 		if (pset.sversion >= 80200)
-			appendPQExpBuffer(&buf, "i.indisvalid, ");
+			appendPQExpBuffer(&buf, "i.indisvalid,\n");
 		else
-			appendPQExpBuffer(&buf, "true as indisvalid, ");
-		appendPQExpBuffer(&buf, "a.amname, c2.relname,\n"
-					"  pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
+			appendPQExpBuffer(&buf, "true AS indisvalid,\n");
+		if (pset.sversion >= 80500)
+			appendPQExpBuffer(&buf,
+							  "  (NOT i.indimmediate) AND "
+							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
+							  "pg_catalog.pg_constraint con WHERE "
+							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+							  "d.objid = i.indexrelid AND "
+							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
+							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
+							  "con.condeferrable) AS condeferrable,\n"
+							  "  (NOT i.indimmediate) AND "
+							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
+							  "pg_catalog.pg_constraint con WHERE "
+							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+							  "d.objid = i.indexrelid AND "
+							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
+							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
+							  "con.condeferred) AS condeferred,\n");
+		else
+			appendPQExpBuffer(&buf,
+						"  false AS condeferrable, false AS condeferred,\n");
+		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
+						  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 		  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
 						  "AND i.indrelid = c2.oid",
@@ -1345,9 +1366,11 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indisprimary = PQgetvalue(result, 0, 1);
 			char	   *indisclustered = PQgetvalue(result, 0, 2);
 			char	   *indisvalid = PQgetvalue(result, 0, 3);
-			char	   *indamname = PQgetvalue(result, 0, 4);
-			char	   *indtable = PQgetvalue(result, 0, 5);
-			char	   *indpred = PQgetvalue(result, 0, 6);
+			char	   *deferrable = PQgetvalue(result, 0, 4);
+			char	   *deferred = PQgetvalue(result, 0, 5);
+			char	   *indamname = PQgetvalue(result, 0, 6);
+			char	   *indtable = PQgetvalue(result, 0, 7);
+			char	   *indpred = PQgetvalue(result, 0, 8);
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
@@ -1369,6 +1392,12 @@ describeOneTableDetails(const char *schemaname,
 
 			if (strcmp(indisvalid, "t") != 0)
 				appendPQExpBuffer(&tmpbuf, _(", invalid"));
+
+			if (strcmp(deferrable, "t") == 0)
+				appendPQExpBuffer(&tmpbuf, _(", deferrable"));
+
+			if (strcmp(deferred, "t") == 0)
+				appendPQExpBuffer(&tmpbuf, _(", initially deferred"));
 
 			printTableAddFooter(&cont, tmpbuf.data);
 			add_tablespace_footer(&cont, tableinfo.relkind,
@@ -1431,6 +1460,26 @@ describeOneTableDetails(const char *schemaname,
 			else
 				appendPQExpBuffer(&buf, "true as indisvalid, ");
 			appendPQExpBuffer(&buf, "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)");
+			if (pset.sversion >= 80500)
+				appendPQExpBuffer(&buf,
+							  ",\n  (NOT i.indimmediate) AND "
+							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
+							  "pg_catalog.pg_constraint con WHERE "
+							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+							  "d.objid = i.indexrelid AND "
+							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
+							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
+							  "con.condeferrable) AS condeferrable"
+							  ",\n  (NOT i.indimmediate) AND "
+							  "EXISTS (SELECT 1 FROM pg_catalog.pg_depend d, "
+							  "pg_catalog.pg_constraint con WHERE "
+							  "d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND "
+							  "d.objid = i.indexrelid AND "
+							  "d.refclassid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND "
+							  "d.refobjid = con.oid AND d.deptype = 'i' AND "
+							  "con.condeferred) AS condeferred");
+			else
+				appendPQExpBuffer(&buf, ", false AS condeferrable, false AS condeferred");
 			if (pset.sversion >= 80000)
 				appendPQExpBuffer(&buf, ", c2.reltablespace");
 			appendPQExpBuffer(&buf,
@@ -1477,12 +1526,18 @@ describeOneTableDetails(const char *schemaname,
 					if (strcmp(PQgetvalue(result, i, 4), "t") != 0)
 						appendPQExpBuffer(&buf, " INVALID");
 
+					if (strcmp(PQgetvalue(result, i, 6), "t") == 0)
+						appendPQExpBuffer(&buf, " DEFERRABLE");
+
+					if (strcmp(PQgetvalue(result, i, 7), "t") == 0)
+						appendPQExpBuffer(&buf, " INITIALLY DEFERRED");
+
 					printTableAddFooter(&cont, buf.data);
 
 					/* Print tablespace of the index on the same line */
 					if (pset.sversion >= 80000)
 						add_tablespace_footer(&cont, 'i',
-											atooid(PQgetvalue(result, i, 6)),
+											atooid(PQgetvalue(result, i, 8)),
 											  false);
 				}
 			}
@@ -1677,7 +1732,7 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 
-		/* print triggers (but ignore foreign-key triggers) */
+		/* print triggers (but ignore RI and unique constraint triggers) */
 		if (tableinfo.hastriggers)
 		{
 			printfPQExpBuffer(&buf,

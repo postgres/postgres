@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.30 2009/03/24 20:17:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.31 2009/07/29 20:56:17 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -172,20 +172,32 @@ aminsert (Relation indexRelation,
           bool *isnull,
           ItemPointer heap_tid,
           Relation heapRelation,
-          bool check_uniqueness);
+          IndexUniqueCheck checkUnique);
 </programlisting>
    Insert a new tuple into an existing index.  The <literal>values</> and
    <literal>isnull</> arrays give the key values to be indexed, and
    <literal>heap_tid</> is the TID to be indexed.
    If the access method supports unique indexes (its
    <structname>pg_am</>.<structfield>amcanunique</> flag is true) then
-   <literal>check_uniqueness</> might be true, in which case the access method
-   must verify that there is no conflicting row; this is the only situation in
-   which the access method normally needs the <literal>heapRelation</>
-   parameter.  See <xref linkend="index-unique-checks"> for details.
-   The result is TRUE if an index entry was inserted, FALSE if not. (A FALSE
-   result does not denote an error condition, but is used for cases such
-   as an index method refusing to index a NULL.)
+   <literal>checkUnique</> indicates the type of uniqueness check to
+   perform.  This varies depending on whether the unique constraint is
+   deferrable; see <xref linkend="index-unique-checks"> for details.
+   Normally the access method only needs the <literal>heapRelation</>
+   parameter when performing uniqueness checking (since then it will have to
+   look into the heap to verify tuple liveness).
+  </para>
+
+  <para>
+   The function's boolean result value is significant only when
+   <literal>checkUnique</> is <literal>UNIQUE_CHECK_PARTIAL</>.
+   In this case a TRUE result means the new entry is known unique, whereas
+   FALSE means it might be non-unique (and a deferred uniqueness check must
+   be scheduled).  For other cases a constant FALSE result is recommended.
+  </para>
+
+  <para>
+   Some indexes might not index all tuples.  If the tuple is not to be
+   indexed, <function>aminsert</> should just return without doing anything.
   </para>
 
   <para>
@@ -706,10 +718,10 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   Furthermore, immediately before raising a uniqueness violation
+   Furthermore, immediately before reporting a uniqueness violation
    according to the above rules, the access method must recheck the
    liveness of the row being inserted.  If it is committed dead then
-   no error should be raised.  (This case cannot occur during the
+   no violation should be reported.  (This case cannot occur during the
    ordinary scenario of inserting a row that's just been created by
    the current transaction.  It can happen during
    <command>CREATE UNIQUE INDEX CONCURRENTLY</>, however.)
@@ -728,8 +740,78 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   The main limitation of this scheme is that it has no convenient way
-   to support deferred uniqueness checks.
+   If the unique constraint is deferrable, there is additional complexity:
+   we need to be able to insert an index entry for a new row, but defer any
+   uniqueness-violation error until end of statement or even later.  To
+   avoid unnecessary repeat searches of the index, the index access method
+   should do a preliminary uniqueness check during the initial insertion.
+   If this shows that there is definitely no conflicting live tuple, we
+   are done.  Otherwise, we schedule a recheck to occur when it is time to
+   enforce the constraint.  If, at the time of the recheck, both the inserted
+   tuple and some other tuple with the same key are live, then the error
+   must be reported.  (Note that for this purpose, <quote>live</> actually
+   means <quote>any tuple in the index entry's HOT chain is live</>.)
+   To implement this, the <function>aminsert</> function is passed a
+   <literal>checkUnique</> parameter having one of the following values:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       <literal>UNIQUE_CHECK_NO</> indicates that no uniqueness checking
+       should be done (this is not a unique index).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>UNIQUE_CHECK_YES</> indicates that this is a non-deferrable
+       unique index, and the uniqueness check must be done immediately, as
+       described above.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>UNIQUE_CHECK_PARTIAL</> indicates that the unique
+       constraint is deferrable. <productname>PostgreSQL</productname>
+       will use this mode to insert each row's index entry.  The access
+       method must allow duplicate entries into the index, and report any
+       potential duplicates by returning FALSE from <function>aminsert</>.
+       For each row for which FALSE is returned, a deferred recheck will
+       be scheduled.
+      </para>
+
+      <para>
+       The access method must identify any rows which might violate the
+       unique constraint, but it is not an error for it to report false
+       positives. This allows the check to be done without waiting for other
+       transactions to finish; conflicts reported here are not treated as
+       errors and will be rechecked later, by which time they may no longer
+       be conflicts.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>UNIQUE_CHECK_EXISTING</> indicates that this is a deferred
+       recheck of a row that was reported as a potential uniqueness violation.
+       Although this is implemented by calling <function>aminsert</>, the
+       access method must <emphasis>not</> insert a new index entry in this
+       case.  The index entry is already present.  Rather, the access method
+       must check to see if there is another live index entry.  If so, and
+       if the target row is also still live, report error.
+      </para>
+
+      <para>
+       It is recommended that in a <literal>UNIQUE_CHECK_EXISTING</> call,
+       the access method further verify that the target row actually does
+       have an existing entry in the index, and report error if not.  This
+       is a good idea because the index tuple values passed to
+       <function>aminsert</> will have been recomputed.  If the index
+       definition involves functions that are not really immutable, we
+       might be checking the wrong area of the index.  Checking that the
+       target row is found in the recheck verifies that we are scanning
+       for the same tuple values as were used in the original insertion.
+      </para>
+     </listitem>
+    </itemizedlist>
   </para>
 
  </sect1>

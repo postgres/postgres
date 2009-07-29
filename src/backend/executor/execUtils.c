@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.160 2009/07/18 19:15:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.161 2009/07/29 20:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1033,17 +1033,22 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		doesn't provide the functionality needed by the
  *		executor.. -cim 9/27/89
  *
+ *		This returns a list of OIDs for any unique indexes
+ *		whose constraint check was deferred and which had
+ *		potential (unconfirmed) conflicts.
+ *
  *		CAUTION: this must not be called for a HOT update.
  *		We can't defend against that here for lack of info.
  *		Should we change the API to make it safer?
  * ----------------------------------------------------------------
  */
-void
+List *
 ExecInsertIndexTuples(TupleTableSlot *slot,
 					  ItemPointer tupleid,
 					  EState *estate,
-					  bool is_vacuum)
+					  bool is_vacuum_full)
 {
+	List	   *result = NIL;
 	ResultRelInfo *resultRelInfo;
 	int			i;
 	int			numIndices;
@@ -1077,9 +1082,12 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
+		Relation	indexRelation = relationDescs[i];
 		IndexInfo  *indexInfo;
+		IndexUniqueCheck checkUnique;
+		bool		isUnique;
 
-		if (relationDescs[i] == NULL)
+		if (indexRelation == NULL)
 			continue;
 
 		indexInfo = indexInfoArray[i];
@@ -1122,22 +1130,50 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					   isnull);
 
 		/*
-		 * The index AM does the rest.	Note we suppress unique-index checks
-		 * if we are being called from VACUUM, since VACUUM may need to move
-		 * dead tuples that have the same keys as live ones.
+		 * The index AM does the rest, including uniqueness checking.
+		 *
+		 * For an immediate-mode unique index, we just tell the index AM to
+		 * throw error if not unique.
+		 *
+		 * For a deferrable unique index, we tell the index AM to just detect
+		 * possible non-uniqueness, and we add the index OID to the result
+		 * list if further checking is needed.
+		 *
+		 * Special hack: we suppress unique-index checks if we are being
+		 * called from VACUUM FULL, since VACUUM FULL may need to move dead
+		 * tuples that have the same keys as live ones.
 		 */
-		index_insert(relationDescs[i],	/* index relation */
-					 values,	/* array of index Datums */
-					 isnull,	/* null flags */
-					 tupleid,	/* tid of heap tuple */
-					 heapRelation,
-					 relationDescs[i]->rd_index->indisunique && !is_vacuum);
+		if (is_vacuum_full || !indexRelation->rd_index->indisunique)
+			checkUnique = UNIQUE_CHECK_NO;
+		else if (indexRelation->rd_index->indimmediate)
+			checkUnique = UNIQUE_CHECK_YES;
+		else
+			checkUnique = UNIQUE_CHECK_PARTIAL;
+
+		isUnique =
+			index_insert(indexRelation,	/* index relation */
+						 values,		/* array of index Datums */
+						 isnull,		/* null flags */
+						 tupleid,		/* tid of heap tuple */
+						 heapRelation,	/* heap relation */
+						 checkUnique);	/* type of uniqueness check to do */
+
+		if (checkUnique == UNIQUE_CHECK_PARTIAL && !isUnique)
+		{
+			/*
+			 * The tuple potentially violates the uniqueness constraint,
+			 * so make a note of the index so that we can re-check it later.
+			 */
+			result = lappend_oid(result, RelationGetRelid(indexRelation));
+		}
 
 		/*
 		 * keep track of index inserts for debugging
 		 */
 		IncrIndexInserted();
 	}
+
+	return result;
 }
 
 /*

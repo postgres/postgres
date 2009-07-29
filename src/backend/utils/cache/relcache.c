@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.287 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.288 2009/07/29 20:56:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2938,7 +2938,7 @@ RelationGetIndexList(Relation relation)
 
 		/* Check to see if it is a unique, non-partial btree index on OID */
 		if (index->indnatts == 1 &&
-			index->indisunique &&
+			index->indisunique && index->indimmediate &&
 			index->indkey.values[0] == ObjectIdAttributeNumber &&
 			index->indclass.values[0] == OID_BTREE_OPS_OID &&
 			heap_attisnull(htup, Anum_pg_index_indpred))

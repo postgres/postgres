@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.673 2009/07/26 23:34:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.674 2009/07/29 20:56:19 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2220,6 +2220,8 @@ ColConstraintElem:
 					n->cooked_expr = NULL;
 					n->keys = NULL;
 					n->indexspace = NULL;
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| NULL_P
@@ -2231,6 +2233,8 @@ ColConstraintElem:
 					n->cooked_expr = NULL;
 					n->keys = NULL;
 					n->indexspace = NULL;
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| UNIQUE opt_definition OptConsTableSpace
@@ -2243,6 +2247,8 @@ ColConstraintElem:
 					n->keys = NULL;
 					n->options = $2;
 					n->indexspace = $3;
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY opt_definition OptConsTableSpace
@@ -2255,6 +2261,8 @@ ColConstraintElem:
 					n->keys = NULL;
 					n->options = $3;
 					n->indexspace = $4;
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| CHECK '(' a_expr ')'
@@ -2266,6 +2274,8 @@ ColConstraintElem:
 					n->cooked_expr = NULL;
 					n->keys = NULL;
 					n->indexspace = NULL;
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| DEFAULT b_expr
@@ -2277,6 +2287,8 @@ ColConstraintElem:
 					n->cooked_expr = NULL;
 					n->keys = NULL;
 					n->indexspace = NULL;
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| REFERENCES qualified_name opt_column_list key_match key_actions
@@ -2398,7 +2410,7 @@ TableConstraint:
 		;
 
 ConstraintElem:
-			CHECK '(' a_expr ')'
+			CHECK '(' a_expr ')' ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
@@ -2406,9 +2418,17 @@ ConstraintElem:
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
 					n->indexspace = NULL;
+					if ($5 != 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CHECK constraints cannot be deferred"),
+								 parser_errposition(@5)));
+					n->deferrable = FALSE;
+					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| UNIQUE '(' columnList ')' opt_definition OptConsTableSpace
+				ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -2418,9 +2438,12 @@ ConstraintElem:
 					n->keys = $3;
 					n->options = $5;
 					n->indexspace = $6;
+					n->deferrable = ($7 & 1) != 0;
+					n->initdeferred = ($7 & 2) != 0;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY '(' columnList ')' opt_definition OptConsTableSpace
+				ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -2430,6 +2453,8 @@ ConstraintElem:
 					n->keys = $4;
 					n->options = $6;
 					n->indexspace = $7;
+					n->deferrable = ($8 & 1) != 0;
+					n->initdeferred = ($8 & 2) != 0;
 					$$ = (Node *)n;
 				}
 			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name

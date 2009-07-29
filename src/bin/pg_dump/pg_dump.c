@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.542 2009/07/23 22:59:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.543 2009/07/29 20:56:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3655,6 +3655,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				i_indisclustered,
 				i_contype,
 				i_conname,
+				i_condeferrable,
+				i_condeferred,
 				i_contableoid,
 				i_conoid,
 				i_tablespace,
@@ -3696,6 +3698,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "c.contype, c.conname, "
+							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
@@ -3722,6 +3725,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "c.contype, c.conname, "
+							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
 							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
@@ -3748,6 +3752,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
 							  "c.contype, c.conname, "
+							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
 							  "c.oid AS conoid, "
 							  "NULL AS tablespace, "
@@ -3776,6 +3781,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "CASE WHEN i.indisprimary THEN 'p'::char "
 							  "ELSE '0'::char END AS contype, "
 							  "t.relname AS conname, "
+							  "false AS condeferrable, "
+							  "false AS condeferred, "
 							  "0::oid AS contableoid, "
 							  "t.oid AS conoid, "
 							  "NULL AS tablespace, "
@@ -3799,6 +3806,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "CASE WHEN i.indisprimary THEN 'p'::char "
 							  "ELSE '0'::char END AS contype, "
 							  "t.relname AS conname, "
+							  "false AS condeferrable, "
+							  "false AS condeferred, "
 							  "0::oid AS contableoid, "
 							  "t.oid AS conoid, "
 							  "NULL AS tablespace, "
@@ -3824,6 +3833,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		i_indisclustered = PQfnumber(res, "indisclustered");
 		i_contype = PQfnumber(res, "contype");
 		i_conname = PQfnumber(res, "conname");
+		i_condeferrable = PQfnumber(res, "condeferrable");
+		i_condeferred = PQfnumber(res, "condeferred");
 		i_contableoid = PQfnumber(res, "contableoid");
 		i_conoid = PQfnumber(res, "conoid");
 		i_tablespace = PQfnumber(res, "tablespace");
@@ -3884,6 +3895,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				constrinfo[j].condef = NULL;
 				constrinfo[j].confrelid = InvalidOid;
 				constrinfo[j].conindex = indxinfo[j].dobj.dumpId;
+				constrinfo[j].condeferrable = *(PQgetvalue(res, j, i_condeferrable)) == 't';
+				constrinfo[j].condeferred = *(PQgetvalue(res, j, i_condeferred)) == 't';
 				constrinfo[j].conislocal = true;
 				constrinfo[j].separate = true;
 
@@ -3988,6 +4001,8 @@ getConstraints(TableInfo tblinfo[], int numTables)
 			constrinfo[j].condef = strdup(PQgetvalue(res, j, i_condef));
 			constrinfo[j].confrelid = atooid(PQgetvalue(res, j, i_confrelid));
 			constrinfo[j].conindex = 0;
+			constrinfo[j].condeferrable = false;
+			constrinfo[j].condeferred = false;
 			constrinfo[j].conislocal = true;
 			constrinfo[j].separate = true;
 		}
@@ -4072,6 +4087,8 @@ getDomainConstraints(TypeInfo *tinfo)
 		constrinfo[i].condef = strdup(PQgetvalue(res, i, i_consrc));
 		constrinfo[i].confrelid = InvalidOid;
 		constrinfo[i].conindex = 0;
+		constrinfo[i].condeferrable = false;
+		constrinfo[i].condeferred = false;
 		constrinfo[i].conislocal = true;
 		constrinfo[i].separate = false;
 
@@ -5071,6 +5088,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].condef = strdup(PQgetvalue(res, j, 3));
 				constrs[j].confrelid = InvalidOid;
 				constrs[j].conindex = 0;
+				constrs[j].condeferrable = false;
+				constrs[j].condeferred = false;
 				constrs[j].conislocal = (PQgetvalue(res, j, 4)[0] == 't');
 				constrs[j].separate = false;
 
@@ -10453,6 +10472,13 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 		if (indxinfo->options && strlen(indxinfo->options) > 0)
 			appendPQExpBuffer(q, " WITH (%s)", indxinfo->options);
+
+		if (coninfo->condeferrable)
+		{
+			appendPQExpBuffer(q, " DEFERRABLE");
+			if (coninfo->condeferred)
+				appendPQExpBuffer(q, " INITIALLY DEFERRED");
+		}
 
 		appendPQExpBuffer(q, ";\n");
 

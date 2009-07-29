@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.154 2009/06/11 14:49:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.155 2009/07/29 20:56:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,6 +332,9 @@ typedef struct _triggerInfo
  * struct ConstraintInfo is used for all constraint types.	However we
  * use a different objType for foreign key constraints, to make it easier
  * to sort them the way we want.
+ *
+ * Note: condeferrable and condeferred are currently only valid for
+ * unique/primary-key constraints.  Otherwise that info is in condef.
  */
 typedef struct _constraintInfo
 {
@@ -342,6 +345,8 @@ typedef struct _constraintInfo
 	char	   *condef;			/* definition, if CHECK or FOREIGN KEY */
 	Oid			confrelid;		/* referenced table, if FOREIGN KEY */
 	DumpId		conindex;		/* identifies associated index if any */
+	bool		condeferrable;	/* TRUE if constraint is DEFERRABLE */
+	bool		condeferred;	/* TRUE if constraint is INITIALLY DEFERRED */
 	bool		conislocal;		/* TRUE if constraint has local definition */
 	bool		separate;		/* TRUE if must dump as separate item */
 } ConstraintInfo;

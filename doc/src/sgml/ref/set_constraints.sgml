@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.16 2008/11/14 10:22:47 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.17 2009/07/29 20:56:17 tgl Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -48,7 +48,7 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    <command>SET CONSTRAINTS</command> with a list of constraint names changes
    the mode of just those constraints (which must all be deferrable).  The
    current schema search path is used to find the first matching name if
-   no schema name is specified.  <command>SET CONSTRAINTS ALL</command> 
+   no schema name is specified.  <command>SET CONSTRAINTS ALL</command>
    changes the mode of all deferrable constraints.
   </para>
 
@@ -66,10 +66,19 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
   </para>
 
   <para>
-   Currently, only foreign key constraints are affected by this
-   setting. Check and unique constraints are always effectively
-   not deferrable. Triggers that are declared as <quote>constraint
-   triggers</> are also affected.
+   Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>, and
+   <literal>REFERENCES</> (foreign key) constraints are affected by this
+   setting.  <literal>NOT NULL</> and <literal>CHECK</> constraints are
+   always checked immediately when a row is inserted or modified
+   (<emphasis>not</> at the end of the statement).
+   Uniqueness constraints that have not been declared <literal>DEFERRABLE</>
+   are also checked immediately.
+  </para>
+
+  <para>
+   The firing of triggers that are declared as <quote>constraint triggers</>
+   is also controlled by this setting &mdash; they fire at the same time
+   that the associated constraint should be checked.
   </para>
  </refsect1>
 
@@ -92,7 +101,7 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    This command complies with the behavior defined in the SQL
    standard, except for the limitation that, in
    <productname>PostgreSQL</productname>, it only applies to
-   foreign-key constraints.
+   foreign-key and uniqueness constraints.
   </para>
 
  </refsect1>

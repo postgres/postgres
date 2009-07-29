@@ -375,3 +375,132 @@ SELECT '' AS five, * FROM UNIQUE_TBL;
 (5 rows)
 
 DROP TABLE UNIQUE_TBL;
+--
+-- Deferrable unique constraints
+--
+CREATE TABLE unique_tbl (i int UNIQUE DEFERRABLE, t text);
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "unique_tbl_i_key" for table "unique_tbl"
+INSERT INTO unique_tbl VALUES (0, 'one');
+INSERT INTO unique_tbl VALUES (1, 'two');
+INSERT INTO unique_tbl VALUES (2, 'tree');
+INSERT INTO unique_tbl VALUES (3, 'four');
+INSERT INTO unique_tbl VALUES (4, 'five');
+BEGIN;
+-- default is immediate so this should fail right away
+UPDATE unique_tbl SET i = 1 WHERE i = 0;
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+ROLLBACK;
+-- check is done at end of statement, so this should succeed
+UPDATE unique_tbl SET i = i+1;
+SELECT * FROM unique_tbl;
+ i |  t   
+---+------
+ 1 | one
+ 2 | two
+ 3 | tree
+ 4 | four
+ 5 | five
+(5 rows)
+
+-- explicitly defer the constraint
+BEGIN;
+SET CONSTRAINTS unique_tbl_i_key DEFERRED;
+INSERT INTO unique_tbl VALUES (3, 'three');
+DELETE FROM unique_tbl WHERE t = 'tree'; -- makes constraint valid again
+COMMIT; -- should succeed
+SELECT * FROM unique_tbl;
+ i |   t   
+---+-------
+ 1 | one
+ 2 | two
+ 4 | four
+ 5 | five
+ 3 | three
+(5 rows)
+
+-- try adding an initially deferred constraint
+ALTER TABLE unique_tbl DROP CONSTRAINT unique_tbl_i_key;
+ALTER TABLE unique_tbl ADD CONSTRAINT unique_tbl_i_key
+	UNIQUE (i) DEFERRABLE INITIALLY DEFERRED;
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "unique_tbl_i_key" for table "unique_tbl"
+BEGIN;
+INSERT INTO unique_tbl VALUES (1, 'five');
+INSERT INTO unique_tbl VALUES (5, 'one');
+UPDATE unique_tbl SET i = 4 WHERE i = 2;
+UPDATE unique_tbl SET i = 2 WHERE i = 4 AND t = 'four';
+DELETE FROM unique_tbl WHERE i = 1 AND t = 'one';
+DELETE FROM unique_tbl WHERE i = 5 AND t = 'five';
+COMMIT;
+SELECT * FROM unique_tbl;
+ i |   t   
+---+-------
+ 3 | three
+ 1 | five
+ 5 | one
+ 4 | two
+ 2 | four
+(5 rows)
+
+-- should fail at commit-time
+BEGIN;
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
+COMMIT; -- should fail
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+-- make constraint check immediate
+BEGIN;
+SET CONSTRAINTS ALL IMMEDIATE;
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should fail
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+COMMIT;
+-- forced check when SET CONSTRAINTS is called
+BEGIN;
+SET CONSTRAINTS ALL DEFERRED;
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
+SET CONSTRAINTS ALL IMMEDIATE; -- should fail
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+COMMIT;
+-- test a HOT update that invalidates the conflicting tuple.
+-- the trigger should still fire and catch the violation
+BEGIN;
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
+UPDATE unique_tbl SET t = 'THREE' WHERE i = 3 AND t = 'Three';
+COMMIT; -- should fail
+ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+SELECT * FROM unique_tbl;
+ i |   t   
+---+-------
+ 3 | three
+ 1 | five
+ 5 | one
+ 4 | two
+ 2 | four
+(5 rows)
+
+-- test a HOT update that modifies the newly inserted tuple,
+-- but should succeed because we then remove the other conflicting tuple.
+BEGIN;
+INSERT INTO unique_tbl VALUES(3, 'tree'); -- should succeed for now
+UPDATE unique_tbl SET t = 'threex' WHERE t = 'tree';
+DELETE FROM unique_tbl WHERE t = 'three';
+SELECT * FROM unique_tbl;
+ i |   t    
+---+--------
+ 1 | five
+ 5 | one
+ 4 | two
+ 2 | four
+ 3 | threex
+(5 rows)
+
+COMMIT;
+SELECT * FROM unique_tbl;
+ i |   t    
+---+--------
+ 1 | five
+ 5 | one
+ 4 | two
+ 2 | four
+ 3 | threex
+(5 rows)
+
+DROP TABLE unique_tbl;

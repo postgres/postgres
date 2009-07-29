@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.23 2009/07/16 06:33:43 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.24 2009/07/29 20:56:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -801,15 +802,38 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 
 	/*
 	 * If the index is marked PRIMARY, it's certainly from a constraint; else,
-	 * if it's not marked UNIQUE, it certainly isn't; else, we have to search
-	 * pg_depend to see if there's an associated unique constraint.
+	 * if it's not marked UNIQUE, it certainly isn't.  If it is or might be
+	 * from a constraint, we have to fetch the constraint to check for
+	 * deferrability attributes.
 	 */
-	if (index->primary)
-		index->isconstraint = true;
-	else if (!index->unique)
-		index->isconstraint = false;
+	if (index->primary || index->unique)
+	{
+		Oid		constraintId = get_index_constraint(source_relid);
+
+		if (OidIsValid(constraintId))
+		{
+			HeapTuple	ht_constr;
+			Form_pg_constraint conrec;
+
+			ht_constr = SearchSysCache(CONSTROID,
+									   ObjectIdGetDatum(constraintId),
+									   0, 0, 0);
+			if (!HeapTupleIsValid(ht_constr))
+				elog(ERROR, "cache lookup failed for constraint %u",
+					 constraintId);
+			conrec = (Form_pg_constraint) GETSTRUCT(ht_constr);
+
+			index->isconstraint = true;
+			index->deferrable = conrec->condeferrable;
+			index->initdeferred = conrec->condeferred;
+
+			ReleaseSysCache(ht_constr);
+		}
+		else
+			index->isconstraint = false;
+	}
 	else
-		index->isconstraint = OidIsValid(get_index_constraint(source_relid));
+		index->isconstraint = false;
 
 	/* Get the index expressions, if any */
 	datum = SysCacheGetAttr(INDEXRELID, ht_idx,
@@ -1039,7 +1063,9 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 			if (equal(index->indexParams, priorindex->indexParams) &&
 				equal(index->whereClause, priorindex->whereClause) &&
-				strcmp(index->accessMethod, priorindex->accessMethod) == 0)
+				strcmp(index->accessMethod, priorindex->accessMethod) == 0 &&
+				index->deferrable == priorindex->deferrable &&
+				index->initdeferred == priorindex->initdeferred)
 			{
 				priorindex->unique |= index->unique;
 
@@ -1092,6 +1118,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		 */
 	}
 	index->isconstraint = true;
+	index->deferrable = constraint->deferrable;
+	index->initdeferred = constraint->initdeferred;
 
 	if (constraint->name != NULL)
 		index->idxname = pstrdup(constraint->name);
@@ -1853,8 +1881,9 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
  * to attach constraint attributes to their primary constraint nodes
  * and detect inconsistent/misplaced constraint attributes.
  *
- * NOTE: currently, attributes are only supported for FOREIGN KEY primary
- * constraints, but someday they ought to be supported for other constraints.
+ * NOTE: currently, attributes are only supported for FOREIGN KEY, UNIQUE,
+ * and PRIMARY KEY constraints, but someday they ought to be supported
+ * for other constraint types.
  */
 static void
 transformConstraintAttrs(List *constraintList)
@@ -1863,6 +1892,13 @@ transformConstraintAttrs(List *constraintList)
 	bool		saw_deferrability = false;
 	bool		saw_initially = false;
 	ListCell   *clist;
+
+#define SUPPORTS_ATTRS(node)								\
+	((node) != NULL &&										\
+	 (IsA((node), FkConstraint) ||							\
+	  (IsA((node), Constraint) &&							\
+	   (((Constraint *) (node))->contype == CONSTR_PRIMARY || \
+		((Constraint *) (node))->contype == CONSTR_UNIQUE))))
 
 	foreach(clist, constraintList)
 	{
@@ -1882,8 +1918,7 @@ transformConstraintAttrs(List *constraintList)
 			switch (con->contype)
 			{
 				case CONSTR_ATTR_DEFERRABLE:
-					if (lastprimarynode == NULL ||
-						!IsA(lastprimarynode, FkConstraint))
+					if (!SUPPORTS_ATTRS(lastprimarynode))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("misplaced DEFERRABLE clause")));
@@ -1892,11 +1927,14 @@ transformConstraintAttrs(List *constraintList)
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed")));
 					saw_deferrability = true;
-					((FkConstraint *) lastprimarynode)->deferrable = true;
+					if (IsA(lastprimarynode, FkConstraint))
+						((FkConstraint *) lastprimarynode)->deferrable = true;
+					else
+						((Constraint *) lastprimarynode)->deferrable = true;
 					break;
+
 				case CONSTR_ATTR_NOT_DEFERRABLE:
-					if (lastprimarynode == NULL ||
-						!IsA(lastprimarynode, FkConstraint))
+					if (!SUPPORTS_ATTRS(lastprimarynode))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("misplaced NOT DEFERRABLE clause")));
@@ -1905,16 +1943,28 @@ transformConstraintAttrs(List *constraintList)
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed")));
 					saw_deferrability = true;
-					((FkConstraint *) lastprimarynode)->deferrable = false;
-					if (saw_initially &&
-						((FkConstraint *) lastprimarynode)->initdeferred)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+					if (IsA(lastprimarynode, FkConstraint))
+					{
+						((FkConstraint *) lastprimarynode)->deferrable = false;
+						if (saw_initially &&
+							((FkConstraint *) lastprimarynode)->initdeferred)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+					}
+					else
+					{
+						((Constraint *) lastprimarynode)->deferrable = false;
+						if (saw_initially &&
+							((Constraint *) lastprimarynode)->initdeferred)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+					}
 					break;
+
 				case CONSTR_ATTR_DEFERRED:
-					if (lastprimarynode == NULL ||
-						!IsA(lastprimarynode, FkConstraint))
+					if (!SUPPORTS_ATTRS(lastprimarynode))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("misplaced INITIALLY DEFERRED clause")));
@@ -1923,21 +1973,36 @@ transformConstraintAttrs(List *constraintList)
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed")));
 					saw_initially = true;
-					((FkConstraint *) lastprimarynode)->initdeferred = true;
 
 					/*
 					 * If only INITIALLY DEFERRED appears, assume DEFERRABLE
 					 */
-					if (!saw_deferrability)
-						((FkConstraint *) lastprimarynode)->deferrable = true;
-					else if (!((FkConstraint *) lastprimarynode)->deferrable)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+					if (IsA(lastprimarynode, FkConstraint))
+					{
+						((FkConstraint *) lastprimarynode)->initdeferred = true;
+
+						if (!saw_deferrability)
+							((FkConstraint *) lastprimarynode)->deferrable = true;
+						else if (!((FkConstraint *) lastprimarynode)->deferrable)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+					}
+					else
+					{
+						((Constraint *) lastprimarynode)->initdeferred = true;
+
+						if (!saw_deferrability)
+							((Constraint *) lastprimarynode)->deferrable = true;
+						else if (!((Constraint *) lastprimarynode)->deferrable)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
+					}
 					break;
+
 				case CONSTR_ATTR_IMMEDIATE:
-					if (lastprimarynode == NULL ||
-						!IsA(lastprimarynode, FkConstraint))
+					if (!SUPPORTS_ATTRS(lastprimarynode))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("misplaced INITIALLY IMMEDIATE clause")));
@@ -1946,8 +2011,12 @@ transformConstraintAttrs(List *constraintList)
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed")));
 					saw_initially = true;
-					((FkConstraint *) lastprimarynode)->initdeferred = false;
+					if (IsA(lastprimarynode, FkConstraint))
+						((FkConstraint *) lastprimarynode)->initdeferred = false;
+					else
+						((Constraint *) lastprimarynode)->initdeferred = false;
 					break;
+
 				default:
 					/* Otherwise it's not an attribute */
 					lastprimarynode = node;

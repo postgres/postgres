@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.319 2009/07/28 02:56:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.320 2009/07/29 20:56:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -40,14 +40,18 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "catalog/storage.h"
 #include "commands/tablecmds.h"
+#include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
+#include "parser/parser.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
@@ -87,6 +91,7 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					Oid *classOids,
 					int16 *coloptions,
 					bool primary,
+					bool immediate,
 					bool isvalid);
 static void index_update_stats(Relation rel, bool hasindex, bool isprimary,
 				   Oid reltoastidxid, double reltuples);
@@ -372,6 +377,7 @@ UpdateIndexRelation(Oid indexoid,
 					Oid *classOids,
 					int16 *coloptions,
 					bool primary,
+					bool immediate,
 					bool isvalid)
 {
 	int2vector *indkey;
@@ -439,6 +445,7 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);
 	values[Anum_pg_index_indisunique - 1] = BoolGetDatum(indexInfo->ii_Unique);
 	values[Anum_pg_index_indisprimary - 1] = BoolGetDatum(primary);
+	values[Anum_pg_index_indimmediate - 1] = BoolGetDatum(immediate);
 	values[Anum_pg_index_indisclustered - 1] = BoolGetDatum(false);
 	values[Anum_pg_index_indisvalid - 1] = BoolGetDatum(isvalid);
 	values[Anum_pg_index_indcheckxmin - 1] = BoolGetDatum(false);
@@ -488,6 +495,8 @@ UpdateIndexRelation(Oid indexoid,
  * reloptions: AM-specific options
  * isprimary: index is a PRIMARY KEY
  * isconstraint: index is owned by a PRIMARY KEY or UNIQUE constraint
+ * deferrable: constraint is DEFERRABLE
+ * initdeferred: constraint is INITIALLY DEFERRED
  * allow_system_table_mods: allow table to be a system catalog
  * skip_build: true to skip the index_build() step for the moment; caller
  *		must do it later (typically via reindex_index())
@@ -509,6 +518,8 @@ index_create(Oid heapRelationId,
 			 Datum reloptions,
 			 bool isprimary,
 			 bool isconstraint,
+			 bool deferrable,
+			 bool initdeferred,
 			 bool allow_system_table_mods,
 			 bool skip_build,
 			 bool concurrent)
@@ -679,7 +690,9 @@ index_create(Oid heapRelationId,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-						classObjectId, coloptions, isprimary, !concurrent);
+						classObjectId, coloptions, isprimary,
+						!deferrable,
+						!concurrent);
 
 	/*
 	 * Register constraint and dependencies for the index.
@@ -726,8 +739,8 @@ index_create(Oid heapRelationId,
 			conOid = CreateConstraintEntry(indexRelationName,
 										   namespaceId,
 										   constraintType,
-										   false,		/* isDeferrable */
-										   false,		/* isDeferred */
+										   deferrable,
+										   initdeferred,
 										   heapRelationId,
 										   indexInfo->ii_KeyAttrNumbers,
 										   indexInfo->ii_NumIndexAttrs,
@@ -753,6 +766,40 @@ index_create(Oid heapRelationId,
 			referenced.objectSubId = 0;
 
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+
+			/*
+			 * If the constraint is deferrable, create the deferred uniqueness
+			 * checking trigger.  (The trigger will be given an internal
+			 * dependency on the constraint by CreateTrigger, so there's no
+			 * need to do anything more here.)
+			 */
+			if (deferrable)
+			{
+				RangeVar   *heapRel;
+				CreateTrigStmt *trigger;
+
+				heapRel = makeRangeVar(get_namespace_name(namespaceId),
+									   pstrdup(RelationGetRelationName(heapRelation)),
+									   -1);
+
+				trigger = makeNode(CreateTrigStmt);
+				trigger->trigname = pstrdup(indexRelationName);
+				trigger->relation = heapRel;
+				trigger->funcname = SystemFuncName("unique_key_recheck");
+				trigger->args = NIL;
+				trigger->before = false;
+				trigger->row = true;
+				trigger->events = TRIGGER_TYPE_INSERT | TRIGGER_TYPE_UPDATE;
+				trigger->isconstraint = true;
+				trigger->deferrable = true;
+				trigger->initdeferred = initdeferred;
+				trigger->constrrel = NULL;
+
+				(void) CreateTrigger(trigger, conOid, indexRelationId,
+									 isprimary ? "PK_ConstraintTrigger" :
+									 "Unique_ConstraintTrigger",
+									 false);
+			}
 		}
 		else
 		{
@@ -791,6 +838,10 @@ index_create(Oid heapRelationId,
 
 				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 			}
+
+			/* Non-constraint indexes can't be deferrable */
+			Assert(!deferrable);
+			Assert(!initdeferred);
 		}
 
 		/* Store dependency on operator classes */
@@ -822,6 +873,13 @@ index_create(Oid heapRelationId,
 											DEPENDENCY_NORMAL,
 											DEPENDENCY_AUTO);
 		}
+	}
+	else
+	{
+		/* Bootstrap mode - assert we weren't asked for constraint support */
+		Assert(!isconstraint);
+		Assert(!deferrable);
+		Assert(!initdeferred);
 	}
 
 	/*
@@ -2190,7 +2248,8 @@ validate_index_heapscan(Relation heapRelation,
 						 isnull,
 						 &rootTuple,
 						 heapRelation,
-						 indexInfo->ii_Unique);
+						 indexInfo->ii_Unique ?
+						 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO);
 
 			state->tups_inserted += 1;
 		}

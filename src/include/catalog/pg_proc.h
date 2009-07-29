@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.546 2009/07/07 18:49:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.547 2009/07/29 20:56:20 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2322,6 +2322,10 @@ DESCR("convert generic options array to name/value table");
 
 DATA(insert OID = 1619 (  pg_typeof				PGNSP PGUID 12 1 0 0 f f f f f s 1 0 2206 "2276" _null_ _null_ _null_ _null_  pg_typeof _null_ _null_ _null_ ));
 DESCR("returns the type of the argument");
+
+/* Deferrable unique constraint trigger */
+DATA(insert OID = 1250 (  unique_key_recheck	PGNSP PGUID 12 1 0 0 f f f t f v 0 0 2279 "" _null_ _null_ _null_ _null_ unique_key_recheck _null_ _null_ _null_ ));
+DESCR("deferred UNIQUE constraint check");
 
 /* Generic referential integrity constraint triggers */
 DATA(insert OID = 1644 (  RI_FKey_check_ins		PGNSP PGUID 12 1 0 0 f f f t f v 0 0 2279 "" _null_ _null_ _null_ _null_ RI_FKey_check_ins _null_ _null_ _null_ ));

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.398 2009/07/26 23:34:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.399 2009/07/29 20:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1355,7 +1355,7 @@ typedef struct CreateStmt
  * Constraint attributes (DEFERRABLE etc) are initially represented as
  * separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes
  * a pass through the constraints list to attach the info to the appropriate
- * FkConstraint node (and, perhaps, someday to other kinds of constraints).
+ * Constraint and FkConstraint nodes.
  * ----------
  */
 
@@ -1385,6 +1385,8 @@ typedef struct Constraint
 	List	   *options;		/* options from WITH clause */
 	char	   *indexspace;		/* index tablespace for PKEY/UNIQUE
 								 * constraints; NULL for default */
+	bool		deferrable;		/* DEFERRABLE */
+	bool		initdeferred;	/* INITIALLY DEFERRED */
 } Constraint;
 
 /* ----------
@@ -1555,12 +1557,11 @@ typedef struct CreateTrigStmt
 	/* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
 	int16		events;			/* INSERT/UPDATE/DELETE/TRUNCATE */
 
-	/* The following are used for referential */
-	/* integrity constraint triggers */
-	bool		isconstraint;	/* This is an RI trigger */
+	/* The following are used for constraint triggers (RI and unique checks) */
+	bool		isconstraint;	/* This is a constraint trigger */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
-	RangeVar   *constrrel;		/* opposite relation */
+	RangeVar   *constrrel;		/* opposite relation, if RI trigger */
 } CreateTrigStmt;
 
 /* ----------------------
@@ -1864,6 +1865,8 @@ typedef struct IndexStmt
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
+	bool		deferrable;		/* is the constraint DEFERRABLE? */
+	bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
 	bool		concurrent;		/* should this be a concurrent index build? */
 } IndexStmt;
 

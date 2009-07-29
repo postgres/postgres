@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.22 2009/06/11 14:48:53 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.23 2009/07/29 20:56:17 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -415,12 +415,11 @@ gininsert(PG_FUNCTION_ARGS)
 
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
-	bool		checkUnique = PG_GETARG_BOOL(5);
+	IndexUniqueCheck checkUnique = (IndexUniqueCheck) PG_GETARG_INT32(5);
 #endif
 	GinState	ginstate;
 	MemoryContext oldCtx;
 	MemoryContext insertCtx;
-	uint32		res = 0;
 	int			i;
 
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
@@ -440,7 +439,7 @@ gininsert(PG_FUNCTION_ARGS)
 		memset(&collector, 0, sizeof(GinTupleCollector));
 		for (i = 0; i < ginstate.origTupdesc->natts; i++)
 			if (!isnull[i])
-				res += ginHeapTupleFastCollect(index, &ginstate, &collector,
+				ginHeapTupleFastCollect(index, &ginstate, &collector,
 								 (OffsetNumber) (i + 1), values[i], ht_ctid);
 
 		ginHeapTupleFastInsert(index, &ginstate, &collector);
@@ -449,7 +448,7 @@ gininsert(PG_FUNCTION_ARGS)
 	{
 		for (i = 0; i < ginstate.origTupdesc->natts; i++)
 			if (!isnull[i])
-				res += ginHeapTupleInsert(index, &ginstate,
+				ginHeapTupleInsert(index, &ginstate,
 								 (OffsetNumber) (i + 1), values[i], ht_ctid);
 
 	}
@@ -457,5 +456,5 @@ gininsert(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextDelete(insertCtx);
 
-	PG_RETURN_BOOL(res > 0);
+	PG_RETURN_BOOL(false);
 }

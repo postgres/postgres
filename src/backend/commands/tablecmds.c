@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.292 2009/07/28 02:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.293 2009/07/29 20:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4391,6 +4391,8 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 				stmt->unique,
 				stmt->primary,
 				stmt->isconstraint,
+				stmt->deferrable,
+				stmt->initdeferred,
 				true,			/* is_alter_table */
 				check_rights,
 				skip_build,
@@ -4955,6 +4957,17 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (indexStruct->indisprimary)
 		{
+			/*
+			 * Refuse to use a deferrable primary key.  This is per SQL spec,
+			 * and there would be a lot of interesting semantic problems if
+			 * we tried to allow it.
+			 */
+			if (!indexStruct->indimmediate)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot use a deferrable primary key for referenced table \"%s\"",
+								RelationGetRelationName(pkrel))));
+
 			*indexOid = indexoid;
 			break;
 		}
@@ -5040,11 +5053,12 @@ transformFkeyCheckAttrs(Relation pkrel,
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/*
-		 * Must have the right number of columns; must be unique and not a
-		 * partial index; forget it if there are any expressions, too
+		 * Must have the right number of columns; must be unique (non
+		 * deferrable) and not a partial index; forget it if there are any
+		 * expressions, too
 		 */
 		if (indexStruct->indnatts == numattrs &&
-			indexStruct->indisunique &&
+			indexStruct->indisunique && indexStruct->indimmediate &&
 			heap_attisnull(indexTuple, Anum_pg_index_indpred) &&
 			heap_attisnull(indexTuple, Anum_pg_index_indexprs))
 		{
@@ -5243,7 +5257,8 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid, indexOid, false);
+	(void) CreateTrigger(fk_trigger, constraintOid, indexOid,
+						 "RI_ConstraintTrigger", false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5322,7 +5337,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid, indexOid, false);
+	(void) CreateTrigger(fk_trigger, constraintOid, indexOid,
+						 "RI_ConstraintTrigger", false);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -5373,7 +5389,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-	(void) CreateTrigger(fk_trigger, constraintOid, indexOid, false);
+	(void) CreateTrigger(fk_trigger, constraintOid, indexOid,
+						 "RI_ConstraintTrigger", false);
 }
 
 /*

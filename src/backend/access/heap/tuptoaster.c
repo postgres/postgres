@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.94 2009/07/22 01:21:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.95 2009/07/29 20:56:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1229,7 +1229,9 @@ toast_save_datum(Relation rel, Datum value, int options)
 		 */
 		index_insert(toastidx, t_values, t_isnull,
 					 &(toasttup->t_self),
-					 toastrel, toastidx->rd_index->indisunique);
+					 toastrel,
+					 toastidx->rd_index->indisunique ?
+					 UNIQUE_CHECK_YES : UNIQUE_CHECK_NO);
 
 		/*
 		 * Free memory

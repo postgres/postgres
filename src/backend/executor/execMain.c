@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.326 2009/06/11 20:46:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.327 2009/07/29 20:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1753,6 +1753,7 @@ ExecInsert(TupleTableSlot *slot,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	Oid			newId;
+	List	   *recheckIndexes = NIL;
 
 	/*
 	 * get the heap tuple out of the tuple table slot, making sure we have a
@@ -1834,10 +1835,11 @@ ExecInsert(TupleTableSlot *slot,
 	 * insert index entries for tuple
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
-		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
+		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+											   estate, false);
 
 	/* AFTER ROW INSERT Triggers */
-	ExecARInsertTriggers(estate, resultRelInfo, tuple);
+	ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
@@ -1999,6 +2001,7 @@ ExecUpdate(TupleTableSlot *slot,
 	HTSU_Result result;
 	ItemPointerData update_ctid;
 	TransactionId update_xmax;
+	List *recheckIndexes = NIL;
 
 	/*
 	 * abort the operation if not running transactions
@@ -2132,10 +2135,12 @@ lreplace:;
 	 * If it's a HOT update, we mustn't insert new index entries.
 	 */
 	if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
-		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
+		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+											   estate, false);
 
 	/* AFTER ROW UPDATE Triggers */
-	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple);
+	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple,
+						 recheckIndexes);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)

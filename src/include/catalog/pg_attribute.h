@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.148 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.149 2009/07/29 20:56:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -469,14 +469,15 @@ DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
 { 0, {"indnatts"},			21, -1, 2, 3, 0, -1, -1, true, 'p', 's', true, false, false, true, 0, { 0 } }, \
 { 0, {"indisunique"},		16, -1, 1, 4, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
 { 0, {"indisprimary"},		16, -1, 1, 5, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisclustered"},	16, -1, 1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisvalid"},		16, -1, 1, 7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indcheckxmin"},		16, -1, 1, 8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indisready"},		16, -1, 1, 9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indkey"},			22, -1, -1, 10, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indclass"},			30, -1, -1, 11, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indoption"},			22, -1, -1, 12, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
-{ 0, {"indexprs"},			25, -1, -1, 13, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 0, {"indpred"},			25, -1, -1, 14, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
+{ 0, {"indimmediate"},		16, -1, 1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indisclustered"},	16, -1, 1, 7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indisvalid"},		16, -1, 1, 8, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indcheckxmin"},		16, -1, 1, 9, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indisready"},		16, -1, 1, 10, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indkey"},			22, -1, -1, 11, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indclass"},			30, -1, -1, 12, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indoption"},			22, -1, -1, 13, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 0, {"indexprs"},			25, -1, -1, 14, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
+{ 0, {"indpred"},			25, -1, -1, 15, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
 
 #endif   /* PG_ATTRIBUTE_H */

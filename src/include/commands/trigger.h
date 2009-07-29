@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.74 2009/07/28 02:56:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.75 2009/07/29 20:56:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ extern PGDLLIMPORT int SessionReplicationRole;
 #define TRIGGER_DISABLED					'D'
 
 extern Oid CreateTrigger(CreateTrigStmt *stmt,
-			  Oid constraintOid, Oid indexOid,
+			  Oid constraintOid, Oid indexOid, const char *prefix,
 			  bool checkPermissions);
 
 extern void DropTrigger(Oid relid, const char *trigname,
@@ -132,7 +132,8 @@ extern HeapTuple ExecBRInsertTriggers(EState *estate,
 					 HeapTuple trigtuple);
 extern void ExecARInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
-					 HeapTuple trigtuple);
+					 HeapTuple trigtuple,
+					 List *recheckIndexes);
 extern void ExecBSDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
@@ -154,7 +155,8 @@ extern HeapTuple ExecBRUpdateTriggers(EState *estate,
 extern void ExecARUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
-					 HeapTuple newtuple);
+					 HeapTuple newtuple,
+					 List *recheckIndexes);
 extern void ExecBSTruncateTriggers(EState *estate,
 					   ResultRelInfo *relinfo);
 extern void ExecASTruncateTriggers(EState *estate,

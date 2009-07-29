@@ -259,3 +259,110 @@ SELECT '' AS five, * FROM UNIQUE_TBL;
 
 DROP TABLE UNIQUE_TBL;
 
+--
+-- Deferrable unique constraints
+--
+
+CREATE TABLE unique_tbl (i int UNIQUE DEFERRABLE, t text);
+
+INSERT INTO unique_tbl VALUES (0, 'one');
+INSERT INTO unique_tbl VALUES (1, 'two');
+INSERT INTO unique_tbl VALUES (2, 'tree');
+INSERT INTO unique_tbl VALUES (3, 'four');
+INSERT INTO unique_tbl VALUES (4, 'five');
+
+BEGIN;
+
+-- default is immediate so this should fail right away
+UPDATE unique_tbl SET i = 1 WHERE i = 0;
+
+ROLLBACK;
+
+-- check is done at end of statement, so this should succeed
+UPDATE unique_tbl SET i = i+1;
+
+SELECT * FROM unique_tbl;
+
+-- explicitly defer the constraint
+BEGIN;
+
+SET CONSTRAINTS unique_tbl_i_key DEFERRED;
+
+INSERT INTO unique_tbl VALUES (3, 'three');
+DELETE FROM unique_tbl WHERE t = 'tree'; -- makes constraint valid again
+
+COMMIT; -- should succeed
+
+SELECT * FROM unique_tbl;
+
+-- try adding an initially deferred constraint
+ALTER TABLE unique_tbl DROP CONSTRAINT unique_tbl_i_key;
+ALTER TABLE unique_tbl ADD CONSTRAINT unique_tbl_i_key
+	UNIQUE (i) DEFERRABLE INITIALLY DEFERRED;
+
+BEGIN;
+
+INSERT INTO unique_tbl VALUES (1, 'five');
+INSERT INTO unique_tbl VALUES (5, 'one');
+UPDATE unique_tbl SET i = 4 WHERE i = 2;
+UPDATE unique_tbl SET i = 2 WHERE i = 4 AND t = 'four';
+DELETE FROM unique_tbl WHERE i = 1 AND t = 'one';
+DELETE FROM unique_tbl WHERE i = 5 AND t = 'five';
+
+COMMIT;
+
+SELECT * FROM unique_tbl;
+
+-- should fail at commit-time
+BEGIN;
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
+COMMIT; -- should fail
+
+-- make constraint check immediate
+BEGIN;
+
+SET CONSTRAINTS ALL IMMEDIATE;
+
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should fail
+
+COMMIT;
+
+-- forced check when SET CONSTRAINTS is called
+BEGIN;
+
+SET CONSTRAINTS ALL DEFERRED;
+
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
+
+SET CONSTRAINTS ALL IMMEDIATE; -- should fail
+
+COMMIT;
+
+-- test a HOT update that invalidates the conflicting tuple.
+-- the trigger should still fire and catch the violation
+
+BEGIN;
+
+INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
+UPDATE unique_tbl SET t = 'THREE' WHERE i = 3 AND t = 'Three';
+
+COMMIT; -- should fail
+
+SELECT * FROM unique_tbl;
+
+-- test a HOT update that modifies the newly inserted tuple,
+-- but should succeed because we then remove the other conflicting tuple.
+
+BEGIN;
+
+INSERT INTO unique_tbl VALUES(3, 'tree'); -- should succeed for now
+UPDATE unique_tbl SET t = 'threex' WHERE t = 'tree';
+DELETE FROM unique_tbl WHERE t = 'three';
+
+SELECT * FROM unique_tbl;
+
+COMMIT;
+
+SELECT * FROM unique_tbl;
+
+DROP TABLE unique_tbl;

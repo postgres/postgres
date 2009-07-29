@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.96 2009/01/01 17:23:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.97 2009/07/29 20:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ Boot_DeclareIndexStmt:
 								NULL,
 								$10,
 								NULL, NIL,
-								false, false, false,
+								false, false, false, false, false,
 								false, false, true, false, false);
 					do_end();
 				}
@@ -284,7 +284,7 @@ Boot_DeclareUniqueIndexStmt:
 								NULL,
 								$11,
 								NULL, NIL,
-								true, false, false,
+								true, false, false, false, false,
 								false, false, true, false, false);
 					do_end();
 				}

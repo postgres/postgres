@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.315 2009/07/25 17:04:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.316 2009/07/29 20:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2130,6 +2130,8 @@ CopyFrom(CopyState cstate)
 
 		if (!skip_tuple)
 		{
+			List *recheckIndexes = NIL;
+
 			/* Place tuple in tuple slot */
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
@@ -2141,10 +2143,12 @@ CopyFrom(CopyState cstate)
 			heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
 
 			if (resultRelInfo->ri_NumIndices > 0)
-				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
+				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+													   estate, false);
 
 			/* AFTER ROW INSERT Triggers */
-			ExecARInsertTriggers(estate, resultRelInfo, tuple);
+			ExecARInsertTriggers(estate, resultRelInfo, tuple,
+								 recheckIndexes);
 
 			/*
 			 * We count only tuples not suppressed by a BEFORE INSERT trigger;
