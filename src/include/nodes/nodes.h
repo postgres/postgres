@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.223 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.224 2009/07/30 02:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,7 +364,6 @@ typedef enum NodeTag
 	T_RangeTblEntry,
 	T_SortGroupClause,
 	T_WindowClause,
-	T_FkConstraint,
 	T_PrivGrantee,
 	T_FuncWithArgs,
 	T_AccessPriv,

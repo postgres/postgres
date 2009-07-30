@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.136 2009/07/28 02:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.137 2009/07/30 02:45:36 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -867,22 +867,11 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	foreach(listptr, schema)
 	{
-		Node	   *newConstraint = lfirst(listptr);
-		Constraint *constr;
+		Constraint *constr = lfirst(listptr);
 
-		/* Check for unsupported constraint types */
-		if (IsA(newConstraint, FkConstraint))
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("foreign key constraints not possible for domains")));
-
-		/* otherwise it should be a plain Constraint */
-		if (!IsA(newConstraint, Constraint))
+		if (!IsA(constr, Constraint))
 			elog(ERROR, "unrecognized node type: %d",
-				 (int) nodeTag(newConstraint));
-
-		constr = (Constraint *) newConstraint;
-
+				 (int) nodeTag(constr));
 		switch (constr->contype)
 		{
 			case CONSTR_DEFAULT:
@@ -993,6 +982,12 @@ DefineDomain(CreateDomainStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("primary key constraints not possible for domains")));
+				break;
+
+			case CONSTR_FOREIGN:
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("foreign key constraints not possible for domains")));
 				break;
 
 			case CONSTR_ATTR_DEFERRABLE:
@@ -1849,13 +1844,6 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
 	checkDomainOwner(tup, typename);
 
-	/* Check for unsupported constraint types */
-	if (IsA(newConstraint, FkConstraint))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("foreign key constraints not possible for domains")));
-
-	/* otherwise it should be a plain Constraint */
 	if (!IsA(newConstraint, Constraint))
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(newConstraint));
@@ -1878,6 +1866,12 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("primary key constraints not possible for domains")));
+			break;
+
+		case CONSTR_FOREIGN:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("foreign key constraints not possible for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -2188,23 +2182,23 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Assign or validate constraint name
 	 */
-	if (constr->name)
+	if (constr->conname)
 	{
 		if (ConstraintNameIsUsed(CONSTRAINT_DOMAIN,
 								 domainOid,
 								 domainNamespace,
-								 constr->name))
+								 constr->conname))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("constraint \"%s\" for domain \"%s\" already exists",
-						constr->name, domainName)));
+						constr->conname, domainName)));
 	}
 	else
-		constr->name = ChooseConstraintName(domainName,
-											NULL,
-											"check",
-											domainNamespace,
-											NIL);
+		constr->conname = ChooseConstraintName(domainName,
+											   NULL,
+											   "check",
+											   domainNamespace,
+											   NIL);
 
 	/*
 	 * Convert the A_EXPR in raw_expr into an EXPR
@@ -2284,7 +2278,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Store the constraint in pg_constraint
 	 */
-	CreateConstraintEntry(constr->name, /* Constraint Name */
+	CreateConstraintEntry(constr->conname,		/* Constraint Name */
 						  domainNamespace,		/* namespace */
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */

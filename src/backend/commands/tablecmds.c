@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.293 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.294 2009/07/30 02:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ typedef struct NewConstraint
 	Oid			refrelid;		/* PK rel, if FOREIGN */
 	Oid			refindid;		/* OID of PK's index, if FOREIGN */
 	Oid			conid;			/* OID of pg_constraint entry, if FOREIGN */
-	Node	   *qual;			/* Check expr or FkConstraint struct */
+	Node	   *qual;			/* Check expr or CONSTR_FOREIGN Constraint */
 	List	   *qualstate;		/* Execution state for CHECK */
 } NewConstraint;
 
@@ -247,10 +247,10 @@ static Oid transformFkeyCheckAttrs(Relation pkrel,
 						int numattrs, int16 *attnums,
 						Oid *opclasses);
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
-static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
+static void validateForeignKeyConstraint(Constraint *fkconstraint,
 							 Relation rel, Relation pkrel,
 							 Oid pkindOid, Oid constraintOid);
-static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
+static void createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 						 Oid constraintOid, Oid indexOid);
 static void ATController(Relation rel, List *cmds, bool recurse);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
@@ -293,13 +293,13 @@ static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			   IndexStmt *stmt, bool is_rebuild);
 static void ATExecAddConstraint(List **wqueue,
 					AlteredTableInfo *tab, Relation rel,
-					Node *newConstraint, bool recurse);
+					Constraint *newConstraint, bool recurse);
 static void ATAddCheckConstraint(List **wqueue,
 					 AlteredTableInfo *tab, Relation rel,
 					 Constraint *constr,
 					 bool recurse, bool recursing);
 static void ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
-						  FkConstraint *fkconstraint);
+						  Constraint *fkconstraint);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
 								 DropBehavior behavior,
 								 bool recurse, bool recursing,
@@ -2637,10 +2637,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecAddIndex(tab, rel, (IndexStmt *) cmd->def, true);
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
-			ATExecAddConstraint(wqueue, tab, rel, cmd->def, false);
+			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
+								false);
 			break;
 		case AT_AddConstraintRecurse:	/* ADD CONSTRAINT with recursion */
-			ATExecAddConstraint(wqueue, tab, rel, cmd->def, true);
+			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
+								true);
 			break;
 		case AT_DropConstraint:	/* DROP CONSTRAINT */
 			ATExecDropConstraint(rel, cmd->name, cmd->behavior,
@@ -2905,7 +2907,7 @@ ATRewriteTables(List **wqueue)
 
 			if (con->contype == CONSTR_FOREIGN)
 			{
-				FkConstraint *fkconstraint = (FkConstraint *) con->qual;
+				Constraint *fkconstraint = (Constraint *) con->qual;
 				Relation	refrel;
 
 				if (rel == NULL)
@@ -4405,69 +4407,55 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
  */
 static void
 ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
-					Node *newConstraint, bool recurse)
+					Constraint *newConstraint, bool recurse)
 {
-	switch (nodeTag(newConstraint))
+	Assert(IsA(newConstraint, Constraint));
+
+	/*
+	 * Currently, we only expect to see CONSTR_CHECK and CONSTR_FOREIGN nodes
+	 * arriving here (see the preprocessing done in parse_utilcmd.c).  Use a
+	 * switch anyway to make it easier to add more code later.
+	 */
+	switch (newConstraint->contype)
 	{
-		case T_Constraint:
+		case CONSTR_CHECK:
+			ATAddCheckConstraint(wqueue, tab, rel,
+								 newConstraint, recurse, false);
+			break;
+
+		case CONSTR_FOREIGN:
+			/*
+			 * Note that we currently never recurse for FK constraints, so
+			 * the "recurse" flag is silently ignored.
+			 *
+			 * Assign or validate constraint name
+			 */
+			if (newConstraint->conname)
 			{
-				Constraint *constr = (Constraint *) newConstraint;
-
-				/*
-				 * Currently, we only expect to see CONSTR_CHECK nodes
-				 * arriving here (see the preprocessing done in
-				 * parse_utilcmd.c).  Use a switch anyway to make it easier to
-				 * add more code later.
-				 */
-				switch (constr->contype)
-				{
-					case CONSTR_CHECK:
-						ATAddCheckConstraint(wqueue, tab, rel,
-											 constr, recurse, false);
-						break;
-					default:
-						elog(ERROR, "unrecognized constraint type: %d",
-							 (int) constr->contype);
-				}
-				break;
+				if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
+										 RelationGetRelid(rel),
+										 RelationGetNamespace(rel),
+										 newConstraint->conname))
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_OBJECT),
+							 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+									newConstraint->conname,
+									RelationGetRelationName(rel))));
 			}
-		case T_FkConstraint:
-			{
-				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
+			else
+				newConstraint->conname =
+					ChooseConstraintName(RelationGetRelationName(rel),
+										 strVal(linitial(newConstraint->fk_attrs)),
+										 "fkey",
+										 RelationGetNamespace(rel),
+										 NIL);
 
-				/*
-				 * Note that we currently never recurse for FK constraints, so
-				 * the "recurse" flag is silently ignored.
-				 *
-				 * Assign or validate constraint name
-				 */
-				if (fkconstraint->constr_name)
-				{
-					if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
-											 RelationGetRelid(rel),
-											 RelationGetNamespace(rel),
-											 fkconstraint->constr_name))
-						ereport(ERROR,
-								(errcode(ERRCODE_DUPLICATE_OBJECT),
-								 errmsg("constraint \"%s\" for relation \"%s\" already exists",
-										fkconstraint->constr_name,
-										RelationGetRelationName(rel))));
-				}
-				else
-					fkconstraint->constr_name =
-						ChooseConstraintName(RelationGetRelationName(rel),
-									strVal(linitial(fkconstraint->fk_attrs)),
-											 "fkey",
-											 RelationGetNamespace(rel),
-											 NIL);
+			ATAddForeignKeyConstraint(tab, rel, newConstraint);
+			break;
 
-				ATAddForeignKeyConstraint(tab, rel, fkconstraint);
-
-				break;
-			}
 		default:
-			elog(ERROR, "unrecognized node type: %d",
-				 (int) nodeTag(newConstraint));
+			elog(ERROR, "unrecognized constraint type: %d",
+				 (int) newConstraint->contype);
 	}
 }
 
@@ -4526,12 +4514,12 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		tab->constraints = lappend(tab->constraints, newcon);
 
 		/* Save the actually assigned name if it was defaulted */
-		if (constr->name == NULL)
-			constr->name = ccon->name;
+		if (constr->conname == NULL)
+			constr->conname = ccon->name;
 	}
 
 	/* At this point we must have a locked-down name to use */
-	Assert(constr->name != NULL);
+	Assert(constr->conname != NULL);
 
 	/* Advance command counter in case same table is visited multiple times */
 	CommandCounterIncrement();
@@ -4583,7 +4571,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
  */
 static void
 ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
-						  FkConstraint *fkconstraint)
+						  Constraint *fkconstraint)
 {
 	Relation	pkrel;
 	int16		pkattnum[INDEX_MAX_KEYS];
@@ -4798,7 +4786,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("foreign key constraint \"%s\" "
 							"cannot be implemented",
-							fkconstraint->constr_name),
+							fkconstraint->conname),
 					 errdetail("Key columns \"%s\" and \"%s\" "
 							   "are of incompatible types: %s and %s.",
 							   strVal(list_nth(fkconstraint->fk_attrs, i)),
@@ -4814,7 +4802,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Record the FK constraint in pg_constraint.
 	 */
-	constrOid = CreateConstraintEntry(fkconstraint->constr_name,
+	constrOid = CreateConstraintEntry(fkconstraint->conname,
 									  RelationGetNamespace(rel),
 									  CONSTRAINT_FOREIGN,
 									  fkconstraint->deferrable,
@@ -4854,7 +4842,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		NewConstraint *newcon;
 
 		newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
-		newcon->name = fkconstraint->constr_name;
+		newcon->name = fkconstraint->conname;
 		newcon->contype = CONSTR_FOREIGN;
 		newcon->refrelid = RelationGetRelid(pkrel);
 		newcon->refindid = indexOid;
@@ -5156,7 +5144,7 @@ checkFkeyPermissions(Relation rel, int16 *attnums, int natts)
  * Caller must have opened and locked both relations.
  */
 static void
-validateForeignKeyConstraint(FkConstraint *fkconstraint,
+validateForeignKeyConstraint(Constraint *fkconstraint,
 							 Relation rel,
 							 Relation pkrel,
 							 Oid pkindOid,
@@ -5171,7 +5159,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	 */
 	MemSet(&trig, 0, sizeof(trig));
 	trig.tgoid = InvalidOid;
-	trig.tgname = fkconstraint->constr_name;
+	trig.tgname = fkconstraint->conname;
 	trig.tgenabled = TRIGGER_FIRES_ON_ORIGIN;
 	trig.tgisconstraint = TRUE;
 	trig.tgconstrrelid = RelationGetRelid(pkrel);
@@ -5228,13 +5216,13 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 }
 
 static void
-CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
+CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 					 Oid constraintOid, Oid indexOid, bool on_insert)
 {
 	CreateTrigStmt *fk_trigger;
 
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->trigname = fkconstraint->conname;
 	fk_trigger->relation = myRel;
 	fk_trigger->before = false;
 	fk_trigger->row = true;
@@ -5268,7 +5256,7 @@ CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
  * Create the triggers that implement an FK constraint.
  */
 static void
-createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
+createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 						 Oid constraintOid, Oid indexOid)
 {
 	RangeVar   *myRel;
@@ -5296,7 +5284,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	 * DELETE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->trigname = fkconstraint->conname;
 	fk_trigger->relation = fkconstraint->pktable;
 	fk_trigger->before = false;
 	fk_trigger->row = true;
@@ -5348,7 +5336,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	 * UPDATE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->trigname = fkconstraint->conname;
 	fk_trigger->relation = fkconstraint->pktable;
 	fk_trigger->before = false;
 	fk_trigger->row = true;

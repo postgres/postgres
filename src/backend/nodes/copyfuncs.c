@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.436 2009/07/29 20:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.437 2009/07/30 02:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1738,25 +1738,6 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	return newnode;
 }
 
-static FkConstraint *
-_copyFkConstraint(FkConstraint *from)
-{
-	FkConstraint *newnode = makeNode(FkConstraint);
-
-	COPY_STRING_FIELD(constr_name);
-	COPY_NODE_FIELD(pktable);
-	COPY_NODE_FIELD(fk_attrs);
-	COPY_NODE_FIELD(pk_attrs);
-	COPY_SCALAR_FIELD(fk_matchtype);
-	COPY_SCALAR_FIELD(fk_upd_action);
-	COPY_SCALAR_FIELD(fk_del_action);
-	COPY_SCALAR_FIELD(deferrable);
-	COPY_SCALAR_FIELD(initdeferred);
-	COPY_SCALAR_FIELD(skip_validation);
-
-	return newnode;
-}
-
 static SortGroupClause *
 _copySortGroupClause(SortGroupClause *from)
 {
@@ -2085,14 +2066,22 @@ _copyConstraint(Constraint *from)
 	Constraint *newnode = makeNode(Constraint);
 
 	COPY_SCALAR_FIELD(contype);
-	COPY_STRING_FIELD(name);
+	COPY_STRING_FIELD(conname);
+	COPY_SCALAR_FIELD(deferrable);
+	COPY_SCALAR_FIELD(initdeferred);
+	COPY_LOCATION_FIELD(location);
 	COPY_NODE_FIELD(raw_expr);
 	COPY_STRING_FIELD(cooked_expr);
 	COPY_NODE_FIELD(keys);
 	COPY_NODE_FIELD(options);
 	COPY_STRING_FIELD(indexspace);
-	COPY_SCALAR_FIELD(deferrable);
-	COPY_SCALAR_FIELD(initdeferred);
+	COPY_NODE_FIELD(pktable);
+	COPY_NODE_FIELD(fk_attrs);
+	COPY_NODE_FIELD(pk_attrs);
+	COPY_SCALAR_FIELD(fk_matchtype);
+	COPY_SCALAR_FIELD(fk_upd_action);
+	COPY_SCALAR_FIELD(fk_del_action);
+	COPY_SCALAR_FIELD(skip_validation);
 
 	return newnode;
 }
@@ -4081,9 +4070,6 @@ copyObject(void *from)
 			break;
 		case T_CommonTableExpr:
 			retval = _copyCommonTableExpr(from);
-			break;
-		case T_FkConstraint:
-			retval = _copyFkConstraint(from);
 			break;
 		case T_PrivGrantee:
 			retval = _copyPrivGrantee(from);

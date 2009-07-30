@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.362 2009/07/29 20:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.363 2009/07/30 02:45:37 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -2277,33 +2277,20 @@ _outConstraint(StringInfo str, Constraint *node)
 {
 	WRITE_NODE_TYPE("CONSTRAINT");
 
-	WRITE_STRING_FIELD(name);
+	WRITE_STRING_FIELD(conname);
+	WRITE_BOOL_FIELD(deferrable);
+	WRITE_BOOL_FIELD(initdeferred);
+	WRITE_LOCATION_FIELD(location);
 
 	appendStringInfo(str, " :contype ");
 	switch (node->contype)
 	{
-		case CONSTR_PRIMARY:
-			appendStringInfo(str, "PRIMARY_KEY");
-			WRITE_NODE_FIELD(keys);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexspace);
-			WRITE_BOOL_FIELD(deferrable);
-			WRITE_BOOL_FIELD(initdeferred);
+		case CONSTR_NULL:
+			appendStringInfo(str, "NULL");
 			break;
 
-		case CONSTR_UNIQUE:
-			appendStringInfo(str, "UNIQUE");
-			WRITE_NODE_FIELD(keys);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexspace);
-			WRITE_BOOL_FIELD(deferrable);
-			WRITE_BOOL_FIELD(initdeferred);
-			break;
-
-		case CONSTR_CHECK:
-			appendStringInfo(str, "CHECK");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
+		case CONSTR_NOTNULL:
+			appendStringInfo(str, "NOT_NULL");
 			break;
 
 		case CONSTR_DEFAULT:
@@ -2312,31 +2299,58 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_STRING_FIELD(cooked_expr);
 			break;
 
-		case CONSTR_NOTNULL:
-			appendStringInfo(str, "NOT_NULL");
+		case CONSTR_CHECK:
+			appendStringInfo(str, "CHECK");
+			WRITE_NODE_FIELD(raw_expr);
+			WRITE_STRING_FIELD(cooked_expr);
+			break;
+
+		case CONSTR_PRIMARY:
+			appendStringInfo(str, "PRIMARY_KEY");
+			WRITE_NODE_FIELD(keys);
+			WRITE_NODE_FIELD(options);
+			WRITE_STRING_FIELD(indexspace);
+			break;
+
+		case CONSTR_UNIQUE:
+			appendStringInfo(str, "UNIQUE");
+			WRITE_NODE_FIELD(keys);
+			WRITE_NODE_FIELD(options);
+			WRITE_STRING_FIELD(indexspace);
+			break;
+
+		case CONSTR_FOREIGN:
+			appendStringInfo(str, "FOREIGN_KEY");
+			WRITE_NODE_FIELD(pktable);
+			WRITE_NODE_FIELD(fk_attrs);
+			WRITE_NODE_FIELD(pk_attrs);
+			WRITE_CHAR_FIELD(fk_matchtype);
+			WRITE_CHAR_FIELD(fk_upd_action);
+			WRITE_CHAR_FIELD(fk_del_action);
+			WRITE_BOOL_FIELD(skip_validation);
+			break;
+
+		case CONSTR_ATTR_DEFERRABLE:
+			appendStringInfo(str, "ATTR_DEFERRABLE");
+			break;
+
+		case CONSTR_ATTR_NOT_DEFERRABLE:
+			appendStringInfo(str, "ATTR_NOT_DEFERRABLE");
+			break;
+
+		case CONSTR_ATTR_DEFERRED:
+			appendStringInfo(str, "ATTR_DEFERRED");
+			break;
+
+		case CONSTR_ATTR_IMMEDIATE:
+			appendStringInfo(str, "ATTR_IMMEDIATE");
 			break;
 
 		default:
-			appendStringInfo(str, "<unrecognized_constraint>");
+			appendStringInfo(str, "<unrecognized_constraint %d>",
+							 (int) node->contype);
 			break;
 	}
-}
-
-static void
-_outFkConstraint(StringInfo str, FkConstraint *node)
-{
-	WRITE_NODE_TYPE("FKCONSTRAINT");
-
-	WRITE_STRING_FIELD(constr_name);
-	WRITE_NODE_FIELD(pktable);
-	WRITE_NODE_FIELD(fk_attrs);
-	WRITE_NODE_FIELD(pk_attrs);
-	WRITE_CHAR_FIELD(fk_matchtype);
-	WRITE_CHAR_FIELD(fk_upd_action);
-	WRITE_CHAR_FIELD(fk_del_action);
-	WRITE_BOOL_FIELD(deferrable);
-	WRITE_BOOL_FIELD(initdeferred);
-	WRITE_BOOL_FIELD(skip_validation);
 }
 
 
@@ -2764,9 +2778,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
-				break;
-			case T_FkConstraint:
-				_outFkConstraint(str, obj);
 				break;
 			case T_FuncCall:
 				_outFuncCall(str, obj);

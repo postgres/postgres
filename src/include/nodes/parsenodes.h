@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.399 2009/07/29 20:56:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.400 2009/07/30 02:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1317,10 +1317,10 @@ typedef struct VariableShowStmt
 /* ----------------------
  *		Create Table Statement
  *
- * NOTE: in the raw gram.y output, ColumnDef, Constraint, and FkConstraint
- * nodes are intermixed in tableElts, and constraints is NIL.  After parse
- * analysis, tableElts contains just ColumnDefs, and constraints contains
- * just Constraint nodes (in fact, only CONSTR_CHECK nodes, in the present
+ * NOTE: in the raw gram.y output, ColumnDef and Constraint nodes are
+ * intermixed in tableElts, and constraints is NIL.  After parse analysis,
+ * tableElts contains just ColumnDefs, and constraints contains just
+ * Constraint nodes (in fact, only CONSTR_CHECK nodes, in the present
  * implementation).
  * ----------------------
  */
@@ -1339,23 +1339,32 @@ typedef struct CreateStmt
 } CreateStmt;
 
 /* ----------
- * Definitions for plain (non-FOREIGN KEY) constraints in CreateStmt
+ * Definitions for constraints in CreateStmt
  *
- * XXX probably these ought to be unified with FkConstraints at some point?
- * To this end we include CONSTR_FOREIGN in the ConstrType enum, even though
- * the parser does not generate it.
+ * Note that column defaults are treated as a type of constraint,
+ * even though that's a bit odd semantically.
  *
- * For constraints that use expressions (CONSTR_DEFAULT, CONSTR_CHECK)
+ * For constraints that use expressions (CONSTR_CHECK, CONSTR_DEFAULT)
  * we may have the expression in either "raw" form (an untransformed
  * parse tree) or "cooked" form (the nodeToString representation of
  * an executable expression tree), depending on how this Constraint
  * node was created (by parsing, or by inheritance from an existing
  * relation).  We should never have both in the same node!
  *
+ * FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype
+ * and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are
+ * stored into pg_constraint.confmatchtype.  Changing the code values may
+ * require an initdb!
+ *
+ * If skip_validation is true then we skip checking that the existing rows
+ * in the table satisfy the constraint, and just install the catalog entries
+ * for the constraint.	This is currently used only during CREATE TABLE
+ * (when we know the table must be empty).
+ *
  * Constraint attributes (DEFERRABLE etc) are initially represented as
  * separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes
- * a pass through the constraints list to attach the info to the appropriate
- * Constraint and FkConstraint nodes.
+ * a pass through the constraints list to insert the info into the appropriate
+ * Constraint node.
  * ----------
  */
 
@@ -1365,69 +1374,56 @@ typedef enum ConstrType			/* types of constraints */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
 	CONSTR_CHECK,
-	CONSTR_FOREIGN,
 	CONSTR_PRIMARY,
 	CONSTR_UNIQUE,
+	CONSTR_FOREIGN,
 	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
 	CONSTR_ATTR_NOT_DEFERRABLE,
 	CONSTR_ATTR_DEFERRED,
 	CONSTR_ATTR_IMMEDIATE
 } ConstrType;
 
-typedef struct Constraint
-{
-	NodeTag		type;
-	ConstrType	contype;
-	char	   *name;			/* name, or NULL if unnamed */
-	Node	   *raw_expr;		/* expr, as untransformed parse tree */
-	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	List	   *keys;			/* String nodes naming referenced column(s) */
-	List	   *options;		/* options from WITH clause */
-	char	   *indexspace;		/* index tablespace for PKEY/UNIQUE
-								 * constraints; NULL for default */
-	bool		deferrable;		/* DEFERRABLE */
-	bool		initdeferred;	/* INITIALLY DEFERRED */
-} Constraint;
-
-/* ----------
- * Definitions for FOREIGN KEY constraints in CreateStmt
- *
- * Note: FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype
- * and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are
- * stored into pg_constraint.confmatchtype.  Changing the code values may
- * require an initdb!
- *
- * If skip_validation is true then we skip checking that the existing rows
- * in the table satisfy the constraint, and just install the catalog entries
- * for the constraint.	This is currently used only during CREATE TABLE
- * (when we know the table must be empty).
- * ----------
- */
+/* Foreign key action codes */
 #define FKCONSTR_ACTION_NOACTION	'a'
 #define FKCONSTR_ACTION_RESTRICT	'r'
 #define FKCONSTR_ACTION_CASCADE		'c'
 #define FKCONSTR_ACTION_SETNULL		'n'
 #define FKCONSTR_ACTION_SETDEFAULT	'd'
 
+/* Foreign key matchtype codes */
 #define FKCONSTR_MATCH_FULL			'f'
 #define FKCONSTR_MATCH_PARTIAL		'p'
 #define FKCONSTR_MATCH_UNSPECIFIED	'u'
 
-typedef struct FkConstraint
+typedef struct Constraint
 {
 	NodeTag		type;
-	char	   *constr_name;	/* Constraint name, or NULL if unnamed */
+	ConstrType	contype;		/* see above */
+
+	/* Fields used for most/all constraint types: */
+	char	   *conname;		/* Constraint name, or NULL if unnamed */
+	bool		deferrable;		/* DEFERRABLE? */
+	bool		initdeferred;	/* INITIALLY DEFERRED? */
+	int			location;		/* token location, or -1 if unknown */
+
+	/* Fields used for constraints with expressions (CHECK and DEFAULT): */
+	Node	   *raw_expr;		/* expr, as untransformed parse tree */
+	char	   *cooked_expr;	/* expr, as nodeToString representation */
+
+	/* Fields used for index constraints (UNIQUE and PRIMARY KEY): */
+	List	   *keys;			/* String nodes naming referenced column(s) */
+	List	   *options;		/* options from WITH clause */
+	char	   *indexspace;		/* index tablespace; NULL for default */
+
+	/* Fields used for FOREIGN KEY constraints: */
 	RangeVar   *pktable;		/* Primary key table */
 	List	   *fk_attrs;		/* Attributes of foreign key */
 	List	   *pk_attrs;		/* Corresponding attrs in PK table */
 	char		fk_matchtype;	/* FULL, PARTIAL, UNSPECIFIED */
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
-	bool		deferrable;		/* DEFERRABLE */
-	bool		initdeferred;	/* INITIALLY DEFERRED */
 	bool		skip_validation;	/* skip validation of existing rows? */
-} FkConstraint;
-
+} Constraint;
 
 /* ----------------------
  *		Create/Drop Table Space Statements

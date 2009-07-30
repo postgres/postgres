@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.674 2009/07/29 20:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.675 2009/07/30 02:45:37 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2172,24 +2172,11 @@ ColQualList:
 ColConstraint:
 			CONSTRAINT name ColConstraintElem
 				{
-					switch (nodeTag($3))
-					{
-						case T_Constraint:
-							{
-								Constraint *n = (Constraint *)$3;
-								n->name = $2;
-							}
-							break;
-						case T_FkConstraint:
-							{
-								FkConstraint *n = (FkConstraint *)$3;
-								n->constr_name = $2;
-							}
-							break;
-						default:
-							break;
-					}
-					$$ = $3;
+					Constraint *n = (Constraint *) $3;
+					Assert(IsA(n, Constraint));
+					n->conname = $2;
+					n->location = @1;
+					$$ = (Node *) n;
 				}
 			| ColConstraintElem						{ $$ = $1; }
 			| ConstraintAttr						{ $$ = $1; }
@@ -2215,94 +2202,66 @@ ColConstraintElem:
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_NOTNULL;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					n->indexspace = NULL;
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| NULL_P
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_NULL;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					n->indexspace = NULL;
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| UNIQUE opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
+					n->location = @1;
 					n->keys = NULL;
 					n->options = $2;
 					n->indexspace = $3;
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
+					n->location = @1;
 					n->keys = NULL;
 					n->options = $3;
 					n->indexspace = $4;
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| CHECK '(' a_expr ')'
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
-					n->name = NULL;
+					n->location = @1;
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
-					n->keys = NULL;
-					n->indexspace = NULL;
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| DEFAULT b_expr
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
-					n->name = NULL;
+					n->location = @1;
 					n->raw_expr = $2;
 					n->cooked_expr = NULL;
-					n->keys = NULL;
-					n->indexspace = NULL;
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| REFERENCES qualified_name opt_column_list key_match key_actions
 				{
-					FkConstraint *n = makeNode(FkConstraint);
-					n->constr_name		= NULL;
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_FOREIGN;
+					n->location = @1;
 					n->pktable			= $2;
 					n->fk_attrs			= NIL;
 					n->pk_attrs			= $3;
 					n->fk_matchtype		= $4;
 					n->fk_upd_action	= (char) ($5 >> 8);
 					n->fk_del_action	= (char) ($5 & 0xFF);
-					n->deferrable		= FALSE;
-					n->initdeferred		= FALSE;
+					n->skip_validation  = FALSE;
 					$$ = (Node *)n;
 				}
 		;
@@ -2324,24 +2283,28 @@ ConstraintAttr:
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_DEFERRABLE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| NOT DEFERRABLE
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_NOT_DEFERRABLE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| INITIALLY DEFERRED
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_DEFERRED;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| INITIALLY IMMEDIATE
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_IMMEDIATE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 		;
@@ -2387,24 +2350,11 @@ TableLikeOption:
 TableConstraint:
 			CONSTRAINT name ConstraintElem
 				{
-					switch (nodeTag($3))
-					{
-						case T_Constraint:
-							{
-								Constraint *n = (Constraint *)$3;
-								n->name = $2;
-							}
-							break;
-						case T_FkConstraint:
-							{
-								FkConstraint *n = (FkConstraint *)$3;
-								n->constr_name = $2;
-							}
-							break;
-						default:
-							break;
-					}
-					$$ = $3;
+					Constraint *n = (Constraint *) $3;
+					Assert(IsA(n, Constraint));
+					n->conname = $2;
+					n->location = @1;
+					$$ = (Node *) n;
 				}
 			| ConstraintElem						{ $$ = $1; }
 		;
@@ -2414,17 +2364,14 @@ ConstraintElem:
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
-					n->name = NULL;
+					n->location = @1;
 					n->raw_expr = $3;
 					n->cooked_expr = NULL;
-					n->indexspace = NULL;
 					if ($5 != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("CHECK constraints cannot be deferred"),
 								 parser_errposition(@5)));
-					n->deferrable = FALSE;
-					n->initdeferred = FALSE;
 					$$ = (Node *)n;
 				}
 			| UNIQUE '(' columnList ')' opt_definition OptConsTableSpace
@@ -2432,9 +2379,7 @@ ConstraintElem:
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
+					n->location = @1;
 					n->keys = $3;
 					n->options = $5;
 					n->indexspace = $6;
@@ -2447,9 +2392,7 @@ ConstraintElem:
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
+					n->location = @1;
 					n->keys = $4;
 					n->options = $6;
 					n->indexspace = $7;
@@ -2460,14 +2403,16 @@ ConstraintElem:
 			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
 				opt_column_list key_match key_actions ConstraintAttributeSpec
 				{
-					FkConstraint *n = makeNode(FkConstraint);
-					n->constr_name		= NULL;
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_FOREIGN;
+					n->location = @1;
 					n->pktable			= $7;
 					n->fk_attrs			= $4;
 					n->pk_attrs			= $8;
 					n->fk_matchtype		= $9;
 					n->fk_upd_action	= (char) ($10 >> 8);
 					n->fk_del_action	= (char) ($10 & 0xFF);
+					n->skip_validation  = FALSE;
 					n->deferrable		= ($11 & 1) != 0;
 					n->initdeferred		= ($11 & 2) != 0;
 					$$ = (Node *)n;
