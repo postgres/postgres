@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.75 2007/12/11 02:31:49 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.75.2.1 2009/07/30 09:28:03 mha Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -17,6 +17,11 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  */
+
+#ifdef WIN32
+#define FD_SETSIZE 1024		/* set before winsock2.h is included */
+#endif   /* ! WIN32 */
+
 #include "postgres_fe.h"
 
 #include "libpq-fe.h"
@@ -24,8 +29,6 @@
 #include <ctype.h>
 
 #ifdef WIN32
-#undef FD_SETSIZE
-#define FD_SETSIZE 1024
 #include <win32.h>
 #else
 #include <sys/time.h>
