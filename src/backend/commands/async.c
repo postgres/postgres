@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.148 2009/07/21 20:24:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.149 2009/07/31 20:26:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,14 +35,15 @@
  *	  If the listenerPID in a matching tuple is ours, we just send a notify
  *	  message to our own front end.  If it is not ours, and "notification"
  *	  is not already nonzero, we set notification to our own PID and send a
- *	  SIGUSR2 signal to the receiving process (indicated by listenerPID).
+ *	  PROCSIG_NOTIFY_INTERRUPT signal to the receiving process (indicated by
+ *	  listenerPID).
  *	  BTW: if the signal operation fails, we presume that the listener backend
  *	  crashed without removing this tuple, and remove the tuple for it.
  *
- * 4. Upon receipt of a SIGUSR2 signal, the signal handler can call inbound-
- *	  notify processing immediately if this backend is idle (ie, it is
- *	  waiting for a frontend command and is not within a transaction block).
- *	  Otherwise the handler may only set a flag, which will cause the
+ * 4. Upon receipt of a PROCSIG_NOTIFY_INTERRUPT signal, the signal handler
+ *	  can call inbound-notify processing immediately if this backend is idle
+ *	  (ie, it is waiting for a frontend command and is not within a transaction
+ *	  block).  Otherwise the handler may only set a flag, which will cause the
  *	  processing to occur just before we next go idle.
  *
  * 5. Inbound-notify processing consists of scanning pg_listener for tuples
@@ -95,6 +96,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
+#include "storage/procsignal.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -634,12 +636,17 @@ Send_Notify(Relation lRel)
 
 			/*
 			 * If someone has already notified this listener, we don't bother
-			 * modifying the table, but we do still send a SIGUSR2 signal,
-			 * just in case that backend missed the earlier signal for some
-			 * reason.	It's OK to send the signal first, because the other
-			 * guy can't read pg_listener until we unlock it.
+			 * modifying the table, but we do still send a NOTIFY_INTERRUPT
+			 * signal, just in case that backend missed the earlier signal for
+			 * some reason.  It's OK to send the signal first, because the
+			 * other guy can't read pg_listener until we unlock it.
+			 *
+			 * Note: we don't have the other guy's BackendId available, so
+			 * this will incur a search of the ProcSignal table.  That's
+			 * probably not worth worrying about.
 			 */
-			if (kill(listenerPID, SIGUSR2) < 0)
+			if (SendProcSignal(listenerPID, PROCSIG_NOTIFY_INTERRUPT,
+							   InvalidBackendId) < 0)
 			{
 				/*
 				 * Get rid of pg_listener entry if it refers to a PID that no
@@ -777,24 +784,22 @@ AtSubAbort_Notify(void)
 }
 
 /*
- * NotifyInterruptHandler
+ * HandleNotifyInterrupt
  *
- *		This is the signal handler for SIGUSR2.
+ *		This is called when PROCSIG_NOTIFY_INTERRUPT is received.
  *
  *		If we are idle (notifyInterruptEnabled is set), we can safely invoke
  *		ProcessIncomingNotify directly.  Otherwise, just set a flag
  *		to do it later.
  */
 void
-NotifyInterruptHandler(SIGNAL_ARGS)
+HandleNotifyInterrupt(void)
 {
-	int			save_errno = errno;
-
 	/*
-	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
-	 * here. Some helpful soul had this routine sprinkled with TPRINTFs, which
-	 * would likely lead to corruption of stdio buffers if they were ever
-	 * turned on.
+	 * Note: this is called by a SIGNAL HANDLER. You must be very wary what
+	 * you do here. Some helpful soul had this routine sprinkled with
+	 * TPRINTFs, which would likely lead to corruption of stdio buffers if
+	 * they were ever turned on.
 	 */
 
 	/* Don't joggle the elbow of proc_exit */
@@ -815,7 +820,7 @@ NotifyInterruptHandler(SIGNAL_ARGS)
 
 		/*
 		 * I'm not sure whether some flavors of Unix might allow another
-		 * SIGUSR2 occurrence to recursively interrupt this routine. To cope
+		 * SIGUSR1 occurrence to recursively interrupt this routine. To cope
 		 * with the possibility, we do the same sort of dance that
 		 * EnableNotifyInterrupt must do --- see that routine for comments.
 		 */
@@ -831,12 +836,12 @@ NotifyInterruptHandler(SIGNAL_ARGS)
 			{
 				/* Here, it is finally safe to do stuff. */
 				if (Trace_notify)
-					elog(DEBUG1, "NotifyInterruptHandler: perform async notify");
+					elog(DEBUG1, "HandleNotifyInterrupt: perform async notify");
 
 				ProcessIncomingNotify();
 
 				if (Trace_notify)
-					elog(DEBUG1, "NotifyInterruptHandler: done");
+					elog(DEBUG1, "HandleNotifyInterrupt: done");
 			}
 		}
 
@@ -854,8 +859,6 @@ NotifyInterruptHandler(SIGNAL_ARGS)
 		 */
 		notifyInterruptOccurred = 1;
 	}
-
-	errno = save_errno;
 }
 
 /*
@@ -922,8 +925,8 @@ EnableNotifyInterrupt(void)
  *		a frontend command.  Signal handler execution of inbound notifies
  *		is disabled until the next EnableNotifyInterrupt call.
  *
- *		The SIGUSR1 signal handler also needs to call this, so as to
- *		prevent conflicts if one signal interrupts the other.  So we
+ *		The PROCSIG_CATCHUP_INTERRUPT signal handler also needs to call this,
+ *		so as to prevent conflicts if one signal interrupts the other.  So we
  *		must return the previous state of the flag.
  */
 bool
@@ -940,8 +943,8 @@ DisableNotifyInterrupt(void)
  * ProcessIncomingNotify
  *
  *		Deal with arriving NOTIFYs from other backends.
- *		This is called either directly from the SIGUSR2 signal handler,
- *		or the next time control reaches the outer idle loop.
+ *		This is called either directly from the PROCSIG_NOTIFY_INTERRUPT
+ *		signal handler, or the next time control reaches the outer idle loop.
  *		Scan pg_listener for arriving notifies, report them to my front end,
  *		and clear the notification field in pg_listener until next time.
  *
@@ -961,7 +964,7 @@ ProcessIncomingNotify(void)
 				nulls[Natts_pg_listener];
 	bool		catchup_enabled;
 
-	/* Must prevent SIGUSR1 interrupt while I am running */
+	/* Must prevent catchup interrupt while I am running */
 	catchup_enabled = DisableCatchupInterrupt();
 
 	if (Trace_notify)

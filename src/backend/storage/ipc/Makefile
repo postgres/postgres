@@ -1,7 +1,7 @@
 #
 # Makefile for storage/ipc
 #
-# $PostgreSQL: pgsql/src/backend/storage/ipc/Makefile,v 1.21 2008/02/19 10:30:08 petere Exp $
+# $PostgreSQL: pgsql/src/backend/storage/ipc/Makefile,v 1.22 2009/07/31 20:26:23 tgl Exp $
 #
 
 subdir = src/backend/storage/ipc
@@ -15,7 +15,7 @@ override CFLAGS+= -fno-inline
 endif
 endif
 
-OBJS = ipc.o ipci.o pmsignal.o procarray.o shmem.o shmqueue.o \
+OBJS = ipc.o ipci.o pmsignal.o procarray.o procsignal.o shmem.o shmqueue.o \
 	sinval.o sinvaladt.o
 
 include $(top_srcdir)/src/backend/common.mk

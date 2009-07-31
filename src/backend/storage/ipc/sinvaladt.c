@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.78 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.79 2009/07/31 20:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "storage/backendid.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
@@ -118,7 +119,7 @@
  * we exceed CLEANUP_MIN.  Should be a power of 2 for speed.
  *
  * SIG_THRESHOLD: the minimum number of messages a backend must have fallen
- * behind before we'll send it SIGUSR1.
+ * behind before we'll send it PROCSIG_CATCHUP_INTERRUPT.
  *
  * WRITE_QUANTUM: the max number of messages to push into the buffer per
  * iteration of SIInsertDataEntries.  Noncritical but should be less than
@@ -551,7 +552,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  * minFree is the minimum number of message slots to make free.
  *
  * Possible side effects of this routine include marking one or more
- * backends as "reset" in the array, and sending a catchup interrupt (SIGUSR1)
+ * backends as "reset" in the array, and sending PROCSIG_CATCHUP_INTERRUPT
  * to some backend that seems to be getting too far behind.  We signal at
  * most one backend at a time, for reasons explained at the top of the file.
  *
@@ -644,18 +645,20 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		segP->nextThreshold = (numMsgs / CLEANUP_QUANTUM + 1) * CLEANUP_QUANTUM;
 
 	/*
-	 * Lastly, signal anyone who needs a catchup interrupt.  Since kill()
-	 * might not be fast, we don't want to hold locks while executing it.
+	 * Lastly, signal anyone who needs a catchup interrupt.  Since
+	 * SendProcSignal() might not be fast, we don't want to hold locks while
+	 * executing it.
 	 */
 	if (needSig)
 	{
 		pid_t		his_pid = needSig->procPid;
+		BackendId	his_backendId = (needSig - &segP->procState[0]) + 1;
 
 		needSig->signaled = true;
 		LWLockRelease(SInvalReadLock);
 		LWLockRelease(SInvalWriteLock);
 		elog(DEBUG4, "sending sinval catchup signal to PID %d", (int) his_pid);
-		kill(his_pid, SIGUSR1);
+		SendProcSignal(his_pid, PROCSIG_CATCHUP_INTERRUPT, his_backendId);
 		if (callerHasWriteLock)
 			LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
 	}

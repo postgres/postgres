@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.62 2009/06/26 20:29:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.63 2009/07/31 20:26:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ BackgroundWriterMain(void)
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 *
 	 * SIGUSR1 is presently unused; keep it spare in case someday we want this
-	 * process to participate in sinval messaging.
+	 * process to participate in ProcSignal signalling.
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
@@ -231,7 +231,7 @@ BackgroundWriterMain(void)
 	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* reserve for sinval */
+	pqsignal(SIGUSR1, SIG_IGN); /* reserve for ProcSignal */
 	pqsignal(SIGUSR2, ReqShutdownHandler);		/* request shutdown */
 
 	/*

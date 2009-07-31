@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.568 2009/06/18 10:08:08 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.569 2009/07/31 20:26:23 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -59,6 +59,7 @@
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "storage/sinval.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
@@ -3221,8 +3222,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * of output during who-knows-what operation...
 	 */
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, CatchupInterruptHandler);
-	pqsignal(SIGUSR2, NotifyInterruptHandler);
+	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
+	pqsignal(SIGUSR2, SIG_IGN);
 	pqsignal(SIGFPE, FloatExceptionHandler);
 
 	/*

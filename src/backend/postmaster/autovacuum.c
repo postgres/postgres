@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.99 2009/06/12 16:17:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.100 2009/07/31 20:26:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,7 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "tcop/tcopprot.h"
 #include "utils/dynahash.h"
@@ -436,7 +437,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, avl_sigusr1_handler);
-	/* We don't listen for async notifies */
 	pqsignal(SIGUSR2, SIG_IGN);
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_DFL);
@@ -1322,7 +1322,7 @@ avl_sighup_handler(SIGNAL_ARGS)
 	got_SIGHUP = true;
 }
 
-/* SIGUSR1: a worker is up and running, or just finished */
+/* SIGUSR1: a worker is up and running, or just finished, or failed to fork */
 static void
 avl_sigusr1_handler(SIGNAL_ARGS)
 {
@@ -1501,8 +1501,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	pqsignal(SIGALRM, handle_sig_alarm);
 
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, CatchupInterruptHandler);
-	/* We don't listen for async notifies */
+	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, SIG_IGN);
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_DFL);

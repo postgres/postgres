@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.90 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.91 2009/07/31 20:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
  * it catch up before the sinval queue overflows and forces it to go
- * through a cache reset exercise.	This is done by sending SIGUSR1
- * to any backend that gets too far behind.
+ * through a cache reset exercise.	This is done by sending
+ * PROCSIG_CATCHUP_INTERRUPT to any backend that gets too far behind.
  *
  * State for catchup events consists of two flags: one saying whether
  * the signal handler is currently allowed to call ProcessCatchupEvent
@@ -145,9 +145,9 @@ ReceiveSharedInvalidMessages(
 
 
 /*
- * CatchupInterruptHandler
+ * HandleCatchupInterrupt
  *
- * This is the signal handler for SIGUSR1.
+ * This is called when PROCSIG_CATCHUP_INTERRUPT is received.
  *
  * If we are idle (catchupInterruptEnabled is set), we can safely
  * invoke ProcessCatchupEvent directly.  Otherwise, just set a flag
@@ -157,13 +157,11 @@ ReceiveSharedInvalidMessages(
  * since there's no longer any reason to do anything.)
  */
 void
-CatchupInterruptHandler(SIGNAL_ARGS)
+HandleCatchupInterrupt(void)
 {
-	int			save_errno = errno;
-
 	/*
-	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
-	 * here.
+	 * Note: this is called by a SIGNAL HANDLER. You must be very wary what
+	 * you do here.
 	 */
 
 	/* Don't joggle the elbow of proc_exit */
@@ -217,8 +215,6 @@ CatchupInterruptHandler(SIGNAL_ARGS)
 		 */
 		catchupInterruptOccurred = 1;
 	}
-
-	errno = save_errno;
 }
 
 /*
@@ -273,8 +269,8 @@ EnableCatchupInterrupt(void)
  * a frontend command.	Signal handler execution of catchup events
  * is disabled until the next EnableCatchupInterrupt call.
  *
- * The SIGUSR2 signal handler also needs to call this, so as to
- * prevent conflicts if one signal interrupts the other.  So we
+ * The PROCSIG_NOTIFY_INTERRUPT signal handler also needs to call this,
+ * so as to prevent conflicts if one signal interrupts the other.  So we
  * must return the previous state of the flag.
  */
 bool
@@ -290,18 +286,19 @@ DisableCatchupInterrupt(void)
 /*
  * ProcessCatchupEvent
  *
- * Respond to a catchup event (SIGUSR1) from another backend.
+ * Respond to a catchup event (PROCSIG_CATCHUP_INTERRUPT) from another
+ * backend.
  *
- * This is called either directly from the SIGUSR1 signal handler,
- * or the next time control reaches the outer idle loop (assuming
- * there's still anything to do by then).
+ * This is called either directly from the PROCSIG_CATCHUP_INTERRUPT
+ * signal handler, or the next time control reaches the outer idle loop
+ * (assuming there's still anything to do by then).
  */
 static void
 ProcessCatchupEvent(void)
 {
 	bool		notify_enabled;
 
-	/* Must prevent SIGUSR2 interrupt while I am running */
+	/* Must prevent notify interrupt while I am running */
 	notify_enabled = DisableNotifyInterrupt();
 
 	/*

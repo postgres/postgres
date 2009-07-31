@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.7 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/walwriter.c,v 1.8 2009/07/31 20:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ WalWriterMain(void)
 	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* reserve for sinval */
+	pqsignal(SIGUSR1, SIG_IGN); /* reserve for ProcSignal */
 	pqsignal(SIGUSR2, SIG_IGN); /* not used */
 
 	/*

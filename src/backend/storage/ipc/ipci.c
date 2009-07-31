@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.100 2009/05/05 19:59:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.101 2009/07/31 20:26:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
+#include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 
@@ -112,6 +113,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, BackendStatusShmemSize());
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
+		size = add_size(size, ProcSignalShmemSize());
 		size = add_size(size, BgWriterShmemSize());
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, BTreeShmemSize());
@@ -208,6 +210,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up interprocess signaling mechanisms
 	 */
 	PMSignalShmemInit();
+	ProcSignalShmemInit();
 	BgWriterShmemInit();
 	AutoVacuumShmemInit();
 
