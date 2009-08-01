@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.172 2009/08/01 19:59:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.173 2009/08/01 20:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 * This is a definite conflict.  Break the tuple down
 					 * into datums and report the error.  But first, make
 					 * sure we release the buffer locks we're holding ---
-					 * the error reporting code could make catalog accesses,
+					 * BuildIndexValueDescription could make catalog accesses,
 					 * which in the worst case might touch this same index
 					 * and cause deadlocks.
 					 */
@@ -379,7 +379,13 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 						index_deform_tuple(itup, RelationGetDescr(rel),
 										   values, isnull);
-						ReportUniqueViolation(rel, values, isnull);
+						ereport(ERROR,
+								(errcode(ERRCODE_UNIQUE_VIOLATION),
+								 errmsg("duplicate key value violates unique constraint \"%s\"",
+										RelationGetRelationName(rel)),
+								 errdetail("Key %s already exists.",
+										   BuildIndexValueDescription(rel,
+															values, isnull))));
 					}
 				}
 				else if (all_dead)

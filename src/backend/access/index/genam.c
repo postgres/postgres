@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.75 2009/08/01 19:59:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.76 2009/08/01 20:59:17 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -133,13 +133,16 @@ IndexScanEnd(IndexScanDesc scan)
 }
 
 /*
- * ReportUniqueViolation -- Report a unique-constraint violation.
+ * BuildIndexValueDescription
  *
- * The index entry represented by values[]/isnull[] violates the unique
- * constraint enforced by this index.  Throw a suitable error.
+ * Construct a string describing the contents of an index entry, in the
+ * form "(key_name, ...)=(key_value, ...)".  This is currently used
+ * only for building unique-constraint error messages, but we don't want
+ * to hardwire the spelling of the messages here.
  */
-void
-ReportUniqueViolation(Relation indexRelation, Datum *values, bool *isnull)
+char *
+BuildIndexValueDescription(Relation indexRelation,
+						   Datum *values, bool *isnull)
 {
 	/*
 	 * XXX for the moment we use the index's tupdesc as a guide to the
@@ -148,14 +151,14 @@ ReportUniqueViolation(Relation indexRelation, Datum *values, bool *isnull)
 	 * are ever to support non-btree unique indexes.
 	 */
 	TupleDesc	tupdesc = RelationGetDescr(indexRelation);
-	char	   *key_names;
-	StringInfoData key_values;
+	StringInfoData buf;
 	int			i;
 
-	key_names = pg_get_indexdef_columns(RelationGetRelid(indexRelation), true);
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "(%s)=(",
+					 pg_get_indexdef_columns(RelationGetRelid(indexRelation),
+											 true));
 
-	/* Get printable versions of the key values */
-	initStringInfo(&key_values);
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		char   *val;
@@ -173,16 +176,13 @@ ReportUniqueViolation(Relation indexRelation, Datum *values, bool *isnull)
 		}
 
 		if (i > 0)
-			appendStringInfoString(&key_values, ", ");
-		appendStringInfoString(&key_values, val);
+			appendStringInfoString(&buf, ", ");
+		appendStringInfoString(&buf, val);
 	}
 
-	ereport(ERROR,
-			(errcode(ERRCODE_UNIQUE_VIOLATION),
-			 errmsg("duplicate key value violates unique constraint \"%s\"",
-					RelationGetRelationName(indexRelation)),
-			 errdetail("Key (%s)=(%s) already exists.",
-					   key_names, key_values.data)));
+	appendStringInfoChar(&buf, ')');
+
+	return buf.data;
 }
 
 

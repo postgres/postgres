@@ -685,7 +685,7 @@ DETAIL:  Key (f1)=(b) already exists.
 -- check if constraint is enforced properly at build time
 CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(f2);
 ERROR:  could not create unique index "concur_index3"
-DETAIL:  Table contains duplicated values.
+DETAIL:  Key (f2)=(b) is duplicated.
 -- test that expression indexes and partial indexes work concurrently
 CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';
 CREATE INDEX CONCURRENTLY concur_index5 on concur_heap(f2) WHERE f1='x';

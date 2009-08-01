@@ -423,7 +423,7 @@ insert into atacc1 (test) values (2);
 alter table atacc1 add constraint atacc_test1 unique (test);
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
 ERROR:  could not create unique index "atacc_test1"
-DETAIL:  Table contains duplicated values.
+DETAIL:  Key (test)=(2) is duplicated.
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the unique constraint fails
@@ -494,7 +494,7 @@ insert into atacc1 (test) values (2);
 alter table atacc1 add constraint atacc_test1 primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
 ERROR:  could not create unique index "atacc_test1"
-DETAIL:  Table contains duplicated values.
+DETAIL:  Key (test)=(2) is duplicated.
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do another one where the primary key constraint fails when added

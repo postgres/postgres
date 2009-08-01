@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.91 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.92 2009/08/01 20:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2801,11 +2801,19 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 	 * error in that case.
 	 */
 	if (state->enforceUnique && !equal_hasnull && tuple1 != tuple2)
+	{
+		Datum	values[INDEX_MAX_KEYS];
+		bool	isnull[INDEX_MAX_KEYS];
+
+		index_deform_tuple(tuple1, tupDes, values, isnull);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNIQUE_VIOLATION),
 				 errmsg("could not create unique index \"%s\"",
 						RelationGetRelationName(state->indexRel)),
-				 errdetail("Table contains duplicated values.")));
+				 errdetail("Key %s is duplicated.",
+						   BuildIndexValueDescription(state->indexRel,
+													  values, isnull))));
+	}
 
 	/*
 	 * If key values are equal, we sort on ItemPointer.  This does not affect

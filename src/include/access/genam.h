@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.80 2009/08/01 19:59:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.81 2009/08/01 20:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,8 +164,8 @@ extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
 					 int nkeys, ScanKey key);
 extern void IndexScanEnd(IndexScanDesc scan);
-extern void ReportUniqueViolation(Relation indexRelation,
-								  Datum *values, bool *isnull);
+extern char *BuildIndexValueDescription(Relation indexRelation,
+						   Datum *values, bool *isnull);
 
 /*
  * heap-or-index access to system catalogs (in genam.c)
