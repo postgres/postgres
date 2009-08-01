@@ -641,6 +641,7 @@ INSERT INTO func_index_heap VALUES('QWE','RTY');
 -- this should fail because of unique index:
 INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 ERROR:  duplicate key value violates unique constraint "func_index_index"
+DETAIL:  Key (textcat(f1, f2))=(ABCDEF) already exists.
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
 --
@@ -655,6 +656,7 @@ INSERT INTO func_index_heap VALUES('QWE','RTY');
 -- this should fail because of unique index:
 INSERT INTO func_index_heap VALUES('ABCD', 'EF');
 ERROR:  duplicate key value violates unique constraint "func_index_index"
+DETAIL:  Key ((f1 || f2))=(ABCDEF) already exists.
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
 --
@@ -679,6 +681,7 @@ CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(f1);
 -- check if constraint is set up properly to be enforced
 INSERT INTO concur_heap VALUES ('b','x');
 ERROR:  duplicate key value violates unique constraint "concur_index2"
+DETAIL:  Key (f1)=(b) already exists.
 -- check if constraint is enforced properly at build time
 CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(f2);
 ERROR:  could not create unique index "concur_index3"

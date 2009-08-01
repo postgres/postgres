@@ -1517,6 +1517,7 @@ select * from PField_v1 where pfname = 'PF0_2' order by slotname;
 --
 insert into PField values ('PF1_1', 'should fail due to unique index');
 ERROR:  duplicate key value violates unique constraint "pfield_name"
+DETAIL:  Key (name)=(PF1_1) already exists.
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
 ERROR:  WS.not.there         does not exist
 CONTEXT:  PL/pgSQL function "tg_backlink_a" line 16 at assignment
@@ -1531,6 +1532,7 @@ ERROR:  illegal slotlink beginning with XX
 CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 16 at assignment
 insert into HSlot values ('HS', 'base.hub1', 1, '');
 ERROR:  duplicate key value violates unique constraint "hslot_name"
+DETAIL:  Key (slotname)=(HS.base.hub1.1      ) already exists.
 insert into HSlot values ('HS', 'base.hub1', 20, '');
 ERROR:  no manual manipulation of HSlot
 delete from HSlot;

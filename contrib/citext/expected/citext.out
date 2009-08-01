@@ -271,10 +271,13 @@ SELECT name, 'A' = name AS t      FROM try where name = 'A';
 -- expected failures on duplicate key
 INSERT INTO try (name) VALUES ('a');
 ERROR:  duplicate key value violates unique constraint "try_pkey"
+DETAIL:  Key (name)=(a) already exists.
 INSERT INTO try (name) VALUES ('A');
 ERROR:  duplicate key value violates unique constraint "try_pkey"
+DETAIL:  Key (name)=(A) already exists.
 INSERT INTO try (name) VALUES ('aB');
 ERROR:  duplicate key value violates unique constraint "try_pkey"
+DETAIL:  Key (name)=(aB) already exists.
 -- Make sure that citext_smaller() and citext_lager() work properly.
 SELECT citext_smaller( 'aa'::citext, 'ab'::citext ) = 'aa' AS t;
  t 

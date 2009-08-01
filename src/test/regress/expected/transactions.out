@@ -468,12 +468,14 @@ NOTICE:  CREATE TABLE / UNIQUE will create implicit index "koju_a_key" for table
 		INSERT INTO koju VALUES (1);
 		INSERT INTO koju VALUES (1);
 ERROR:  duplicate key value violates unique constraint "koju_a_key"
+DETAIL:  Key (a)=(1) already exists.
 	rollback to x;
 	CREATE TABLE koju (a INT UNIQUE);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "koju_a_key" for table "koju"
 	INSERT INTO koju VALUES (1);
 	INSERT INTO koju VALUES (1);
 ERROR:  duplicate key value violates unique constraint "koju_a_key"
+DETAIL:  Key (a)=(1) already exists.
 ROLLBACK;
 DROP TABLE foo;
 DROP TABLE baz;

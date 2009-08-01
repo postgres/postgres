@@ -407,6 +407,7 @@ insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
+DETAIL:  Key (test)=(2) already exists.
 -- should succeed
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
@@ -442,6 +443,7 @@ insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
+DETAIL:  Key (test, test2)=(4, 4) already exists.
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
@@ -456,6 +458,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test2_key" 
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
 ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
+DETAIL:  Key (test)=(3) already exists.
 drop table atacc1;
 -- test primary key constraint adding
 create table atacc1 ( test int ) with oids;
@@ -467,6 +470,7 @@ insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
+DETAIL:  Key (test)=(2) already exists.
 -- should succeed
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
@@ -534,6 +538,7 @@ insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
+DETAIL:  Key (test, test2)=(4, 4) already exists.
 insert into atacc1 (test,test2) values (NULL,3);
 ERROR:  null value in column "test" violates not-null constraint
 insert into atacc1 (test,test2) values (3, NULL);
@@ -552,6 +557,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "atacc1_pkey" for
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
 ERROR:  duplicate key value violates unique constraint "atacc1_pkey"
+DETAIL:  Key (test)=(3) already exists.
 insert into atacc1 (test2, test) values (1, NULL);
 ERROR:  null value in column "test" violates not-null constraint
 drop table atacc1;

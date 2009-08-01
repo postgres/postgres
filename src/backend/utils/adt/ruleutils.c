@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.305 2009/07/29 20:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.306 2009/08/01 19:59:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,8 @@ static char *pg_get_viewdef_worker(Oid viewoid, int prettyFlags);
 static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
-static char *pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
+static char *pg_get_indexdef_worker(Oid indexrelid, int colno,
+					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags);
 static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags);
@@ -613,7 +614,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	Oid			indexrelid = PG_GETARG_OID(0);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, 0,
-														   false, 0)));
+														   false, false, 0)));
 }
 
 Datum
@@ -626,18 +627,31 @@ pg_get_indexdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_indexdef_worker(indexrelid, colno,
-													   false, prettyFlags)));
+														   colno != 0,
+														   false,
+														   prettyFlags)));
 }
 
 /* Internal version that returns a palloc'd C string */
 char *
 pg_get_indexdef_string(Oid indexrelid)
 {
-	return pg_get_indexdef_worker(indexrelid, 0, true, 0);
+	return pg_get_indexdef_worker(indexrelid, 0, false, true, 0);
+}
+
+/* Internal version that just reports the column definitions */
+char *
+pg_get_indexdef_columns(Oid indexrelid, bool pretty)
+{
+	int			prettyFlags;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
+	return pg_get_indexdef_worker(indexrelid, 0, true, false, prettyFlags);
 }
 
 static char *
-pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
+pg_get_indexdef_worker(Oid indexrelid, int colno,
+					   bool attrsOnly, bool showTblSpc,
 					   int prettyFlags)
 {
 	HeapTuple	ht_idx;
@@ -736,7 +750,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 	 */
 	initStringInfo(&buf);
 
-	if (!colno)
+	if (!attrsOnly)
 		appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 						 idxrec->indisunique ? "UNIQUE " : "",
 						 quote_identifier(NameStr(idxrelrec->relname)),
@@ -790,8 +804,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 			keycoltype = exprType(indexkey);
 		}
 
-		/* Provide decoration only in the colno=0 case */
-		if (!colno)
+		if (!attrsOnly && (!colno || colno == keyno + 1))
 		{
 			/* Add the operator class name, if not default */
 			get_opclass_name(indclass->values[keyno], keycoltype, &buf);
@@ -816,7 +829,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 		}
 	}
 
-	if (!colno)
+	if (!attrsOnly)
 	{
 		appendStringInfoChar(&buf, ')');
 

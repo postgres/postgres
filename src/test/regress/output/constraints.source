@@ -294,6 +294,7 @@ INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 INSERT INTO PRIMARY_TBL VALUES (1, 'three');
 ERROR:  duplicate key value violates unique constraint "primary_tbl_pkey"
+DETAIL:  Key (i)=(1) already exists.
 INSERT INTO PRIMARY_TBL VALUES (4, 'three');
 INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 INSERT INTO PRIMARY_TBL (t) VALUES ('six');
@@ -338,6 +339,7 @@ INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(1) already exists.
 INSERT INTO UNIQUE_TBL VALUES (4, 'four');
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
@@ -362,6 +364,7 @@ INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i, t)=(1, one) already exists.
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 SELECT '' AS five, * FROM UNIQUE_TBL;
@@ -389,6 +392,7 @@ BEGIN;
 -- default is immediate so this should fail right away
 UPDATE unique_tbl SET i = 1 WHERE i = 0;
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(1) already exists.
 ROLLBACK;
 -- check is done at end of statement, so this should succeed
 UPDATE unique_tbl SET i = i+1;
@@ -446,11 +450,13 @@ BEGIN;
 INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
 COMMIT; -- should fail
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(3) already exists.
 -- make constraint check immediate
 BEGIN;
 SET CONSTRAINTS ALL IMMEDIATE;
 INSERT INTO unique_tbl VALUES (3, 'Three'); -- should fail
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(3) already exists.
 COMMIT;
 -- forced check when SET CONSTRAINTS is called
 BEGIN;
@@ -458,6 +464,7 @@ SET CONSTRAINTS ALL DEFERRED;
 INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
 SET CONSTRAINTS ALL IMMEDIATE; -- should fail
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(3) already exists.
 COMMIT;
 -- test a HOT update that invalidates the conflicting tuple.
 -- the trigger should still fire and catch the violation
@@ -466,6 +473,7 @@ INSERT INTO unique_tbl VALUES (3, 'Three'); -- should succeed for now
 UPDATE unique_tbl SET t = 'THREE' WHERE i = 3 AND t = 'Three';
 COMMIT; -- should fail
 ERROR:  duplicate key value violates unique constraint "unique_tbl_i_key"
+DETAIL:  Key (i)=(3) already exists.
 SELECT * FROM unique_tbl;
  i |   t   
 ---+-------

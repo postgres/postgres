@@ -713,6 +713,7 @@ insert into arr_tbl values ('{1,2}');
 -- failure expected:
 insert into arr_tbl values ('{1,2,3}');
 ERROR:  duplicate key value violates unique constraint "arr_tbl_f1_key"
+DETAIL:  Key (f1)=({1,2,3}) already exists.
 insert into arr_tbl values ('{2,3,4}');
 insert into arr_tbl values ('{1,5,3}');
 insert into arr_tbl values ('{1,2,10}');

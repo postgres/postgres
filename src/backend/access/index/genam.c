@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.74 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.75 2009/08/01 19:59:41 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -24,6 +24,8 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
@@ -128,6 +130,59 @@ IndexScanEnd(IndexScanDesc scan)
 		pfree(scan->keyData);
 
 	pfree(scan);
+}
+
+/*
+ * ReportUniqueViolation -- Report a unique-constraint violation.
+ *
+ * The index entry represented by values[]/isnull[] violates the unique
+ * constraint enforced by this index.  Throw a suitable error.
+ */
+void
+ReportUniqueViolation(Relation indexRelation, Datum *values, bool *isnull)
+{
+	/*
+	 * XXX for the moment we use the index's tupdesc as a guide to the
+	 * datatypes of the values.  This is okay for btree indexes but is in
+	 * fact the wrong thing in general.  This will have to be fixed if we
+	 * are ever to support non-btree unique indexes.
+	 */
+	TupleDesc	tupdesc = RelationGetDescr(indexRelation);
+	char	   *key_names;
+	StringInfoData key_values;
+	int			i;
+
+	key_names = pg_get_indexdef_columns(RelationGetRelid(indexRelation), true);
+
+	/* Get printable versions of the key values */
+	initStringInfo(&key_values);
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		char   *val;
+
+		if (isnull[i])
+			val = "null";
+		else
+		{
+			Oid		foutoid;
+			bool	typisvarlena;
+
+			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+							  &foutoid, &typisvarlena);
+			val = OidOutputFunctionCall(foutoid, values[i]);
+		}
+
+		if (i > 0)
+			appendStringInfoString(&key_values, ", ");
+		appendStringInfoString(&key_values, val);
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_UNIQUE_VIOLATION),
+			 errmsg("duplicate key value violates unique constraint \"%s\"",
+					RelationGetRelationName(indexRelation)),
+			 errdetail("Key (%s)=(%s) already exists.",
+					   key_names, key_values.data)));
 }
 
 
