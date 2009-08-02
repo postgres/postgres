@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.184 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.185 2009/08/02 22:14:52 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -674,12 +674,10 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "CREATE") == 0)
 		matches = completion_matches(text, create_command_generator);
 
-/* DROP, except ALTER (TABLE|DOMAIN|GROUP) sth DROP */
+/* DROP, but watch out for DROP embedded in other commands */
 	/* complete with something you can drop */
 	else if (pg_strcasecmp(prev_wd, "DROP") == 0 &&
-			 pg_strcasecmp(prev3_wd, "TABLE") != 0 &&
-			 pg_strcasecmp(prev3_wd, "DOMAIN") != 0 &&
-			 pg_strcasecmp(prev3_wd, "GROUP") != 0)
+			 pg_strcasecmp(prev2_wd, "DROP") == 0)
 		matches = completion_matches(text, drop_command_generator);
 
 /* ALTER */
@@ -967,12 +965,43 @@ psql_completion(char *text, int start, int end)
 			 (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			  pg_strcasecmp(prev2_wd, "ALTER") == 0))
 	{
-		/* DROP ... does not work well yet */
 		static const char *const list_COLUMNALTER[] =
-		{"TYPE", "SET DEFAULT", "DROP DEFAULT", "SET NOT NULL",
-		"DROP NOT NULL", "SET STATISTICS", "SET STORAGE", NULL};
+		{"TYPE", "SET", "DROP", NULL};
 
 		COMPLETE_WITH_LIST(list_COLUMNALTER);
+	}
+	else if (((pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			   pg_strcasecmp(prev3_wd, "COLUMN") == 0) ||
+			  (pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
+			   pg_strcasecmp(prev3_wd, "ALTER") == 0)) &&
+			 pg_strcasecmp(prev_wd, "SET") == 0)
+	{
+		static const char *const list_COLUMNSET[] =
+		{"DEFAULT", "NOT NULL", "STATISTICS", "STORAGE", NULL};
+
+		COMPLETE_WITH_LIST(list_COLUMNSET);
+	}
+	else if (((pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			   pg_strcasecmp(prev4_wd, "COLUMN") == 0) ||
+			  pg_strcasecmp(prev4_wd, "ALTER") == 0) &&
+			 pg_strcasecmp(prev2_wd, "SET") == 0 &&
+			 pg_strcasecmp(prev_wd, "STATISTICS") == 0)
+	{
+		static const char *const list_COLUMNSETSTATS[] =
+		{"DISTINCT", NULL};
+
+		COMPLETE_WITH_LIST(list_COLUMNSETSTATS);
+	}
+	else if (((pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			   pg_strcasecmp(prev3_wd, "COLUMN") == 0) ||
+			  (pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
+			   pg_strcasecmp(prev3_wd, "ALTER") == 0)) &&
+			 pg_strcasecmp(prev_wd, "DROP") == 0)
+	{
+		static const char *const list_COLUMNDROP[] =
+		{"DEFAULT", "NOT NULL", NULL};
+
+		COMPLETE_WITH_LIST(list_COLUMNDROP);
 	}
 	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev_wd, "CLUSTER") == 0)

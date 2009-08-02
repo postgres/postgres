@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.203 2009/07/29 20:56:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.204 2009/08/02 22:14:51 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -883,6 +883,19 @@
        For scalar data types, <structfield>attstattarget</structfield>
        is both the target number of <quote>most common values</quote>
        to collect, and the target number of histogram bins to create
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>attdistinct</structfield></entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>attdistinct</structfield>, if nonzero, is a user-specified
+       number-of-distinct-values figure to be used instead of estimating the
+       number of distinct values during <command>ANALYZE</>.  Nonzero values
+       have the same meanings as for
+       <link linkend="catalog-pg-statistic"><structname>pg_statistic</></link>.<structfield>stadistinct</>
       </entry>
      </row>
 
@@ -4303,9 +4316,10 @@
       <entry></entry>
       <entry>The number of distinct nonnull data values in the column.
       A value greater than zero is the actual number of distinct values.
-      A value less than zero is the negative of a fraction of the number
-      of rows in the table (for example, a column in which values appear about
-      twice on the average could be represented by <structfield>stadistinct</> = -0.5).
+      A value less than zero is the negative of a multiplier for the number
+      of rows in the table; for example, a column in which values appear about
+      twice on the average could be represented by
+      <structfield>stadistinct</> = -0.5.
       A zero value means the number of distinct values is unknown
       </entry>
      </row>

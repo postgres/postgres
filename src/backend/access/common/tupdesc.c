@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.127 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.128 2009/08/02 22:14:51 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -338,6 +338,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attstattarget != attr2->attstattarget)
 			return false;
+		if (attr1->attdistinct != attr2->attdistinct)
+			return false;
 		if (attr1->attlen != attr2->attlen)
 			return false;
 		if (attr1->attndims != attr2->attndims)
@@ -465,6 +467,7 @@ TupleDescInitEntry(TupleDesc desc,
 		MemSet(NameStr(att->attname), 0, NAMEDATALEN);
 
 	att->attstattarget = -1;
+	att->attdistinct = 0;
 	att->attcacheoff = -1;
 	att->atttypmod = typmod;
 

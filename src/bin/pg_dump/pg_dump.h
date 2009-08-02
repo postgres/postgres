@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.155 2009/07/29 20:56:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.156 2009/08/02 22:14:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,6 +243,7 @@ typedef struct _tableInfo
 	char	  **atttypnames;	/* attribute type names */
 	int		   *atttypmod;		/* type-specific type modifiers */
 	int		   *attstattarget;	/* attribute statistics targets */
+	float4	   *attdistinct;	/* override ndistinct calculation */
 	char	   *attstorage;		/* attribute storage scheme */
 	char	   *typstorage;		/* type storage scheme */
 	bool	   *attisdropped;	/* true if attr is dropped; don't dump it */

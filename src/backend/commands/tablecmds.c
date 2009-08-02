@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.294 2009/07/30 02:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.295 2009/08/02 22:14:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,9 +280,13 @@ static void ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 static void ATExecColumnDefault(Relation rel, const char *colName,
 					Node *newDefault);
 static void ATPrepSetStatistics(Relation rel, const char *colName,
-					Node *flagValue);
+					Node *newValue);
 static void ATExecSetStatistics(Relation rel, const char *colName,
 					Node *newValue);
+static void ATPrepSetDistinct(Relation rel, const char *colName,
+					Node *newValue);
+static void ATExecSetDistinct(Relation rel, const char *colName,
+				 Node *newValue);
 static void ATExecSetStorage(Relation rel, const char *colName,
 				 Node *newValue);
 static void ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
@@ -2399,13 +2403,19 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_ADD_CONSTR;
 			break;
-		case AT_SetStatistics:	/* ALTER COLUMN STATISTICS */
+		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			ATSimpleRecursion(wqueue, rel, cmd, recurse);
 			/* Performs own permission checks */
 			ATPrepSetStatistics(rel, cmd->name, cmd->def);
 			pass = AT_PASS_COL_ATTRS;
 			break;
-		case AT_SetStorage:		/* ALTER COLUMN STORAGE */
+		case AT_SetDistinct:	/* ALTER COLUMN SET STATISTICS DISTINCT */
+			ATSimpleRecursion(wqueue, rel, cmd, recurse);
+			/* Performs own permission checks */
+			ATPrepSetDistinct(rel, cmd->name, cmd->def);
+			pass = AT_PASS_COL_ATTRS;
+			break;
+		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
 			ATSimplePermissions(rel, false);
 			ATSimpleRecursion(wqueue, rel, cmd, recurse);
 			/* No command-specific prep needed */
@@ -2616,10 +2626,13 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
 			ATExecSetNotNull(tab, rel, cmd->name);
 			break;
-		case AT_SetStatistics:	/* ALTER COLUMN STATISTICS */
+		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			ATExecSetStatistics(rel, cmd->name, cmd->def);
 			break;
-		case AT_SetStorage:		/* ALTER COLUMN STORAGE */
+		case AT_SetDistinct:	/* ALTER COLUMN SET STATISTICS DISTINCT */
+			ATExecSetDistinct(rel, cmd->name, cmd->def);
+			break;
+		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
 			ATExecSetStorage(rel, cmd->name, cmd->def);
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
@@ -3620,6 +3633,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	namestrcpy(&(attribute.attname), colDef->colname);
 	attribute.atttypid = typeOid;
 	attribute.attstattarget = (newattnum > 0) ? -1 : 0;
+	attribute.attdistinct = 0;
 	attribute.attlen = tform->typlen;
 	attribute.attcacheoff = -1;
 	attribute.atttypmod = typmod;
@@ -4007,7 +4021,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
  * ALTER TABLE ALTER COLUMN SET STATISTICS
  */
 static void
-ATPrepSetStatistics(Relation rel, const char *colName, Node *flagValue)
+ATPrepSetStatistics(Relation rel, const char *colName, Node *newValue)
 {
 	/*
 	 * We do our own permission checking because (a) we want to allow SET
@@ -4076,6 +4090,94 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue)
 						colName)));
 
 	attrtuple->attstattarget = newtarget;
+
+	simple_heap_update(attrelation, &tuple->t_self, tuple);
+
+	/* keep system catalog indexes current */
+	CatalogUpdateIndexes(attrelation, tuple);
+
+	heap_freetuple(tuple);
+
+	heap_close(attrelation, RowExclusiveLock);
+}
+
+/*
+ * ALTER TABLE ALTER COLUMN SET STATISTICS DISTINCT
+ */
+static void
+ATPrepSetDistinct(Relation rel, const char *colName, Node *newValue)
+{
+	/*
+	 * We do our own permission checking because (a) we want to allow SET
+	 * DISTINCT on indexes (for expressional index columns), and (b) we want
+	 * to allow SET DISTINCT on system catalogs without requiring
+	 * allowSystemTableMods to be turned on.
+	 */
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table or index",
+						RelationGetRelationName(rel))));
+
+	/* Permissions checks */
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+}
+
+static void
+ATExecSetDistinct(Relation rel, const char *colName, Node *newValue)
+{
+	float4		newdistinct;
+	Relation	attrelation;
+	HeapTuple	tuple;
+	Form_pg_attribute attrtuple;
+
+	switch (nodeTag(newValue))
+	{
+		case T_Integer:
+			newdistinct = intVal(newValue);
+			break;
+		case T_Float:
+			newdistinct = floatVal(newValue);
+			break;
+		default:
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(newValue));
+			newdistinct = 0;	/* keep compiler quiet */
+			break;
+	}
+
+	/*
+	 * Limit ndistinct to sane values
+	 */
+	if (newdistinct < -1.0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of distinct values %g is too low",
+						newdistinct)));
+	}
+
+	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
+	attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
+
+	if (attrtuple->attnum <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system column \"%s\"",
+						colName)));
+
+	attrtuple->attdistinct = newdistinct;
 
 	simple_heap_update(attrelation, &tuple->t_self, tuple);
 

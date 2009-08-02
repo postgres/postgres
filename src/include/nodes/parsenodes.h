@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.400 2009/07/30 02:45:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.401 2009/08/02 22:14:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1098,8 +1098,9 @@ typedef enum AlterTableType
 	AT_ColumnDefault,			/* alter column default */
 	AT_DropNotNull,				/* alter column drop not null */
 	AT_SetNotNull,				/* alter column set not null */
-	AT_SetStatistics,			/* alter column statistics */
-	AT_SetStorage,				/* alter column storage */
+	AT_SetStatistics,			/* alter column set statistics */
+	AT_SetDistinct,				/* alter column set statistics distinct */
+	AT_SetStorage,				/* alter column set storage */
 	AT_DropColumn,				/* drop column */
 	AT_DropColumnRecurse,		/* internal to commands/tablecmds.c */
 	AT_AddIndex,				/* add index */

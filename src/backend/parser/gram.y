@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.675 2009/07/30 02:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.676 2009/08/02 22:14:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1603,6 +1603,15 @@ alter_table_cmd:
 					n->subtype = AT_SetStatistics;
 					n->name = $3;
 					n->def = (Node *) makeInteger($6);
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS DISTINCT <NumericOnly> */
+			| ALTER opt_column ColId SET STATISTICS DISTINCT NumericOnly
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetDistinct;
+					n->name = $3;
+					n->def = (Node *) $7;
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.139 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.140 2009/08/02 22:14:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,6 +425,11 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 									 std_fetch_func,
 									 numrows,
 									 totalrows);
+
+			/* If attdistinct is set, override with that value */
+			if (stats->attr->attdistinct != 0)
+				stats->stadistinct = stats->attr->attdistinct;
+
 			MemoryContextResetAndDeleteChildren(col_context);
 		}
 
@@ -679,6 +684,9 @@ compute_index_stats(Relation onerel, double totalrows,
 										 ind_fetch_func,
 										 numindexrows,
 										 totalindexrows);
+				/* If attdistinct is set, override with that value */
+				if (stats->attr->attdistinct != 0)
+					stats->stadistinct = stats->attr->attdistinct;
 				MemoryContextResetAndDeleteChildren(col_context);
 			}
 		}

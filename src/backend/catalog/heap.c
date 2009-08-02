@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.356 2009/07/30 02:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.357 2009/08/02 22:14:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -111,37 +111,37 @@ static List *insert_ordered_unique_oid(List *list, Oid datum);
  */
 
 static FormData_pg_attribute a1 = {
-	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
+	0, {"ctid"}, TIDOID, 0, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
 	false, 'p', 's', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a2 = {
-	0, {"oid"}, OIDOID, 0, sizeof(Oid),
+	0, {"oid"}, OIDOID, 0, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a3 = {
-	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
+	0, {"xmin"}, XIDOID, 0, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a4 = {
-	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
+	0, {"cmin"}, CIDOID, 0, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a5 = {
-	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
+	0, {"xmax"}, XIDOID, 0, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0, {0}
 };
 
 static FormData_pg_attribute a6 = {
-	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
+	0, {"cmax"}, CIDOID, 0, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0, {0}
 };
@@ -153,7 +153,7 @@ static FormData_pg_attribute a6 = {
  * used in SQL.
  */
 static FormData_pg_attribute a7 = {
-	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
+	0, {"tableoid"}, OIDOID, 0, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0, {0}
 };
@@ -501,6 +501,7 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attname - 1] = NameGetDatum(&new_attribute->attname);
 	values[Anum_pg_attribute_atttypid - 1] = ObjectIdGetDatum(new_attribute->atttypid);
 	values[Anum_pg_attribute_attstattarget - 1] = Int32GetDatum(new_attribute->attstattarget);
+	values[Anum_pg_attribute_attdistinct - 1] = Float4GetDatum(new_attribute->attdistinct);
 	values[Anum_pg_attribute_attlen - 1] = Int16GetDatum(new_attribute->attlen);
 	values[Anum_pg_attribute_attnum - 1] = Int16GetDatum(new_attribute->attnum);
 	values[Anum_pg_attribute_attndims - 1] = Int32GetDatum(new_attribute->attndims);
@@ -571,6 +572,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		attr->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
 		attr->attstattarget = -1;
+		attr->attdistinct = 0;
 		attr->attcacheoff = -1;
 
 		InsertPgAttributeTuple(rel, attr, indstate);

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.25 2008/12/13 19:13:44 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.26 2009/08/02 22:14:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -164,6 +164,17 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    the number of table rows sampled to prepare the statistics.  Increasing
    the target causes a proportional increase in the time and space needed
    to do <command>ANALYZE</command>.
+  </para>
+
+  <para>
+   One of the values estimated by <command>ANALYZE</command> is the number of
+   distinct values that appear in each column.  Because only a subset of the
+   rows are examined, this estimate can sometimes be quite inaccurate, even
+   with the largest possible statistics target.  If this inaccuracy leads to
+   bad query plans, a more accurate value can be determined manually and then
+   installed with
+   <command>ALTER TABLE ... ALTER COLUMN ... SET STATISTICS DISTINCT</>
+   (see <xref linkend="sql-altertable" endterm="sql-altertable-title">).
   </para>
  </refsect1>
 
