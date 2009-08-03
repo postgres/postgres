@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.8 2009/05/07 22:01:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.9 2009/08/03 15:18:14 ishii Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -169,6 +169,14 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <entry>
        Number of clients simulated, that is, number of concurrent database
        sessions.  Default is 1.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>-j</literal> <replaceable>threads</></entry>
+      <entry>
+       Number of worker threads. Clients are equally-divided into those
+       threads and executed in it. The number of clients must be a multiple
+       number of threads. Default is 1.
       </entry>
      </row>
      <row>
