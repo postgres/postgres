@@ -815,8 +815,30 @@ SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION')
  t
 (1 row)
 
+-- has_sequence_privilege tests
+\c -
+CREATE SEQUENCE x_seq;
+GRANT USAGE on x_seq to regressuser2;
+SELECT has_sequence_privilege('regressuser1', 'atest1', 'SELECT');
+ERROR:  "atest1" is not a sequence
+SELECT has_sequence_privilege('regressuser1', 'x_seq', 'INSERT');
+ERROR:  unrecognized privilege type: "INSERT"
+SELECT has_sequence_privilege('regressuser1', 'x_seq', 'SELECT');
+ has_sequence_privilege 
+------------------------
+ f
+(1 row)
+
+SET SESSION AUTHORIZATION regressuser2;
+SELECT has_sequence_privilege('x_seq', 'USAGE');
+ has_sequence_privilege 
+------------------------
+ t
+(1 row)
+
 -- clean up
 \c
+drop sequence x_seq;
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
 DROP VIEW atestv1;

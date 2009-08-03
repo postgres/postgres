@@ -469,9 +469,26 @@ SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
 SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
 
 
+-- has_sequence_privilege tests
+\c -
+
+CREATE SEQUENCE x_seq;
+
+GRANT USAGE on x_seq to regressuser2;
+
+SELECT has_sequence_privilege('regressuser1', 'atest1', 'SELECT');
+SELECT has_sequence_privilege('regressuser1', 'x_seq', 'INSERT');
+SELECT has_sequence_privilege('regressuser1', 'x_seq', 'SELECT');
+
+SET SESSION AUTHORIZATION regressuser2;
+
+SELECT has_sequence_privilege('x_seq', 'USAGE');
+
 -- clean up
 
 \c
+
+drop sequence x_seq;
 
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);

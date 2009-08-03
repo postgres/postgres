@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.547 2009/07/29 20:56:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.548 2009/08/03 21:11:39 joe Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2917,6 +2917,19 @@ DATA(insert OID = 1926 (  has_table_privilege		   PGNSP PGUID 12 1 0 0 f f f t f
 DESCR("current user privilege on relation by rel name");
 DATA(insert OID = 1927 (  has_table_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_table_privilege_id _null_ _null_ _null_ ));
 DESCR("current user privilege on relation by rel oid");
+
+DATA(insert OID = 2181 (  has_sequence_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_sequence_privilege_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on sequence by username, seq name");
+DATA(insert OID = 2182 (  has_sequence_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	has_sequence_privilege_name_id _null_ _null_ _null_ ));
+DESCR("user privilege on sequence by username, seq oid");
+DATA(insert OID = 2183 (  has_sequence_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "26 25 25" _null_ _null_ _null_ _null_	has_sequence_privilege_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on sequence by user oid, seq name");
+DATA(insert OID = 2184 (  has_sequence_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 3 0 16 "26 26 25" _null_ _null_ _null_ _null_	has_sequence_privilege_id_id _null_ _null_ _null_ ));
+DESCR("user privilege on sequence by user oid, seq oid");
+DATA(insert OID = 2185 (  has_sequence_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ has_sequence_privilege_name _null_ _null_ _null_ ));
+DESCR("current user privilege on sequence by seq name");
+DATA(insert OID = 2186 (  has_sequence_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_sequence_privilege_id _null_ _null_ _null_ ));
+DESCR("current user privilege on sequence by seq oid");
 
 DATA(insert OID = 3012 (  has_column_privilege		   PGNSP PGUID 12 1 0 0 f f f t f s 4 0 16 "19 25 25 25" _null_ _null_ _null_ _null_	has_column_privilege_name_name_name _null_ _null_ _null_ ));
 DESCR("user privilege on column by username, rel name, col name");

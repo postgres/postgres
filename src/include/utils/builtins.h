@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.336 2009/08/01 19:59:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.337 2009/08/03 21:11:39 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,12 @@ extern Datum has_table_privilege_id_name(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_id_id(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_name(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_sequence_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_sequence_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_sequence_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_sequence_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_sequence_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_sequence_privilege_id(PG_FUNCTION_ARGS);
 extern Datum has_database_privilege_name_name(PG_FUNCTION_ARGS);
 extern Datum has_database_privilege_name_id(PG_FUNCTION_ARGS);
 extern Datum has_database_privilege_id_name(PG_FUNCTION_ARGS);

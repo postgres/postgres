@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.483 2009/07/22 18:07:26 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.484 2009/08/03 21:11:39 joe Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11789,6 +11789,21 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry>does current user have privilege for foreign server</entry>
       </row>
       <row>
+       <entry><literal><function>has_sequence_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>sequence</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for sequence</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_sequence_privilege</function>(<parameter>sequence</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for sequence</entry>
+      </row>
+      <row>
        <entry><literal><function>has_table_privilege</function>(<parameter>user</parameter>,
                                   <parameter>table</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -11862,6 +11877,9 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     <primary>has_server_privilege</primary>
    </indexterm>
    <indexterm>
+    <primary>has_sequence_privilege</primary>
+   </indexterm>
+   <indexterm>
     <primary>has_table_privilege</primary>
    </indexterm>
    <indexterm>
@@ -11898,6 +11916,16 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 SELECT has_table_privilege('myschema.mytable', 'select');
 SELECT has_table_privilege('joe', 'mytable', 'INSERT, SELECT WITH GRANT OPTION');
 </programlisting>
+   </para>
+
+   <para>
+    <function>has_sequence_privilege</function> checks whether a user
+    can access a sequence in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access privilege type must evaluate to one of
+    <literal>USAGE</literal>,
+    <literal>SELECT</literal>, or
+    <literal>UPDATE</literal>.
    </para>
 
    <para>

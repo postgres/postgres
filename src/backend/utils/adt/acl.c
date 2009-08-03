@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.148 2009/06/11 14:49:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.149 2009/08/03 21:11:39 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_class.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "foreign/foreign.h"
@@ -88,6 +89,7 @@ static AclMode convert_any_priv_string(text *priv_type_text,
 
 static Oid	convert_table_name(text *tablename);
 static AclMode convert_table_priv_string(text *priv_type_text);
+static AclMode convert_sequence_priv_string(text *priv_type_text);
 static AttrNumber convert_column_name(Oid tableoid, text *column);
 static AclMode convert_column_priv_string(text *priv_type_text);
 static Oid	convert_database_name(text *databasename);
@@ -1702,6 +1704,216 @@ convert_table_priv_string(text *priv_type_text)
 	};
 
 	return convert_any_priv_string(priv_type_text, table_priv_map);
+}
+
+/*
+ * has_sequence_privilege variants
+ *		These are all named "has_sequence_privilege" at the SQL level.
+ *		They take various combinations of relation name, relation OID,
+ *		user name, user OID, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.  The variants that take a relation OID
+ *		return NULL if the OID doesn't exist.
+ */
+
+/*
+ * has_sequence_privilege_name_name
+ *		Check user privileges on a sequence given
+ *		name username, text sequencename, and text priv name.
+ */
+Datum
+has_sequence_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		rolename = PG_GETARG_NAME(0);
+	text	   *sequencename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			roleid;
+	Oid			sequenceoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleid = get_roleid_checked(NameStr(*rolename));
+	mode = convert_sequence_priv_string(priv_type_text);
+	sequenceoid = convert_table_name(sequencename);
+	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a sequence",
+				text_to_cstring(sequencename))));
+
+	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_sequence_privilege_name
+ *		Check user privileges on a sequence given
+ *		text sequencename and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_sequence_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *sequencename = PG_GETARG_TEXT_P(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	Oid			roleid;
+	Oid			sequenceoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleid = GetUserId();
+	mode = convert_sequence_priv_string(priv_type_text);
+	sequenceoid = convert_table_name(sequencename);
+	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a sequence",
+				text_to_cstring(sequencename))));
+
+	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_sequence_privilege_name_id
+ *		Check user privileges on a sequence given
+ *		name usename, sequence oid, and text priv name.
+ */
+Datum
+has_sequence_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			sequenceoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			roleid;
+	AclMode		mode;
+	AclResult	aclresult;
+	char		relkind;
+
+	roleid = get_roleid_checked(NameStr(*username));
+	mode = convert_sequence_priv_string(priv_type_text);
+	relkind = get_rel_relkind(sequenceoid);
+	if (relkind == '\0')
+		PG_RETURN_NULL();
+	else if (relkind != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a sequence",
+				get_rel_name(sequenceoid))));
+
+	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_sequence_privilege_id
+ *		Check user privileges on a sequence given
+ *		sequence oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_sequence_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			sequenceoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	Oid			roleid;
+	AclMode		mode;
+	AclResult	aclresult;
+	char		relkind;
+
+	roleid = GetUserId();
+	mode = convert_sequence_priv_string(priv_type_text);
+	relkind = get_rel_relkind(sequenceoid);
+	if (relkind == '\0')
+		PG_RETURN_NULL();
+	else if (relkind != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a sequence",
+				get_rel_name(sequenceoid))));
+
+	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_sequence_privilege_id_name
+ *		Check user privileges on a sequence given
+ *		roleid, text sequencename, and text priv name.
+ */
+Datum
+has_sequence_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	text	   *sequencename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			sequenceoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_sequence_priv_string(priv_type_text);
+	sequenceoid = convert_table_name(sequencename);
+	if (get_rel_relkind(sequenceoid) != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a sequence",
+				text_to_cstring(sequencename))));
+
+	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_sequence_privilege_id_id
+ *		Check user privileges on a sequence given
+ *		roleid, sequence oid, and text priv name.
+ */
+Datum
+has_sequence_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	Oid			sequenceoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+	char		relkind;
+
+	mode = convert_sequence_priv_string(priv_type_text);
+	relkind = get_rel_relkind(sequenceoid);
+	if (relkind == '\0')
+		PG_RETURN_NULL();
+	else if (relkind != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a sequence",
+				get_rel_name(sequenceoid))));
+
+	aclresult = pg_class_aclcheck(sequenceoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * convert_sequence_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_sequence_priv_string(text *priv_type_text)
+{
+	static const priv_map sequence_priv_map[] = {
+		{ "USAGE", ACL_USAGE },
+		{ "SELECT", ACL_SELECT },
+		{ "UPDATE", ACL_UPDATE },
+		{ NULL, 0 }
+	};
+
+	return convert_any_priv_string(priv_type_text, sequence_priv_map);
 }
 
 
