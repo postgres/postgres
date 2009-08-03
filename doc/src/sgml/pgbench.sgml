@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.9 2009/08/03 15:18:14 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pgbench.sgml,v 1.10 2009/08/03 18:30:55 tgl Exp $ -->
 
 <sect1 id="pgbench">
  <title>pgbench</title>
@@ -27,13 +27,14 @@ transaction type: TPC-B (sort of)
 scaling factor: 10
 query mode: simple
 number of clients: 10
+number of threads: 1
 number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
 tps = 85.184871 (including connections establishing)
 tps = 85.296346 (excluding connections establishing)
  </programlisting>
 
-  The first five lines report some of the most important parameter
+  The first six lines report some of the most important parameter
   settings.  The next line reports the number of transactions completed
   and intended (the latter being just the product of number of clients
   and number of transactions per client); these will be equal unless the run
@@ -174,9 +175,11 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      <row>
       <entry><literal>-j</literal> <replaceable>threads</></entry>
       <entry>
-       Number of worker threads. Clients are equally-divided into those
-       threads and executed in it. The number of clients must be a multiple
-       number of threads. Default is 1.
+       Number of worker threads within <application>pgbench</application>.
+       Using more than one thread can be helpful on multi-CPU machines.
+       The number of clients must be a multiple of the number of threads,
+       since each thread is given the same number of client sessions to manage.
+       Default is 1.
       </entry>
      </row>
      <row>
@@ -267,7 +270,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <entry><literal>-C</literal></entry>
       <entry>
        Establish a new connection for each transaction, rather than
-       doing it just once per client thread.
+       doing it just once per client session.
        This is useful to measure the connection overhead.
       </entry>
      </row>

@@ -4,7 +4,7 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.89 2009/08/03 15:18:14 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.90 2009/08/03 18:30:55 tgl Exp $
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -71,23 +71,27 @@
 /* Use native win32 threads on Windows */
 typedef struct win32_pthread   *pthread_t;
 typedef int						pthread_attr_t;
+
 static int pthread_create(pthread_t *thread, pthread_attr_t *attr, void * (*start_routine)(void *), void *arg);
 static int pthread_join(pthread_t th, void **thread_return);
 
 #elif defined(ENABLE_THREAD_SAFETY)
-/* Use platform-dependent pthread */
+/* Use platform-dependent pthread capability */
 #include <pthread.h>
 
 #else
+/* Use emulation with fork. Rename pthread identifiers to avoid conflicts */
 
 #include <sys/wait.h>
-/* Use emulation with fork. Rename pthread idendifiers to avoid conflictions */
+
 #define pthread_t				pg_pthread_t
 #define pthread_attr_t			pg_pthread_attr_t
 #define pthread_create			pg_pthread_create
 #define pthread_join			pg_pthread_join
+
 typedef struct fork_pthread	   *pthread_t;
 typedef int						pthread_attr_t;
+
 static int pthread_create(pthread_t *thread, pthread_attr_t *attr, void * (*start_routine)(void *), void *arg);
 static int pthread_join(pthread_t th, void **thread_return);
 
@@ -136,7 +140,7 @@ FILE	   *LOGFILE = NULL;
 
 bool		use_log;			/* log transaction latencies to a file */
 
-int			is_connect;			/* establish connection  for each transaction */
+int			is_connect;			/* establish connection for each transaction */
 
 char	   *pghost = "";
 char	   *pgport = "";
@@ -185,7 +189,7 @@ typedef struct
 {
 	pthread_t		thread;		/* thread handle */
 	CState		   *state;		/* array of CState */
-	int				nstate;		/* length of state */
+	int				nstate;		/* length of state[] */
 	instr_time		start_time;	/* thread start time */
 } TState;
 
@@ -647,20 +651,25 @@ top:
 		 */
 		if (use_log && commands[st->state + 1] == NULL)
 		{
+			instr_time	now;
 			instr_time	diff;
-			double		sec;
-			double		msec;
 			double		usec;
 
-			INSTR_TIME_SET_CURRENT(diff);
+			INSTR_TIME_SET_CURRENT(now);
+			diff = now;
 			INSTR_TIME_SUBTRACT(diff, st->txn_begin);
-			sec = INSTR_TIME_GET_DOUBLE(diff);
-			msec = INSTR_TIME_GET_MILLISEC(diff);
 			usec = (double) INSTR_TIME_GET_MICROSEC(diff);
 
-			fprintf(LOGFILE, "%d %d %.0f %d %.0f %.0f\n",
+#ifndef WIN32
+			/* This is more than we really ought to know about instr_time */
+			fprintf(LOGFILE, "%d %d %.0f %d %ld %ld\n",
 					st->id, st->cnt, usec, st->use_file,
-					sec, usec - sec * 1000.0);
+					(long) now.tv_sec, (long) now.tv_usec);
+#else
+			/* On Windows, instr_time doesn't provide a timestamp anyway */
+			fprintf(LOGFILE, "%d %d %.0f %d 0 0\n",
+					st->id, st->cnt, usec, st->use_file);
+#endif
 		}
 
 		if (commands[st->state]->type == SQL_COMMAND)
@@ -1269,15 +1278,17 @@ process_commands(char *buf)
 			}
 
 			/*
-			 * Split argument into number and unit for "sleep 1ms" or so.
+			 * Split argument into number and unit to allow "sleep 1ms" etc.
 			 * We don't have to terminate the number argument with null
-			 * because it will parsed with atoi, that ignores trailing
+			 * because it will be parsed with atoi, which ignores trailing
 			 * non-digit characters.
 			 */
 			if (my_commands->argv[1][0] != ':')
 			{
 				char	*c = my_commands->argv[1];
-				while (isdigit(*c)) { c++; }
+
+				while (isdigit((unsigned char) *c))
+					c++;
 				if (*c)
 				{
 					my_commands->argv[2] = c;
@@ -1772,7 +1783,7 @@ main(int argc, char **argv)
 
 	if (nclients % nthreads != 0)
 	{
-		fprintf(stderr, "number of clients (%d) must be a multiple number of threads (%d)\n", nclients, nthreads);
+		fprintf(stderr, "number of clients (%d) must be a multiple of number of threads (%d)\n", nclients, nthreads);
 		exit(1);
 	}
 
