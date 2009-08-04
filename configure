@@ -642,8 +642,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 vpath_build
-DOCBOOK2MAN
-SGMLSPL
+OSX
+XSLTPROC
 COLLATEINDEX
 DOCBOOKSTYLE
 have_docbook
@@ -28028,17 +28028,17 @@ fi
 done
 
 fi
-for ac_prog in sgmlspl
+for ac_prog in xsltproc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 { $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_prog_SGMLSPL+set}" = set; then
+if test "${ac_cv_prog_XSLTPROC+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$SGMLSPL"; then
-  ac_cv_prog_SGMLSPL="$SGMLSPL" # Let the user override the test.
+  if test -n "$XSLTPROC"; then
+  ac_cv_prog_XSLTPROC="$XSLTPROC" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -28047,7 +28047,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_SGMLSPL="$ac_prog"
+    ac_cv_prog_XSLTPROC="$ac_prog"
     $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -28057,49 +28057,60 @@ IFS=$as_save_IFS
 
 fi
 fi
-SGMLSPL=$ac_cv_prog_SGMLSPL
-if test -n "$SGMLSPL"; then
-  { $as_echo "$as_me:$LINENO: result: $SGMLSPL" >&5
-$as_echo "$SGMLSPL" >&6; }
+XSLTPROC=$ac_cv_prog_XSLTPROC
+if test -n "$XSLTPROC"; then
+  { $as_echo "$as_me:$LINENO: result: $XSLTPROC" >&5
+$as_echo "$XSLTPROC" >&6; }
 else
   { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
 
-  test -n "$SGMLSPL" && break
+  test -n "$XSLTPROC" && break
 done
 
-{ $as_echo "$as_me:$LINENO: checking for docbook2man" >&5
-$as_echo_n "checking for docbook2man... " >&6; }
-if test "${ac_cv_path_DOCBOOK2MAN+set}" = set; then
+for ac_prog in osx sgml2xml sx
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_OSX+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  if test -z "$DOCBOOK2MAN"; then
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  if test -n "$OSX"; then
+  ac_cv_prog_OSX="$OSX" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
-  for ac_prog in docbook2x-man db2x_docbook2man docbook2man; do
-    ac_path="$as_dir/$ac_prog"
-    { test -f "$ac_path" && $as_test_x "$ac_path"; } || continue
-    if "$ac_path" --version 2>/dev/null | $GREP docbook2x >/dev/null 2>&1; then
-      ac_cv_path_DOCBOOK2MAN=$ac_path
-      break
-    fi
-  done
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_OSX="$ac_prog"
+    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
 done
 IFS=$as_save_IFS
 
+fi
+fi
+OSX=$ac_cv_prog_OSX
+if test -n "$OSX"; then
+  { $as_echo "$as_me:$LINENO: result: $OSX" >&5
+$as_echo "$OSX" >&6; }
 else
-  ac_cv_path_DOCBOOK2MAN=$DOCBOOK2MAN
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
 fi
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_path_DOCBOOK2MAN" >&5
-$as_echo "$ac_cv_path_DOCBOOK2MAN" >&6; }
-DOCBOOK2MAN=$ac_cv_path_DOCBOOK2MAN
 
+
+  test -n "$OSX" && break
+done
 
 
 # Thread testing

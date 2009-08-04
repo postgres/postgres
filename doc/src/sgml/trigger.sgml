@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.57 2009/07/28 02:56:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.58 2009/08/04 22:04:37 petere Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -541,7 +541,7 @@ typedef struct Trigger
   </sect1>
 
   <sect1 id="trigger-example">
-   <title>A Complete Example</title>
+   <title>A Complete Trigger Example</title>
 
    <para>
     Here is a very simple example of a trigger function written in C.

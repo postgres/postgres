@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.119 2009/07/20 18:34:58 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.120 2009/08/04 22:04:37 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -33,17 +33,15 @@ ifndef NSGMLS
 NSGMLS = nsgmls
 endif
 
-ifndef SGMLSPL
-SGMLSPL = sgmlspl
+ifndef OSX
+OSX = osx
 endif
 
-ifndef DOCBOOK2MAN
-DOCBOOK2MAN = docbook2man_is_missing
+ifndef XSLTPROC
+XSLTPROC = xsltproc
 endif
 
-# docbook2man generates man pages from docbook refentry source code.
-D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
-D2MLINKS = $(D2MDIR)/docbook2man-spec_makelinks
+override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
 
 
 GENERATED_SGML = bookindex.sgml version.sgml \
@@ -70,25 +68,14 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 ## Man pages
 ##
 
-.PHONY: html man draft clean
+.PHONY: man
 
-DEFAULTSECTION = l
+man: man-stamp
 
-fix_man_xrefs = $(PERL) -npi -e 's{\[XRef to GUC-([A-Z0-9-]*)\]}{($$l = $$1) =~ tr/A-Z-/a-z_/, $$l}ge || s{\[XRef to [A-Z0-9-]*\]}{in the documentation}g'
-lowercase = tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'
-
-man: postgres.sgml $(ALLSGML)
-	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
-# One more time, to resolve cross-references
-	$(NSGMLS) $(NSGMLS_FLAGS) $(SGMLINCLUDE) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
-	$(fix_man_xrefs) *.1 *.7
-	$(mkinstalldirs) man1 man7
-	$(D2MLINKS) < manpage.links
-	mv *.1 man1/
-	mv *.7 man7/
-	rm *.$(DEFAULTSECTION)
-# manpage.links doesn't handle lowercase, needs fixups
-	cd man7 && for file in `awk '{ print $$2 }' ../manpage.links`; do $(lowercase) <$$file >`echo $$file | $(lowercase)` && rm $$file || exit; done
+man-stamp: stylesheet-man.xsl postgres.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) $^
+	rm man1/SPI* man1/dblink*
+	touch $@
 
 
 ##
@@ -96,6 +83,8 @@ man: postgres.sgml $(ALLSGML)
 ##
 
 all: html
+
+.PHONY: html draft
 
 JADE.html.call = $(JADE) $(JADEFLAGS) $(SPFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t sgml -i output-html
 
@@ -222,17 +211,12 @@ regress_README.html: regress.sgml
 ## XSLT processing
 ##
 
-OSX = osx # (may be called sx or sgml2xml on some systems)
-XSLTPROC = xsltproc
-
 postgres.xml: postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower $< | \
 	  $(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
 	             -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
 	  >$@
 # ' hello Emacs
-
-override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
 
 xslthtml: stylesheet.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
@@ -269,18 +253,6 @@ MAKEINFO = makeinfo
 
 
 ##
-## Experimental man page building through docbook2x
-##
-
-manx: postgres.xml stylesheet-man.xsl
-	$(DOCBOOK2MAN) --solinks -s $(srcdir)/stylesheet-man.xsl --string-param default-manpage-section=$(DEFAULTSECTION)  $<
-	$(mkinstalldirs) man1 man7
-	mv *.1 man1/
-	mv *.7 man7/
-	rm *.$(DEFAULTSECTION)
-
-
-##
 ## Check
 ##
 
@@ -297,7 +269,7 @@ clean distclean maintainer-clean:
 # HTML
 	rm -f *.html html-stamp
 # man
-	rm -rf *.1 *.7 *.$(DEFAULTSECTION) man1 man7 manpage.refs manpage.links manpage.log
+	rm -rf man1 man7 man-stamp
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.fot
 # index

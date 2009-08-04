@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.26 2009/08/02 22:14:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.27 2009/08/04 22:04:37 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -94,7 +94,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
 
   <para>
    In the default <productname>PostgreSQL</productname> configuration,
-   <xref linkend="autovacuum" endterm="autovacuum-title">
+   the autovacuum daemon (see <xref linkend="autovacuum">)
    takes care of automatic analyzing of tables when they are first loaded
    with data, and as they change throughout regular operation.
    When autovacuum is disabled,

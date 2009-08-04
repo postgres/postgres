@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.76 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.77 2009/08/04 22:04:37 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -83,13 +83,14 @@
 
    <variablelist>
     <varlistentry>
-     <term><ulink url="http://www.oasis-open.org/docbook/sgml/">DocBook DTD</ulink></term>
+     <term><ulink url="http://www.oasis-open.org/docbook/">DocBook DTD</ulink></term>
      <listitem>
       <para>
        This is the definition of DocBook itself.  We currently use
-       version 4.2; you cannot use later or earlier versions.  Note
-       that there is also an <acronym>XML</acronym> version of DocBook
-       &mdash; do not use that.
+       version 4.2; you cannot use later or earlier versions.  You
+       need the <acronym>SGML</acronym> variant of the DocBook DTD,
+       but to build man pages you also need the <acronym>XML</acronym>
+       variant of the same version.
       </para>
      </listitem>
     </varlistentry>
@@ -100,6 +101,30 @@
       <para>
        These are required by DocBook but are distributed separately
        because they are maintained by ISO.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><ulink url="http://wiki.docbook.org/topic/DocBookDssslStylesheets">DocBook DSSSL Stylesheets</ulink></term>
+     <listitem>
+      <para>
+       These contain the processing instructions for converting the
+       DocBook sources to other formats, such as
+       <acronym>HTML</acronym>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><ulink url="http://wiki.docbook.org/topic/DocBookXslStylesheets">DocBook XSL Stylesheets</ulink></term>
+     <listitem>
+      <para>
+       This is another stylesheet for converting DocBook to other
+       formats.  We currently use this to produce man pages and
+       optionally HTMLHelp.  You can also use this toolchain to
+       produce HTML or PDF output, but official PostgreSQL releases
+       use the DSSSL stylesheets for that.
       </para>
      </listitem>
     </varlistentry>
@@ -120,32 +145,12 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://wiki.docbook.org/topic/DocBookDssslStylesheets">DocBook DSSSL Stylesheets</ulink></term>
+     <term><ulink url="http://xmlsoft.org/XSLT/">Libxslt</ulink> for <command>xsltproc</command></term>
      <listitem>
       <para>
-       These contain the processing instructions for converting the
-       DocBook sources to other formats, such as
-       <acronym>HTML</acronym>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><ulink url="http://search.cpan.org/dist/SGMLSpm/">SGMLSpm</ulink></term>
-     <listitem>
-      <para>
-       This optional package is used to create man pages.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><ulink url="http://docbook2x.sourceforge.net">DocBook2X</ulink></term>
-     <listitem>
-      <para>
-       This optional package is also used to create man pages.  You
-       want the <literal>docbook2man-sgmlspl</literal> package, not
-       the main <literal>docbook2x</literal> package.
+       This is the processing tool to use with the XSLT stylesheets
+       (like <command>jade</command> is the processing tool for DSSSL
+       stylesheets).
       </para>
      </listitem>
     </varlistentry>
@@ -263,13 +268,8 @@ CATALOG "docbook/4.2/catalog"
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install openjade1.3
-apt-get install docbook
-apt-get install docbook-dsssl
-apt-get install sgmlspl   # for the man pages
+apt-get install docbook docbook-dsssl docbook-xsl openjade xsltproc
 </programlisting>
-    (The plain <literal>openjade</literal> package installs
-    OpenJade 1.4, which seems not to work.)
    </para>
   </sect2>
 
@@ -511,13 +511,15 @@ CATALOG "docbook-dsssl-1.<replaceable>xx</>/catalog"
 checking for onsgmls... onsgmls
 checking for openjade... openjade
 checking for DocBook V4.2... yes
-checking for DocBook stylesheets... /usr/lib/sgml/stylesheets/nwalsh-modular
-checking for sgmlspl... sgmlspl
+checking for DocBook stylesheets... /usr/share/sgml/docbook/stylesheet/dsssl/modular
+checking for collateindex.pl... /usr/bin/collateindex.pl
+checking for xsltproc... xsltproc
+checking for osx... osx
 </computeroutput>
 </screen>
    If neither <filename>onsgmls</filename> nor
-   <filename>nsgmls</filename> were found then you will not see the
-   remaining 4 lines.  <filename>nsgmls</filename> is part of the Jade
+   <filename>nsgmls</filename> were found then some of the following tests
+   will be skipped.  <filename>nsgmls</filename> is part of the Jade
    package.  You can pass the environment variables
    <envar>JADE</envar> and <envar>NSGMLS</envar> to configure to point
    to the programs if they are not found automatically.  If
@@ -583,8 +585,7 @@ gmake postgres.tar.gz
   <title>Manpages</title>
 
   <para>
-   We use the <application>docbook2man-sgmlspl</application> utility
-   from the <productname>DocBook2X</productname> project to
+   We use the DocBook XSL stylesheets to
    convert <productname>DocBook</productname>
    <sgmltag>refentry</sgmltag> pages to *roff output suitable for man
    pages.  The man pages are also distributed as a tar archive,
@@ -592,32 +593,15 @@ gmake postgres.tar.gz
    pages, use the commands:
 <programlisting>
 cd doc/src/sgml
-gmake man D2MDIR=<replaceable>directory</replaceable>
+gmake man
 </programlisting>
-   Use the <varname>D2MDIR</varname> variable to specify the name of
-   the directory where the
-   file <filename>docbook2man-spec.pl</filename> from
-   the <application>docbook2man-sgmlspl</application> package resides.
-   There is no default for that.  Since that package is not available
-   or outdated in many packaging systems, you might want to just
-   download the source code tarball and unpack it.  No building is
-   required.  Then the path is something
-   like <literal>D2MDIR=/home/you/somewhere/docbook2man-sgmlspl-1.0/perl</literal>.
-   You may get warnings like this:
-<screen>
-Warning: unrecognized SDATA '[scaron]': please add definition to docbook2man-spec.pl
-Warning: unrecognized SDATA '[ouml  ]': please add definition to docbook2man-spec.pl
-</screen>
-   which can ignore if (and only if) you are using the latest version
-   of <filename>docbook2man-spec.pl</filename>
-   and you are not seeing any other SDATA warnings besides those.
   </para>
 
   <para>
    To create the man page package for a release, use the following commands:
 <programlisting>
 cd doc/src
-gmake man.tar.gz D2MDIR=<replaceable>directory</replaceable>
+gmake man.tar.gz
 </programlisting>
    which will result in a tar file being generated in the
    <filename>doc/src</filename> directory.

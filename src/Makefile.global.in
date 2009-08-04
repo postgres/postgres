@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.254 2009/06/23 03:46:00 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.255 2009/08/04 22:04:37 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -187,11 +187,6 @@ TCL_SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
 PTHREAD_CFLAGS		= @PTHREAD_CFLAGS@
 PTHREAD_LIBS		= @PTHREAD_LIBS@
 
-have_docbook	= @have_docbook@
-DOCBOOKSTYLE	= @DOCBOOKSTYLE@
-COLLATEINDEX	= @COLLATEINDEX@
-DOCBOOK2MAN	= @DOCBOOK2MAN@
-
 
 ##########################################################################
 #
@@ -298,9 +293,13 @@ STRIP_SHARED_LIB = @STRIP_SHARED_LIB@
 
 # Documentation
 
-JADE	= @JADE@
-NSGMLS	= @NSGMLS@
-SGMLSPL	= @SGMLSPL@
+have_docbook	= @have_docbook@
+COLLATEINDEX	= @COLLATEINDEX@
+DOCBOOKSTYLE	= @DOCBOOKSTYLE@
+JADE			= @JADE@
+NSGMLS			= @NSGMLS@
+OSX				= @OSX@
+XSLTPROC		= @XSLTPROC@
 
 # Code coverage
 
