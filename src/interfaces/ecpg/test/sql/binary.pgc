@@ -33,6 +33,13 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
+  EXEC SQL set bytea_output = escape;
+  if (sqlca.sqlcode)
+    {
+      printf ("set bytea_output error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
   EXEC SQL create table empl
     (idnum integer, name char (20), accs smallint, byte bytea);
   if (sqlca.sqlcode)

@@ -78,8 +78,17 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set bytea_output = escape", ECPGt_EOIT, ECPGt_EORT);}
+#line 36 "binary.pgc"
+
+  if (sqlca.sqlcode)
+    {
+      printf ("set bytea_output error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table empl ( idnum integer , name char ( 20 ) , accs smallint , byte bytea )", ECPGt_EOIT, ECPGt_EORT);}
-#line 37 "binary.pgc"
+#line 44 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -90,7 +99,7 @@ main (void)
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into empl values ( 1 , 'first user' , 320 , $1  )", 
 	ECPGt_char,&(data),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 44 "binary.pgc"
+#line 51 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -99,12 +108,12 @@ main (void)
     }
 
   /* declare C cursor for select name , accs , byte from empl where idnum = $1  */
-#line 51 "binary.pgc"
+#line 58 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 52 "binary.pgc"
+#line 59 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 
 	ECPGt_char,(empl.name),(long)21,(long)1,(21)*sizeof(char), 
@@ -113,7 +122,7 @@ main (void)
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(empl.byte),(long)20,(long)1,(20)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 53 "binary.pgc"
+#line 60 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -125,12 +134,12 @@ main (void)
 
   memset(empl.name, 0, 21L);
   /* declare B binary cursor for select name , accs , byte from empl where idnum = $1  */
-#line 63 "binary.pgc"
+#line 70 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare B binary cursor for select name , accs , byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 64 "binary.pgc"
+#line 71 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch B", ECPGt_EOIT, 
 	ECPGt_char,(empl.name),(long)21,(long)1,(21)*sizeof(char), 
@@ -139,7 +148,7 @@ main (void)
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(empl.byte),(long)20,(long)1,(20)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 65 "binary.pgc"
+#line 72 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -148,7 +157,7 @@ main (void)
     }
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close B", ECPGt_EOIT, ECPGt_EORT);}
-#line 72 "binary.pgc"
+#line 79 "binary.pgc"
 
 
   /* do not print a.accs because big/little endian will have different outputs here */
@@ -158,17 +167,17 @@ main (void)
   printf("\n");
 
   /* declare A binary cursor for select byte from empl where idnum = $1  */
-#line 80 "binary.pgc"
+#line 87 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare A binary cursor for select byte from empl where idnum = $1 ", 
 	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
-#line 81 "binary.pgc"
+#line 88 "binary.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch A", ECPGt_EOIT, 
 	ECPGt_char,&(pointer),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 82 "binary.pgc"
+#line 89 "binary.pgc"
 
   if (sqlca.sqlcode)
     {
@@ -177,7 +186,7 @@ main (void)
     }
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close A", ECPGt_EOIT, ECPGt_EORT);}
-#line 89 "binary.pgc"
+#line 96 "binary.pgc"
 
 
   printf ("pointer=");
@@ -187,7 +196,7 @@ main (void)
   free(pointer);
 
   { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 97 "binary.pgc"
+#line 104 "binary.pgc"
 
   exit (0);
 }
