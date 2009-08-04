@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.114 2009/07/22 02:31:38 joe Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.115 2009/08/04 21:22:46 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 
 #include "access/xact.h"
 #include "fmgr.h"
-#include "miscadmin.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "utils/tuplestore.h"
