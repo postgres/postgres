@@ -1,6 +1,8 @@
 --
 -- DES cipher
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 -- no official test vectors atm
 -- from blowfish.sql
 SELECT encode(encrypt(

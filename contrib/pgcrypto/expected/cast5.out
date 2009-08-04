@@ -1,6 +1,8 @@
 --
 -- Cast5 cipher
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 -- test vectors from RFC2144
 -- 128 bit key
 SELECT encode(encrypt(

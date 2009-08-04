@@ -1,6 +1,8 @@
 --
 -- 3DES cipher
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 
 -- test vector from somewhere
 SELECT encode(encrypt(
