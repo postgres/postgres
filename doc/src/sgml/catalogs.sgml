@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.204 2009/08/02 22:14:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.205 2009/08/04 04:04:11 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3841,7 +3841,7 @@
 
      <row>
       <entry><structfield>probin</structfield></entry>
-      <entry><type>bytea</type></entry>
+      <entry><type>text</type></entry>
       <entry></entry>
       <entry>
        Additional information about how to invoke the function.

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.150 2009/08/02 22:14:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.151 2009/08/04 04:04:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -312,7 +312,7 @@ DATA(insert ( 1247 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
 { 1255, {"proargnames"},	  1009, -1, 0, -1, 20, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
 { 1255, {"proargdefaults"},		25, -1, 0, -1, 21, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
 { 1255, {"prosrc"},				25, -1, 0, -1, 22, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
-{ 1255, {"probin"},				17, -1, 0, -1, 23, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
+{ 1255, {"probin"},				25, -1, 0, -1, 23, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
 { 1255, {"proconfig"},		  1009, -1, 0, -1, 24, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
 { 1255, {"proacl"},			  1034, -1, 0, -1, 25, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
 
@@ -338,7 +338,7 @@ DATA(insert ( 1255 proargmodes	  1002 -1 0 -1 19 1 -1 -1 f x i f f f t 0 _null_)
 DATA(insert ( 1255 proargnames	  1009 -1 0 -1 20 1 -1 -1 f x i f f f t 0 _null_));
 DATA(insert ( 1255 proargdefaults	25 -1 0 -1 21 0 -1 -1 f x i f f f t 0 _null_));
 DATA(insert ( 1255 prosrc			25 -1 0 -1 22 0 -1 -1 f x i f f f t 0 _null_));
-DATA(insert ( 1255 probin			17 -1 0 -1 23 0 -1 -1 f x i f f f t 0 _null_));
+DATA(insert ( 1255 probin			25 -1 0 -1 23 0 -1 -1 f x i f f f t 0 _null_));
 DATA(insert ( 1255 proconfig	  1009 -1 0 -1 24 1 -1 -1 f x i f f f t 0 _null_));
 DATA(insert ( 1255 proacl		  1034 -1 0 -1 25 1 -1 -1 f x i f f f t 0 _null_));
 DATA(insert ( 1255 ctid				27 0 0  6  -1 0 -1 -1 f p s t f f t 0 _null_));
