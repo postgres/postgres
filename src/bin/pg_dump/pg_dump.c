@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.545 2009/08/04 16:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.546 2009/08/04 19:46:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -11111,7 +11111,8 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
 						  fmtId(tginfo->tgfname));
 
-	tgargs = (char *) PQunescapeBytea(tginfo->tgargs, &lentgargs);
+	tgargs = (char *) PQunescapeBytea((unsigned char *) tginfo->tgargs,
+									  &lentgargs);
 	p = tgargs;
 	for (findx = 0; findx < tginfo->tgnargs; findx++)
 	{
