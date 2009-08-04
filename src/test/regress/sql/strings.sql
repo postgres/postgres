@@ -43,6 +43,27 @@ SELECT U&'wrong: +0061' UESCAPE '+';
 
 RESET standard_conforming_strings;
 
+-- bytea
+SET bytea_output TO hex;
+SELECT E'\\xDeAdBeEf'::bytea;
+SELECT E'\\x De Ad Be Ef '::bytea;
+SELECT E'\\xDeAdBeE'::bytea;
+SELECT E'\\xDeAdBeEx'::bytea;
+SELECT E'\\xDe00BeEf'::bytea;
+SELECT E'DeAdBeEf'::bytea;
+SELECT E'De\\000dBeEf'::bytea;
+SELECT E'De\123dBeEf'::bytea;
+SELECT E'De\\123dBeEf'::bytea;
+SELECT E'De\\678dBeEf'::bytea;
+
+SET bytea_output TO escape;
+SELECT E'\\xDeAdBeEf'::bytea;
+SELECT E'\\x De Ad Be Ef '::bytea;
+SELECT E'\\xDe00BeEf'::bytea;
+SELECT E'DeAdBeEf'::bytea;
+SELECT E'De\\000dBeEf'::bytea;
+SELECT E'De\\123dBeEf'::bytea;
+
 --
 -- test conversions between various string types
 -- E021-10 implicit casting among the character data types

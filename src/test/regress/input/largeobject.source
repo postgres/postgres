@@ -2,6 +2,9 @@
 -- Test large object support
 --
 
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
+
 -- Load a file
 CREATE TABLE lotest_stash_values (loid oid, fd integer);
 -- lo_creat(mode integer) returns oid

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.240 2009/07/08 17:21:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.241 2009/08/04 16:08:35 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1177,7 +1177,7 @@ SELECT b, char_length(b) FROM test2;
    <para>
     A binary string is a sequence of octets (or bytes).  Binary
     strings are distinguished from character strings in two
-    ways: First, binary strings specifically allow storing
+    ways.  First, binary strings specifically allow storing
     octets of value zero and other <quote>non-printable</quote>
     octets (usually, octets outside the range 32 to 126).
     Character strings disallow zero octets, and also disallow any
@@ -1191,13 +1191,82 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    When entering <type>bytea</type> values, octets of certain
-    values <emphasis>must</emphasis> be escaped (but all octet
-    values <emphasis>can</emphasis> be escaped) when used as part
-    of a string literal in an <acronym>SQL</acronym> statement. In
+    The <type>bytea</type> type supports two external formats for
+    input and output: <productname>PostgreSQL</productname>'s historical
+    <quote>escape</quote> format, and <quote>hex</quote> format.  Both
+    of these are always accepted on input.  The output format depends
+    on the configuration parameter <xref linkend="guc-bytea-output">;
+    the default is hex.  (Note that the hex format was introduced in
+    <productname>PostgreSQL</productname> 8.5; earlier versions and some
+    tools don't understand it.)
+   </para>
+
+   <para>
+    The <acronym>SQL</acronym> standard defines a different binary
+    string type, called <type>BLOB</type> or <type>BINARY LARGE
+    OBJECT</type>.  The input format is different from
+    <type>bytea</type>, but the provided functions and operators are
+    mostly the same.
+   </para>
+
+  <sect2>
+   <title><type>bytea</> hex format</title>
+
+   <para>
+    The <quote>hex</> format encodes binary data as 2 hexadecimal digits
+    per byte, most significant nibble first.  The entire string is
+    preceded by the sequence <literal>\x</literal> (to distinguish it
+    from the escape format).  In some contexts, the initial backslash may
+    need to be escaped by doubling it, in the same cases in which backslashes
+    have to be doubled in escape format; details appear below.
+    The hexadecimal digits can
+    be either upper or lower case, and whitespace is permitted between
+    digit pairs (but not within a digit pair nor in the starting
+    <literal>\x</literal> sequence).
+    The hex format is compatible with a wide
+    range of external applications and protocols, and it tends to be
+    faster to convert than the escape format, so its use is preferred.
+   </para>
+
+   <para>
+    Example:
+<programlisting>
+SELECT E'\\xDEADBEEF';
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title><type>bytea</> escape format</title>
+
+   <para>
+    The <quote>escape</quote> format is the traditional
+    <productname>PostgreSQL</productname> format for the <type>bytea</type>
+    type.  It
+    takes the approach of representing a binary string as a sequence
+    of ASCII characters, while converting those bytes that cannot be
+    represented as an ASCII character into special escape sequences.
+    If, from the point of view of the application, representing bytes
+    as characters makes sense, then this representation can be
+    convenient.  But in practice it is usually confusing becauses it
+    fuzzes up the distinction between binary strings and character
+    strings, and also the particular escape mechanism that was chosen is
+    somewhat unwieldy.  So this format should probably be avoided
+    for most new applications.
+   </para>
+
+   <para>
+    When entering <type>bytea</type> values in escape format,
+    octets of certain
+    values <emphasis>must</emphasis> be escaped, while all octet
+    values <emphasis>can</emphasis> be escaped.  In
     general, to escape an octet, convert it into its three-digit
     octal value and precede it
-    by two backslashes.  <xref linkend="datatype-binary-sqlesc">
+    by a backslash (or two backslashes, if writing the value as a
+    literal using escape string syntax).
+    Backslash itself (octet value 92) can alternatively be represented by
+    double backslashes.
+    <xref linkend="datatype-binary-sqlesc">
     shows the characters that must be escaped, and gives the alternative
     escape sequences where applicable.
    </para>
@@ -1343,14 +1412,7 @@ SELECT b, char_length(b) FROM test2;
     have to escape line feeds and carriage returns if your interface
     automatically translates these.
    </para>
-
-   <para>
-        The <acronym>SQL</acronym> standard defines a different binary
-        string type, called <type>BLOB</type> or <type>BINARY LARGE
-        OBJECT</type>.  The input format is different from
-        <type>bytea</type>, but the provided functions and operators are
-        mostly the same.
-   </para>
+  </sect2>
  </sect1>
 
 

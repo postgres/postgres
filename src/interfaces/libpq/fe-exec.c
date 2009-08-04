@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.203 2009/06/11 14:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.204 2009/08/04 16:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3167,6 +3167,29 @@ PQescapeBytea(const unsigned char *from, size_t from_length, size_t *to_length)
 }
 
 
+static const int8 hexlookup[128] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+static inline char
+get_hex(char c)
+{
+	int			res = -1;
+
+	if (c > 0 && c < 127)
+		res = hexlookup[(unsigned char) c];
+
+	return (char) res;
+}
+
+
 #define ISFIRSTOCTDIGIT(CH) ((CH) >= '0' && (CH) <= '3')
 #define ISOCTDIGIT(CH) ((CH) >= '0' && (CH) <= '7')
 #define OCTVAL(CH) ((CH) - '0')
@@ -3198,6 +3221,40 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 
 	strtextlen = strlen((const char *) strtext);
 
+	if (strtext[0] == '\\' && strtext[1] == 'x')
+	{
+		const unsigned char *s;
+		unsigned char	*p;
+
+		buflen = (strtextlen - 2)/2;
+		/* Avoid unportable malloc(0) */
+		buffer = (unsigned char *) malloc(buflen > 0 ? buflen : 1);
+		if (buffer == NULL)
+			return NULL;
+
+		s = strtext + 2;
+		p = buffer;
+		while (*s)
+		{
+			char	v1,
+					v2;
+
+			/*
+			 * Bad input is silently ignored.  Note that this includes
+			 * whitespace between hex pairs, which is allowed by byteain.
+			 */
+			v1 = get_hex(*s++);
+			if (!*s || v1 == (char) -1)
+				continue;
+			v2 = get_hex(*s++);
+			if (v2 != (char) -1)
+				*p++ = (v1 << 4) | v2;
+		}
+
+		buflen = p - buffer;
+	}
+	else
+	{
 	/*
 	 * Length of input is max length of output, but add one to avoid
 	 * unportable malloc(0) if input is zero-length.
@@ -3244,6 +3301,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 		}
 	}
 	buflen = j;					/* buflen is the length of the dequoted data */
+	}
 
 	/* Shrink the buffer to be no larger than necessary */
 	/* +1 avoids unportable behavior when buflen==0 */

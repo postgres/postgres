@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.222 2009/07/16 20:55:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.223 2009/08/04 16:08:35 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4056,6 +4056,23 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         that there is not an unreasonably short time between forced
         autovacuums.  For more information see <xref
         linkend="vacuum-for-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-bytea-output" xreflabel="bytea_output">
+      <term><varname>bytea_output</varname> (<type>enum</type>)</term>
+      <indexterm>
+       <primary><varname>bytea_output</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the output format for values of type <type>bytea</type>.
+        Valid values are <literal>hex</literal> (the default)
+        and <literal>escape</literal> (the traditional PostgreSQL
+        format).  See <xref linkend="datatype-binary"> for more
+        information.  The <type>bytea</type> type always
+        accepts both formats on input, regardless of this setting.
        </para>
       </listitem>
      </varlistentry>

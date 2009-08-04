@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.509 2009/07/22 17:00:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.510 2009/08/04 16:08:36 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@
 #include "tcop/tcopprot.h"
 #include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
+#include "utils/bytea.h"
 #include "utils/guc_tables.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
@@ -179,6 +180,12 @@ static char *config_enum_get_options(struct config_enum * record,
  *
  * NOTE! Option values may not contain double quotes!
  */
+
+static const struct config_enum_entry bytea_output_options[] = {
+	{"escape", BYTEA_OUTPUT_ESCAPE, false},
+	{"hex", BYTEA_OUTPUT_HEX, false},
+	{NULL, 0, false}
+};
 
 /*
  * We have different sets for client and server message level options because
@@ -2538,6 +2545,15 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&backslash_quote,
 		BACKSLASH_QUOTE_SAFE_ENCODING, backslash_quote_options, NULL, NULL
+	},
+
+	{
+		{"bytea_output", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the output format for bytea."),
+			NULL
+		},
+		&bytea_output,
+		BYTEA_OUTPUT_HEX, bytea_output_options, NULL, NULL
 	},
 
 	{

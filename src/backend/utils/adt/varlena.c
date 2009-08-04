@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.171 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.172 2009/08/04 16:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,13 @@
 #include "parser/scansup.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
+#include "utils/bytea.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 
+
+/* GUC variable */
+int		bytea_output = BYTEA_OUTPUT_HEX;
 
 typedef struct varlena unknown;
 
@@ -186,10 +190,24 @@ byteain(PG_FUNCTION_ARGS)
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	char	   *tp;
 	char	   *rp;
-	int byte;
+	int			bc;
 	bytea	   *result;
 
-	for (byte = 0, tp = inputText; *tp != '\0'; byte ++)
+	/* Recognize hex input */
+	if (inputText[0] == '\\' && inputText[1] == 'x')
+	{
+		size_t len = strlen(inputText);
+
+		bc = (len - 2)/2 + VARHDRSZ;		/* maximum possible length */
+		result = palloc(bc);
+		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
+		SET_VARSIZE(result, bc + VARHDRSZ);	/* actual length */
+
+		PG_RETURN_BYTEA_P(result);
+	}
+
+	/* Else, it's the traditional escaped style */
+	for (bc = 0, tp = inputText; *tp != '\0'; bc++)
 	{
 		if (tp[0] != '\\')
 			tp++;
@@ -204,7 +222,7 @@ byteain(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * one backslash, not followed by 0 or ### valid octal
+			 * one backslash, not followed by another or ### valid octal
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -212,10 +230,10 @@ byteain(PG_FUNCTION_ARGS)
 		}
 	}
 
-	byte	  +=VARHDRSZ;
+	bc += VARHDRSZ;
 
-	result = (bytea *) palloc(byte);
-	SET_VARSIZE(result, byte);
+	result = (bytea *) palloc(bc);
+	SET_VARSIZE(result, bc);
 
 	tp = inputText;
 	rp = VARDATA(result);
@@ -228,11 +246,11 @@ byteain(PG_FUNCTION_ARGS)
 				 (tp[2] >= '0' && tp[2] <= '7') &&
 				 (tp[3] >= '0' && tp[3] <= '7'))
 		{
-			byte = VAL(tp[1]);
-			byte	 <<=3;
-			byte	  +=VAL(tp[2]);
-			byte	 <<=3;
-			*rp++ = byte +VAL(tp[3]);
+			bc = VAL(tp[1]);
+			bc <<= 3;
+			bc += VAL(tp[2]);
+			bc <<= 3;
+			*rp++ = bc + VAL(tp[3]);
 
 			tp += 4;
 		}
@@ -259,21 +277,30 @@ byteain(PG_FUNCTION_ARGS)
 /*
  *		byteaout		- converts to printable representation of byte array
  *
- *		Non-printable characters are inserted as '\nnn' (octal) and '\' as
- *		'\\'.
- *
- *		NULL vlena should be an error--returning string with NULL for now.
+ *		In the traditional escaped format, non-printable characters are
+ *		printed as '\nnn' (octal) and '\' as '\\'.
  */
 Datum
 byteaout(PG_FUNCTION_ARGS)
 {
 	bytea	   *vlena = PG_GETARG_BYTEA_PP(0);
 	char	   *result;
-	char	   *vp;
 	char	   *rp;
-	int			val;			/* holds unprintable chars */
-	int			i;
+
+	if (bytea_output == BYTEA_OUTPUT_HEX)
+	{
+		/* Print hex format */
+		rp = result = palloc(VARSIZE_ANY_EXHDR(vlena) * 2 + 2 + 1);
+		*rp++ = '\\';
+		*rp++ = 'x';
+		rp += hex_encode(VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena), rp);
+	}
+	else if (bytea_output == BYTEA_OUTPUT_ESCAPE)
+	{
+	/* Print traditional escaped format */
+	char	   *vp;
 	int			len;
+	int			i;
 
 	len = 1;					/* empty string has 1 char */
 	vp = VARDATA_ANY(vlena);
@@ -297,6 +324,8 @@ byteaout(PG_FUNCTION_ARGS)
 		}
 		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
 		{
+			int			val;			/* holds unprintable chars */
+
 			val = *vp;
 			rp[0] = '\\';
 			rp[3] = DIG(val & 07);
@@ -308,6 +337,13 @@ byteaout(PG_FUNCTION_ARGS)
 		}
 		else
 			*rp++ = *vp;
+	}
+	}
+	else
+	{
+		elog(ERROR, "unrecognized bytea_output setting: %d",
+			 bytea_output);
+		rp = result = NULL;		/* keep compiler quiet */
 	}
 	*rp = '\0';
 	PG_RETURN_CSTRING(result);

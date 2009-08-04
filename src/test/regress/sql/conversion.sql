@@ -1,3 +1,6 @@
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
+
 --
 -- create user defined conversion
 --

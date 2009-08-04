@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.544 2009/08/02 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.545 2009/08/04 16:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -11008,6 +11008,8 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	TableInfo  *tbinfo = tginfo->tgtable;
 	PQExpBuffer query;
 	PQExpBuffer delqry;
+	char	   *tgargs;
+	size_t		lentgargs;
 	const char *p;
 	int			findx;
 
@@ -11109,53 +11111,29 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
 						  fmtId(tginfo->tgfname));
 
-	p = tginfo->tgargs;
+	tgargs = (char *) PQunescapeBytea(tginfo->tgargs, &lentgargs);
+	p = tgargs;
 	for (findx = 0; findx < tginfo->tgnargs; findx++)
 	{
-		const char *s = p;
+		/* find the embedded null that terminates this trigger argument */
+		size_t	tlen = strlen(p);
 
-		/* Set 'p' to end of arg string. marked by '\000' */
-		for (;;)
+		if (p + tlen >= tgargs + lentgargs)
 		{
-			p = strchr(p, '\\');
-			if (p == NULL)
-			{
-				write_msg(NULL, "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n",
-						  tginfo->tgargs,
-						  tginfo->dobj.name,
-						  tbinfo->dobj.name);
-				exit_nicely();
-			}
-			p++;
-			if (*p == '\\')		/* is it '\\'? */
-			{
-				p++;
-				continue;
-			}
-			if (p[0] == '0' && p[1] == '0' && p[2] == '0')		/* is it '\000'? */
-				break;
+			/* hm, not found before end of bytea value... */
+			write_msg(NULL, "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n",
+					  tginfo->tgargs,
+					  tginfo->dobj.name,
+					  tbinfo->dobj.name);
+			exit_nicely();
 		}
-		p--;
 
-		appendPQExpBufferChar(query, '\'');
-		while (s < p)
-		{
-			if (*s == '\'')
-				appendPQExpBufferChar(query, '\'');
-
-			/*
-			 * bytea unconditionally doubles backslashes, so we suppress the
-			 * doubling for standard_conforming_strings.
-			 */
-			if (fout->std_strings && *s == '\\' && s[1] == '\\')
-				s++;
-			appendPQExpBufferChar(query, *s++);
-		}
-		appendPQExpBufferChar(query, '\'');
-		appendPQExpBuffer(query,
-						  (findx < tginfo->tgnargs - 1) ? ", " : "");
-		p = p + 4;
+		if (findx > 0)
+			appendPQExpBuffer(query, ", ");
+		appendStringLiteralAH(query, p, fout);
+		p += tlen + 1;
 	}
+	free(tgargs);
 	appendPQExpBuffer(query, ");\n");
 
 	if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
