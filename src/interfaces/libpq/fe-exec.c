@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.204 2009/08/04 16:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.205 2009/08/04 18:05:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3058,114 +3058,9 @@ PQescapeString(char *to, const char *from, size_t length)
 								  static_std_strings);
 }
 
-/*
- *		PQescapeBytea	- converts from binary string to the
- *		minimal encoding necessary to include the string in an SQL
- *		INSERT statement with a bytea type column as the target.
- *
- *		The following transformations are applied
- *		'\0' == ASCII  0 == \000
- *		'\'' == ASCII 39 == ''
- *		'\\' == ASCII 92 == \\
- *		anything < 0x20, or > 0x7e ---> \ooo
- *										(where ooo is an octal expression)
- *		If not std_strings, all backslashes sent to the output are doubled.
- */
-static unsigned char *
-PQescapeByteaInternal(PGconn *conn,
-					  const unsigned char *from, size_t from_length,
-					  size_t *to_length, bool std_strings)
-{
-	const unsigned char *vp;
-	unsigned char *rp;
-	unsigned char *result;
-	size_t		i;
-	size_t		len;
-	size_t		bslash_len = (std_strings ? 1 : 2);
 
-	/*
-	 * empty string has 1 char ('\0')
-	 */
-	len = 1;
-
-	vp = from;
-	for (i = from_length; i > 0; i--, vp++)
-	{
-		if (*vp < 0x20 || *vp > 0x7e)
-			len += bslash_len + 3;
-		else if (*vp == '\'')
-			len += 2;
-		else if (*vp == '\\')
-			len += bslash_len + bslash_len;
-		else
-			len++;
-	}
-
-	*to_length = len;
-	rp = result = (unsigned char *) malloc(len);
-	if (rp == NULL)
-	{
-		if (conn)
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("out of memory\n"));
-		return NULL;
-	}
-
-	vp = from;
-	for (i = from_length; i > 0; i--, vp++)
-	{
-		if (*vp < 0x20 || *vp > 0x7e)
-		{
-			int			val = *vp;
-
-			if (!std_strings)
-				*rp++ = '\\';
-			*rp++ = '\\';
-			*rp++ = (val >> 6) + '0';
-			*rp++ = ((val >> 3) & 07) + '0';
-			*rp++ = (val & 07) + '0';
-		}
-		else if (*vp == '\'')
-		{
-			*rp++ = '\'';
-			*rp++ = '\'';
-		}
-		else if (*vp == '\\')
-		{
-			if (!std_strings)
-			{
-				*rp++ = '\\';
-				*rp++ = '\\';
-			}
-			*rp++ = '\\';
-			*rp++ = '\\';
-		}
-		else
-			*rp++ = *vp;
-	}
-	*rp = '\0';
-
-	return result;
-}
-
-unsigned char *
-PQescapeByteaConn(PGconn *conn,
-				  const unsigned char *from, size_t from_length,
-				  size_t *to_length)
-{
-	if (!conn)
-		return NULL;
-	return PQescapeByteaInternal(conn, from, from_length, to_length,
-								 conn->std_strings);
-}
-
-unsigned char *
-PQescapeBytea(const unsigned char *from, size_t from_length, size_t *to_length)
-{
-	return PQescapeByteaInternal(NULL, from, from_length, to_length,
-								 static_std_strings);
-}
-
+/* HEX encoding support for bytea */
+static const char hextbl[] = "0123456789abcdef";
 
 static const int8 hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -3187,6 +3082,139 @@ get_hex(char c)
 		res = hexlookup[(unsigned char) c];
 
 	return (char) res;
+}
+
+
+/*
+ *		PQescapeBytea	- converts from binary string to the
+ *		minimal encoding necessary to include the string in an SQL
+ *		INSERT statement with a bytea type column as the target.
+ *
+ *		We can use either hex or escape (traditional) encoding.
+ *		In escape mode, the following transformations are applied:
+ *		'\0' == ASCII  0 == \000
+ *		'\'' == ASCII 39 == ''
+ *		'\\' == ASCII 92 == \\
+ *		anything < 0x20, or > 0x7e ---> \ooo
+ *										(where ooo is an octal expression)
+ *
+ *		If not std_strings, all backslashes sent to the output are doubled.
+ */
+static unsigned char *
+PQescapeByteaInternal(PGconn *conn,
+					  const unsigned char *from, size_t from_length,
+					  size_t *to_length, bool std_strings, bool use_hex)
+{
+	const unsigned char *vp;
+	unsigned char *rp;
+	unsigned char *result;
+	size_t		i;
+	size_t		len;
+	size_t		bslash_len = (std_strings ? 1 : 2);
+
+	/*
+	 * empty string has 1 char ('\0')
+	 */
+	len = 1;
+
+	if (use_hex)
+	{
+		len += bslash_len + 1 + 2 * from_length;
+	}
+	else
+	{
+		vp = from;
+		for (i = from_length; i > 0; i--, vp++)
+		{
+			if (*vp < 0x20 || *vp > 0x7e)
+				len += bslash_len + 3;
+			else if (*vp == '\'')
+				len += 2;
+			else if (*vp == '\\')
+				len += bslash_len + bslash_len;
+			else
+				len++;
+		}
+	}
+
+	*to_length = len;
+	rp = result = (unsigned char *) malloc(len);
+	if (rp == NULL)
+	{
+		if (conn)
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("out of memory\n"));
+		return NULL;
+	}
+
+	if (use_hex)
+	{
+		if (!std_strings)
+			*rp++ = '\\';
+		*rp++ = '\\';
+		*rp++ = 'x';
+	}
+
+	vp = from;
+	for (i = from_length; i > 0; i--, vp++)
+	{
+		unsigned char c = *vp;
+
+		if (use_hex)
+		{
+			*rp++ = hextbl[(c >> 4) & 0xF];
+			*rp++ = hextbl[c & 0xF];
+		}
+		else if (c < 0x20 || c > 0x7e)
+		{
+			if (!std_strings)
+				*rp++ = '\\';
+			*rp++ = '\\';
+			*rp++ = (c >> 6) + '0';
+			*rp++ = ((c >> 3) & 07) + '0';
+			*rp++ = (c & 07) + '0';
+		}
+		else if (c == '\'')
+		{
+			*rp++ = '\'';
+			*rp++ = '\'';
+		}
+		else if (c == '\\')
+		{
+			if (!std_strings)
+			{
+				*rp++ = '\\';
+				*rp++ = '\\';
+			}
+			*rp++ = '\\';
+			*rp++ = '\\';
+		}
+		else
+			*rp++ = c;
+	}
+	*rp = '\0';
+
+	return result;
+}
+
+unsigned char *
+PQescapeByteaConn(PGconn *conn,
+				  const unsigned char *from, size_t from_length,
+				  size_t *to_length)
+{
+	if (!conn)
+		return NULL;
+	return PQescapeByteaInternal(conn, from, from_length, to_length,
+								 conn->std_strings,
+								 (conn->sversion >= 80500));
+}
+
+unsigned char *
+PQescapeBytea(const unsigned char *from, size_t from_length, size_t *to_length)
+{
+	return PQescapeByteaInternal(NULL, from, from_length, to_length,
+								 static_std_strings,
+								 false /* can't use hex */ );
 }
 
 
