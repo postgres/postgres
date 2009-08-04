@@ -1,6 +1,8 @@
 --
 -- PGP encrypt
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 
 select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'), 'key');
 

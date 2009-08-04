@@ -1,9 +1,9 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_bit.c,v 1.10 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/btree_gist/btree_bit.c,v 1.11 2009/08/04 18:49:50 tgl Exp $
  */
 #include "btree_gist.h"
 #include "btree_utils_var.h"
-#include "utils/builtins.h"
+#include "utils/bytea.h"
 #include "utils/varbit.h"
 
 

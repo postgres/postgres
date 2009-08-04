@@ -1,6 +1,8 @@
 --
 -- AES / Rijndael-128 cipher
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 
 -- some standard Rijndael testvalues
 SELECT encode(encrypt(

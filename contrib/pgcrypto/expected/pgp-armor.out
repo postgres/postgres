@@ -1,50 +1,52 @@
 --
 -- PGP Armor
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 select armor('');
             armor            
 -----------------------------
  -----BEGIN PGP MESSAGE-----
-                            
- =twTO                      
- -----END PGP MESSAGE-----  
-                            
+ 
+ =twTO
+ -----END PGP MESSAGE-----
+ 
 (1 row)
 
 select armor('test');
             armor            
 -----------------------------
  -----BEGIN PGP MESSAGE-----
-                            
- dGVzdA==                   
- =+G7Q                      
- -----END PGP MESSAGE-----  
-                            
+ 
+ dGVzdA==
+ =+G7Q
+ -----END PGP MESSAGE-----
+ 
 (1 row)
 
 select dearmor(armor(''));
  dearmor 
 ---------
-        
+ 
 (1 row)
 
 select dearmor(armor('zooka'));
  dearmor 
 ---------
- zooka  
+ zooka
 (1 row)
 
 select armor('0123456789abcdef0123456789abcdef0123456789abcdef
 0123456789abcdef0123456789abcdef0123456789abcdef');
                                     armor                                     
 ------------------------------------------------------------------------------
- -----BEGIN PGP MESSAGE-----                                                 
-                                                                             
+ -----BEGIN PGP MESSAGE-----
+ 
  MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmCjAxMjM0NTY3
- ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZg==                    
- =JFw5                                                                       
- -----END PGP MESSAGE-----                                                   
-                                                                             
+ ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZg==
+ =JFw5
+ -----END PGP MESSAGE-----
+ 
 (1 row)
 
 -- lots formatting
@@ -60,7 +62,7 @@ em9va2E=
 -----END PGP MESSAGE-----');
  dearmor 
 ---------
- zooka  
+ zooka
 (1 row)
 
 -- lots messages
@@ -88,7 +90,7 @@ d3Jvbmc=
 ');
  dearmor 
 ---------
- right  
+ right
 (1 row)
 
 -- bad crc

@@ -1,4 +1,6 @@
 set enable_seqscan=off;
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 CREATE TABLE test_bytea (
 	i bytea
 );

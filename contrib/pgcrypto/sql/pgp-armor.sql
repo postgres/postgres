@@ -1,6 +1,8 @@
 --
 -- PGP Armor
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 
 select armor('');
 select armor('test');

@@ -737,18 +737,6 @@ SELECT 'f'::citext::"char" = 'f'::"char" AS t;
  t
 (1 row)
 
-SELECT 'foo'::bytea::citext = 'foo' AS t;
- t 
----
- t
-(1 row)
-
-SELECT 'foo'::citext::bytea = 'foo'::bytea AS t;
- t 
----
- t
-(1 row)
-
 SELECT '100'::money::citext = '$100.00' AS t;
  t 
 ---

@@ -226,9 +226,6 @@ SELECT 'f'::citext::char = 'f'::char AS t;
 SELECT 'f'::"char"::citext = 'f' AS t;
 SELECT 'f'::citext::"char" = 'f'::"char" AS t;
 
-SELECT 'foo'::bytea::citext = 'foo' AS t;
-SELECT 'foo'::citext::bytea = 'foo'::bytea AS t;
-
 SELECT '100'::money::citext = '$100.00' AS t;
 SELECT '100'::citext::money = '100'::money AS t;
 

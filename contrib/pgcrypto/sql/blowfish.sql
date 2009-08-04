@@ -1,6 +1,8 @@
 --
 -- Blowfish cipher
 --
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
 
 -- some standard Blowfish testvalues
 SELECT encode(encrypt(

@@ -12,6 +12,9 @@ SET client_min_messages = warning;
 \set ECHO all
 RESET client_min_messages;
 
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
+
 -- check for encoding fn's
 SELECT encode('foo', 'hex');
 SELECT decode('666f6f', 'hex');
