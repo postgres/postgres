@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.24 2009/03/11 03:33:29 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.25 2009/08/04 21:56:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@ extern void appendStringLiteralConn(PQExpBuffer buf, const char *str,
 						PGconn *conn);
 extern void appendStringLiteralDQ(PQExpBuffer buf, const char *str,
 					  const char *dqprefix);
+extern void appendByteaLiteral(PQExpBuffer buf,
+							   const unsigned char *str, size_t length,
+							   bool std_strings);
 extern int	parse_version(const char *versionString);
 extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
 extern bool buildACLCommands(const char *name, const char *subname,

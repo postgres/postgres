@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.80 2009/07/21 21:46:10 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.81 2009/08/04 21:56:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,6 +341,9 @@ extern bool checkSeek(FILE *fp);
 
 #define appendStringLiteralAHX(buf,str,AH) \
 	appendStringLiteral(buf, str, (AH)->public.encoding, (AH)->public.std_strings)
+
+#define appendByteaLiteralAHX(buf,str,len,AH) \
+	appendByteaLiteral(buf, str, len, (AH)->public.std_strings)
 
 /*
  * Mandatory routines for each supported format

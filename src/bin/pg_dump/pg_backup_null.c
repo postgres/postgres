@@ -17,12 +17,13 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.21 2009/07/21 21:46:10 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.22 2009/08/04 21:56:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pg_backup_archiver.h"
+#include "dumputils.h"
 
 #include <unistd.h>				/* for dup */
 
@@ -101,16 +102,16 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	if (dLen > 0)
 	{
-		unsigned char *str;
-		size_t		len;
+		PQExpBuffer buf = createPQExpBuffer();
 
-		str = PQescapeBytea((const unsigned char *) data, dLen, &len);
-		if (!str)
-			die_horribly(AH, NULL, "out of memory\n");
+		appendByteaLiteralAHX(buf,
+							  (const unsigned char *) data,
+							  dLen,
+							  AH);
 
-		ahprintf(AH, "SELECT pg_catalog.lowrite(0, '%s');\n", str);
+		ahprintf(AH, "SELECT pg_catalog.lowrite(0, %s);\n", buf->data);
 
-		free(str);
+		destroyPQExpBuffer(buf);
 	}
 	return dLen;
 }
