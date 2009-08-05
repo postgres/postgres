@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.18 2009/06/09 17:41:02 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/dblink/dblink.sql.in,v 1.19 2009/08/05 16:11:07 joe Exp $ */
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
@@ -201,4 +201,23 @@ LANGUAGE C STRICT;
 CREATE OR REPLACE FUNCTION dblink_error_message(text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'dblink_error_message'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_get_notify(
+    OUT notify_name TEXT,
+    OUT be_pid INT4,
+    OUT extra TEXT
+) 
+RETURNS setof record
+AS 'MODULE_PATHNAME', 'dblink_get_notify'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_get_notify(
+    conname TEXT,
+    OUT notify_name TEXT,
+    OUT be_pid INT4,
+    OUT extra TEXT
+) 
+RETURNS setof record
+AS 'MODULE_PATHNAME', 'dblink_get_notify'
 LANGUAGE C STRICT;

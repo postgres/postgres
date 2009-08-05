@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.82 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.83 2009/08/05 16:11:07 joe Exp $
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1633,6 +1633,89 @@ dblink_current_query(PG_FUNCTION_ARGS)
 {
 	/* This is now just an alias for the built-in function current_query() */
 	PG_RETURN_DATUM(current_query(fcinfo));
+}
+
+/*
+ * Retrieve async notifications for a connection. 
+ *
+ * Returns an setof record of notifications, or an empty set if none recieved.
+ * Can optionally take a named connection as parameter, but uses the unnamed connection per default.
+ *
+ */
+#define DBLINK_NOTIFY_COLS		3
+
+PG_FUNCTION_INFO_V1(dblink_get_notify);
+Datum
+dblink_get_notify(PG_FUNCTION_ARGS)
+{
+	PGconn			   *conn = NULL;
+	remoteConn		   *rconn = NULL;
+	PGnotify		   *notify;
+	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc			tupdesc;
+	Tuplestorestate	   *tupstore;
+	MemoryContext		per_query_ctx;
+	MemoryContext		oldcontext;
+
+	DBLINK_INIT;
+	if (PG_NARGS() == 1)
+		DBLINK_GET_NAMED_CONN;
+	else
+		conn = pconn->conn;
+
+	/* create the tuplestore */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupdesc = CreateTemplateTupleDesc(DBLINK_NOTIFY_COLS, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "notify_name",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "be_pid",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "extra",
+					   TEXTOID, -1, 0);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	PQconsumeInput(conn);
+	while ((notify = PQnotifies(conn)) != NULL)
+	{
+		Datum		values[DBLINK_NOTIFY_COLS];
+		bool		nulls[DBLINK_NOTIFY_COLS];
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
+
+		if (notify->relname != NULL)
+			values[0] = CStringGetTextDatum(notify->relname);
+		else
+			nulls[0] = true;
+
+		values[1] = Int32GetDatum(notify->be_pid);
+
+		if (notify->extra != NULL)
+			values[2] = CStringGetTextDatum(notify->extra);
+		else
+			nulls[2] = true;
+
+		/* switch to appropriate context while storing the tuple */
+		MemoryContextSwitchTo(per_query_ctx);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		MemoryContextSwitchTo(oldcontext);
+
+		PQfreemem(notify);
+		PQconsumeInput(conn);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }
 
 /*************************************************************

@@ -389,3 +389,20 @@ DROP USER dblink_regression_test;
 DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
 DROP FOREIGN DATA WRAPPER postgresql;
+
+-- test asynchronous notifications
+SELECT dblink_connect('dbname=contrib_regression');
+
+--should return listen
+SELECT dblink_exec('LISTEN regression');
+--should return listen
+SELECT dblink_exec('LISTEN foobar');
+
+SELECT dblink_exec('NOTIFY regression');
+SELECT dblink_exec('NOTIFY foobar');
+
+SELECT notify_name, be_pid = (select t.be_pid from dblink('select pg_backend_pid()') as t(be_pid int)) AS is_self_notify, extra from dblink_get_notify();
+
+SELECT * from dblink_get_notify();
+
+SELECT dblink_disconnect();

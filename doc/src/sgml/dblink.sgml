@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.8 2009/06/18 14:34:36 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dblink.sgml,v 1.9 2009/08/05 16:11:07 joe Exp $ -->
 
 <sect1 id="dblink">
  <title>dblink</title>
@@ -1256,6 +1256,79 @@ SELECT *
 
    <programlisting>
     SELECT dblink_is_busy('dtest1');
+   </programlisting>
+  </refsect1>
+ </refentry>
+
+ <refentry id="CONTRIB-DBLINK-GET-NOTIFY">
+  <refnamediv>
+   <refname>dblink_get_notify</refname>
+   <refpurpose>retrieve async notifications on a connection</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+   <synopsis>
+    dblink_get_notify() returns setof (notify_name text, be_pid int, extra text)
+    dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, extra text)
+   </synopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+   <title>Description</title>
+
+   <para>
+    <function>dblink_get_notify</> retrieves notifications on either 
+    the unnamed connection, or on a named connection if specified.
+    To receive notifications via dblink, <function>LISTEN</> must 
+    first be issued, using <function>dblink_exec</>.
+    For details see <xref linkend="sql-listen"> and <xref linkend="sql-notify">.
+   </para>
+
+  </refsect1>
+
+  <refsect1>
+   <title>Arguments</title>
+
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conname</parameter></term>
+     <listitem>
+      <para>
+       The name of a named connection to get notifications on.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+
+  <refsect1>
+   <title>Return Value</title>
+    <para>Returns setof (notify_name text, be_pid int, extra text), or an empty set if none.</para>
+  </refsect1>
+
+  <refsect1>
+   <title>Example</title>
+
+   <programlisting>
+test=# SELECT dblink_exec('LISTEN virtual');
+ dblink_exec 
+-------------
+ LISTEN
+(1 row)
+
+test=# SELECT * FROM dblink_get_notify();
+ notify_name | be_pid | extra
+-------------+--------+-------
+(0 rows)
+
+test=# NOTIFY virtual;
+NOTIFY
+
+SELECT * FROM dblink_get_notify();
+ notify_name | be_pid | extra
+-------------+--------+-------
+ virtual     |   1229 |
+(1 row)
    </programlisting>
   </refsect1>
  </refentry>
