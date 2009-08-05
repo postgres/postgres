@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.37 2009/06/27 21:06:46 tgl Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.38 2009/08/05 19:31:49 alvherre Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -47,9 +47,9 @@ fix_sqlmansectnum = sed -e '/^\.TH/s/"7"/"$(sqlmansect)"/' \
 			-e 's/\\fR(7)/\\fR($(sqlmansectnum))/g' \
 			-e '1s/^\.so man7/.so man$(sqlmansectnum)/g;1s/^\(\.so.*\)\.7$$/\1.$(sqlmansect)/g'
 
-all: man1/.timestamp man$(sqlmansectnum)/.timestamp
+all: man1/.timestamp man3/.timestamp man$(sqlmansectnum)/.timestamp
 
-man1/.timestamp: man7/.timestamp
+man1/.timestamp man3/.timestamp: man7/.timestamp
 	@echo timestamp >$@
 
 man7/.timestamp: man.tar.gz
@@ -79,7 +79,7 @@ ifdef found_html
 	gzip -d -c $(srcdir)/postgres.tar.gz | ( cd $(DESTDIR)$(htmldir)/html && $(TAR) xf - )
 endif
 ifdef found_man
-	for file in man1/*.1 man$(sqlmansectnum)/*.$(sqlmansect) ; do \
+	for file in man1/*.1 man3/*.3 man$(sqlmansectnum)/*.$(sqlmansect) ; do \
 	  $(INSTALL_DATA) $$file $(DESTDIR)$(mandir)/$$file || exit; \
 	done
 endif
@@ -90,7 +90,7 @@ ifdef found_html
 	$(mkinstalldirs) '$(DESTDIR)$(htmldir)'/html
 endif
 ifdef found_man
-	$(mkinstalldirs) $(addprefix '$(DESTDIR)$(mandir)'/man, 1 $(sqlmansectnum))
+	$(mkinstalldirs) $(addprefix '$(DESTDIR)$(mandir)'/man, 1 3 $(sqlmansectnum))
 endif
 
 
@@ -104,5 +104,5 @@ endif
 
 
 clean distclean maintainer-clean:
-	rm -rf man1/ man7/ man$(sqlmansectnum)/
+	rm -rf man1/ man3/ man7/ man$(sqlmansectnum)/
 	$(MAKE) -C src $@

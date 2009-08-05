@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $PostgreSQL: pgsql/doc/src/Makefile,v 1.35 2008/11/14 10:43:59 petere Exp $
+# $PostgreSQL: pgsql/doc/src/Makefile,v 1.36 2009/08/05 19:31:50 alvherre Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -15,4 +15,4 @@ postgres.tar:
 
 man.tar:
 	$(MAKE) -C sgml man
-	$(TAR) -cf $@ -C sgml man1 man7
+	$(TAR) -cf $@ -C sgml man1 man3 man7
