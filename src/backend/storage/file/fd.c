@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.149 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.150 2009/08/05 18:01:54 heikki Exp $
  *
  * NOTES:
  *
@@ -1317,6 +1317,20 @@ FileTruncate(File file, off_t offset)
 
 	returnCode = ftruncate(VfdCache[file].fd, offset);
 	return returnCode;
+}
+
+/*
+ * Return the pathname associated with an open file.
+ *
+ * The returned string points to an internal buffer, which is valid until
+ * the file is closed.
+ */
+char *
+FilePathName(File file)
+{
+	Assert(FileIsValid(file));
+
+	return VfdCache[file].fileName;
 }
 
 
