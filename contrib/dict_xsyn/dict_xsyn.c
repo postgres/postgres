@@ -6,7 +6,7 @@
  * Copyright (c) 2007-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.c,v 1.6 2009/01/01 17:23:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/dict_xsyn/dict_xsyn.c,v 1.7 2009/08/05 18:06:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,10 @@ typedef struct
 	int			len;
 	Syn		   *syn;
 
+	bool		matchorig;
 	bool		keeporig;
+	bool		matchsynonyms;
+	bool		keepsynonyms;
 } DictSyn;
 
 
@@ -88,7 +91,8 @@ read_dictionary(DictSyn *d, char *filename)
 	{
 		char	   *value;
 		char	   *key;
-		char	   *end = NULL;
+		char	   *pos;
+		char	   *end;
 
 		if (*line == '\0')
 			continue;
@@ -96,26 +100,36 @@ read_dictionary(DictSyn *d, char *filename)
 		value = lowerstr(line);
 		pfree(line);
 
-		key = find_word(value, &end);
-		if (!key)
+		pos = value;
+		while ((key = find_word(pos, &end)) != NULL)
 		{
-			pfree(value);
-			continue;
+			/* Enlarge syn structure if full */
+			if (cur == d->len)
+			{
+				d->len = (d->len > 0) ? 2 * d->len : 16;
+				if (d->syn)
+					d->syn = (Syn *) repalloc(d->syn, sizeof(Syn) * d->len);
+				else
+					d->syn = (Syn *) palloc(sizeof(Syn) * d->len);
+			}
+
+			/* Save first word only if we will match it */
+			if (pos != value || d->matchorig)
+			{
+				d->syn[cur].key = pnstrdup(key, end - key);
+				d->syn[cur].value = pstrdup(value);
+
+				cur++;
+			}
+
+			pos = end;
+
+			/* Don't bother scanning synonyms if we will not match them */
+			if (!d->matchsynonyms)
+				break;
 		}
 
-		if (cur == d->len)
-		{
-			d->len = (d->len > 0) ? 2 * d->len : 16;
-			if (d->syn)
-				d->syn = (Syn *) repalloc(d->syn, sizeof(Syn) * d->len);
-			else
-				d->syn = (Syn *) palloc(sizeof(Syn) * d->len);
-		}
-
-		d->syn[cur].key = pnstrdup(key, end - key);
-		d->syn[cur].value = value;
-
-		cur++;
+		pfree(value);
 	}
 
 	tsearch_readline_end(&trst);
@@ -133,23 +147,40 @@ dxsyn_init(PG_FUNCTION_ARGS)
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictSyn    *d;
 	ListCell   *l;
+	char       *filename = NULL;
 
 	d = (DictSyn *) palloc0(sizeof(DictSyn));
 	d->len = 0;
 	d->syn = NULL;
+	d->matchorig = true;
 	d->keeporig = true;
+	d->matchsynonyms = false;
+	d->keepsynonyms = true;
 
 	foreach(l, dictoptions)
 	{
 		DefElem    *defel = (DefElem *) lfirst(l);
 
-		if (pg_strcasecmp(defel->defname, "KEEPORIG") == 0)
+		if (pg_strcasecmp(defel->defname, "MATCHORIG") == 0)
+		{
+			d->matchorig = defGetBoolean(defel);
+		}
+		else if (pg_strcasecmp(defel->defname, "KEEPORIG") == 0)
 		{
 			d->keeporig = defGetBoolean(defel);
 		}
+		else if (pg_strcasecmp(defel->defname, "MATCHSYNONYMS") == 0)
+		{
+			d->matchsynonyms = defGetBoolean(defel);
+		}
+		else if (pg_strcasecmp(defel->defname, "KEEPSYNONYMS") == 0)
+		{
+			d->keepsynonyms = defGetBoolean(defel);
+		}
 		else if (pg_strcasecmp(defel->defname, "RULES") == 0)
 		{
-			read_dictionary(d, defGetString(defel));
+			/* we can't read the rules before parsing all options! */
+			filename = defGetString(defel);
 		}
 		else
 		{
@@ -159,6 +190,9 @@ dxsyn_init(PG_FUNCTION_ARGS)
 							defel->defname)));
 		}
 	}
+
+	if (filename)
+		read_dictionary(d, filename);
 
 	PG_RETURN_POINTER(d);
 }
@@ -194,41 +228,33 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 
 	/* Parse string of synonyms and return array of words */
 	{
-		char	   *value = pstrdup(found->value);
-		int			value_length = strlen(value);
-		char	   *pos = value;
+		char	   *value = found->value;
+		char	   *syn;
+		char	   *pos;
+		char	   *end;
 		int			nsyns = 0;
-		bool		is_first = true;
 
-		res = palloc(0);
+		res = palloc(sizeof(TSLexeme));
 
-		while (pos < value + value_length)
+		pos = value;
+		while ((syn = find_word(pos, &end)) != NULL)
 		{
-			char	   *end;
-			char	   *syn = find_word(pos, &end);
-
-			if (!syn)
-				break;
-			*end = '\0';
-
 			res = repalloc(res, sizeof(TSLexeme) * (nsyns + 2));
-			res[nsyns].lexeme = NULL;
 
-			/* first word is added to result only if KEEPORIG flag is set */
-			if (d->keeporig || !is_first)
+			/* The first word is output only if keeporig=true */
+			if (pos != value || d->keeporig)
 			{
-				res[nsyns].lexeme = pstrdup(syn);
-				res[nsyns + 1].lexeme = NULL;
-
+				res[nsyns].lexeme = pnstrdup(syn, end - syn);
 				nsyns++;
 			}
 
-			is_first = false;
+			pos = end;
 
-			pos = end + 1;
+			/* Stop if we are not to output the synonyms */
+			if (!d->keepsynonyms)
+				break;
 		}
-
-		pfree(value);
+		res[nsyns].lexeme = NULL;
 	}
 
 	PG_RETURN_POINTER(res);
