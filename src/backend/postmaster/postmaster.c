@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.585 2009/07/24 20:12:42 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.586 2009/08/06 09:50:22 mha Exp $
  *
  * NOTES
  *
@@ -3627,7 +3627,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		 * mess with the half-started process
 		 */
 		if (!TerminateProcess(pi.hProcess, 255))
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg_internal("could not terminate unstarted process: error code %d",
 									 (int) GetLastError())));
 		CloseHandle(pi.hProcess);
@@ -3654,7 +3654,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		 * process and give up.
 		 */
 		if (!TerminateProcess(pi.hProcess, 255))
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg_internal("could not terminate process that failed to reserve memory: error code %d",
 									 (int) GetLastError())));
 		CloseHandle(pi.hProcess);
@@ -3671,7 +3671,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	{
 		if (!TerminateProcess(pi.hProcess, 255))
 		{
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg_internal("could not terminate unstartable process: error code %d",
 									 (int) GetLastError())));
 			CloseHandle(pi.hProcess);
@@ -3680,7 +3680,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		}
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
-		ereport(ERROR,
+		ereport(LOG,
 				(errmsg_internal("could not resume thread of unstarted process: error code %d",
 								 (int) GetLastError())));
 		return -1;
@@ -4430,8 +4430,8 @@ extern int	pgStatSock;
 #define write_inheritable_socket(dest, src, childpid) (*(dest) = (src))
 #define read_inheritable_socket(dest, src) (*(dest) = *(src))
 #else
-static void write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
-static void write_inheritable_socket(InheritableSocket *dest, SOCKET src,
+static bool write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
+static bool write_inheritable_socket(InheritableSocket *dest, SOCKET src,
 						 pid_t childPid);
 static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 #endif
@@ -4448,7 +4448,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 #endif
 {
 	memcpy(&param->port, port, sizeof(Port));
-	write_inheritable_socket(&param->portsocket, port->sock, childPid);
+	if (!write_inheritable_socket(&param->portsocket, port->sock, childPid))
+		return false;
 
 	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
@@ -4469,7 +4470,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->ProcGlobal = ProcGlobal;
 	param->AuxiliaryProcs = AuxiliaryProcs;
 	param->PMSignalState = PMSignalState;
-	write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid);
+	if (!write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid))
+		return false;
 
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
@@ -4479,9 +4481,10 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
-	write_duplicated_handle(&param->initial_signal_pipe,
+	if (!write_duplicated_handle(&param->initial_signal_pipe,
 							pgwin32_create_signal_listener(childPid),
-							childProcess);
+							childProcess))
+		return false;
 #endif
 
 	memcpy(&param->syslogPipe, &syslogPipe, sizeof(syslogPipe));
@@ -4501,7 +4504,7 @@ save_backend_variables(BackendParameters *param, Port *port,
  * Duplicate a handle for usage in a child process, and write the child
  * process instance of the handle to the parameter file.
  */
-static void
+static bool
 write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
 {
 	HANDLE		hChild = INVALID_HANDLE_VALUE;
@@ -4513,11 +4516,15 @@ write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
 						 0,
 						 TRUE,
 						 DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS))
-		ereport(ERROR,
+	{
+		ereport(LOG,
 				(errmsg_internal("could not duplicate handle to be written to backend parameter file: error code %d",
 								 (int) GetLastError())));
+		return false;
+	}
 
 	*dest = hChild;
+	return true;
 }
 
 /*
@@ -4527,7 +4534,7 @@ write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
  * common on Windows (antivirus, firewalls, download managers etc) break
  * straight socket inheritance.
  */
-static void
+static bool
 write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
 {
 	dest->origsocket = src;
@@ -4535,10 +4542,14 @@ write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
 	{
 		/* Actual socket */
 		if (WSADuplicateSocket(src, childpid, &dest->wsainfo) != 0)
-			ereport(ERROR,
+		{
+			ereport(LOG,
 					(errmsg("could not duplicate socket %d for use in backend: error code %d",
 							src, WSAGetLastError())));
+			return false;
+		}
 	}
+	return true;
 }
 
 /*
