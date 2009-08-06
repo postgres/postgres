@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.250 2009/06/11 17:25:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.251 2009/08/06 20:44:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "access/tupconvert.h"
 #include "catalog/pg_type.h"
 #include "commands/typecmds.h"
 #include "executor/execdebug.h"
@@ -2548,13 +2549,6 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	Datum		tupDatum;
 	HeapTupleHeader tuple;
 	HeapTupleData tmptup;
-	AttrNumber *attrMap;
-	Datum	   *invalues;
-	bool	   *inisnull;
-	Datum	   *outvalues;
-	bool	   *outisnull;
-	int			i;
-	int			outnatts;
 
 	tupDatum = ExecEvalExpr(cstate->arg, econtext, isNull, isDone);
 
@@ -2566,110 +2560,51 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 
 	/* Lookup tupdescs if first time through or after rescan */
 	if (cstate->indesc == NULL)
+	{
 		get_cached_rowtype(exprType((Node *) convert->arg), -1,
 						   &cstate->indesc, econtext);
+		cstate->initialized = false;
+	}
 	if (cstate->outdesc == NULL)
+	{
 		get_cached_rowtype(convert->resulttype, -1,
 						   &cstate->outdesc, econtext);
+		cstate->initialized = false;
+	}
 
 	Assert(HeapTupleHeaderGetTypeId(tuple) == cstate->indesc->tdtypeid);
 	Assert(HeapTupleHeaderGetTypMod(tuple) == cstate->indesc->tdtypmod);
 
-	/* if first time through, initialize */
-	if (cstate->attrMap == NULL)
+	/* if first time through, initialize conversion map */
+	if (!cstate->initialized)
 	{
 		MemoryContext old_cxt;
-		int			n;
 
-		/* allocate state in long-lived memory context */
+		/* allocate map in long-lived memory context */
 		old_cxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 		/* prepare map from old to new attribute numbers */
-		n = cstate->outdesc->natts;
-		cstate->attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
-		for (i = 0; i < n; i++)
-		{
-			Form_pg_attribute att = cstate->outdesc->attrs[i];
-			char	   *attname;
-			Oid			atttypid;
-			int32		atttypmod;
-			int			j;
-
-			if (att->attisdropped)
-				continue;		/* attrMap[i] is already 0 */
-			attname = NameStr(att->attname);
-			atttypid = att->atttypid;
-			atttypmod = att->atttypmod;
-			for (j = 0; j < cstate->indesc->natts; j++)
-			{
-				att = cstate->indesc->attrs[j];
-				if (att->attisdropped)
-					continue;
-				if (strcmp(attname, NameStr(att->attname)) == 0)
-				{
-					/* Found it, check type */
-					if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-						elog(ERROR, "attribute \"%s\" of type %s does not match corresponding attribute of type %s",
-							 attname,
-							 format_type_be(cstate->indesc->tdtypeid),
-							 format_type_be(cstate->outdesc->tdtypeid));
-					cstate->attrMap[i] = (AttrNumber) (j + 1);
-					break;
-				}
-			}
-			if (cstate->attrMap[i] == 0)
-				elog(ERROR, "attribute \"%s\" of type %s does not exist",
-					 attname,
-					 format_type_be(cstate->indesc->tdtypeid));
-		}
-		/* preallocate workspace for Datum arrays */
-		n = cstate->indesc->natts + 1;	/* +1 for NULL */
-		cstate->invalues = (Datum *) palloc(n * sizeof(Datum));
-		cstate->inisnull = (bool *) palloc(n * sizeof(bool));
-		n = cstate->outdesc->natts;
-		cstate->outvalues = (Datum *) palloc(n * sizeof(Datum));
-		cstate->outisnull = (bool *) palloc(n * sizeof(bool));
+		cstate->map = convert_tuples_by_name(cstate->indesc,
+											 cstate->outdesc,
+											 gettext_noop("could not convert row type"));
+		cstate->initialized = true;
 
 		MemoryContextSwitchTo(old_cxt);
 	}
 
-	attrMap = cstate->attrMap;
-	invalues = cstate->invalues;
-	inisnull = cstate->inisnull;
-	outvalues = cstate->outvalues;
-	outisnull = cstate->outisnull;
-	outnatts = cstate->outdesc->natts;
+	/*
+	 * No-op if no conversion needed (not clear this can happen here).
+	 */
+	if (cstate->map == NULL)
+		return tupDatum;
 
 	/*
-	 * heap_deform_tuple needs a HeapTuple not a bare HeapTupleHeader.
+	 * do_convert_tuple needs a HeapTuple not a bare HeapTupleHeader.
 	 */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	tmptup.t_data = tuple;
 
-	/*
-	 * Extract all the values of the old tuple, offsetting the arrays so that
-	 * invalues[0] is NULL and invalues[1] is the first source attribute; this
-	 * exactly matches the numbering convention in attrMap.
-	 */
-	heap_deform_tuple(&tmptup, cstate->indesc, invalues + 1, inisnull + 1);
-	invalues[0] = (Datum) 0;
-	inisnull[0] = true;
-
-	/*
-	 * Transpose into proper fields of the new tuple.
-	 */
-	for (i = 0; i < outnatts; i++)
-	{
-		int			j = attrMap[i];
-
-		outvalues[i] = invalues[j];
-		outisnull[i] = inisnull[j];
-	}
-
-	/*
-	 * Now form the new tuple.
-	 */
-	result = heap_form_tuple(cstate->outdesc, outvalues, outisnull);
+	result = do_convert_tuple(&tmptup, cstate->map);
 
 	return HeapTupleGetDatum(result);
 }
