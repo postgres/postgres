@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.586 2009/08/06 09:50:22 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.587 2009/08/07 05:58:55 heikki Exp $
  *
  * NOTES
  *
@@ -2094,6 +2094,7 @@ pmdie(SIGNAL_ARGS)
 			}
 			if (pmState == PM_RUN ||
 				pmState == PM_WAIT_BACKUP ||
+				pmState == PM_WAIT_BACKENDS ||
 				pmState == PM_RECOVERY_CONSISTENT)
 			{
 				ereport(LOG,
