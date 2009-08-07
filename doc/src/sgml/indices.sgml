@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.78 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.79 2009/08/07 20:54:31 alvherre Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -1025,7 +1025,9 @@ SELECT am.amname AS index_method,
      real statistics, some default values are assumed, which are
      almost certain to be inaccurate.  Examining an application's
      index usage without having run <command>ANALYZE</command> is
-     therefore a lost cause.
+     therefore a lost cause. 
+     See <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
+     and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
     </para>
    </listitem>
 

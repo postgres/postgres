@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.129 2009/06/26 22:06:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.130 2009/08/07 20:54:31 alvherre Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -168,10 +168,10 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
    <para>
     After restoring a backup, it is wise to run <xref
     linkend="sql-analyze" endterm="sql-analyze-title"> on each
-    database so the query optimizer has useful statistics. An easy way
-    to do this is to run <command>vacuumdb -a -z</>; this is
-    equivalent to running <command>VACUUM ANALYZE</> on each database
-    manually.  For more advice on how to load large amounts of data
+    database so the query optimizer has useful statistics;
+    see <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
+    and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
+    For more advice on how to load large amounts of data
     into <productname>PostgreSQL</> efficiently, refer to <xref
     linkend="populate">.
    </para>

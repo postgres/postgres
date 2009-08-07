@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.71 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.72 2009/08/07 20:54:31 alvherre Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -974,7 +974,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     table.  With no statistics or obsolete statistics, the planner might
     make poor decisions during query planning, leading to poor
     performance on any tables with inaccurate or nonexistent
-    statistics.
+    statistics.  Note that if the autovacuum daemon is enabled, it might
+    run <command>ANALYZE</command> automatically; see
+    <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
+    and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
    </para>
   </sect2>
 
@@ -1054,7 +1057,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     while loading the data, but don't bother increasing
     <varname>maintenance_work_mem</varname>; rather, you'd do that while
     manually recreating indexes and foreign keys afterwards.
-    And don't forget to <command>ANALYZE</> when you're done.
+    And don't forget to <command>ANALYZE</> when you're done; see
+    <xref linkend="vacuum-for-statistics" endterm="vacuum-for-statistics-title">
+    and <xref linkend="autovacuum" endterm="autovacuum-title"> for more information.
    </para>
   </sect2>
   </sect1>

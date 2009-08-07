@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.81 2009/03/20 09:21:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.82 2009/08/07 20:54:31 alvherre Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -679,7 +679,9 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    Once restored, it is wise to run <command>ANALYZE</> on each
-   restored table so the optimizer has useful statistics.
+   restored table so the optimizer has useful statistics; see
+   <xref linkend="vacuum-for-statistics"> and
+   <xref linkend="autovacuum"> for more information.
   </para>
 
  </refsect1>
