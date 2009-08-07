@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.89 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.90 2009/08/07 15:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,10 @@ static const Oid object_classes[MAX_OCLASS] = {
 	TSConfigRelationId,			/* OCLASS_TSCONFIG */
 	AuthIdRelationId,			/* OCLASS_ROLE */
 	DatabaseRelationId,			/* OCLASS_DATABASE */
-	TableSpaceRelationId		/* OCLASS_TBLSPACE */
+	TableSpaceRelationId,		/* OCLASS_TBLSPACE */
+	ForeignDataWrapperRelationId,	/* OCLASS_FDW */
+	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
+	UserMappingRelationId		/* OCLASS_USER_MAPPING */
 };
 
 
@@ -1115,19 +1118,22 @@ doDeletion(const ObjectAddress *object)
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
-		case OCLASS_USER_MAPPING:
-			RemoveUserMappingById(object->objectId);
+			/*
+			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally
+			 * not handled here
+			 */
+
+		case OCLASS_FDW:
+			RemoveForeignDataWrapperById(object->objectId);
 			break;
 
 		case OCLASS_FOREIGN_SERVER:
 			RemoveForeignServerById(object->objectId);
 			break;
 
-		case OCLASS_FDW:
-			RemoveForeignDataWrapperById(object->objectId);
+		case OCLASS_USER_MAPPING:
+			RemoveUserMappingById(object->objectId);
 			break;
-
-			/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
 
 		default:
 			elog(ERROR, "unrecognized object class: %u",
