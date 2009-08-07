@@ -13,6 +13,7 @@ int main(void)
 {
 	$int i = 14; 
 	$decimal j, m, n;
+	$string c[10];
 
 	ECPGdebug(1, stderr);
 	$whenever sqlerror do dosqlprint();
@@ -20,19 +21,19 @@ int main(void)
 	$connect to REGRESSDB1;
 	if (sqlca.sqlcode != 0) exit(1);
 
-	$create table test(i int primary key, j int);
+	$create table test(i int primary key, j int, c text);
 
 	/* this INSERT works */
 	rsetnull(CDECIMALTYPE, (char *)&j);
-	$insert into test (i, j) values (7, :j);
+	$insert into test (i, j, c) values (7, :j, 'test   ');
 	$commit;
 
 	/* this INSERT should fail because i is a unique column */
-	$insert into test (i, j) values (7, NUMBER);
+	$insert into test (i, j, c) values (7, NUMBER, 'a');
 	printf("INSERT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 	if (sqlca.sqlcode != 0) $rollback;
 
-	$insert into test (i, j) values (:i, 1);
+	$insert into test (i, j, c) values (:i, 1, 'a      ');
 	$commit;
 
 	/* this will fail (more than one row in subquery) */
@@ -51,7 +52,7 @@ int main(void)
 
 	while (1)
 	{
-		$fetch forward c into :i, :j;
+		$fetch forward c into :i, :j, :c;
 		if (sqlca.sqlcode == 100) break;
 		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
 
@@ -62,7 +63,7 @@ int main(void)
 			int a;
 
 			dectoint(&j, &a);
-			printf("%d %d\n", i, a);
+			printf("%d %d \"%s\"\n", i, a, c);
 		}
 	}
 

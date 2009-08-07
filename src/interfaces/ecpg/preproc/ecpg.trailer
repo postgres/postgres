@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.9 2009/06/10 23:11:52 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.10 2009/08/07 10:51:20 meskes Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -213,6 +213,7 @@ char_variable: cvariable
 				{
 					case ECPGt_char:
 					case ECPGt_unsigned_char:
+					case ECPGt_string:
 						$$ = $1;
 						break;
 					case ECPGt_varchar:
@@ -587,6 +588,14 @@ var_type:	simple_type
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
+			else if ((strcmp($1, "string") == 0) && INFORMIX_MODE)
+			{
+				$$.type_enum = ECPGt_string;
+				$$.type_str = make_str("char");
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -849,6 +858,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 
 				case ECPGt_char:
 				case ECPGt_unsigned_char:
+				case ECPGt_string:
 					if (atoi(dimension) == -1)
 					{
 						int i = strlen($5);
@@ -1269,6 +1279,7 @@ ECPGVar: SQL_VAR
 
 					case ECPGt_char:
 					case ECPGt_unsigned_char:
+					case ECPGt_string:
 						if (atoi(dimension) == -1)
 							type = ECPGmake_simple_type($5.type_enum, length, 0);
 						else

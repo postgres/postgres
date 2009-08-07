@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.85 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.86 2009/08/07 10:51:20 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -359,6 +359,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 			{
 				case ECPGt_char:
 				case ECPGt_unsigned_char:
+				case ECPGt_string:
 					if (!var->varcharsize && !var->arrsize)
 					{
 						/* special mode for handling char**foo=0 */
@@ -418,7 +419,7 @@ ecpg_store_result(const PGresult *results, int act_field,
 
 	/* fill the variable with the tuple(s) */
 	if (!var->varcharsize && !var->arrsize &&
-		(var->type == ECPGt_char || var->type == ECPGt_unsigned_char))
+		(var->type == ECPGt_char || var->type == ECPGt_unsigned_char || var->type == ECPGt_string))
 	{
 		/* special mode for handling char**foo=0 */
 
@@ -757,6 +758,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
+			case ECPGt_string:
 				{
 					/* set slen to string length if type is char * */
 					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : (unsigned int) var->varcharsize;

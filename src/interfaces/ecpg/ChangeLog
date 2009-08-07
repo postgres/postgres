@@ -2412,6 +2412,12 @@ Mon, 02 Feb 2009 16:34:53 +0100
 	- Fixed auto allocation for binary data types.
 	- Set pgtypes library version to 3.1.
 	- Set compat library version to 3.1.
-	- Set ecpg library version to 6.2.
+	- Set ecpg library version to 6.1.
 	- Set ecpg version to 4.5.
 
+Fri, 07 Aug 2009 10:41:28 +0200
+
+	- Added STRING datatype for Informix compatibility mode. This work is
+	  based on a patch send in by Böszörményi Zoltán <zb@cybertec.at>.
+	- Set ecpg library version to 6.2.
+	- Set ecpg version to 4.6.

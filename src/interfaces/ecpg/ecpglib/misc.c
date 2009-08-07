@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.49 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.50 2009/08/07 10:51:20 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -295,6 +295,7 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 	{
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
+		case ECPGt_string:
 			*((char *) ptr) = '\0';
 			break;
 		case ECPGt_short:
@@ -361,6 +362,7 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 	{
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
+		case ECPGt_string:
 			if (*((char *) ptr) == '\0')
 				return true;
 			break;

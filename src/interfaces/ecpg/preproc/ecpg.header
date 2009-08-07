@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.7 2009/06/10 23:11:52 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.8 2009/08/07 10:51:20 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -256,12 +256,12 @@ adjust_informix(struct arguments *list)
 		original_var = ptr->variable->name;
 		sprintf(temp, "%d))", ecpg_informix_var);
 
-		if ((ptr->variable->type->type != ECPGt_varchar && ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
+		if ((ptr->variable->type->type != ECPGt_varchar && ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char && ptr->variable->type->type != ECPGt_string) && atoi(ptr->variable->type->size) > 1)
 		{
 			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1"), ptr->variable->type->u.element->lineno), ptr->variable->type->size), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
 		}
-		else if ((ptr->variable->type->type == ECPGt_varchar || ptr->variable->type->type == ECPGt_char || ptr->variable->type->type == ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
+		else if ((ptr->variable->type->type == ECPGt_varchar || ptr->variable->type->type == ECPGt_char || ptr->variable->type->type == ECPGt_unsigned_char || ptr->variable->type->type == ECPGt_string) && atoi(ptr->variable->type->size) > 1)
 		{
 			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
@@ -343,6 +343,8 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	     type_enum == ECPGt_union) &&
 	    initializer == 1)
 		mmerror(PARSE_ERROR, ET_ERROR, "initializer not allowed in type definition");
+	else if (INFORMIX_MODE && strcmp(name, "string") == 0)
+		mmerror(PARSE_ERROR, ET_ERROR, "type name \"string\" is reserved in Informix mode");
 	else
 	{
 		for (ptr = types; ptr != NULL; ptr = ptr->next)
@@ -371,6 +373,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 		if (type_enum != ECPGt_varchar &&
 			type_enum != ECPGt_char &&
 			type_enum != ECPGt_unsigned_char &&
+			type_enum != ECPGt_string &&
 			atoi(this->type->type_index) >= 0)
 			mmerror(PARSE_ERROR, ET_ERROR, "multidimensional arrays for simple data types are not supported");
 
