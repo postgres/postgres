@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.255 2009/08/04 22:04:37 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.256 2009/08/07 20:50:22 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -617,12 +617,22 @@ lcov.info: $(gcda_files)
 %.c.gcov: %.gcda | lcov.info
 	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
 
+coverage: $(gcda_files:.gcda=.c.gcov) lcov.info
+	$(if $(SUBDIRS),for dir in $(SUBDIRS); do $(MAKE) -C $$dir coverage || exit; done)
+
+.PHONY: coverage-html
+coverage-html: coverage
+	rm -rf coverage
+	mkdir coverage
+	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir) `find . -name lcov.info -print`
+
 
 # hook for clean-up
 clean distclean maintainer-clean: clean-coverage
 
 .PHONY: clean-coverage
 clean-coverage:
+	rm -rf coverage
 	rm -f *.gcda *.gcno lcov.info *.gcov *.gcov.out
 
 

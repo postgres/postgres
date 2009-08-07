@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.50 2009/01/15 01:53:49 momjian Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.51 2009/08/07 20:50:21 petere Exp $
 #
 
 subdir =
@@ -20,7 +20,7 @@ install:
 	$(MAKE) -C config $@
 	@echo "PostgreSQL installation complete."
 
-installdirs uninstall:
+installdirs uninstall coverage:
 	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 	$(MAKE) -C config $@
@@ -59,25 +59,6 @@ check installcheck installcheck-parallel:
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
-
-
-##########################################################################
-
-coverage:
-	$(MAKE) -C src/backend $@
-
-.PHONY: coverage-html
-coverage-html: coverage
-	rm -rf coverage
-	mkdir coverage
-	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir)/src `find src/backend -name lcov.info -print`
-
-ifeq ($(enable_coverage),yes)
-clean distclean maintainer-clean: clean-coverage-local
-.PHONY: clean-coverage-local
-clean-coverage-local:
-	rm -rf coverage
-endif
 
 
 ##########################################################################

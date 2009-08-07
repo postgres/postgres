@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.63 2009/04/27 16:27:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.64 2009/08/07 20:50:21 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -476,6 +476,7 @@ gmake coverage-html
 </screen>
     Then point your HTML browser
     to <filename>coverage/index.html</filename>.
+    The <command>gmake</command> commands also work in subdirectories.
    </para>
 
    <para>

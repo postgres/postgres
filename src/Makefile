@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.45 2009/02/24 10:06:32 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.46 2009/08/07 20:50:22 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,6 +72,15 @@ distclean maintainer-clean:
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/thread $@
 	rm -f Makefile.port Makefile.global
+
+coverage:
+	$(MAKE) -C timezone $@
+	$(MAKE) -C backend $@
+	$(MAKE) -C backend/utils/mb/conversion_procs $@
+	$(MAKE) -C backend/snowball $@
+	$(MAKE) -C interfaces $@
+	$(MAKE) -C bin $@
+	$(MAKE) -C pl $@
 
 
 .PHONY: install-local installdirs-local uninstall-local
