@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.58.2.1 2006/11/24 23:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.58.2.2 2009/08/07 20:16:35 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -582,6 +582,9 @@ do_copy(const char *args)
 		success = false;
 		psql_error("\\copy: unexpected response (%d)\n",
 				   PQresultStatus(result));
+		/* if still in COPY IN state, try to get out of it */
+		if (PQresultStatus(result) == PGRES_COPY_IN)
+			PQputCopyEnd(pset.db, _("trying to exit copy mode"));
 		PQclear(result);
 	}
 
