@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.345.2.1 2009/08/07 19:29:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.345.2.2 2009/08/08 16:39:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5951,6 +5951,9 @@ XLogInsertAllowed(void)
 
 /*
  * Make XLogInsertAllowed() return true in the current process only.
+ *
+ * Note: it is allowed to switch LocalXLogInsertAllowed back to -1 later,
+ * and even call LocalSetXLogInsertAllowed() again after that.
  */
 static void
 LocalSetXLogInsertAllowed(void)
