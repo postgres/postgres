@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.77 2009/08/04 22:04:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.78 2009/08/09 22:47:59 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -554,7 +554,8 @@ checking for osx... osx
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>gmake html</userinput>
 </screen>
-    This is also the default target.
+    This is also the default target.  The output appears in the
+    subdirectory <filename>html</filename>.
    </para>
 
    <para>
@@ -565,20 +566,6 @@ checking for osx... osx
 <prompt>doc/src/sgml$ </prompt><userinput>gmake draft</userinput>
 </screen>
    </para>
-
-   <para>
-    To allow for easier handling in the final distribution, the files
-    comprising the HTML documentation can be stored in a tar archive that
-    is unpacked at installation time.  To create the
-    <acronym>HTML</acronym> documentation package, use the commands:
-<programlisting>
-cd doc/src
-gmake postgres.tar.gz
-</programlisting>
-    In the distribution, these archives live in the
-    <filename>doc</filename> directory and are installed by default
-    with <command>gmake install</command>.
-  </para>
  </sect2>
 
  <sect2>
@@ -595,16 +582,6 @@ gmake postgres.tar.gz
 cd doc/src/sgml
 gmake man
 </programlisting>
-  </para>
-
-  <para>
-   To create the man page package for a release, use the following commands:
-<programlisting>
-cd doc/src
-gmake man.tar.gz
-</programlisting>
-   which will result in a tar file being generated in the
-   <filename>doc/src</filename> directory.
   </para>
  </sect2>
 

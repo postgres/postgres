@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.51 2009/08/07 20:50:21 petere Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.52 2009/08/09 22:47:58 petere Exp $
 #
 
 subdir =
@@ -13,6 +13,9 @@ all:
 	$(MAKE) -C src all
 	$(MAKE) -C config all
 	@echo "All of PostgreSQL successfully made. Ready to install."
+
+html man:
+	$(MAKE) -C doc $@
 
 install:
 	$(MAKE) -C doc $@

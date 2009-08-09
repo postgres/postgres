@@ -9,6 +9,7 @@
 
 
 <!-- Parameters -->
+<xsl:param name="base.dir" select="'html'"></xsl:param>
 <xsl:param name="html.stylesheet" select="'stylesheet.css'"></xsl:param>
 <xsl:param name="use.id.as.filename" select="'1'"></xsl:param>
 <xsl:param name="make.valid.html" select="1"></xsl:param>

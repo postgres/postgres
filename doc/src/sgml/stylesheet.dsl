@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.34 2009/07/14 22:16:38 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.35 2009/08/09 22:47:59 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -179,6 +179,9 @@
 (define %gentext-nav-use-ff%    #t)
 (define %body-attr%             '())
 (define ($generate-book-lot-list$) '())
+(define use-output-dir          #t)
+(define %output-dir%            "html")
+(define html-index-filename     "../HTML.index")
 
 
 ;; Only build HTML.index or the actual HTML output, not both.  Saves a
