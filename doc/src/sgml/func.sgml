@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.484 2009/08/03 21:11:39 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.485 2009/08/10 16:10:19 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6239,8 +6239,8 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
        </para>
 
 <screen>
-SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-08');
-<lineannotation>Result: </lineannotation><computeroutput>982384720</computeroutput>
+SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40.12-08');
+<lineannotation>Result: </lineannotation><computeroutput>982384720.12</computeroutput>
 
 SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
 <lineannotation>Result: </lineannotation><computeroutput>442800</computeroutput>
@@ -6250,10 +6250,13 @@ SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
         Here is how you can convert an epoch value back to a time
         stamp:
        </para>
-
 <screen>
-SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720 * INTERVAL '1 second';
+SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720.12 * INTERVAL '1 second';
 </screen>
+       <para>
+        (The <function>to_timestamp</> function encapsulates the above
+        conversion.)
+       </para>
       </listitem>
      </varlistentry>
 
