@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.23 2009/06/11 14:49:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.24 2009/08/10 18:19:06 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -30,7 +30,7 @@
 #define FSYNC_FILENAME	"/var/tmp/test_fsync.out"
 #endif
 
-#define WRITE_SIZE	(16 * 1024)
+#define WRITE_SIZE	(16 * 1024) /* 16k */
 
 void		die(char *str);
 void		print_elapse(struct timeval start_t, struct timeval elapse_t);
@@ -71,6 +71,9 @@ main(int argc, char *argv[])
 
 	buf = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
 
+	/*
+	 *	Simple write
+	 */
 	printf("Simple write timing:\n");
 	/* write only */
 	gettimeofday(&start_t, NULL);
@@ -87,8 +90,11 @@ main(int argc, char *argv[])
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
+	/*
+	 *	Fsync another file descriptor?
+	 */
 	printf("\nCompare fsync times on write() and non-write() descriptor:\n");
-	printf("(If the times are similar, fsync() can sync data written\n on a different descriptor.)\n");
+	printf("If the times are similar, fsync() can sync data written\non a different descriptor.\n");
 
 	/* write, fsync, close */
 	gettimeofday(&start_t, NULL);
@@ -132,6 +138,9 @@ main(int argc, char *argv[])
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
+	/*
+	 *	Compare 1 to 2 writes
+	 */
 	printf("\nCompare one o_sync write to two:\n");
 
 #ifdef OPEN_SYNC_FLAG
@@ -148,7 +157,7 @@ main(int argc, char *argv[])
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
-	/* 2*8k o_sync writes */
+	/* Two 8k o_sync writes */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
@@ -163,14 +172,16 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	printf("\ttwo 8k o_sync writes   ");
 	print_elapse(start_t, elapse_t);
-	printf("\n");
-
-	printf("\nCompare file sync methods with one 8k write:\n");
 #else
 	printf("\t(o_sync unavailable)  ");
 #endif
 	printf("\n");
 
+	/*
+	 *	Compare file sync methods with one 8k write
+	 */
+	printf("\nCompare file sync methods with one 8k write:\n");
+
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC, 0)) == -1)
@@ -183,7 +194,11 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	printf("\topen o_dsync, write    ");
 	print_elapse(start_t, elapse_t);
+#else
+	printf("\t(o_dsync unavailable)  ");
+#endif
 	printf("\n");
+
 #ifdef OPEN_SYNC_FLAG
 	/* open_fsync, write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG, 0)) == -1)
@@ -196,9 +211,8 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	printf("\topen o_sync, write     ");
 	print_elapse(start_t, elapse_t);
-#endif
 #else
-	printf("\t(o_dsync unavailable)  ");
+	printf("\t(o_sync unavailable)  ");
 #endif
 	printf("\n");
 
@@ -235,11 +249,14 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
-	printf("\twrite, fsync,          ");
+	printf("\twrite, fsync           ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
-	printf("\nCompare file sync methods with 2 8k writes:\n");
+	/*
+	 *	Compare file sync methods with two 8k write
+	 */
+	printf("\nCompare file sync methods with two 8k writes:\n");
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
@@ -318,7 +335,7 @@ main(int argc, char *argv[])
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
-	printf("\twrite, fsync,          ");
+	printf("\twrite, fsync           ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
