@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.40 2007/07/21 04:02:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.40.4.1 2009/08/10 22:42:41 alvherre Exp $ -->
 
  <chapter id="geqo">
   <chapterinfo>
@@ -325,7 +325,7 @@
    <itemizedlist>
     <listitem>
      <para>
-      <ulink url="http://www.cs.bham.ac.uk/Mirrors/ftp.de.uu.net/EC/clife/www/location.htm">
+      <ulink url="http://www.aip.de/~ast/EvolCompFAQ/">
       The Hitch-Hiker's Guide to Evolutionary Computation</ulink>, (FAQ for <ulink
       url="news://comp.ai.genetic"></ulink>)
      </para>
