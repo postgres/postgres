@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.45 2009/07/26 23:34:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.46 2009/08/10 05:46:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
+EXPLAIN [ ( { ANALYZE <replaceable class="parameter">boolean</replaceable> | VERBOSE <replaceable class="parameter">boolean</replaceable> | COSTS <replaceable class="parameter">boolean</replaceable> | FORMAT { TEXT | XML | JSON } } [, ...] ) ] <replaceable class="parameter">statement</replaceable>
 EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -109,7 +109,7 @@ ROLLBACK;
     <listitem>
      <para>
       Carry out the command and show the actual run times.  This
-      parameter defaults to <command>FALSE</command>.
+      parameter defaults to <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -118,8 +118,12 @@ ROLLBACK;
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Include the output column list for each node in the plan tree.  This
-      parameter defaults to <command>FALSE</command>.
+      Display additional information regarding the plan.  Specifically, include
+      the output column list for each node in the plan tree, schema-qualify
+      table and function names, always label variables in expressions with
+      their range table alias, and always print the name of each trigger for
+      which statistics are displayed.  This parameter defaults to
+      <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -130,7 +134,19 @@ ROLLBACK;
      <para>
       Include information on the estimated startup and total cost of each
       plan node, as well as the estimated number of rows and the estimated
-      width of each row.  This parameter defaults to <command>TRUE</command>.
+      width of each row.  This parameter defaults to <literal>TRUE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FORMAT</literal></term>
+    <listitem>
+     <para>
+      Specify the output format, which can be TEXT, XML, or JSON.
+      XML or JSON output contains the same information as the text output
+      format, but is easier for programs to parse.  This parameter defaults to
+      <literal>TEXT</literal>.
      </para>
     </listitem>
    </varlistentry>

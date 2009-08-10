@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.40 2009/07/26 23:34:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.41 2009/08/10 05:46:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,16 +15,26 @@
 
 #include "executor/executor.h"
 
+typedef enum ExplainFormat
+{
+	EXPLAIN_FORMAT_TEXT,
+	EXPLAIN_FORMAT_XML,
+	EXPLAIN_FORMAT_JSON
+} ExplainFormat;
+
 typedef struct ExplainState
 {
 	StringInfo	str;			/* output buffer */
 	/* options */
-	bool		verbose;		/* print plan targetlists */
+	bool		verbose;		/* be verbose */
 	bool		analyze;		/* print actual times */
 	bool		costs;			/* print costs */
+	ExplainFormat format;		/* output format */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
+	int			indent;			/* current indentation level */
+	List	   *grouping_stack;	/* format-specific grouping state */
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */
@@ -53,5 +63,7 @@ extern void ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 			   const char *queryString, ParamListInfo params);
 
 extern void ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc);
+
+extern void ExplainSeparatePlans(ExplainState *es);
 
 #endif   /* EXPLAIN_H */

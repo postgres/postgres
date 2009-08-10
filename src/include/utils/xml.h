@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.28 2009/06/11 14:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.29 2009/08/10 05:46:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ extern xmltype *xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);
 extern bool xml_is_document(xmltype *arg);
 extern text *xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg);
+extern char *escape_xml(const char *str);
 
 extern char *map_sql_identifier_to_xml_name(char *ident, bool fully_escaped, bool escape_period);
 extern char *map_xml_name_to_sql_identifier(char *name);

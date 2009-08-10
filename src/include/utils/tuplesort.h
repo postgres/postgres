@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.33 2009/06/11 14:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.34 2009/08/10 05:46:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,10 @@ extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
 
 extern void tuplesort_end(Tuplesortstate *state);
 
-extern char *tuplesort_explain(Tuplesortstate *state);
+extern void tuplesort_get_stats(Tuplesortstate *state,
+								const char **sortMethod,
+								const char **spaceType,
+								long *spaceUsed);
 
 extern int	tuplesort_merge_order(long allowedMem);
 

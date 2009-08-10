@@ -6,7 +6,7 @@
  * Copyright (c) 2008-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.6 2009/07/26 23:34:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/auto_explain/auto_explain.c,v 1.7 2009/08/10 05:46:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,15 @@ PG_MODULE_MAGIC;
 static int	auto_explain_log_min_duration = -1; /* msec or -1 */
 static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
+static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static bool auto_explain_log_nested_statements = false;
+
+static const struct config_enum_entry format_options[] = {
+        {"text", EXPLAIN_FORMAT_TEXT, false},
+        {"xml", EXPLAIN_FORMAT_XML, false},
+        {"json", EXPLAIN_FORMAT_JSON, false},
+        {NULL, 0, false}
+};
 
 /* Current nesting depth of ExecutorRun calls */
 static int	nesting_level = 0;
@@ -79,6 +87,17 @@ _PG_init(void)
 							 NULL,
 							 &auto_explain_log_verbose,
 							 false,
+							 PGC_SUSET,
+							 0,
+							 NULL,
+							 NULL);
+
+	DefineCustomEnumVariable("auto_explain.log_format",
+							 "EXPLAIN format to be used for plan logging.",
+							 NULL,
+							 &auto_explain_log_format,
+							 EXPLAIN_FORMAT_TEXT,
+							 format_options,
 							 PGC_SUSET,
 							 0,
 							 NULL,
@@ -201,6 +220,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			ExplainInitState(&es);
 			es.analyze = (queryDesc->doInstrument && auto_explain_log_analyze);
 			es.verbose = auto_explain_log_verbose;
+			es.format = auto_explain_log_format;
 
 			ExplainPrintPlan(&es, queryDesc);
 

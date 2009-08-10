@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.3 2009/01/02 01:16:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/auto-explain.sgml,v 1.4 2009/08/10 05:46:50 tgl Exp $ -->
 
 <sect1 id="auto-explain">
  <title>auto_explain</title>
@@ -97,6 +97,24 @@ LOAD 'auto_explain';
       <varname>auto_explain.log_verbose</varname> causes <command>EXPLAIN VERBOSE</>
       output, rather than just <command>EXPLAIN</> output, to be printed
       when an execution plan is logged. This parameter is off by default.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>auto_explain.log_format</varname> (<type>enum</type>)
+    </term>
+    <indexterm>
+     <primary><varname>auto_explain.log_format</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_format</varname> selects the
+      <command>EXPLAIN</> output format to be used.
+      The allowed values are <literal>text</literal>, <literal>xml</literal>,
+      and <literal>json</literal>.  The default is text.
       Only superusers can change this setting.
      </para>
     </listitem>

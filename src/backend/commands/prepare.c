@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.98 2009/07/26 23:34:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.99 2009/08/10 05:46:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,9 +685,6 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
 	foreach(p, plan_list)
 	{
 		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
-		bool		is_last_query;
-
-		is_last_query = (lnext(p) == NULL);
 
 		if (IsA(pstmt, PlannedStmt))
 		{
@@ -714,9 +711,9 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
 
 		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
 
-		/* put a blank line between plans */
-		if (!is_last_query)
-			appendStringInfoChar(es->str, '\n');
+		/* Separate plans with an appropriate separator */
+		if (lnext(p) != NULL)
+			ExplainSeparatePlans(es);
 	}
 
 	if (estate)
