@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.16.2.1 2008/04/15 16:23:21 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.16.2.2 2009/08/10 11:48:50 mha Exp $
 #
 use Carp;
 use strict;
@@ -498,6 +498,7 @@ sub WriteConfiguration
 		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;WIN32_STACK_RLIMIT=4194304;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_USE_32BIT_TIME_T$self->{defines}$p->{defs}"
 		StringPooling="$p->{strpool}"
 		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"
+		AdditionalOptions="/MP"
 EOF
     print $f <<EOF;
 		AssemblerOutput="0" AssemblerListingLocation=".\\$cfgname\\$self->{name}\\" ObjectFile=".\\$cfgname\\$self->{name}\\"
