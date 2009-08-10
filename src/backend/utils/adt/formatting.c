@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.159 2009/07/06 19:11:39 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.160 2009/08/10 18:29:26 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2009, PostgreSQL Global Development Group
@@ -335,6 +335,7 @@ typedef struct
 #define NUM_F_MULTI			(1 << 11)
 #define NUM_F_PLUS_POST		(1 << 12)
 #define NUM_F_MINUS_POST	(1 << 13)
+#define NUM_F_EEEE			(1 << 14)
 
 #define NUM_LSIGN_PRE	(-1)
 #define NUM_LSIGN_POST	1
@@ -355,6 +356,7 @@ typedef struct
 #define IS_PLUS(_f) ((_f)->flag & NUM_F_PLUS)
 #define IS_ROMAN(_f)	((_f)->flag & NUM_F_ROMAN)
 #define IS_MULTI(_f)	((_f)->flag & NUM_F_MULTI)
+#define IS_EEEE(_f)		((_f)->flag & NUM_F_EEEE)
 
 /* ----------
  * Format picture cache
@@ -821,7 +823,7 @@ static const KeyWord NUM_keywords[] = {
 	{"B", 1, NUM_B},			/* B */
 	{"C", 1, NUM_C},			/* C */
 	{"D", 1, NUM_D},			/* D */
-	{"E", 1, NUM_E},			/* E */
+	{"EEEE", 4, NUM_E},			/* E */
 	{"FM", 2, NUM_FM},			/* F */
 	{"G", 1, NUM_G},			/* G */
 	{"L", 1, NUM_L},			/* L */
@@ -837,7 +839,7 @@ static const KeyWord NUM_keywords[] = {
 	{"b", 1, NUM_B},			/* b */
 	{"c", 1, NUM_C},			/* c */
 	{"d", 1, NUM_D},			/* d */
-	{"e", 1, NUM_E},			/* e */
+	{"eeee", 4, NUM_E},			/* e */
 	{"fm", 2, NUM_FM},			/* f */
 	{"g", 1, NUM_G},			/* g */
 	{"l", 1, NUM_L},			/* l */
@@ -1044,6 +1046,14 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 	if (n->type != NODE_TYPE_ACTION)
 		return;
 
+	if (IS_EEEE(num) && n->key->id != NUM_E)
+	{
+		NUM_cache_remove(last_NUMCacheEntry);
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("\"EEEE\" must be the last pattern used")));
+	}
+
 	switch (n->key->id)
 	{
 		case NUM_9:
@@ -1217,10 +1227,25 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			break;
 
 		case NUM_E:
-			NUM_cache_remove(last_NUMCacheEntry);
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"E\" is not supported")));
+			if (IS_EEEE(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"EEEE\" twice")));
+			}
+			if (IS_BLANK(num) || IS_FILLMODE(num) || IS_LSIGN(num) ||
+				IS_BRACKET(num) || IS_MINUS(num) || IS_PLUS(num) ||
+				IS_ROMAN(num) || IS_MULTI(num))
+			{
+				NUM_cache_remove(last_NUMCacheEntry);
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("\"EEEE\" is incompatible with other formats"),
+						 errdetail("\"EEEE\" may only be used together with digit and decimal point patterns.")));
+			}
+			num->flag |= NUM_F_EEEE;
+			break;
 	}
 
 	return;
@@ -4145,6 +4170,15 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	if (Np->Num->zero_start)
 		--Np->Num->zero_start;
 
+	if (IS_EEEE(Np->Num))
+	{
+		if (!Np->is_to_char)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"EEEE\" not supported for input")));
+		return strcpy(inout, number);
+	}
+
 	/*
 	 * Roman correction
 	 */
@@ -4153,7 +4187,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		if (!Np->is_to_char)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"RN\" not supported")));
+					 errmsg("\"RN\" not supported for input")));
 
 		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->post =
 			Np->Num->pre = Np->num_pre = Np->sign = 0;
@@ -4240,7 +4274,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output,
-		 "\n\tSIGN: '%c'\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s\n\tBRACKET: %s\n\tPLUS: %s\n\tMINUS: %s\n\tFILLMODE: %s\n\tROMAN: %s",
+		 "\n\tSIGN: '%c'\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s\n\tBRACKET: %s\n\tPLUS: %s\n\tMINUS: %s\n\tFILLMODE: %s\n\tROMAN: %s\n\tEEEE: %s",
 		 Np->sign,
 		 Np->number,
 		 Np->Num->pre,
@@ -4256,7 +4290,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		 IS_PLUS(Np->Num) ? "Yes" : "No",
 		 IS_MINUS(Np->Num) ? "Yes" : "No",
 		 IS_FILLMODE(Np->Num) ? "Yes" : "No",
-		 IS_ROMAN(Np->Num) ? "Yes" : "No"
+		 IS_ROMAN(Np->Num) ? "Yes" : "No",
+		 IS_EEEE(Np->Num) ? "Yes" : "No"
 		);
 #endif
 
@@ -4626,6 +4661,39 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
 													   NumericGetDatum(x))));
 	}
+	else if (IS_EEEE(&Num))
+	{
+		orgnum = numeric_out_sci(value, Num.post);
+
+		/*
+		 * numeric_out_sci() does not emit a sign for positive numbers.  We
+		 * need to add a space in this case so that positive and negative
+		 * numbers are aligned.  We also have to do the right thing for NaN.
+		 */
+		if (strcmp(orgnum, "NaN") == 0)
+		{
+			/*
+			 * Allow 6 characters for the leading sign, the decimal point, "e",
+			 * the exponent's sign and two exponent digits.
+			 */
+			numstr = (char *) palloc(Num.pre + Num.post + 7);
+			fill_str(numstr, '#', Num.pre + Num.post + 6);
+			*numstr = ' ';
+			*(numstr + Num.pre + 1) = '.';
+		}
+		else if (*orgnum != '-')
+		{
+			numstr = (char *) palloc(strlen(orgnum) + 2);
+			*numstr = ' ';
+			strcpy(numstr + 1, orgnum);
+			len = strlen(numstr);
+		}
+		else
+		{
+			numstr = orgnum;
+			len = strlen(orgnum);
+		}
+	}
 	else
 	{
 		Numeric		val = value;
@@ -4707,6 +4775,23 @@ int4_to_char(PG_FUNCTION_ARGS)
 	 */
 	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman(value);
+	else if (IS_EEEE(&Num))
+	{
+		/* we can do it easily because float8 won't lose any precision */
+		float8	val = (float8) value;
+
+		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
+		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, val);
+
+		/*
+		 * Swap a leading positive sign for a space.
+		 */
+		if (*orgnum == '+')
+			*orgnum = ' ';
+
+		len = strlen(orgnum);
+		numstr = orgnum;
+	}
 	else
 	{
 		if (IS_MULTI(&Num))
@@ -4785,6 +4870,33 @@ int8_to_char(PG_FUNCTION_ARGS)
 		numstr = orgnum = int_to_roman(DatumGetInt32(
 						  DirectFunctionCall1(int84, Int64GetDatum(value))));
 	}
+	else if (IS_EEEE(&Num))
+	{
+		/* to avoid loss of precision, must go via numeric not float8 */
+		Numeric	val;
+
+		val = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+												  Int64GetDatum(value)));
+		orgnum = numeric_out_sci(val, Num.post);
+
+		/*
+		 * numeric_out_sci() does not emit a sign for positive numbers.  We
+		 * need to add a space in this case so that positive and negative
+		 * numbers are aligned.  We don't have to worry about NaN here.
+		 */
+		if (*orgnum != '-')
+		{
+			numstr = (char *) palloc(strlen(orgnum) + 2);
+			*numstr = ' ';
+			strcpy(numstr + 1, orgnum);
+			len = strlen(numstr);
+		}
+		else
+		{
+			numstr = orgnum;
+			len = strlen(orgnum);
+		}
+	}
 	else
 	{
 		if (IS_MULTI(&Num))
@@ -4859,6 +4971,34 @@ float4_to_char(PG_FUNCTION_ARGS)
 
 	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman((int) rint(value));
+	else if (IS_EEEE(&Num))
+	{
+		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
+		if (isnan(value) || is_infinite(value))
+		{
+			/*
+			 * Allow 6 characters for the leading sign, the decimal point, "e",
+			 * the exponent's sign and two exponent digits.
+			 */
+			numstr = (char *) palloc(Num.pre + Num.post + 7);
+			fill_str(numstr, '#', Num.pre + Num.post + 6);
+			*numstr = ' ';
+			*(numstr + Num.pre + 1) = '.';
+		}
+		else
+		{
+			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
+
+			/*
+			 * Swap a leading positive sign for a space.
+			 */
+			if (*orgnum == '+')
+				*orgnum = ' ';
+
+			len = strlen(orgnum);
+			numstr = orgnum;
+		}
+	}
 	else
 	{
 		float4		val = value;
@@ -4935,6 +5075,34 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 	if (IS_ROMAN(&Num))
 		numstr = orgnum = int_to_roman((int) rint(value));
+	else if (IS_EEEE(&Num))
+	{
+		numstr = orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
+		if (isnan(value) || is_infinite(value))
+		{
+			/*
+			 * Allow 6 characters for the leading sign, the decimal point, "e",
+			 * the exponent's sign and two exponent digits.
+			 */
+			numstr = (char *) palloc(Num.pre + Num.post + 7);
+			fill_str(numstr, '#', Num.pre + Num.post + 6);
+			*numstr = ' ';
+			*(numstr + Num.pre + 1) = '.';
+		}
+		else
+		{
+			snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%+.*e", Num.post, value);
+
+			/*
+			 * Swap a leading positive sign for a space.
+			 */
+			if (*orgnum == '+')
+				*orgnum = ' ';
+
+			len = strlen(orgnum);
+			numstr = orgnum;
+		}
+	}
 	else
 	{
 		float8		val = value;

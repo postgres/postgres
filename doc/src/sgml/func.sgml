@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.485 2009/08/10 16:10:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.486 2009/08/10 18:29:26 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5345,7 +5345,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>EEEE</literal></entry>
-        <entry>scientific notation (not implemented)</entry>
+        <entry>exponent for scientific notation</entry>
        </row>
       </tbody>
      </tgroup>
@@ -5402,6 +5402,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <function>to_char</function> does not support the use of
        <literal>V</literal> combined with a decimal point
        (e.g., <literal>99.9V99</literal> is not allowed).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>EEEE</literal> (scientific notation) cannot be used in
+       combination with any of the other special formatting patterns or
+       modifiers, and must be at the end of the format string
+       (e.g., <literal>9.99EEEE</literal> is a valid pattern).
       </para>
      </listitem>
     </itemizedlist>
@@ -5604,6 +5613,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>            
         <entry><literal>to_char(12.45, '99V9')</literal></entry>
         <entry><literal>'&nbsp;125'</literal></entry>
+       </row>
+       <row>
+        <entry><literal>to_char(0.0004859, '9.99EEEE')</literal></entry>
+        <entry><literal>' 4.86e-04'</literal></entry>
        </row>
       </tbody>
      </tgroup>

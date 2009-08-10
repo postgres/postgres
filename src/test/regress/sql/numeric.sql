@@ -762,6 +762,7 @@ SELECT '' AS to_char_19, to_char(val, 'FMS 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 . 9 9
 SELECT '' AS to_char_20, to_char(val, E'99999 "text" 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM num_data;
 SELECT '' AS to_char_21, to_char(val, '999999SG9999999999')			FROM num_data;
 SELECT '' AS to_char_22, to_char(val, 'FM9999999999999999.999999999999999')	FROM num_data;
+SELECT '' AS to_char_23, to_char(val, '9.999EEEE')				FROM num_data;
 
 -- TO_NUMBER()
 --

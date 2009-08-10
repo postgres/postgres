@@ -1139,6 +1139,21 @@ SELECT '' AS to_char_22, to_char(val, 'FM9999999999999999.999999999999999')	FROM
             | -24926804.04504742
 (10 rows)
 
+SELECT '' AS to_char_23, to_char(val, '9.999EEEE')				FROM num_data;
+ to_char_23 |  to_char   
+------------+------------
+            |  0.000e+00
+            |  0.000e+00
+            | -3.434e+07
+            |  4.310e+00
+            |  7.799e+06
+            |  1.640e+04
+            |  9.390e+04
+            | -8.303e+07
+            |  7.488e+04
+            | -2.493e+07
+(10 rows)
+
 -- TO_NUMBER()
 --
 SELECT '' AS to_number_1,  to_number('-34,338,492', '99G999G999');
