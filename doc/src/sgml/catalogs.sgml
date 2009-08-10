@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.200.2.1 2009/07/01 23:57:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.200.2.2 2009/08/10 22:16:11 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -7166,7 +7166,7 @@
   <table>
    <title><structname>pg_user_mappings</> Columns</title>
 
-   <tgroup cols="3">
+   <tgroup cols="4">
     <thead>
      <row>
       <entry>Name</entry>
