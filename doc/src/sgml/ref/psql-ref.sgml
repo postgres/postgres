@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.130.4.3 2005/02/11 04:19:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.130.4.4 2009/08/10 02:39:12 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -218,6 +218,17 @@ PostgreSQL documentation
       List all available databases, then exit. Other non-connection
       options are ignored. This is similar to the internal command
       <command>\list</command>.
+      </para>
+      </listitem>
+    </varlistentry>
+
+	<varlistentry>
+      <term><option>-n</></term>
+      <term><option>--no-readline</></term>
+      <listitem>
+      <para>
+       Do not use readline for line editing and do not use the history.
+       This can be useful to turn off tab expansion when cutting and pasting.
       </para>
       </listitem>
     </varlistentry>
