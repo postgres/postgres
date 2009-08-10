@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.227 2009/07/25 17:04:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.228 2009/08/10 02:39:04 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -236,6 +236,17 @@ PostgreSQL documentation
        Write all query output into file <replaceable
        class="parameter">filename</replaceable>, in addition to the
        normal output destination.
+      </para>
+      </listitem>
+    </varlistentry>
+
+	<varlistentry>
+      <term><option>-n</></term>
+      <term><option>--no-readline</></term>
+      <listitem>
+      <para>
+       Do not use readline for line editing and do not use the history.
+       This can be useful to turn off tab expansion when cutting and pasting.
       </para>
       </listitem>
     </varlistentry>
