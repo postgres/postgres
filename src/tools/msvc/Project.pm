@@ -374,6 +374,7 @@ sub WriteConfiguration
 		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;WIN32_STACK_RLIMIT=4194304;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
 		StringPooling="$p->{strpool}"
 		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"
+		AdditionalOptions="/MP"
 EOF
 	print $f <<EOF;
 		AssemblerOutput="0" AssemblerListingLocation=".\\$cfgname\\$self->{name}\\" ObjectFile=".\\$cfgname\\$self->{name}\\"
