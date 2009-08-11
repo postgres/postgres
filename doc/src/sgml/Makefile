@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.123 2009/08/11 20:16:03 alvherre Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.124 2009/08/11 21:53:06 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -307,21 +307,17 @@ install-html: html installdirs
 
 ## Install man
 
+install-man: man installdirs
+
 sqlmansect ?= 7
 sqlmansectnum = $(shell expr X'$(sqlmansect)' : X'\([0-9]\)')
-
-define install-man-func
-for file in $(1); do \
-  $(INSTALL_DATA) $$file $(DESTDIR)$(mandir)/`echo $$file | sed 's,^$(2),,'` || exit; \
-done
-endef
 
 # Before we install the man pages, we massage the section numbers to
 # follow the local conventions.
 #
 ifeq ($(sqlmansectnum),7)
 install-man:
-	$(call install-man-func,$(addprefix $(srcdir)/,man1/*.1 man3/*.3 man$(sqlmansectnum)/*.$(sqlmansect)),$(srcdir)/)
+	cp -R $(addprefix $(srcdir)/,man1 man3 man7) '$(DESTDIR)$(mandir)'
 
 else # sqlmansectnum != 7
 fix_sqlmansectnum = sed -e '/^\.TH/s/"7"/"$(sqlmansect)"/' \
@@ -348,7 +344,7 @@ $(fixed_sql_manpage_files): fixedman/man$(sqlmansectnum)/%.$(sqlmansect): man7/%
 	$(fix_sqlmansectnum) $< >$@
 
 install-man: all-man
-	$(call install-man-func,$(fixed_manpage_files),fixedman/)
+	cp -R $(sort $(dir $(fixed_manpage_files))) '$(DESTDIR)$(mandir)'
 
 clean: clean-man
 .PHONY: clean-man
