@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.83 2008/01/09 09:16:43 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.83.2.1 2009/08/11 11:51:20 mha Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -285,6 +285,9 @@ int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
 extern int	pgwin32_is_admin(void);
 extern int	pgwin32_is_service(void);
 #endif
+
+/* in backend/port/win32_shmem.c */
+extern int	pgwin32_ReserveSharedMemoryRegion(HANDLE);
 
 /* in port/win32error.c */
 extern void _dosmaperr(unsigned long);
