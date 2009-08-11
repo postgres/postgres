@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.124 2009/08/11 21:53:06 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.125 2009/08/11 22:21:51 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -222,10 +222,6 @@ regress_README.html: regress.sgml
 ## XSLT processing
 ##
 
-# This allows removing postgres.xml in the distribution tarballs while
-# keeping the dependencies satisfied.
-.SECONDARY: postgres.xml
-
 postgres.xml: postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower $< | \
 	  $(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
@@ -358,8 +354,12 @@ endif # sqlmansectnum != 7
 ## Clean
 ##
 
+# This allows removing some files from the distribution tarballs while
+# keeping the dependencies satisfied.
+.SECONDARY: postgres.xml $(GENERATED_SGML) HTML.index
+
 distclean:
-	rm -f postgres.xml
+	rm -f postgres.xml $(GENERATED_SGML) HTML.index
 
 maintainer-clean: distclean
 # HTML
