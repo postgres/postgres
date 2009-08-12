@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.207 2009/06/11 14:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.208 2009/08/12 20:53:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,21 +332,13 @@ InitProcess(void)
  * InitProcessPhase2 -- make MyProc visible in the shared ProcArray.
  *
  * This is separate from InitProcess because we can't acquire LWLocks until
- * we've created a PGPROC, but in the EXEC_BACKEND case there is a good deal
- * of stuff to be done before this step that will require LWLock access.
+ * we've created a PGPROC, but in the EXEC_BACKEND case ProcArrayAdd won't
+ * work until after we've done CreateSharedMemoryAndSemaphores.
  */
 void
 InitProcessPhase2(void)
 {
 	Assert(MyProc != NULL);
-
-	/*
-	 * We should now know what database we're in, so advertise that.  (We need
-	 * not do any locking here, since no other backend can yet see our
-	 * PGPROC.)
-	 */
-	Assert(OidIsValid(MyDatabaseId));
-	MyProc->databaseId = MyDatabaseId;
 
 	/*
 	 * Add our PGPROC to the PGPROC array in shared memory.

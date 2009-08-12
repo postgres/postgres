@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.175 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.176 2009/08/12 20:53:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
@@ -128,17 +129,9 @@ ResetReindexProcessing(void)
 void
 SetDatabasePath(const char *path)
 {
-	if (DatabasePath)
-	{
-		free(DatabasePath);
-		DatabasePath = NULL;
-	}
-	/* use strdup since this is done before memory contexts are set up */
-	if (path)
-	{
-		DatabasePath = strdup(path);
-		AssertState(DatabasePath);
-	}
+	/* This should happen only once per process */
+	Assert(!DatabasePath);
+	DatabasePath = MemoryContextStrdup(TopMemoryContext, path);
 }
 
 /*

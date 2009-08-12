@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.207 2009/07/11 21:15:32 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.208 2009/08/12 20:53:30 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -333,13 +333,9 @@ DESCR("array of oids, used in system tables");
 /* hand-built rowtype entries for bootstrapped catalogs: */
 
 DATA(insert OID = 71 (	pg_type			PGNSP PGUID -1 f c C f t \054 1247 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_TYPE_RELTYPE_OID 71
 DATA(insert OID = 75 (	pg_attribute	PGNSP PGUID -1 f c C f t \054 1249 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_ATTRIBUTE_RELTYPE_OID 75
 DATA(insert OID = 81 (	pg_proc			PGNSP PGUID -1 f c C f t \054 1255 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_PROC_RELTYPE_OID 81
 DATA(insert OID = 83 (	pg_class		PGNSP PGUID -1 f c C f t \054 1259 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define PG_CLASS_RELTYPE_OID 83
 
 /* OIDS 100 - 199 */
 DATA(insert OID = 142 ( xml		   PGNSP PGUID -1 f b U f t \054 0 0 143 xml_in xml_out xml_recv xml_send - - - i x f 0 -1 0 _null_ _null_ ));

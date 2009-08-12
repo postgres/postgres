@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.151 2009/08/04 04:04:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.152 2009/08/12 20:53:30 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -464,6 +464,29 @@ DATA(insert ( 1259 cmin				29 0 0  4  -4 0 -1 -1 t p i t f f t 0 _null_));
 DATA(insert ( 1259 xmax				28 0 0  4  -5 0 -1 -1 t p i t f f t 0 _null_));
 DATA(insert ( 1259 cmax				29 0 0  4  -6 0 -1 -1 t p i t f f t 0 _null_));
 DATA(insert ( 1259 tableoid			26 0 0  4  -7 0 -1 -1 t p i t f f t 0 _null_));
+
+/* ----------------
+ *		pg_database
+ *
+ * pg_database is not bootstrapped in the same way as the other relations that
+ * have hardwired pg_attribute entries in this file.  However, we do need
+ * a "Schema_xxx" macro for it --- see relcache.c.
+ * ----------------
+ */
+#define Schema_pg_database \
+{ 1262, {"datname"},		  19, -1, 0, NAMEDATALEN, 1, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datdba"},			  26, -1, 0,	4,	2, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"encoding"},		  23, -1, 0,	4,	3, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datcollate"},		  19, -1, 0, NAMEDATALEN, 4, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datctype"},		  19, -1, 0, NAMEDATALEN, 5, 0, -1, -1, false, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datistemplate"},	  16, -1, 0,	1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datallowconn"},	  16, -1, 0,	1, 7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datconnlimit"},	  23, -1, 0,	4, 8, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datlastsysoid"},	  26, -1, 0,	4, 9, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datfrozenxid"},	  28, -1, 0,	4, 10, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"dattablespace"},	  26, -1, 0,	4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0, { 0 } }, \
+{ 1262, {"datconfig"},		1009, -1, 0,   -1, 12, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
+{ 1262, {"datacl"},			1034, -1, 0,   -1, 13, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
 
 /* ----------------
  *		pg_index

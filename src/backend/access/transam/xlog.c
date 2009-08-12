@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.347 2009/08/08 16:39:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.348 2009/08/12 20:53:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5248,6 +5248,16 @@ StartupXLOG(void)
 	 * excluded and need to be re-created.
 	 */
 	ValidateXLOGDirectoryStructure();
+
+	/*
+	 * Clear out any old relcache cache files.  This is *necessary* if we
+	 * do any WAL replay, since that would probably result in the cache files
+	 * being out of sync with database reality.  In theory we could leave
+	 * them in place if the database had been cleanly shut down, but it
+	 * seems safest to just remove them always and let them be rebuilt
+	 * during the first backend startup.
+	 */
+	RelationCacheInitFileRemove();
 
 	/*
 	 * Initialize on the assumption we want to recover to the same timeline

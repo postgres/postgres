@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.63 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.64 2009/08/12 20:53:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ extern void RelationInitIndexAccessInfo(Relation relation);
  */
 extern void RelationCacheInitialize(void);
 extern void RelationCacheInitializePhase2(void);
+extern void RelationCacheInitializePhase3(void);
 
 /*
  * Routine to create a relcache entry for an about-to-be-created relation
@@ -81,13 +82,15 @@ extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 extern void RelationCacheMarkNewRelfilenode(Relation rel);
 
 /*
- * Routines to help manage rebuilding of relcache init file
+ * Routines to help manage rebuilding of relcache init files
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
 extern void RelationCacheInitFileInvalidate(bool beforeSend);
-extern void RelationCacheInitFileRemove(const char *dbPath);
+extern void RelationCacheInitFileRemove(void);
 
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;
+/* should be used only by relcache.c and postinit.c */
+extern bool criticalSharedRelcachesBuilt;
 
 #endif   /* RELCACHE_H */

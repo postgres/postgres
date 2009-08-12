@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2009, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.189 2009/06/11 14:49:01 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.190 2009/08/12 20:53:30 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2138,6 +2138,7 @@ CreateSharedBackendStatus(void)
  *	Called from InitPostgres.  MyBackendId must be set,
  *	but we must not have started any transaction yet (since the
  *	exit hook must run after the last transaction exit).
+ *	NOTE: MyDatabaseId isn't set yet; so the shutdown hook has to be careful.
  * ----------
  */
 void
@@ -2232,7 +2233,14 @@ pgstat_beshutdown_hook(int code, Datum arg)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
-	pgstat_report_stat(true);
+	/*
+	 * If we got as far as discovering our own database ID, we can report
+	 * what we did to the collector.  Otherwise, we'd be sending an invalid
+	 * database ID, so forget it.  (This means that accesses to pg_database
+	 * during failed backend starts might never get counted.)
+	 */
+	if (OidIsValid(MyDatabaseId))
+		pgstat_report_stat(true);
 
 	/*
 	 * Clear my status entry, following the protocol of bumping st_changecount
