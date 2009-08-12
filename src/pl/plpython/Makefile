@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.32 2009/01/15 13:49:56 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.33 2009/08/12 16:37:25 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -57,7 +57,22 @@ endif
 SHLIB_LINK = $(python_libspec) $(python_additional_libs) $(filter -lintl,$(LIBS))
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu
-REGRESS = plpython_schema plpython_populate plpython_function plpython_test plpython_error plpython_drop
+REGRESS = \
+	plpython_schema \
+	plpython_populate \
+	plpython_test \
+	plpython_global \
+	plpython_import \
+	plpython_spi \
+	plpython_newline \
+	plpython_void \
+	plpython_params \
+	plpython_setof \
+	plpython_record \
+	plpython_trigger \
+	plpython_error \
+	plpython_unicode \
+	plpython_drop
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 

@@ -39,10 +39,6 @@ CREATE TABLE xsequences (
 	) ;
 CREATE INDEX xsequences_pid_idx ON xsequences(pid) ;
 
-CREATE TABLE unicode_test (
-	testvalue  text NOT NULL
-);
-
 CREATE TABLE table_record (
 	first text,
 	second int4

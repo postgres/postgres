@@ -1,0 +1,76 @@
+-- import python modules
+CREATE FUNCTION import_fail() returns text
+    AS
+'try:
+	import foosocket
+except Exception, ex:
+	plpy.notice("import socket failed -- %s" % str(ex))
+	return "failed as expected"
+return "succeeded, that wasn''t supposed to happen"'
+    LANGUAGE plpythonu;
+CREATE FUNCTION import_succeed() returns text
+	AS
+'try:
+  import array
+  import bisect
+  import calendar
+  import cmath
+  import errno
+  import math
+  import md5
+  import operator
+  import random
+  import re
+  import sha
+  import string
+  import time
+except Exception, ex:
+	plpy.notice("import failed -- %s" % str(ex))
+	return "failed, that wasn''t supposed to happen"
+return "succeeded, as expected"'
+    LANGUAGE plpythonu;
+CREATE FUNCTION import_test_one(p text) RETURNS text
+	AS
+'import sha
+digest = sha.new(p)
+return digest.hexdigest()'
+	LANGUAGE plpythonu;
+CREATE FUNCTION import_test_two(u users) RETURNS text
+	AS
+'import sha
+plain = u["fname"] + u["lname"]
+digest = sha.new(plain);
+return "sha hash of " + plain + " is " + digest.hexdigest()'
+	LANGUAGE plpythonu;
+-- import python modules
+--
+SELECT import_fail();
+NOTICE:  ('import socket failed -- No module named foosocket',)
+CONTEXT:  PL/Python function "import_fail"
+    import_fail     
+--------------------
+ failed as expected
+(1 row)
+
+SELECT import_succeed();
+     import_succeed     
+------------------------
+ succeeded, as expected
+(1 row)
+
+-- test import and simple argument handling
+--
+SELECT import_test_one('sha hash of this string');
+             import_test_one              
+------------------------------------------
+ a04e23cb9b1a09cd1051a04a7c571aae0f90346c
+(1 row)
+
+-- test import and tuple argument handling
+--
+select import_test_two(users) from users where fname = 'willem';
+                          import_test_two                          
+-------------------------------------------------------------------
+ sha hash of willemdoe is 3cde6b574953b0ca937b4d76ebc40d534d910759
+(1 row)
+

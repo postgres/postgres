@@ -1,0 +1,51 @@
+--
+-- Test named and nameless parameters
+--
+CREATE FUNCTION test_param_names0(integer, integer) RETURNS int AS $$
+return args[0] + args[1]
+$$ LANGUAGE plpythonu;
+CREATE FUNCTION test_param_names1(a0 integer, a1 text) RETURNS boolean AS $$
+assert a0 == args[0]
+assert a1 == args[1]
+return True
+$$ LANGUAGE plpythonu;
+CREATE FUNCTION test_param_names2(u users) RETURNS text AS $$
+assert u == args[0]
+return str(u)
+$$ LANGUAGE plpythonu;
+-- use deliberately wrong parameter names
+CREATE FUNCTION test_param_names3(a0 integer) RETURNS boolean AS $$
+try:
+	assert a1 == args[0]
+	return False
+except NameError, e:
+	assert e.args[0].find("a1") > -1
+	return True
+$$ LANGUAGE plpythonu;
+SELECT test_param_names0(2,7);
+ test_param_names0 
+-------------------
+                 9
+(1 row)
+
+SELECT test_param_names1(1,'text');
+ test_param_names1 
+-------------------
+ t
+(1 row)
+
+SELECT test_param_names2(users) from users;
+                           test_param_names2                           
+-----------------------------------------------------------------------
+ {'lname': 'doe', 'username': 'j_doe', 'userid': 1, 'fname': 'jane'}
+ {'lname': 'doe', 'username': 'johnd', 'userid': 2, 'fname': 'john'}
+ {'lname': 'doe', 'username': 'w_doe', 'userid': 3, 'fname': 'willem'}
+ {'lname': 'smith', 'username': 'slash', 'userid': 4, 'fname': 'rick'}
+(4 rows)
+
+SELECT test_param_names3(1);
+ test_param_names3 
+-------------------
+ t
+(1 row)
+
