@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.296 2009/08/07 15:27:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.297 2009/08/12 23:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5117,6 +5117,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 {
 	Oid			indexoid = InvalidOid;
 	bool		found = false;
+	bool		found_deferrable = false;
 	List	   *indexoidlist;
 	ListCell   *indexoidscan;
 
@@ -5143,12 +5144,11 @@ transformFkeyCheckAttrs(Relation pkrel,
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/*
-		 * Must have the right number of columns; must be unique (non
-		 * deferrable) and not a partial index; forget it if there are any
-		 * expressions, too
+		 * Must have the right number of columns; must be unique and not a
+		 * partial index; forget it if there are any expressions, too
 		 */
 		if (indexStruct->indnatts == numattrs &&
-			indexStruct->indisunique && indexStruct->indimmediate &&
+			indexStruct->indisunique &&
 			heap_attisnull(indexTuple, Anum_pg_index_indpred) &&
 			heap_attisnull(indexTuple, Anum_pg_index_indexprs))
 		{
@@ -5198,6 +5198,21 @@ transformFkeyCheckAttrs(Relation pkrel,
 						break;
 				}
 			}
+
+			/*
+			 * Refuse to use a deferrable unique/primary key.  This is per
+			 * SQL spec, and there would be a lot of interesting semantic
+			 * problems if we tried to allow it.
+			 */
+			if (found && !indexStruct->indimmediate)
+			{
+				/*
+				 * Remember that we found an otherwise matching index, so
+				 * that we can generate a more appropriate error message.
+				 */
+				found_deferrable = true;
+				found = false;
+			}
 		}
 		ReleaseSysCache(indexTuple);
 		if (found)
@@ -5205,10 +5220,18 @@ transformFkeyCheckAttrs(Relation pkrel,
 	}
 
 	if (!found)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				 errmsg("there is no unique constraint matching given keys for referenced table \"%s\"",
-						RelationGetRelationName(pkrel))));
+	{
+		if (found_deferrable)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cannot use a deferrable unique constraint for referenced table \"%s\"",
+							RelationGetRelationName(pkrel))));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FOREIGN_KEY),
+					 errmsg("there is no unique constraint matching given keys for referenced table \"%s\"",
+							RelationGetRelationName(pkrel))));
+	}
 
 	list_free(indexoidlist);
 
