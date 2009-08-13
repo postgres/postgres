@@ -2209,6 +2209,19 @@ SELECT * FROM t3;
 ---+---
 (0 rows)
 
+-- Test join against inheritance tree
+create temp table t2a () inherits (t2);
+insert into t2a values (200, 2001);
+select * from t1 left join t2 on (t1.a = t2.a);
+  a  |  b   |  a  |  b   
+-----+------+-----+------
+   5 |   10 |     |     
+  15 |   20 |     |     
+ 100 |  100 |     |     
+ 200 | 1000 | 200 | 2000
+ 200 | 1000 | 200 | 2001
+(5 rows)
+
 --
 -- regression test for 8.1 merge right join bug
 --
