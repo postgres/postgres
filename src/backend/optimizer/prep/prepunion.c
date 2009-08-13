@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.172 2009/07/06 18:26:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.173 2009/08/13 16:53:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1636,7 +1636,62 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
-	Assert(!IsA(node, RestrictInfo));
+
+	/*
+	 * We have to process RestrictInfo nodes specially.  (Note: although
+	 * set_append_rel_pathlist will hide RestrictInfos in the parent's
+	 * baserestrictinfo list from us, it doesn't hide those in joininfo.)
+	 */
+	if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo *oldinfo = (RestrictInfo *) node;
+		RestrictInfo *newinfo = makeNode(RestrictInfo);
+
+		/* Copy all flat-copiable fields */
+		memcpy(newinfo, oldinfo, sizeof(RestrictInfo));
+
+		/* Recursively fix the clause itself */
+		newinfo->clause = (Expr *)
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->clause, context);
+
+		/* and the modified version, if an OR clause */
+		newinfo->orclause = (Expr *)
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->orclause, context);
+
+		/* adjust relid sets too */
+		newinfo->clause_relids = adjust_relid_set(oldinfo->clause_relids,
+												  context->parent_relid,
+												  context->child_relid);
+		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
+													context->parent_relid,
+													context->child_relid);
+		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
+													context->parent_relid,
+													context->child_relid);
+		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
+												context->parent_relid,
+												context->child_relid);
+		newinfo->right_relids = adjust_relid_set(oldinfo->right_relids,
+												 context->parent_relid,
+												 context->child_relid);
+
+		/*
+		 * Reset cached derivative fields, since these might need to have
+		 * different values when considering the child relation.
+		 */
+		newinfo->eval_cost.startup = -1;
+		newinfo->norm_selec = -1;
+		newinfo->outer_selec = -1;
+		newinfo->left_ec = NULL;
+		newinfo->right_ec = NULL;
+		newinfo->left_em = NULL;
+		newinfo->right_em = NULL;
+		newinfo->scansel_cache = NIL;
+		newinfo->left_bucketsize = -1;
+		newinfo->right_bucketsize = -1;
+
+		return (Node *) newinfo;
+	}
 
 	/*
 	 * NOTE: we do not need to recurse into sublinks, because they should
