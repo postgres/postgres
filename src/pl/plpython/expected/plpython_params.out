@@ -43,6 +43,12 @@ SELECT test_param_names2(users) from users;
  {'lname': 'smith', 'username': 'slash', 'userid': 4, 'fname': 'rick'}
 (4 rows)
 
+SELECT test_param_names2(NULL);
+ test_param_names2 
+-------------------
+ None
+(1 row)
+
 SELECT test_param_names3(1);
  test_param_names3 
 -------------------

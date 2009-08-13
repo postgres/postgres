@@ -2,6 +2,13 @@
 -- Test returning SETOF
 --
 
+CREATE FUNCTION test_setof_error() RETURNS SETOF text AS $$
+return 37
+$$ LANGUAGE plpythonu;
+
+SELECT test_setof_error();
+
+
 CREATE FUNCTION test_setof_as_list(count integer, content text) RETURNS SETOF text AS $$
 return [ content ]*count
 $$ LANGUAGE plpythonu;

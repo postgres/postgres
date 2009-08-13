@@ -31,4 +31,5 @@ $$ LANGUAGE plpythonu;
 SELECT test_param_names0(2,7);
 SELECT test_param_names1(1,'text');
 SELECT test_param_names2(users) from users;
+SELECT test_param_names2(NULL);
 SELECT test_param_names3(1);

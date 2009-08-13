@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.123 2009/07/20 08:01:06 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.124 2009/08/13 20:50:05 petere Exp $
  *
  *********************************************************************
  */
@@ -538,7 +538,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			platt = PyList_GetItem(plkeys, i);
 			if (!PyString_Check(platt))
 				ereport(ERROR,
-						(errmsg("name of TD[\"new\"] attribute at ordinal position %d is not a string", i)));
+						(errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
 			attn = SPI_fnumber(tupdesc, PyString_AsString(platt));
 			if (attn == SPI_ERROR_NOATTRIBUTE)
 				ereport(ERROR,

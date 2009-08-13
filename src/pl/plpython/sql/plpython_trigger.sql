@@ -82,14 +82,174 @@ return None
 
 $$;
 
-CREATE TRIGGER show_trigger_data_trig 
+CREATE TRIGGER show_trigger_data_trig_before
 BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+
+CREATE TRIGGER show_trigger_data_trig_after
+AFTER INSERT OR UPDATE OR DELETE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+
+CREATE TRIGGER show_trigger_data_trig_stmt
+BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON trigger_test
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_data(23,'skidoo');
 
 insert into trigger_test values(1,'insert');
 update trigger_test set v = 'update' where i = 1;
 delete from trigger_test;
-      
-DROP TRIGGER show_trigger_data_trig on trigger_test;
-      
-DROP FUNCTION trigger_data();
+truncate table trigger_test;
+
+DROP FUNCTION trigger_data() CASCADE;
+
+
+--
+-- trigger error handling
+--
+
+INSERT INTO trigger_test VALUES (0, 'zero');
+
+
+-- returning non-string from trigger function
+
+CREATE FUNCTION stupid1() RETURNS trigger
+AS $$
+    return 37
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger1
+BEFORE INSERT ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid1();
+
+INSERT INTO trigger_test VALUES (1, 'one');
+
+DROP TRIGGER stupid_trigger1 ON trigger_test;
+
+
+-- returning MODIFY from DELETE trigger
+
+CREATE FUNCTION stupid2() RETURNS trigger
+AS $$
+    return "MODIFY"
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger2
+BEFORE DELETE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid2();
+
+DELETE FROM trigger_test WHERE i = 0;
+
+DROP TRIGGER stupid_trigger2 ON trigger_test;
+
+INSERT INTO trigger_test VALUES (0, 'zero');
+
+
+-- returning unrecognized string from trigger function
+
+CREATE FUNCTION stupid3() RETURNS trigger
+AS $$
+    return "foo"
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger3
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid3();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger3 ON trigger_test;
+
+
+-- deleting the TD dictionary
+
+CREATE FUNCTION stupid4() RETURNS trigger
+AS $$
+    del TD["new"]
+    return "MODIFY";
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger4
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid4();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger4 ON trigger_test;
+
+
+-- TD not a dictionary
+
+CREATE FUNCTION stupid5() RETURNS trigger
+AS $$
+    TD["new"] = ['foo', 'bar']
+    return "MODIFY";
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger5
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid5();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger5 ON trigger_test;
+
+
+-- TD not having string keys
+
+CREATE FUNCTION stupid6() RETURNS trigger
+AS $$
+    TD["new"] = {1: 'foo', 2: 'bar'}
+    return "MODIFY";
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger6
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid6();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger6 ON trigger_test;
+
+
+-- TD keys not corresponding to row columns
+
+CREATE FUNCTION stupid7() RETURNS trigger
+AS $$
+    TD["new"] = {'a': 'foo', 'b': 'bar'}
+    return "MODIFY";
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger7
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid7();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger7 ON trigger_test;
+
+
+-- calling a trigger function directly
+
+SELECT stupid7();
+
+
+--
+-- Null values
+--
+
+SELECT * FROM trigger_test;
+
+CREATE FUNCTION test_null() RETURNS trigger
+AS $$
+    TD["new"]['v'] = None
+    return "MODIFY"
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER test_null_trigger
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE test_null();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER test_null_trigger ON trigger_test;
+
+SELECT * FROM trigger_test;

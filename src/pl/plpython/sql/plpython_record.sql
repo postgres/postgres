@@ -2,6 +2,17 @@
 -- Test returning tuples
 --
 
+CREATE TABLE table_record (
+	first text,
+	second int4
+	) ;
+
+CREATE TYPE type_record AS (
+	first text,
+	second int4
+	) ;
+
+
 CREATE FUNCTION test_table_record_as(typ text, first text, second integer, retnull boolean) RETURNS table_record AS $$
 if retnull:
 	return None
@@ -102,3 +113,28 @@ SELECT * FROM test_in_out_params('test_in');
 -- this doesn't work yet :-(
 SELECT * FROM test_in_out_params_multi('test_in');
 SELECT * FROM test_inout_params('test_in');
+
+
+-- errors cases
+
+CREATE FUNCTION test_type_record_error1() RETURNS type_record AS $$
+    return { 'first': 'first' }
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_record_error1();
+
+
+CREATE FUNCTION test_type_record_error2() RETURNS type_record AS $$
+    return [ 'first' ]
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_record_error2();
+
+
+CREATE FUNCTION test_type_record_error3() RETURNS type_record AS $$
+    class type_record: pass
+    type_record.first = 'first'
+    return type_record
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_record_error3();
