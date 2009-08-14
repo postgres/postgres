@@ -173,14 +173,6 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
                  5000000000.5
 (1 row)
 
-SELECT * FROM test_type_conversion_numeric(79228162514264337593543950336);
-INFO:  (7.9228162514264338e+28, <type 'float'>)
-CONTEXT:  PL/Python function "test_type_conversion_numeric"
- test_type_conversion_numeric  
--------------------------------
- 79228162514300000000000000000
-(1 row)
-
 SELECT * FROM test_type_conversion_numeric(null);
 INFO:  (None, <type 'NoneType'>)
 CONTEXT:  PL/Python function "test_type_conversion_numeric"

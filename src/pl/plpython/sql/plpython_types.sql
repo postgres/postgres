@@ -65,7 +65,6 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_numeric(100);
 SELECT * FROM test_type_conversion_numeric(-100);
 SELECT * FROM test_type_conversion_numeric(5000000000.5);
-SELECT * FROM test_type_conversion_numeric(79228162514264337593543950336);
 SELECT * FROM test_type_conversion_numeric(null);
 
 
