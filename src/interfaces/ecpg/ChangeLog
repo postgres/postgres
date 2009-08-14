@@ -2419,5 +2419,11 @@ Fri, 07 Aug 2009 10:41:28 +0200
 
 	- Added STRING datatype for Informix compatibility mode. This work is
 	  based on a patch send in by Böszörményi Zoltán <zb@cybertec.at>.
+
+Fri, 14 Aug 2009 14:45:02 +0200
+
+	- Made sure sqlca is reset for declare cursor in Informix mode as
+	  pointed out by Böszörményi Zoltán <zb@cybertec.at>.
 	- Set ecpg library version to 6.2.
+	- Set compat library version to 3.2.
 	- Set ecpg version to 4.6.

@@ -55,79 +55,79 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 44: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 93: query: declare c cursor for select * from test where i <= $1 ; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 95: query: declare c cursor for select * from test where i <= $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 93: using PQexecParams
+[NO_PID]: ecpg_execute on line 95: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 93: parameter 1 = 14
+[NO_PID]: free_params on line 95: parameter 1 = 14
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 93: OK: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 95: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: query: fetch forward from c; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 57: query: fetch forward from c; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: using PQexec
+[NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_execute on line 57: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 55: RESULT: 7 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 57: RESULT: 7 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 55: RESULT: 0 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 57: RESULT: 0 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 55: RESULT: test    offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 57: RESULT: test    offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: query: fetch forward from c; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 57: query: fetch forward from c; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: using PQexec
+[NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_execute on line 57: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 55: RESULT: 14 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 57: RESULT: 14 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 55: RESULT: 1 offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 57: RESULT: 1 offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 55: RESULT: a       offset: -1; array: yes
+[NO_PID]: ecpg_get_data on line 57: RESULT: a       offset: -1; array: yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: query: fetch forward from c; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 57: query: fetch forward from c; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: using PQexec
+[NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 55: correctly got 0 tuples with 3 fields
+[NO_PID]: ecpg_execute on line 57: correctly got 0 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 55: no data found on line 55
+[NO_PID]: raising sqlcode 100 on line 57: no data found on line 57
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 73: query: delete from test where i = $1  :: decimal; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 75: query: delete from test where i = $1  :: decimal; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 73: using PQexecParams
+[NO_PID]: ecpg_execute on line 75: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 73: parameter 1 = 21.0
+[NO_PID]: free_params on line 75: parameter 1 = 21.0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 73: OK: DELETE 0
+[NO_PID]: ecpg_execute on line 75: OK: DELETE 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 73: no data found on line 73
+[NO_PID]: raising sqlcode 100 on line 75: no data found on line 75
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 76: query: select 1 from test where i = 14; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 78: query: select 1 from test where i = 14; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 76: using PQexec
+[NO_PID]: ecpg_execute on line 78: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 76: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 78: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 79: query: select 1 from test where i = 147; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 81: query: select 1 from test where i = 147; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 79: using PQexec
+[NO_PID]: ecpg_execute on line 81: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 79: correctly got 0 tuples with 1 fields
+[NO_PID]: ecpg_execute on line 81: correctly got 0 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 79: no data found on line 79
+[NO_PID]: raising sqlcode 100 on line 81: no data found on line 81
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGtrans on line 82: action "commit"; connection "regress1"
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 83: query: drop table test; with 0 parameter(s) on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 83: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 83: OK: DROP TABLE
-[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 84: action "commit"; connection "regress1"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 85: query: drop table test; with 0 parameter(s) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 85: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 85: OK: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans on line 86: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

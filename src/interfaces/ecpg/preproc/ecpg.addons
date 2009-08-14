@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.4 2009/01/30 12:53:43 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.5 2009/08/14 13:28:22 meskes Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{
@@ -238,6 +238,7 @@ ECPG: ExecuteStmtEXECUTEprepared_nameexecute_param_clauseexecute_rest block
 ECPG: DeclareCursorStmtDECLAREnamecursor_optionsCURSORopt_holdFORSelectStmt block
 	{
 		struct cursor *ptr, *this;
+		char *comment;
 
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
 		{
@@ -257,10 +258,19 @@ ECPG: DeclareCursorStmtDECLAREnamecursor_optionsCURSORopt_holdFORSelectStmt bloc
 		argsinsert = argsresult = NULL;
 		cur = this;
 
+		comment = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+
 		if (INFORMIX_MODE)
-			$$ = cat_str(5, adjust_informix(this->argsinsert), adjust_informix(this->argsresult), make_str("/*"), mm_strdup(this->command), make_str("*/"));
+		{
+			if (braces_open > 0) /* we're in a function */
+			{
+				$$ = cat_str(4, adjust_informix(this->argsinsert), adjust_informix(this->argsresult), make_str("ECPG_informix_reset_sqlca();"), comment);
+			}
+			else
+				$$ = cat_str(3, adjust_informix(this->argsinsert), adjust_informix(this->argsresult), comment);
+		}
 		else
-			$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
+			$$ = comment;
 	}
 ECPG: opt_hold block
 	{

@@ -45,7 +45,9 @@ int main(void)
 	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 	if (sqlca.sqlcode != 0) $rollback;
 
+	sqlca.sqlcode = 100;
 	$declare c cursor for select * from test where i <= :i;
+	printf ("%ld\n", sqlca.sqlcode);
 	openit();
 
 	deccvint(0, &j);

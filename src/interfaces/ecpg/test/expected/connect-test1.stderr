@@ -47,7 +47,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode -402 on line 53: could not connect to database "nonexistant" on line 53
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: raising sqlcode -220 on line 54: no such connection CURRENT on line 54
+[NO_PID]: raising sqlcode -220 on line 54: connection "CURRENT" does not exist on line 54
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port <REGRESSION_PORT>  for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000

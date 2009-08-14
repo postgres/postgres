@@ -1,6 +1,6 @@
 /*
  * This file contains stuff needed to be as compatible to Informix as possible.
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.22 2008/02/17 18:14:29 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg_informix.h,v 1.23 2009/08/14 13:28:22 meskes Exp $
  */
 #ifndef _ECPG_INFORMIX_H
 #define _ECPG_INFORMIX_H
@@ -34,7 +34,7 @@ extern		"C"
 #endif
 
 extern int	rdatestr(date, char *);
-extern void rtoday(date *);
+extern void 	rtoday(date *);
 extern int	rjulmdy(date, short *);
 extern int	rdefmtdate(date *, char *, char *);
 extern int	rfmtdate(date, char *, char *);
@@ -49,13 +49,14 @@ extern int	rsetnull(int, char *);
 extern int	rtypalign(int, int);
 extern int	rtypmsize(int, int);
 extern int	rtypwidth(int, int);
-extern void rupshift(char *);
+extern void 	rupshift(char *);
 
 extern int	byleng(char *, int);
 extern void ldchar(char *, int, char *);
 
 extern void ECPG_informix_set_var(int, void *, int);
 extern void *ECPG_informix_get_var(int);
+extern void ECPG_informix_reset_sqlca(void);
 
 /* Informix defines these in decimal.h */
 int			decadd(decimal *, decimal *, decimal *);

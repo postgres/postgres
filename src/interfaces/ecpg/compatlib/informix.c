@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.59 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.60 2009/08/14 13:28:22 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -16,6 +16,34 @@
 #include <sqlca.h>
 #include <ecpgerrno.h>
 
+/* this is also defined in ecpglib/misc.c, by defining it twice we don't have to export the symbol */
+
+static struct sqlca_t sqlca_init =
+{
+	{
+		'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '
+	},
+	sizeof(struct sqlca_t),
+	0,
+	{
+		0,
+		{
+			0
+		}
+	},
+	{
+		'N', 'O', 'T', ' ', 'S', 'E', 'T', ' '
+	},
+	{
+		0, 0, 0, 0, 0, 0
+	},
+	{
+		0, 0, 0, 0, 0, 0, 0, 0
+	},
+	{
+		'0', '0', '0', '0', '0'
+	}
+};
 static int
 deccall2(decimal *arg1, decimal *arg2, int (*ptr) (numeric *, numeric *))
 {
@@ -1031,6 +1059,14 @@ ECPG_informix_get_var(int number)
 
 	for (ptr = ivlist; ptr != NULL && ptr->number != number; ptr = ptr->next);
 	return (ptr) ? ptr->pointer : NULL;
+}
+
+void
+ECPG_informix_reset_sqlca(void)
+{
+	struct sqlca_t *sqlca = ECPGget_sqlca();
+
+	memcpy((char *) sqlca, (char *) &sqlca_init, sizeof(struct sqlca_t));
 }
 
 int

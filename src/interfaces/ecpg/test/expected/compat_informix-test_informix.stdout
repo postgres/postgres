@@ -2,6 +2,7 @@ doSQLprint: Error: duplicate key value violates unique constraint "test_pkey" on
 INSERT: -239=duplicate key value violates unique constraint "test_pkey" on line 32
 doSQLprint: Error: more than one row returned by a subquery used as an expression on line 40
 SELECT: 0=
+0
 7 0 "test"
 14 1 "a"
 DELETE: 100
