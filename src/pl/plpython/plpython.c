@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.124 2009/08/13 20:50:05 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.125 2009/08/14 13:12:21 petere Exp $
  *
  *********************************************************************
  */
@@ -1641,7 +1641,7 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 	arg->typbyval = typeStruct->typbyval;
 
 	/* Determine which kind of Python object we will convert to */
-	switch (typeOid)
+	switch (getBaseType(typeOid))
 	{
 		case BOOLOID:
 			arg->func = PLyBool_FromString;
