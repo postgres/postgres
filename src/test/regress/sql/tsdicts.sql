@@ -56,6 +56,7 @@ CREATE TEXT SEARCH DICTIONARY synonym (
 
 SELECT ts_lexize('synonym', 'PoStGrEs');
 SELECT ts_lexize('synonym', 'Gogle');
+SELECT ts_lexize('synonym', 'indices');
 
 -- Create and simple test thesaurus dictionary
 -- More tests in configuration checks because ts_lexize()
@@ -104,6 +105,8 @@ ALTER TEXT SEARCH CONFIGURATION synonym_tst ALTER MAPPING FOR
 
 SELECT to_tsvector('synonym_tst', 'Postgresql is often called as postgres or pgsql and pronounced as postgre');
 SELECT to_tsvector('synonym_tst', 'Most common mistake is to write Gogle instead of Google');
+SELECT to_tsvector('synonym_tst', 'Indexes or indices - Which is right plural form of index?');
+SELECT to_tsquery('synonym_tst', 'Index & indices');
 
 -- test thesaurus in configuration
 -- see thesaurus_sample.ths to understand 'odd' resulting tsvector

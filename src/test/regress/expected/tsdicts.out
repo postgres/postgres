@@ -208,6 +208,12 @@ SELECT ts_lexize('synonym', 'Gogle');
  {googl}
 (1 row)
 
+SELECT ts_lexize('synonym', 'indices');
+ ts_lexize 
+-----------
+ {index}
+(1 row)
+
 -- Create and simple test thesaurus dictionary
 -- More tests in configuration checks because ts_lexize()
 -- cannot pass more than one word to thesaurus.
@@ -288,6 +294,18 @@ SELECT to_tsvector('synonym_tst', 'Most common mistake is to write Gogle instead
                        to_tsvector                        
 ----------------------------------------------------------
  'common':2 'googl':7,10 'instead':8 'mistak':3 'write':6
+(1 row)
+
+SELECT to_tsvector('synonym_tst', 'Indexes or indices - Which is right plural form of index?');
+                 to_tsvector                  
+----------------------------------------------
+ 'form':8 'index':1,3,10 'plural':7 'right':6
+(1 row)
+
+SELECT to_tsquery('synonym_tst', 'Index & indices');
+     to_tsquery      
+---------------------
+ 'index' & 'index':*
 (1 row)
 
 -- test thesaurus in configuration
