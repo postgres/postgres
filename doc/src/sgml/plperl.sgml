@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.69 2008/04/10 15:16:46 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.70 2009/08/15 00:33:12 petere Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -72,8 +72,10 @@ $$ LANGUAGE plperl;
     they refer to lexical variables in the enclosing scope. Because a PL/Perl
     function is wrapped in a subroutine, any named subroutine you create will
     be nested. In general, it is far safer to create anonymous subroutines
-    which you call via a coderef. See the <literal>perldiag</literal>
-    man page for more details.
+    which you call via a coderef. See <literal>Variable "%s" will not stay shared</literal>
+    and <literal>Variable "%s" is not available</literal> in the
+    <citerefentry><refentrytitle>perldiag</></citerefentry> man page for more
+    details.
    </para>
   </note>
 
