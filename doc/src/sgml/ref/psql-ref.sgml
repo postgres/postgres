@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.225.2.2 2009/08/10 02:50:18 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.225.2.3 2009/08/15 19:33:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -240,7 +240,7 @@ PostgreSQL documentation
       </listitem>
     </varlistentry>
 
-	<varlistentry>
+    <varlistentry>
       <term><option>-n</></term>
       <term><option>--no-readline</></term>
       <listitem>
