@@ -1,4 +1,0 @@
-select t.*, B.unique1 AS Bunique1,B.unique2 AS Bunique2,B.two AS Btwo,B.four AS Bfour,B.ten AS Bten, B.twenty AS Btwenty, B.hundred AS Bhundred,B.thousand AS Bthousand,B.twothousand AS Btwothousand, B.fivethous AS Bfivethous,B.tenthous AS Btenthous,B.odd AS Bodd, B.even AS Beven,B.stringu1 AS Bstringu1,B.stringu2 AS Bstringu2,B.string4 AS Bstring4 into table temp_bench  from tenk1 t, Bprime B where t.unique1 = B.unique1;
-drop table temp_bench;
-select t.*, B.unique1 AS Bunique1,B.unique2 AS Bunique2,B.two AS Btwo,B.four AS Bfour,B.ten AS Bten, B.twenty AS Btwenty, B.hundred AS Bhundred,B.thousand AS Bthousand,B.twothousand AS Btwothousand, B.fivethous AS Bfivethous,B.tenthous AS Btenthous,B.odd AS Bodd, B.even AS Beven,B.stringu1 AS Bstringu1,B.stringu2 AS Bstringu2,B.string4 AS Bstring4 into table temp_bench  from tenk1 t, Bprime B where t.unique1 = B.unique1;
-drop table temp_bench;

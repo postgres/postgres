@@ -1,4 +1,0 @@
-select * into table temp_bench from tenk1 where (unique2 > 301) and (unique2 < 402);
-drop table temp_bench;
-select * into table temp_bench from tenk1 where (unique2 > 301) and (unique2 < 402);
-drop table temp_bench;

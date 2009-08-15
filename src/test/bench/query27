@@ -1,2 +1,0 @@
-delete from tenk1 where tenk1.unique2 = 877;
-delete from tenk1 where tenk1.unique2 = 876;

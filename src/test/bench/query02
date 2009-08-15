@@ -1,4 +1,0 @@
-select * into table temp_bench from tenk1 where (unique1 > 647) and (unique1 < 1648);
-drop table temp_bench;
-select * into table temp_bench from tenk1 where (unique1 > 647) and (unique1 < 1648);
-drop table temp_bench;
