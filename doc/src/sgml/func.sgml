@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.486 2009/08/10 18:29:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.487 2009/08/16 19:55:21 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -821,7 +821,7 @@
       <row>
        <entry><literal><function>random</function>()</literal></entry>
        <entry><type>dp</type></entry>
-       <entry>random value between 0.0 and 1.0, inclusive</entry>
+       <entry>random value in the range 0.0 &lt;= x &lt; 1.0</entry>
        <entry><literal>random()</literal></entry>
        <entry></entry>
       </row>
