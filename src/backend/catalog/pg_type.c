@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.126 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.127 2009/08/16 18:14:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,23 +686,27 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 char *
 makeArrayTypeName(const char *typeName, Oid typeNamespace)
 {
-	char	   *arr;
-	int			i;
+	char	   *arr = (char *) palloc(NAMEDATALEN);
+	int			namelen = strlen(typeName);
 	Relation	pg_type_desc;
+	int			i;
 
 	/*
 	 * The idea is to prepend underscores as needed until we make a name that
 	 * doesn't collide with anything...
 	 */
-	arr = palloc(NAMEDATALEN);
-
 	pg_type_desc = heap_open(TypeRelationId, AccessShareLock);
 
 	for (i = 1; i < NAMEDATALEN - 1; i++)
 	{
 		arr[i - 1] = '_';
-		strlcpy(arr + i, typeName, NAMEDATALEN - i);
-		truncate_identifier(arr, strlen(arr), false);
+		if (i + namelen < NAMEDATALEN)
+			strcpy(arr + i, typeName);
+		else
+		{
+			memcpy(arr + i, typeName, NAMEDATALEN - i);
+			truncate_identifier(arr, NAMEDATALEN, false);
+		}
 		if (!SearchSysCacheExists(TYPENAMENSP,
 								  CStringGetDatum(arr),
 								  ObjectIdGetDatum(typeNamespace),
