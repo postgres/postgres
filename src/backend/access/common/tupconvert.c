@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.1 2009/08/06 20:44:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupconvert.c,v 1.2 2009/08/17 20:34:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,11 +146,22 @@ convert_tuples_by_position(TupleDesc indesc,
 	{
 		for (i = 0; i < n; i++)
 		{
-			if (attrMap[i] != (i+1))
-			{
-				same = false;
-				break;
-			}
+			if (attrMap[i] == (i+1))
+				continue;
+
+			/*
+			 * If it's a dropped column and the corresponding input
+			 * column is also dropped, we needn't convert.  However,
+			 * attlen and attalign must agree.
+			 */
+			if (attrMap[i] == 0 &&
+				indesc->attrs[i]->attisdropped &&
+				indesc->attrs[i]->attlen == outdesc->attrs[i]->attlen &&
+				indesc->attrs[i]->attalign == outdesc->attrs[i]->attalign)
+				continue;
+
+			same = false;
+			break;
 		}
 	}
 	else
@@ -255,11 +266,22 @@ convert_tuples_by_name(TupleDesc indesc,
 		same = true;
 		for (i = 0; i < n; i++)
 		{
-			if (attrMap[i] != (i+1))
-			{
-				same = false;
-				break;
-			}
+			if (attrMap[i] == (i+1))
+				continue;
+
+			/*
+			 * If it's a dropped column and the corresponding input
+			 * column is also dropped, we needn't convert.  However,
+			 * attlen and attalign must agree.
+			 */
+			if (attrMap[i] == 0 &&
+				indesc->attrs[i]->attisdropped &&
+				indesc->attrs[i]->attlen == outdesc->attrs[i]->attlen &&
+				indesc->attrs[i]->attalign == outdesc->attrs[i]->attalign)
+				continue;
+
+			same = false;
+			break;
 		}
 	}
 	else
