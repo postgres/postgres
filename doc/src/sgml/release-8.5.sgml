@@ -1,0 +1,400 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.1 2009/08/17 22:14:44 petere Exp $ -->
+
+<sect1 id="release-8.5">
+  <title>Release 8.5alpha1</title>
+  <sect2>
+    <title>Overview</title>
+    <para>
+      PostgreSQL alpha releases are snapshots of development code. They
+      are intended to preview and test upcoming features and to provide
+      the possibility for early feedback. They should not be used in
+      production installations or active development projects. While the
+      PostgreSQL code is continuously subject to a number of automated
+      and manual tests, alpha releases might have serious bugs. Also
+      features may be changed incompatibly or removed at any time during
+      the development cycle.
+    </para>
+    <para>
+      The development cycle of a PostgreSQL major release alternates
+      between periods of development and periods of integration work,
+      called commit fests, normally one month each. Alpha releases are
+      planned to be produced at the end of every commit fest, thus every
+      two months. Since the first commit fest starts within a month from
+      the beginning of development altogether, early alpha releases are
+      not indicative of the likely feature set of the final release.
+    </para>
+    <para>
+      The release notes below highlight user visible changes and new
+      features. There are normally numerous bug fixes and performance
+      improvements in every new snapshot of PostgreSQL, and it would be
+      too bulky to attempt to list them all. Note that many bug fixes are
+      also backported to stable releases of PostgreSQL, and you should be
+      using those if you are looking for bug-fix-only upgrades for your
+      current installations.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Migration</title>
+    <para>
+      To upgrade from any release to an alpha release or from an alpha
+      release to any other release will most likely require a
+      dump/restore upgrade procedure. It may happen that this is not
+      necessary in particular cases, but that is not verified beforehand.
+      (The server will warn you in any case when a dump/restore is
+      necessary if you attempt to use it with an old data directory.)
+      Note, however, that the dump/restore upgrade procedure is expected
+      to work for alpha releases, and problems in this area should be
+      reported.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Changes</title>
+    <sect3>
+      <title>SQL Features</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            DROP COLUMN and DROP CONSTRAINT now support an IF EXISTS clause so
+            that users can avoid fatal errors when running repeatable scripts.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            UNIQUE constraints can now be DEFERRABLE. This is primarily useful
+            for incremental updates of numerical keys, e.g. &quot;ID = ID +
+            1&quot;
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Allows parentheses around the query expression that follows a WITH
+            clause.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            INFORMATION_SCHEMA, a catalog of standard views of database
+            objects, has been updated to the SQL:2008 ANSI/ISO standard.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Changes character_octet_length to more sensible values in
+            INFORMATION_SCHEMA.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Allow * as parameter for FORCE QUOTE for COPY CSV, so that all
+            columns will be quoted.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Performance</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            EXPLAIN allows output of plans in XML or JSON format for automated
+            processing of explain plans by analysis or visualization tools.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            EXPLAIN now supports the use of generic options in EXPLAIN ( option
+            value, ... ) format, which permits the creation of additional
+            EXPLAIN options.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            ALTER TABLE ... ALTER COLUMN ... SET STATISTICS DISTINCT allows
+            users to manually tweak the number of distinct values estimated for
+            a column, to fix cases where ANALYZE estimates are incorrect.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Makes GEQO's planning deterministic by having it start from a
+            predictable random number seed each time.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Rewrite GEQO's gimme_tree function so that it always finds a legal
+            join sequence. Previously, it could have failed to produce a plan
+            in some cases.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Tweak TOAST code so that columns marked with MAIN storage strategy
+            are not forced out-of-line unless that is necessary to make the row
+            fit on a page. Previously, they were forced out-of-line if needed
+            to get the row down to the default target size (1/4th page).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Simplify the forms foo &lt;&gt; true and foo &lt;&gt; false to foo
+            = false and foo = true during query optimization.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Avoid per-send() system calls to manage SIGPIPE in libpq, if the
+            platform provides either sockopt(SO_NOSIGPIPE) or the MSG_NOSIGNAL
+            flag to send().
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Reserve the shared memory region during backend startup on Windows,
+            so that memory allocated by starting third party DLLs doesn't end
+            up conflicting with it. Hopefully this solves the long-time issue
+            with &quot;could not reattach to shared memory&quot; errors on
+            Win32.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Administration and Monitoring</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            Add the ability to include the SQLSTATE error code of any error
+            messages in the PostgreSQL activity log with the new
+            log_line_prefix placeholder %e.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Show the exact value being complained of in
+            unique-constraint-violation error messages, including unique-index
+            build failures.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Security</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            New has_sequence_privilege() functions allow you to check sequence
+            privileges for a given ROLE.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Built-In Functions</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            The to_char() formatting functions now supports EEEE (scientific
+            notation).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Use floor() not rint() when reducing precision of fractional
+            seconds in timestamp_trunc, timestamptz_trunc, and interval_trunc()
+            for the float-datetime case. This improves accuracy of time
+            calculations.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Fix ancient bug in handling of to_char() modifier 'TH', when used
+            with HH.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Datatypes</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            New hex-string input and output format options for type BYTEA. Hex
+            output format is enabled by default, which is an INCOMPATIBLE
+            CHANGE. See the new bytea_output parameter if you need to restore
+            compatibility.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Adds prefix support for text search synonym dictionary, allowing
+            creation of synonyms on partial matches.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Server Tools</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            pg_dump/pg_restore --clean now drops large objects.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Modifies parallel pg_restore ordering logic to avoid a potential
+            O(N^2) slowdown for some complex databases.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>psql</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            Have \d show child tables that inherit from the specified parent
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            psql now shows the index methods in \di
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Procedural Languages</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            PL/pgSQL functions using RETURNS QUERY or RECORD types no longer
+            always need to be rebuilt after adding or dropping a column for the
+            related tables.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Improves error context reporting in PL/Python, for easier
+            debugging.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Greatly expands the regression testing for PL/Python.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Additional Supplied Modules</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            pgbench is now multi-threaded, allowing it to use multiple CPU's
+            for its client connections, and to do more realistic workload
+            testing.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Added the ability to retrieve asynchronous notifications using
+            dblink, via the addition of the function dblink_get_notify().
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Added matchorig, matchsynonyms, and keepsynonyms options to
+            contrib/dict_xsyn.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Development</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            Functions which conflict with C++ reserved words have been renamed,
+            making backend header files now safe to use with C++ libraries.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Add man pages for SPI functions.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            ECPG now includes a STRING datatype for Informix compatibility
+            mode.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+    <sect3>
+      <title>Source code, build options</title>
+      <itemizedlist>
+        <listitem>
+          <para>
+            Upgrade to Autoconf 2.63 (not relevant to users of distribution
+            tarballs).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Minimum version of Flex is now 2.5.31, to support reentrant
+            scanners (not relevant to users of distribution tarballs).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Documentation build rules have been improved. The generated
+            documentation files are now shipped &quot;loose&quot;, not in
+            sub-tarballs.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            New toolchain to generate man pages. From now on, the man pages
+            will be current in every release.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Code-coverage testing support now extends to the entire source
+            tree, not only src/backend/.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Reserve the shared memory region during backend startup on Windows,
+            so that memory allocated by starting third party DLLs doesn't end
+            up conflicting with it. Hopefully this solves the long-time issue
+            with &quot;could not reattach to shared memory&quot; errors on
+            Win32.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Make the core scanner re-entrant, along with additional fixes that
+            will let it be used directly by PL/pgSQL.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Fix backend startup to not depend on the flat-file copy of
+            pg_database. This is a first step towards eliminating the flat
+            files altogether.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Add s_lock support for SuperH architecture (not well tested).
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect3>
+  </sect2>
+</sect1>

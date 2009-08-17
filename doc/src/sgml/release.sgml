@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.633 2009/05/02 20:17:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.634 2009/08/17 22:14:44 petere Exp $ -->
 <!--
 
 Typical markup:
@@ -70,6 +70,7 @@ can be created without links to the main documentation.
   The reason for splitting the release notes this way is so that appropriate
   subsets can easily be copied into back branches.
 -->
+&release-8.5;
 &release-8.4;
 &release-8.3;
 &release-8.2;
