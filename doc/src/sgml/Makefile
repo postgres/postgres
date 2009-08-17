@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.126 2009/08/15 01:56:35 tgl Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.127 2009/08/17 21:29:30 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -118,7 +118,12 @@ $(srcdir)/HTML.index: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
 $(srcdir)/bookindex.sgml: HTML.index
 	LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g -i 'bookindex' -o $@ $<
 
-$(srcdir)/version.sgml: $(top_builddir)/src/Makefile.global
+# Technically, this should depend on Makefile.global, but then
+# version.sgml would need to be rebuilt after every configure run,
+# even in distribution tarballs.  So this is cheating a bit, but it
+# will achieve the goal of updating the version number when it
+# changes.
+$(srcdir)/version.sgml: $(top_srcdir)/configure
 	{ \
 	  echo "<!entity version \"$(VERSION)\">"; \
 	  echo "<!entity majorversion \"$(MAJORVERSION)\">"; \
