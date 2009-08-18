@@ -4,6 +4,9 @@ SET client_min_messages = warning;
 \set ECHO all
 RESET client_min_messages;
 
+-- must have a UTF8 database
+SELECT getdatabaseencoding();
+
 SET client_encoding TO 'KOI8';
 
 SELECT unaccent('foobar');
