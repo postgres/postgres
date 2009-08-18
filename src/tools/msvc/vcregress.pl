@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.10 2008/12/01 13:39:45 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.11 2009/08/18 22:36:56 adunstan Exp $
 
 use strict;
 
@@ -180,15 +180,16 @@ sub contribcheck
     {
         next unless -d "$module/sql" && 
 			-d "$module/expected" && 
-			(-f "$module/Makefile" || -f "$module/GNUmakefile");
+			(-f "$module/GNUmakefile" || -f "$module/Makefile");
         chdir $module;
 		print "============================================================\n";
         print "Checking $module\n";
         my @tests = fetchTests();
+		my @opts = fetchRegressOpts();
         my @args = (
             "../../$Config/pg_regress/pg_regress",
             "--psqldir=../../$Config/psql",
-            "--dbname=contrib_regression",@tests
+            "--dbname=contrib_regression",@opts,@tests
         );
         system(@args);
         my $status = $? >> 8;
@@ -198,12 +199,31 @@ sub contribcheck
     exit $mstat if $mstat;
 }
 
+sub fetchRegressOpts
+{
+    my $handle;
+    open($handle,"<GNUmakefile")
+      || open($handle,"<Makefile")
+      || die "Could not open Makefile";
+    local($/) = undef;
+    my $m = <$handle>;
+    close($handle);
+	my @opts;
+	if ($m =~ /^\s*REGRESS_OPTS\s*=(.*)/m)
+	{
+		# ignore options that use makefile variables - can't handle those
+		# ignore anything that isn't an option staring with --
+		@opts = grep { $_ !~ /\$\(/ && $_ =~ /^--/ } split(/\s+/,$1);
+	}
+	return @opts;
+}
+
 sub fetchTests
 {
 
     my $handle;
-    open($handle,"<Makefile")
-      || open($handle,"<GNUmakefile")
+    open($handle,"<GNUmakefile")
+      || open($handle,"<Makefile")
       || die "Could not open Makefile";
     local($/) = undef;
     my $m = <$handle>;
