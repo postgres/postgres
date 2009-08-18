@@ -6,7 +6,7 @@
  * Copyright (c) 2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.2 2009/08/18 15:37:04 tgl Exp $
+ *    $PostgreSQL: pgsql/contrib/unaccent/unaccent.c,v 1.3 2009/08/18 15:57:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,10 +78,10 @@ placeChar(SuffixChar *node, unsigned char *str, int lenstr, char *replaceTo, int
 static SuffixChar*
 initSuffixTree(char *filename) 
 {
-	SuffixChar *rootSuffixTree = NULL;
+	SuffixChar * volatile rootSuffixTree = NULL;
 	MemoryContext ccxt = CurrentMemoryContext;
 	tsearch_readline_state	trst;
-	bool			skip;
+	volatile bool	skip;
 
 	filename = get_tsearch_config_filename(filename, "rules");
 	if (!tsearch_readline_begin(&trst, filename))
