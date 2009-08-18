@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.13 2009/07/16 06:33:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.14 2009/08/18 10:30:41 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@ typedef struct ParsedLex
 	int			type;
 	char	   *lemm;
 	int			lenlemm;
-	bool		resfollow;
 	struct ParsedLex *next;
 } ParsedLex;
 
@@ -189,6 +188,8 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 		while (ld->towork.head)
 		{
 			ParsedLex  *curVal = ld->towork.head;
+			char	   *curValLemm = curVal->lemm;
+			int	   		curValLenLemm = curVal->lenlemm;
 
 			map = ld->cfg->map + curVal->type;
 
@@ -208,8 +209,8 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 				res = (TSLexeme *) DatumGetPointer(FunctionCall4(
 															 &(dict->lexize),
 											 PointerGetDatum(dict->dictData),
-											   PointerGetDatum(curVal->lemm),
-											  Int32GetDatum(curVal->lenlemm),
+											     PointerGetDatum(curValLemm),
+											    Int32GetDatum(curValLenLemm),
 											  PointerGetDatum(&ld->dictState)
 																 ));
 
@@ -230,6 +231,13 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 
 				if (!res)		/* dictionary doesn't know this lexeme */
 					continue;
+
+				if ( res->flags & TSL_FILTER )
+				{
+					curValLemm = res->lexeme;
+					curValLenLemm = strlen(res->lexeme);
+					continue;
+				}
 
 				RemoveHead(ld);
 				setCorrLex(ld, correspondLexem);
