@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.676 2009/08/02 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.677 2009/08/18 23:40:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -331,7 +331,8 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
 %type <objtype>	reindex_type drop_type comment_type
 
-%type <node>	fetch_direction select_limit_value select_offset_value
+%type <node>	fetch_direction limit_clause select_limit_value
+				offset_clause select_offset_value
 				select_offset_value2 opt_select_fetch_first_value
 %type <ival>	row_or_rows first_or_next
 
@@ -7228,14 +7229,20 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 
 
 select_limit:
-			LIMIT select_limit_value OFFSET select_offset_value
-				{ $$ = list_make2($4, $2); }
-			| OFFSET select_offset_value LIMIT select_limit_value
-				{ $$ = list_make2($2, $4); }
-			| LIMIT select_limit_value
-				{ $$ = list_make2(NULL, $2); }
-			| OFFSET select_offset_value
-				{ $$ = list_make2($2, NULL); }
+			limit_clause offset_clause			{ $$ = list_make2($2, $1); }
+			| offset_clause limit_clause		{ $$ = list_make2($1, $2); }
+			| limit_clause						{ $$ = list_make2(NULL, $1); }
+			| offset_clause						{ $$ = list_make2($1, NULL); }
+		;
+
+opt_select_limit:
+			select_limit						{ $$ = $1; }
+			| /* EMPTY */						{ $$ = list_make2(NULL,NULL); }
+		;
+
+limit_clause:
+			LIMIT select_limit_value
+				{ $$ = $2; }
 			| LIMIT select_limit_value ',' select_offset_value
 				{
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
@@ -7245,19 +7252,17 @@ select_limit:
 							 errhint("Use separate LIMIT and OFFSET clauses."),
 							 parser_errposition(@1)));
 				}
-			/* SQL:2008 syntax variants */
-			| OFFSET select_offset_value2 row_or_rows
-				{ $$ = list_make2($2, NULL); }
+			/* SQL:2008 syntax */
 			| FETCH first_or_next opt_select_fetch_first_value row_or_rows ONLY
-				{ $$ = list_make2(NULL, $3); }
-			| OFFSET select_offset_value2 row_or_rows FETCH first_or_next opt_select_fetch_first_value row_or_rows ONLY
-				{ $$ = list_make2($2, $6); }
+				{ $$ = $3; }
 		;
 
-opt_select_limit:
-			select_limit							{ $$ = $1; }
-			| /* EMPTY */
-					{ $$ = list_make2(NULL,NULL); }
+offset_clause:
+			OFFSET select_offset_value
+				{ $$ = $2; }
+			/* SQL:2008 syntax */
+			| OFFSET select_offset_value2 row_or_rows
+				{ $$ = $2; }
 		;
 
 select_limit_value:
@@ -7269,19 +7274,20 @@ select_limit_value:
 				}
 		;
 
+select_offset_value:
+			a_expr									{ $$ = $1; }
+		;
+
 /*
  * Allowing full expressions without parentheses causes various parsing
  * problems with the trailing ROW/ROWS key words.  SQL only calls for
- * constants, so we allow the rest only with parentheses.
+ * constants, so we allow the rest only with parentheses.  If omitted,
+ * default to 1.
  */
 opt_select_fetch_first_value:
-			SignedIconst		{ $$ = makeIntConst($1, @1); }
-			| '(' a_expr ')'	{ $$ = $2; }
-			| /*EMPTY*/		{ $$ = makeIntConst(1, -1); }
-		;
-
-select_offset_value:
-			a_expr									{ $$ = $1; }
+			SignedIconst						{ $$ = makeIntConst($1, @1); }
+			| '(' a_expr ')'					{ $$ = $2; }
+			| /*EMPTY*/							{ $$ = makeIntConst(1, -1); }
 		;
 
 /*
@@ -7293,16 +7299,14 @@ select_offset_value2:
 		;
 
 /* noise words */
-row_or_rows:
-			ROW		{ $$ = 0; }
-			| ROWS		{ $$ = 0; }
-			;
+row_or_rows: ROW									{ $$ = 0; }
+			| ROWS									{ $$ = 0; }
+		;
 
-/* noise words */
-first_or_next:
-			FIRST_P		{ $$ = 0; }
-			| NEXT		{ $$ = 0; }
-			;
+first_or_next: FIRST_P								{ $$ = 0; }
+			| NEXT									{ $$ = 0; }
+		;
+
 
 group_clause:
 			GROUP_P BY expr_list					{ $$ = $3; }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.122 2009/05/03 20:45:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.123 2009/08/18 23:40:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1005,14 +1005,15 @@ OFFSET <replaceable class="parameter">start</replaceable>
 
    <para>
     SQL:2008 introduced a different syntax to achieve the same thing,
-    which PostgreSQL also supports.  It is:
+    which <productname>PostgreSQL</> also supports.  It is:
 <synopsis>
 OFFSET <replaceable class="parameter">start</replaceable> { ROW | ROWS }
 FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } ONLY
 </synopsis>
-    Both clauses are optional, but if present
-    the <literal>OFFSET</literal> clause must come before
-    the <literal>FETCH</literal> clause.  <literal>ROW</literal>
+    According to the standard, the <literal>OFFSET</literal> clause must come
+    before the <literal>FETCH</literal> clause if both are present; but
+    <productname>PostgreSQL</> is laxer and allows either order.
+    <literal>ROW</literal>
     and <literal>ROWS</literal> as well as <literal>FIRST</literal>
     and <literal>NEXT</literal> are noise words that don't influence
     the effects of these clauses.  In this syntax, when using expressions
