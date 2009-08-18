@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.137.4.9 2009/05/01 19:29:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.137.4.10 2009/08/18 21:23:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3103,6 +3103,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						break;
 
 					case DTK_MILLISEC:
+						/* avoid overflowing the fsec field */
+						tm->tm_sec += val / 1000;
+						val -= (val / 1000) * 1000;
 #ifdef HAVE_INT64_TIMESTAMP
 						*fsec += ((val + fval) * 1000);
 #else
