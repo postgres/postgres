@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.88 2009/08/07 20:50:21 petere Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.89 2009/08/18 10:34:39 teodor Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -39,6 +39,7 @@ SUBDIRS = \
 		tablefunc	\
 		test_parser	\
 		tsearch2	\
+		unaccent	\
 		vacuumlo
 
 ifeq ($(with_openssl),yes)

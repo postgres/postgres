@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.63 2009/08/17 22:14:44 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.64 2009/08/18 10:34:39 teodor Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -126,6 +126,7 @@
 <!entity tablefunc       SYSTEM "tablefunc.sgml">
 <!entity test-parser     SYSTEM "test-parser.sgml">
 <!entity tsearch2        SYSTEM "tsearch2.sgml">
+<!entity unaccent      SYSTEM "unaccent.sgml">
 <!entity uuid-ossp       SYSTEM "uuid-ossp.sgml">
 <!entity vacuumlo        SYSTEM "vacuumlo.sgml">
 <!entity xml2            SYSTEM "xml2.sgml"> 

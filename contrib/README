@@ -169,6 +169,10 @@ tsearch2 -
 	Pavel Stehule <pavel.stehule@gmail.com>, based on code originally by
 	Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>.
 
+unaccent -
+	Unaccent dictionary for text search
+	Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>.
+
 uuid-ossp -
 	UUID generation functions
 	by Peter Eisentraut <peter_e@gmx.net>

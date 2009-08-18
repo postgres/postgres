@@ -1,0 +1,150 @@
+<sect1 id="unaccent">
+ <title>unaccent</title>
+
+ <indexterm zone="unaccent">
+  <primary>unaccent</primary>
+ </indexterm>
+
+ <para>
+  <filename>unaccent</> removes accents (diacritic signs) from a lexeme.
+  It's a filtering dictionary, that means its output is 
+  always passed to the next dictionary (if any), contrary to the standard 
+  behaviour. Currently, it supports most important accents from european 
+  languages. 
+ </para>
+
+ <para>
+  Limitation: Current implementation of <filename>unaccent</> 
+  dictionary cannot be used as a normalizing dictionary for 
+  <filename>thesaurus</filename> dictionary.
+ </para>
+ 
+ <sect2>
+  <title>Configuration</title>
+
+  <para>
+   A <literal>unaccent</> dictionary accepts the following options:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>RULES</> is the base name of the file containing the list of
+     translation rules.  This file must be stored in
+     <filename>$SHAREDIR/tsearch_data/</> (where <literal>$SHAREDIR</> means
+     the <productname>PostgreSQL</> installation's shared-data directory).
+     Its name must end in <literal>.rules</> (which is not to be included in
+     the <literal>RULES</> parameter).
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   The rules file has the following format:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Each line represents pair: character_with_accent  character_without_accent
+    <programlisting>
+&Agrave;	A
+&Aacute; 	A
+&Acirc; 	A
+&Atilde;	A
+&Auml;  	A
+&Aring;		A
+&AElig; 	A
+    </programlisting>
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   Look at <filename>unaccent.rules</>, which is installed in
+   <filename>$SHAREDIR/tsearch_data/</>, for an example.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Usage</title>
+
+  <para>
+   Running the installation script creates a text search template
+   <literal>unaccent</> and a dictionary <literal>unaccent</>
+   based on it, with default parameters.  You can alter the
+   parameters, for example
+
+<programlisting>
+=# ALTER TEXT SEARCH DICTIONARY unaccent (RULES='my_rules');
+</programlisting>
+
+   or create new dictionaries based on the template.
+  </para>
+
+  <para>
+   To test the dictionary, you can try
+
+<programlisting>
+=# select ts_lexize('unaccent','Hôtel');
+ ts_lexize 
+-----------
+ {Hotel}
+(1 row)
+</programlisting>
+  </para>
+  
+  <para>
+  Filtering dictionary are useful for correct work of 
+  <function>ts_headline</function> function.
+<programlisting>
+=# CREATE TEXT SEARCH CONFIGURATION fr ( COPY = french );
+=# ALTER TEXT SEARCH CONFIGURATION fr
+	ALTER MAPPING FOR hword, hword_part, word
+	WITH unaccent, french_stem;
+=# select to_tsvector('fr','Hôtels de la Mer');
+    to_tsvector    
+-------------------
+ 'hotel':1 'mer':4
+(1 row)
+
+=# select to_tsvector('fr','Hôtel de la Mer') @@ to_tsquery('fr','Hotels');
+ ?column? 
+----------
+ t
+(1 row)
+=# select ts_headline('fr','Hôtel de la Mer',to_tsquery('fr','Hotels'));
+      ts_headline       
+------------------------
+  &lt;b&gt;Hôtel&lt;/b&gt;de la Mer
+(1 row)
+
+</programlisting>
+  </para>
+ </sect2>
+
+ <sect2>
+ <title>Function</title>
+
+ <para>
+  <function>unaccent</> function removes accents (diacritic signs) from
+  argument string. Basically, it's a wrapper around 
+  <filename>unaccent</> dictionary.
+ </para>
+
+ <indexterm>
+  <primary>unaccent</primary>
+ </indexterm>
+
+ <synopsis>
+   unaccent(<optional><replaceable class="PARAMETER">dictionary</replaceable>,
+   </optional> <replaceable class="PARAMETER">string</replaceable>) 
+  returns <type>text</type>
+ </synopsis>  
+
+ <para>
+<programlisting>
+SELECT unaccent('unaccent','Hôtel');
+SELECT unaccent('Hôtel');
+</programlisting>
+ </para>
+ </sect2>
+
+</sect1>
