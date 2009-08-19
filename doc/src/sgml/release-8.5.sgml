@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.3 2009/08/19 07:54:21 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.4 2009/08/19 08:18:48 petere Exp $ -->
 
 <sect1 id="release-8.5">
   <title>Release 8.5alpha1</title>
@@ -260,9 +260,8 @@
       <itemizedlist>
         <listitem>
           <para>
-            PL/pgSQL functions using RETURNS QUERY or RECORD types no longer
-            always need to be rebuilt after adding or dropping a column for the
-            related tables.
+            PL/pgSQL functions can now better cope with row types
+            containing dropped columns.
           </para>
         </listitem>
         <listitem>
