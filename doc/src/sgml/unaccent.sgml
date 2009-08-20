@@ -45,13 +45,13 @@
     <para>
      Each line represents pair: character_with_accent  character_without_accent
     <programlisting>
-&Agrave;	A
-&Aacute; 	A
-&Acirc; 	A
-&Atilde;	A
-&Auml;  	A
-&Aring;		A
-&AElig; 	A
+&Agrave;        A
+&Aacute;        A
+&Acirc;         A
+&Atilde;        A
+&Auml;          A
+&Aring;         A
+&AElig;         A
     </programlisting>
     </para>
    </listitem>
@@ -97,8 +97,8 @@
 <programlisting>
 =# CREATE TEXT SEARCH CONFIGURATION fr ( COPY = french );
 =# ALTER TEXT SEARCH CONFIGURATION fr
-	ALTER MAPPING FOR hword, hword_part, word
-	WITH unaccent, french_stem;
+        ALTER MAPPING FOR hword, hword_part, word
+        WITH unaccent, french_stem;
 =# select to_tsvector('fr','Hôtels de la Mer');
     to_tsvector    
 -------------------
