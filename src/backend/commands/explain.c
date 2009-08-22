@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.189 2009/08/10 05:46:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.190 2009/08/22 02:06:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1134,17 +1134,15 @@ show_plan_tlist(Plan *plan, ExplainState *es)
 									   es->pstmt->subplans);
 	useprefix = list_length(es->rtable) > 1;
 
-	/* Deparse each non-junk result column */
+	/* Deparse each result column (we now include resjunk ones) */
 	i = 0;
 	foreach(lc, plan->targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
-		if (tle->resjunk)
-			continue;
 		result = lappend(result,
 					     deparse_expression((Node *) tle->expr, context,
-												  useprefix, false));
+											useprefix, false));
 	}
 
 	/* Print results */
