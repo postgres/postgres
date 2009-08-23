@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.133 2009/07/18 19:15:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.134 2009/08/23 18:26:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,6 +238,10 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 						 IndexRuntimeKeyInfo *runtimeKeys, int numRuntimeKeys)
 {
 	int			j;
+	MemoryContext oldContext;
+
+	/* We want to keep the key values in per-tuple memory */
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	for (j = 0; j < numRuntimeKeys; j++)
 	{
@@ -256,18 +260,32 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 		 * econtext->ecxt_per_tuple_memory.  We assume that the outer tuple
 		 * will stay put throughout our scan.  If this is wrong, we could copy
 		 * the result into our context explicitly, but I think that's not
-		 * necessary...
+		 * necessary.
+		 *
+		 * It's also entirely possible that the result of the eval is a
+		 * toasted value.  In this case we should forcibly detoast it,
+		 * to avoid repeat detoastings each time the value is examined
+		 * by an index support function.
 		 */
-		scanvalue = ExecEvalExprSwitchContext(key_expr,
-											  econtext,
-											  &isNull,
-											  NULL);
-		scan_key->sk_argument = scanvalue;
+		scanvalue = ExecEvalExpr(key_expr,
+								 econtext,
+								 &isNull,
+								 NULL);
 		if (isNull)
+		{
+			scan_key->sk_argument = scanvalue;
 			scan_key->sk_flags |= SK_ISNULL;
+		}
 		else
+		{
+			if (runtimeKeys[j].key_toastable)
+				scanvalue = PointerGetDatum(PG_DETOAST_DATUM(scanvalue));
+			scan_key->sk_argument = scanvalue;
 			scan_key->sk_flags &= ~SK_ISNULL;
+		}
 	}
+
+	MemoryContextSwitchTo(oldContext);
 }
 
 /*
@@ -795,6 +813,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 				runtime_keys[n_runtime_keys].scan_key = this_scan_key;
 				runtime_keys[n_runtime_keys].key_expr =
 					ExecInitExpr(rightop, planstate);
+				runtime_keys[n_runtime_keys].key_toastable =
+					TypeIsToastable(op_righttype);
 				n_runtime_keys++;
 				scanvalue = (Datum) 0;
 			}
@@ -844,34 +864,6 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 				varattno = ((Var *) leftop)->varattno;
 
 				/*
-				 * rightop is the constant or variable comparison value
-				 */
-				rightop = (Expr *) lfirst(rargs_cell);
-				rargs_cell = lnext(rargs_cell);
-
-				if (rightop && IsA(rightop, RelabelType))
-					rightop = ((RelabelType *) rightop)->arg;
-
-				Assert(rightop != NULL);
-
-				if (IsA(rightop, Const))
-				{
-					/* OK, simple constant comparison value */
-					scanvalue = ((Const *) rightop)->constvalue;
-					if (((Const *) rightop)->constisnull)
-						flags |= SK_ISNULL;
-				}
-				else
-				{
-					/* Need to treat this one as a runtime key */
-					runtime_keys[n_runtime_keys].scan_key = this_sub_key;
-					runtime_keys[n_runtime_keys].key_expr =
-						ExecInitExpr(rightop, planstate);
-					n_runtime_keys++;
-					scanvalue = (Datum) 0;
-				}
-
-				/*
 				 * We have to look up the operator's associated btree support
 				 * function
 				 */
@@ -895,6 +887,36 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 											 op_lefttype,
 											 op_righttype,
 											 BTORDER_PROC);
+
+				/*
+				 * rightop is the constant or variable comparison value
+				 */
+				rightop = (Expr *) lfirst(rargs_cell);
+				rargs_cell = lnext(rargs_cell);
+
+				if (rightop && IsA(rightop, RelabelType))
+					rightop = ((RelabelType *) rightop)->arg;
+
+				Assert(rightop != NULL);
+
+				if (IsA(rightop, Const))
+				{
+					/* OK, simple constant comparison value */
+					scanvalue = ((Const *) rightop)->constvalue;
+					if (((Const *) rightop)->constisnull)
+						flags |= SK_ISNULL;
+				}
+				else
+				{
+					/* Need to treat this one as a runtime key */
+					runtime_keys[n_runtime_keys].scan_key = this_sub_key;
+					runtime_keys[n_runtime_keys].key_expr =
+						ExecInitExpr(rightop, planstate);
+					runtime_keys[n_runtime_keys].key_toastable =
+						TypeIsToastable(op_righttype);
+					n_runtime_keys++;
+					scanvalue = (Datum) 0;
+				}
 
 				/*
 				 * initialize the subsidiary scan key's fields appropriately
