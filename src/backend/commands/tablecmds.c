@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.297 2009/08/12 23:00:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.298 2009/08/23 19:23:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,6 +775,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 	EState	   *estate;
 	ResultRelInfo *resultRelInfos;
 	ResultRelInfo *resultRelInfo;
+	SubTransactionId mySubid;
 	ListCell   *cell;
 
 	/*
@@ -944,36 +945,58 @@ ExecuteTruncate(TruncateStmt *stmt)
 	/*
 	 * OK, truncate each table.
 	 */
+	mySubid = GetCurrentSubTransactionId();
+
 	foreach(cell, rels)
 	{
 		Relation	rel = (Relation) lfirst(cell);
-		Oid			heap_relid;
-		Oid			toast_relid;
 
 		/*
-		 * Create a new empty storage file for the relation, and assign it as
-		 * the relfilenode value.	The old storage file is scheduled for
-		 * deletion at commit.
+		 * Normally, we need a transaction-safe truncation here.  However,
+		 * if the table was either created in the current (sub)transaction
+		 * or has a new relfilenode in the current (sub)transaction, then
+		 * we can just truncate it in-place, because a rollback would
+		 * cause the whole table or the current physical file to be
+		 * thrown away anyway.
 		 */
-		setNewRelfilenode(rel, RecentXmin);
-
-		heap_relid = RelationGetRelid(rel);
-		toast_relid = rel->rd_rel->reltoastrelid;
-
-		/*
-		 * The same for the toast table, if any.
-		 */
-		if (OidIsValid(toast_relid))
+		if (rel->rd_createSubid == mySubid ||
+			rel->rd_newRelfilenodeSubid == mySubid)
 		{
-			rel = relation_open(toast_relid, AccessExclusiveLock);
-			setNewRelfilenode(rel, RecentXmin);
-			heap_close(rel, NoLock);
+			/* Immediate, non-rollbackable truncation is OK */
+			heap_truncate_one_rel(rel);
 		}
+		else
+		{
+			Oid			heap_relid;
+			Oid			toast_relid;
 
-		/*
-		 * Reconstruct the indexes to match, and we're done.
-		 */
-		reindex_relation(heap_relid, true);
+			/*
+			 * Need the full transaction-safe pushups.
+			 *
+			 * Create a new empty storage file for the relation, and assign it
+			 * as the relfilenode value. The old storage file is scheduled for
+			 * deletion at commit.
+			 */
+			setNewRelfilenode(rel, RecentXmin);
+
+			heap_relid = RelationGetRelid(rel);
+			toast_relid = rel->rd_rel->reltoastrelid;
+
+			/*
+			 * The same for the toast table, if any.
+			 */
+			if (OidIsValid(toast_relid))
+			{
+				rel = relation_open(toast_relid, AccessExclusiveLock);
+				setNewRelfilenode(rel, RecentXmin);
+				heap_close(rel, NoLock);
+			}
+
+			/*
+			 * Reconstruct the indexes to match, and we're done.
+			 */
+			reindex_relation(heap_relid, true);
+		}
 	}
 
 	/*

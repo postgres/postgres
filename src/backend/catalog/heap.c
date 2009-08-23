@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.357 2009/08/02 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.358 2009/08/23 19:23:40 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2342,18 +2342,9 @@ heap_truncate(List *relids)
 	{
 		Oid			rid = lfirst_oid(cell);
 		Relation	rel;
-		Oid			toastrelid;
 
 		rel = heap_open(rid, AccessExclusiveLock);
 		relations = lappend(relations, rel);
-
-		/* If there is a toast table, add it to the list too */
-		toastrelid = rel->rd_rel->reltoastrelid;
-		if (OidIsValid(toastrelid))
-		{
-			rel = heap_open(toastrelid, AccessExclusiveLock);
-			relations = lappend(relations, rel);
-		}
 	}
 
 	/* Don't allow truncate on tables that are referenced by foreign keys */
@@ -2364,16 +2355,44 @@ heap_truncate(List *relids)
 	{
 		Relation	rel = lfirst(cell);
 
-		/* Truncate the actual file (and discard buffers) */
-		RelationTruncate(rel, 0);
+		/* Truncate the relation */
+		heap_truncate_one_rel(rel);
 
-		/* If this relation has indexes, truncate the indexes too */
-		RelationTruncateIndexes(rel);
-
-		/*
-		 * Close the relation, but keep exclusive lock on it until commit.
-		 */
+		/* Close the relation, but keep exclusive lock on it until commit */
 		heap_close(rel, NoLock);
+	}
+}
+
+/*
+ *	 heap_truncate_one_rel
+ *
+ *	 This routine deletes all data within the specified relation.
+ *
+ * This is not transaction-safe, because the truncation is done immediately
+ * and cannot be rolled back later.  Caller is responsible for having
+ * checked permissions etc, and must have obtained AccessExclusiveLock.
+ */
+void
+heap_truncate_one_rel(Relation rel)
+{
+	Oid			toastrelid;
+
+	/* Truncate the actual file (and discard buffers) */
+	RelationTruncate(rel, 0);
+
+	/* If the relation has indexes, truncate the indexes too */
+	RelationTruncateIndexes(rel);
+
+	/* If there is a toast table, truncate that too */
+	toastrelid = rel->rd_rel->reltoastrelid;
+	if (OidIsValid(toastrelid))
+	{
+		Relation	toastrel = heap_open(toastrelid, AccessExclusiveLock);
+
+		RelationTruncate(toastrel, 0);
+		RelationTruncateIndexes(toastrel);
+		/* keep the lock... */
+		heap_close(toastrel, NoLock);
 	}
 }
 
