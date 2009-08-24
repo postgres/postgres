@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71.2.9 2009/06/09 19:36:42 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.71.2.10 2009/08/24 17:23:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,7 +646,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 				 * of a worker will continue to fail in the same way.
 				 */
 				AutoVacuumShmem->av_signal[AutoVacForkFailed] = false;
-				pg_usleep(100000L);		/* 100ms */
+				pg_usleep(1000000L);		/* 1s */
 				SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER);
 				continue;
 			}
