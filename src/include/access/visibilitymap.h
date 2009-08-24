@@ -7,17 +7,17 @@
  * Portions Copyright (c) 2007-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/visibilitymap.h,v 1.4 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/visibilitymap.h,v 1.5 2009/08/24 02:18:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VISIBILITYMAP_H
 #define VISIBILITYMAP_H
 
-#include "utils/relcache.h"
-#include "storage/buf.h"
-#include "storage/itemptr.h"
 #include "access/xlogdefs.h"
+#include "storage/block.h"
+#include "storage/buf.h"
+#include "utils/relcache.h"
 
 extern void visibilitymap_clear(Relation rel, BlockNumber heapBlk);
 extern void visibilitymap_pin(Relation rel, BlockNumber heapBlk,

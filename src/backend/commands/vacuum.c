@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.389 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.390 2009/08/24 02:18:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2935,6 +2935,8 @@ move_chain_tuple(Relation rel,
 	OffsetNumber newoff;
 	ItemId		newitemid;
 	Size		tuple_len = old_tup->t_len;
+	bool		all_visible_cleared = false;
+	bool		all_visible_cleared_new = false;
 
 	/*
 	 * make a modifiable copy of the source tuple.
@@ -3019,6 +3021,18 @@ move_chain_tuple(Relation rel,
 		newtup.t_data->t_ctid = *ctid;
 	*ctid = newtup.t_self;
 
+	/* clear PD_ALL_VISIBLE flags */
+	if (PageIsAllVisible(old_page))
+	{
+		all_visible_cleared = true;
+		PageClearAllVisible(old_page);
+	}
+	if (dst_buf != old_buf && PageIsAllVisible(dst_page))
+	{
+		all_visible_cleared_new = true;
+		PageClearAllVisible(dst_page);
+	}
+
 	MarkBufferDirty(dst_buf);
 	if (dst_buf != old_buf)
 		MarkBufferDirty(old_buf);
@@ -3027,7 +3041,9 @@ move_chain_tuple(Relation rel,
 	if (!rel->rd_istemp)
 	{
 		XLogRecPtr	recptr = log_heap_move(rel, old_buf, old_tup->t_self,
-										   dst_buf, &newtup);
+										   dst_buf, &newtup,
+										   all_visible_cleared,
+										   all_visible_cleared_new);
 
 		if (old_buf != dst_buf)
 		{
@@ -3040,17 +3056,14 @@ move_chain_tuple(Relation rel,
 
 	END_CRIT_SECTION();
 
-	PageClearAllVisible(BufferGetPage(old_buf));
-	if (dst_buf != old_buf)
-		PageClearAllVisible(BufferGetPage(dst_buf));
-
 	LockBuffer(dst_buf, BUFFER_LOCK_UNLOCK);
 	if (dst_buf != old_buf)
 		LockBuffer(old_buf, BUFFER_LOCK_UNLOCK);
 
-	/* Clear the bits in the visibility map. */
-	visibilitymap_clear(rel, BufferGetBlockNumber(old_buf));
-	if (dst_buf != old_buf)
+	/* Clear bits in visibility map */
+	if (all_visible_cleared)
+		visibilitymap_clear(rel, BufferGetBlockNumber(old_buf));
+	if (all_visible_cleared_new)
 		visibilitymap_clear(rel, BufferGetBlockNumber(dst_buf));
 
 	/* Create index entries for the moved tuple */
@@ -3084,6 +3097,8 @@ move_plain_tuple(Relation rel,
 	OffsetNumber newoff;
 	ItemId		newitemid;
 	Size		tuple_len = old_tup->t_len;
+	bool		all_visible_cleared = false;
+	bool		all_visible_cleared_new = false;
 
 	/* copy tuple */
 	heap_copytuple_with_tuple(old_tup, &newtup);
@@ -3134,6 +3149,18 @@ move_plain_tuple(Relation rel,
 	old_tup->t_data->t_infomask |= HEAP_MOVED_OFF;
 	HeapTupleHeaderSetXvac(old_tup->t_data, myXID);
 
+	/* clear PD_ALL_VISIBLE flags */
+	if (PageIsAllVisible(old_page))
+	{
+		all_visible_cleared = true;
+		PageClearAllVisible(old_page);
+	}
+	if (PageIsAllVisible(dst_page))
+	{
+		all_visible_cleared_new = true;
+		PageClearAllVisible(dst_page);
+	}
+
 	MarkBufferDirty(dst_buf);
 	MarkBufferDirty(old_buf);
 
@@ -3141,7 +3168,9 @@ move_plain_tuple(Relation rel,
 	if (!rel->rd_istemp)
 	{
 		XLogRecPtr	recptr = log_heap_move(rel, old_buf, old_tup->t_self,
-										   dst_buf, &newtup);
+										   dst_buf, &newtup,
+										   all_visible_cleared,
+										   all_visible_cleared_new);
 
 		PageSetLSN(old_page, recptr);
 		PageSetTLI(old_page, ThisTimeLineID);
@@ -3151,28 +3180,17 @@ move_plain_tuple(Relation rel,
 
 	END_CRIT_SECTION();
 
-	/*
-	 * Clear the visible-to-all hint bits on the page, and bits in the
-	 * visibility map. Normally we'd release the locks on the heap pages
-	 * before updating the visibility map, but doesn't really matter here
-	 * because we're holding an AccessExclusiveLock on the relation anyway.
-	 */
-	if (PageIsAllVisible(dst_page))
-	{
-		PageClearAllVisible(dst_page);
-		visibilitymap_clear(rel, BufferGetBlockNumber(dst_buf));
-	}
-	if (PageIsAllVisible(old_page))
-	{
-		PageClearAllVisible(old_page);
-		visibilitymap_clear(rel, BufferGetBlockNumber(old_buf));
-	}
-
 	dst_vacpage->free = PageGetFreeSpaceWithFillFactor(rel, dst_page);
 	LockBuffer(dst_buf, BUFFER_LOCK_UNLOCK);
 	LockBuffer(old_buf, BUFFER_LOCK_UNLOCK);
 
 	dst_vacpage->offsets_used++;
+
+	/* Clear bits in visibility map */
+	if (all_visible_cleared)
+		visibilitymap_clear(rel, BufferGetBlockNumber(old_buf));
+	if (all_visible_cleared_new)
+		visibilitymap_clear(rel, BufferGetBlockNumber(dst_buf));
 
 	/* insert index' tuples if needed */
 	if (ec->resultRelInfo->ri_NumIndices > 0)

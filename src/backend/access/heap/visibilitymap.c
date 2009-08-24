@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.5 2009/06/18 10:08:08 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/visibilitymap.c,v 1.6 2009/08/24 02:18:31 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		visibilitymap_clear - clear a bit in the visibility map
@@ -19,10 +19,10 @@
  * NOTES
  *
  * The visibility map is a bitmap with one bit per heap page. A set bit means
- * that all tuples on the page are visible to all transactions, and doesn't
- * therefore need to be vacuumed. The map is conservative in the sense that we
- * make sure that whenever a bit is set, we know the condition is true, but if
- * a bit is not set, it might or might not be.
+ * that all tuples on the page are known visible to all transactions, and 
+ * therefore the page doesn't need to be vacuumed. The map is conservative in
+ * the sense that we make sure that whenever a bit is set, we know the
+ * condition is true, but if a bit is not set, it might or might not be true.
  *
  * There's no explicit WAL logging in the functions in this file. The callers
  * must make sure that whenever a bit is cleared, the bit is cleared on WAL
@@ -34,10 +34,11 @@
  * make VACUUM skip pages that need vacuuming, until the next anti-wraparound
  * vacuum. The visibility map is not used for anti-wraparound vacuums, because
  * an anti-wraparound vacuum needs to freeze tuples and observe the latest xid
- * present in the table, also on pages that don't have any dead tuples.
+ * present in the table, even on pages that don't have any dead tuples.
  *
  * Although the visibility map is just a hint at the moment, the PD_ALL_VISIBLE
- * flag on heap pages *must* be correct.
+ * flag on heap pages *must* be correct, because it is used to skip visibility
+ * checking.
  *
  * LOCKING
  *
@@ -55,17 +56,17 @@
  * When a bit is set, the LSN of the visibility map page is updated to make
  * sure that the visibility map update doesn't get written to disk before the
  * WAL record of the changes that made it possible to set the bit is flushed.
- * But when a bit is cleared, we don't have to do that because it's always OK
- * to clear a bit in the map from correctness point of view.
+ * But when a bit is cleared, we don't have to do that because it's always
+ * safe to clear a bit in the map from correctness point of view.
  *
  * TODO
  *
- * It would be nice to use the visibility map to skip visibility checkes in
+ * It would be nice to use the visibility map to skip visibility checks in
  * index scans.
  *
  * Currently, the visibility map is not 100% correct all the time.
  * During updates, the bit in the visibility map is cleared after releasing
- * the lock on the heap page. During the window after releasing the lock
+ * the lock on the heap page. During the window between releasing the lock
  * and clearing the bit in the visibility map, the bit in the visibility map
  * is set, but the new insertion or deletion is not yet visible to other
  * backends.
@@ -73,7 +74,7 @@
  * That might actually be OK for the index scans, though. The newly inserted
  * tuple wouldn't have an index pointer yet, so all tuples reachable from an
  * index would still be visible to all other backends, and deletions wouldn't
- * be visible to other backends yet.
+ * be visible to other backends yet.  (But HOT breaks that argument, no?)
  *
  * There's another hole in the way the PD_ALL_VISIBLE flag is set. When
  * vacuum observes that all tuples are visible to all, it sets the flag on
@@ -81,7 +82,8 @@
  * crash, and only the visibility map page was flushed to disk, we'll have
  * a bit set in the visibility map, but the corresponding flag on the heap
  * page is not set. If the heap page is then updated, the updater won't
- * know to clear the bit in the visibility map.
+ * know to clear the bit in the visibility map.  (Isn't that prevented by
+ * the LSN interlock?)
  *
  *-------------------------------------------------------------------------
  */
