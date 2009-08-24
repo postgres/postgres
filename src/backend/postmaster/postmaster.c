@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.587 2009/08/07 05:58:55 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.588 2009/08/24 17:23:02 alvherre Exp $
  *
  * NOTES
  *
@@ -290,6 +290,8 @@ bool		redirection_done = false;	/* stderr redirected for syslogger? */
 
 /* received START_AUTOVAC_LAUNCHER signal */
 static volatile sig_atomic_t start_autovac_launcher = false;
+/* the launcher needs to be signalled to communicate some condition */
+static volatile bool		avlauncher_needs_signal = false;
 
 /*
  * State for assigning random salts and cancel keys.
@@ -1390,6 +1392,14 @@ ServerLoop(void)
 		/* If we have lost the stats collector, try to start a new one */
 		if (PgStatPID == 0 && pmState == PM_RUN)
 			PgStatPID = pgstat_start();
+
+		/* If we need to signal the autovacuum launcher, do so now */
+		if (avlauncher_needs_signal)
+		{
+			avlauncher_needs_signal = false;
+			if (AutoVacPID != 0)
+				kill(AutoVacPID, SIGUSR1);
+		}
 
 		/*
 		 * Touch the socket and lock file every 58 minutes, to ensure that
@@ -3014,6 +3024,7 @@ BackendStartup(Port *port)
 		/* in parent, fork failed */
 		int			save_errno = errno;
 
+		(void) ReleasePostmasterChildSlot(bn->child_slot);
 		free(bn);
 		errno = save_errno;
 		ereport(LOG,
@@ -4343,6 +4354,7 @@ StartAutovacuumWorker(void)
 			 * fork failed, fall through to report -- actual error message was
 			 * logged by StartAutoVacWorker
 			 */
+			(void) ReleasePostmasterChildSlot(bn->child_slot);
 			free(bn);
 		}
 		else
@@ -4354,12 +4366,16 @@ StartAutovacuumWorker(void)
 	/*
 	 * Report the failure to the launcher, if it's running.  (If it's not, we
 	 * might not even be connected to shared memory, so don't try to call
-	 * AutoVacWorkerFailed.)
+	 * AutoVacWorkerFailed.)  Note that we also need to signal it so that it
+	 * responds to the condition, but we don't do that here, instead waiting
+	 * for ServerLoop to do it.  This way we avoid a ping-pong signalling in
+	 * quick succession between the autovac launcher and postmaster in case
+	 * things get ugly.
 	 */
 	if (AutoVacPID != 0)
 	{
 		AutoVacWorkerFailed();
-		kill(AutoVacPID, SIGUSR1);
+		avlauncher_needs_signal = true;
 	}
 }
 
