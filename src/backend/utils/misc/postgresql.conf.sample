@@ -265,6 +265,11 @@
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
 
+#silent_mode = off			# Run server silently.
+					# DO NOT USE without syslog or
+					# logging_collector
+					# (change requires restart)
+
 
 # - When to Log -
 
@@ -314,9 +319,6 @@
 					# statements running at least this number
 					# of milliseconds
 
-#silent_mode = off			# DO NOT USE without syslog or
-					# logging_collector
-					# (change requires restart)
 
 # - What to Log -
 

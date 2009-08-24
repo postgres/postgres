@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.510 2009/08/04 16:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.511 2009/08/24 20:08:32 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -734,7 +734,7 @@ static struct config_bool ConfigureNamesBool[] =
 		true, NULL, NULL
 	},
 	{
-		{"silent_mode", PGC_POSTMASTER, LOGGING_WHEN,
+		{"silent_mode", PGC_POSTMASTER, LOGGING_WHERE,
 			gettext_noop("Runs the server silently."),
 			gettext_noop("If this parameter is set, the server will automatically run in the "
 				 "background and any controlling terminals are dissociated.")
