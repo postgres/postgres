@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.23 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.23.4.1 2009/08/24 16:18:42 tgl Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -16,21 +16,27 @@
  */
 #ifdef HAVE_LIBREADLINE
 #define USE_READLINE 1
+
 #if defined(HAVE_READLINE_READLINE_H)
 #include <readline/readline.h>
-#elif defined(HAVE_EDITLINE_READLINE_H)
-#include <editline/readline.h>
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#endif
 #if defined(HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
-#elif defined(HAVE_EDITLINE_HISTORY_H)
+#endif
+
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#if defined(HAVE_EDITLINE_HISTORY_H)
 #include <editline/history.h>
-#elif defined(HAVE_HISTORY_H)
+#endif
+
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#if defined(HAVE_HISTORY_H)
 #include <history.h>
 #endif
-#endif
+
+#endif /* HAVE_READLINE_READLINE_H, etc */
+#endif /* HAVE_LIBREADLINE */
 
 
 char	   *gets_interactive(const char *prompt);
