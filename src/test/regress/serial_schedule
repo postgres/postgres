@@ -1,5 +1,6 @@
-# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.53 2009/07/02 07:03:18 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.54 2009/08/24 03:10:16 tgl Exp $
 # This should probably be in an order similar to parallel_schedule.
+test: tablespace
 test: boolean
 test: char
 test: name
@@ -121,4 +122,3 @@ test: largeobject
 test: with
 test: xml
 test: stats
-test: tablespace

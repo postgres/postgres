@@ -1,9 +1,14 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.56 2009/07/02 07:03:18 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.57 2009/08/24 03:10:16 tgl Exp $
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
 # ----------
+
+# run tablespace by itself, and first, because it forces a checkpoint;
+# we'd prefer not to have checkpoints later in the tests because that
+# interferes with crash-recovery testing.
+test: tablespace
 
 # ----------
 # The first group of parallel tests
@@ -89,6 +94,3 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 
 # run stats by itself because its delay may be insufficient under heavy load
 test: stats
-
-# run tablespace by itself
-test: tablespace
