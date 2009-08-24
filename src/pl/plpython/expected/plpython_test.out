@@ -10,7 +10,7 @@ select stupid();
 -- test multiple arguments
 CREATE FUNCTION argument_test_one(u users, a1 text, a2 text) RETURNS text
 	AS
-'keys = u.keys()
+'keys = list(u.keys())
 keys.sort()
 out = []
 for key in keys:

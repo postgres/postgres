@@ -25,7 +25,7 @@ CREATE FUNCTION nested_call_three(a text) RETURNS text
 
 CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text
 	AS
-'if not SD.has_key("myplan"):
+'if "myplan" not in SD:
 	q = "SELECT count(*) FROM users WHERE lname = $1"
 	SD["myplan"] = plpy.prepare(q, [ "text" ])
 try:
@@ -39,7 +39,7 @@ return None
 
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text
 	AS
-'if not SD.has_key("myplan"):
+'if "myplan" not in SD:
 	q = "SELECT spi_prepared_plan_test_one(''%s'') as count" % a
 	SD["myplan"] = plpy.prepare(q)
 try:

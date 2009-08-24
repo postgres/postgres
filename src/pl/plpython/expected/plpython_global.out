@@ -3,23 +3,23 @@
 --
 CREATE FUNCTION global_test_one() returns text
     AS
-'if not SD.has_key("global_test"):
+'if "global_test" not in SD:
 	SD["global_test"] = "set by global_test_one"
-if not GD.has_key("global_test"):
+if "global_test" not in GD:
 	GD["global_test"] = "set by global_test_one"
 return "SD: " + SD["global_test"] + ", GD: " + GD["global_test"]'
     LANGUAGE plpythonu;
 CREATE FUNCTION global_test_two() returns text
     AS
-'if not SD.has_key("global_test"):
+'if "global_test" not in SD:
 	SD["global_test"] = "set by global_test_two"
-if not GD.has_key("global_test"):
+if "global_test" not in GD:
 	GD["global_test"] = "set by global_test_two"
 return "SD: " + SD["global_test"] + ", GD: " + GD["global_test"]'
     LANGUAGE plpythonu;
 CREATE FUNCTION static_test() returns int4
     AS
-'if SD.has_key("call"):
+'if "call" in SD:
 	SD["call"] = SD["call"] + 1
 else:
 	SD["call"] = 1

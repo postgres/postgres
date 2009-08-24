@@ -15,7 +15,7 @@ $$ LANGUAGE plpythonu;
 
 CREATE FUNCTION test_setof_as_tuple(count integer, content text) RETURNS SETOF text AS $$
 t = ()
-for i in xrange(count):
+for i in range(count):
 	t += ( content, )
 return t
 $$ LANGUAGE plpythonu;

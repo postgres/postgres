@@ -37,7 +37,7 @@ SELECT exception_index_invalid_nested();
  */
 CREATE FUNCTION invalid_type_uncaught(a text) RETURNS text
 	AS
-'if not SD.has_key("plan"):
+'if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	SD["plan"] = plpy.prepare(q, [ "test" ])
 rv = plpy.execute(SD["plan"], [ a ])
@@ -55,7 +55,7 @@ SELECT invalid_type_uncaught('rick');
  */
 CREATE FUNCTION invalid_type_caught(a text) RETURNS text
 	AS
-'if not SD.has_key("plan"):
+'if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
 		SD["plan"] = plpy.prepare(q, [ "test" ])
@@ -77,7 +77,7 @@ SELECT invalid_type_caught('rick');
  */
 CREATE FUNCTION invalid_type_reraised(a text) RETURNS text
 	AS
-'if not SD.has_key("plan"):
+'if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
 		SD["plan"] = plpy.prepare(q, [ "test" ])
@@ -97,7 +97,7 @@ SELECT invalid_type_reraised('rick');
  */
 CREATE FUNCTION valid_type(a text) RETURNS text
 	AS
-'if not SD.has_key("plan"):
+'if "plan" not in SD:
 	SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):

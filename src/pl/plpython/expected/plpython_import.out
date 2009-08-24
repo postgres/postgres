@@ -17,11 +17,9 @@ CREATE FUNCTION import_succeed() returns text
   import cmath
   import errno
   import math
-  import md5
   import operator
   import random
   import re
-  import sha
   import string
   import time
 except Exception, ex:
@@ -31,15 +29,23 @@ return "succeeded, as expected"'
     LANGUAGE plpythonu;
 CREATE FUNCTION import_test_one(p text) RETURNS text
 	AS
-'import sha
-digest = sha.new(p)
+'try:
+    import hashlib
+    digest = hashlib.sha1(p.encode("ascii"))
+except ImportError:
+    import sha
+    digest = sha.new(p)
 return digest.hexdigest()'
 	LANGUAGE plpythonu;
 CREATE FUNCTION import_test_two(u users) RETURNS text
 	AS
-'import sha
-plain = u["fname"] + u["lname"]
-digest = sha.new(plain);
+'plain = u["fname"] + u["lname"]
+try:
+    import hashlib
+    digest = hashlib.sha1(plain.encode("ascii"))
+except ImportError:
+    import sha
+    digest = sha.new(plain);
 return "sha hash of " + plain + " is " + digest.hexdigest()'
 	LANGUAGE plpythonu;
 -- import python modules

@@ -69,10 +69,10 @@ CREATE TABLE trigger_test
 
 CREATE FUNCTION trigger_data() returns trigger language plpythonu as $$
 
-if TD.has_key('relid'):
+if 'relid' in TD:
 	TD['relid'] = "bogus:12345"
 
-skeys = TD.keys()
+skeys = list(TD.keys())
 skeys.sort()
 for key in skeys:
 	val = TD[key]
