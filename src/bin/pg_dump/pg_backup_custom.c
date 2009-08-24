@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.43 2009/07/21 21:46:10 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.44 2009/08/24 14:15:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,7 +441,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	int			id;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 	int			blkType;
-	int			found = 0;
 
 	if (tctx->dataState == K_OFFSET_NO_DATA)
 		return;
@@ -449,8 +448,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	if (!ctx->hasSeek || tctx->dataState == K_OFFSET_POS_NOT_SET)
 	{
 		/* Skip over unnecessary blocks until we get the one we want. */
-
-		found = 0;
 
 		_readBlockHeader(AH, &blkType, &id);
 
