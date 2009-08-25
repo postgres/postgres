@@ -313,13 +313,15 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_record_error1();
 ERROR:  key "second" not found in mapping
 HINT:  To return null in a column, add the value None to the mapping with the key named after the column.
-CONTEXT:  PL/Python function "test_type_record_error1"
+CONTEXT:  while creating return value
+PL/Python function "test_type_record_error1"
 CREATE FUNCTION test_type_record_error2() RETURNS type_record AS $$
     return [ 'first' ]
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_record_error2();
 ERROR:  length of returned sequence did not match number of columns in row
-CONTEXT:  PL/Python function "test_type_record_error2"
+CONTEXT:  while creating return value
+PL/Python function "test_type_record_error2"
 CREATE FUNCTION test_type_record_error3() RETURNS type_record AS $$
     class type_record: pass
     type_record.first = 'first'
@@ -328,4 +330,5 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_record_error3();
 ERROR:  attribute "second" does not exist in Python object
 HINT:  To return null in a column, let the returned object have an attribute named after column with value None.
-CONTEXT:  PL/Python function "test_type_record_error3"
+CONTEXT:  while creating return value
+PL/Python function "test_type_record_error3"

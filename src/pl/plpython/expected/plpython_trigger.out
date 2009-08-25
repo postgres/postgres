@@ -353,7 +353,8 @@ BEFORE UPDATE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE stupid4();
 UPDATE trigger_test SET v = 'null' WHERE i = 0;
 ERROR:  TD["new"] deleted, cannot modify row
-CONTEXT:  PL/Python function "stupid4"
+CONTEXT:  while modifying trigger row
+PL/Python function "stupid4"
 DROP TRIGGER stupid_trigger4 ON trigger_test;
 -- TD not a dictionary
 CREATE FUNCTION stupid5() RETURNS trigger
@@ -366,7 +367,8 @@ BEFORE UPDATE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE stupid5();
 UPDATE trigger_test SET v = 'null' WHERE i = 0;
 ERROR:  TD["new"] is not a dictionary
-CONTEXT:  PL/Python function "stupid5"
+CONTEXT:  while modifying trigger row
+PL/Python function "stupid5"
 DROP TRIGGER stupid_trigger5 ON trigger_test;
 -- TD not having string keys
 CREATE FUNCTION stupid6() RETURNS trigger
@@ -379,7 +381,8 @@ BEFORE UPDATE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE stupid6();
 UPDATE trigger_test SET v = 'null' WHERE i = 0;
 ERROR:  TD["new"] dictionary key at ordinal position 0 is not a string
-CONTEXT:  PL/Python function "stupid6"
+CONTEXT:  while modifying trigger row
+PL/Python function "stupid6"
 DROP TRIGGER stupid_trigger6 ON trigger_test;
 -- TD keys not corresponding to row columns
 CREATE FUNCTION stupid7() RETURNS trigger
@@ -392,7 +395,8 @@ BEFORE UPDATE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE stupid7();
 UPDATE trigger_test SET v = 'null' WHERE i = 0;
 ERROR:  key "a" found in TD["new"] does not exist as a column in the triggering row
-CONTEXT:  PL/Python function "stupid7"
+CONTEXT:  while modifying trigger row
+PL/Python function "stupid7"
 DROP TRIGGER stupid_trigger7 ON trigger_test;
 -- calling a trigger function directly
 SELECT stupid7();

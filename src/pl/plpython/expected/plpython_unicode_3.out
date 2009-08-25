@@ -24,13 +24,15 @@ rv = plpy.execute(plan, u"\\x80", 1)
 return rv[0]["testvalue1"]
 ' LANGUAGE plpythonu;
 SELECT unicode_return_error();
-ERROR:  PL/Python: could not create string representation of Python object, while creating return value
+ERROR:  PL/Python: could not create string representation of Python object
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
-CONTEXT:  PL/Python function "unicode_return_error"
+CONTEXT:  while creating return value
+PL/Python function "unicode_return_error"
 INSERT INTO unicode_test (testvalue) VALUES ('test');
-ERROR:  PL/Python: could not compute string representation of Python object, while modifying trigger row
+ERROR:  PL/Python: could not create string representation of Python object
 DETAIL:  exceptions.UnicodeEncodeError: 'ascii' codec can't encode character u'\x80' in position 0: ordinal not in range(128)
-CONTEXT:  PL/Python function "unicode_trigger_error"
+CONTEXT:  while modifying trigger row
+PL/Python function "unicode_trigger_error"
 SELECT unicode_plan_error1();
 WARNING:  PL/Python: plpy.Error: unrecognized error in PLy_spi_execute_plan
 CONTEXT:  PL/Python function "unicode_plan_error1"

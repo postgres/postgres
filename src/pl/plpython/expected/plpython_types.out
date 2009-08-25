@@ -332,7 +332,8 @@ SELECT * FROM test_type_conversion_uint2(100::uint2, -50);
 INFO:  (100, <type 'int'>)
 CONTEXT:  PL/Python function "test_type_conversion_uint2"
 ERROR:  value for domain uint2 violates check constraint "uint2_check"
-CONTEXT:  PL/Python function "test_type_conversion_uint2"
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_uint2"
 SELECT * FROM test_type_conversion_uint2(null, 1);
 INFO:  (None, <type 'NoneType'>)
 CONTEXT:  PL/Python function "test_type_conversion_uint2"
@@ -360,11 +361,13 @@ SELECT * FROM test_type_conversion_bytea10('hello word', 'hello world');
 INFO:  ('\\x68656c6c6f20776f7264', <type 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
-CONTEXT:  PL/Python function "test_type_conversion_bytea10"
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_bytea10"
 SELECT * FROM test_type_conversion_bytea10(null, 'hello word');
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 SELECT * FROM test_type_conversion_bytea10('hello word', null);
 INFO:  ('\\x68656c6c6f20776f7264', <type 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
-CONTEXT:  PL/Python function "test_type_conversion_bytea10"
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_bytea10"
