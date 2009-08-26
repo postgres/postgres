@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.8 2009/08/26 13:56:24 petere Exp $ */
+/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.9 2009/08/26 21:18:29 petere Exp $ */
 
 /* color scheme similar to www.postgresql.org */
 
@@ -56,7 +56,7 @@ H6 {
 
 /* center some titles */
 
-.TITLEPAGE {
+.BOOK .TITLE, .BOOK .CORPAUTHOR, .BOOK .COPYRIGHT {
 	text-align: center;
 }
 
