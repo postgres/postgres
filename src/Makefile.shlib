@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.120 2009/01/05 09:27:19 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.121 2009/08/26 22:24:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -517,9 +517,9 @@ endif # enable_shared
 
 installdirs-lib:
 ifdef soname
-	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
+	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 else
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
 endif
 
 

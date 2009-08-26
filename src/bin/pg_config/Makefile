@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.21 2009/01/01 17:23:54 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.22 2009/08/26 22:24:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ install: all installdirs
 	$(INSTALL_SCRIPT) pg_config$(X) '$(DESTDIR)$(bindir)/pg_config$(X)'
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
+	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_config$(X)'

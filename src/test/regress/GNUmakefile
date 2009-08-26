@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.77 2009/01/01 17:24:04 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.78 2009/08/26 22:24:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ install: all installdirs
 	$(INSTALL_PROGRAM) pg_regress$(X) '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress$(X)'
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/$(subdir)'
+	$(MKDIR_P) '$(DESTDIR)$(pgxsdir)/$(subdir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress$(X)'
@@ -104,7 +104,7 @@ install-tests: all install install-lib installdirs-tests
 	done
 
 installdirs-tests: installdirs
-	$(mkinstalldirs)  $(patsubst $(srcdir)/%/,'$(DESTDIR)$(pkglibdir)/regress/%',$(sort $(dir $(regress_data_files))))
+	$(MKDIR_P)  $(patsubst $(srcdir)/%/,'$(DESTDIR)$(pkglibdir)/regress/%',$(sort $(dir $(regress_data_files))))
 
 
 # Get some extra C modules from contrib/spi...

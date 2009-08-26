@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.127 2009/08/17 21:29:30 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.128 2009/08/26 22:24:42 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -99,20 +99,20 @@ endif
 
 # The draft target creates HTML output in draft mode, without index (for faster build).
 draft: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
-	$(mkinstalldirs) $(srcdir)/html
+	$(MKDIR_P) $(srcdir)/html
 	$(JADE.html.call) -V draft-mode $<
 	cp $(srcdir)/stylesheet.css $(srcdir)/html/
 
 html: html-stamp
 
 $(srcdir)/html-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
-	$(mkinstalldirs) $(srcdir)/html
+	$(MKDIR_P) $(srcdir)/html
 	$(JADE.html.call) -i include-index $<
 	cp $(srcdir)/stylesheet.css $(srcdir)/html/
 	touch $@
 
 $(srcdir)/HTML.index: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
-	@$(mkinstalldirs) $(srcdir)/html
+	@$(MKDIR_P) $(srcdir)/html
 	$(JADE.html.call) -V html-index $<
 
 $(srcdir)/bookindex.sgml: HTML.index
@@ -292,7 +292,7 @@ endif
 install: $(if $(found_html),install-html) $(if $(found_man),install-man)
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(htmldir)'/html $(addprefix '$(DESTDIR)$(mandir)'/man, 1 3 $(sqlmansectnum))
+	$(MKDIR_P) '$(DESTDIR)$(htmldir)'/html $(addprefix '$(DESTDIR)$(mandir)'/man, 1 3 $(sqlmansectnum))
 
 uninstall:
 	rm -f '$(DESTDIR)$(htmldir)/html/'* $(addprefix  '$(DESTDIR)$(mandir)'/man, 1/* 3/* $(sqlmansectnum)/*)
@@ -335,11 +335,11 @@ all: all-man
 all-man: $(fixed_manpage_files)
 
 $(fixed_nonsql_manpage_files): fixedman/%: %
-	@$(mkinstalldirs) $(dir $@)
+	@$(MKDIR_P) $(dir $@)
 	$(fix_sqlmansectnum) $< >$@
 
 $(fixed_sql_manpage_files): fixedman/man$(sqlmansectnum)/%.$(sqlmansect): man7/%.7
-	@$(mkinstalldirs) $(dir $@)
+	@$(MKDIR_P) $(dir $@)
 	$(fix_sqlmansectnum) $< >$@
 
 install-man: all-man

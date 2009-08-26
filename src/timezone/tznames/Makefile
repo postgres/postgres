@@ -4,7 +4,7 @@
 #    Makefile for the timezone names
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/tznames/Makefile,v 1.2 2007/02/09 15:56:00 petere Exp $
+#    $PostgreSQL: pgsql/src/timezone/tznames/Makefile,v 1.3 2009/08/26 22:24:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ install: installdirs
 	$(INSTALL_DATA) $(TZNAMES_SETS_FILES) '$(DESTDIR)$(datadir)/timezonesets'
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(datadir)/timezonesets'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/timezonesets'
 
 uninstall:
 	rm -rf '$(DESTDIR)$(datadir)/timezonesets'

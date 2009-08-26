@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.174 2009/07/13 01:37:05 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.175 2009/08/26 22:24:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -113,7 +113,7 @@ install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 installdirs: installdirs-lib
-	$(mkinstalldirs) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
+	$(MKDIR_P) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)'
 
 uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h'

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.46 2009/08/07 20:50:22 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.47 2009/08/26 22:24:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ install-local: installdirs-local
 installdirs: installdirs-local
 
 installdirs-local:
-	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/$(subdir)'
+	$(MKDIR_P) '$(DESTDIR)$(pgxsdir)/$(subdir)'
 
 uninstall: uninstall-local
 

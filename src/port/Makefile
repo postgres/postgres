@@ -19,7 +19,7 @@
 # OBJS adds additional object files that are always compiled.
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.37 2008/11/25 18:19:31 tgl Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.38 2009/08/26 22:24:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ install: all installdirs
 	$(INSTALL_STLIB) libpgport.a '$(DESTDIR)$(libdir)/libpgport.a'
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
+	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgport.a'

@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.16 2009/07/08 13:47:29 petere Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.17 2009/08/26 22:24:43 petere Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -137,21 +137,21 @@ endif # MODULE_big
 
 installdirs:
 ifneq (,$(DATA)$(DATA_built))
-	$(mkinstalldirs) '$(DESTDIR)$(datadir)/contrib'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/contrib'
 endif
 ifneq (,$(DATA_TSEARCH))
-	$(mkinstalldirs) '$(DESTDIR)$(datadir)/tsearch_data'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/tsearch_data'
 endif
 ifneq (,$(MODULES))
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
 endif
 ifdef DOCS
 ifdef docdir
-	$(mkinstalldirs) '$(DESTDIR)$(docdir)/contrib'
+	$(MKDIR_P) '$(DESTDIR)$(docdir)/contrib'
 endif # docdir
 endif # DOCS
 ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))
-	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
+	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 endif
 
 ifdef MODULE_big

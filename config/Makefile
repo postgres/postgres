@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/Makefile,v 1.2 2005/12/09 21:19:34 petere Exp $
+# $PostgreSQL: pgsql/config/Makefile,v 1.3 2009/08/26 22:24:42 petere Exp $
 
 subdir = config
 top_builddir = ..
@@ -7,10 +7,9 @@ include $(top_builddir)/src/Makefile.global
 
 install: all installdirs
 	$(INSTALL_SCRIPT) $(srcdir)/install-sh '$(DESTDIR)$(pgxsdir)/config/install-sh'
-	$(INSTALL_SCRIPT) $(srcdir)/mkinstalldirs '$(DESTDIR)$(pgxsdir)/config/mkinstalldirs'
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/config'
+	$(MKDIR_P) '$(DESTDIR)$(pgxsdir)/config'
 
 uninstall:
-	rm -f '$(DESTDIR)$(pgxsdir)/config/install-sh' '$(DESTDIR)$(pgxsdir)/config/mkinstalldirs'
+	rm -f '$(DESTDIR)$(pgxsdir)/config/install-sh'

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.257 2009/08/09 22:47:59 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.258 2009/08/26 22:24:42 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -19,7 +19,6 @@
 # Meta configuration
 
 .PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man
-.SILENT: installdirs
 
 # make `all' the default target
 all:
@@ -284,7 +283,8 @@ INSTALL_SHLIB	= $(INSTALL_SHLIB_ENV) $(INSTALL) $(INSTALL_SHLIB_OPTS) $(INSTALL_
 # Override in Makefile.port if necessary
 INSTALL_SHLIB_OPTS = -m 755
 
-mkinstalldirs	= $(SHELL) $(top_srcdir)/config/mkinstalldirs
+MKDIR_P = @MKDIR_P@
+
 missing		= $(SHELL) $(top_srcdir)/config/missing
 
 STRIP		= @STRIP@

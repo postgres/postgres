@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.31 2009/01/06 02:25:29 momjian Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.32 2009/08/26 22:24:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ endif
 	$(MAKE) -C tznames $@
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(datadir)'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)'
 
 uninstall:
 ifeq (,$(with_system_tzdata))

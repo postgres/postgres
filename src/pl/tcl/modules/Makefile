@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/tcl/modules/Makefile,v 1.4 2005/12/09 21:19:36 petere Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/modules/Makefile,v 1.5 2009/08/26 22:24:43 petere Exp $
 
 subdir = src/pl/tcl/modules
 top_builddir = ../../../..
@@ -19,7 +19,7 @@ install: all installdirs
 	$(INSTALL_DATA) $(srcdir)/unknown.pltcl '$(DESTDIR)$(datadir)/unknown.pltcl'
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
+	$(MKDIR_P) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pltcl_loadmod' '$(DESTDIR)$(bindir)/pltcl_delmod' '$(DESTDIR)$(bindir)/pltcl_listmod' '$(DESTDIR)$(datadir)/unknown.pltcl'

@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.132 2009/01/01 17:23:34 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.133 2009/08/26 22:24:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -194,19 +194,19 @@ endif
 .PHONY: install-bin
 
 installdirs:
-	$(mkinstalldirs) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
+	$(MKDIR_P) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
 ifeq ($(PORTNAME), cygwin)
 ifeq ($(MAKE_DLL), true)
-	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
+	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 endif
 endif
 ifeq ($(PORTNAME), win32)
 ifeq ($(MAKE_DLL), true)
-	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
+	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 endif
 endif
 ifeq ($(MAKE_EXPORTS), true)
-	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
 endif
 
 
