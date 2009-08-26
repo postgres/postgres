@@ -1,32 +1,62 @@
-/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.7 2004/06/29 20:44:34 petere Exp $ */
+/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.8 2009/08/26 13:56:24 petere Exp $ */
 
 /* color scheme similar to www.postgresql.org */
 
 BODY {
 	color: #000000;
 	background: #FFFFFF;
+	font-family: verdana, sans-serif;
 }
 
-A:link		{ color: #000066; }
-A:visited	{ color: #000099; }
-A:active	{ color: #FF0000; }
+A:link		{ color:#0066A2; }
+A:visited	{ color:#004E66; }
+A:active	{ color:#0066A2; }
+A:hover		{ color:#000000; }
 
-/* center titles */
-
-BODY.BOOK H1.TITLE, BODY.SET H1.TITLE {
-	text-align: center;
-	font-size: 250%;
-	font-family: sans-serif;
-	color: #020167;
+H1 {
+	font-size: 1.4em;
+	font-weight: bold;
+	margin-top: 0em;
+	margin-bottom: 0em;
+	color: #EC5800;
 }
 
-BODY.BOOK H3.CORPAUTHOR, BODY.SET H3.CORPAUTHOR {
-	text-align: center;
-	font-style: italic;
+H2 {
+	font-size: 1.2em;
+	margin: 1.2em 0em 1.2em 0em;
+	font-weight: bold;
+	color: #666; 
+}
+
+H3 {
+	font-size: 1.1em;
+	margin: 1.2em 0em 1.2em 0em;
+	font-weight: bold;
+	color: #666;
+}
+
+H4 {
+	font-size: 0.95em;
+	margin: 1.2em 0em 1.2em 0em;
+	font-weight: normal;
+	color: #666;
+}
+
+H5 {
+	font-size: 0.9em;
+	margin: 1.2em 0em 1.2em 0em;
 	font-weight: normal;
 }
 
-BODY.BOOK .COPYRIGHT, BODY.SET .COPYRIGHT {
+H6 {
+	font-size: 0.85em;
+	margin: 1.2em 0em 1.2em 0em;
+	font-weight: normal;
+}
+
+/* center some titles */
+
+.TITLEPAGE {
 	text-align: center;
 }
 
@@ -43,23 +73,22 @@ DIV.EXAMPLE {
 
 /* less dense spacing of TOC */
 
-.SET .TOC DL DT, .BOOK .TOC DL DT {
+.BOOK .TOC DL DT {
 	padding-top: 1.5ex;
 	padding-bottom: 1.5ex;
 }
 
-.SET .TOC DL DL DT, .BOOK .TOC DL DL DT {
+.BOOK .TOC DL DL DT {
 	padding-top: 0ex;
 	padding-bottom: 0ex;
 }
+
+/* miscellaneous */
 
 .SCREEN, .SYNOPSIS, .PROGRAMLISTING {
 	margin-left: 4ex;
 }
 
-/* miscellaneous */
-
-.NAVHEADER TH	{ font-style: italic; }
 .COMMENT	{ color: red; }
 
 VAR		{ font-family: monospace; font-style: italic; }
