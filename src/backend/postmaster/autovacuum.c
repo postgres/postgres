@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.102 2009/08/24 17:23:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.103 2009/08/27 17:18:44 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2448,25 +2448,29 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		 * toast table, try the main table too.  Otherwise use the GUC
 		 * defaults, autovacuum's own first and plain vacuum second.
 		 */
-		if (avopts)
-		{
-			vac_cost_delay = avopts->vacuum_cost_delay;
-			vac_cost_limit = avopts->vacuum_cost_limit;
-			freeze_min_age = avopts->freeze_min_age;
-			freeze_table_age = avopts->freeze_table_age;
-		}
-		else
-		{
-			/* -1 in autovac setting means use plain vacuum_cost_delay */
-			vac_cost_delay = autovacuum_vac_cost_delay >= 0 ?
-				autovacuum_vac_cost_delay : VacuumCostDelay;
-			/* 0 or -1 in autovac setting means use plain vacuum_cost_limit */
-			vac_cost_limit = autovacuum_vac_cost_limit > 0 ?
-				autovacuum_vac_cost_limit : VacuumCostLimit;
-			/* these do not have autovacuum-specific settings */
-			freeze_min_age = default_freeze_min_age;
-			freeze_table_age = default_freeze_table_age;
-		}
+
+		/* -1 in autovac setting means use plain vacuum_cost_delay */
+		vac_cost_delay = (avopts && avopts->vacuum_cost_delay >= 0)
+			? avopts->vacuum_cost_delay
+			: (autovacuum_vac_cost_delay >= 0)
+				? autovacuum_vac_cost_delay
+				: VacuumCostDelay;
+
+		/* 0 or -1 in autovac setting means use plain vacuum_cost_limit */
+		vac_cost_limit = (avopts && avopts->vacuum_cost_limit > 0)
+			? avopts->vacuum_cost_limit
+			: (autovacuum_vac_cost_limit > 0)
+				? autovacuum_vac_cost_limit
+				: VacuumCostLimit;
+
+		/* these do not have autovacuum-specific settings */
+		freeze_min_age = (avopts && avopts->freeze_min_age >= 0)
+			? avopts->freeze_min_age
+			: default_freeze_min_age;
+
+		freeze_table_age = (avopts && avopts->freeze_table_age >= 0)
+			? avopts->freeze_table_age
+			: default_freeze_table_age;
 
 		tab = palloc(sizeof(autovac_table));
 		tab->at_relid = relid;
@@ -2563,25 +2567,29 @@ relation_needs_vacanalyze(Oid relid,
 	 * sources: the passed reloptions (which could be a main table or a toast
 	 * table), or the autovacuum GUC variables.
 	 */
-	if (relopts)
-	{
-		vac_scale_factor = relopts->vacuum_scale_factor;
-		vac_base_thresh = relopts->vacuum_threshold;
-		anl_scale_factor = relopts->analyze_scale_factor;
-		anl_base_thresh = relopts->analyze_threshold;
-		freeze_max_age = Min(relopts->freeze_max_age,
-							 autovacuum_freeze_max_age);
-		av_enabled = relopts->enabled;
-	}
-	else
-	{
-		vac_scale_factor = autovacuum_vac_scale;
-		vac_base_thresh = autovacuum_vac_thresh;
-		anl_scale_factor = autovacuum_anl_scale;
-		anl_base_thresh = autovacuum_anl_thresh;
-		freeze_max_age = autovacuum_freeze_max_age;
-		av_enabled = true;
-	}
+
+	/* -1 in autovac setting means use plain vacuum_cost_delay */
+	vac_scale_factor = (relopts && relopts->vacuum_scale_factor >= 0)
+		? relopts->vacuum_scale_factor
+		: autovacuum_vac_scale;
+
+	vac_base_thresh = (relopts && relopts->vacuum_threshold >= 0)
+		? relopts->vacuum_threshold
+		: autovacuum_vac_thresh;
+
+	anl_scale_factor = (relopts && relopts->analyze_scale_factor >= 0)
+		? relopts->analyze_scale_factor
+		: autovacuum_anl_scale;
+
+	anl_base_thresh = (relopts && relopts->analyze_threshold >= 0)
+		? relopts->analyze_threshold
+		: autovacuum_anl_thresh;
+
+	freeze_max_age = (relopts && relopts->freeze_max_age >= 0)
+		? Min(relopts->freeze_max_age, autovacuum_freeze_max_age)
+		: autovacuum_freeze_max_age;
+
+	av_enabled = (relopts ? relopts->enabled : true);
 
 	/* Force vacuum if table is at risk of wraparound */
 	xidForceLimit = recentXid - freeze_max_age;
