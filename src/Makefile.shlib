@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.121 2009/08/26 22:24:42 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.122 2009/08/27 17:55:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@
 # SHLIB_LINK            If shared library relies on other libraries,
 #                       additional stuff to put in its link command
 # SHLIB_EXPORTS         (optional) Name of file containing list of symbols to
-#                       export
+#                       export, in the format "function_name  number"
 #
 # When building a shared library, the following version information
 # must also be set.  It should be omitted when building a dynamically
@@ -444,22 +444,22 @@ $(srcdir)/lib$(NAME)dll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for MS VC++' >$@
 	echo 'LIBRARY LIB$(UC_NAME)' >>$@
 	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
+	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 $(srcdir)/lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for MS VC++' >$@
 	echo 'LIBRARY LIB$(UC_NAME)D' >>$@
 	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
+	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 $(srcdir)/blib$(NAME)dll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for Borland C++ Builder' >$@
 	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
 	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    _\1@ \2/' $< >>$@
+	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    _\1@ \2/' $< >>$@
 	echo >>$@
 	echo '; Aliases for MS compatible names' >> $@
-	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1= _\1/' $< | sed 's/ *$$//' >>$@
+	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1= _\1/' $< | sed 's/ *$$//' >>$@
 endif # SHLIB_EXPORTS
 
 
