@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.103 2009/07/28 09:47:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.104 2009/08/27 15:59:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2939,7 +2939,7 @@ close_lseg(PG_FUNCTION_ARGS)
 		memcpy(&point, &l1->p[1], sizeof(Point));
 	}
 
-	if ((d = dist_ps_internal(&l2->p[0], l1)) < dist)
+	if (dist_ps_internal(&l2->p[0], l1) < dist)
 	{
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
 													PointPGetDatum(&l2->p[0]),
@@ -2950,7 +2950,7 @@ close_lseg(PG_FUNCTION_ARGS)
 													LsegPGetDatum(l2)));
 	}
 
-	if ((d = dist_ps_internal(&l2->p[1], l1)) < dist)
+	if (dist_ps_internal(&l2->p[1], l1) < dist)
 	{
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
 													PointPGetDatum(&l2->p[1]),
@@ -2990,7 +2990,7 @@ close_pb(PG_FUNCTION_ARGS)
 	point.x = box->low.x;
 	point.y = box->high.y;
 	statlseg_construct(&lseg, &box->low, &point);
-	dist = d = dist_ps_internal(pt, &lseg);
+	dist = dist_ps_internal(pt, &lseg);
 
 	statlseg_construct(&seg, &box->high, &point);
 	if ((d = dist_ps_internal(pt, &seg)) < dist)
