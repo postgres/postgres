@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.13 2009/08/27 01:27:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.14 2009/08/27 20:05:28 alvherre Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4-1">
@@ -104,7 +104,7 @@
     <listitem>
      <para>
       Properly show fractional seconds and milliseconds for
-      <function>>EXTRACT()</> (Tom)
+      <function>EXTRACT()</> (Tom)
      </para>
     </listitem>
 
