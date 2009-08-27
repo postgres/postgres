@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-old.sgml,v 1.1.8.1 2009/05/02 20:18:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-old.sgml,v 1.1.8.2 2009/08/27 01:26:51 momjian Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-7-3-21">
