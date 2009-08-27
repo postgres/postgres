@@ -167,8 +167,8 @@ SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SEL
 -- ordering by a non-integer constant is allowed
 SELECT rank() OVER (ORDER BY length('abc'));
 
--- but this draws an error: "ORDER BY 1" means order by first SELECT column
-SELECT rank() OVER (ORDER BY 1);
+-- can't order by another window function
+SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random()));
 
 -- some other errors
 SELECT * FROM empsalary WHERE row_number() OVER (ORDER BY salary) < 10;
