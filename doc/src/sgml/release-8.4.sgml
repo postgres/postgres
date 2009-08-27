@@ -1,5 +1,182 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.12 2009/06/26 22:23:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.13 2009/08/27 01:27:34 momjian Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-4-1">
+  <title>Release 8.4.1</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-09-09, AS OF 2009-08-26</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.1</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix pg_dump <literal>--binary-upgrade</> to handle dropped inherited columns
+      and their check constraints properly (Tom)
+     </para>
+
+     <para>
+      <literal>pg_dump --binary-upgrade</> is used by pg_migrator.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix pg_dump <literal>--binary-upgrade</> to handle pg_largeobject frozen xid value
+      (Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow parentheses around the <literal>WITH</> query expression
+      body (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Treat <function>to_char(..., 'TH')</> as an uppercase ordinal
+      suffix with <literal>'HH'</>/<literal>'HH12'</> (Heikki)
+     </para>
+
+     <para>
+      It was previously handled as <literal>'th'</> (lowercase).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix locale handling with plperl (Heikki)
+     </para>
+
+     <para>
+      This bug could cause the servers locale to change, leading to
+      data corruption.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>/contrib/xml2</> <function>xslt_process()</> to
+      properly handle the maximum number of parameters (twenty) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove translated FAQs (Peter)
+     </para>
+
+     <para>
+      They are now on the <ulink
+      url="http://wiki.postgresql.org/wiki/FAQ">wiki</ulink>.  The
+      main FAQ was moved to the wiki some time ago.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce memory consumption of aggregates on arrays (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly show fractional seconds and milliseconds for
+      <function>>EXTRACT()</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix case where <application>pg_ctl</> fast shutdown was not
+      working if <application>pg_ctl</> smart shutdown was already in
+      progress (Fujii Masao)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare recovery error related to the creation of WAL entries (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Re-add documentation for configure flag <literal>--no-readline</> (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix problem where Win32 shared memory allocation sometimes failed on
+      startup (Tsutomu Yamada, Magnus)
+     </para>
+
+     <para>
+      This bug caused some Win32 backends to randomly not start.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance when processing TOAST rows (Tom)
+     </para>
+
+     <para>
+      This is particularly useful for <ulink
+      url="http://postgis.refractions.net/">PostGIS</ulink>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix problem where expired rows could appear visible after a crash (Tom)
+     </para>
+
+     <para>
+      This bug involved a page status bit potentially not being set
+      correctly after a server crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Output configuration file errors to <filename>postmaster.log</> if the
+      server is started in silent mode (Tom)
+     </para>
+
+     <para>
+      Previously such error messages were discarded, leading to
+      difficulty in debugging.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-4">
   <title>Release 8.4</title>

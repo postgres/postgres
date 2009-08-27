@@ -1,5 +1,62 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.1 2009/05/02 20:17:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.1.sgml,v 1.2 2009/08/27 01:27:34 momjian Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-8-1-18">
+  <title>Release 8.1.18</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-09-09, AS OF 2009-08-26</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.1.17.
+   For information about new features in the 8.1 major release, see
+   <xref linkend="release-8-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.1.18</title>
+
+   <para>
+    A dump/restore is not required for those running 8.1.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Treat <function>to_char(..., 'TH')</> as an uppercase ordinal
+      suffix with <literal>'HH'</>/<literal>'HH12'</> (Heikki)
+     </para>
+
+     <para>
+      It was previously handled as <literal>'th'</> (lowercase).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>/contrib/xml2</> <function>xslt_process()</> to
+      properly handle the maximum number of parameters (twenty) (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Re-add documentation for configure flag <literal>--no-readline</> (Andrew)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-8-1-17">
   <title>Release 8.1.17</title>

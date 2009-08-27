@@ -1,5 +1,44 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-7.4.sgml,v 1.1 2009/05/02 20:17:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-7.4.sgml,v 1.2 2009/08/27 01:27:34 momjian Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
+
+ <sect1 id="release-7-4-26">
+  <title>Release 7.4.26</title>
+
+  <note>
+  <title>Release date</title>
+  <simpara>2009-09-09, AS OF 2009-08-26</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 7.4.25.
+   For information about new features in the 7.4 major release, see
+   <xref linkend="release-7-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 7.4.26</title>
+
+   <para>
+    A dump/restore is not required for those running 7.4.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Re-add documentation for configure flag <literal>--no-readline</> (Andrew)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4-25">
   <title>Release 7.4.25</title>
