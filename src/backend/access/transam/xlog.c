@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.348 2009/08/12 20:53:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.349 2009/08/27 07:15:41 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6445,6 +6445,17 @@ CreateCheckPoint(int flags)
 	}
 
 	/*
+	 * An end-of-recovery checkpoint is created before anyone is allowed to
+	 * write WAL. To allow us to write the checkpoint record, temporarily
+	 * enable XLogInsertAllowed.  (This also ensures ThisTimeLineID is
+	 * initialized, which we need here and in AdvanceXLInsertBuffer.)
+	 */
+	if (flags & CHECKPOINT_END_OF_RECOVERY)
+		LocalSetXLogInsertAllowed();
+
+	checkPoint.ThisTimeLineID = ThisTimeLineID;
+
+	/*
 	 * Compute new REDO record ptr = location of next XLOG record.
 	 *
 	 * NB: this is NOT necessarily where the checkpoint record itself will be,
@@ -6565,20 +6576,6 @@ CreateCheckPoint(int flags)
 	CheckPointGuts(checkPoint.redo, flags);
 
 	START_CRIT_SECTION();
-
-	/*
-	 * An end-of-recovery checkpoint is created before anyone is allowed to
-	 * write WAL. To allow us to write the checkpoint record, temporarily
-	 * enable XLogInsertAllowed.
-	 */
-	if (flags & CHECKPOINT_END_OF_RECOVERY)
-		LocalSetXLogInsertAllowed();
-
-	/*
-	 * This needs to be done after LocalSetXLogInsertAllowed(), else
-	 * ThisTimeLineID might still be uninitialized.
-	 */
-	checkPoint.ThisTimeLineID = ThisTimeLineID;
 
 	/*
 	 * Now insert the checkpoint record into XLOG.
