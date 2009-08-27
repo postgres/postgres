@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.111 2009/06/11 14:49:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.112 2009/08/27 16:59:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -670,6 +670,21 @@ do_start(void)
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 	if (allow_core_files)
 		unlimit_core_size();
+#endif
+
+	/*
+	 * If possible, tell the postmaster our parent shell's PID (see the
+	 * comments in CreateLockFile() for motivation).  Windows hasn't got
+	 * getppid() unfortunately.
+	 */
+#ifndef WIN32
+	{
+		static char env_var[32];
+
+		snprintf(env_var, sizeof(env_var), "PG_GRANDPARENT_PID=%d",
+				 (int) getppid());
+		putenv(env_var);
+	}
 #endif
 
 	exitcode = start_postmaster();

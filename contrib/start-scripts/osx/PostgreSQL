@@ -68,9 +68,9 @@ ROTATESEC="604800"
 # The path that is to be used for the script
 PATH="$prefix/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 
-# What to use to start up the postmaster (we do NOT use pg_ctl for this,
-# as it adds no value and can cause the postmaster to misrecognize a stale
-# lock file)
+# What to use to start up the postmaster.  (If you want the script to wait
+# until the server has started, you could use "pg_ctl start -w" here.
+# But without -w, pg_ctl adds no value.)
 DAEMON="$prefix/bin/postmaster"
 
 # What to use to shut down the postmaster
@@ -85,7 +85,7 @@ StartService () {
     if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Starting PostgreSQL database server"
         if [ "${ROTATELOGS}" = "1" ]; then
-            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
+            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &
         else
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" >>$PGLOG 2>&1
         fi
@@ -104,7 +104,7 @@ RestartService () {
 	sudo -u $PGUSER $PGCTL stop -D "$PGDATA" -s -m fast
 	# should match StartService:
         if [ "${ROTATELOGS}" = "1" ]; then
-            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
+            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &
         else
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" >>$PGLOG 2>&1
         fi
