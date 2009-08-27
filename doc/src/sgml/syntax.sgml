@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.133 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.134 2009/08/27 20:08:02 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1619,7 +1619,9 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
     expression that does not itself contain window function calls.
     The <literal>PARTITION BY</> and <literal>ORDER BY</> lists have
     essentially the same syntax and semantics as <literal>GROUP BY</>
-    and <literal>ORDER BY</> clauses of the whole query.
+    and <literal>ORDER BY</> clauses of the whole query, except that their
+    expressions are always just expressions and cannot be output-column
+    names or numbers.
     <replaceable>window_name</replaceable> is a reference to a named window
     specification defined in the query's <literal>WINDOW</literal> clause.
     Named window specifications are usually referenced with just

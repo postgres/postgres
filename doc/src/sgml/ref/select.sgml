@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.123 2009/08/18 23:40:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.124 2009/08/27 20:08:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -595,15 +595,22 @@ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceabl
 
    <para>
     The elements of the <literal>PARTITION BY</> list are interpreted in
-    the same fashion as elements of a
-    <xref linkend="sql-groupby" endterm="sql-groupby-title">, and
-    the elements of the <literal>ORDER BY</> list are interpreted in the
-    same fashion as elements of an
-    <xref linkend="sql-orderby" endterm="sql-orderby-title">.
-    The only difference is that these expressions can contain aggregate
+    much the same fashion as elements of a
+    <xref linkend="sql-groupby" endterm="sql-groupby-title">, except that
+    they are always simple expressions and never the name or number of an
+    output column.
+    Another difference is that these expressions can contain aggregate
     function calls, which are not allowed in a regular <literal>GROUP BY</>
     clause.  They are allowed here because windowing occurs after grouping
     and aggregation.
+   </para>
+
+   <para>
+    Similarly, the elements of the <literal>ORDER BY</> list are interpreted
+    in much the same fashion as elements of an
+    <xref linkend="sql-orderby" endterm="sql-orderby-title">, except that
+    the expressions are always taken as simple expressions and never the name
+    or number of an output column.
    </para>
 
    <para>

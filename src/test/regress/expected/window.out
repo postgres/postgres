@@ -741,11 +741,11 @@ SELECT rank() OVER (ORDER BY length('abc'));
     1
 (1 row)
 
--- but this draws an error: "ORDER BY 1" means order by first SELECT column
-SELECT rank() OVER (ORDER BY 1);
+-- can't order by another window function
+SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random()));
 ERROR:  window functions not allowed in window definition
-LINE 1: SELECT rank() OVER (ORDER BY 1);
-               ^
+LINE 1: SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random())...
+                                     ^
 -- some other errors
 SELECT * FROM empsalary WHERE row_number() OVER (ORDER BY salary) < 10;
 ERROR:  window functions not allowed in WHERE clause
