@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.108 2009/05/05 19:59:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.109 2009/08/28 18:23:53 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -23,7 +23,7 @@
 #include "storage/backendid.h"
 
 
-ProtocolVersion FrontendProtocol = PG_PROTOCOL_LATEST;
+ProtocolVersion FrontendProtocol;
 
 volatile bool InterruptPending = false;
 volatile bool QueryCancelPending = false;

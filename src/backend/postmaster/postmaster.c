@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.591 2009/08/28 17:42:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.592 2009/08/28 18:23:53 tgl Exp $
  *
  * NOTES
  *
@@ -3353,7 +3353,6 @@ BackendRun(Port *port)
 	int			ac;
 	long		secs;
 	int			usecs;
-	char		protobuf[32];
 	int			i;
 
 	/*
@@ -3396,10 +3395,6 @@ BackendRun(Port *port)
 	 * ExtraOptions now, since we're safely inside a subprocess.)
 	 */
 	split_opts(av, &ac, ExtraOptions);
-
-	/* Tell the backend what protocol the frontend is using. */
-	snprintf(protobuf, sizeof(protobuf), "-v%u", port->proto);
-	av[ac++] = protobuf;
 
 	/*
 	 * Tell the backend it is being called from the postmaster, and which

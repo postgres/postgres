@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.569 2009/07/31 20:26:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.570 2009/08/28 18:23:53 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3075,6 +3075,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 				}
 
 			case 'v':
+				/*
+				 * -v is no longer used in normal operation, since
+				 * FrontendProtocol is already set before we get here.
+				 * We keep the switch only for possible use in standalone
+				 * operation, in case we ever support using normal FE/BE
+				 * protocol with a standalone backend.
+				 */
 				if (secure)
 					FrontendProtocol = (ProtocolVersion) atoi(optarg);
 				break;
