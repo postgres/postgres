@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.128 2009/08/26 22:24:42 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.129 2009/08/28 20:26:18 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ endif
 ifndef JADE
 JADE = jade
 endif
-SGMLINCLUDE = -D $(srcdir)
+SGMLINCLUDE = -D . -D $(srcdir)
 
 ifndef NSGMLS
 NSGMLS = nsgmls
@@ -75,13 +75,9 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 
 man: man-stamp
 
-ifeq ($(vpath_build),yes)
-XSLTPROC_MAN_FLAGS = --stringparam man.output.base.dir '$(srcdir)/'
-endif
-
-$(srcdir)/man-stamp: stylesheet-man.xsl postgres.xml
+man-stamp: stylesheet-man.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
-	rm $(srcdir)/man1/dblink*
+	rm man1/dblink*
 	touch $@
 
 
@@ -92,30 +88,26 @@ $(srcdir)/man-stamp: stylesheet-man.xsl postgres.xml
 .PHONY: draft
 
 JADE.html.call = $(JADE) $(JADEFLAGS) $(SPFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t sgml -i output-html
-ifeq ($(vpath_build),yes)
-# This only works with openjade, not with the older jade.
-JADE.html.call += -V '(define %output-dir% "$(srcdir)/html")'
-endif
 
 # The draft target creates HTML output in draft mode, without index (for faster build).
 draft: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
-	$(MKDIR_P) $(srcdir)/html
+	$(MKDIR_P) html
 	$(JADE.html.call) -V draft-mode $<
-	cp $(srcdir)/stylesheet.css $(srcdir)/html/
+	cp $(srcdir)/stylesheet.css html/
 
 html: html-stamp
 
-$(srcdir)/html-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
-	$(MKDIR_P) $(srcdir)/html
+html-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
+	$(MKDIR_P) html
 	$(JADE.html.call) -i include-index $<
-	cp $(srcdir)/stylesheet.css $(srcdir)/html/
+	cp $(srcdir)/stylesheet.css html/
 	touch $@
 
-$(srcdir)/HTML.index: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
-	@$(MKDIR_P) $(srcdir)/html
+HTML.index: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
+	@$(MKDIR_P) html
 	$(JADE.html.call) -V html-index $<
 
-$(srcdir)/bookindex.sgml: HTML.index
+bookindex.sgml: HTML.index
 	LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g -i 'bookindex' -o $@ $<
 
 # Technically, this should depend on Makefile.global, but then
@@ -123,16 +115,16 @@ $(srcdir)/bookindex.sgml: HTML.index
 # even in distribution tarballs.  So this is cheating a bit, but it
 # will achieve the goal of updating the version number when it
 # changes.
-$(srcdir)/version.sgml: $(top_srcdir)/configure
+version.sgml: $(top_srcdir)/configure
 	{ \
 	  echo "<!entity version \"$(VERSION)\">"; \
 	  echo "<!entity majorversion \"$(MAJORVERSION)\">"; \
 	} >$@
 
-$(srcdir)/features-supported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
+features-supported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
 	$(PERL) $(srcdir)/mk_feature_tables.pl YES $^ > $@
 
-$(srcdir)/features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
+features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_packages.txt $(top_srcdir)/src/backend/catalog/sql_features.txt
 	$(PERL) $(srcdir)/mk_feature_tables.pl NO $^ > $@
 
 
@@ -232,10 +224,6 @@ postgres.xml: postgres.sgml $(ALMOSTALLSGML)
 	  >$@
 # ' hello Emacs
 
-ifeq ($(vpath_build),yes)
-XSLTPROC_HTML_FLAGS = --stringparam base.dir '$(srcdir)/html'
-endif
-
 xslthtml: stylesheet.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^
 
@@ -280,9 +268,11 @@ check: postgres.sgml $(ALMOSTALLSGML)
 ## Install
 ##
 
-found_html = $(wildcard $(srcdir)/html-stamp)
+vpathsearch = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,. $(VPATH)))))
 
-ifneq ($(wildcard $(srcdir)/man-stamp),)
+found_html = $(wildcard html-stamp $(srcdir)/html-stamp)
+
+ifneq ($(wildcard man-stamp $(srcdir)/man-stamp),)
 # SCO OpenServer's man system is sufficiently different to not bother.
 ifneq ($(PORTNAME), sco)
 found_man = yes
@@ -301,7 +291,7 @@ uninstall:
 ## Install html
 
 install-html: html installdirs
-	cp -R $(srcdir)/html '$(DESTDIR)$(htmldir)'
+	cp -R $(call vpathsearch,html) '$(DESTDIR)$(htmldir)'
 
 
 ## Install man
@@ -316,7 +306,7 @@ sqlmansectnum = $(shell expr X'$(sqlmansect)' : X'\([0-9]\)')
 #
 ifeq ($(sqlmansectnum),7)
 install-man:
-	cp -R $(addprefix $(srcdir)/,man1 man3 man7) '$(DESTDIR)$(mandir)'
+	cp -R $(foreach dir,man1 man3 man7,$(call vpathsearch,$(dir))) '$(DESTDIR)$(mandir)'
 
 else # sqlmansectnum != 7
 fix_sqlmansectnum = sed -e '/^\.TH/s/"7"/"$(sqlmansect)"/' \

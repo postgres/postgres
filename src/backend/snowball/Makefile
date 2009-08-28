@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/snowball
 #
-# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.7 2009/08/26 22:24:43 petere Exp $
+# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.8 2009/08/28 20:26:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -71,11 +71,7 @@ LANGUAGES=  \
 SQLSCRIPT= snowball_create.sql
 DICTDIR=tsearch_data
 
-ifdef VPATH
-override VPATH := $(srcdir)/libstemmer:$(VPATH)
-else
-VPATH = $(srcdir)/libstemmer
-endif
+VPATH += $(srcdir)/libstemmer
 
 NAME := dict_snowball
 rpath =

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.144 2009/08/26 22:24:43 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.145 2009/08/28 20:26:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ MINOR_VERSION= 6
 PATCHLEVEL=0
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-	-I$(srcdir) -DMAJOR_VERSION=$(MAJOR_VERSION) \
+	-I. -I$(srcdir) -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	 $(CPPFLAGS)
 
@@ -34,33 +34,33 @@ ecpg: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
 
 # pgc is compiled as part of preproc
-preproc.o: $(srcdir)/pgc.c
+preproc.o: pgc.c
 
-$(srcdir)/preproc.h: $(srcdir)/preproc.c ;
+preproc.h: preproc.c ;
 
-$(srcdir)/preproc.c: $(srcdir)/preproc.y
+preproc.c: preproc.y
 ifdef BISON
 	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
 
-$(srcdir)/pgc.c: $(srcdir)/pgc.l
+pgc.c: pgc.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
 
-$(srcdir)/preproc.y: $(top_srcdir)/src/backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
+preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
 	$(PERL) $(srcdir)/parse.pl $(srcdir) < $< > $@ 
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
-kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
+kwlookup.c: % : ../../../backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
-distprep: $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
+distprep: preproc.y preproc.c preproc.h pgc.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
@@ -80,4 +80,4 @@ clean distclean:
 # since we want to ship those files in the distribution for people with
 # inadequate tools.  Instead, `make maintainer-clean' will remove them.
 maintainer-clean: distclean
-	rm -f $(srcdir)/preproc.y $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
+	rm -f preproc.y preproc.c preproc.h pgc.c

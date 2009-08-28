@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.133 2009/08/26 22:24:43 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.134 2009/08/28 20:26:18 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -118,7 +118,7 @@ postgres.o: $(OBJS)
 # the make files in our subdirectories. Note that it's important we
 # match the dependencies shown in the subdirectory makefiles!
 
-$(srcdir)/parser/gram.h: parser/gram.y
+parser/gram.h: parser/gram.y
 	$(MAKE) -C parser gram.h
 
 utils/fmgroids.h: utils/Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h
@@ -131,7 +131,7 @@ utils/probes.h: utils/probes.d
 # we can cut down on the -I options. Also, a symlink is automatically
 # up to date when we update the base file.
 
-$(top_builddir)/src/include/parser/gram.h: $(srcdir)/parser/gram.h
+$(top_builddir)/src/include/parser/gram.h: parser/gram.h
 	prereqdir=`cd $(dir $<) >/dev/null && pwd` && \
 	  cd $(dir $@) && rm -f $(notdir $@) && \
 	  $(LN_S) "$$prereqdir/$(notdir $<)" .
@@ -252,12 +252,12 @@ distclean: clean
 	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c
 
 maintainer-clean: distclean
-	rm -f $(srcdir)/bootstrap/bootparse.c \
-	      $(srcdir)/bootstrap/bootscanner.c \
-	      $(srcdir)/parser/gram.c \
-	      $(srcdir)/parser/scan.c \
-	      $(srcdir)/parser/gram.h \
-	      $(srcdir)/utils/misc/guc-file.c
+	rm -f bootstrap/bootparse.c \
+	      bootstrap/bootscanner.c \
+	      parser/gram.c \
+	      parser/scan.c \
+	      parser/gram.h \
+	      utils/misc/guc-file.c
 
 
 ##########################################################################

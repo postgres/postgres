@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.122 2009/08/27 17:55:53 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.123 2009/08/28 20:26:18 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -415,7 +415,7 @@ exports_file = $(DLL_DEFFILE)
 $(exports_file): $(OBJS)
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $@ $^
 else
-DLL_DEFFILE = $(srcdir)/lib$(NAME)dll.def
+DLL_DEFFILE = lib$(NAME)dll.def
 endif
 
 $(shlib): $(OBJS) $(DLL_DEFFILE)
@@ -436,23 +436,23 @@ endif # enable_shared
 # tarballs.
 
 ifneq (,$(SHLIB_EXPORTS))
-distprep: $(srcdir)/lib$(NAME)dll.def $(srcdir)/lib$(NAME)ddll.def $(srcdir)/blib$(NAME)dll.def
+distprep: lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
 
 UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
-$(srcdir)/lib$(NAME)dll.def: $(SHLIB_EXPORTS)
+lib$(NAME)dll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for MS VC++' >$@
 	echo 'LIBRARY LIB$(UC_NAME)' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
-$(srcdir)/lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
+lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for MS VC++' >$@
 	echo 'LIBRARY LIB$(UC_NAME)D' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
-$(srcdir)/blib$(NAME)dll.def: $(SHLIB_EXPORTS)
+blib$(NAME)dll.def: $(SHLIB_EXPORTS)
 	echo '; DEF file for Borland C++ Builder' >$@
 	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
 	echo 'EXPORTS' >>$@
@@ -551,5 +551,5 @@ clean-lib:
 
 ifneq (,$(SHLIB_EXPORTS))
 maintainer-clean-lib:
-	rm -f $(srcdir)/lib$(NAME)dll.def $(srcdir)/lib$(NAME)ddll.def $(srcdir)/blib$(NAME)dll.def
+	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
 endif

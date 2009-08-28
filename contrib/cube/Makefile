@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.22 2008/08/29 13:02:32 petere Exp $
+# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.23 2009/08/28 20:26:18 petere Exp $
 
 MODULE_big = cube
 OBJS= cube.o cubeparse.o
@@ -24,23 +24,23 @@ endif
 
 
 # cubescan is compiled as part of cubeparse
-cubeparse.o: $(srcdir)/cubescan.c
+cubeparse.o: cubescan.c
 
-$(srcdir)/cubeparse.c: cubeparse.y
+cubeparse.c: cubeparse.y
 ifdef BISON
 	$(BISON) $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
 
-$(srcdir)/cubescan.c: cubescan.l
+cubescan.c: cubescan.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
 
-distprep: $(srcdir)/cubeparse.c $(srcdir)/cubescan.c
+distprep: cubeparse.c cubescan.c
 
 maintainer-clean:
-	rm -f $(srcdir)/cubeparse.c $(srcdir)/cubescan.c
+	rm -f cubeparse.c cubescan.c

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.21 2008/08/29 13:02:32 petere Exp $
+# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.22 2009/08/28 20:26:18 petere Exp $
 
 MODULE_big = seg
 OBJS = seg.o segparse.o
@@ -21,23 +21,23 @@ endif
 
 
 # segscan is compiled as part of segparse
-segparse.o: $(srcdir)/segscan.c
+segparse.o: segscan.c
 
-$(srcdir)/segparse.c: segparse.y
+segparse.c: segparse.y
 ifdef BISON
 	$(BISON) $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
 
-$(srcdir)/segscan.c: segscan.l
+segscan.c: segscan.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
 
-distprep: $(srcdir)/segparse.c $(srcdir)/segscan.c
+distprep: segparse.c segscan.c
 
 maintainer-clean:
-	rm -f $(srcdir)/segparse.c $(srcdir)/segscan.c
+	rm -f segparse.c segscan.c

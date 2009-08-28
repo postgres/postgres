@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.64 2009/08/26 22:24:43 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.65 2009/08/28 20:26:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include $(top_builddir)/src/Makefile.global
 
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
-override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/pg_dump $(CPPFLAGS)
+override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) -I$(top_srcdir)/src/bin/pg_dump $(CPPFLAGS)
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
@@ -32,7 +32,7 @@ all: submake-libpq submake-libpgport psql
 psql: $(OBJS) $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
-help.o: $(srcdir)/sql_help.h
+help.o: sql_help.h
 
 dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
@@ -40,17 +40,17 @@ dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
 kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
-$(srcdir)/sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
+sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 	$(PERL) $< $(REFDOCDIR) $@
 
-$(srcdir)/psqlscan.c: psqlscan.l
+psqlscan.c: psqlscan.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
 
-distprep: $(srcdir)/sql_help.h $(srcdir)/psqlscan.c
+distprep: sql_help.h psqlscan.c
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
@@ -67,4 +67,4 @@ clean distclean:
 	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c
 
 maintainer-clean: distclean
-	rm -f $(srcdir)/sql_help.h $(srcdir)/psqlscan.c
+	rm -f sql_help.h psqlscan.c
