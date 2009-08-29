@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.511 2009/08/24 20:08:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.512 2009/08/29 19:26:51 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4635,7 +4635,8 @@ set_config_option(const char *name, const char *value,
 				if (IsUnderPostmaster)
 					return true;
 			}
-			else if (context != PGC_BACKEND && context != PGC_POSTMASTER)
+			else if (context != PGC_POSTMASTER && context != PGC_BACKEND &&
+					 source != PGC_S_CLIENT)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
@@ -5241,22 +5242,6 @@ GetConfigOptionResetString(const char *name)
 								 ((struct config_enum *) record)->reset_val);
 	}
 	return NULL;
-}
-
-/*
- * Detect whether the given configuration option can only be set by
- * a superuser.
- */
-bool
-IsSuperuserConfigOption(const char *name)
-{
-	struct config_generic *record;
-
-	record = find_option(name, false, ERROR);
-	/* On an unrecognized name, don't error, just return false. */
-	if (record == NULL)
-		return false;
-	return (record->context == PGC_SUSET);
 }
 
 

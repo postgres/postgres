@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.45 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.46 2009/08/29 19:26:51 tgl Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -49,23 +49,23 @@
 #ifdef HAVE_SIGPROCMASK
 sigset_t	UnBlockSig,
 			BlockSig,
-			AuthBlockSig;
+			StartupBlockSig;
 #else
 int			UnBlockSig,
 			BlockSig,
-			AuthBlockSig;
+			StartupBlockSig;
 #endif
 
 
 /*
- * Initialize BlockSig, UnBlockSig, and AuthBlockSig.
+ * Initialize BlockSig, UnBlockSig, and StartupBlockSig.
  *
  * BlockSig is the set of signals to block when we are trying to block
  * signals.  This includes all signals we normally expect to get, but NOT
  * signals that should never be turned off.
  *
- * AuthBlockSig is the set of signals to block during authentication;
- * it's essentially BlockSig minus SIGTERM, SIGQUIT, SIGALRM.
+ * StartupBlockSig is the set of signals to block during startup packet
+ * collection; it's essentially BlockSig minus SIGTERM, SIGQUIT, SIGALRM.
  *
  * UnBlockSig is the set of signals to block when we don't want to block
  * signals (is this ever nonzero??)
@@ -79,7 +79,7 @@ pqinitmask(void)
 
 	/* First set all signals, then clear some. */
 	sigfillset(&BlockSig);
-	sigfillset(&AuthBlockSig);
+	sigfillset(&StartupBlockSig);
 
 	/*
 	 * Unmark those signals that should never be blocked. Some of these signal
@@ -88,46 +88,46 @@ pqinitmask(void)
 	 */
 #ifdef SIGTRAP
 	sigdelset(&BlockSig, SIGTRAP);
-	sigdelset(&AuthBlockSig, SIGTRAP);
+	sigdelset(&StartupBlockSig, SIGTRAP);
 #endif
 #ifdef SIGABRT
 	sigdelset(&BlockSig, SIGABRT);
-	sigdelset(&AuthBlockSig, SIGABRT);
+	sigdelset(&StartupBlockSig, SIGABRT);
 #endif
 #ifdef SIGILL
 	sigdelset(&BlockSig, SIGILL);
-	sigdelset(&AuthBlockSig, SIGILL);
+	sigdelset(&StartupBlockSig, SIGILL);
 #endif
 #ifdef SIGFPE
 	sigdelset(&BlockSig, SIGFPE);
-	sigdelset(&AuthBlockSig, SIGFPE);
+	sigdelset(&StartupBlockSig, SIGFPE);
 #endif
 #ifdef SIGSEGV
 	sigdelset(&BlockSig, SIGSEGV);
-	sigdelset(&AuthBlockSig, SIGSEGV);
+	sigdelset(&StartupBlockSig, SIGSEGV);
 #endif
 #ifdef SIGBUS
 	sigdelset(&BlockSig, SIGBUS);
-	sigdelset(&AuthBlockSig, SIGBUS);
+	sigdelset(&StartupBlockSig, SIGBUS);
 #endif
 #ifdef SIGSYS
 	sigdelset(&BlockSig, SIGSYS);
-	sigdelset(&AuthBlockSig, SIGSYS);
+	sigdelset(&StartupBlockSig, SIGSYS);
 #endif
 #ifdef SIGCONT
 	sigdelset(&BlockSig, SIGCONT);
-	sigdelset(&AuthBlockSig, SIGCONT);
+	sigdelset(&StartupBlockSig, SIGCONT);
 #endif
 
-/* Signals unique to Auth */
+/* Signals unique to startup */
 #ifdef SIGQUIT
-	sigdelset(&AuthBlockSig, SIGQUIT);
+	sigdelset(&StartupBlockSig, SIGQUIT);
 #endif
 #ifdef SIGTERM
-	sigdelset(&AuthBlockSig, SIGTERM);
+	sigdelset(&StartupBlockSig, SIGTERM);
 #endif
 #ifdef SIGALRM
-	sigdelset(&AuthBlockSig, SIGALRM);
+	sigdelset(&StartupBlockSig, SIGALRM);
 #endif
 #else
 	/* Set the signals we want. */
@@ -139,7 +139,7 @@ pqinitmask(void)
 		sigmask(SIGINT) | sigmask(SIGUSR1) |
 		sigmask(SIGUSR2) | sigmask(SIGCHLD) |
 		sigmask(SIGWINCH) | sigmask(SIGFPE);
-	AuthBlockSig = sigmask(SIGHUP) |
+	StartupBlockSig = sigmask(SIGHUP) |
 		sigmask(SIGINT) | sigmask(SIGUSR1) |
 		sigmask(SIGUSR2) | sigmask(SIGCHLD) |
 		sigmask(SIGWINCH) | sigmask(SIGFPE);

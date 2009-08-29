@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.77 2009/01/01 17:23:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.78 2009/08/29 19:26:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,38 +20,63 @@
 #include <crypt.h>
 #endif
 
+#include "catalog/pg_authid.h"
 #include "libpq/crypt.h"
 #include "libpq/md5.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 
 int
 md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 {
-	char	   *shadow_pass = NULL,
-			   *valuntil = NULL,
-			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
-	List	  **line;
-	ListCell   *token;
+	char	   *shadow_pass,
+			   *crypt_pwd;
+	TimestampTz vuntil = 0;
 	char	   *crypt_client_pass = client_pass;
+	HeapTuple	roleTup;
+	Datum		datum;
+	bool		isnull;
 
-	if ((line = get_role_line(role)) == NULL)
-		return STATUS_ERROR;
+	/*
+	 * Disable immediate interrupts while doing database access.  (Note
+	 * we don't bother to turn this back on if we hit one of the failure
+	 * conditions, since we can expect we'll just exit right away anyway.)
+	 */
+	ImmediateInterruptOK = false;
 
-	/* Skip over rolename */
-	token = list_head(*line);
-	if (token)
-		token = lnext(token);
-	if (token)
+	/* Get role info from pg_authid */
+	roleTup = SearchSysCache(AUTHNAME,
+							 PointerGetDatum(role),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(roleTup))
+		return STATUS_ERROR;					/* no such user */
+
+	datum = SysCacheGetAttr(AUTHNAME, roleTup,
+							Anum_pg_authid_rolpassword, &isnull);
+	if (isnull)
 	{
-		shadow_pass = (char *) lfirst(token);
-		token = lnext(token);
-		if (token)
-			valuntil = (char *) lfirst(token);
+		ReleaseSysCache(roleTup);
+		return STATUS_ERROR;					/* user has no password */
 	}
+	shadow_pass = TextDatumGetCString(datum);
 
-	if (shadow_pass == NULL || *shadow_pass == '\0')
-		return STATUS_ERROR;
+	datum = SysCacheGetAttr(AUTHNAME, roleTup,
+							Anum_pg_authid_rolvaliduntil, &isnull);
+	if (!isnull)
+		vuntil = DatumGetTimestampTz(datum);
+
+	ReleaseSysCache(roleTup);
+
+	if (*shadow_pass == '\0')
+		return STATUS_ERROR;					/* empty password */
+
+	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
+	ImmediateInterruptOK = true;
+	/* And don't forget to detect one that already arrived */
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * Compare with the encrypted or plain password depending on the
@@ -119,24 +144,14 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 	if (strcmp(crypt_client_pass, crypt_pwd) == 0)
 	{
 		/*
-		 * Password OK, now check to be sure we are not past valuntil
+		 * Password OK, now check to be sure we are not past rolvaliduntil
 		 */
-		if (valuntil == NULL || *valuntil == '\0')
+		if (isnull)
 			retval = STATUS_OK;
+		else if (vuntil < GetCurrentTimestamp())
+			retval = STATUS_ERROR;
 		else
-		{
-			TimestampTz vuntil;
-
-			vuntil = DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
-												   CStringGetDatum(valuntil),
-												ObjectIdGetDatum(InvalidOid),
-														 Int32GetDatum(-1)));
-
-			if (vuntil < GetCurrentTimestamp())
-				retval = STATUS_ERROR;
-			else
-				retval = STATUS_OK;
-		}
+			retval = STATUS_OK;
 	}
 
 	if (port->hba->auth_method == uaMD5)

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.592 2009/08/28 18:23:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.593 2009/08/29 19:26:51 tgl Exp $
  *
  * NOTES
  *
@@ -327,6 +327,7 @@ static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
+static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void CleanupBackend(int pid, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
@@ -1561,7 +1562,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	if (proto == CANCEL_REQUEST_CODE)
 	{
 		processCancelRequest(port, buf);
-		return 127;				/* XXX */
+		/* Not really an error, but we don't want to proceed further */
+		return STATUS_ERROR;
 	}
 
 	if (proto == NEGOTIATE_SSL_CODE && !SSLdone)
@@ -1623,10 +1625,10 @@ retry1:
 	/*
 	 * Now fetch parameters out of startup packet and save them into the Port
 	 * structure.  All data structures attached to the Port struct must be
-	 * allocated in TopMemoryContext so that they won't disappear when we pass
-	 * them to PostgresMain (see BackendRun).  We need not worry about leaking
-	 * this storage on failure, since we aren't in the postmaster process
-	 * anymore.
+	 * allocated in TopMemoryContext so that they will remain available in
+	 * a running backend (even after PostmasterContext is destroyed).  We need
+	 * not worry about leaking this storage on failure, since we aren't in the
+	 * postmaster process anymore.
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -2290,13 +2292,6 @@ reaper(SIGNAL_ARGS)
 			 */
 			FatalError = false;
 			pmState = PM_RUN;
-
-			/*
-			 * Load the flat authorization file into postmaster's cache. The
-			 * startup process has recomputed this from the database contents,
-			 * so we wait till it finishes before loading it.
-			 */
-			load_role();
 
 			/*
 			 * Crank up the background writer, if we didn't do that already
@@ -3054,7 +3049,7 @@ BackendStartup(Port *port)
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
 
-		/* Perform additional initialization and client authentication */
+		/* Perform additional initialization and collect startup packet */
 		BackendInitialize(port);
 
 		/* And run the backend */
@@ -3130,38 +3125,8 @@ report_fork_failure_to_client(Port *port, int errnum)
 
 
 /*
- * split_opts -- split a string of options and append it to an argv array
- *
- * NB: the string is destructively modified!
- *
- * Since no current POSTGRES arguments require any quoting characters,
- * we can use the simple-minded tactic of assuming each set of space-
- * delimited characters is a separate argv element.
- *
- * If you don't like that, well, we *used* to pass the whole option string
- * as ONE argument to execl(), which was even less intelligent...
- */
-static void
-split_opts(char **argv, int *argcp, char *s)
-{
-	while (s && *s)
-	{
-		while (isspace((unsigned char) *s))
-			++s;
-		if (*s == '\0')
-			break;
-		argv[(*argcp)++] = s;
-		while (*s && !isspace((unsigned char) *s))
-			++s;
-		if (*s)
-			*s++ = '\0';
-	}
-}
-
-
-/*
  * BackendInitialize -- initialize an interactive (postmaster-child)
- *				backend process, and perform client authentication.
+ *				backend process, and collect the client's startup packet.
  *
  * returns: nothing.  Will not return at all if there's any failure.
  *
@@ -3183,13 +3148,14 @@ BackendInitialize(Port *port)
 	/*
 	 * PreAuthDelay is a debugging aid for investigating problems in the
 	 * authentication cycle: it can be set in postgresql.conf to allow time to
-	 * attach to the newly-forked backend with a debugger. (See also the -W
-	 * backend switch, which we allow clients to pass through PGOPTIONS, but
+	 * attach to the newly-forked backend with a debugger.  (See also
+	 * PostAuthDelay, which we allow clients to pass through PGOPTIONS, but
 	 * it is not honored until after authentication.)
 	 */
 	if (PreAuthDelay > 0)
 		pg_usleep(PreAuthDelay * 1000000L);
 
+	/* This flag will remain set until InitPostgres finishes authentication */
 	ClientAuthInProgress = true;	/* limit visibility of log messages */
 
 	/* save process start time */
@@ -3218,15 +3184,15 @@ BackendInitialize(Port *port)
 #endif
 
 	/*
-	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT during
-	 * any client authentication related communication. Otherwise the
+	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT
+	 * or timeout while trying to collect the startup packet.  Otherwise the
 	 * postmaster cannot shutdown the database FAST or IMMED cleanly if a
-	 * buggy client blocks a backend during authentication.
+	 * buggy client fails to send the packet promptly.
 	 */
-	pqsignal(SIGTERM, authdie);
-	pqsignal(SIGQUIT, authdie);
-	pqsignal(SIGALRM, authdie);
-	PG_SETMASK(&AuthBlockSig);
+	pqsignal(SIGTERM, startup_die);
+	pqsignal(SIGQUIT, startup_die);
+	pqsignal(SIGALRM, startup_die);
+	PG_SETMASK(&StartupBlockSig);
 
 	/*
 	 * Get the remote host name and port for logging and status display.
@@ -3265,42 +3231,13 @@ BackendInitialize(Port *port)
 	port->remote_port = strdup(remote_port);
 
 	/*
-	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
-	 * etcetera from the postmaster, and have to load them ourselves. Build
-	 * the PostmasterContext (which didn't exist before, in this process) to
-	 * contain the data.
-	 *
-	 * FIXME: [fork/exec] Ugh.	Is there a way around this overhead?
-	 */
-#ifdef EXEC_BACKEND
-	Assert(PostmasterContext == NULL);
-	PostmasterContext = AllocSetContextCreate(TopMemoryContext,
-											  "Postmaster",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
-	MemoryContextSwitchTo(PostmasterContext);
-
-	if (!load_hba())
-	{
-		/*
-		 * It makes no sense to continue if we fail to load the HBA file,
-		 * since there is no way to connect to the database in this case.
-		 */
-		ereport(FATAL,
-				(errmsg("could not load pg_hba.conf")));
-	}
-	load_ident();
-	load_role();
-#endif
-
-	/*
-	 * Ready to begin client interaction.  We will give up and exit(0) after a
+	 * Ready to begin client interaction.  We will give up and exit(1) after a
 	 * time delay, so that a broken client can't hog a connection
-	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
+	 * indefinitely.  PreAuthDelay and any DNS interactions above don't count
+	 * against the time limit.
 	 */
 	if (!enable_sig_alarm(AuthenticationTimeout * 1000, false))
-		elog(FATAL, "could not set timer for authorization timeout");
+		elog(FATAL, "could not set timer for startup packet timeout");
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel request
@@ -3308,6 +3245,10 @@ BackendInitialize(Port *port)
 	 */
 	status = ProcessStartupPacket(port, false);
 
+	/*
+	 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
+	 * already did any appropriate error reporting.
+	 */
 	if (status != STATUS_OK)
 		proc_exit(0);
 
@@ -3319,22 +3260,11 @@ BackendInitialize(Port *port)
 					update_process_title ? "authentication" : "");
 
 	/*
-	 * Now perform authentication exchange.
-	 */
-	ClientAuthentication(port); /* might not return, if failure */
-
-	/*
-	 * Done with authentication.  Disable timeout, and prevent SIGTERM/SIGQUIT
-	 * again until backend startup is complete.
+	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
 	 */
 	if (!disable_sig_alarm(false))
-		elog(FATAL, "could not disable timer for authorization timeout");
+		elog(FATAL, "could not disable timer for startup packet timeout");
 	PG_SETMASK(&BlockSig);
-
-	if (Log_connections)
-		ereport(LOG,
-				(errmsg("connection authorized: user=%s database=%s",
-						port->user_name, port->database_name)));
 }
 
 
@@ -3366,22 +3296,15 @@ BackendRun(Port *port)
 	TimestampDifference(0, port->SessionStartTime, &secs, &usecs);
 	srandom((unsigned int) (MyProcPid ^ usecs));
 
-	/* ----------------
+	/*
 	 * Now, build the argv vector that will be given to PostgresMain.
 	 *
-	 * The layout of the command line is
-	 *		postgres [secure switches] -y databasename [insecure switches]
-	 * where the switches after -y come from the client request.
-	 *
 	 * The maximum possible number of commandline arguments that could come
-	 * from ExtraOptions or port->cmdline_options is (strlen + 1) / 2; see
-	 * split_opts().
-	 * ----------------
+	 * from ExtraOptions is (strlen(ExtraOptions) + 1) / 2; see
+	 * pg_split_opts().
 	 */
-	maxac = 10;					/* for fixed args supplied below */
+	maxac = 5;					/* for fixed args supplied below */
 	maxac += (strlen(ExtraOptions) + 1) / 2;
-	if (port->cmdline_options)
-		maxac += (strlen(port->cmdline_options) + 1) / 2;
 
 	av = (char **) MemoryContextAlloc(TopMemoryContext,
 									  maxac * sizeof(char *));
@@ -3390,40 +3313,20 @@ BackendRun(Port *port)
 	av[ac++] = "postgres";
 
 	/*
-	 * Pass any backend switches specified with -o in the postmaster's own
+	 * Pass any backend switches specified with -o on the postmaster's own
 	 * command line.  We assume these are secure.  (It's OK to mangle
 	 * ExtraOptions now, since we're safely inside a subprocess.)
 	 */
-	split_opts(av, &ac, ExtraOptions);
+	pg_split_opts(av, &ac, ExtraOptions);
 
 	/*
-	 * Tell the backend it is being called from the postmaster, and which
-	 * database to use.  -y marks the end of secure switches.
+	 * Tell the backend which database to use.
 	 */
-	av[ac++] = "-y";
 	av[ac++] = port->database_name;
-
-	/*
-	 * Pass the (insecure) option switches from the connection request. (It's
-	 * OK to mangle port->cmdline_options now.)
-	 */
-	if (port->cmdline_options)
-		split_opts(av, &ac, port->cmdline_options);
 
 	av[ac] = NULL;
 
 	Assert(ac < maxac);
-
-	/*
-	 * Release postmaster's working memory context so that backend can recycle
-	 * the space.  Note this does not trash *MyProcPort, because ConnCreate()
-	 * allocated that space with malloc() ... else we'd need to copy the Port
-	 * data here.  Also, subsidiary data such as the username isn't lost
-	 * either; see ProcessStartupPacket().
-	 */
-	MemoryContextSwitchTo(TopMemoryContext);
-	MemoryContextDelete(PostmasterContext);
-	PostmasterContext = NULL;
 
 	/*
 	 * Debug: print arguments being passed to backend
@@ -3437,7 +3340,11 @@ BackendRun(Port *port)
 	ereport(DEBUG3,
 			(errmsg_internal(")")));
 
-	ClientAuthInProgress = false;		/* client_min_messages is active now */
+	/*
+	 * Make sure we aren't in PostmasterContext anymore.  (We can't delete it
+	 * just yet, though, because InitPostgres will need the HBA data.)
+	 */
+	MemoryContextSwitchTo(TopMemoryContext);
 
 	return (PostgresMain(ac, av, port->user_name));
 }
@@ -3833,7 +3740,6 @@ SubPostmasterMain(int argc, char *argv[])
 				 errmsg("out of memory")));
 #endif
 
-
 	/* Check we got appropriate args */
 	if (argc < 3)
 		elog(FATAL, "invalid subpostmaster invocation");
@@ -3901,7 +3807,7 @@ SubPostmasterMain(int argc, char *argv[])
 #endif
 
 		/*
-		 * Perform additional initialization and client authentication.
+		 * Perform additional initialization and collect startup packet.
 		 *
 		 * We want to do this before InitProcess() for a couple of reasons: 1.
 		 * so that we aren't eating up a PGPROC slot while waiting on the
@@ -4075,13 +3981,6 @@ sigusr1_handler(SIGNAL_ARGS)
 		pmState == PM_RECOVERY)
 	{
 		/*
-		 * Load the flat authorization file into postmaster's cache. The
-		 * startup process won't have recomputed this from the database yet,
-		 * so it may change following recovery.
-		 */
-		load_role();
-
-		/*
 		 * Likewise, start other special children as needed.
 		 */
 		Assert(PgStatPID == 0);
@@ -4092,14 +3991,6 @@ sigusr1_handler(SIGNAL_ARGS)
 				(errmsg("database system is in consistent recovery mode")));
 
 		pmState = PM_RECOVERY_CONSISTENT;
-	}
-
-	if (CheckPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE))
-	{
-		/*
-		 * Authorization file has changed.
-		 */
-		load_role();
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER) &&
@@ -4144,6 +4035,20 @@ sigusr1_handler(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
+/*
+ * Timeout or shutdown signal from postmaster while processing startup packet.
+ * Cleanup and exit(1).
+ *
+ * XXX: possible future improvement: try to send a message indicating
+ * why we are disconnecting.  Problem is to be sure we don't block while
+ * doing so, nor mess up SSL initialization.  In practice, if the client
+ * has wedged here, it probably couldn't do anything with the message anyway.
+ */
+static void
+startup_die(SIGNAL_ARGS)
+{
+	proc_exit(1);
+}
 
 /*
  * Dummy signal handler

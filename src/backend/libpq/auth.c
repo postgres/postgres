@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.183 2009/06/25 11:30:08 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.184 2009/08/29 19:26:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,9 @@
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "storage/ipc.h"
+
 
 /*----------------------------------------------------------------
  * Global authentication functions
@@ -282,6 +284,15 @@ ClientAuthentication(Port *port)
 				 errhint("See server log for details.")));
 
 	/*
+	 * Enable immediate response to SIGTERM/SIGINT/timeout interrupts.
+	 * (We don't want this during hba_getauthmethod() because it might
+	 * have to do database access, eg for role membership checks.)
+	 */
+	ImmediateInterruptOK = true;
+	/* And don't forget to detect one that already arrived */
+	CHECK_FOR_INTERRUPTS();
+
+	/*
 	 * This is the first point where we have access to the hba record for the
 	 * current connection, so perform any verifications based on the hba
 	 * options field that should be done *before* the authentication here.
@@ -458,6 +469,9 @@ ClientAuthentication(Port *port)
 		sendAuthRequest(port, AUTH_REQ_OK);
 	else
 		auth_failed(port, status);
+
+	/* Done with authentication, so we should turn off immediate interrupts */
+	ImmediateInterruptOK = false;
 }
 
 
@@ -689,9 +703,6 @@ pg_krb5_recvauth(Port *port)
 	krb5_ticket *ticket;
 	char	   *kusername;
 	char	   *cp;
-
-	if (get_role_line(port->user_name) == NULL)
-		return STATUS_ERROR;
 
 	ret = pg_krb5_init(port);
 	if (ret != STATUS_OK)
@@ -1822,9 +1833,6 @@ static int
 authident(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-
-	if (get_role_line(port->user_name) == NULL)
-		return STATUS_ERROR;
 
 	switch (port->raddr.addr.ss_family)
 	{

@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.194 2009/08/12 20:53:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.195 2009/08/29 19:26:51 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -27,6 +28,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_tablespace.h"
+#include "libpq/auth.h"
 #include "libpq/libpq-be.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -54,6 +56,7 @@
 
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
+static void PerformAuthentication(Port *port);
 static void CheckMyDatabase(const char *name, bool am_superuser);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
@@ -155,6 +158,66 @@ GetDatabaseTupleByOid(Oid dboid)
 	heap_close(relation, AccessShareLock);
 
 	return tuple;
+}
+
+
+/*
+ * PerformAuthentication -- authenticate a remote client
+ *
+ * returns: nothing.  Will not return at all if there's any failure.
+ */
+static void
+PerformAuthentication(Port *port)
+{
+	/* This should be set already, but let's make sure */
+	ClientAuthInProgress = true;	/* limit visibility of log messages */
+
+	/*
+	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
+	 * etcetera from the postmaster, and have to load them ourselves.  Note
+	 * we are loading them into the startup transaction's memory context,
+	 * not PostmasterContext, but that shouldn't matter.
+	 *
+	 * FIXME: [fork/exec] Ugh.	Is there a way around this overhead?
+	 */
+#ifdef EXEC_BACKEND
+	if (!load_hba())
+	{
+		/*
+		 * It makes no sense to continue if we fail to load the HBA file,
+		 * since there is no way to connect to the database in this case.
+		 */
+		ereport(FATAL,
+				(errmsg("could not load pg_hba.conf")));
+	}
+	load_ident();
+#endif
+
+	/*
+	 * Set up a timeout in case a buggy or malicious client fails to respond
+	 * during authentication.  Since we're inside a transaction and might do
+	 * database access, we have to use the statement_timeout infrastructure.
+	 */
+	if (!enable_sig_alarm(AuthenticationTimeout * 1000, true))
+		elog(FATAL, "could not set timer for authorization timeout");
+
+	/*
+	 * Now perform authentication exchange.
+	 */
+	ClientAuthentication(port); /* might not return, if failure */
+
+	/*
+	 * Done with authentication.  Disable the timeout, and log if needed.
+	 */
+	if (!disable_sig_alarm(true))
+		elog(FATAL, "could not disable timer for authorization timeout");
+
+	if (Log_connections)
+		ereport(LOG,
+				(errmsg("connection authorized: user=%s database=%s",
+						port->user_name, port->database_name)));
+
+	ClientAuthInProgress = false;		/* client_min_messages is active now */
 }
 
 
@@ -330,6 +393,38 @@ InitCommunication(void)
 
 
 /*
+ * pg_split_opts -- split a string of options and append it to an argv array
+ *
+ * NB: the input string is destructively modified!  Also, caller is responsible
+ * for ensuring the argv array is large enough.  The maximum possible number
+ * of arguments added by this routine is (strlen(optstr) + 1) / 2.
+ *
+ * Since no current POSTGRES arguments require any quoting characters,
+ * we can use the simple-minded tactic of assuming each set of space-
+ * delimited characters is a separate argv element.
+ *
+ * If you don't like that, well, we *used* to pass the whole option string
+ * as ONE argument to execl(), which was even less intelligent...
+ */
+void
+pg_split_opts(char **argv, int *argcp, char *optstr)
+{
+	while (*optstr)
+	{
+		while (isspace((unsigned char) *optstr))
+			optstr++;
+		if (*optstr == '\0')
+			break;
+		argv[(*argcp)++] = optstr;
+		while (*optstr && !isspace((unsigned char) *optstr))
+			optstr++;
+		if (*optstr)
+			*optstr++ = '\0';
+	}
+}
+
+
+/*
  * Early initialization of a backend (either standalone or under postmaster).
  * This happens even before InitPostgres.
  *
@@ -387,6 +482,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	bool		am_superuser;
 	char	   *fullpath;
 	char		dbname[NAMEDATALEN];
+
+	elog(DEBUG3, "InitPostgres");
 
 	/*
 	 * Add my PGPROC struct to the ProcArray.
@@ -599,7 +696,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	RelationCacheInitializePhase3();
 
 	/*
-	 * Figure out our postgres user id, and see if we are a superuser.
+	 * Perform client authentication if necessary, then figure out our
+	 * postgres user id, and see if we are a superuser.
 	 *
 	 * In standalone mode and in the autovacuum process, we use a fixed id,
 	 * otherwise we figure it out from the authenticated user name.
@@ -623,6 +721,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	else
 	{
 		/* normal multiuser case */
+		Assert(MyProcPort != NULL);
+		PerformAuthentication(MyProcPort);
 		InitializeSessionUserId(username);
 		am_superuser = superuser();
 	}

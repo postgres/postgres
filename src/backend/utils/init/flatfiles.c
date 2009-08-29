@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.37 2009/08/12 20:53:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.38 2009/08/29 19:26:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -823,11 +823,6 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 		heap_close(arel, NoLock);
 		heap_close(mrel, NoLock);
 	}
-
-	/*
-	 * Signal the postmaster to reload its caches.
-	 */
-	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
 
 	/*
 	 * Force synchronous commit, to minimize the window between changing the

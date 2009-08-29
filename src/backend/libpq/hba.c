@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.188 2009/06/24 13:39:42 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.189 2009/08/29 19:26:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,9 @@
 #include "libpq/libpq.h"
 #include "regex/regex.h"
 #include "storage/fd.h"
-#include "utils/flatfiles.h"
+#include "utils/acl.h"
 #include "utils/guc.h"
-
+#include "utils/lsyscache.h"
 
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
@@ -42,31 +42,21 @@
 
 #define MAX_TOKEN	256
 
-/* pre-parsed content of HBA config file */
+/* pre-parsed content of HBA config file: list of HbaLine structs */
 static List *parsed_hba_lines = NIL;
 
 /*
- * These variables hold the pre-parsed contents of the ident
- * configuration files, as well as the flat auth file.
- * Each is a list of sublists, one sublist for
- * each (non-empty, non-comment) line of the file.	Each sublist's
- * first item is an integer line number (so we can give somewhat-useful
- * location info in error messages).  Remaining items are palloc'd strings,
- * one string per token on the line.  Note there will always be at least
- * one token, since blank lines are not entered in the data structure.
+ * These variables hold the pre-parsed contents of the ident usermap
+ * configuration file.  ident_lines is a list of sublists, one sublist for
+ * each (non-empty, non-comment) line of the file.  The sublist items are
+ * palloc'd strings, one string per token on the line.  Note there will always
+ * be at least one token, since blank lines are not entered in the data
+ * structure.  ident_line_nums is an integer list containing the actual line
+ * number for each line represented in ident_lines.
  */
-
-/* pre-parsed content of ident usermap file and corresponding line #s */
 static List *ident_lines = NIL;
 static List *ident_line_nums = NIL;
 
-/* pre-parsed content of flat auth file and corresponding line #s */
-static List *role_lines = NIL;
-static List *role_line_nums = NIL;
-
-/* sorted entries so we can do binary search lookups */
-static List **role_sorted = NULL;		/* sorted role list, for bsearch() */
-static int	role_length;
 
 static void tokenize_file(const char *filename, FILE *file,
 			  List **lines, List **line_nums);
@@ -434,70 +424,28 @@ tokenize_file(const char *filename, FILE *file,
 	}
 }
 
-/*
- * Compare two lines based on their role/member names.
- *
- * Used for bsearch() lookup.
- */
-static int
-role_bsearch_cmp(const void *role, const void *list)
-{
-	char	   *role2 = linitial(*(List **) list);
-
-	return strcmp(role, role2);
-}
-
-
-/*
- * Lookup a role name in the pg_auth file
- */
-List	  **
-get_role_line(const char *role)
-{
-	/* On some versions of Solaris, bsearch of zero items dumps core */
-	if (role_length == 0)
-		return NULL;
-
-	return (List **) bsearch((void *) role,
-							 (void *) role_sorted,
-							 role_length,
-							 sizeof(List *),
-							 role_bsearch_cmp);
-}
-
 
 /*
  * Does user belong to role?
  *
- * user is always the name given as the attempted login identifier.
+ * userid is the OID of the role given as the attempted login identifier.
  * We check to see if it is a member of the specified role name.
  */
 static bool
-is_member(const char *user, const char *role)
+is_member(Oid userid, const char *role)
 {
-	List	  **line;
-	ListCell   *line_item;
+	Oid			roleid;
 
-	if ((line = get_role_line(user)) == NULL)
+	if (!OidIsValid(userid))
 		return false;			/* if user not exist, say "no" */
 
-	/* A user always belongs to its own role */
-	if (strcmp(user, role) == 0)
-		return true;
+	roleid = get_roleid(role);
 
-	/*
-	 * skip over the role name, password, valuntil, examine all the membership
-	 * entries
-	 */
-	if (list_length(*line) < 4)
-		return false;
-	for_each_cell(line_item, lnext(lnext(lnext(list_head(*line)))))
-	{
-		if (strcmp((char *) lfirst(line_item), role) == 0)
-			return true;
-	}
+	if (!OidIsValid(roleid))
+		return false;			/* if target role not exist, say "no" */
 
-	return false;
+	/* See if user is directly or indirectly a member of role */
+	return is_member_of_role(userid, roleid);
 }
 
 /*
@@ -508,7 +456,7 @@ is_member(const char *user, const char *role)
  * and so it doesn't matter that we clobber the stored hba info.
  */
 static bool
-check_role(const char *role, char *param_str)
+check_role(const char *role, Oid roleid, char *param_str)
 {
 	char	   *tok;
 
@@ -518,7 +466,7 @@ check_role(const char *role, char *param_str)
 	{
 		if (tok[0] == '+')
 		{
-			if (is_member(role, tok + 1))
+			if (is_member(roleid, tok + 1))
 				return true;
 		}
 		else if (strcmp(tok, role) == 0 ||
@@ -537,7 +485,7 @@ check_role(const char *role, char *param_str)
  * and so it doesn't matter that we clobber the stored hba info.
  */
 static bool
-check_db(const char *dbname, const char *role, char *param_str)
+check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 {
 	char	   *tok;
 
@@ -555,7 +503,7 @@ check_db(const char *dbname, const char *role, char *param_str)
 		else if (strcmp(tok, "samegroup\n") == 0 ||
 				 strcmp(tok, "samerole\n") == 0)
 		{
-			if (is_member(role, dbname))
+			if (is_member(roleid, dbname))
 				return true;
 		}
 		else if (strcmp(tok, dbname) == 0)
@@ -1106,8 +1054,12 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 static bool
 check_hba(hbaPort *port)
 {
+	Oid			roleid;
 	ListCell   *line;
 	HbaLine    *hba;
+
+	/* Get the target role's OID.  Note we do not error out for bad role. */
+	roleid = get_roleid(port->user_name);
 
 	foreach(line, parsed_hba_lines)
 	{
@@ -1177,10 +1129,11 @@ check_hba(hbaPort *port)
 		}						/* != ctLocal */
 
 		/* Check database and role */
-		if (!check_db(port->database_name, port->user_name, hba->database))
+		if (!check_db(port->database_name, port->user_name, roleid,
+					  hba->database))
 			continue;
 
-		if (!check_role(port->user_name, hba->role))
+		if (!check_role(port->user_name, roleid, hba->role))
 			continue;
 
 		/* Found a record that matched! */
@@ -1198,58 +1151,6 @@ check_hba(hbaPort *port)
 	 * XXX: Return false only happens if we have a parsing error, which we can
 	 * no longer have (parsing now in postmaster). Consider changing API.
 	 */
-}
-
-
-/*
- *	 Load role/password mapping file
- */
-void
-load_role(void)
-{
-	char	   *filename;
-	FILE	   *role_file;
-
-	/* Discard any old data */
-	if (role_lines || role_line_nums)
-		free_lines(&role_lines, &role_line_nums);
-	if (role_sorted)
-		pfree(role_sorted);
-	role_sorted = NULL;
-	role_length = 0;
-
-	/* Read in the file contents */
-	filename = auth_getflatfilename();
-	role_file = AllocateFile(filename, "r");
-
-	if (role_file == NULL)
-	{
-		/* no complaint if not there */
-		if (errno != ENOENT)
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m", filename)));
-		pfree(filename);
-		return;
-	}
-
-	tokenize_file(filename, role_file, &role_lines, &role_line_nums);
-
-	FreeFile(role_file);
-	pfree(filename);
-
-	/* create array for binary searching */
-	role_length = list_length(role_lines);
-	if (role_length)
-	{
-		int			i = 0;
-		ListCell   *line;
-
-		/* We assume the flat file was written already-sorted */
-		role_sorted = palloc(role_length * sizeof(List *));
-		foreach(line, role_lines)
-			role_sorted[i++] = lfirst(line);
-	}
 }
 
 /*
@@ -1613,7 +1514,7 @@ ident_syntax:
  *	as Postgres user "pgrole" according to usermap "usermap_name".
  *
  *	Special case: Usermap NULL, equivalent to what was previously called
- *	"sameuser" or "samerole", don't look in the usermap
+ *	"sameuser" or "samerole", means don't look in the usermap
  *	file.  That's an implied map where "pgrole" must be identical to
  *	"ident_user" in order to be authorized.
  *

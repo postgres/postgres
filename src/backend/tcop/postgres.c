@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.570 2009/08/28 18:23:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.571 2009/08/29 19:26:51 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -55,6 +55,7 @@
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "postmaster/autovacuum.h"
+#include "postmaster/postmaster.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
@@ -73,8 +74,13 @@
 #include "mb/pg_wchar.h"
 
 
-extern int	optind;
 extern char *optarg;
+extern int	optind;
+
+#ifdef HAVE_INT_OPTRESET
+extern int	optreset;			/* might not be declared by system headers */
+#endif
+
 
 /* ----------------
  *		global variables
@@ -151,7 +157,10 @@ static CachedPlanSource *unnamed_stmt_psrc = NULL;
 static MemoryContext unnamed_stmt_context = NULL;
 
 
-static bool EchoQuery = false;	/* default don't echo */
+/* assorted command-line switches */
+static const char *userDoption = NULL;		/* -D switch */
+
+static bool EchoQuery = false;				/* -E switch */
 
 /*
  * people who want to use EOF should #define DONTUSENEWLINE in
@@ -2482,6 +2491,15 @@ quickdie(SIGNAL_ARGS)
 	PG_SETMASK(&BlockSig);
 
 	/*
+	 * If we're aborting out of client auth, don't risk trying to send
+	 * anything to the client; we will likely violate the protocol,
+	 * not to mention that we may have interrupted the guts of OpenSSL
+	 * or some authentication library.
+	 */
+	if (ClientAuthInProgress && whereToSendOutput == DestRemote)
+		whereToSendOutput = DestNone;
+
+	/*
 	 * Ideally this should be ereport(FATAL), but then we'd not get control
 	 * back...
 	 */
@@ -2550,20 +2568,6 @@ die(SIGNAL_ARGS)
 	}
 
 	errno = save_errno;
-}
-
-/*
- * Timeout or shutdown signal from postmaster during client authentication.
- * Simply exit(1).
- *
- * XXX: possible future improvement: try to send a message indicating
- * why we are disconnecting.  Problem is to be sure we don't block while
- * doing so, nor mess up the authentication message exchange.
- */
-void
-authdie(SIGNAL_ARGS)
-{
-	proc_exit(1);
 }
 
 /*
@@ -2646,6 +2650,9 @@ ProcessInterrupts(void)
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
+		/* As in quickdie, don't risk sending to client during auth */
+		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
+			whereToSendOutput = DestNone;
 		if (IsAutoVacuumWorkerProcess())
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
@@ -2661,7 +2668,14 @@ ProcessInterrupts(void)
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
-		if (cancel_from_timeout)
+		/* As in quickdie, don't risk sending to client during auth */
+		if (ClientAuthInProgress && whereToSendOutput == DestRemote)
+			whereToSendOutput = DestNone;
+		if (ClientAuthInProgress)
+			ereport(ERROR,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("canceling authentication due to timeout")));
+		else if (cancel_from_timeout)
 			ereport(ERROR,
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling statement due to statement timeout")));
@@ -2840,116 +2854,55 @@ get_stats_option_name(const char *arg)
 
 
 /* ----------------------------------------------------------------
- * PostgresMain
- *	   postgres main loop -- all backends, interactive or otherwise start here
+ * process_postgres_switches
+ *	   Parse command line arguments for PostgresMain
  *
- * argc/argv are the command line arguments to be used.  (When being forked
- * by the postmaster, these are not the original argv array of the process.)
- * username is the (possibly authenticated) PostgreSQL user name to be used
- * for the session.
+ * This is called twice, once for the "secure" options coming from the
+ * postmaster or command line, and once for the "insecure" options coming
+ * from the client's startup packet.  The latter have the same syntax but
+ * may be restricted in what they can do.
+ *
+ * argv[0] is the program name either way.
+ *
+ * ctx is PGC_POSTMASTER for secure options, PGC_BACKEND for insecure options
+ * coming from the client, or PGC_SUSET for insecure options coming from
+ * a superuser client.
+ *
+ * Returns the database name extracted from the command line, if any.
  * ----------------------------------------------------------------
  */
-int
-PostgresMain(int argc, char *argv[], const char *username)
+static const char *
+process_postgres_switches(int argc, char *argv[], GucContext ctx)
 {
-	int			flag;
-	const char *dbname = NULL;
-	char	   *userDoption = NULL;
-	bool		secure;
+	const char *dbname;
+	const char *argv0 = argv[0];
+	bool		secure = (ctx == PGC_POSTMASTER);
 	int			errs = 0;
-	int			debug_flag = -1;	/* -1 means not given */
-	List	   *guc_names = NIL;	/* for SUSET options */
-	List	   *guc_values = NIL;
-	GucContext	ctx;
 	GucSource	gucsource;
-	bool		am_superuser;
-	int			firstchar;
-	char		stack_base;
-	StringInfoData input_message;
-	sigjmp_buf	local_sigjmp_buf;
-	volatile bool send_ready_for_query = true;
+	int			flag;
 
-#define PendingConfigOption(name,val) \
-	(guc_names = lappend(guc_names, pstrdup(name)), \
-	 guc_values = lappend(guc_values, pstrdup(val)))
-
-	/*
-	 * initialize globals (already done if under postmaster, but not if
-	 * standalone; cheap enough to do over)
-	 */
-	MyProcPid = getpid();
-
-	MyStartTime = time(NULL);
-
-	/*
-	 * Fire up essential subsystems: error and memory management
-	 *
-	 * If we are running under the postmaster, this is done already.
-	 */
-	if (!IsUnderPostmaster)
-		MemoryContextInit();
-
-	set_ps_display("startup", false);
-
-	SetProcessingMode(InitProcessing);
-
-	/* Set up reference point for stack depth checking */
-	stack_base_ptr = &stack_base;
-
-	/* Compute paths, if we didn't inherit them from postmaster */
-	if (my_exec_path[0] == '\0')
+	if (secure)
 	{
-		if (find_my_exec(argv[0], my_exec_path) < 0)
-			elog(FATAL, "%s: could not locate my own executable path",
-				 argv[0]);
+		gucsource = PGC_S_ARGV;			/* switches came from command line */
+
+		/* Ignore the initial --single argument, if present */
+		if (argc > 1 && strcmp(argv[1], "--single") == 0)
+		{
+			argv++;
+			argc--;
+		}
 	}
-
-	if (pkglib_path[0] == '\0')
-		get_pkglib_path(my_exec_path, pkglib_path);
-
-	/*
-	 * Set default values for command-line options.
-	 */
-	EchoQuery = false;
-
-	if (!IsUnderPostmaster)
-		InitializeGUCOptions();
-
-	/* ----------------
-	 *	parse command line arguments
-	 *
-	 *	There are now two styles of command line layout for the backend:
-	 *
-	 *	For interactive use (not started from postmaster) the format is
-	 *		postgres [switches] [databasename]
-	 *	If the databasename is omitted it is taken to be the user name.
-	 *
-	 *	When started from the postmaster, the format is
-	 *		postgres [secure switches] -y databasename [insecure switches]
-	 *	Switches appearing after -y came from the client (via "options"
-	 *	field of connection request).  For security reasons we restrict
-	 *	what these switches can do.
-	 * ----------------
-	 */
-
-	/* Ignore the initial --single argument, if present */
-	if (argc > 1 && strcmp(argv[1], "--single") == 0)
+	else
 	{
-		argv++;
-		argc--;
+		gucsource = PGC_S_CLIENT;		/* switches came from client */
 	}
-
-	/* all options are allowed until '-y' */
-	secure = true;
-	ctx = PGC_POSTMASTER;
-	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
 	/*
 	 * Parse command-line options.	CAUTION: keep this in sync with
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-	while ((flag = getopt(argc, argv, "A:B:c:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:y:-:")) != -1)
+	while ((flag = getopt(argc, argv, "A:B:c:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -2963,11 +2916,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'D':
 				if (secure)
-					userDoption = optarg;
+					userDoption = strdup(optarg);
 				break;
 
 			case 'd':
-				debug_flag = atoi(optarg);
+				set_debug_options(atoi(optarg), ctx, gucsource);
 				break;
 
 			case 'E':
@@ -3042,16 +2995,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 's':
-
-				/*
-				 * Since log options are SUSET, we need to postpone unless
-				 * still in secure context
-				 */
-				if (ctx == PGC_BACKEND)
-					PendingConfigOption("log_statement_stats", "true");
-				else
-					SetConfigOption("log_statement_stats", "true",
-									ctx, gucsource);
+				SetConfigOption("log_statement_stats", "true", ctx, gucsource);
 				break;
 
 			case 'T':
@@ -3063,12 +3007,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					const char *tmp = get_stats_option_name(optarg);
 
 					if (tmp)
-					{
-						if (ctx == PGC_BACKEND)
-							PendingConfigOption(tmp, "true");
-						else
-							SetConfigOption(tmp, "true", ctx, gucsource);
-					}
+						SetConfigOption(tmp, "true", ctx, gucsource);
 					else
 						errs++;
 					break;
@@ -3088,23 +3027,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'W':
 				SetConfigOption("post_auth_delay", optarg, ctx, gucsource);
-				break;
-
-
-			case 'y':
-
-				/*
-				 * y - special flag passed if backend was forked by a
-				 * postmaster.
-				 */
-				if (secure)
-				{
-					dbname = strdup(optarg);
-
-					secure = false;		/* subsequent switches are NOT secure */
-					ctx = PGC_BACKEND;
-					gucsource = PGC_S_CLIENT;
-				}
 				break;
 
 			case 'c':
@@ -3127,15 +3049,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 									 errmsg("-c %s requires a value",
 											optarg)));
 					}
-
-					/*
-					 * If a SUSET option, must postpone evaluation, unless we
-					 * are still reading secure switches.
-					 */
-					if (ctx == PGC_BACKEND && IsSuperuserConfigOption(name))
-						PendingConfigOption(name, value);
-					else
-						SetConfigOption(name, value, ctx, gucsource);
+					SetConfigOption(name, value, ctx, gucsource);
 					free(name);
 					if (value)
 						free(value);
@@ -3149,29 +3063,120 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 
 	/*
-	 * Process any additional GUC variable settings passed in startup packet.
-	 * These are handled exactly like command-line variables.
+	 * Should be no more arguments except an optional database name, and
+	 * that's only in the secure case.
 	 */
-	if (MyProcPort != NULL)
+	if (errs || argc - optind > 1 || (argc != optind && !secure))
 	{
-		ListCell   *gucopts = list_head(MyProcPort->guc_options);
+		/* spell the error message a bit differently depending on context */
+		if (IsUnderPostmaster)
+			ereport(FATAL,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid command-line arguments for server process"),
+			   errhint("Try \"%s --help\" for more information.", argv0)));
+		else
+			ereport(FATAL,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s: invalid command-line arguments",
+							argv0),
+			   errhint("Try \"%s --help\" for more information.", argv0)));
+	}
 
-		while (gucopts)
-		{
-			char	   *name;
-			char	   *value;
+	if (argc - optind == 1)
+		dbname = strdup(argv[optind]);
+	else
+		dbname = NULL;
 
-			name = lfirst(gucopts);
-			gucopts = lnext(gucopts);
+	/*
+	 * Reset getopt(3) library so that it will work correctly in subprocesses
+	 * or when this function is called a second time with another array.
+	 */
+	optind = 1;
+#ifdef HAVE_INT_OPTRESET
+	optreset = 1;				/* some systems need this too */
+#endif
 
-			value = lfirst(gucopts);
-			gucopts = lnext(gucopts);
+	return dbname;
+}
 
-			if (IsSuperuserConfigOption(name))
-				PendingConfigOption(name, value);
-			else
-				SetConfigOption(name, value, PGC_BACKEND, PGC_S_CLIENT);
-		}
+
+/* ----------------------------------------------------------------
+ * PostgresMain
+ *	   postgres main loop -- all backends, interactive or otherwise start here
+ *
+ * argc/argv are the command line arguments to be used.  (When being forked
+ * by the postmaster, these are not the original argv array of the process.)
+ * username is the (possibly authenticated) PostgreSQL user name to be used
+ * for the session.
+ * ----------------------------------------------------------------
+ */
+int
+PostgresMain(int argc, char *argv[], const char *username)
+{
+	const char *dbname;
+	bool		am_superuser;
+	GucContext	ctx;
+	int			firstchar;
+	char		stack_base;
+	StringInfoData input_message;
+	sigjmp_buf	local_sigjmp_buf;
+	volatile bool send_ready_for_query = true;
+
+	/*
+	 * Initialize globals (already done if under postmaster, but not if
+	 * standalone).
+	 */
+	if (!IsUnderPostmaster)
+	{
+		MyProcPid = getpid();
+
+		MyStartTime = time(NULL);
+	}
+
+	/*
+	 * Fire up essential subsystems: error and memory management
+	 *
+	 * If we are running under the postmaster, this is done already.
+	 */
+	if (!IsUnderPostmaster)
+		MemoryContextInit();
+
+	SetProcessingMode(InitProcessing);
+
+	/* Set up reference point for stack depth checking */
+	stack_base_ptr = &stack_base;
+
+	/* Compute paths, if we didn't inherit them from postmaster */
+	if (my_exec_path[0] == '\0')
+	{
+		if (find_my_exec(argv[0], my_exec_path) < 0)
+			elog(FATAL, "%s: could not locate my own executable path",
+				 argv[0]);
+	}
+
+	if (pkglib_path[0] == '\0')
+		get_pkglib_path(my_exec_path, pkglib_path);
+
+	/*
+	 * Set default values for command-line options.
+	 */
+	if (!IsUnderPostmaster)
+		InitializeGUCOptions();
+
+	/*
+	 * Parse command-line options.
+	 */
+	dbname = process_postgres_switches(argc, argv, PGC_POSTMASTER);
+
+	/* Must have gotten a database name, or have a default (the username) */
+	if (dbname == NULL)
+	{
+		dbname = username;
+		if (dbname == NULL)
+			ereport(FATAL,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("%s: no database nor user name specified",
+						argv[0])));
 	}
 
 	/* Acquire configuration parameters, unless inherited from postmaster */
@@ -3184,9 +3189,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* If timezone_abbreviations is not set, select default */
 		pg_timezone_abbrev_initialize();
 	}
-
-	if (PostAuthDelay)
-		pg_usleep(PostAuthDelay * 1000000L);
 
 	/*
 	 * You might expect to see a setsid() call here, but it's not needed,
@@ -3254,38 +3256,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	if (IsUnderPostmaster)
 	{
-		/* noninteractive case: nothing should be left after switches */
-		if (errs || argc != optind || dbname == NULL)
-		{
-			ereport(FATAL,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid command-line arguments for server process"),
-			   errhint("Try \"%s --help\" for more information.", argv[0])));
-		}
-
 		BaseInit();
 	}
 	else
 	{
-		/* interactive case: database name can be last arg on command line */
-		if (errs || argc - optind > 1)
-		{
-			ereport(FATAL,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("%s: invalid command-line arguments",
-							argv[0]),
-			   errhint("Try \"%s --help\" for more information.", argv[0])));
-		}
-		else if (argc - optind == 1)
-			dbname = argv[optind];
-		else if ((dbname = username) == NULL)
-		{
-			ereport(FATAL,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("%s: no database nor user name specified",
-							argv[0])));
-		}
-
 		/*
 		 * Validate we have been given a reasonable-looking DataDir (if under
 		 * postmaster, assume postmaster did this already).
@@ -3330,6 +3304,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	InitProcess();
 #endif
 
+	/* We need to allow SIGINT, etc during the initial transaction */
+	PG_SETMASK(&UnBlockSig);
+
 	/*
 	 * General initialization.
 	 *
@@ -3337,36 +3314,86 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * it inside InitPostgres() instead.  In particular, anything that
 	 * involves database access should be there, not here.
 	 */
-	ereport(DEBUG3,
-			(errmsg_internal("InitPostgres")));
 	am_superuser = InitPostgres(dbname, InvalidOid, username, NULL);
+
+	/*
+	 * If the PostmasterContext is still around, recycle the space; we don't
+	 * need it anymore after InitPostgres completes.  Note this does not trash
+	 * *MyProcPort, because ConnCreate() allocated that space with malloc()
+	 * ... else we'd need to copy the Port data first.  Also, subsidiary data
+	 * such as the username isn't lost either; see ProcessStartupPacket().
+	 */
+	if (PostmasterContext)
+	{
+		MemoryContextDelete(PostmasterContext);
+		PostmasterContext = NULL;
+	}
 
 	SetProcessingMode(NormalProcessing);
 
+	set_ps_display("startup", false);
+
 	/*
-	 * Now that we know if client is a superuser, we can try to apply SUSET
-	 * GUC options that came from the client.
+	 * Now that we know if client is a superuser, we can try to apply any
+	 * command-line options passed in the startup packet.
 	 */
-	ctx = am_superuser ? PGC_SUSET : PGC_USERSET;
+	ctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
 
-	if (debug_flag >= 0)
-		set_debug_options(debug_flag, ctx, PGC_S_CLIENT);
-
-	if (guc_names != NIL)
+	if (MyProcPort != NULL &&
+		MyProcPort->cmdline_options != NULL)
 	{
-		ListCell   *namcell,
-				   *valcell;
+		/*
+		 * The maximum possible number of commandline arguments that could
+		 * come from MyProcPort->cmdline_options is (strlen + 1) / 2; see
+		 * pg_split_opts().
+		 */
+		char	  **av;
+		int			maxac;
+		int			ac;
 
-		forboth(namcell, guc_names, valcell, guc_values)
+		maxac = 2 + (strlen(MyProcPort->cmdline_options) + 1) / 2;
+
+		av = (char **) palloc(maxac * sizeof(char *));
+		ac = 0;
+
+		av[ac++] = argv[0];
+
+		/* Note this mangles MyProcPort->cmdline_options */
+		pg_split_opts(av, &ac, MyProcPort->cmdline_options);
+
+		av[ac] = NULL;
+
+		Assert(ac < maxac);
+
+		(void) process_postgres_switches(ac, av, ctx);
+	}
+
+	/*
+	 * Process any additional GUC variable settings passed in startup packet.
+	 * These are handled exactly like command-line variables.
+	 */
+	if (MyProcPort != NULL)
+	{
+		ListCell   *gucopts = list_head(MyProcPort->guc_options);
+
+		while (gucopts)
 		{
-			char	   *name = (char *) lfirst(namcell);
-			char	   *value = (char *) lfirst(valcell);
+			char	   *name;
+			char	   *value;
+
+			name = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			value = lfirst(gucopts);
+			gucopts = lnext(gucopts);
 
 			SetConfigOption(name, value, ctx, PGC_S_CLIENT);
-			pfree(name);
-			pfree(value);
 		}
 	}
+
+	/* Apply PostAuthDelay as soon as we've read all options */
+	if (PostAuthDelay > 0)
+		pg_usleep(PostAuthDelay * 1000000L);
 
 	/*
 	 * Now all GUC states are fully set up.  Report them to client if
@@ -3513,8 +3540,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
-
-	PG_SETMASK(&UnBlockSig);
 
 	if (!ignore_till_sync)
 		send_ready_for_query = true;	/* initially, or after error */
