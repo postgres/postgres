@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.20.2.1 2008/02/26 02:54:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.20.2.2 2009/08/30 16:53:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ hex_decode(const char *src, unsigned len, char *dst)
 			   *srcend;
 	char		v1,
 				v2,
-			   *p = dst;
+			   *p;
 
 	srcend = src + len;
 	s = src;

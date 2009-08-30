@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.4 2008/01/21 02:46:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/regis.c,v 1.4.2.1 2009/08/30 16:53:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ RS_free(Regis *r)
 static bool
 mb_strchr(char *str, char *c)
 {
-	int			clen = pg_mblen(c),
+	int			clen,
 				plen,
 				i;
 	char	   *ptr = str;
