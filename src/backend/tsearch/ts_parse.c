@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.14 2009/08/18 10:30:41 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.15 2009/08/30 16:53:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,6 @@ LexizeAddLemm(LexizeData *ld, int type, char *lemm, int lenlemm)
 {
 	ParsedLex  *newpl = (ParsedLex *) palloc(sizeof(ParsedLex));
 
-	newpl = (ParsedLex *) palloc(sizeof(ParsedLex));
 	newpl->type = type;
 	newpl->lemm = lemm;
 	newpl->lenlemm = lenlemm;
