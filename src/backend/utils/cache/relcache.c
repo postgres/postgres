@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.289 2009/08/12 20:53:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.290 2009/08/30 17:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3502,7 +3502,8 @@ load_relcache_init_file(bool shared)
 		bool		has_not_null;
 
 		/* first read the relation descriptor length */
-		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+		nread = fread(&len, 1, sizeof(len), fp);
+		if (nread != sizeof(len))
 		{
 			if (nread == 0)
 				break;			/* end of file */
@@ -3523,15 +3524,15 @@ load_relcache_init_file(bool shared)
 		rel = rels[num_rels++] = (Relation) palloc(len);
 
 		/* then, read the Relation structure */
-		if ((nread = fread(rel, 1, len, fp)) != len)
+		if (fread(rel, 1, len, fp) != len)
 			goto read_failed;
 
 		/* next read the relation tuple form */
-		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+		if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 			goto read_failed;
 
 		relform = (Form_pg_class) palloc(len);
-		if ((nread = fread(relform, 1, len, fp)) != len)
+		if (fread(relform, 1, len, fp) != len)
 			goto read_failed;
 
 		rel->rd_rel = relform;
@@ -3548,23 +3549,23 @@ load_relcache_init_file(bool shared)
 		has_not_null = false;
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 			if (len != ATTRIBUTE_FIXED_PART_SIZE)
 				goto read_failed;
-			if ((nread = fread(rel->rd_att->attrs[i], 1, len, fp)) != len)
+			if (fread(rel->rd_att->attrs[i], 1, len, fp) != len)
 				goto read_failed;
 
 			has_not_null |= rel->rd_att->attrs[i]->attnotnull;
 		}
 
 		/* next read the access method specific field */
-		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+		if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 			goto read_failed;
 		if (len > 0)
 		{
 			rel->rd_options = palloc(len);
-			if ((nread = fread(rel->rd_options, 1, len, fp)) != len)
+			if (fread(rel->rd_options, 1, len, fp) != len)
 				goto read_failed;
 			if (len != VARSIZE(rel->rd_options))
 				goto read_failed;		/* sanity check */
@@ -3600,11 +3601,11 @@ load_relcache_init_file(bool shared)
 				nailed_indexes++;
 
 			/* next, read the pg_index tuple */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			rel->rd_indextuple = (HeapTuple) palloc(len);
-			if ((nread = fread(rel->rd_indextuple, 1, len, fp)) != len)
+			if (fread(rel->rd_indextuple, 1, len, fp) != len)
 				goto read_failed;
 
 			/* Fix up internal pointers in the tuple -- see heap_copytuple */
@@ -3612,11 +3613,11 @@ load_relcache_init_file(bool shared)
 			rel->rd_index = (Form_pg_index) GETSTRUCT(rel->rd_indextuple);
 
 			/* next, read the access method tuple form */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			am = (Form_pg_am) palloc(len);
-			if ((nread = fread(am, 1, len, fp)) != len)
+			if (fread(am, 1, len, fp) != len)
 				goto read_failed;
 			rel->rd_am = am;
 
@@ -3632,50 +3633,50 @@ load_relcache_init_file(bool shared)
 			rel->rd_indexcxt = indexcxt;
 
 			/* next, read the vector of opfamily OIDs */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			opfamily = (Oid *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(opfamily, 1, len, fp)) != len)
+			if (fread(opfamily, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_opfamily = opfamily;
 
 			/* next, read the vector of opcintype OIDs */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			opcintype = (Oid *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(opcintype, 1, len, fp)) != len)
+			if (fread(opcintype, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_opcintype = opcintype;
 
 			/* next, read the vector of operator OIDs */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			operator = (Oid *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(operator, 1, len, fp)) != len)
+			if (fread(operator, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_operator = operator;
 
 			/* next, read the vector of support procedures */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 			support = (RegProcedure *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(support, 1, len, fp)) != len)
+			if (fread(support, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_support = support;
 
 			/* finally, read the vector of indoption values */
-			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 
 			indoption = (int16 *) MemoryContextAlloc(indexcxt, len);
-			if ((nread = fread(indoption, 1, len, fp)) != len)
+			if (fread(indoption, 1, len, fp) != len)
 				goto read_failed;
 
 			rel->rd_indoption = indoption;
