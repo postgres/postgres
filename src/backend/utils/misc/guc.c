@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.513 2009/08/31 02:23:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.514 2009/08/31 19:41:00 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1335,7 +1335,7 @@ static struct config_int ConfigureNamesInt[] =
 	 * Note: MaxBackends is limited to INT_MAX/4 because some places compute
 	 * 4*MaxBackends without any overflow check.  This check is made in
 	 * assign_maxconnections, since MaxBackends is computed as MaxConnections
-	 * plus autovacuum_max_workers.
+	 * plus autovacuum_max_workers plus one (for the autovacuum launcher).
 	 *
 	 * Likewise we have to limit NBuffers to INT_MAX/2.
 	 */
@@ -7570,11 +7570,11 @@ show_tcp_keepalives_count(void)
 static bool
 assign_maxconnections(int newval, bool doit, GucSource source)
 {
-	if (newval + autovacuum_max_workers > INT_MAX / 4)
+	if (newval + autovacuum_max_workers + 1 > INT_MAX / 4)
 		return false;
 
 	if (doit)
-		MaxBackends = newval + autovacuum_max_workers;
+		MaxBackends = newval + autovacuum_max_workers + 1;
 
 	return true;
 }
@@ -7582,11 +7582,11 @@ assign_maxconnections(int newval, bool doit, GucSource source)
 static bool
 assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
 {
-	if (newval + MaxConnections > INT_MAX / 4)
+	if (MaxConnections + newval + 1 > INT_MAX / 4)
 		return false;
 
 	if (doit)
-		MaxBackends = newval + MaxConnections;
+		MaxBackends = MaxConnections + newval + 1;
 
 	return true;
 }

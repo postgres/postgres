@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.113 2009/08/12 20:53:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.114 2009/08/31 19:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,12 +141,11 @@ typedef struct PROC_HDR
  * We set aside some extra PGPROC structures for auxiliary processes,
  * ie things that aren't full-fledged backends but need shmem access.
  *
- * Background writer, WAL writer, and autovacuum launcher run during
- * normal operation. Startup process also consumes one slot, but WAL
- * writer and autovacuum launcher are launched only after it has
- * exited.
+ * Background writer and WAL writer run during normal operation. Startup
+ * process also consumes one slot, but WAL writer is launched only after
+ * startup has exited, so we only need 2 slots.
  */
-#define NUM_AUXILIARY_PROCS		3
+#define NUM_AUXILIARY_PROCS		2
 
 
 /* configurable options */

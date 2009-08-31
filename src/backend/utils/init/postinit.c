@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.195 2009/08/29 19:26:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.196 2009/08/31 19:41:00 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -460,7 +460,9 @@ BaseInit(void)
  * name can be returned to the caller in out_dbname.  If out_dbname isn't
  * NULL, it must point to a buffer of size NAMEDATALEN.
  *
- * In bootstrap mode no parameters are used.
+ * In bootstrap mode no parameters are used.  The autovacuum launcher process
+ * doesn't use any parameters either, because it only goes far enough to be
+ * able to read pg_database; it doesn't connect to any particular database.
  *
  * The return value indicates whether the userID is a superuser.  (That
  * can only be tested inside a transaction, so we want to do it during
@@ -538,6 +540,12 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		pgstat_initialize();
 
 	/*
+	 * Load relcache entries for the shared system catalogs.  This must
+	 * create at least an entry for pg_database.
+	 */
+	RelationCacheInitializePhase2();
+
+	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This has to
 	 * be after we've initialized all the low-level modules like the buffer
 	 * manager, because during shutdown this has to run before the low-level
@@ -548,22 +556,23 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	on_shmem_exit(ShutdownPostgres, 0);
 
+	/* The autovacuum launcher is done here */
+	if (IsAutoVacuumLauncherProcess())
+		return true;			/* result doesn't matter */
+
 	/*
 	 * Start a new transaction here before first access to db, and get a
 	 * snapshot.  We don't have a use for the snapshot itself, but we're
 	 * interested in the secondary effect that it sets RecentGlobalXmin.
+	 * (This is critical for anything that reads heap pages, because HOT
+	 * may decide to prune them even if the process doesn't attempt to
+	 * modify any tuples.)
 	 */
 	if (!bootstrap)
 	{
 		StartTransactionCommand();
 		(void) GetTransactionSnapshot();
 	}
-
-	/*
-	 * Load relcache entries for the shared system catalogs.  This must
-	 * create at least an entry for pg_database.
-	 */
-	RelationCacheInitializePhase2();
 
 	/*
 	 * Set up the global variables holding database id and default tablespace.

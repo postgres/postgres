@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.15 2009/01/01 17:24:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.16 2009/08/31 19:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@ extern int	Log_autovacuum_min_duration;
 extern bool AutoVacuumingActive(void);
 extern bool IsAutoVacuumLauncherProcess(void);
 extern bool IsAutoVacuumWorkerProcess(void);
+#define IsAnyAutoVacuumProcess() \
+	(IsAutoVacuumLauncherProcess() || IsAutoVacuumWorkerProcess())
 
 /* Functions to start autovacuum process, called from postmaster */
 extern void autovac_init(void);
