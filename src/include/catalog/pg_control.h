@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.43 2009/01/01 17:23:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.44 2009/08/31 02:23:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	843
+#define PG_CONTROL_VERSION	851
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -37,6 +37,8 @@ typedef struct CheckPoint
 	Oid			nextOid;		/* next free OID */
 	MultiXactId nextMulti;		/* next free MultiXactId */
 	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
+	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
+	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
 	pg_time_t	time;			/* time stamp of checkpoint */
 } CheckPoint;
 

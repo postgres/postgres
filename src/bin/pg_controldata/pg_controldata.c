@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.43 2009/06/11 14:49:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.44 2009/08/31 02:23:22 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -192,6 +192,10 @@ main(int argc, char *argv[])
 		   ControlFile.checkPointCopy.nextMulti);
 	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
 		   ControlFile.checkPointCopy.nextMultiOffset);
+	printf(_("Latest checkpoint's oldestXID:        %u\n"),
+		   ControlFile.checkPointCopy.oldestXid);
+	printf(_("Latest checkpoint's oldestXID's DB:   %u\n"),
+		   ControlFile.checkPointCopy.oldestXidDB);
 	printf(_("Time of latest checkpoint:            %s\n"),
 		   ckpttime_str);
 	printf(_("Minimum recovery ending location:     %X/%X\n"),

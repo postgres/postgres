@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.349 2009/08/27 07:15:41 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.350 2009/08/31 02:23:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "access/xlogutils.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqsignal.h"
@@ -4638,12 +4639,16 @@ BootStrapXLOG(void)
 	checkPoint.nextOid = FirstBootstrapObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
 	checkPoint.nextMultiOffset = 0;
+	checkPoint.oldestXid = FirstNormalTransactionId;
+	checkPoint.oldestXidDB = TemplateDbOid;
 	checkPoint.time = (pg_time_t) time(NULL);
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
+	ShmemVariableCache->oldestXid = checkPoint.oldestXid;
+	ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
 
 	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -5355,6 +5360,9 @@ StartupXLOG(void)
 	ereport(DEBUG1,
 			(errmsg("next MultiXactId: %u; next MultiXactOffset: %u",
 					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
+	ereport(DEBUG1,
+			(errmsg("oldest unfrozen transaction ID: %u, in database %u",
+					checkPoint.oldestXid, checkPoint.oldestXidDB)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
@@ -5363,6 +5371,8 @@ StartupXLOG(void)
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
+	ShmemVariableCache->oldestXid = checkPoint.oldestXid;
+	ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were created
@@ -6546,6 +6556,8 @@ CreateCheckPoint(int flags)
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
 	checkPoint.nextXid = ShmemVariableCache->nextXid;
+	checkPoint.oldestXid = ShmemVariableCache->oldestXid;
+	checkPoint.oldestXidDB = ShmemVariableCache->oldestXidDB;
 	LWLockRelease(XidGenLock);
 
 	/* Increase XID epoch if we've wrapped around since last checkpoint */
@@ -6984,6 +6996,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ShmemVariableCache->oidCount = 0;
 		MultiXactSetNextMXact(checkPoint.nextMulti,
 							  checkPoint.nextMultiOffset);
+		ShmemVariableCache->oldestXid = checkPoint.oldestXid;
+		ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
 
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
@@ -7022,6 +7036,12 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		}
 		MultiXactAdvanceNextMXact(checkPoint.nextMulti,
 								  checkPoint.nextMultiOffset);
+		if (TransactionIdPrecedes(ShmemVariableCache->oldestXid,
+								  checkPoint.oldestXid))
+		{
+			ShmemVariableCache->oldestXid = checkPoint.oldestXid;
+			ShmemVariableCache->oldestXidDB = checkPoint.oldestXidDB;
+		}
 
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
@@ -7056,13 +7076,16 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		appendStringInfo(buf, "checkpoint: redo %X/%X; "
-						 "tli %u; xid %u/%u; oid %u; multi %u; offset %u; %s",
+						 "tli %u; xid %u/%u; oid %u; multi %u; offset %u; "
+						 "oldest xid %u in DB %u; %s",
 						 checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->nextXidEpoch, checkpoint->nextXid,
 						 checkpoint->nextOid,
 						 checkpoint->nextMulti,
 						 checkpoint->nextMultiOffset,
+						 checkpoint->oldestXid,
+						 checkpoint->oldestXidDB,
 				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
 	else if (info == XLOG_NOOP)
