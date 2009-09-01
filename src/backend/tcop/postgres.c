@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.571 2009/08/29 19:26:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.572 2009/09/01 00:09:42 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2862,7 +2862,7 @@ get_stats_option_name(const char *arg)
  * from the client's startup packet.  The latter have the same syntax but
  * may be restricted in what they can do.
  *
- * argv[0] is the program name either way.
+ * argv[0] is ignored in either case (it's assumed to be the program name).
  *
  * ctx is PGC_POSTMASTER for secure options, PGC_BACKEND for insecure options
  * coming from the client, or PGC_SUSET for insecure options coming from
@@ -2871,11 +2871,10 @@ get_stats_option_name(const char *arg)
  * Returns the database name extracted from the command line, if any.
  * ----------------------------------------------------------------
  */
-static const char *
+const char *
 process_postgres_switches(int argc, char *argv[], GucContext ctx)
 {
 	const char *dbname;
-	const char *argv0 = argv[0];
 	bool		secure = (ctx == PGC_POSTMASTER);
 	int			errs = 0;
 	GucSource	gucsource;
@@ -3073,13 +3072,13 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid command-line arguments for server process"),
-			   errhint("Try \"%s --help\" for more information.", argv0)));
+			   errhint("Try \"%s --help\" for more information.", progname)));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("%s: invalid command-line arguments",
-							argv0),
-			   errhint("Try \"%s --help\" for more information.", argv0)));
+							progname),
+			   errhint("Try \"%s --help\" for more information.", progname)));
 	}
 
 	if (argc - optind == 1)
@@ -3114,8 +3113,6 @@ int
 PostgresMain(int argc, char *argv[], const char *username)
 {
 	const char *dbname;
-	bool		am_superuser;
-	GucContext	ctx;
 	int			firstchar;
 	char		stack_base;
 	StringInfoData input_message;
@@ -3176,13 +3173,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 			ereport(FATAL,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("%s: no database nor user name specified",
-						argv[0])));
+						progname)));
 	}
 
 	/* Acquire configuration parameters, unless inherited from postmaster */
 	if (!IsUnderPostmaster)
 	{
-		if (!SelectConfigFiles(userDoption, argv[0]))
+		if (!SelectConfigFiles(userDoption, progname))
 			proc_exit(1);
 		/* If timezone is not set, determine what the OS uses */
 		pg_timezone_initialize();
@@ -3314,7 +3311,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * it inside InitPostgres() instead.  In particular, anything that
 	 * involves database access should be there, not here.
 	 */
-	am_superuser = InitPostgres(dbname, InvalidOid, username, NULL);
+	InitPostgres(dbname, InvalidOid, username, NULL);
 
 	/*
 	 * If the PostmasterContext is still around, recycle the space; we don't
@@ -3330,70 +3327,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 
 	SetProcessingMode(NormalProcessing);
-
-	set_ps_display("startup", false);
-
-	/*
-	 * Now that we know if client is a superuser, we can try to apply any
-	 * command-line options passed in the startup packet.
-	 */
-	ctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
-
-	if (MyProcPort != NULL &&
-		MyProcPort->cmdline_options != NULL)
-	{
-		/*
-		 * The maximum possible number of commandline arguments that could
-		 * come from MyProcPort->cmdline_options is (strlen + 1) / 2; see
-		 * pg_split_opts().
-		 */
-		char	  **av;
-		int			maxac;
-		int			ac;
-
-		maxac = 2 + (strlen(MyProcPort->cmdline_options) + 1) / 2;
-
-		av = (char **) palloc(maxac * sizeof(char *));
-		ac = 0;
-
-		av[ac++] = argv[0];
-
-		/* Note this mangles MyProcPort->cmdline_options */
-		pg_split_opts(av, &ac, MyProcPort->cmdline_options);
-
-		av[ac] = NULL;
-
-		Assert(ac < maxac);
-
-		(void) process_postgres_switches(ac, av, ctx);
-	}
-
-	/*
-	 * Process any additional GUC variable settings passed in startup packet.
-	 * These are handled exactly like command-line variables.
-	 */
-	if (MyProcPort != NULL)
-	{
-		ListCell   *gucopts = list_head(MyProcPort->guc_options);
-
-		while (gucopts)
-		{
-			char	   *name;
-			char	   *value;
-
-			name = lfirst(gucopts);
-			gucopts = lnext(gucopts);
-
-			value = lfirst(gucopts);
-			gucopts = lnext(gucopts);
-
-			SetConfigOption(name, value, ctx, PGC_S_CLIENT);
-		}
-	}
-
-	/* Apply PostAuthDelay as soon as we've read all options */
-	if (PostAuthDelay > 0)
-		pg_usleep(PostAuthDelay * 1000000L);
 
 	/*
 	 * Now all GUC states are fully set up.  Report them to client if

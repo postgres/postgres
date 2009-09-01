@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.196 2009/08/31 19:41:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.197 2009/09/01 00:09:42 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -44,11 +44,13 @@
 #include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
+#include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/pg_locale.h"
 #include "utils/portal.h"
+#include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -217,6 +219,8 @@ PerformAuthentication(Port *port)
 				(errmsg("connection authorized: user=%s database=%s",
 						port->user_name, port->database_name)));
 
+	set_ps_display("startup", false);
+
 	ClientAuthInProgress = false;		/* client_min_messages is active now */
 }
 
@@ -256,7 +260,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	 * a way to recover from disabling all access to all databases, for
 	 * example "UPDATE pg_database SET datallowconn = false;".
 	 *
-	 * We do not enforce them for the autovacuum worker processes either.
+	 * We do not enforce them for autovacuum worker processes either.
 	 */
 	if (IsUnderPostmaster && !IsAutoVacuumWorkerProcess())
 	{
@@ -464,10 +468,6 @@ BaseInit(void)
  * doesn't use any parameters either, because it only goes far enough to be
  * able to read pg_database; it doesn't connect to any particular database.
  *
- * The return value indicates whether the userID is a superuser.  (That
- * can only be tested inside a transaction, so we want to do it during
- * the startup transaction rather than doing a separate one in postgres.c.)
- *
  * As of PostgreSQL 8.2, we expect InitProcess() was already called, so we
  * already have a PGPROC struct ... but it's not completely filled in yet.
  *
@@ -475,13 +475,13 @@ BaseInit(void)
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
  */
-bool
+void
 InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			 char *out_dbname)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
-	bool		autovacuum = IsAutoVacuumWorkerProcess();
 	bool		am_superuser;
+	GucContext	gucctx;
 	char	   *fullpath;
 	char		dbname[NAMEDATALEN];
 
@@ -558,7 +558,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* The autovacuum launcher is done here */
 	if (IsAutoVacuumLauncherProcess())
-		return true;			/* result doesn't matter */
+		return;
 
 	/*
 	 * Start a new transaction here before first access to db, and get a
@@ -706,12 +706,12 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/*
 	 * Perform client authentication if necessary, then figure out our
-	 * postgres user id, and see if we are a superuser.
+	 * postgres user ID, and see if we are a superuser.
 	 *
-	 * In standalone mode and in the autovacuum process, we use a fixed id,
-	 * otherwise we figure it out from the authenticated user name.
+	 * In standalone mode and in autovacuum worker processes, we use a fixed
+	 * ID, otherwise we figure it out from the authenticated user name.
 	 */
-	if (bootstrap || autovacuum)
+	if (bootstrap || IsAutoVacuumWorkerProcess())
 	{
 		InitializeSessionUserIdStandalone();
 		am_superuser = true;
@@ -724,7 +724,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("no roles are defined in this database system"),
-					 errhint("You should immediately run CREATE USER \"%s\" CREATEUSER;.",
+					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username)));
 	}
 	else
@@ -769,6 +769,69 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 				 errmsg("connection limit exceeded for non-superusers")));
 
 	/*
+	 * Now process any command-line switches that were included in the startup
+	 * packet, if we are in a regular backend.  We couldn't do this before
+	 * because we didn't know if client is a superuser.
+	 */
+	gucctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
+
+	if (MyProcPort != NULL &&
+		MyProcPort->cmdline_options != NULL)
+	{
+		/*
+		 * The maximum possible number of commandline arguments that could
+		 * come from MyProcPort->cmdline_options is (strlen + 1) / 2; see
+		 * pg_split_opts().
+		 */
+		char	  **av;
+		int			maxac;
+		int			ac;
+
+		maxac = 2 + (strlen(MyProcPort->cmdline_options) + 1) / 2;
+
+		av = (char **) palloc(maxac * sizeof(char *));
+		ac = 0;
+
+		av[ac++] = "postgres";
+
+		/* Note this mangles MyProcPort->cmdline_options */
+		pg_split_opts(av, &ac, MyProcPort->cmdline_options);
+
+		av[ac] = NULL;
+
+		Assert(ac < maxac);
+
+		(void) process_postgres_switches(ac, av, gucctx);
+	}
+
+	/*
+	 * Process any additional GUC variable settings passed in startup packet.
+	 * These are handled exactly like command-line variables.
+	 */
+	if (MyProcPort != NULL)
+	{
+		ListCell   *gucopts = list_head(MyProcPort->guc_options);
+
+		while (gucopts)
+		{
+			char	   *name;
+			char	   *value;
+
+			name = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			value = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			SetConfigOption(name, value, gucctx, PGC_S_CLIENT);
+		}
+	}
+
+	/* Apply PostAuthDelay as soon as we've read all options */
+	if (PostAuthDelay > 0)
+		pg_usleep(PostAuthDelay * 1000000L);
+
+	/*
 	 * Initialize various default states that can't be set up until we've
 	 * selected the active user and gotten the right GUC settings.
 	 */
@@ -786,8 +849,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* close the transaction we started above */
 	if (!bootstrap)
 		CommitTransactionCommand();
-
-	return am_superuser;
 }
 
 
