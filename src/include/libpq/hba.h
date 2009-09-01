@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.57 2009/08/29 19:26:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.58 2009/09/01 03:53:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,8 +67,6 @@ typedef struct Port hbaPort;
 extern bool load_hba(void);
 extern void load_ident(void);
 extern int	hba_getauthmethod(hbaPort *port);
-extern bool read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
-					  Oid *dbtablespace, TransactionId *dbfrozenxid);
 extern int check_usermap(const char *usermap_name,
 			  const char *pg_role, const char *auth_user,
 			  bool case_sensitive);
