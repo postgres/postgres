@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.189 2009/08/29 19:26:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.190 2009/09/01 02:54:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1271,51 +1271,6 @@ load_hba(void)
 	/* Free the temporary lists */
 	free_lines(&hba_lines, &hba_line_nums);
 
-	return true;
-}
-
-/*
- * Read and parse one line from the flat pg_database file.
- *
- * Returns TRUE on success, FALSE if EOF; bad data causes elog(FATAL).
- *
- * Output parameters:
- *	dbname: gets database name (must be of size NAMEDATALEN bytes)
- *	dboid: gets database OID
- *	dbtablespace: gets database's default tablespace's OID
- *	dbfrozenxid: gets database's frozen XID
- *
- * This is not much related to the other functions in hba.c, but we put it
- * here because it uses the next_token() infrastructure.
- */
-bool
-read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
-					  Oid *dbtablespace, TransactionId *dbfrozenxid)
-{
-	char		buf[MAX_TOKEN];
-
-	if (feof(fp))
-		return false;
-	if (!next_token(fp, buf, sizeof(buf)))
-		return false;
-	if (strlen(buf) >= NAMEDATALEN)
-		elog(FATAL, "bad data in flat pg_database file");
-	strcpy(dbname, buf);
-	next_token(fp, buf, sizeof(buf));
-	if (!isdigit((unsigned char) buf[0]))
-		elog(FATAL, "bad data in flat pg_database file");
-	*dboid = atooid(buf);
-	next_token(fp, buf, sizeof(buf));
-	if (!isdigit((unsigned char) buf[0]))
-		elog(FATAL, "bad data in flat pg_database file");
-	*dbtablespace = atooid(buf);
-	next_token(fp, buf, sizeof(buf));
-	if (!isdigit((unsigned char) buf[0]))
-		elog(FATAL, "bad data in flat pg_database file");
-	*dbfrozenxid = atoxid(buf);
-	/* expect EOL next */
-	if (next_token(fp, buf, sizeof(buf)))
-		elog(FATAL, "bad data in flat pg_database file");
 	return true;
 }
 

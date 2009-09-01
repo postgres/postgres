@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.225 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.226 2009/09/01 02:54:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -691,19 +690,17 @@ createdb(const CreatedbStmt *stmt)
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
-		 * Close pg_database, but keep lock till commit (this is important to
-		 * prevent any risk of deadlock failure while updating flat file)
+		 * Close pg_database, but keep lock till commit.
 		 */
 		heap_close(pg_database_rel, NoLock);
 
 		/*
-		 * Set flag to update flat database file at commit.  Note: this also
-		 * forces synchronous commit, which minimizes the window between
+		 * Force synchronous commit, thus minimizing the window between
 		 * creation of the database files and commital of the transaction. If
 		 * we crash before committing, we'll have a DB that's taking up disk
 		 * space but is not in pg_database, which is not good.
 		 */
-		database_file_update_needed();
+		ForceSyncCommit();
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(createdb_failure_callback,
 								PointerGetDatum(&fparms));
@@ -862,19 +859,17 @@ dropdb(const char *dbname, bool missing_ok)
 	remove_dbtablespaces(db_id);
 
 	/*
-	 * Close pg_database, but keep lock till commit (this is important to
-	 * prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_database, but keep lock till commit.
 	 */
 	heap_close(pgdbrel, NoLock);
 
 	/*
-	 * Set flag to update flat database file at commit.  Note: this also
-	 * forces synchronous commit, which minimizes the window between removal
+	 * Force synchronous commit, thus minimizing the window between removal
 	 * of the database files and commital of the transaction. If we crash
 	 * before committing, we'll have a DB that's gone on disk but still there
 	 * according to pg_database, which is not good.
 	 */
-	database_file_update_needed();
+	ForceSyncCommit();
 }
 
 
@@ -957,15 +952,9 @@ RenameDatabase(const char *oldname, const char *newname)
 	CatalogUpdateIndexes(rel, newtup);
 
 	/*
-	 * Close pg_database, but keep lock till commit (this is important to
-	 * prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_database, but keep lock till commit.
 	 */
 	heap_close(rel, NoLock);
-
-	/*
-	 * Set flag to update flat database file at commit.
-	 */
-	database_file_update_needed();
 }
 
 
@@ -1212,17 +1201,15 @@ movedb(const char *dbname, const char *tblspcname)
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
-		 * Set flag to update flat database file at commit.  Note: this also
-		 * forces synchronous commit, which minimizes the window between
+		 * Force synchronous commit, thus minimizing the window between
 		 * copying the database files and commital of the transaction. If we
 		 * crash before committing, we'll leave an orphaned set of files on
 		 * disk, which is not fatal but not good either.
 		 */
-		database_file_update_needed();
+		ForceSyncCommit();
 
 		/*
-		 * Close pg_database, but keep lock till commit (this is important to
-		 * prevent any risk of deadlock failure while updating flat file)
+		 * Close pg_database, but keep lock till commit.
 		 */
 		heap_close(pgdbrel, NoLock);
 	}
@@ -1401,11 +1388,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
-
-	/*
-	 * We don't bother updating the flat file since the existing options for
-	 * ALTER DATABASE don't affect it.
-	 */
 }
 
 
@@ -1494,11 +1476,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
-
-	/*
-	 * We don't bother updating the flat file since ALTER DATABASE SET doesn't
-	 * affect it.
-	 */
 }
 
 
@@ -1608,11 +1585,6 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
-
-	/*
-	 * We don't bother updating the flat file since ALTER DATABASE OWNER
-	 * doesn't affect it.
-	 */
 }
 
 

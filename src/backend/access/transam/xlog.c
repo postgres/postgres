@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.350 2009/08/31 02:23:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.351 2009/09/01 02:54:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@
 #include "storage/smgr.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-#include "utils/flatfiles.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "pg_trace.h"
@@ -8076,8 +8075,6 @@ StartupProcessMain(void)
 	PG_SETMASK(&UnBlockSig);
 
 	StartupXLOG();
-
-	BuildFlatFiles(false);
 
 	/*
 	 * Exit normally. Exit code 0 tells postmaster that we completed recovery

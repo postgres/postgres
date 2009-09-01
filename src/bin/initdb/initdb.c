@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.172 2009/06/11 14:49:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.173 2009/09/01 02:54:52 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1404,20 +1404,6 @@ setup_auth(void)
 	PG_CMD_DECL;
 	const char **line;
 	static const char *pg_authid_setup[] = {
-		/*
-		 * Create triggers to ensure manual updates to shared catalogs will be
-		 * reflected into their "flat file" copies.
-		 */
-		"CREATE TRIGGER pg_sync_pg_database "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_database "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_authid "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_authid "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_auth_members "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_auth_members "
-		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-
 		/*
 		 * The authid table shouldn't be readable except through views, to
 		 * ensure passwords are not publicly visible.

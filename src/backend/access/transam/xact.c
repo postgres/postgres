@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.274 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.275 2009/09/01 02:54:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "utils/combocid.h"
-#include "utils/flatfiles.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -1608,12 +1607,6 @@ CommitTransaction(void)
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
-	/*
-	 * Update flat files if we changed pg_database, pg_authid or
-	 * pg_auth_members.  This should be the last step before commit.
-	 */
-	AtEOXact_UpdateFlatFiles(true);
-
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
@@ -1797,7 +1790,7 @@ PrepareTransaction(void)
 	/* close large objects before lower-level cleanup */
 	AtEOXact_LargeObject(true);
 
-	/* NOTIFY and flatfiles will be handled below */
+	/* NOTIFY will be handled below */
 
 	/*
 	 * Don't allow PREPARE TRANSACTION if we've accessed a temporary table in
@@ -1860,7 +1853,6 @@ PrepareTransaction(void)
 	StartPrepare(gxact);
 
 	AtPrepare_Notify();
-	AtPrepare_UpdateFlatFiles();
 	AtPrepare_Inval();
 	AtPrepare_Locks();
 	AtPrepare_PgStat();
@@ -1909,7 +1901,7 @@ PrepareTransaction(void)
 	/* Clean up the snapshot manager */
 	AtEarlyCommit_Snapshot();
 
-	/* notify and flatfiles don't need a postprepare call */
+	/* notify doesn't need a postprepare call */
 
 	PostPrepare_PgStat();
 
@@ -2036,7 +2028,6 @@ AbortTransaction(void)
 	AtAbort_Portals();
 	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
 	AtAbort_Notify();
-	AtEOXact_UpdateFlatFiles(false);
 
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
@@ -3764,8 +3755,6 @@ CommitSubTransaction(void)
 	AtEOSubXact_LargeObject(true, s->subTransactionId,
 							s->parent->subTransactionId);
 	AtSubCommit_Notify();
-	AtEOSubXact_UpdateFlatFiles(true, s->subTransactionId,
-								s->parent->subTransactionId);
 
 	CallSubXactCallbacks(SUBXACT_EVENT_COMMIT_SUB, s->subTransactionId,
 						 s->parent->subTransactionId);
@@ -3885,8 +3874,6 @@ AbortSubTransaction(void)
 		AtEOSubXact_LargeObject(false, s->subTransactionId,
 								s->parent->subTransactionId);
 		AtSubAbort_Notify();
-		AtEOSubXact_UpdateFlatFiles(false, s->subTransactionId,
-									s->parent->subTransactionId);
 
 		/* Advertise the fact that we aborted in pg_clog. */
 		(void) RecordTransactionAbort(true);
