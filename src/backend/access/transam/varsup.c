@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.85 2009/08/31 02:23:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.86 2009/09/01 04:46:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,32 +372,41 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 
 /*
- * TransactionIdLimitIsValid -- is the shared XID wrap-limit data sane?
+ * ForceTransactionIdLimitUpdate -- does the XID wrap-limit data need updating?
  *
  * We primarily check whether oldestXidDB is valid.  The cases we have in
  * mind are that that database was dropped, or the field was reset to zero
  * by pg_resetxlog.  In either case we should force recalculation of the
- * wrap limit.  In future we might add some more sanity checks here.
+ * wrap limit.  Also do it if oldestXid is old enough to be forcing
+ * autovacuums or other actions; this ensures we update our state as soon
+ * as possible once extra overhead is being incurred.
  */
 bool
-TransactionIdLimitIsValid(void)
+ForceTransactionIdLimitUpdate(void)
 {
+	TransactionId nextXid;
+	TransactionId xidVacLimit;
 	TransactionId oldestXid;
 	Oid			oldestXidDB;
 
 	/* Locking is probably not really necessary, but let's be careful */
 	LWLockAcquire(XidGenLock, LW_SHARED);
+	nextXid = ShmemVariableCache->nextXid;
+	xidVacLimit = ShmemVariableCache->xidVacLimit;
 	oldestXid = ShmemVariableCache->oldestXid;
 	oldestXidDB = ShmemVariableCache->oldestXidDB;
 	LWLockRelease(XidGenLock);
 
 	if (!TransactionIdIsNormal(oldestXid))
-		return false;			/* shouldn't happen, but just in case */
+		return true;			/* shouldn't happen, but just in case */
+	if (TransactionIdFollowsOrEquals(nextXid, xidVacLimit) &&
+		TransactionIdIsValid(xidVacLimit))
+		return true;			/* past VacLimit, don't delay updating */
 	if (!SearchSysCacheExists(DATABASEOID,
 							  ObjectIdGetDatum(oldestXidDB),
 							  0, 0, 0))
-		return false;			/* could happen, per comment above */
-	return true;
+		return true;			/* could happen, per comments above */
+	return false;
 }
 
 

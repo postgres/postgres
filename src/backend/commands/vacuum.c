@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.392 2009/09/01 02:54:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.393 2009/09/01 04:46:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -893,9 +893,10 @@ vac_update_datfrozenxid(void)
 
 	/*
 	 * If we were able to advance datfrozenxid, see if we can truncate pg_clog.
-	 * Also do it if the shared XID-wrap-limit info is stale.
+	 * Also do it if the shared XID-wrap-limit info is stale, since this
+	 * action will update that too.
 	 */
-	if (dirty || !TransactionIdLimitIsValid())
+	if (dirty || ForceTransactionIdLimitUpdate())
 		vac_truncate_clog(newFrozenXid);
 }
 
