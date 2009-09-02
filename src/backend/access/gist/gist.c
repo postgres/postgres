@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.105.4.2 2009/04/07 17:49:40 teodor Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.105.4.3 2009/09/02 13:23:13 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1363,9 +1363,9 @@ gistSplit(Relation r,
 	{
 		ereport(DEBUG1,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Picksplit method for first column of index \"%s\" failed",
+				 errmsg("picksplit method for first column of index \"%s\" failed",
 													RelationGetRelationName(r)),
-				 errhint("Index is not optimal, to optimize it contact developer or try to use the column as a second one in create index command")));
+				 errhint("The index is not optimal. To optimize it, contact a developer, or try to use the column as the second one in the CREATE INDEX command.")));
 
 		genericPickSplit(giststate, entryvec, &v);
 	}
