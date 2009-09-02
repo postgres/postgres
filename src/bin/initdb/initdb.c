@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.173 2009/09/01 02:54:52 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.174 2009/09/02 02:40:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ static char **replace_token(char **lines,
 #ifndef HAVE_UNIX_SOCKETS
 static char **filter_lines_with_token(char **lines, const char *token);
 #endif
-static char **readfile(char *path);
+static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
 static int	mkdir_p(char *path, mode_t omode);
@@ -362,10 +362,10 @@ filter_lines_with_token(char **lines, const char *token)
  * get the lines from a text file
  */
 static char **
-readfile(char *path)
+readfile(const char *path)
 {
 	FILE	   *infile;
-	int			maxlength = 0,
+	int			maxlength = 1,
 				linelen = 0;
 	int			nlines = 0;
 	char	  **result;
@@ -394,26 +394,20 @@ readfile(char *path)
 	}
 
 	/* handle last line without a terminating newline (yuck) */
-
 	if (linelen)
 		nlines++;
 	if (linelen > maxlength)
 		maxlength = linelen;
 
 	/* set up the result and the line buffer */
-
-	result = (char **) pg_malloc((nlines + 2) * sizeof(char *));
-	buffer = (char *) pg_malloc(maxlength + 2);
+	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
+	buffer = (char *) pg_malloc(maxlength + 1);
 
 	/* now reprocess the file and store the lines */
-
 	rewind(infile);
 	nlines = 0;
 	while (fgets(buffer, maxlength + 1, infile) != NULL)
-	{
-		result[nlines] = xstrdup(buffer);
-		nlines++;
-	}
+		result[nlines++] = xstrdup(buffer);
 
 	fclose(infile);
 	free(buffer);
