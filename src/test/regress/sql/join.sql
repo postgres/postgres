@@ -540,3 +540,24 @@ create temp table b (x integer, y integer);
 select * from a left join b on i = x and i = y and x = i;
 
 rollback;
+
+--
+-- test NULL behavior of whole-row Vars, per bug #5025
+--
+select t1.q2, count(t2.*)
+from int8_tbl t1 left join int8_tbl t2 on (t1.q2 = t2.q1)
+group by t1.q2 order by 1;
+
+select t1.q2, count(t2.*)
+from int8_tbl t1 left join (select * from int8_tbl) t2 on (t1.q2 = t2.q1)
+group by t1.q2 order by 1;
+
+select t1.q2, count(t2.*)
+from int8_tbl t1 left join (select * from int8_tbl offset 0) t2 on (t1.q2 = t2.q1)
+group by t1.q2 order by 1;
+
+select t1.q2, count(t2.*)
+from int8_tbl t1 left join
+  (select q1, case when q2=1 then 1 else q2 end as q2 from int8_tbl) t2
+  on (t1.q2 = t2.q1)
+group by t1.q2 order by 1;

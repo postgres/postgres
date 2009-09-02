@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.122 2009/06/11 14:49:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.123 2009/09/02 17:52:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1067,16 +1067,14 @@ AddInvertedQual(Query *parsetree, Node *qual)
 
 
 /*
- * ResolveNew - replace Vars with corresponding items from a targetlist
+ * replace_rte_variables() finds all Vars in an expression tree
+ * that reference a particular RTE, and replaces them with substitute
+ * expressions obtained from a caller-supplied callback function.
  *
- * Vars matching target_varno and sublevels_up are replaced by the
- * entry with matching resno from targetlist, if there is one.
- * If not, we either change the unmatched Var's varno to update_varno
- * (when event == CMD_UPDATE) or replace it with a constant NULL.
- *
- * The caller must also provide target_rte, the RTE describing the target
- * relation.  This is needed to handle whole-row Vars referencing the target.
- * We expand such Vars into RowExpr constructs.
+ * When invoking replace_rte_variables on a portion of a Query, pass the
+ * address of the containing Query's hasSubLinks field as outer_hasSubLinks.
+ * Otherwise, pass NULL, but inserting a SubLink into a non-Query expression
+ * will then cause an error.
  *
  * Note: the business with inserted_sublink is needed to update hasSubLinks
  * in subqueries when the replacement adds a subquery inside a subquery.
@@ -1084,122 +1082,88 @@ AddInvertedQual(Query *parsetree, Node *qual)
  * because it isn't possible for this transformation to insert a level-zero
  * aggregate reference into a subquery --- it could only insert outer aggs.
  * Likewise for hasWindowFuncs.
+ *
+ * Note: usually, we'd not expose the mutator function or context struct
+ * for a function like this.  We do so because callbacks often find it
+ * convenient to recurse directly to the mutator on sub-expressions of
+ * what they will return.
  */
-
-typedef struct
+Node *
+replace_rte_variables(Node *node, int target_varno, int sublevels_up,
+					  replace_rte_variables_callback callback,
+					  void *callback_arg,
+					  bool *outer_hasSubLinks)
 {
-	int			target_varno;
-	int			sublevels_up;
-	RangeTblEntry *target_rte;
-	List	   *targetlist;
-	int			event;
-	int			update_varno;
-	bool		inserted_sublink;
-} ResolveNew_context;
+	Node	   *result;
+	replace_rte_variables_context context;
 
-static Node *
-resolve_one_var(Var *var, ResolveNew_context *context)
-{
-	TargetEntry *tle;
+	context.callback = callback;
+	context.callback_arg = callback_arg;
+	context.target_varno = target_varno;
+	context.sublevels_up = sublevels_up;
 
-	tle = get_tle_by_resno(context->targetlist, var->varattno);
-
-	if (tle == NULL)
-	{
-		/* Failed to find column in insert/update tlist */
-		if (context->event == CMD_UPDATE)
-		{
-			/* For update, just change unmatched var's varno */
-			var = (Var *) copyObject(var);
-			var->varno = context->update_varno;
-			var->varnoold = context->update_varno;
-			return (Node *) var;
-		}
-		else
-		{
-			/* Otherwise replace unmatched var with a null */
-			/* need coerce_to_domain in case of NOT NULL domain constraint */
-			return coerce_to_domain((Node *) makeNullConst(var->vartype,
-														   var->vartypmod),
-									InvalidOid, -1,
-									var->vartype,
-									COERCE_IMPLICIT_CAST,
-									-1,
-									false,
-									false);
-		}
-	}
+	/*
+	 * We try to initialize inserted_sublink to true if there is no need to
+	 * detect new sublinks because the query already has some.
+	 */
+	if (node && IsA(node, Query))
+		context.inserted_sublink = ((Query *) node)->hasSubLinks;
+	else if (outer_hasSubLinks)
+		context.inserted_sublink = *outer_hasSubLinks;
 	else
-	{
-		/* Make a copy of the tlist item to return */
-		Node	   *n = copyObject(tle->expr);
+		context.inserted_sublink = false;
 
-		/* Adjust varlevelsup if tlist item is from higher query */
-		if (var->varlevelsup > 0)
-			IncrementVarSublevelsUp(n, var->varlevelsup, 0);
-		/* Report it if we are adding a sublink to query */
-		if (!context->inserted_sublink)
-			context->inserted_sublink = checkExprHasSubLink(n);
-		return n;
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	result = query_or_expression_tree_mutator(node,
+											  replace_rte_variables_mutator,
+											  (void *) &context,
+											  0);
+
+	if (context.inserted_sublink)
+	{
+		if (result && IsA(result, Query))
+			((Query *) result)->hasSubLinks = true;
+		else if (outer_hasSubLinks)
+			*outer_hasSubLinks = true;
+		else
+			elog(ERROR, "replace_rte_variables inserted a SubLink, but has noplace to record it");
 	}
+
+	return result;
 }
 
-static Node *
-ResolveNew_mutator(Node *node, ResolveNew_context *context)
+Node *
+replace_rte_variables_mutator(Node *node,
+							  replace_rte_variables_context *context)
 {
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		int			this_varno = (int) var->varno;
-		int			this_varlevelsup = (int) var->varlevelsup;
 
-		if (this_varno == context->target_varno &&
-			this_varlevelsup == context->sublevels_up)
+		if (var->varno == context->target_varno &&
+			var->varlevelsup == context->sublevels_up)
 		{
-			if (var->varattno == InvalidAttrNumber)
-			{
-				/* Must expand whole-tuple reference into RowExpr */
-				RowExpr    *rowexpr;
-				List	   *colnames;
-				List	   *fields;
+			/* Found a matching variable, make the substitution */
+			Node	   *newnode;
 
-				/*
-				 * If generating an expansion for a var of a named rowtype
-				 * (ie, this is a plain relation RTE), then we must include
-				 * dummy items for dropped columns.  If the var is RECORD (ie,
-				 * this is a JOIN), then omit dropped columns.	Either way,
-				 * attach column names to the RowExpr for use of ruleutils.c.
-				 */
-				expandRTE(context->target_rte,
-						  this_varno, this_varlevelsup, var->location,
-						  (var->vartype != RECORDOID),
-						  &colnames, &fields);
-				/* Adjust the generated per-field Vars... */
-				fields = (List *) ResolveNew_mutator((Node *) fields,
-													 context);
-				rowexpr = makeNode(RowExpr);
-				rowexpr->args = fields;
-				rowexpr->row_typeid = var->vartype;
-				rowexpr->row_format = COERCE_IMPLICIT_CAST;
-				rowexpr->colnames = colnames;
-				rowexpr->location = -1;
-
-				return (Node *) rowexpr;
-			}
-
-			/* Normal case for scalar variable */
-			return resolve_one_var(var, context);
+			newnode = (*context->callback) (var, context);
+			/* Detect if we are adding a sublink to query */
+			if (!context->inserted_sublink)
+				context->inserted_sublink = checkExprHasSubLink(newnode);
+			return newnode;
 		}
 		/* otherwise fall through to copy the var normally */
 	}
 	else if (IsA(node, CurrentOfExpr))
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
-		int			this_varno = (int) cexpr->cvarno;
 
-		if (this_varno == context->target_varno &&
+		if (cexpr->cvarno == context->target_varno &&
 			context->sublevels_up == 0)
 		{
 			/*
@@ -1222,9 +1186,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 		context->sublevels_up++;
 		save_inserted_sublink = context->inserted_sublink;
-		context->inserted_sublink = false;
+		context->inserted_sublink = ((Query *) node)->hasSubLinks;
 		newnode = query_tree_mutator((Query *) node,
-									 ResolveNew_mutator,
+									 replace_rte_variables_mutator,
 									 (void *) context,
 									 0);
 		newnode->hasSubLinks |= context->inserted_sublink;
@@ -1232,46 +1196,128 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
-	return expression_tree_mutator(node, ResolveNew_mutator,
+	return expression_tree_mutator(node, replace_rte_variables_mutator,
 								   (void *) context);
+}
+
+
+/*
+ * ResolveNew - replace Vars with corresponding items from a targetlist
+ *
+ * Vars matching target_varno and sublevels_up are replaced by the
+ * entry with matching resno from targetlist, if there is one.
+ * If not, we either change the unmatched Var's varno to update_varno
+ * (when event == CMD_UPDATE) or replace it with a constant NULL.
+ *
+ * The caller must also provide target_rte, the RTE describing the target
+ * relation.  This is needed to handle whole-row Vars referencing the target.
+ * We expand such Vars into RowExpr constructs.
+ *
+ * outer_hasSubLinks works the same as for replace_rte_variables().
+ */
+
+typedef struct
+{
+	RangeTblEntry *target_rte;
+	List	   *targetlist;
+	int			event;
+	int			update_varno;
+} ResolveNew_context;
+
+static Node *
+ResolveNew_callback(Var *var,
+					replace_rte_variables_context *context)
+{
+	ResolveNew_context *rcon = (ResolveNew_context *) context->callback_arg;
+	TargetEntry *tle;
+
+	if (var->varattno == InvalidAttrNumber)
+	{
+		/* Must expand whole-tuple reference into RowExpr */
+		RowExpr    *rowexpr;
+		List	   *colnames;
+		List	   *fields;
+
+		/*
+		 * If generating an expansion for a var of a named rowtype
+		 * (ie, this is a plain relation RTE), then we must include
+		 * dummy items for dropped columns.  If the var is RECORD (ie,
+		 * this is a JOIN), then omit dropped columns.	Either way,
+		 * attach column names to the RowExpr for use of ruleutils.c.
+		 */
+		expandRTE(rcon->target_rte,
+				  var->varno, var->varlevelsup, var->location,
+				  (var->vartype != RECORDOID),
+				  &colnames, &fields);
+		/* Adjust the generated per-field Vars... */
+		fields = (List *) replace_rte_variables_mutator((Node *) fields,
+														context);
+		rowexpr = makeNode(RowExpr);
+		rowexpr->args = fields;
+		rowexpr->row_typeid = var->vartype;
+		rowexpr->row_format = COERCE_IMPLICIT_CAST;
+		rowexpr->colnames = colnames;
+		rowexpr->location = var->location;
+
+		return (Node *) rowexpr;
+	}
+
+	/* Normal case referencing one targetlist element */
+	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
+
+	if (tle == NULL)
+	{
+		/* Failed to find column in insert/update tlist */
+		if (rcon->event == CMD_UPDATE)
+		{
+			/* For update, just change unmatched var's varno */
+			var = (Var *) copyObject(var);
+			var->varno = rcon->update_varno;
+			var->varnoold = rcon->update_varno;
+			return (Node *) var;
+		}
+		else
+		{
+			/* Otherwise replace unmatched var with a null */
+			/* need coerce_to_domain in case of NOT NULL domain constraint */
+			return coerce_to_domain((Node *) makeNullConst(var->vartype,
+														   var->vartypmod),
+									InvalidOid, -1,
+									var->vartype,
+									COERCE_IMPLICIT_CAST,
+									-1,
+									false,
+									false);
+		}
+	}
+	else
+	{
+		/* Make a copy of the tlist item to return */
+		Node	   *newnode = copyObject(tle->expr);
+
+		/* Must adjust varlevelsup if tlist item is from higher query */
+		if (var->varlevelsup > 0)
+			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+
+		return newnode;
+	}
 }
 
 Node *
 ResolveNew(Node *node, int target_varno, int sublevels_up,
 		   RangeTblEntry *target_rte,
-		   List *targetlist, int event, int update_varno)
+		   List *targetlist, int event, int update_varno,
+		   bool *outer_hasSubLinks)
 {
-	Node	   *result;
 	ResolveNew_context context;
 
-	context.target_varno = target_varno;
-	context.sublevels_up = sublevels_up;
 	context.target_rte = target_rte;
 	context.targetlist = targetlist;
 	context.event = event;
 	context.update_varno = update_varno;
-	context.inserted_sublink = false;
 
-	/*
-	 * Must be prepared to start with a Query or a bare expression tree; if
-	 * it's a Query, we don't want to increment sublevels_up.
-	 */
-	result = query_or_expression_tree_mutator(node,
-											  ResolveNew_mutator,
-											  (void *) &context,
-											  0);
-
-	if (context.inserted_sublink)
-	{
-		if (IsA(result, Query))
-			((Query *) result)->hasSubLinks = true;
-
-		/*
-		 * Note: if we're called on a non-Query node then it's the caller's
-		 * responsibility to update hasSubLinks in the ancestor Query. This is
-		 * pretty fragile and perhaps should be rethought ...
-		 */
-	}
-
-	return result;
+	return replace_rte_variables(node, target_varno, sublevels_up,
+								 ResolveNew_callback,
+								 (void *) &context,
+								 outer_hasSubLinks);
 }
