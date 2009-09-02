@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2009, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.145 2009/08/28 20:26:19 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.146 2009/09/02 19:14:14 mha Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.
 
 ecpg_keywords.o c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
-kwlookup.c: % : ../../../backend/parser/%
+kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 	rm -f $@ && $(LN_S) $< .
 
 distprep: preproc.y preproc.c preproc.h pgc.c
