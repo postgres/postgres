@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.74 2009/06/11 14:49:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.75 2009/09/03 18:48:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -919,9 +919,14 @@ int48div(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
 	/* No overflow is possible */
 	PG_RETURN_INT64((int64) arg1 / arg2);
 }
@@ -1098,9 +1103,14 @@ int28div(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 
 	if (arg2 == 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
 	/* No overflow is possible */
 	PG_RETURN_INT64((int64) arg1 / arg2);
 }
