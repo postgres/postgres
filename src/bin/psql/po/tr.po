@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-12 23:16-0300\n"
-"PO-Revision-Date: 2008-03-13 00:31-0800\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2009-08-15 21:27+0000\n"
+"PO-Revision-Date: 2009-08-17 01:32+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -139,8 +139,8 @@ msgstr "Zamanlama kapalı."
 #: command.c:1458
 #: command.c:1491
 #: common.c:135
-#: copy.c:521
-#: copy.c:585
+#: copy.c:509
+#: copy.c:576
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -164,9 +164,9 @@ msgstr "%s kulalnıcısının şifresi: "
 #: common.c:809
 #: common.c:834
 #: common.c:907
-#: copy.c:656
-#: copy.c:701
-#: copy.c:830
+#: copy.c:647
+#: copy.c:692
+#: copy.c:821
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -398,47 +398,51 @@ msgstr "Sunucunu sürümü (%d) ON_ERROR_ROLLBACK biçiminde tablespace destekle
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: parametre eksik\n"
 
-#: copy.c:403
+#: copy.c:391
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: \"%s\" ifadesinde ayrıştırma hatası\n"
 
-#: copy.c:405
+#: copy.c:393
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: satır sonunda ayrıştırma hatası\n"
 
-#: copy.c:532
+#: copy.c:520
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: dizinden ya da dizine kopyalanamıyor\n"
 
-#: copy.c:558
+#: copy.c:546
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:562
-#: copy.c:576
+#: copy.c:550
+#: copy.c:564
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: beklenmeyen yanıt (%d)\n"
 
-#: copy.c:631
-#: copy.c:641
+#: copy.c:568
+msgid "trying to exit copy mode"
+msgstr "copy moduden çıkmaya çalışıyor"
+
+#: copy.c:622
+#: copy.c:632
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "COPY verisi yazılamadı: %s\n"
 
-#: copy.c:648
+#: copy.c:639
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "COPY veri aktarımı başarısız: %s"
 
-#: copy.c:696
+#: copy.c:687
 msgid "canceled by user"
 msgstr "kullanıcı tarafından iptal edildi"
 
-#: copy.c:711
+#: copy.c:702
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -446,7 +450,7 @@ msgstr ""
 "Kopyalanacak veriyi girin ve ardından entera basın.\n"
 "Sonuçlandırmak için yeni satırda ters taksim işareti ve nokta girin."
 
-#: copy.c:823
+#: copy.c:814
 msgid "aborted because of read failure"
 msgstr "okuma hatası nedeniyle kesildi"
 
@@ -692,10 +696,28 @@ msgstr "  \\h [NAME]      SQL komutları hakkında yardım göster, tüm komutla
 
 #: help.c:180
 #, c-format
+msgid ""
+"  \\prompt [TEXT] NAME\n"
+"                 prompt user to set internal variable\n"
+msgstr ""
+"  \\prompt [TEXT] NAME\n"
+"                 kullanıcıdan dahili değişkeninin belirtmesini iste\n"
+
+#: help.c:182
+#, c-format
+msgid ""
+"  \\password [USERNAME]\n"
+"                 securely change the password for a user\n"
+msgstr ""
+"  \\password [KULLANICI ADI]\n"
+"                 bir kullanıcının parolasını güvenli şekilde değiştirir\n"
+
+#: help.c:184
+#, c-format
 msgid "  \\q             quit psql\n"
 msgstr "  \\q             psql'den çık\n"
 
-#: help.c:181
+#: help.c:185
 #, c-format
 msgid ""
 "  \\set [NAME [VALUE]]\n"
@@ -704,86 +726,77 @@ msgstr ""
 "  \\set [NAME [VALUE]]\n"
 "                 dahili değişkene değer ata, VALUE boş ise tüm değişkenlerin listesini göster\n"
 
-#: help.c:183
+#: help.c:187
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
 msgstr "  \\timing        komutların zamanlamasını göster (şu an %s)\n"
 
-#: help.c:185
+#: help.c:189
 #, c-format
 msgid "  \\unset NAME    unset (delete) internal variable\n"
 msgstr "  \\unset NAME    dahili değişkenini sıfırla (sil)\n"
 
-#: help.c:186
-#, c-format
-msgid ""
-"  \\prompt [TEXT] NAME\n"
-"                 prompt user to set internal variable\n"
-msgstr ""
-"  \\prompt [TEXT] NAME\n"
-"                 kullanıcıdan dahili değişkeninin belirtmesini iste\n"
-
-#: help.c:188
+#: help.c:190
 #, c-format
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
 msgstr "  \\! [COMMAND]   kabukta komut çalıştır ya da etkileşimli kabuğu başlar\n"
 
-#: help.c:191
+#: help.c:193
 #, c-format
 msgid "Query Buffer\n"
 msgstr "Sorgu tamponu\n"
 
-#: help.c:192
+#: help.c:194
 #, c-format
 msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
 msgstr "  \\e [FILE]      sorgu tamponunu (ya da dosyasını) harici bir metin düzenleyici ile düzenle\n"
 
-#: help.c:193
+#: help.c:195
 #, c-format
 msgid "  \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"
 msgstr "  \\g [FILE]      sorgu tamponundaki sorguyu sunucuya gönder (ve sonuçları dosyaya ya da |pipe'e gönder)\n"
 
-#: help.c:194
+#: help.c:196
 #, c-format
 msgid "  \\p             show the contents of the query buffer\n"
 msgstr "  \\p             sorgu tamponunun içeriğini göster\n"
 
-#: help.c:195
+#: help.c:197
 #, c-format
 msgid "  \\r             reset (clear) the query buffer\n"
 msgstr "  \\r             sorgu tamponunu sıfırla (temizle)\n"
 
-#: help.c:197
+#: help.c:199
 #, c-format
 msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr "  \\s [FILE]      geçmişi göster ya da  dosyaya kaydet\n"
 
-#: help.c:199
+#: help.c:201
 #, c-format
 msgid "  \\w FILE        write query buffer to file\n"
 msgstr "  \\w FILE        sorgu tamponunu dosyaya kaydet\n"
 
-#: help.c:202
+#: help.c:204
 #, c-format
 msgid "Input/Output\n"
 msgstr "Giriş/Çıkış\n"
 
-#: help.c:203
+#: help.c:205
 #, c-format
 msgid "  \\echo [STRING] write string to standard output\n"
 msgstr "  \\echo [STRING] standart çıktıya bir satır gönder\n"
 
-#: help.c:204
+#: help.c:206
 #, c-format
 msgid "  \\i FILE        execute commands from file\n"
 msgstr "  \\i FILE        dosyadaki komutları çalıştır\n"
 
-#: help.c:205
+#: help.c:207
 #, c-format
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
 msgstr "  \\o [FILE]      tüm sorgu sonuçlarını dosyaya ya da |pipe'e gönder\n"
 
-#: help.c:206
+#: help.c:208
 #, c-format
 msgid ""
 "  \\qecho [STRING]\n"
@@ -792,17 +805,17 @@ msgstr ""
 "  \\qecho [STRING]\n"
 "                 sorgu çıkış akımına satır yaz (bk. \\o)\n"
 
-#: help.c:210
+#: help.c:212
 #, c-format
 msgid "Informational\n"
 msgstr "Bilgi edinme\n"
 
-#: help.c:211
+#: help.c:213
 #, c-format
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
 msgstr "  \\d [NAME]      tablo, indeks, sequence, ya da view hakkında bilgi ver\n"
 
-#: help.c:212
+#: help.c:214
 #, c-format
 msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
@@ -811,132 +824,132 @@ msgstr ""
 "  \\d{t|i|s|v|S} [PATTERN] (daha fazla ayrıntı için \"+\" ekleyin)\n"
 "                 tablolar/indeksler/sequenceler/viewlar/system tablolarını listele\n"
 
-#: help.c:214
+#: help.c:216
 #, c-format
 msgid "  \\da [PATTERN]  list aggregate functions\n"
 msgstr "  \\da [PATTERN]  aggregate fonksiyonları listele\n"
 
-#: help.c:215
+#: help.c:217
 #, c-format
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 msgstr "  \\db [PATTERN]  tablespaceleri listele (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:216
+#: help.c:218
 #, c-format
 msgid "  \\dc [PATTERN]  list conversions\n"
 msgstr "  \\dc [PATTERN]  dönüşümleri listele\n"
 
-#: help.c:217
+#: help.c:219
 #, c-format
 msgid "  \\dC            list casts\n"
 msgstr "  \\dC            castları listele\n"
 
-#: help.c:218
+#: help.c:220
 #, c-format
 msgid "  \\dd [PATTERN]  show comment for object\n"
 msgstr "  \\dd [PATTERN]  nesne yorumunu göster\n"
 
-#: help.c:219
+#: help.c:221
 #, c-format
 msgid "  \\dD [PATTERN]  list domains\n"
 msgstr "  \\dD [PATTERN]  domainleri göster\n"
 
-#: help.c:220
+#: help.c:222
 #, c-format
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 msgstr "  \\df [PATTERN]  fonksiyonları göster (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:221
+#: help.c:223
 #, c-format
 msgid "  \\dF [PATTERN]  list text search configurations (add \"+\" for more detail)\n"
 msgstr "  \\dF [PATTERN]  metin arama yapılandırmalarını listele (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:222
+#: help.c:224
 #, c-format
 msgid "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"
 msgstr "  \\dFd [PATTERN]  metin arama sözlüklerini listele (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:223
+#: help.c:225
 #, c-format
 msgid "  \\dFt [PATTERN] list text search templates\n"
 msgstr "  \\dFt [PATTERN]  metin arama şablonlarını listele\n"
 
-#: help.c:224
+#: help.c:226
 #, c-format
 msgid "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
 msgstr "  \\dFp [PATTERN] metin arama ayrıştırıcılarını listele (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:225
+#: help.c:227
 #, c-format
 msgid "  \\dg [PATTERN]  list groups\n"
 msgstr "  \\dg [PATTERN]  grupları göster\n"
 
-#: help.c:226
+#: help.c:228
 #, c-format
 msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 msgstr "  \\dn [PATTERN]  şemaları göster (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:227
+#: help.c:229
 #, c-format
 msgid "  \\do [NAME]     list operators\n"
 msgstr "  \\do [NAME]     operatörleri göster\n"
 
-#: help.c:228
+#: help.c:230
 #, c-format
 msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl            large objectleri göster, \\lo_list ile aynı\n"
 
-#: help.c:229
+#: help.c:231
 #, c-format
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
 msgstr "  \\dp [PATTERN]  tablo, view, ve sequence erişim haklarını göster\n"
 
-#: help.c:230
+#: help.c:232
 #, c-format
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr "  \\dT [PATTERN]  veri tipleri listele (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:231
+#: help.c:233
 #, c-format
 msgid "  \\du [PATTERN]  list users\n"
 msgstr "  \\du [PATTERN]  kullanıcıları listele\n"
 
-#: help.c:232
+#: help.c:234
 #, c-format
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 msgstr "  \\l             tüm veritabanlarını listele (daha fazla ayrıntı için \"+\" ekleyin)\n"
 
-#: help.c:233
+#: help.c:235
 #, c-format
 msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
 msgstr "  \\z [PATTERN]   tablo, view, ve sequence erişim haklarını listele (\\dp ile aynı)\n"
 
-#: help.c:236
+#: help.c:238
 #, c-format
 msgid "Formatting\n"
 msgstr "Biçimlendirme:\n"
 
-#: help.c:237
+#: help.c:239
 #, c-format
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
 msgstr "  \\a             düzenli ve düzensiz biçim arasında geçiş yap\n"
 
-#: help.c:238
+#: help.c:240
 #, c-format
 msgid "  \\C [STRING]    set table title, or unset if none\n"
 msgstr "  \\C [STRING]    tablo başlığını ayarla, kaldırmak için boş bırakın\n"
 
-#: help.c:239
+#: help.c:241
 #, c-format
 msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
 msgstr "  \\f [STRING]    sorgunun düzensiz çıkışı için alan ayracı tanımla\n"
 
-#: help.c:240
+#: help.c:242
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr "  \\H             HTML çıktı biçimini etkinleştir (şu an %s)\n"
 
-#: help.c:242
+#: help.c:244
 #, c-format
 msgid ""
 "  \\pset NAME [VALUE]\n"
@@ -949,32 +962,32 @@ msgstr ""
 "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
 
-#: help.c:246
+#: help.c:248
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
 msgstr "  \\t             sadece satırları göster (şu an %s)\n"
 
-#: help.c:248
+#: help.c:250
 #, c-format
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
 msgstr "  \\T [STRING]    HTML <table> tag parametrelerini tanımla, boş ise tüm parametrelerini kaldır\n"
 
-#: help.c:249
+#: help.c:251
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
 msgstr "  \\x             geniş çıktı ayarla (şu an %s)\n"
 
-#: help.c:253
+#: help.c:255
 #, c-format
 msgid "Copy, Large Object\n"
 msgstr "Copy, Large Object\n"
 
-#: help.c:254
+#: help.c:256
 #, c-format
 msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
 msgstr "  \\copy ...      istemci sisteminden veri akımı ile SQL COPY komutunu çalıştır\n"
 
-#: help.c:255
+#: help.c:257
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -987,11 +1000,11 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID    large object işlemleri\n"
 
-#: help.c:307
+#: help.c:309
 msgid "Available help:\n"
 msgstr "Yardım:\n"
 
-#: help.c:396
+#: help.c:398
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -1006,7 +1019,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:412
+#: help.c:414
 #, c-format
 msgid ""
 "No help available for \"%-.*s\".\n"
@@ -2553,7 +2566,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2562,8 +2574,8 @@ msgid ""
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE column [, ...] ]"
 msgstr ""
-"COPY tablename [ ( column [, ...] ) ]\n"
-"    FROM { 'filename' | STDIN }\n"
+"COPY tablo adı [ ( column [, ...] ) ]\n"
+"    FROM { 'dosya adı' | STDIN }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
@@ -2578,7 +2590,6 @@ msgstr ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -3313,12 +3324,12 @@ msgid ""
 "DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"DELETE FROM [ ONLY ] tablo [ [ AS ] takma_adı ]\n"
+"DELETE FROM [ ONLY ] tablo [ [ AS ] takma adı ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 
 #: sql_help.h:285
 msgid "discard session state"
@@ -3684,11 +3695,11 @@ msgstr "tabloda yeni satırları ekliyor"
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"IINSERT INTO table [ ( column [, ...] ) ]\n"
+"INSERT INTO tablo [ ( kolon [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 
 #: sql_help.h:421
 msgid "listen for a notification"
@@ -3931,7 +3942,7 @@ msgstr "tablo ya da  view'dan satırları getir"
 #: sql_help.h:486
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
 "    [ GROUP BY expression [, ...] ]\n"
@@ -3951,7 +3962,7 @@ msgid ""
 "    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
 msgstr ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
 "    [ GROUP BY expression [, ...] ]\n"
@@ -3973,7 +3984,7 @@ msgstr ""
 #: sql_help.h:490
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
 "    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
@@ -3986,7 +3997,7 @@ msgid ""
 "    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
 msgstr ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ [ AS ] output_name ] [, ...]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
 "    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
@@ -4123,14 +4134,14 @@ msgid ""
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
 "    [ FROM fromlist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
-"    SET { column = { expression | DEFAULT } |\n"
-"          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
+"UPDATE [ ONLY ] tablo [ [ AS ] takma ad ]\n"
+"    SET { kolon = { expression | DEFAULT } |\n"
+"          ( kolon [, ...] ) = ( { expression | DEFAULT } [, ...] ) } [, ...]\n"
 "    [ FROM fromlist ]\n"
-"    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
-"    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
+"    [ WHERE durum | WHERE CURRENT OF imleç adı ]\n"
+"    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 
 #: sql_help.h:533
 msgid "garbage-collect and optionally analyze a database"

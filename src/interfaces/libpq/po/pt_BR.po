@@ -1,13 +1,13 @@
 # "libpq" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2008.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-31 00:19-0200\n"
+"POT-Creation-Date: 2009-05-19 19:19-0300\n"
 "PO-Revision-Date: 2005-10-04 22:45-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -30,54 +30,54 @@ msgstr "Autenticação Kerberos 5 rejeitada: %*s\n"
 msgid "could not restore non-blocking mode on socket: %s\n"
 msgstr "não pôde restaurar modo não-bloqueado no soquete: %s\n"
 
-#: fe-auth.c:442
+#: fe-auth.c:429
 msgid "GSSAPI continuation error"
 msgstr "erro ao continuar autenticação GSSAPI"
 
-#: fe-auth.c:471
+#: fe-auth.c:458
 msgid "duplicate GSS authentication request\n"
 msgstr "pedido de autenticação GSS duplicado\n"
 
-#: fe-auth.c:491
+#: fe-auth.c:478
 msgid "GSSAPI name import error"
 msgstr "erro de importação de nome GSSAPI"
 
-#: fe-auth.c:577
+#: fe-auth.c:564
 msgid "SSPI continuation error"
 msgstr "erro ao continuar autenticação SSPI"
 
-#: fe-auth.c:588 fe-auth.c:661 fe-auth.c:687 fe-auth.c:784 fe-connect.c:1307
-#: fe-connect.c:2516 fe-connect.c:2733 fe-connect.c:3067 fe-connect.c:3076
-#: fe-connect.c:3213 fe-connect.c:3259 fe-connect.c:3277 fe-exec.c:2754
+#: fe-auth.c:575 fe-auth.c:648 fe-auth.c:674 fe-auth.c:771 fe-connect.c:1307
+#: fe-connect.c:2520 fe-connect.c:2737 fe-connect.c:3071 fe-connect.c:3080
+#: fe-connect.c:3217 fe-connect.c:3263 fe-connect.c:3281 fe-exec.c:2754
 #: fe-lobj.c:669 fe-protocol2.c:1027 fe-protocol3.c:1415
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
-#: fe-auth.c:681
+#: fe-auth.c:668
 msgid "host name must be specified\n"
 msgstr "nome da máquina deve ser especificado\n"
 
-#: fe-auth.c:760
+#: fe-auth.c:747
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "método de autenticação SCM_CRED não é suportado\n"
 
-#: fe-auth.c:842
+#: fe-auth.c:829
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Autenticação Kerberos 4 não é suportada\n"
 
-#: fe-auth.c:858
+#: fe-auth.c:845
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Autenticação Kerberos 5 não é suportada\n"
 
-#: fe-auth.c:925
+#: fe-auth.c:912
 msgid "GSSAPI authentication not supported\n"
 msgstr "Autenticação GSSAPI não é suportada\n"
 
-#: fe-auth.c:949
+#: fe-auth.c:936
 msgid "SSPI authentication not supported\n"
 msgstr "Autenticação SSPI não é suportada\n"
 
-#: fe-auth.c:979
+#: fe-auth.c:966
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "método de autenticação %u não é suportado\n"
@@ -203,98 +203,98 @@ msgstr ""
 "estado de conexão %c é inválido, provavelmente indicativo de corrupção de "
 "memória\n"
 
-#: fe-connect.c:2529
+#: fe-connect.c:2533
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "URL LDAP \"%s\" é inválida: esquema deve ser ldap://\n"
 
-#: fe-connect.c:2544
+#: fe-connect.c:2548
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "URL LDAP \"%s\" é inválida: faltando nome distinto\n"
 
-#: fe-connect.c:2555 fe-connect.c:2608
+#: fe-connect.c:2559 fe-connect.c:2612
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "URL LDAP \"%s\" é inválida: deve ter exatamente um atributo\n"
 
-#: fe-connect.c:2565 fe-connect.c:2622
+#: fe-connect.c:2569 fe-connect.c:2626
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr "URL LDAP \"%s\" é inválida: deve ter escopo de busca (base/one/sub)\n"
 
-#: fe-connect.c:2576
+#: fe-connect.c:2580
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "URL LDAP \"%s\" é inválida: nenhum filtro\n"
 
-#: fe-connect.c:2597
+#: fe-connect.c:2601
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "URL LDAP \"%s\" é inválida: número de porta é inválido\n"
 
-#: fe-connect.c:2631
+#: fe-connect.c:2635
 msgid "could not create LDAP structure\n"
 msgstr "não pôde criar estrutura LDAP\n"
 
-#: fe-connect.c:2673
+#: fe-connect.c:2677
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "busca em servidor LDAP falhou: %s\n"
 
-#: fe-connect.c:2684
+#: fe-connect.c:2688
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "mais de um registro encontrado na busca no LDAP\n"
 
-#: fe-connect.c:2685 fe-connect.c:2697
+#: fe-connect.c:2689 fe-connect.c:2701
 msgid "no entry found on LDAP lookup\n"
 msgstr "nenhum registro encontrado na busca no LDAP\n"
 
-#: fe-connect.c:2708 fe-connect.c:2721
+#: fe-connect.c:2712 fe-connect.c:2725
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "atributo não tem valores na busca no LDAP\n"
 
-#: fe-connect.c:2772 fe-connect.c:2790 fe-connect.c:3115
+#: fe-connect.c:2776 fe-connect.c:2794 fe-connect.c:3119
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "faltando \"=\" depois de \"%s\" na cadeia de caracteres de conexão\n"
 
-#: fe-connect.c:2853 fe-connect.c:3197
+#: fe-connect.c:2857 fe-connect.c:3201
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opção de conexão \"%s\" é inválida\n"
 
-#: fe-connect.c:2866 fe-connect.c:3164
+#: fe-connect.c:2870 fe-connect.c:3168
 msgid "unterminated quoted string in connection info string\n"
 msgstr ""
 "cadeia de caracteres entre aspas não foi terminada na cadeia de caracteres "
 "de conexão\n"
 
-#: fe-connect.c:2909
+#: fe-connect.c:2913
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "ERRO: arquivo de serviço \"%s\" não foi encontrado\n"
 
-#: fe-connect.c:2922
+#: fe-connect.c:2926
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "ERRO: linha %d é muito longa no arquivo de serviço \"%s\"\n"
 
-#: fe-connect.c:2994 fe-connect.c:3021
+#: fe-connect.c:2998 fe-connect.c:3025
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr "ERRO: erro de sintaxe no arquivo de serviço \"%s\", linha %d\n"
 
-#: fe-connect.c:3445
+#: fe-connect.c:3449
 msgid "connection pointer is NULL\n"
 msgstr "ponteiro da conexão é NULO\n"
 
-#: fe-connect.c:3729
+#: fe-connect.c:3733
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "AVISO: arquivo de senhas \"%s\" não é um arquivo no formato texto\n"
 
-#: fe-connect.c:3738
+#: fe-connect.c:3742
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has world or group read access; permission "
@@ -464,7 +464,7 @@ msgstr "conexão não está aberta\n"
 msgid "could not receive data from server: %s\n"
 msgstr "não pôde receber dados do servidor: %s\n"
 
-#: fe-misc.c:715 fe-misc.c:783
+#: fe-misc.c:715 fe-misc.c:792
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -474,20 +474,20 @@ msgstr ""
 "\tIsto provavelmente significa que o servidor terminou de forma anormal\n"
 "\tantes ou durante o processamento do pedido.\n"
 
-#: fe-misc.c:800
+#: fe-misc.c:809
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "não pôde enviar dados ao servidor: %s\n"
 
-#: fe-misc.c:919
+#: fe-misc.c:928
 msgid "timeout expired\n"
 msgstr "tempo de espera expirado\n"
 
-#: fe-misc.c:964
+#: fe-misc.c:973
 msgid "socket not open\n"
 msgstr "soquete não está aberto\n"
 
-#: fe-misc.c:987
+#: fe-misc.c:996
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() falhou: %s\n"
