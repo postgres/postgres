@@ -1,11 +1,11 @@
 # "pg_config" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2004-2006.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2004-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 23:49-0200\n"
+"POT-Creation-Date: 2009-05-30 17:32-0300\n"
 "PO-Revision-Date: 2005-10-04 22:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -189,7 +189,7 @@ msgstr ""
 msgid ""
 "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr ""
-"  --libs              mostra valor de LIBS utilizado quando PostgreSQL foi "
+"  --libs                mostra valor de LIBS utilizado quando PostgreSQL foi "
 "construído\n"
 
 #: pg_config.c:424
@@ -233,47 +233,47 @@ msgstr "%s: não pôde encontrar o próprio executável\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: argumento inválido: %s\n"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "não pôde identificar diretório atual: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binário \"%s\" é inválido"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "não pôde ler o binário \"%s\""
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "não pôde encontrar o \"%s\" para executá-lo"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "não pôde mudar diretório para \"%s\""
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:585
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:588
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"

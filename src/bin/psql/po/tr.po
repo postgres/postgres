@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-01-30 13:15-0400\n"
-"PO-Revision-Date: 2008-01-30 11:41-0800\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2009-08-15 21:37+0000\n"
+"PO-Revision-Date: 2009-08-17 01:33+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -132,7 +132,7 @@ msgstr "Zamanlama kapalı."
 #: command.c:1385
 #: common.c:160
 #: copy.c:549
-#: copy.c:613
+#: copy.c:616
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -149,9 +149,9 @@ msgstr "Şifre: "
 #: common.c:834
 #: common.c:859
 #: common.c:932
-#: copy.c:684
-#: copy.c:729
-#: copy.c:858
+#: copy.c:687
+#: copy.c:732
+#: copy.c:861
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -413,22 +413,26 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: beklenmeyen yanıt (%d)\n"
 
-#: copy.c:659
-#: copy.c:669
+#: copy.c:608
+msgid "trying to exit copy mode"
+msgstr "copy modundan çıkmaya çalışıyor"
+
+#: copy.c:662
+#: copy.c:672
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "COPY verisi yazılamadı: %s\n"
 
-#: copy.c:676
+#: copy.c:679
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "COPY veri aktarımı başarısız: %s"
 
-#: copy.c:724
+#: copy.c:727
 msgid "canceled by user"
 msgstr "kullanıcı tarafından iptal edildi"
 
-#: copy.c:739
+#: copy.c:742
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -436,7 +440,7 @@ msgstr ""
 "Kopyalanacak veriyi girin ve ardından entera basın.\n"
 "Sonuçlandırmak için yeni satırda ters taksim işareti ve nokta girin."
 
-#: copy.c:851
+#: copy.c:854
 msgid "aborted because of read failure"
 msgstr "okuma hatası nedeniyle kesildi"
 
@@ -2199,7 +2203,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2208,8 +2211,8 @@ msgid ""
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE column [, ...] ]"
 msgstr ""
-"COPY tablename [ ( column [, ...] ) ]\n"
-"    FROM { 'filename' | STDIN }\n"
+"COPY tablo adı [ ( kolon [, ...] ) ]\n"
+"    FROM { 'dosya adı' | STDIN }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
@@ -2220,18 +2223,17 @@ msgstr ""
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE NOT NULL column [, ...] ]\n"
 "\n"
-"COPY { tablename [ ( column [, ...] ) ] | ( query ) }\n"
-"    TO { 'filename' | STDOUT }\n"
+"COPY { tablo adı [ ( kolon [, ...] ) ] | ( sorgu ) }\n"
+"    TO { 'dosya adı' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
 "          [ CSV [ HEADER ]\n"
 "                [ QUOTE [ AS ] 'quote' ] \n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
-"                [ FORCE QUOTE column [, ...] ]"
+"                [ FORCE QUOTE kolon [, ...] ]"
 
 #: sql_help.h:137
 msgid "define a new aggregate function"
@@ -3668,50 +3670,50 @@ msgstr ""
 "    [ LIMIT { count | ALL } ]\n"
 "    [ OFFSET start ]"
 
-#: ../../port/exec.c:191
-#: ../../port/exec.c:305
-#: ../../port/exec.c:348
+#: ../../port/exec.c:194
+#: ../../port/exec.c:308
+#: ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "geçersiz ikili (binary) \"%s\""
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "\"%s\" ikili (binary) dosyası okunamadı"
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "\"%s\"  çalıştırmak için bulunamadı"
 
-#: ../../port/exec.c:321
-#: ../../port/exec.c:357
+#: ../../port/exec.c:324
+#: ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:585
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:588
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"

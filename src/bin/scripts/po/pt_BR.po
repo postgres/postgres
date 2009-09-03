@@ -1,11 +1,11 @@
 # "pgscripts" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2006.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 23:49-0200\n"
+"POT-Creation-Date: 2009-05-30 17:35-0300\n"
 "PO-Revision-Date: 2005-10-06 00:21-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -14,8 +14,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: createdb.c:102 createdb.c:121 createlang.c:85 createlang.c:106
-#: createlang.c:152 createuser.c:157 createuser.c:172 dropdb.c:84 dropdb.c:93
-#: dropdb.c:101 droplang.c:96 droplang.c:117 droplang.c:164 dropuser.c:84
+#: createlang.c:154 createuser.c:157 createuser.c:172 dropdb.c:84 dropdb.c:93
+#: dropdb.c:101 droplang.c:96 droplang.c:117 droplang.c:166 dropuser.c:84
 #: dropuser.c:99 clusterdb.c:95 clusterdb.c:110 vacuumdb.c:112 vacuumdb.c:127
 #: reindexdb.c:111 reindexdb.c:125
 #, c-format
@@ -52,8 +52,8 @@ msgstr ""
 "%s cria um banco de dados PostgreSQL.\n"
 "\n"
 
-#: createdb.c:221 createlang.c:204 createuser.c:313 dropdb.c:146
-#: droplang.c:321 dropuser.c:145 clusterdb.c:234 vacuumdb.c:260
+#: createdb.c:221 createlang.c:206 createuser.c:313 dropdb.c:146
+#: droplang.c:323 dropuser.c:145 clusterdb.c:234 vacuumdb.c:260
 #: reindexdb.c:332
 #, c-format
 msgid "Usage:\n"
@@ -64,8 +64,8 @@ msgstr "Uso:\n"
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPÇÃO]... [NOMEBD] [DESCRIÇÃO]\n"
 
-#: createdb.c:223 createlang.c:206 createuser.c:315 dropdb.c:148
-#: droplang.c:323 dropuser.c:147 clusterdb.c:236 vacuumdb.c:262
+#: createdb.c:223 createlang.c:208 createuser.c:315 dropdb.c:148
+#: droplang.c:325 dropuser.c:147 clusterdb.c:236 vacuumdb.c:262
 #: reindexdb.c:334
 #, c-format
 msgid ""
@@ -79,7 +79,7 @@ msgstr ""
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
-"  -D, --tablespace=ESPAÇO_DE_TABELAS  espaço de tabelas padrão para o banco "
+"  -D, --tablespace=TABLESPACE  espaço de tabelas padrão para o banco "
 "de dados\n"
 
 #: createdb.c:225
@@ -164,8 +164,8 @@ msgstr ""
 "\n"
 "Por padrão, um banco de dados com o mesmo nome do usuário é criado.\n"
 
-#: createdb.c:238 createlang.c:216 createuser.c:342 dropdb.c:158
-#: droplang.c:333 dropuser.c:157 clusterdb.c:250 vacuumdb.c:279
+#: createdb.c:238 createlang.c:218 createuser.c:342 dropdb.c:158
+#: droplang.c:335 dropuser.c:157 clusterdb.c:250 vacuumdb.c:279
 #: reindexdb.c:350
 #, c-format
 msgid ""
@@ -191,26 +191,26 @@ msgstr "não"
 msgid "Trusted?"
 msgstr "Confiável?"
 
-#: createlang.c:142 droplang.c:153
+#: createlang.c:144 droplang.c:155
 msgid "Procedural Languages"
 msgstr "Linguagens Procedurais"
 
-#: createlang.c:151 droplang.c:162
+#: createlang.c:153 droplang.c:164
 #, c-format
 msgid "%s: missing required argument language name\n"
 msgstr "%s: nome da linguagem é um argumento requerido\n"
 
-#: createlang.c:173
+#: createlang.c:175
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
 msgstr "%s: linguagem \"%s\" já está instalada no banco de dados \"%s\"\n"
 
-#: createlang.c:187
+#: createlang.c:189
 #, c-format
 msgid "%s: language installation failed: %s"
 msgstr "%s: instalação de linguagem falhou: %s"
 
-#: createlang.c:203
+#: createlang.c:205
 #, c-format
 msgid ""
 "%s installs a procedural language into a PostgreSQL database.\n"
@@ -219,30 +219,30 @@ msgstr ""
 "%s instala uma linguagem procedural no banco de dados PostgreSQL.\n"
 "\n"
 
-#: createlang.c:205 droplang.c:322
+#: createlang.c:207 droplang.c:324
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "  %s [OPÇÃO]... LINGUAGEM [NOMEBD]\n"
 
-#: createlang.c:207
+#: createlang.c:209
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=NOMEBD       banco de dados para instalar linguagem\n"
 
-#: createlang.c:208 createuser.c:331 dropdb.c:149 droplang.c:325
+#: createlang.c:210 createuser.c:331 dropdb.c:149 droplang.c:327
 #: dropuser.c:148 clusterdb.c:240 reindexdb.c:340
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                mostra os comandos enviados ao servidor\n"
 
-#: createlang.c:209 droplang.c:326
+#: createlang.c:211 droplang.c:328
 #, c-format
 msgid ""
 "  -l, --list                show a list of currently installed languages\n"
 msgstr "  -l, --list                mostra a lista das linguagens instaladas\n"
 
-#: createlang.c:210 createuser.c:336 dropdb.c:152 droplang.c:327
+#: createlang.c:212 createuser.c:336 dropdb.c:152 droplang.c:329
 #: dropuser.c:151 clusterdb.c:245 vacuumdb.c:274 reindexdb.c:345
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
@@ -250,31 +250,31 @@ msgstr ""
 "  -h, --host=MÁQUINA        máquina do servidor de banco de dados ou "
 "diretório do soquete\n"
 
-#: createlang.c:211 createuser.c:337 dropdb.c:153 droplang.c:328
+#: createlang.c:213 createuser.c:337 dropdb.c:153 droplang.c:330
 #: dropuser.c:152 clusterdb.c:246 vacuumdb.c:275 reindexdb.c:346
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORTA          porta do servidor de banco de dados\n"
 
-#: createlang.c:212 dropdb.c:154 droplang.c:329 clusterdb.c:247 vacuumdb.c:276
+#: createlang.c:214 dropdb.c:154 droplang.c:331 clusterdb.c:247 vacuumdb.c:276
 #: reindexdb.c:347
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USUÁRIO    nome do usuário para se conectar\n"
 
-#: createlang.c:213 dropdb.c:155 droplang.c:330 clusterdb.c:248 vacuumdb.c:277
+#: createlang.c:215 dropdb.c:155 droplang.c:332 clusterdb.c:248 vacuumdb.c:277
 #: reindexdb.c:348
 #, c-format
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            pergunta senha\n"
 
-#: createlang.c:214 createuser.c:333 dropdb.c:156 droplang.c:331
+#: createlang.c:216 createuser.c:333 dropdb.c:156 droplang.c:333
 #: dropuser.c:155 clusterdb.c:242 reindexdb.c:342
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    mostra esta ajuda e termina\n"
 
-#: createlang.c:215 createuser.c:334 dropdb.c:157 droplang.c:332
+#: createlang.c:217 createuser.c:334 dropdb.c:157 droplang.c:334
 #: dropuser.c:156 clusterdb.c:243 reindexdb.c:343
 #, c-format
 msgid "  --version                 output version information, then exit\n"
@@ -342,7 +342,7 @@ msgstr "  -s, --superuser           role será super-usuário\n"
 #: createuser.c:317
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser\n"
-msgstr "  -S, --no-superuser          role não será super-usuário\n"
+msgstr "  -S, --no-superuser        role não será super-usuário\n"
 
 #: createuser.c:318
 #, c-format
@@ -358,22 +358,22 @@ msgstr ""
 #: createuser.c:320
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
-msgstr "  -r, --createrole            role pode criar novas roles\n"
+msgstr "  -r, --createrole          role pode criar novas roles\n"
 
 #: createuser.c:321
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles\n"
-msgstr "  -R, --no-createrole         role não pode criar novas roles\n"
+msgstr "  -R, --no-createrole       role não pode criar novas roles\n"
 
 #: createuser.c:322
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
-msgstr "  -l, --login                   role pode efetuar login (padrão)\n"
+msgstr "  -l, --login               role pode efetuar login (padrão)\n"
 
 #: createuser.c:323
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
-msgstr "  -L, --no-login          role não pode efetuar login\n"
+msgstr "  -L, --no-login            role não pode efetuar login\n"
 
 #: createuser.c:324
 #, c-format
@@ -387,7 +387,7 @@ msgstr ""
 #: createuser.c:326
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
-msgstr "  -I, --no-inherit               role não herda privilégios\n"
+msgstr "  -I, --no-inherit          role não herda privilégios\n"
 
 #: createuser.c:327
 #, c-format
@@ -480,12 +480,12 @@ msgstr "  %s [OPÇÃO]... NOMEBD]\n"
 msgid "  -i, --interactive         prompt before deleting anything\n"
 msgstr "  -i, --interactive         pergunta antes de apagar algo\n"
 
-#: droplang.c:192
+#: droplang.c:194
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%s: linguagem \"%s\" não está instalada no banco de dados \"%s\"\n"
 
-#: droplang.c:212
+#: droplang.c:214
 #, c-format
 msgid ""
 "%s: still %s functions declared in language \"%s\"; language not removed\n"
@@ -493,19 +493,19 @@ msgstr ""
 "%s: ainda há %s funções declaradas na linguagem \"%s\"; linguagem não foi "
 "removida\n"
 
-#: droplang.c:305
+#: droplang.c:307
 #, c-format
 msgid "%s: language removal failed: %s"
 msgstr "%s: remoção da linguagem falhou: %s"
 
-#: droplang.c:320
+#: droplang.c:322
 #, c-format
 msgid ""
 "%s removes a procedural language from a database.\n"
 "\n"
 msgstr "%s remove uma linguagem procedural do banco de dados.\n"
 
-#: droplang.c:324
+#: droplang.c:326
 #, c-format
 msgid ""
 "  -d, --dbname=DBNAME       database from which to remove the language\n"

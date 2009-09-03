@@ -1,13 +1,13 @@
 # "pg_controldata" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2006.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 23:49-0200\n"
+"POT-Creation-Date: 2009-05-30 17:33-0300\n"
 "PO-Revision-Date: 2005-10-04 23:00-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"

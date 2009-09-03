@@ -1,11 +1,11 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2006.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 23:49-0200\n"
+"POT-Creation-Date: 2009-05-20 13:04-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -107,7 +107,7 @@ msgstr "Tempo de execução está desabilitado."
 
 #: command.c:878 command.c:898 command.c:1289 command.c:1296 command.c:1305
 #: command.c:1315 command.c:1324 command.c:1338 command.c:1352 command.c:1385
-#: common.c:160 copy.c:553 copy.c:605
+#: common.c:160 copy.c:549 copy.c:613
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -117,7 +117,7 @@ msgid "Password: "
 msgstr "Senha: "
 
 #: command.c:1076 common.c:206 common.c:483 common.c:548 common.c:834
-#: common.c:859 common.c:932 copy.c:676 copy.c:721 copy.c:850
+#: common.c:859 common.c:932 copy.c:684 copy.c:729 copy.c:858
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -370,36 +370,36 @@ msgstr "\\copy: erro de análise em \"%s\"\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: erro de análise no fim da linha\n"
 
-#: copy.c:564
+#: copy.c:560
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: não pode copiar de/para o diretório\n"
 
-#: copy.c:590
+#: copy.c:586
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:594
+#: copy.c:590 copy.c:604
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: resposta inesperada (%d)\n"
 
-#: copy.c:651 copy.c:661
+#: copy.c:659 copy.c:669
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "não pôde escrever dados utilizando COPY: %s\n"
 
-#: copy.c:668
+#: copy.c:676
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "transferência de dados utilizando COPY falhou: %s"
 
-#: copy.c:716
+#: copy.c:724
 msgid "canceled by user"
 msgstr "cancelado pelo usuário"
 
-#: copy.c:731
+#: copy.c:739
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -407,7 +407,7 @@ msgstr ""
 "Informe os dados a serem copiados seguido pelo caracter de nova linha.\n"
 "Finalize com uma barra invertida e um ponto na linha."
 
-#: copy.c:843
+#: copy.c:851
 msgid "aborted because of read failure"
 msgstr "interrompido devido a falha de leitura"
 
@@ -464,8 +464,7 @@ msgstr "  -f ARQUIVO      executa comandos de um arquivo e termina"
 
 #: help.c:92
 msgid "  -1 (\"one\")      execute command file as a single transaction"
-msgstr ""
-"  -1 (\"um\")    executa o arquivo com comandos em uma transação única"
+msgstr "  -1 (\"um\")       executa o arquivo com comandos em uma transação única"
 
 #: help.c:93
 msgid "  -l              list available databases, then exit"
@@ -534,7 +533,7 @@ msgstr ""
 
 #: help.c:108
 msgid "  -L FILENAME     send session log to file"
-msgstr "  -L ARQUIVO     envia log da sessão para arquivo"
+msgstr "  -L ARQUIVO      envia log da sessão para arquivo"
 
 #: help.c:110
 msgid ""
@@ -1040,8 +1039,8 @@ msgid "%s: unknown transaction status\n"
 msgstr "%s: status da transação é desconhecido\n"
 
 #: large_obj.c:252 describe.c:80 describe.c:131 describe.c:212 describe.c:285
-#: describe.c:346 describe.c:397 describe.c:499 describe.c:798 describe.c:1459
-#: describe.c:1535 describe.c:1778
+#: describe.c:346 describe.c:397 describe.c:499 describe.c:798 describe.c:1466
+#: describe.c:1542 describe.c:1785
 msgid "Description"
 msgstr "Descrição"
 
@@ -1200,13 +1199,13 @@ msgstr ""
 "detalhes.\n"
 
 #: describe.c:79 describe.c:202 describe.c:272 describe.c:344 describe.c:445
-#: describe.c:499 describe.c:1523 describe.c:1629 describe.c:1678
+#: describe.c:499 describe.c:1530 describe.c:1636 describe.c:1685
 msgid "Schema"
 msgstr "Esquema"
 
 #: describe.c:79 describe.c:125 describe.c:202 describe.c:272 describe.c:344
-#: describe.c:386 describe.c:445 describe.c:499 describe.c:1523
-#: describe.c:1630 describe.c:1679 describe.c:1772
+#: describe.c:386 describe.c:445 describe.c:499 describe.c:1530
+#: describe.c:1637 describe.c:1686 describe.c:1779
 msgid "Name"
 msgstr "Nome"
 
@@ -1223,8 +1222,8 @@ msgstr "Lista das funções de agregação"
 msgid "The server version (%d) does not support tablespaces.\n"
 msgstr "A versão do servidor (%d) não suporta espaços de tabelas.\n"
 
-#: describe.c:125 describe.c:211 describe.c:386 describe.c:1525
-#: describe.c:1772
+#: describe.c:125 describe.c:211 describe.c:386 describe.c:1532
+#: describe.c:1779
 msgid "Owner"
 msgstr "Dono"
 
@@ -1232,7 +1231,7 @@ msgstr "Dono"
 msgid "Location"
 msgstr "Local"
 
-#: describe.c:131 describe.c:445 describe.c:1778
+#: describe.c:131 describe.c:445 describe.c:1785
 msgid "Access privileges"
 msgstr "Privilégios de acesso"
 
@@ -1296,19 +1295,19 @@ msgstr "Espaço de Tabelas"
 msgid "List of databases"
 msgstr "Lista dos bancos de dados"
 
-#: describe.c:445 describe.c:575 describe.c:1524
+#: describe.c:445 describe.c:575 describe.c:1531
 msgid "table"
 msgstr "tabela"
 
-#: describe.c:445 describe.c:575 describe.c:1524
+#: describe.c:445 describe.c:575 describe.c:1531
 msgid "view"
 msgstr "visão"
 
-#: describe.c:445 describe.c:575 describe.c:1524
+#: describe.c:445 describe.c:575 describe.c:1531
 msgid "sequence"
 msgstr "sequência"
 
-#: describe.c:445 describe.c:785 describe.c:1525 describe.c:1631
+#: describe.c:445 describe.c:785 describe.c:1532 describe.c:1638
 msgid "Type"
 msgstr "Tipo"
 
@@ -1337,7 +1336,7 @@ msgstr "operador"
 msgid "data type"
 msgstr "tipo de dado"
 
-#: describe.c:575 describe.c:1524
+#: describe.c:575 describe.c:1531
 msgid "index"
 msgstr "índice"
 
@@ -1446,175 +1445,175 @@ msgstr ""
 "Definição da visão:\n"
 "%s"
 
-#: describe.c:1029 describe.c:1270
+#: describe.c:1029 describe.c:1277
 msgid "Rules:"
 msgstr "Regras:"
 
-#: describe.c:1184
+#: describe.c:1191
 msgid "Indexes:"
 msgstr "Índices:"
 
-#: describe.c:1193
+#: describe.c:1200
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1240
+#: describe.c:1247
 msgid "Check constraints:"
 msgstr "Restrições de verificação:"
 
-#: describe.c:1244 describe.c:1259
+#: describe.c:1251 describe.c:1266
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
-#: describe.c:1255
+#: describe.c:1262
 msgid "Foreign-key constraints:"
 msgstr "Restrições de chave estrangeira:"
 
-#: describe.c:1289
+#: describe.c:1296
 msgid "Triggers:"
 msgstr "Gatilhos:"
 
-#: describe.c:1311
+#: describe.c:1318
 msgid "Inherits"
 msgstr "Heranças"
 
-#: describe.c:1325
+#: describe.c:1332
 msgid "Has OIDs"
 msgstr "Têm OIDs"
 
-#: describe.c:1328 describe.c:1451 describe.c:1452 describe.c:1453
-#: describe.c:1682 describe.c:1739
+#: describe.c:1335 describe.c:1458 describe.c:1459 describe.c:1460
+#: describe.c:1689 describe.c:1746
 msgid "yes"
 msgstr "sim"
 
-#: describe.c:1328 describe.c:1451 describe.c:1452 describe.c:1453
-#: describe.c:1683 describe.c:1737
+#: describe.c:1335 describe.c:1458 describe.c:1459 describe.c:1460
+#: describe.c:1690 describe.c:1744
 msgid "no"
 msgstr "não"
 
-#: describe.c:1413
+#: describe.c:1420
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Espaço de tabelas: \"%s\""
 
-#: describe.c:1413
+#: describe.c:1420
 #, c-format
 msgid "tablespace \"%s\""
 msgstr "espaço de tabelas: \"%s\""
 
-#: describe.c:1450
+#: describe.c:1457
 msgid "Role name"
 msgstr "Nome da role"
 
-#: describe.c:1451
+#: describe.c:1458
 msgid "Superuser"
 msgstr "Super-usuário"
 
-#: describe.c:1452
+#: describe.c:1459
 msgid "Create role"
 msgstr "Cria role"
 
-#: describe.c:1453
+#: describe.c:1460
 msgid "Create DB"
 msgstr "Cria BD"
 
-#: describe.c:1454
+#: describe.c:1461
 msgid "no limit"
 msgstr "ilimitado"
 
-#: describe.c:1454
+#: describe.c:1461
 msgid "Connections"
 msgstr "Conexões"
 
-#: describe.c:1455
+#: describe.c:1462
 msgid "Member of"
 msgstr "Membro de"
 
-#: describe.c:1474
+#: describe.c:1481
 msgid "List of roles"
 msgstr "Lista de roles"
 
-#: describe.c:1525
+#: describe.c:1532
 msgid "special"
 msgstr "especial"
 
-#: describe.c:1530
+#: describe.c:1537
 msgid "Table"
 msgstr "Tabela"
 
-#: describe.c:1584
+#: describe.c:1591
 #, c-format
 msgid "No matching relations found.\n"
 msgstr "Nenhuma relação correspondente foi encontrada.\n"
 
-#: describe.c:1586
+#: describe.c:1593
 #, c-format
 msgid "No relations found.\n"
 msgstr "Nenhuma relação foi encontrada.\n"
 
-#: describe.c:1591
+#: describe.c:1598
 msgid "List of relations"
 msgstr "Lista de relações"
 
-#: describe.c:1632
+#: describe.c:1639
 msgid "Modifier"
 msgstr "Modificador"
 
-#: describe.c:1633
+#: describe.c:1640
 msgid "Check"
 msgstr "Verificação"
 
-#: describe.c:1647
+#: describe.c:1654
 msgid "List of domains"
 msgstr "Lista de domínios"
 
-#: describe.c:1680
+#: describe.c:1687
 msgid "Source"
 msgstr "Fonte"
 
-#: describe.c:1681
+#: describe.c:1688
 msgid "Destination"
 msgstr "Destino"
 
-#: describe.c:1684
+#: describe.c:1691
 msgid "Default?"
 msgstr "Padrão?"
 
-#: describe.c:1698
+#: describe.c:1705
 msgid "List of conversions"
 msgstr "Lista de conversões"
 
-#: describe.c:1733
+#: describe.c:1740
 msgid "Source type"
 msgstr "Tipo fonte"
 
-#: describe.c:1734
+#: describe.c:1741
 msgid "Target type"
 msgstr "Tipo alvo"
 
-#: describe.c:1735
+#: describe.c:1742
 msgid "(binary compatible)"
 msgstr "(binariamente compatíveis)"
 
-#: describe.c:1736
+#: describe.c:1743
 msgid "Function"
 msgstr "Função"
 
-#: describe.c:1738
+#: describe.c:1745
 msgid "in assignment"
 msgstr "em atribuição"
 
-#: describe.c:1740
+#: describe.c:1747
 msgid "Implicit?"
 msgstr "Implícito?"
 
-#: describe.c:1748
+#: describe.c:1755
 msgid "List of casts"
 msgstr "Lista de conversões de tipos"
 
-#: describe.c:1798
+#: describe.c:1805
 msgid "List of schemas"
 msgstr "Lista de esquemas"
 
@@ -2195,7 +2194,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2220,7 +2218,6 @@ msgstr ""
 "    TO { 'arquivo' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
 "          [ NULL [ AS ] 'cadeia nula' ] ]\n"
@@ -2689,7 +2686,8 @@ msgstr ""
 "  UNIQUE parâmetros_índice |\n"
 "  PRIMARY KEY parâmetros_índice |\n"
 "  CHECK ( expressão ) |\n"
-"  REFERENCES tabela_ref [ ( coluna_ref ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES tabela_ref [ ( coluna_ref ) ] [ MATCH FULL | MATCH PARTIAL | "
+"MATCH SIMPLE ]\n"
 "    [ ON DELETE ação ] [ ON UPDATE ação ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
 "IMMEDIATE ]\n"
@@ -2704,7 +2702,8 @@ msgstr ""
 "[, ... ] ) ]\n"
 "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE ação ] [ ON "
 "UPDATE ação ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "parâmetros_índice em restrições UNIQUE e PRIMARY KEY são:\n"
 "\n"
@@ -3206,7 +3205,8 @@ msgstr ""
 "    TO { usuário | GROUP nome_grupo | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
+"[ PRIVILEGES ] }\n"
 "    ON DATABASE nome_banco_dados [, ...]\n"
 "    TO { usuário | GROUP nome_grupo | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
@@ -3718,11 +3718,13 @@ msgstr "coleta lixo e opcionalmente analisa um banco de dados"
 
 #: sql_help.h:466
 msgid ""
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
 msgstr ""
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ tabela ]\n"
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ tabela [ (coluna [, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabela ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabela [ (coluna "
+"[, ...] ) ] ]"
 
 #: sql_help.h:469
 msgid "compute a set of rows"
@@ -3741,47 +3743,47 @@ msgstr ""
 "    [ LIMIT { contador | ALL } ]\n"
 "    [ OFFSET início ]"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "não pôde identificar diretório atual: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binário \"%s\" é inválido"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "não pôde ler o binário \"%s\""
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "não pôde encontrar o \"%s\" para executá-lo"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "não pôde mudar diretório para \"%s\""
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:585
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:588
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:591
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"

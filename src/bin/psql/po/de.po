@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: psql.po,v 1.8.2.3 2009/01/16 08:05:44 petere Exp $
+# pgtranslation Id: psql.po,v 1.8.2.4 2009/09/02 13:31:00 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:25+0000\n"
-"PO-Revision-Date: 2009-01-16 00:48+0200\n"
+"POT-Creation-Date: 2009-09-02 07:38+0000\n"
+"PO-Revision-Date: 2009-09-02 16:30+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -110,7 +110,7 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:878 command.c:898 command.c:1289 command.c:1296 command.c:1305
 #: command.c:1315 command.c:1324 command.c:1338 command.c:1352 command.c:1385
-#: common.c:160 copy.c:549 copy.c:613
+#: common.c:160 copy.c:549 copy.c:616
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -120,7 +120,7 @@ msgid "Password: "
 msgstr "Passwort: "
 
 #: command.c:1076 common.c:206 common.c:483 common.c:548 common.c:834
-#: common.c:859 common.c:932 copy.c:684 copy.c:729 copy.c:858
+#: common.c:859 common.c:932 copy.c:687 copy.c:732 copy.c:861
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -388,21 +388,25 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: unerwartete Antwort (%d)\n"
 
-#: copy.c:659 copy.c:669
+#: copy.c:608
+msgid "trying to exit copy mode"
+msgstr "versuche, den COPY-Modus zu verlassen"
+
+#: copy.c:662 copy.c:672
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "konnte COPY-Daten nicht schreiben: %s\n"
 
-#: copy.c:676
+#: copy.c:679
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "Datentransfer mit COPY fehlgeschlagen: %s"
 
-#: copy.c:724
+#: copy.c:727
 msgid "canceled by user"
 msgstr "vom Benutzer abgebrochen"
 
-#: copy.c:739
+#: copy.c:742
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -410,7 +414,7 @@ msgstr ""
 "Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
 "Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
 
-#: copy.c:851
+#: copy.c:854
 msgid "aborted because of read failure"
 msgstr "abgebrochen wegen Lesenfehlers"
 

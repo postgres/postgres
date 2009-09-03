@@ -1,13 +1,13 @@
 # "pg_resetxlog" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2006.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-23 23:49-0200\n"
+"POT-Creation-Date: 2009-05-30 17:35-0300\n"
 "PO-Revision-Date: 2005-10-04 22:55-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -15,94 +15,94 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_resetxlog.c:124
+#: pg_resetxlog.c:125
 #, c-format
 msgid "%s: invalid argument for option -e\n"
 msgstr "%s: argumento inválido para opção -e\n"
 
-#: pg_resetxlog.c:125 pg_resetxlog.c:140 pg_resetxlog.c:155 pg_resetxlog.c:170
-#: pg_resetxlog.c:185 pg_resetxlog.c:200 pg_resetxlog.c:207 pg_resetxlog.c:214
-#: pg_resetxlog.c:220 pg_resetxlog.c:228
+#: pg_resetxlog.c:126 pg_resetxlog.c:141 pg_resetxlog.c:156 pg_resetxlog.c:171
+#: pg_resetxlog.c:186 pg_resetxlog.c:201 pg_resetxlog.c:208 pg_resetxlog.c:215
+#: pg_resetxlog.c:221 pg_resetxlog.c:229
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
 
-#: pg_resetxlog.c:130
+#: pg_resetxlog.c:131
 #, c-format
 msgid "%s: transaction ID epoch (-e) must not be -1\n"
 msgstr "%s: época do ID da transação (-e) não deve ser -1\n"
 
-#: pg_resetxlog.c:139
+#: pg_resetxlog.c:140
 #, c-format
 msgid "%s: invalid argument for option -x\n"
 msgstr "%s: argumento inválido para opção -x\n"
 
-#: pg_resetxlog.c:145
+#: pg_resetxlog.c:146
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: ID da transação (-x) não deve ser 0\n"
 
-#: pg_resetxlog.c:154
+#: pg_resetxlog.c:155
 #, c-format
 msgid "%s: invalid argument for option -o\n"
 msgstr "%s: argumento inválido para opção -o\n"
 
-#: pg_resetxlog.c:160
+#: pg_resetxlog.c:161
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) não deve ser 0\n"
 
-#: pg_resetxlog.c:169
+#: pg_resetxlog.c:170
 #, c-format
 msgid "%s: invalid argument for option -m\n"
 msgstr "%s: argumento inválido para opção -m\n"
 
-#: pg_resetxlog.c:175
+#: pg_resetxlog.c:176
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
 msgstr "%s: ID da transação múltipla (-m) não deve ser 0\n"
 
-#: pg_resetxlog.c:184
+#: pg_resetxlog.c:185
 #, c-format
 msgid "%s: invalid argument for option -O\n"
 msgstr "%s: argumento inválido para opção -O\n"
 
-#: pg_resetxlog.c:190
+#: pg_resetxlog.c:191
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
 msgstr "%s: deslocamento da transação múltipla (-O) não deve ser -1\n"
 
-#: pg_resetxlog.c:199 pg_resetxlog.c:206 pg_resetxlog.c:213
+#: pg_resetxlog.c:200 pg_resetxlog.c:207 pg_resetxlog.c:214
 #, c-format
 msgid "%s: invalid argument for option -l\n"
 msgstr "%s: argumento inválido para opção -l\n"
 
-#: pg_resetxlog.c:227
+#: pg_resetxlog.c:228
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: nenhum diretório de dados foi especificado\n"
 
-#: pg_resetxlog.c:241
+#: pg_resetxlog.c:242
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
 msgstr "%s: não pode ser executado pelo \"root\"\n"
 
-#: pg_resetxlog.c:243
+#: pg_resetxlog.c:244
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Você deve executar %s como um super-usuário do PostgreSQL.\n"
 
-#: pg_resetxlog.c:253
+#: pg_resetxlog.c:254
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
 msgstr "%s: não pôde mudar diretório para \"%s\": %s\n"
 
-#: pg_resetxlog.c:268 pg_resetxlog.c:376
+#: pg_resetxlog.c:269 pg_resetxlog.c:378
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: não pôde abrir arquivo \"%s\" para leitura: %s\n"
 
-#: pg_resetxlog.c:274
+#: pg_resetxlog.c:275
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
@@ -112,7 +112,7 @@ msgstr ""
 "O servidor está executando? Se não, apague o arquivo de bloqueio e tente "
 "novamente.\n"
 
-#: pg_resetxlog.c:325
+#: pg_resetxlog.c:326
 #, c-format
 msgid ""
 "\n"
@@ -121,7 +121,7 @@ msgstr ""
 "\n"
 "Se estes valores lhe parecem aceitáveis, use -f para forçar o reinício.\n"
 
-#: pg_resetxlog.c:337
+#: pg_resetxlog.c:338
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -132,12 +132,12 @@ msgstr ""
 "Reiniciar o log de transação pode causar perdas de dados.\n"
 "Se você quer continuar, use -f para forçar o reinício.\n"
 
-#: pg_resetxlog.c:350
+#: pg_resetxlog.c:352
 #, c-format
 msgid "Transaction log reset\n"
 msgstr "Log de transação reiniciado\n"
 
-#: pg_resetxlog.c:379
+#: pg_resetxlog.c:381
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -149,34 +149,34 @@ msgstr ""
 "  touch %s\n"
 "e tente novamente.\n"
 
-#: pg_resetxlog.c:392
+#: pg_resetxlog.c:394
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: não pôde ler arquivo \"%s\": %s\n"
 
-#: pg_resetxlog.c:415
+#: pg_resetxlog.c:417
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
 msgstr "%s: pg_control existe mas tem CRC inválido: prossiga com cuidado\n"
 
-#: pg_resetxlog.c:424
+#: pg_resetxlog.c:426
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
 msgstr ""
 "%s: pg_control existe mas não funciona ou sua versão é desconhecida; "
 "ignorando-o\n"
 
-#: pg_resetxlog.c:494
+#: pg_resetxlog.c:496
 #, c-format
 msgid "%s: invalid LC_COLLATE setting\n"
 msgstr "%s: definição do LC_COLLATE inválido\n"
 
-#: pg_resetxlog.c:501
+#: pg_resetxlog.c:503
 #, c-format
 msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: definição do LC_CTYPE inválido\n"
 
-#: pg_resetxlog.c:525
+#: pg_resetxlog.c:527
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -185,7 +185,7 @@ msgstr ""
 "Valores supostos do pg_control:\n"
 "\n"
 
-#: pg_resetxlog.c:527
+#: pg_resetxlog.c:529
 #, c-format
 msgid ""
 "pg_control values:\n"
@@ -194,120 +194,120 @@ msgstr ""
 "valores do pg_control:\n"
 "\n"
 
-#: pg_resetxlog.c:536
+#: pg_resetxlog.c:538
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "número da versão do pg_control:       %u\n"
 
-#: pg_resetxlog.c:538
+#: pg_resetxlog.c:540
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Número da versão do catálogo:         %u\n"
 
-#: pg_resetxlog.c:540
+#: pg_resetxlog.c:542
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Identificador do sistema de banco de dados:   %s\n"
 
-#: pg_resetxlog.c:542
+#: pg_resetxlog.c:544
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "ID do arquivo de log atual:           %u\n"
 
-#: pg_resetxlog.c:544
+#: pg_resetxlog.c:546
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Próximo segmento do arquivo de log:   %u\n"
 
-#: pg_resetxlog.c:546
+#: pg_resetxlog.c:548
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Último TimeLineID do ponto de controle:         %u\n"
 
-#: pg_resetxlog.c:548
+#: pg_resetxlog.c:550
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "Último NextXID do ponto de controle:         %u/%u\n"
 
-#: pg_resetxlog.c:551
+#: pg_resetxlog.c:553
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Último NextOID do ponto de controle:         %u\n"
 
-#: pg_resetxlog.c:553
+#: pg_resetxlog.c:555
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Último NextMultiXactId do ponto de controle:  %u\n"
 
-#: pg_resetxlog.c:555
+#: pg_resetxlog.c:557
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Último NextMultiOffset do ponto de controle:  %u\n"
 
-#: pg_resetxlog.c:557
+#: pg_resetxlog.c:559
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Máximo alinhamento de dado:          %u\n"
 
-#: pg_resetxlog.c:560
+#: pg_resetxlog.c:562
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Tamanho do bloco do banco de dados:   %u\n"
 
-#: pg_resetxlog.c:562
+#: pg_resetxlog.c:564
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blocos por segmento da relação grande:   %u\n"
 
-#: pg_resetxlog.c:564
+#: pg_resetxlog.c:566
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Tamanho do bloco do WAL:              %u\n"
 
-#: pg_resetxlog.c:566
+#: pg_resetxlog.c:568
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Bytes por segmento do WAL:            %u\n"
 
-#: pg_resetxlog.c:568
+#: pg_resetxlog.c:570
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Tamanho máximo de identificadores:        %u\n"
 
-#: pg_resetxlog.c:570
+#: pg_resetxlog.c:572
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Máximo de colunas em um índice:        %u\n"
 
-#: pg_resetxlog.c:572
+#: pg_resetxlog.c:574
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tipo de data/hora do repositório:     %s\n"
 
-#: pg_resetxlog.c:573
+#: pg_resetxlog.c:575
 msgid "64-bit integers"
 msgstr "inteiros de 64 bits"
 
-#: pg_resetxlog.c:573
+#: pg_resetxlog.c:575
 msgid "floating-point numbers"
 msgstr "números de ponto flutuante"
 
-#: pg_resetxlog.c:574
+#: pg_resetxlog.c:576
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Tamanho máximo do nome do idioma:     %u\n"
 
-#: pg_resetxlog.c:576
+#: pg_resetxlog.c:578
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_resetxlog.c:578
+#: pg_resetxlog.c:580
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
 
-#: pg_resetxlog.c:642
+#: pg_resetxlog.c:644
 #, c-format
 msgid ""
 "%s: internal error -- sizeof(ControlFileData) is too large ... fix "
@@ -316,47 +316,47 @@ msgstr ""
 "%s: erro interno -- sizeof(ControlFileData) é muito grande ... conserte o "
 "PG_CONTROL_SIZE\n"
 
-#: pg_resetxlog.c:657
+#: pg_resetxlog.c:659
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
 msgstr "%s: não pôde criar arquivo do pg_control: %s\n"
 
-#: pg_resetxlog.c:668
+#: pg_resetxlog.c:670
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: não pôde escrever no arquivo do pg_control: %s\n"
 
-#: pg_resetxlog.c:675 pg_resetxlog.c:833
+#: pg_resetxlog.c:677 pg_resetxlog.c:892
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: erro ao executar fsync: %s\n"
 
-#: pg_resetxlog.c:696
+#: pg_resetxlog.c:698 pg_resetxlog.c:754
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: não pôde abrir diretório \"%s\": %s\n"
 
-#: pg_resetxlog.c:710
+#: pg_resetxlog.c:712 pg_resetxlog.c:769
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: não pôde apagar arquivo \"%s\": %s\n"
 
-#: pg_resetxlog.c:729
+#: pg_resetxlog.c:731 pg_resetxlog.c:788
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
 msgstr "%s: não pôde ler diretório \"%s\": %s\n"
 
-#: pg_resetxlog.c:800
+#: pg_resetxlog.c:859
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: não pôde abrir arquivo \"%s\": %s\n"
 
-#: pg_resetxlog.c:811 pg_resetxlog.c:825
+#: pg_resetxlog.c:870 pg_resetxlog.c:884
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: não pôde escrever no arquivo \"%s\": %s\n"
 
-#: pg_resetxlog.c:844
+#: pg_resetxlog.c:903
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -365,7 +365,7 @@ msgstr ""
 "%s reinicia o log de transação do PostgreSQL.\n"
 "\n"
 
-#: pg_resetxlog.c:845
+#: pg_resetxlog.c:904
 #, c-format
 msgid ""
 "Usage:\n"
@@ -376,31 +376,31 @@ msgstr ""
 "  %s [OPÇÃO] DIRDADOS\n"
 "\n"
 
-#: pg_resetxlog.c:846
+#: pg_resetxlog.c:905
 #, c-format
 msgid "Options:\n"
 msgstr "Opções:\n"
 
-#: pg_resetxlog.c:847
+#: pg_resetxlog.c:906
 #, c-format
 msgid "  -f              force update to be done\n"
 msgstr "  -f                força atualização\n"
 
-#: pg_resetxlog.c:848
+#: pg_resetxlog.c:907
 #, c-format
 msgid ""
 "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
 "log\n"
 msgstr ""
-"  -l TLI,FILE,SEG     força local inicial mínimo do WAL para novo log de "
+"  -l TLI,FILE,SEG   força local inicial mínimo do WAL para novo log de "
 "transação\n"
 
-#: pg_resetxlog.c:849
+#: pg_resetxlog.c:908
 #, c-format
 msgid "  -m XID          set next multitransaction ID\n"
 msgstr "  -m XID            define próximo ID de transação múltipla\n"
 
-#: pg_resetxlog.c:850
+#: pg_resetxlog.c:909
 #, c-format
 msgid ""
 "  -n              no update, just show extracted control values (for "
@@ -409,37 +409,37 @@ msgstr ""
 "  -n                sem atualização, mostra somente valores de controle "
 "extraídos (para teste)\n"
 
-#: pg_resetxlog.c:851
+#: pg_resetxlog.c:910
 #, c-format
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID            define próximo OID\n"
 
-#: pg_resetxlog.c:852
+#: pg_resetxlog.c:911
 #, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
-msgstr "  -O OFFSET       define próximo deslocamento de transação múltipla\n"
+msgstr "  -O OFFSET         define próximo deslocamento de transação múltipla\n"
 
-#: pg_resetxlog.c:853
+#: pg_resetxlog.c:912
 #, c-format
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID            define próximo ID de transação\n"
 
-#: pg_resetxlog.c:854
+#: pg_resetxlog.c:913
 #, c-format
 msgid "  -e XIDEPOCH     set next transaction ID epoch\n"
 msgstr "  -e ÉPOCA_XID      define próxima época do ID de transação\n"
 
-#: pg_resetxlog.c:855
+#: pg_resetxlog.c:914
 #, c-format
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help            mostra esta ajuda e termina\n"
 
-#: pg_resetxlog.c:856
+#: pg_resetxlog.c:915
 #, c-format
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version         mostra informação sobre a versão e termina\n"
 
-#: pg_resetxlog.c:857
+#: pg_resetxlog.c:916
 #, c-format
 msgid ""
 "\n"
