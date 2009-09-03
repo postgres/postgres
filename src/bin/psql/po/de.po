@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.3 2008/06/05 23:37:31 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.4 2009/09/03 18:58:59 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-06 03:23-0400\n"
-"PO-Revision-Date: 2007-01-06 18:49+0100\n"
+"POT-Creation-Date: 2009-09-02 07:52+0000\n"
+"PO-Revision-Date: 2009-09-02 16:25+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -97,7 +97,7 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:803 command.c:823 command.c:1208 command.c:1215 command.c:1225
 #: command.c:1237 command.c:1250 command.c:1264 command.c:1286 command.c:1318
-#: common.c:170 copy.c:530 copy.c:587
+#: common.c:170 copy.c:530 copy.c:590
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -354,7 +354,11 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: unerwartete Antwort (%d)\n"
 
-#: copy.c:680
+#: copy.c:582
+msgid "trying to exit copy mode"
+msgstr "versuche, den COPY-Modus zu verlassen"
+
+#: copy.c:683
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
