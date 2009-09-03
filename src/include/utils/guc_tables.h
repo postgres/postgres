@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.29 2006/10/03 21:11:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.29.2.1 2009/09/03 22:08:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,8 @@ struct config_generic
 #define GUC_UNIT_S				0x2000	/* value is in seconds */
 #define GUC_UNIT_MIN			0x4000	/* value is in minutes */
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
+
+#define GUC_NOT_WHILE_SEC_DEF	0x8000	/* can't change inside sec-def func */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
