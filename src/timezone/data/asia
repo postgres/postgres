@@ -1,5 +1,5 @@
 # <pre>
-# @(#)asia	8.34
+# @(#)asia	8.36
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -165,9 +165,18 @@ Zone	Asia/Bahrain	3:22:20 -	LMT	1920		# Al Manamah
 # http://www.timeanddate.com/news/time/bangladesh-daylight-saving-2009.html
 # </a>
 
-# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Bang	2009	only	-	Jan	1	0:00	0	-
-Rule	Bang	2009	only	-	Jun	20	0:00	1:00	S
+# From A. N. M. Kamrus Saadat (2009-06-15):
+# Finally we've got the official mail regarding DST start time where DST start 
+# time is mentioned as Jun 19 2009, 23:00 from BTRC (Bangladesh 
+# Telecommunication Regulatory Commission). 
+#
+# No DST end date has been announced yet.
+
+# From Arthur David Olson (2009-07-11):
+# Arbitrarily end DST at the end of 2009 so that a POSIX-sytle time zone string
+# can appear in the Dhaka binary file and for the benefit of old glibc
+# reimplementations of the time zone software that mishandle permanent DST.
+# A change will be required once the end date is known.
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Dhaka	6:01:40 -	LMT	1890
@@ -176,8 +185,9 @@ Zone	Asia/Dhaka	6:01:40 -	LMT	1890
 			5:30	-	IST	1942 Sep
 			6:30	-	BURT	1951 Sep 30
 			6:00	-	DACT	1971 Mar 26 # Dacca Time
-			6:00	-	BDT	2009 # Bangladesh Time
-			6:00	Bang	BD%sT
+			6:00	-	BDT	2009 Jun 19 23:00 # Bangladesh Time
+			6:00	1:00	BDST	2010
+			6:00	-	BDT
 
 # Bhutan
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
