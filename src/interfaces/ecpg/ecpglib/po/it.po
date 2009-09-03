@@ -1,0 +1,191 @@
+#
+# Translation of ecpglib to Italian
+# PostgreSQL Project
+#
+# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
+# http://www.itpug.org/ - info@itpug.org
+#
+# Traduttori:
+#  * Maurizio Totti <maurizio.totti@gmail.com>
+# 
+# Revisori:
+#  * Gabriele Bartolini <gabriele.bartolini@2ndQuadrant.it>
+#
+# Copyright (c) 2009, Associazione Culturale ITPUG
+# Distributed under the same license of the PostgreSQL project
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-07-08 19:56+0000\n"
+"PO-Revision-Date: 2009-07-16 00:30:13+0200\n"
+"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Italian\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: connect.c:226
+msgid "empty message text"
+msgstr "messaggio di testo vuoto"
+
+#: connect.c:381
+#: connect.c:407
+#: connect.c:520
+msgid "<DEFAULT>"
+msgstr "<DEFAULT>"
+
+#: error.c:29
+#, c-format
+msgid "no data found on line %d"
+msgstr "non ci sono dati alla linea %d"
+
+# Utilizzerei 'memoria esaurita' al posto di 'errore di memoria' (GB)
+#: error.c:39
+#, c-format
+msgid "out of memory on line %d"
+msgstr "memoria esaurita alla linea %d"
+
+#: error.c:49
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "tipo \"%s\" non supportato alla linea %d"
+
+#: error.c:59
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "troppi argomenti alla linea %d"
+
+#: error.c:69
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "numero di argomenti non sufficiente alla linea %d"
+
+#: error.c:79
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "sintassi in input non valida per il tipo int: \"%s\", alla linea %d"
+
+#: error.c:89
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "sintassi in input non valida per il tipo unsigned int: \"%s\", alla linea %d"
+
+#: error.c:99
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "sintassi in input non valida per il tipo floating-point: \"%s\", alla linea %d"
+
+#: error.c:110
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "sintassi in input non valida per il tipo boolean: \"%s\", alla linea %d"
+
+# Originariamente da MT: non si può convertire il valore booleano: la dimensione è sbagliata (disallineata), alla linea %d
+#: error.c:118
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "conversione fallita per il valore booleano: dimensione incompatibile, alla linea %d"
+
+#: error.c:128
+#, c-format
+msgid "empty query on line %d"
+msgstr "query vuota alla linea %d"
+
+#: error.c:138
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "valore nullo senza variabile 'indicatore' alla linea %d"
+
+# è difficile da tradurre diversamente (GB)
+#: error.c:148
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "la variabile non è di tipo array alla linea %d"
+
+#: error.c:158
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "i dati letti dal server non sono di tipo array alla linea %d"
+
+#: error.c:168
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "inserire un array di variabili non è supportato alla linea %d"
+
+#: error.c:178
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "la connessione \"%s\" non esiste alla linea %d"
+
+# Inizialmente (MT): non si è connessi alla connessione \"%s\" alla linea %d
+#: error.c:188
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "connessione \"%s\" non attiva alla linea %d"
+
+#: error.c:198
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "nome di istruzione non valido \"%s\" alla linea %d"
+
+#: error.c:208
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "il descrittore \"%s\" non esiste alla linea %d"
+
+# userei intervallo al posto di range (GB)
+#: error.c:218
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "l'indice del descrittore è fuori intervallo alla linea %d"
+
+#: error.c:228
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "elemento del descrittore \"%s\" non riconosciuto alla linea %d"
+
+#: error.c:238
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "la variabile non è di tipo numerico alla linea %d"
+
+#: error.c:248
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "la variabile non è di tipo carattere alla linea %d"
+
+#: error.c:258
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "errore nel processare la transazione alla linea %d"
+
+# Inizialmente (MT): non posso connettermi al database \"%s\" alla linea %d
+#: error.c:268
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "connessione fallita al database \"%s\" alla linea %d"
+
+#: error.c:278
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "errore SQL %d alla linea %d"
+
+#: error.c:391
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "errore SQL: %s\n"
+
+#: execute.c:1639
+msgid "<empty>"
+msgstr "<empty>"
+
+#: misc.c:113
+msgid "NULL"
+msgstr "NULL"
+
