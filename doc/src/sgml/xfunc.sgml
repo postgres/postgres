@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.130 2007/11/10 20:14:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.130.2.1 2009/09/03 22:11:22 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1230,9 +1230,7 @@ PG_MODULE_MAGIC;
     file is retained in memory.  Future calls in the same session to
     the function(s) in that file will only incur the small overhead of
     a symbol table lookup.  If you need to force a reload of an object
-    file, for example after recompiling it, use the <xref
-    linkend="sql-load" endterm="sql-load-title"> command or begin a
-    fresh session.
+    file, for example after recompiling it, begin a fresh session.
    </para>
 
    <indexterm zone="xfunc-c-dynload">
@@ -1258,8 +1256,8 @@ PG_MODULE_MAGIC;
     unloading the file.  Likewise, the function receives no parameters and
     should return void.  Note that <function>_PG_fini</> will only be called
     during an unload of the file, not during process termination.
-    (Presently, an unload only happens in the context of re-loading
-    the file due to an explicit <command>LOAD</> command.)
+    (Presently, unloads are disabled and will never occur, but this may
+    change in the future.)
    </para>
 
   </sect2>

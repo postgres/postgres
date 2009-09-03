@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.78 2007/09/11 00:06:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.78.2.1 2009/09/03 22:11:22 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -456,8 +456,7 @@ CREATE FUNCTION foo(int, out text) ...
     When repeated <command>CREATE FUNCTION</command> calls refer to
     the same object file, the file is only loaded once per session.
     To unload and
-    reload the file (perhaps during development), use the <xref
-    linkend="sql-load" endterm="sql-load-title"> command.
+    reload the file (perhaps during development), start a new session.
    </para>
 
    <para>
