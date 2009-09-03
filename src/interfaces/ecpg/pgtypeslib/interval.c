@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.41 2009/06/11 14:49:13 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.42 2009/09/03 09:59:20 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -918,7 +918,7 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 				AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, false);
 				cp += strlen(cp);
 				*cp++ = 'S';
-				*cp++ = '\0';
+				*cp = '\0';
 			}
 			break;
 

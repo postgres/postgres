@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.45 2009/06/11 14:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/timestamp.c,v 1.46 2009/09/03 09:59:20 meskes Exp $
  */
 #include "postgres_fe.h"
 
@@ -237,8 +237,6 @@ recalc_t:
 			if (tzn != NULL)
 				*tzn = NULL;
 #endif
-
-			dt = dt2local(dt, *tzp);
 		}
 		else
 		{

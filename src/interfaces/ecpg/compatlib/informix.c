@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.60 2009/08/14 13:28:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.61 2009/09/03 09:59:20 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -767,13 +767,12 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	size_t		fmt_len = strlen(fmt);
 	size_t		temp_len;
 	int			i,
-				j,
+				j, /* position in temp */
 				k,
 				dotpos;
 	int			leftalign = 0,
 				blank = 0,
 				sign = 0,
-				entity = 0,
 				entitydone = 0,
 				signdone = 0,
 				brackets_ok = 0;
@@ -811,7 +810,6 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 
 	/* start to parse the formatstring */
 	temp[0] = '\0';
-	j = 0;						/* position in temp */
 	k = value.digits - 1;		/* position in the value_string */
 	for (i = fmt_len - 1, j = 0; i >= 0; i--, j++)
 	{
@@ -819,9 +817,7 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 		if (k < 0)
 		{
 			blank = 1;
-			if (k == -2)
-				entity = 1;
-			else if (k == -1)
+			if (k == -1)
 				sign = 1;
 			if (leftalign)
 			{

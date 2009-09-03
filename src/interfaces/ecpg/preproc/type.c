@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.84 2009/08/07 10:51:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.85 2009/09/03 09:59:20 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -228,7 +228,7 @@ static void ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				  char *varcharsize,
 				  char *arrsiz, const char *siz, const char *prefix, int);
 static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
-				  struct ECPGtype * type, struct ECPGtype * ind_type, const char *offset, const char *prefix, const char *ind_prefix);
+				  struct ECPGtype * type, struct ECPGtype * ind_type, const char *prefix, const char *ind_prefix);
 
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
@@ -254,7 +254,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 									  type->size,
 									  type->u.element,
 									  (ind_type == NULL) ? NULL : ((ind_type->type == ECPGt_NO_INDICATOR) ? ind_type : ind_type->u.element),
-									  NULL, prefix, ind_prefix);
+									  prefix, ind_prefix);
 					break;
 				default:
 					if (!IS_SIMPLE_TYPE(type->u.element->type))
@@ -280,7 +280,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			if (indicator_set && ind_type->type != ECPGt_struct)
 				mmerror(INDICATOR_NOT_STRUCT, ET_FATAL, "indicator for struct has to be a struct");
 
-			ECPGdump_a_struct(o, name, ind_name, make_str("1"), type, ind_type, NULL, prefix, ind_prefix);
+			ECPGdump_a_struct(o, name, ind_name, make_str("1"), type, ind_type, prefix, ind_prefix);
 			break;
 		case ECPGt_union:		/* cannot dump a complete union */
 			base_yyerror("type of union has to be specified");
@@ -459,7 +459,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 
 /* Penetrate a struct and dump the contents. */
 static void
-ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz, struct ECPGtype * type, struct ECPGtype * ind_type, const char *offsetarg, const char *prefix, const char *ind_prefix)
+ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz, struct ECPGtype * type, struct ECPGtype * ind_type, const char *prefix, const char *ind_prefix)
 {
 	/*
 	 * If offset is NULL, then this is the first recursive level. If not then
@@ -467,18 +467,8 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
 	 */
 	struct ECPGstruct_member *p,
 			   *ind_p = NULL;
-	char		obuf[BUFSIZ];
 	char		pbuf[BUFSIZ],
 				ind_pbuf[BUFSIZ];
-	const char *offset;
-
-	if (offsetarg == NULL)
-	{
-		sprintf(obuf, "sizeof(%s)", name);
-		offset = obuf;
-	}
-	else
-		offset = offsetarg;
 
 	if (atoi(arrsiz) == 1)
 		sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);

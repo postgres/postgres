@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.33 2006/10/04 00:30:12 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.34 2009/09/03 09:59:20 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -1046,7 +1046,6 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 	NumericDigit firstdigit1,
 				firstdigit2;
 	int			res_dscale;
-	int			res_rscale;
 
 	/*
 	 * The result scale of a division isn't specified in any SQL standard. For
@@ -1098,7 +1097,7 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
 
 	/* Select result scale */
-	*rscale = res_rscale = res_dscale + 4;
+	*rscale = res_dscale + 4;
 
 	return res_dscale;
 }
@@ -1537,9 +1536,8 @@ int
 PGTYPESnumeric_to_double(numeric *nv, double *dp)
 {
 	double		tmp;
-	int			i;
 
-	if ((i = numericvar_to_double(nv, &tmp)) != 0)
+	if (numericvar_to_double(nv, &tmp) != 0)
 		return -1;
 	*dp = tmp;
 	return 0;

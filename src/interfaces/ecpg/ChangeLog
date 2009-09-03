@@ -2424,6 +2424,10 @@ Fri, 14 Aug 2009 14:45:02 +0200
 
 	- Made sure sqlca is reset for declare cursor in Informix mode as
 	  pointed out by Böszörményi Zoltán <zb@cybertec.at>.
+
+Thu, 03 Sep 2009 11:45:13 +0200
+
+	- Removed some no longer used variables as reported by clang.
 	- Set ecpg library version to 6.2.
 	- Set compat library version to 3.2.
 	- Set ecpg version to 4.6.
