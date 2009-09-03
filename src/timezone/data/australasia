@@ -1,5 +1,5 @@
 # <pre>
-# @(#)australasia	8.11
+# @(#)australasia	8.12
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -427,6 +427,22 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 			-11:00	-	SST			# S=Samoa
 
 # Samoa
+
+# From Alexander Krivenyshev (2008-12-06):
+# The Samoa government (Western Samoa) may implement DST on the first Sunday of 
+# October 2009 (October 4, 2009) until the last Sunday of March 2010 (March 28, 
+# 2010). 
+# 
+# "Selected Committee reports to Cabinet on Daylight Saving Time",
+# Government of Samoa:
+# <a href="http://www.govt.ws/pr_article.cfm?pr_id=560">
+# http://www.govt.ws/pr_article.cfm?pr_id=560
+# </a>
+# or
+# <a href="http://www.worldtimezone.com/dst_news/dst_news_samoa01.html">
+# http://www.worldtimezone.com/dst_news/dst_news_samoa01.html
+# </a>
+
 Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
 			-11:26:56 -	LMT	1911
 			-11:30	-	SAMT	1950		# Samoa Time
