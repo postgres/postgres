@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.0.sgml,v 1.2 2009/08/27 01:27:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.0.sgml,v 1.3 2009/09/03 22:13:47 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-0-22">
@@ -6,7 +6,7 @@
 
   <note>
   <title>Release date</title>
-  <simpara>2009-09-09, AS OF 2009-08-26</simpara>
+  <simpara>2009-09-09</simpara>
   </note>
 
   <para>
@@ -20,6 +20,10 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.
+    However, if you have any hash indexes on <type>interval</> columns,
+    you must <command>REINDEX</> them after updating to 8.0.22.
+    Also, if you are upgrading from a version earlier than 8.0.6,
+    see the release notes for 8.0.6.
    </para>
 
   </sect2>
@@ -28,6 +32,40 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+     <para>
+      Disallow <command>RESET ROLE</> and <command>RESET SESSION
+      AUTHORIZATION</> inside security-definer functions (Tom, Heikki)
+     </para>
+
+     <para>
+      This covers a case that was missed in the previous patch that
+      disallowed <command>SET ROLE</> and <command>SET SESSION
+      AUTHORIZATION</> inside security-definer functions.
+      (See CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of sub-SELECTs appearing in the arguments of
+      an outer-level aggregate function (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix hash calculation for data type <type>interval</> (Tom)
+     </para>
+
+     <para>
+      This corrects wrong results for hash joins on interval values.
+      It also changes the contents of hash indexes on interval columns.
+      If you have any such indexes, you must <command>REINDEX</> them
+      after updating.
+     </para>
+    </listitem>
 
     <listitem>
      <para>
@@ -42,14 +80,83 @@
 
     <listitem>
      <para>
-      Fix <filename>/contrib/xml2</> <function>xslt_process()</> to
+      Fix overflow for <literal>INTERVAL '<replaceable>x</> ms'</literal>
+      when <replaceable>x</> is more than 2 million and integer
+      datetimes are in use (Alex Hunsaker)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix calculation of distance between a point and a line segment (Tom)
+     </para>
+
+     <para>
+      This led to incorrect results from a number of geometric operators.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <type>money</> data type to work in locales where currency
+      amounts have no fractional digits, e.g. Japan (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly round datetime input like
+      <literal>00:12:57.9999999999999999999999999999</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix poor choice of page split point in GiST R-tree operator classes
+      (Teodor)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix portability issues in plperl initialization (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_ctl</> to not go into an infinite loop if
+      <filename>postgresql.conf</> is empty (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/xml2</>'s <function>xslt_process()</> to
       properly handle the maximum number of parameters (twenty) (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Re-add documentation for configure flag <literal>--no-readline</> (Andrew)
+      Improve robustness of <application>libpq</>'s code to recover
+      from errors during <command>COPY FROM STDIN</> (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid including conflicting readline and editline header files
+      when both libraries are installed (Zdenek Kotala)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2009l
+      for DST law changes in Bangladesh, Egypt, Jordan, Pakistan,
+      Argentina/San_Luis, Cuba, Jordan (historical correction only),
+      Mauritius, Morocco, Palestine, Syria, Tunisia.
      </para>
     </listitem>
 

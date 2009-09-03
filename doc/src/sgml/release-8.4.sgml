@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.14 2009/08/27 20:05:28 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.4.sgml,v 1.15 2009/09/03 22:13:47 tgl Exp $ -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-8-4-1">
@@ -6,7 +6,7 @@
 
   <note>
   <title>Release date</title>
-  <simpara>2009-09-09, AS OF 2009-08-26</simpara>
+  <simpara>2009-09-09</simpara>
   </note>
 
   <para>
@@ -31,26 +31,140 @@
 
     <listitem>
      <para>
-      Fix pg_dump <literal>--binary-upgrade</> to handle dropped inherited columns
-      and their check constraints properly (Tom)
+      Fix WAL page header initialization at the end of archive recovery
+      (Heikki)
      </para>
 
      <para>
-      <literal>pg_dump --binary-upgrade</> is used by pg_migrator.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Fix pg_dump <literal>--binary-upgrade</> to handle pg_largeobject frozen xid value
-      (Bruce)
+      This could lead to failure to process the WAL in a subsequent
+      archive recovery.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow parentheses around the <literal>WITH</> query expression
-      body (Tom)
+      Fix <quote>cannot make new WAL entries during recovery</> error (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix problem that could make expired rows visible after a crash (Tom)
+     </para>
+
+     <para>
+      This bug involved a page status bit potentially not being set
+      correctly after a server crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow <command>RESET ROLE</> and <command>RESET SESSION
+      AUTHORIZATION</> inside security-definer functions (Tom, Heikki)
+     </para>
+
+     <para>
+      This covers a case that was missed in the previous patch that
+      disallowed <command>SET ROLE</> and <command>SET SESSION
+      AUTHORIZATION</> inside security-definer functions.
+      (See CVE-2007-6600)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <command>LOAD</> of an already-loaded loadable module
+      into a no-op (Tom)
+     </para>
+
+     <para>
+      Formerly, <command>LOAD</> would attempt to unload and re-load the
+      module, but this is unsafe and not all that useful.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make window function <literal>PARTITION BY</> and <literal>ORDER BY</>
+      items always be interpreted as simple expressions (Tom)
+     </para>
+
+     <para>
+      In 8.4.0 these lists were parsed following the rules used for
+      top-level <literal>GROUP BY</> and <literal>ORDER BY</> lists.
+      But this was not correct per the SQL standard, and it led to possible
+      circularity.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix several errors in planning of semi-joins (Tom)
+     </para>
+
+     <para>
+      These led to wrong query results in some cases where <literal>IN</>
+      or <literal>EXISTS</> was used together with another join.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of whole-row references to subqueries that are within
+      an outer join (Tom)
+     </para>
+
+     <para>
+      An example is
+      <literal>SELECT COUNT(ss.*) FROM ... LEFT JOIN (SELECT ...) ss ON ...</>.
+      Here, <literal>ss.*</> would be treated as <literal>ROW(NULL,NULL,...)</>
+      for null-extended join rows, which is not the same as a simple NULL.
+      Now it is treated as a simple NULL.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix Windows shared-memory allocation code (Tsutomu Yamada, Magnus)
+     </para>
+
+     <para>
+      This bug led to the often-reported <quote>could not reattach
+      to shared memory</> error message.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix locale handling with plperl (Heikki)
+     </para>
+
+     <para>
+      This bug could cause the server's locale setting to change when a
+      plperl function is called, leading to data corruption.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of reloptions to ensure setting one option doesn't
+      force default values for others (Itagaki Takahiro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that a <quote>fast shutdown</> request will forcibly terminate
+      open sessions, even if a <quote>smart shutdown</> was already in progress
+      (Fujii Masao)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid memory leak for <function>array_agg()</> in <literal>GROUP BY</>
+      queries (Tom)
      </para>
     </listitem>
 
@@ -67,19 +181,52 @@
 
     <listitem>
      <para>
-      Fix locale handling with plperl (Heikki)
+      Include the fractional part in the result of
+      <function>EXTRACT(second)</> and
+      <function>EXTRACT(milliseconds)</> for
+      <type>time</> and <type>time with time zone</> inputs (Tom)
      </para>
 
      <para>
-      This bug could cause the servers locale to change, leading to
-      data corruption.
+      This has always worked for floating-point datetime configurations,
+      but was broken in the integer datetime code.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix <filename>/contrib/xml2</> <function>xslt_process()</> to
-      properly handle the maximum number of parameters (twenty) (Tom)
+      Fix overflow for <literal>INTERVAL '<replaceable>x</> ms'</literal>
+      when <replaceable>x</> is more than 2 million and integer
+      datetimes are in use (Alex Hunsaker)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance when processing toasted values in index scans (Tom)
+     </para>
+
+     <para>
+      This is particularly useful for <ulink
+      url="http://postgis.refractions.net/">PostGIS</ulink>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix a typo that disabled <varname>commit_delay</> (Jeff Janes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Output early-startup messages to <filename>postmaster.log</> if the
+      server is started in silent mode (Tom)
+     </para>
+
+     <para>
+      Previously such error messages were discarded, leading to
+      difficulty in debugging.
      </para>
     </listitem>
 
@@ -97,79 +244,54 @@
 
     <listitem>
      <para>
-      Reduce memory consumption of aggregates on arrays (Tom)
+      Fix <application>pg_ctl</> to not go into an infinite loop if
+      <filename>postgresql.conf</> is empty (Jeff Davis)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Properly show fractional seconds and milliseconds for
-      <function>EXTRACT()</> (Tom)
+      Fix several errors in <application>pg_dump</>'s
+      <literal>--binary-upgrade</> mode (Bruce, Tom)
+     </para>
+
+     <para>
+      <literal>pg_dump --binary-upgrade</> is used by pg_migrator.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix case where <application>pg_ctl</> fast shutdown was not
-      working if <application>pg_ctl</> smart shutdown was already in
-      progress (Fujii Masao)
+      Fix <filename>contrib/xml2</>'s <function>xslt_process()</> to
+      properly handle the maximum number of parameters (twenty) (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix rare recovery error related to the creation of WAL entries (Tom)
+      Improve robustness of <application>libpq</>'s code to recover
+      from errors during <command>COPY FROM STDIN</> (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Re-add documentation for configure flag <literal>--no-readline</> (Andrew)
+      Avoid including conflicting readline and editline header files
+      when both libraries are installed (Zdenek Kotala)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix problem where Win32 shared memory allocation sometimes failed on
-      startup (Tsutomu Yamada, Magnus)
-     </para>
-
-     <para>
-      This bug caused some Win32 backends to randomly not start.
+      Work around gcc bug that causes <quote>floating-point exception</>
+      instead of <quote>division by zero</> on some platforms (Tom)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Improve performance when processing TOAST rows (Tom)
-     </para>
-
-     <para>
-      This is particularly useful for <ulink
-      url="http://postgis.refractions.net/">PostGIS</ulink>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Fix problem where expired rows could appear visible after a crash (Tom)
-     </para>
-
-     <para>
-      This bug involved a page status bit potentially not being set
-      correctly after a server crash.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Output configuration file errors to <filename>postmaster.log</> if the
-      server is started in silent mode (Tom)
-     </para>
-
-     <para>
-      Previously such error messages were discarded, leading to
-      difficulty in debugging.
+      Update time zone data files to <application>tzdata</> release 2009l
+      for DST law changes in Bangladesh, Egypt, Mauritius.
      </para>
     </listitem>
 
