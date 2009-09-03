@@ -1,5 +1,5 @@
 # <pre>
-# @(#)leapseconds	8.8
+# @(#)leapseconds	8.9
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -56,13 +56,13 @@ Leap	2008	Dec	31	23:59:60	+	S
 # SERVICE DE LA ROTATION TERRESTRE
 # OBSERVATOIRE DE PARIS
 # 61, Av. de l'Observatoire 75014 PARIS (France)
-# Tel.      : 33 (0) 1 40 51 22 29
+# Tel.      : 33 (0) 1 40 51 22 26
 # FAX       : 33 (0) 1 40 51 22 91
 # Internet  : services.iers@obspm.fr
 #
-# Paris, 15 January 2009
+# Paris, 4 July 2009
 #
-# Bulletin C 37
+# Bulletin C 38
 #
 # To authorities responsible
 # for the measurement and
@@ -70,7 +70,7 @@ Leap	2008	Dec	31	23:59:60	+	S
 #
 # INFORMATION ON UTC - TAI
 #
-# NO positive leap second will be introduced at the end of June 2009.
+# NO positive leap second will be introduced at the end of December 2009.
 # The difference between Coordinated Universal Time UTC and the
 # International Atomic Time TAI is :		
 #
@@ -82,6 +82,6 @@ Leap	2008	Dec	31	23:59:60	+	S
 # will be no time step at the next possible date.
 #
 # Daniel GAMBIS
-# Head			
-# Earth Orientation Center of the IERS
+# Director			
+# Earth Orientation Center of IERS
 # Observatoire de Paris, France
