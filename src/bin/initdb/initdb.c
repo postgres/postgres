@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.174 2009/09/02 02:40:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.175 2009/09/03 01:40:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1434,8 +1434,6 @@ get_set_pwd(void)
 
 	char	   *pwd1,
 			   *pwd2;
-	char		pwdpath[MAXPGPATH];
-	struct stat statbuf;
 
 	if (pwprompt)
 	{
@@ -1505,16 +1503,6 @@ get_set_pwd(void)
 	PG_CMD_CLOSE;
 
 	check_ok();
-
-	snprintf(pwdpath, sizeof(pwdpath), "%s/global/pg_auth", pg_data);
-	if (stat(pwdpath, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
-	{
-		fprintf(stderr,
-				_("%s: The password file was not generated. "
-				  "Please report this problem.\n"),
-				progname);
-		exit_nicely();
-	}
 }
 
 /*
