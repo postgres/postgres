@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.99 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.100 2009/09/03 22:11:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,10 +385,17 @@ incompatible_module_error(const char *libname,
  * Unload the specified dynamic-link library file, if it is loaded.
  *
  * Note: libname is expected to be an exact name for the library file.
+ *
+ * XXX for the moment, this is disabled, resulting in LOAD of an already-loaded
+ * library always being a no-op.  We might re-enable it someday if we can
+ * convince ourselves we have safe protocols for un-hooking from hook function
+ * pointers, releasing custom GUC variables, and perhaps other things that
+ * are definitely unsafe currently.
  */
 static void
 internal_unload_library(const char *libname)
 {
+#ifdef NOT_USED
 	DynamicFileList *file_scanner,
 			   *prv,
 			   *nxt;
@@ -436,6 +443,7 @@ internal_unload_library(const char *libname)
 		else
 			prv = file_scanner;
 	}
+#endif /* NOT_USED */
 }
 
 static bool

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/load.sgml,v 1.25 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/load.sgml,v 1.26 2009/09/03 22:11:07 tgl Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -11,7 +11,7 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/load.sgml,v 1.25 2008/11/14 10:22:47 petere 
 
  <refnamediv>
   <refname>LOAD</refname>
-  <refpurpose>load or reload a shared library file</refpurpose>
+  <refpurpose>load a shared library file</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-load">
@@ -29,13 +29,12 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
 
   <para>
    This command loads a shared library file into the <productname>PostgreSQL</>
-   server's address space.  If the file had been loaded previously,
-   it is first unloaded.  This command is primarily useful to unload
-   and reload a shared library file that has been changed since the
-   server first loaded it.  To make use of the shared library,
-   function(s) in it need to be declared using the <xref
-   linkend="sql-createfunction" endterm="sql-createfunction-title">
-   command.
+   server's address space.  If the file has been loaded already,
+   the command does nothing.  Shared library files that contain C functions
+   are automatically loaded whenever one of their functions is called.
+   Therefore, an explicit <command>LOAD</> is usually only needed to
+   load a library that modifies the server's behavior through <quote>hooks</>
+   rather than providing a set of functions.
   </para>
 
   <para>
