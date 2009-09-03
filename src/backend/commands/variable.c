@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.88.2.4 2008/01/03 21:25:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.88.2.5 2009/09/03 22:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -772,22 +772,6 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 	{
 		/* not a saved ID, so look it up */
 		HeapTuple	userTup;
-
-		if (InSecurityDefinerContext())
-		{
-			/*
-			 * Disallow SET SESSION AUTHORIZATION inside a security definer
-			 * context.  We need to do this because when we exit the context,
-			 * GUC won't be notified, leaving things out of sync.  Note that
-			 * this test is positioned so that restoring a previously saved
-			 * setting isn't prevented.
-			 */
-			if (interactive)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot set session authorization within security-definer function")));
-			return NULL;
-		}
 
 		if (!IsTransactionState())
 		{
