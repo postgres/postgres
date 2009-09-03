@@ -1,7 +1,7 @@
 # translation of psql-fr.po to FR_fr
 # French message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.4.2.8 2008/06/05 23:38:03 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.4.2.9 2009/09/03 18:49:04 petere Exp $
 #
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-74-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-14 17:20-0300\n"
-"PO-Revision-Date: 2008-03-28 22:30+0100\n"
+"POT-Creation-Date: 2009-09-02 23:23+0000\n"
+"PO-Revision-Date: 2009-09-03 17:51+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -44,7 +44,8 @@ msgstr "n'a pas pu obtenir le répertoire de l'utilisateur : %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s : n'a pas pu accéder au répertoire « %s » : %s\n"
 
-#: command.c:411 command.c:769
+#: command.c:411
+#: command.c:769
 msgid "no query buffer\n"
 msgstr "aucun tampon de requête\n"
 
@@ -53,8 +54,13 @@ msgstr "aucun tampon de requête\n"
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s : nom d'encodage invalide ou procédure de conversion introuvable\n"
 
-#: command.c:530 command.c:561 command.c:572 command.c:586 command.c:628
-#: command.c:749 command.c:778
+#: command.c:530
+#: command.c:561
+#: command.c:572
+#: command.c:586
+#: command.c:628
+#: command.c:749
+#: command.c:778
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s : argument requis manquant\n"
@@ -72,12 +78,21 @@ msgstr "Le tampon de requête a été effacé."
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Historique sauvegardé dans « %s ».\n"
 
-#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:338 describe.c:51
+#: command.c:692
+#: command.c:1149
+#: command.c:1246
+#: command.c:1964
+#: common.c:86
+#: copy.c:88
+#: copy.c:116
+#: mainloop.c:78
+#: mainloop.c:338
+#: describe.c:51
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
-#: command.c:707 command.c:754
+#: command.c:707
+#: command.c:754
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s : erreur\n"
@@ -90,9 +105,20 @@ msgstr "Chronométrage activé."
 msgid "Timing is off."
 msgstr "Chronométrage désactivé."
 
-#: command.c:793 command.c:813 command.c:1011 command.c:1024 command.c:1035
-#: command.c:1606 command.c:1619 command.c:1631 command.c:1644 command.c:1658
-#: command.c:1680 command.c:1710 common.c:135 copy.c:378
+#: command.c:793
+#: command.c:813
+#: command.c:1011
+#: command.c:1024
+#: command.c:1035
+#: command.c:1606
+#: command.c:1619
+#: command.c:1631
+#: command.c:1644
+#: command.c:1658
+#: command.c:1680
+#: command.c:1710
+#: common.c:135
+#: copy.c:378
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s : %s\n"
@@ -102,15 +128,24 @@ msgstr "%s : %s\n"
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s : argument « %s » supplémentaire ignoré\n"
 
-#: command.c:972 command.c:1000 command.c:1122
+#: command.c:972
+#: command.c:1000
+#: command.c:1122
 msgid "parse error at the end of line\n"
 msgstr "erreur d'analyse à la fin de la ligne\n"
 
-#: command.c:1351 command.c:1375 startup.c:177 startup.c:195
+#: command.c:1351
+#: command.c:1375
+#: startup.c:177
+#: startup.c:195
 msgid "Password: "
 msgstr "Mot de passe : "
 
-#: command.c:1389 common.c:181 common.c:352 common.c:406 common.c:653
+#: command.c:1389
+#: common.c:181
+#: common.c:352
+#: common.c:406
+#: common.c:653
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -277,7 +312,8 @@ msgstr "Échec.\n"
 msgid "Succeeded.\n"
 msgstr "Succès.\n"
 
-#: common.c:382 common.c:621
+#: common.c:382
+#: common.c:621
 msgid "You are currently not connected to a database.\n"
 msgstr "Vous n'êtes pas connecté à une base de données.\n"
 
@@ -335,10 +371,15 @@ msgstr "%s : ne peut pas copier à partir de/vers un répertoire\n"
 msgid "\\copy: %s"
 msgstr "\\copy : %s"
 
-#: copy.c:414 copy.c:426
+#: copy.c:414
+#: copy.c:426
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy : réponse inattendue (%d)\n"
+
+#: copy.c:430
+msgid "trying to exit copy mode"
+msgstr "tente de sortir du mode copy"
 
 #: help.c:48
 msgid "on"
@@ -940,8 +981,15 @@ msgstr "%s : la transaction en cours est abandonnée\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s : état de la transaction inconnu\n"
 
-#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
-#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
+#: large_obj.c:278
+#: describe.c:106
+#: describe.c:157
+#: describe.c:230
+#: describe.c:292
+#: describe.c:339
+#: describe.c:438
+#: describe.c:718
+#: describe.c:1345
 msgid "Description"
 msgstr "Description"
 
@@ -968,7 +1016,8 @@ msgstr "(1 ligne)"
 msgid "(%d rows)"
 msgstr "(%d lignes)"
 
-#: startup.c:132 startup.c:574
+#: startup.c:132
+#: startup.c:574
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : mémoire épuisée\n"
@@ -1013,7 +1062,8 @@ msgstr "%s : n'a pas pu effacer la variable « %s »\n"
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s : n'a pas pu initialiser la variable « %s »\n"
 
-#: startup.c:515 startup.c:521
+#: startup.c:515
+#: startup.c:521
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
@@ -1041,13 +1091,27 @@ msgstr ""
 "Connexion SSL (chiffrement : %s, bits : %i)\n"
 "\n"
 
-#: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:384
-#: describe.c:438 describe.c:1338 describe.c:1444 describe.c:1492
+#: describe.c:105
+#: describe.c:147
+#: describe.c:217
+#: describe.c:290
+#: describe.c:384
+#: describe.c:438
+#: describe.c:1338
+#: describe.c:1444
+#: describe.c:1492
 msgid "Schema"
 msgstr "Schéma"
 
-#: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:332
-#: describe.c:438 describe.c:1338 describe.c:1445 describe.c:1493
+#: describe.c:105
+#: describe.c:147
+#: describe.c:217
+#: describe.c:290
+#: describe.c:332
+#: describe.c:438
+#: describe.c:1338
+#: describe.c:1445
+#: describe.c:1493
 #: describe.c:1588
 msgid "Name"
 msgstr "Nom"
@@ -1072,7 +1136,10 @@ msgstr "Type de données du résultat"
 msgid "Argument data types"
 msgstr "Type de données des paramètres"
 
-#: describe.c:156 describe.c:332 describe.c:1340 describe.c:1589
+#: describe.c:156
+#: describe.c:332
+#: describe.c:1340
+#: describe.c:1589
 msgid "Owner"
 msgstr "Propriétaire"
 
@@ -1124,7 +1191,8 @@ msgstr "Encodage"
 msgid "List of databases"
 msgstr "Liste des bases de données"
 
-#: describe.c:384 describe.c:1355
+#: describe.c:384
+#: describe.c:1355
 msgid "Table"
 msgstr "Table"
 
@@ -1157,19 +1225,23 @@ msgstr "opérateur"
 msgid "data type"
 msgstr "type de données"
 
-#: describe.c:512 describe.c:1339
+#: describe.c:512
+#: describe.c:1339
 msgid "table"
 msgstr "table"
 
-#: describe.c:512 describe.c:1339
+#: describe.c:512
+#: describe.c:1339
 msgid "view"
 msgstr "vue"
 
-#: describe.c:512 describe.c:1339
+#: describe.c:512
+#: describe.c:1339
 msgid "index"
 msgstr "index"
 
-#: describe.c:512 describe.c:1339
+#: describe.c:512
+#: describe.c:1339
 msgid "sequence"
 msgstr "séquence"
 
@@ -1199,7 +1271,9 @@ msgstr "Aucune relation avec l'OID « %s » n'a été trouvée.\n"
 msgid "Column"
 msgstr "Colonne"
 
-#: describe.c:705 describe.c:1340 describe.c:1446
+#: describe.c:705
+#: describe.c:1340
+#: describe.c:1446
 msgid "Type"
 msgstr "Type"
 
@@ -1299,7 +1373,8 @@ msgstr " unique,"
 msgid "Check constraints:"
 msgstr "Contraintes de vérification :"
 
-#: describe.c:1124 describe.c:1139
+#: describe.c:1124
+#: describe.c:1139
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    « %s » %s"
@@ -1382,11 +1457,13 @@ msgstr "Source"
 msgid "Destination"
 msgstr "Destination"
 
-#: describe.c:1496 describe.c:1553
+#: describe.c:1496
+#: describe.c:1553
 msgid "yes"
 msgstr "oui"
 
-#: describe.c:1497 describe.c:1551
+#: describe.c:1497
+#: describe.c:1551
 msgid "no"
 msgstr "non"
 
@@ -1430,7 +1507,8 @@ msgstr "Liste des conversions explicites"
 msgid "List of schemas"
 msgstr "Liste des schémas"
 
-#: sql_help.h:25 sql_help.h:345
+#: sql_help.h:25
+#: sql_help.h:345
 msgid "abort the current transaction"
 msgstr "abandonner la transaction en cours"
 
@@ -1672,7 +1750,8 @@ msgstr "acquérir des statistiques concernant la base de données"
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ table [ (colonne [, ...] ) ] ]"
 
-#: sql_help.h:85 sql_help.h:377
+#: sql_help.h:85
+#: sql_help.h:377
 msgid "start a transaction block"
 msgstr "débuter un bloc de transaction"
 
@@ -1754,7 +1833,8 @@ msgstr ""
 "  VIEW nom_objet\n"
 "} IS 'commentaires'"
 
-#: sql_help.h:105 sql_help.h:285
+#: sql_help.h:105
+#: sql_help.h:285
 msgid "commit the current transaction"
 msgstr "valider la transaction en cours"
 
@@ -2141,7 +2221,8 @@ msgstr ""
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
-#: sql_help.h:177 sql_help.h:353
+#: sql_help.h:177
+#: sql_help.h:353
 msgid "create a new table from the results of a query"
 msgstr "créer une nouvelle table à partir des résultats d'une requête"
 
@@ -2899,3 +2980,4 @@ msgid ""
 msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (colonne [, ...] ) ] ]"
+

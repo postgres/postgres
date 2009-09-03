@@ -1,15 +1,15 @@
 # "pg_resetxlog" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002. - Fair & Simple Networks Ltda.
 # Roberto Mello <rmello@fslc.usu.edu>
-# Euler Taveira de Oliveira <euler@ufgnet.ufg.br>, 2003.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "POT-Creation-Date: 2003-12-21 19:10-0200\n"
 "PO-Revision-Date: 2004-01-07 11:37-0200\n"
-"Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov.br>\n"
+"Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
