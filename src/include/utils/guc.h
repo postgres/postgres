@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.103 2009/08/29 19:26:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.104 2009/09/03 22:08:05 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -145,6 +145,8 @@ typedef enum
 #define GUC_UNIT_S				0x2000	/* value is in seconds */
 #define GUC_UNIT_MIN			0x4000	/* value is in minutes */
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
+
+#define GUC_NOT_WHILE_SEC_DEF	0x8000	/* can't change inside sec-def func */
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;

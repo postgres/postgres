@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.514 2009/08/31 19:41:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.515 2009/09/03 22:08:05 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2321,7 +2321,7 @@ static struct config_string ConfigureNamesString[] =
 		{"role", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the current role."),
 			NULL,
-			GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF
 		},
 		&role_string,
 		"none", assign_role, show_role
@@ -2332,7 +2332,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the session user name."),
 			NULL,
-			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_DEF
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -4659,6 +4659,32 @@ set_config_option(const char *name, const char *value,
 		case PGC_USERSET:
 			/* always okay */
 			break;
+	}
+
+	/*
+	 * Disallow changing GUC_NOT_WHILE_SEC_DEF values if we are inside a
+	 * security-definer function.  We can reject this regardless of
+	 * the context or source, mainly because sources that it might be
+	 * reasonable to override for won't be seen while inside a function.
+	 *
+	 * Note: variables marked GUC_NOT_WHILE_SEC_DEF should probably be marked
+	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
+	 *
+	 * Note: this flag is currently used for "session_authorization" and
+	 * "role".  We need to prohibit this because when we exit the sec-def
+	 * context, GUC won't be notified, leaving things out of sync.
+	 *
+	 * XXX it would be nice to allow these cases in future, with the behavior
+	 * being that the SET's effects end when the security definer context is
+	 * exited.
+	 */
+	if ((record->flags & GUC_NOT_WHILE_SEC_DEF) && InSecurityDefinerContext())
+	{
+		ereport(elevel,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("cannot set parameter \"%s\" within security-definer function",
+						name)));
+		return false;
 	}
 
 	/*
