@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.19.4.1 2006/02/12 22:33:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.19.4.2 2009/09/03 22:08:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,8 @@ struct config_generic
 #define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
 #define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
 #define GUC_IS_NAME				0x0200	/* limit string to NAMEDATALEN-1 */
+
+#define GUC_NOT_WHILE_SEC_DEF	0x8000	/* can't change inside sec-def func */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
