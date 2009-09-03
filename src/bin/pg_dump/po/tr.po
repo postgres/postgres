@@ -6,9 +6,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-05 09:13-0400\n"
-"PO-Revision-Date: 2008-01-31 10:41-0800\n"
-"Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
+"POT-Creation-Date: 2009-08-15 21:47+0000\n"
+"PO-Revision-Date: 2009-08-17 01:39+0200\n"
+"Last-Translator: Devrim GÜNDÜZ <devrim@gunduz.org>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -237,18 +237,18 @@ msgid "  -s, --schema-only        dump only the schema, no data\n"
 msgstr "  -s, --schema-only        sadece şemayı dump et, veriyi etme\n"
 
 #: pg_dump.c:689
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in\n"
 "                           plain text format\n"
 msgstr ""
-"  -S, --superuser=NAME     düz metin biçiminde kullanılacak superuser\n"
-"                            kullanıcısının adı\n"
+"  -S, --superuser=AD     düz metin formatında kullanılacak superuser\n"
+"                           kullanıcı ADını belirt\n"
 
 #: pg_dump.c:691
-#, fuzzy, c-format
+#, c-format
 msgid "  -t, --table=TABLE        dump the named table only\n"
-msgstr "  -t, --table=TABLE        sadece bu tabloyu yedekle\n"
+msgstr "  -t, --table=TABLE        sadece verilen tabloyu yedekle\n"
 
 #: pg_dump.c:692
 #: pg_dumpall.c:374
@@ -360,9 +360,9 @@ msgid "dumping contents of table %s\n"
 msgstr "%s tablosunun içeriği aktarılıyor\n"
 
 #: pg_dump.c:910
-#, fuzzy, c-format
+#, c-format
 msgid "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n"
-msgstr "\"%s\" tablosunu içeriğinin aktarımı başarısız: PQgetCopyData() başarısız.\n"
+msgstr "\"%s\" tablosunun içeriğinin aktarımını yapan SQL komutu başarısız: PQendCopy() başarısız.\n"
 
 #: pg_dump.c:911
 #: pg_dump.c:8425
@@ -418,9 +418,9 @@ msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" şemasının sahibi geçersizdir\n"
 
 #: pg_dump.c:1647
-#, fuzzy, c-format
+#, c-format
 msgid "specified schema \"%s\" does not exist\n"
-msgstr "OID %u olan şema mevcut değil\n"
+msgstr "belirtilen\"%s\" şeması mevcut değil\n"
 
 #: pg_dump.c:1684
 #, c-format
@@ -458,9 +458,9 @@ msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" tablosunun sahibi geçersizdir\n"
 
 #: pg_dump.c:2697
-#, fuzzy, c-format
+#, c-format
 msgid "specified table \"%s\" does not exist\n"
-msgstr "OID %u olan şema mevcut değil\n"
+msgstr "belirtilen\"%s\" tablosu mevcut değil\n"
 
 #: pg_dump.c:2804
 #, c-format
@@ -760,23 +760,20 @@ msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
 msgstr "tutarlılık kontrolü başarısız, \"%2$s\" tablosunun (OID %3$u) üst OID %1$u bulunamadı\n"
 
 #: common.c:802
-#, fuzzy
 msgid "could not parse numeric array: too many numbers\n"
-msgstr "\"%s\" numerik dizisi ayrıştırılamadı: çok fazla sayı\n"
+msgstr "sayısal dizi ayrıştırılamadı: çok fazla sayı\n"
 
 #: common.c:817
-#, fuzzy
 msgid "could not parse numeric array: invalid character in number\n"
-msgstr "\"%s\" numerik dizisi ayrıştırılamadı: sayıda geçersiz karakter\n"
+msgstr "sayısal dizi ayrıştırılamadı: sayıda geçersiz karakter\n"
 
 #: pg_backup_archiver.c:42
 msgid "archiver"
 msgstr "arşivleyici"
 
 #: pg_backup_archiver.c:122
-#, fuzzy
 msgid "could not close output archive file\n"
-msgstr "arşiv dosyası kapatma hatası: %s\n"
+msgstr "çıktı arşivi kapatılamadı\n"
 
 #: pg_backup_archiver.c:147
 msgid "-C and -c are incompatible options\n"
@@ -816,9 +813,8 @@ msgid "connecting to new database \"%s\"\n"
 msgstr "\"%s\" veritabanına bağlanılıyor\n"
 
 #: pg_backup_archiver.c:298
-#, fuzzy
 msgid "cannot restore from compressed archive (not configured for compression support)\n"
-msgstr "sıkıştırılmış arşivden yükleme başarısız (bu kurulumda sıkıştırma desteklenmiyor)\n"
+msgstr "sıkıştırılmış arşivden yüklenemiyor (bu kurulumda sıkıştırma desteklenmiyor)\n"
 
 #: pg_backup_archiver.c:306
 #, c-format
@@ -920,18 +916,17 @@ msgid "could not write to large object (result: %lu, expected: %lu)\n"
 msgstr "large-object yazılamıyor (sonuç: %lu, beklenen: %lu)\n"
 
 #: pg_backup_archiver.c:1045
-#, fuzzy
 msgid "could not write to compressed archive\n"
-msgstr "kullanıcı tanımlı çıktı yordamına yazma hatası\n"
+msgstr "sıkıştırılmış arşive yazılamadı\n"
 
 #: pg_backup_archiver.c:1053
 msgid "could not write to custom output routine\n"
 msgstr "kullanıcı tanımlı çıktı yordamına yazma hatası\n"
 
 #: pg_backup_archiver.c:1068
-#, fuzzy, c-format
+#, c-format
 msgid "could not write to output file (%lu != %lu)\n"
-msgstr "çıktı dosyasına yazma başarısız: %s\n"
+msgstr "çıktı dosyasına yazılamadı (%lu != %lu)\n"
 
 #: pg_backup_archiver.c:1151
 msgid "Error while INITIALIZING:\n"
@@ -951,9 +946,9 @@ msgid "Error from TOC entry %d; %u %u %s %s %s\n"
 msgstr "TOC girişte hata %d; %u %u %s %s %s\n"
 
 #: pg_backup_archiver.c:1300
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected data offset flag %d\n"
-msgstr "neklenmeyen veri konum bayrağı %d\n"
+msgstr "Beklenmeyen veri konum bayrağı %d\n"
 
 #: pg_backup_archiver.c:1313
 msgid "file offset in dump file is too large\n"
@@ -1001,9 +996,9 @@ msgid "read %lu bytes into lookahead buffer\n"
 msgstr "ileri bakma art alanına %lu bayt okundu\n"
 
 #: pg_backup_archiver.c:1537
-#, fuzzy, c-format
+#, c-format
 msgid "could not close the input file after reading header: %s\n"
-msgstr "veri dosyası okunduktan sonra kapatılamadı\n"
+msgstr "başlık okunduktan sonra girdi dosyası kapatılamadı: %s\n"
 
 #: pg_backup_archiver.c:1554
 #, c-format
@@ -1082,9 +1077,9 @@ msgstr "özel arşiv uygulaması"
 
 #: pg_backup_custom.c:178
 #: pg_backup_custom.c:189
-#, fuzzy, c-format
+#, c-format
 msgid "could not open archive file \"%s\": %s\n"
-msgstr "\"%s\" giriş dosyası açılamadı: %s\n"
+msgstr "\"%s\" arşiv dosyası açılamadı: %s\n"
 
 #: pg_backup_custom.c:385
 #: pg_backup_null.c:148
@@ -1092,9 +1087,8 @@ msgid "invalid OID for large object\n"
 msgstr "large object için geçersiz OID\n"
 
 #: pg_backup_custom.c:441
-#, fuzzy
 msgid "Dumping a specific TOC data block out of order is not supported without ID on this input stream (fseek required)\n"
-msgstr "sıra dışı TOC veri blokun aktarılması, giriş akımında ID olmadan desteklenmemektedir (fseek() gerekir)\n"
+msgstr "sıra dışından TOC veri bloğunun aktarılması, giriş akımında ID olmadan desteklenmemektedir (fseek() gerekir)\n"
 
 #: pg_backup_custom.c:456
 #, c-format
@@ -1165,14 +1159,12 @@ msgid "could not compress data: %s\n"
 msgstr "veri sıkıştırılamadı: %s\n"
 
 #: pg_backup_custom.c:933
-#, fuzzy
 msgid "could not write compressed chunk\n"
-msgstr "veri sıkıştırılamadı: %s\n"
+msgstr "sıkıştırılmış parça yazılamadı\n"
 
 #: pg_backup_custom.c:947
-#, fuzzy
 msgid "could not write uncompressed chunk\n"
-msgstr "sıkıştırılmış veri açılamadı: %s\n"
+msgstr "sıkıştırılmamış parça yazılamadı\n"
 
 #: pg_backup_custom.c:993
 #, c-format
@@ -1246,30 +1238,25 @@ msgstr "\"%s\" veritabanına bağlantı başarısız oldu: %s"
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:299
+#: pg_backup_db.c:394
 #, c-format
-msgid "%s: no result from server\n"
-msgstr "%s: sunucudan sonuç gelmedi\n"
-
-#: pg_backup_db.c:392
-#, fuzzy, c-format
 msgid "error returned by PQputline: %s"
-msgstr "PQputCopyEnd'in döndürdüğü hata: %s"
+msgstr "PQputline'ın döndürdüğü hata: %s"
 
-#: pg_backup_db.c:404
-#, fuzzy, c-format
+#: pg_backup_db.c:406
+#, c-format
 msgid "error returned by PQendcopy: %s"
-msgstr "PQputCopyEnd'in döndürdüğü hata: %s"
+msgstr "PQendcopy'nin döndürdüğü hata: %s"
 
-#: pg_backup_db.c:444
+#: pg_backup_db.c:446
 msgid "could not execute query"
 msgstr "sorgu çalıştırılamadı"
 
-#: pg_backup_db.c:646
+#: pg_backup_db.c:648
 msgid "could not start database transaction"
 msgstr ";veritabanı transaction'u başlatılamadı"
 
-#: pg_backup_db.c:658
+#: pg_backup_db.c:660
 msgid "could not commit database transaction"
 msgstr "Veritabanı transaction'u commit edilemedi"
 
@@ -1288,18 +1275,16 @@ msgstr ""
 "  denenmemelidir. Dosyalar mecvut çalışma dizinine yazılacaktır.\n"
 
 #: pg_backup_files.c:246
-#, fuzzy
 msgid "could not open data file for output\n"
-msgstr "çıktı için TOC dosyası açılamadı: %s\n"
+msgstr "çıktı için veri dosyası açılamadı: %s\n"
 
 #: pg_backup_files.c:266
 msgid "could not close data file\n"
 msgstr "veri dosyası kapatılamadı\n"
 
 #: pg_backup_files.c:290
-#, fuzzy
 msgid "could not open data file for input\n"
-msgstr "girdi için TOC dosyası açılamadı: %s\n"
+msgstr "girdi için veri dosyası açılamadı: %s\n"
 
 #: pg_backup_files.c:299
 msgid "could not close data file after reading\n"
@@ -1332,9 +1317,8 @@ msgid "invalid OID for large object (%u)\n"
 msgstr "(%u) large objecti için geçersiz OID\n"
 
 #: pg_backup_files.c:512
-#, fuzzy
 msgid "could not open large object file\n"
-msgstr "large object dosyası kapatılamadı\n"
+msgstr "large object dosyası açılamadı\n"
 
 #: pg_backup_files.c:526
 msgid "could not close large object file\n"
@@ -1394,9 +1378,9 @@ msgid "requested %d bytes, got %d from lookahead and %d from file\n"
 msgstr "%d bayt istenildi, ileri bakıştan %d, dosyadan ise %d alındı\n"
 
 #: pg_backup_tar.c:575
-#, fuzzy, c-format
+#, c-format
 msgid "could not write to tar member (wrote %lu, attempted %lu)\n"
-msgstr "large-object yazılamıyor (sonuç: %lu, beklenen: %lu)\n"
+msgstr "tar üyesine yazılamıyor (yazılan: %lu, denenen: %lu)\n"
 
 #: pg_backup_tar.c:664
 #, c-format
@@ -1427,9 +1411,9 @@ msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
 msgstr "tar arşivine ekleme yapılırken yazma hatas oldu (yazılan %lu, denenen %lu)\n"
 
 #: pg_backup_tar.c:1084
-#, fuzzy, c-format
+#, c-format
 msgid "could not close tar member: %s\n"
-msgstr "tar öğesi kapatılamadı\n"
+msgstr "tar öğesi kapatılamadı: %s\n"
 
 #: pg_backup_tar.c:1094
 #, c-format
@@ -1487,9 +1471,8 @@ msgid "corrupt tar header found in %s (expected %d, computed %d) file position %
 msgstr "%s dosyasında bozuk tar başlığı (beklenen: %d, hesaplanan: %d) dosya pozisyonu %s\n"
 
 #: pg_backup_tar.c:1371
-#, fuzzy
 msgid "could not write tar header\n"
-msgstr "byte yazılamadı\n"
+msgstr "tar başlığı yazılamadı\n"
 
 #: pg_restore.c:286
 #, c-format
@@ -1827,6 +1810,8 @@ msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 
+#~ msgid "%s: no result from server\n"
+#~ msgstr "%s: sunucudan sonuç gelmedi\n"
 #~ msgid "%s: invalid -%c option\n"
 #~ msgstr "%s: geçersiz -%c seçeneği\n"
 #~ msgid "invalid client encoding \"%s\" specified\n"

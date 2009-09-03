@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-05 09:13-0400\n"
-"PO-Revision-Date: 2008-01-31 10:27-0800\n"
+"POT-Creation-Date: 2009-05-03 23:47+0000\n"
+"PO-Revision-Date: 2009-05-06 21:46+0200\n"
 "Last-Translator: Devrim GÜNDÜZ <devrim@commandprompt.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -25,22 +25,22 @@ msgid "%s: out of memory\n"
 msgstr "%s: yetersiz bellek\n"
 
 #: initdb.c:374
-#: initdb.c:1457
+#: initdb.c:1469
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: \"%s\"  dosyası, okunmak için açılamadı: %s\n"
 
 #: initdb.c:435
-#: initdb.c:1043
-#: initdb.c:1070
+#: initdb.c:1055
+#: initdb.c:1082
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: \"%s\" dosyası, yazılmak için açılamadı: %s\n"
 
 #: initdb.c:443
 #: initdb.c:451
-#: initdb.c:1050
-#: initdb.c:1076
+#: initdb.c:1062
+#: initdb.c:1088
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasına yazılamadı: %s\n"
@@ -85,17 +85,27 @@ msgstr ""
 "%s: root olarak çalıştırılamaz.\n"
 "(Örneğin \"su\" kullanarak ) sunucu sürecinin sahibi olacak şekilde sisteme yetkisiz bir kullanıcı olarak giriş yapın.\n"
 
-#: initdb.c:685
+#: initdb.c:648
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: mevcut kullanıcı hakkında bilgi alınamadı: %s\n"
+
+#: initdb.c:665
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: mevcut kullanıcının adı alınamadı: %s\n"
+
+#: initdb.c:697
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" geçerli bir dil kodlaması adı değil\n"
 
-#: initdb.c:841
+#: initdb.c:853
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
 msgstr "%s: uyarı: dil kodlaması uyuşmazlığı\n"
 
-#: initdb.c:843
+#: initdb.c:855
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the selected\n"
@@ -110,12 +120,12 @@ msgstr ""
 "%s komutunu yeniden çalıştırın ve de ya kodlama belirtmeyin\n"
 "ya da eşleştirilebilir bir kodlama seçin.\n"
 
-#: initdb.c:984
+#: initdb.c:996
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: \"%s\" dizini oluşturma başarısız: %s\n"
 
-#: initdb.c:1012
+#: initdb.c:1024
 #, c-format
 msgid ""
 "%s: file \"%s\" does not exist\n"
@@ -126,26 +136,26 @@ msgstr ""
 "Bu ileti, bozulmus bir kurulumunuz olduğu ya da\n"
 "initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir..\n"
 
-#: initdb.c:1094
+#: initdb.c:1106
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "ön tanımlı max_connections seçiliyor ... "
 
-#: initdb.c:1130
+#: initdb.c:1142
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "ön tanımlı shared_buffers seçiliyor ... "
 
-#: initdb.c:1163
+#: initdb.c:1175
 msgid "creating configuration files ... "
 msgstr "yapılandırma dosyaları yaratılıyor ... "
 
-#: initdb.c:1302
+#: initdb.c:1314
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "%s/base/1 içinde template1 veritabanı yaratılıyor."
 
-#: initdb.c:1318
+#: initdb.c:1330
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -154,99 +164,99 @@ msgstr ""
 "%s: \"%s\" girdi dosyası PostgreSQL'e ait değil %s\n"
 "Kurulumunuzu kontrol edin ya da -L seçeneği ile doğru dizini belirtin.\n"
 
-#: initdb.c:1396
+#: initdb.c:1408
 msgid "initializing pg_authid ... "
 msgstr "pg_authid ilklendiriliyor ... "
 
-#: initdb.c:1432
+#: initdb.c:1444
 msgid "Enter new superuser password: "
 msgstr "Yeni superuser şifresini giriniz: "
 
-#: initdb.c:1433
+#: initdb.c:1445
 msgid "Enter it again: "
 msgstr "Yeniden giriniz: "
 
-#: initdb.c:1436
+#: initdb.c:1448
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Şifreler uyuşmadı.\n"
 
-#: initdb.c:1463
+#: initdb.c:1475
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasından şifre okunamadı: %s\n"
 
-#: initdb.c:1476
+#: initdb.c:1488
 #, c-format
 msgid "setting password ... "
 msgstr "şifre ayarlanıyor ... "
 
-#: initdb.c:1497
+#: initdb.c:1509
 #, c-format
 msgid "%s: The password file was not generated. Please report this problem.\n"
 msgstr "%s: Şifre dosyası üretilemedi. Lütfen bu hatayı bildiriniz.\n"
 
-#: initdb.c:1524
+#: initdb.c:1536
 msgid "enabling unlimited row size for system tables ... "
 msgstr "Sistem tabloları için sınırsız satır sayısı etkinleştiriliyor ... "
 
-#: initdb.c:1604
+#: initdb.c:1616
 msgid "initializing dependencies ... "
 msgstr "bağlılıklar ilklendiriliyor ... "
 
-#: initdb.c:1632
+#: initdb.c:1644
 msgid "creating system views ... "
 msgstr "sistem viewları yaratılıyor ... "
 
-#: initdb.c:1668
+#: initdb.c:1680
 msgid "loading pg_description ... "
 msgstr "pg_description yükleniyor ... "
 
-#: initdb.c:1707
+#: initdb.c:1719
 msgid "creating conversions ... "
 msgstr "dönüşümler yükleniyor ... "
 
-#: initdb.c:1758
+#: initdb.c:1770
 msgid "setting privileges on built-in objects ... "
 msgstr "gömülü nesnelerdeki izinler ayarlanıyor ... "
 
-#: initdb.c:1816
+#: initdb.c:1828
 msgid "creating information schema ... "
 msgstr "information schema yaratılıyor ... "
 
-#: initdb.c:1872
+#: initdb.c:1884
 msgid "vacuuming database template1 ... "
 msgstr "template1 veritabanı vakumlanıyor ... "
 
-#: initdb.c:1926
+#: initdb.c:1938
 msgid "copying template1 to template0 ... "
 msgstr "template1 template0'a kopyalanıyor ... "
 
-#: initdb.c:1957
+#: initdb.c:1969
 msgid "copying template1 to postgres ... "
 msgstr "template1, postgres'e kopyalanıyor ... "
 
-#: initdb.c:2014
+#: initdb.c:2026
 #, c-format
 msgid "caught signal\n"
 msgstr "sinyal yakalandı\n"
 
-#: initdb.c:2020
+#: initdb.c:2032
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "çocuk sürece yazılamadı: %s\n"
 
-#: initdb.c:2028
+#: initdb.c:2040
 #, c-format
 msgid "ok\n"
 msgstr "tamam\n"
 
-#: initdb.c:2085
+#: initdb.c:2097
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: geçersiz yerel adı \"%s\"\n"
 
-#: initdb.c:2151
+#: initdb.c:2163
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -255,17 +265,17 @@ msgstr ""
 "%sbir PostgreSQL Veritabanı kümesini ilklendirir.\n"
 "\n"
 
-#: initdb.c:2152
+#: initdb.c:2164
 #, c-format
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
 
-#: initdb.c:2153
+#: initdb.c:2165
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [SEÇENEK]... [DATADIR]\n"
 
-#: initdb.c:2154
+#: initdb.c:2166
 #, c-format
 msgid ""
 "\n"
@@ -274,22 +284,22 @@ msgstr ""
 "\n"
 "Seçenekler:\n"
 
-#: initdb.c:2155
+#: initdb.c:2167
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr "[-D, --pgdata=]DATADIR     bu veritabanı kümesi için yer\n"
 
-#: initdb.c:2156
+#: initdb.c:2168
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=ENCODING   yeni veritabanları için öntanımlı dil kodlamasını ayarlar\n"
 
-#: initdb.c:2157
+#: initdb.c:2169
 #, c-format
 msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
 msgstr "  --locale=LOCALE           veritabanı kümesini verilen yerel ile ilklendirir\n"
 
-#: initdb.c:2158
+#: initdb.c:2170
 #, c-format
 msgid ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
@@ -304,42 +314,42 @@ msgstr ""
 "                            verilen yerelde ilklendirir.\n"
 "                            ön tanımlı bilgi çevresel bigilerden alınmıştır)\n"
 
-#: initdb.c:2163
+#: initdb.c:2175
 #, c-format
 msgid "  --no-locale               equivalent to --locale=C\n"
 msgstr "  --no-locale               --locale=C'ye eşdeğer\n"
 
-#: initdb.c:2164
+#: initdb.c:2176
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METHOD         yerel bağlantılar için ön tanımlı yetkilendirme yöntemi\n"
 
-#: initdb.c:2165
+#: initdb.c:2177
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       veritabanı superuser kullanıcısı adı\n"
 
-#: initdb.c:2166
+#: initdb.c:2178
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            yeni superuser için şifre sorar\n"
 
-#: initdb.c:2167
+#: initdb.c:2179
 #, c-format
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr "  --pwfile=DOSYA_ADI         yeni superuser için şifreyi belirtilen dosyadan okur\n"
 
-#: initdb.c:2168
+#: initdb.c:2180
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                bu yardımı gösterir ve sonra çıkar\n"
 
-#: initdb.c:2169
+#: initdb.c:2181
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             sürüm bilgisini gösterir ve sonra çıkar\n"
 
-#: initdb.c:2170
+#: initdb.c:2182
 #, c-format
 msgid ""
 "\n"
@@ -348,27 +358,27 @@ msgstr ""
 "\n"
 "Daha az kullanılan seçenekler:\n"
 
-#: initdb.c:2171
+#: initdb.c:2183
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               bol miktarda debug çıktısı üretir\n"
 
-#: initdb.c:2172
+#: initdb.c:2184
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                dahili ayarları gösterir\n"
 
-#: initdb.c:2173
+#: initdb.c:2185
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              girdi dosyalarının nerede bulunacağını belirtir\n"
 
-#: initdb.c:2174
+#: initdb.c:2186
 #, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean             hatalardan sonra temizlik yapma\n"
 
-#: initdb.c:2175
+#: initdb.c:2187
 #, c-format
 msgid ""
 "\n"
@@ -378,7 +388,7 @@ msgstr ""
 "\n"
 "Eğer veri dizini belirtilmezse, PGDATA çevresel değişkeni kullanılacaktır\n"
 
-#: initdb.c:2177
+#: initdb.c:2189
 #, c-format
 msgid ""
 "\n"
@@ -387,34 +397,34 @@ msgstr ""
 "\n"
 "Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
 
-#: initdb.c:2274
+#: initdb.c:2286
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Debug modunda çalışıyor.\n"
 
-#: initdb.c:2278
+#: initdb.c:2290
 #, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "noclean modunda çalışıyor.  Hatalar silinmeyecek.\n"
 
-#: initdb.c:2315
-#: initdb.c:2332
-#: initdb.c:2551
+#: initdb.c:2327
+#: initdb.c:2344
+#: initdb.c:2563
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Ayrıntılı bilgi için  \"%s --help\" komutunu deneyebilirsiniz.\n"
 
-#: initdb.c:2330
+#: initdb.c:2342
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: Çok fazla komut satırı girdisi var (ilki \"%s\")\n"
 
-#: initdb.c:2338
+#: initdb.c:2350
 #, c-format
 msgid "%s: password prompt and password file may not be specified together\n"
 msgstr "%s: Şifre promptu ve şifre dosyası birlikte belirtilemez\n"
 
-#: initdb.c:2344
+#: initdb.c:2356
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -426,17 +436,17 @@ msgstr ""
 "Bunu, pg_hba.conf dosyasını düzenleyerek ya da  initdb'yi yeniden \n"
 " çalıştırdığınızda -A parametresi ile değiştirebilirsiniz..\n"
 
-#: initdb.c:2367
+#: initdb.c:2379
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
 msgstr "%s: bilinmeyen yetkilendirme yöntemi\"%s\".\n"
 
-#: initdb.c:2377
+#: initdb.c:2389
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr "%s: %s yetkilendirmesini etkinleştirmek için superuser'a şifre atamanız gerekmektedir.\n"
 
-#: initdb.c:2392
+#: initdb.c:2404
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -448,7 +458,7 @@ msgstr ""
 "Bu veritabanı sistemi için verinin hangi dizinde duracağını belirtmeniz gerekmektedir.\n"
 "Bunu ya -D seçeneği ile ya da PGDATA çevresel değişkeni ile yapabilirsiniz.\n"
 
-#: initdb.c:2424
+#: initdb.c:2436
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -459,7 +469,7 @@ msgstr ""
 "ile aynı dizinde bulunamadı.\n"
 "Kurulumunuzu kontrol ediniz.\n"
 
-#: initdb.c:2431
+#: initdb.c:2443
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -470,17 +480,17 @@ msgstr ""
 "ile aynı sürüm numarasına sahip değil.\n"
 "Kurulumunuzu kontrol ediniz.\n"
 
-#: initdb.c:2450
+#: initdb.c:2462
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: girdi dosyasının yeri mutlak bir yol olmalıdır\n"
 
-#: initdb.c:2458
+#: initdb.c:2470
 #, c-format
 msgid "%s: could not determine valid short version string\n"
 msgstr "%s: geçerli bir kısa sürüm katarı belirlenemedi\n"
 
-#: initdb.c:2511
+#: initdb.c:2523
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -491,12 +501,12 @@ msgstr ""
 "Bu kullanıcı aynı zamanda sunucu sürecinin de sahibi olmalıdır.\n"
 "\n"
 
-#: initdb.c:2521
+#: initdb.c:2533
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr "Veritabanı kümesi %s yereli ile ilklendirilecek.\n"
 
-#: initdb.c:2524
+#: initdb.c:2536
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -515,37 +525,37 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2549
+#: initdb.c:2561
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
 msgstr "%s: \"%s\" yereli için uygun dil kodlaması bulunamadı.\n"
 
-#: initdb.c:2550
+#: initdb.c:2562
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "%s komutunu -E seçeneği ile yeniden çalıştırın.\n"
 
-#: initdb.c:2557
+#: initdb.c:2569
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr "Öntanımlı veritabanı dil kodlaması %s olarak ayarlandı.\n"
 
-#: initdb.c:2597
+#: initdb.c:2609
 #, c-format
 msgid "creating directory %s ... "
 msgstr "%s dizini yaratılıyor... "
 
-#: initdb.c:2611
+#: initdb.c:2623
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "mevcut %s dizininin izinleri düzeltiliyor..."
 
-#: initdb.c:2617
+#: initdb.c:2629
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: \"%s\" dizininin erişim haklarını değiştirilemiyor: %s\n"
 
-#: initdb.c:2630
+#: initdb.c:2642
 #, c-format
 msgid ""
 "%s: directory \"%s\" exists but is not empty\n"
@@ -558,17 +568,17 @@ msgstr ""
 "ya silin ya da taşıyın; ya da %s komutunu \n"
 "\"%s\" argümanınından farklı bir argümanla çalıştırın.\n"
 
-#: initdb.c:2639
+#: initdb.c:2651
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: \"%s\" dizine erişim hatası: %s\n"
 
-#: initdb.c:2648
+#: initdb.c:2660
 #, c-format
 msgid "creating directory %s/%s ... "
 msgstr "%s/%s dizini yaratılıyor... "
 
-#: initdb.c:2717
+#: initdb.c:2729
 #, c-format
 msgid ""
 "\n"

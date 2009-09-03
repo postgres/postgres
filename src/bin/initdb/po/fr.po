@@ -1,7 +1,7 @@
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.9.2.2 2008/06/05 23:37:15 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.9.2.3 2009/09/03 19:08:56 petere Exp $
 #
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-81-fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-14 17:20-0300\n"
-"PO-Revision-Date: 2008-03-28 22:30+0100\n"
+"POT-Creation-Date: 2009-06-05 21:46+0000\n"
+"PO-Revision-Date: 2009-06-09 19:55+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team:  <pgsql-fr-generale@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,22 +19,29 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.10.2\n"
 
-#: initdb.c:251 initdb.c:265
+#: initdb.c:251
+#: initdb.c:265
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : mémoire épuisée\n"
 
-#: initdb.c:374 initdb.c:1457
+#: initdb.c:374
+#: initdb.c:1469
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
 
-#: initdb.c:435 initdb.c:1043 initdb.c:1070
+#: initdb.c:435
+#: initdb.c:1055
+#: initdb.c:1082
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s : n'a pas pu ouvrir le fichier « %s » en écriture : %s\n"
 
-#: initdb.c:443 initdb.c:451 initdb.c:1050 initdb.c:1076
+#: initdb.c:443
+#: initdb.c:451
+#: initdb.c:1062
+#: initdb.c:1088
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire le fichier « %s » : %s\n"
@@ -80,17 +87,27 @@ msgstr ""
 "Connectez-vous (par exemple en utilisant « su ») sous l'utilisateur (non\n"
 " privilégié) qui sera propriétaire du processus serveur.\n"
 
-#: initdb.c:685
+#: initdb.c:648
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s : n'a pas pu obtenir d'informations sur l'utilisateur actuel : %s\n"
+
+#: initdb.c:665
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s : n'a pas pu obtenir le nom de l'utilisateur actuel : %s\n"
+
+#: initdb.c:697
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s : « %s » n'est pas un nom d'encodage serveur valide\n"
 
-#: initdb.c:841
+#: initdb.c:853
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
 msgstr "%s : attention : encodage différent\n"
 
-#: initdb.c:843
+#: initdb.c:855
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the selected\n"
@@ -106,12 +123,12 @@ msgstr ""
 "de nouveau %s et soit vous ne spécifiez pas d'encodage explicitement, soit\n"
 "vous choisissez une combinaison fonctionnelle.\n"
 
-#: initdb.c:984
+#: initdb.c:996
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le répertoire « %s » : %s\n"
 
-#: initdb.c:1012
+#: initdb.c:1024
 #, c-format
 msgid ""
 "%s: file \"%s\" does not exist\n"
@@ -122,26 +139,26 @@ msgstr ""
 "Cela signifie que votre installation est corrompue ou que vous avez\n"
 "identifié le mauvais répertoire avec l'option -L.\n"
 
-#: initdb.c:1094
+#: initdb.c:1106
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "sélection de la valeur par défaut de max_connections... "
 
-#: initdb.c:1130
+#: initdb.c:1142
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "sélection de la valeur par défaut de shared_buffers... "
 
-#: initdb.c:1163
+#: initdb.c:1175
 msgid "creating configuration files ... "
 msgstr "création des fichiers de configuration... "
 
-#: initdb.c:1302
+#: initdb.c:1314
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "création de la base de données template1 dans %s/base/1... "
 
-#: initdb.c:1318
+#: initdb.c:1330
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -150,101 +167,101 @@ msgstr ""
 "%s : le fichier « %s » n'appartient pas à PostgreSQL %s\n"
 "Vérifiez votre installation ou indiquez le bon chemin avec l'option -L.\n"
 
-#: initdb.c:1396
+#: initdb.c:1408
 msgid "initializing pg_authid ... "
 msgstr "initialisation de pg_authid... "
 
-#: initdb.c:1432
+#: initdb.c:1444
 msgid "Enter new superuser password: "
 msgstr "Saisissez le nouveau mot de passe du super-utilisateur : "
 
-#: initdb.c:1433
+#: initdb.c:1445
 msgid "Enter it again: "
 msgstr "Saisissez-le à nouveau : "
 
-#: initdb.c:1436
+#: initdb.c:1448
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Les mots de passe ne sont pas identiques.\n"
 
-#: initdb.c:1463
+#: initdb.c:1475
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s : n'a pas pu lire le mot de passe à partir du fichier « %s » : %s\n"
 
-#: initdb.c:1476
+#: initdb.c:1488
 #, c-format
 msgid "setting password ... "
 msgstr "initialisation du mot de passe... "
 
-#: initdb.c:1497
+#: initdb.c:1509
 #, c-format
 msgid "%s: The password file was not generated. Please report this problem.\n"
 msgstr ""
 "%s : le fichier de mots de passe n'a pas été créé.\n"
 "Merci de rapporter ce problème.\n"
 
-#: initdb.c:1524
+#: initdb.c:1536
 msgid "enabling unlimited row size for system tables ... "
 msgstr "activation de la taille illimitée des lignes pour les tables systèmes... "
 
-#: initdb.c:1604
+#: initdb.c:1616
 msgid "initializing dependencies ... "
 msgstr "initialisation des dépendances... "
 
-#: initdb.c:1632
+#: initdb.c:1644
 msgid "creating system views ... "
 msgstr "création des vues système... "
 
-#: initdb.c:1668
+#: initdb.c:1680
 msgid "loading pg_description ... "
 msgstr "chargement de pg_description... "
 
-#: initdb.c:1707
+#: initdb.c:1719
 msgid "creating conversions ... "
 msgstr "création des conversions... "
 
-#: initdb.c:1758
+#: initdb.c:1770
 msgid "setting privileges on built-in objects ... "
 msgstr "initialisation des droits sur les objets internes... "
 
-#: initdb.c:1816
+#: initdb.c:1828
 msgid "creating information schema ... "
 msgstr "création du schéma d'informations... "
 
-#: initdb.c:1872
+#: initdb.c:1884
 msgid "vacuuming database template1 ... "
 msgstr "lancement du vacuum sur la base de données template1... "
 
-#: initdb.c:1926
+#: initdb.c:1938
 msgid "copying template1 to template0 ... "
 msgstr "copie de template1 vers template0... "
 
-#: initdb.c:1957
+#: initdb.c:1969
 msgid "copying template1 to postgres ... "
 msgstr "copie de template1 vers postgres... "
 
-#: initdb.c:2014
+#: initdb.c:2026
 #, c-format
 msgid "caught signal\n"
 msgstr "signal reçu\n"
 
-#: initdb.c:2020
+#: initdb.c:2032
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "n'a pas pu écrire au processus fils : %s\n"
 
-#: initdb.c:2028
+#: initdb.c:2040
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2085
+#: initdb.c:2097
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s : nom de locale invalide (« %s »)\n"
 
-#: initdb.c:2151
+#: initdb.c:2163
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -253,17 +270,17 @@ msgstr ""
 "%s initialise un cluster PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2152
+#: initdb.c:2164
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: initdb.c:2153
+#: initdb.c:2165
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPTION]... [RÉP_DONNÉES]\n"
 
-#: initdb.c:2154
+#: initdb.c:2166
 #, c-format
 msgid ""
 "\n"
@@ -272,24 +289,24 @@ msgstr ""
 "\n"
 "Options :\n"
 
-#: initdb.c:2155
+#: initdb.c:2167
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]RÉP_DONNÉES  emplacement du cluster\n"
 
-#: initdb.c:2156
+#: initdb.c:2168
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr ""
 "  -E, --encoding=ENCODAGE    initialise l'encodage par défaut des nouvelles\n"
 "                             bases de données\n"
 
-#: initdb.c:2157
+#: initdb.c:2169
 #, c-format
 msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
 msgstr "  --locale=LOCALE            initialise le cluster avec la locale indiquée\n"
 
-#: initdb.c:2158
+#: initdb.c:2170
 #, c-format
 msgid ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
@@ -304,48 +321,48 @@ msgstr ""
 "                             dans la catégorie respective\n"
 "                             (prise, par défaut, dans l'environnement)\n"
 
-#: initdb.c:2163
+#: initdb.c:2175
 #, c-format
 msgid "  --no-locale               equivalent to --locale=C\n"
 msgstr "  --no-locale                équivalent à --locale=C\n"
 
-#: initdb.c:2164
+#: initdb.c:2176
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr ""
 "  -A, --auth=MÉTHODE         méthode d'authentification par défaut pour les\n"
 "                             connexions locales\n"
 
-#: initdb.c:2165
+#: initdb.c:2177
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NOM         nom du super-utilisateur de la base de données\n"
 
-#: initdb.c:2166
+#: initdb.c:2178
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr ""
 "  -W, --pwprompt             demande un mot de passe pour le nouveau\n"
 "                             super-utilisateur\n"
 
-#: initdb.c:2167
+#: initdb.c:2179
 #, c-format
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr ""
 "  --pwfile=nomfichier        lit le mot de passe du nouveau\n"
 "                             super-utilisateur à partir de ce fichier\n"
 
-#: initdb.c:2168
+#: initdb.c:2180
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                 affiche cette aide puis quitte\n"
 
-#: initdb.c:2169
+#: initdb.c:2181
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version              affiche la version puis quitte\n"
 
-#: initdb.c:2170
+#: initdb.c:2182
 #, c-format
 msgid ""
 "\n"
@@ -354,29 +371,29 @@ msgstr ""
 "\n"
 "Options moins utilisées :\n"
 
-#: initdb.c:2171
+#: initdb.c:2183
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug                engendre un grand nombre de traces de débogage\n"
 
-#: initdb.c:2172
+#: initdb.c:2184
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                 affiche la configuration interne\n"
 
-#: initdb.c:2173
+#: initdb.c:2185
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr ""
 "  -L RÉPERTOIRE              indique où trouver les fichiers servant à la\n"
 "                             création du cluster\n"
 
-#: initdb.c:2174
+#: initdb.c:2186
 #, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean              ne nettoie pas en cas d'erreur\n"
 
-#: initdb.c:2175
+#: initdb.c:2187
 #, c-format
 msgid ""
 "\n"
@@ -387,7 +404,7 @@ msgstr ""
 "Si le répertoire des données n'est pas indiqué, la variable d'environnement\n"
 "PGDATA est utilisée.\n"
 
-#: initdb.c:2177
+#: initdb.c:2189
 #, c-format
 msgid ""
 "\n"
@@ -396,34 +413,36 @@ msgstr ""
 "\n"
 "Rapportez les bogues à <pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2274
+#: initdb.c:2286
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Lancé en mode débogage.\n"
 
-#: initdb.c:2278
+#: initdb.c:2290
 #, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Lancé en mode « sans nettoyage ». Les erreurs ne seront pas supprimées.\n"
 
-#: initdb.c:2315 initdb.c:2332 initdb.c:2551
+#: initdb.c:2327
+#: initdb.c:2344
+#: initdb.c:2563
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: initdb.c:2330
+#: initdb.c:2342
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 
-#: initdb.c:2338
+#: initdb.c:2350
 #, c-format
 msgid "%s: password prompt and password file may not be specified together\n"
 msgstr ""
 "%s : les options d'invite du mot de passe et de fichier de mot de passe ne\n"
 "peuvent pas être spécifiées en même temps\n"
 
-#: initdb.c:2344
+#: initdb.c:2356
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -436,19 +455,19 @@ msgstr ""
 "Vous pouvez modifier ceci en éditant pg_hba.conf ou en utilisant l'option -A\n"
 "au prochain lancement d'initdb.\n"
 
-#: initdb.c:2367
+#: initdb.c:2379
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
 msgstr "%s : méthode d'authentification « %s » inconnue.\n"
 
-#: initdb.c:2377
+#: initdb.c:2389
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr ""
 "%s : vous devez indiquer un mot de passe pour le super-utilisateur pour\n"
 "activer l'authentification %s\n"
 
-#: initdb.c:2392
+#: initdb.c:2404
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -461,7 +480,7 @@ msgstr ""
 "système de bases de données. Faites-le soit avec l'option -D soit en\n"
 "initialisant la variable d'environnement PGDATA.\n"
 
-#: initdb.c:2424
+#: initdb.c:2436
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -472,7 +491,7 @@ msgstr ""
 "le même répertoire que « %s ».\n"
 "Vérifiez votre installation.\n"
 
-#: initdb.c:2431
+#: initdb.c:2443
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -483,19 +502,19 @@ msgstr ""
 "version que « %s ».\n"
 "Vérifiez votre installation.\n"
 
-#: initdb.c:2450
+#: initdb.c:2462
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr ""
 "%s : l'emplacement du fichier d'entrées doit être indiqué avec un chemin\n"
 "absolu\n"
 
-#: initdb.c:2458
+#: initdb.c:2470
 #, c-format
 msgid "%s: could not determine valid short version string\n"
 msgstr "%s : n'a pas pu déterminer une chaîne de version courte valide\n"
 
-#: initdb.c:2511
+#: initdb.c:2523
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -506,12 +525,12 @@ msgstr ""
 "Le processus serveur doit également lui appartenir.\n"
 "\n"
 
-#: initdb.c:2521
+#: initdb.c:2533
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr "Le cluster sera initialisé avec la locale %s.\n"
 
-#: initdb.c:2524
+#: initdb.c:2536
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -530,39 +549,39 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2549
+#: initdb.c:2561
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
 msgstr "%s : impossible de trouver l'encodage adéquat pour la locale « %s »\n"
 
-#: initdb.c:2550
+#: initdb.c:2562
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Relancez %s avec l'option -E.\n"
 
-#: initdb.c:2557
+#: initdb.c:2569
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr ""
 "L'encodage par défaut des bases de données a été configuré en conséquence\n"
 "avec %s.\n"
 
-#: initdb.c:2597
+#: initdb.c:2609
 #, c-format
 msgid "creating directory %s ... "
 msgstr "création du répertoire %s... "
 
-#: initdb.c:2611
+#: initdb.c:2623
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "correction des droits sur le répertoire existant %s... "
 
-#: initdb.c:2617
+#: initdb.c:2629
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu modifier les droits du répertoire « %s » : %s\n"
 
-#: initdb.c:2630
+#: initdb.c:2642
 #, c-format
 msgid ""
 "%s: directory \"%s\" exists but is not empty\n"
@@ -575,17 +594,17 @@ msgstr ""
 "soit vous supprimez ou videz le répertoire « %s »,\n"
 "soit vous exécutez %s avec un argument autre que « %s ».\n"
 
-#: initdb.c:2639
+#: initdb.c:2651
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu accéder au répertoire « %s » : %s\n"
 
-#: initdb.c:2648
+#: initdb.c:2660
 #, c-format
 msgid "creating directory %s/%s ... "
 msgstr "création du répertoire %s/%s... "
 
-#: initdb.c:2717
+#: initdb.c:2729
 #, c-format
 msgid ""
 "\n"
@@ -604,7 +623,9 @@ msgstr ""
 "    %s%s%spg_ctl%s -D %s%s%s -l journaltrace start\n"
 "\n"
 
-#: ../../port/dirmod.c:75 ../../port/dirmod.c:88 ../../port/dirmod.c:101
+#: ../../port/dirmod.c:75
+#: ../../port/dirmod.c:88
+#: ../../port/dirmod.c:101
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
@@ -649,7 +670,9 @@ msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "n'a pas pu supprimer le fichier ou répertoire « %s » : %s\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "n'a pas pu identifier le répertoire courant : %s"
@@ -669,7 +692,8 @@ msgstr "n'a pas pu lire le binaire « %s »"
 msgid "could not find a \"%s\" to execute"
 msgstr "n'a pas pu trouver un « %s » à exécuter"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "n'a pas pu accéder au répertoire « %s »"
@@ -693,3 +717,4 @@ msgstr "le processus fils a été terminé par le signal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
+

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-15 19:33+0000\n"
-"PO-Revision-Date: 2009-01-16 00:42+0200\n"
+"POT-Creation-Date: 2009-09-02 07:46+0000\n"
+"PO-Revision-Date: 2009-09-02 16:27+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -93,7 +93,7 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:809 command.c:829 command.c:1223 command.c:1230 command.c:1240
 #: command.c:1252 command.c:1265 command.c:1279 command.c:1301 command.c:1333
-#: common.c:168 copy.c:535 copy.c:592
+#: common.c:168 copy.c:535 copy.c:595
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -382,7 +382,11 @@ msgstr "\\copy: %s"
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: unerwartete Antwort (%d)\n"
 
-#: copy.c:685
+#: copy.c:587
+msgid "trying to exit copy mode"
+msgstr "versuche, den COPY-Modus zu verlassen"
+
+#: copy.c:688
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."

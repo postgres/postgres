@@ -1,15 +1,14 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <eulerto@yahoo.com.br>, 2003, 2004, 2005.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-02 10:26-0200\n"
+"POT-Creation-Date: 2009-05-20 15:58-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
-"Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
-"Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
-"postgresql.org.br>\n"
+"Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -39,7 +38,7 @@ msgstr "não pôde alternar para diretório base do usuário: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: não pôde mudar diretório para \"%s\": %s\n"
 
-#: command.c:389 command.c:782
+#: command.c:389 command.c:781
 msgid "no query buffer\n"
 msgstr "nenhum buffer de consulta\n"
 
@@ -51,7 +50,7 @@ msgstr ""
 "encontrado\n"
 
 #: command.c:520 command.c:554 command.c:568 command.c:585 command.c:631
-#: command.c:762 command.c:793
+#: command.c:761 command.c:792
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: faltando argumento requerido\n"
@@ -64,195 +63,200 @@ msgstr "Buffer de consulta está vazio."
 msgid "Query buffer reset (cleared)."
 msgstr "Buffer de consulta reiniciado (limpo)."
 
-#: command.c:665
+#: command.c:664
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s/%s\".\n"
 
-#: command.c:703 common.c:83 common.c:97 mainloop.c:71 print.c:46 print.c:362
+#: command.c:702 common.c:83 common.c:97 mainloop.c:71 print.c:46 print.c:362
 #: print.c:369 print.c:388 print.c:586 print.c:610 print.c:677 print.c:1619
 #: print.c:1631 print.c:1652 print.c:1669
 #, c-format
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
-#: command.c:718 command.c:767
+#: command.c:717 command.c:766
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: erro\n"
 
-#: command.c:748
+#: command.c:747
 msgid "Timing is on."
 msgstr "Tempo de execução está habilitado."
 
-#: command.c:750
+#: command.c:749
 msgid "Timing is off."
 msgstr "Tempo de execução está desabilitado."
 
-#: command.c:810 command.c:830 command.c:1224 command.c:1231 command.c:1241
-#: command.c:1253 command.c:1266 command.c:1280 command.c:1302 command.c:1334
-#: common.c:168 copy.c:535 copy.c:580
+#: command.c:809 command.c:829 command.c:1223 command.c:1230 command.c:1240
+#: command.c:1252 command.c:1265 command.c:1279 command.c:1301 command.c:1333
+#: common.c:168 copy.c:535 copy.c:592
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:984 common.c:214 common.c:685 common.c:749 common.c:1011
-#: common.c:1038 common.c:1092
+#: command.c:937 command.c:939 startup.c:196 startup.c:198
+#, c-format
+msgid "Password for user %s: "
+msgstr "Senha para usuário %s: "
+
+#: command.c:983 common.c:214 common.c:692 common.c:756 common.c:1018
+#: common.c:1045 common.c:1099
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:988
+#: command.c:987
 msgid "Previous connection kept\n"
 msgstr "Conexão anterior mantida\n"
 
-#: command.c:999
+#: command.c:998
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1011
+#: command.c:1010
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Você está conectado ao banco de dados \"%s\" agora.\n"
 
-#: command.c:1013
+#: command.c:1012
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Você está conectado como usuário \"%s\" agora.\n"
 
-#: command.c:1016
+#: command.c:1015
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr ""
 "Você está conectado ao banco de dados \"%s\" como usuário \"%s\" agora.\n"
 
-#: command.c:1141
+#: command.c:1140
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "não pôde iniciar o editor \"%s\"\n"
 
-#: command.c:1143
+#: command.c:1142
 msgid "could not start /bin/sh\n"
 msgstr "não pôde iniciar /bin/sh\n"
 
-#: command.c:1182
+#: command.c:1181
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "não pôde localizar diretório temporário: %s"
 
-#: command.c:1209
+#: command.c:1208
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo temporário \"%s\": %s\n"
 
-#: command.c:1407
+#: command.c:1406
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: formatos permitidos são unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1412
+#: command.c:1411
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Formato de saída é %s.\n"
 
-#: command.c:1422
+#: command.c:1421
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Estilo de borda é %d.\n"
 
-#: command.c:1431
+#: command.c:1430
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Exibição expandida está habilitada.\n"
 
-#: command.c:1432
+#: command.c:1431
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Exibição expandida está desabilitada.\n"
 
-#: command.c:1442
+#: command.c:1441
 msgid "Showing locale-adjusted numeric output."
 msgstr "Exibindo formato numérico baseado na localidade."
 
-#: command.c:1444
+#: command.c:1443
 msgid "Locale-adjusted numeric output is off."
 msgstr "Formato numérico baseado na localidade está desabilitado."
 
-#: command.c:1457
+#: command.c:1456
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Exibição nula é \"%s\".\n"
 
-#: command.c:1469
+#: command.c:1468
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Separador de campos é \"%s\".\n"
 
-#: command.c:1483
+#: command.c:1482
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Separador de registros é <novalinha>."
 
-#: command.c:1485
+#: command.c:1484
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Separador de registros é \"%s\".\n"
 
-#: command.c:1496
+#: command.c:1495
 msgid "Showing only tuples."
 msgstr "Mostrando apenas tuplas."
 
-#: command.c:1498
+#: command.c:1497
 msgid "Tuples only is off."
 msgstr "Somente tuplas está desabilitado."
 
-#: command.c:1514
+#: command.c:1513
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Título é \"%s\".\n"
 
-#: command.c:1516
+#: command.c:1515
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Título não está definido.\n"
 
-#: command.c:1532
+#: command.c:1531
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atributo de tabela é \"%s\".\n"
 
-#: command.c:1534
+#: command.c:1533
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atributos de tabela não estão definidos.\n"
 
-#: command.c:1550
+#: command.c:1549
 msgid "Pager is used for long output."
 msgstr "Paginação é usada para saída longa."
 
-#: command.c:1552
+#: command.c:1551
 msgid "Pager is always used."
 msgstr "Paginação é sempre utilizada."
 
-#: command.c:1554
+#: command.c:1553
 msgid "Pager usage is off."
 msgstr "Uso de paginação está desabilitado."
 
-#: command.c:1565
+#: command.c:1564
 msgid "Default footer is on."
 msgstr "Rodapé padrão está habilitado."
 
-#: command.c:1567
+#: command.c:1566
 msgid "Default footer is off."
 msgstr "Rodapé padrão está desabilitado."
 
-#: command.c:1573
+#: command.c:1572
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opção desconhecida: %s\n"
 
-#: command.c:1628
+#: command.c:1627
 msgid "\\!: failed\n"
 msgstr "\\!: falhou\n"
 
@@ -265,42 +269,42 @@ msgstr "%s: pg_strdup: não pode duplicar ponteiro nulo (erro interno)\n"
 msgid "out of memory"
 msgstr "sem memória"
 
-#: common.c:353
+#: common.c:360
 msgid "connection to server was lost\n"
 msgstr "conexão com servidor foi perdida\n"
 
-#: common.c:357
+#: common.c:364
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "A conexão com servidor foi perdida. Tentando reiniciar: "
 
-#: common.c:362
+#: common.c:369
 msgid "Failed.\n"
 msgstr "Falhou.\n"
 
-#: common.c:369
+#: common.c:376
 msgid "Succeeded.\n"
 msgstr "Reiniciada.\n"
 
-#: common.c:468
+#: common.c:475
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "ERRO INTERNO: posição \"%s\" do comando inesperada\n"
 
-#: common.c:604
+#: common.c:611
 #, c-format
 msgid "LINE %d: "
 msgstr "LINHA %d: "
 
-#: common.c:621 common.c:630
+#: common.c:628 common.c:637
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: common.c:717 common.c:968
+#: common.c:724 common.c:975
 msgid "You are currently not connected to a database.\n"
 msgstr "Você não está conectado ao banco de dados.\n"
 
-#: common.c:724 common.c:731 common.c:994
+#: common.c:731 common.c:738 common.c:1001
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -313,14 +317,14 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: common.c:780
+#: common.c:787
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Notificação assíncrona \"%s\" recebida do processo do servidor com PID %d.\n"
 
-#: common.c:976
+#: common.c:983
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -335,14 +339,14 @@ msgstr ""
 "***(pressione Enter para prosseguir ou digite x e Enter para cancelar)"
 "********************\n"
 
-#: common.c:1029
+#: common.c:1036
 #, c-format
 msgid ""
 "The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"
 msgstr ""
 "A versão do servidor (%d) não suporta savepoints para ON_ERROR_ROLLBACK.\n"
 
-#: common.c:1102
+#: common.c:1113
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Tempo: %.3f ms\n"
@@ -370,12 +374,12 @@ msgstr "%s: não pode copiar de/para o diretório\n"
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:571
+#: copy.c:571 copy.c:583
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: resposta inesperada (%d)\n"
 
-#: copy.c:673
+#: copy.c:685
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -500,7 +504,7 @@ msgstr ""
 
 #: help.c:110
 msgid "  -L FILENAME     send session log to file"
-msgstr "  -L ARQUIVO     envia log da sessão para arquivo"
+msgstr "  -L ARQUIVO      envia log da sessão para arquivo"
 
 #: help.c:112
 msgid ""
@@ -1053,17 +1057,12 @@ msgstr "Nome do usuário: "
 msgid "Password: "
 msgstr "Senha: "
 
-#: startup.c:196 startup.c:198
-#, c-format
-msgid "Password for user %s: "
-msgstr "Senha para usuário %s: "
-
-#: startup.c:254
+#: startup.c:255
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: não pôde abrir arquivo de log \"%s\": %s\n"
 
-#: startup.c:335
+#: startup.c:336
 #, c-format
 msgid ""
 "Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n"
@@ -1072,7 +1071,7 @@ msgstr ""
 "Bem vindo ao %s %s (servidor %s), o terminal iterativo do PostgreSQL.\n"
 "\n"
 
-#: startup.c:339
+#: startup.c:340
 #, c-format
 msgid ""
 "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
@@ -1081,7 +1080,7 @@ msgstr ""
 "Bem vindo ao %s %s, o terminal iterativo do PostgreSQL.\n"
 "\n"
 
-#: startup.c:342
+#: startup.c:343
 #, c-format
 msgid ""
 "Type:  \\copyright for distribution terms\n"
@@ -1098,7 +1097,7 @@ msgstr ""
 "         \\q para sair\n"
 "\n"
 
-#: startup.c:349
+#: startup.c:350
 #, c-format
 msgid ""
 "WARNING:  You are connected to a server with major version %d.%d,\n"
@@ -1111,41 +1110,41 @@ msgstr ""
 "invertida,\n"
 "tais como \\d, podem não funcionar corretamente.\n"
 
-#: startup.c:531
+#: startup.c:532
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: não pôde definir parâmetro de exibição \"%s\"\n"
 
-#: startup.c:577
+#: startup.c:578
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: não pôde apagar variável \"%s\"\n"
 
-#: startup.c:587
+#: startup.c:588
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: não pôde definir variável \"%s\"\n"
 
-#: startup.c:618 startup.c:624
+#: startup.c:619 startup.c:625
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Tente \"%s --help\" para obter mais informação.\n"
 
-#: startup.c:641
+#: startup.c:642
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: aviso: argumento extra de linha de comando \"%s\" ignorado\n"
 
-#: startup.c:648
+#: startup.c:649
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Aviso: A opção -u está obsoleta. Use -U.\n"
 
-#: startup.c:710
+#: startup.c:711
 msgid "contains support for command-line editing"
 msgstr "contém suporte a edição em linha de comando"
 
-#: startup.c:733
+#: startup.c:734
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -1154,7 +1153,7 @@ msgstr ""
 "conexão SSL (cifra: %s, bits: %i)\n"
 "\n"
 
-#: startup.c:756
+#: startup.c:757
 #, c-format
 msgid ""
 "Warning: Console code page (%u) differs from Windows code page (%u)\n"
@@ -2147,7 +2146,6 @@ msgid ""
 "    TO { 'filename' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ]\n"
@@ -2172,7 +2170,6 @@ msgstr ""
 "    TO { 'arquivo' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
-"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'delimitador' ]\n"
 "          [ NULL [ AS ] 'cadeia nula' ] ]\n"
@@ -3062,8 +3059,7 @@ msgid ""
 "    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT role [, ...]\n"
-"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH ADMIN OPTION ]"
+"GRANT role [, ...] TO username [, ...] [ WITH ADMIN OPTION ]"
 msgstr ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -3096,8 +3092,7 @@ msgstr ""
 "    TO { usuário | GROUP nome_grupo | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]\n"
 "\n"
-"GRANT role [, ...]\n"
-"    TO { usuário | GROUP nome_grupo | PUBLIC } [, ...] [ WITH ADMIN OPTION ]"
+"GRANT role [, ...] TO usuário [, ...] [ WITH ADMIN OPTION ]"
 
 #: sql_help.h:345
 msgid "create new rows in a table"
@@ -3253,8 +3248,7 @@ msgid ""
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ ADMIN OPTION FOR ]\n"
-"    role [, ...]\n"
-"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    role [, ...] FROM username [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
 "REVOKE [ GRANT OPTION FOR ]\n"
@@ -3295,8 +3289,7 @@ msgstr ""
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ ADMIN OPTION FOR ]\n"
-"    role [, ...]\n"
-"    FROM { usuário | GROUP nome_grupo | PUBLIC } [, ...]\n"
+"    role [, ...] FROM usuário [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:394
@@ -3600,97 +3593,3 @@ msgstr "processo filho foi terminado pelo sinal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"
-
-#~ msgid "Warning: This syntax is deprecated.\n"
-#~ msgstr "Aviso: Esta sintaxe está obsoleta.\n"
-
-#~ msgid "User ID"
-#~ msgstr "ID do usuário"
-
-#~ msgid "superuser, create database"
-#~ msgstr "super-usuário, cria banco de dados"
-
-#~ msgid "create database"
-#~ msgstr "cria banco de dados"
-
-#~ msgid "Attributes"
-#~ msgstr "Atributos"
-
-#~ msgid "Groups"
-#~ msgstr "Grupos"
-
-#~ msgid "List of users"
-#~ msgstr "Lista de usuários"
-
-#~ msgid "Group name"
-#~ msgstr "Nome do Grupo"
-
-#~ msgid "Group ID"
-#~ msgstr "ID do Grupo"
-
-#~ msgid ""
-#~ "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
-#~ "ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
-#~ msgstr ""
-#~ "ALTER FUNCTION nome ( [ tipo [, ...] ] ) RENAME TO novo_nome\n"
-#~ "ALTER FUNCTION nome ( [ tipo [, ...] ] ) OWNER TO novo_dono"
-
-#~ msgid "change a user group"
-#~ msgstr "muda o grupo do usuário"
-
-#~ msgid ""
-#~ "ALTER INDEX name \n"
-#~ "    action [, ... ]\n"
-#~ "ALTER INDEX name\n"
-#~ "    RENAME TO new_name\n"
-#~ "\n"
-#~ "where action is one of:\n"
-#~ "\n"
-#~ "    OWNER TO new_owner\n"
-#~ "    SET TABLESPACE indexspace_name"
-#~ msgstr ""
-#~ "ALTER INDEX nome \n"
-#~ "    ação [, ... ]\n"
-#~ "ALTER INDEX nome\n"
-#~ "    RENAME TO novo_nome\n"
-#~ "\n"
-#~ "onde ação é uma das:\n"
-#~ "\n"
-#~ "    OWNER TO novo_dono\n"
-#~ "    SET TABLESPACE caminho_indice"
-
-#~ msgid "ALTER TYPE name OWNER TO new_owner"
-#~ msgstr "ALTER TYPE nome OWNER TO novo_dono"
-
-#~ msgid "change a database user account"
-#~ msgstr "muda uma conta de usuário do banco de dados"
-
-#~ msgid "define a new user group"
-#~ msgstr "define um novo grupo de usuários"
-
-#~ msgid ""
-#~ "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
-#~ "\n"
-#~ "where option can be:\n"
-#~ "\n"
-#~ "     SYSID gid\n"
-#~ "   | USER  username [, ...]"
-#~ msgstr ""
-#~ "CREATE GROUP nome [ [ WITH ] opção [ ... ] ]\n"
-#~ "\n"
-#~ "onde opção pode ser:\n"
-#~ "\n"
-#~ "     SYSID id_grupo\n"
-#~ "   | USER  usuário [, ...]"
-
-#~ msgid "define a new database user account"
-#~ msgstr "define uma nova conta de usuário do banco de dados"
-
-#~ msgid "remove a user group"
-#~ msgstr "remove um grupo de usuários"
-
-#~ msgid "remove a database user account"
-#~ msgstr "remove uma conta de usuário do banco de dados"
-
-#~ msgid "empty a table"
-#~ msgstr "esvazia uma tabela"
