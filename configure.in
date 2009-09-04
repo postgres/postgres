@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.490.2.25 2009/03/13 02:16:42 scrappy Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.490.2.26 2009/09/04 01:16:33 scrappy Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -17,7 +17,7 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-AC_INIT([PostgreSQL], [8.2.13], [pgsql-bugs@postgresql.org])
+AC_INIT([PostgreSQL], [8.2.14], [pgsql-bugs@postgresql.org])
 
 m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.59], [], [m4_fatal([Autoconf version 2.59 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
