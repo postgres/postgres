@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.85 2009/09/03 18:48:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.86 2009/09/04 11:20:22 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,13 +225,21 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 
 	Assert(!locfcinfo.isnull);
 
-	/* sanity checks: int2vector must be 1-D, no nulls */
+	/* sanity checks: int2vector must be 1-D, 0-based, no nulls */
 	if (ARR_NDIM(result) != 1 ||
 		ARR_HASNULL(result) ||
-		ARR_ELEMTYPE(result) != INT2OID)
+		ARR_ELEMTYPE(result) != INT2OID ||
+		ARR_LBOUND(result)[0] != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid int2vector data")));
+
+	/* check length for consistency with int2vectorin() */
+	if (ARR_DIMS(result)[0] > FUNC_MAX_ARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("oidvector has too many elements")));
+
 	PG_RETURN_POINTER(result);
 }
 
