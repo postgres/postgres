@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.10 2009/06/10 03:44:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.68.2.11 2009/09/04 10:49:50 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ static int parse_xml_decl(const xmlChar * str, size_t *lenp,
 static bool print_xml_decl(StringInfo buf, const xmlChar * version,
 			   pg_enc encoding, int standalone);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
-		  bool preserve_whitespace, xmlChar * encoding);
+		  bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur);
 #endif   /* USE_LIBXML */
 
@@ -186,7 +186,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume that
 	 * ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(vardata, xmloption, true, NULL);
+	doc = xml_parse(vardata, xmloption, true, GetDatabaseEncoding());
 	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(vardata);
@@ -275,7 +275,8 @@ xml_recv(PG_FUNCTION_ARGS)
 	char	   *newstr;
 	int			nbytes;
 	xmlDocPtr	doc;
-	xmlChar    *encoding = NULL;
+	xmlChar    *encodingStr = NULL;
+	int			encoding;
 
 	/*
 	 * Read the data in raw format. We don't know yet what the encoding is, as
@@ -296,7 +297,15 @@ xml_recv(PG_FUNCTION_ARGS)
 	str = VARDATA(result);
 	str[nbytes] = '\0';
 
-	parse_xml_decl((xmlChar *) str, NULL, NULL, &encoding, NULL);
+	parse_xml_decl((xmlChar *) str, NULL, NULL, &encodingStr, NULL);
+
+	/*
+	 * If encoding wasn't explicitly specified in the XML header, treat it as
+	 * UTF-8, as that's the default in XML. This is different from xml_in(),
+	 * where the input has to go through the normal client to server encoding
+	 * conversion.
+	 */
+	encoding = encodingStr ? xmlChar_to_encoding(encodingStr) : PG_UTF8;
 
 	/*
 	 * Parse the data to check if it is well-formed XML data.  Assume that
@@ -308,9 +317,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	/* Now that we know what we're dealing with, convert to server encoding */
 	newstr = (char *) pg_do_encoding_conversion((unsigned char *) str,
 												nbytes,
-												encoding ?
-											  xmlChar_to_encoding(encoding) :
-												PG_UTF8,
+												encoding,
 												GetDatabaseEncoding());
 
 	if (newstr != str)
@@ -674,7 +681,8 @@ xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace)
 #ifdef USE_LIBXML
 	xmlDocPtr	doc;
 
-	doc = xml_parse(data, xmloption_arg, preserve_whitespace, NULL);
+	doc = xml_parse(data, xmloption_arg, preserve_whitespace,
+					GetDatabaseEncoding());
 	xmlFreeDoc(doc);
 
 	return (xmltype *) data;
@@ -815,7 +823,8 @@ xml_is_document(xmltype *arg)
 
 	PG_TRY();
 	{
-		doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true, NULL);
+		doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true,
+						GetDatabaseEncoding());
 		result = true;
 	}
 	PG_CATCH();
@@ -1177,7 +1186,7 @@ print_xml_decl(StringInfo buf, const xmlChar * version,
  */
 static xmlDocPtr
 xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
-		  xmlChar * encoding)
+		  int encoding)
 {
 	int32		len;
 	xmlChar    *string;
@@ -1190,9 +1199,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 
 	utf8string = pg_do_encoding_conversion(string,
 										   len,
-										   encoding ?
-										   xmlChar_to_encoding(encoding) :
-										   GetDatabaseEncoding(),
+										   encoding,
 										   PG_UTF8);
 
 	xml_init();
