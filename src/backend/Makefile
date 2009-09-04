@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.132 2009/01/01 17:23:34 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.132.2.1 2009/09/04 23:11:10 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,10 +20,8 @@ SUBDIRS = access bootstrap catalog parser commands executor foreign lib libpq \
 
 include $(srcdir)/common.mk
 
-ifeq ($(PORTNAME), solaris)
 ifeq ($(enable_dtrace), yes)
 LOCALOBJS += utils/probes.o
-endif
 endif
 
 OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a
@@ -145,10 +143,8 @@ $(top_builddir)/src/include/utils/probes.h: utils/probes.h
 	    $(LN_S) ../../../$(subdir)/utils/probes.h .
 
 
-ifeq ($(PORTNAME), solaris)
 utils/probes.o: utils/probes.d $(SUBDIROBJS)
 	$(DTRACE) $(DTRACEFLAGS) -C -G -s $(call expand_subsys,$^) -o $@
-endif
 
 
 ##########################################################################
