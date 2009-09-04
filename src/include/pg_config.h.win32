@@ -3,8 +3,8 @@
 /*
  * Parts of pg_config.h that you get with autoconf on other systems
  */
-#define PG_VERSION "8.1.17"
-#define PG_VERSION_STR "8.1.17 (win32)"
+#define PG_VERSION "8.1.18"
+#define PG_VERSION_STR "8.1.18 (win32)"
 
 #define DEF_PGPORT 5432
 #define DEF_PGPORT_STR "5432"
