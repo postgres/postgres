@@ -1,3 +1,8 @@
+$PostgreSQL: pgsql/src/timezone/tznames/README,v 1.2.4.1 2009/09/06 15:25:39 tgl Exp $
+
+tznames
+=======
+
 This directory contains files with timezone sets for PostgreSQL.  The problem
 is that time zone abbreviations are not unique throughout the world and you
 might find out that a time zone abbreviation in the `Default' set collides
@@ -18,5 +23,9 @@ Your set of time zone names can then be included in future releases.
 For the time being you can always add your own set.
 
 The files named Africa.txt, etc, are not intended to be used directly as
-timezone abbreviation files.  They contain reference definitions of timezone
+time zone abbreviation files. They contain reference definitions of time zone
 names that can be copied into a custom abbreviation file as needed.
+
+Note that these files (*.txt) are already a subset of the zic timezone
+database files: we tried to list only those time zones that (according to
+the zic timezone database) appear to be still in use.
