@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Africa.txt,v 1.2 2006/07/25 13:49:21 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Africa.txt,v 1.3 2009/09/06 15:25:23 tgl Exp $
 #
 
 CAT      7200    # Central Africa Time
@@ -161,6 +161,12 @@ WAT      3600    # West Africa Time
                  #     (Africa/Niamey)
                  #     (Africa/Porto-Novo)
                  #     (Africa/Windhoek)
+WEST     3600 D  # Western Europe Summer Time
+                 #     (Africa/Casablanca)
+                 #     (Atlantic/Canary)
+                 #     (Atlantic/Faeroe)
+                 #     (Atlantic/Madeira)
+                 #     (Europe/Lisbon)
 WET         0    # Western Europe Time
                  #     (Africa/Casablanca)
                  #     (Africa/El_Aaiun)

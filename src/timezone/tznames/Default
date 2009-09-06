@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.7 2009/03/05 14:27:50 heikki Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.8 2009/09/06 15:25:23 tgl Exp $
 
 
 #################### AFRICA ####################
@@ -283,6 +283,7 @@ ICT     25200    # Indochina Time
                  #     (Asia/Phnom_Penh)
                  #     (Asia/Saigon)
                  #     (Asia/Vientiane)
+IDT     10800 D  # Israel Daylight Time
 IRKST   32400 D  # Irkutsk Summer Time
                  #     (Asia/Irkutsk)
 IRKT    28800    # Irkutsk Time

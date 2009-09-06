@@ -4,7 +4,7 @@
 #   a template for timezones you could need.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Europe.txt,v 1.2 2006/07/25 13:49:21 tgl Exp $
+# $PostgreSQL: pgsql/src/timezone/tznames/Europe.txt,v 1.3 2009/09/06 15:25:23 tgl Exp $
 #
 
 BST      3600 D  # British Summer Time
@@ -191,6 +191,7 @@ SAMST   18000 D  # Samara Summer Time
 SAMT    14400    # Samara Time
                  #     (Europe/Samara)
 WEST     3600 D  # Western Europe Summer Time
+                 #     (Africa/Casablanca)
                  #     (Atlantic/Canary)
                  #     (Atlantic/Faeroe)
                  #     (Atlantic/Madeira)
