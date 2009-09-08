@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/perl.m4,v 1.4 2008/11/12 00:00:05 adunstan Exp $
+# $PostgreSQL: pgsql/config/perl.m4,v 1.5 2009/09/08 18:15:55 tgl Exp $
 
 
 # PGAC_PATH_PERL
@@ -25,12 +25,16 @@ AC_DEFUN([PGAC_CHECK_PERL_CONFIGS],
 
 # PGAC_CHECK_PERL_EMBED_LDFLAGS
 # -----------------------------
+# We are after Embed's ldopts, but without the subset mentioned in
+# Config's ccdlflags; and also without any -arch flags, which recent
+# Apple releases put in unhelpfully.  (If you want a multiarch build
+# you'd better be specifying it in more places than plperl's final link.)
 AC_DEFUN([PGAC_CHECK_PERL_EMBED_LDFLAGS],
 [AC_REQUIRE([PGAC_PATH_PERL])
 AC_MSG_CHECKING(for flags to link embedded Perl)
 pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
 pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
-perl_embed_ldflags=`echo X"$pgac_tmp1" | sed "s/^X//;s%$pgac_tmp2%%"`
+perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e ["s/ -arch [-a-zA-Z0-9_]*//g"]`
 AC_SUBST(perl_embed_ldflags)dnl
 if test -z "$perl_embed_ldflags" ; then
 	AC_MSG_RESULT(no)
