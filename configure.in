@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.609 2009/08/26 22:24:42 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.610 2009/09/08 16:08:26 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1066,7 +1066,7 @@ if test "$with_ldap" = yes ; then
 fi
 
 if test "$with_bonjour" = yes ; then
-  AC_CHECK_HEADER(DNSServiceDiscovery/DNSServiceDiscovery.h, [], [AC_MSG_ERROR([header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Bonjour])])
+  AC_CHECK_HEADER(dns_sd.h, [], [AC_MSG_ERROR([header file <dns_sd.h> is required for Bonjour])])
 fi
 
 # for contrib/uuid-ossp

@@ -13439,18 +13439,18 @@ done
 fi
 
 if test "$with_bonjour" = yes ; then
-  if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
-  { $as_echo "$as_me:$LINENO: checking for DNSServiceDiscovery/DNSServiceDiscovery.h" >&5
-$as_echo_n "checking for DNSServiceDiscovery/DNSServiceDiscovery.h... " >&6; }
-if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
+  if test "${ac_cv_header_dns_sd_h+set}" = set; then
+  { $as_echo "$as_me:$LINENO: checking for dns_sd.h" >&5
+$as_echo_n "checking for dns_sd.h... " >&6; }
+if test "${ac_cv_header_dns_sd_h+set}" = set; then
   $as_echo_n "(cached) " >&6
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&5
-$as_echo "$ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&6; }
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_dns_sd_h" >&5
+$as_echo "$ac_cv_header_dns_sd_h" >&6; }
 else
   # Is the header compilable?
-{ $as_echo "$as_me:$LINENO: checking DNSServiceDiscovery/DNSServiceDiscovery.h usability" >&5
-$as_echo_n "checking DNSServiceDiscovery/DNSServiceDiscovery.h usability... " >&6; }
+{ $as_echo "$as_me:$LINENO: checking dns_sd.h usability" >&5
+$as_echo_n "checking dns_sd.h usability... " >&6; }
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -13458,7 +13458,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
-#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
+#include <dns_sd.h>
 _ACEOF
 rm -f conftest.$ac_objext
 if { (ac_try="$ac_compile"
@@ -13491,15 +13491,15 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 $as_echo "$ac_header_compiler" >&6; }
 
 # Is the header present?
-{ $as_echo "$as_me:$LINENO: checking DNSServiceDiscovery/DNSServiceDiscovery.h presence" >&5
-$as_echo_n "checking DNSServiceDiscovery/DNSServiceDiscovery.h presence... " >&6; }
+{ $as_echo "$as_me:$LINENO: checking dns_sd.h presence" >&5
+$as_echo_n "checking dns_sd.h presence... " >&6; }
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
+#include <dns_sd.h>
 _ACEOF
 if { (ac_try="$ac_cpp conftest.$ac_ext"
 case "(($ac_try" in
@@ -13533,25 +13533,25 @@ $as_echo "$ac_header_preproc" >&6; }
 # So?  What about this header?
 case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
   yes:no: )
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the compiler's result" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: dns_sd.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: dns_sd.h: proceeding with the compiler's result" >&2;}
     ac_header_preproc=yes
     ;;
   no:yes:* )
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the preprocessor's result" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: proceeding with the preprocessor's result" >&2;}
-    { $as_echo "$as_me:$LINENO: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: in the future, the compiler will take precedence" >&5
-$as_echo "$as_me: WARNING: DNSServiceDiscovery/DNSServiceDiscovery.h: in the future, the compiler will take precedence" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: dns_sd.h: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: dns_sd.h:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: dns_sd.h: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: dns_sd.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h: proceeding with the preprocessor's result" >&5
+$as_echo "$as_me: WARNING: dns_sd.h: proceeding with the preprocessor's result" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: dns_sd.h: in the future, the compiler will take precedence" >&5
+$as_echo "$as_me: WARNING: dns_sd.h: in the future, the compiler will take precedence" >&2;}
     ( cat <<\_ASBOX
 ## ---------------------------------------- ##
 ## Report this to pgsql-bugs@postgresql.org ##
@@ -13560,22 +13560,22 @@ _ASBOX
      ) | sed "s/^/$as_me: WARNING:     /" >&2
     ;;
 esac
-{ $as_echo "$as_me:$LINENO: checking for DNSServiceDiscovery/DNSServiceDiscovery.h" >&5
-$as_echo_n "checking for DNSServiceDiscovery/DNSServiceDiscovery.h... " >&6; }
-if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
+{ $as_echo "$as_me:$LINENO: checking for dns_sd.h" >&5
+$as_echo_n "checking for dns_sd.h... " >&6; }
+if test "${ac_cv_header_dns_sd_h+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h=$ac_header_preproc
+  ac_cv_header_dns_sd_h=$ac_header_preproc
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&5
-$as_echo "$ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" >&6; }
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_dns_sd_h" >&5
+$as_echo "$ac_cv_header_dns_sd_h" >&6; }
 
 fi
-if test "x$ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h" = x""yes; then
+if test "x$ac_cv_header_dns_sd_h" = x""yes; then
   :
 else
-  { { $as_echo "$as_me:$LINENO: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Bonjour" >&5
-$as_echo "$as_me: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Bonjour" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: header file <dns_sd.h> is required for Bonjour" >&5
+$as_echo "$as_me: error: header file <dns_sd.h> is required for Bonjour" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

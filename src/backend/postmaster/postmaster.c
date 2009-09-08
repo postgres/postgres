@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.594 2009/08/31 19:41:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.595 2009/09/08 16:08:26 tgl Exp $
  *
  * NOTES
  *
@@ -89,7 +89,7 @@
 #endif
 
 #ifdef USE_BONJOUR
-#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
+#include <dns_sd.h>
 #endif
 
 #include "access/transam.h"
@@ -309,16 +309,15 @@ extern int	optind,
 extern int	optreset;			/* might not be declared by system headers */
 #endif
 
+#ifdef USE_BONJOUR
+static DNSServiceRef bonjour_sdref = NULL;
+#endif
+
 /*
  * postmaster.c - function prototypes
  */
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
-
-#ifdef USE_BONJOUR
-static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode,
-		  void *context);
-#endif
 static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
@@ -855,15 +854,38 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef USE_BONJOUR
 	/* Register for Bonjour only if we opened TCP socket(s) */
-	if (ListenSocket[0] != -1 && bonjour_name != NULL)
+	if (ListenSocket[0] != -1)
 	{
-		DNSServiceRegistrationCreate(bonjour_name,
-									 "_postgresql._tcp.",
-									 "",
-									 htons(PostPortNumber),
-									 "",
-									 (DNSServiceRegistrationReply) reg_reply,
-									 NULL);
+		DNSServiceErrorType err;
+
+		/*
+		 * We pass 0 for interface_index, which will result in registering on
+		 * all "applicable" interfaces.  It's not entirely clear from the
+		 * DNS-SD docs whether this would be appropriate if we have bound to
+		 * just a subset of the available network interfaces.
+		 */
+		err = DNSServiceRegister(&bonjour_sdref,
+								 0,
+								 0,
+								 bonjour_name,
+								 "_postgresql._tcp.",
+								 NULL,
+								 NULL,
+								 htons(PostPortNumber),
+								 0,
+								 NULL,
+								 NULL,
+								 NULL);
+		if (err != kDNSServiceErr_NoError)
+			elog(LOG, "DNSServiceRegister() failed: error code %ld",
+				 (long) err);
+		/*
+		 * We don't bother to read the mDNS daemon's reply, and we expect
+		 * that it will automatically terminate our registration when the
+		 * socket is closed at postmaster termination.  So there's nothing
+		 * more to be done here.  However, the bonjour_sdref is kept around
+		 * so that forked children can close their copies of the socket.
+		 */
 	}
 #endif
 
@@ -1190,18 +1212,6 @@ checkDataDir(void)
 	}
 	FreeFile(fp);
 }
-
-
-#ifdef USE_BONJOUR
-
-/*
- * empty callback function for DNSServiceRegistrationCreate()
- */
-static void
-reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
-{
-}
-#endif   /* USE_BONJOUR */
 
 
 /*
@@ -2004,6 +2014,12 @@ ClosePostmasterPorts(bool am_syslogger)
 		syslogPipe[0] = 0;
 #endif
 	}
+
+#ifdef USE_BONJOUR
+	/* If using Bonjour, close the connection to the mDNS daemon */
+	if (bonjour_sdref)
+		close(DNSServiceRefSockFD(bonjour_sdref));
+#endif
 }
 
 
