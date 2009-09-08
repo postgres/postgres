@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.224 2009/08/24 20:08:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.225 2009/09/08 17:08:36 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -472,6 +472,20 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-bonjour" xreflabel="bonjour">
+      <term><varname>bonjour</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>bonjour</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables advertising the server's existence via
+        <productname>Bonjour</productname>.  The default is off.
+        This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-bonjour-name" xreflabel="bonjour_name">
       <term><varname>bonjour_name</varname> (<type>string</type>)</term>
       <indexterm>
@@ -479,7 +493,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Specifies the <productname>Bonjour</productname> broadcast
+        Specifies the <productname>Bonjour</productname> service
         name.  The computer name is used if this parameter is set to the
         empty string <literal>''</> (which is the default).  This parameter is
         ignored if the server was not compiled with

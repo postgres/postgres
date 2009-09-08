@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.595 2009/09/08 16:08:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.596 2009/09/08 17:08:36 tgl Exp $
  *
  * NOTES
  *
@@ -200,6 +200,7 @@ bool		log_hostname;		/* for ps display and logging */
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
 
+bool		enable_bonjour = false;
 char	   *bonjour_name;
 
 /* PIDs of special child processes; 0 when not running */
@@ -854,7 +855,7 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef USE_BONJOUR
 	/* Register for Bonjour only if we opened TCP socket(s) */
-	if (ListenSocket[0] != -1)
+	if (enable_bonjour && ListenSocket[0] != -1)
 	{
 		DNSServiceErrorType err;
 

@@ -69,6 +69,8 @@
 #unix_socket_group = ''			# (change requires restart)
 #unix_socket_permissions = 0777		# begin with 0 to use octal notation
 					# (change requires restart)
+#bonjour = off				# advertise server via Bonjour
+					# (change requires restart)
 #bonjour_name = ''			# defaults to the computer name
 					# (change requires restart)
 

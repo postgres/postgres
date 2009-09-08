@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.515 2009/09/03 22:08:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.516 2009/09/08 17:08:36 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -152,6 +152,7 @@ static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 static const char *assign_custom_variable_classes(const char *newval, bool doit,
 							   GucSource source);
 static bool assign_debug_assertions(bool newval, bool doit, GucSource source);
+static bool assign_bonjour(bool newval, bool doit, GucSource source);
 static bool assign_ssl(bool newval, bool doit, GucSource source);
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
@@ -680,6 +681,14 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&session_auth_is_superuser,
 		false, NULL, NULL
+	},
+	{
+		{"bonjour", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Enables advertising the server via Bonjour."),
+			NULL
+		},
+		&enable_bonjour,
+		false, assign_bonjour, NULL
 	},
 	{
 		{"ssl", PGC_POSTMASTER, CONN_AUTH_SECURITY,
@@ -2199,7 +2208,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"bonjour_name", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
-			gettext_noop("Sets the Bonjour broadcast service name."),
+			gettext_noop("Sets the Bonjour service name."),
 			NULL
 		},
 		&bonjour_name,
@@ -7388,6 +7397,21 @@ assign_debug_assertions(bool newval, bool doit, GucSource source)
 		ereport(GUC_complaint_elevel(source),
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			   errmsg("assertion checking is not supported by this build")));
+		return false;
+	}
+#endif
+	return true;
+}
+
+static bool
+assign_bonjour(bool newval, bool doit, GucSource source)
+{
+#ifndef USE_BONJOUR
+	if (newval)
+	{
+		ereport(GUC_complaint_elevel(source),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Bonjour is not supported by this build")));
 		return false;
 	}
 #endif
