@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.8 2008/10/10 12:19:32 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.9 2009/09/08 04:25:54 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -162,11 +162,7 @@ make3_str(char *str1, char *str2, char *str3)
 static char *
 make_name(void)
 {
-	char * name = (char *)mm_alloc(yyleng + 1);
-
-	strncpy(name, yytext, yyleng);
-	name[yyleng] = '\0';
-	return(name);
+	return mm_strdup(yytext);
 }
 
 static char *
