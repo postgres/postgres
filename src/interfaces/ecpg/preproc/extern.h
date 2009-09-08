@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.70 2007/11/15 21:14:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.70.2.1 2009/09/08 04:25:25 tgl Exp $ */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -38,8 +38,7 @@ extern char *yytext,
 #ifdef YYDEBUG
 extern int	yydebug;
 #endif
-extern int	yylineno,
-			yyleng;
+extern int	yylineno;
 extern FILE *yyin,
 		   *yyout;
 extern char *output_filename;
