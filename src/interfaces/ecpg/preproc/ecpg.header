@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.8 2009/08/07 10:51:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.9 2009/09/08 04:25:00 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -184,11 +184,7 @@ make3_str(char *str1, char *str2, char *str3)
 static char *
 make_name(void)
 {
-	char * name = (char *)mm_alloc(yyleng + 1);
-
-	strncpy(name, yytext, yyleng);
-	name[yyleng] = '\0';
-	return(name);
+	return mm_strdup(yytext);
 }
 
 static char *
@@ -220,7 +216,7 @@ create_questionmarks(char *name, bool array)
 	for (; count > 0; count --)
 	{
 		sprintf(pacounter_buffer, "$%d", pacounter++);
-		result = cat_str(3, result, strdup(pacounter_buffer), make_str(" , "));
+		result = cat_str(3, result, mm_strdup(pacounter_buffer), make_str(" , "));
 	}
 
 	/* removed the trailing " ," */
