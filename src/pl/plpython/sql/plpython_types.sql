@@ -16,6 +16,35 @@ SELECT * FROM test_type_conversion_bool(false);
 SELECT * FROM test_type_conversion_bool(null);
 
 
+-- test various other ways to express Booleans in Python
+CREATE FUNCTION test_type_conversion_bool_other(n int) RETURNS bool AS $$
+# numbers
+if n == 0:
+   ret = 0
+elif n == 1:
+   ret = 5
+# strings
+elif n == 2:
+   ret = ''
+elif n == 3:
+   ret = 'fa' # true in Python, false in PostgreSQL
+# containers
+elif n == 4:
+   ret = []
+elif n == 5:
+   ret = [0]
+plpy.info(ret, not not ret)
+return ret
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_bool_other(0);
+SELECT * FROM test_type_conversion_bool_other(1);
+SELECT * FROM test_type_conversion_bool_other(2);
+SELECT * FROM test_type_conversion_bool_other(3);
+SELECT * FROM test_type_conversion_bool_other(4);
+SELECT * FROM test_type_conversion_bool_other(5);
+
+
 CREATE FUNCTION test_type_conversion_char(x char) RETURNS char AS $$
 plpy.info(x, type(x))
 return x
@@ -105,6 +134,7 @@ return x
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_conversion_bytea('hello world');
+SELECT * FROM test_type_conversion_bytea(E'null\\000byte');
 SELECT * FROM test_type_conversion_bytea(null);
 
 
@@ -121,14 +151,23 @@ except ValueError, e:
     return 'FAILED: ' + str(e)
 $$ LANGUAGE plpythonu;
 
-/* This will currently fail because the bytea datum is presented to
-   Python as a string in bytea-encoding, which Python doesn't understand. */
 SELECT test_type_unmarshal(x) FROM test_type_marshal() x;
 
 
 --
 -- Domains
 --
+
+CREATE DOMAIN booltrue AS bool CHECK (VALUE IS TRUE OR VALUE IS NULL);
+
+CREATE FUNCTION test_type_conversion_booltrue(x booltrue, y bool) RETURNS booltrue AS $$
+return y
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_booltrue(true, true);
+SELECT * FROM test_type_conversion_booltrue(false, true);
+SELECT * FROM test_type_conversion_booltrue(true, false);
+
 
 CREATE DOMAIN uint2 AS int2 CHECK (VALUE >= 0);
 
@@ -140,6 +179,17 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_uint2(100::uint2, 50);
 SELECT * FROM test_type_conversion_uint2(100::uint2, -50);
 SELECT * FROM test_type_conversion_uint2(null, 1);
+
+
+CREATE DOMAIN nnint AS int CHECK (VALUE IS NOT NULL);
+
+CREATE FUNCTION test_type_conversion_nnint(x nnint, y int) RETURNS nnint AS $$
+return y
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_nnint(10, 20);
+SELECT * FROM test_type_conversion_nnint(null, 20);
+SELECT * FROM test_type_conversion_nnint(10, null);
 
 
 CREATE DOMAIN bytea10 AS bytea CHECK (octet_length(VALUE) = 10 AND VALUE IS NOT NULL);

@@ -32,6 +32,74 @@ CONTEXT:  PL/Python function "test_type_conversion_bool"
  
 (1 row)
 
+-- test various other ways to express Booleans in Python
+CREATE FUNCTION test_type_conversion_bool_other(n int) RETURNS bool AS $$
+# numbers
+if n == 0:
+   ret = 0
+elif n == 1:
+   ret = 5
+# strings
+elif n == 2:
+   ret = ''
+elif n == 3:
+   ret = 'fa' # true in Python, false in PostgreSQL
+# containers
+elif n == 4:
+   ret = []
+elif n == 5:
+   ret = [0]
+plpy.info(ret, not not ret)
+return ret
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_bool_other(0);
+INFO:  (0, False)
+CONTEXT:  PL/Python function "test_type_conversion_bool_other"
+ test_type_conversion_bool_other 
+---------------------------------
+ f
+(1 row)
+
+SELECT * FROM test_type_conversion_bool_other(1);
+INFO:  (5, True)
+CONTEXT:  PL/Python function "test_type_conversion_bool_other"
+ test_type_conversion_bool_other 
+---------------------------------
+ t
+(1 row)
+
+SELECT * FROM test_type_conversion_bool_other(2);
+INFO:  ('', False)
+CONTEXT:  PL/Python function "test_type_conversion_bool_other"
+ test_type_conversion_bool_other 
+---------------------------------
+ f
+(1 row)
+
+SELECT * FROM test_type_conversion_bool_other(3);
+INFO:  ('fa', True)
+CONTEXT:  PL/Python function "test_type_conversion_bool_other"
+ test_type_conversion_bool_other 
+---------------------------------
+ t
+(1 row)
+
+SELECT * FROM test_type_conversion_bool_other(4);
+INFO:  ([], False)
+CONTEXT:  PL/Python function "test_type_conversion_bool_other"
+ test_type_conversion_bool_other 
+---------------------------------
+ f
+(1 row)
+
+SELECT * FROM test_type_conversion_bool_other(5);
+INFO:  ([0], True)
+CONTEXT:  PL/Python function "test_type_conversion_bool_other"
+ test_type_conversion_bool_other 
+---------------------------------
+ t
+(1 row)
+
 CREATE FUNCTION test_type_conversion_char(x char) RETURNS char AS $$
 plpy.info(x, type(x))
 return x
@@ -278,11 +346,19 @@ plpy.info(x, type(x))
 return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_bytea('hello world');
-INFO:  ('\\x68656c6c6f20776f726c64', <type 'str'>)
+INFO:  ('hello world', <type 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea"
  test_type_conversion_bytea 
 ----------------------------
  \x68656c6c6f20776f726c64
+(1 row)
+
+SELECT * FROM test_type_conversion_bytea(E'null\\000byte');
+INFO:  ('null\x00byte', <type 'str'>)
+CONTEXT:  PL/Python function "test_type_conversion_bytea"
+ test_type_conversion_bytea 
+----------------------------
+ \x6e756c6c0062797465
 (1 row)
 
 SELECT * FROM test_type_conversion_bytea(null);
@@ -304,17 +380,31 @@ try:
 except ValueError, e:
     return 'FAILED: ' + str(e)
 $$ LANGUAGE plpythonu;
-/* This will currently fail because the bytea datum is presented to
-   Python as a string in bytea-encoding, which Python doesn't understand. */
 SELECT test_type_unmarshal(x) FROM test_type_marshal() x;
-   test_type_unmarshal    
---------------------------
- FAILED: bad marshal data
+ test_type_unmarshal 
+---------------------
+ hello world
 (1 row)
 
 --
 -- Domains
 --
+CREATE DOMAIN booltrue AS bool CHECK (VALUE IS TRUE OR VALUE IS NULL);
+CREATE FUNCTION test_type_conversion_booltrue(x booltrue, y bool) RETURNS booltrue AS $$
+return y
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_booltrue(true, true);
+ test_type_conversion_booltrue 
+-------------------------------
+ t
+(1 row)
+
+SELECT * FROM test_type_conversion_booltrue(false, true);
+ERROR:  value for domain booltrue violates check constraint "booltrue_check"
+SELECT * FROM test_type_conversion_booltrue(true, false);
+ERROR:  value for domain booltrue violates check constraint "booltrue_check"
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_booltrue"
 CREATE DOMAIN uint2 AS int2 CHECK (VALUE >= 0);
 CREATE FUNCTION test_type_conversion_uint2(x uint2, y int) RETURNS uint2 AS $$
 plpy.info(x, type(x))
@@ -342,13 +432,29 @@ CONTEXT:  PL/Python function "test_type_conversion_uint2"
                           1
 (1 row)
 
+CREATE DOMAIN nnint AS int CHECK (VALUE IS NOT NULL);
+CREATE FUNCTION test_type_conversion_nnint(x nnint, y int) RETURNS nnint AS $$
+return y
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_nnint(10, 20);
+ test_type_conversion_nnint 
+----------------------------
+                         20
+(1 row)
+
+SELECT * FROM test_type_conversion_nnint(null, 20);
+ERROR:  value for domain nnint violates check constraint "nnint_check"
+SELECT * FROM test_type_conversion_nnint(10, null);
+ERROR:  value for domain nnint violates check constraint "nnint_check"
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_nnint"
 CREATE DOMAIN bytea10 AS bytea CHECK (octet_length(VALUE) = 10 AND VALUE IS NOT NULL);
 CREATE FUNCTION test_type_conversion_bytea10(x bytea10, y bytea) RETURNS bytea10 AS $$
 plpy.info(x, type(x))
 return y
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_bytea10('hello wold', 'hello wold');
-INFO:  ('\\x68656c6c6f20776f6c64', <type 'str'>)
+INFO:  ('hello wold', <type 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea10"
  test_type_conversion_bytea10 
 ------------------------------
@@ -358,7 +464,7 @@ CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 SELECT * FROM test_type_conversion_bytea10('hello world', 'hello wold');
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 SELECT * FROM test_type_conversion_bytea10('hello word', 'hello world');
-INFO:  ('\\x68656c6c6f20776f7264', <type 'str'>)
+INFO:  ('hello word', <type 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 CONTEXT:  while creating return value
@@ -366,7 +472,7 @@ PL/Python function "test_type_conversion_bytea10"
 SELECT * FROM test_type_conversion_bytea10(null, 'hello word');
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 SELECT * FROM test_type_conversion_bytea10('hello word', null);
-INFO:  ('\\x68656c6c6f20776f7264', <type 'str'>)
+INFO:  ('hello word', <type 'str'>)
 CONTEXT:  PL/Python function "test_type_conversion_bytea10"
 ERROR:  value for domain bytea10 violates check constraint "bytea10_check"
 CONTEXT:  while creating return value

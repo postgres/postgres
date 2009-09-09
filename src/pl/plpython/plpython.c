@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.127 2009/08/25 12:44:59 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.128 2009/09/09 19:00:09 petere Exp $
  *
  *********************************************************************
  */
@@ -78,7 +78,8 @@ PG_MODULE_MAGIC;
  * objects.
  */
 
-typedef PyObject *(*PLyDatumToObFunc) (const char *);
+struct PLyDatumToOb;
+typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb*, Datum);
 
 typedef struct PLyDatumToOb
 {
@@ -104,8 +105,16 @@ typedef union PLyTypeInput
 /* convert PyObject to a Postgresql Datum or tuple.
  * output from Python
  */
+
+struct PLyObToDatum;
+struct PLyTypeInfo;
+typedef Datum (*PLyObToDatumFunc) (struct PLyTypeInfo*,
+								   struct PLyObToDatum*,
+								   PyObject *);
+
 typedef struct PLyObToDatum
 {
+	PLyObToDatumFunc func;
 	FmgrInfo	typfunc;		/* The type's input function */
 	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
@@ -131,12 +140,11 @@ typedef struct PLyTypeInfo
 {
 	PLyTypeInput in;
 	PLyTypeOutput out;
-	int			is_rowtype;
-
 	/*
-	 * is_rowtype can be: -1  not known yet (initial state) 0  scalar datatype
-	 * 1  rowtype 2  rowtype, but I/O functions not set up yet
+	 * is_rowtype can be: -1 = not known yet (initial state); 0 = scalar datatype;
+	 * 1 = rowtype; 2 = rowtype, but I/O functions not set up yet
 	 */
+	int			is_rowtype;
 } PLyTypeInfo;
 
 
@@ -263,12 +271,24 @@ static void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
 static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
 /* conversion functions */
+static PyObject *PLyBool_FromBool(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyFloat_FromFloat4(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyFloat_FromFloat8(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyFloat_FromNumeric(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyInt_FromInt16(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyInt_FromInt32(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyString_FromBytea(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyString_FromDatum(PLyDatumToOb *arg, Datum d);
+
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
-static PyObject *PLyBool_FromString(const char *);
-static PyObject *PLyFloat_FromString(const char *);
-static PyObject *PLyInt_FromString(const char *);
-static PyObject *PLyLong_FromString(const char *);
-static PyObject *PLyString_FromString(const char *);
+
+static Datum PLyObject_ToBool(PLyTypeInfo *, PLyObToDatum *,
+							  PyObject *);
+static Datum PLyObject_ToBytea(PLyTypeInfo *, PLyObToDatum *,
+							   PyObject *);
+static Datum PLyObject_ToDatum(PLyTypeInfo *, PLyObToDatum *,
+							   PyObject *);
 
 static HeapTuple PLyMapping_ToTuple(PLyTypeInfo *, PyObject *);
 static HeapTuple PLySequence_ToTuple(PLyTypeInfo *, PyObject *);
@@ -552,8 +572,6 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 		for (i = 0; i < natts; i++)
 		{
-			char	   *src;
-
 			platt = PyList_GetItem(plkeys, i);
 			if (!PyString_Check(platt))
 				ereport(ERROR,
@@ -580,20 +598,9 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			}
 			else if (plval != Py_None)
 			{
-				plstr = PyObject_Str(plval);
-				if (!plstr)
-					PLy_elog(ERROR, "could not create string representation of Python object");
-				src = PyString_AsString(plstr);
-
-				modvalues[i] =
-					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
-									  src,
-									proc->result.out.r.atts[atti].typioparam,
-									  tupdesc->attrs[atti]->atttypmod);
+				PLyObToDatum *att = &proc->result.out.r.atts[atti];
+				modvalues[i] = (att->func) (&proc->result, att, plval);
 				modnulls[i] = ' ';
-
-				Py_DECREF(plstr);
-				plstr = NULL;
 			}
 			else
 			{
@@ -830,8 +837,6 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	Datum		rv;
 	PyObject   *volatile plargs = NULL;
 	PyObject   *volatile plrv = NULL;
-	PyObject   *volatile plrv_so = NULL;
-	char	   *plrv_sc;
 	ErrorContextCallback plerrcontext;
 
 	PG_TRY();
@@ -909,7 +914,6 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 
 				Py_XDECREF(plargs);
 				Py_XDECREF(plrv);
-				Py_XDECREF(plrv_so);
 
 				PLy_function_delete_args(proc);
 
@@ -983,21 +987,15 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		else
 		{
 			fcinfo->isnull = false;
-			plrv_so = PyObject_Str(plrv);
-			if (!plrv_so)
-				PLy_elog(ERROR, "could not create string representation of Python object");
-			plrv_sc = PyString_AsString(plrv_so);
-			rv = InputFunctionCall(&proc->result.out.d.typfunc,
-								   plrv_sc,
-								   proc->result.out.d.typioparam,
-								   -1);
+			rv = (proc->result.out.d.func) (&proc->result,
+											&proc->result.out.d,
+											plrv);
 		}
 	}
 	PG_CATCH();
 	{
 		Py_XDECREF(plargs);
 		Py_XDECREF(plrv);
-		Py_XDECREF(plrv_so);
 
 		PG_RE_THROW();
 	}
@@ -1007,7 +1005,6 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 
 	Py_XDECREF(plargs);
 	Py_DECREF(plrv);
-	Py_XDECREF(plrv_so);
 
 	return rv;
 }
@@ -1090,12 +1087,8 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 					arg = NULL;
 				else
 				{
-					char	   *ct;
-
-					ct = OutputFunctionCall(&(proc->args[i].in.d.typfunc),
-											fcinfo->arg[i]);
-					arg = (proc->args[i].in.d.func) (ct);
-					pfree(ct);
+					arg = (proc->args[i].in.d.func) (&(proc->args[i].in.d),
+													 fcinfo->arg[i]);
 				}
 			}
 
@@ -1646,6 +1639,24 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 	arg->typoid = HeapTupleGetOid(typeTup);
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
+
+	/*
+	 * Select a conversion function to convert Python objects to
+	 * PostgreSQL datums.  Most data types can go through the generic
+	 * function.
+	 */
+	switch (getBaseType(arg->typoid))
+	{
+		case BOOLOID:
+			arg->func = PLyObject_ToBool;
+			break;
+		case BYTEAOID:
+			arg->func = PLyObject_ToBytea;
+			break;
+		default:
+			arg->func = PLyObject_ToDatum;
+			break;
+	}
 }
 
 static void
@@ -1672,22 +1683,31 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 	switch (getBaseType(typeOid))
 	{
 		case BOOLOID:
-			arg->func = PLyBool_FromString;
+			arg->func = PLyBool_FromBool;
 			break;
 		case FLOAT4OID:
+			arg->func = PLyFloat_FromFloat4;
+			break;
 		case FLOAT8OID:
+			arg->func = PLyFloat_FromFloat8;
+			break;
 		case NUMERICOID:
-			arg->func = PLyFloat_FromString;
+			arg->func = PLyFloat_FromNumeric;
 			break;
 		case INT2OID:
+			arg->func = PLyInt_FromInt16;
+			break;
 		case INT4OID:
-			arg->func = PLyInt_FromString;
+			arg->func = PLyInt_FromInt32;
 			break;
 		case INT8OID:
-			arg->func = PLyLong_FromString;
+			arg->func = PLyLong_FromInt64;
+			break;
+		case BYTEAOID:
+			arg->func = PLyString_FromBytea;
 			break;
 		default:
-			arg->func = PLyString_FromString;
+			arg->func = PLyString_FromDatum;
 			break;
 	}
 }
@@ -1713,9 +1733,8 @@ PLy_typeinfo_dealloc(PLyTypeInfo *arg)
 	}
 }
 
-/* assumes that a bool is always returned as a 't' or 'f' */
 static PyObject *
-PLyBool_FromString(const char *src)
+PLyBool_FromBool(PLyDatumToOb *arg, Datum d)
 {
 	/*
 	 * We would like to use Py_RETURN_TRUE and Py_RETURN_FALSE here for
@@ -1723,47 +1742,75 @@ PLyBool_FromString(const char *src)
 	 * Python >= 2.3, and we support older versions.
 	 * http://docs.python.org/api/boolObjects.html
 	 */
-	if (src[0] == 't')
+	if (DatumGetBool(d))
 		return PyBool_FromLong(1);
 	return PyBool_FromLong(0);
 }
 
 static PyObject *
-PLyFloat_FromString(const char *src)
+PLyFloat_FromFloat4(PLyDatumToOb *arg, Datum d)
 {
-	double		v;
-	char	   *eptr;
-
-	errno = 0;
-	v = strtod(src, &eptr);
-	if (*eptr != '\0' || errno)
-		return NULL;
-	return PyFloat_FromDouble(v);
+	return PyFloat_FromDouble(DatumGetFloat4(d));
 }
 
 static PyObject *
-PLyInt_FromString(const char *src)
+PLyFloat_FromFloat8(PLyDatumToOb *arg, Datum d)
 {
-	long		v;
-	char	   *eptr;
-
-	errno = 0;
-	v = strtol(src, &eptr, 0);
-	if (*eptr != '\0' || errno)
-		return NULL;
-	return PyInt_FromLong(v);
+	return PyFloat_FromDouble(DatumGetFloat8(d));
 }
 
 static PyObject *
-PLyLong_FromString(const char *src)
+PLyFloat_FromNumeric(PLyDatumToOb *arg, Datum d)
 {
-	return PyLong_FromString((char *) src, NULL, 0);
+	/*
+	 * Numeric is cast to a PyFloat:
+	 *   This results in a loss of precision
+	 *   Would it be better to cast to PyString?
+	 */
+	Datum  f = DirectFunctionCall1(numeric_float8, d);
+	double x = DatumGetFloat8(f);
+	return PyFloat_FromDouble(x);
 }
 
 static PyObject *
-PLyString_FromString(const char *src)
+PLyInt_FromInt16(PLyDatumToOb *arg, Datum d)
 {
-	return PyString_FromString(src);
+	return PyInt_FromLong(DatumGetInt16(d));
+}
+
+static PyObject *
+PLyInt_FromInt32(PLyDatumToOb *arg, Datum d)
+{
+	return PyInt_FromLong(DatumGetInt32(d));
+}
+
+static PyObject *
+PLyLong_FromInt64(PLyDatumToOb *arg, Datum d)
+{
+	/* on 32 bit platforms "long" may be too small */
+	if (sizeof(int64) > sizeof(long))
+		return PyLong_FromLongLong(DatumGetInt64(d));
+	else
+		return PyLong_FromLong(DatumGetInt64(d));
+}
+
+static PyObject *
+PLyString_FromBytea(PLyDatumToOb *arg, Datum d)
+{
+	text     *txt = DatumGetByteaP(d);
+	char     *str = VARDATA(txt);
+	size_t    size = VARSIZE(txt) - VARHDRSZ;
+
+	return PyString_FromStringAndSize(str, size);
+}
+
+static PyObject *
+PLyString_FromDatum(PLyDatumToOb *arg, Datum d)
+{
+	char     *x = OutputFunctionCall(&arg->typfunc, d);
+	PyObject *r = PyString_FromString(x);
+	pfree(x);
+	return r;
 }
 
 static PyObject *
@@ -1783,8 +1830,7 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 	{
 		for (i = 0; i < info->in.r.natts; i++)
 		{
-			char	   *key,
-					   *vsrc;
+			char	   *key;
 			Datum		vattr;
 			bool		is_null;
 			PyObject   *value;
@@ -1799,14 +1845,7 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 				PyDict_SetItemString(dict, key, Py_None);
 			else
 			{
-				vsrc = OutputFunctionCall(&info->in.r.atts[i].typfunc,
-										  vattr);
-
-				/*
-				 * no exceptions allowed
-				 */
-				value = info->in.r.atts[i].func(vsrc);
-				pfree(vsrc);
+				value = (info->in.r.atts[i].func) (&info->in.r.atts[i], vattr);
 				PyDict_SetItemString(dict, key, value);
 				Py_DECREF(value);
 			}
@@ -1822,6 +1861,116 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 	return dict;
 }
 
+/*
+ * Convert a Python object to a PostgreSQL bool datum.  This can't go
+ * through the generic conversion function, because Python attaches a
+ * Boolean value to everything, more things than the PostgreSQL bool
+ * type can parse.
+ */
+static Datum
+PLyObject_ToBool(PLyTypeInfo *info,
+				 PLyObToDatum *arg,
+				 PyObject *plrv)
+{
+	Datum		rv;
+
+	Assert(plrv != Py_None);
+	rv = BoolGetDatum(PyObject_IsTrue(plrv));
+
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+
+	return rv;
+}
+
+/*
+ * Convert a Python object to a PostgreSQL bytea datum.  This doesn't
+ * go through the generic conversion function to circumvent problems
+ * with embedded nulls.  And it's faster this way.
+ */
+static Datum
+PLyObject_ToBytea(PLyTypeInfo *info,
+				  PLyObToDatum *arg,
+				  PyObject *plrv)
+{
+	PyObject   *volatile plrv_so = NULL;
+	Datum       rv;
+
+	Assert(plrv != Py_None);
+
+	plrv_so = PyObject_Str(plrv);
+	if (!plrv_so)
+		PLy_elog(ERROR, "could not create string representation of Python object");
+
+	PG_TRY();
+	{
+		char *plrv_sc = PyString_AsString(plrv_so);
+		size_t len = PyString_Size(plrv_so);
+		size_t size = len + VARHDRSZ;
+		bytea *result = palloc(size);
+
+		SET_VARSIZE(result, size);
+		memcpy(VARDATA(result), plrv_sc, len);
+		rv = PointerGetDatum(result);
+	}
+	PG_CATCH();
+	{
+		Py_XDECREF(plrv_so);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	Py_XDECREF(plrv_so);
+
+	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
+		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
+
+	return rv;
+}
+
+/*
+ * Generic conversion function: Convert PyObject to cstring and
+ * cstring into PostgreSQL type.
+ */
+static Datum
+PLyObject_ToDatum(PLyTypeInfo *info,
+				  PLyObToDatum *arg,
+				  PyObject *plrv)
+{
+	PyObject *volatile plrv_so = NULL;
+	Datum     rv;
+
+	Assert(plrv != Py_None);
+
+	plrv_so = PyObject_Str(plrv);
+	if (!plrv_so)
+		PLy_elog(ERROR, "could not create string representation of Python object");
+
+	PG_TRY();
+	{
+		char *plrv_sc = PyString_AsString(plrv_so);
+		size_t plen = PyString_Size(plrv_so);
+		size_t slen = strlen(plrv_sc);
+
+		if (slen < plen)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("could not convert Python object into cstring: Python string representation appears to contain null bytes")));
+		else if (slen > plen)
+			elog(ERROR, "could not convert Python object into cstring: Python string longer than reported length");
+		rv = InputFunctionCall(&arg->typfunc, plrv_sc, arg->typioparam, -1);
+	}
+	PG_CATCH();
+	{
+		Py_XDECREF(plrv_so);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	Py_XDECREF(plrv_so);
+
+	return rv;
+}
 
 static HeapTuple
 PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
@@ -1845,11 +1994,12 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   *volatile value,
-				   *volatile so;
+		PyObject   *volatile value;
+		PLyObToDatum *att;
 
 		key = NameStr(desc->attrs[i]->attname);
-		value = so = NULL;
+		value = NULL;
+		att = &info->out.r.atts[i];
 		PG_TRY();
 		{
 			value = PyMapping_GetItemString(mapping, key);
@@ -1860,19 +2010,7 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 			}
 			else if (value)
 			{
-				char	   *valuestr;
-
-				so = PyObject_Str(value);
-				if (so == NULL)
-					PLy_elog(ERROR, "could not compute string representation of Python object");
-				valuestr = PyString_AsString(so);
-
-				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
-											  ,valuestr
-											  ,info->out.r.atts[i].typioparam
-											  ,-1);
-				Py_DECREF(so);
-				so = NULL;
+				values[i] = (att->func) (info, att, value);
 				nulls[i] = false;
 			}
 			else
@@ -1887,7 +2025,6 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 		}
 		PG_CATCH();
 		{
-			Py_XDECREF(so);
 			Py_XDECREF(value);
 			PG_RE_THROW();
 		}
@@ -1934,10 +2071,11 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 	nulls = palloc(sizeof(bool) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
-		PyObject   *volatile value,
-				   *volatile so;
+		PyObject   *volatile value;
+		PLyObToDatum *att;
 
-		value = so = NULL;
+		value = NULL;
+		att = &info->out.r.atts[i];
 		PG_TRY();
 		{
 			value = PySequence_GetItem(sequence, i);
@@ -1949,18 +2087,7 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 			}
 			else if (value)
 			{
-				char	   *valuestr;
-
-				so = PyObject_Str(value);
-				if (so == NULL)
-					PLy_elog(ERROR, "could not compute string representation of Python object");
-				valuestr = PyString_AsString(so);
-				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
-											  ,valuestr
-											  ,info->out.r.atts[i].typioparam
-											  ,-1);
-				Py_DECREF(so);
-				so = NULL;
+				values[i] = (att->func) (info, att, value);
 				nulls[i] = false;
 			}
 
@@ -1969,7 +2096,6 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 		}
 		PG_CATCH();
 		{
-			Py_XDECREF(so);
 			Py_XDECREF(value);
 			PG_RE_THROW();
 		}
@@ -2005,11 +2131,12 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   *volatile value,
-				   *volatile so;
+		PyObject   *volatile value;
+		PLyObToDatum *att;
 
 		key = NameStr(desc->attrs[i]->attname);
-		value = so = NULL;
+		value = NULL;
+		att = &info->out.r.atts[i];
 		PG_TRY();
 		{
 			value = PyObject_GetAttrString(object, key);
@@ -2020,18 +2147,7 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 			}
 			else if (value)
 			{
-				char	   *valuestr;
-
-				so = PyObject_Str(value);
-				if (so == NULL)
-					PLy_elog(ERROR, "could not compute string representation of Python object");
-				valuestr = PyString_AsString(so);
-				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
-											  ,valuestr
-											  ,info->out.r.atts[i].typioparam
-											  ,-1);
-				Py_DECREF(so);
-				so = NULL;
+				values[i] = (att->func) (info, att, value);
 				nulls[i] = false;
 			}
 			else
@@ -2047,7 +2163,6 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 		}
 		PG_CATCH();
 		{
-			Py_XDECREF(so);
 			Py_XDECREF(value);
 			PG_RE_THROW();
 		}
