@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.6 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_cte.c,v 2.7 2009/09/09 03:32:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,6 @@ typedef struct CteItem
 {
 	CommonTableExpr *cte;		/* One CTE to examine */
 	int			id;				/* Its ID number for dependencies */
-	Node	   *non_recursive_term;		/* Its nonrecursive part, if
-										 * identified */
 	Bitmapset  *depends_on;		/* CTEs depended on (not including self) */
 } CteItem;
 
@@ -80,7 +78,6 @@ typedef struct CteState
 
 
 static void analyzeCTE(ParseState *pstate, CommonTableExpr *cte);
-static void analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist);
 
 /* Dependency processing functions */
 static void makeDependencyGraph(CteState *cstate);
@@ -191,25 +188,6 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 		{
 			CommonTableExpr *cte = cstate.items[i].cte;
 
-			/*
-			 * If it's recursive, we have to do a throwaway parse analysis of
-			 * the non-recursive term in order to determine the set of output
-			 * columns for the recursive CTE.
-			 */
-			if (cte->cterecursive)
-			{
-				Node	   *nrt;
-				Query	   *nrq;
-
-				if (!cstate.items[i].non_recursive_term)
-					elog(ERROR, "could not find non-recursive term for %s",
-						 cte->ctename);
-				/* copy the term to be sure we don't modify original query */
-				nrt = copyObject(cstate.items[i].non_recursive_term);
-				nrq = parse_sub_analyze(nrt, pstate);
-				analyzeCTETargetList(pstate, cte, nrq->targetList);
-			}
-
 			analyzeCTE(pstate, cte);
 		}
 	}
@@ -251,7 +229,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	/* Analysis not done already */
 	Assert(IsA(cte->ctequery, SelectStmt));
 
-	query = parse_sub_analyze(cte->ctequery, pstate);
+	query = parse_sub_analyze(cte->ctequery, pstate, cte);
 	cte->ctequery = (Node *) query;
 
 	/*
@@ -325,13 +303,25 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 
 /*
  * Compute derived fields of a CTE, given the transformed output targetlist
+ *
+ * For a nonrecursive CTE, this is called after transforming the CTE's query.
+ * For a recursive CTE, we call it after transforming the non-recursive term,
+ * and pass the targetlist emitted by the non-recursive term only.
+ *
+ * Note: in the recursive case, the passed pstate is actually the one being
+ * used to analyze the CTE's query, so it is one level lower down than in
+ * the nonrecursive case.  This doesn't matter since we only use it for
+ * error message context anyway.
  */
-static void
+void
 analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 {
 	int			numaliases;
 	int			varattno;
 	ListCell   *tlistitem;
+
+	/* Not done already ... */
+	Assert(cte->ctecolnames == NIL);
 
 	/*
 	 * We need to determine column names and types.  The alias column names
@@ -668,11 +658,6 @@ checkWellFormedRecursion(CteState *cstate)
 					 errmsg("FOR UPDATE/SHARE in a recursive query is not implemented"),
 					 parser_errposition(cstate->pstate,
 							   exprLocation((Node *) stmt->lockingClause))));
-
-		/*
-		 * Save non_recursive_term.
-		 */
-		cstate->items[i].non_recursive_term = (Node *) stmt->larg;
 	}
 }
 

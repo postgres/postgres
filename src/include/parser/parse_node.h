@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.62 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.63 2009/09/09 03:32:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,9 @@
  * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
  * visible due to scope rules.	This is used to help improve error messages.
  *
+ * p_parent_cte: CommonTableExpr that immediately contains the current query,
+ * if any.
+ *
  * p_windowdefs: list of WindowDefs representing WINDOW and OVER clauses.
  * We collect these while transforming expressions and then transform them
  * afterwards (so that any resjunk tlist items needed for the sort/group
@@ -88,6 +91,7 @@ typedef struct ParseState
 	List	   *p_varnamespace; /* current namespace for columns */
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
+	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
