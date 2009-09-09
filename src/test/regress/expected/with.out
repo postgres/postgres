@@ -953,3 +953,76 @@ from int4_tbl;
  -2147483647
 (5 rows)
 
+--
+-- test for nested-recursive-WITH bug
+--
+WITH RECURSIVE t(j) AS (
+    WITH RECURSIVE s(i) AS (
+        VALUES (1)
+        UNION ALL
+        SELECT i+1 FROM s WHERE i < 10
+    )
+    SELECT i FROM s
+    UNION ALL
+    SELECT j+1 FROM t WHERE j < 10
+)
+SELECT * FROM t;
+ j  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+  5
+  6
+  7
+  8
+  9
+ 10
+  6
+  7
+  8
+  9
+ 10
+  7
+  8
+  9
+ 10
+  8
+  9
+ 10
+  9
+ 10
+ 10
+(55 rows)
+

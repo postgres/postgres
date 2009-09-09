@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.189.2.1 2009/08/27 20:08:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.189.2.2 2009/09/09 03:33:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,7 +479,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	/*
 	 * Analyze and transform the subquery.
 	 */
-	query = parse_sub_analyze(r->subquery, pstate);
+	query = parse_sub_analyze(r->subquery, pstate, NULL);
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
