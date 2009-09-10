@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258.2.5 2009/05/07 11:25:32 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258.2.6 2009/09/10 09:43:32 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2599,6 +2599,9 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 	struct dirent *xlde;
 	char		lastoff[MAXFNAMELEN];
 	char		path[MAXPGPATH];
+#ifdef WIN32
+	char		newpath[MAXPGPATH];
+#endif
 
 	*nsegsremoved = 0;
 	*nsegsrecycled = 0;
@@ -2662,10 +2665,40 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 				else
 				{
 					/* No need for any more future segments... */
+					int rc;
+
 					ereport(DEBUG2,
 							(errmsg("removing transaction log file \"%s\"",
 									xlde->d_name)));
-					unlink(path);
+#ifdef WIN32
+					/*
+					 * On Windows, if another process (e.g another backend)
+					 * holds the file open in FILE_SHARE_DELETE mode, unlink
+					 * will succeed, but the file will still show up in
+					 * directory listing until the last handle is closed.
+					 * To avoid confusing the lingering deleted file for a
+					 * live WAL file that needs to be archived, rename it
+					 * before deleting it.
+					 *
+					 * If another process holds the file open without
+					 * FILE_SHARE_DELETE flag, rename will fail. We'll try
+					 * again at the next checkpoint.
+					 */
+					snprintf(newpath, MAXPGPATH, "%s.deleted", path);
+					if (rename(path, newpath) != 0)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not rename old transaction log file \"%s\"",
+										path)));
+					rc = unlink(newpath);
+#else
+					rc = unlink(path);
+#endif
+					if (rc != 0)
+						ereport(ERROR,
+								(errcode_for_file_access(),
+								 errmsg("could not remove old transaction log file \"%s\": %m",
+										path)));
 					(*nsegsremoved)++;
 				}
 
