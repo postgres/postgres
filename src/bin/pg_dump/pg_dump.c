@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.546 2009/08/04 19:46:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.547 2009/09/11 19:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,7 +595,9 @@ main(int argc, char **argv)
 	 * If supported, set extra_float_digits so that we can dump float data
 	 * exactly (given correctly implemented float I/O code, anyway)
 	 */
-	if (g_fout->remoteVersion >= 70400)
+	if (g_fout->remoteVersion >= 80500)
+		do_sql_command(g_conn, "SET extra_float_digits TO 3");
+	else if (g_fout->remoteVersion >= 70400)
 		do_sql_command(g_conn, "SET extra_float_digits TO 2");
 
 	/*

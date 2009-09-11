@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.516 2009/09/08 17:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.517 2009/09/11 19:17:03 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1684,7 +1684,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "(FLT_DIG or DBL_DIG as appropriate).")
 		},
 		&extra_float_digits,
-		0, -15, 2, NULL, NULL
+		0, -15, 3, NULL, NULL
 	},
 
 	{

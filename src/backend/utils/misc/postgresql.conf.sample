@@ -445,7 +445,7 @@
 					#   India
 					# You can create your own file in
 					# share/timezonesets/.
-#extra_float_digits = 0			# min -15, max 2
+#extra_float_digits = 0			# min -15, max 3
 #client_encoding = sql_ascii		# actually, defaults to database
 					# encoding
 

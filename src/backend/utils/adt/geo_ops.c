@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.104 2009/08/27 15:59:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.105 2009/09/11 19:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ static Point* lseg_interpt_internal(LSEG *l1, LSEG *l2);
 #define RDELIM_C		'>'
 
 /* Maximum number of characters printed by pair_encode() */
-/* ...+2+7 : 2 accounts for extra_float_digits max value */
-#define P_MAXLEN (2*(DBL_DIG+2+7)+1)
+/* ...+3+7 : 3 accounts for extra_float_digits max value */
+#define P_MAXLEN (2*(DBL_DIG+3+7)+1)
 
 
 /*
