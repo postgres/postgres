@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.20 2009/06/23 20:33:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.21 2009/09/11 12:53:24 petere Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -11,8 +11,7 @@
   The previous chapter discussed how to create tables and other
   structures to hold your data.  Now it is time to fill the tables
   with data.  This chapter covers how to insert, update, and delete
-  table data.  We also introduce ways to effect automatic data changes
-  when certain events occur: triggers and rewrite rules.  The chapter
+  table data.  The chapter
   after this will finally explain how to extract your long-lost data
   from the database.
  </para>
