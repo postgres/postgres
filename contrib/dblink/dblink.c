@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.82 2009/06/11 14:48:50 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.82.2.1 2009/09/12 23:21:13 joe Exp $
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -855,9 +855,9 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-			dblink_res_error(conname, res, "could not execute query", fail);
 			if (freeconn)
 				PQfinish(conn);
+			dblink_res_error(conname, res, "could not execute query", fail);
 			MemoryContextSwitchTo(oldcontext);
 			SRF_RETURN_DONE(funcctx);
 		}
