@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.98 2009/07/17 23:19:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.99 2009/09/12 00:04:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -635,6 +635,15 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 							exprType((Node *) tle->expr),
 							exprTypmod((Node *) tle->expr),
 							0);
+
+				/*
+				 * Note: it might look funny to be setting sortref = 0 for
+				 * a reference to a volatile sub_eclass.  However, the
+				 * expression is *not* volatile in the outer query: it's
+				 * just a Var referencing whatever the subquery emitted.
+				 * (IOW, the outer query isn't going to re-execute the
+				 * volatile expression itself.)  So this is okay.
+				 */
 				outer_ec =
 					get_eclass_for_sort_expr(root,
 											 outer_expr,

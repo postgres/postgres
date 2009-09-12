@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.19 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.20 2009/09/12 00:04:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,7 +357,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *	  EquivalenceClass for it.
  *
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
- * or zero if not.
+ * or zero if not.  (It should never be zero if the expression is volatile!)
  *
  * This can be used safely both before and after EquivalenceClass merging;
  * since it never causes merging it does not invalidate any existing ECs
@@ -388,8 +388,12 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
 		ListCell   *lc2;
 
-		/* Never match to a volatile EC */
-		if (cur_ec->ec_has_volatile)
+		/*
+		 * Never match to a volatile EC, except when we are looking at another
+		 * reference to the same volatile SortGroupClause.
+		 */
+		if (cur_ec->ec_has_volatile &&
+			(sortref == 0 || sortref != cur_ec->ec_sortref))
 			continue;
 
 		if (!equal(opfamilies, cur_ec->ec_opfamilies))
@@ -433,6 +437,10 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	newec->ec_broken = false;
 	newec->ec_sortref = sortref;
 	newec->ec_merged = NULL;
+
+	if (newec->ec_has_volatile && sortref == 0)		/* should not happen */
+		elog(ERROR, "volatile EquivalenceClass has no sortref");
+
 	newem = add_eq_member(newec, expr, pull_varnos((Node *) expr),
 						  false, expr_datatype);
 
