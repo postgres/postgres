@@ -2,7 +2,3 @@ Guide to alternative expected files:
 
 plpython_error_2.out		Python 2.2, 2.3, 2.4
 plpython_error.out			Python 2.5, 2.6
-
-plpython_unicode_2.out		Python 2.2
-plpython_unicode_3.out		Python 2.3, 2.4
-plpython_unicode.out		Python 2.5, 2.6

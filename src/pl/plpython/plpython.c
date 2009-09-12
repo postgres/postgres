@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.128 2009/09/09 19:00:09 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.129 2009/09/12 22:13:12 petere Exp $
  *
  *********************************************************************
  */
@@ -54,6 +54,7 @@ typedef int Py_ssize_t;
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "fmgr.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
@@ -237,6 +238,9 @@ static void *PLy_malloc(size_t);
 static void *PLy_malloc0(size_t);
 static char *PLy_strdup(const char *);
 static void PLy_free(void *);
+
+static PyObject*PLyUnicode_Str(PyObject *unicode);
+static char *PLyUnicode_AsString(PyObject *unicode);
 
 /* sub handlers for functions and triggers */
 static Datum PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *);
@@ -474,13 +478,19 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		{
 			char	   *srv;
 
-			if (!PyString_Check(plrv))
+			if (PyString_Check(plrv))
+				srv = PyString_AsString(plrv);
+			else if (PyUnicode_Check(plrv))
+				srv = PLyUnicode_AsString(plrv);
+			else
+			{
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_EXCEPTION),
 					errmsg("unexpected return value from trigger procedure"),
 						 errdetail("Expected None or a string.")));
+				srv = NULL;		/* keep compiler quiet */
+			}
 
-			srv = PyString_AsString(plrv);
 			if (pg_strcasecmp(srv, "SKIP") == 0)
 				rv = NULL;
 			else if (pg_strcasecmp(srv, "MODIFY") == 0)
@@ -572,15 +582,24 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 		for (i = 0; i < natts; i++)
 		{
+			char	   *plattstr;
+
 			platt = PyList_GetItem(plkeys, i);
-			if (!PyString_Check(platt))
+			if (PyString_Check(platt))
+				plattstr = PyString_AsString(platt);
+			else if (PyUnicode_Check(platt))
+				plattstr = PLyUnicode_AsString(platt);
+			else
+			{
 				ereport(ERROR,
 						(errmsg("TD[\"new\"] dictionary key at ordinal position %d is not a string", i)));
-			attn = SPI_fnumber(tupdesc, PyString_AsString(platt));
+				plattstr = NULL; /* keep compiler quiet */
+			}
+			attn = SPI_fnumber(tupdesc, plattstr);
 			if (attn == SPI_ERROR_NOATTRIBUTE)
 				ereport(ERROR,
 						(errmsg("key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row",
-								PyString_AsString(platt))));
+								plattstr)));
 			atti = attn - 1;
 
 			plval = PyDict_GetItem(plntup, platt);
@@ -1942,7 +1961,10 @@ PLyObject_ToDatum(PLyTypeInfo *info,
 
 	Assert(plrv != Py_None);
 
-	plrv_so = PyObject_Str(plrv);
+	if (PyUnicode_Check(plrv))
+		plrv_so = PLyUnicode_Str(plrv);
+	else
+		plrv_so = PyObject_Str(plrv);
 	if (!plrv_so)
 		PLy_elog(ERROR, "could not create string representation of Python object");
 
@@ -2562,10 +2584,16 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 					Form_pg_type typeStruct;
 
 					optr = PySequence_GetItem(list, i);
-					if (!PyString_Check(optr))
+					if (PyString_Check(optr))
+						sptr = PyString_AsString(optr);
+					else if (PyUnicode_Check(optr))
+						sptr = PLyUnicode_AsString(optr);
+					else
+					{
 						ereport(ERROR,
 								(errmsg("plpy.prepare: type name at ordinal position %d is not a string", i)));
-					sptr = PyString_AsString(optr);
+						sptr = NULL; /* keep compiler quiet */
+					}
 
 					/********************************************************
 					 * Resolve argument type names and then look them up by
@@ -2670,7 +2698,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 	if (list != NULL)
 	{
-		if (!PySequence_Check(list) || PyString_Check(list))
+		if (!PySequence_Check(list) || PyString_Check(list) || PyUnicode_Check(list))
 		{
 			PLy_exception_set(PLy_exc_spi_error, "plpy.execute takes a sequence as its second argument");
 			return NULL;
@@ -2714,7 +2742,10 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			elem = PySequence_GetItem(list, j);
 			if (elem != Py_None)
 			{
-				so = PyObject_Str(elem);
+				if (PyUnicode_Check(elem))
+					so = PLyUnicode_Str(elem);
+				else
+					so = PyObject_Str(elem);
 				if (!so)
 					PLy_elog(ERROR, "could not execute plan");
 				Py_DECREF(elem);
@@ -3302,4 +3333,33 @@ static void
 PLy_free(void *ptr)
 {
 	free(ptr);
+}
+
+/*
+ * Convert a Python unicode object to a Python string object in
+ * PostgreSQL server encoding.  Reference ownership is passed to the
+ * caller.
+ */
+static PyObject*
+PLyUnicode_Str(PyObject *unicode)
+{
+	/*
+	 * This assumes that the PostgreSQL encoding names are acceptable
+	 * to Python, but that appears to be the case.
+	 */
+	return PyUnicode_AsEncodedString(unicode, GetDatabaseEncodingName(), "strict");
+}
+
+/*
+ * Convert a Python unicode object to a C string in PostgreSQL server
+ * encoding.  No Python object reference is passed out of this
+ * function.
+ */
+static char *
+PLyUnicode_AsString(PyObject *unicode)
+{
+	PyObject *o = PLyUnicode_Str(unicode);
+	char *rv = PyString_AsString(o);
+	Py_XDECREF(o);
+	return rv;
 }

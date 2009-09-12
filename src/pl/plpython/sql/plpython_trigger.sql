@@ -159,6 +159,22 @@ UPDATE trigger_test SET v = 'null' WHERE i = 0;
 DROP TRIGGER stupid_trigger3 ON trigger_test;
 
 
+-- Unicode variant
+
+CREATE FUNCTION stupid3u() RETURNS trigger
+AS $$
+    return u"foo"
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger3
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid3u();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger3 ON trigger_test;
+
+
 -- deleting the TD dictionary
 
 CREATE FUNCTION stupid4() RETURNS trigger
@@ -221,6 +237,23 @@ $$ LANGUAGE plpythonu;
 CREATE TRIGGER stupid_trigger7
 BEFORE UPDATE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE stupid7();
+
+UPDATE trigger_test SET v = 'null' WHERE i = 0;
+
+DROP TRIGGER stupid_trigger7 ON trigger_test;
+
+
+-- Unicode variant
+
+CREATE FUNCTION stupid7u() RETURNS trigger
+AS $$
+    TD["new"] = {u'a': 'foo', u'b': 'bar'}
+    return "MODIFY"
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER stupid_trigger7
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE stupid7u();
 
 UPDATE trigger_test SET v = 'null' WHERE i = 0;
 
