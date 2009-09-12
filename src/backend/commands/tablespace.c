@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.61 2009/01/22 20:16:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.62 2009/09/12 15:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,6 +612,17 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 							subfile)));
 
 		pfree(subfile);
+
+		/*
+		 * OS X 10.6 and 10.6.1 have a bug in readdir() that causes the
+		 * next call to fail after deleting the current element.  Hopefully
+		 * that will be fixed real soon, but for the moment we have this
+		 * ugly kluge to restart the directory scan.
+		 */
+#ifdef __darwin__
+		FreeDir(dirdesc);
+		dirdesc = AllocateDir(location);
+#endif
 	}
 
 	FreeDir(dirdesc);
