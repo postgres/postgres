@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.122 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.123 2009/09/12 22:12:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include <math.h>
 
+#include "executor/executor.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -405,18 +406,10 @@ match_unsorted_outer(PlannerInfo *root,
 	else if (nestjoinOK)
 	{
 		/*
-		 * If the cheapest inner path is a join or seqscan, we should consider
-		 * materializing it.  (This is a heuristic: we could consider it
-		 * always, but for inner indexscans it's probably a waste of time.)
-		 * Also skip it if the inner path materializes its output anyway.
+		 * Consider materializing the cheapest inner path, unless it is one
+		 * that materializes its output anyway.
 		 */
-		if (!(inner_cheapest_total->pathtype == T_IndexScan ||
-			  inner_cheapest_total->pathtype == T_BitmapHeapScan ||
-			  inner_cheapest_total->pathtype == T_TidScan ||
-			  inner_cheapest_total->pathtype == T_Material ||
-			  inner_cheapest_total->pathtype == T_FunctionScan ||
-			  inner_cheapest_total->pathtype == T_CteScan ||
-			  inner_cheapest_total->pathtype == T_WorkTableScan))
+		if (!ExecMaterializesOutput(inner_cheapest_total->pathtype))
 			matpath = (Path *)
 				create_material_path(innerrel, inner_cheapest_total);
 

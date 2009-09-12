@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.210 2009/07/11 04:09:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.211 2009/09/12 22:12:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@
 
 #include <math.h>
 
+#include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -119,6 +120,8 @@ typedef struct
 static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 			   RestrictInfo *rinfo,
 			   PathKey *pathkey);
+static void cost_rescan(PlannerInfo *root, Path *path,
+			Cost *rescan_startup_cost, Cost *rescan_total_cost);
 static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
 static bool adjust_semi_join(PlannerInfo *root, JoinPath *path,
 				 SpecialJoinInfo *sjinfo,
@@ -895,15 +898,26 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	rte = planner_rt_fetch(baserel->relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
 
-	/* Estimate costs of executing the function expression */
+	/*
+	 * Estimate costs of executing the function expression.
+	 *
+	 * Currently, nodeFunctionscan.c always executes the function to
+	 * completion before returning any rows, and caches the results in a
+	 * tuplestore.  So the function eval cost is all startup cost, and
+	 * per-row costs are minimal.
+	 *
+	 * XXX in principle we ought to charge tuplestore spill costs if the
+	 * number of rows is large.  However, given how phony our rowcount
+	 * estimates for functions tend to be, there's not a lot of point
+	 * in that refinement right now.
+	 */
 	cost_qual_eval_node(&exprcost, rte->funcexpr, root);
 
-	startup_cost += exprcost.startup;
-	cpu_per_tuple = exprcost.per_tuple;
+	startup_cost += exprcost.startup + exprcost.per_tuple;
 
 	/* Add scanning CPU costs */
 	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple += cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
@@ -1176,40 +1190,43 @@ sort_exceeds_work_mem(Sort *sort)
  *
  * If the total volume of data to materialize exceeds work_mem, we will need
  * to write it to disk, so the cost is much higher in that case.
+ *
+ * Note that here we are estimating the costs for the first scan of the
+ * relation, so the materialization is all overhead --- any savings will
+ * occur only on rescan, which is estimated in cost_rescan.
  */
 void
 cost_material(Path *path,
-			  Cost input_cost, double tuples, int width)
+			  Cost input_startup_cost, Cost input_total_cost,
+			  double tuples, int width)
 {
-	Cost		startup_cost = input_cost;
-	Cost		run_cost = 0;
+	Cost		startup_cost = input_startup_cost;
+	Cost		run_cost = input_total_cost - input_startup_cost;
 	double		nbytes = relation_byte_size(tuples, width);
 	long		work_mem_bytes = work_mem * 1024L;
 
-	/* disk costs */
+	/*
+	 * Whether spilling or not, charge 2x cpu_tuple_cost per tuple to reflect
+	 * bookkeeping overhead.  (This rate must be more than cpu_tuple_cost;
+	 * if it is exactly the same then there will be a cost tie between
+	 * nestloop with A outer, materialized B inner and nestloop with B outer,
+	 * materialized A inner.  The extra cost ensures we'll prefer
+	 * materializing the smaller rel.)
+	 */
+	run_cost += 2 * cpu_tuple_cost * tuples;
+
+	/*
+	 * If we will spill to disk, charge at the rate of seq_page_cost per page.
+	 * This cost is assumed to be evenly spread through the plan run phase,
+	 * which isn't exactly accurate but our cost model doesn't allow for
+	 * nonuniform costs within the run phase.
+	 */
 	if (nbytes > work_mem_bytes)
 	{
 		double		npages = ceil(nbytes / BLCKSZ);
 
-		/* We'll write during startup and read during retrieval */
-		startup_cost += seq_page_cost * npages;
 		run_cost += seq_page_cost * npages;
 	}
-
-	/*
-	 * Charge a very small amount per inserted tuple, to reflect bookkeeping
-	 * costs.  We use cpu_tuple_cost/10 for this.  This is needed to break the
-	 * tie that would otherwise exist between nestloop with A outer,
-	 * materialized B inner and nestloop with B outer, materialized A inner.
-	 * The extra cost ensures we'll prefer materializing the smaller rel.
-	 */
-	startup_cost += cpu_tuple_cost * 0.1 * tuples;
-
-	/*
-	 * Also charge a small amount per extracted tuple.	We use cpu_tuple_cost
-	 * so that it doesn't appear worthwhile to materialize a bare seqscan.
-	 */
-	run_cost += cpu_tuple_cost * tuples;
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -1400,7 +1417,10 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	Path	   *inner_path = path->innerjoinpath;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	Cost		inner_rescan_start_cost;
+	Cost		inner_rescan_total_cost;
 	Cost		inner_run_cost;
+	Cost		inner_rescan_run_cost;
 	Cost		cpu_per_tuple;
 	QualCost	restrict_qual_cost;
 	double		outer_path_rows = PATH_ROWS(outer_path);
@@ -1413,32 +1433,26 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	if (!enable_nestloop)
 		startup_cost += disable_cost;
 
+	/* estimate costs to rescan the inner relation */
+	cost_rescan(root, inner_path,
+				&inner_rescan_start_cost,
+				&inner_rescan_total_cost);
+
 	/* cost of source data */
 
 	/*
 	 * NOTE: clearly, we must pay both outer and inner paths' startup_cost
 	 * before we can start returning tuples, so the join's startup cost is
-	 * their sum.  What's not so clear is whether the inner path's
-	 * startup_cost must be paid again on each rescan of the inner path. This
-	 * is not true if the inner path is materialized or is a hashjoin, but
-	 * probably is true otherwise.
+	 * their sum.  We'll also pay the inner path's rescan startup cost
+	 * multiple times.
 	 */
 	startup_cost += outer_path->startup_cost + inner_path->startup_cost;
 	run_cost += outer_path->total_cost - outer_path->startup_cost;
-	if (IsA(inner_path, MaterialPath) ||
-		IsA(inner_path, HashPath))
-	{
-		/* charge only run cost for each iteration of inner path */
-	}
-	else
-	{
-		/*
-		 * charge startup cost for each iteration of inner path, except we
-		 * already charged the first startup_cost in our own startup
-		 */
-		run_cost += (outer_path_rows - 1) * inner_path->startup_cost;
-	}
+	if (outer_path_rows > 1)
+		run_cost += (outer_path_rows - 1) * inner_rescan_start_cost;
+
 	inner_run_cost = inner_path->total_cost - inner_path->startup_cost;
+	inner_rescan_run_cost = inner_rescan_total_cost - inner_rescan_start_cost;
 
 	if (adjust_semi_join(root, path, sjinfo,
 						 &outer_match_frac,
@@ -1458,12 +1472,22 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		 * that fraction.  (If we used a larger fuzz factor, we'd have to
 		 * clamp inner_scan_frac to at most 1.0; but since match_count is at
 		 * least 1, no such clamp is needed now.)
+		 *
+		 * A complicating factor is that rescans may be cheaper than first
+		 * scans.  If we never scan all the way to the end of the inner rel,
+		 * it might be (depending on the plan type) that we'd never pay the
+		 * whole inner first-scan run cost.  However it is difficult to
+		 * estimate whether that will happen, so be conservative and always
+		 * charge the whole first-scan cost once.
 		 */
+		run_cost += inner_run_cost;
+
 		outer_matched_rows = rint(outer_path_rows * outer_match_frac);
 		inner_scan_frac = 2.0 / (match_count + 1.0);
 
-		/* Add inner run cost for outer tuples having matches */
-		run_cost += outer_matched_rows * inner_run_cost * inner_scan_frac;
+		/* Add inner run cost for additional outer tuples having matches */
+		if (outer_matched_rows > 1)
+			run_cost += (outer_matched_rows - 1) * inner_rescan_run_cost * inner_scan_frac;
 
 		/* Compute number of tuples processed (not number emitted!) */
 		ntuples = outer_matched_rows * inner_path_rows * inner_scan_frac;
@@ -1479,13 +1503,16 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		if (indexed_join_quals)
 		{
 			run_cost += (outer_path_rows - outer_matched_rows) *
-				inner_run_cost / inner_path_rows;
-			/* We won't be evaluating any quals at all for these rows */
+				inner_rescan_run_cost / inner_path_rows;
+			/*
+			 * We won't be evaluating any quals at all for these rows,
+			 * so don't add them to ntuples.
+			 */
 		}
 		else
 		{
 			run_cost += (outer_path_rows - outer_matched_rows) *
-				inner_run_cost;
+				inner_rescan_run_cost;
 			ntuples += (outer_path_rows - outer_matched_rows) *
 				inner_path_rows;
 		}
@@ -1493,7 +1520,9 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	else
 	{
 		/* Normal case; we'll scan whole input rel for each outer row */
-		run_cost += outer_path_rows * inner_run_cost;
+		run_cost += inner_run_cost;
+		if (outer_path_rows > 1)
+			run_cost += (outer_path_rows - 1) * inner_rescan_run_cost;
 
 		/* Compute number of tuples processed (not number emitted!) */
 		ntuples = outer_path_rows * inner_path_rows;
@@ -2190,13 +2219,13 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
 
 		/*
 		 * Also account for subplan's startup cost. If the subplan is
-		 * uncorrelated or undirect correlated, AND its topmost node is a Sort
-		 * or Material node, assume that we'll only need to pay its startup
-		 * cost once; otherwise assume we pay the startup cost every time.
+		 * uncorrelated or undirect correlated, AND its topmost node is one
+		 * that materializes its output, assume that we'll only need to pay
+		 * its startup cost once; otherwise assume we pay the startup cost
+		 * every time.
 		 */
 		if (subplan->parParam == NIL &&
-			(IsA(plan, Sort) ||
-			 IsA(plan, Material)))
+			ExecMaterializesOutput(nodeTag(plan)))
 			sp_cost.startup += plan->startup_cost;
 		else
 			sp_cost.per_tuple += plan->startup_cost;
@@ -2204,6 +2233,81 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
 
 	subplan->startup_cost = sp_cost.startup;
 	subplan->per_call_cost = sp_cost.per_tuple;
+}
+
+
+/*
+ * cost_rescan
+ *		Given a finished Path, estimate the costs of rescanning it after
+ *		having done so the first time.  For some Path types a rescan is
+ *		cheaper than an original scan (if no parameters change), and this
+ *		function embodies knowledge about that.  The default is to return
+ *		the same costs stored in the Path.  (Note that the cost estimates
+ *		actually stored in Paths are always for first scans.)
+ *
+ * This function is not currently intended to model effects such as rescans
+ * being cheaper due to disk block caching; what we are concerned with is
+ * plan types wherein the executor caches results explicitly, or doesn't
+ * redo startup calculations, etc.
+ */
+static void
+cost_rescan(PlannerInfo *root, Path *path,
+			Cost *rescan_startup_cost,		/* output parameters */
+			Cost *rescan_total_cost)
+{
+	switch (path->pathtype)
+	{
+		case T_FunctionScan:
+			/*
+			 * Currently, nodeFunctionscan.c always executes the function
+			 * to completion before returning any rows, and caches the
+			 * results in a tuplestore.  So the function eval cost is
+			 * all startup cost and isn't paid over again on rescans.
+			 * However, all run costs will be paid over again.
+			 */
+			*rescan_startup_cost = 0;
+			*rescan_total_cost = path->total_cost - path->startup_cost;
+			break;
+		case T_HashJoin:
+			/*
+			 * Assume that all of the startup cost represents hash table
+			 * building, which we won't have to do over.
+			 */
+			*rescan_startup_cost = 0;
+			*rescan_total_cost = path->total_cost - path->startup_cost;
+			break;
+		case T_Material:
+		case T_CteScan:
+		case T_WorkTableScan:
+		case T_Sort:
+			{
+				/*
+				 * These plan types materialize their final result in a
+				 * tuplestore or tuplesort object.  So the rescan cost is only
+				 * cpu_tuple_cost per tuple, unless the result is large enough
+				 * to spill to disk.
+				 */
+				Cost	run_cost = cpu_tuple_cost * path->parent->rows;
+				double	nbytes = relation_byte_size(path->parent->rows,
+													path->parent->width);
+				long	work_mem_bytes = work_mem * 1024L;
+
+				if (nbytes > work_mem_bytes)
+				{
+					/* It will spill, so account for re-read cost */
+					double		npages = ceil(nbytes / BLCKSZ);
+
+					run_cost += seq_page_cost * npages;
+				}
+				*rescan_startup_cost = 0;
+				*rescan_total_cost = run_cost;
+			}
+			break;
+		default:
+			*rescan_startup_cost = path->startup_cost;
+			*rescan_total_cost = path->total_cost;
+			break;
+	}
 }
 
 

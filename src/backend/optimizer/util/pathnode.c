@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.152 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.153 2009/09/12 22:12:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,6 +711,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	cost_material(&pathnode->path,
+				  subpath->startup_cost,
 				  subpath->total_cost,
 				  rel->rows,
 				  rel->width);
@@ -1424,7 +1425,8 @@ create_mergejoin_path(PlannerInfo *root,
 		 * cost_mergejoin will avoid choosing anyway).	Therefore
 		 * cost_material's cost estimate is bogus and we should charge just
 		 * cpu_tuple_cost per tuple.  (Keep this estimate in sync with similar
-		 * ones in cost_mergejoin and create_mergejoin_plan.)
+		 * ones in cost_mergejoin and create_mergejoin_plan; also see
+		 * cost_rescan.)
 		 */
 		mpath->startup_cost = inner_path->startup_cost;
 		mpath->total_cost = inner_path->total_cost;

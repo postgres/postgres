@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.152 2009/07/16 06:33:43 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.153 2009/09/12 22:12:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -564,33 +565,16 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 			splan->useHashTable = true;
 
 		/*
-		 * Otherwise, we have the option to tack a MATERIAL node onto the top
+		 * Otherwise, we have the option to tack a Material node onto the top
 		 * of the subplan, to reduce the cost of reading it repeatedly.  This
 		 * is pointless for a direct-correlated subplan, since we'd have to
 		 * recompute its results each time anyway.	For uncorrelated/undirect
-		 * correlated subplans, we add MATERIAL unless the subplan's top plan
+		 * correlated subplans, we add Material unless the subplan's top plan
 		 * node would materialize its output anyway.
 		 */
-		else if (splan->parParam == NIL)
-		{
-			bool		use_material;
-
-			switch (nodeTag(plan))
-			{
-				case T_Material:
-				case T_FunctionScan:
-				case T_CteScan:
-				case T_WorkTableScan:
-				case T_Sort:
-					use_material = false;
-					break;
-				default:
-					use_material = true;
-					break;
-			}
-			if (use_material)
-				plan = materialize_finished_plan(plan);
-		}
+		else if (splan->parParam == NIL &&
+				 !ExecMaterializesOutput(nodeTag(plan)))
+			plan = materialize_finished_plan(plan);
 
 		result = (Node *) splan;
 		isInitPlan = false;

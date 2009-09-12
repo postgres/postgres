@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.103 2009/01/01 17:23:41 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.104 2009/09/12 22:12:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,4 +495,31 @@ IndexSupportsBackwardScan(Oid indexid)
 	ReleaseSysCache(ht_am);
 
 	return result;
+}
+
+/*
+ * ExecMaterializesOutput - does a plan type materialize its output?
+ *
+ * Returns true if the plan node type is one that automatically materializes
+ * its output (typically by keeping it in a tuplestore).  For such plans,
+ * a rescan without any parameter change will have zero startup cost and
+ * very low per-tuple cost.
+ */
+bool
+ExecMaterializesOutput(NodeTag plantype)
+{
+	switch (plantype)
+	{
+		case T_Material:
+		case T_FunctionScan:
+		case T_CteScan:
+		case T_WorkTableScan:
+		case T_Sort:
+			return true;
+
+		default:
+			break;
+	}
+
+	return false;
 }
