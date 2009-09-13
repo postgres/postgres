@@ -10,7 +10,7 @@
  *	Win32 (NT4 and newer).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.58 2009/06/11 14:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.59 2009/09/13 18:32:08 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,8 @@ pgrename(const char *from, const char *to)
 	 * We need to loop because even though PostgreSQL uses flags that allow
 	 * rename while the file is open, other applications might have the file
 	 * open without those flags.  However, we won't wait indefinitely for
-	 * someone else to close the file.
+	 * someone else to close the file, as the caller might be holding locks
+	 * and blocking other backends.
 	 */
 #if defined(WIN32) && !defined(__CYGWIN__)
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
@@ -129,13 +130,28 @@ pgrename(const char *from, const char *to)
 #endif
 	{
 #if defined(WIN32) && !defined(__CYGWIN__)
-		if (GetLastError() != ERROR_ACCESS_DENIED)
+		DWORD		err = GetLastError();
+
+		_dosmaperr(err);
+
+		/*
+		 * Modern NT-based Windows versions return ERROR_SHARING_VIOLATION
+		 * if another process has the file open without FILE_SHARE_DELETE.
+		 * ERROR_LOCK_VIOLATION has also been seen with some anti-virus
+		 * software. This used to check for just ERROR_ACCESS_DENIED, so
+		 * presumably you can get that too with some OS versions. We don't
+		 * expect real permission errors where we currently use rename().
+		 */
+		if (err != ERROR_ACCESS_DENIED &&
+			err != ERROR_SHARING_VIOLATION &&
+			err != ERROR_LOCK_VIOLATION)
+			return -1;
 #else
 		if (errno != EACCES)
-#endif
-			/* set errno? */
 			return -1;
-		if (++loops > 300)		/* time out after 30 sec */
+#endif
+
+		if (++loops > 100)		/* time out after 10 sec */
 			return -1;
 		pg_usleep(100000);		/* us */
 	}
@@ -155,14 +171,14 @@ pgunlink(const char *path)
 	 * We need to loop because even though PostgreSQL uses flags that allow
 	 * unlink while the file is open, other applications might have the file
 	 * open without those flags.  However, we won't wait indefinitely for
-	 * someone else to close the file.
+	 * someone else to close the file, as the caller might be holding locks
+	 * and blocking other backends.
 	 */
 	while (unlink(path))
 	{
 		if (errno != EACCES)
-			/* set errno? */
 			return -1;
-		if (++loops > 300)		/* time out after 30 sec */
+		if (++loops > 100)		/* time out after 10 sec */
 			return -1;
 		pg_usleep(100000);		/* us */
 	}
