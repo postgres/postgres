@@ -78,6 +78,9 @@
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
 
+/* Define to 1 if you have the `append_history' function. */
+#undef HAVE_APPEND_HISTORY
+
 /* Define to 1 if you have the `atexit' function. */
 #undef HAVE_ATEXIT
 
@@ -211,6 +214,9 @@
 
 /* Define to 1 if you have the <history.h> header file. */
 #undef HAVE_HISTORY_H
+
+/* Define to 1 if you have the `history_truncate_file' function. */
+#undef HAVE_HISTORY_TRUNCATE_FILE
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #undef HAVE_IEEEFP_H
@@ -377,9 +383,6 @@
 
 /* Define to 1 if you have the `readlink' function. */
 #undef HAVE_READLINK
-
-/* Define to 1 if you have the `replace_history_entry' function. */
-#undef HAVE_REPLACE_HISTORY_ENTRY
 
 /* Define to 1 if you have the `rint' function. */
 #undef HAVE_RINT

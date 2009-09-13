@@ -3,9 +3,14 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.66 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.67 2009/09/13 22:18:22 tgl Exp $
  */
 #include "postgres_fe.h"
+
+#ifndef WIN32
+#include <unistd.h>
+#endif
+#include <fcntl.h>
 
 #include "input.h"
 #include "settings.h"
@@ -23,7 +28,11 @@
 #ifdef USE_READLINE
 static bool useReadline;
 static bool useHistory;
-char	   *psql_history;
+
+static char *psql_history;
+
+static int	history_lines_added;
+
 
 /*
  *	Preserve newlines in saved queries by mapping '\n' to NL_IN_HISTORY
@@ -135,6 +144,8 @@ pg_send_history(PQExpBuffer history_buf)
 			prev_hist = pg_strdup(s);
 			/* And send it to readline */
 			add_history(s);
+			/* Count lines added to history for use later */
+			history_lines_added++;
 		}
 	}
 
@@ -276,6 +287,7 @@ initializeInput(int flags)
 
 		useHistory = true;
 		using_history();
+		history_lines_added = 0;
 
 		histfile = GetVariable(pset.vars, "HISTFILE");
 		if (histfile == NULL)
@@ -310,15 +322,22 @@ initializeInput(int flags)
 
 
 /*
- * This function is for saving the readline history when user
- * runs \s command or when psql finishes.
+ * This function saves the readline history when user
+ * runs \s command or when psql exits.
  *
- * We have an argument named encodeFlag to handle the cases differently.
- * In case of call via \s we don't really need to encode \n as \x01,
- * but when we save history for Readline we must do that conversion.
+ * fname: pathname of history file.  (Should really be "const char *",
+ * but some ancient versions of readline omit the const-decoration.)
+ *
+ * max_lines: if >= 0, limit history file to that many entries.
+ *
+ * appendFlag: if true, try to append just our new lines to the file.
+ * If false, write the whole available history.
+ *
+ * encodeFlag: whether to encode \n as \x01.  For \s calls we don't wish
+ * to do that, but must do so when saving the final history file.
  */
 bool
-saveHistory(char *fname, bool encodeFlag)
+saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 {
 #ifdef USE_READLINE
 
@@ -335,14 +354,54 @@ saveHistory(char *fname, bool encodeFlag)
 			encode_history();
 
 		/*
-		 * return value of write_history is not standardized across GNU
+		 * On newer versions of libreadline, truncate the history file as
+		 * needed and then append what we've added.  This avoids overwriting
+		 * history from other concurrent sessions (although there are still
+		 * race conditions when two sessions exit at about the same time).
+		 * If we don't have those functions, fall back to write_history().
+		 *
+		 * Note: return value of write_history is not standardized across GNU
 		 * readline and libedit.  Therefore, check for errno becoming set to
-		 * see if the write failed.
+		 * see if the write failed.  Similarly for append_history.
 		 */
-		errno = 0;
-		(void) write_history(fname);
-		if (errno == 0)
-			return true;
+#if defined(HAVE_HISTORY_TRUNCATE_FILE) && defined(HAVE_APPEND_HISTORY)
+		if (appendFlag)
+		{
+			int		nlines;
+			int		fd;
+
+			/* truncate previous entries if needed */
+			if (max_lines >= 0)
+			{
+				nlines = Max(max_lines - history_lines_added, 0);
+				(void) history_truncate_file(fname, nlines);
+			}
+			/* append_history fails if file doesn't already exist :-( */
+			fd = open(fname, O_CREAT | O_WRONLY | PG_BINARY, 0600);
+			if (fd >= 0)
+				close(fd);
+			/* append the appropriate number of lines */
+			if (max_lines >= 0)
+				nlines = Min(max_lines, history_lines_added);
+			else
+				nlines = history_lines_added;
+			errno = 0;
+			(void) append_history(nlines, fname);
+			if (errno == 0)
+				return true;
+		}
+		else
+#endif
+		{
+			/* truncate what we have ... */
+			if (max_lines >= 0)
+				stifle_history(max_lines);
+			/* ... and overwrite file.  Tough luck for concurrent sessions. */
+			errno = 0;
+			(void) write_history(fname);
+			if (errno == 0)
+				return true;
+		}
 
 		psql_error("could not save history to file \"%s\": %s\n",
 				   fname, strerror(errno));
@@ -369,10 +428,7 @@ finishInput(int exitstatus, void *arg)
 		int			hist_size;
 
 		hist_size = GetVariableNum(pset.vars, "HISTSIZE", 500, -1, true);
-		if (hist_size >= 0)
-			stifle_history(hist_size);
-
-		saveHistory(psql_history, true);
+		saveHistory(psql_history, hist_size, true, true);
 		free(psql_history);
 		psql_history = NULL;
 	}

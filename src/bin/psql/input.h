@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.32 2009/08/24 16:18:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.33 2009/09/13 22:18:22 tgl Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -45,7 +45,7 @@ char	   *gets_interactive(const char *prompt);
 char	   *gets_fromFile(FILE *source);
 
 void		initializeInput(int flags);
-bool		saveHistory(char *fname, bool encodeFlag);
+bool		saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag);
 
 void		pg_append_history(const char *s, PQExpBuffer history_buf);
 void		pg_send_history(PQExpBuffer history_buf);
