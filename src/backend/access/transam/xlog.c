@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258.2.6 2009/09/10 09:43:32 heikki Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258.2.7 2009/09/13 18:32:34 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1996,7 +1996,11 @@ XLogFileInit(uint32 log, uint32 seg,
 								*use_existent, &max_advance,
 								use_lock))
 	{
-		/* No need for any more future segments... */
+		/*
+		 * No need for any more future segments, or InstallXLogFileSegment()
+		 * failed to rename the file into place. If the rename failed, opening
+		 * the file below will fail.
+		 */
 		unlink(tmppath);
 	}
 
@@ -2141,10 +2145,9 @@ XLogFileCopy(uint32 log, uint32 seg,
  * place.  This should be TRUE except during bootstrap log creation.  The
  * caller must *not* hold the lock at call.
  *
- * Returns TRUE if file installed, FALSE if not installed because of
- * exceeding max_advance limit.  On Windows, we also return FALSE if we
- * can't rename the file into place because someone's got it open.
- * (Any other kind of failure causes ereport().)
+ * Returns TRUE if the file was installed successfully.  FALSE indicates that
+ * max_advance limit was exceeded, or an error occurred while renaming the
+ * file into place.
  */
 static bool
 InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
@@ -2192,31 +2195,26 @@ InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 	 */
 #if HAVE_WORKING_LINK
 	if (link(tmppath, path) < 0)
-		ereport(ERROR,
+	{
+		if (use_lock)
+			LWLockRelease(ControlFileLock);
+		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not link file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
 						tmppath, path, *log, *seg)));
+		return false;
+	}
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0)
 	{
-#ifdef WIN32
-#if !defined(__CYGWIN__)
-		if (GetLastError() == ERROR_ACCESS_DENIED)
-#else
-		if (errno == EACCES)
-#endif
-		{
-			if (use_lock)
-				LWLockRelease(ControlFileLock);
-			return false;
-		}
-#endif /* WIN32 */
-
-		ereport(ERROR,
+		if (use_lock)
+			LWLockRelease(ControlFileLock);
+		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
 						tmppath, path, *log, *seg)));
+		return false;
 	}
 #endif
 
@@ -2686,19 +2684,25 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 					 */
 					snprintf(newpath, MAXPGPATH, "%s.deleted", path);
 					if (rename(path, newpath) != 0)
-						ereport(ERROR,
+					{
+						ereport(LOG,
 								(errcode_for_file_access(),
 								 errmsg("could not rename old transaction log file \"%s\"",
 										path)));
+						continue;
+					}
 					rc = unlink(newpath);
 #else
 					rc = unlink(path);
 #endif
 					if (rc != 0)
-						ereport(ERROR,
+					{
+						ereport(LOG,
 								(errcode_for_file_access(),
 								 errmsg("could not remove old transaction log file \"%s\": %m",
 										path)));
+						continue;
+					}
 					(*nsegsremoved)++;
 				}
 
