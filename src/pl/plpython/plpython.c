@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.129 2009/09/12 22:13:12 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.130 2009/09/13 22:07:06 petere Exp $
  *
  *********************************************************************
  */
@@ -3343,11 +3343,21 @@ PLy_free(void *ptr)
 static PyObject*
 PLyUnicode_Str(PyObject *unicode)
 {
+	PyObject *rv;
+	const char *serverenc;
+
 	/*
-	 * This assumes that the PostgreSQL encoding names are acceptable
-	 * to Python, but that appears to be the case.
+	 * Python understands almost all PostgreSQL encoding names, but it
+	 * doesn't know SQL_ASCII.
 	 */
-	return PyUnicode_AsEncodedString(unicode, GetDatabaseEncodingName(), "strict");
+	if (GetDatabaseEncoding() == PG_SQL_ASCII)
+		serverenc = "ascii";
+	else
+		serverenc = GetDatabaseEncodingName();
+	rv = PyUnicode_AsEncodedString(unicode, serverenc, "strict");
+	if (rv == NULL)
+		PLy_elog(ERROR, "could not convert Python Unicode object to PostgreSQL server encoding");
+	return rv;
 }
 
 /*
