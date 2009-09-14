@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.129 2009/08/28 20:26:18 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.130 2009/09/14 13:23:48 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -134,7 +134,7 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 
 # RTF to allow minor editing for hardcopy
-%.rtf: %.sgml $(ALLSGML) html
+%.rtf: %.sgml $(ALLSGML)
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print  -i include-index postgres.sgml
 
 # TeX
@@ -148,7 +148,7 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 %-A4.tex-ps %-A4.tex-pdf : JADE_PAPER=A4
 %-US.tex-ps %-US.tex-pdf : JADE_PAPER=USletter
 
-%-A4.tex-ps %-US.tex-ps %-A4.tex-pdf %-US.tex-pdf: %.sgml $(ALLSGML) html
+%-A4.tex-ps %-US.tex-ps %-A4.tex-pdf %-US.tex-pdf: %.sgml $(ALLSGML)
 	$(JADE.tex.call) -V $(JADE_OUTPUT) -V '%paper-type%'=$(JADE_PAPER) -o $@ $<
 
 %.dvi: %.tex-ps
@@ -182,7 +182,7 @@ postgres.pdf:
 # This generates an XML version of the flow-object tree.  It's useful
 # for debugging DSSSL code, and possibly to interface to some other
 # tools that can make use of this.
-%.fot: %.sgml $(ALLSGML) html
+%.fot: %.sgml $(ALLSGML)
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -i include-index -o $@ $<
 
 
