@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.36 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.37 2009/09/15 02:31:15 tgl Exp $
  */
 
 /* This is intended to be used in both frontend and backend, so use c.h */
@@ -314,7 +314,8 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 			   char *buf)
 {
 	size_t		passwd_len = strlen(passwd);
-	char	   *crypt_buf = malloc(passwd_len + salt_len);
+	/* +1 here is just to avoid risk of unportable malloc(0) */
+	char	   *crypt_buf = malloc(passwd_len + salt_len + 1);
 	bool		ret;
 
 	if (!crypt_buf)
@@ -324,7 +325,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	 * Place salt at the end because it may be known by users trying to crack
 	 * the MD5 output.
 	 */
-	strcpy(crypt_buf, passwd);
+	memcpy(crypt_buf, passwd, passwd_len);
 	memcpy(crypt_buf + passwd_len, salt, salt_len);
 
 	strcpy(buf, "md5");
