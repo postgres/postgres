@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.169 2009/01/23 12:43:32 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.170 2009/09/15 08:44:57 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -987,7 +987,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 							BEGIN(xskip);
 					}
 				}
-<C,xskip>{informix_special}{else}{space}*	{
+<C,xskip>{informix_special}{else}{space}*";"	{
 					/* are we simulating Informix? */
 					if (INFORMIX_MODE)
 					{
