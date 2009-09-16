@@ -53,41 +53,75 @@ BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
 insert into trigger_test values(1,'insert');
 NOTICE:  $_TD->{argc} = '2'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['23', 'skidoo']
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'INSERT'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{new} = {'i' => '1', 'v' => 'insert'}
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
+CONTEXT:  PL/Perl function "trigger_data"
 update trigger_test set v = 'update' where i = 1;
 NOTICE:  $_TD->{argc} = '2'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['23', 'skidoo']
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'UPDATE'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{new} = {'i' => '1', 'v' => 'update'}
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'i' => '1', 'v' => 'insert'}
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
+CONTEXT:  PL/Perl function "trigger_data"
 delete from trigger_test;
 NOTICE:  $_TD->{argc} = '2'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{args} = ['23', 'skidoo']
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{event} = 'DELETE'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{level} = 'ROW'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{old} = {'i' => '1', 'v' => 'update'}
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relid} = 'bogus:12345'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{relname} = 'trigger_test'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_name} = 'trigger_test'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{table_schema} = 'public'
+CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
+CONTEXT:  PL/Perl function "trigger_data"
 	  
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 	  

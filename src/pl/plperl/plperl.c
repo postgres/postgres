@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.150 2009/06/11 14:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.151 2009/09/16 06:06:12 petere Exp $
  *
  **********************************************************************/
 
@@ -162,6 +162,8 @@ static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
 static SV  *plperl_create_sub(char *proname, char *s, bool trusted);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo);
+static void plperl_compile_callback(void *arg);
+static void plperl_exec_callback(void *arg);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -1019,9 +1021,7 @@ plperl_create_sub(char *proname, char *s, bool trusted)
 		LEAVE;
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("creation of Perl function \"%s\" failed: %s",
-						proname,
-						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
+				 errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
 	/*
@@ -1149,9 +1149,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("error from Perl function \"%s\": %s",
-						desc->proname,
-						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
+				(errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -1207,9 +1205,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		LEAVE;
 		/* XXX need to find a way to assign an errcode here */
 		ereport(ERROR,
-				(errmsg("error from Perl function \"%s\": %s",
-						desc->proname,
-						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
+				(errmsg("%s", strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -1231,6 +1227,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsi;
 	SV		   *array_ret = NULL;
 	bool		oldcontext = trusted_context;
+	ErrorContextCallback pl_error_context;
 
 	/*
 	 * Create the call_data beforing connecting to SPI, so that it is not
@@ -1244,6 +1241,12 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
 	current_call_data->prodesc = prodesc;
+
+	/* Set a callback for error reporting */
+	pl_error_context.callback = plperl_exec_callback;
+	pl_error_context.previous = error_context_stack;
+	pl_error_context.arg = prodesc->proname;
+	error_context_stack = &pl_error_context;
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -1367,6 +1370,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 								   prodesc->result_typioparam, -1);
 	}
 
+	/* Restore the previous error callback */
+	error_context_stack = pl_error_context.previous;
+	
 	if (array_ret == NULL)
 		SvREFCNT_dec(perlret);
 
@@ -1386,6 +1392,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	SV		   *svTD;
 	HV		   *hvTD;
 	bool		oldcontext = trusted_context;
+	ErrorContextCallback pl_error_context;
 
 	/*
 	 * Create the call_data beforing connecting to SPI, so that it is not
@@ -1401,6 +1408,12 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true);
 	current_call_data->prodesc = prodesc;
+
+	/* Set a callback for error reporting */
+	pl_error_context.callback = plperl_exec_callback;
+	pl_error_context.previous = error_context_stack;
+	pl_error_context.arg = prodesc->proname;
+	error_context_stack = &pl_error_context;
 
 	check_interp(prodesc->lanpltrusted);
 
@@ -1471,6 +1484,9 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		retval = PointerGetDatum(trv);
 	}
 
+	/* Restore the previous error callback */
+	error_context_stack = pl_error_context.previous;
+
 	SvREFCNT_dec(svTD);
 	if (perlret)
 		SvREFCNT_dec(perlret);
@@ -1492,6 +1508,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	plperl_proc_entry *hash_entry;
 	bool		found;
 	bool		oldcontext = trusted_context;
+	ErrorContextCallback plperl_error_context;
 
 	/* We'll need the pg_proc tuple in any case... */
 	procTup = SearchSysCache(PROCOID,
@@ -1500,6 +1517,12 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+	/* Set a callback for reporting compilation errors */
+	plperl_error_context.callback = plperl_compile_callback;
+	plperl_error_context.previous = error_context_stack;
+	plperl_error_context.arg = NameStr(procStruct->proname);
+	error_context_stack = &plperl_error_context;
 
 	/************************************************************
 	 * Build our internal proc name from the function's Oid
@@ -1730,6 +1753,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 								 HASH_ENTER, &found);
 		hash_entry->proc_data = prodesc;
 	}
+
+	/* restore previous error callback */
+	error_context_stack = plperl_error_context.previous;
 
 	ReleaseSysCache(procTup);
 
@@ -2682,4 +2708,26 @@ hv_fetch_string(HV *hv, const char *key)
 		klen = -klen;
 #endif
 	return hv_fetch(hv, key, klen, 0);
+}
+
+/*
+ * Provide function name for PL/Perl execution errors 
+ */
+static void 
+plperl_exec_callback(void *arg)
+{
+	char *procname = (char *) arg;
+	if (procname)
+		errcontext("PL/Perl function \"%s\"", procname);
+}
+
+/*
+ * Provide function name for PL/Perl compilation errors 
+ */
+static void
+plperl_compile_callback(void *arg)
+{
+	char *procname = (char *) arg;
+	if (procname)
+		errcontext("compilation of PL/Perl function \"%s\"", procname);
 }

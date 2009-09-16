@@ -122,8 +122,10 @@ CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
 $$  LANGUAGE plperl;
 SELECT perl_set();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+CONTEXT:  PL/Perl function "perl_set"
 SELECT * FROM perl_set();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+CONTEXT:  PL/Perl function "perl_set"
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     return [
         { f1 => 1, f2 => 'Hello', f3 =>  'World' },
@@ -171,6 +173,7 @@ CREATE OR REPLACE FUNCTION perl_record() RETURNS record AS $$
 $$ LANGUAGE plperl;
 SELECT perl_record();
 ERROR:  function returning record called in context that cannot accept type record
+CONTEXT:  PL/Perl function "perl_record"
 SELECT * FROM perl_record();
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: SELECT * FROM perl_record();
@@ -186,6 +189,7 @@ CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
 $$  LANGUAGE plperl;
 SELECT perl_record_set();
 ERROR:  set-valued function called in context that cannot accept a set
+CONTEXT:  PL/Perl function "perl_record_set"
 SELECT * FROM perl_record_set();
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: SELECT * FROM perl_record_set();
@@ -204,12 +208,14 @@ CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
 $$  LANGUAGE plperl;
 SELECT perl_record_set();
 ERROR:  set-valued function called in context that cannot accept a set
+CONTEXT:  PL/Perl function "perl_record_set"
 SELECT * FROM perl_record_set();
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: SELECT * FROM perl_record_set();
                       ^
 SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+CONTEXT:  PL/Perl function "perl_record_set"
 CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
     return [
         { f1 => 1, f2 => 'Hello', f3 =>  'World' },
@@ -219,6 +225,7 @@ CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
 $$  LANGUAGE plperl;
 SELECT perl_record_set();
 ERROR:  set-valued function called in context that cannot accept a set
+CONTEXT:  PL/Perl function "perl_record_set"
 SELECT * FROM perl_record_set();
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: SELECT * FROM perl_record_set();
@@ -308,11 +315,13 @@ CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
 ERROR:  Perl hash contains nonexistent column "z"
+CONTEXT:  PL/Perl function "foo_bad"
 CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 return 42;
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
 ERROR:  composite-returning PL/Perl function must return reference to hash
+CONTEXT:  PL/Perl function "foo_bad"
 CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 return [
     [1, 2],
@@ -321,16 +330,19 @@ return [
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
 ERROR:  composite-returning PL/Perl function must return reference to hash
+CONTEXT:  PL/Perl function "foo_bad"
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
     return 42;
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  set-returning PL/Perl function must return reference to array or use return_next
+CONTEXT:  PL/Perl function "foo_set_bad"
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
     return {y => 3, z => 4};
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  set-returning PL/Perl function must return reference to array or use return_next
+CONTEXT:  PL/Perl function "foo_set_bad"
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
 return [
     [1, 2],
@@ -339,6 +351,7 @@ return [
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  SETOF-composite-returning PL/Perl function must call return_next with reference to hash
+CONTEXT:  PL/Perl function "foo_set_bad"
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
 return [
     {y => 3, z => 4}
@@ -346,6 +359,7 @@ return [
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  Perl hash contains nonexistent column "z"
+CONTEXT:  PL/Perl function "foo_set_bad"
 --
 -- Check passing a tuple argument
 --
@@ -539,4 +553,5 @@ CREATE OR REPLACE FUNCTION perl_spi_prepared_bad(double precision) RETURNS doubl
   return $result;
 $$ LANGUAGE plperl;
 SELECT perl_spi_prepared_bad(4.35) as "double precision";
-ERROR:  error from Perl function "perl_spi_prepared_bad": type "does_not_exist" does not exist at line 2.
+ERROR:  type "does_not_exist" does not exist at line 2.
+CONTEXT:  PL/Perl function "perl_spi_prepared_bad"

@@ -7,6 +7,7 @@ create or replace function perl_elog(text) returns void language plperl as $$
 $$;
 select perl_elog('explicit elog');
 NOTICE:  explicit elog
+CONTEXT:  PL/Perl function "perl_elog"
  perl_elog 
 -----------
  
@@ -21,6 +22,7 @@ $$;
 select perl_warn('implicit elog via warn');
 NOTICE:  implicit elog via warn at line 4.
 
+CONTEXT:  PL/Perl function "perl_warn"
  perl_warn 
 -----------
  
@@ -35,8 +37,9 @@ create or replace function uses_global() returns text language plperl as $$
   return 'uses_global worked';
 
 $$;
-ERROR:  creation of Perl function "uses_global" failed: Global symbol "$global" requires explicit package name at line 3.
+ERROR:  Global symbol "$global" requires explicit package name at line 3.
 Global symbol "$other_global" requires explicit package name at line 4.
+CONTEXT:  compilation of PL/Perl function "uses_global"
 select uses_global();
 ERROR:  function uses_global() does not exist
 LINE 1: select uses_global();
