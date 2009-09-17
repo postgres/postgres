@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.224 2009/07/30 02:45:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.225 2009/09/17 20:49:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,6 +211,7 @@ typedef enum NodeTag
 	T_ResultPath,
 	T_MaterialPath,
 	T_UniquePath,
+	T_NoOpPath,
 	T_EquivalenceClass,
 	T_EquivalenceMember,
 	T_PathKey,

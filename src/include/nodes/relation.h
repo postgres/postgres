@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.174 2009/07/16 20:55:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.175 2009/09/17 20:49:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,6 +782,22 @@ typedef struct UniquePath
 	List	   *uniq_exprs;		/* expressions to be made unique */
 	double		rows;			/* estimated number of result tuples */
 } UniquePath;
+
+/*
+ * NoOpPath represents exactly the same plan as its subpath.  This is used
+ * when we have determined that a join can be eliminated.  The difference
+ * between the NoOpPath and its subpath is just that the NoOpPath's parent
+ * is the whole join relation while the subpath is for one of the joined
+ * relations (and the other one isn't needed).
+ *
+ * Note: path.pathtype is always T_Join, but this won't actually give rise
+ * to a Join plan node.
+ */
+typedef struct NoOpPath
+{
+	Path		path;
+	Path	   *subpath;
+} NoOpPath;
 
 /*
  * All join-type paths share these fields.

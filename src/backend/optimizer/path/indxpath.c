@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.241 2009/08/04 16:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.242 2009/09/17 20:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1916,6 +1916,86 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 	clause_list = list_concat(list_copy(rel->baserestrictinfo), clause_list);
 
 	return clause_list;
+}
+
+/*
+ * relation_has_unique_index_for
+ *	  Determine whether the relation provably has at most one row satisfying
+ *	  a set of equality conditions, because the conditions constrain all
+ *	  columns of some unique index.
+ *
+ * The conditions are provided as a list of RestrictInfo nodes, where the
+ * caller has already determined that each condition is a mergejoinable
+ * equality with an expression in this relation on one side, and an
+ * expression not involving this relation on the other.  The transient
+ * outer_is_left flag is used to identify which side we should look at:
+ * left side if outer_is_left is false, right side if it is true.
+ */
+bool
+relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
+							  List *restrictlist)
+{
+	ListCell   *ic;
+
+	/* Short-circuit the easy case */
+	if (restrictlist == NIL)
+		return false;
+
+	/* Examine each index of the relation ... */
+	foreach(ic, rel->indexlist)
+	{
+		IndexOptInfo   *ind = (IndexOptInfo *) lfirst(ic);
+		int				c;
+
+		/*
+		 * If the index is not unique or if it's a partial index that doesn't
+		 * match the query, it's useless here.
+		 */
+		if (!ind->unique || (ind->indpred != NIL && !ind->predOK))
+			continue;
+
+		/*
+		 * Try to find each index column in the list of conditions.  This is
+		 * O(n^2) or worse, but we expect all the lists to be short.
+		 */
+		for (c = 0; c < ind->ncolumns; c++)
+		{
+			ListCell   *lc;
+
+			foreach(lc, restrictlist)
+			{
+				RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+				Node   *rexpr;
+
+				/*
+				 * The condition's equality operator must be a member of the
+				 * index opfamily, else it is not asserting the right kind
+				 * of equality behavior for this index.  We check this first
+				 * since it's probably cheaper than match_index_to_operand().
+				 */
+				if (!list_member_oid(rinfo->mergeopfamilies, ind->opfamily[c]))
+					continue;
+
+				/* OK, see if the condition operand matches the index key */
+				if (rinfo->outer_is_left)
+					rexpr = get_rightop(rinfo->clause);
+				else
+					rexpr = get_leftop(rinfo->clause);
+
+				if (match_index_to_operand(rexpr, c, ind))
+					break;		/* found a match; column is unique */
+			}
+
+			if (lc == NULL)
+				break;			/* no match; this index doesn't help us */
+		}
+
+		/* Matched all columns of this index? */
+		if (c == ind->ncolumns)
+			return true;
+	}
+
+	return false;
 }
 
 

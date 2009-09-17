@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.363 2009/07/30 02:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.364 2009/09/17 20:49:28 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1422,6 +1422,16 @@ _outUniquePath(StringInfo str, UniquePath *node)
 }
 
 static void
+_outNoOpPath(StringInfo str, NoOpPath *node)
+{
+	WRITE_NODE_TYPE("NOOPPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+}
+
+static void
 _outNestPath(StringInfo str, NestPath *node)
 {
 	WRITE_NODE_TYPE("NESTPATH");
@@ -2633,6 +2643,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_UniquePath:
 				_outUniquePath(str, obj);
+				break;
+			case T_NoOpPath:
+				_outNoOpPath(str, obj);
 				break;
 			case T_NestPath:
 				_outNestPath(str, obj);

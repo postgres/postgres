@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.153 2009/09/12 22:12:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.154 2009/09/17 20:49:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1213,6 +1213,26 @@ distinct_col_search(int colno, List *colnos, List *opids)
 			return lfirst_oid(lc2);
 	}
 	return InvalidOid;
+}
+
+/*
+ * create_noop_path
+ *	  Creates a path equivalent to the input subpath, but having a different
+ *	  parent rel.  This is used when a join is found to be removable.
+ */
+NoOpPath *
+create_noop_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
+{
+	NoOpPath   *pathnode = makeNode(NoOpPath);
+
+	pathnode->path.pathtype = T_Join;			/* by convention */
+	pathnode->path.parent = rel;
+	pathnode->path.startup_cost = subpath->startup_cost;
+	pathnode->path.total_cost = subpath->total_cost;
+	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->subpath = subpath;
+
+	return pathnode;
 }
 
 /*
