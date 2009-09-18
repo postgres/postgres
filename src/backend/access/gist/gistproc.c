@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.17 2009/06/11 14:48:53 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.18 2009/09/18 14:01:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,9 +234,9 @@ chooseLR(GIST_SPLITVEC *v,
 						  NULL, NULL, InvalidOffsetNumber, FALSE);
 
 			gistentryinit(addon, BoxPGetDatum(union1), NULL, NULL, InvalidOffsetNumber, FALSE);
-			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union1), PointerGetDatum(&p1));
+			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&addon), PointerGetDatum(&p1));
 			gistentryinit(addon, BoxPGetDatum(union2), NULL, NULL, InvalidOffsetNumber, FALSE);
-			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union2), PointerGetDatum(&p2));
+			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&addon), PointerGetDatum(&p2));
 
 			if ((v->spl_ldatum_exists && p1 > p2) || (v->spl_rdatum_exists && p1 < p2))
 				firstToLeft = false;
