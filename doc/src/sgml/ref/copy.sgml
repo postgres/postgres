@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.85.2.2 2009/09/17 21:49:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.85.2.3 2009/09/18 20:01:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -183,8 +183,8 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     <listitem>
      <para>
       The string that represents a null value. The default is
-      <literal>\N</literal> (backslash-N) in text mode, and a empty
-      value with no quotes in <literal>CSV</> mode. You might prefer an
+      <literal>\N</literal> (backslash-N) in text mode, and an unquoted empty
+      string in <literal>CSV</> mode. You might prefer an
       empty string even in text mode for cases where you don't want to
       distinguish nulls from empty strings.
      </para>
@@ -298,6 +298,10 @@ COPY <replaceable class="parameter">count</replaceable>
     somewhat faster than the normal text mode, but a binary-format
     file is less portable across machine architectures and
     <productname>PostgreSQL</productname> versions.
+    Also, the binary format is very data type specific; for example
+    it will not work to output binary data from a <type>smallint</> column
+    and read it into an <type>integer</> column, even though that would work
+    fine in text format.
    </para>
 
    <para>
@@ -544,11 +548,11 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     The <literal>CSV</> format has no standard way to distinguish a
     <literal>NULL</> value from an empty string.
-    <productname>PostgreSQL</>'s <command>COPY</> handles this by
-    quoting. A <literal>NULL</> is output as the <literal>NULL</>
-    parameter and is not quoted, while a non-NULL value matching the
-    the <literal>NULL</> parameter string is quoted. Therefore, using the default
-    settings, a <literal>NULL</> is written as an unquoted empty
+    <productname>PostgreSQL</>'s <command>COPY</> handles this by quoting.
+    A <literal>NULL</> is output as the <literal>NULL</> parameter string
+    and is not quoted, while a non-<literal>NULL</> value matching the
+    <literal>NULL</> parameter string is quoted.  For example, with the
+    default settings, a <literal>NULL</> is written as an unquoted empty
     string, while an empty string data value is written with double quotes
     (<literal>""</>). Reading values follows similar rules. You can
     use <literal>FORCE NOT NULL</> to prevent <literal>NULL</> input
