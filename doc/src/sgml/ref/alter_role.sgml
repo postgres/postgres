@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.12 2009/03/28 03:26:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.13 2009/09/18 05:00:41 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
-where <replaceable class="PARAMETER">option</replaceable> can be:
+<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
     
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB

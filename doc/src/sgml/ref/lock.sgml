@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.52 2009/01/12 08:54:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.53 2009/09/18 05:00:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
 
-where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
+<phrase>where <replaceable class="PARAMETER">lockmode</replaceable> is one of:</phrase>
 
     ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE
     | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE

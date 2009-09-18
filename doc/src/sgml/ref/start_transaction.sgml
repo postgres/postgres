@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.17 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.18 2009/09/18 05:00:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ]
 
-where <replaceable class="parameter">transaction_mode</replaceable> is one of:
+<phrase>where <replaceable class="parameter">transaction_mode</replaceable> is one of:</phrase>
 
     ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
     READ WRITE | READ ONLY

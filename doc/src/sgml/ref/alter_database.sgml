@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.22 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.23 2009/09/18 05:00:41 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
-where <replaceable class="PARAMETER">option</replaceable> can be:
+<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
 
     CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
 

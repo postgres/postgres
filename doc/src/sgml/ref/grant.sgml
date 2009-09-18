@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.75 2009/09/12 16:26:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.76 2009/09/18 05:00:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -41,11 +41,11 @@ GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
-    ON FOREIGN DATA WRAPPER <replaceable>fdwname</> [, ...]
+    ON FOREIGN DATA WRAPPER <replaceable>fdwname</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
-    ON FOREIGN SERVER <replaceable>servername</> [, ...]
+    ON FOREIGN SERVER <replaceable>servername</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
@@ -61,7 +61,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { CREATE | ALL [ PRIVILEGES ] }
-    ON TABLESPACE <replaceable>tablespacename</> [, ...]
+    ON TABLESPACE <replaceable>tablespacename</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">rolename</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable class="PARAMETER">rolename</replaceable> [, ...] [ WITH ADMIN OPTION ]

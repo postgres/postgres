@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.151 2009/07/24 19:35:44 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.152 2009/09/18 05:00:42 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -349,7 +349,6 @@ helpSQL(const char *topic, unsigned short int pager)
 		size_t		len,
 					wordlen;
 		int			nl_count = 0;
-		const char *ch;
 
 		/* User gets two chances: exact match, then the first word */
 
@@ -386,10 +385,8 @@ helpSQL(const char *topic, unsigned short int pager)
 				if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
 					strcmp(topic, "*") == 0)
 				{
-					nl_count += 5;
-					for (ch = QL_HELP[i].syntax; *ch != '\0'; ch++)
-						if (*ch == '\n')
-							nl_count++;
+					nl_count += 5 + QL_HELP[i].nl_count;
+
 					/* If we have an exact match, exit.  Fixes \h SELECT */
 					if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
 						break;
@@ -403,13 +400,17 @@ helpSQL(const char *topic, unsigned short int pager)
 				if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
 					strcmp(topic, "*") == 0)
 				{
+					PQExpBufferData buffer;
+
+					initPQExpBuffer(&buffer);
+					QL_HELP[i].syntaxfunc(&buffer);
 					help_found = true;
 					fprintf(output, _("Command:     %s\n"
 									  "Description: %s\n"
 									  "Syntax:\n%s\n\n"),
 							QL_HELP[i].cmd,
 							_(QL_HELP[i].help),
-							_(QL_HELP[i].syntax));
+							buffer.data);
 					/* If we have an exact match, exit.  Fixes \h SELECT */
 					if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
 						break;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.108 2009/08/02 22:14:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.109 2009/09/18 05:00:41 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 
-where <replaceable class="PARAMETER">action</replaceable> is one of:
+<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]

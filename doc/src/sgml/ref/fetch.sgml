@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.43 2009/04/10 17:56:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.44 2009/09/18 05:00:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,7 @@ PostgreSQL documentation
 <synopsis>
 FETCH [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursorname</replaceable>
 
-where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:
+<phrase>where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:</phrase>
 
     NEXT
     PRIOR
