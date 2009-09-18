@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.51 2009/09/03 09:09:01 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.52 2009/09/18 13:13:32 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -168,6 +168,21 @@ ECPGstatus(int lineno, const char *connection_name)
 	}
 
 	return (true);
+}
+
+PGTransactionStatusType
+ECPGtransactionStatus(const char *connection_name)
+{
+	const struct connection *con;
+
+	con = ecpg_get_connection(connection_name);
+	if (con == NULL) {
+		/* transaction status is unknown */
+		return PQTRANS_UNKNOWN;
+	}
+
+	return PQtransactionStatus(con->connection);
+
 }
 
 bool

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.90 2009/07/11 21:15:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.91 2009/09/18 13:13:32 meskes Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -4751,6 +4751,31 @@ ECPG = ecpg
     that library.
     </para>
     </note>
+   </listitem>
+
+   <listitem>
+     <para>
+       <function>ECPGget_PGconn(const char *<replaceable>connection_name</replaceable>)
+       </function> returns the library database connection handle identified by the given name.
+       If <replaceable>connection_name</replaceable> is set to <literal>NULL</literal>, the current
+       connection handle is returned. If no connection handle can be identified, the function returns 
+       <literal>NULL</literal>. The returned connection handle can be used to call any other functions
+       from <application>libpq</application>, if necessary.
+     </para>
+     <note>
+     <para>
+       It is a bad idea to manipulate database connection handles made from <application>ecpg</application> directly
+       with <application>libpq</application> routines.
+     </para>
+     </note>
+   </listitem>
+
+   <listitem>
+     <para>
+       <function>ECPGtransactionStatus(const char *<replaceable>connection_name</replaceable>)</function>
+       returns the current transaction status of the given connection identified by <replaceable>connection_name</replaceable>.
+       See <xref linkend="libpq-status"> and libpq's <function>PQtransactionStatus()</function> for details about the returned status codes.
+     </para>
    </listitem>
 
    <listitem>
