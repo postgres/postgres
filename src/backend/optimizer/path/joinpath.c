@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.125 2009/09/18 17:24:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.126 2009/09/19 17:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,18 +155,18 @@ add_paths_to_joinrel(PlannerInfo *root,
 }
 
 /*
- * clause_matches_join
+ * clause_sides_match_join
  *	  Determine whether a join clause is of the right form to use in this join.
  *
  * We already know that the clause is a binary opclause referencing only the
  * rels in the current join.  The point here is to check whether it has the
  * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
- * rather than mixing outer and inner vars on either side.  If it is usable,
+ * rather than mixing outer and inner vars on either side.  If it matches,
  * we set the transient flag outer_is_left to identify which side is which.
  */
 static inline bool
-clause_matches_join(RestrictInfo *rinfo, RelOptInfo *outerrel,
-					RelOptInfo *innerrel)
+clause_sides_match_join(RestrictInfo *rinfo, RelOptInfo *outerrel,
+						RelOptInfo *innerrel)
 {
 	if (bms_is_subset(rinfo->left_relids, outerrel->relids) &&
 		bms_is_subset(rinfo->right_relids, innerrel->relids))
@@ -267,7 +267,7 @@ join_is_removable(PlannerInfo *root,
 		/*
 		 * Check if clause has the form "outer op inner" or "inner op outer".
 		 */
-		if (!clause_matches_join(restrictinfo, outerrel, innerrel))
+		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
 			continue;			/* no good for these input relations */
 
 		/* OK, add to list */
@@ -1009,7 +1009,7 @@ hash_inner_and_outer(PlannerInfo *root,
 		/*
 		 * Check if clause has the form "outer op inner" or "inner op outer".
 		 */
-		if (!clause_matches_join(restrictinfo, outerrel, innerrel))
+		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
 			continue;			/* no good for these input relations */
 
 		hashclauses = lappend(hashclauses, restrictinfo);
@@ -1186,7 +1186,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		/*
 		 * Check if clause has the form "outer op inner" or "inner op outer".
 		 */
-		if (!clause_matches_join(restrictinfo, outerrel, innerrel))
+		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
 		{
 			have_nonmergeable_joinclause = true;
 			continue;			/* no good for these input relations */
