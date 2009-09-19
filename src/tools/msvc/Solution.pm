@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.47 2009/01/06 18:37:50 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.48 2009/09/19 05:56:50 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -235,7 +235,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
     {
         print "Generating sql_help.h...\n";
         chdir('src\bin\psql');
-        system("perl create_help.pl ../../../doc/src/sgml/ref sql_help.h");
+        system("perl create_help.pl ../../../doc/src/sgml/ref sql_help");
         chdir('..\..\..');
     }
 
