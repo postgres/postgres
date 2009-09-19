@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.12 2009/09/18 05:00:41 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.13 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -34,11 +34,11 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
-    | IN ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
-    | IN GROUP <replaceable class="PARAMETER">rolename</replaceable> [, ...]
-    | ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
-    | ADMIN <replaceable class="PARAMETER">rolename</replaceable> [, ...]
-    | USER <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
+    | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
+    | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
+    | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
+    | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | SYSID <replaceable class="PARAMETER">uid</replaceable> 
 </synopsis>
  </refsynopsisdiv>
@@ -237,7 +237,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>IN ROLE</> <replaceable class="parameter">rolename</replaceable></term>
+      <term><literal>IN ROLE</> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>IN ROLE</literal> clause lists one or more existing
@@ -249,7 +249,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>IN GROUP</> <replaceable class="parameter">rolename</replaceable></term>
+      <term><literal>IN GROUP</> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         <literal>IN GROUP</literal> is an obsolete spelling of
@@ -259,7 +259,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ROLE</> <replaceable class="parameter">rolename</replaceable></term>
+      <term><literal>ROLE</> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>ROLE</literal> clause lists one or more existing
@@ -270,7 +270,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ADMIN</> <replaceable class="parameter">rolename</replaceable></term>
+      <term><literal>ADMIN</> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>ADMIN</literal> clause is like <literal>ROLE</literal>,
@@ -282,7 +282,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>USER</> <replaceable class="parameter">rolename</replaceable></term>
+      <term><literal>USER</> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>USER</literal> clause is an obsolete spelling of
@@ -432,7 +432,7 @@ CREATE ROLE admin WITH CREATEDB CREATEROLE;
    The <command>CREATE ROLE</command> statement is in the SQL standard,
    but the standard only requires the syntax
 <synopsis>
-CREATE ROLE <replaceable class="PARAMETER">name</> [ WITH ADMIN <replaceable class="PARAMETER">rolename</> ]
+CREATE ROLE <replaceable class="PARAMETER">name</> [ WITH ADMIN <replaceable class="PARAMETER">role_name</> ]
 </synopsis>
    Multiple initial administrators, and all the other options of
    <command>CREATE ROLE</command>, are

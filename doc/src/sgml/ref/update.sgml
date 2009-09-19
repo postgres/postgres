@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.49 2009/01/22 20:16:00 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.50 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
 UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
           ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
-    [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
+    [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
@@ -136,7 +136,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">fromlist</replaceable></term>
+    <term><replaceable class="PARAMETER">from_list</replaceable></term>
     <listitem>
      <para>
       A list of table expressions, allowing columns from other tables
@@ -145,8 +145,8 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
       specified in the <xref linkend="sql-from"
       endterm="sql-from-title"> of a <command>SELECT</command>
       statement.  Note that the target table must not appear in the
-      <replaceable>fromlist</>, unless you intend a self-join (in which
-      case it must appear with an alias in the <replaceable>fromlist</>).
+      <replaceable>from_list</>, unless you intend a self-join (in which
+      case it must appear with an alias in the <replaceable>from_list</>).
      </para>
     </listitem>
    </varlistentry>
@@ -234,7 +234,7 @@ UPDATE <replaceable class="parameter">count</replaceable>
   <para>
    When a <literal>FROM</> clause is present, what essentially happens
    is that the target table is joined to the tables mentioned in the
-   <replaceable>fromlist</replaceable>, and each output row of the join
+   <replaceable>from_list</replaceable>, and each output row of the join
    represents an update operation for the target table.  When using
    <literal>FROM</> you should ensure that the join
    produces at most one output row for each row to be modified.  In

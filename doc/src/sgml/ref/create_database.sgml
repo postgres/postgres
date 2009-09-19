@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.52 2009/05/06 16:15:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.53 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
-    [ [ WITH ] [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
+    [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
@@ -81,7 +81,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">dbowner</replaceable></term>
+      <term><replaceable class="parameter">use_name</replaceable></term>
       <listitem>
        <para>
         The name of the database user who will own the new database,

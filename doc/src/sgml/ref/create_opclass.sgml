@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.23 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.24 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable>
   USING <replaceable class="parameter">index_method</replaceable> [ FAMILY <replaceable class="parameter">family_name</replaceable> ] AS
   {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> [ ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> ) ]
-   | FUNCTION <replaceable class="parameter">support_number</replaceable> [ ( <replaceable class="parameter">op_type</replaceable> [ , <replaceable class="parameter">op_type</replaceable> ] ) ] <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
+   | FUNCTION <replaceable class="parameter">support_number</replaceable> [ ( <replaceable class="parameter">op_type</replaceable> [ , <replaceable class="parameter">op_type</replaceable> ] ) ] <replaceable class="parameter">function_name</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
    | STORAGE <replaceable class="parameter">storage_type</replaceable>
   } [, ... ]
 </synopsis>
@@ -191,7 +191,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">funcname</replaceable></term>
+    <term><replaceable class="parameter">function_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of a function that is an
@@ -201,7 +201,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">argument_types</replaceable></term>
+    <term><replaceable class="parameter">argument_type</replaceable></term>
     <listitem>
      <para>
       The parameter data type(s) of the function.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.50 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.51 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,8 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> (
-    PROCEDURE = <replaceable class="parameter">funcname</replaceable>
-    [, LEFTARG = <replaceable class="parameter">lefttype</replaceable> ] [, RIGHTARG = <replaceable class="parameter">righttype</replaceable> ]
+    PROCEDURE = <replaceable class="parameter">function_name</replaceable>
+    [, LEFTARG = <replaceable class="parameter">left_type</replaceable> ] [, RIGHTARG = <replaceable class="parameter">right_type</replaceable> ]
     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
     [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
     [, HASHES ] [, MERGES ]
@@ -88,7 +88,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   </para>
 
   <para>
-   The <replaceable class="parameter">funcname</replaceable>
+   The <replaceable class="parameter">function_name</replaceable>
    procedure must have been previously defined using <command>CREATE
    FUNCTION</command> and must be defined to accept the correct number
    of arguments (either one or two) of the indicated types.
@@ -120,7 +120,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">funcname</replaceable></term>
+      <term><replaceable class="parameter">function_name</replaceable></term>
       <listitem>
        <para>
         The function used to implement this operator.
@@ -129,7 +129,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">lefttype</replaceable></term>
+      <term><replaceable class="parameter">left_type</replaceable></term>
       <listitem>
        <para>
         The data type of the operator's left operand, if any.
@@ -139,7 +139,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">righttype</replaceable></term>
+      <term><replaceable class="parameter">right_type</replaceable></term>
       <listitem>
        <para>
         The data type of the operator's right operand, if any.

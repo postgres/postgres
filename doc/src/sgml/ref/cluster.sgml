@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.46 2008/11/24 08:46:03 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.47 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER [VERBOSE] <replaceable class="PARAMETER">tablename</replaceable> [ USING <replaceable class="PARAMETER">indexname</replaceable> ]
+CLUSTER [VERBOSE] <replaceable class="PARAMETER">table_name</replaceable> [ USING <replaceable class="PARAMETER">index_name</replaceable> ]
 CLUSTER [VERBOSE]
 </synopsis>
  </refsynopsisdiv>
@@ -32,11 +32,11 @@ CLUSTER [VERBOSE]
   <para>
    <command>CLUSTER</command> instructs <productname>PostgreSQL</productname> 
    to cluster the table specified
-   by <replaceable class="parameter">tablename</replaceable>
+   by <replaceable class="parameter">table_name</replaceable>
    based on the index specified by
-   <replaceable class="parameter">indexname</replaceable>. The index must
+   <replaceable class="parameter">index_name</replaceable>. The index must
    already have been defined on 
-   <replaceable class="parameter">tablename</replaceable>.
+   <replaceable class="parameter">table_name</replaceable>.
   </para>
 
   <para>
@@ -54,7 +54,7 @@ CLUSTER [VERBOSE]
   <para>
    When a table is clustered, <productname>PostgreSQL</productname>
    remembers which index it was clustered by.  The form
-   <command>CLUSTER <replaceable class="parameter">tablename</replaceable></command>
+   <command>CLUSTER <replaceable class="parameter">table_name</replaceable></command>
    reclusters the table using the same index as before.
   </para>
 
@@ -79,7 +79,7 @@ CLUSTER [VERBOSE]
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">tablename</replaceable></term>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
       The name (possibly schema-qualified) of a table.
@@ -88,7 +88,7 @@ CLUSTER [VERBOSE]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">indexname</replaceable></term>
+    <term><replaceable class="PARAMETER">index_name</replaceable></term>
     <listitem>
      <para>
       The name of an index.
@@ -215,7 +215,7 @@ CLUSTER;
   <para>
    The syntax
 <synopsis>
-CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
+CLUSTER <replaceable class="PARAMETER">index_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable>
 </synopsis>
   is also supported for compatibility with pre-8.3 <productname>PostgreSQL</>
   versions.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.5 2009/06/19 15:28:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.6 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'servertype' ] [ VERSION 'serverversion' ]
-    FOREIGN DATA WRAPPER <replaceable class="parameter">fdwname</replaceable>
+CREATE SERVER <replaceable class="parameter">server_name</replaceable> [ TYPE '<replaceable class="parameter">server_type</replaceable>' ] [ VERSION '<replaceable class="parameter">server_version</replaceable>' ]
+    FOREIGN DATA WRAPPER <replaceable class="parameter">fdw_name</replaceable>
     [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
@@ -57,7 +57,7 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">servername</replaceable></term>
+    <term><replaceable class="parameter">server_name</replaceable></term>
     <listitem>
      <para>
       The name of the foreign server to be created.
@@ -66,7 +66,7 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">servertype</replaceable></term>
+    <term><replaceable class="parameter">server_type</replaceable></term>
     <listitem>
      <para>
       Optional server type.
@@ -75,7 +75,7 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">serverversion</replaceable></term>
+    <term><replaceable class="parameter">server_version</replaceable></term>
     <listitem>
      <para>
       Optional server version.
@@ -84,7 +84,7 @@ CREATE SERVER <replaceable class="parameter">servername</replaceable> [ TYPE 'se
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">fdwname</replaceable></term>
+    <term><replaceable class="parameter">fdw_name</replaceable></term>
     <listitem>
      <para>
       The name of the foreign-data wrapper that manages the server.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsconfig.sgml,v 1.4 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsconfig.sgml,v 1.5 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -31,8 +31,8 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
     ALTER MAPPING FOR <replaceable class="parameter">token_type</replaceable> [, ... ] REPLACE <replaceable class="parameter">old_dictionary</replaceable> WITH <replaceable class="parameter">new_dictionary</replaceable>
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
     DROP MAPPING [ IF EXISTS ] FOR <replaceable class="parameter">token_type</replaceable> [, ... ]
-ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
-ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -107,7 +107,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newname</replaceable></term>
+    <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the text search configuration.
@@ -116,7 +116,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newowner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The new owner of the text search configuration.

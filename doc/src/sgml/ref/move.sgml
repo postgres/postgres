@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.32 2009/06/22 07:12:50 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.33 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursorname</replaceable>
+MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursor_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 

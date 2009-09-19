@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.13 2009/09/18 05:00:41 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.14 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -35,7 +35,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
 
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
 ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
@@ -137,7 +137,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable>newname</replaceable></term>
+      <term><replaceable>new_name</replaceable></term>
       <listitem>
        <para>
         The new name of the role.

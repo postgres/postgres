@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.10 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.11 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SCHEMA <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
-ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
+ALTER SCHEMA <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -58,7 +58,7 @@ ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>newowner</rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable>newname</replaceable></term>
+    <term><replaceable>new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the schema.  The new name cannot
@@ -69,7 +69,7 @@ ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>newowner</rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newowner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The new owner of the schema.

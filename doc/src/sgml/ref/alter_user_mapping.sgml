@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.3 2009/06/19 15:28:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.4 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> | USER | CURRENT_USER | PUBLIC }
-    SERVER <replaceable class="parameter">servername</replaceable>
+ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
+    SERVER <replaceable class="parameter">server_name</replaceable>
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )
 </synopsis>
  </refsynopsisdiv>
@@ -48,7 +48,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> |
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">username</replaceable></term>
+    <term><replaceable class="parameter">user_name</replaceable></term>
     <listitem>
      <para>
       User name of the mapping. <literal>CURRENT_USER</>
@@ -60,7 +60,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">username</replaceable> |
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">servername</replaceable></term>
+    <term><replaceable class="parameter">server_name</replaceable></term>
     <listitem>
      <para>
       Server name of the user mapping.

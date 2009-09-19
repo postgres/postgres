@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.90 2009/09/18 20:01:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.91 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [ WITH ]
           [ BINARY ]
@@ -34,7 +34,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
                 [ FORCE NOT NULL <replaceable class="parameter">column</replaceable> [, ...] ]
 
-COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
+COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ]
           [ BINARY ]
@@ -85,7 +85,7 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">tablename</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table.
@@ -822,12 +822,12 @@ ZW      ZIMBABWE
    version 7.3 and is still supported:
 
 <synopsis>
-COPY [ BINARY ] <replaceable class="parameter">tablename</replaceable> [ WITH OIDS ]
+COPY [ BINARY ] <replaceable class="parameter">table_name</replaceable> [ WITH OIDS ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
     [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
 
-COPY [ BINARY ] <replaceable class="parameter">tablename</replaceable> [ WITH OIDS ]
+COPY [ BINARY ] <replaceable class="parameter">table_name</replaceable> [ WITH OIDS ]
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
     [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.85 2009/09/03 22:11:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.86 2009/09/19 10:23:26 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -21,10 +21,10 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.85 2009/09/03 22:11
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] FUNCTION
-    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">defexpr</replaceable> ] [, ...] ] )
+    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [ { DEFAULT | = } <replaceable class="parameter">default_expr</replaceable> ] [, ...] ] )
     [ RETURNS <replaceable class="parameter">rettype</replaceable>
-      | RETURNS TABLE ( <replaceable class="parameter">colname</replaceable> <replaceable class="parameter">coltype</replaceable> [, ...] ) ]
-  { LANGUAGE <replaceable class="parameter">langname</replaceable>
+      | RETURNS TABLE ( <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">column_type</replaceable> [, ...] ) ]
+  { LANGUAGE <replaceable class="parameter">lang_name</replaceable>
     | WINDOW
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
@@ -147,8 +147,8 @@ CREATE [ OR REPLACE ] FUNCTION
       <para>
        The type of a column is referenced by writing
        <literal><replaceable
-       class="parameter">tablename</replaceable>.<replaceable
-       class="parameter">columnname</replaceable>%TYPE</literal>.
+       class="parameter">table_name</replaceable>.<replaceable
+       class="parameter">column_name</replaceable>%TYPE</literal>.
        Using this feature can sometimes help make a function independent of
        changes to the definition of a table.
       </para>
@@ -156,7 +156,7 @@ CREATE [ OR REPLACE ] FUNCTION
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">defexpr</replaceable></term>
+     <term><replaceable class="parameter">default_expr</replaceable></term>
 
      <listitem>
       <para>
@@ -198,14 +198,14 @@ CREATE [ OR REPLACE ] FUNCTION
       <para>
        The type of a column is referenced by writing
        <literal><replaceable
-       class="parameter">tablename</replaceable>.<replaceable
-       class="parameter">columnname</replaceable>%TYPE</literal>.
+       class="parameter">table_name</replaceable>.<replaceable
+       class="parameter">column_name</replaceable>%TYPE</literal>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">colname</replaceable></term>
+     <term><replaceable class="parameter">column_name</replaceable></term>
 
      <listitem>
       <para>
@@ -218,7 +218,7 @@ CREATE [ OR REPLACE ] FUNCTION
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">coltype</replaceable></term>
+     <term><replaceable class="parameter">column_type</replaceable></term>
 
      <listitem>
       <para>
@@ -229,7 +229,7 @@ CREATE [ OR REPLACE ] FUNCTION
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">langname</replaceable></term>
+     <term><replaceable class="parameter">lang_name</replaceable></term>
 
      <listitem>
       <para>

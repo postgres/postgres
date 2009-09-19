@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_server.sgml,v 1.2 2009/06/19 15:28:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_server.sgml,v 1.3 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SERVER <replaceable class="parameter">servername</replaceable> [ VERSION 'newversion' ]
+ALTER SERVER <replaceable class="parameter">server_name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
-ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -52,7 +52,7 @@ ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <r
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">servername</replaceable></term>
+    <term><replaceable class="parameter">server_name</replaceable></term>
     <listitem>
      <para>
       The name of an existing server.
@@ -61,7 +61,7 @@ ALTER SERVER <replaceable class="PARAMETER">servername</replaceable> OWNER TO <r
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">serverversion</replaceable></term>
+    <term><replaceable class="parameter">new_version</replaceable></term>
     <listitem>
      <para>
       New server version.

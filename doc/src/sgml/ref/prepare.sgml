@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.24 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.25 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">datatype</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">statement</replaceable>
+PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">data_type</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -99,7 +99,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">datatype</replaceable></term>
+    <term><replaceable class="PARAMETER">data_type</replaceable></term>
     <listitem>
      <para>
       The data type of a parameter to the prepared statement.  If the

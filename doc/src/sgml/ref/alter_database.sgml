@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.23 2009/09/18 05:00:41 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.24 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -27,7 +27,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <rep
 
     CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
 
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 
@@ -117,7 +117,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
      </varlistentry> 
 
    <varlistentry>
-    <term><replaceable>newname</replaceable></term>
+    <term><replaceable>new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the database.

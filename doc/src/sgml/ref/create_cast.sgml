@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.31 2008/11/14 10:22:45 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.32 2009/09/19 10:23:26 petere Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -18,15 +18,15 @@
 
  <refsynopsisdiv>
 <synopsis>
-CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
-    WITH FUNCTION <replaceable>funcname</replaceable> (<replaceable>argtypes</replaceable>)
+CREATE CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>)
+    WITH FUNCTION <replaceable>function_name</replaceable> (<replaceable>argument_type</replaceable> [, ...])
     [ AS ASSIGNMENT | AS IMPLICIT ]
 
-CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
+CREATE CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>)
     WITHOUT FUNCTION
     [ AS ASSIGNMENT | AS IMPLICIT ]
 
-CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
+CREATE CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>)
     WITH INOUT
     [ AS ASSIGNMENT | AS IMPLICIT ]
 </synopsis>
@@ -168,7 +168,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
 
    <variablelist>
     <varlistentry>
-     <term><replaceable>sourcetype</replaceable></term>
+     <term><replaceable>source_type</replaceable></term>
 
      <listitem>
       <para>
@@ -178,7 +178,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>targettype</replaceable></term>
+     <term><replaceable>target_type</replaceable></term>
 
      <listitem>
       <para>
@@ -188,7 +188,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>funcname</replaceable>(<replaceable>argtypes</replaceable>)</term>
+     <term><replaceable>function_name</replaceable>(<replaceable>argument_type</replaceable> [, ...])</term>
 
      <listitem>
       <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.7 2009/03/28 03:26:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.8 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SET [ SESSION | LOCAL ] ROLE <replaceable class="parameter">rolename</replaceable>
+SET [ SESSION | LOCAL ] ROLE <replaceable class="parameter">role_name</replaceable>
 SET [ SESSION | LOCAL ] ROLE NONE
 RESET ROLE
 </synopsis>
@@ -33,7 +33,7 @@ RESET ROLE
   <para>
    This command sets the current user
    identifier of the current SQL session to be <replaceable
-   class="parameter">rolename</replaceable>.  The role name can be
+   class="parameter">role_name</replaceable>.  The role name can be
    written as either an identifier or a string literal.
    After <command>SET ROLE</>, permissions checking for SQL commands
    is carried out as though the named role were the one that had logged
@@ -41,7 +41,7 @@ RESET ROLE
   </para>
 
   <para>
-   The specified <replaceable class="parameter">rolename</replaceable>
+   The specified <replaceable class="parameter">role_name</replaceable>
    must be a role that the current session user is a member of.
    (If the session user is a superuser, any role can be selected.)
   </para>

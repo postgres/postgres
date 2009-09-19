@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.4 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.5 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replaceable> | NONE } , { <replaceable>righttype</replaceable> | NONE } ) OWNER TO <replaceable>newowner</replaceable>
+ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>left_type</replaceable> | NONE } , { <replaceable>right_type</replaceable> | NONE } ) OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -58,7 +58,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">lefttype</replaceable></term>
+    <term><replaceable class="parameter">left_type</replaceable></term>
     <listitem>
      <para>
       The data type of the operator's left operand; write
@@ -68,7 +68,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">righttype</replaceable></term>
+    <term><replaceable class="parameter">right_type</replaceable></term>
     <listitem>
      <para>
       The data type of the operator's right operand; write
@@ -78,7 +78,7 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newowner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The new owner of the operator.

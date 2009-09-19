@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.20 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.21 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SCHEMA <replaceable class="parameter">schemaname</replaceable> [ AUTHORIZATION <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
-CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable> [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA <replaceable class="parameter">schema_name</replaceable> [ AUTHORIZATION <replaceable class="parameter">user_name</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">user_name</replaceable> [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -62,7 +62,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="parameter">schemaname</replaceable></term>
+      <term><replaceable class="parameter">schema_name</replaceable></term>
       <listitem>
        <para>
         The name of a schema to be created.  If this is omitted, the user name
@@ -74,7 +74,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">username</replaceable></term>
+      <term><replaceable class="parameter">user_name</replaceable></term>
       <listitem>
        <para>
         The name of the user who will own the schema.  If omitted,

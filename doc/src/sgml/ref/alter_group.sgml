@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.18 2008/11/14 10:22:45 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.19 2009/09/19 10:23:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> ADD USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
-ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> DROP USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
+ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> ADD USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
+ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> DROP USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
 
-ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,7 +60,7 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">groupname</replaceable></term>
+    <term><replaceable class="PARAMETER">group_name</replaceable></term>
     <listitem>
      <para>
       The name of the group (role) to modify.
@@ -69,7 +69,7 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">username</replaceable></term>
+    <term><replaceable class="PARAMETER">user_name</replaceable></term>
     <listitem>
      <para>
       Users (roles) that are to be added to or removed from the group.
@@ -80,7 +80,7 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable>newname</replaceable></term>
+    <term><replaceable>new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the group.

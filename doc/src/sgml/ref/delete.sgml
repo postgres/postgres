@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.35 2008/11/16 17:34:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.36 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-    [ USING <replaceable class="PARAMETER">usinglist</replaceable> ]
+    [ USING <replaceable class="PARAMETER">using_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
@@ -116,7 +116,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">usinglist</replaceable></term>
+    <term><replaceable class="PARAMETER">using_list</replaceable></term>
     <listitem>
      <para>
       A list of table expressions, allowing columns from other tables
@@ -125,7 +125,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
       linkend="sql-from" endterm="sql-from-title"> of a
       <command>SELECT</command> statement; for example, an alias for
       the table name can be specified.  Do not repeat the target table
-      in the <replaceable class="PARAMETER">usinglist</replaceable>,
+      in the <replaceable class="PARAMETER">using_list</replaceable>,
       unless you wish to set up a self-join.
      </para>
     </listitem>

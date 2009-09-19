@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.28 2008/11/14 10:22:46 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.29 2009/09/19 10:23:27 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( { <replaceable class="PARAMETER">lefttype</replaceable> | NONE } , { <replaceable class="PARAMETER">righttype</replaceable> | NONE } ) [ CASCADE | RESTRICT ]
+DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( { <replaceable class="PARAMETER">left_type</replaceable> | NONE } , { <replaceable class="PARAMETER">right_type</replaceable> | NONE } ) [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,7 +60,7 @@ DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">lefttype</replaceable></term>
+    <term><replaceable class="parameter">left_type</replaceable></term>
     <listitem>
      <para>
       The data type of the operator's left operand; write
@@ -70,7 +70,7 @@ DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">righttype</replaceable></term>
+    <term><replaceable class="parameter">right_type</replaceable></term>
     <listitem>
      <para>
       The data type of the operator's right operand; write
