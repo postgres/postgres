@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.137 2009/07/12 17:12:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.138 2009/09/20 01:53:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,10 +424,6 @@ do_compile(FunctionCallInfo fcinfo,
 				if (argvariable->dtype == PLPGSQL_DTYPE_VAR)
 				{
 					argitemtype = PLPGSQL_NSTYPE_VAR;
-					/* input argument vars are forced to be CONSTANT */
-					if (argmode == PROARGMODE_IN ||
-						argmode == PROARGMODE_VARIADIC)
-						((PLpgSQL_var *) argvariable)->isconst = true;
 				}
 				else
 				{
