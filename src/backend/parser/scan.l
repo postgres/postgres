@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.157 2009/07/14 20:24:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.158 2009/09/21 22:22:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1097,11 +1097,30 @@ check_unicode_value(pg_wchar c, char *loc, base_yyscan_t yyscanner)
 	}
 }
 
+static bool
+is_utf16_surrogate_first(pg_wchar c)
+{
+	return (c >= 0xD800 && c <= 0xDBFF);
+}
+
+static bool
+is_utf16_surrogate_second(pg_wchar c)
+{
+	return (c >= 0xDC00 && c <= 0xDFFF);
+}
+
+static pg_wchar
+surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
+{
+	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
+}
+
 static char *
 litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 {
 	char *new;
 	char *litbuf, *in, *out;
+	pg_wchar pair_first = 0;
 
 	if (isxdigit(escape)
 		|| escape == '+'
@@ -1131,6 +1150,11 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 		{
 			if (in[1] == escape)
 			{
+				if (pair_first)
+				{
+					ADVANCE_YYLLOC(in - litbuf + 3);   /* 3 for U&" */
+					yyerror("invalid Unicode surrogate pair");
+				}
 				*out++ = escape;
 				in += 2;
 			}
@@ -1138,9 +1162,27 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 			{
 				pg_wchar unicode = hexval(in[1]) * 16*16*16 + hexval(in[2]) * 16*16 + hexval(in[3]) * 16 + hexval(in[4]);
 				check_unicode_value(unicode, in, yyscanner);
-				unicode_to_utf8(unicode, (unsigned char *) out);
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+					{
+						ADVANCE_YYLLOC(in - litbuf + 3);   /* 3 for U&" */
+						yyerror("invalid Unicode surrogate pair");
+					}
+				}
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					unicode_to_utf8(unicode, (unsigned char *) out);
+					out += pg_mblen(out);
+				}
 				in += 5;
-				out += pg_mblen(out);
 			}
 			else if (in[1] == '+'
 					 && isxdigit(in[2]) && isxdigit(in[3])
@@ -1150,9 +1192,27 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 				pg_wchar unicode = hexval(in[2]) * 16*16*16*16*16 + hexval(in[3]) * 16*16*16*16 + hexval(in[4]) * 16*16*16
 									+ hexval(in[5]) * 16*16 + hexval(in[6]) * 16 + hexval(in[7]);
 				check_unicode_value(unicode, in, yyscanner);
-				unicode_to_utf8(unicode, (unsigned char *) out);
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+					{
+						ADVANCE_YYLLOC(in - litbuf + 3);   /* 3 for U&" */
+						yyerror("invalid Unicode surrogate pair");
+					}
+				}
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					unicode_to_utf8(unicode, (unsigned char *) out);
+					out += pg_mblen(out);
+				}
 				in += 8;
-				out += pg_mblen(out);
 			}
 			else
 			{
@@ -1161,7 +1221,14 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 			}
 		}
 		else
+		{
+			if (pair_first)
+			{
+				ADVANCE_YYLLOC(in - litbuf + 3);   /* 3 for U&" */
+				yyerror("invalid Unicode surrogate pair");
+			}
 			*out++ = *in++;
+		}
 	}
 
 	*out = '\0';

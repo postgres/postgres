@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.134 2009/08/27 20:08:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.135 2009/09/21 22:22:07 petere Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -238,6 +238,10 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
     The Unicode escape syntax works only when the server encoding is
     UTF8.  When other server encodings are used, only code points in
     the ASCII range (up to <literal>\007F</literal>) can be specified.
+    Both the 4-digit and the 6-digit form can be used to specify
+    UTF-16 surrogate pairs to compose characters with code points
+    larger than <literal>\FFFF</literal> (although the availability of
+    the 6-digit form technically makes this unnecessary).
    </para>
 
    <para>
@@ -497,6 +501,10 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
      UTF8.  When other server encodings are used, only code points in
      the ASCII range (up to <literal>\007F</literal>) can be
      specified.
+     Both the 4-digit and the 6-digit form can be used to specify
+     UTF-16 surrogate pairs to compose characters with code points
+     larger than <literal>\FFFF</literal> (although the availability
+     of the 6-digit form technically makes this unnecessary).
     </para>
 
     <para>
