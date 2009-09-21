@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.24 2009/08/10 18:19:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/fsync/test_fsync.c,v 1.25 2009/09/21 20:20:56 momjian Exp $
  *
  *
  *	test_fsync.c
@@ -149,8 +149,12 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
+	{
 		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
 			die("write failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
+	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
 	printf("\tone 16k o_sync write   ");
@@ -167,6 +171,8 @@ main(int argc, char *argv[])
 			die("write failed");
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -188,8 +194,12 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
+	{
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
+	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
 	printf("\topen o_dsync, write    ");
@@ -205,8 +215,12 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
+	{
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
+	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
 	printf("\topen o_sync, write     ");
@@ -226,6 +240,8 @@ main(int argc, char *argv[])
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		fdatasync(tmpfile);
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -246,6 +262,8 @@ main(int argc, char *argv[])
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -269,6 +287,8 @@ main(int argc, char *argv[])
 			die("write failed");
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -290,6 +310,8 @@ main(int argc, char *argv[])
 			die("write failed");
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -310,6 +332,8 @@ main(int argc, char *argv[])
 		if (write(tmpfile, buf, WRITE_SIZE / 2) != WRITE_SIZE / 2)
 			die("write failed");
 		fdatasync(tmpfile);
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -332,6 +356,8 @@ main(int argc, char *argv[])
 			die("write failed");
 		if (fsync(tmpfile) != 0)
 			die("fsync failed");
+		if (lseek(tmpfile, 0, SEEK_SET) == -1)
+			die("seek failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
