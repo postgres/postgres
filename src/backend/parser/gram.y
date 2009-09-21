@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.677 2009/08/18 23:40:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.678 2009/09/21 20:10:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -373,6 +373,10 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <node>	explain_option_arg
 %type <defelt>	explain_option_elem
 %type <list>	explain_option_list
+%type <node>	copy_generic_opt_arg copy_generic_opt_arg_list_item
+%type <defelt>	copy_generic_opt_elem
+%type <list>	copy_generic_opt_list copy_generic_opt_arg_list
+%type <list>	copy_options
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -1934,19 +1938,23 @@ ClosePortalStmt:
 /*****************************************************************************
  *
  *		QUERY :
- *				COPY relname ['(' columnList ')'] FROM/TO file [WITH options]
+ *				COPY relname [(columnList)] FROM/TO file [WITH] [(options)]
+ *				COPY ( SELECT ... ) TO file [WITH] [(options)]
  *
- *				BINARY, OIDS, and DELIMITERS kept in old locations
- *				for backward compatibility.  2002-06-18
+ *				In the preferred syntax the options are comma-separated
+ *				and use generic identifiers instead of keywords.  The pre-8.5
+ *				syntax had a hard-wired, space-separated set of options.
  *
- *				COPY ( SELECT ... ) TO file [WITH options]
- *				This form doesn't have the backwards-compatible option
- *				syntax.
+ *				Really old syntax, from versions 7.2 and prior:
+ *				COPY [ BINARY ] table [ WITH OIDS ] FROM/TO file
+ *					[ [ USING ] DELIMITERS 'delimiter' ] ]
+ *					[ WITH NULL AS 'null string' ]
+ *				This option placement is not supported with COPY (SELECT...).
  *
  *****************************************************************************/
 
 CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
-			copy_from copy_file_name copy_delimiter opt_with copy_opt_list
+			copy_from copy_file_name copy_delimiter opt_with copy_options
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
@@ -1967,8 +1975,7 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 						n->options = list_concat(n->options, $10);
 					$$ = (Node *)n;
 				}
-			| COPY select_with_parens TO copy_file_name opt_with
-			  copy_opt_list
+			| COPY select_with_parens TO copy_file_name opt_with copy_options
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = NULL;
@@ -1997,18 +2004,20 @@ copy_file_name:
 			| STDOUT								{ $$ = NULL; }
 		;
 
+copy_options: copy_opt_list							{ $$ = $1; }
+			| '(' copy_generic_opt_list ')'			{ $$ = $2; }
+		;
 
-
+/* old COPY option syntax */
 copy_opt_list:
 			copy_opt_list copy_opt_item				{ $$ = lappend($1, $2); }
 			| /* EMPTY */							{ $$ = NIL; }
 		;
 
-
 copy_opt_item:
 			BINARY
 				{
-					$$ = makeDefElem("binary", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("format", (Node *)makeString("binary"));
 				}
 			| OIDS
 				{
@@ -2024,7 +2033,7 @@ copy_opt_item:
 				}
 			| CSV
 				{
-					$$ = makeDefElem("csv", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("format", (Node *)makeString("csv"));
 				}
 			| HEADER_P
 				{
@@ -2048,16 +2057,16 @@ copy_opt_item:
 				}
 			| FORCE NOT NULL_P columnList
 				{
-					$$ = makeDefElem("force_notnull", (Node *)$4);
+					$$ = makeDefElem("force_not_null", (Node *)$4);
 				}
 		;
 
-/* The following exist for backward compatibility */
+/* The following exist for backward compatibility with very old versions */
 
 opt_binary:
 			BINARY
 				{
-					$$ = makeDefElem("binary", (Node *)makeInteger(TRUE));
+					$$ = makeDefElem("format", (Node *)makeString("binary"));
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2071,7 +2080,6 @@ opt_oids:
 		;
 
 copy_delimiter:
-			/* USING DELIMITERS kept for backward compatibility. 2002-06-15 */
 			opt_using DELIMITERS Sconst
 				{
 					$$ = makeDefElem("delimiter", (Node *)makeString($3));
@@ -2082,6 +2090,51 @@ copy_delimiter:
 opt_using:
 			USING									{}
 			| /*EMPTY*/								{}
+		;
+
+/* new COPY option syntax */
+copy_generic_opt_list:
+			copy_generic_opt_elem
+				{
+					$$ = list_make1($1);
+				}
+			| copy_generic_opt_list ',' copy_generic_opt_elem
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+copy_generic_opt_elem:
+			ColLabel copy_generic_opt_arg
+				{
+					$$ = makeDefElem($1, $2);
+				}
+		;
+
+copy_generic_opt_arg:
+			opt_boolean						{ $$ = (Node *) makeString($1); }
+			| ColId_or_Sconst				{ $$ = (Node *) makeString($1); }
+			| NumericOnly					{ $$ = (Node *) $1; }
+			| '*'							{ $$ = (Node *) makeNode(A_Star); }
+			| '(' copy_generic_opt_arg_list ')'		{ $$ = (Node *) $2; }
+			| /* EMPTY */					{ $$ = NULL; }
+		;
+
+copy_generic_opt_arg_list:
+			  copy_generic_opt_arg_list_item
+				{
+					$$ = list_make1($1);
+				}
+			| copy_generic_opt_arg_list ',' copy_generic_opt_arg_list_item
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+/* beware of emitting non-string list elements here; see commands/define.c */
+copy_generic_opt_arg_list_item:
+			opt_boolean				{ $$ = (Node *) makeString($1); }
+			| ColId_or_Sconst		{ $$ = (Node *) makeString($1); }
 		;
 
 

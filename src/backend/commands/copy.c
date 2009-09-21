@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.316 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.317 2009/09/21 20:10:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
+#include "commands/defrem.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "libpq/libpq.h"
@@ -723,6 +724,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	List	   *force_quote = NIL;
 	List	   *force_notnull = NIL;
 	bool		force_quote_all = false;
+	bool		format_specified = false;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	AclMode		relPerms;
 	AclMode		remainingPerms;
@@ -739,13 +741,25 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "binary") == 0)
+		if (strcmp(defel->defname, "format") == 0)
 		{
-			if (cstate->binary)
+			char   *fmt = defGetString(defel);
+
+			if (format_specified)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->binary = intVal(defel->arg);
+			format_specified = true;
+			if (strcmp(fmt, "text") == 0)
+				/* default format */ ;
+			else if (strcmp(fmt, "csv") == 0)
+				cstate->csv_mode = true;
+			else if (strcmp(fmt, "binary") == 0)
+				cstate->binary = true;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("COPY format \"%s\" not recognized", fmt)));
 		}
 		else if (strcmp(defel->defname, "oids") == 0)
 		{
@@ -753,7 +767,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->oids = intVal(defel->arg);
+			cstate->oids = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "delimiter") == 0)
 		{
@@ -761,7 +775,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->delim = strVal(defel->arg);
+			cstate->delim = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "null") == 0)
 		{
@@ -769,15 +783,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->null_print = strVal(defel->arg);
-		}
-		else if (strcmp(defel->defname, "csv") == 0)
-		{
-			if (cstate->csv_mode)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			cstate->csv_mode = intVal(defel->arg);
+			cstate->null_print = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "header") == 0)
 		{
@@ -785,7 +791,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->header_line = intVal(defel->arg);
+			cstate->header_line = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{
@@ -793,7 +799,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->quote = strVal(defel->arg);
+			cstate->quote = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "escape") == 0)
 		{
@@ -801,7 +807,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			cstate->escape = strVal(defel->arg);
+			cstate->escape = defGetString(defel);
 		}
 		else if (strcmp(defel->defname, "force_quote") == 0)
 		{
@@ -811,32 +817,43 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 						 errmsg("conflicting or redundant options")));
 			if (defel->arg && IsA(defel->arg, A_Star))
 				force_quote_all = true;
-			else
+			else if (defel->arg && IsA(defel->arg, List))
 				force_quote = (List *) defel->arg;
+			else
+				ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("argument to option \"%s\" must be a list of column names",
+							defel->defname)));
 		}
-		else if (strcmp(defel->defname, "force_notnull") == 0)
+		else if (strcmp(defel->defname, "force_not_null") == 0)
 		{
 			if (force_notnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			force_notnull = (List *) defel->arg;
+			if (defel->arg && IsA(defel->arg, List))
+				force_notnull = (List *) defel->arg;
+			else
+				ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("argument to option \"%s\" must be a list of column names",
+							defel->defname)));
 		}
 		else
-			elog(ERROR, "option \"%s\" not recognized",
-				 defel->defname);
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("option \"%s\" not recognized",
+							defel->defname)));
 	}
 
-	/* Check for incompatible options */
+	/*
+	 * Check for incompatible options (must do these two before inserting
+	 * defaults)
+	 */
 	if (cstate->binary && cstate->delim)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify DELIMITER in BINARY mode")));
-
-	if (cstate->binary && cstate->csv_mode)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("cannot specify CSV in BINARY mode")));
 
 	if (cstate->binary && cstate->null_print)
 		ereport(ERROR,

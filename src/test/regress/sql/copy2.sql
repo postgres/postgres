@@ -130,6 +130,18 @@ COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
 COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
 COPY y TO stdout WITH CSV FORCE QUOTE *;
 
+-- Repeat above tests with new 8.5 option syntax
+
+COPY y TO stdout (FORMAT CSV);
+COPY y TO stdout (FORMAT CSV, QUOTE '''', DELIMITER '|');
+COPY y TO stdout (FORMAT CSV, FORCE_QUOTE (col2), ESCAPE E'\\');
+COPY y TO stdout (FORMAT CSV, FORCE_QUOTE *);
+
+\copy y TO stdout (FORMAT CSV)
+\copy y TO stdout (FORMAT CSV, QUOTE '''', DELIMITER '|')
+\copy y TO stdout (FORMAT CSV, FORCE_QUOTE (col2), ESCAPE E'\\')
+\copy y TO stdout (FORMAT CSV, FORCE_QUOTE *)
+
 --test that we read consecutive LFs properly
 
 CREATE TEMP TABLE testnl (a int, b text, c int);

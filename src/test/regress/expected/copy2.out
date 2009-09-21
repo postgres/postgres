@@ -195,6 +195,39 @@ COPY y TO stdout WITH CSV FORCE QUOTE *;
 "Jackson, Sam","\h"
 "It is ""perfect"".","	"
 "",
+-- Repeat above tests with new 8.5 option syntax
+COPY y TO stdout (FORMAT CSV);
+"Jackson, Sam",\h
+"It is ""perfect"".",	
+"",
+COPY y TO stdout (FORMAT CSV, QUOTE '''', DELIMITER '|');
+Jackson, Sam|\h
+It is "perfect".|	
+''|
+COPY y TO stdout (FORMAT CSV, FORCE_QUOTE (col2), ESCAPE E'\\');
+"Jackson, Sam","\\h"
+"It is \"perfect\".","	"
+"",
+COPY y TO stdout (FORMAT CSV, FORCE_QUOTE *);
+"Jackson, Sam","\h"
+"It is ""perfect"".","	"
+"",
+\copy y TO stdout (FORMAT CSV)
+"Jackson, Sam",\h
+"It is ""perfect"".",	
+"",
+\copy y TO stdout (FORMAT CSV, QUOTE '''', DELIMITER '|')
+Jackson, Sam|\h
+It is "perfect".|	
+''|
+\copy y TO stdout (FORMAT CSV, FORCE_QUOTE (col2), ESCAPE E'\\')
+"Jackson, Sam","\\h"
+"It is \"perfect\".","	"
+"",
+\copy y TO stdout (FORMAT CSV, FORCE_QUOTE *)
+"Jackson, Sam","\h"
+"It is ""perfect"".","	"
+"",
 --test that we read consecutive LFs properly
 CREATE TEMP TABLE testnl (a int, b text, c int);
 COPY testnl FROM stdin CSV;

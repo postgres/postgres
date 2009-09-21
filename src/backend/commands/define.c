@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.105 2009/07/26 23:34:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.106 2009/09/21 20:10:21 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -88,6 +88,8 @@ defGetString(DefElem *def)
 			return TypeNameToString((TypeName *) def->arg);
 		case T_List:
 			return NameListToString((List *) def->arg);
+		case T_A_Star:
+			return pstrdup("*");
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
 	}
