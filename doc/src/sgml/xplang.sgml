@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.34 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.35 2009/09/22 23:43:37 tgl Exp $ -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
@@ -75,9 +75,9 @@ createlang plpgsql template1
     </title>
 
     <para>
-     A procedural language is installed in a database in four steps,
+     A procedural language is installed in a database in five steps,
      which must be carried out by a database superuser.  (For languages
-     known to <command>CREATE LANGUAGE</>, the second and third steps
+     known to <command>CREATE LANGUAGE</>, the second through fourth steps
      can be omitted, because they will be carried out automatically
      if needed.)
     </para>
@@ -111,11 +111,27 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable>()
 
     <step performance="optional" id="xplang-install-cr3">
      <para>
+      Optionally, the language handler can provide an <quote>inline</>
+      handler function that executes anonymous code blocks
+      (<xref linkend="sql-do" endterm="sql-do-title"> commands)
+      written in this language.  If an inline handler function
+      is provided by the language, declare it with a command like
+<synopsis>
+CREATE FUNCTION <replaceable>inline_function_name</replaceable>(internal)
+    RETURNS void
+    AS '<replaceable>path-to-shared-object</replaceable>'
+    LANGUAGE C;
+</synopsis>
+     </para>
+    </step>
+
+    <step performance="optional" id="xplang-install-cr4">
+     <para>
       Optionally, the language handler can provide a <quote>validator</>
       function that checks a function definition for correctness without
       actually executing it.  The validator function is called by
       <command>CREATE FUNCTION</> if it exists.  If a validator function
-      is provided by the handler, declare it with a command like
+      is provided by the language, declare it with a command like
 <synopsis>
 CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
     RETURNS void
@@ -125,12 +141,13 @@ CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
      </para>
     </step>
 
-    <step performance="required" id="xplang-install-cr4">
+    <step performance="required" id="xplang-install-cr5">
      <para>
       The PL must be declared with the command
 <synopsis>
 CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
     HANDLER <replaceable>handler_function_name</replaceable>
+    <optional>INLINE <replaceable>inline_function_name</replaceable></optional>
     <optional>VALIDATOR <replaceable>validator_function_name</replaceable></optional> ;
 </synopsis>
       The optional key word <literal>TRUSTED</literal> specifies that
@@ -173,10 +190,13 @@ CREATE FUNCTION plpgsql_call_handler() RETURNS language_handler AS
      </para>
 
      <para>
-      <application>PL/pgSQL</application> has a validator function,
-      so we declare that too:
+      <application>PL/pgSQL</application> has an inline handler function
+      and a validator function, so we declare those too:
 
 <programlisting>
+CREATE FUNCTION plpgsql_inline_handler(internal) RETURNS void AS
+    '$libdir/plpgsql' LANGUAGE C;
+
 CREATE FUNCTION plpgsql_validator(oid) RETURNS void AS
     '$libdir/plpgsql' LANGUAGE C;
 </programlisting>
@@ -187,6 +207,7 @@ CREATE FUNCTION plpgsql_validator(oid) RETURNS void AS
 <programlisting>
 CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
     HANDLER plpgsql_call_handler
+    INLINE plpgsql_inline_handler
     VALIDATOR plpgsql_validator;
 </programlisting>
       then defines that the previously declared functions

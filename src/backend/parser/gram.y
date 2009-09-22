@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.678 2009/09/21 20:10:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.679 2009/09/22 23:43:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -196,7 +196,7 @@ static TypeName *TableFuncTypeName(List *columns);
 		CreateSchemaStmt CreateSeqStmt CreateStmt CreateTableSpaceStmt
 		CreateFdwStmt CreateForeignServerStmt CreateAssertStmt CreateTrigStmt
 		CreateUserStmt CreateUserMappingStmt CreateRoleStmt
-		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt
+		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
 		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
 		DropUserStmt DropdbStmt DropTableSpaceStmt DropFdwStmt
@@ -246,7 +246,6 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <list>	OptSchemaEltList
 
 %type <boolean> TriggerActionTime TriggerForSpec opt_trusted opt_restart_seqs
-%type <str>		opt_lancompiler
 
 %type <ival>	TriggerEvents TriggerOneEvent
 %type <value>	TriggerFuncArg
@@ -256,7 +255,7 @@ static TypeName *TableFuncTypeName(List *columns);
 				index_name name file_name cluster_index_specification
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
-				opt_class opt_validator validator_clause
+				opt_class opt_inline_handler opt_validator validator_clause
 
 %type <range>	qualified_name OptConstrFromTable
 
@@ -295,12 +294,12 @@ static TypeName *TableFuncTypeName(List *columns);
 				execute_param_clause using_clause returning_clause
 				enum_val_list table_func_column_list
 				create_generic_options alter_generic_options
-				relation_expr_list
+				relation_expr_list dostmt_opt_list
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
 
-%type <defelt>	createfunc_opt_item common_func_opt_item
+%type <defelt>	createfunc_opt_item common_func_opt_item dostmt_opt_item
 %type <fun_param> func_arg func_arg_with_default table_func_column
 %type <fun_param_mode> arg_class
 %type <typnam>	func_return func_type
@@ -481,7 +480,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	HANDLER HAVING HEADER_P HOLD HOUR_P
 
 	IDENTITY_P IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P
-	INCLUDING INCREMENT INDEX INDEXES INHERIT INHERITS INITIALLY
+	INCLUDING INCREMENT INDEX INDEXES INHERIT INHERITS INITIALLY INLINE_P
 	INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P INTEGER
 	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
@@ -489,7 +488,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+	LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
 	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
 	LOCATION LOCK_P LOGIN_P
 
@@ -676,6 +675,7 @@ stmt :
 			| DefineStmt
 			| DeleteStmt
 			| DiscardStmt
+			| DoStmt
 			| DropAssertStmt
 			| DropCastStmt
 			| DropFdwStmt
@@ -2771,19 +2771,20 @@ CreatePLangStmt:
 				n->plname = $5;
 				/* parameters are all to be supplied by system */
 				n->plhandler = NIL;
+				n->plinline = NIL;
 				n->plvalidator = NIL;
 				n->pltrusted = false;
 				$$ = (Node *)n;
 			}
 			| CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
-			  HANDLER handler_name opt_validator opt_lancompiler
+			  HANDLER handler_name opt_inline_handler opt_validator
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
 				n->plhandler = $7;
-				n->plvalidator = $8;
+				n->plinline = $8;
+				n->plvalidator = $9;
 				n->pltrusted = $2;
-				/* LANCOMPILER is now ignored entirely */
 				$$ = (Node *)n;
 			}
 		;
@@ -2802,6 +2803,11 @@ handler_name:
 			| name attrs				{ $$ = lcons(makeString($1), $2); }
 		;
 
+opt_inline_handler:
+			INLINE_P handler_name					{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
 validator_clause:
 			VALIDATOR handler_name					{ $$ = $2; }
 			| NO VALIDATOR							{ $$ = NIL; }
@@ -2810,11 +2816,6 @@ validator_clause:
 opt_validator:
 			validator_clause						{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-opt_lancompiler:
-			LANCOMPILER Sconst						{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 DropPLangStmt:
@@ -5139,6 +5140,38 @@ any_operator:
 					{ $$ = lcons(makeString($1), $3); }
 		;
 
+/*****************************************************************************
+ *
+ *		DO <anonymous code block> [ LANGUAGE language ]
+ *
+ * We use a DefElem list for future extensibility, and to allow flexibility
+ * in the clause order.
+ *
+ *****************************************************************************/
+
+DoStmt: DO dostmt_opt_list
+				{
+					DoStmt *n = makeNode(DoStmt);
+					n->args = $2;
+					$$ = (Node *)n;
+				}
+		;
+
+dostmt_opt_list:
+			dostmt_opt_item						{ $$ = list_make1($1); }
+			| dostmt_opt_list dostmt_opt_item	{ $$ = lappend($1, $2); }
+		;
+
+dostmt_opt_item:
+			Sconst
+				{
+					$$ = makeDefElem("as", (Node *)makeString($1));
+				}
+			| LANGUAGE ColId_or_Sconst
+				{
+					$$ = makeDefElem("language", (Node *)makeString($2));
+				}
+		;
 
 /*****************************************************************************
  *
@@ -10362,6 +10395,7 @@ unreserved_keyword:
 			| INDEXES
 			| INHERIT
 			| INHERITS
+			| INLINE_P
 			| INPUT_P
 			| INSENSITIVE
 			| INSERT
@@ -10369,7 +10403,6 @@ unreserved_keyword:
 			| INVOKER
 			| ISOLATION
 			| KEY
-			| LANCOMPILER
 			| LANGUAGE
 			| LARGE_P
 			| LAST_P

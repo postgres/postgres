@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.86 2009/07/12 17:12:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.87 2009/09/22 23:43:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,14 @@ typedef struct
 	bool		tmpltrusted;	/* trusted? */
 	bool		tmpldbacreate;	/* db owner allowed to create? */
 	char	   *tmplhandler;	/* name of handler function */
+	char	   *tmplinline;		/* name of anonymous-block handler, or NULL */
 	char	   *tmplvalidator;	/* name of validator function, or NULL */
 	char	   *tmpllibrary;	/* path of shared library */
 } PLTemplate;
 
 static void create_proc_lang(const char *languageName,
-				 Oid languageOwner, Oid handlerOid, Oid valOid, bool trusted);
+				 Oid languageOwner, Oid handlerOid, Oid inlineOid,
+				 Oid valOid, bool trusted);
 static PLTemplate *find_language_template(const char *languageName);
 static void AlterLanguageOwner_internal(HeapTuple tup, Relation rel,
 							Oid newOwnerId);
@@ -65,6 +67,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	char	   *languageName;
 	PLTemplate *pltemplate;
 	Oid			handlerOid,
+				inlineOid,
 				valOid;
 	Oid			funcrettype;
 	Oid			funcargtypes[1];
@@ -155,6 +158,44 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		}
 
 		/*
+		 * Likewise for the anonymous block handler, if required;
+		 * but we don't care about its return type.
+		 */
+		if (pltemplate->tmplinline)
+		{
+			funcname = SystemFuncName(pltemplate->tmplinline);
+			funcargtypes[0] = INTERNALOID;
+			inlineOid = LookupFuncName(funcname, 1, funcargtypes, true);
+			if (!OidIsValid(inlineOid))
+			{
+				inlineOid = ProcedureCreate(pltemplate->tmplinline,
+											PG_CATALOG_NAMESPACE,
+											false, /* replace */
+											false, /* returnsSet */
+											VOIDOID,
+											ClanguageId,
+											F_FMGR_C_VALIDATOR,
+											pltemplate->tmplinline,
+											pltemplate->tmpllibrary,
+											false, /* isAgg */
+											false, /* isWindowFunc */
+											false, /* security_definer */
+											true, /* isStrict */
+											PROVOLATILE_VOLATILE,
+											buildoidvector(funcargtypes, 1),
+											PointerGetDatum(NULL),
+											PointerGetDatum(NULL),
+											PointerGetDatum(NULL),
+											NIL,
+											PointerGetDatum(NULL),
+											1,
+											0);
+			}
+		}
+		else
+			inlineOid = InvalidOid;
+
+		/*
 		 * Likewise for the validator, if required; but we don't care about
 		 * its return type.
 		 */
@@ -177,7 +218,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 false, /* isAgg */
 										 false, /* isWindowFunc */
 										 false, /* security_definer */
-										 false, /* isStrict */
+										 true, /* isStrict */
 										 PROVOLATILE_VOLATILE,
 										 buildoidvector(funcargtypes, 1),
 										 PointerGetDatum(NULL),
@@ -193,8 +234,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			valOid = InvalidOid;
 
 		/* ok, create it */
-		create_proc_lang(languageName, GetUserId(), handlerOid, valOid,
-						 pltemplate->tmpltrusted);
+		create_proc_lang(languageName, GetUserId(), handlerOid, inlineOid,
+						 valOid, pltemplate->tmpltrusted);
 	}
 	else
 	{
@@ -246,6 +287,16 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 						 NameListToString(stmt->plhandler))));
 		}
 
+		/* validate the inline function */
+		if (stmt->plinline)
+		{
+			funcargtypes[0] = INTERNALOID;
+			inlineOid = LookupFuncName(stmt->plinline, 1, funcargtypes, false);
+			/* return value is ignored, so we don't check the type */
+		}
+		else
+			inlineOid = InvalidOid;
+
 		/* validate the validator function */
 		if (stmt->plvalidator)
 		{
@@ -257,8 +308,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			valOid = InvalidOid;
 
 		/* ok, create it */
-		create_proc_lang(languageName, GetUserId(), handlerOid, valOid,
-						 stmt->pltrusted);
+		create_proc_lang(languageName, GetUserId(), handlerOid, inlineOid,
+						 valOid, stmt->pltrusted);
 	}
 }
 
@@ -267,7 +318,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
  */
 static void
 create_proc_lang(const char *languageName,
-				 Oid languageOwner, Oid handlerOid, Oid valOid, bool trusted)
+				 Oid languageOwner, Oid handlerOid, Oid inlineOid,
+				 Oid valOid, bool trusted)
 {
 	Relation	rel;
 	TupleDesc	tupDesc;
@@ -293,6 +345,7 @@ create_proc_lang(const char *languageName,
 	values[Anum_pg_language_lanispl - 1] = BoolGetDatum(true);
 	values[Anum_pg_language_lanpltrusted - 1] = BoolGetDatum(trusted);
 	values[Anum_pg_language_lanplcallfoid - 1] = ObjectIdGetDatum(handlerOid);
+	values[Anum_pg_language_laninline - 1] = ObjectIdGetDatum(inlineOid);
 	values[Anum_pg_language_lanvalidator - 1] = ObjectIdGetDatum(valOid);
 	nulls[Anum_pg_language_lanacl - 1] = true;
 
@@ -320,6 +373,15 @@ create_proc_lang(const char *languageName,
 	referenced.objectId = handlerOid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* dependency on the inline handler function, if any */
+	if (OidIsValid(inlineOid))
+	{
+		referenced.classId = ProcedureRelationId;
+		referenced.objectId = inlineOid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/* dependency on the validator function, if any */
 	if (OidIsValid(valOid))
@@ -370,6 +432,11 @@ find_language_template(const char *languageName)
 							 RelationGetDescr(rel), &isnull);
 		if (!isnull)
 			result->tmplhandler = TextDatumGetCString(datum);
+
+		datum = heap_getattr(tup, Anum_pg_pltemplate_tmplinline,
+							 RelationGetDescr(rel), &isnull);
+		if (!isnull)
+			result->tmplinline = TextDatumGetCString(datum);
 
 		datum = heap_getattr(tup, Anum_pg_pltemplate_tmplvalidator,
 							 RelationGetDescr(rel), &isnull);

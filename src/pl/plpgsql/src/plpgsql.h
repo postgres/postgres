@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.115 2009/08/04 21:22:46 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.116 2009/09/22 23:43:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -799,6 +799,7 @@ extern PLpgSQL_plugin **plugin_ptr;
  */
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 				bool forValidator);
+extern PLpgSQL_function *plpgsql_compile_inline(char *proc_source);
 extern int	plpgsql_parse_word(const char *word);
 extern int	plpgsql_parse_dblword(const char *word);
 extern int	plpgsql_parse_tripword(const char *word);
@@ -828,6 +829,7 @@ extern void plpgsql_compile_error_callback(void *arg);
  */
 extern void _PG_init(void);
 extern Datum plpgsql_call_handler(PG_FUNCTION_ARGS);
+extern Datum plpgsql_inline_handler(PG_FUNCTION_ARGS);
 extern Datum plpgsql_validator(PG_FUNCTION_ARGS);
 
 /* ----------

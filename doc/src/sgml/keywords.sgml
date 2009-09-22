@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.25 2009/04/06 15:01:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.26 2009/09/22 23:43:37 tgl Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -2376,6 +2376,14 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>INLINE</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>INNER</token></entry>
     <entry>reserved (can be function or type)</entry>
     <entry>reserved</entry>
@@ -2571,14 +2579,6 @@
     <entry><token>LAG</token></entry>
     <entry></entry>
     <entry>reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
-   </row>
-   <row>
-    <entry><token>LANCOMPILER</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
     <entry></entry>
     <entry></entry>
     <entry></entry>

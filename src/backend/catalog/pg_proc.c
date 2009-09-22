@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.164 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.165 2009/09/22 23:43:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,11 +782,12 @@ sql_function_parse_error_callback(void *arg)
 
 /*
  * Adjust a syntax error occurring inside the function body of a CREATE
- * FUNCTION command.  This can be used by any function validator, not only
- * for SQL-language functions.	It is assumed that the syntax error position
- * is initially relative to the function body string (as passed in).  If
- * possible, we adjust the position to reference the original CREATE command;
- * if we can't manage that, we set up an "internal query" syntax error instead.
+ * FUNCTION or DO command.  This can be used by any function validator or
+ * anonymous-block handler, not only for SQL-language functions.
+ * It is assumed that the syntax error position is initially relative to the
+ * function body string (as passed in).  If possible, we adjust the position
+ * to reference the original command text; if we can't manage that, we set
+ * up an "internal query" syntax error instead.
  *
  * Returns true if a syntax error was processed, false if not.
  */
@@ -843,8 +844,8 @@ function_parse_error_transpose(const char *prosrc)
 
 /*
  * Try to locate the string literal containing the function body in the
- * given text of the CREATE FUNCTION command.  If successful, return the
- * character (not byte) index within the command corresponding to the
+ * given text of the CREATE FUNCTION or DO command.  If successful, return
+ * the character (not byte) index within the command corresponding to the
  * given character index within the literal.  If not successful, return 0.
  */
 static int
@@ -852,7 +853,7 @@ match_prosrc_to_query(const char *prosrc, const char *queryText,
 					  int cursorpos)
 {
 	/*
-	 * Rather than fully parsing the CREATE FUNCTION command, we just scan the
+	 * Rather than fully parsing the original command, we just scan the
 	 * command looking for $prosrc$ or 'prosrc'.  This could be fooled (though
 	 * not in any very probable scenarios), so fail if we find more than one
 	 * match.

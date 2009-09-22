@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.313 2009/07/29 20:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.314 2009/09/22 23:43:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,6 +838,10 @@ ProcessUtility(Node *parsetree,
 						break;
 				}
 			}
+			break;
+
+		case T_DoStmt:
+			ExecuteDoStmt((DoStmt *) parsetree);
 			break;
 
 		case T_CreatedbStmt:
@@ -1761,6 +1765,10 @@ CreateCommandTag(Node *parsetree)
 			}
 			break;
 
+		case T_DoStmt:
+			tag = "DO";
+			break;
+
 		case T_CreatedbStmt:
 			tag = "CREATE DATABASE";
 			break;
@@ -2274,6 +2282,10 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_RemoveFuncStmt:
 			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DoStmt:
+			lev = LOGSTMT_ALL;
 			break;
 
 		case T_CreatedbStmt:

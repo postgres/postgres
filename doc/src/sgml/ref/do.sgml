@@ -1,0 +1,122 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.1 2009/09/22 23:43:37 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DO">
+ <refmeta>
+  <refentrytitle id="sql-do-title">DO</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DO</refname>
+  <refpurpose>execute an anonymous code block</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-do">
+  <primary>DO</primary>
+ </indexterm>
+
+ <indexterm zone="sql-do">
+  <primary>anonymous code blocks</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DO <replaceable class="PARAMETER">code</replaceable> [ LANGUAGE <replaceable class="PARAMETER">lang_name</replaceable> ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DO</command> executes an anonymous code block, or in other
+   words a transient anonymous function in a procedural language.
+  </para>
+
+  <para>
+   The code block is treated as though it were the body of a function
+   with no parameters, returning <type>void</>.  It is parsed and
+   executed a single time.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">code</replaceable></term>
+    <listitem>
+     <para>
+      The procedural language code to be executed.  This must be specified
+      as a string literal, just as in <command>CREATE FUNCTION</>.
+      Use of a dollar-quoted literal is recommended.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">lang_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the procedural language the code is written in.
+      If omitted, the default is determined by the runtime parameter
+      <xref linkend="guc-default-do-language">.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The procedural language to be used must already have been installed
+   into the current database by means of <command>CREATE LANGUAGE</>.
+  </para>
+
+  <para>
+   The user must have <literal>USAGE</> privilege for the procedural
+   language, or must be a superuser if the language is untrusted.
+   This is the same privilege requirement as for creating a function
+   in the language.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-do-examples">
+  <title id="sql-do-examples-title">Examples</title>
+  <para>
+   Execute a simple PL/pgsql loop without needing to create a function:
+<programlisting>
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
+</programlisting>
+  </para>
+ </refsect1>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DO</command> statement in the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

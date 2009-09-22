@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.110 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.111 2009/09/22 23:43:37 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -1914,4 +1914,111 @@ AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 	heap_freetuple(tup);
 
 	heap_close(procRel, RowExclusiveLock);
+}
+
+
+/*
+ * ExecuteDoStmt
+ *		Execute inline procedural-language code
+ */
+void
+ExecuteDoStmt(DoStmt *stmt)
+{
+	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
+	ListCell   *arg;
+	DefElem    *as_item = NULL;
+	DefElem    *language_item = NULL;
+	char	   *language;
+	char	   *languageName;
+	Oid			laninline;
+	HeapTuple	languageTuple;
+	Form_pg_language languageStruct;
+
+	/* Process options we got from gram.y */
+	foreach(arg, stmt->args)
+	{
+		DefElem    *defel = (DefElem *) lfirst(arg);
+
+		if (strcmp(defel->defname, "as") == 0)
+		{
+			if (as_item)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			as_item = defel;
+		}
+		else if (strcmp(defel->defname, "language") == 0)
+		{
+			if (language_item)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			language_item = defel;
+		}
+		else
+			elog(ERROR, "option \"%s\" not recognized",
+				 defel->defname);
+	}
+
+	if (as_item)
+		codeblock->source_text = strVal(as_item->arg);
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("no inline code specified")));
+
+	/* if LANGUAGE option wasn't specified, use the default language */
+	if (language_item)
+		language = strVal(language_item->arg);
+	else
+		language = default_do_language;
+
+	/* Convert language name to canonical case */
+	languageName = case_translate_language_name(language);
+
+	/* Look up the language and validate permissions */
+	languageTuple = SearchSysCache(LANGNAME,
+								   PointerGetDatum(languageName),
+								   0, 0, 0);
+	if (!HeapTupleIsValid(languageTuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("language \"%s\" does not exist", languageName),
+				 (PLTemplateExists(languageName) ?
+				  errhint("Use CREATE LANGUAGE to load the language into the database.") : 0)));
+
+	codeblock->langOid = HeapTupleGetOid(languageTuple);
+	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+
+	if (languageStruct->lanpltrusted)
+	{
+		/* if trusted language, need USAGE privilege */
+		AclResult	aclresult;
+
+		aclresult = pg_language_aclcheck(codeblock->langOid, GetUserId(),
+										 ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+						   NameStr(languageStruct->lanname));
+	}
+	else
+	{
+		/* if untrusted language, must be superuser */
+		if (!superuser())
+			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
+						   NameStr(languageStruct->lanname));
+	}
+
+	/* get the handler function's OID */
+	laninline = languageStruct->laninline;
+	if (!OidIsValid(laninline))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("language \"%s\" does not support inline code execution",
+						NameStr(languageStruct->lanname))));
+
+	ReleaseSysCache(languageTuple);
+
+	/* execute the inline handler */
+	OidFunctionCall1(laninline, PointerGetDatum(codeblock));
 }

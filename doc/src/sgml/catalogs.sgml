@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.206 2009/08/10 22:13:50 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.207 2009/09/22 23:43:37 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2942,6 +2942,18 @@
      </row>
 
      <row>
+      <entry><structfield>laninline</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>
+       This references a function that is responsible for executing
+       <quote>inline</> anonymous code blocks
+       (<xref linkend="sql-do" endterm="sql-do-title"> blocks).
+       Zero if inline blocks are not supported
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>lanvalidator</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
@@ -3545,6 +3557,12 @@
       <entry><structfield>tmplhandler</structfield></entry>
       <entry><type>text</type></entry>
       <entry>Name of call handler function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tmplinline</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>Name of anonymous-block handler function, or NULL if none</entry>
      </row>
 
      <row>

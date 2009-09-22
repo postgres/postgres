@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.31 2009/02/26 16:02:39 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.32 2009/09/22 23:43:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ main(int argc, char *argv[])
 	const char *progname;
 	int			optindex;
 	int			c;
-
 	bool		listlangs = false;
 	const char *dbname = NULL;
 	char	   *host = NULL;
@@ -47,19 +46,20 @@ main(int argc, char *argv[])
 	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		echo = false;
 	char	   *langname = NULL;
-
 	char	   *p;
 	Oid			lanplcallfoid;
+	Oid			laninline;
 	Oid			lanvalidator;
 	char	   *handler;
+	char	   *inline_handler;
 	char	   *validator;
 	char	   *handler_ns;
+	char	   *inline_ns;
 	char	   *validator_ns;
 	bool		keephandler;
+	bool		keepinline;
 	bool		keepvalidator;
-
 	PQExpBufferData sql;
-
 	PGconn	   *conn;
 	PGresult   *result;
 
@@ -190,10 +190,10 @@ main(int argc, char *argv[])
 	executeCommand(conn, "SET search_path = pg_catalog;", progname, echo);
 
 	/*
-	 * Make sure the language is installed and find the OIDs of the handler
-	 * and validator functions
+	 * Make sure the language is installed and find the OIDs of the
+	 * language support functions
 	 */
-	printfPQExpBuffer(&sql, "SELECT lanplcallfoid, lanvalidator "
+	printfPQExpBuffer(&sql, "SELECT lanplcallfoid, laninline, lanvalidator "
 					  "FROM pg_language WHERE lanname = '%s' AND lanispl;",
 					  langname);
 	result = executeQuery(conn, sql.data, progname, echo);
@@ -206,7 +206,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	lanplcallfoid = atooid(PQgetvalue(result, 0, 0));
-	lanvalidator = atooid(PQgetvalue(result, 0, 1));
+	laninline = atooid(PQgetvalue(result, 0, 1));
+	lanvalidator = atooid(PQgetvalue(result, 0, 2));
 	PQclear(result);
 
 	/*
@@ -261,6 +262,44 @@ main(int argc, char *argv[])
 	}
 
 	/*
+	 * Check that the inline function isn't used by some other language
+	 */
+	if (OidIsValid(laninline))
+	{
+		printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language "
+						  "WHERE laninline = %u AND lanname <> '%s';",
+						  laninline, langname);
+		result = executeQuery(conn, sql.data, progname, echo);
+		if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
+			keepinline = false;
+		else
+			keepinline = true;
+		PQclear(result);
+	}
+	else
+		keepinline = true;	/* don't try to delete it */
+
+	/*
+	 * Find the inline handler name
+	 */
+	if (!keepinline)
+	{
+		printfPQExpBuffer(&sql, "SELECT proname, (SELECT nspname "
+						  "FROM pg_namespace ns WHERE ns.oid = pronamespace) "
+						  "AS prons FROM pg_proc WHERE oid = %u;",
+						  laninline);
+		result = executeQuery(conn, sql.data, progname, echo);
+		inline_handler = strdup(PQgetvalue(result, 0, 0));
+		inline_ns = strdup(PQgetvalue(result, 0, 1));
+		PQclear(result);
+	}
+	else
+	{
+		inline_handler = NULL;
+		inline_ns = NULL;
+	}
+
+	/*
 	 * Check that the validator function isn't used by some other language
 	 */
 	if (OidIsValid(lanvalidator))
@@ -305,6 +344,9 @@ main(int argc, char *argv[])
 	if (!keephandler)
 		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\".\"%s\" ();\n",
 						  handler_ns, handler);
+	if (!keepinline)
+		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\".\"%s\" (internal);\n",
+						  inline_ns, inline_handler);
 	if (!keepvalidator)
 		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\".\"%s\" (oid);\n",
 						  validator_ns, validator);

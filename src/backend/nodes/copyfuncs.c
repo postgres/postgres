@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.437 2009/07/30 02:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.438 2009/09/22 23:43:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2561,6 +2561,16 @@ _copyRemoveFuncStmt(RemoveFuncStmt *from)
 	return newnode;
 }
 
+static DoStmt *
+_copyDoStmt(DoStmt *from)
+{
+	DoStmt	   *newnode = makeNode(DoStmt);
+
+	COPY_NODE_FIELD(args);
+
+	return newnode;
+}
+
 static RemoveOpClassStmt *
 _copyRemoveOpClassStmt(RemoveOpClassStmt *from)
 {
@@ -3104,6 +3114,7 @@ _copyCreatePLangStmt(CreatePLangStmt *from)
 
 	COPY_STRING_FIELD(plname);
 	COPY_NODE_FIELD(plhandler);
+	COPY_NODE_FIELD(plinline);
 	COPY_NODE_FIELD(plvalidator);
 	COPY_SCALAR_FIELD(pltrusted);
 
@@ -3796,6 +3807,9 @@ copyObject(void *from)
 			break;
 		case T_RemoveFuncStmt:
 			retval = _copyRemoveFuncStmt(from);
+			break;
+		case T_DoStmt:
+			retval = _copyDoStmt(from);
 			break;
 		case T_RemoveOpClassStmt:
 			retval = _copyRemoveOpClassStmt(from);

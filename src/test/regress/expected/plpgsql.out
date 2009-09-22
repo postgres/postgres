@@ -3861,3 +3861,40 @@ NOTICE:  foo\bar!baz
 (1 row)
 
 drop function strtest();
+-- Test anonymous code blocks.
+DO $$
+DECLARE r record;
+BEGIN 
+    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$ LANGUAGE plpgsql;
+NOTICE:  001, Entrance
+NOTICE:  002, Office
+NOTICE:  003, Office
+NOTICE:  004, Technical
+NOTICE:  101, Office
+NOTICE:  102, Conference
+NOTICE:  103, Restroom
+NOTICE:  104, Technical
+NOTICE:  105, Office
+NOTICE:  106, Office
+-- these are to check syntax error reporting
+DO LANGUAGE plpgsql $$begin return 1; end$$;
+ERROR:  RETURN cannot have a parameter in function returning void at or near "1"
+LINE 1: DO LANGUAGE plpgsql $$begin return 1; end$$;
+                                           ^
+DO LANGUAGE plpgsql $$
+DECLARE r record;
+BEGIN 
+    FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
+ERROR:  column "foo" does not exist
+LINE 1:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY room...
+                                         ^
+QUERY:   SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows

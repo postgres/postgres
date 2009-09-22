@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.401 2009/08/02 22:14:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.402 2009/09/22 23:43:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1570,6 +1570,7 @@ typedef struct CreatePLangStmt
 	NodeTag		type;
 	char	   *plname;			/* PL name */
 	List	   *plhandler;		/* PL call handler function (qual. name) */
+	List	   *plinline;		/* optional inline function (qual. name) */
 	List	   *plvalidator;	/* optional validator function (qual. name) */
 	bool		pltrusted;		/* PL is trusted */
 } CreatePLangStmt;
@@ -1921,6 +1922,25 @@ typedef struct RemoveFuncStmt
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if missing? */
 } RemoveFuncStmt;
+
+/* ----------------------
+ *		DO Statement
+ *
+ * DoStmt is the raw parser output, InlineCodeBlock is the execution-time API
+ * ----------------------
+ */
+typedef struct DoStmt
+{
+	NodeTag		type;
+	List	   *args;			/* List of DefElem nodes */
+} DoStmt;
+
+typedef struct InlineCodeBlock
+{
+	NodeTag		type;
+	char	   *source_text;	/* source text of anonymous code block */
+	Oid			langOid;		/* OID of selected language */
+} InlineCodeBlock;
 
 /* ----------------------
  *		Drop Operator Class Statement

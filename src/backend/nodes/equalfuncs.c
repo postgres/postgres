@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.360 2009/07/30 02:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.361 2009/09/22 23:43:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1213,6 +1213,14 @@ _equalRemoveFuncStmt(RemoveFuncStmt *a, RemoveFuncStmt *b)
 }
 
 static bool
+_equalDoStmt(DoStmt *a, DoStmt *b)
+{
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
 _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 {
 	COMPARE_NODE_FIELD(opclassname);
@@ -1667,6 +1675,7 @@ _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 {
 	COMPARE_STRING_FIELD(plname);
 	COMPARE_NODE_FIELD(plhandler);
+	COMPARE_NODE_FIELD(plinline);
 	COMPARE_NODE_FIELD(plvalidator);
 	COMPARE_SCALAR_FIELD(pltrusted);
 
@@ -2575,6 +2584,9 @@ equal(void *a, void *b)
 			break;
 		case T_RemoveFuncStmt:
 			retval = _equalRemoveFuncStmt(a, b);
+			break;
+		case T_DoStmt:
+			retval = _equalDoStmt(a, b);
 			break;
 		case T_RemoveOpClassStmt:
 			retval = _equalRemoveOpClassStmt(a, b);

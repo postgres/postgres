@@ -3079,3 +3079,26 @@ $$ language plpgsql;
 select strtest();
 
 drop function strtest();
+
+-- Test anonymous code blocks.
+
+DO $$
+DECLARE r record;
+BEGIN 
+    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$ LANGUAGE plpgsql;
+
+-- these are to check syntax error reporting
+DO LANGUAGE plpgsql $$begin return 1; end$$;
+
+DO LANGUAGE plpgsql $$
+DECLARE r record;
+BEGIN 
+    FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+    LOOP
+        RAISE NOTICE '%, %', r.roomno, r.comment;
+    END LOOP;
+END$$;
