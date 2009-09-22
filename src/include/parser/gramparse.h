@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.47 2009/07/14 20:24:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.48 2009/09/22 23:52:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,9 @@ typedef struct base_yy_extra_type
 
 	int			xcdepth;		/* depth of nesting in slash-star comments */
 	char	   *dolqstart;		/* current $foo$ quote start string */
+
+	/* first part of UTF16 surrogate pair for Unicode escapes */
+	int32		utf16_first_part;
 
 	/* state variables for literal-lexing warnings */
 	bool		warn_on_first_escape;

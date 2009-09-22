@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.135 2009/09/21 22:22:07 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.136 2009/09/22 23:52:53 petere Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -398,6 +398,14 @@ SELECT 'foo'      'bar';
         </entry>
         <entry>hexadecimal byte value</entry>
        </row>
+       <row>
+        <entry>
+         <literal>\u<replaceable>xxxx</replaceable></literal>,
+         <literal>\U<replaceable>xxxxxxxx</replaceable></literal>
+         (<replaceable>x</replaceable> = 0 - 9, A - F)
+        </entry>
+        <entry>16 or 32-bit hexadecimal Unicode character value</entry>
+       </row>
       </tbody>
       </tgroup>
      </table>
@@ -411,13 +419,25 @@ SELECT 'foo'      'bar';
     </para>
 
     <para>
-     It is your responsibility that the byte sequences you create are
+     It is your responsibility that the byte sequences you create,
+     especially when using the octal or hexadecimal escapes, compose
      valid characters in the server character set encoding.  When the
-     server encoding is UTF-8, then the alternative Unicode escape
-     syntax, explained in <xref linkend="sql-syntax-strings-uescape">,
-     should be used instead.  (The alternative would be doing the
-     UTF-8 encoding by hand and writing out the bytes, which would be
-     very cumbersome.)
+     server encoding is UTF-8, then the Unicode escapes or the
+     alternative Unicode escape syntax, explained
+     in <xref linkend="sql-syntax-strings-uescape">, should be used
+     instead.  (The alternative would be doing the UTF-8 encoding by
+     hand and writing out the bytes, which would be very cumbersome.)
+    </para>
+
+    <para>
+     The Unicode escape syntax works fully only when the server
+     encoding is UTF-8.  When other server encodings are used, only
+     code points in the ASCII range (up to <literal>\u007F</>) can be
+     specified.  Both the 4-digit and the 8-digit form can be used to
+     specify UTF-16 surrogate pairs to compose characters with code
+     points larger than <literal>\FFFF</literal> (although the
+     availability of the 8-digit form technically makes this
+     unnecessary).
     </para>
 
     <caution>
