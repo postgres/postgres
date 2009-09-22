@@ -1444,6 +1444,14 @@ insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
 ERROR:  insert or update on table "rule_and_refint_t3" violates foreign key constraint "rule_and_refint_t3_id3a_fkey"
 DETAIL:  Key (id3a,id3b)=(1,13) is not present in table "rule_and_refint_t1".
 --
+-- disallow dropping a view's rule (bug #5072)
+--
+create view fooview as select 'foo'::text;
+drop rule "_RETURN" on fooview;
+ERROR:  cannot drop rule _RETURN on view fooview because view fooview requires it
+HINT:  You can drop view fooview instead.
+drop view fooview;
+--
 -- check for planner problems with complex inherited UPDATES
 --
 create table id (id serial primary key, name text);
