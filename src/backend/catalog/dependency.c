@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.90 2009/08/07 15:27:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.91 2009/09/22 15:46:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,7 +559,8 @@ findDependentObjects(const ObjectAddress *object,
 				{
 					char	   *otherObjDesc;
 
-					if (object_address_present(&otherObject, pendingObjects))
+					if (pendingObjects &&
+						object_address_present(&otherObject, pendingObjects))
 					{
 						systable_endscan(scan);
 						/* need to release caller's lock; see notes below */
