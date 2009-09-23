@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.1 2009/09/22 23:43:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.2 2009/09/23 15:41:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,6 +41,11 @@ DO <replaceable class="PARAMETER">code</replaceable> [ LANGUAGE <replaceable cla
    The code block is treated as though it were the body of a function
    with no parameters, returning <type>void</>.  It is parsed and
    executed a single time.
+  </para>
+
+  <para>
+   The optional <literal>LANGUAGE</> clause can be written either
+   before or after the code block.
   </para>
  </refsect1>
 
@@ -91,17 +96,20 @@ DO <replaceable class="PARAMETER">code</replaceable> [ LANGUAGE <replaceable cla
  <refsect1 id="sql-do-examples">
   <title id="sql-do-examples-title">Examples</title>
   <para>
-   Execute a simple PL/pgsql loop without needing to create a function:
+   Grant all privileges on all views in schema <literal>public</> to
+   role <literal>webuser</>:
 <programlisting>
-DO $$
-DECLARE r record;
+DO $$DECLARE r record;
 BEGIN
-    FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
+    FOR r IN SELECT table_schema, table_name FROM information_schema.tables
+             WHERE table_type = 'VIEW' AND table_schema = 'public'
     LOOP
-        RAISE NOTICE '%, %', r.roomno, r.comment;
+        EXECUTE 'GRANT ALL ON ' || quote_ident(r.table_schema) || '.' || quote_ident(r.table_name) || ' TO webuser';
     END LOOP;
 END$$;
 </programlisting>
+   This example assumes that <varname>default_do_language</> has its
+   default value, namely <literal>plpgsql</>.
   </para>
  </refsect1>
  <refsect1>
