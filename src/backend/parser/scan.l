@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.160 2009/09/25 20:51:37 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.161 2009/09/25 21:13:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1223,6 +1223,9 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 						yyerror("invalid Unicode surrogate pair");
 					}
 				}
+				else if (is_utf16_surrogate_second(unicode))
+					yyerror("invalid Unicode surrogate pair");
+
 				if (is_utf16_surrogate_first(unicode))
 					pair_first = unicode;
 				else
@@ -1253,6 +1256,9 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 						yyerror("invalid Unicode surrogate pair");
 					}
 				}
+				else if (is_utf16_surrogate_second(unicode))
+					yyerror("invalid Unicode surrogate pair");
+
 				if (is_utf16_surrogate_first(unicode))
 					pair_first = unicode;
 				else
