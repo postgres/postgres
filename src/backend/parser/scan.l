@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.159 2009/09/22 23:52:53 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.160 2009/09/25 20:51:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ xeescape		[\\][^0-7]
 xeoctesc		[\\][0-7]{1,3}
 xehexesc		[\\]x[0-9A-Fa-f]{1,2}
 xeunicode		[\\](u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})
-xeunicodebad	[\\]([uU])
+xeunicodefail	[\\](u[0-9A-Fa-f]{0,3}|U[0-9A-Fa-f]{0,7})
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -575,7 +575,7 @@ other			.
 <xeu>\n			|
 <xeu><<EOF>>	{ yyerror("invalid Unicode surrogate pair"); }
 
-<xe>{xeunicodebad}	{
+<xe,xeu>{xeunicodefail}	{
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 								 errmsg("invalid Unicode escape"),
