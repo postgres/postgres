@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.291 2009/09/26 18:24:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.292 2009/09/26 23:08:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,8 +203,9 @@ static bool load_relcache_init_file(bool shared);
 static void write_relcache_init_file(bool shared);
 static void write_item(const void *data, Size len, FILE *fp);
 
-static void formrdesc(const char *relationName, bool isshared,
-		  bool hasoids, int natts, const FormData_pg_attribute *attrs);
+static void formrdesc(const char *relationName, Oid relationReltype,
+		  bool isshared, bool hasoids,
+		  int natts, const FormData_pg_attribute *attrs);
 
 static HeapTuple ScanPgRelation(Oid targetRelId, bool indexOK);
 static Relation AllocateRelationDesc(Relation relation, Form_pg_class relp);
@@ -1374,8 +1375,9 @@ LookupOpclassInfo(Oid operatorClassOid,
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */
 static void
-formrdesc(const char *relationName, bool isshared,
-		  bool hasoids, int natts, const FormData_pg_attribute *attrs)
+formrdesc(const char *relationName, Oid relationReltype,
+		  bool isshared, bool hasoids,
+		  int natts, const FormData_pg_attribute *attrs)
 {
 	Relation	relation;
 	int			i;
@@ -1420,6 +1422,7 @@ formrdesc(const char *relationName, bool isshared,
 
 	namestrcpy(&relation->rd_rel->relname, relationName);
 	relation->rd_rel->relnamespace = PG_CATALOG_NAMESPACE;
+	relation->rd_rel->reltype = relationReltype;
 
 	/*
 	 * It's important to distinguish between shared and non-shared relations,
@@ -1450,6 +1453,9 @@ formrdesc(const char *relationName, bool isshared,
 	 */
 	relation->rd_att = CreateTemplateTupleDesc(natts, hasoids);
 	relation->rd_att->tdrefcount = 1;	/* mark as refcounted */
+
+	relation->rd_att->tdtypeid = relationReltype;
+	relation->rd_att->tdtypmod = -1;	/* unnecessary, but... */
 
 	/*
 	 * initialize tuple desc info
@@ -2558,7 +2564,7 @@ RelationCacheInitializePhase2(void)
 	 */
 	if (!load_relcache_init_file(true))
 	{
-		formrdesc("pg_database", true,
+		formrdesc("pg_database", DatabaseRelation_Rowtype_Id, true,
 				  true, Natts_pg_database, Desc_pg_database);
 
 #define NUM_CRITICAL_SHARED_RELS	1	/* fix if you change list above */
@@ -2604,13 +2610,13 @@ RelationCacheInitializePhase3(void)
 	{
 		needNewCacheFile = true;
 
-		formrdesc("pg_class", false,
+		formrdesc("pg_class", RelationRelation_Rowtype_Id, false,
 				  true, Natts_pg_class, Desc_pg_class);
-		formrdesc("pg_attribute", false,
+		formrdesc("pg_attribute", AttributeRelation_Rowtype_Id, false,
 				  false, Natts_pg_attribute, Desc_pg_attribute);
-		formrdesc("pg_proc", false,
+		formrdesc("pg_proc", ProcedureRelation_Rowtype_Id, false,
 				  true, Natts_pg_proc, Desc_pg_proc);
-		formrdesc("pg_type", false,
+		formrdesc("pg_type", TypeRelation_Rowtype_Id, false,
 				  true, Natts_pg_type, Desc_pg_type);
 
 #define NUM_CRITICAL_LOCAL_RELS	4	/* fix if you change list above */
@@ -2738,11 +2744,14 @@ RelationCacheInitializePhase3(void)
 			RelationParseRelOptions(relation, htup);
 
 			/*
-			 * Also update the derived fields in rd_att.
+			 * Check the values in rd_att were set up correctly.  (We cannot
+			 * just copy them over now: formrdesc must have set up the
+			 * rd_att data correctly to start with, because it may already
+			 * have been copied into one or more catcache entries.)
 			 */
-			relation->rd_att->tdtypeid = relp->reltype;
-			relation->rd_att->tdtypmod = -1;	/* unnecessary, but... */
-			relation->rd_att->tdhasoid = relp->relhasoids;
+			Assert(relation->rd_att->tdtypeid == relp->reltype);
+			Assert(relation->rd_att->tdtypmod == -1);
+			Assert(relation->rd_att->tdhasoid == relp->relhasoids);
 
 			ReleaseSysCache(htup);
 
