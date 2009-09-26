@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.47 2009/09/26 22:42:01 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.48 2009/09/26 23:22:48 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -329,7 +329,10 @@ comment_level > 0 { next; }
 		without_oids = " without_oids";
 	}
 	if ($0 ~ /BKI_ROWTYPE_OID\([0-9]*\)/) {
-		rowtype_oid = gensub(/^.*BKI_ROWTYPE_OID\(([0-9]*)\).*$/, " rowtype_oid \\1", 1);
+		tmp = $0;
+		sub(/^.*BKI_ROWTYPE_OID\(/, "", tmp);
+		sub(/\).*$/, "", tmp);
+		rowtype_oid = " rowtype_oid " tmp;
 	}
 
         i = 1;
