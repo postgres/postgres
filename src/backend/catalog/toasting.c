@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.18 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.19 2009/09/26 22:42:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,6 +203,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
 										   toastOid,
+										   InvalidOid,
 										   rel->rd_rel->relowner,
 										   tupdesc,
 										   NIL,

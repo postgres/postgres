@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.115 2009/08/02 22:14:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.116 2009/09/26 22:42:02 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -27,8 +27,9 @@
  * ----------------
  */
 #define RelationRelationId	1259
+#define RelationRelation_Rowtype_Id  83
 
-CATALOG(pg_class,1259) BKI_BOOTSTRAP
+CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83)
 {
 	NameData	relname;		/* class name */
 	Oid			relnamespace;	/* OID of namespace containing this class */

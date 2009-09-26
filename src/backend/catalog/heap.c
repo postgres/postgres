@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.358 2009/08/23 19:23:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.359 2009/09/26 22:42:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -80,6 +80,7 @@ static Oid AddNewRelationType(const char *typeName,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
 				   Oid ownerid,
+				   Oid new_row_type,
 				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
@@ -790,10 +791,11 @@ AddNewRelationType(const char *typeName,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
 				   Oid ownerid,
+				   Oid new_row_type,
 				   Oid new_array_type)
 {
 	return
-		TypeCreate(InvalidOid,	/* no predetermined OID */
+		TypeCreate(new_row_type,		/* optional predetermined OID */
 				   typeName,	/* type name */
 				   typeNamespace,		/* type namespace */
 				   new_rel_oid, /* relation oid */
@@ -836,6 +838,7 @@ heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 Oid reltablespace,
 						 Oid relid,
+						 Oid reltypeid,
 						 Oid ownerid,
 						 TupleDesc tupdesc,
 						 List *cooked_constraints,
@@ -952,7 +955,9 @@ heap_create_with_catalog(const char *relname,
 
 	/*
 	 * Since defining a relation also defines a complex type, we add a new
-	 * system type corresponding to the new relation.
+	 * system type corresponding to the new relation.  The OID of the type
+	 * can be preselected by the caller, but if reltypeid is InvalidOid,
+	 * we'll generate a new OID for it.
 	 *
 	 * NOTE: we could get a unique-index failure here, in case someone else is
 	 * creating the same type name in parallel but hadn't committed yet when
@@ -963,6 +968,7 @@ heap_create_with_catalog(const char *relname,
 									  relid,
 									  relkind,
 									  ownerid,
+									  reltypeid,
 									  new_array_oid);
 
 	/*

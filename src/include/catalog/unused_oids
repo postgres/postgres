@@ -2,7 +2,7 @@
 #
 # unused_oids
 #
-# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.8 2006/07/31 01:16:38 tgl Exp $
+# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.9 2009/09/26 22:42:03 tgl Exp $
 #
 #	finds blocks of manually-assignable oids that have not already been
 #	claimed by post_hackers.  primarily useful for finding available
@@ -25,11 +25,12 @@ export FIRSTOBJECTID
 
 # this part (down to the uniq step) should match the duplicate_oids script
 # note: we exclude BKI_BOOTSTRAP relations since they are expected to have
-# matching DATA lines in pg_class.h
+# matching DATA lines in pg_class.h and pg_type.h
 
 cat pg_*.h toasting.h indexing.h | \
 egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
 sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\)).*$/\1,\2/p' \
 	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
 	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
 	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \

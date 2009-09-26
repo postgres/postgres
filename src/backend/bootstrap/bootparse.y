@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.97 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.98 2009/09/26 22:42:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,13 +108,13 @@ int num_columns_read = 0;
 %type <ival>  boot_const boot_ident
 %type <ival>  optbootstrap optsharedrelation optwithoutoids
 %type <ival>  boot_tuple boot_tuplelist
-%type <oidval> oidspec optoideq
+%type <oidval> oidspec optoideq optrowtypeoid
 
 %token <ival> CONST_P ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE XTOAST
 %token COMMA EQUALS LPAREN RPAREN
-%token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS NULLVAL
+%token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS XROWTYPE_OID NULLVAL
 %start TopLevel
 
 %nonassoc low
@@ -168,15 +168,15 @@ Boot_CloseStmt:
 		;
 
 Boot_CreateStmt:
-		  XCREATE optbootstrap optsharedrelation optwithoutoids boot_ident oidspec LPAREN
+		  XCREATE boot_ident oidspec optbootstrap optsharedrelation optwithoutoids optrowtypeoid LPAREN
 				{
 					do_start();
 					numattr = 0;
 					elog(DEBUG4, "creating%s%s relation %s %u",
-						 $2 ? " bootstrap" : "",
-						 $3 ? " shared" : "",
-						 LexIDStr($5),
-						 $6);
+						 $4 ? " bootstrap" : "",
+						 $5 ? " shared" : "",
+						 LexIDStr($2),
+						 $3);
 				}
 		  boot_typelist
 				{
@@ -188,9 +188,9 @@ Boot_CreateStmt:
 
 					do_start();
 
-					tupdesc = CreateTupleDesc(numattr, !($4), attrtypes);
+					tupdesc = CreateTupleDesc(numattr, !($6), attrtypes);
 
-					if ($2)
+					if ($4)
 					{
 						if (boot_reldesc)
 						{
@@ -198,13 +198,13 @@ Boot_CreateStmt:
 							closerel(NULL);
 						}
 
-						boot_reldesc = heap_create(LexIDStr($5),
+						boot_reldesc = heap_create(LexIDStr($2),
 												   PG_CATALOG_NAMESPACE,
-												   $3 ? GLOBALTABLESPACE_OID : 0,
-												   $6,
+												   $5 ? GLOBALTABLESPACE_OID : 0,
+												   $3,
 												   tupdesc,
 												   RELKIND_RELATION,
-												   $3,
+												   $5,
 												   true);
 						elog(DEBUG4, "bootstrap relation created");
 					}
@@ -212,15 +212,16 @@ Boot_CreateStmt:
 					{
 						Oid id;
 
-						id = heap_create_with_catalog(LexIDStr($5),
+						id = heap_create_with_catalog(LexIDStr($2),
 													  PG_CATALOG_NAMESPACE,
-													  $3 ? GLOBALTABLESPACE_OID : 0,
-													  $6,
+													  $5 ? GLOBALTABLESPACE_OID : 0,
+													  $3,
+													  $7,
 													  BOOTSTRAP_SUPERUSERID,
 													  tupdesc,
 													  NIL,
 													  RELKIND_RELATION,
-													  $3,
+													  $5,
 													  true,
 													  0,
 													  ONCOMMIT_NOOP,
@@ -343,6 +344,11 @@ optwithoutoids:
 		|					{ $$ = 0; }
 		;
 
+optrowtypeoid:
+			XROWTYPE_OID oidspec	{ $$ = $2; }
+		|							{ $$ = InvalidOid; }
+		;
+
 boot_typelist:
 		  boot_type_thing
 		| boot_typelist COMMA boot_type_thing
@@ -363,7 +369,7 @@ oidspec:
 
 optoideq:
 			OBJ_ID EQUALS oidspec				{ $$ = $3; }
-		|										{ $$ = (Oid) 0; }
+		|										{ $$ = InvalidOid; }
 		;
 
 boot_tuplelist:

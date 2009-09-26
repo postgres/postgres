@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.6 2009/01/01 17:24:05 momjian Exp $
+#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.7 2009/09/26 22:42:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -79,6 +79,7 @@ sub genbki
     my $bootstrap = "";
     my $shared_relation = "";
     my $without_oids = "";
+    my $rowtype_oid = "";
     my $nc = 0;
     my $inside = 0;
     my @attr;
@@ -152,18 +153,22 @@ sub genbki
             my @fields = split /,/,$1;
             $catalog = $fields[0];
             $oid = $fields[1];
-            $bootstrap=$shared_relation=$without_oids="";
+            $bootstrap=$shared_relation=$without_oids=$rowtype_oid="";
             if ($rest =~ /BKI_BOOTSTRAP/)
             {
-                $bootstrap = "bootstrap ";
+                $bootstrap = " bootstrap";
             }
             if ($rest =~ /BKI_SHARED_RELATION/)
             {
-                $shared_relation = "shared_relation ";
+                $shared_relation = " shared_relation";
             }
             if ($rest =~ /BKI_WITHOUT_OIDS/)
             {
-                $without_oids = "without_oids ";
+                $without_oids = " without_oids";
+            }
+            if ($rest =~ /BKI_ROWTYPE_OID\((\d+)\)/)
+            {
+                $rowtype_oid = " rowtype_oid $1";
             }
             $nc++;
             $inside = 1;
@@ -176,7 +181,7 @@ sub genbki
             {
 
                 # Last line
-                $bki .= "create $bootstrap$shared_relation$without_oids$catalog $oid\n (\n";
+                $bki .= "create $catalog $oid$bootstrap$shared_relation$without_oids$rowtype_oid\n\t(\n";
                 my $first = 1;
                 for (my $i = 0; $i <= $#attr; $i++)
                 {

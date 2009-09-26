@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.209 2009/08/13 21:14:31 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.210 2009/09/26 22:42:03 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -32,8 +32,9 @@
  * ----------------
  */
 #define TypeRelationId	1247
+#define TypeRelation_Rowtype_Id  71
 
-CATALOG(pg_type,1247) BKI_BOOTSTRAP
+CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71)
 {
 	NameData	typname;		/* type name */
 	Oid			typnamespace;	/* OID of namespace containing this type */
@@ -330,7 +331,8 @@ DATA(insert OID = 30 (	oidvector  PGNSP PGUID -1 f b A f t \054 0	26 1013 oidvec
 DESCR("array of oids, used in system tables");
 #define OIDVECTOROID	30
 
-/* hand-built rowtype entries for bootstrapped catalogs: */
+/* hand-built rowtype entries for bootstrapped catalogs */
+/* NB: OIDs assigned here must match the BKI_ROWTYPE_OID declarations */
 
 DATA(insert OID = 71 (	pg_type			PGNSP PGUID -1 f c C f t \054 1247 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 75 (	pg_attribute	PGNSP PGUID -1 f c C f t \054 1249 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));

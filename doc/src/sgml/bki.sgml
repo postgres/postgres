@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.21 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.22 2009/09/26 22:42:00 tgl Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>
@@ -67,12 +67,13 @@
   <variablelist>
    <varlistentry>
     <term>
-     <literal>create</> 
+     <literal>create</>
+     <replaceable class="parameter">tablename</replaceable>
+     <replaceable class="parameter">tableoid</replaceable>
      <optional><literal>bootstrap</></optional>
      <optional><literal>shared_relation</></optional>
      <optional><literal>without_oids</></optional>
-     <replaceable class="parameter">tablename</replaceable>
-     <replaceable class="parameter">tableoid</replaceable>
+     <optional><literal>rowtype_oid</> <replaceable>oid</></optional>
      (<replaceable class="parameter">name1</replaceable> =
      <replaceable class="parameter">type1</replaceable> <optional>,
      <replaceable class="parameter">name2</replaceable> = <replaceable
@@ -121,6 +122,11 @@
       The table is created as shared if <literal>shared_relation</> is
       specified.
       It will have OIDs unless <literal>without_oids</> is specified.
+      The table's rowtype OID (<structname>pg_type</> OID) can optionally
+      be specified via the <literal>rowtype_oid</> clause; if not specified,
+      an OID is automatically generated for it.  (The <literal>rowtype_oid</>
+      clause is useless if <literal>bootstrap</> is specified, but it can be
+      provided anyway for documentation.)
      </para>
     </listitem>
    </varlistentry>

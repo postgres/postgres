@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.298 2009/08/23 19:23:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.299 2009/09/26 22:42:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,6 +509,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
 										  tablespaceId,
+										  InvalidOid,
 										  InvalidOid,
 										  GetUserId(),
 										  descriptor,
