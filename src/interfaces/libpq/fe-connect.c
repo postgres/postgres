@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.376 2009/07/24 17:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.377 2009/09/27 03:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -817,7 +817,16 @@ connectDBStart(PGconn *conn)
 
 	/* Set up port number as a string */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
+	{
 		portnum = atoi(conn->pgport);
+		if (portnum < 1 || portnum > 65535)
+		{
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("invalid port number: \"%s\"\n"),
+							  conn->pgport);
+			goto connect_errReturn;
+		}
+	}
 	else
 		portnum = DEF_PGPORT;
 	snprintf(portstr, sizeof(portstr), "%d", portnum);
