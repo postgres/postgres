@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.161 2009/09/25 21:13:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.162 2009/09/27 03:27:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,18 +571,16 @@ other			.
 
 					BEGIN(xe);
 				}
-<xeu>.			|
-<xeu>\n			|
+<xeu>.			{ yyerror("invalid Unicode surrogate pair"); }
+<xeu>\n			{ yyerror("invalid Unicode surrogate pair"); }
 <xeu><<EOF>>	{ yyerror("invalid Unicode surrogate pair"); }
-
 <xe,xeu>{xeunicodefail}	{
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 								 errmsg("invalid Unicode escape"),
 								 errhint("Unicode escapes must be \\uXXXX or \\UXXXXXXXX."),
 								 lexer_errposition()));
-					}
-
+				}
 <xe>{xeescape}  {
 					if (yytext[1] == '\'')
 					{

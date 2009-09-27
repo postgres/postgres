@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.28 2009/01/01 17:23:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.29 2009/09/27 03:27:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ static void push_new_buffer(const char *newstr);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
+static bool is_utf16_surrogate_first(uint32 c);
 
 #define ECHO emit(yytext, yyleng)
 
@@ -158,6 +159,7 @@ static void emit(const char *txt, int len);
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
  *  <xus> quoted string with Unicode escapes
+ *  <xeu> Unicode surrogate pair in extended quoted string
  */
 
 %x xb
@@ -169,6 +171,7 @@ static void emit(const char *txt, int len);
 %x xdolq
 %x xui
 %x xus
+%x xeu
 /* Additional exclusive states for psql only: lex backslash commands */
 %x xslashcmd
 %x xslasharg
@@ -192,6 +195,9 @@ static void emit(const char *txt, int len);
  * did not end with a newline.
  *
  * XXX perhaps \f (formfeed) should be treated as a newline as well?
+ *
+ * XXX if you change the set of whitespace characters, fix scanner_isspace()
+ * to agree, and see also the plpgsql lexer.
  */
 
 space			[ \t\n\r\f]
@@ -253,6 +259,8 @@ xeinside		[^\\']+
 xeescape		[\\][^0-7]
 xeoctesc		[\\][0-7]{1,3}
 xehexesc		[\\]x[0-9A-Fa-f]{1,2}
+xeunicode		[\\](u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})
+xeunicodefail	[\\](u[0-9A-Fa-f]{0,3}|U[0-9A-Fa-f]{0,7})
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -333,6 +341,10 @@ ident_cont		[A-Za-z\200-\377_0-9\$]
 identifier		{ident_start}{ident_cont}*
 
 typecast		"::"
+
+/* these two token types are used by PL/pgsql, though not in core SQL */
+dot_dot			\.\.
+colon_equals	":="
 
 /*
  * "self" is the set of chars that should be returned as single-character
@@ -511,6 +523,22 @@ other			.
 <xe>{xeinside}  {
 					ECHO;
 				}
+<xe>{xeunicode} {
+					uint32 c = strtoul(yytext+2, NULL, 16);
+
+					if (is_utf16_surrogate_first(c))
+						BEGIN(xeu);
+					ECHO;
+				}
+<xeu>{xeunicode} {
+					BEGIN(xe);
+					ECHO;
+				}
+<xeu>.			{ ECHO; }
+<xeu>\n			{ ECHO; }
+<xe,xeu>{xeunicodefail}	{
+					ECHO;
+				}
 <xe>{xeescape}  {
 					ECHO;
 				}
@@ -602,6 +630,14 @@ other			.
 				}
 
 {typecast}		{
+					ECHO;
+				}
+
+{dot_dot}		{
+					ECHO;
+				}
+
+{colon_equals}	{
 					ECHO;
 				}
 
@@ -1689,4 +1725,10 @@ emit(const char *txt, int len)
 			appendPQExpBufferChar(output_buf, ch);
 		}
 	}
+}
+
+static bool
+is_utf16_surrogate_first(uint32 c)
+{
+	return (c >= 0xD800 && c <= 0xDBFF);
 }
