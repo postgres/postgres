@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.98 2009/09/26 22:42:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.99 2009/09/27 01:32:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ do_end(void)
 }
 
 
-int num_columns_read = 0;
+static int num_columns_read = 0;
 
 %}
 
@@ -105,16 +105,16 @@ int num_columns_read = 0;
 
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
-%type <ival>  boot_const boot_ident
+%type <str>   boot_const boot_ident
 %type <ival>  optbootstrap optsharedrelation optwithoutoids
-%type <ival>  boot_tuple boot_tuplelist
 %type <oidval> oidspec optoideq optrowtypeoid
 
-%token <ival> CONST_P ID
+%token <str> CONST_P ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE XTOAST
 %token COMMA EQUALS LPAREN RPAREN
 %token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS XROWTYPE_OID NULLVAL
+
 %start TopLevel
 
 %nonassoc low
@@ -147,7 +147,7 @@ Boot_OpenStmt:
 		  OPEN boot_ident
 				{
 					do_start();
-					boot_openrel(LexIDStr($2));
+					boot_openrel($2);
 					do_end();
 				}
 		;
@@ -156,7 +156,7 @@ Boot_CloseStmt:
 		  XCLOSE boot_ident %prec low
 				{
 					do_start();
-					closerel(LexIDStr($2));
+					closerel($2);
 					do_end();
 				}
 		| XCLOSE %prec high
@@ -175,10 +175,10 @@ Boot_CreateStmt:
 					elog(DEBUG4, "creating%s%s relation %s %u",
 						 $4 ? " bootstrap" : "",
 						 $5 ? " shared" : "",
-						 LexIDStr($2),
+						 $2,
 						 $3);
 				}
-		  boot_typelist
+		  boot_column_list
 				{
 					do_end();
 				}
@@ -198,7 +198,7 @@ Boot_CreateStmt:
 							closerel(NULL);
 						}
 
-						boot_reldesc = heap_create(LexIDStr($2),
+						boot_reldesc = heap_create($2,
 												   PG_CATALOG_NAMESPACE,
 												   $5 ? GLOBALTABLESPACE_OID : 0,
 												   $3,
@@ -212,7 +212,7 @@ Boot_CreateStmt:
 					{
 						Oid id;
 
-						id = heap_create_with_catalog(LexIDStr($2),
+						id = heap_create_with_catalog($2,
 													  PG_CATALOG_NAMESPACE,
 													  $5 ? GLOBALTABLESPACE_OID : 0,
 													  $3,
@@ -243,7 +243,7 @@ Boot_InsertStmt:
 						elog(DEBUG4, "inserting row");
 					num_columns_read = 0;
 				}
-		  LPAREN  boot_tuplelist RPAREN
+		  LPAREN boot_column_val_list RPAREN
 				{
 					if (num_columns_read != numattr)
 						elog(ERROR, "incorrect number of columns in row (expected %d, got %d)",
@@ -260,10 +260,10 @@ Boot_DeclareIndexStmt:
 				{
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, LexIDStr($6), -1),
-								LexIDStr($3),
+					DefineIndex(makeRangeVar(NULL, $6, -1),
+								$3,
 								$4,
-								LexIDStr($8),
+								$8,
 								NULL,
 								$10,
 								NULL, NIL,
@@ -278,10 +278,10 @@ Boot_DeclareUniqueIndexStmt:
 				{
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, LexIDStr($7), -1),
-								LexIDStr($4),
+					DefineIndex(makeRangeVar(NULL, $7, -1),
+								$4,
 								$5,
-								LexIDStr($9),
+								$9,
 								NULL,
 								$11,
 								NULL, NIL,
@@ -296,7 +296,7 @@ Boot_DeclareToastStmt:
 				{
 					do_start();
 
-					BootstrapToastTable(LexIDStr($6), $3, $4);
+					BootstrapToastTable($6, $3, $4);
 					do_end();
 				}
 		;
@@ -320,9 +320,9 @@ boot_index_param:
 		boot_ident boot_ident
 				{
 					IndexElem *n = makeNode(IndexElem);
-					n->name = LexIDStr($1);
+					n->name = $1;
 					n->expr = NULL;
-					n->opclass = list_make1(makeString(LexIDStr($2)));
+					n->opclass = list_make1(makeString($2));
 					n->ordering = SORTBY_DEFAULT;
 					n->nulls_ordering = SORTBY_NULLS_DEFAULT;
 					$$ = n;
@@ -349,22 +349,22 @@ optrowtypeoid:
 		|							{ $$ = InvalidOid; }
 		;
 
-boot_typelist:
-		  boot_type_thing
-		| boot_typelist COMMA boot_type_thing
+boot_column_list:
+		  boot_column_def
+		| boot_column_list COMMA boot_column_def
 		;
 
-boot_type_thing:
+boot_column_def:
 		  boot_ident EQUALS boot_ident
 				{
 				   if (++numattr > MAXATTR)
 						elog(FATAL, "too many columns");
-				   DefineAttr(LexIDStr($1),LexIDStr($3),numattr-1);
+				   DefineAttr($1, $3, numattr-1);
 				}
 		;
 
 oidspec:
-			boot_ident							{ $$ = atooid(LexIDStr($1)); }
+			boot_ident							{ $$ = atooid($1); }
 		;
 
 optoideq:
@@ -372,27 +372,27 @@ optoideq:
 		|										{ $$ = InvalidOid; }
 		;
 
-boot_tuplelist:
-		   boot_tuple
-		|  boot_tuplelist boot_tuple
-		|  boot_tuplelist COMMA boot_tuple
+boot_column_val_list:
+		   boot_column_val
+		|  boot_column_val_list boot_column_val
+		|  boot_column_val_list COMMA boot_column_val
 		;
 
-boot_tuple:
+boot_column_val:
 		  boot_ident
-			{ InsertOneValue(LexIDStr($1), num_columns_read++); }
+			{ InsertOneValue($1, num_columns_read++); }
 		| boot_const
-			{ InsertOneValue(LexIDStr($1), num_columns_read++); }
+			{ InsertOneValue($1, num_columns_read++); }
 		| NULLVAL
 			{ InsertOneNull(num_columns_read++); }
 		;
 
 boot_const :
-		  CONST_P { $$=yylval.ival; }
+		  CONST_P { $$ = yylval.str; }
 		;
 
 boot_ident :
-		  ID	{ $$=yylval.ival; }
+		  ID	{ $$ = yylval.str; }
 		;
 %%
 

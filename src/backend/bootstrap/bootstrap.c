@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.252 2009/08/02 22:14:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.253 2009/09/27 01:32:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,10 +53,7 @@ static void CheckerModeMain(void);
 static void BootstrapModeMain(void);
 static void bootstrap_signals(void);
 static void ShutdownAuxiliaryProcess(int code, Datum arg);
-static hashnode *AddStr(char *str, int strlength, int mderef);
 static Form_pg_attribute AllocateAttribute(void);
-static int	CompHash(char *str, int len);
-static hashnode *FindStr(char *str, int length, hashnode *mderef);
 static Oid	gettype(char *type);
 static void cleanup(void);
 
@@ -67,30 +64,11 @@ static void cleanup(void);
 
 Relation	boot_reldesc;		/* current relation descriptor */
 
+Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
+int			numattr;			/* number of attributes for cur. rel */
+
+
 /*
- * In the lexical analyzer, we need to get the reference number quickly from
- * the string, and the string from the reference number.  Thus we have
- * as our data structure a hash table, where the hashing key taken from
- * the particular string.  The hash table is chained.  One of the fields
- * of the hash table node is an index into the array of character pointers.
- * The unique index number that every string is assigned is simply the
- * position of its string pointer in the array of string pointers.
- */
-
-#define STRTABLESIZE	10000
-#define HASHTABLESIZE	503
-
-/* Hash function numbers */
-#define NUM		23
-#define NUMSQR	529
-#define NUMCUBE 12167
-
-char	   *strtable[STRTABLESIZE];
-hashnode   *hashtable[HASHTABLESIZE];
-
-static int	strtable_end = -1;	/* Tells us last occupied string space */
-
-/*-
  * Basic information associated with each type.  This is used before
  * pg_type is created.
  *
@@ -169,11 +147,8 @@ struct typmap
 static struct typmap **Typ = NULL;
 static struct typmap *Ap = NULL;
 
+static Datum values[MAXATTR];	/* current row's attribute values */
 static bool Nulls[MAXATTR];
-
-Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
-static Datum values[MAXATTR];	/* corresponding attribute values */
-int			numattr;			/* number of attributes for cur. rel */
 
 static MemoryContext nogc = NULL;		/* special no-gc mem context */
 
@@ -501,10 +476,6 @@ BootstrapModeMain(void)
 		attrtypes[i] = NULL;
 		Nulls[i] = false;
 	}
-	for (i = 0; i < STRTABLESIZE; ++i)
-		strtable[i] = NULL;
-	for (i = 0; i < HASHTABLESIZE; ++i)
-		hashtable[i] = NULL;
 
 	/*
 	 * Process bootstrap input.
@@ -1079,155 +1050,6 @@ MapArrayTypeName(char *s)
 
 	return newStr;
 }
-
-/* ----------------
- *		EnterString
- *		returns the string table position of the identifier
- *		passed to it.  We add it to the table if we can't find it.
- * ----------------
- */
-int
-EnterString(char *str)
-{
-	hashnode   *node;
-	int			len;
-
-	len = strlen(str);
-
-	node = FindStr(str, len, NULL);
-	if (node)
-		return node->strnum;
-	else
-	{
-		node = AddStr(str, len, 0);
-		return node->strnum;
-	}
-}
-
-/* ----------------
- *		LexIDStr
- *		when given an idnum into the 'string-table' return the string
- *		associated with the idnum
- * ----------------
- */
-char *
-LexIDStr(int ident_num)
-{
-	return strtable[ident_num];
-}
-
-
-/* ----------------
- *		CompHash
- *
- *		Compute a hash function for a given string.  We look at the first,
- *		the last, and the middle character of a string to try to get spread
- *		the strings out.  The function is rather arbitrary, except that we
- *		are mod'ing by a prime number.
- * ----------------
- */
-static int
-CompHash(char *str, int len)
-{
-	int			result;
-
-	result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
-
-	return result % HASHTABLESIZE;
-
-}
-
-/* ----------------
- *		FindStr
- *
- *		This routine looks for the specified string in the hash
- *		table.	It returns a pointer to the hash node found,
- *		or NULL if the string is not in the table.
- * ----------------
- */
-static hashnode *
-FindStr(char *str, int length, hashnode *mderef)
-{
-	hashnode   *node;
-
-	node = hashtable[CompHash(str, length)];
-	while (node != NULL)
-	{
-		/*
-		 * We must differentiate between string constants that might have the
-		 * same value as a identifier and the identifier itself.
-		 */
-		if (!strcmp(str, strtable[node->strnum]))
-		{
-			return node;		/* no need to check */
-		}
-		else
-			node = node->next;
-	}
-	/* Couldn't find it in the list */
-	return NULL;
-}
-
-/* ----------------
- *		AddStr
- *
- *		This function adds the specified string, along with its associated
- *		data, to the hash table and the string table.  We return the node
- *		so that the calling routine can find out the unique id that AddStr
- *		has assigned to this string.
- * ----------------
- */
-static hashnode *
-AddStr(char *str, int strlength, int mderef)
-{
-	hashnode   *temp,
-			   *trail,
-			   *newnode;
-	int			hashresult;
-	int			len;
-
-	if (++strtable_end >= STRTABLESIZE)
-		elog(FATAL, "bootstrap string table overflow");
-
-	/*
-	 * Some of the utilites (eg, define type, create relation) assume that the
-	 * string they're passed is a NAMEDATALEN.  We get array bound read
-	 * violations from purify if we don't allocate at least NAMEDATALEN bytes
-	 * for strings of this sort.  Because we're lazy, we allocate at least
-	 * NAMEDATALEN bytes all the time.
-	 */
-
-	if ((len = strlength + 1) < NAMEDATALEN)
-		len = NAMEDATALEN;
-
-	strtable[strtable_end] = malloc((unsigned) len);
-	strcpy(strtable[strtable_end], str);
-
-	/* Now put a node in the hash table */
-
-	newnode = (hashnode *) malloc(sizeof(hashnode) * 1);
-	newnode->strnum = strtable_end;
-	newnode->next = NULL;
-
-	/* Find out where it goes */
-
-	hashresult = CompHash(str, strlength);
-	if (hashtable[hashresult] == NULL)
-		hashtable[hashresult] = newnode;
-	else
-	{							/* There is something in the list */
-		trail = hashtable[hashresult];
-		temp = trail->next;
-		while (temp != NULL)
-		{
-			trail = temp;
-			temp = temp->next;
-		}
-		trail->next = newnode;
-	}
-	return newnode;
-}
-
 
 
 /*
