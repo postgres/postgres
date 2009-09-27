@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.161 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.162 2009/09/27 20:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ CreateExecutorState(void)
 
 	estate->es_query_cxt = qcontext;
 
-	estate->es_tupleTable = NULL;
+	estate->es_tupleTable = NIL;
 
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;

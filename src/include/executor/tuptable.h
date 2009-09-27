@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.42 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.43 2009/09/27 20:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "storage/buf.h"
 
 /*----------
- * The executor stores tuples in a "tuple table" which is composed of
+ * The executor stores tuples in a "tuple table" which is a List of
  * independent TupleTableSlots.  There are several cases we need to handle:
  *		1. physical tuple in a disk buffer page
  *		2. physical tuple constructed in palloc'ed memory
@@ -112,7 +112,7 @@
  */
 typedef struct TupleTableSlot
 {
-	NodeTag		type;			/* vestigial ... allows IsA tests */
+	NodeTag		type;
 	bool		tts_isempty;	/* true = slot is empty */
 	bool		tts_shouldFree; /* should pfree tts_tuple? */
 	bool		tts_shouldFreeMin;		/* should pfree tts_mintuple? */
@@ -133,30 +133,17 @@ typedef struct TupleTableSlot
 	((slot)->tts_tuple != NULL && (slot)->tts_tuple != &((slot)->tts_minhdr))
 
 /*
- * Tuple table data structure: an array of TupleTableSlots.
- */
-typedef struct TupleTableData
-{
-	int			size;			/* size of the table (number of slots) */
-	int			next;			/* next available slot number */
-	TupleTableSlot array[1];	/* VARIABLE LENGTH ARRAY - must be last */
-} TupleTableData;				/* VARIABLE LENGTH STRUCT */
-
-typedef TupleTableData *TupleTable;
-
-
-/*
  * TupIsNull -- is a TupleTableSlot empty?
  */
 #define TupIsNull(slot) \
 	((slot) == NULL || (slot)->tts_isempty)
 
 /* in executor/execTuples.c */
-extern TupleTable ExecCreateTupleTable(int tableSize);
-extern void ExecDropTupleTable(TupleTable table, bool shouldFree);
+extern TupleTableSlot *MakeTupleTableSlot(void);
+extern TupleTableSlot *ExecAllocTableSlot(List **tupleTable);
+extern void ExecResetTupleTable(List *tupleTable, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
-extern TupleTableSlot *ExecAllocTableSlot(TupleTable table);
 extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   TupleTableSlot *slot,

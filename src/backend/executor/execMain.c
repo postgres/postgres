@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.328 2009/09/26 22:42:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.329 2009/09/27 20:09:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -755,40 +755,12 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * Initialize the executor "tuple" table.  We need slots for all the plan
-	 * nodes, plus possibly output slots for the junkfilter(s). At this point
-	 * we aren't sure if we need junkfilters, so just add slots for them
-	 * unconditionally.  Also, if it's not a SELECT, set up a slot for use for
-	 * trigger output tuples.  Also, one for RETURNING-list evaluation.
+	 * Initialize the executor's tuple table.  Also, if it's not a SELECT,
+	 * set up a tuple table slot for use for trigger output tuples.
 	 */
-	{
-		int			nSlots;
-
-		/* Slots for the main plan tree */
-		nSlots = ExecCountSlotsNode(plan);
-		/* Add slots for subplans and initplans */
-		foreach(l, plannedstmt->subplans)
-		{
-			Plan	   *subplan = (Plan *) lfirst(l);
-
-			nSlots += ExecCountSlotsNode(subplan);
-		}
-		/* Add slots for junkfilter(s) */
-		if (plannedstmt->resultRelations != NIL)
-			nSlots += list_length(plannedstmt->resultRelations);
-		else
-			nSlots += 1;
-		if (operation != CMD_SELECT)
-			nSlots++;			/* for es_trig_tuple_slot */
-		if (plannedstmt->returningLists)
-			nSlots++;			/* for RETURNING projection */
-
-		estate->es_tupleTable = ExecCreateTupleTable(nSlots);
-
-		if (operation != CMD_SELECT)
-			estate->es_trig_tuple_slot =
-				ExecAllocTableSlot(estate->es_tupleTable);
-	}
+	estate->es_tupleTable = NIL;
+	if (operation != CMD_SELECT)
+		estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
 
 	/* mark EvalPlanQual not active */
 	estate->es_plannedstmt = plannedstmt;
@@ -909,7 +881,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
 							resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
-								  ExecAllocTableSlot(estate->es_tupleTable));
+										   ExecInitExtraTupleSlot(estate));
 
 					/*
 					 * Since it must be UPDATE/DELETE, there had better be a
@@ -953,7 +925,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 				j = ExecInitJunkFilter(planstate->plan->targetlist,
 									   tupType->tdhasoid,
-								  ExecAllocTableSlot(estate->es_tupleTable));
+									   ExecInitExtraTupleSlot(estate));
 				estate->es_junkFilter = j;
 				if (estate->es_result_relation_info)
 					estate->es_result_relation_info->ri_junkFilter = j;
@@ -1026,7 +998,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 								 false);
 
 		/* Set up a slot for the output of the RETURNING projection(s) */
-		slot = ExecAllocTableSlot(estate->es_tupleTable);
+		slot = ExecInitExtraTupleSlot(estate);
 		ExecSetSlotDescriptor(slot, tupType);
 		/* Need an econtext too */
 		econtext = CreateExprContext(estate);
@@ -1387,10 +1359,12 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	}
 
 	/*
-	 * destroy the executor "tuple" table.
+	 * destroy the executor's tuple table.  Actually we only care about
+	 * releasing buffer pins and tupdesc refcounts; there's no need to
+	 * pfree the TupleTableSlots, since the containing memory context
+	 * is about to go away anyway.
 	 */
-	ExecDropTupleTable(estate->es_tupleTable, true);
-	estate->es_tupleTable = NULL;
+	ExecResetTupleTable(estate->es_tupleTable, false);
 
 	/*
 	 * close the result relation(s) if any, but hold locks until xact commit.
@@ -2712,10 +2686,9 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 		epqstate->es_evTuple = priorepq->estate->es_evTuple;
 
 	/*
-	 * Create sub-tuple-table; we needn't redo the CountSlots work though.
+	 * Each epqstate also has its own tuple table.
 	 */
-	epqstate->es_tupleTable =
-		ExecCreateTupleTable(estate->es_tupleTable->size);
+	epqstate->es_tupleTable = NIL;
 
 	/*
 	 * Initialize private state information for each SubPlan.  We must do this
@@ -2770,8 +2743,9 @@ EvalPlanQualStop(evalPlanQual *epq)
 		ExecEndNode(subplanstate);
 	}
 
-	ExecDropTupleTable(epqstate->es_tupleTable, true);
-	epqstate->es_tupleTable = NULL;
+	/* throw away the per-epqstate tuple table completely */
+	ExecResetTupleTable(epqstate->es_tupleTable, true);
+	epqstate->es_tupleTable = NIL;
 
 	if (epqstate->es_evTuple[epq->rti - 1] != NULL)
 	{

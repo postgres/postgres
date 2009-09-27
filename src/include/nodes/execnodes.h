@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.207 2009/08/23 18:26:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.208 2009/09/27 20:09:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ typedef struct EState
 	/* Other working state: */
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
 
-	TupleTable	es_tupleTable;	/* Array of TupleTableSlots */
+	List	   *es_tupleTable;	/* List of TupleTableSlots */
 
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
