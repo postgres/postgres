@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.69 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.70 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,8 +202,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	 * ExecQual or ExecProject.
 	 */
 
-#define MATERIAL_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 *
@@ -232,14 +230,6 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.ps_ProjInfo = NULL;
 
 	return matstate;
-}
-
-int
-ExecCountSlotsMaterial(Material *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) +
-		MATERIAL_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

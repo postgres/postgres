@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.61 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.62 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,8 +137,6 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-#define UNIQUE_NSLOTS 1
-
 	/*
 	 * Tuple table initialization
 	 */
@@ -164,14 +162,6 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 							   node->uniqOperators);
 
 	return uniquestate;
-}
-
-int
-ExecCountSlotsUnique(Unique *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		UNIQUE_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.43 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.44 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,8 +230,6 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 
 	resstate->ps.ps_TupFromTlist = false;
 
-#define RESULT_NSLOTS 1
-
 	/*
 	 * tuple table initialization
 	 */
@@ -266,12 +264,6 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	ExecAssignProjectionInfo(&resstate->ps, NULL);
 
 	return resstate;
-}
-
-int
-ExecCountSlotsResult(Result *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) + RESULT_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

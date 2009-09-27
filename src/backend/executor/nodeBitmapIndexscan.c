@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.31 2009/07/18 19:15:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.32 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,8 +235,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 * sub-parts corresponding to runtime keys (see below).
 	 */
 
-#define BITMAPINDEXSCAN_NSLOTS 0
-
 	/*
 	 * We do not open or lock the base relation here.  We assume that an
 	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better) on
@@ -317,11 +315,4 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 * all done.
 	 */
 	return indexstate;
-}
-
-int
-ExecCountSlotsBitmapIndexScan(BitmapIndexScan *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) + BITMAPINDEXSCAN_NSLOTS;
 }

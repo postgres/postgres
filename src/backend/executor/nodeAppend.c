@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.74 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.75 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,8 +192,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	 * ExecQual or ExecProject.
 	 */
 
-#define APPEND_NSLOTS 1
-
 	/*
 	 * append nodes still have Result slots, which hold pointers to tuples, so
 	 * we have to initialize them.
@@ -231,17 +229,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	exec_append_initialize_next(appendstate);
 
 	return appendstate;
-}
-
-int
-ExecCountSlotsAppend(Append *node)
-{
-	ListCell   *plan;
-	int			nSlots = 0;
-
-	foreach(plan, node->appendplans)
-		nSlots += ExecCountSlotsNode((Plan *) lfirst(plan));
-	return nSlots + APPEND_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

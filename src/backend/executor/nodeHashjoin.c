@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.101 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.102 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,8 +400,6 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	outerPlanState(hjstate) = ExecInitNode(outerNode, estate, eflags);
 	innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate, eflags);
 
-#define HASHJOIN_NSLOTS 3
-
 	/*
 	 * tuple table initialization
 	 */
@@ -492,14 +490,6 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	hjstate->hj_OuterNotEmpty = false;
 
 	return hjstate;
-}
-
-int
-ExecCountSlotsHashJoin(HashJoin *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		HASHJOIN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.39 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.40 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,8 +367,6 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	limitstate->limitCount = ExecInitExpr((Expr *) node->limitCount,
 										  (PlanState *) limitstate);
 
-#define LIMIT_NSLOTS 1
-
 	/*
 	 * Tuple table initialization (XXX not actually used...)
 	 */
@@ -388,14 +386,6 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	limitstate->ps.ps_ProjInfo = NULL;
 
 	return limitstate;
-}
-
-int
-ExecCountSlotsLimit(Limit *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		LIMIT_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

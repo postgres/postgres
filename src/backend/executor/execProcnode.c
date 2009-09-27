@@ -12,13 +12,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.65 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.66 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
- *		ExecCountSlotsNode -	count tuple slots needed by plan tree
  *		ExecInitNode	-		initialize a plan node and its subplans
  *		ExecProcNode	-		get a tuple by executing the plan node
  *		ExecEndNode		-		shut down a plan node and its subplans
@@ -518,122 +517,6 @@ MultiExecProcNode(PlanState *node)
 	return result;
 }
 
-
-/*
- * ExecCountSlotsNode - count up the number of tuple table slots needed
- *
- * Note that this scans a Plan tree, not a PlanState tree, because we
- * haven't built the PlanState tree yet ...
- */
-int
-ExecCountSlotsNode(Plan *node)
-{
-	if (node == NULL)
-		return 0;
-
-	switch (nodeTag(node))
-	{
-			/*
-			 * control nodes
-			 */
-		case T_Result:
-			return ExecCountSlotsResult((Result *) node);
-
-		case T_Append:
-			return ExecCountSlotsAppend((Append *) node);
-
-		case T_RecursiveUnion:
-			return ExecCountSlotsRecursiveUnion((RecursiveUnion *) node);
-
-		case T_BitmapAnd:
-			return ExecCountSlotsBitmapAnd((BitmapAnd *) node);
-
-		case T_BitmapOr:
-			return ExecCountSlotsBitmapOr((BitmapOr *) node);
-
-			/*
-			 * scan nodes
-			 */
-		case T_SeqScan:
-			return ExecCountSlotsSeqScan((SeqScan *) node);
-
-		case T_IndexScan:
-			return ExecCountSlotsIndexScan((IndexScan *) node);
-
-		case T_BitmapIndexScan:
-			return ExecCountSlotsBitmapIndexScan((BitmapIndexScan *) node);
-
-		case T_BitmapHeapScan:
-			return ExecCountSlotsBitmapHeapScan((BitmapHeapScan *) node);
-
-		case T_TidScan:
-			return ExecCountSlotsTidScan((TidScan *) node);
-
-		case T_SubqueryScan:
-			return ExecCountSlotsSubqueryScan((SubqueryScan *) node);
-
-		case T_FunctionScan:
-			return ExecCountSlotsFunctionScan((FunctionScan *) node);
-
-		case T_ValuesScan:
-			return ExecCountSlotsValuesScan((ValuesScan *) node);
-
-		case T_CteScan:
-			return ExecCountSlotsCteScan((CteScan *) node);
-
-		case T_WorkTableScan:
-			return ExecCountSlotsWorkTableScan((WorkTableScan *) node);
-
-			/*
-			 * join nodes
-			 */
-		case T_NestLoop:
-			return ExecCountSlotsNestLoop((NestLoop *) node);
-
-		case T_MergeJoin:
-			return ExecCountSlotsMergeJoin((MergeJoin *) node);
-
-		case T_HashJoin:
-			return ExecCountSlotsHashJoin((HashJoin *) node);
-
-			/*
-			 * materialization nodes
-			 */
-		case T_Material:
-			return ExecCountSlotsMaterial((Material *) node);
-
-		case T_Sort:
-			return ExecCountSlotsSort((Sort *) node);
-
-		case T_Group:
-			return ExecCountSlotsGroup((Group *) node);
-
-		case T_Agg:
-			return ExecCountSlotsAgg((Agg *) node);
-
-		case T_WindowAgg:
-			return ExecCountSlotsWindowAgg((WindowAgg *) node);
-			break;
-
-		case T_Unique:
-			return ExecCountSlotsUnique((Unique *) node);
-
-		case T_Hash:
-			return ExecCountSlotsHash((Hash *) node);
-
-		case T_SetOp:
-			return ExecCountSlotsSetOp((SetOp *) node);
-
-		case T_Limit:
-			return ExecCountSlotsLimit((Limit *) node);
-
-		default:
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
-			break;
-	}
-
-	return 0;
-}
 
 /* ----------------------------------------------------------------
  *		ExecEndNode

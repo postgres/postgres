@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.121 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.122 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,8 +170,6 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &hashstate->ps);
 
-#define HASH_NSLOTS 1
-
 	/*
 	 * initialize our result slot
 	 */
@@ -200,14 +198,6 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 	hashstate->ps.ps_ProjInfo = NULL;
 
 	return hashstate;
-}
-
-int
-ExecCountSlotsHash(Hash *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		HASH_NSLOTS;
 }
 
 /* ---------------------------------------------------------------

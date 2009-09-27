@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.62 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.63 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -548,8 +548,6 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->tidquals,
 					 (PlanState *) tidstate);
 
-#define TIDSCAN_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 */
@@ -586,11 +584,4 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 * all done.
 	 */
 	return tidstate;
-}
-
-int
-ExecCountSlotsTidScan(TidScan *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) + TIDSCAN_NSLOTS;
 }

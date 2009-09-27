@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.6 2009/06/20 18:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.7 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1107,8 +1107,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-#define WINDOWAGG_NSLOTS 6
-
 	/*
 	 * tuple table initialization
 	 */
@@ -1270,18 +1268,6 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->more_partitions = false;
 
 	return winstate;
-}
-
-/* -----------------
- * ExecCountSlotsWindowAgg
- * -----------------
- */
-int
-ExecCountSlotsWindowAgg(WindowAgg *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		WINDOWAGG_NSLOTS;
 }
 
 /* -----------------

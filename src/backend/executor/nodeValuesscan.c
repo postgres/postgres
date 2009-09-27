@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.9 2009/01/01 17:23:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.10 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,8 +213,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	scanstate->rowcontext = planstate->ps_ExprContext;
 	ExecAssignExprContext(estate, planstate);
 
-#define VALUESSCAN_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 */
@@ -263,14 +261,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	ExecAssignScanProjectionInfo(&scanstate->ss);
 
 	return scanstate;
-}
-
-int
-ExecCountSlotsValuesScan(ValuesScan *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		VALUESSCAN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

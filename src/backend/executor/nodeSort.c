@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.65 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.66 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,8 +182,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	 * ExecQual or ExecProject.
 	 */
 
-#define SORT_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 *
@@ -214,14 +212,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 			   "sort node initialized");
 
 	return sortstate;
-}
-
-int
-ExecCountSlotsSort(Sort *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) +
-		SORT_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

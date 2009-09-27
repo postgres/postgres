@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.11 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.12 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,6 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate, int eflags)
 	 * ExecQual or ExecProject.  They don't need any tuple slots either.
 	 */
 
-#define BITMAPAND_NSLOTS 0
-
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "bitmapplanstates".
@@ -89,17 +87,6 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate, int eflags)
 	}
 
 	return bitmapandstate;
-}
-
-int
-ExecCountSlotsBitmapAnd(BitmapAnd *node)
-{
-	ListCell   *plan;
-	int			nSlots = 0;
-
-	foreach(plan, node->bitmapplans)
-		nSlots += ExecCountSlotsNode((Plan *) lfirst(plan));
-	return nSlots + BITMAPAND_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

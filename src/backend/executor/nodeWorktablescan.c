@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.7 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeWorktablescan.c,v 1.8 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,8 +156,6 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) scanstate);
 
-#define WORKTABLESCAN_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 */
@@ -172,14 +170,6 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	return scanstate;
-}
-
-int
-ExecCountSlotsWorkTableScan(WorkTableScan *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		WORKTABLESCAN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.5 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.6 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,8 +237,6 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) scanstate);
 
-#define CTESCAN_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 */
@@ -261,14 +259,6 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	return scanstate;
-}
-
-int
-ExecCountSlotsCteScan(CteScan *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		CTESCAN_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

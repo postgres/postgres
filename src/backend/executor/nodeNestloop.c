@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.53 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.54 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,8 +318,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate,
 										   eflags | EXEC_FLAG_REWIND);
 
-#define NESTLOOP_NSLOTS 2
-
 	/*
 	 * tuple table initialization
 	 */
@@ -358,14 +356,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 			   "node initialized");
 
 	return nlstate;
-}
-
-int
-ExecCountSlotsNestLoop(NestLoop *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		NESTLOOP_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

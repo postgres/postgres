@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeRecursiveunion.c,v 1.4 2009/06/11 14:48:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeRecursiveunion.c,v 1.5 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,8 +231,6 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	 */
 	Assert(node->plan.qual == NIL);
 
-#define RECURSIVEUNION_NSLOTS 1
-
 	/*
 	 * RecursiveUnion nodes still have Result slots, which hold pointers to
 	 * tuples, so we have to initialize them.
@@ -267,14 +265,6 @@ ExecInitRecursiveUnion(RecursiveUnion *node, EState *estate, int eflags)
 	}
 
 	return rustate;
-}
-
-int
-ExecCountSlotsRecursiveUnion(RecursiveUnion *node)
-{
-	return ExecCountSlotsNode(outerPlan(node)) +
-		ExecCountSlotsNode(innerPlan(node)) +
-		RECURSIVEUNION_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

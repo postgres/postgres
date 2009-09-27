@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.10 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.11 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,6 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	 * ExecQual or ExecProject.  They don't need any tuple slots either.
 	 */
 
-#define BITMAPOR_NSLOTS 0
-
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "bitmapplanstates".
@@ -90,17 +88,6 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	}
 
 	return bitmaporstate;
-}
-
-int
-ExecCountSlotsBitmapOr(BitmapOr *node)
-{
-	ListCell   *plan;
-	int			nSlots = 0;
-
-	foreach(plan, node->bitmapplans)
-		nSlots += ExecCountSlotsNode((Plan *) lfirst(plan));
-	return nSlots + BITMAPOR_NSLOTS;
 }
 
 /* ----------------------------------------------------------------

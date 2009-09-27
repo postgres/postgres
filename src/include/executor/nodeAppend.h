@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeAppend.h,v 1.28 2009/01/01 17:23:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeAppend.h,v 1.29 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "nodes/execnodes.h"
 
-extern int	ExecCountSlotsAppend(Append *node);
 extern AppendState *ExecInitAppend(Append *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecAppend(AppendState *node);
 extern void ExecEndAppend(AppendState *node);

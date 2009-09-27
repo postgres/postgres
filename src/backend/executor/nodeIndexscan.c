@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.134 2009/08/23 18:26:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.135 2009/09/27 21:10:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,8 +536,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	indexstate->indexqualorig = (List *)
 		ExecInitExpr((Expr *) node->indexqualorig,
 					 (PlanState *) indexstate);
-
-#define INDEXSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization
@@ -1073,11 +1071,4 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 	}
 	else if (n_array_keys != 0)
 		elog(ERROR, "ScalarArrayOpExpr index qual found where not allowed");
-}
-
-int
-ExecCountSlotsIndexScan(IndexScan *node)
-{
-	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
 }
