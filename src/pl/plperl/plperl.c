@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.151 2009/09/16 06:06:12 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.152 2009/09/28 17:31:12 adunstan Exp $
  *
  **********************************************************************/
 
@@ -2021,7 +2021,15 @@ plperl_return_next(SV *sv)
 
 		if (SvOK(sv))
 		{
-			char	   *val = SvPV(sv, PL_na);
+			char	   *val;
+
+			if (prodesc->fn_retisarray && SvROK(sv) &&
+				SvTYPE(SvRV(sv)) == SVt_PVAV)
+			{
+				sv = plperl_convert_to_pg_array(sv);
+			}
+
+			val = SvPV(sv, PL_na);
 
 			ret = InputFunctionCall(&prodesc->result_in_func, val,
 									prodesc->result_typioparam, -1);
