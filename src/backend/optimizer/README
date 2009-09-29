@@ -467,7 +467,10 @@ operator is mergejoinable, so there is no way for a volatile expression to
 get into EquivalenceClasses otherwise.  Aggregates are disallowed in WHERE
 altogether, so will never be found in a mergejoinable clause.)  This is just
 a convenience to maintain a uniform PathKey representation: such an
-EquivalenceClass will never be merged with any other.
+EquivalenceClass will never be merged with any other.  Note in particular
+that a single-item EquivalenceClass {a.x} is *not* meant to imply an
+assertion that a.x = a.x; the practical effect of this is that a.x could
+be NULL.
 
 An EquivalenceClass also contains a list of btree opfamily OIDs, which
 determines what the equalities it represents actually "mean".  All the
