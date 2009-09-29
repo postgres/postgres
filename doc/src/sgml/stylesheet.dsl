@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.35 2009/08/09 22:47:59 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.36 2009/09/29 20:25:01 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -264,6 +264,112 @@
     (if (not (last-sibling?))
         (make empty-element gi: "BR")
         (empty-sosofo))))
+
+
+;; Customization of header, add title attributes (overrides
+;; dbcommon.dsl)
+(define (default-header-nav-tbl-ff elemnode prev next prevsib nextsib)
+  (let* ((r1? (nav-banner? elemnode))
+	 (r1-sosofo (make element gi: "TR"
+			  (make element gi: "TH"
+				attributes: (list
+					     (list "COLSPAN" "5")
+					     (list "ALIGN" "center")
+					     (list "VALIGN" "bottom"))
+				(make element gi: "A"
+				      attributes: (list
+						   (list "HREF" (href-to (nav-home elemnode))))
+				      (nav-banner elemnode)))))
+	 (r2? (or (not (node-list-empty? prev))
+		  (not (node-list-empty? next))
+		  (not (node-list-empty? prevsib))
+		  (not (node-list-empty? nextsib))
+		  (nav-context? elemnode)))
+	 (r2-sosofo (make element gi: "TR"
+			  (make element gi: "TD"
+				attributes: (list
+					     (list "WIDTH" "10%")
+					     (list "ALIGN" "left")
+					     (list "VALIGN" "top"))
+				(if (node-list-empty? prev)
+				    (make entity-ref name: "nbsp")
+				    (make element gi: "A"
+					  attributes: (list
+						       (list "TITLE" (element-title-string prev))
+						       (list "HREF"
+							     (href-to
+							      prev))
+						       (list "ACCESSKEY"
+							     "P"))
+					  (gentext-nav-prev prev))))
+			  (make element gi: "TD"
+				attributes: (list
+					     (list "WIDTH" "10%")
+					     (list "ALIGN" "left")
+					     (list "VALIGN" "top"))
+				(if (node-list-empty? prevsib)
+				    (make entity-ref name: "nbsp")
+				    (make element gi: "A"
+					  attributes: (list
+						       (list "TITLE" (element-title-string prevsib))
+						       (list "HREF"
+							     (href-to
+							      prevsib)))
+					  (gentext-nav-prev-sibling prevsib))))
+			  (make element gi: "TD"
+				attributes: (list
+					     (list "WIDTH" "60%")
+					     (list "ALIGN" "center")
+					     (list "VALIGN" "bottom"))
+				(nav-context elemnode))
+			  (make element gi: "TD"
+				attributes: (list
+					     (list "WIDTH" "10%")
+					     (list "ALIGN" "right")
+					     (list "VALIGN" "top"))
+				(if (node-list-empty? nextsib)
+				    (make entity-ref name: "nbsp")
+				    (make element gi: "A"
+					  attributes: (list
+						       (list "TITLE" (element-title-string nextsib))
+						       (list "HREF" 
+							     (href-to
+							      nextsib)))
+					  (gentext-nav-next-sibling nextsib))))
+			  (make element gi: "TD"
+				attributes: (list
+					     (list "WIDTH" "10%")
+					     (list "ALIGN" "right")
+					     (list "VALIGN" "top"))
+				(if (node-list-empty? next)
+				    (make entity-ref name: "nbsp")
+				    (make element gi: "A"
+					  attributes: (list
+						       (list "TITLE" (element-title-string next))
+						       (list "HREF" 
+							     (href-to
+							      next))
+						       (list "ACCESSKEY"
+							     "N"))
+					  (gentext-nav-next next)))))))
+    (if (or r1? r2?)
+	(make element gi: "DIV"
+	      attributes: '(("CLASS" "NAVHEADER"))
+	  (make element gi: "TABLE"
+		attributes: (list
+			     (list "SUMMARY" "Header navigation table")
+			     (list "WIDTH" %gentext-nav-tblwidth%)
+			     (list "BORDER" "0")
+			     (list "CELLPADDING" "0")
+			     (list "CELLSPACING" "0"))
+		(if r1? r1-sosofo (empty-sosofo))
+		(if r2? r2-sosofo (empty-sosofo)))
+	  (make empty-element gi: "HR"
+		attributes: (list
+			     (list "ALIGN" "LEFT")
+			     (list "WIDTH" %gentext-nav-tblwidth%))))
+	(empty-sosofo))))
+
 
 ]]> <!-- %output-html -->
 
