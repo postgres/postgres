@@ -768,3 +768,19 @@ select sillysrf(-1) order by 1;
 (4 rows)
 
 drop function sillysrf(int);
+-- X = X isn't a no-op, it's effectively X IS NOT NULL assuming = is strict
+-- (see bug #5084)
+select * from (values (2),(null),(1)) v(k) where k = k order by k;
+ k 
+---
+ 1
+ 2
+(2 rows)
+
+select * from (values (2),(null),(1)) v(k) where k = k;
+ k 
+---
+ 2
+ 1
+(2 rows)
+
