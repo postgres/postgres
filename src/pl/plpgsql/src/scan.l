@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.71 2009/07/13 00:42:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.72 2009/09/29 20:05:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,7 @@ param			\${digit}+
 =				{ return K_ASSIGN;			}
 \.\.			{ return K_DOTDOT;			}
 alias			{ return K_ALIAS;			}
+all				{ return K_ALL;				}
 begin			{ return K_BEGIN;			}
 by				{ return K_BY;   			}
 case			{ return K_CASE;			}

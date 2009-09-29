@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.127 2009/07/22 02:31:38 joe Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.128 2009/09/29 20:05:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@ static	PLpgSQL_expr	*read_sql_stmt(const char *sqlstart);
 static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_execsql_stmt(const char *sqlstart, int lineno);
 static	PLpgSQL_stmt_fetch *read_fetch_direction(void);
+static	void			 complete_direction(PLpgSQL_stmt_fetch *fetch,
+											bool *check_FROM);
 static	PLpgSQL_stmt	*make_return_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_next_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_query_stmt(int lineno);
@@ -178,6 +180,7 @@ static List				*read_raise_options(void);
 		 * Keyword tokens
 		 */
 %token	K_ALIAS
+%token	K_ALL
 %token	K_ASSIGN
 %token	K_BEGIN
 %token	K_BY
@@ -1622,6 +1625,15 @@ stmt_fetch		: K_FETCH lno opt_fetch_direction cursor_variable K_INTO
 						if (yylex() != ';')
 							yyerror("syntax error");
 
+						/*
+						 * We don't allow multiple rows in PL/pgSQL's FETCH
+						 * statement, only in MOVE.
+						 */
+						if (fetch->returns_multiple_rows)
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("FETCH statement cannot return multiple rows")));
+
 						fetch->lineno = $2;
 						fetch->rec		= rec;
 						fetch->row		= row;
@@ -2252,6 +2264,9 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 }
 
 
+/*
+ * Read FETCH or MOVE direction clause (everything through FROM/IN).
+ */
 static PLpgSQL_stmt_fetch *
 read_fetch_direction(void)
 {
@@ -2269,6 +2284,7 @@ read_fetch_direction(void)
 	fetch->direction = FETCH_FORWARD;
 	fetch->how_many  = 1;
 	fetch->expr      = NULL;
+	fetch->returns_multiple_rows = false;
 
 	/*
 	 * Most of the direction keywords are not plpgsql keywords, so we
@@ -2311,26 +2327,46 @@ read_fetch_direction(void)
 										   NULL);
 		check_FROM = false;
 	}
+	else if (pg_strcasecmp(yytext, "all") == 0)
+	{
+		fetch->how_many = FETCH_ALL;
+		fetch->returns_multiple_rows = true;
+	}
 	else if (pg_strcasecmp(yytext, "forward") == 0)
 	{
-		/* use defaults */
+		complete_direction(fetch, &check_FROM);
 	}
 	else if (pg_strcasecmp(yytext, "backward") == 0)
 	{
 		fetch->direction = FETCH_BACKWARD;
+		complete_direction(fetch, &check_FROM);
 	}
-	else if (tok != T_SCALAR)
+	else if (tok == K_FROM || tok == K_IN)
 	{
+		/* empty direction */
+		check_FROM = false;
+	}
+	else if (tok == T_SCALAR)
+	{
+		/* Assume there's no direction clause and tok is a cursor name */
 		plpgsql_push_back_token(tok);
-		fetch->expr = read_sql_expression2(K_FROM, K_IN,
-										   "FROM or IN",
-										   NULL);
 		check_FROM = false;
 	}
 	else
 	{
-		/* Assume there's no direction clause */
+		/*
+		 * Assume it's a count expression with no preceding keyword.
+		 * Note: we allow this syntax because core SQL does, but we don't
+		 * document it because of the ambiguity with the omitted-direction
+		 * case.  For instance, "MOVE n IN c" will fail if n is a scalar.
+		 * Perhaps this can be improved someday, but it's hardly worth a
+		 * lot of work.
+		 */
 		plpgsql_push_back_token(tok);
+		fetch->expr = read_sql_expression2(K_FROM, K_IN,
+										   "FROM or IN",
+										   NULL);
+		fetch->returns_multiple_rows = true;
 		check_FROM = false;
 	}
 
@@ -2343,6 +2379,43 @@ read_fetch_direction(void)
 	}
 
 	return fetch;
+}
+
+/*
+ * Process remainder of FETCH/MOVE direction after FORWARD or BACKWARD.
+ * Allows these cases:
+ *   FORWARD expr,  FORWARD ALL,  FORWARD
+ *   BACKWARD expr, BACKWARD ALL, BACKWARD
+ */
+static void
+complete_direction(PLpgSQL_stmt_fetch *fetch,  bool *check_FROM)
+{
+	int			tok;
+
+	tok = yylex();
+	if (tok == 0)
+		yyerror("unexpected end of function definition");
+
+	if (tok == K_FROM || tok == K_IN)
+	{
+		*check_FROM = false;
+		return;
+	}
+
+	if (tok == K_ALL)
+	{
+		fetch->how_many = FETCH_ALL;
+		fetch->returns_multiple_rows = true;
+		*check_FROM = true;
+		return;
+	}
+
+	plpgsql_push_back_token(tok);
+	fetch->expr = read_sql_expression2(K_FROM, K_IN,
+									   "FROM or IN",
+									   NULL);
+	fetch->returns_multiple_rows = true;
+	*check_FROM = false;
 }
 
 
@@ -3043,11 +3116,11 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 
 			/* copy expression query without SELECT keyword (expr->query + 7) */
 			Assert(strncmp(expr->query, "SELECT ", 7) == 0);
-			
+
 			/* And do the string hacking */
 			initStringInfo(&ds);
 
-			appendStringInfo(&ds, "SELECT $%d IN(%s)", 
+			appendStringInfo(&ds, "SELECT $%d IN(%s)",
 								nparams + 1,
 								expr->query + 7);
 

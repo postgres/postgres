@@ -2513,6 +2513,24 @@ select * from sc_test();
 
 create or replace function sc_test() returns setof integer as $$
 declare
+  c refcursor;
+  x integer;
+begin
+  open c scroll for execute 'select f1 from int4_tbl';
+  fetch last from c into x;
+  while found loop
+    return next x;
+    move backward 2 from c;
+    fetch relative -1 from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+
+select * from sc_test();
+
+create or replace function sc_test() returns setof integer as $$
+declare
   c cursor for select * from generate_series(1, 10);
   x integer;
 begin
@@ -2527,6 +2545,23 @@ begin
           return next x;
       end if;
   end loop;
+  close c;
+end;
+$$ language plpgsql;
+
+select * from sc_test();
+
+create or replace function sc_test() returns setof integer as $$
+declare
+  c cursor for select * from generate_series(1, 10);
+  x integer;
+begin
+  open c;
+  move forward all in c;
+  fetch backward from c into x;
+  if found then
+    return next x;
+  end if;
   close c;
 end;
 $$ language plpgsql;
@@ -3084,7 +3119,7 @@ drop function strtest();
 
 DO $$
 DECLARE r record;
-BEGIN 
+BEGIN
     FOR r IN SELECT rtrim(roomno) AS roomno, comment FROM Room ORDER BY roomno
     LOOP
         RAISE NOTICE '%, %', r.roomno, r.comment;
@@ -3096,7 +3131,7 @@ DO LANGUAGE plpgsql $$begin return 1; end$$;
 
 DO LANGUAGE plpgsql $$
 DECLARE r record;
-BEGIN 
+BEGIN
     FOR r IN SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
     LOOP
         RAISE NOTICE '%, %', r.roomno, r.comment;

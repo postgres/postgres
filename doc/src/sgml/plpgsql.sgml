@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.142 2009/06/18 10:22:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.143 2009/09/29 20:05:29 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2655,16 +2655,18 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
     </para>
 
     <para>
-     The options for the <replaceable>direction</replaceable> clause are
-     the same as for <command>FETCH</>, namely
+     The <replaceable>direction</replaceable> clause can be any of the
+     variants allowed in the SQL <xref linkend="sql-fetch"
+     endterm="sql-fetch-title"> command, namely
      <literal>NEXT</>,
      <literal>PRIOR</>,
      <literal>FIRST</>,
      <literal>LAST</>,
      <literal>ABSOLUTE</> <replaceable>count</replaceable>,
      <literal>RELATIVE</> <replaceable>count</replaceable>,
-     <literal>FORWARD</>, or
-     <literal>BACKWARD</>.
+     <literal>ALL</>,
+     <literal>FORWARD</> <optional> <replaceable>count</replaceable> | <literal>ALL</> </optional>, or
+     <literal>BACKWARD</> <optional> <replaceable>count</replaceable> | <literal>ALL</> </optional>.
      Omitting <replaceable>direction</replaceable> is the same
      as specifying <literal>NEXT</>.
      <replaceable>direction</replaceable> values that require moving
@@ -2678,6 +2680,7 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
 MOVE curs1;
 MOVE LAST FROM curs3;
 MOVE RELATIVE -2 FROM curs4;
+MOVE FORWARD 2 FROM curs4;
 </programlisting>
        </para>
      </sect3>

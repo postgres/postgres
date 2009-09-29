@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.116 2009/09/22 23:43:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.117 2009/09/29 20:05:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -517,9 +517,10 @@ typedef struct
 	PLpgSQL_row *row;
 	int			curvar;			/* cursor variable to fetch from */
 	FetchDirection direction;	/* fetch direction */
-	int			how_many;		/* count, if constant (expr is NULL) */
+	long		how_many;		/* count, if constant (expr is NULL) */
 	PLpgSQL_expr *expr;			/* count, if expression */
 	bool		is_move;		/* is this a fetch or move? */
+	bool		returns_multiple_rows;	/* can return more than one row? */
 } PLpgSQL_stmt_fetch;
 
 
