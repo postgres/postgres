@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.20 2009/09/12 00:04:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.21 2009/09/29 01:20:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,19 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	item2_relids = restrictinfo->right_relids;
 
 	/*
+	 * Reject clauses of the form X=X.  These are not as redundant as they
+	 * might seem at first glance: assuming the operator is strict, this is
+	 * really an expensive way to write X IS NOT NULL.  So we must not risk
+	 * just losing the clause, which would be possible if there is already
+	 * a single-element EquivalenceClass containing X.  The case is not
+	 * common enough to be worth contorting the EC machinery for, so just
+	 * reject the clause and let it be processed as a normal restriction
+	 * clause.
+	 */
+	if (equal(item1, item2))
+		return false;			/* X=X is not a useful equivalence */
+
+	/*
 	 * If below outer join, check for strictness, else reject.
 	 */
 	if (below_outer_join)
@@ -152,13 +165,10 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	 *
 	 * 4. We find neither.	Make a new, two-entry EC.
 	 *
-	 * Note: since all ECs are built through this process, it's impossible
-	 * that we'd match an item in more than one existing EC.  It is possible
-	 * to match more than once within an EC, if someone fed us something silly
-	 * like "WHERE X=X".  (However, we can't simply discard such clauses,
-	 * since they should fail when X is null; so we will build a 2-member EC
-	 * to ensure the correct restriction clause gets generated.  Hence there
-	 * is no shortcut here for item1 and item2 equal.)
+	 * Note: since all ECs are built through this process or the similar
+	 * search in get_eclass_for_sort_expr(), it's impossible that we'd match
+	 * an item in more than one existing nonvolatile EC.  So it's okay to stop
+	 * at the first match.
 	 */
 	ec1 = ec2 = NULL;
 	em1 = em2 = NULL;
