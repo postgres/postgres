@@ -1,13 +1,14 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_gist.c,v 1.10 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gist.c,v 1.11 2009/09/30 19:50:22 tgl Exp $
  */
 #include "postgres.h"
 
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/skey.h"
-#include "crc32.h"
+#include "catalog/pg_type.h"
 
+#include "crc32.h"
 #include "hstore.h"
 
 /* bigint defines */
@@ -114,29 +115,26 @@ ghstore_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		GISTTYPE   *res = (GISTTYPE *) palloc0(CALCGTSIZE(0));
-		HStore	   *toastedval = (HStore *) DatumGetPointer(entry->key);
-		HStore	   *val = (HStore *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
-		HEntry	   *ptr = ARRPTR(val);
-		char	   *words = STRPTR(val);
+		HStore	   *val = DatumGetHStoreP(entry->key);
+		HEntry	   *hsent = ARRPTR(val);
+		char	   *ptr = STRPTR(val);
+		int        count = HS_COUNT(val);
+		int        i;
 
 		SET_VARSIZE(res, CALCGTSIZE(0));
 
-		while (ptr - ARRPTR(val) < val->size)
+		for (i = 0; i < count; ++i)
 		{
-			int			h;
+			int	h;
 
-			h = crc32_sz((char *) (words + ptr->pos), ptr->keylen);
+			h = crc32_sz((char *) HS_KEY(hsent,ptr,i), HS_KEYLEN(hsent,i));
 			HASH(GETSIGN(res), h);
-			if (!ptr->valisnull)
+			if (!HS_VALISNULL(hsent,i))
 			{
-				h = crc32_sz((char *) (words + ptr->pos + ptr->keylen), ptr->vallen);
+				h = crc32_sz((char *) HS_VAL(hsent,ptr,i), HS_VALLEN(hsent,i));
 				HASH(GETSIGN(res), h);
 			}
-			ptr++;
 		}
-
-		if (val != toastedval)
-			pfree(val);
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
@@ -177,7 +175,7 @@ ghstore_decompress(PG_FUNCTION_ARGS)
 	GISTENTRY  *retval;
 	HStore	   *key;
 
-	key = (HStore *) PG_DETOAST_DATUM(entry->key);
+	key = DatumGetHStoreP(entry->key);
 
 	if (key != (HStore *) DatumGetPointer(entry->key))
 	{
@@ -500,7 +498,6 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	*right = *left = FirstOffsetNumber;
-	pfree(costvector);
 
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
@@ -514,7 +511,6 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 {
 	GISTTYPE   *entry = (GISTTYPE *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	bool		res = true;
@@ -528,36 +524,84 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 	sign = GETSIGN(entry);
 
-	if (strategy == HStoreContainsStrategyNumber || strategy == 13 /* hack for old strats */ )
+	if (strategy == HStoreContainsStrategyNumber ||
+		strategy == HStoreOldContainsStrategyNumber)
 	{
 		HStore	   *query = PG_GETARG_HS(1);
 		HEntry	   *qe = ARRPTR(query);
 		char	   *qv = STRPTR(query);
+		int        count = HS_COUNT(query);
+		int        i;
 
-		while (res && qe - ARRPTR(query) < query->size)
+		for (i = 0; res && i < count; ++i)
 		{
-			int			crc = crc32_sz((char *) (qv + qe->pos), qe->keylen);
+			int	crc = crc32_sz((char *) HS_KEY(qe,qv,i), HS_KEYLEN(qe,i));
 
 			if (GETBIT(sign, HASHVAL(crc)))
 			{
-				if (!qe->valisnull)
+				if (!HS_VALISNULL(qe,i))
 				{
-					crc = crc32_sz((char *) (qv + qe->pos + qe->keylen), qe->vallen);
+					crc = crc32_sz((char *) HS_VAL(qe,qv,i), HS_VALLEN(qe,i));
 					if (!GETBIT(sign, HASHVAL(crc)))
 						res = false;
 				}
 			}
 			else
 				res = false;
-			qe++;
 		}
 	}
 	else if (strategy == HStoreExistsStrategyNumber)
 	{
-		text	   *query = PG_GETARG_TEXT_P(1);
-		int			crc = crc32_sz(VARDATA(query), VARSIZE(query) - VARHDRSZ);
+		text	   *query = PG_GETARG_TEXT_PP(1);
+		int			crc = crc32_sz(VARDATA_ANY(query), VARSIZE_ANY_EXHDR(query));
 
 		res = (GETBIT(sign, HASHVAL(crc))) ? true : false;
+	}
+	else if (strategy == HStoreExistsAllStrategyNumber)
+	{
+		ArrayType   *query = PG_GETARG_ARRAYTYPE_P(1);
+		Datum      *key_datums;
+		bool       *key_nulls;
+		int        key_count;
+		int        i;
+
+		deconstruct_array(query,
+						  TEXTOID, -1, false, 'i',
+						  &key_datums, &key_nulls, &key_count);
+
+		for (i = 0; res && i < key_count; ++i)
+		{
+			int	crc;
+			if (key_nulls[i])
+				continue;
+			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			if (!(GETBIT(sign, HASHVAL(crc))))
+				res = FALSE;
+		}
+	}
+	else if (strategy == HStoreExistsAnyStrategyNumber)
+	{
+		ArrayType   *query = PG_GETARG_ARRAYTYPE_P(1);
+		Datum      *key_datums;
+		bool       *key_nulls;
+		int        key_count;
+		int        i;
+
+		deconstruct_array(query,
+						  TEXTOID, -1, false, 'i',
+						  &key_datums, &key_nulls, &key_count);
+
+		res = FALSE;
+
+		for (i = 0; !res && i < key_count; ++i)
+		{
+			int	crc;
+			if (key_nulls[i])
+				continue;
+			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			if (GETBIT(sign, HASHVAL(crc)))
+				res = TRUE;
+		}
 	}
 	else
 		elog(ERROR, "Unsupported strategy number: %d", strategy);

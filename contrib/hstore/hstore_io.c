@@ -1,13 +1,25 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.11 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.12 2009/09/30 19:50:22 tgl Exp $
  */
 #include "postgres.h"
 
 #include <ctype.h>
 
+#include "access/heapam.h"
+#include "access/htup.h"
+#include "catalog/pg_type.h"
+#include "funcapi.h"
+#include "libpq/pqformat.h"
+#include "utils/lsyscache.h"
+#include "utils/typcache.h"
+
 #include "hstore.h"
 
 PG_MODULE_MAGIC;
+
+/* old names for C functions */
+HSTORE_POLLUTE(hstore_from_text,tconvert);
+
 
 typedef struct
 {
@@ -263,7 +275,7 @@ parse_hstore(HSParser *state)
 	}
 }
 
-int
+static int
 comparePairs(const void *a, const void *b)
 {
 	if (((Pairs *) a)->keylen == ((Pairs *) b)->keylen)
@@ -286,8 +298,14 @@ comparePairs(const void *a, const void *b)
 	return (((Pairs *) a)->keylen > ((Pairs *) b)->keylen) ? 1 : -1;
 }
 
+/*
+ * this code still respects pairs.needfree, even though in general
+ * it should never be called in a context where anything needs freeing.
+ * we keep it because (a) those calls are in a rare code path anyway,
+ * and (b) who knows whether they might be needed by some caller.
+ */
 int
-uniquePairs(Pairs *a, int4 l, int4 *buflen)
+hstoreUniquePairs(Pairs *a, int4 l, int4 *buflen)
 {
 	Pairs	   *ptr,
 			   *res;
@@ -305,7 +323,8 @@ uniquePairs(Pairs *a, int4 l, int4 *buflen)
 	res = a;
 	while (ptr - a < l)
 	{
-		if (ptr->keylen == res->keylen && strncmp(ptr->key, res->key, res->keylen) == 0)
+		if (ptr->keylen == res->keylen &&
+			strncmp(ptr->key, res->key, res->keylen) == 0)
 		{
 			if (ptr->needfree)
 			{
@@ -325,24 +344,6 @@ uniquePairs(Pairs *a, int4 l, int4 *buflen)
 
 	*buflen += res->keylen + ((res->isnull) ? 0 : res->vallen);
 	return res + 1 - a;
-}
-
-static void
-freeHSParse(HSParser *state)
-{
-	int			i;
-
-	if (state->word)
-		pfree(state->word);
-	for (i = 0; i < state->pcur; i++)
-		if (state->pairs[i].needfree)
-		{
-			if (state->pairs[i].key)
-				pfree(state->pairs[i].key);
-			if (state->pairs[i].val)
-				pfree(state->pairs[i].val);
-		}
-	pfree(state->pairs);
 }
 
 size_t
@@ -366,64 +367,721 @@ hstoreCheckValLen(size_t len)
 }
 
 
+HStore *
+hstorePairs(Pairs *pairs, int4 pcount, int4 buflen)
+{
+	HStore     *out;
+	HEntry	   *entry;
+	char	   *ptr;
+	char	   *buf;
+	int4       len;
+	int4       i;
+
+	len = CALCDATASIZE(pcount, buflen);
+	out = palloc(len);
+	SET_VARSIZE(out, len);
+	HS_SETCOUNT(out, pcount);
+
+	if (pcount == 0)
+		return out;
+
+	entry = ARRPTR(out);
+	buf = ptr = STRPTR(out);
+
+	for (i = 0; i < pcount; i++)
+		HS_ADDITEM(entry,buf,ptr,pairs[i]);
+
+	HS_FINALIZE(out,pcount,buf,ptr);
+
+	return out;
+}
+
+
 PG_FUNCTION_INFO_V1(hstore_in);
 Datum		hstore_in(PG_FUNCTION_ARGS);
 Datum
 hstore_in(PG_FUNCTION_ARGS)
 {
 	HSParser	state;
-	int4		len,
-				buflen,
-				i;
+	int4		buflen;
 	HStore	   *out;
-	HEntry	   *entries;
-	char	   *ptr;
 
 	state.begin = PG_GETARG_CSTRING(0);
 
 	parse_hstore(&state);
 
-	if (state.pcur == 0)
+	state.pcur = hstoreUniquePairs(state.pairs, state.pcur, &buflen);
+
+	out = hstorePairs(state.pairs, state.pcur, buflen);
+
+	PG_RETURN_POINTER(out);
+}
+
+
+PG_FUNCTION_INFO_V1(hstore_recv);
+Datum		hstore_recv(PG_FUNCTION_ARGS);
+Datum
+hstore_recv(PG_FUNCTION_ARGS)
+{
+	int4		buflen;
+	HStore	   *out;
+	Pairs	   *pairs;
+	int4	   i;
+	int4	   pcount;
+	StringInfo buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	pcount = pq_getmsgint(buf, 4);
+
+	if (pcount == 0)
 	{
-		freeHSParse(&state);
-		len = CALCDATASIZE(0, 0);
-		out = palloc(len);
-		SET_VARSIZE(out, len);
-		out->size = 0;
+		out = hstorePairs(NULL, 0, 0);
 		PG_RETURN_POINTER(out);
 	}
 
-	state.pcur = uniquePairs(state.pairs, state.pcur, &buflen);
+	pairs = palloc(pcount * sizeof(Pairs));
 
-	len = CALCDATASIZE(state.pcur, buflen);
-	out = palloc(len);
-	SET_VARSIZE(out, len);
-	out->size = state.pcur;
-
-	entries = ARRPTR(out);
-	ptr = STRPTR(out);
-
-	for (i = 0; i < out->size; i++)
+	for (i = 0; i < pcount; ++i)
 	{
-		entries[i].keylen = state.pairs[i].keylen;
-		entries[i].pos = ptr - STRPTR(out);
-		memcpy(ptr, state.pairs[i].key, state.pairs[i].keylen);
-		ptr += entries[i].keylen;
+		int rawlen = pq_getmsgint(buf, 4);
+		int len;
 
-		entries[i].valisnull = state.pairs[i].isnull;
-		if (entries[i].valisnull)
-			entries[i].vallen = 4;		/* null */
+		if (rawlen < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("null value not allowed for hstore key")));
+
+		pairs[i].key = pq_getmsgtext(buf, rawlen, &len);
+		pairs[i].keylen = hstoreCheckKeyLen(len);
+		pairs[i].needfree = true;
+
+		rawlen = pq_getmsgint(buf, 4);
+		if (rawlen < 0)
+		{
+			pairs[i].val = NULL;
+			pairs[i].vallen = 0;
+			pairs[i].isnull = true;
+		}
 		else
 		{
-			entries[i].vallen = state.pairs[i].vallen;
-			memcpy(ptr, state.pairs[i].val, state.pairs[i].vallen);
-			ptr += entries[i].vallen;
+			pairs[i].val = pq_getmsgtext(buf, rawlen, &len);
+			pairs[i].vallen = hstoreCheckValLen(len);
+			pairs[i].isnull = false;
 		}
 	}
 
-	freeHSParse(&state);
+	pcount = hstoreUniquePairs(pairs, pcount, &buflen);
+
+	out = hstorePairs(pairs, pcount, buflen);
+
 	PG_RETURN_POINTER(out);
 }
+
+
+PG_FUNCTION_INFO_V1(hstore_from_text);
+Datum		hstore_from_text(PG_FUNCTION_ARGS);
+Datum
+hstore_from_text(PG_FUNCTION_ARGS)
+{
+	text       *key;
+	text       *val = NULL;
+	Pairs      p;
+	HStore	   *out;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	p.needfree = false;
+	key = PG_GETARG_TEXT_PP(0);
+	p.key = VARDATA_ANY(key);
+	p.keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key));
+
+	if (PG_ARGISNULL(1))
+	{
+		p.vallen = 0;
+		p.isnull = true;
+	}
+	else
+	{
+		val = PG_GETARG_TEXT_PP(1);
+		p.val = VARDATA_ANY(val);
+		p.vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(val));
+		p.isnull = false;
+	}
+
+	out = hstorePairs(&p, 1, p.keylen + p.vallen);
+
+	PG_RETURN_POINTER(out);
+}
+
+
+PG_FUNCTION_INFO_V1(hstore_from_arrays);
+Datum		hstore_from_arrays(PG_FUNCTION_ARGS);
+Datum
+hstore_from_arrays(PG_FUNCTION_ARGS)
+{
+	int4		buflen;
+	HStore	   *out;
+	Pairs	   *pairs;
+	Datum	   *key_datums;
+	bool	   *key_nulls;
+	int		   key_count;
+	Datum	   *value_datums;
+	bool	   *value_nulls;
+	int		   value_count;
+	ArrayType  *key_array;
+	ArrayType  *value_array;
+	int		   i;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	key_array = PG_GETARG_ARRAYTYPE_P(0);
+
+	Assert(ARR_ELEMTYPE(key_array) == TEXTOID);
+
+	/*
+	 * must check >1 rather than != 1 because empty arrays have
+	 * 0 dimensions, not 1
+	 */
+
+	if (ARR_NDIM(key_array) > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("wrong number of array subscripts")));
+
+	deconstruct_array(key_array,
+					  TEXTOID, -1, false, 'i',
+					  &key_datums, &key_nulls, &key_count);
+
+	/* value_array might be NULL */
+
+	if (PG_ARGISNULL(1))
+	{
+		value_array = NULL;
+		value_count = key_count;
+		value_datums = NULL;
+		value_nulls = NULL;
+	}
+	else
+	{
+		value_array = PG_GETARG_ARRAYTYPE_P(1);
+
+		Assert(ARR_ELEMTYPE(value_array) == TEXTOID);
+
+		if (ARR_NDIM(value_array) > 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("wrong number of array subscripts")));
+
+		if ((ARR_NDIM(key_array) > 0 || ARR_NDIM(value_array) > 0) &&
+			(ARR_NDIM(key_array) != ARR_NDIM(value_array) ||
+			 ARR_DIMS(key_array)[0] != ARR_DIMS(value_array)[0] ||
+			 ARR_LBOUND(key_array)[0] != ARR_LBOUND(value_array)[0]))
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("arrays must have same bounds")));
+
+		deconstruct_array(value_array,
+						  TEXTOID, -1, false, 'i',
+						  &value_datums, &value_nulls, &value_count);
+
+		Assert(key_count == value_count);
+	}
+
+	pairs = palloc(key_count * sizeof(Pairs));
+
+	for (i = 0; i < key_count; ++i)
+	{
+		if (key_nulls[i])
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("null value not allowed for hstore key")));
+
+		if (!value_nulls || value_nulls[i])
+		{
+			pairs[i].key = VARDATA_ANY(key_datums[i]);
+			pairs[i].val = NULL;
+			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key_datums[i]));
+			pairs[i].vallen = 4;
+			pairs[i].isnull = true;
+			pairs[i].needfree = false;
+		}
+		else
+		{
+			pairs[i].key = VARDATA_ANY(key_datums[i]);
+			pairs[i].val = VARDATA_ANY(value_datums[i]);
+			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key_datums[i]));
+			pairs[i].vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(value_datums[i]));
+			pairs[i].isnull = false;
+			pairs[i].needfree = false;
+		}
+	}
+
+	key_count = hstoreUniquePairs(pairs, key_count, &buflen);
+
+	out = hstorePairs(pairs, key_count, buflen);
+
+	PG_RETURN_POINTER(out);
+}
+
+
+PG_FUNCTION_INFO_V1(hstore_from_array);
+Datum		hstore_from_array(PG_FUNCTION_ARGS);
+Datum
+hstore_from_array(PG_FUNCTION_ARGS)
+{
+	ArrayType  *in_array = PG_GETARG_ARRAYTYPE_P(0);
+	int         ndims = ARR_NDIM(in_array);
+	int         count;
+	int4		buflen;
+	HStore	   *out;
+	Pairs	   *pairs;
+	Datum	   *in_datums;
+	bool	   *in_nulls;
+	int		    in_count;
+	int		    i;
+
+	Assert(ARR_ELEMTYPE(in_array) == TEXTOID);
+
+	switch (ndims)
+	{
+		case 0:
+			out = hstorePairs(NULL, 0, 0);
+			PG_RETURN_POINTER(out);
+
+		case 1:
+			if ((ARR_DIMS(in_array)[0]) % 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("array must have even number of elements")));
+			break;
+
+		case 2:
+			if ((ARR_DIMS(in_array)[1]) != 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("array must have two columns")));
+			break;
+
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("wrong number of array subscripts")));
+	}			
+
+	deconstruct_array(in_array,
+					  TEXTOID, -1, false, 'i',
+					  &in_datums, &in_nulls, &in_count);
+
+	count = in_count / 2;
+
+	pairs = palloc(count * sizeof(Pairs));
+
+	for (i = 0; i < count; ++i)
+	{
+		if (in_nulls[i*2])
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("null value not allowed for hstore key")));
+
+		if (in_nulls[i*2+1])
+		{
+			pairs[i].key = VARDATA_ANY(in_datums[i*2]);
+			pairs[i].val = NULL;
+			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i*2]));
+			pairs[i].vallen = 4;
+			pairs[i].isnull = true;
+			pairs[i].needfree = false;
+		}
+		else
+		{
+			pairs[i].key = VARDATA_ANY(in_datums[i*2]);
+			pairs[i].val = VARDATA_ANY(in_datums[i*2+1]);
+			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i*2]));
+			pairs[i].vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(in_datums[i*2+1]));
+			pairs[i].isnull = false;
+			pairs[i].needfree = false;
+		}
+	}
+
+	count = hstoreUniquePairs(pairs, count, &buflen);
+
+	out = hstorePairs(pairs, count, buflen);
+
+	PG_RETURN_POINTER(out);
+}
+
+/* most of hstore_from_record is shamelessly swiped from record_out */
+
+/*
+ * structure to cache metadata needed for record I/O
+ */
+typedef struct ColumnIOData
+{
+	Oid			column_type;
+	Oid			typiofunc;
+	Oid			typioparam;
+	FmgrInfo	proc;
+} ColumnIOData;
+
+typedef struct RecordIOData
+{
+	Oid			record_type;
+	int32		record_typmod;
+	int			ncolumns;
+	ColumnIOData columns[1];	/* VARIABLE LENGTH ARRAY */
+} RecordIOData;
+
+PG_FUNCTION_INFO_V1(hstore_from_record);
+Datum		hstore_from_record(PG_FUNCTION_ARGS);
+Datum
+hstore_from_record(PG_FUNCTION_ARGS)
+{
+	HeapTupleHeader rec;
+	int4		buflen;
+	HStore	   *out;
+	Pairs      *pairs;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tuple;
+	RecordIOData *my_extra;
+	int			ncolumns;
+	int			i,j;
+	Datum	   *values;
+	bool	   *nulls;
+
+	if (PG_ARGISNULL(0))
+	{
+		Oid     argtype = get_fn_expr_argtype(fcinfo->flinfo,0);
+
+		/*
+		 * have no tuple to look at, so the only source of type info
+		 * is the argtype. The lookup_rowtype_tupdesc call below will
+		 * error out if we don't have a known composite type oid here.
+		 */
+		tupType = argtype;
+		tupTypmod = -1;
+
+		rec = NULL;
+	}
+	else
+	{
+		rec = PG_GETARG_HEAPTUPLEHEADER(0);
+
+		/* Extract type info from the tuple itself */
+		tupType = HeapTupleHeaderGetTypeId(rec);
+		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+	}
+
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	ncolumns = tupdesc->natts;
+
+	/*
+	 * We arrange to look up the needed I/O info just once per series of
+	 * calls, assuming the record type doesn't change underneath us.
+	 */
+	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL ||
+		my_extra->ncolumns != ncolumns)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(RecordIOData) - sizeof(ColumnIOData)
+							   + ncolumns * sizeof(ColumnIOData));
+		my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+		my_extra->record_type = InvalidOid;
+		my_extra->record_typmod = 0;
+	}
+
+	if (my_extra->record_type != tupType ||
+		my_extra->record_typmod != tupTypmod)
+	{
+		MemSet(my_extra, 0,
+			   sizeof(RecordIOData) - sizeof(ColumnIOData)
+			   + ncolumns * sizeof(ColumnIOData));
+		my_extra->record_type = tupType;
+		my_extra->record_typmod = tupTypmod;
+		my_extra->ncolumns = ncolumns;
+	}
+
+	pairs = palloc(ncolumns * sizeof(Pairs));
+
+	if (rec)
+	{
+		/* Build a temporary HeapTuple control structure */
+		tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
+		ItemPointerSetInvalid(&(tuple.t_self));
+		tuple.t_tableOid = InvalidOid;
+		tuple.t_data = rec;
+
+		values = (Datum *) palloc(ncolumns * sizeof(Datum));
+		nulls = (bool *) palloc(ncolumns * sizeof(bool));
+
+		/* Break down the tuple into fields */
+		heap_deform_tuple(&tuple, tupdesc, values, nulls);
+	}
+	else
+	{
+		values = NULL;
+		nulls = NULL;
+	}
+
+	for (i = 0, j = 0; i < ncolumns; ++i)
+	{
+		ColumnIOData *column_info = &my_extra->columns[i];
+		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		char	   *value;
+
+		/* Ignore dropped columns in datatype */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
+		pairs[j].key = NameStr(tupdesc->attrs[i]->attname);
+		pairs[j].keylen = hstoreCheckKeyLen(strlen(NameStr(tupdesc->attrs[i]->attname)));
+
+		if (!nulls || nulls[i])
+		{
+			pairs[j].val = NULL;
+			pairs[j].vallen = 4;
+			pairs[j].isnull = true;
+			pairs[j].needfree = false;
+			++j;
+			continue;
+		}
+
+		/*
+		 * Convert the column value to text
+		 */
+		if (column_info->column_type != column_type)
+		{
+			bool typIsVarlena;
+
+			getTypeOutputInfo(column_type,
+							  &column_info->typiofunc,
+							  &typIsVarlena);
+			fmgr_info_cxt(column_info->typiofunc, &column_info->proc,
+						  fcinfo->flinfo->fn_mcxt);
+			column_info->column_type = column_type;
+		}
+
+		value = OutputFunctionCall(&column_info->proc, values[i]);
+
+		pairs[j].val = value;
+		pairs[j].vallen = hstoreCheckValLen(strlen(value));
+		pairs[j].isnull = false;
+		pairs[j].needfree = false;
+		++j;
+	}
+
+	ncolumns = hstoreUniquePairs(pairs, j, &buflen);
+
+	out = hstorePairs(pairs, ncolumns, buflen);
+
+	ReleaseTupleDesc(tupdesc);
+
+	PG_RETURN_POINTER(out);
+}
+
+
+PG_FUNCTION_INFO_V1(hstore_populate_record);
+Datum		hstore_populate_record(PG_FUNCTION_ARGS);
+Datum
+hstore_populate_record(PG_FUNCTION_ARGS)
+{
+	Oid         argtype = get_fn_expr_argtype(fcinfo->flinfo,0);
+	HStore     *hs;
+	HEntry     *entries;
+	char       *ptr;
+	HeapTupleHeader rec;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tuple;
+	HeapTuple   rettuple;
+	RecordIOData *my_extra;
+	int         ncolumns;
+	int			i;
+	Datum	   *values;
+	bool	   *nulls;
+
+	if (!type_is_rowtype(argtype))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("first argument must be a rowtype")));
+
+	if (PG_ARGISNULL(0))
+	{
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();
+
+		rec = NULL;
+
+		/*
+		 * have no tuple to look at, so the only source of type info
+		 * is the argtype. The lookup_rowtype_tupdesc call below will
+		 * error out if we don't have a known composite type oid here.
+		 */
+		tupType = argtype;
+		tupTypmod = -1;
+	}
+	else
+	{
+		rec = PG_GETARG_HEAPTUPLEHEADER(0);
+
+		if (PG_ARGISNULL(1))
+			PG_RETURN_POINTER(rec);
+
+		/* Extract type info from the tuple itself */
+		tupType = HeapTupleHeaderGetTypeId(rec);
+		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+	}
+
+	hs = PG_GETARG_HS(1);
+	entries = ARRPTR(hs);
+	ptr = STRPTR(hs);
+
+	/*
+	 * if the input hstore is empty, we can only skip the rest if
+	 * we were passed in a non-null record, since otherwise there
+	 * may be issues with domain nulls.
+	 */
+
+	if (HS_COUNT(hs) == 0 && rec)
+		PG_RETURN_POINTER(rec);
+
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	ncolumns = tupdesc->natts;
+
+	if (rec)
+	{
+		/* Build a temporary HeapTuple control structure */
+		tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
+		ItemPointerSetInvalid(&(tuple.t_self));
+		tuple.t_tableOid = InvalidOid;
+		tuple.t_data = rec;
+	}
+
+	/*
+	 * We arrange to look up the needed I/O info just once per series of
+	 * calls, assuming the record type doesn't change underneath us.
+	 */
+	my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL ||
+		my_extra->ncolumns != ncolumns)
+	{
+		fcinfo->flinfo->fn_extra =
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(RecordIOData) - sizeof(ColumnIOData)
+							   + ncolumns * sizeof(ColumnIOData));
+		my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
+		my_extra->record_type = InvalidOid;
+		my_extra->record_typmod = 0;
+	}
+
+	if (my_extra->record_type != tupType ||
+		my_extra->record_typmod != tupTypmod)
+	{
+		MemSet(my_extra, 0,
+			   sizeof(RecordIOData) - sizeof(ColumnIOData)
+			   + ncolumns * sizeof(ColumnIOData));
+		my_extra->record_type = tupType;
+		my_extra->record_typmod = tupTypmod;
+		my_extra->ncolumns = ncolumns;
+	}
+
+	values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+
+	if (rec)
+	{
+		/* Break down the tuple into fields */
+		heap_deform_tuple(&tuple, tupdesc, values, nulls);
+	}
+	else
+	{
+		for (i = 0; i < ncolumns; ++i)
+		{
+			values[i] = (Datum) 0;
+			nulls[i] = true;
+		}
+	}
+
+	for (i = 0; i < ncolumns; ++i)
+	{
+		ColumnIOData *column_info = &my_extra->columns[i];
+		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		char	   *value;
+		int        idx;
+		int        vallen;
+
+		/* Ignore dropped columns in datatype */
+		if (tupdesc->attrs[i]->attisdropped)
+		{
+			nulls[i] = true;
+			continue;
+		}
+
+		idx = hstoreFindKey(hs, 0,
+							NameStr(tupdesc->attrs[i]->attname),
+							strlen(NameStr(tupdesc->attrs[i]->attname)));
+		/*
+		 * we can't just skip here if the key wasn't found since we
+		 * might have a domain to deal with. If we were passed in a
+		 * non-null record datum, we assume that the existing values
+		 * are valid (if they're not, then it's not our fault), but if
+		 * we were passed in a null, then every field which we don't
+		 * populate needs to be run through the input function just in
+		 * case it's a domain type.
+		 */
+		if (idx < 0 && rec)
+			continue;
+
+		/*
+		 * Prepare to convert the column value from text
+		 */
+		if (column_info->column_type != column_type)
+		{
+			getTypeInputInfo(column_type,
+							 &column_info->typiofunc,
+							 &column_info->typioparam);
+			fmgr_info_cxt(column_info->typiofunc, &column_info->proc,
+						  fcinfo->flinfo->fn_mcxt);
+			column_info->column_type = column_type;
+		}
+
+		if (idx < 0 || HS_VALISNULL(entries,idx))
+		{
+			/*
+			 * need InputFunctionCall to happen even for nulls, so
+			 * that domain checks are done
+			 */
+			values[i] = InputFunctionCall(&column_info->proc, NULL,
+										  column_info->typioparam,
+										  tupdesc->attrs[i]->atttypmod);
+			nulls[i] = true;
+		}
+		else
+		{
+			vallen = HS_VALLEN(entries,idx);
+			value = palloc(1 + vallen);
+			memcpy(value, HS_VAL(entries,ptr,idx), vallen);
+			value[vallen] = 0;
+
+			values[i] = InputFunctionCall(&column_info->proc, value,
+										  column_info->typioparam,
+										  tupdesc->attrs[i]->atttypmod);
+			nulls[i] = false;
+		}
+	}
+
+	rettuple = heap_form_tuple(tupdesc, values, nulls);
+
+	ReleaseTupleDesc(tupdesc);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(rettuple));
+}
+
 
 static char *
 cpw(char *dst, char *src, int len)
@@ -446,40 +1104,50 @@ hstore_out(PG_FUNCTION_ARGS)
 {
 	HStore	   *in = PG_GETARG_HS(0);
 	int			buflen,
-				i,
-				nnulls = 0;
+				i;
+	int        count = HS_COUNT(in);
 	char	   *out,
 			   *ptr;
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
 
-	if (in->size == 0)
+	if (count == 0)
 	{
 		out = palloc(1);
 		*out = '\0';
-		PG_FREE_IF_COPY(in, 0);
 		PG_RETURN_CSTRING(out);
 	}
 
-	for (i = 0; i < in->size; i++)
-		if (entries[i].valisnull)
-			nnulls++;
+	buflen = 0;
 
-	buflen = (4 /* " */ + 2 /* => */ ) * (in->size - nnulls) +
-		(2 /* " */ + 2 /* => */ + 4 /* NULL */ ) * nnulls +
-		2 /* ,	*/ * (in->size - 1) +
-		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0)) +
-		1 /* \0 */ ;
+	/*
+	 * this loop overestimates due to pessimistic assumptions about
+	 * escaping, so very large hstore values can't be output. this
+	 * could be fixed, but many other data types probably have the
+	 * same issue. This replaced code that used the original varlena
+	 * size for calculations, which was wrong in some subtle ways.
+	 */
+
+	for (i = 0; i < count; i++)
+	{
+		/* include "" and => and comma-space */
+		buflen += 6 + 2 * HS_KEYLEN(entries,i);
+		/* include "" only if nonnull */
+		buflen += 2 + (HS_VALISNULL(entries,i)
+					   ? 2
+					   : 2 * HS_VALLEN(entries,i));
+	}
 
 	out = ptr = palloc(buflen);
-	for (i = 0; i < in->size; i++)
+
+	for (i = 0; i < count; i++)
 	{
 		*ptr++ = '"';
-		ptr = cpw(ptr, base + entries[i].pos, entries[i].keylen);
+		ptr = cpw(ptr, HS_KEY(entries,base,i), HS_KEYLEN(entries,i));
 		*ptr++ = '"';
 		*ptr++ = '=';
 		*ptr++ = '>';
-		if (entries[i].valisnull)
+		if (HS_VALISNULL(entries,i))
 		{
 			*ptr++ = 'N';
 			*ptr++ = 'U';
@@ -489,11 +1157,11 @@ hstore_out(PG_FUNCTION_ARGS)
 		else
 		{
 			*ptr++ = '"';
-			ptr = cpw(ptr, base + entries[i].pos + entries[i].keylen, entries[i].vallen);
+			ptr = cpw(ptr, HS_VAL(entries,base,i), HS_VALLEN(entries,i));
 			*ptr++ = '"';
 		}
 
-		if (i + 1 != in->size)
+		if (i + 1 != count)
 		{
 			*ptr++ = ',';
 			*ptr++ = ' ';
@@ -501,6 +1169,42 @@ hstore_out(PG_FUNCTION_ARGS)
 	}
 	*ptr = '\0';
 
-	PG_FREE_IF_COPY(in, 0);
 	PG_RETURN_CSTRING(out);
+}
+
+
+PG_FUNCTION_INFO_V1(hstore_send);
+Datum		hstore_send(PG_FUNCTION_ARGS);
+Datum
+hstore_send(PG_FUNCTION_ARGS)
+{
+	HStore	   *in = PG_GETARG_HS(0);
+	int        i;
+	int        count = HS_COUNT(in);
+	char	   *base = STRPTR(in);
+	HEntry	   *entries = ARRPTR(in);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+
+	pq_sendint(&buf, count, 4);
+
+	for (i = 0; i < count; i++)
+	{
+		int32 keylen = HS_KEYLEN(entries,i);
+		pq_sendint(&buf, keylen, 4);
+		pq_sendtext(&buf, HS_KEY(entries,base,i), keylen);
+		if (HS_VALISNULL(entries,i))
+		{
+			pq_sendint(&buf, -1, 4);
+		}
+		else
+		{
+			int32 vallen = HS_VALLEN(entries,i);
+			pq_sendint(&buf, vallen, 4);
+			pq_sendtext(&buf, HS_VAL(entries,base,i), vallen);
+		}
+	}
+
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }

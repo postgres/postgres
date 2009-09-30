@@ -1,9 +1,10 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.6 2009/06/11 14:48:51 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/hstore/hstore_gin.c,v 1.7 2009/09/30 19:50:22 tgl Exp $
  */
 #include "postgres.h"
 
 #include "access/gin.h"
+#include "catalog/pg_type.h"
 
 #include "hstore.h"
 
@@ -35,43 +36,36 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 	HStore	   *hs = PG_GETARG_HS(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
+	HEntry     *hsent = ARRPTR(hs);
+	char       *ptr = STRPTR(hs);
+	int        count = HS_COUNT(hs);
+	int        i;
 
-	*nentries = 2 * hs->size;
+	*nentries = 2 * count;
+	if (count)
+		entries = (Datum *) palloc(sizeof(Datum) * 2 * count);
 
-	if (hs->size > 0)
+	for (i = 0; i < count; ++i)
 	{
-		HEntry	   *ptr = ARRPTR(hs);
-		char	   *words = STRPTR(hs);
-		int			i = 0;
+		text	   *item;
 
-		entries = (Datum *) palloc(sizeof(Datum) * 2 * hs->size);
+		item = makeitem(HS_KEY(hsent,ptr,i), HS_KEYLEN(hsent,i));
+		*VARDATA(item) = KEYFLAG;
+		entries[2*i] = PointerGetDatum(item);
 
-		while (ptr - ARRPTR(hs) < hs->size)
+		if (HS_VALISNULL(hsent,i))
 		{
-			text	   *item;
-
-			item = makeitem(words + ptr->pos, ptr->keylen);
-			*VARDATA(item) = KEYFLAG;
-			entries[i++] = PointerGetDatum(item);
-
-			if (ptr->valisnull)
-			{
-				item = makeitem(NULL, 0);
-				*VARDATA(item) = NULLFLAG;
-
-			}
-			else
-			{
-				item = makeitem(words + ptr->pos + ptr->keylen, ptr->vallen);
-				*VARDATA(item) = VALFLAG;
-			}
-			entries[i++] = PointerGetDatum(item);
-
-			ptr++;
+			item = makeitem(NULL, 0);
+			*VARDATA(item) = NULLFLAG;
 		}
+		else
+		{
+			item = makeitem(HS_VAL(hsent,ptr,i), HS_VALLEN(hsent,i));
+			*VARDATA(item) = VALFLAG;
+		}
+		entries[2*i+1] = PointerGetDatum(item);
 	}
 
-	PG_FREE_IF_COPY(hs, 0);
 	PG_RETURN_POINTER(entries);
 }
 
@@ -85,8 +79,7 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 
 	if (strategy == HStoreContainsStrategyNumber)
 	{
-		PG_RETURN_DATUM(DirectFunctionCall2(
-											gin_extract_hstore,
+		PG_RETURN_DATUM(DirectFunctionCall2(gin_extract_hstore,
 											PG_GETARG_DATUM(0),
 											PG_GETARG_DATUM(1)
 											));
@@ -94,16 +87,47 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 	else if (strategy == HStoreExistsStrategyNumber)
 	{
 		text	   *item,
-				   *q = PG_GETARG_TEXT_P(0);
+				   *query = PG_GETARG_TEXT_PP(0);
 		int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 		Datum	   *entries = NULL;
 
 		*nentries = 1;
 		entries = (Datum *) palloc(sizeof(Datum));
 
-		item = makeitem(VARDATA(q), VARSIZE(q) - VARHDRSZ);
+		item = makeitem(VARDATA_ANY(query), VARSIZE_ANY_EXHDR(query));
 		*VARDATA(item) = KEYFLAG;
 		entries[0] = PointerGetDatum(item);
+
+		PG_RETURN_POINTER(entries);
+	}
+	else if (strategy == HStoreExistsAnyStrategyNumber ||
+			 strategy == HStoreExistsAllStrategyNumber)
+	{
+		ArrayType   *query = PG_GETARG_ARRAYTYPE_P(0);
+		Datum      *key_datums;
+		bool       *key_nulls;
+		int        key_count;
+		int        i,j;
+		int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
+		Datum	   *entries = NULL;
+		text       *item;
+
+		deconstruct_array(query,
+						  TEXTOID, -1, false, 'i',
+						  &key_datums, &key_nulls, &key_count);
+
+		entries = (Datum *) palloc(sizeof(Datum) * key_count);
+
+		for (i = 0, j = 0; i < key_count; ++i)
+		{
+			if (key_nulls[i])
+				continue;
+			item = makeitem(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			*VARDATA(item) = KEYFLAG;
+			entries[j++] = PointerGetDatum(item);
+		}
+
+		*nentries = j ? j : -1;
 
 		PG_RETURN_POINTER(entries);
 	}
@@ -121,12 +145,13 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
-	HStore	   *query = PG_GETARG_HS(2);
-
-	/* int32	nkeys = PG_GETARG_INT32(3); */
+	/* HStore	   *query = PG_GETARG_HS(2); */
+	int32		nkeys = PG_GETARG_INT32(3);
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = true;
+
+	*recheck = false;
 
 	if (strategy == HStoreContainsStrategyNumber)
 	{
@@ -134,18 +159,30 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 
 		/*
 		 * Index lost information about correspondence of keys and values, so
-		 * we need recheck
+		 * we need recheck (pre-8.4 this is handled at SQL level)
 		 */
 		*recheck = true;
-		for (i = 0; res && i < 2 * query->size; i++)
+		for (i = 0; res && i < nkeys; i++)
 			if (check[i] == false)
 				res = false;
 	}
 	else if (strategy == HStoreExistsStrategyNumber)
 	{
 		/* Existence of key is guaranteed */
-		*recheck = false;
 		res = true;
+	}
+	else if (strategy == HStoreExistsAnyStrategyNumber)
+	{
+		/* Existence of key is guaranteed */
+		res = true;
+	}
+	else if (strategy == HStoreExistsAllStrategyNumber)
+	{
+		int        i;
+
+		for (i = 0; res && i < nkeys; ++i)
+			if (!check[i])
+				res = false;
 	}
 	else
 		elog(ERROR, "Unsupported strategy number: %d", strategy);
