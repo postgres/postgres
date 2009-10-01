@@ -33,6 +33,9 @@
 # (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that specifies
 # the number of significant bits in the mask.  Alternatively, you can write
 # an IP address and netmask in separate columns to specify the set of hosts.
+# Instead of a CIDR-address, you can write "samehost" to match any of the 
+# server's own IP addresses, or "samenet" to match any address in any subnet
+# that the server is directly connected to.
 #
 # METHOD can be "trust", "reject", "md5", "password", "gss", "sspi", "krb5",
 # "ident", "pam", "ldap" or "cert".  Note that "password" sends passwords

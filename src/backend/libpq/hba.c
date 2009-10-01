@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.190 2009/09/01 02:54:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.191 2009/10/01 01:58:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,14 @@
 #define MULTI_VALUE_SEP "\001"
 
 #define MAX_TOKEN	256
+
+/* callback data for check_network_callback */
+typedef struct check_network_data
+{
+	IPCompareMethod method;		/* test method */
+	SockAddr   *raddr;			/* client's actual address */
+	bool		result;			/* set to true if match */
+} check_network_data;
 
 /* pre-parsed content of HBA config file: list of HbaLine structs */
 static List *parsed_hba_lines = NIL;
@@ -512,6 +520,99 @@ check_db(const char *dbname, const char *role, Oid roleid, char *param_str)
 	return false;
 }
 
+/*
+ * Check to see if a connecting IP matches the given address and netmask.
+ */
+static bool
+check_ip(SockAddr *raddr, struct sockaddr *addr, struct sockaddr *mask)
+{
+	if (raddr->addr.ss_family == addr->sa_family)
+	{
+		/* Same address family */
+		if (!pg_range_sockaddr(&raddr->addr,
+							   (struct sockaddr_storage*)addr,
+		                       (struct sockaddr_storage*)mask))
+			return false;
+	}
+#ifdef HAVE_IPV6
+	else if (addr->sa_family == AF_INET &&
+			 raddr->addr.ss_family == AF_INET6)
+	{
+		/*
+		 * If we're connected on IPv6 but the file specifies an IPv4 address
+		 * to match against, promote the latter to an IPv6 address
+		 * before trying to match the client's address.
+		 */
+		struct sockaddr_storage addrcopy,
+					maskcopy;
+
+		memcpy(&addrcopy, &addr, sizeof(addrcopy));
+		memcpy(&maskcopy, &mask, sizeof(maskcopy));
+		pg_promote_v4_to_v6_addr(&addrcopy);
+		pg_promote_v4_to_v6_mask(&maskcopy);
+
+		if (!pg_range_sockaddr(&raddr->addr, &addrcopy, &maskcopy))
+			return false;
+	}
+#endif   /* HAVE_IPV6 */
+	else
+	{
+		/* Wrong address family, no IPV6 */
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * pg_foreach_ifaddr callback: does client addr match this machine interface?
+ */
+static void
+check_network_callback(struct sockaddr *addr, struct sockaddr *netmask,
+					   void *cb_data)
+{
+	check_network_data *cn = (check_network_data *) cb_data;
+	struct sockaddr_storage mask;
+
+	/* Already found a match? */
+	if (cn->result)
+		return;
+
+	if (cn->method == ipCmpSameHost)
+	{
+		/* Make an all-ones netmask of appropriate length for family */
+		pg_sockaddr_cidr_mask(&mask, NULL, addr->sa_family);
+		cn->result = check_ip(cn->raddr, addr, (struct sockaddr*) &mask);
+	}
+	else
+	{
+		/* Use the netmask of the interface itself */
+		cn->result = check_ip(cn->raddr, addr, netmask);
+	}
+}
+
+/*
+ * Use pg_foreach_ifaddr to check a samehost or samenet match
+ */
+static bool
+check_same_host_or_net(SockAddr *raddr, IPCompareMethod method)
+{
+	check_network_data cn;
+
+	cn.method = method;
+	cn.raddr = raddr;
+	cn.result = false;
+
+	errno = 0;
+	if (pg_foreach_ifaddr(check_network_callback, &cn) < 0)
+	{
+		elog(LOG, "error enumerating network interfaces: %m");
+		return false;
+	}
+
+	return cn.result;
+}
+
 
 /*
  * Macros used to check and report on invalid configuration options.
@@ -658,99 +759,121 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 								line_num, HbaFileName)));
 			return false;
 		}
-		token = pstrdup(lfirst(line_item));
+		token = lfirst(line_item);
 
-		/* Check if it has a CIDR suffix and if so isolate it */
-		cidr_slash = strchr(token, '/');
-		if (cidr_slash)
-			*cidr_slash = '\0';
-
-		/* Get the IP address either way */
-		hints.ai_flags = AI_NUMERICHOST;
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = 0;
-		hints.ai_protocol = 0;
-		hints.ai_addrlen = 0;
-		hints.ai_canonname = NULL;
-		hints.ai_addr = NULL;
-		hints.ai_next = NULL;
-
-		ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
-		if (ret || !gai_result)
+		/* Is it equal to 'samehost' or 'samenet'? */
+		if (strcmp(token, "samehost") == 0)
 		{
-			ereport(LOG,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("invalid IP address \"%s\": %s",
-							token, gai_strerror(ret)),
-					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
-			if (cidr_slash)
-				*cidr_slash = '/';
-			if (gai_result)
-				pg_freeaddrinfo_all(hints.ai_family, gai_result);
-			return false;
+			/* Any IP on this host is allowed to connect */
+			parsedline->ip_cmp_method = ipCmpSameHost;
 		}
-
-		if (cidr_slash)
-			*cidr_slash = '/';
-
-		memcpy(&parsedline->addr, gai_result->ai_addr, gai_result->ai_addrlen);
-		pg_freeaddrinfo_all(hints.ai_family, gai_result);
-
-		/* Get the netmask */
-		if (cidr_slash)
+		else if (strcmp(token, "samenet") == 0)
 		{
-			if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
-									  parsedline->addr.ss_family) < 0)
-			{
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("invalid CIDR mask in address \"%s\"",
-								token),
-						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
-				return false;
-			}
+			/* Any IP on the host's subnets is allowed to connect */
+			parsedline->ip_cmp_method = ipCmpSameNet;
 		}
 		else
 		{
-			/* Read the mask field. */
-			line_item = lnext(line_item);
-			if (!line_item)
-			{
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("end-of-line before netmask specification"),
-						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
-				return false;
-			}
-			token = lfirst(line_item);
+			/* IP and netmask are specified */
+			parsedline->ip_cmp_method = ipCmpMask;
+
+			/* need a modifiable copy of token */
+			token = pstrdup(token);
+
+			/* Check if it has a CIDR suffix and if so isolate it */
+			cidr_slash = strchr(token, '/');
+			if (cidr_slash)
+				*cidr_slash = '\0';
+
+			/* Get the IP address either way */
+			hints.ai_flags = AI_NUMERICHOST;
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_socktype = 0;
+			hints.ai_protocol = 0;
+			hints.ai_addrlen = 0;
+			hints.ai_canonname = NULL;
+			hints.ai_addr = NULL;
+			hints.ai_next = NULL;
 
 			ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
 			if (ret || !gai_result)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("invalid IP mask \"%s\": %s",
+						 errmsg("invalid IP address \"%s\": %s",
 								token, gai_strerror(ret)),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
+				if (cidr_slash)
+					*cidr_slash = '/';
 				if (gai_result)
 					pg_freeaddrinfo_all(hints.ai_family, gai_result);
 				return false;
 			}
 
-			memcpy(&parsedline->mask, gai_result->ai_addr, gai_result->ai_addrlen);
+			if (cidr_slash)
+				*cidr_slash = '/';
+
+			memcpy(&parsedline->addr, gai_result->ai_addr,
+				   gai_result->ai_addrlen);
 			pg_freeaddrinfo_all(hints.ai_family, gai_result);
 
-			if (parsedline->addr.ss_family != parsedline->mask.ss_family)
+			/* Get the netmask */
+			if (cidr_slash)
 			{
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("IP address and mask do not match in file \"%s\" line %d",
-								HbaFileName, line_num)));
-				return false;
+				if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
+										  parsedline->addr.ss_family) < 0)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid CIDR mask in address \"%s\"",
+									token),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
+					return false;
+				}
+			}
+			else
+			{
+				/* Read the mask field. */
+				line_item = lnext(line_item);
+				if (!line_item)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("end-of-line before netmask specification"),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
+					return false;
+				}
+				token = lfirst(line_item);
+
+				ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
+				if (ret || !gai_result)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid IP mask \"%s\": %s",
+									token, gai_strerror(ret)),
+							 errcontext("line %d of configuration file \"%s\"",
+										line_num, HbaFileName)));
+					if (gai_result)
+						pg_freeaddrinfo_all(hints.ai_family, gai_result);
+					return false;
+				}
+
+				memcpy(&parsedline->mask, gai_result->ai_addr,
+					   gai_result->ai_addrlen);
+				pg_freeaddrinfo_all(hints.ai_family, gai_result);
+
+				if (parsedline->addr.ss_family != parsedline->mask.ss_family)
+				{
+					ereport(LOG,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("IP address and mask do not match in file \"%s\" line %d",
+									HbaFileName, line_num)));
+					return false;
+				}
 			}
 		}
 	}							/* != ctLocal */
@@ -1097,35 +1220,24 @@ check_hba(hbaPort *port)
 #endif
 
 			/* Check IP address */
-			if (port->raddr.addr.ss_family == hba->addr.ss_family)
+			switch (hba->ip_cmp_method)
 			{
-				if (!pg_range_sockaddr(&port->raddr.addr, &hba->addr, &hba->mask))
+				case ipCmpMask:
+					if (!check_ip(&port->raddr,
+								  (struct sockaddr *) &hba->addr,
+								  (struct sockaddr *) &hba->mask))
+						continue;
+					break;
+				case ipCmpSameHost:
+				case ipCmpSameNet:
+					if (!check_same_host_or_net(&port->raddr,
+												hba->ip_cmp_method))
+						continue;
+					break;
+				default:
+					/* shouldn't get here, but deem it no-match if so */
 					continue;
 			}
-#ifdef HAVE_IPV6
-			else if (hba->addr.ss_family == AF_INET &&
-					 port->raddr.addr.ss_family == AF_INET6)
-			{
-				/*
-				 * Wrong address family.  We allow only one case: if the file
-				 * has IPv4 and the port is IPv6, promote the file address to
-				 * IPv6 and try to match that way.
-				 */
-				struct sockaddr_storage addrcopy,
-							maskcopy;
-
-				memcpy(&addrcopy, &hba->addr, sizeof(addrcopy));
-				memcpy(&maskcopy, &hba->mask, sizeof(maskcopy));
-				pg_promote_v4_to_v6_addr(&addrcopy);
-				pg_promote_v4_to_v6_mask(&maskcopy);
-
-				if (!pg_range_sockaddr(&port->raddr.addr, &addrcopy, &maskcopy))
-					continue;
-			}
-#endif   /* HAVE_IPV6 */
-			else
-				/* Wrong address family, no IPV6 */
-				continue;
 		}						/* != ctLocal */
 
 		/* Check database and role */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.123 2009/06/24 13:46:32 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.124 2009/10/01 01:58:57 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -223,6 +223,13 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        be zero in the given IP address.
        There must not be any white space between the IP address, the
        <literal>/</literal>, and the CIDR mask length.
+      </para>
+
+      <para>
+       Instead of a <replaceable>CIDR-address</replaceable>, you can write
+       <literal>samehost</literal> to match any of the server's own IP
+       addresses, or <literal>samenet</literal> to match any address in any
+       subnet that the server is directly connected to.
       </para>
 
       <para>
