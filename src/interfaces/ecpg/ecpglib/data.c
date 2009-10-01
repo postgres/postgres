@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.44 2009/08/07 16:47:53 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.45 2009/10/01 18:03:54 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -554,7 +554,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					else
 						PGTYPESnumeric_to_decimal(nres, (decimal *) (var + offset * act_tuple));
 
-					free(nres);
+					PGTYPESnumeric_free(nres);
 					break;
 
 				case ECPGt_interval:

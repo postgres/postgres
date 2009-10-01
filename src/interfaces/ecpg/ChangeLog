@@ -2433,6 +2433,11 @@ Tue, 15 Sep 2009 10:17:52 +0200
 
 	- Applied patch by Boszormenyi Zoltan <zb@cybertec.at> to add missing
 	  ";" to rule in pgc.l.
+
+Thu, 01 Oct 2009 19:31:57 +0200
+
+	- Applied patch by Boszormenyi Zoltan <zb@cybertec.at> to fix memory
+	  leak in decimal handling.
 	- Set ecpg library version to 6.2.
 	- Set compat library version to 3.2.
 	- Set ecpg version to 4.6.
