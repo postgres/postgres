@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.170 2009/06/11 14:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.170.2.1 2009/10/02 21:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,9 +418,10 @@ _bt_findinsertloc(Relation rel,
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %lu exceeds btree maximum, %lu",
+				 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
 						(unsigned long) itemsz,
-						(unsigned long) BTMaxItemSize(page)),
+						(unsigned long) BTMaxItemSize(page),
+						RelationGetRelationName(rel)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));
