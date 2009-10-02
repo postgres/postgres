@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2008, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.169.2.1 2008/04/03 16:27:32 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.169.2.2 2009/10/02 22:50:03 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1121,7 +1121,8 @@ pgstat_initstats(Relation rel)
 	/* We only count stats for things that have storage */
 	if (!(relkind == RELKIND_RELATION ||
 		  relkind == RELKIND_INDEX ||
-		  relkind == RELKIND_TOASTVALUE))
+		  relkind == RELKIND_TOASTVALUE ||
+		  relkind == RELKIND_SEQUENCE))
 	{
 		rel->pgstat_info = NULL;
 		return;
