@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.23 2009/07/29 20:56:17 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.24 2009/10/02 21:14:04 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -102,8 +102,9 @@ addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 {
 	Datum		key = gin_index_getattr(ginstate, old);
 	OffsetNumber attnum = gintuple_get_attrnum(ginstate, old);
-	IndexTuple	res = GinFormTuple(ginstate, attnum, key,
-								   NULL, nitem + GinGetNPosting(old));
+	IndexTuple	res = GinFormTuple(index, ginstate, attnum, key,
+								   NULL, nitem + GinGetNPosting(old),
+								   false);
 
 	if (res)
 	{
@@ -122,7 +123,7 @@ addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack,
 		GinPostingTreeScan *gdi;
 
 		/* posting list becomes big, so we need to make posting's tree */
-		res = GinFormTuple(ginstate, attnum, key, NULL, 0);
+		res = GinFormTuple(index, ginstate, attnum, key, NULL, 0, true);
 		postingRoot = createPostingTree(index, GinGetPosting(old), GinGetNPosting(old));
 		GinSetPostingTree(res, postingRoot);
 
@@ -185,13 +186,12 @@ ginEntryInsert(Relation index, GinState *ginstate,
 	}
 	else
 	{
-		/* We suppose, that tuple can store at list one itempointer */
-		itup = GinFormTuple(ginstate, attnum, value, items, 1);
-		if (itup == NULL || IndexTupleSize(itup) >= GinMaxItemSize)
-			elog(ERROR, "huge tuple");
+		/* We suppose that tuple can store at least one itempointer */
+		itup = GinFormTuple(index, ginstate, attnum, value, items, 1, true);
 
 		if (nitem > 1)
 		{
+			/* Add the rest, making a posting tree if necessary */
 			IndexTuple	previtup = itup;
 
 			itup = addItemPointersToTuple(index, ginstate, stack, previtup, items + 1, nitem - 1, isBuild);

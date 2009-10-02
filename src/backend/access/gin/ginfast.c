@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.4 2009/09/15 20:31:30 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginfast.c,v 1.5 2009/10/02 21:14:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 
 #include "access/genam.h"
 #include "access/gin.h"
-#include "access/tuptoaster.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
@@ -465,16 +464,10 @@ ginHeapTupleFastCollect(Relation index, GinState *ginstate,
 	 */
 	for (i = 0; i < nentries; i++)
 	{
-		int32		tupsize;
-
-		collector->tuples[collector->ntuples + i] = GinFormTuple(ginstate, attnum, entries[i], NULL, 0);
+		collector->tuples[collector->ntuples + i] =
+			GinFormTuple(index, ginstate, attnum, entries[i], NULL, 0, true);
 		collector->tuples[collector->ntuples + i]->t_tid = *item;
-		tupsize = IndexTupleSize(collector->tuples[collector->ntuples + i]);
-
-		if (tupsize > TOAST_INDEX_TARGET || tupsize >= GinMaxItemSize)
-			elog(ERROR, "huge tuple");
-
-		collector->sumsize += tupsize;
+		collector->sumsize += IndexTupleSize(collector->tuples[collector->ntuples + i]);
 	}
 
 	collector->ntuples += nentries;

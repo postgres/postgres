@@ -8,19 +8,21 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.21 2009/06/11 14:48:53 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.22 2009/10/02 21:14:04 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
 #include "access/gin.h"
-#include "access/tuptoaster.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 /*
  * Form a tuple for entry tree.
+ *
+ * If the tuple would be too big to be stored, function throws a suitable
+ * error if errorTooBig is TRUE, or returns NULL if errorTooBig is FALSE.
  *
  * On leaf pages, Index tuple has non-traditional layout. Tuple may contain
  * posting list or root blocknumber of posting tree.
@@ -49,10 +51,13 @@
  * and value.
  */
 IndexTuple
-GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key, ItemPointerData *ipd, uint32 nipd)
+GinFormTuple(Relation index, GinState *ginstate,
+			 OffsetNumber attnum, Datum key,
+			 ItemPointerData *ipd, uint32 nipd, bool errorTooBig)
 {
 	bool		isnull[2] = {FALSE, FALSE};
 	IndexTuple	itup;
+	uint32		newsize;
 
 	if (ginstate->oneCol)
 		itup = index_form_tuple(ginstate->origTupdesc, &key, isnull);
@@ -69,13 +74,19 @@ GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key, ItemPointerData
 
 	if (nipd > 0)
 	{
-		uint32		newsize = MAXALIGN(SHORTALIGN(IndexTupleSize(itup)) + sizeof(ItemPointerData) * nipd);
-
-		if (newsize >= INDEX_SIZE_MASK)
+		newsize = MAXALIGN(SHORTALIGN(IndexTupleSize(itup)) + sizeof(ItemPointerData) * nipd);
+		if (newsize > Min(INDEX_SIZE_MASK, GinMaxItemSize))
+		{
+			if (errorTooBig)
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+								(unsigned long) newsize,
+								(unsigned long) Min(INDEX_SIZE_MASK,
+													GinMaxItemSize),
+								RelationGetRelationName(index))));
 			return NULL;
-
-		if (newsize > TOAST_INDEX_TARGET && nipd > 1)
-			return NULL;
+		}
 
 		itup = repalloc(itup, newsize);
 
@@ -89,6 +100,29 @@ GinFormTuple(GinState *ginstate, OffsetNumber attnum, Datum key, ItemPointerData
 	}
 	else
 	{
+		/*
+		 * Gin tuple without any ItemPointers should be large enough to keep
+		 * one ItemPointer, to prevent inconsistency between
+		 * ginHeapTupleFastCollect and ginEntryInsert called by
+		 * ginHeapTupleInsert.  ginHeapTupleFastCollect forms tuple without
+		 * extra pointer to heap, but ginEntryInsert (called for pending list
+		 * cleanup during vacuum) will form the same tuple with one
+		 * ItemPointer.
+		 */
+		newsize = MAXALIGN(SHORTALIGN(IndexTupleSize(itup)) + sizeof(ItemPointerData));
+		if (newsize > Min(INDEX_SIZE_MASK, GinMaxItemSize))
+		{
+			if (errorTooBig)
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
+								(unsigned long) newsize,
+								(unsigned long) Min(INDEX_SIZE_MASK,
+													GinMaxItemSize),
+								RelationGetRelationName(index))));
+			return NULL;
+		}
+
 		GinSetNPosting(itup, 0);
 	}
 	return itup;
