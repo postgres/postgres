@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.86 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.87 2009/10/02 18:13:04 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -560,6 +560,14 @@ CREATE FUNCTION foo(int, int default 42) ...
    <para>
     To be able to define a function, the user must have the
     <literal>USAGE</literal> privilege on the language.
+   </para>
+
+   <para>
+    When <command>CREATE OR REPLACE FUNCTION</> is used to replace an
+    existing function, the ownership and permissions of the function
+    do not change.  All other function properties are assigned the
+    values specified or implied in the command.  You must own the function
+    to replace it (this includes being a member of the owning role).
    </para>
 
  </refsect1>
