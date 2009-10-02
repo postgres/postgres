@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.10 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/snapmgr.c,v 1.11 2009/10/02 17:57:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,6 @@ bool		FirstSnapshotSet = false;
 static bool registered_serializable = false;
 
 
-static Snapshot CopySnapshot(Snapshot snapshot);
 static void FreeSnapshot(Snapshot snapshot);
 static void SnapshotResetXmin(void);
 
@@ -192,7 +191,7 @@ SnapshotSetCommandId(CommandId curcid)
  * The copy is palloc'd in TopTransactionContext and has initial refcounts set
  * to 0.  The returned snapshot has the copied flag set.
  */
-static Snapshot
+Snapshot
 CopySnapshot(Snapshot snapshot)
 {
 	Snapshot	newsnap;
