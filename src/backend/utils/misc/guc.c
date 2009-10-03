@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.519 2009/09/22 23:43:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.520 2009/10/03 18:04:57 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5197,11 +5197,15 @@ SetConfigOption(const char *name, const char *value,
  * Fetch the current value of the option `name'. If the option doesn't exist,
  * throw an ereport and don't return.
  *
+ * If restrict_superuser is true, we also enforce that only superusers can
+ * see GUC_SUPERUSER_ONLY variables.  This should only be passed as true
+ * in user-driven calls.
+ *
  * The string is *not* allocated for modification and is really only
  * valid until the next call to configuration related functions.
  */
 const char *
-GetConfigOption(const char *name)
+GetConfigOption(const char *name, bool restrict_superuser)
 {
 	struct config_generic *record;
 	static char buffer[256];
@@ -5211,7 +5215,9 @@ GetConfigOption(const char *name)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			   errmsg("unrecognized configuration parameter \"%s\"", name)));
-	if ((record->flags & GUC_SUPERUSER_ONLY) && !superuser())
+	if (restrict_superuser &&
+		(record->flags & GUC_SUPERUSER_ONLY) &&
+		!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to examine \"%s\"", name)));
