@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.191 2009/10/01 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.192 2009/10/03 20:04:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,15 +804,11 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 								token, gai_strerror(ret)),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				if (cidr_slash)
-					*cidr_slash = '/';
 				if (gai_result)
 					pg_freeaddrinfo_all(hints.ai_family, gai_result);
+				pfree(token);
 				return false;
 			}
-
-			if (cidr_slash)
-				*cidr_slash = '/';
 
 			memcpy(&parsedline->addr, gai_result->ai_addr,
 				   gai_result->ai_addrlen);
@@ -824,18 +820,22 @@ parse_hba_line(List *line, int line_num, HbaLine *parsedline)
 				if (pg_sockaddr_cidr_mask(&parsedline->mask, cidr_slash + 1,
 										  parsedline->addr.ss_family) < 0)
 				{
+					*cidr_slash = '/';		/* restore token for message */
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid CIDR mask in address \"%s\"",
 									token),
 							 errcontext("line %d of configuration file \"%s\"",
 										line_num, HbaFileName)));
+					pfree(token);
 					return false;
 				}
+				pfree(token);
 			}
 			else
 			{
 				/* Read the mask field. */
+				pfree(token);
 				line_item = lnext(line_item);
 				if (!line_item)
 				{
@@ -1266,7 +1266,7 @@ check_hba(hbaPort *port)
 }
 
 /*
- * Free the contents of a hba record
+ * Free an HbaLine structure
  */
 static void
 free_hba_record(HbaLine *record)
@@ -1275,6 +1275,8 @@ free_hba_record(HbaLine *record)
 		pfree(record->database);
 	if (record->role)
 		pfree(record->role);
+	if (record->usermap)
+		pfree(record->usermap);
 	if (record->pamservice)
 		pfree(record->pamservice);
 	if (record->ldapserver)
@@ -1287,6 +1289,7 @@ free_hba_record(HbaLine *record)
 		pfree(record->krb_server_hostname);
 	if (record->krb_realm)
 		pfree(record->krb_realm);
+	pfree(record);
 }
 
 /*
@@ -1355,19 +1358,21 @@ load_hba(void)
 		{
 			/* Parse error in the file, so indicate there's a problem */
 			free_hba_record(newline);
-			pfree(newline);
+			ok = false;
 
 			/*
 			 * Keep parsing the rest of the file so we can report errors on
 			 * more than the first row. Error has already been reported in the
 			 * parsing function, so no need to log it here.
 			 */
-			ok = false;
 			continue;
 		}
 
 		new_parsed_lines = lappend(new_parsed_lines, newline);
 	}
+
+	/* Free the temporary lists */
+	free_lines(&hba_lines, &hba_line_nums);
 
 	if (!ok)
 	{
@@ -1379,9 +1384,6 @@ load_hba(void)
 	/* Loaded new file successfully, replace the one we use */
 	clean_hba_list(parsed_hba_lines);
 	parsed_hba_lines = new_parsed_lines;
-
-	/* Free the temporary lists */
-	free_lines(&hba_lines, &hba_line_nums);
 
 	return true;
 }
