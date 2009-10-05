@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.130 2009/09/14 13:23:48 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.131 2009/10/05 23:58:49 alvherre Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -371,7 +371,4 @@ distclean: clean
 	rm -f $(addprefix $(srcdir)/,*.texixml *.texi *.info db2texi.refs)
 
 maintainer-clean: distclean
-# HTML
-	rm -rf $(addprefix $(srcdir)/,html/ html-stamp)
-# man
-	rm -rf $(addprefix $(srcdir)/,man1/ man3/ man7/ man-stamp)
+	rm -rf html-stamp man-stamp
