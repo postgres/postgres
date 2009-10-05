@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.74 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.75 2009/10/05 19:24:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ enum SysCacheIdentifier
 	CONSTROID,
 	CONVOID,
 	DATABASEOID,
+	DEFACLROLENSPOBJ,
 	ENUMOID,
 	ENUMTYPOIDNAME,
 	FOREIGNDATAWRAPPERNAME,

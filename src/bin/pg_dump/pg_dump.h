@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.157 2009/09/22 23:43:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.158 2009/10/05 19:24:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,7 @@ typedef enum
 	DO_TSCONFIG,
 	DO_FDW,
 	DO_FOREIGN_SERVER,
+	DO_DEFAULT_ACL,
 	DO_BLOBS,
 	DO_BLOB_COMMENTS
 } DumpableObjectType;
@@ -432,6 +433,14 @@ typedef struct _foreignServerInfo
 	char	   *srvoptions;
 } ForeignServerInfo;
 
+typedef struct _defaultACLInfo
+{
+	DumpableObject dobj;
+	char	   *defaclrole;
+	char	    defaclobjtype;
+	char	   *defaclacl;
+} DefaultACLInfo;
+
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
 extern bool g_verbose;			/* verbose flag */
@@ -516,5 +525,6 @@ extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
 extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
 extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
 extern ForeignServerInfo *getForeignServers(int *numForeignServers);
+extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
 
 #endif   /* PG_DUMP_H */

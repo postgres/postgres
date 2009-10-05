@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.108 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.109 2009/10/05 19:24:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,6 +266,11 @@ DECLARE_UNIQUE_INDEX(pg_user_mapping_oid_index, 174, on pg_user_mapping using bt
 
 DECLARE_UNIQUE_INDEX(pg_user_mapping_user_server_index, 175, on pg_user_mapping using btree(umuser oid_ops, umserver oid_ops));
 #define UserMappingUserServerIndexId	175
+
+DECLARE_UNIQUE_INDEX(pg_default_acl_role_nsp_obj_index, 827, on pg_default_acl using btree(defaclrole oid_ops, defaclnamespace oid_ops, defaclobjtype char_ops));
+#define DefaultAclRoleNspObjIndexId	827
+DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btree(oid oid_ops));
+#define DefaultAclOidIndexId	828
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

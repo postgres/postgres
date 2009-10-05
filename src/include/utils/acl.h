@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.108 2009/06/11 14:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.109 2009/10/05 19:24:49 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -193,41 +193,23 @@ typedef enum AclObjectKind
 	MAX_ACL_KIND				/* MUST BE LAST */
 } AclObjectKind;
 
-/*
- * The information about one Grant/Revoke statement, in internal format: object
- * and grantees names have been turned into Oids, the privilege list is an
- * AclMode bitmask.  If 'privileges' is ACL_NO_RIGHTS (the 0 value) and
- * all_privs is true, 'privileges' will be internally set to the right kind of
- * ACL_ALL_RIGHTS_*, depending on the object type (NB - this will modify the
- * InternalGrant struct!)
- *
- * Note: 'all_privs' and 'privileges' represent object-level privileges only.
- * There might also be column-level privilege specifications, which are
- * represented in col_privs (this is a list of untransformed AccessPriv nodes).
- * Column privileges are only valid for objtype ACL_OBJECT_RELATION.
- */
-typedef struct
-{
-	bool		is_grant;
-	GrantObjectType objtype;
-	List	   *objects;
-	bool		all_privs;
-	AclMode		privileges;
-	List	   *col_privs;
-	List	   *grantees;
-	bool		grant_option;
-	DropBehavior behavior;
-} InternalGrant;
 
 /*
  * routines used internally
  */
 extern Acl *acldefault(GrantObjectType objtype, Oid ownerId);
+extern Acl *get_user_default_acl(GrantObjectType objtype, Oid ownerId,
+								 Oid nsp_oid);
+
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		  int modechg, Oid ownerId, DropBehavior behavior);
 extern Acl *aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId);
+extern Acl *make_empty_acl(void);
 extern Acl *aclcopy(const Acl *orig_acl);
 extern Acl *aclconcat(const Acl *left_acl, const Acl *right_acl);
+extern Acl *aclmerge(const Acl *left_acl, const Acl *right_acl, Oid ownerId);
+extern void aclitemsort(Acl *acl);
+extern bool aclequal(const Acl *left_acl, const Acl *right_acl);
 
 extern AclMode aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		AclMode mask, AclMaskHow how);
@@ -261,7 +243,10 @@ extern Datum hash_aclitem(PG_FUNCTION_ARGS);
  * prototypes for functions in aclchk.c
  */
 extern void ExecuteGrantStmt(GrantStmt *stmt);
-extern void ExecGrantStmt_oids(InternalGrant *istmt);
+extern void ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt);
+
+extern void RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid);
+extern void RemoveDefaultACLById(Oid defaclOid);
 
 extern AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
 					 Oid roleid, AclMode mask, AclMaskHow how);

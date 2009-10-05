@@ -484,6 +484,73 @@ SET SESSION AUTHORIZATION regressuser2;
 
 SELECT has_sequence_privilege('x_seq', 'USAGE');
 
+
+-- test default ACLs
+\c -
+
+CREATE SCHEMA testns;
+GRANT ALL ON SCHEMA testns TO regressuser1;
+
+CREATE TABLE testns.acltest1 (x int);
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'SELECT'); -- no
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'INSERT'); -- no
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT SELECT ON TABLE TO public;
+
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'SELECT'); -- no
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'INSERT'); -- no
+
+DROP TABLE testns.acltest1;
+CREATE TABLE testns.acltest1 (x int);
+
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'SELECT'); -- yes
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'INSERT'); -- no
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT INSERT ON TABLE TO regressuser1;
+
+DROP TABLE testns.acltest1;
+CREATE TABLE testns.acltest1 (x int);
+
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'SELECT'); -- yes
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'INSERT'); -- yes
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns REVOKE INSERT ON TABLE FROM regressuser1;
+
+DROP TABLE testns.acltest1;
+CREATE TABLE testns.acltest1 (x int);
+
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'SELECT'); -- yes
+SELECT has_table_privilege('regressuser1', 'testns.acltest1', 'INSERT'); -- no
+
+ALTER DEFAULT PRIVILEGES FOR ROLE regressuser1 REVOKE EXECUTE ON FUNCTION FROM public;
+
+SET ROLE regressuser1;
+
+CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+
+SELECT has_function_privilege('regressuser2', 'testns.foo()', 'EXECUTE'); -- no
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT EXECUTE ON FUNCTION to public;
+
+DROP FUNCTION testns.foo();
+CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
+
+SELECT has_function_privilege('regressuser2', 'testns.foo()', 'EXECUTE'); -- yes
+
+DROP FUNCTION testns.foo();
+
+RESET ROLE;
+
+SELECT count(*)
+  FROM pg_default_acl d LEFT JOIN pg_namespace n ON defaclnamespace = n.oid
+  WHERE nspname = 'testns';
+
+DROP SCHEMA testns CASCADE;
+
+SELECT d.*     -- check that entries went away
+  FROM pg_default_acl d LEFT JOIN pg_namespace n ON defaclnamespace = n.oid
+  WHERE nspname IS NULL AND defaclnamespace != 0;
+
 -- clean up
 
 \c
@@ -513,7 +580,10 @@ DROP TABLE atestp2;
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
 
+-- these are needed to clean up permissions
 REVOKE USAGE ON LANGUAGE sql FROM regressuser1;
+DROP OWNED BY regressuser1;
+
 DROP USER regressuser1;
 DROP USER regressuser2;
 DROP USER regressuser3;

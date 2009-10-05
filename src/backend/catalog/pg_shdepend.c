@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.34 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.35 2009/10/05 19:24:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_default_acl.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
@@ -1180,7 +1181,6 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
-			InternalGrant istmt;
 			ObjectAddress obj;
 
 			/* We only operate on objects in the current database */
@@ -1195,42 +1195,9 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					elog(ERROR, "unexpected dependency type");
 					break;
 				case SHARED_DEPENDENCY_ACL:
-					switch (sdepForm->classid)
-					{
-						case RelationRelationId:
-							/* it's OK to use RELATION for a sequence */
-							istmt.objtype = ACL_OBJECT_RELATION;
-							break;
-						case DatabaseRelationId:
-							istmt.objtype = ACL_OBJECT_DATABASE;
-							break;
-						case ProcedureRelationId:
-							istmt.objtype = ACL_OBJECT_FUNCTION;
-							break;
-						case LanguageRelationId:
-							istmt.objtype = ACL_OBJECT_LANGUAGE;
-							break;
-						case NamespaceRelationId:
-							istmt.objtype = ACL_OBJECT_NAMESPACE;
-							break;
-						case TableSpaceRelationId:
-							istmt.objtype = ACL_OBJECT_TABLESPACE;
-							break;
-						default:
-							elog(ERROR, "unexpected object type %d",
-								 sdepForm->classid);
-							break;
-					}
-					istmt.is_grant = false;
-					istmt.objects = list_make1_oid(sdepForm->objid);
-					istmt.all_privs = true;
-					istmt.privileges = ACL_NO_RIGHTS;
-					istmt.col_privs = NIL;
-					istmt.grantees = list_make1_oid(roleid);
-					istmt.grant_option = false;
-					istmt.behavior = DROP_CASCADE;
-
-					ExecGrantStmt_oids(&istmt);
+					RemoveRoleFromObjectACL(roleid,
+											sdepForm->classid,
+											sdepForm->objid);
 					break;
 				case SHARED_DEPENDENCY_OWNER:
 					/* Save it for deletion below */
@@ -1365,8 +1332,15 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					AlterLanguageOwner_oid(sdepForm->objid, newrole);
 					break;
 
+				case DefaultAclRelationId:
+					/*
+					 * Ignore default ACLs; they should be handled by
+					 * DROP OWNED, not REASSIGN OWNED.
+					 */
+					break;
+
 				default:
-					elog(ERROR, "unexpected classid %d", sdepForm->classid);
+					elog(ERROR, "unexpected classid %u", sdepForm->classid);
 					break;
 			}
 			/* Make sure the next iteration will see my changes */

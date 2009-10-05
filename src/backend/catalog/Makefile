@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.71 2009/08/26 22:24:43 petere Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.72 2009/10/05 19:24:34 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,6 +37,7 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
 	pg_ts_parser.h pg_ts_template.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
+	pg_default_acl.h \
 	toasting.h indexing.h \
     )
 

@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.361 2009/09/22 23:43:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.362 2009/10/05 19:24:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1024,6 +1024,15 @@ _equalGrantRoleStmt(GrantRoleStmt *a, GrantRoleStmt *b)
 	COMPARE_SCALAR_FIELD(admin_opt);
 	COMPARE_STRING_FIELD(grantor);
 	COMPARE_SCALAR_FIELD(behavior);
+
+	return true;
+}
+
+static bool
+_equalAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *a, AlterDefaultPrivilegesStmt *b)
+{
+	COMPARE_NODE_FIELD(options);
+	COMPARE_NODE_FIELD(action);
 
 	return true;
 }
@@ -2536,6 +2545,9 @@ equal(void *a, void *b)
 			break;
 		case T_GrantRoleStmt:
 			retval = _equalGrantRoleStmt(a, b);
+			break;
+		case T_AlterDefaultPrivilegesStmt:
+			retval = _equalAlterDefaultPrivilegesStmt(a, b);
 			break;
 		case T_DeclareCursorStmt:
 			retval = _equalDeclareCursorStmt(a, b);

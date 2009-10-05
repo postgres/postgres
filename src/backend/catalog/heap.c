@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.359 2009/09/26 22:42:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.360 2009/10/05 19:24:35 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -59,6 +59,7 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
@@ -74,6 +75,7 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_rel_oid, Oid new_type_oid,
 					Oid relowner,
 					char relkind,
+					Datum relacl,
 					Datum reloptions);
 static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
@@ -636,14 +638,16 @@ AddNewAttributeTuples(Oid new_rel_oid,
  * Caller has already opened and locked pg_class.
  * Tuple data is taken from new_rel_desc->rd_rel, except for the
  * variable-width fields which are not present in a cached reldesc.
- * We always initialize relacl to NULL (i.e., default permissions),
- * and reloptions is set to the passed-in text array (if any).
+ * relacl and reloptions are passed in Datum form (to avoid having
+ * to reference the data types in heap.h).  Pass (Datum) 0 to set them
+ * to NULL.
  * --------------------------------
  */
 void
 InsertPgClassTuple(Relation pg_class_desc,
 				   Relation new_rel_desc,
 				   Oid new_rel_oid,
+				   Datum relacl,
 				   Datum reloptions)
 {
 	Form_pg_class rd_rel = new_rel_desc->rd_rel;
@@ -678,8 +682,10 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relhastriggers - 1] = BoolGetDatum(rd_rel->relhastriggers);
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
-	/* start out with empty permissions */
-	nulls[Anum_pg_class_relacl - 1] = true;
+	if (relacl != (Datum) 0)
+		values[Anum_pg_class_relacl - 1] = relacl;
+	else
+		nulls[Anum_pg_class_relacl - 1] = true;
 	if (reloptions != (Datum) 0)
 		values[Anum_pg_class_reloptions - 1] = reloptions;
 	else
@@ -715,6 +721,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_type_oid,
 					Oid relowner,
 					char relkind,
+					Datum relacl,
 					Datum reloptions)
 {
 	Form_pg_class new_rel_reltup;
@@ -775,7 +782,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_desc->rd_att->tdtypeid = new_type_oid;
 
 	/* Now build and insert the tuple */
-	InsertPgClassTuple(pg_class_desc, new_rel_desc, new_rel_oid, reloptions);
+	InsertPgClassTuple(pg_class_desc, new_rel_desc, new_rel_oid,
+					   relacl, reloptions);
 }
 
 
@@ -831,6 +839,27 @@ AddNewRelationType(const char *typeName,
  *		heap_create_with_catalog
  *
  *		creates a new cataloged relation.  see comments above.
+ *
+ * Arguments:
+ *	relname: name to give to new rel
+ *	relnamespace: OID of namespace it goes in
+ *	reltablespace: OID of tablespace it goes in
+ *	relid: OID to assign to new rel, or InvalidOid to select a new OID
+ *	reltypeid: OID to assign to rel's rowtype, or InvalidOid to select one
+ *	ownerid: OID of new rel's owner
+ *	tupdesc: tuple descriptor (source of column definitions)
+ *	cooked_constraints: list of precooked check constraints and defaults
+ *	relkind: relkind for new rel
+ *	shared_relation: TRUE if it's to be a shared relation
+ *	oidislocal: TRUE if oid column (if any) should be marked attislocal
+ *	oidinhcount: attinhcount to assign to oid column (if any)
+ *	oncommit: ON COMMIT marking (only relevant if it's a temp table)
+ *	reloptions: reloptions in Datum form, or (Datum) 0 if none
+ *	use_user_acl: TRUE if should look for user-defined default permissions;
+ *		if FALSE, relacl is always set NULL
+ *	allow_system_table_mods: TRUE to allow creation in system namespaces
+ *
+ * Returns the OID of the new relation
  * --------------------------------
  */
 Oid
@@ -848,10 +877,12 @@ heap_create_with_catalog(const char *relname,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
 						 Datum reloptions,
+						 bool use_user_acl,
 						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
+	Acl		   *relacl;
 	Oid			old_type_oid;
 	Oid			new_type_oid;
 	Oid			new_array_oid = InvalidOid;
@@ -919,6 +950,30 @@ heap_create_with_catalog(const char *relname,
 	if (!OidIsValid(relid))
 		relid = GetNewRelFileNode(reltablespace, shared_relation,
 								  pg_class_desc);
+
+	/*
+	 * Determine the relation's initial permissions.
+	 */
+	if (use_user_acl)
+	{
+		switch (relkind)
+		{
+			case RELKIND_RELATION:
+			case RELKIND_VIEW:
+				relacl = get_user_default_acl(ACL_OBJECT_RELATION, ownerid,
+											  relnamespace);
+				break;
+			case RELKIND_SEQUENCE:
+				relacl = get_user_default_acl(ACL_OBJECT_SEQUENCE, ownerid,
+											  relnamespace);
+				break;
+			default:
+				relacl = NULL;
+				break;
+		}
+	}
+	else
+		relacl = NULL;
 
 	/*
 	 * Create the relcache entry (mostly dummy at this point) and the physical
@@ -1027,6 +1082,7 @@ heap_create_with_catalog(const char *relname,
 						new_type_oid,
 						ownerid,
 						relkind,
+						PointerGetDatum(relacl),
 						reloptions);
 
 	/*
@@ -1037,12 +1093,15 @@ heap_create_with_catalog(const char *relname,
 
 	/*
 	 * Make a dependency link to force the relation to be deleted if its
-	 * namespace is.  Also make a dependency link to its owner.
+	 * namespace is.  Also make a dependency link to its owner, as well
+	 * as dependencies for any roles mentioned in the default ACL.
 	 *
 	 * For composite types, these dependencies are tracked for the pg_type
 	 * entry, so we needn't record them here.  Likewise, TOAST tables don't
 	 * need a namespace dependency (they live in a pinned namespace) nor an
-	 * owner dependency (they depend indirectly through the parent table).
+	 * owner dependency (they depend indirectly through the parent table),
+	 * nor should they have any ACL entries.
+	 *
 	 * Also, skip this in bootstrap mode, since we don't make dependencies
 	 * while bootstrapping.
 	 */
@@ -1062,6 +1121,18 @@ heap_create_with_catalog(const char *relname,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
+
+		if (relacl != NULL)
+		{
+			int			nnewmembers;
+			Oid		   *newmembers;
+
+			nnewmembers = aclmembers(relacl, &newmembers);
+			updateAclDependencies(RelationRelationId, relid, 0,
+								  ownerid, true,
+								  0, NULL,
+								  nnewmembers, newmembers);
+		}
 	}
 
 	/*

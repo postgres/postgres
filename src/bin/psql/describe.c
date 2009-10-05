@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.226 2009/07/29 20:56:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.227 2009/10/05 19:24:46 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -731,6 +731,73 @@ permissionsList(const char *pattern)
 	return true;
 }
 
+
+/*
+ * \ddp
+ *
+ * List DefaultACLs.  The pattern can match either schema or role name.
+ */
+bool
+listDefaultACLs(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+	static const bool translate_columns[] = {false, false, true, false};
+
+	if (pset.sversion < 80500)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support altering default privileges.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT pg_catalog.pg_get_userbyid(d.defaclrole) AS \"%s\",\n"
+					  "  n.nspname AS \"%s\",\n"
+					  "  CASE d.defaclobjtype WHEN 'r' THEN '%s' WHEN 'S' THEN '%s' WHEN 'f' THEN '%s' END AS \"%s\",\n"
+					  "  ",
+					  gettext_noop("Owner"),
+					  gettext_noop("Schema"),
+					  gettext_noop("table"),
+					  gettext_noop("sequence"),
+					  gettext_noop("function"),
+					  gettext_noop("Type"));
+
+	printACLColumn(&buf, "d.defaclacl");
+
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_default_acl d\n"
+	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  NULL,
+						  "n.nspname",
+						  "pg_catalog.pg_get_userbyid(d.defaclrole)",
+						  NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3;");
+
+	res = PSQLexec(buf.data, false);
+	if (!res)
+	{
+		termPQExpBuffer(&buf);
+		return false;
+	}
+
+	myopt.nullPrint = NULL;
+	printfPQExpBuffer(&buf, _("Default access privileges"));
+	myopt.title = buf.data;
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	termPQExpBuffer(&buf);
+	PQclear(res);
+	return true;
+}
 
 
 /*

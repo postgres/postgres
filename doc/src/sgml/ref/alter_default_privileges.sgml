@@ -1,0 +1,211 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_default_privileges.sgml,v 1.1 2009/10/05 19:24:33 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERDEFAULTPRIVILEGES">
+ <refmeta>
+  <refentrytitle id="SQL-ALTERDEFAULTPRIVILEGES-TITLE">ALTER DEFAULT PRIVILEGES</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER DEFAULT PRIVILEGES</refname>
+  <refpurpose>define default access privileges</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterdefaultprivileges">
+  <primary>ALTER DEFAULT PRIVILEGES</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER DEFAULT PRIVILEGES
+    [ FOR { ROLE | USER } <replaceable>target_role</replaceable> [, ...] ]
+    [ IN SCHEMA <replaceable>schema_name</replaceable> [, ...] ]
+    <replaceable class="parameter">abbreviated_grant_or_revoke</replaceable>
+
+<phrase>where <replaceable class="parameter">abbreviated_grant_or_revoke</replaceable> is one of:</phrase>
+
+GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+    [,...] | ALL [ PRIVILEGES ] }
+    ON TABLE
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { USAGE | SELECT | UPDATE }
+    [,...] | ALL [ PRIVILEGES ] }
+    ON SEQUENCE
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { EXECUTE | ALL [ PRIVILEGES ] }
+    ON FUNCTION
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+    [,...] | ALL [ PRIVILEGES ] }
+    ON TABLE
+    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { { USAGE | SELECT | UPDATE }
+    [,...] | ALL [ PRIVILEGES ] }
+    ON SEQUENCE
+    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { EXECUTE | ALL [ PRIVILEGES ] }
+    ON FUNCTION
+    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="sql-alterdefaultprivileges-description">
+  <title>Description</title>
+
+  <para>
+   <command>ALTER DEFAULT PRIVILEGES</> allows you to set the privileges
+   that will be applied to objects created in the future.  (It does not
+   affect privileges assigned to already-existing objects.)  Currently,
+   only the privileges for tables (including views), sequences, and
+   functions can be altered.
+  </para>
+
+  <para>
+   You can change default privileges only for objects that will be created by
+   yourself or by roles that you are a member of.  The privileges can be set
+   globally (i.e., for all objects created in the current database),
+   or just for objects created in specified schemas.  Default privileges
+   that are specified per-schema are added to whatever the global default
+   privileges are for the particular object type.
+  </para>
+
+  <para>
+   As explained under <xref linkend="sql-grant" endterm="sql-grant-title">,
+   the default privileges for any object type normally grant all grantable
+   permissions to the object owner, and may grant some privileges to
+   <literal>PUBLIC</> as well.  However, this behavior can be changed by
+   altering the global default privileges with
+   <command>ALTER DEFAULT PRIVILEGES</>.
+  </para>
+
+ <refsect2>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable>target_role</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing role of which the current role is a member.
+      If <literal>FOR ROLE</> is omitted, the current role is assumed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>schema_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing schema.  Each <replaceable>target_role</>
+      must have <literal>CREATE</> privileges for each specified schema.
+      If <literal>IN SCHEMA</> is omitted, the global default privileges
+      are altered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>role_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing role to grant or revoke privileges for.
+      This parameter, and all the other parameters in
+      <replaceable class="parameter">abbreviated_grant_or_revoke</>,
+      act as described under
+      <xref linkend="sql-grant" endterm="sql-grant-title"> or
+      <xref linkend="sql-revoke" endterm="sql-revoke-title">,
+      except that one is setting permissions for a whole class of objects
+      rather than specific named objects.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect2>
+ </refsect1>
+
+ <refsect1 id="sql-alterdefaultprivileges-notes">
+  <title>Notes</title>
+
+  <para>
+   Use <xref linkend="app-psql">'s <command>\ddp</command> command
+   to obtain information about existing assignments of default privileges.
+   The meaning of the privilege values is the same as explained for
+   <command>\dp</command> under
+   <xref linkend="sql-grant" endterm="sql-grant-title">.
+  </para>
+
+  <para>
+   If you wish to drop a role that has had its global default privileges
+   altered, it is necessary to use <command>DROP OWNED BY</> first,
+   to get rid of the default privileges entry for the role.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-alterdefaultprivileges-examples">
+  <title>Examples</title>
+
+  <para>
+   Grant SELECT privilege to everyone for all tables (and views) you
+   subsequently create in schema <literal>myschema</literal>, and allow
+   role <literal>webuser</> to INSERT into them too:
+
+<programlisting>
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT SELECT ON TABLE TO PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT INSERT ON TABLE TO webuser;
+</programlisting>
+  </para>
+
+  <para>
+   Undo the above, so that subsequently-created tables won't have any
+   more permissions than normal:
+
+<programlisting>
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE SELECT ON TABLE FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLE FROM webuser;
+</programlisting>
+  </para>
+
+  <para>
+   Remove the public EXECUTE permission that is normally granted on functions,
+   for all functions subsequently created by role <literal>admin</>:
+
+<programlisting>
+ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTION FROM PUBLIC;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>ALTER DEFAULT PRIVILEGES</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
+   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

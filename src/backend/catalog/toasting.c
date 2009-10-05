@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.19 2009/09/26 22:42:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.20 2009/10/05 19:24:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,6 +213,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   0,
 										   ONCOMMIT_NOOP,
 										   reloptions,
+										   false,
 										   true);
 
 	/* make the toast relation visible, else index creation will fail */

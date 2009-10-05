@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.299 2009/09/26 22:42:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.300 2009/10/05 19:24:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,6 +521,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  parentOidCount,
 										  stmt->oncommit,
 										  reloptions,
+										  true,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -6098,6 +6099,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 			case OCLASS_FDW:
 			case OCLASS_FOREIGN_SERVER:
 			case OCLASS_USER_MAPPING:
+			case OCLASS_DEFACL:
 
 				/*
 				 * We don't expect any of these sorts of objects to depend on

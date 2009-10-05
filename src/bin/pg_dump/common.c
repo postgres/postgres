@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.107 2009/06/11 14:49:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.108 2009/10/05 19:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ getSchemaData(int *numTablesPtr)
 	TSConfigInfo *cfginfo;
 	FdwInfo    *fdwinfo;
 	ForeignServerInfo *srvinfo;
+	DefaultACLInfo *daclinfo;
 	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
@@ -108,6 +109,7 @@ getSchemaData(int *numTablesPtr)
 	int			numTSConfigs;
 	int			numForeignDataWrappers;
 	int			numForeignServers;
+	int			numDefaultACLs;
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
@@ -165,6 +167,10 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign servers\n");
 	srvinfo = getForeignServers(&numForeignServers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading default privileges\n");
+	daclinfo = getDefaultACLs(&numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator families\n");

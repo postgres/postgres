@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.329 2009/09/27 20:09:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.330 2009/10/05 19:24:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2909,6 +2909,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  0,
 											  into->onCommit,
 											  reloptions,
+											  true,
 											  allowSystemTableMods);
 
 	FreeTupleDesc(tupdesc);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.166 2009/10/02 18:13:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.167 2009/10/05 19:24:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ ProcedureCreate(const char *procedureName,
 	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
 	Oid			proowner = GetUserId();
+	Acl		   *proacl = NULL;
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -331,8 +332,7 @@ ProcedureCreate(const char *procedureName,
 		values[Anum_pg_proc_proconfig - 1] = proconfig;
 	else
 		nulls[Anum_pg_proc_proconfig - 1] = true;
-	/* start out with empty permissions */
-	nulls[Anum_pg_proc_proacl - 1] = true;
+	/* proacl will be determined later */
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
@@ -489,6 +489,15 @@ ProcedureCreate(const char *procedureName,
 	else
 	{
 		/* Creating a new procedure */
+
+		/* First, get default permissions and set up proacl */
+		proacl = get_user_default_acl(ACL_OBJECT_FUNCTION, proowner,
+									  procNamespace);
+		if (proacl != NULL)
+			values[Anum_pg_proc_proacl - 1] = PointerGetDatum(proacl);
+		else
+			nulls[Anum_pg_proc_proacl - 1] = true;
+
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
 		is_update = false;
@@ -542,6 +551,19 @@ ProcedureCreate(const char *procedureName,
 	/* dependency on owner */
 	if (!is_update)
 		recordDependencyOnOwner(ProcedureRelationId, retval, proowner);
+
+	/* dependency on any roles mentioned in ACL */
+	if (!is_update && proacl != NULL)
+	{
+		int			nnewmembers;
+		Oid		   *newmembers;
+
+		nnewmembers = aclmembers(proacl, &newmembers);
+		updateAclDependencies(ProcedureRelationId, retval, 0,
+							  proowner, true,
+							  0, NULL,
+							  nnewmembers, newmembers);
+	}
 
 	heap_freetuple(tup);
 

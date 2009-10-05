@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.679 2009/09/22 23:43:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.680 2009/10/05 19:24:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -188,7 +188,9 @@ static TypeName *TableFuncTypeName(List *columns);
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterFdwStmt
 		AlterForeignServerStmt AlterGroupStmt
 		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
-		AlterUserStmt AlterUserMappingStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
+		AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
+		AlterRoleStmt AlterRoleSetStmt
+		AlterDefaultPrivilegesStmt DefACLAction
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
 		CreateDomainStmt CreateGroupStmt CreateOpClassStmt
@@ -269,6 +271,9 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <privtarget> privilege_target
 %type <funwithargs> function_with_argtypes
 %type <list>	function_with_argtypes_list
+%type <ival>	defacl_privilege_target
+%type <defelt>	DefACLOption
+%type <list>	DefACLOptionList
 
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
@@ -625,6 +630,7 @@ stmtmulti:	stmtmulti ';' stmt
 stmt :
 			AlterDatabaseStmt
 			| AlterDatabaseSetStmt
+			| AlterDefaultPrivilegesStmt
 			| AlterDomainStmt
 			| AlterFdwStmt
 			| AlterForeignServerStmt
@@ -1891,7 +1897,7 @@ reloption_list:
 		;
 
 /* This should match def_elem and also allow qualified names */
-reloption_elem:	
+reloption_elem:
 			ColLabel '=' def_arg
 				{
 					$$ = makeDefElem($1, (Node *) $3);
@@ -4574,6 +4580,93 @@ opt_grant_admin_option: WITH ADMIN OPTION				{ $$ = TRUE; }
 
 opt_granted_by: GRANTED BY RoleId						{ $$ = $3; }
 			| /*EMPTY*/									{ $$ = NULL; }
+		;
+
+/*****************************************************************************
+ *
+ * ALTER DEFAULT PRIVILEGES statement
+ *
+ *****************************************************************************/
+
+AlterDefaultPrivilegesStmt:
+			ALTER DEFAULT PRIVILEGES DefACLOptionList DefACLAction
+				{
+					AlterDefaultPrivilegesStmt *n = makeNode(AlterDefaultPrivilegesStmt);
+					n->options = $4;
+					n->action = (GrantStmt *) $5;
+					$$ = (Node*)n;
+				}
+		;
+
+DefACLOptionList:
+			DefACLOptionList DefACLOption			{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+DefACLOption:
+			IN_P SCHEMA name_list
+				{
+					$$ = makeDefElem("schemas", (Node *)$3);
+				}
+			| FOR ROLE name_list
+				{
+					$$ = makeDefElem("roles", (Node *)$3);
+				}
+			| FOR USER name_list
+				{
+					$$ = makeDefElem("roles", (Node *)$3);
+				}
+		;
+
+/*
+ * This should match GRANT/REVOKE, except that target objects are missing
+ * and we only allow a subset of object types.
+ */
+DefACLAction:
+			GRANT privileges ON defacl_privilege_target TO grantee_list
+			opt_grant_grant_option
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = true;
+					n->privileges = $2;
+					n->objtype = $4;
+					n->objects = NIL;
+					n->grantees = $6;
+					n->grant_option = $7;
+					$$ = (Node*)n;
+				}
+			| REVOKE privileges ON defacl_privilege_target
+			FROM grantee_list opt_drop_behavior
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = false;
+					n->grant_option = false;
+					n->privileges = $2;
+					n->objtype = $4;
+					n->objects = NIL;
+					n->grantees = $6;
+					n->behavior = $7;
+					$$ = (Node *)n;
+				}
+			| REVOKE GRANT OPTION FOR privileges ON defacl_privilege_target
+			FROM grantee_list opt_drop_behavior
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = false;
+					n->grant_option = true;
+					n->privileges = $5;
+					n->objtype = $7;
+					n->objects = NIL;
+					n->grantees = $9;
+					n->behavior = $10;
+					$$ = (Node *)n;
+				}
+		;
+
+defacl_privilege_target:
+			TABLE			{ $$ = ACL_OBJECT_RELATION; }
+			| FUNCTION		{ $$ = ACL_OBJECT_FUNCTION; }
+			| SEQUENCE		{ $$ = ACL_OBJECT_SEQUENCE; }
 		;
 
 
@@ -8632,10 +8725,11 @@ a_expr:		c_expr									{ $$ = $1; }
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6, @2);
 				}
 			/*
-			 *	Ideally we would not use hard-wired operators below but instead use
-			 *	opclasses.  However, mixed data types and other issues make this
-			 *	difficult:  http://archives.postgresql.org/pgsql-hackers/2008-08/msg01142.php
-			 */			
+			 *	Ideally we would not use hard-wired operators below but
+			 *	instead use opclasses.  However, mixed data types and other
+			 *	issues make this difficult:
+			 *	http://archives.postgresql.org/pgsql-hackers/2008-08/msg01142.php
+			 */
 			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,

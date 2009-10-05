@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.229 2009/08/11 12:02:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.230 2009/10/05 19:24:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -979,6 +979,29 @@ testdb=&gt;
 
 
       <varlistentry>
+        <term><literal>\ddp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Lists default access privilege settings.  An entry is shown for
+        each role (and schema, if applicable) for which the default
+        privilege settings have been changed from the built-in defaults.
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only entries whose role name or schema name matches
+        the pattern are listed.
+        </para>
+
+        <para>
+        The <xref linkend="sql-alterdefaultprivileges"
+        endterm="sql-alterdefaultprivileges-title"> command is used to set
+        default access privileges.  The meaning of the
+        privilege display is explained under
+        <xref linkend="sql-grant" endterm="sql-grant-title">.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\dD[S] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
@@ -1142,8 +1165,8 @@ testdb=&gt;
         class="parameter">pattern</replaceable> is specified, only
         those roles whose names match the pattern are listed.
         (This command is now effectively the same as <literal>\du</literal>).
-        If the form <literal>\dg+</literal> is used, additional information 
-        is shown about each role, including the comment for each role.  
+        If the form <literal>\dg+</literal> is used, additional information
+        is shown about each role, including the comment for each role.
         </para>
         </listitem>
       </varlistentry>
@@ -1235,7 +1258,9 @@ testdb=&gt;
         <para>
         The <xref linkend="sql-grant" endterm="sql-grant-title"> and
         <xref linkend="sql-revoke" endterm="sql-revoke-title">
-        commands are used to set access privileges.
+        commands are used to set access privileges.  The meaning of the
+        privilege display is explained under
+        <xref linkend="sql-grant" endterm="sql-grant-title">.
         </para>
         </listitem>
       </varlistentry>
@@ -2043,12 +2068,6 @@ lo_import 152801
         associated access privileges.
         If a <replaceable class="parameter">pattern</replaceable> is
         specified, only tables,views and sequences whose names match the pattern are listed.
-        </para>
-
-        <para>
-        The <xref linkend="sql-grant" endterm="sql-grant-title"> and
-        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-        commands are used to set access privileges.
         </para>
 
         <para>

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.152 2009/09/18 05:00:42 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.153 2009/10/05 19:24:46 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -201,6 +201,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dc[S]  [PATTERN]      list conversions\n"));
 	fprintf(output, _("  \\dC     [PATTERN]      list casts\n"));
 	fprintf(output, _("  \\dd[S]  [PATTERN]      show comments on objects\n"));
+	fprintf(output, _("  \\ddp    [PATTERN]      list default privileges\n"));
 	fprintf(output, _("  \\dD[S]  [PATTERN]      list domains\n"));
 	fprintf(output, _("  \\des[+] [PATTERN]      list foreign servers\n"));
 	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));

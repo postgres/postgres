@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.120 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.121 2009/10/05 19:24:45 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -31,6 +31,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_default_acl.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
@@ -343,6 +344,18 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		4
+	},
+	{DefaultAclRelationId,		/* DEFACLROLENSPOBJ */
+		DefaultAclRoleNspObjIndexId,
+		0,
+		3,
+		{
+			Anum_pg_default_acl_defaclrole,
+			Anum_pg_default_acl_defaclnamespace,
+			Anum_pg_default_acl_defaclobjtype,
+			0
+		},
+		256
 	},
 	{EnumRelationId,			/* ENUMOID */
 		EnumOidIndexId,

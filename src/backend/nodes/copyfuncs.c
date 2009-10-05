@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.438 2009/09/22 23:43:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.439 2009/10/05 19:24:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2345,6 +2345,17 @@ _copyGrantRoleStmt(GrantRoleStmt *from)
 	return newnode;
 }
 
+static AlterDefaultPrivilegesStmt *
+_copyAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *from)
+{
+	AlterDefaultPrivilegesStmt *newnode = makeNode(AlterDefaultPrivilegesStmt);
+
+	COPY_NODE_FIELD(options);
+	COPY_NODE_FIELD(action);
+
+	return newnode;
+}
+
 static DeclareCursorStmt *
 _copyDeclareCursorStmt(DeclareCursorStmt *from)
 {
@@ -3759,6 +3770,9 @@ copyObject(void *from)
 			break;
 		case T_GrantRoleStmt:
 			retval = _copyGrantRoleStmt(from);
+			break;
+		case T_AlterDefaultPrivilegesStmt:
+			retval = _copyAlterDefaultPrivilegesStmt(from);
 			break;
 		case T_DeclareCursorStmt:
 			retval = _copyDeclareCursorStmt(from);

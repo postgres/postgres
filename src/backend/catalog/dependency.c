@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.91 2009/09/22 15:46:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.92 2009/10/05 19:24:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_default_acl.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
@@ -64,6 +65,7 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/lmgr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
@@ -146,7 +148,8 @@ static const Oid object_classes[MAX_OCLASS] = {
 	TableSpaceRelationId,		/* OCLASS_TBLSPACE */
 	ForeignDataWrapperRelationId,	/* OCLASS_FDW */
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
-	UserMappingRelationId		/* OCLASS_USER_MAPPING */
+	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
+	DefaultAclRelationId		/* OCLASS_DEFACL */
 };
 
 
@@ -1136,6 +1139,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveUserMappingById(object->objectId);
 			break;
 
+		case OCLASS_DEFACL:
+			RemoveDefaultACLById(object->objectId);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
@@ -2055,6 +2062,10 @@ getObjectClass(const ObjectAddress *object)
 		case UserMappingRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_USER_MAPPING;
+
+		case DefaultAclRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_DEFACL;
 	}
 
 	/* shouldn't get here */
@@ -2594,6 +2605,69 @@ getObjectDescription(const ObjectAddress *object)
 					usename = "public";
 
 				appendStringInfo(&buffer, _("user mapping for %s"), usename);
+				break;
+			}
+
+		case OCLASS_DEFACL:
+			{
+				Relation	defaclrel;
+				ScanKeyData skey[1];
+				SysScanDesc rcscan;
+				HeapTuple	tup;
+				Form_pg_default_acl defacl;
+
+				defaclrel = heap_open(DefaultAclRelationId, AccessShareLock);
+
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
+
+				rcscan = systable_beginscan(defaclrel, DefaultAclOidIndexId,
+											true, SnapshotNow, 1, skey);
+
+				tup = systable_getnext(rcscan);
+
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "could not find tuple for default ACL %u",
+						 object->objectId);
+
+				defacl = (Form_pg_default_acl) GETSTRUCT(tup);
+
+				switch (defacl->defaclobjtype)
+				{
+					case DEFACLOBJ_RELATION:
+						appendStringInfo(&buffer,
+										 _("default privileges on new relations belonging to role %s"),
+										 GetUserNameFromId(defacl->defaclrole));
+						break;
+					case DEFACLOBJ_SEQUENCE:
+						appendStringInfo(&buffer,
+										 _("default privileges on new sequences belonging to role %s"),
+										 GetUserNameFromId(defacl->defaclrole));
+						break;
+					case DEFACLOBJ_FUNCTION:
+						appendStringInfo(&buffer,
+										 _("default privileges on new functions belonging to role %s"),
+										 GetUserNameFromId(defacl->defaclrole));
+						break;
+					default:
+						/* shouldn't get here */
+						appendStringInfo(&buffer,
+										 _("default privileges belonging to role %s"),
+										 GetUserNameFromId(defacl->defaclrole));
+						break;
+				}
+
+				if (OidIsValid(defacl->defaclnamespace))
+				{
+					appendStringInfo(&buffer,
+									_(" in schema %s"),
+									get_namespace_name(defacl->defaclnamespace));
+				}
+
+				systable_endscan(rcscan);
+				heap_close(defaclrel, AccessShareLock);
 				break;
 			}
 

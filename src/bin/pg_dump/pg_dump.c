@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.548 2009/09/22 23:43:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.549 2009/10/05 19:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "access/sysattr.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_default_acl.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
@@ -162,6 +163,7 @@ static void dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo);
 static void dumpUserMappings(Archive *fout, const char *target,
 				 const char *servername, const char *namespace,
 				 const char *owner, CatalogId catalogId, DumpId dumpId);
+static void dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo);
 
 static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 		const char *type, const char *name, const char *subname,
@@ -1050,6 +1052,23 @@ selectDumpableType(TypeInfo *tinfo)
 }
 
 /*
+ * selectDumpableDefaultACL: policy-setting subroutine
+ *		Mark a default ACL as to be dumped or not
+ *
+ * For per-schema default ACLs, dump if the schema is to be dumped.
+ * Otherwise dump if we are dumping "everything".  Note that dataOnly
+ * and aclsSkip are checked separately.
+ */
+static void
+selectDumpableDefaultACL(DefaultACLInfo *dinfo)
+{
+	if (dinfo->dobj.namespace)
+		dinfo->dobj.dump = dinfo->dobj.namespace->dobj.dump;
+	else
+		dinfo->dobj.dump = include_everything;
+}
+
+/*
  * selectDumpableObject: policy-setting subroutine
  *		Mark a generic dumpable object as to be dumped or not
  *
@@ -1779,7 +1798,7 @@ dumpDatabase(Archive *AH)
 		PQExpBuffer loFrozenQry = createPQExpBuffer();
 		PQExpBuffer loOutQry = createPQExpBuffer();
 		int			i_relfrozenxid;
-		
+
 		appendPQExpBuffer(loFrozenQry, "SELECT relfrozenxid\n"
 							"FROM pg_catalog.pg_class\n"
 							"WHERE oid = %d;\n",
@@ -1808,7 +1827,7 @@ dumpDatabase(Archive *AH)
 					 loOutQry->data, "", NULL,
 					 NULL, 0,
 					 NULL, NULL);
-						  
+
 		PQclear(lo_res);
 		destroyPQExpBuffer(loFrozenQry);
 		destroyPQExpBuffer(loOutQry);
@@ -5646,6 +5665,94 @@ getForeignServers(int *numForeignServers)
 }
 
 /*
+ * getDefaultACLs:
+ *	  read all default ACL information in the system catalogs and return
+ *	  them in the DefaultACLInfo structure
+ *
+ *	numDefaultACLs is set to the number of ACLs read in
+ */
+DefaultACLInfo *
+getDefaultACLs(int *numDefaultACLs)
+{
+	DefaultACLInfo *daclinfo;
+	PQExpBuffer query;
+	PGresult   *res;
+	int			i_oid;
+	int			i_tableoid;
+	int			i_defaclrole;
+	int			i_defaclnamespace;
+	int			i_defaclobjtype;
+	int			i_defaclacl;
+	int			i,
+				ntups;
+
+	if (g_fout->remoteVersion < 80500)
+	{
+		*numDefaultACLs = 0;
+		return NULL;
+	}
+
+	query = createPQExpBuffer();
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	appendPQExpBuffer(query, "SELECT oid, tableoid, "
+					  "(%s defaclrole) AS defaclrole, "
+					  "defaclnamespace, "
+					  "defaclobjtype, "
+					  "defaclacl "
+					  "FROM pg_default_acl",
+					  username_subquery);
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+	*numDefaultACLs = ntups;
+
+	daclinfo = (DefaultACLInfo *) malloc(ntups * sizeof(DefaultACLInfo));
+
+	i_oid = PQfnumber(res, "oid");
+	i_tableoid = PQfnumber(res, "tableoid");
+	i_defaclrole = PQfnumber(res, "defaclrole");
+	i_defaclnamespace = PQfnumber(res, "defaclnamespace");
+	i_defaclobjtype = PQfnumber(res, "defaclobjtype");
+	i_defaclacl = PQfnumber(res, "defaclacl");
+
+	for (i = 0; i < ntups; i++)
+	{
+		Oid		nspid = atooid(PQgetvalue(res, i, i_defaclnamespace));
+
+		daclinfo[i].dobj.objType = DO_DEFAULT_ACL;
+		daclinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
+		daclinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
+		AssignDumpId(&daclinfo[i].dobj);
+		/* cheesy ... is it worth coming up with a better object name? */
+		daclinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_defaclobjtype));
+
+		if (nspid != InvalidOid)
+			daclinfo[i].dobj.namespace = findNamespace(nspid,
+													   daclinfo[i].dobj.catId.oid);
+		else
+			daclinfo[i].dobj.namespace = NULL;
+
+		daclinfo[i].defaclrole = strdup(PQgetvalue(res, i, i_defaclrole));
+		daclinfo[i].defaclobjtype = *(PQgetvalue(res, i, i_defaclobjtype));
+		daclinfo[i].defaclacl = strdup(PQgetvalue(res, i, i_defaclacl));
+
+		/* Decide whether we want to dump it */
+		selectDumpableDefaultACL(&(daclinfo[i]));
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+
+	return daclinfo;
+}
+
+/*
  * dumpComment --
  *
  * This routine is used to dump any comments associated with the
@@ -6057,6 +6164,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			break;
 		case DO_FOREIGN_SERVER:
 			dumpForeignServer(fout, (ForeignServerInfo *) dobj);
+			break;
+		case DO_DEFAULT_ACL:
+			dumpDefaultACL(fout, (DefaultACLInfo *) dobj);
 			break;
 		case DO_BLOBS:
 			ArchiveEntry(fout, dobj->catId, dobj->dumpId,
@@ -9791,6 +9901,72 @@ dumpUserMappings(Archive *fout, const char *target,
 	destroyPQExpBuffer(q);
 }
 
+/*
+ * Write out default privileges information
+ */
+static void
+dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
+{
+	PQExpBuffer q;
+	PQExpBuffer tag;
+	const char *type;
+
+	/* Skip if not to be dumped */
+	if (!daclinfo->dobj.dump || dataOnly || aclsSkip)
+		return;
+
+	q = createPQExpBuffer();
+	tag = createPQExpBuffer();
+
+	switch (daclinfo->defaclobjtype)
+	{
+		case DEFACLOBJ_RELATION:
+			type = "TABLE";
+			break;
+		case DEFACLOBJ_SEQUENCE:
+			type = "SEQUENCE";
+			break;
+		case DEFACLOBJ_FUNCTION:
+			type = "FUNCTION";
+			break;
+		default:
+			/* shouldn't get here */
+			write_msg(NULL, "unknown object type (%d) in default privileges\n",
+					  (int) daclinfo->defaclobjtype);
+			exit_nicely();
+			type = "";			/* keep compiler quiet */
+	}
+
+	appendPQExpBuffer(tag, "DEFAULT %s PRIVILEGES", type);
+
+	/* build the actual command(s) for this tuple */
+	if (!buildDefaultACLCommands(type,
+								 daclinfo->dobj.namespace != NULL ?
+								 daclinfo->dobj.namespace->dobj.name : NULL,
+								 daclinfo->defaclacl,
+								 daclinfo->defaclrole,
+								 fout->remoteVersion,
+								 q))
+	{
+		write_msg(NULL, "could not parse default ACL list (%s)\n",
+				  daclinfo->defaclacl);
+		exit_nicely();
+	}
+
+	ArchiveEntry(fout, daclinfo->dobj.catId, daclinfo->dobj.dumpId,
+				 tag->data,
+				 daclinfo->dobj.namespace ? daclinfo->dobj.namespace->dobj.name : NULL,
+				 NULL,
+				 daclinfo->defaclrole,
+				 false, "DEFAULT ACL", SECTION_NONE,
+				 q->data, "", NULL,
+				 daclinfo->dobj.dependencies, daclinfo->dobj.nDeps,
+				 NULL, NULL);
+
+	destroyPQExpBuffer(tag);
+	destroyPQExpBuffer(q);
+}
+
 /*----------
  * Write out grant/revoke information
  *
@@ -9820,7 +9996,8 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 
 	sql = createPQExpBuffer();
 
-	if (!buildACLCommands(name, subname, type, acls, owner, fout->remoteVersion, sql))
+	if (!buildACLCommands(name, subname, type, acls, owner,
+						  "", fout->remoteVersion, sql))
 	{
 		write_msg(NULL, "could not parse ACL list (%s) for object \"%s\" (%s)\n",
 				  acls, name, type);
@@ -10263,7 +10440,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  fmtId(tbinfo->dobj.name));
 				appendPQExpBuffer(q, "ALTER COLUMN %s ",
 								  fmtId(tbinfo->attnames[j]));
-				appendPQExpBuffer(q, "SET STATISTICS DISTINCT %g;\n", 
+				appendPQExpBuffer(q, "SET STATISTICS DISTINCT %g;\n",
 								  tbinfo->attdistinct[j]);
 			}
 

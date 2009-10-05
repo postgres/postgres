@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.149 2009/08/03 21:11:39 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.150 2009/10/05 19:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ static Acl *allocacl(int n);
 static void check_acl(const Acl *acl);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
+static int aclitemComparator(const void *arg1, const void *arg2);
 static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 				  Oid ownerId);
 static Acl *recursive_revoke(Acl *acl, Oid grantee, AclMode revoke_privs,
@@ -383,6 +384,15 @@ allocacl(int n)
 }
 
 /*
+ * Create a zero-entry ACL
+ */
+Acl *
+make_empty_acl(void)
+{
+	return allocacl(0);
+}
+
+/*
  * Copy an ACL
  */
 Acl *
@@ -421,6 +431,98 @@ aclconcat(const Acl *left_acl, const Acl *right_acl)
 		   ACL_NUM(right_acl) * sizeof(AclItem));
 
 	return result_acl;
+}
+
+/*
+ * Merge two ACLs
+ *
+ * This produces a properly merged ACL with no redundant entries.
+ * Returns NULL on NULL input.
+ */
+Acl *
+aclmerge(const Acl *left_acl, const Acl *right_acl, Oid ownerId)
+{
+	Acl		   *result_acl;
+	AclItem    *aip;
+	int			i,
+				num;
+
+	/* Check for cases where one or both are empty/null */
+	if (left_acl == NULL || ACL_NUM(left_acl) == 0)
+	{
+		if (right_acl == NULL || ACL_NUM(right_acl) == 0)
+			return NULL;
+		else
+			return aclcopy(right_acl);
+	}
+	else
+	{
+		if (right_acl == NULL || ACL_NUM(right_acl) == 0)
+			return aclcopy(left_acl);
+	}
+
+	/* Merge them the hard way, one item at a time */
+	result_acl = aclcopy(left_acl);
+
+	aip = ACL_DAT(right_acl);
+	num = ACL_NUM(right_acl);
+
+	for (i = 0; i < num; i++, aip++)
+	{
+		Acl *tmp_acl;
+
+		tmp_acl = aclupdate(result_acl, aip, ACL_MODECHG_ADD,
+							ownerId, DROP_RESTRICT);
+		pfree(result_acl);
+		result_acl = tmp_acl;
+	}
+
+	return result_acl;
+}
+
+/*
+ * Sort the items in an ACL (into an arbitrary but consistent order)
+ */
+void
+aclitemsort(Acl *acl)
+{
+	if (acl != NULL && ACL_NUM(acl) > 1)
+		qsort(ACL_DAT(acl), ACL_NUM(acl), sizeof(AclItem), aclitemComparator);
+}
+
+/*
+ * Check if two ACLs are exactly equal
+ *
+ * This will not detect equality if the two arrays contain the same items
+ * in different orders.  To handle that case, sort both inputs first,
+ * using aclitemsort().
+ */
+bool
+aclequal(const Acl *left_acl, const Acl *right_acl)
+{
+	/* Check for cases where one or both are empty/null */
+	if (left_acl == NULL || ACL_NUM(left_acl) == 0)
+	{
+		if (right_acl == NULL || ACL_NUM(right_acl) == 0)
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		if (right_acl == NULL || ACL_NUM(right_acl) == 0)
+			return false;
+	}
+
+	if (ACL_NUM(left_acl) != ACL_NUM(right_acl))
+		return false;
+
+	if (memcmp(ACL_DAT(left_acl),
+			   ACL_DAT(right_acl),
+			   ACL_NUM(left_acl) * sizeof(AclItem)) == 0)
+		return true;
+
+	return false;
 }
 
 /*
@@ -556,6 +658,31 @@ aclitem_match(const AclItem *a1, const AclItem *a2)
 }
 
 /*
+ * aclitemComparator
+ *		qsort comparison function for AclItems
+ */
+static int
+aclitemComparator(const void *arg1, const void *arg2)
+{
+	const AclItem *a1 = (const AclItem *) arg1;
+	const AclItem *a2 = (const AclItem *) arg2;
+
+	if (a1->ai_grantee > a2->ai_grantee)
+		return 1;
+	if (a1->ai_grantee < a2->ai_grantee)
+		return -1;
+	if (a1->ai_grantor > a2->ai_grantor)
+		return 1;
+	if (a1->ai_grantor < a2->ai_grantor)
+		return -1;
+	if (a1->ai_privs > a2->ai_privs)
+		return 1;
+	if (a1->ai_privs < a2->ai_privs)
+		return -1;
+	return 0;
+}
+
+/*
  * aclitem equality operator
  */
 Datum
@@ -593,6 +720,9 @@ hash_aclitem(PG_FUNCTION_ARGS)
  *
  * Change this routine if you want to alter the default access policy for
  * newly-created objects (or any object with a NULL acl entry).
+ *
+ * Note that these are the hard-wired "defaults" that are used in the
+ * absence of any pg_default_acl entry.
  */
 Acl *
 acldefault(GrantObjectType objtype, Oid ownerId)

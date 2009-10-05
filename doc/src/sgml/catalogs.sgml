@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.207 2009/09/22 23:43:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.208 2009/10/05 19:24:32 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -111,6 +111,11 @@
      <row>
       <entry><link linkend="catalog-pg-database"><structname>pg_database</structname></link></entry>
       <entry>databases within this database cluster</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-default-acl"><structname>pg_default_acl</structname></link></entry>
+      <entry>default privileges for object types</entry>
      </row>
 
      <row>
@@ -2152,6 +2157,93 @@
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-default-acl">
+  <title><structname>pg_default_acl</structname></title>
+
+  <indexterm zone="catalog-pg-default-acl">
+   <primary>pg_default_acl</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_default_acl</> stores initial
+   privileges to be assigned to newly created objects.
+  </para>
+
+  <table>
+   <title><structname>pg_default_acl</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>defaclrole</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>The OID of the role associated with this entry</entry>
+     </row>
+
+     <row>
+      <entry><structfield>defaclnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>The OID of the namespace associated with this entry,
+       or 0 if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>defaclobjtype</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Type of object this entry is for:
+       <literal>r</> = relation (table, view),
+       <literal>S</> = sequence,
+       <literal>f</> = function
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>defaclacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       Access privileges that this type of object should have on creation
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   A <structname>pg_default_acl</> entry shows the initial privileges to
+   be assigned to an object belonging to the indicated user.  There are
+   currently two types of entry: <quote>global</> entries with
+   <structfield>defaclnamespace</> = 0, and <quote>per-schema</> entries
+   that reference a particular schema.  If a global entry is present then
+   it <emphasis>overrides</> the normal hard-wired default privileges
+   for the object type.  A per-schema entry, if present, represents privileges
+   to be <emphasis>added to</> the global or hard-wired default privileges.
+  </para>
+
+  <para>
+   Note that when an ACL entry in another catalog is NULL, it is taken
+   to represent the hard-wired default privileges for its object,
+   <emphasis>not</> whatever might be in <structname>pg_default_acl</>
+   at the moment.  <structname>pg_default_acl</> is only consulted during
+   object creation.
+  </para>
+
  </sect1>
 
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.68 2009/09/22 23:43:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.69 2009/10/05 19:24:33 tgl Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -37,6 +37,7 @@
    &alterAggregate;
    &alterConversion;
    &alterDatabase;
+   &alterDefaultPrivileges;
    &alterDomain;
    &alterForeignDataWrapper;
    &alterFunction;

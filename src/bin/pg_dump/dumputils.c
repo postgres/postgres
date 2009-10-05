@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.48 2009/08/04 21:56:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.49 2009/10/05 19:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,10 +490,14 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  *	acls: the ACL string fetched from the database
  *	owner: username of object owner (will be passed through fmtId); can be
  *		NULL or empty string to indicate "no owner known"
+ *	prefix: string to prefix to each generated command; typically empty
  *	remoteVersion: version of database
  *
  * Returns TRUE if okay, FALSE if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
+ *
+ * Note: when processing a default ACL, prefix is "ALTER DEFAULT PRIVILEGES "
+ * or something similar, and name is an empty string.
  *
  * Note: beware of passing a fmtId() result directly as 'name' or 'subname',
  * since this routine uses fmtId() internally.
@@ -501,7 +505,7 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
 bool
 buildACLCommands(const char *name, const char *subname,
 				 const char *type, const char *acls, const char *owner,
-				 int remoteVersion,
+				 const char *prefix, int remoteVersion,
 				 PQExpBuffer sql)
 {
 	char	  **aclitems;
@@ -549,7 +553,7 @@ buildACLCommands(const char *name, const char *subname,
 	 * wire-in knowledge about the default public privileges for different
 	 * kinds of objects.
 	 */
-	appendPQExpBuffer(firstsql, "REVOKE ALL");
+	appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 	if (subname)
 		appendPQExpBuffer(firstsql, "(%s)", subname);
 	appendPQExpBuffer(firstsql, " ON %s %s FROM PUBLIC;\n", type, name);
@@ -564,8 +568,8 @@ buildACLCommands(const char *name, const char *subname,
 	if (remoteVersion < 80200 && strcmp(type, "DATABASE") == 0)
 	{
 		/* database CONNECT priv didn't exist before 8.2 */
-		appendPQExpBuffer(firstsql, "GRANT CONNECT ON %s %s TO PUBLIC;\n",
-						  type, name);
+		appendPQExpBuffer(firstsql, "%sGRANT CONNECT ON %s %s TO PUBLIC;\n",
+						  prefix, type, name);
 	}
 
 	/* Scan individual ACL items */
@@ -594,20 +598,20 @@ buildACLCommands(const char *name, const char *subname,
 					? strcmp(privswgo->data, "ALL") != 0
 					: strcmp(privs->data, "ALL") != 0)
 				{
-					appendPQExpBuffer(firstsql, "REVOKE ALL");
+					appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 					if (subname)
 						appendPQExpBuffer(firstsql, "(%s)", subname);
 					appendPQExpBuffer(firstsql, " ON %s %s FROM %s;\n",
 									  type, name, fmtId(grantee->data));
 					if (privs->len > 0)
 						appendPQExpBuffer(firstsql,
-										  "GRANT %s ON %s %s TO %s;\n",
-										  privs->data, type, name,
+										  "%sGRANT %s ON %s %s TO %s;\n",
+										  prefix, privs->data, type, name,
 										  fmtId(grantee->data));
 					if (privswgo->len > 0)
 						appendPQExpBuffer(firstsql,
-							  "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
-										  privswgo->data, type, name,
+							  "%sGRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+										  prefix, privswgo->data, type, name,
 										  fmtId(grantee->data));
 				}
 			}
@@ -623,8 +627,8 @@ buildACLCommands(const char *name, const char *subname,
 
 				if (privs->len > 0)
 				{
-					appendPQExpBuffer(secondsql, "GRANT %s ON %s %s TO ",
-									  privs->data, type, name);
+					appendPQExpBuffer(secondsql, "%sGRANT %s ON %s %s TO ",
+									  prefix, privs->data, type, name);
 					if (grantee->len == 0)
 						appendPQExpBuffer(secondsql, "PUBLIC;\n");
 					else if (strncmp(grantee->data, "group ",
@@ -636,8 +640,8 @@ buildACLCommands(const char *name, const char *subname,
 				}
 				if (privswgo->len > 0)
 				{
-					appendPQExpBuffer(secondsql, "GRANT %s ON %s %s TO ",
-									  privswgo->data, type, name);
+					appendPQExpBuffer(secondsql, "%sGRANT %s ON %s %s TO ",
+									  prefix, privswgo->data, type, name);
 					if (grantee->len == 0)
 						appendPQExpBuffer(secondsql, "PUBLIC");
 					else if (strncmp(grantee->data, "group ",
@@ -661,7 +665,7 @@ buildACLCommands(const char *name, const char *subname,
 	 */
 	if (!found_owner_privs && owner)
 	{
-		appendPQExpBuffer(firstsql, "REVOKE ALL");
+		appendPQExpBuffer(firstsql, "%sREVOKE ALL", prefix);
 		if (subname)
 			appendPQExpBuffer(firstsql, "(%s)", subname);
 		appendPQExpBuffer(firstsql, " ON %s %s FROM %s;\n",
@@ -680,6 +684,50 @@ buildACLCommands(const char *name, const char *subname,
 	free(aclitems);
 
 	return true;
+}
+
+/*
+ * Build ALTER DEFAULT PRIVILEGES command(s) for single pg_default_acl entry.
+ *
+ *	type: the object type (as seen in GRANT command)
+ *	nspname: schema name, or NULL for global default privileges
+ *	acls: the ACL string fetched from the database
+ *	owner: username of privileges owner (will be passed through fmtId)
+ *	remoteVersion: version of database
+ *
+ * Returns TRUE if okay, FALSE if could not parse the acl string.
+ * The resulting commands (if any) are appended to the contents of 'sql'.
+ */
+bool
+buildDefaultACLCommands(const char *type, const char *nspname,
+						const char *acls, const char *owner,
+						int remoteVersion,
+						PQExpBuffer sql)
+{
+	bool		result;
+	PQExpBuffer prefix;
+
+	prefix = createPQExpBuffer();
+
+	/*
+	 * We incorporate the target role directly into the command, rather than
+	 * playing around with SET ROLE or anything like that.  This is so that
+	 * a permissions error leads to nothing happening, rather than
+	 * changing default privileges for the wrong user.
+	 */
+	appendPQExpBuffer(prefix, "ALTER DEFAULT PRIVILEGES FOR ROLE %s ",
+					  fmtId(owner));
+	if (nspname)
+		appendPQExpBuffer(prefix, "IN SCHEMA %s ", fmtId(nspname));
+
+	result = buildACLCommands("", NULL,
+							  type, acls, owner,
+							  prefix->data, remoteVersion,
+							  sql);
+
+	destroyPQExpBuffer(prefix);
+
+	return result;
 }
 
 /*

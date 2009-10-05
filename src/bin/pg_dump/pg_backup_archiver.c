@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.175 2009/08/07 22:48:34 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.176 2009/10/05 19:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2072,7 +2072,8 @@ ReadToc(ArchiveHandle *AH)
 			 * the entries into sections
 			 */
 			if (strcmp(te->desc, "COMMENT") == 0 ||
-				strcmp(te->desc, "ACL") == 0)
+				strcmp(te->desc, "ACL") == 0 ||
+				strcmp(te->desc, "DEFAULT ACL") == 0)
 				te->section = SECTION_NONE;
 			else if (strcmp(te->desc, "TABLE DATA") == 0 ||
 					 strcmp(te->desc, "BLOBS") == 0 ||
@@ -2227,7 +2228,8 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 		return 0;
 
 	/* If it's an ACL, maybe ignore it */
-	if ((!include_acls || ropt->aclsSkip) && strcmp(te->desc, "ACL") == 0)
+	if ((!include_acls || ropt->aclsSkip) &&
+		(strcmp(te->desc, "ACL") == 0 || strcmp(te->desc, "DEFAULT ACL") == 0))
 		return 0;
 
 	if (!ropt->create && strcmp(te->desc, "DATABASE") == 0)
@@ -2721,12 +2723,14 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	/* ACLs are dumped only during acl pass */
 	if (acl_pass)
 	{
-		if (strcmp(te->desc, "ACL") != 0)
+		if (!(strcmp(te->desc, "ACL") == 0 ||
+			  strcmp(te->desc, "DEFAULT ACL") == 0))
 			return;
 	}
 	else
 	{
-		if (strcmp(te->desc, "ACL") == 0)
+		if (strcmp(te->desc, "ACL") == 0 ||
+			strcmp(te->desc, "DEFAULT ACL") == 0)
 			return;
 	}
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.77 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.78 2009/10/05 19:24:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -80,14 +80,6 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
    they are different enough to be described separately.
   </para>
 
-  <para>
-   As of <productname>PostgreSQL</productname> 8.1, the concepts of users and
-   groups have been unified into a single kind of entity called a role.
-   It is therefore no longer necessary to use the keyword <literal>GROUP</>
-   to identify whether a grantee is a user or a group.  <literal>GROUP</>
-   is still allowed in the command, but it is a noise word.
-  </para>
-
  <refsect2 id="sql-grant-description-objects">
   <title>GRANT on Database Objects</title>
 
@@ -145,6 +137,9 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
    security, issue the <command>REVOKE</> in the same transaction that
    creates the object; then there is no window in which another user
    can use the object.)
+   Also, these initial default privilege settings can be changed using the
+   <xref linkend="sql-alterdefaultprivileges" endterm="sql-alterdefaultprivileges-title">
+   command.
   </para>
 
   <para>
@@ -389,6 +384,14 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
    </para>
 
    <para>
+    Since <productname>PostgreSQL</productname> 8.1, the concepts of users and
+    groups have been unified into a single kind of entity called a role.
+    It is therefore no longer necessary to use the keyword <literal>GROUP</>
+    to identify whether a grantee is a user or a group.  <literal>GROUP</>
+    is still allowed in the command, but it is a noise word.
+   </para>
+
+   <para>
     A user may perform <command>SELECT</>, <command>INSERT</>, etc. on a
     column if he holds that privilege for either the specific column or
     its whole table.  Granting the privilege at the table level and then
@@ -518,8 +521,13 @@ GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
     <command>REVOKE</> on an object
     will instantiate the default privileges (producing, for example,
     <literal>{miriam=arwdDxt/miriam}</>) and then modify them per the
-    specified request.  Entries are shown in <quote>Column access
+    specified request.  Similarly, entries are shown in <quote>Column access
     privileges</> only for columns with nondefault privileges.
+    (Note: for this purpose, <quote>default privileges</> always means the
+    built-in default privileges for the object's type.  An object whose
+    privileges have been affected by an <command>ALTER DEFAULT PRIVILEGES</>
+    command will always be shown with an explicit privilege entry that
+    includes the effects of the <command>ALTER</>.)
    </para>
 
    <para>
@@ -602,9 +610,10 @@ GRANT admins TO joe;
  <refsect1>
   <title>See Also</title>
 
-  <simpara>
-   <xref linkend="sql-revoke" endterm="sql-revoke-title">
-  </simpara>
+  <simplelist type="inline">
+   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
+   <member><xref linkend="sql-alterdefaultprivileges" endterm="sql-alterdefaultprivileges-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>
