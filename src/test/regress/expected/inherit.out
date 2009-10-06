@@ -571,6 +571,21 @@ order by 1,2;
  bar2    |  4 |   4
 (8 rows)
 
+/* Test multiple inheritance of column defaults */
+CREATE TABLE firstparent (tomorrow date default now()::date + 1);
+CREATE TABLE secondparent (tomorrow date default  now() :: date  +  1);
+CREATE TABLE jointchild () INHERITS (firstparent, secondparent);  -- ok
+NOTICE:  merging multiple inherited definitions of column "tomorrow"
+CREATE TABLE thirdparent (tomorrow date default now()::date - 1);
+CREATE TABLE otherchild () INHERITS (firstparent, thirdparent);  -- not ok
+NOTICE:  merging multiple inherited definitions of column "tomorrow"
+ERROR:  column "tomorrow" inherits conflicting default values
+HINT:  To resolve the conflict, specify a default explicitly.
+CREATE TABLE otherchild (tomorrow date default now())
+  INHERITS (firstparent, thirdparent);  -- ok, child resolves ambiguous default
+NOTICE:  merging multiple inherited definitions of column "tomorrow"
+NOTICE:  merging column "tomorrow" with inherited definition
+DROP TABLE firstparent, secondparent, jointchild, thirdparent, otherchild;
 /* Test inheritance of structure (LIKE) */
 CREATE TABLE inhx (xx text DEFAULT 'text');
 /*

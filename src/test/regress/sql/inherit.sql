@@ -121,6 +121,17 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
 SELECT relname, bar.* FROM bar, pg_class where bar.tableoid = pg_class.oid
 order by 1,2;
 
+/* Test multiple inheritance of column defaults */
+
+CREATE TABLE firstparent (tomorrow date default now()::date + 1);
+CREATE TABLE secondparent (tomorrow date default  now() :: date  +  1);
+CREATE TABLE jointchild () INHERITS (firstparent, secondparent);  -- ok
+CREATE TABLE thirdparent (tomorrow date default now()::date - 1);
+CREATE TABLE otherchild () INHERITS (firstparent, thirdparent);  -- not ok
+CREATE TABLE otherchild (tomorrow date default now())
+  INHERITS (firstparent, thirdparent);  -- ok, child resolves ambiguous default
+
+DROP TABLE firstparent, secondparent, jointchild, thirdparent, otherchild;
 
 /* Test inheritance of structure (LIKE) */
 CREATE TABLE inhx (xx text DEFAULT 'text');

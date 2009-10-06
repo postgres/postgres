@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.21 2009/06/11 14:49:00 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.21.2.1 2009/10/06 00:55:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,7 +642,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		 */
 		if (attribute->atthasdef && including_defaults)
 		{
-			char	   *this_default = NULL;
+			Node	   *this_default = NULL;
 			AttrDefault *attrdef;
 			int			i;
 
@@ -653,7 +653,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			{
 				if (attrdef[i].adnum == parent_attno)
 				{
-					this_default = attrdef[i].adbin;
+					this_default = stringToNode(attrdef[i].adbin);
 					break;
 				}
 			}
@@ -664,7 +664,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			 * but it can't; so default is ready to apply to child.
 			 */
 
-			def->cooked_default = pstrdup(this_default);
+			def->cooked_default = this_default;
 		}
 	}
 
