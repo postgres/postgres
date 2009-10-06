@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.439 2009/10/05 19:24:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.440 2009/10/06 00:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2054,7 +2054,7 @@ _copyColumnDef(ColumnDef *from)
 	COPY_SCALAR_FIELD(is_local);
 	COPY_SCALAR_FIELD(is_not_null);
 	COPY_NODE_FIELD(raw_default);
-	COPY_STRING_FIELD(cooked_default);
+	COPY_NODE_FIELD(cooked_default);
 	COPY_NODE_FIELD(constraints);
 
 	return newnode;

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.403 2009/10/05 19:24:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.404 2009/10/06 00:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,10 +443,9 @@ typedef struct RangeFunction
  *
  * If the column has a default value, we may have the value expression
  * in either "raw" form (an untransformed parse tree) or "cooked" form
- * (the nodeToString representation of an executable expression tree),
- * depending on how this ColumnDef node was created (by parsing, or by
- * inheritance from an existing relation).	We should never have both
- * in the same node!
+ * (a post-parse-analysis, executable expression tree), depending on
+ * how this ColumnDef node was created (by parsing, or by inheritance
+ * from an existing relation).  We should never have both in the same node!
  *
  * The constraints list may contain a CONSTR_DEFAULT item in a raw
  * parsetree produced by gram.y, but transformCreateStmt will remove
@@ -462,7 +461,7 @@ typedef struct ColumnDef
 	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
-	char	   *cooked_default; /* nodeToString representation */
+	Node	   *cooked_default; /* default value (transformed expr tree) */
 	List	   *constraints;	/* other constraints on column */
 } ColumnDef;
 

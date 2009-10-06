@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.300 2009/10/05 19:24:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.301 2009/10/06 00:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,7 +493,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			cooked->contype = CONSTR_DEFAULT;
 			cooked->name = NULL;
 			cooked->attnum = attnum;
-			cooked->expr = stringToNode(colDef->cooked_default);
+			cooked->expr = colDef->cooked_default;
 			cooked->is_local = true;	/* not used for defaults */
 			cooked->inhcount = 0;		/* ditto */
 			cookedDefaults = lappend(cookedDefaults, cooked);
@@ -1168,8 +1168,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	List	   *constraints = NIL;
 	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
-	char	   *bogus_marker = "Bogus!";		/* marks conflicting defaults */
 	int			child_attno;
+	static Node	bogus_marker = { 0 };		/* marks conflicting defaults */
 
 	/*
 	 * Check for and reject tables with too many columns. We perform this
@@ -1353,7 +1353,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			 */
 			if (attribute->atthasdef)
 			{
-				char	   *this_default = NULL;
+				Node	   *this_default = NULL;
 				AttrDefault *attrdef;
 				int			i;
 
@@ -1364,7 +1364,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				{
 					if (attrdef[i].adnum == parent_attno)
 					{
-						this_default = attrdef[i].adbin;
+						this_default = stringToNode(attrdef[i].adbin);
 						break;
 					}
 				}
@@ -1382,10 +1382,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 */
 				Assert(def->raw_default == NULL);
 				if (def->cooked_default == NULL)
-					def->cooked_default = pstrdup(this_default);
-				else if (strcmp(def->cooked_default, this_default) != 0)
+					def->cooked_default = this_default;
+				else if (!equal(def->cooked_default, this_default))
 				{
-					def->cooked_default = bogus_marker;
+					def->cooked_default = &bogus_marker;
 					have_bogus_defaults = true;
 				}
 			}
@@ -1524,7 +1524,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		{
 			ColumnDef  *def = lfirst(entry);
 
-			if (def->cooked_default == bogus_marker)
+			if (def->cooked_default == &bogus_marker)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
 				  errmsg("column \"%s\" inherits conflicting default values",
