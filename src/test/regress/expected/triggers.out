@@ -537,6 +537,37 @@ NOTICE:  row 1 not changed
 NOTICE:  row 2 not changed
 DROP TABLE trigger_test;
 DROP FUNCTION mytrigger();
+-- Test snapshot management in serializable transactions involving triggers
+-- per bug report in 6bc73d4c0910042358k3d1adff3qa36f8df75198ecea@mail.gmail.com
+CREATE FUNCTION serializable_update_trig() RETURNS trigger LANGUAGE plpgsql AS
+$$
+declare
+	rec record;
+begin
+	new.description = 'updated in trigger';
+	return new;
+end;
+$$;
+CREATE TABLE serializable_update_tab (
+	id int,
+	filler  text,
+	description text
+);
+CREATE TRIGGER serializable_update_trig BEFORE UPDATE ON serializable_update_tab
+	FOR EACH ROW EXECUTE PROCEDURE serializable_update_trig();
+INSERT INTO serializable_update_tab SELECT a, repeat('xyzxz', 100), 'new'
+	FROM generate_series(1, 50) a;
+BEGIN;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+UPDATE serializable_update_tab SET description = 'no no', id = 1 WHERE id = 1;
+COMMIT;
+SELECT description FROM serializable_update_tab WHERE id = 1;
+    description     
+--------------------
+ updated in trigger
+(1 row)
+
+DROP TABLE serializable_update_tab;
 -- minimal update trigger
 CREATE TABLE min_updates_test (
 	f1	text,
