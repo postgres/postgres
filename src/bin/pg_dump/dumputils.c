@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.49 2009/10/05 19:24:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.50 2009/10/07 22:14:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -942,7 +942,8 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
  *
  * Scan a wildcard-pattern string and generate appropriate WHERE clauses
  * to limit the set of objects returned.  The WHERE clauses are appended
- * to the already-partially-constructed query in buf.
+ * to the already-partially-constructed query in buf.  Returns whether
+ * any clause was added.
  *
  * conn: connection query will be sent to (consulted for escaping rules).
  * buf: output parameter.
@@ -961,7 +962,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
  * Formatting note: the text already present in buf should end with a newline.
  * The appended text, if any, will end with one too.
  */
-void
+bool
 processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,
@@ -973,9 +974,11 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	bool		inquotes;
 	const char *cp;
 	int			i;
+	bool		added_clause = false;
 
 #define WHEREAND() \
-	(appendPQExpBufferStr(buf, have_where ? "  AND " : "WHERE "), have_where = true)
+	(appendPQExpBufferStr(buf, have_where ? "  AND " : "WHERE "), \
+	 have_where = true, added_clause = true)
 
 	if (pattern == NULL)
 	{
@@ -985,7 +988,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 			WHEREAND();
 			appendPQExpBuffer(buf, "%s\n", visibilityrule);
 		}
-		return;
+		return added_clause;
 	}
 
 	initPQExpBuffer(&schemabuf);
@@ -1142,5 +1145,6 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	termPQExpBuffer(&schemabuf);
 	termPQExpBuffer(&namebuf);
 
+	return added_clause;
 #undef WHEREAND
 }

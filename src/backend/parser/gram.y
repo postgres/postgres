@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.680 2009/10/05 19:24:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.681 2009/10/07 22:14:21 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -237,12 +237,13 @@ static TypeName *TableFuncTypeName(List *columns);
 				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait opt_if_exists opt_with_data
 
-%type <list>	OptRoleList
-%type <defelt>	OptRoleElem
+%type <list>	OptRoleList AlterOptRoleList
+%type <defelt>	CreateOptRoleElem AlterOptRoleElem
 
 %type <str>		opt_type
 %type <str>		foreign_server_version opt_foreign_server_version
 %type <str>		auth_ident
+%type <str>		opt_in_database
 
 %type <str>		OptSchemaName
 %type <list>	OptSchemaEltList
@@ -762,11 +763,16 @@ opt_with:	WITH									{}
  * is "WITH ADMIN name".
  */
 OptRoleList:
-			OptRoleList OptRoleElem					{ $$ = lappend($1, $2); }
+			OptRoleList CreateOptRoleElem			{ $$ = lappend($1, $2); }
 			| /* EMPTY */							{ $$ = NIL; }
 		;
 
-OptRoleElem:
+AlterOptRoleList:
+			AlterOptRoleList AlterOptRoleElem		{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+AlterOptRoleElem:
 			PASSWORD Sconst
 				{
 					$$ = makeDefElem("password",
@@ -848,7 +854,11 @@ OptRoleElem:
 				{
 					$$ = makeDefElem("rolemembers", (Node *)$2);
 				}
-		/* The following are not supported by ALTER ROLE/USER/GROUP */
+		;
+
+CreateOptRoleElem:
+			AlterOptRoleElem			{ $$ = $1; }
+			/* The following are not supported by ALTER ROLE/USER/GROUP */
 			| SYSID Iconst
 				{
 					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
@@ -897,7 +907,7 @@ CreateUserStmt:
  *****************************************************************************/
 
 AlterRoleStmt:
-			ALTER ROLE RoleId opt_with OptRoleList
+			ALTER ROLE RoleId opt_with AlterOptRoleList
 				 {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
@@ -907,12 +917,18 @@ AlterRoleStmt:
 				 }
 		;
 
+opt_in_database:
+			   /* EMPTY */					{ $$ = NULL; }
+			| IN_P DATABASE database_name	{ $$ = $3; }
+		;
+
 AlterRoleSetStmt:
-			ALTER ROLE RoleId SetResetClause
+			ALTER ROLE RoleId opt_in_database SetResetClause
 				{
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = $3;
-					n->setstmt = $4;
+					n->database = $4;
+					n->setstmt = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -925,7 +941,7 @@ AlterRoleSetStmt:
  *****************************************************************************/
 
 AlterUserStmt:
-			ALTER USER RoleId opt_with OptRoleList
+			ALTER USER RoleId opt_with AlterOptRoleList
 				 {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
@@ -941,6 +957,7 @@ AlterUserSetStmt:
 				{
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = $3;
+					n->database = NULL;
 					n->setstmt = $4;
 					$$ = (Node *)n;
 				}

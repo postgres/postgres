@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.72 2009/10/05 19:24:34 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.73 2009/10/07 22:14:16 alvherre Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
        pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
        pg_inherits.o pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o \
-       pg_shdepend.o pg_type.o storage.o toasting.o
+       pg_db_role_setting.o pg_shdepend.o pg_type.o storage.o toasting.o
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 
@@ -32,7 +32,7 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
 	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
 	pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
-	pg_database.h pg_tablespace.h pg_pltemplate.h \
+	pg_database.h pg_db_role_setting.h pg_tablespace.h pg_pltemplate.h \
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
 	pg_ts_parser.h pg_ts_template.h \

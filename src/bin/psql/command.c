@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.208 2009/10/05 19:24:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.209 2009/10/07 22:14:24 alvherre Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -410,6 +410,19 @@ exec_command(const char *cmd,
 			case 'i':
 			case 's':
 				success = listTables(&cmd[1], pattern, show_verbose, show_system);
+				break;
+			case 'r':
+				if (cmd[2] == 'd' && cmd[3] == 's')
+				{
+					char	   *pattern2 = NULL;
+
+					if (pattern)
+						pattern2 = psql_scan_slash_option(scan_state,
+														  OT_NORMAL, NULL, true);
+					success = listDbRoleSettings(pattern, pattern2);
+				}
+				else
+					success = PSQL_CMD_UNKNOWN;
 				break;
 			case 'u':
 				success = describeRoles(pattern, show_verbose);

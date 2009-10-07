@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.106 2009/10/03 18:04:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.107 2009/10/07 22:14:26 alvherre Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -86,6 +86,7 @@ typedef enum
 	PGC_S_ARGV,					/* postmaster command line */
 	PGC_S_DATABASE,				/* per-database setting */
 	PGC_S_USER,					/* per-user setting */
+	PGC_S_DATABASE_USER,		/* per-user-and-database setting */
 	PGC_S_CLIENT,				/* from client connection request */
 	PGC_S_OVERRIDE,				/* special case to forcibly set default */
 	PGC_S_INTERACTIVE,			/* dividing line for error reporting */

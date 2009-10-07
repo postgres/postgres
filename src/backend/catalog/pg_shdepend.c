@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.35 2009/10/05 19:24:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.36 2009/10/07 22:14:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 #include "commands/conversioncmds.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
@@ -55,7 +56,6 @@ typedef enum
 static int getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2,
 			   Oid **diff);
 static Oid	classIdGetDbId(Oid classId);
-static void shdepLockAndCheckObject(Oid classId, Oid objectId);
 static void shdepChangeDep(Relation sdepRel,
 			   Oid classid, Oid objid, int32 objsubid,
 			   Oid refclassid, Oid refobjid,
@@ -963,7 +963,7 @@ classIdGetDbId(Oid classId)
  * weren't looking.  If the object has been dropped, this function
  * does not return!
  */
-static void
+void
 shdepLockAndCheckObject(Oid classId, Oid objectId)
 {
 	/* AccessShareLock should be OK, since we are not modifying the object */
@@ -1002,6 +1002,21 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 				break;
 			}
 #endif
+
+		case DatabaseRelationId:
+			{
+				/* For lack of a syscache on pg_database, do this: */
+				char	   *database = get_database_name(objectId);
+
+				if (database == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("database %u was concurrently dropped",
+									objectId)));
+				pfree(database);
+				break;
+			}
+		
 
 		default:
 			elog(ERROR, "unrecognized shared classId: %u", classId);

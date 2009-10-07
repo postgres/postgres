@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.227 2009/10/05 19:24:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.228 2009/10/07 22:14:24 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -2241,6 +2241,65 @@ add_role_attribute(PQExpBuffer buf, const char *const str)
 		appendPQExpBufferStr(buf, "\n");
 
 	appendPQExpBufferStr(buf, str);
+}
+
+/*
+ * \drds
+ */
+bool
+listDbRoleSettings(const char *pattern, const char *pattern2)
+{
+	PQExpBufferData	buf;
+	PGresult	   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	if (pset.sversion >= 80500)
+	{
+		bool	havewhere;
+
+		printfPQExpBuffer(&buf, "SELECT rolname AS role, datname AS database,\n"
+						  "pg_catalog.array_to_string(setconfig, E'\\n') AS settings\n"
+						  "FROM pg_db_role_setting AS s\n"
+						  "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
+						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n");
+		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
+										  NULL, "pg_roles.rolname", NULL, NULL);
+		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
+							  NULL, "pg_database.datname", NULL, NULL);
+		appendPQExpBufferStr(&buf, "ORDER BY role, database");
+	}
+	else
+	{
+		fprintf(pset.queryFout,
+				_("No per-database role settings support in this server version.\n"));
+		return false;
+	}
+
+	res = PSQLexec(buf.data, false);
+	if (!res)
+		return false;
+
+	if (PQntuples(res) == 0 && !pset.quiet)
+	{
+		if (pattern)
+			fprintf(pset.queryFout, _("No matching settings found.\n"));
+		else
+			fprintf(pset.queryFout, _("No settings found.\n"));
+	}
+	else
+	{
+		myopt.nullPrint = NULL;
+		myopt.title = _("List of settings");
+		myopt.translate_header = true;
+
+		printQuery(res, &myopt, pset.queryFout, pset.logfile);
+	}
+
+	PQclear(res);
+	resetPQExpBuffer(&buf);
+	return true;
 }
 
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.109 2009/10/05 19:24:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.110 2009/10/07 22:14:25 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,6 +271,9 @@ DECLARE_UNIQUE_INDEX(pg_default_acl_role_nsp_obj_index, 827, on pg_default_acl u
 #define DefaultAclRoleNspObjIndexId	827
 DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btree(oid oid_ops));
 #define DefaultAclOidIndexId	828
+
+DECLARE_UNIQUE_INDEX(pg_db_role_setting_databaseid_rol_index, 2965, on pg_db_role_setting using btree(setdatabase oid_ops, setrole oid_ops));
+#define DbRoleSettingDatidRolidIndexId	2965
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

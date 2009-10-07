@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.9 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.10 2009/10/07 22:14:25 alvherre Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -55,7 +55,6 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION
 	/* remaining fields may be null; use heap_getattr to read them! */
 	text		rolpassword;	/* password, if any */
 	timestamptz rolvaliduntil;	/* password expiration time, if any */
-	text		rolconfig[1];	/* GUC settings to apply at login */
 } FormData_pg_authid;
 
 #undef timestamptz
@@ -83,7 +82,6 @@ typedef FormData_pg_authid *Form_pg_authid;
 #define Anum_pg_authid_rolconnlimit		8
 #define Anum_pg_authid_rolpassword		9
 #define Anum_pg_authid_rolvaliduntil	10
-#define Anum_pg_authid_rolconfig		11
 
 /* ----------------
  *		initial contents of pg_authid
@@ -92,7 +90,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  * user choices.
  * ----------------
  */
-DATA(insert OID = 10 ( "POSTGRES" t t t t t t -1 _null_ _null_ _null_ ));
+DATA(insert OID = 10 ( "POSTGRES" t t t t t t -1 _null_ _null_ ));
 
 #define BOOTSTRAP_SUPERUSERID 10
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.60 2009/04/07 00:31:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.61 2009/10/07 22:14:18 alvherre Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -18,21 +18,23 @@ CREATE VIEW pg_roles AS
         rolconnlimit,
         '********'::text as rolpassword,
         rolvaliduntil,
-        rolconfig,
-        oid
-    FROM pg_authid;
+        setconfig as rolconfig,
+        pg_authid.oid
+    FROM pg_authid LEFT JOIN pg_db_role_setting s
+    ON (pg_authid.oid = setrole AND setdatabase = 0);
 
 CREATE VIEW pg_shadow AS
     SELECT
         rolname AS usename,
-        oid AS usesysid,
+        pg_authid.oid AS usesysid,
         rolcreatedb AS usecreatedb,
         rolsuper AS usesuper,
         rolcatupdate AS usecatupd,
         rolpassword AS passwd,
         rolvaliduntil::abstime AS valuntil,
-        rolconfig AS useconfig
-    FROM pg_authid
+        setconfig AS useconfig
+    FROM pg_authid LEFT JOIN pg_db_role_setting s
+    ON (pg_authid.oid = setrole AND setdatabase = 0)
     WHERE rolcanlogin;
 
 REVOKE ALL on pg_shadow FROM public;

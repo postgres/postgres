@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.14 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.15 2009/10/07 22:14:16 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -37,10 +37,10 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
 
 ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>configuration_parameter</replaceable>
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
 </synopsis>
  </refsynopsisdiv>
 
@@ -80,14 +80,16 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
   </para>
 
   <para> 
-   The remaining variants change a role's session default for a
-   specified configuration variable. Whenever the role subsequently
+   The remaining variants change a role's session default for a configuration variable 
+   for all databases or, when the <literal>IN DATABASE</literal> clause is specified,
+   for the named database. Whenever the role subsequently
    starts a new session, the specified value becomes the session
    default, overriding whatever setting is present in
    <filename>postgresql.conf</> or has been received from the postgres
    command line. This only happens at login time, so configuration
    settings associated with a role to which you've <xref
-   linkend="sql-set-role" endterm="sql-set-role-title"> will be ignored.
+   linkend="sql-set-role" endterm="sql-set-role-title"> will be ignored. Settings set to
+   a role directly are overridden by any database specific settings attached to a role.
    Superusers can change anyone's session defaults. Roles having
    <literal>CREATEROLE</> privilege can change defaults for non-superuser
    roles. Certain variables cannot be set this way, or can only be
@@ -146,6 +148,15 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
      </varlistentry>
 
      <varlistentry>
+       <term><replaceable>database_name</replaceable></term>
+       <listitem>
+         <para>
+           The name of the database the configuration variable should be set in.
+         </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable>configuration_parameter</replaceable></term>
       <term><replaceable>value</replaceable></term>
       <listitem>
@@ -159,6 +170,8 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
         <literal>RESET ALL</literal> to clear all role-specific settings.
         <literal>SET FROM CURRENT</> saves the session's current value of
         the parameter as the role-specific value.
+        If used in conjunction with <literal>IN DATABASE</literal>, the configuration
+        parameter is set or removed for the given role and database only.
        </para>
 
        <para>
@@ -207,8 +220,8 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET ALL
    It is also possible to tie a
    session default to a specific database rather than to a role; see
    <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">.
-   Role-specific settings override database-specific
-   ones if there is a conflict.
+   If there is a conflict, database-role-specific settings override role-specific
+   ones, which in turn override database-specific ones.
   </para>
  </refsect1>
 
@@ -261,6 +274,15 @@ ALTER ROLE miriam CREATEROLE CREATEDB;
 
 <programlisting>
 ALTER ROLE worker_bee SET maintenance_work_mem = 100000;
+</programlisting>
+  </para>
+
+  <para>
+    Give a role a non-default, database-specific setting of the 
+  <xref linkend="guc-client-min-messages"> parameter:
+
+<programlisting>
+ALTER ROLE fred IN DATABASE devel SET client_min_messages = DEBUG;
 </programlisting>
   </para>
  </refsect1>

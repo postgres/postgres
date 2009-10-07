@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.8 2009/06/11 20:46:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.9 2009/10/07 22:14:25 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,5 +58,8 @@ DECLARE_TOAST(pg_database, 2844, 2845);
 DECLARE_TOAST(pg_shdescription, 2846, 2847);
 #define PgShdescriptionToastTable 2846
 #define PgShdescriptionToastIndex 2847
+DECLARE_TOAST(pg_db_role_setting, 2966, 2967);
+#define PgDbRoleSettingToastTable 2966
+#define PgDbRoleSettingToastIndex 2967
 
 #endif   /* TOASTING_H */

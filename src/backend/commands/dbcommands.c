@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.226 2009/09/01 02:54:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.227 2009/10/07 22:14:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
@@ -50,7 +51,6 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 #include "utils/snapmgr.h"
@@ -544,12 +544,10 @@ createdb(const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 
 	/*
-	 * We deliberately set datconfig and datacl to defaults (NULL), rather
-	 * than copying them from the template database.  Copying datacl would be
-	 * a bad idea when the owner is not the same as the template's owner. It's
-	 * more debatable whether datconfig should be copied.
+	 * We deliberately set datacl to default (NULL), rather than copying it
+	 * from the template database.  Copying it would be a bad idea when the
+	 * owner is not the same as the template's owner.
 	 */
-	new_record_nulls[Anum_pg_database_datconfig - 1] = true;
 	new_record_nulls[Anum_pg_database_datacl - 1] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(pg_database_rel),
@@ -819,6 +817,11 @@ dropdb(const char *dbname, bool missing_ok)
 	 * Delete any comments associated with the database.
 	 */
 	DeleteSharedComments(db_id, DatabaseRelationId);
+
+	/*
+	 * Remove settings associated with this database
+	 */
+	DropSetting(db_id, InvalidOid);
 
 	/*
 	 * Remove shared dependency references for the database.
@@ -1397,85 +1400,26 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
-	char	   *valuestr;
-	HeapTuple	tuple,
-				newtuple;
-	Relation	rel;
-	ScanKeyData scankey;
-	SysScanDesc scan;
-	Datum		repl_val[Natts_pg_database];
-	bool		repl_null[Natts_pg_database];
-	bool		repl_repl[Natts_pg_database];
+	Oid		datid = get_database_oid(stmt->dbname);
 
-	valuestr = ExtractSetVariableArgs(stmt->setstmt);
-
+	if (!OidIsValid(datid))
+  		ereport(ERROR,
+  				(errcode(ERRCODE_UNDEFINED_DATABASE),
+  				 errmsg("database \"%s\" does not exist", stmt->dbname)));
+  
 	/*
-	 * Get the old tuple.  We don't need a lock on the database per se,
-	 * because we're not going to do anything that would mess up incoming
-	 * connections.
+	 * Obtain a lock on the database and make sure it didn't go away in the
+	 * meantime.
 	 */
-	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
-	ScanKeyInit(&scankey,
-				Anum_pg_database_datname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(stmt->dbname));
-	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
-							  SnapshotNow, 1, &scankey);
-	tuple = systable_getnext(scan);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", stmt->dbname)));
+	shdepLockAndCheckObject(DatabaseRelationId, datid);
 
-	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
-					   stmt->dbname);
+	if (!pg_database_ownercheck(datid, GetUserId()))
+  		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+  					   stmt->dbname);
 
-	memset(repl_repl, false, sizeof(repl_repl));
-	repl_repl[Anum_pg_database_datconfig - 1] = true;
-
-	if (stmt->setstmt->kind == VAR_RESET_ALL)
-	{
-		/* RESET ALL, so just set datconfig to null */
-		repl_null[Anum_pg_database_datconfig - 1] = true;
-		repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
-	}
-	else
-	{
-		Datum		datum;
-		bool		isnull;
-		ArrayType  *a;
-
-		repl_null[Anum_pg_database_datconfig - 1] = false;
-
-		/* Extract old value of datconfig */
-		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
-							 RelationGetDescr(rel), &isnull);
-		a = isnull ? NULL : DatumGetArrayTypeP(datum);
-
-		/* Update (valuestr is NULL in RESET cases) */
-		if (valuestr)
-			a = GUCArrayAdd(a, stmt->setstmt->name, valuestr);
-		else
-			a = GUCArrayDelete(a, stmt->setstmt->name);
-
-		if (a)
-			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
-		else
-			repl_null[Anum_pg_database_datconfig - 1] = true;
-	}
-
-	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
-								 repl_val, repl_null, repl_repl);
-	simple_heap_update(rel, &tuple->t_self, newtuple);
-
-	/* Update indexes */
-	CatalogUpdateIndexes(rel, newtuple);
-
-	systable_endscan(scan);
-
-	/* Close pg_database, but keep lock till commit */
-	heap_close(rel, NoLock);
+	AlterSetting(datid, InvalidOid, stmt->setstmt);
+  
+	UnlockSharedObject(DatabaseRelationId, datid, 0, AccessShareLock);
 }
 
 

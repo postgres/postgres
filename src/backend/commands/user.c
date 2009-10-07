@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.188 2009/09/01 02:54:51 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.189 2009/10/07 22:14:19 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,10 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_db_role_setting.h"
 #include "commands/comment.h"
+#include "commands/dbcommands.h"
 #include "commands/user.h"
 #include "libpq/md5.h"
 #include "miscadmin.h"
@@ -27,7 +30,6 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -340,8 +342,6 @@ CreateRole(CreateRoleStmt *stmt)
 
 	else
 		new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = true;
-
-	new_record_nulls[Anum_pg_authid_rolconfig - 1] = true;
 
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
@@ -715,30 +715,29 @@ AlterRole(AlterRoleStmt *stmt)
 void
 AlterRoleSet(AlterRoleSetStmt *stmt)
 {
-	char	   *valuestr;
-	HeapTuple	oldtuple,
-				newtuple;
-	Relation	rel;
-	Datum		repl_val[Natts_pg_authid];
-	bool		repl_null[Natts_pg_authid];
-	bool		repl_repl[Natts_pg_authid];
+	HeapTuple	roletuple;
+	Oid			databaseid = InvalidOid;
 
-	valuestr = ExtractSetVariableArgs(stmt->setstmt);
+	roletuple = SearchSysCache(AUTHNAME,
+							   PointerGetDatum(stmt->role),
+							   0, 0, 0);
 
-	rel = heap_open(AuthIdRelationId, RowExclusiveLock);
-	oldtuple = SearchSysCache(AUTHNAME,
-							  PointerGetDatum(stmt->role),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(oldtuple))
+	if (!HeapTupleIsValid(roletuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role \"%s\" does not exist", stmt->role)));
 
 	/*
+	 * Obtain a lock on the role and make sure it didn't go away in the
+	 * meantime.
+	 */
+	shdepLockAndCheckObject(AuthIdRelationId, HeapTupleGetOid(roletuple));
+
+	/*
 	 * To mess with a superuser you gotta be superuser; else you need
 	 * createrole, or just want to change your own settings
 	 */
-	if (((Form_pg_authid) GETSTRUCT(oldtuple))->rolsuper)
+	if (((Form_pg_authid) GETSTRUCT(roletuple))->rolsuper)
 	{
 		if (!superuser())
 			ereport(ERROR,
@@ -748,54 +747,25 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	else
 	{
 		if (!have_createrole_privilege() &&
-			HeapTupleGetOid(oldtuple) != GetUserId())
+			HeapTupleGetOid(roletuple) != GetUserId())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied")));
 	}
 
-	memset(repl_repl, false, sizeof(repl_repl));
-	repl_repl[Anum_pg_authid_rolconfig - 1] = true;
-
-	if (stmt->setstmt->kind == VAR_RESET_ALL)
+	/* look up and lock the database, if specified */
+	if (stmt->database != NULL)
 	{
-		/* RESET ALL, so just set rolconfig to null */
-		repl_null[Anum_pg_authid_rolconfig - 1] = true;
-		repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
-	}
-	else
-	{
-		Datum		datum;
-		bool		isnull;
-		ArrayType  *array;
-
-		repl_null[Anum_pg_authid_rolconfig - 1] = false;
-
-		/* Extract old value of rolconfig */
-		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
-								Anum_pg_authid_rolconfig, &isnull);
-		array = isnull ? NULL : DatumGetArrayTypeP(datum);
-
-		/* Update (valuestr is NULL in RESET cases) */
-		if (valuestr)
-			array = GUCArrayAdd(array, stmt->setstmt->name, valuestr);
-		else
-			array = GUCArrayDelete(array, stmt->setstmt->name);
-
-		if (array)
-			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(array);
-		else
-			repl_null[Anum_pg_authid_rolconfig - 1] = true;
+		databaseid = get_database_oid(stmt->database);
+		if (!OidIsValid(databaseid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("database \"%s\" not found", stmt->database)));
+		shdepLockAndCheckObject(DatabaseRelationId, databaseid);
 	}
 
-	newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
-								 repl_val, repl_null, repl_repl);
-
-	simple_heap_update(rel, &oldtuple->t_self, newtuple);
-	CatalogUpdateIndexes(rel, newtuple);
-
-	ReleaseSysCache(oldtuple);
-	heap_close(rel, RowExclusiveLock);
+	AlterSetting(databaseid, HeapTupleGetOid(roletuple), stmt->setstmt);
+	ReleaseSysCache(roletuple);
 }
 
 
@@ -942,6 +912,11 @@ DropRole(DropRoleStmt *stmt)
 		 * Remove any comments on this role.
 		 */
 		DeleteSharedComments(roleid, AuthIdRelationId);
+
+		/*
+		 * Remove settings for this role.
+		 */
+		DropSetting(InvalidOid, roleid);
 
 		/*
 		 * Advance command counter so that later iterations of this loop will

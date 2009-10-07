@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.197 2009/09/01 00:09:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.198 2009/10/07 22:14:23 alvherre Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -27,6 +27,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_tablespace.h"
 #include "libpq/auth.h"
 #include "libpq/libpq-be.h"
@@ -63,6 +64,7 @@ static void CheckMyDatabase(const char *name, bool am_superuser);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static bool ThereIsAtLeastOneRole(void);
+static void process_settings(Oid databaseid, Oid roleid);
 
 
 /*** InitPostgres support ***/
@@ -343,29 +345,6 @@ CheckMyDatabase(const char *name, bool am_superuser)
 #ifdef ENABLE_NLS
 	pg_bind_textdomain_codeset(textdomain(NULL));
 #endif
-
-	/*
-	 * Lastly, set up any database-specific configuration variables.
-	 */
-	if (IsUnderPostmaster)
-	{
-		Datum		datum;
-		bool		isnull;
-
-		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_datconfig,
-								&isnull);
-		if (!isnull)
-		{
-			ArrayType  *a = DatumGetArrayTypeP(datum);
-
-			/*
-			 * We process all the options at SUSET level.  We assume that the
-			 * right to insert an option into pg_database was checked when it
-			 * was inserted.
-			 */
-			ProcessGUCArray(a, PGC_SUSET, PGC_S_DATABASE, GUC_ACTION_SET);
-		}
-	}
 
 	ReleaseSysCache(tup);
 }
@@ -739,6 +718,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* set up ACL framework (so CheckMyDatabase can check permissions) */
 	initialize_acl();
 
+	/* Process pg_db_role_setting options */
+	process_settings(MyDatabaseId, GetSessionUserId());
+
 	/*
 	 * Re-read the pg_database row for our database, check permissions and
 	 * set up database-specific GUC settings.  We can't do this until all the
@@ -851,6 +833,28 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		CommitTransactionCommand();
 }
 
+/*
+ * Load GUC settings from pg_db_role_setting.
+ *
+ * We try specific settings for the database/role combination, as well as
+ * general for this database and for this user.
+ */
+static void
+process_settings(Oid databaseid, Oid roleid)
+{
+	Relation		relsetting;
+
+	if (!IsUnderPostmaster)
+		return;
+
+	relsetting = heap_open(DbRoleSettingRelationId, AccessShareLock);
+
+	ApplySetting(databaseid, roleid, relsetting, PGC_S_DATABASE_USER);
+	ApplySetting(InvalidOid, roleid, relsetting, PGC_S_USER);
+	ApplySetting(databaseid, InvalidOid, relsetting, PGC_S_DATABASE);
+
+	heap_close(relsetting, AccessShareLock);
+}
 
 /*
  * Backend-shutdown callback.  Do cleanup that we want to be sure happens

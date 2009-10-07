@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.26 2009/10/05 19:24:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.27 2009/10/07 22:14:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ extern bool buildDefaultACLCommands(const char *type, const char *nspname,
 						const char *acls, const char *owner,
 						int remoteVersion,
 						PQExpBuffer sql);
-extern void processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
+extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
 					  const char *pattern,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,

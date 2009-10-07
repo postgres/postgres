@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.208 2009/10/05 19:24:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.209 2009/10/07 22:14:14 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -201,6 +201,11 @@
      <row>
       <entry><link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link></entry>
       <entry>query rewrite rules</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-db-role-setting"><structname>pg_db_role_setting</structname></link></entry>
+      <entry>per-role and per-database settings</entry>
      </row>
 
      <row>
@@ -2134,13 +2139,6 @@
        will be stored in this tablespace; in particular, all the non-shared
        system catalogs will be there
       </entry>
-     </row>
-
-     <row>
-      <entry><structfield>datconfig</structfield></entry>
-      <entry><type>text[]</type></entry>
-      <entry></entry>
-      <entry>Session defaults for run-time configuration variables</entry>
      </row>
 
      <row>
@@ -4104,6 +4102,65 @@
    </para>
   </note>
 
+ </sect1>
+
+ <sect1 id="catalog-pg-db-role-setting">
+  <title><structname>pg_db_role_setting</structname></title>
+
+  <indexterm zone="catalog-pg-db-role-setting">
+   <primary>pg_db_role_setting</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_db_role_setting</structname> records the default
+   values that have been set for run-time configuration variables,
+   for each role and database combination.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_db_role_setting</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_db_role_setting</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_db_role_setting</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>setdatabase</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
+      <entry>The OID of the database the setting is applicable to, or zero if not database-specific</entry>
+     </row>
+
+     <row>
+      <entry><structfield>setrole</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>The OID of the role the setting is applicable to, or zero if not role-specific</entry>
+     </row>
+
+     <row>
+      <entry><structfield>setconfig</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Defaults for run-time configuration variables</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
 
@@ -6555,13 +6612,6 @@
       <entry></entry>
       <entry>Password expiry time (only used for password authentication);
        NULL if no expiration</entry>
-     </row>
-
-     <row>
-      <entry><structfield>rolconfig</structfield></entry>
-      <entry><type>text[]</type></entry>
-      <entry></entry>
-      <entry>Session defaults for run-time configuration variables</entry>
      </row>
 
      <row>
