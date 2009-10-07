@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/snapmgr.h,v 1.6 2009/10/02 17:57:30 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/snapmgr.h,v 1.7 2009/10/07 16:27:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@ extern TransactionId RecentGlobalXmin;
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);
-extern Snapshot CopySnapshot(Snapshot snapshot);
 
 extern void PushActiveSnapshot(Snapshot snapshot);
 extern void PushUpdatedSnapshot(Snapshot snapshot);
