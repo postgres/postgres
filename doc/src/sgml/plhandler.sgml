@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.7 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.8 2009/10/08 04:41:07 tgl Exp $ -->
 
  <chapter id="plhandler">
    <title>Writing A Procedural Language Handler</title>
@@ -13,7 +13,7 @@
     the current <quote>version 1</quote> interface for compiled
     languages (this includes functions in user-defined procedural languages,
     functions written in SQL, and functions using the version 0 compiled
-    language interface), go through a <firstterm>call handler</firstterm>
+    language interface) go through a <firstterm>call handler</firstterm>
     function for the specific language.  It is the responsibility of
     the call handler to execute the function in a meaningful way, such
     as by interpreting the supplied source text.  This chapter outlines
@@ -51,8 +51,7 @@
 
    <para>
     It's up to the call handler to fetch the entry of the function from the
-    system table
-    <classname>pg_proc</classname> and to analyze the argument
+    <classname>pg_proc</classname> system catalog and to analyze the argument
     and return types of the called function. The <literal>AS</> clause from the
     <command>CREATE FUNCTION</command> command for the function will be found
     in the <literal>prosrc</literal> column of the
@@ -153,9 +152,70 @@ CREATE LANGUAGE plsample
    </para>
 
    <para>
+    Although providing a call handler is sufficient to create a minimal
+    procedural language, there are two other functions that can optionally
+    be provided to make the language more convenient to use.  These
+    are a <firstterm>validator</firstterm> and an
+    <firstterm>inline handler</firstterm>.  A validator can be provided
+    to allow language-specific checking to be done during
+    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">.
+    An inline handler can be provided to allow the language to support
+    anonymous code blocks executed via the <xref linkend="sql-do"
+    endterm="sql-do-title"> command.
+   </para>
+
+   <para>
+    If a validator is provided by a procedural language, it
+    must be declared as a function taking a single parameter of type
+    <type>oid</>.  The validator's result is ignored, so it is customarily
+    declared to return <type>void</>.  The validator will be called at
+    the end of a <command>CREATE FUNCTION</> command that has created
+    or updated a function written in the procedural language.
+    The passed-in OID is the OID of the function's <classname>pg_proc</>
+    row.  The validator must fetch this row in the usual way, and do
+    whatever checking is appropriate.  Typical checks include verifying
+    that the function's argument and result types are supported by the
+    language, and that the function's body is syntactically correct
+    in the language.  If the validator finds the function to be okay,
+    it should just return.  If it finds an error, it should report that
+    via the normal <function>ereport()</> error reporting mechanism.
+    Throwing an error will force a transaction rollback and thus prevent
+    the incorrect function definition from being committed.
+   </para>
+
+   <para>
+    Validator functions should typically honor the <xref
+    linkend="guc-check-function-bodies"> parameter: if it is turned off then
+    any expensive or context-sensitive checking should be skipped.
+    In particular, this parameter is turned off by <application>pg_dump</>
+    so that it can load procedural language functions without worrying
+    about possible dependencies of the function bodies on other database
+    objects.  (Because of this requirement, the call handler should avoid
+    assuming that the validator has fully checked the function.  The point
+    of having a validator is not to let the call handler omit checks, but
+    to notify the user immediately if there are obvious errors in a
+    <command>CREATE FUNCTION</> command.)
+   </para>
+
+   <para>
+    If an inline handler is provided by a procedural language, it
+    must be declared as a function taking a single parameter of type
+    <type>internal</>.  The inline handler's result is ignored, so it is
+    customarily declared to return <type>void</>.  The inline handler
+    will be called when a <command>DO</> statement is executed specifying
+    the procedural language.  The parameter actually passed is a pointer
+    to an <structname>InlineCodeBlock</> struct, which contains information
+    about the <command>DO</> statement's parameters, in particular the
+    text of the anonymous code block to be executed.  The inline handler
+    should execute this code and return.
+   </para>
+
+   <para>
     The procedural languages included in the standard distribution
-    are good references when trying to write your own call handler.
+    are good references when trying to write your own language handler.
     Look into the <filename>src/pl</> subdirectory of the source tree.
+    The <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
+    reference page also has some useful details.
    </para>
 
  </chapter>

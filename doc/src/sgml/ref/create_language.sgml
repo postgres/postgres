@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.46 2009/09/22 23:43:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.47 2009/10/08 04:41:07 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
   <para>
    <command>CREATE LANGUAGE</command> effectively associates the
    language name with a call handler that is responsible for executing
-   functions written in the language.  Refer to <xref linkend="xplang">
+   functions written in the language.  Refer to <xref linkend="plhandler">
    for more information about language call handlers.
   </para>
 
