@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.81 2009/06/11 14:48:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.82 2009/10/08 22:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,8 +387,6 @@ gistindex_keytest(IndexTuple tuple,
 	so = (GISTScanOpaque) scan->opaque;
 	giststate = so->giststate;
 	p = BufferGetPage(so->curbuf);
-
-	IncrIndexProcessed();
 
 	scan->xs_recheck = false;
 

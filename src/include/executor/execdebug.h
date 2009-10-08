@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.34 2009/01/01 17:23:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.35 2009/10/08 22:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,16 +28,6 @@
  *		since we can use -D compiler options to enable features.
  *		- thomas 1999-02-20
  * ----------------------------------------------------------------
- */
-
-/* ----------------
- *		EXEC_TUPLECOUNT is a #define which causes the
- *		executor to keep track of tuple counts.  This might be
- *		causing some problems with the decstation stuff so
- *		you might want to undefine this if you are doing work
- *		on the decs  - cim 10/20/89
- * ----------------
-#undef EXEC_TUPLECOUNT
  */
 
 /* ----------------
@@ -78,40 +68,6 @@
  */
 #define T_OR_F(b)				((b) ? "true" : "false")
 #define NULL_OR_TUPLE(slot)		(TupIsNull(slot) ? "null" : "a tuple")
-
-
-/* ----------------
- *		tuple count debugging defines
- * ----------------
- */
-#ifdef EXEC_TUPLECOUNT
-extern int	NTupleProcessed;
-extern int	NTupleRetrieved;
-extern int	NTupleReplaced;
-extern int	NTupleAppended;
-extern int	NTupleDeleted;
-extern int	NIndexTupleProcessed;
-extern int	NIndexTupleInserted;
-
-#define IncrRetrieved()			NTupleRetrieved++
-#define IncrAppended()			NTupleAppended++
-#define IncrDeleted()			NTupleDeleted++
-#define IncrReplaced()			NTupleReplaced++
-#define IncrInserted()			NTupleInserted++
-#define IncrProcessed()			NTupleProcessed++
-#define IncrIndexProcessed()	NIndexTupleProcessed++
-#define IncrIndexInserted()		NIndexTupleInserted++
-#else
-/* stop compiler warnings */
-#define IncrRetrieved()			(void)(0)
-#define IncrAppended()			(void)(0)
-#define IncrDeleted()			(void)(0)
-#define IncrReplaced()			(void)(0)
-#define IncrInserted()			(void)(0)
-#define IncrProcessed()			(void)(0)
-#define IncrIndexProcessed()	(void)(0)
-#define IncrIndexInserted()		(void)(0)
-#endif   /* EXEC_TUPLECOUNT */
 
 /* ----------------
  *		nest loop debugging defines

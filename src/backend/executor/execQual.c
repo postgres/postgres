@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.251 2009/08/06 20:44:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.252 2009/10/08 22:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4813,8 +4813,6 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	EV_printf("ExecQual: qual is ");
 	EV_nodeDisplay(qual);
 	EV_printf("\n");
-
-	IncrProcessed();
 
 	/*
 	 * Run in short-lived per-tuple context while computing expressions.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.162 2009/09/27 20:09:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.163 2009/10/08 22:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,83 +53,8 @@
 #include "utils/tqual.h"
 
 
-/* ----------------------------------------------------------------
- *		global counters for number of tuples processed, retrieved,
- *		appended, replaced, deleted.
- * ----------------------------------------------------------------
- */
-int			NTupleProcessed;
-int			NTupleRetrieved;
-int			NTupleReplaced;
-int			NTupleAppended;
-int			NTupleDeleted;
-int			NIndexTupleInserted;
-int			NIndexTupleProcessed;
-
-
 static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
 static void ShutdownExprContext(ExprContext *econtext, bool isCommit);
-
-
-/* ----------------------------------------------------------------
- *						statistic functions
- * ----------------------------------------------------------------
- */
-
-/* ----------------------------------------------------------------
- *		ResetTupleCount
- * ----------------------------------------------------------------
- */
-#ifdef NOT_USED
-void
-ResetTupleCount(void)
-{
-	NTupleProcessed = 0;
-	NTupleRetrieved = 0;
-	NTupleAppended = 0;
-	NTupleDeleted = 0;
-	NTupleReplaced = 0;
-	NIndexTupleProcessed = 0;
-}
-#endif
-
-/* ----------------------------------------------------------------
- *		PrintTupleCount
- * ----------------------------------------------------------------
- */
-#ifdef NOT_USED
-void
-DisplayTupleCount(FILE *statfp)
-{
-	if (NTupleProcessed > 0)
-		fprintf(statfp, "!\t%d tuple%s processed, ", NTupleProcessed,
-				(NTupleProcessed == 1) ? "" : "s");
-	else
-	{
-		fprintf(statfp, "!\tno tuples processed.\n");
-		return;
-	}
-	if (NIndexTupleProcessed > 0)
-		fprintf(statfp, "%d indextuple%s processed, ", NIndexTupleProcessed,
-				(NIndexTupleProcessed == 1) ? "" : "s");
-	if (NIndexTupleInserted > 0)
-		fprintf(statfp, "%d indextuple%s inserted, ", NIndexTupleInserted,
-				(NIndexTupleInserted == 1) ? "" : "s");
-	if (NTupleRetrieved > 0)
-		fprintf(statfp, "%d tuple%s retrieved. ", NTupleRetrieved,
-				(NTupleRetrieved == 1) ? "" : "s");
-	if (NTupleAppended > 0)
-		fprintf(statfp, "%d tuple%s appended. ", NTupleAppended,
-				(NTupleAppended == 1) ? "" : "s");
-	if (NTupleDeleted > 0)
-		fprintf(statfp, "%d tuple%s deleted. ", NTupleDeleted,
-				(NTupleDeleted == 1) ? "" : "s");
-	if (NTupleReplaced > 0)
-		fprintf(statfp, "%d tuple%s replaced. ", NTupleReplaced,
-				(NTupleReplaced == 1) ? "" : "s");
-	fprintf(statfp, "\n");
-}
-#endif
 
 
 /* ----------------------------------------------------------------
@@ -1166,11 +1091,6 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 			 */
 			result = lappend_oid(result, RelationGetRelid(indexRelation));
 		}
-
-		/*
-		 * keep track of index inserts for debugging
-		 */
-		IncrIndexInserted();
 	}
 
 	return result;

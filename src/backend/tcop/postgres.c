@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.573 2009/09/01 02:54:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.574 2009/10/08 22:34:57 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3851,7 +3851,6 @@ ResetUsage(void)
 	getrusage(RUSAGE_SELF, &Save_r);
 	gettimeofday(&Save_t, NULL);
 	ResetBufferUsage();
-	/* ResetTupleCount(); */
 }
 
 void

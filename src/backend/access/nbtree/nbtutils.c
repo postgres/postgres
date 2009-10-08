@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.93 2009/01/05 17:14:28 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.94 2009/10/08 22:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,8 +818,6 @@ _bt_checkkeys(IndexScanDesc scan,
 		tuple_valid = true;
 
 	tuple = (IndexTuple) PageGetItem(page, iid);
-
-	IncrIndexProcessed();
 
 	tupdesc = RelationGetDescr(scan->indexRelation);
 	so = (BTScanOpaque) scan->opaque;
