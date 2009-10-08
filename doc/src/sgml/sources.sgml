@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.34 2009/06/04 18:33:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.35 2009/10/08 02:39:16 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -125,7 +125,7 @@ ereport(ERROR,
         (errcode(ERRCODE_AMBIGUOUS_FUNCTION),
          errmsg("function %s is not unique",
                 func_signature_string(funcname, nargs,
-                                      actual_arg_types)),
+                                      NIL, actual_arg_types)),
          errhint("Unable to choose a best candidate function. "
                  "You might need to add explicit typecasts.")));
 </programlisting>

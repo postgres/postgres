@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.223 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.224 2009/10/08 02:39:21 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -520,6 +520,22 @@ _readFuncExpr(void)
 	READ_BOOL_FIELD(funcretset);
 	READ_ENUM_FIELD(funcformat, CoercionForm);
 	READ_NODE_FIELD(args);
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readNamedArgExpr
+ */
+static NamedArgExpr *
+_readNamedArgExpr(void)
+{
+	READ_LOCALS(NamedArgExpr);
+
+	READ_NODE_FIELD(arg);
+	READ_STRING_FIELD(name);
+	READ_INT_FIELD(argnumber);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1207,6 +1223,8 @@ parseNodeString(void)
 		return_value = _readArrayRef();
 	else if (MATCH("FUNCEXPR", 8))
 		return_value = _readFuncExpr();
+	else if (MATCH("NAMEDARGEXPR", 12))
+		return_value = _readNamedArgExpr();
 	else if (MATCH("OPEXPR", 6))
 		return_value = _readOpExpr();
 	else if (MATCH("DISTINCTEXPR", 12))

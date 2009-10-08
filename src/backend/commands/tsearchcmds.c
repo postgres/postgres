@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.17 2009/06/11 14:48:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.18 2009/10/08 02:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ get_ts_parser_func(DefElem *defel, int attnum)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("function %s should return type %s",
-						func_signature_string(funcName, nargs, typeId),
+						func_signature_string(funcName, nargs, NIL, typeId),
 						format_type_be(retTypeId))));
 
 	return ObjectIdGetDatum(procOid);
@@ -945,7 +945,7 @@ get_ts_template_func(DefElem *defel, int attnum)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("function %s should return type %s",
-						func_signature_string(funcName, nargs, typeId),
+						func_signature_string(funcName, nargs, NIL, typeId),
 						format_type_be(retTypeId))));
 
 	return ObjectIdGetDatum(procOid);

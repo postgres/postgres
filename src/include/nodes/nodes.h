@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.227 2009/10/05 19:24:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.228 2009/10/08 02:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,7 @@ typedef enum NodeTag
 	T_WindowFunc,
 	T_ArrayRef,
 	T_FuncExpr,
+	T_NamedArgExpr,
 	T_OpExpr,
 	T_DistinctExpr,
 	T_ScalarArrayOpExpr,

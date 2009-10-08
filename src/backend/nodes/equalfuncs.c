@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.364 2009/10/07 22:14:20 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.365 2009/10/08 02:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,6 +236,17 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 		return false;
 
 	COMPARE_NODE_FIELD(args);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalNamedArgExpr(NamedArgExpr *a, NamedArgExpr *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_SCALAR_FIELD(argnumber);
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2374,6 +2385,9 @@ equal(void *a, void *b)
 			break;
 		case T_FuncExpr:
 			retval = _equalFuncExpr(a, b);
+			break;
+		case T_NamedArgExpr:
+			retval = _equalNamedArgExpr(a, b);
 			break;
 		case T_OpExpr:
 			retval = _equalOpExpr(a, b);

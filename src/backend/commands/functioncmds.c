@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.111 2009/09/22 23:43:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.112 2009/10/08 02:39:19 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -285,6 +285,39 @@ examine_parameter_list(List *parameters, Oid languageOid,
 
 		if (fp->name && fp->name[0])
 		{
+			ListCell   *px;
+
+			/*
+			 * As of Postgres 8.5 we disallow using the same name for two
+			 * input or two output function parameters.  Depending on the
+			 * function's language, conflicting input and output names might
+			 * be bad too, but we leave it to the PL to complain if so.
+			 */
+			foreach(px, parameters)
+			{
+				FunctionParameter *prevfp = (FunctionParameter *) lfirst(px);
+
+				if (prevfp == fp)
+					break;
+				/* pure in doesn't conflict with pure out */
+				if ((fp->mode == FUNC_PARAM_IN ||
+					 fp->mode == FUNC_PARAM_VARIADIC) &&
+					(prevfp->mode == FUNC_PARAM_OUT ||
+					 prevfp->mode == FUNC_PARAM_TABLE))
+					continue;
+				if ((prevfp->mode == FUNC_PARAM_IN ||
+					 prevfp->mode == FUNC_PARAM_VARIADIC) &&
+					(fp->mode == FUNC_PARAM_OUT ||
+					 fp->mode == FUNC_PARAM_TABLE))
+					continue;
+				if (prevfp->name && prevfp->name[0] &&
+					strcmp(prevfp->name, fp->name) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("parameter name \"%s\" used more than once",
+									fp->name)));
+			}
+
 			paramNames[i] = CStringGetTextDatum(fp->name);
 			have_names = true;
 		}
@@ -1097,6 +1130,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 				 errmsg("function %s already exists in schema \"%s\"",
 						funcname_signature_string(newname,
 												  procForm->pronargs,
+												  NIL,
 											   procForm->proargtypes.values),
 						get_namespace_name(namespaceOid))));
 	}

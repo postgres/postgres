@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.681 2009/10/07 22:14:21 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.682 2009/10/08 02:39:22 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -354,6 +354,8 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr func_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
+%type <list>	func_arg_list
+%type <node>	func_arg_expr
 %type <list>	row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
@@ -9055,7 +9057,7 @@ func_expr:	func_name '(' ')' over_clause
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' expr_list ')' over_clause
+			| func_name '(' func_arg_list ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -9067,7 +9069,7 @@ func_expr:	func_name '(' ')' over_clause
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' VARIADIC a_expr ')' over_clause
+			| func_name '(' VARIADIC func_arg_expr ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -9079,7 +9081,7 @@ func_expr:	func_name '(' ')' over_clause
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' expr_list ',' VARIADIC a_expr ')' over_clause
+			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -9091,7 +9093,7 @@ func_expr:	func_name '(' ')' over_clause
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' ALL expr_list ')' over_clause
+			| func_name '(' ALL func_arg_list ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -9107,7 +9109,7 @@ func_expr:	func_name '(' ')' over_clause
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' DISTINCT expr_list ')' over_clause
+			| func_name '(' DISTINCT func_arg_list ')' over_clause
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -9830,6 +9832,32 @@ expr_list:	a_expr
 				}
 		;
 
+/* function arguments can have names */
+func_arg_list:  func_arg_expr
+				{
+					$$ = list_make1($1);
+				}
+			| func_arg_list ',' func_arg_expr
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+func_arg_expr:  a_expr
+				{
+					$$ = $1;
+				}
+			| a_expr AS param_name
+				{
+					NamedArgExpr *na = makeNode(NamedArgExpr);
+					na->arg = (Expr *) $1;
+					na->name = $3;
+					na->argnumber = -1;		/* until determined */
+					na->location = @3;
+					$$ = (Node *) na;
+				}
+		;
+
 type_list:	Typename								{ $$ = list_make1($1); }
 			| type_list ',' Typename				{ $$ = lappend($1, $3); }
 		;
@@ -10296,10 +10324,27 @@ AexprConst: Iconst
 					t->location = @1;
 					$$ = makeStringConstCast($2, @2, t);
 				}
-			| func_name '(' expr_list ')' Sconst
+			| func_name '(' func_arg_list ')' Sconst
 				{
 					/* generic syntax with a type modifier */
 					TypeName *t = makeTypeNameFromNameList($1);
+					ListCell *lc;
+
+					/*
+					 * We must use func_arg_list in the production to avoid
+					 * reduce/reduce conflicts, but we don't actually wish
+					 * to allow NamedArgExpr in this context.
+					 */
+					foreach(lc, $3)
+					{
+						NamedArgExpr *arg = (NamedArgExpr *) lfirst(lc);
+
+						if (IsA(arg, NamedArgExpr))
+							ereport(ERROR,
+								    (errcode(ERRCODE_SYNTAX_ERROR),
+								     errmsg("type modifier cannot have AS name"),
+								     parser_errposition(arg->location)));
+					}
 					t->typmods = $3;
 					t->location = @1;
 					$$ = makeStringConstCast($5, @5, t);

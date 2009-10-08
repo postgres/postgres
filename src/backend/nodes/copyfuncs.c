@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.441 2009/10/07 22:14:20 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.442 2009/10/08 02:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1014,6 +1014,22 @@ _copyFuncExpr(FuncExpr *from)
 	COPY_SCALAR_FIELD(funcretset);
 	COPY_SCALAR_FIELD(funcformat);
 	COPY_NODE_FIELD(args);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+/*
+ * _copyNamedArgExpr *
+ */
+static NamedArgExpr *
+_copyNamedArgExpr(NamedArgExpr *from)
+{
+	NamedArgExpr *newnode = makeNode(NamedArgExpr);
+
+	COPY_NODE_FIELD(arg);
+	COPY_STRING_FIELD(name);
+	COPY_SCALAR_FIELD(argnumber);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -3586,6 +3602,9 @@ copyObject(void *from)
 			break;
 		case T_FuncExpr:
 			retval = _copyFuncExpr(from);
+			break;
+		case T_NamedArgExpr:
+			retval = _copyNamedArgExpr(from);
 			break;
 		case T_OpExpr:
 			retval = _copyOpExpr(from);

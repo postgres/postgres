@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.150 2009/07/16 06:33:45 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.151 2009/10/08 02:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,6 +312,29 @@ typedef struct FuncExpr
 	List	   *args;			/* arguments to the function */
 	int			location;		/* token location, or -1 if unknown */
 } FuncExpr;
+
+/*
+ * NamedArgExpr - a named argument of a function
+ *
+ * This node type can only appear in the args list of a FuncCall or FuncExpr
+ * node.  We support pure positional call notation (no named arguments),
+ * named notation (all arguments are named), and mixed notation (unnamed
+ * arguments followed by named ones).
+ *
+ * Parse analysis sets argnumber to the positional index of the argument,
+ * but doesn't rearrange the argument list.
+ *
+ * The planner will convert argument lists to pure positional notation
+ * during expression preprocessing, so execution never sees a NamedArgExpr.
+ */
+typedef struct NamedArgExpr
+{
+	Expr		xpr;
+	Expr	   *arg;			/* the argument expression */
+	char	   *name;			/* the name */
+	int			argnumber;		/* argument's number in positional notation */
+	int			location;		/* argument name location, or -1 if unknown */
+} NamedArgExpr;
 
 /*
  * OpExpr - expression node for an operator invocation

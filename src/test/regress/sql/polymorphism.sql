@@ -1,5 +1,6 @@
 -- Currently this tests polymorphic aggregates and indirectly does some
 -- testing of polymorphic SQL functions.  It ought to be extended.
+-- Tests for other features related to function-calling have snuck in, too.
 
 
 -- Legend:
@@ -21,7 +22,7 @@
 -- !> = not allowed
 -- E  = exists
 -- NE = not-exists
--- 
+--
 -- Possible states:
 -- ----------------
 -- B = (A || P || N)
@@ -69,7 +70,7 @@ CREATE FUNCTION ffnp(int[]) returns int[] as
 'select $1' LANGUAGE SQL;
 
 -- Try to cover all the possible states:
--- 
+--
 -- Note: in Cases 1 & 2, we are trying to return P. Therefore, if the transfn
 -- is stfnp, tfnp, or tf2p, we must use ffp as finalfn, because stfnp, tfnp,
 -- and tf2p do not return P. Conversely, in Cases 3 & 4, we are trying to
@@ -624,3 +625,123 @@ select dfunc('Hi');
 drop function dfunc(int, int, int);
 drop function dfunc(int, int);
 drop function dfunc(text);
+
+--
+-- Tests for named- and mixed-notation function calling
+--
+
+create function dfunc(a int, b int, c int = 0, d int = 0)
+  returns table (a int, b int, c int, d int) as $$
+  select $1, $2, $3, $4;
+$$ language sql;
+
+select (dfunc(10,20,30)).*;
+select (dfunc(10 as a, 20 as b, 30 as c)).*;
+select * from dfunc(10 as a, 20 as b);
+select * from dfunc(10 as b, 20 as a);
+select * from dfunc(0);  -- fail
+select * from dfunc(1,2);
+select * from dfunc(1,2,3 as c);
+select * from dfunc(1,2,3 as d);
+
+select * from dfunc(10 as x, 20 as b, 30 as x);  -- fail, duplicate name
+select * from dfunc(10, 20 as b, 30);  -- fail, named args must be last
+select * from dfunc(10 as x, 20 as b, 30 as c);  -- fail, unknown param
+select * from dfunc(10, 10, 20 as a);  -- fail, a overlaps positional parameter
+select * from dfunc(1,2 as c,3 as d); -- fail, no value for b
+
+drop function dfunc(int, int, int, int);
+
+-- test with different parameter types
+create function dfunc(a varchar, b numeric, c date = current_date)
+  returns table (a varchar, b numeric, c date) as $$
+  select $1, $2, $3;
+$$ language sql;
+
+select (dfunc('Hello World', 20, '2009-07-25'::date)).*;
+select * from dfunc('Hello World', 20, '2009-07-25'::date);
+select * from dfunc('2009-07-25'::date as c, 'Hello World' as a, 20 as b);
+select * from dfunc('Hello World', 20 as b, '2009-07-25'::date as c);
+select * from dfunc('Hello World', '2009-07-25'::date as c, 20 as b);
+select * from dfunc('Hello World', 20 as c, '2009-07-25'::date as b);  -- fail
+
+drop function dfunc(varchar, numeric, date);
+
+-- test out parameters with named params
+create function dfunc(a varchar = 'def a', out _a varchar, c numeric = NULL, out _c numeric)
+returns record as $$
+  select $1, $2;
+$$ language sql;
+
+select (dfunc()).*;
+select * from dfunc();
+select * from dfunc('Hello', 100);
+select * from dfunc('Hello' as a, 100 as c);
+select * from dfunc(100 as c, 'Hello' as a);
+select * from dfunc('Hello');
+select * from dfunc('Hello', 100 as c);
+select * from dfunc(100 as c);
+
+-- fail, can no longer change an input parameter's name
+create or replace function dfunc(a varchar = 'def a', out _a varchar, x numeric = NULL, out _c numeric)
+returns record as $$
+  select $1, $2;
+$$ language sql;
+
+create or replace function dfunc(a varchar = 'def a', out _a varchar, numeric = NULL, out _c numeric)
+returns record as $$
+  select $1, $2;
+$$ language sql;
+
+drop function dfunc(varchar, numeric);
+
+--fail, named parameters are not unique
+create function testfoo(a int, a int) returns int as $$ select 1;$$ language sql;
+create function testfoo(int, out a int, out a int) returns int as $$ select 1;$$ language sql;
+create function testfoo(out a int, inout a int) returns int as $$ select 1;$$ language sql;
+create function testfoo(a int, inout a int) returns int as $$ select 1;$$ language sql;
+
+-- valid
+create function testfoo(a int, out a int) returns int as $$ select $1;$$ language sql;
+select testfoo(37);
+drop function testfoo(int);
+create function testfoo(a int) returns table(a int) as $$ select $1;$$ language sql;
+select * from testfoo(37);
+drop function testfoo(int);
+
+-- test polymorphic params and defaults
+create function dfunc(a anyelement, b anyelement = null, flag bool = true)
+returns anyelement as $$
+  select case when $3 then $1 else $2 end;
+$$ language sql;
+
+select dfunc(1,2);
+select dfunc('a'::text, 'b'); -- positional notation with default
+
+select dfunc(1 as a, 2 as b);
+select dfunc('a'::text as a, 'b' as b);
+select dfunc('a'::text as a, 'b' as b, false as flag); -- named notation
+
+select dfunc('b'::text as b, 'a' as a); -- named notation with default
+select dfunc('a'::text as a, true as flag); -- named notation with default
+select dfunc('a'::text as a, false as flag); -- named notation with default
+select dfunc('b'::text as b, 'a' as a, true as flag); -- named notation
+
+select dfunc('a'::text, 'b', false); -- full positional notation
+select dfunc('a'::text, 'b', false as flag); -- mixed notation
+select dfunc('a'::text, 'b', true); -- full positional notation
+select dfunc('a'::text, 'b', true as flag); -- mixed notation
+
+-- check reverse-listing of named-arg calls
+CREATE VIEW dfview AS
+   SELECT q1, q2,
+     dfunc(q1,q2, q1>q2 as flag) as c3,
+     dfunc(q1, q1<q2 as flag, q2 AS b) as c4
+     FROM int8_tbl;
+
+select * from dfview;
+
+\d dfview
+
+drop view dfview;
+drop function dfunc(anyelement, anyelement, bool);

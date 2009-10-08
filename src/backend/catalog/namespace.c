@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.118 2009/06/11 14:48:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.119 2009/10/08 02:39:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -188,6 +189,8 @@ static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
+static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
+						   int **argnumbers);
 
 /* These don't really need to appear in any header file */
 Datum		pg_table_is_visible(PG_FUNCTION_ARGS);
@@ -562,8 +565,14 @@ TypeIsVisible(Oid typid)
  *		retrieve a list of the possible matches.
  *
  * If nargs is -1, we return all functions matching the given name,
- * regardless of argument count.  (expand_variadic and expand_defaults must be
- * false in this case.)
+ * regardless of argument count.  (argnames must be NIL, and expand_variadic
+ * and expand_defaults must be false, in this case.)
+ *
+ * If argnames isn't NIL, we are considering a named- or mixed-notation call,
+ * and only functions having all the listed argument names will be returned.
+ * (We assume that length(argnames) <= nargs and all the passed-in names are
+ * distinct.)  The returned structs will include an argnumbers array showing
+ * the actual argument index for each logical argument position.
  *
  * If expand_variadic is true, then variadic functions having the same number
  * or fewer arguments will be retrieved, with the variadic argument and any
@@ -583,6 +592,13 @@ TypeIsVisible(Oid typid)
  * than nargs arguments while the variadic transformation requires the same
  * number or less.
  *
+ * When argnames isn't NIL, the returned args[] type arrays are not ordered
+ * according to the functions' declarations, but rather according to the call:
+ * first any positional arguments, then the named arguments, then defaulted
+ * arguments (if needed and allowed by expand_defaults).  The argnumbers[]
+ * array can be used to map this back to the catalog information.
+ * argnumbers[k] is set to the proargtypes index of the k'th call argument.
+ *
  * We search a single namespace if the function name is qualified, else
  * all namespaces in the search path.  In the multiple-namespace case,
  * we arrange for entries in earlier namespaces to mask identical entries in
@@ -596,15 +612,16 @@ TypeIsVisible(Oid typid)
  * It is guaranteed that the return list will never contain multiple entries
  * with identical argument lists.  When expand_defaults is true, the entries
  * could have more than nargs positions, but we still guarantee that they are
- * distinct in the first nargs positions.  However, if either expand_variadic
- * or expand_defaults is true, there might be multiple candidate functions
- * that expand to identical argument lists.  Rather than throw error here,
- * we report such situations by setting oid = 0 in the ambiguous entries.
+ * distinct in the first nargs positions.  However, if argnames isn't NIL or
+ * either expand_variadic or expand_defaults is true, there might be multiple
+ * candidate functions that expand to identical argument lists.  Rather than
+ * throw error here, we report such situations by returning a single entry
+ * with oid = 0 that represents a set of such conflicting candidates.
  * The caller might end up discarding such an entry anyway, but if it selects
  * such an entry it should react as though the call were ambiguous.
  */
 FuncCandidateList
-FuncnameGetCandidates(List *names, int nargs,
+FuncnameGetCandidates(List *names, int nargs, List *argnames,
 					  bool expand_variadic, bool expand_defaults)
 {
 	FuncCandidateList resultList = NULL;
@@ -648,41 +665,8 @@ FuncnameGetCandidates(List *names, int nargs,
 		bool		variadic;
 		bool		use_defaults;
 		Oid			va_elem_type;
+		int		   *argnumbers = NULL;
 		FuncCandidateList newResult;
-
-		/*
-		 * Check if function is variadic, and get variadic element type if so.
-		 * If expand_variadic is false, we should just ignore variadic-ness.
-		 */
-		if (pronargs <= nargs && expand_variadic)
-		{
-			va_elem_type = procform->provariadic;
-			variadic = OidIsValid(va_elem_type);
-			any_special |= variadic;
-		}
-		else
-		{
-			va_elem_type = InvalidOid;
-			variadic = false;
-		}
-
-		/*
-		 * Check if function can match by using parameter defaults.
-		 */
-		if (pronargs > nargs && expand_defaults)
-		{
-			/* Ignore if not enough default expressions */
-			if (nargs + procform->pronargdefaults < pronargs)
-				continue;
-			use_defaults = true;
-			any_special = true;
-		}
-		else
-			use_defaults = false;
-
-		/* Ignore if it doesn't match requested argument count */
-		if (nargs >= 0 && pronargs != nargs && !variadic && !use_defaults)
-			continue;
 
 		if (OidIsValid(namespaceId))
 		{
@@ -709,6 +693,88 @@ FuncnameGetCandidates(List *names, int nargs,
 				continue;		/* proc is not in search path */
 		}
 
+		if (argnames != NIL)
+		{
+			/*
+			 * Call uses named or mixed notation
+			 *
+			 * Named or mixed notation can match a variadic function only
+			 * if expand_variadic is off; otherwise there is no way to match
+			 * the presumed-nameless parameters expanded from the variadic
+			 * array.
+			 */
+			if (OidIsValid(procform->provariadic) && expand_variadic)
+				continue;
+			va_elem_type = InvalidOid;
+			variadic = false;
+
+			/*
+			 * Check argument count.
+			 */
+			Assert(nargs >= 0);			/* -1 not supported with argnames */
+
+			if (pronargs > nargs && expand_defaults)
+			{
+				/* Ignore if not enough default expressions */
+				if (nargs + procform->pronargdefaults < pronargs)
+					continue;
+				use_defaults = true;
+			}
+			else
+				use_defaults = false;
+
+			/* Ignore if it doesn't match requested argument count */
+			if (pronargs != nargs && !use_defaults)
+				continue;
+
+			/* Check for argument name match, generate positional mapping */
+			if (!MatchNamedCall(proctup, nargs, argnames,
+								&argnumbers))
+				continue;
+
+			/* Named argument matching is always "special" */
+			any_special = true;
+		}
+		else
+		{
+			/*
+			 * Call uses positional notation
+			 *
+			 * Check if function is variadic, and get variadic element type if
+			 * so.  If expand_variadic is false, we should just ignore
+			 * variadic-ness.
+			 */
+			if (pronargs <= nargs && expand_variadic)
+			{
+				va_elem_type = procform->provariadic;
+				variadic = OidIsValid(va_elem_type);
+				any_special |= variadic;
+			}
+			else
+			{
+				va_elem_type = InvalidOid;
+				variadic = false;
+			}
+
+			/*
+			 * Check if function can match by using parameter defaults.
+			 */
+			if (pronargs > nargs && expand_defaults)
+			{
+				/* Ignore if not enough default expressions */
+				if (nargs + procform->pronargdefaults < pronargs)
+					continue;
+				use_defaults = true;
+				any_special = true;
+			}
+			else
+				use_defaults = false;
+
+			/* Ignore if it doesn't match requested argument count */
+			if (nargs >= 0 && pronargs != nargs && !variadic && !use_defaults)
+				continue;
+		}
+
 		/*
 		 * We must compute the effective argument list so that we can easily
 		 * compare it to earlier results.  We waste a palloc cycle if it gets
@@ -722,8 +788,22 @@ FuncnameGetCandidates(List *names, int nargs,
 		newResult->pathpos = pathpos;
 		newResult->oid = HeapTupleGetOid(proctup);
 		newResult->nargs = effective_nargs;
-		memcpy(newResult->args, procform->proargtypes.values,
-			   pronargs * sizeof(Oid));
+		newResult->argnumbers = argnumbers;
+		if (argnumbers)
+		{
+			/* Re-order the argument types into call's logical order */
+			Oid		   *proargtypes = procform->proargtypes.values;
+			int			i;
+
+			for (i = 0; i < pronargs; i++)
+				newResult->args[i] = proargtypes[argnumbers[i]];
+		}
+		else
+		{
+			/* Simple positional case, just copy proargtypes as-is */
+			memcpy(newResult->args, procform->proargtypes.values,
+				   pronargs * sizeof(Oid));
+		}
 		if (variadic)
 		{
 			int			i;
@@ -741,9 +821,9 @@ FuncnameGetCandidates(List *names, int nargs,
 		 * Does it have the same arguments as something we already accepted?
 		 * If so, decide what to do to avoid returning duplicate argument
 		 * lists.  We can skip this check for the single-namespace case if no
-		 * special (variadic or defaults) match has been made, since then the
-		 * unique index on pg_proc guarantees all the matches have different
-		 * argument lists.
+		 * special (named, variadic or defaults) match has been made, since
+		 * then the unique index on pg_proc guarantees all the matches have
+		 * different argument lists.
 		 */
 		if (resultList != NULL &&
 			(any_special || !OidIsValid(namespaceId)))
@@ -827,7 +907,8 @@ FuncnameGetCandidates(List *names, int nargs,
 					 * both foo(numeric, variadic numeric[]) and
 					 * foo(variadic numeric[]) in the same namespace, or
 					 * both foo(int) and foo (int, int default something)
-					 * in the same namespace.
+					 * in the same namespace, or both foo(a int, b text)
+					 * and foo(b text, a int) in the same namespace.
 					 *----------
 					 */
 					preference = 0;
@@ -886,6 +967,125 @@ FuncnameGetCandidates(List *names, int nargs,
 }
 
 /*
+ * MatchNamedCall
+ *		Given a pg_proc heap tuple and a call's list of argument names,
+ *		check whether the function could match the call.
+ *
+ * The call could match if all supplied argument names are accepted by
+ * the function, in positions after the last positional argument, and there
+ * are defaults for all unsupplied arguments.
+ *
+ * The number of positional arguments is nargs - list_length(argnames).
+ * Note caller has already done basic checks on argument count.
+ *
+ * On match, return true and fill *argnumbers with a palloc'd array showing
+ * the mapping from call argument positions to actual function argument
+ * numbers.  Defaulted arguments are included in this map, at positions
+ * after the last supplied argument.
+ */
+static bool
+MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
+			   int **argnumbers)
+{
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+	int			pronargs = procform->pronargs;
+	int			numposargs = nargs - list_length(argnames);
+	int			pronallargs;
+	Oid		   *p_argtypes;
+	char	  **p_argnames;
+	char	   *p_argmodes;
+	bool		arggiven[FUNC_MAX_ARGS];
+	bool		isnull;
+	int			ap;				/* call args position */
+	int			pp;				/* proargs position */
+	ListCell   *lc;
+
+	Assert(argnames != NIL);
+	Assert(numposargs >= 0);
+	Assert(nargs <= pronargs);
+
+	/* Ignore this function if its proargnames is null */
+	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proargnames,
+						   &isnull);
+	if (isnull)
+		return false;
+
+	/* OK, let's extract the argument names and types */
+	pronallargs = get_func_arg_info(proctup,
+									&p_argtypes, &p_argnames, &p_argmodes);
+	Assert(p_argnames != NULL);
+
+	/* initialize state for matching */
+	*argnumbers = (int *) palloc(pronargs * sizeof(int));
+	memset(arggiven, false, pronargs * sizeof(bool));
+
+	/* there are numposargs positional args before the named args */
+	for (ap = 0; ap < numposargs; ap++)
+	{
+		(*argnumbers)[ap] = ap;
+		arggiven[ap] = true;
+	}
+
+	/* now examine the named args */
+	foreach(lc, argnames)
+	{
+		char   *argname = (char *) lfirst(lc);
+		bool	found;
+		int		i;
+
+		pp = 0;
+		found = false;
+		for (i = 0; i < pronallargs; i++)
+		{
+			/* consider only input parameters */
+			if (p_argmodes &&
+				(p_argmodes[i] != FUNC_PARAM_IN &&
+				 p_argmodes[i] != FUNC_PARAM_INOUT &&
+				 p_argmodes[i] != FUNC_PARAM_VARIADIC))
+				continue;
+			if (p_argnames[i] && strcmp(p_argnames[i], argname) == 0)
+			{
+				/* fail if argname matches a positional argument */
+				if (arggiven[pp])
+					return false;
+				arggiven[pp] = true;
+				(*argnumbers)[ap] = pp;
+				found = true;
+				break;
+			}
+			/* increase pp only for input parameters */
+			pp++;
+		}
+		/* if name isn't in proargnames, fail */
+		if (!found)
+			return false;
+		ap++;
+	}
+
+	Assert(ap == nargs);		/* processed all actual parameters */
+
+	/* Check for default arguments */
+	if (nargs < pronargs)
+	{
+		int		first_arg_with_default = pronargs - procform->pronargdefaults;
+
+		for (pp = numposargs; pp < pronargs; pp++)
+		{
+			if (arggiven[pp])
+				continue;
+			/* fail if arg not given and no default available */
+			if (pp < first_arg_with_default)
+				return false;
+			(*argnumbers)[ap++] = pp;
+		}
+	}
+
+	Assert(ap == pronargs);		/* processed all function parameters */
+
+	return true;
+}
+
+/*
  * FunctionIsVisible
  *		Determine whether a function (identified by OID) is visible in the
  *		current search path.  Visible means "would be found by searching
@@ -932,7 +1132,7 @@ FunctionIsVisible(Oid funcid)
 		visible = false;
 
 		clist = FuncnameGetCandidates(list_make1(makeString(proname)),
-									  nargs, false, false);
+									  nargs, NIL, false, false);
 
 		for (; clist; clist = clist->next)
 		{
@@ -1202,6 +1402,7 @@ OpernameGetCandidates(List *names, char oprkind)
 		newResult->nargs = 2;
 		newResult->nvargs = 0;
 		newResult->ndargs = 0;
+		newResult->argnumbers = NULL;
 		newResult->args[0] = operform->oprleft;
 		newResult->args[1] = operform->oprright;
 		newResult->next = resultList;

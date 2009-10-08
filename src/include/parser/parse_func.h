@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.65 2009/05/12 00:56:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.66 2009/10/08 02:39:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ extern Node *ParseFuncOrColumn(ParseState *pstate,
 				  bool agg_star, bool agg_distinct, bool func_variadic,
 				  WindowDef *over, bool is_column, int location);
 
-extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
+extern FuncDetailCode func_get_detail(List *funcname,
+				List *fargs, List *fargnames,
 				int nargs, Oid *argtypes,
 				bool expand_variadic, bool expand_defaults,
 				Oid *funcid, Oid *rettype,
@@ -68,10 +69,10 @@ extern void make_fn_arguments(ParseState *pstate,
 				  Oid *actual_arg_types,
 				  Oid *declared_arg_types);
 
-extern const char *funcname_signature_string(const char *funcname,
-						  int nargs, const Oid *argtypes);
-extern const char *func_signature_string(List *funcname,
-					  int nargs, const Oid *argtypes);
+extern const char *funcname_signature_string(const char *funcname, int nargs,
+						  List *argnames, const Oid *argtypes);
+extern const char *func_signature_string(List *funcname, int nargs,
+					  List *argnames, const Oid *argtypes);
 
 extern Oid LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 			   bool noError);

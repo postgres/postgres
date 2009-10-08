@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.256 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.257 2009/10/08 02:39:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,7 +526,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	/*
 	 * Simplify constant expressions.
 	 *
-	 * Note: one essential effect here is to insert the current actual values
+	 * Note: an essential effect of this is to convert named-argument function
+	 * calls to positional notation and insert the current actual values
 	 * of any default arguments for functions.	To ensure that happens, we
 	 * *must* process all expressions here.  Previous PG versions sometimes
 	 * skipped const-simplification if it didn't seem worth the trouble, but
@@ -2658,9 +2659,10 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
  * Currently, we disallow sublinks in standalone expressions, so there's no
  * real "planning" involved here.  (That might not always be true though.)
  * What we must do is run eval_const_expressions to ensure that any function
- * default arguments get inserted.	The fact that constant subexpressions
- * get simplified is a side-effect that is useful when the expression will
- * get evaluated more than once.  Also, we must fix operator function IDs.
+ * calls are converted to positional notation and function default arguments
+ * get inserted.  The fact that constant subexpressions get simplified is a
+ * side-effect that is useful when the expression will get evaluated more than
+ * once.  Also, we must fix operator function IDs.
  *
  * Note: this must not make any damaging changes to the passed-in expression
  * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
@@ -2672,7 +2674,10 @@ expression_planner(Expr *expr)
 {
 	Node	   *result;
 
-	/* Insert default arguments and simplify constant subexprs */
+	/*
+	 * Convert named-argument function calls, insert default arguments and
+	 * simplify constant subexprs
+	 */
 	result = eval_const_expressions(NULL, (Node *) expr);
 
 	/* Fill in opfuncid values if missing */

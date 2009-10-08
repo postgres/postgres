@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.139 2009/09/03 22:11:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.140 2009/10/08 02:39:16 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -517,6 +517,39 @@ SELECT getname(new_emp());
     </para>
    </sect2>
 
+   <sect2 id="xfunc-named-parameters">
+    <title><acronym>SQL</> Functions with Parameter Names</title>
+
+   <indexterm>
+    <primary>function</primary>
+    <secondary>named parameter</secondary>
+   </indexterm>
+
+    <para>
+     It is possible to attach names to a function's parameters, for example
+
+<programlisting>
+CREATE FUNCTION tf1 (acct_no integer, debit numeric) RETURNS numeric AS $$
+    UPDATE bank
+        SET balance = balance - $2
+        WHERE accountno = $1
+    RETURNING balance;
+$$ LANGUAGE SQL;
+</programlisting>
+
+     Here the first parameter has been given the name <literal>acct_no</>,
+     and the second parameter the name <literal>debit</>.
+     So far as the SQL function itself is concerned, these names are just
+     decoration; you must still refer to the parameters as <literal>$1</>,
+     <literal>$2</>, etc within the function body.  (Some procedural
+     languages let you use the parameter names instead.)  However,
+     attaching names to the parameters is useful for documentation purposes.
+     When a function has many parameters, it is also useful to use the names
+     while calling the function, as described in
+     <xref linkend="sql-syntax-calling-funcs">.
+    </para>
+   </sect2>
+
    <sect2 id="xfunc-output-parameters">
     <title><acronym>SQL</> Functions with Output Parameters</title>
 
@@ -571,7 +604,10 @@ LANGUAGE SQL;
 </screen>
 
      but not having to bother with the separate composite type definition
-     is often handy.
+     is often handy.  Notice that the names attached to the output parameters
+     are not just decoration, but determine the column names of the anonymous
+     composite type.  (If you omit a name for an output parameter, the
+     system will choose a name on its own.)
     </para>
 
     <para>
@@ -621,7 +657,7 @@ DROP FUNCTION sum_n_product (int, int);
      must be declared as being of an array type.  For example:
 
 <screen>
-CREATE FUNCTION mleast(VARIADIC numeric[]) RETURNS numeric AS $$
+CREATE FUNCTION mleast(VARIADIC arr numeric[]) RETURNS numeric AS $$
     SELECT min($1[i]) FROM generate_subscripts($1, 1) g(i);
 $$ LANGUAGE SQL;
 
@@ -661,6 +697,25 @@ SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4]);
      normally.  <literal>VARIADIC</> can only be attached to the last
      actual argument of a function call.
     </para>
+
+    <para>
+     The array element parameters generated from a variadic parameter are
+     treated as not having any names of their own.  This means it is not
+     possible to call a variadic function using named arguments (<xref
+     linkend="sql-syntax-calling-funcs">), except when you specify
+     <literal>VARIADIC</>.  For example, this will work:
+
+<screen>
+SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4] AS arr);
+</screen>
+
+     but not these:
+
+<screen>
+SELECT mleast(10 AS arr);
+SELECT mleast(ARRAY[10, -1, 5, 4.4] AS arr);
+</screen>
+    </para>
    </sect2>
 
    <sect2 id="xfunc-sql-parameter-defaults">
@@ -677,7 +732,9 @@ SELECT mleast(VARIADIC ARRAY[10, -1, 5, 4.4]);
      called with insufficiently many actual arguments.  Since arguments
      can only be omitted from the end of the actual argument list, all
      parameters after a parameter with a default value have to have
-     default values as well.
+     default values as well.  (Although the use of named argument notation
+     could allow this restriction to be relaxed, it's still enforced so that
+     positional argument notation works sensibly.)
     </para>
 
     <para>
@@ -712,7 +769,7 @@ SELECT foo();  -- fails since there is no default for the first argument
 ERROR:  function foo() does not exist
 </screen>
      The <literal>=</literal> sign can also be used in place of the
-     key word <literal>DEFAULT</literal>,
+     key word <literal>DEFAULT</literal>.
     </para>
    </sect2>
 

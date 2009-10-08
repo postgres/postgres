@@ -159,7 +159,7 @@ SELECT * FROM getfoo(1) AS t1(fooid int, foosubid int, fooname text);
      1 |        1 | Joe
 (1 row)
 
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) AS 
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) AS
 (fooid int, foosubid int, fooname text);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
@@ -515,7 +515,13 @@ SELECT * FROM dup('xyz'::text);
  xyz | {xyz,xyz}
 (1 row)
 
--- equivalent specification
+-- fails, as we are attempting to rename first argument
+CREATE OR REPLACE FUNCTION dup (inout f2 anyelement, out f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+ERROR:  cannot change name of input parameter "f1"
+HINT:  Use DROP FUNCTION first.
+DROP FUNCTION dup(anyelement);
+-- equivalent behavior, though different name exposed for input arg
 CREATE OR REPLACE FUNCTION dup (inout f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 SELECT dup(22);

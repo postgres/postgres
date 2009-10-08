@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.167 2009/10/05 19:24:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.168 2009/10/08 02:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,6 +348,8 @@ ProcedureCreate(const char *procedureName,
 	{
 		/* There is one; okay to replace it? */
 		Form_pg_proc oldproc = (Form_pg_proc) GETSTRUCT(oldtup);
+		Datum		proargnames;
+		bool		isnull;
 
 		if (!replace)
 			ereport(ERROR,
@@ -394,6 +396,49 @@ ProcedureCreate(const char *procedureName,
 		}
 
 		/*
+		 * If there were any named input parameters, check to make sure the
+		 * names have not been changed, as this could break existing calls.
+		 * We allow adding names to formerly unnamed parameters, though.
+		 */
+		proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
+									  Anum_pg_proc_proargnames,
+									  &isnull);
+		if (!isnull)
+		{
+			Datum		proargmodes;
+			char	  **old_arg_names;
+			char	  **new_arg_names;
+			int			n_old_arg_names;
+			int			n_new_arg_names;
+			int			j;
+
+			proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
+										  Anum_pg_proc_proargmodes,
+										  &isnull);
+			if (isnull)
+				proargmodes = PointerGetDatum(NULL);	/* just to be sure */
+
+			n_old_arg_names = get_func_input_arg_names(proargnames,
+													   proargmodes,
+													   &old_arg_names);
+			n_new_arg_names = get_func_input_arg_names(parameterNames,
+													   parameterModes,
+													   &new_arg_names);
+			for (j = 0; j < n_old_arg_names; j++)
+			{
+				if (old_arg_names[j] == NULL)
+					continue;
+				if (j >= n_new_arg_names || new_arg_names[j] == NULL ||
+					strcmp(old_arg_names[j], new_arg_names[j]) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("cannot change name of input parameter \"%s\"",
+									old_arg_names[j]),
+							 errhint("Use DROP FUNCTION first.")));
+			}
+		 }
+
+		/*
 		 * If there are existing defaults, check compatibility: redefinition
 		 * must not remove any defaults nor change their types.  (Removing a
 		 * default might cause a function to fail to satisfy an existing call.
@@ -404,7 +449,6 @@ ProcedureCreate(const char *procedureName,
 		if (oldproc->pronargdefaults != 0)
 		{
 			Datum		proargdefaults;
-			bool		isnull;
 			List	   *oldDefaults;
 			ListCell   *oldlc;
 			ListCell   *newlc;

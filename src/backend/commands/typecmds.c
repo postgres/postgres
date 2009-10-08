@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.137 2009/07/30 02:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.138 2009/10/08 02:39:19 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1267,7 +1267,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_FUNCTION),
 			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, argList))));
+					func_signature_string(procname, 1, NIL, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -1318,7 +1318,7 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_FUNCTION),
 			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, argList))));
+					func_signature_string(procname, 1, NIL, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -1349,7 +1349,7 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_FUNCTION),
 			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, argList))));
+					func_signature_string(procname, 1, NIL, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -1372,7 +1372,7 @@ findTypeSendFunction(List *procname, Oid typeOid)
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_FUNCTION),
 			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, argList))));
+					func_signature_string(procname, 1, NIL, argList))));
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -1393,7 +1393,7 @@ findTypeTypmodinFunction(List *procname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(procname, 1, argList))));
+						func_signature_string(procname, 1, NIL, argList))));
 
 	if (get_func_rettype(procOid) != INT4OID)
 		ereport(ERROR,
@@ -1420,7 +1420,7 @@ findTypeTypmodoutFunction(List *procname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(procname, 1, argList))));
+						func_signature_string(procname, 1, NIL, argList))));
 
 	if (get_func_rettype(procOid) != CSTRINGOID)
 		ereport(ERROR,
@@ -1447,7 +1447,7 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-						func_signature_string(procname, 1, argList))));
+						func_signature_string(procname, 1, NIL, argList))));
 
 	if (get_func_rettype(procOid) != BOOLOID)
 		ereport(ERROR,

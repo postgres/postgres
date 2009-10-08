@@ -1,5 +1,6 @@
 -- Currently this tests polymorphic aggregates and indirectly does some
 -- testing of polymorphic SQL functions.  It ought to be extended.
+-- Tests for other features related to function-calling have snuck in, too.
 -- Legend:
 -----------
 -- A = type is ANY
@@ -19,7 +20,7 @@
 -- !> = not allowed
 -- E  = exists
 -- NE = not-exists
--- 
+--
 -- Possible states:
 -- ----------------
 -- B = (A || P || N)
@@ -60,7 +61,7 @@ CREATE FUNCTION ffp(anyarray) RETURNS anyarray AS
 CREATE FUNCTION ffnp(int[]) returns int[] as
 'select $1' LANGUAGE SQL;
 -- Try to cover all the possible states:
--- 
+--
 -- Note: in Cases 1 & 2, we are trying to return P. Therefore, if the transfn
 -- is stfnp, tfnp, or tf2p, we must use ffp as finalfn, because stfnp, tfnp,
 -- and tf2p do not return P. Conversely, in Cases 3 & 4, we are trying to
@@ -837,7 +838,7 @@ select dfunc();
 
 -- verify it lists properly
 \df dfunc
-                                       List of functions
+                                           List of functions
  Schema | Name  | Result data type |                    Argument data types                    |  Type  
 --------+-------+------------------+-----------------------------------------------------------+--------
  public | dfunc | integer          | a integer DEFAULT 1, OUT sum integer, b integer DEFAULT 2 | normal
@@ -1005,7 +1006,7 @@ $$ select array_upper($1, 1) $$ language sql;
 ERROR:  cannot remove parameter defaults from existing function
 HINT:  Use DROP FUNCTION first.
 \df dfunc
-                                  List of functions
+                                      List of functions
  Schema | Name  | Result data type |               Argument data types               |  Type  
 --------+-------+------------------+-------------------------------------------------+--------
  public | dfunc | integer          | VARIADIC a integer[] DEFAULT ARRAY[]::integer[] | normal
@@ -1038,3 +1039,328 @@ select dfunc('Hi');
 drop function dfunc(int, int, int);
 drop function dfunc(int, int);
 drop function dfunc(text);
+--
+-- Tests for named- and mixed-notation function calling
+--
+create function dfunc(a int, b int, c int = 0, d int = 0)
+  returns table (a int, b int, c int, d int) as $$
+  select $1, $2, $3, $4;
+$$ language sql;
+select (dfunc(10,20,30)).*;
+ a  | b  | c  | d 
+----+----+----+---
+ 10 | 20 | 30 | 0
+(1 row)
+
+select (dfunc(10 as a, 20 as b, 30 as c)).*;
+ a  | b  | c  | d 
+----+----+----+---
+ 10 | 20 | 30 | 0
+(1 row)
+
+select * from dfunc(10 as a, 20 as b);
+ a  | b  | c | d 
+----+----+---+---
+ 10 | 20 | 0 | 0
+(1 row)
+
+select * from dfunc(10 as b, 20 as a);
+ a  | b  | c | d 
+----+----+---+---
+ 20 | 10 | 0 | 0
+(1 row)
+
+select * from dfunc(0);  -- fail
+ERROR:  function dfunc(integer) does not exist
+LINE 1: select * from dfunc(0);
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select * from dfunc(1,2);
+ a | b | c | d 
+---+---+---+---
+ 1 | 2 | 0 | 0
+(1 row)
+
+select * from dfunc(1,2,3 as c);
+ a | b | c | d 
+---+---+---+---
+ 1 | 2 | 3 | 0
+(1 row)
+
+select * from dfunc(1,2,3 as d);
+ a | b | c | d 
+---+---+---+---
+ 1 | 2 | 0 | 3
+(1 row)
+
+select * from dfunc(10 as x, 20 as b, 30 as x);  -- fail, duplicate name
+ERROR:  argument name "x" used more than once
+LINE 1: select * from dfunc(10 as x, 20 as b, 30 as x);
+                                                    ^
+select * from dfunc(10, 20 as b, 30);  -- fail, named args must be last
+ERROR:  positional argument cannot follow named argument
+LINE 1: select * from dfunc(10, 20 as b, 30);
+                                         ^
+select * from dfunc(10 as x, 20 as b, 30 as c);  -- fail, unknown param
+ERROR:  function dfunc(integer AS x, integer AS b, integer AS c) does not exist
+LINE 1: select * from dfunc(10 as x, 20 as b, 30 as c);
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select * from dfunc(10, 10, 20 as a);  -- fail, a overlaps positional parameter
+ERROR:  function dfunc(integer, integer, integer AS a) does not exist
+LINE 1: select * from dfunc(10, 10, 20 as a);
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select * from dfunc(1,2 as c,3 as d); -- fail, no value for b
+ERROR:  function dfunc(integer, integer AS c, integer AS d) does not exist
+LINE 1: select * from dfunc(1,2 as c,3 as d);
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function dfunc(int, int, int, int);
+-- test with different parameter types
+create function dfunc(a varchar, b numeric, c date = current_date)
+  returns table (a varchar, b numeric, c date) as $$
+  select $1, $2, $3;
+$$ language sql;
+select (dfunc('Hello World', 20, '2009-07-25'::date)).*;
+      a      | b  |     c      
+-------------+----+------------
+ Hello World | 20 | 07-25-2009
+(1 row)
+
+select * from dfunc('Hello World', 20, '2009-07-25'::date);
+      a      | b  |     c      
+-------------+----+------------
+ Hello World | 20 | 07-25-2009
+(1 row)
+
+select * from dfunc('2009-07-25'::date as c, 'Hello World' as a, 20 as b);
+      a      | b  |     c      
+-------------+----+------------
+ Hello World | 20 | 07-25-2009
+(1 row)
+
+select * from dfunc('Hello World', 20 as b, '2009-07-25'::date as c);
+      a      | b  |     c      
+-------------+----+------------
+ Hello World | 20 | 07-25-2009
+(1 row)
+
+select * from dfunc('Hello World', '2009-07-25'::date as c, 20 as b);
+      a      | b  |     c      
+-------------+----+------------
+ Hello World | 20 | 07-25-2009
+(1 row)
+
+select * from dfunc('Hello World', 20 as c, '2009-07-25'::date as b);  -- fail
+ERROR:  function dfunc(unknown, integer AS c, date AS b) does not exist
+LINE 1: select * from dfunc('Hello World', 20 as c, '2009-07-25'::da...
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function dfunc(varchar, numeric, date);
+-- test out parameters with named params
+create function dfunc(a varchar = 'def a', out _a varchar, c numeric = NULL, out _c numeric)
+returns record as $$
+  select $1, $2;
+$$ language sql;
+select (dfunc()).*;
+  _a   | _c 
+-------+----
+ def a |   
+(1 row)
+
+select * from dfunc();
+  _a   | _c 
+-------+----
+ def a |   
+(1 row)
+
+select * from dfunc('Hello', 100);
+  _a   | _c  
+-------+-----
+ Hello | 100
+(1 row)
+
+select * from dfunc('Hello' as a, 100 as c);
+  _a   | _c  
+-------+-----
+ Hello | 100
+(1 row)
+
+select * from dfunc(100 as c, 'Hello' as a);
+  _a   | _c  
+-------+-----
+ Hello | 100
+(1 row)
+
+select * from dfunc('Hello');
+  _a   | _c 
+-------+----
+ Hello |   
+(1 row)
+
+select * from dfunc('Hello', 100 as c);
+  _a   | _c  
+-------+-----
+ Hello | 100
+(1 row)
+
+select * from dfunc(100 as c);
+  _a   | _c  
+-------+-----
+ def a | 100
+(1 row)
+
+-- fail, can no longer change an input parameter's name
+create or replace function dfunc(a varchar = 'def a', out _a varchar, x numeric = NULL, out _c numeric)
+returns record as $$
+  select $1, $2;
+$$ language sql;
+ERROR:  cannot change name of input parameter "c"
+HINT:  Use DROP FUNCTION first.
+create or replace function dfunc(a varchar = 'def a', out _a varchar, numeric = NULL, out _c numeric)
+returns record as $$
+  select $1, $2;
+$$ language sql;
+ERROR:  cannot change name of input parameter "c"
+HINT:  Use DROP FUNCTION first.
+drop function dfunc(varchar, numeric);
+--fail, named parameters are not unique
+create function testfoo(a int, a int) returns int as $$ select 1;$$ language sql;
+ERROR:  parameter name "a" used more than once
+create function testfoo(int, out a int, out a int) returns int as $$ select 1;$$ language sql;
+ERROR:  parameter name "a" used more than once
+create function testfoo(out a int, inout a int) returns int as $$ select 1;$$ language sql;
+ERROR:  parameter name "a" used more than once
+create function testfoo(a int, inout a int) returns int as $$ select 1;$$ language sql;
+ERROR:  parameter name "a" used more than once
+-- valid
+create function testfoo(a int, out a int) returns int as $$ select $1;$$ language sql;
+select testfoo(37);
+ testfoo 
+---------
+      37
+(1 row)
+
+drop function testfoo(int);
+create function testfoo(a int) returns table(a int) as $$ select $1;$$ language sql;
+select * from testfoo(37);
+ a  
+----
+ 37
+(1 row)
+
+drop function testfoo(int);
+-- test polymorphic params and defaults
+create function dfunc(a anyelement, b anyelement = null, flag bool = true)
+returns anyelement as $$
+  select case when $3 then $1 else $2 end;
+$$ language sql;
+select dfunc(1,2);
+ dfunc 
+-------
+     1
+(1 row)
+
+select dfunc('a'::text, 'b'); -- positional notation with default
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc(1 as a, 2 as b);
+ dfunc 
+-------
+     1
+(1 row)
+
+select dfunc('a'::text as a, 'b' as b);
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text as a, 'b' as b, false as flag); -- named notation
+ dfunc 
+-------
+ b
+(1 row)
+
+select dfunc('b'::text as b, 'a' as a); -- named notation with default
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text as a, true as flag); -- named notation with default
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text as a, false as flag); -- named notation with default
+ dfunc 
+-------
+ 
+(1 row)
+
+select dfunc('b'::text as b, 'a' as a, true as flag); -- named notation
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text, 'b', false); -- full positional notation
+ dfunc 
+-------
+ b
+(1 row)
+
+select dfunc('a'::text, 'b', false as flag); -- mixed notation
+ dfunc 
+-------
+ b
+(1 row)
+
+select dfunc('a'::text, 'b', true); -- full positional notation
+ dfunc 
+-------
+ a
+(1 row)
+
+select dfunc('a'::text, 'b', true as flag); -- mixed notation
+ dfunc 
+-------
+ a
+(1 row)
+
+-- check reverse-listing of named-arg calls
+CREATE VIEW dfview AS
+   SELECT q1, q2,
+     dfunc(q1,q2, q1>q2 as flag) as c3,
+     dfunc(q1, q1<q2 as flag, q2 AS b) as c4
+     FROM int8_tbl;
+select * from dfview;
+        q1        |        q2         |        c3        |        c4         
+------------------+-------------------+------------------+-------------------
+              123 |               456 |              456 |               123
+              123 |  4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 |               123 | 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789 | 4567890123456789 | -4567890123456789
+(5 rows)
+
+\d dfview
+    View "public.dfview"
+ Column |  Type  | Modifiers 
+--------+--------+-----------
+ q1     | bigint | 
+ q2     | bigint | 
+ c3     | bigint | 
+ c4     | bigint | 
+View definition:
+ SELECT int8_tbl.q1, int8_tbl.q2, dfunc(int8_tbl.q1, int8_tbl.q2, int8_tbl.q1 > int8_tbl.q2 AS flag) AS c3, dfunc(int8_tbl.q1, int8_tbl.q1 < int8_tbl.q2 AS flag, int8_tbl.q2 AS b) AS c4
+   FROM int8_tbl;
+
+drop view dfview;
+drop function dfunc(anyelement, anyelement, bool);

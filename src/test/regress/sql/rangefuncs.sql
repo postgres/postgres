@@ -70,7 +70,7 @@ DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS RECORD AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1(fooid int, foosubid int, fooname text);
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) AS 
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) AS
 (fooid int, foosubid int, fooname text);
 SELECT * FROM vw_getfoo;
 
@@ -251,7 +251,13 @@ SELECT dup('xyz');	-- fails
 SELECT dup('xyz'::text);
 SELECT * FROM dup('xyz'::text);
 
--- equivalent specification
+-- fails, as we are attempting to rename first argument
+CREATE OR REPLACE FUNCTION dup (inout f2 anyelement, out f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+
+DROP FUNCTION dup(anyelement);
+
+-- equivalent behavior, though different name exposed for input arg
 CREATE OR REPLACE FUNCTION dup (inout f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 SELECT dup(22);

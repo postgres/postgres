@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.365 2009/10/06 00:55:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.366 2009/10/08 02:39:21 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -872,6 +872,17 @@ _outFuncExpr(StringInfo str, FuncExpr *node)
 	WRITE_BOOL_FIELD(funcretset);
 	WRITE_ENUM_FIELD(funcformat, CoercionForm);
 	WRITE_NODE_FIELD(args);
+	WRITE_LOCATION_FIELD(location);
+}
+
+static void
+_outNamedArgExpr(StringInfo str, NamedArgExpr *node)
+{
+	WRITE_NODE_TYPE("NAMEDARGEXPR");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_STRING_FIELD(name);
+	WRITE_INT_FIELD(argnumber);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -2513,6 +2524,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_FuncExpr:
 				_outFuncExpr(str, obj);
+				break;
+			case T_NamedArgExpr:
+				_outNamedArgExpr(str, obj);
 				break;
 			case T_OpExpr:
 				_outOpExpr(str, obj);

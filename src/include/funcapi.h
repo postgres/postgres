@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.29 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.30 2009/10/08 02:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,9 @@ extern bool resolve_polymorphic_argtypes(int numargs, Oid *argtypes,
 extern int get_func_arg_info(HeapTuple procTup,
 				  Oid **p_argtypes, char ***p_argnames,
 				  char **p_argmodes);
+
+extern int get_func_input_arg_names(Datum proargnames, Datum proargmodes,
+									char ***arg_names);
 
 extern char *get_func_result_name(Oid functionId);
 

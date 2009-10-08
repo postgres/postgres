@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.136 2009/09/22 23:52:53 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.137 2009/10/08 02:39:16 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1505,6 +1505,11 @@ sqrt(2)
     The list of built-in functions is in <xref linkend="functions">.
     Other functions can be added by the user.
    </para>
+
+   <para>
+    The arguments can optionally have names attached.
+    See <xref linkend="sql-syntax-calling-funcs"> for details.
+   </para>
   </sect2>
 
   <sect2 id="syntax-aggregates">
@@ -2119,6 +2124,170 @@ SELECT ... WHERE CASE WHEN x &gt; 0 THEN y/x &gt; 1.5 ELSE false END;
     attempts, so it should only be done when necessary.  (In this particular
     example, it would be better to sidestep the problem by writing
     <literal>y &gt; 1.5*x</> instead.)
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="sql-syntax-calling-funcs">
+  <title>Calling Functions</title>
+
+   <indexterm zone="sql-syntax-calling-funcs">
+    <primary>notation</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</productname> allows functions that have named
+    parameters to be called using either <firstterm>positional</firstterm> or
+    <firstterm>named</firstterm> notation.  Named notation is especially
+    useful for functions that have a large number of parameters, since it
+    makes the associations between parameters and actual arguments more
+    explicit and reliable.
+    In positional notation, a function call is written with
+    its argument values in the same order as they are defined in the function
+    declaration.  In named notation, the arguments are matched to the
+    function parameters by name and can be written in any order.
+   </para>
+
+   <para>
+    In either notation, parameters that have default values given in the
+    function declaration need not be written in the call at all.  But this
+    is particularly useful in named notation, since any combination of
+    parameters can be omitted; while in positional notation parameters can
+    only be omitted from right to left.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> also supports
+    <firstterm>mixed</firstterm> notation, which combines positional and
+    named notation.  In this case, positional parameters are written first
+    and named parameters appear after them.
+   </para>
+
+   <para>
+    The following examples will illustrate the usage of all three
+    notations, using the following function definition:
+<programlisting>
+CREATE FUNCTION concat_lower_or_upper(a text, b text, uppercase boolean DEFAULT false)
+RETURNS text
+AS
+$$
+ SELECT CASE
+        WHEN $3 THEN UPPER($1 || ' ' || $2)
+        ELSE LOWER($1 || ' ' || $2)
+        END;
+$$
+LANGUAGE SQL IMMUTABLE STRICT;
+</programlisting>
+    Function <function>concat_lower_or_upper</function> has two mandatory
+    parameters, <literal>a</literal> and <literal>b</literal>.  Additionally
+    there is one optional parameter <literal>uppercase</literal> which defaults
+    to <literal>false</literal>.  The <literal>a</literal> and
+    <literal>b</literal> inputs will be concatenated, and forced to either
+    upper or lower case depending on the <literal>uppercase</literal>
+    parameter.  The remaining details of this function
+    definition are not important here (see <xref linkend="extend"> for
+    more information).
+   </para>
+
+   <sect2 id="sql-syntax-calling-funcs-positional">
+    <title>Using positional notation</title>
+
+    <indexterm>
+     <primary>function</primary>
+     <secondary>positional notation</secondary>
+    </indexterm>
+
+    <para>
+     Positional notation is the traditional mechanism for passing arguments
+     to functions in <productname>PostgreSQL</productname>.  An example is:
+<screen>
+SELECT concat_lower_or_upper('Hello', 'World', true);
+ concat_lower_or_upper 
+-----------------------
+ HELLO WORLD
+(1 row)
+</screen>
+     All arguments are specified in order.  The result is upper case since
+     <literal>uppercase</literal> is specified as <literal>true</literal>.
+     Another example is:
+<screen>
+SELECT concat_lower_or_upper('Hello', 'World');
+ concat_lower_or_upper 
+-----------------------
+ hello world
+(1 row)
+</screen>
+     Here, the <literal>uppercase</literal> parameter is omitted, so it
+     receives its default value of <literal>false</literal>, resulting in
+     lower case output.  In positional notation, arguments can be omitted
+     from right to left so long as they have defaults.
+    </para>
+   </sect2>
+
+   <sect2 id="sql-syntax-calling-funcs-named">
+    <title>Using named notation</title>
+
+    <indexterm>
+     <primary>function</primary>
+     <secondary>named notation</secondary>
+    </indexterm>
+
+    <para>
+     In named notation, each argument's name is specified using the
+     <literal>AS</literal> keyword.  For example:
+<screen>
+SELECT concat_lower_or_upper('Hello' AS a, 'World' AS b);
+ concat_lower_or_upper 
+-----------------------
+ hello world
+(1 row)
+</screen>
+     Again, the argument <literal>uppercase</literal> was omitted
+     so it is set to <literal>false</literal> implicitly.  One advantage of
+     using named notation is that the arguments may be specified in any
+     order, for example:
+<screen>
+SELECT concat_lower_or_upper('Hello' AS a, 'World' AS b, true AS uppercase);
+ concat_lower_or_upper 
+-----------------------
+ HELLO WORLD
+(1 row)
+
+SELECT concat_lower_or_upper('Hello' AS a, true AS uppercase, 'World' AS b);
+ concat_lower_or_upper 
+-----------------------
+ HELLO WORLD
+(1 row)
+</screen>
+    </para>
+   </sect2>
+
+  <sect2 id="sql-syntax-calling-funcs-mixed">
+   <title>Using mixed notation</title>
+
+   <indexterm>
+    <primary>function</primary>
+    <secondary>mixed notation</secondary>
+   </indexterm>
+
+   <para>
+    The mixed notation combines positional and named notation. However, as
+    already mentioned, named arguments cannot precede positional arguments.
+    For example:
+<screen>
+SELECT concat_lower_or_upper('Hello', 'World', true AS uppercase);
+ concat_lower_or_upper 
+-----------------------
+ HELLO WORLD
+(1 row)
+</screen>
+    In the above query, the arguments <literal>a</literal> and
+    <literal>b</literal> are specified positionally, while
+    <literal>uppercase</> is specified by name.  In this example,
+    that adds little except documentation.  With a more complex function
+    having numerous parameters that have default values, named or mixed
+    notation can save a great deal of writing and reduce chances for error.
    </para>
   </sect2>
  </sect1>

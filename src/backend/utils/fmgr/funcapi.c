@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.45 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.46 2009/10/08 02:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,6 +763,92 @@ get_func_arg_info(HeapTuple procTup,
 	}
 
 	return numargs;
+}
+
+
+/*
+ * get_func_input_arg_names
+ *
+ * Extract the names of input arguments only, given a function's
+ * proargnames and proargmodes entries in Datum form.
+ *
+ * Returns the number of input arguments, which is the length of the
+ * palloc'd array returned to *arg_names.  Entries for unnamed args
+ * are set to NULL.  You don't get anything if proargnames is NULL.
+ */
+int
+get_func_input_arg_names(Datum proargnames, Datum proargmodes,
+						 char ***arg_names)
+{
+	ArrayType  *arr;
+	int			numargs;
+	Datum	   *argnames;
+	char	   *argmodes;
+	char	  **inargnames;
+	int			numinargs;
+	int			i;
+
+	/* Do nothing if null proargnames */
+	if (proargnames == PointerGetDatum(NULL))
+	{
+		*arg_names = NULL;
+		return 0;
+	}
+
+	/*
+	 * We expect the arrays to be 1-D arrays of the right types; verify that.
+	 * For proargmodes, we don't need to use deconstruct_array()
+	 * since the array data is just going to look like a C array of values.
+	 */
+	arr = DatumGetArrayTypeP(proargnames);		/* ensure not toasted */
+	if (ARR_NDIM(arr) != 1 ||
+		ARR_HASNULL(arr) ||
+		ARR_ELEMTYPE(arr) != TEXTOID)
+		elog(ERROR, "proargnames is not a 1-D text array");
+	deconstruct_array(arr, TEXTOID, -1, false, 'i',
+					  &argnames, NULL, &numargs);
+	if (proargmodes != PointerGetDatum(NULL))
+	{
+		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numargs ||
+			ARR_HASNULL(arr) ||
+			ARR_ELEMTYPE(arr) != CHAROID)
+			elog(ERROR, "proargmodes is not a 1-D char array");
+		argmodes = (char *) ARR_DATA_PTR(arr);
+	}
+	else
+		argmodes = NULL;
+
+	/* zero elements probably shouldn't happen, but handle it gracefully */
+	if (numargs <= 0)
+	{
+		*arg_names = NULL;
+		return 0;
+	}
+
+	/* extract input-argument names */
+	inargnames = (char **) palloc(numargs * sizeof(char *));
+	numinargs = 0;
+	for (i = 0; i < numargs; i++)
+	{
+		if (argmodes == NULL ||
+			argmodes[i] == PROARGMODE_IN ||
+			argmodes[i] == PROARGMODE_INOUT ||
+			argmodes[i] == PROARGMODE_VARIADIC)
+		{
+			char	   *pname = TextDatumGetCString(argnames[i]);
+
+			if (pname[0] != '\0')
+				inargnames[numinargs] = pname;
+			else
+				inargnames[numinargs] = NULL;
+			numinargs++;
+		}
+	}
+
+	*arg_names = inargnames;
+	return numinargs;
 }
 
 
