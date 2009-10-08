@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.230 2009/10/05 19:24:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.231 2009/10/08 16:34:00 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -1265,6 +1265,25 @@ testdb=&gt;
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><literal>\drds [ <replaceable class="parameter">role-pattern</replaceable> [ <replaceable class="parameter">database-pattern </replaceable> ] ]</literal></term>
+        <listitem>
+        <para>
+        Lists defined configuration settings.  These settings can be role-specific,
+        database-specific, or both.  <literal>role-pattern</literal> and
+        <literal>database-pattern</literal> are used to select
+        specific roles and database to list, respectively; if omitted, or * is specified,
+        all settings are listed, including those not role-specific or database-specific,
+        respectively.
+        </para>
+
+        <para>
+        The <xref linkend="sql-alterrole" endterm="sql-alterrole-title"> and
+        <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">
+        commands are used to define per-database role configuration settings.
+        </para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><literal>\dT[S+] [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>

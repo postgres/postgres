@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.153 2009/10/05 19:24:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.154 2009/10/08 16:34:01 alvherre Exp $
  */
 #include "postgres_fe.h"
 
@@ -217,6 +217,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dn[+]  [PATTERN]      list schemas\n"));
 	fprintf(output, _("  \\do[S]  [PATTERN]      list operators\n"));
 	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
+	fprintf(output, _("  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"));
 	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
 	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));
 	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));
