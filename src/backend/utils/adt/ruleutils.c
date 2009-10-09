@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.307 2009/10/08 02:39:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.308 2009/10/09 21:02:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,7 @@ static char *deparse_expression_pretty(Node *expr, List *dpcontext,
 						  bool forceprefix, bool showimplicit,
 						  int prettyFlags, int startIndent);
 static char *pg_get_viewdef_worker(Oid viewoid, int prettyFlags);
+static char *pg_get_triggerdef_worker(Oid trigid, bool pretty);
 static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
 static char *pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
@@ -462,6 +463,22 @@ Datum
 pg_get_triggerdef(PG_FUNCTION_ARGS)
 {
 	Oid			trigid = PG_GETARG_OID(0);
+
+	PG_RETURN_TEXT_P(string_to_text(pg_get_triggerdef_worker(trigid, false)));
+}
+
+Datum
+pg_get_triggerdef_ext(PG_FUNCTION_ARGS)
+{
+	Oid			trigid = PG_GETARG_OID(0);
+	bool		pretty = PG_GETARG_BOOL(1);
+
+	PG_RETURN_TEXT_P(string_to_text(pg_get_triggerdef_worker(trigid, pretty)));
+}
+
+static char *
+pg_get_triggerdef_worker(Oid trigid, bool pretty)
+{
 	HeapTuple	ht_trig;
 	Form_pg_trigger trigrec;
 	StringInfoData buf;
@@ -498,9 +515,10 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 	initStringInfo(&buf);
 
 	tgname = NameStr(trigrec->tgname);
-	appendStringInfo(&buf, "CREATE %sTRIGGER %s ",
+	appendStringInfo(&buf, "CREATE %sTRIGGER %s",
 					 trigrec->tgisconstraint ? "CONSTRAINT " : "",
 					 quote_identifier(tgname));
+	appendStringInfoString(&buf, pretty ? "\n    " : " ");
 
 	if (TRIGGER_FOR_BEFORE(trigrec->tgtype))
 		appendStringInfo(&buf, "BEFORE");
@@ -533,29 +551,33 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		else
 			appendStringInfo(&buf, " TRUNCATE");
 	}
-	appendStringInfo(&buf, " ON %s ",
+	appendStringInfo(&buf, " ON %s",
 					 generate_relation_name(trigrec->tgrelid, NIL));
+	appendStringInfoString(&buf, pretty ? "\n    " : " ");
 
 	if (trigrec->tgisconstraint)
 	{
 		if (trigrec->tgconstrrelid != InvalidOid)
-			appendStringInfo(&buf, "FROM %s ",
-							 generate_relation_name(trigrec->tgconstrrelid,
-													NIL));
+		{
+			appendStringInfo(&buf, "FROM %s",
+							 generate_relation_name(trigrec->tgconstrrelid, NIL));
+			appendStringInfoString(&buf, pretty ? "\n    " : " ");
+		}
 		if (!trigrec->tgdeferrable)
 			appendStringInfo(&buf, "NOT ");
 		appendStringInfo(&buf, "DEFERRABLE INITIALLY ");
 		if (trigrec->tginitdeferred)
-			appendStringInfo(&buf, "DEFERRED ");
+			appendStringInfo(&buf, "DEFERRED");
 		else
-			appendStringInfo(&buf, "IMMEDIATE ");
-
+			appendStringInfo(&buf, "IMMEDIATE");
+		appendStringInfoString(&buf, pretty ? "\n    " : " ");
 	}
 
 	if (TRIGGER_FOR_ROW(trigrec->tgtype))
-		appendStringInfo(&buf, "FOR EACH ROW ");
+		appendStringInfo(&buf, "FOR EACH ROW");
 	else
-		appendStringInfo(&buf, "FOR EACH STATEMENT ");
+		appendStringInfo(&buf, "FOR EACH STATEMENT");
+	appendStringInfoString(&buf, pretty ? "\n    " : " ");
 
 	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
@@ -594,7 +616,7 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 
 	heap_close(tgrel, AccessShareLock);
 
-	PG_RETURN_TEXT_P(string_to_text(buf.data));
+	return buf.data;
 }
 
 /* ----------

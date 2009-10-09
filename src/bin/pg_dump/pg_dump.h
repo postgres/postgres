@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.158 2009/10/05 19:24:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.159 2009/10/09 21:02:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,7 @@ typedef struct _triggerInfo
 	char		tgenabled;
 	bool		tgdeferrable;
 	bool		tginitdeferred;
+	char	   *tgdef;
 } TriggerInfo;
 
 /*

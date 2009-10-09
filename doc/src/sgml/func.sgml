@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.487 2009/08/16 19:55:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.488 2009/10/09 21:02:55 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -12366,6 +12366,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       </row>
       <row>
        <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
+      </row>
+      <row>
+       <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>, <parameter>pretty_bool</>)</entry>
        <entry><type>text</type></entry>
        <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
       </row>
