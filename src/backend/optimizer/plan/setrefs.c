@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.150 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.151 2009/10/10 01:43:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,6 +440,29 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				/* resconstantqual can't contain any subplan variable refs */
 				splan->resconstantqual =
 					fix_scan_expr(glob, splan->resconstantqual, rtoffset);
+			}
+			break;
+		case T_ModifyTable:
+			{
+				ModifyTable *splan = (ModifyTable *) plan;
+
+				/*
+				 * planner.c already called set_returning_clause_references,
+				 * so we should not process either the targetlist or the
+				 * returningLists.
+				 */
+				Assert(splan->plan.qual == NIL);
+
+				foreach(l, splan->resultRelations)
+				{
+					lfirst_int(l) += rtoffset;
+				}
+				foreach(l, splan->plans)
+				{
+					lfirst(l) = set_plan_refs(glob,
+											  (Plan *) lfirst(l),
+											  rtoffset);
+				}
 			}
 			break;
 		case T_Append:
@@ -1600,7 +1623,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  *
  * If the query involves more than just the result table, we have to
  * adjust any Vars that refer to other tables to reference junk tlist
- * entries in the top plan's targetlist.  Vars referencing the result
+ * entries in the top subplan's targetlist.  Vars referencing the result
  * table should be left alone, however (the executor will evaluate them
  * using the actual heap tuple, after firing triggers if any).	In the
  * adjusted RETURNING list, result-table Vars will still have their
@@ -1610,8 +1633,8 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  * glob->relationOids.
  *
  * 'rlist': the RETURNING targetlist to be fixed
- * 'topplan': the top Plan node for the query (not yet passed through
- *		set_plan_references)
+ * 'topplan': the top subplan node that will be just below the ModifyTable
+ *		node (note it's not yet passed through set_plan_references)
  * 'resultRelation': RT index of the associated result relation
  *
  * Note: we assume that result relations will have rtoffset zero, that is,

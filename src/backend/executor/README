@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.8 2009/01/09 15:46:10 tgl Exp $
+$PostgreSQL: pgsql/src/backend/executor/README,v 1.9 2009/10/10 01:43:45 tgl Exp $
 
 The Postgres Executor
 =====================
@@ -25,16 +25,17 @@ There is a moderately intelligent scheme to avoid rescanning nodes
 unnecessarily (for example, Sort does not rescan its input if no parameters
 of the input have changed, since it can just reread its stored sorted data).
 
-The plan tree concept implements SELECT directly: it is only necessary to
-deliver the top-level result tuples to the client, or insert them into
-another table in the case of INSERT ... SELECT.  (INSERT ... VALUES is
-handled similarly, but the plan tree is just a Result node with no source
-tables.)  For UPDATE, the plan tree selects the tuples that need to be
-updated (WHERE condition) and delivers a new calculated tuple value for each
-such tuple, plus a "junk" (hidden) tuple CTID identifying the target tuple.
-The executor's top level then uses this information to update the correct
-tuple.  DELETE is similar to UPDATE except that only a CTID need be
-delivered by the plan tree.
+For a SELECT, it is only necessary to deliver the top-level result tuples
+to the client.  For INSERT/UPDATE/DELETE, the actual table modification
+operations happen in a top-level ModifyTable plan node.  If the query
+includes a RETURNING clause, the ModifyTable node delivers the computed
+RETURNING rows as output, otherwise it returns nothing.  Handling INSERT
+is pretty straightforward: the tuples returned from the plan tree below
+ModifyTable are inserted into the correct result relation.  For UPDATE,
+the plan tree returns the computed tuples to be updated, plus a "junk"
+(hidden) CTID column identifying which table row is to be replaced by each
+one.  For DELETE, the plan tree need only deliver a CTID column, and the
+ModifyTable node visits each of those rows and marks the row deleted.
 
 XXX a great deal more documentation needs to be written here...
 

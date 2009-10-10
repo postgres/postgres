@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.32 2009/04/27 16:27:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.33 2009/10/10 01:43:45 tgl Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -58,7 +58,7 @@
       The <firstterm>rewrite system</firstterm> takes
       the query tree created by the parser stage and looks for
       any <firstterm>rules</firstterm> (stored in the
-      <firstterm>system catalogs</firstterm>) to apply to 
+      <firstterm>system catalogs</firstterm>) to apply to
       the query tree.  It performs the
       transformations given in the <firstterm>rule bodies</firstterm>.
      </para>
@@ -77,7 +77,7 @@
     <step>
      <para>
       The <firstterm>planner/optimizer</firstterm> takes
-      the (rewritten) query tree and creates a 
+      the (rewritten) query tree and creates a
       <firstterm>query plan</firstterm> that will be the input to the
       <firstterm>executor</firstterm>.
      </para>
@@ -163,8 +163,8 @@
       <para>
        The <firstterm>parser</firstterm> defined in
        <filename>gram.y</filename> and <filename>scan.l</filename> is
-       built using the Unix tools <application>yacc</application>
-       and <application>lex</application>.
+       built using the Unix tools <application>bison</application>
+       and <application>flex</application>.
       </para>
      </listitem>
      <listitem>
@@ -184,8 +184,8 @@
      ASCII text) for valid syntax. If the syntax is correct a
      <firstterm>parse tree</firstterm> is built up and handed back;
      otherwise an error is returned. The parser and lexer are
-     implemented using the well-known Unix tools <application>yacc</>
-     and <application>lex</>.
+     implemented using the well-known Unix tools <application>bison</>
+     and <application>flex</>.
     </para>
 
     <para>
@@ -208,13 +208,13 @@
     <para>
      The file <filename>scan.l</filename> is transformed to the C
      source file <filename>scan.c</filename> using the program
-     <application>lex</application> and <filename>gram.y</filename> is
+     <application>flex</application> and <filename>gram.y</filename> is
      transformed to <filename>gram.c</filename> using
-     <application>yacc</application>.  After these transformations
+     <application>bison</application>.  After these transformations
      have taken place a normal C compiler can be used to create the
      parser. Never make any changes to the generated C files as they
-     will be overwritten the next time <application>lex</application>
-     or <application>yacc</application> is called.
+     will be overwritten the next time <application>flex</application>
+     or <application>bison</application> is called.
 
      <note>
       <para>
@@ -227,12 +227,12 @@
     </para>
 
     <para>
-     A detailed description of <application>yacc</application> or
+     A detailed description of <application>bison</application> or
      the grammar rules given in <filename>gram.y</filename> would be
      beyond the scope of this paper. There are many books and
-     documents dealing with <application>lex</application> and
-     <application>yacc</application>. You should be familiar with
-     <application>yacc</application> before you start to study the
+     documents dealing with <application>flex</application> and
+     <application>bison</application>. You should be familiar with
+     <application>bison</application> before you start to study the
      grammar given in <filename>gram.y</filename> otherwise you won't
      understand what happens there.
     </para>
@@ -299,7 +299,7 @@
        called whenever an individual row had been accessed. This
        implementation was removed in 1995 when the last official release
        of the <productname>Berkeley Postgres</productname> project was
-       transformed into <productname>Postgres95</productname>. 
+       transformed into <productname>Postgres95</productname>.
       </para>
      </listitem>
 
@@ -479,7 +479,7 @@
    <title>Executor</title>
 
    <para>
-    The <firstterm>executor</firstterm> takes the plan handed back by the
+    The <firstterm>executor</firstterm> takes the plan created by the
     planner/optimizer and recursively processes it to extract the required set
     of rows.  This is essentially a demand-pull pipeline mechanism.
     Each time a plan node is called, it must deliver one more row, or
@@ -488,7 +488,7 @@
 
    <para>
     To provide a concrete example, assume that the top
-    node is a <literal>MergeJoin</literal> node. 
+    node is a <literal>MergeJoin</literal> node.
     Before any merge can be done two rows have to be fetched (one from
     each subplan). So the executor recursively calls itself to
     process the subplans (it starts with the subplan attached to
@@ -533,17 +533,21 @@
     <command>DELETE</>.  For <command>SELECT</>, the top-level executor
     code only needs to send each row returned by the query plan tree off
     to the client.  For <command>INSERT</>, each returned row is inserted
-    into the target table specified for the <command>INSERT</>.  (A simple
+    into the target table specified for the <command>INSERT</>.  This is
+    done in a special top-level plan node called <literal>ModifyTable</>.
+    (A simple
     <command>INSERT ... VALUES</> command creates a trivial plan tree
     consisting of a single <literal>Result</> node, which computes just one
-    result row.  But <command>INSERT ... SELECT</> can demand the full power
+    result row, and <literal>ModifyTable</> above it to perform the insertion.
+    But <command>INSERT ... SELECT</> can demand the full power
     of the executor mechanism.)  For <command>UPDATE</>, the planner arranges
     that each computed row includes all the updated column values, plus
     the <firstterm>TID</> (tuple ID, or row ID) of the original target row;
-    the executor top level uses this information to create a new updated row
-    and mark the old row deleted.  For <command>DELETE</>, the only column
-    that is actually returned by the plan is the TID, and the executor top
-    level simply uses the TID to visit each target row and mark it deleted.
+    this data is fed into a <literal>ModifyTable</> node, which uses the
+    information to create a new updated row and mark the old row deleted.
+    For <command>DELETE</>, the only column that is actually returned by the
+    plan is the TID, and the <literal>ModifyTable</> node simply uses the TID
+    to visit each target row and mark it deleted.
    </para>
 
   </sect1>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.208 2009/09/27 20:09:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.209 2009/10/10 01:43:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,7 +339,7 @@ typedef struct EState
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
 	int			es_num_result_relations;		/* length of array */
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
-	JunkFilter *es_junkFilter;	/* currently active junk filter */
+	JunkFilter *es_junkFilter;	/* top-level junk filter, if any */
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
@@ -976,12 +976,24 @@ typedef struct ResultState
 } ResultState;
 
 /* ----------------
+ *	 ModifyTableState information
+ * ----------------
+ */
+typedef struct ModifyTableState
+{
+	PlanState		ps;				/* its first field is NodeTag */
+	CmdType			operation;
+	PlanState	  **mt_plans;		/* subplans (one per target rel) */
+	int				mt_nplans;		/* number of plans in the array */
+	int				mt_whichplan;	/* which one is being executed (0..n-1) */
+	bool			fireBSTriggers;	/* do we need to fire stmt triggers? */
+} ModifyTableState;
+
+/* ----------------
  *	 AppendState information
  *
- *		nplans			how many plans are in the list
+ *		nplans			how many plans are in the array
  *		whichplan		which plan is being executed (0 .. n-1)
- *		firstplan		first plan to execute (usually 0)
- *		lastplan		last plan to execute (usually n-1)
  * ----------------
  */
 typedef struct AppendState
@@ -990,8 +1002,6 @@ typedef struct AppendState
 	PlanState **appendplans;	/* array of PlanStates for my inputs */
 	int			as_nplans;
 	int			as_whichplan;
-	int			as_firstplan;
-	int			as_lastplan;
 } AppendState;
 
 /* ----------------

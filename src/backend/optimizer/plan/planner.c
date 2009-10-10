@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.257 2009/10/08 02:39:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.258 2009/10/10 01:43:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,6 +217,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result = makeNode(PlannedStmt);
 
 	result->commandType = parse->commandType;
+	result->hasReturning = (parse->returningList != NIL);
 	result->canSetTag = parse->canSetTag;
 	result->transientPlan = glob->transientPlan;
 	result->planTree = top_plan;
@@ -226,7 +227,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->intoClause = parse->intoClause;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
-	result->returningLists = root->returningLists;
 	result->rowMarks = parse->rowMarks;
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
@@ -478,7 +478,39 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		rt_fetch(parse->resultRelation, parse->rtable)->inh)
 		plan = inheritance_planner(root);
 	else
+	{
 		plan = grouping_planner(root, tuple_fraction);
+		/* If it's not SELECT, we need a ModifyTable node */
+		if (parse->commandType != CMD_SELECT)
+		{
+			/*
+			 * Deal with the RETURNING clause if any.  It's convenient to pass
+			 * the returningList through setrefs.c now rather than at top
+			 * level (if we waited, handling inherited UPDATE/DELETE would be
+			 * much harder).
+			 */
+			List   *returningLists;
+
+			if (parse->returningList)
+			{
+				List	   *rlist;
+
+				Assert(parse->resultRelation);
+				rlist = set_returning_clause_references(root->glob,
+														parse->returningList,
+														plan,
+														parse->resultRelation);
+				returningLists = list_make1(rlist);
+			}
+			else
+				returningLists = NIL;
+
+			plan = (Plan *) make_modifytable(parse->commandType,
+											 copyObject(root->resultRelations),
+											 list_make1(plan),
+											 returningLists);
+		}
+	}
 
 	/*
 	 * If any subplans were generated, or if we're inside a subplan, build
@@ -625,9 +657,7 @@ preprocess_qual_conditions(PlannerInfo *root, Node *jtnode)
  * is an inheritance set. Source inheritance is expanded at the bottom of the
  * plan tree (see allpaths.c), but target inheritance has to be expanded at
  * the top.  The reason is that for UPDATE, each target relation needs a
- * different targetlist matching its own column set.  Also, for both UPDATE
- * and DELETE, the executor needs the Append plan node at the top, else it
- * can't keep track of which table is the current target table.  Fortunately,
+ * different targetlist matching its own column set.  Fortunately,
  * the UPDATE/DELETE target can never be the nullable side of an outer join,
  * so it's OK to generate the plan this way.
  *
@@ -642,7 +672,7 @@ inheritance_planner(PlannerInfo *root)
 	List	   *resultRelations = NIL;
 	List	   *returningLists = NIL;
 	List	   *rtable = NIL;
-	List	   *tlist = NIL;
+	List	   *tlist;
 	PlannerInfo subroot;
 	ListCell   *l;
 
@@ -662,7 +692,6 @@ inheritance_planner(PlannerInfo *root)
 		subroot.parse = (Query *)
 			adjust_appendrel_attrs((Node *) parse,
 								   appinfo);
-		subroot.returningLists = NIL;
 		subroot.init_plans = NIL;
 		/* We needn't modify the child's append_rel_list */
 		/* There shouldn't be any OJ info to translate, as yet */
@@ -680,12 +709,9 @@ inheritance_planner(PlannerInfo *root)
 		if (is_dummy_plan(subplan))
 			continue;
 
-		/* Save rtable and tlist from first rel for use below */
+		/* Save rtable from first rel for use below */
 		if (subplans == NIL)
-		{
 			rtable = subroot.parse->rtable;
-			tlist = subplan->targetlist;
-		}
 
 		subplans = lappend(subplans, subplan);
 
@@ -698,20 +724,24 @@ inheritance_planner(PlannerInfo *root)
 		/* Build list of per-relation RETURNING targetlists */
 		if (parse->returningList)
 		{
-			Assert(list_length(subroot.returningLists) == 1);
-			returningLists = list_concat(returningLists,
-										 subroot.returningLists);
+			List	   *rlist;
+
+			rlist = set_returning_clause_references(root->glob,
+													subroot.parse->returningList,
+													subplan,
+													appinfo->child_relid);
+			returningLists = lappend(returningLists, rlist);
 		}
 	}
 
 	root->resultRelations = resultRelations;
-	root->returningLists = returningLists;
 
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
 
 	/*
-	 * If we managed to exclude every child rel, return a dummy plan
+	 * If we managed to exclude every child rel, return a dummy plan;
+	 * it doesn't even need a ModifyTable node.
 	 */
 	if (subplans == NIL)
 	{
@@ -738,11 +768,11 @@ inheritance_planner(PlannerInfo *root)
 	 */
 	parse->rtable = rtable;
 
-	/* Suppress Append if there's only one surviving child rel */
-	if (list_length(subplans) == 1)
-		return (Plan *) linitial(subplans);
-
-	return (Plan *) make_append(subplans, true, tlist);
+	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
+	return (Plan *) make_modifytable(parse->commandType,
+									 copyObject(root->resultRelations),
+									 subplans, 
+									 returningLists);
 }
 
 /*--------------------
@@ -1568,25 +1598,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										  offset_est,
 										  count_est);
 	}
-
-	/*
-	 * Deal with the RETURNING clause if any.  It's convenient to pass the
-	 * returningList through setrefs.c now rather than at top level (if we
-	 * waited, handling inherited UPDATE/DELETE would be much harder).
-	 */
-	if (parse->returningList)
-	{
-		List	   *rlist;
-
-		Assert(parse->resultRelation);
-		rlist = set_returning_clause_references(root->glob,
-												parse->returningList,
-												result_plan,
-												parse->resultRelation);
-		root->returningLists = list_make1(rlist);
-	}
-	else
-		root->returningLists = NIL;
 
 	/* Compute result-relations list if needed */
 	if (parse->resultRelation)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.252 2009/08/04 16:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.253 2009/10/10 01:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);
 static void InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx);
 static HeapTuple GetTupleForTrigger(EState *estate,
+				   PlanState *subplanstate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
 				   TupleTableSlot **newSlot);
@@ -1793,7 +1794,8 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 }
 
 bool
-ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
+ExecBRDeleteTriggers(EState *estate, PlanState *subplanstate,
+					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -1806,7 +1808,8 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	TupleTableSlot *newSlot;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, relinfo, tupleid, &newSlot);
+	trigtuple = GetTupleForTrigger(estate, subplanstate, relinfo, tupleid,
+								   &newSlot);
 	if (trigtuple == NULL)
 		return false;
 
@@ -1862,7 +1865,7 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
 	{
-		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
+		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
 												   tupleid, NULL);
 
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
@@ -1941,7 +1944,8 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 }
 
 HeapTuple
-ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
+ExecBRUpdateTriggers(EState *estate, PlanState *subplanstate,
+					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid, HeapTuple newtuple)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -1954,16 +1958,18 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	TupleTableSlot *newSlot;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, relinfo, tupleid, &newSlot);
+	trigtuple = GetTupleForTrigger(estate, subplanstate, relinfo, tupleid,
+								   &newSlot);
 	if (trigtuple == NULL)
 		return NULL;
 
 	/*
 	 * In READ COMMITTED isolation level it's possible that newtuple was
-	 * changed due to concurrent update.
+	 * changed due to concurrent update.  In that case we have a raw subplan
+	 * output tuple and need to run it through the junk filter.
 	 */
 	if (newSlot != NULL)
-		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
+		intuple = newtuple = ExecRemoveJunk(relinfo->ri_junkFilter, newSlot);
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
@@ -2014,7 +2020,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
-		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
+		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
 												   tupleid, NULL);
 
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
@@ -2094,7 +2100,9 @@ ExecASTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 
 static HeapTuple
-GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
+GetTupleForTrigger(EState *estate,
+				   PlanState *subplanstate,
+				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
 				   TupleTableSlot **newSlot)
 {
@@ -2110,6 +2118,9 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 		TransactionId update_xmax;
 
 		*newSlot = NULL;
+
+		/* caller must pass a subplanstate if EvalPlanQual is possible */
+		Assert(subplanstate != NULL);
 
 		/*
 		 * lock tuple for update
@@ -2143,6 +2154,7 @@ ltrmark:;
 
 					epqslot = EvalPlanQual(estate,
 										   relinfo->ri_RangeTableIndex,
+										   subplanstate,
 										   &update_ctid,
 										   update_xmax);
 					if (!TupIsNull(epqslot))

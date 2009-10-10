@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.366 2009/10/08 02:39:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.367 2009/10/10 01:43:49 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -242,6 +242,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_TYPE("PLANNEDSTMT");
 
 	WRITE_ENUM_FIELD(commandType, CmdType);
+	WRITE_BOOL_FIELD(hasReturning);
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_NODE_FIELD(planTree);
 	WRITE_NODE_FIELD(rtable);
@@ -250,7 +251,6 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_FIELD(intoClause);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
-	WRITE_NODE_FIELD(returningLists);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
@@ -319,6 +319,19 @@ _outResult(StringInfo str, Result *node)
 }
 
 static void
+_outModifyTable(StringInfo str, ModifyTable *node)
+{
+	WRITE_NODE_TYPE("MODIFYTABLE");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_ENUM_FIELD(operation, CmdType);
+	WRITE_NODE_FIELD(resultRelations);
+	WRITE_NODE_FIELD(plans);
+	WRITE_NODE_FIELD(returningLists);
+}
+
+static void
 _outAppend(StringInfo str, Append *node)
 {
 	WRITE_NODE_TYPE("APPEND");
@@ -326,7 +339,6 @@ _outAppend(StringInfo str, Append *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_NODE_FIELD(appendplans);
-	WRITE_BOOL_FIELD(isTarget);
 }
 
 static void
@@ -1501,7 +1513,6 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_UINT_FIELD(query_level);
 	WRITE_NODE_FIELD(join_rel_list);
 	WRITE_NODE_FIELD(resultRelations);
-	WRITE_NODE_FIELD(returningLists);
 	WRITE_NODE_FIELD(init_plans);
 	WRITE_NODE_FIELD(cte_plan_ids);
 	WRITE_NODE_FIELD(eq_classes);
@@ -2407,6 +2418,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Result:
 				_outResult(str, obj);
+				break;
+			case T_ModifyTable:
+				_outModifyTable(str, obj);
 				break;
 			case T_Append:
 				_outAppend(str, obj);

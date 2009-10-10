@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.153 2009/09/12 22:12:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.154 2009/10/10 01:43:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1935,6 +1935,23 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			context.paramids =
 				bms_add_member(context.paramids,
 							   ((WorkTableScan *) plan)->wtParam);
+			break;
+
+		case T_ModifyTable:
+			{
+				ListCell   *l;
+
+				finalize_primnode((Node *) ((ModifyTable *) plan)->returningLists,
+								  &context);
+				foreach(l, ((ModifyTable *) plan)->plans)
+				{
+					context.paramids =
+						bms_add_members(context.paramids,
+										finalize_plan(root,
+													  (Plan *) lfirst(l),
+													  valid_params));
+				}
+			}
 			break;
 
 		case T_Append:

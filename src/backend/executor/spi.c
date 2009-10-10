@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.209 2009/10/02 17:57:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.210 2009/10/10 01:43:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1975,19 +1975,19 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 				res = SPI_OK_SELECT;
 			break;
 		case CMD_INSERT:
-			if (queryDesc->plannedstmt->returningLists)
+			if (queryDesc->plannedstmt->hasReturning)
 				res = SPI_OK_INSERT_RETURNING;
 			else
 				res = SPI_OK_INSERT;
 			break;
 		case CMD_DELETE:
-			if (queryDesc->plannedstmt->returningLists)
+			if (queryDesc->plannedstmt->hasReturning)
 				res = SPI_OK_DELETE_RETURNING;
 			else
 				res = SPI_OK_DELETE;
 			break;
 		case CMD_UPDATE:
-			if (queryDesc->plannedstmt->returningLists)
+			if (queryDesc->plannedstmt->hasReturning)
 				res = SPI_OK_UPDATE_RETURNING;
 			else
 				res = SPI_OK_UPDATE;
@@ -2011,7 +2011,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 	_SPI_current->processed = queryDesc->estate->es_processed;
 	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 
-	if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->returningLists) &&
+	if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->hasReturning) &&
 		queryDesc->dest->mydest == DestSPI)
 	{
 		if (_SPI_checktuples())

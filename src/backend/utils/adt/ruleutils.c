@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.308 2009/10/09 21:02:55 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.309 2009/10/10 01:43:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3346,11 +3346,12 @@ static void
 push_plan(deparse_namespace *dpns, Plan *subplan)
 {
 	/*
-	 * We special-case Append to pretend that the first child plan is the
-	 * OUTER referent; otherwise normal.
+	 * We special-case ModifyTable to pretend that the first child plan is the
+	 * OUTER referent; otherwise normal.  This is to support RETURNING lists
+	 * containing references to non-target relations.
 	 */
-	if (IsA(subplan, Append))
-		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
+	if (IsA(subplan, ModifyTable))
+		dpns->outer_plan = (Plan *) linitial(((ModifyTable *) subplan)->plans);
 	else
 		dpns->outer_plan = outerPlan(subplan);
 

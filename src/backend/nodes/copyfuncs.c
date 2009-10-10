@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.442 2009/10/08 02:39:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.443 2009/10/10 01:43:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ _copyPlannedStmt(PlannedStmt *from)
 	PlannedStmt *newnode = makeNode(PlannedStmt);
 
 	COPY_SCALAR_FIELD(commandType);
+	COPY_SCALAR_FIELD(hasReturning);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_NODE_FIELD(planTree);
 	COPY_NODE_FIELD(rtable);
@@ -85,7 +86,6 @@ _copyPlannedStmt(PlannedStmt *from)
 	COPY_NODE_FIELD(intoClause);
 	COPY_NODE_FIELD(subplans);
 	COPY_BITMAPSET_FIELD(rewindPlanIDs);
-	COPY_NODE_FIELD(returningLists);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(relationOids);
 	COPY_NODE_FIELD(invalItems);
@@ -155,6 +155,30 @@ _copyResult(Result *from)
 }
 
 /*
+ * _copyModifyTable
+ */
+static ModifyTable *
+_copyModifyTable(ModifyTable *from)
+{
+	ModifyTable    *newnode = makeNode(ModifyTable);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(operation);
+	COPY_NODE_FIELD(resultRelations);
+	COPY_NODE_FIELD(plans);
+	COPY_NODE_FIELD(returningLists);
+
+	return newnode;
+}
+
+/*
  * _copyAppend
  */
 static Append *
@@ -171,7 +195,6 @@ _copyAppend(Append *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(appendplans);
-	COPY_SCALAR_FIELD(isTarget);
 
 	return newnode;
 }
@@ -3481,6 +3504,9 @@ copyObject(void *from)
 			break;
 		case T_Result:
 			retval = _copyResult(from);
+			break;
+		case T_ModifyTable:
+			retval = _copyModifyTable(from);
 			break;
 		case T_Append:
 			retval = _copyAppend(from);

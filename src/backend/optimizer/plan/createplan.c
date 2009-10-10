@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.263 2009/09/17 20:49:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.264 2009/10/10 01:43:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,7 +579,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 		subplans = lappend(subplans, create_plan(root, subpath));
 	}
 
-	plan = make_append(subplans, false, tlist);
+	plan = make_append(subplans, tlist);
 
 	return (Plan *) plan;
 }
@@ -2621,7 +2621,7 @@ make_worktablescan(List *qptlist,
 }
 
 Append *
-make_append(List *appendplans, bool isTarget, List *tlist)
+make_append(List *appendplans, List *tlist)
 {
 	Append	   *node = makeNode(Append);
 	Plan	   *plan = &node->plan;
@@ -2657,7 +2657,6 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->appendplans = appendplans;
-	node->isTarget = isTarget;
 
 	return node;
 }
@@ -3712,6 +3711,73 @@ make_result(PlannerInfo *root,
 }
 
 /*
+ * make_modifytable
+ *	  Build a ModifyTable plan node
+ *
+ * Currently, we don't charge anything extra for the actual table modification
+ * work, nor for the RETURNING expressions if any.  It would only be window
+ * dressing, since these are always top-level nodes and there is no way for
+ * the costs to change any higher-level planning choices.  But we might want
+ * to make it look better sometime.
+ */
+ModifyTable *
+make_modifytable(CmdType operation, List *resultRelations,
+				 List *subplans, List *returningLists)
+{
+	ModifyTable *node = makeNode(ModifyTable);
+	Plan	   *plan = &node->plan;
+	double		total_size;
+	ListCell   *subnode;
+
+	Assert(list_length(resultRelations) == list_length(subplans));
+	Assert(returningLists == NIL ||
+		   list_length(resultRelations) == list_length(returningLists));
+
+	/*
+	 * Compute cost as sum of subplan costs.
+	 */
+	plan->startup_cost = 0;
+	plan->total_cost = 0;
+	plan->plan_rows = 0;
+	total_size = 0;
+	foreach(subnode, subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(subnode);
+
+		if (subnode == list_head(subplans))	/* first node? */
+			plan->startup_cost = subplan->startup_cost;
+		plan->total_cost += subplan->total_cost;
+		plan->plan_rows += subplan->plan_rows;
+		total_size += subplan->plan_width * subplan->plan_rows;
+	}
+	if (plan->plan_rows > 0)
+		plan->plan_width = rint(total_size / plan->plan_rows);
+	else
+		plan->plan_width = 0;
+
+	node->plan.lefttree = NULL;
+	node->plan.righttree = NULL;
+	node->plan.qual = NIL;
+
+	/*
+	 * Set up the visible plan targetlist as being the same as the first
+	 * RETURNING list.  This is for the use of EXPLAIN; the executor won't
+	 * pay any attention to the targetlist.
+	 */
+	if (returningLists)
+		node->plan.targetlist = copyObject(linitial(returningLists));
+	else
+		node->plan.targetlist = NIL;
+
+	node->operation = operation;
+	node->resultRelations = resultRelations;
+	node->plans = subplans;
+	node->returningLists = returningLists;
+
+	return node;
+}
+
+/*
  * is_projection_capable_plan
  *		Check whether a given Plan node is able to do projection.
  */
@@ -3727,6 +3793,7 @@ is_projection_capable_plan(Plan *plan)
 		case T_Unique:
 		case T_SetOp:
 		case T_Limit:
+		case T_ModifyTable:
 		case T_Append:
 		case T_RecursiveUnion:
 			return false;

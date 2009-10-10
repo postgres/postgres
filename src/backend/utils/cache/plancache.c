@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.28 2009/07/14 15:37:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.29 2009/10/10 01:43:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -880,8 +880,8 @@ PlanCacheComputeResultDesc(List *stmt_list)
 			if (IsA(node, PlannedStmt))
 			{
 				pstmt = (PlannedStmt *) node;
-				Assert(pstmt->returningLists);
-				return ExecCleanTypeFromTL((List *) linitial(pstmt->returningLists), false);
+				Assert(pstmt->hasReturning);
+				return ExecCleanTypeFromTL(pstmt->planTree->targetlist, false);
 			}
 			/* other cases shouldn't happen, but return NULL */
 			break;

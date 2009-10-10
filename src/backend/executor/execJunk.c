@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.58 2009/01/01 17:23:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.59 2009/10/10 01:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,7 @@
  * called 'resjunk'. If the value of this field is true then the
  * corresponding attribute is a "junk" attribute.
  *
- * When we initialize a plan we call ExecInitJunkFilter to create
- * and store the appropriate information in the es_junkFilter attribute of
- * EState.
+ * When we initialize a plan we call ExecInitJunkFilter to create a filter.
  *
  * We then execute the plan, treating the resjunk attributes like any others.
  *
@@ -44,7 +42,7 @@
  * ExecFindJunkAttribute/ExecGetJunkAttribute to retrieve the values of the
  * junk attributes we are interested in, and ExecFilterJunk or ExecRemoveJunk
  * to remove all the junk attributes from a tuple. This new "clean" tuple is
- * then printed, replaced, deleted or inserted.
+ * then printed, inserted, or updated.
  *
  *-------------------------------------------------------------------------
  */
