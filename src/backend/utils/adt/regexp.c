@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.82 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.83 2009/10/10 03:50:15 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -639,7 +639,7 @@ textregexreplace(PG_FUNCTION_ARGS)
 
 /*
  * similar_escape()
- * Convert a SQL99 regexp pattern to POSIX style, so it can be used by
+ * Convert a SQL:2008 regexp pattern to POSIX style, so it can be used by
  * our regexp engine.
  */
 Datum
@@ -740,8 +740,8 @@ similar_escape(PG_FUNCTION_ARGS)
 		}
 		else if (pchar == '_')
 			*r++ = '.';
-		else if (pchar == '\\' || pchar == '.' || pchar == '?' ||
-				 pchar == '{')
+		else if (pchar == '\\' || pchar == '.' ||
+				 pchar == '^' || pchar == '$')
 		{
 			*r++ = '\\';
 			*r++ = pchar;

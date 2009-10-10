@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.488 2009/10/09 21:02:55 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.489 2009/10/10 03:50:15 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3156,6 +3156,31 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     </listitem>
     <listitem>
      <para>
+      <literal>?</literal> denotes repetition of the previous item zero
+      or one time.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>{</><replaceable>m</><literal>}</literal> denotes repetition
+      of the previous item exactly <replaceable>m</> times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>{</><replaceable>m</><literal>,}</literal> denotes repetition
+      of the previous item <replaceable>m</> or more times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</>
+      denotes repetition of the previous item at least <replaceable>m</> and
+      not more than <replaceable>n</> times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       Parentheses <literal>()</literal> can be used to group items into
       a single logical item.
      </para>
@@ -3168,9 +3193,8 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     </listitem>
    </itemizedlist>
 
-    Notice that bounded repetition operators (<literal>?</> and
-    <literal>{...}</>) are not provided, though they exist in POSIX.
-    Also, the period (<literal>.</>) is not a metacharacter.
+    Notice that the period (<literal>.</>) is not a metacharacter
+    for <function>SIMILAR TO</>.
    </para>
 
    <para>
