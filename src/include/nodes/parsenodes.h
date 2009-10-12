@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.407 2009/10/12 19:49:24 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.408 2009/10/12 20:39:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1182,6 +1182,13 @@ typedef struct AlterDomainStmt
  *		Grant|Revoke Statement
  * ----------------------
  */
+typedef enum GrantTargetType
+{
+	ACL_TARGET_OBJECT,			/* grant on specific named object(s) */
+	ACL_TARGET_ALL_IN_SCHEMA,	/* grant on all objects in given schema(s) */
+	ACL_TARGET_DEFAULTS			/* ALTER DEFAULT PRIVILEGES */
+} GrantTargetType;
+
 typedef enum GrantObjectType
 {
 	ACL_OBJECT_COLUMN,			/* column */
@@ -1200,6 +1207,7 @@ typedef struct GrantStmt
 {
 	NodeTag		type;
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
+	GrantTargetType targtype;	/* type of the grant target */
 	GrantObjectType objtype;	/* kind of object being operated on */
 	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
 								 * or plain names (as Value strings) */

@@ -5,7 +5,7 @@
 -- Clean up in case a prior regression run failed
 
 -- Suppress NOTICE messages when users/groups don't exist
-SET client_min_messages TO 'error';
+SET client_min_messages TO 'warning';
 
 DROP ROLE IF EXISTS regressgroup1;
 DROP ROLE IF EXISTS regressgroup2;
@@ -550,6 +550,39 @@ DROP SCHEMA testns CASCADE;
 SELECT d.*     -- check that entries went away
   FROM pg_default_acl d LEFT JOIN pg_namespace n ON defaclnamespace = n.oid
   WHERE nspname IS NULL AND defaclnamespace != 0;
+
+
+-- Grant on all objects of given type in a schema
+\c -
+
+CREATE SCHEMA testns;
+CREATE TABLE testns.t1 (f1 int);
+CREATE TABLE testns.t2 (f1 int);
+
+SELECT has_table_privilege('regressuser1', 'testns.t1', 'SELECT'); -- false
+
+GRANT ALL ON ALL TABLES IN SCHEMA testns TO regressuser1;
+
+SELECT has_table_privilege('regressuser1', 'testns.t1', 'SELECT'); -- true
+SELECT has_table_privilege('regressuser1', 'testns.t2', 'SELECT'); -- true
+
+REVOKE ALL ON ALL TABLES IN SCHEMA testns FROM regressuser1;
+
+SELECT has_table_privilege('regressuser1', 'testns.t1', 'SELECT'); -- false
+SELECT has_table_privilege('regressuser1', 'testns.t2', 'SELECT'); -- false
+
+CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+
+SELECT has_function_privilege('regressuser1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
+
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
+
+SELECT has_function_privilege('regressuser1', 'testns.testfunc(int)', 'EXECUTE'); -- false
+
+SET client_min_messages TO 'warning';
+DROP SCHEMA testns CASCADE;
+RESET client_min_messages;
+
 
 -- clean up
 

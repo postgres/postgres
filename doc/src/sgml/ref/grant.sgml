@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.78 2009/10/05 19:24:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.79 2009/10/12 20:39:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,8 @@ PostgreSQL documentation
 <synopsis>
 GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
-    ON [ TABLE ] <replaceable class="PARAMETER">table_name</replaceable> [, ...]
+    ON { [ TABLE ] <replaceable class="PARAMETER">table_name</replaceable> [, ...]
+         | ALL TABLES IN SCHEMA <replaceable class="PARAMETER">schema_name</replaceable> [, ...] }
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column</replaceable> [, ...] )
@@ -33,7 +34,8 @@ GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETE
 
 GRANT { { USAGE | SELECT | UPDATE }
     [,...] | ALL [ PRIVILEGES ] }
-    ON SEQUENCE <replaceable class="PARAMETER">sequence_name</replaceable> [, ...]
+    ON { SEQUENCE <replaceable class="PARAMETER">sequence_name</replaceable> [, ...]
+         | ALL SEQUENCES IN SCHEMA <replaceable class="PARAMETER">schema_name</replaceable> [, ...] }
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
@@ -49,7 +51,8 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
-    ON FUNCTION <replaceable>function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) [, ...]
+    ON { FUNCTION <replaceable>function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) [, ...]
+         | ALL FUNCTIONS IN SCHEMA <replaceable class="PARAMETER">schema_name</replaceable> [, ...] }
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
@@ -88,6 +91,13 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
    privileges on a database object to
    one or more roles.  These privileges are added
    to those already granted, if any.
+  </para>
+
+  <para>
+   There is also an option to grant privileges on all objects of the same
+   type within one or more schemas.  This functionality is currently supported
+   only for tables, sequences, and functions (but note that <literal>ALL
+   TABLES</> is considered to include views).
   </para>
 
   <para>

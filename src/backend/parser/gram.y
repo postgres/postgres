@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.683 2009/10/12 19:49:24 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.684 2009/10/12 20:39:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -95,6 +95,7 @@
 /* Private struct for the result of privilege_target production */
 typedef struct PrivTarget
 {
+	GrantTargetType targtype;
 	GrantObjectType objtype;
 	List	   *objs;
 } PrivTarget;
@@ -480,7 +481,7 @@ static TypeName *TableFuncTypeName(List *columns);
 	EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOLLOWING FOR FORCE FOREIGN FORWARD
-	FREEZE FROM FULL FUNCTION
+	FREEZE FROM FULL FUNCTION FUNCTIONS
 
 	GLOBAL GRANT GRANTED GREATEST GROUP_P
 
@@ -518,13 +519,13 @@ static TypeName *TableFuncTypeName(List *columns);
 	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA RESET RESTART
 	RESTRICT RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK ROW ROWS RULE
 
-	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE
+	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE SEQUENCES
 	SERIALIZABLE SERVER SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE_P START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
 	SYMMETRIC SYSID SYSTEM_P
 
-	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
+	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P
 
@@ -4321,6 +4322,7 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
 					n->privileges = $2;
+					n->targtype = ($4)->targtype;
 					n->objtype = ($4)->objtype;
 					n->objects = ($4)->objs;
 					n->grantees = $6;
@@ -4337,6 +4339,7 @@ RevokeStmt:
 					n->is_grant = false;
 					n->grant_option = false;
 					n->privileges = $2;
+					n->targtype = ($4)->targtype;
 					n->objtype = ($4)->objtype;
 					n->objects = ($4)->objs;
 					n->grantees = $6;
@@ -4350,6 +4353,7 @@ RevokeStmt:
 					n->is_grant = false;
 					n->grant_option = true;
 					n->privileges = $5;
+					n->targtype = ($7)->targtype;
 					n->objtype = ($7)->objtype;
 					n->objects = ($7)->objs;
 					n->grantees = $9;
@@ -4432,6 +4436,7 @@ privilege_target:
 			qualified_name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_RELATION;
 					n->objs = $1;
 					$$ = n;
@@ -4439,6 +4444,7 @@ privilege_target:
 			| TABLE qualified_name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_RELATION;
 					n->objs = $2;
 					$$ = n;
@@ -4446,6 +4452,7 @@ privilege_target:
 			| SEQUENCE qualified_name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_SEQUENCE;
 					n->objs = $2;
 					$$ = n;
@@ -4453,6 +4460,7 @@ privilege_target:
 			| FOREIGN DATA_P WRAPPER name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_FDW;
 					n->objs = $4;
 					$$ = n;
@@ -4460,6 +4468,7 @@ privilege_target:
 			| FOREIGN SERVER name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_FOREIGN_SERVER;
 					n->objs = $3;
 					$$ = n;
@@ -4467,6 +4476,7 @@ privilege_target:
 			| FUNCTION function_with_argtypes_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_FUNCTION;
 					n->objs = $2;
 					$$ = n;
@@ -4474,6 +4484,7 @@ privilege_target:
 			| DATABASE name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_DATABASE;
 					n->objs = $2;
 					$$ = n;
@@ -4481,6 +4492,7 @@ privilege_target:
 			| LANGUAGE name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_LANGUAGE;
 					n->objs = $2;
 					$$ = n;
@@ -4488,6 +4500,7 @@ privilege_target:
 			| SCHEMA name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_NAMESPACE;
 					n->objs = $2;
 					$$ = n;
@@ -4495,8 +4508,33 @@ privilege_target:
 			| TABLESPACE name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_TABLESPACE;
 					n->objs = $2;
+					$$ = n;
+				}
+			| ALL TABLES IN_P SCHEMA name_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_ALL_IN_SCHEMA;
+					n->objtype = ACL_OBJECT_RELATION;
+					n->objs = $5;
+					$$ = n;
+				}
+			| ALL SEQUENCES IN_P SCHEMA name_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_ALL_IN_SCHEMA;
+					n->objtype = ACL_OBJECT_SEQUENCE;
+					n->objs = $5;
+					$$ = n;
+				}
+			| ALL FUNCTIONS IN_P SCHEMA name_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_ALL_IN_SCHEMA;
+					n->objtype = ACL_OBJECT_FUNCTION;
+					n->objs = $5;
 					$$ = n;
 				}
 		;
@@ -4648,6 +4686,7 @@ DefACLAction:
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
 					n->privileges = $2;
+					n->targtype = ACL_TARGET_DEFAULTS;
 					n->objtype = $4;
 					n->objects = NIL;
 					n->grantees = $6;
@@ -4661,6 +4700,7 @@ DefACLAction:
 					n->is_grant = false;
 					n->grant_option = false;
 					n->privileges = $2;
+					n->targtype = ACL_TARGET_DEFAULTS;
 					n->objtype = $4;
 					n->objects = NIL;
 					n->grantees = $6;
@@ -4674,6 +4714,7 @@ DefACLAction:
 					n->is_grant = false;
 					n->grant_option = true;
 					n->privileges = $5;
+					n->targtype = ACL_TARGET_DEFAULTS;
 					n->objtype = $7;
 					n->objects = NIL;
 					n->grantees = $9;
@@ -10535,6 +10576,7 @@ unreserved_keyword:
 			| FORCE
 			| FORWARD
 			| FUNCTION
+			| FUNCTIONS
 			| GLOBAL
 			| GRANTED
 			| HANDLER
@@ -10644,6 +10686,7 @@ unreserved_keyword:
 			| SECOND_P
 			| SECURITY
 			| SEQUENCE
+			| SEQUENCES
 			| SERIALIZABLE
 			| SERVER
 			| SESSION
@@ -10664,6 +10707,7 @@ unreserved_keyword:
 			| SUPERUSER_P
 			| SYSID
 			| SYSTEM_P
+			| TABLES
 			| TABLESPACE
 			| TEMP
 			| TEMPLATE

@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.367 2009/10/12 19:49:24 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.368 2009/10/12 20:39:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -990,6 +990,7 @@ static bool
 _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 {
 	COMPARE_SCALAR_FIELD(is_grant);
+	COMPARE_SCALAR_FIELD(targtype);
 	COMPARE_SCALAR_FIELD(objtype);
 	COMPARE_NODE_FIELD(objects);
 	COMPARE_NODE_FIELD(privileges);

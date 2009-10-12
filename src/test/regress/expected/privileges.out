@@ -3,7 +3,7 @@
 --
 -- Clean up in case a prior regression run failed
 -- Suppress NOTICE messages when users/groups don't exist
-SET client_min_messages TO 'error';
+SET client_min_messages TO 'warning';
 DROP ROLE IF EXISTS regressgroup1;
 DROP ROLE IF EXISTS regressgroup2;
 DROP ROLE IF EXISTS regressuser1;
@@ -947,6 +947,60 @@ SELECT d.*     -- check that entries went away
 ------------+-----------------+---------------+-----------
 (0 rows)
 
+-- Grant on all objects of given type in a schema
+\c -
+CREATE SCHEMA testns;
+CREATE TABLE testns.t1 (f1 int);
+CREATE TABLE testns.t2 (f1 int);
+SELECT has_table_privilege('regressuser1', 'testns.t1', 'SELECT'); -- false
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
+GRANT ALL ON ALL TABLES IN SCHEMA testns TO regressuser1;
+SELECT has_table_privilege('regressuser1', 'testns.t1', 'SELECT'); -- true
+ has_table_privilege 
+---------------------
+ t
+(1 row)
+
+SELECT has_table_privilege('regressuser1', 'testns.t2', 'SELECT'); -- true
+ has_table_privilege 
+---------------------
+ t
+(1 row)
+
+REVOKE ALL ON ALL TABLES IN SCHEMA testns FROM regressuser1;
+SELECT has_table_privilege('regressuser1', 'testns.t1', 'SELECT'); -- false
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
+SELECT has_table_privilege('regressuser1', 'testns.t2', 'SELECT'); -- false
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
+CREATE FUNCTION testns.testfunc(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
+SELECT has_function_privilege('regressuser1', 'testns.testfunc(int)', 'EXECUTE'); -- true by default
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
+SELECT has_function_privilege('regressuser1', 'testns.testfunc(int)', 'EXECUTE'); -- false
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+SET client_min_messages TO 'warning';
+DROP SCHEMA testns CASCADE;
+RESET client_min_messages;
 -- clean up
 \c
 drop sequence x_seq;
