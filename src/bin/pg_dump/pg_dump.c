@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.550 2009/10/09 21:02:56 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.551 2009/10/12 23:41:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -9944,13 +9944,13 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 	switch (daclinfo->defaclobjtype)
 	{
 		case DEFACLOBJ_RELATION:
-			type = "TABLE";
+			type = "TABLES";
 			break;
 		case DEFACLOBJ_SEQUENCE:
-			type = "SEQUENCE";
+			type = "SEQUENCES";
 			break;
 		case DEFACLOBJ_FUNCTION:
-			type = "FUNCTION";
+			type = "FUNCTIONS";
 			break;
 		default:
 			/* shouldn't get here */
@@ -9960,7 +9960,7 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 			type = "";			/* keep compiler quiet */
 	}
 
-	appendPQExpBuffer(tag, "DEFAULT %s PRIVILEGES", type);
+	appendPQExpBuffer(tag, "DEFAULT PRIVILEGES FOR %s", type);
 
 	/* build the actual command(s) for this tuple */
 	if (!buildDefaultACLCommands(type,

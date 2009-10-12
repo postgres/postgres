@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_default_privileges.sgml,v 1.1 2009/10/05 19:24:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_default_privileges.sgml,v 1.2 2009/10/12 23:41:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,35 +30,35 @@ ALTER DEFAULT PRIVILEGES
 
 GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
-    ON TABLE
+    ON TABLES
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { USAGE | SELECT | UPDATE }
     [,...] | ALL [ PRIVILEGES ] }
-    ON SEQUENCE
+    ON SEQUENCES
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
-    ON FUNCTION
+    ON FUNCTIONS
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
-    ON TABLE
+    ON TABLES
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { USAGE | SELECT | UPDATE }
     [,...] | ALL [ PRIVILEGES ] }
-    ON SEQUENCE
+    ON SEQUENCES
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { EXECUTE | ALL [ PRIVILEGES ] }
-    ON FUNCTION
+    ON FUNCTIONS
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
@@ -165,8 +165,8 @@ REVOKE [ GRANT OPTION FOR ]
    role <literal>webuser</> to INSERT into them too:
 
 <programlisting>
-ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT SELECT ON TABLE TO PUBLIC;
-ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT INSERT ON TABLE TO webuser;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT SELECT ON TABLES TO PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT INSERT ON TABLES TO webuser;
 </programlisting>
   </para>
 
@@ -175,8 +175,8 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT INSERT ON TABLE TO webuser;
    more permissions than normal:
 
 <programlisting>
-ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE SELECT ON TABLE FROM PUBLIC;
-ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLE FROM webuser;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE SELECT ON TABLES FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLES FROM webuser;
 </programlisting>
   </para>
 
@@ -185,7 +185,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLE FROM webuser;
    for all functions subsequently created by role <literal>admin</>:
 
 <programlisting>
-ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTION FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 </programlisting>
   </para>
  </refsect1>
