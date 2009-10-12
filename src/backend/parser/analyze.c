@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.391 2009/09/09 03:32:52 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.392 2009/10/12 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1388,7 +1388,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 	/*
-	 * If an internal node of a set-op tree has ORDER BY, UPDATE, or LIMIT
+	 * If an internal node of a set-op tree has ORDER BY, LIMIT, or FOR UPDATE
 	 * clauses attached, we need to treat it like a leaf node to generate an
 	 * independent sub-Query tree.	Otherwise, it can be represented by a
 	 * SetOperationStmt node underneath the parent Query.
@@ -2251,6 +2251,7 @@ applyLockingClause(Query *qry, Index rtindex, bool forUpdate, bool noWait)
 	rc = makeNode(RowMarkClause);
 	rc->rti = rtindex;
 	rc->prti = rtindex;
+	rc->rowmarkId = 0;			/* not used until plan time */
 	rc->forUpdate = forUpdate;
 	rc->noWait = noWait;
 	rc->isParent = false;

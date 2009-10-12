@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.443 2009/10/10 01:43:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.444 2009/10/12 18:10:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,6 +423,7 @@ _copySubqueryScan(SubqueryScan *from)
 	 */
 	COPY_NODE_FIELD(subplan);
 	COPY_NODE_FIELD(subrtable);
+	COPY_NODE_FIELD(subrowmark);
 
 	return newnode;
 }
@@ -790,6 +791,27 @@ _copySetOp(SetOp *from)
 	COPY_SCALAR_FIELD(flagColIdx);
 	COPY_SCALAR_FIELD(firstFlag);
 	COPY_SCALAR_FIELD(numGroups);
+
+	return newnode;
+}
+
+/*
+ * _copyLockRows
+ */
+static LockRows *
+_copyLockRows(LockRows *from)
+{
+	LockRows	   *newnode = makeNode(LockRows);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(rowMarks);
 
 	return newnode;
 }
@@ -1813,6 +1835,7 @@ _copyRowMarkClause(RowMarkClause *from)
 
 	COPY_SCALAR_FIELD(rti);
 	COPY_SCALAR_FIELD(prti);
+	COPY_SCALAR_FIELD(rowmarkId);
 	COPY_SCALAR_FIELD(forUpdate);
 	COPY_SCALAR_FIELD(noWait);
 	COPY_SCALAR_FIELD(isParent);
@@ -3588,6 +3611,9 @@ copyObject(void *from)
 			break;
 		case T_SetOp:
 			retval = _copySetOp(from);
+			break;
+		case T_LockRows:
+			retval = _copyLockRows(from);
 			break;
 		case T_Limit:
 			retval = _copyLimit(from);

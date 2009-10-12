@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.161 2009/10/10 01:43:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.162 2009/10/12 18:10:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,13 @@ extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 			 PlanState *subplanstate,
 			 ItemPointer tid, TransactionId priorXmax);
-extern PlanState *ExecGetActivePlanTree(QueryDesc *queryDesc);
+extern HeapTuple EvalPlanQualFetch(EState *estate, Index rti,
+				  ItemPointer tid, TransactionId priorXmax);
+extern void EvalPlanQualPush(EState *estate, Index rti,
+							 PlanState *subplanstate);
+extern void EvalPlanQualSetTuple(EState *estate, Index rti, HeapTuple tuple);
+extern TupleTableSlot *EvalPlanQualNext(EState *estate);
+extern void EvalPlanQualPop(EState *estate, PlanState *subplanstate);
 extern DestReceiver *CreateIntoRelDestReceiver(void);
 
 /*

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.175 2009/10/10 01:43:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.176 2009/10/12 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 							  NIL,
 							  rtr->rtindex,
 							  subplan,
-							  subroot->parse->rtable);
+							  subroot->parse->rtable,
+							  subroot->parse->rowMarks);
 
 		/*
 		 * We don't bother to determine the subquery's output ordering since
@@ -1281,6 +1282,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 			newrc->rti = childRTindex;
 			newrc->prti = rti;
+			/* children use the same rowmarkId as their parent */
+			newrc->rowmarkId = oldrc->rowmarkId;
 			newrc->forUpdate = oldrc->forUpdate;
 			newrc->noWait = oldrc->noWait;
 			newrc->isParent = false;

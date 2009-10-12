@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.405 2009/10/07 22:14:26 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.406 2009/10/12 18:10:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,12 +809,15 @@ typedef struct WindowClause
  * the target rel itself in its role as a child).  The child entries have
  * rti == child rel's RT index, prti == parent's RT index, and can therefore
  * be recognized as children by the fact that prti != rti.
+ * rowmarkId is a unique ID for the RowMarkClause across an entire query,
+ * and is assigned during planning; it's always zero upstream of the planner.
  */
 typedef struct RowMarkClause
 {
 	NodeTag		type;
 	Index		rti;			/* range table index of target relation */
 	Index		prti;			/* range table index of parent relation */
+	Index		rowmarkId;		/* unique identifier assigned by planner */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
 	bool		isParent;		/* set by planner when expanding inheritance */

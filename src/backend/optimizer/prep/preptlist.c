@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.96 2009/04/19 19:46:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.97 2009/10/12 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,24 +123,19 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		 */
 		CheckSelectLocking(parse);
 
-		/*
-		 * Currently the executor only supports FOR UPDATE/SHARE at top level
-		 */
-		if (root->query_level > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("SELECT FOR UPDATE/SHARE is not allowed in subqueries")));
-
 		foreach(l, parse->rowMarks)
 		{
 			RowMarkClause *rc = (RowMarkClause *) lfirst(l);
 			Var		   *var;
-			char	   *resname;
+			char		resname[32];
 			TargetEntry *tle;
 
 			/* ignore child rels */
 			if (rc->rti != rc->prti)
 				continue;
+
+			/* we should have an ID for the RowMarkClause */
+			Assert(rc->rowmarkId != 0);
 
 			/* always need the ctid */
 			var = makeVar(rc->rti,
@@ -149,12 +144,12 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 						  -1,
 						  0);
 
-			resname = (char *) palloc(32);
-			snprintf(resname, 32, "ctid%u", rc->rti);
+			snprintf(resname, sizeof(resname),
+					 "ctid%u", rc->rowmarkId);
 
 			tle = makeTargetEntry((Expr *) var,
 								  list_length(tlist) + 1,
-								  resname,
+								  pstrdup(resname),
 								  true);
 
 			tlist = lappend(tlist, tle);
@@ -168,12 +163,12 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 							  -1,
 							  0);
 
-				resname = (char *) palloc(32);
-				snprintf(resname, 32, "tableoid%u", rc->rti);
+				snprintf(resname, sizeof(resname),
+						 "tableoid%u", rc->rowmarkId);
 
 				tle = makeTargetEntry((Expr *) var,
 									  list_length(tlist) + 1,
-									  resname,
+									  pstrdup(resname),
 									  true);
 
 				tlist = lappend(tlist, tle);

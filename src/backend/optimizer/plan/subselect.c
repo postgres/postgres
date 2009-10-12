@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.154 2009/10/10 01:43:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.155 2009/10/12 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,8 @@ typedef struct finalize_primnode_context
 } finalize_primnode_context;
 
 
-static Node *build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
+static Node *build_subplan(PlannerInfo *root, Plan *plan,
+			  List *rtable, List *rowmarks,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
@@ -333,7 +334,8 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 							&subroot);
 
 	/* And convert to SubPlan or InitPlan format. */
-	result = build_subplan(root, plan, subroot->parse->rtable,
+	result = build_subplan(root, plan,
+						   subroot->parse->rtable, subroot->parse->rowMarks,
 						   subLinkType, testexpr, true, isTopQual);
 
 	/*
@@ -375,6 +377,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 				/* OK, convert to SubPlan format. */
 				hashplan = (SubPlan *) build_subplan(root, plan,
 													 subroot->parse->rtable,
+													 subroot->parse->rowMarks,
 													 ANY_SUBLINK, newtestexpr,
 													 false, true);
 				/* Check we got what we expected */
@@ -402,7 +405,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
  * as explained in the comments for make_subplan.
  */
 static Node *
-build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
+build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse)
 {
@@ -585,6 +588,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	 */
 	root->glob->subplans = lappend(root->glob->subplans, plan);
 	root->glob->subrtables = lappend(root->glob->subrtables, rtable);
+	root->glob->subrowmarks = lappend(root->glob->subrowmarks, rowmarks);
 	splan->plan_id = list_length(root->glob->subplans);
 
 	if (isInitPlan)
@@ -944,6 +948,8 @@ SS_process_ctes(PlannerInfo *root)
 		root->glob->subplans = lappend(root->glob->subplans, plan);
 		root->glob->subrtables = lappend(root->glob->subrtables,
 										 subroot->parse->rtable);
+		root->glob->subrowmarks = lappend(root->glob->subrowmarks,
+										  subroot->parse->rowMarks);
 		splan->plan_id = list_length(root->glob->subplans);
 
 		root->init_plans = lappend(root->init_plans, splan);
@@ -2035,6 +2041,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 		case T_Unique:
 		case T_SetOp:
 		case T_Group:
+		case T_LockRows:
 			break;
 
 		default:
@@ -2191,6 +2198,8 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 								   plan);
 	root->glob->subrtables = lappend(root->glob->subrtables,
 									 root->parse->rtable);
+	root->glob->subrowmarks = lappend(root->glob->subrowmarks,
+									  root->parse->rowMarks);
 
 	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans. Note

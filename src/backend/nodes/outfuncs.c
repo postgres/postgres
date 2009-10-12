@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.367 2009/10/10 01:43:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.368 2009/10/12 18:10:45 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -454,6 +454,7 @@ _outSubqueryScan(StringInfo str, SubqueryScan *node)
 
 	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(subrtable);
+	WRITE_NODE_FIELD(subrowmark);
 }
 
 static void
@@ -718,6 +719,16 @@ _outSetOp(StringInfo str, SetOp *node)
 	WRITE_INT_FIELD(flagColIdx);
 	WRITE_INT_FIELD(firstFlag);
 	WRITE_LONG_FIELD(numGroups);
+}
+
+static void
+_outLockRows(StringInfo str, LockRows *node)
+{
+	WRITE_NODE_TYPE("LOCKROWS");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_NODE_FIELD(rowMarks);
 }
 
 static void
@@ -1494,11 +1505,14 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	WRITE_NODE_FIELD(paramlist);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_NODE_FIELD(subrtables);
+	WRITE_NODE_FIELD(subrowmarks);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 	WRITE_NODE_FIELD(finalrtable);
+	WRITE_NODE_FIELD(finalrowmarks);
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_UINT_FIELD(lastPHId);
+	WRITE_UINT_FIELD(lastRowmarkId);
 	WRITE_BOOL_FIELD(transientPlan);
 }
 
@@ -1561,6 +1575,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(subrtable);
+	WRITE_NODE_FIELD(subrowmark);
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
@@ -2001,6 +2016,7 @@ _outRowMarkClause(StringInfo str, RowMarkClause *node)
 
 	WRITE_UINT_FIELD(rti);
 	WRITE_UINT_FIELD(prti);
+	WRITE_UINT_FIELD(rowmarkId);
 	WRITE_BOOL_FIELD(forUpdate);
 	WRITE_BOOL_FIELD(noWait);
 	WRITE_BOOL_FIELD(isParent);
@@ -2502,6 +2518,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SetOp:
 				_outSetOp(str, obj);
+				break;
+			case T_LockRows:
+				_outLockRows(str, obj);
 				break;
 			case T_Limit:
 				_outLimit(str, obj);

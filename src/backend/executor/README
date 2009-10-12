@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.9 2009/10/10 01:43:45 tgl Exp $
+$PostgreSQL: pgsql/src/backend/executor/README,v 1.10 2009/10/12 18:10:41 tgl Exp $
 
 The Postgres Executor
 =====================
@@ -157,7 +157,8 @@ if need be) and re-evaluate the query qualifications to see if it would
 still meet the quals.  If so, we regenerate the updated tuple (if we are
 doing an UPDATE) from the modified tuple, and finally update/delete the
 modified tuple.  SELECT FOR UPDATE/SHARE behaves similarly, except that its
-action is just to lock the modified tuple.
+action is just to lock the modified tuple and return results based on that
+version of the tuple.
 
 To implement this checking, we actually re-run the entire query from scratch
 for each modified tuple, but with the scan node that sourced the original
@@ -195,5 +196,5 @@ It should be noted also that UPDATE/DELETE expect at most one tuple to
 result from the modified query, whereas in the FOR UPDATE case it's possible
 for multiple tuples to result (since we could be dealing with a join in
 which multiple tuples join to the modified tuple).  We want FOR UPDATE to
-lock all relevant tuples, so we pass all tuples output by all the stacked
-recheck queries back to the executor toplevel for locking.
+lock all relevant tuples, so we process all tuples output by all the stacked
+recheck queries.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.191 2009/10/10 01:43:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.192 2009/10/12 18:10:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,6 +717,9 @@ ExplainNode(Plan *plan, PlanState *planstate,
 					strategy = "???";
 					break;
 			}
+			break;
+		case T_LockRows:
+			pname = sname = "LockRows";
 			break;
 		case T_Limit:
 			pname = sname = "Limit";

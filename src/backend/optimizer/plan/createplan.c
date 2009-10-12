@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.264 2009/10/10 01:43:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.265 2009/10/12 18:10:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1336,7 +1336,8 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan,
-								  best_path->parent->subrtable);
+								  best_path->parent->subrtable,
+								  best_path->parent->subrowmark);
 
 	copy_path_costsize(&scan_plan->scan.plan, best_path);
 
@@ -2508,7 +2509,8 @@ make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
 				  Plan *subplan,
-				  List *subrtable)
+				  List *subrtable,
+				  List *subrowmark)
 {
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2528,6 +2530,7 @@ make_subqueryscan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->subplan = subplan;
 	node->subrtable = subrtable;
+	node->subrowmark = subrowmark;
 
 	return node;
 }
@@ -3591,6 +3594,31 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 }
 
 /*
+ * make_lockrows
+ *	  Build a LockRows plan node
+ */
+LockRows *
+make_lockrows(Plan *lefttree, List *rowMarks)
+{
+	LockRows   *node = makeNode(LockRows);
+	Plan	   *plan = &node->plan;
+
+	copy_plan_costsize(plan, lefttree);
+
+	/* charge cpu_tuple_cost to reflect locking costs (underestimate?) */
+	plan->total_cost += cpu_tuple_cost * plan->plan_rows;
+
+	plan->targetlist = lefttree->targetlist;
+	plan->qual = NIL;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+
+	node->rowMarks = rowMarks;
+
+	return node;
+}
+
+/*
  * Note: offset_est and count_est are passed in to save having to repeat
  * work already done to estimate the values of the limitOffset and limitCount
  * expressions.  Their values are as returned by preprocess_limit (0 means
@@ -3792,6 +3820,7 @@ is_projection_capable_plan(Plan *plan)
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
+		case T_LockRows:
 		case T_Limit:
 		case T_ModifyTable:
 		case T_Append:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.258 2009/10/10 01:43:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.259 2009/10/12 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,8 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	PlannerInfo *root;
 	Plan	   *top_plan;
 	ListCell   *lp,
-			   *lr;
+			   *lrt,
+			   *lrm;
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -151,11 +152,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->paramlist = NIL;
 	glob->subplans = NIL;
 	glob->subrtables = NIL;
+	glob->subrowmarks = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
+	glob->finalrowmarks = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 	glob->lastPHId = 0;
+	glob->lastRowmarkId = 0;
 	glob->transientPlan = false;
 
 	/* Determine what fraction of the plan is likely to be scanned */
@@ -202,15 +206,25 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
-	top_plan = set_plan_references(glob, top_plan, root->parse->rtable);
+	Assert(glob->finalrowmarks == NIL);
+	top_plan = set_plan_references(glob, top_plan,
+								   root->parse->rtable,
+								   root->parse->rowMarks);
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
-	forboth(lp, glob->subplans, lr, glob->subrtables)
+	Assert(list_length(glob->subplans) == list_length(glob->subrowmarks));
+	lrt = list_head(glob->subrtables);
+	lrm = list_head(glob->subrowmarks);
+	foreach(lp, glob->subplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		List	   *subrtable = (List *) lfirst(lr);
+		List	   *subrtable = (List *) lfirst(lrt);
+		List	   *subrowmark = (List *) lfirst(lrm);
 
-		lfirst(lp) = set_plan_references(glob, subplan, subrtable);
+		lfirst(lp) = set_plan_references(glob, subplan,
+										 subrtable, subrowmark);
+		lrt = lnext(lrt);
+		lrm = lnext(lrm);
 	}
 
 	/* build the PlannedStmt result */
@@ -227,7 +241,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->intoClause = parse->intoClause;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
-	result->rowMarks = parse->rowMarks;
+	result->rowMarks = glob->finalrowmarks;
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
 	result->nParamExec = list_length(glob->paramlist);
@@ -347,6 +361,21 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				break;
 			}
 		}
+	}
+
+	/*
+	 * Assign unique IDs (unique within this planner run) to RowMarkClauses.
+	 * We can't identify them just by RT index because that will change
+	 * during final rtable flattening, and we don't want to have to go back
+	 * and change the resnames assigned to junk CTID tlist entries at that
+	 * point.  Do it now before expanding inheritance sets, because child
+	 * relations should inherit their parents' rowmarkId.
+	 */
+	foreach(l, parse->rowMarks)
+	{
+		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+
+		rc->rowmarkId = ++(root->glob->lastRowmarkId);
 	}
 
 	/*
@@ -1588,7 +1617,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
-	 * Finally, if there is a LIMIT/OFFSET clause, add the LIMIT node.
+	 * If there is a LIMIT/OFFSET clause, add the LIMIT node.
 	 */
 	if (parse->limitCount || parse->limitOffset)
 	{
@@ -1597,6 +1626,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										  parse->limitCount,
 										  offset_est,
 										  count_est);
+	}
+
+	/*
+	 * Finally, if there is a FOR UPDATE/SHARE clause, add the LockRows node.
+	 */
+	if (parse->rowMarks)
+	{
+		result_plan = (Plan *) make_lockrows(result_plan,
+											 parse->rowMarks);
 	}
 
 	/* Compute result-relations list if needed */

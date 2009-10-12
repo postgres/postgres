@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.41 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.42 2009/10/12 18:10:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,11 +99,12 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 
 	/*
 	 * SubqueryScan should not have any "normal" children.	Also, if planner
-	 * left anything in subrtable, it's fishy.
+	 * left anything in subrtable/subrowmark, it's fishy.
 	 */
 	Assert(outerPlan(node) == NULL);
 	Assert(innerPlan(node) == NULL);
 	Assert(node->subrtable == NIL);
+	Assert(node->subrowmark == NIL);
 
 	/*
 	 * create state structure

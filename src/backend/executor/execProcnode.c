@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.67 2009/10/10 01:43:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.68 2009/10/12 18:10:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,7 @@
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeLimit.h"
+#include "executor/nodeLockRows.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
@@ -286,6 +287,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 												 estate, eflags);
 			break;
 
+		case T_LockRows:
+			result = (PlanState *) ExecInitLockRows((LockRows *) node,
+													estate, eflags);
+			break;
+
 		case T_Limit:
 			result = (PlanState *) ExecInitLimit((Limit *) node,
 												 estate, eflags);
@@ -454,6 +460,10 @@ ExecProcNode(PlanState *node)
 
 		case T_SetOpState:
 			result = ExecSetOp((SetOpState *) node);
+			break;
+
+		case T_LockRowsState:
+			result = ExecLockRows((LockRowsState *) node);
 			break;
 
 		case T_LimitState:
@@ -674,6 +684,10 @@ ExecEndNode(PlanState *node)
 
 		case T_SetOpState:
 			ExecEndSetOp((SetOpState *) node);
+			break;
+
+		case T_LockRowsState:
+			ExecEndLockRows((LockRowsState *) node);
 			break;
 
 		case T_LimitState:

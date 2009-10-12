@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.111 2009/10/10 01:43:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.112 2009/10/12 18:10:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,7 +343,7 @@ typedef struct TidScan
  *
  * Note: subrtable is used just to carry the subquery rangetable from
  * createplan.c to setrefs.c; it should always be NIL by the time the
- * executor sees the plan.
+ * executor sees the plan.  Similarly for subrowmark.
  * ----------------
  */
 typedef struct SubqueryScan
@@ -351,6 +351,7 @@ typedef struct SubqueryScan
 	Scan		scan;
 	Plan	   *subplan;
 	List	   *subrtable;		/* temporary workspace for planner */
+	List	   *subrowmark;		/* temporary workspace for planner */
 } SubqueryScan;
 
 /* ----------------
@@ -613,6 +614,19 @@ typedef struct SetOp
 	int			firstFlag;		/* flag value for first input relation */
 	long		numGroups;		/* estimated number of groups in input */
 } SetOp;
+
+/* ----------------
+ *		lock-rows node
+ *
+ * rowMarks identifies the rels to be locked by this node; it should be
+ * a subset of the rowMarks listed in the top-level PlannedStmt.
+ * ----------------
+ */
+typedef struct LockRows
+{
+	Plan		plan;
+	List	   *rowMarks;		/* a list of RowMarkClause's */
+} LockRows;
 
 /* ----------------
  *		limit node

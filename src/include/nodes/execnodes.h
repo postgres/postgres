@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.209 2009/10/10 01:43:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.210 2009/10/12 18:10:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,6 +332,8 @@ typedef struct EState
 	Snapshot	es_crosscheck_snapshot; /* crosscheck time qual for RI */
 	List	   *es_range_table; /* List of RangeTblEntry */
 
+	JunkFilter *es_junkFilter;	/* top-level junk filter, if any */
+
 	/* If query can insert/delete tuples, the command ID to mark them with */
 	CommandId	es_output_cid;
 
@@ -339,7 +341,6 @@ typedef struct EState
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
 	int			es_num_result_relations;		/* length of array */
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
-	JunkFilter *es_junkFilter;	/* top-level junk filter, if any */
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
@@ -354,9 +355,10 @@ typedef struct EState
 
 	List	   *es_tupleTable;	/* List of TupleTableSlots */
 
+	List	   *es_rowMarks;	/* List of ExecRowMarks */
+
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
-	List	   *es_rowMarks;	/* not good place, but there is no other */
 
 	bool		es_instrument;	/* true requests runtime instrumentation */
 	bool		es_select_into; /* true if doing SELECT INTO */
@@ -378,19 +380,22 @@ typedef struct EState
 	struct evalPlanQual *es_evalPlanQual;		/* chain of PlanQual states */
 	bool	   *es_evTupleNull; /* local array of EPQ status */
 	HeapTuple  *es_evTuple;		/* shared array of EPQ substitute tuples */
-	bool		es_useEvalPlan; /* evaluating EPQ tuples? */
 } EState;
 
 
 /*
- * es_rowMarks is a list of these structs.	See RowMarkClause for details
- * about rti and prti.	toidAttno is not used in a "plain" rowmark.
+ * es_rowMarks is a list of these structs.  Each LockRows node has its own
+ * list, which is the subset of locks that it is supposed to enforce; note
+ * that the per-node lists point to the same structs that are in the global
+ * list.  See RowMarkClause for details about rti, prti, and rowmarkId.
+ * toidAttno is not used in a "plain" (non-inherited) rowmark.
  */
 typedef struct ExecRowMark
 {
 	Relation	relation;		/* opened and RowShareLock'd relation */
 	Index		rti;			/* its range table index */
 	Index		prti;			/* parent range table index, if child */
+	Index		rowmarkId;		/* unique identifier assigned by planner */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
 	AttrNumber	ctidAttNo;		/* resno of its ctid junk attribute */
@@ -1635,6 +1640,20 @@ typedef struct SetOpState
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
 } SetOpState;
+
+/* ----------------
+ *	 LockRowsState information
+ *
+ *		LockRows nodes are used to enforce FOR UPDATE/FOR SHARE locking.
+ * ----------------
+ */
+typedef struct LockRowsState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	List	   *lr_rowMarks;	/* List of ExecRowMarks */
+	JunkFilter *lr_junkFilter;	/* needed for getting ctid columns */
+	bool		lr_useEvalPlan;	/* evaluating EPQ tuples? */
+} LockRowsState;
 
 /* ----------------
  *	 LimitState information

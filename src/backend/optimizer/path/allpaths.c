@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.186 2009/09/17 20:49:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.187 2009/10/12 18:10:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -632,6 +632,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 									false, tuple_fraction,
 									&subroot);
 	rel->subrtable = subroot->parse->rtable;
+	rel->subrowmark = subroot->parse->rowMarks;
 
 	/* Copy number of output rows from subplan */
 	rel->tuples = rel->subplan->plan_rows;
@@ -971,10 +972,10 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * since that could change the set of rows returned.
  *
  * 2. If the subquery contains any window functions, we can't push quals
- * into it, because that would change the results.
+ * into it, because that could change the results.
  *
  * 3. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
- * quals into it, because that would change the results.
+ * quals into it, because that could change the results.
  *
  * 4. For subqueries using UNION/UNION ALL/INTERSECT/INTERSECT ALL, we can
  * push quals into each component query, but the quals can only reference
