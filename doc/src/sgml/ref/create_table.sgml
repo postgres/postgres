@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.116 2009/09/18 05:00:41 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.117 2009/10/12 19:49:24 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
   { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
-    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ] ... }
+    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL } ] ... }
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
@@ -230,6 +230,10 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       will always be chosen for it.
      </para>
 
+     <para>
+      Column storage parameters are also copied from parent tables.
+     </para>
+
 <!--
      <para>
       <productname>PostgreSQL</> automatically allows the
@@ -247,7 +251,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES } ]</literal></term>
+    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL } ]</literal></term>
     <listitem>
      <para>
       The <literal>LIKE</literal> clause specifies a table from which
@@ -279,6 +283,23 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       Any indexes on the original table will not be created on the new
       table, unless the <literal>INCLUDING INDEXES</literal> clause is
       specified.
+     </para>
+     <para>
+      Storage parameters for the copied column definitions will only be copied
+      if <literal>INCLUDING STORAGE</literal> is specified.  The default
+      behavior is to exclude storage parameters, resulting in the copied
+      columns in the new table having type-specific default parameters.  For
+      more on storage parameters, see <xref linkend="storage-toast">.
+     </para>
+     <para>
+      Comments for the copied column, constraint, index and columns of index
+	  definitions will only be copied if <literal>INCLUDING COMMENTS</literal>
+	  is specified. The default behavior is to exclude comments, resulting in
+	  the copied columns and constraints in the new table having no comments.
+     </para>
+     <para>
+      <literal>INCLUDING ALL</literal> is an abbreviated form of
+      <literal>INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
      </para>
      <para>
       Note also that unlike <literal>INHERITS</literal>, copied columns and

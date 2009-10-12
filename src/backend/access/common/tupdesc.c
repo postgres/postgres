@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.128 2009/08/02 22:14:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.129 2009/10/12 19:49:24 adunstan Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -558,6 +558,8 @@ BuildDescForRelation(List *schema)
 		has_not_null |= entry->is_not_null;
 		desc->attrs[attnum - 1]->attislocal = entry->is_local;
 		desc->attrs[attnum - 1]->attinhcount = entry->inhcount;
+		if (entry->storage)
+			desc->attrs[attnum - 1]->attstorage = entry->storage;
 	}
 
 	if (has_not_null)

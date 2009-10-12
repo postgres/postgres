@@ -287,3 +287,52 @@ create table cc2(f4 float) inherits(pp1,cc1);
 alter table pp1 add column a2 int check (a2 > 0);
 \d cc2
 drop table pp1 cascade;
+
+-- including storage and comments
+CREATE TABLE t1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
+CREATE INDEX t1_b_key ON t1 (b);
+CREATE INDEX t1_fnidx ON t1 ((a || b));
+COMMENT ON COLUMN t1.a IS 'A';
+COMMENT ON COLUMN t1.b IS 'B';
+COMMENT ON CONSTRAINT t1_a_check ON t1 IS 't1_a_check';
+COMMENT ON INDEX t1_pkey IS 'index pkey';
+COMMENT ON INDEX t1_b_key IS 'index b_key';
+COMMENT ON COLUMN t1_pkey.a IS 'index column pkey.a';
+COMMENT ON COLUMN t1_fnidx.pg_expression_1 IS 'index column fnidx';
+ALTER TABLE t1 ALTER COLUMN a SET STORAGE MAIN;
+
+CREATE TABLE t2 (c text);
+ALTER TABLE t2 ALTER COLUMN c SET STORAGE EXTERNAL;
+COMMENT ON COLUMN t2.c IS 'C';
+
+CREATE TABLE t3 (a text CHECK (length(a) < 5), c text);
+ALTER TABLE t3 ALTER COLUMN c SET STORAGE EXTERNAL;
+ALTER TABLE t3 ALTER COLUMN a SET STORAGE MAIN;
+COMMENT ON COLUMN t3.a IS 'A3';
+COMMENT ON COLUMN t3.c IS 'C';
+COMMENT ON CONSTRAINT t3_a_check ON t3 IS 't3_a_check';
+
+CREATE TABLE t4 (a text, c text);
+ALTER TABLE t4 ALTER COLUMN c SET STORAGE EXTERNAL;
+
+CREATE TABLE t12_storage (LIKE t1 INCLUDING STORAGE, LIKE t2 INCLUDING STORAGE);
+\d+ t12_storage
+CREATE TABLE t12_comments (LIKE t1 INCLUDING COMMENTS, LIKE t2 INCLUDING COMMENTS);
+\d+ t12_comments
+CREATE TABLE t1_inh (LIKE t1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (t1);
+\d+ t1_inh
+SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 't1_inh'::regclass;
+CREATE TABLE t13_inh () INHERITS (t1, t3);
+\d+ t13_inh
+CREATE TABLE t13_like (LIKE t3 INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (t1);
+\d+ t13_like
+SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 't13_like'::regclass;
+
+CREATE TABLE t_all (LIKE t1 INCLUDING ALL);
+\d+ t_all
+SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 't_all'::regclass ORDER BY c.relname, objsubid;
+
+CREATE TABLE inh_error1 () INHERITS (t1, t4);
+CREATE TABLE inh_error2 (LIKE t4 INCLUDING STORAGE) INHERITS (t1);
+
+DROP TABLE t1, t2, t3, t4, t12_storage, t12_comments, t1_inh, t13_inh, t13_like, t_all;

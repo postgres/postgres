@@ -921,3 +921,139 @@ drop table pp1 cascade;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table cc1
 drop cascades to table cc2
+-- including storage and comments
+CREATE TABLE t1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t1_pkey" for table "t1"
+CREATE INDEX t1_b_key ON t1 (b);
+CREATE INDEX t1_fnidx ON t1 ((a || b));
+COMMENT ON COLUMN t1.a IS 'A';
+COMMENT ON COLUMN t1.b IS 'B';
+COMMENT ON CONSTRAINT t1_a_check ON t1 IS 't1_a_check';
+COMMENT ON INDEX t1_pkey IS 'index pkey';
+COMMENT ON INDEX t1_b_key IS 'index b_key';
+COMMENT ON COLUMN t1_pkey.a IS 'index column pkey.a';
+COMMENT ON COLUMN t1_fnidx.pg_expression_1 IS 'index column fnidx';
+ALTER TABLE t1 ALTER COLUMN a SET STORAGE MAIN;
+CREATE TABLE t2 (c text);
+ALTER TABLE t2 ALTER COLUMN c SET STORAGE EXTERNAL;
+COMMENT ON COLUMN t2.c IS 'C';
+CREATE TABLE t3 (a text CHECK (length(a) < 5), c text);
+ALTER TABLE t3 ALTER COLUMN c SET STORAGE EXTERNAL;
+ALTER TABLE t3 ALTER COLUMN a SET STORAGE MAIN;
+COMMENT ON COLUMN t3.a IS 'A3';
+COMMENT ON COLUMN t3.c IS 'C';
+COMMENT ON CONSTRAINT t3_a_check ON t3 IS 't3_a_check';
+CREATE TABLE t4 (a text, c text);
+ALTER TABLE t4 ALTER COLUMN c SET STORAGE EXTERNAL;
+CREATE TABLE t12_storage (LIKE t1 INCLUDING STORAGE, LIKE t2 INCLUDING STORAGE);
+\d+ t12_storage
+             Table "public.t12_storage"
+ Column | Type | Modifiers | Storage  | Description 
+--------+------+-----------+----------+-------------
+ a      | text | not null  | main     | 
+ b      | text |           | extended | 
+ c      | text |           | external | 
+Has OIDs: no
+
+CREATE TABLE t12_comments (LIKE t1 INCLUDING COMMENTS, LIKE t2 INCLUDING COMMENTS);
+\d+ t12_comments
+            Table "public.t12_comments"
+ Column | Type | Modifiers | Storage  | Description 
+--------+------+-----------+----------+-------------
+ a      | text | not null  | extended | A
+ b      | text |           | extended | B
+ c      | text |           | extended | C
+Has OIDs: no
+
+CREATE TABLE t1_inh (LIKE t1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (t1);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "b" with inherited definition
+NOTICE:  merging constraint "t1_a_check" with inherited definition
+\d+ t1_inh
+               Table "public.t1_inh"
+ Column | Type | Modifiers | Storage  | Description 
+--------+------+-----------+----------+-------------
+ a      | text | not null  | main     | A
+ b      | text |           | extended | B
+Check constraints:
+    "t1_a_check" CHECK (length(a) > 2)
+Inherits: t1
+Has OIDs: no
+
+SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 't1_inh'::regclass;
+ description 
+-------------
+ t1_a_check
+(1 row)
+
+CREATE TABLE t13_inh () INHERITS (t1, t3);
+NOTICE:  merging multiple inherited definitions of column "a"
+\d+ t13_inh
+               Table "public.t13_inh"
+ Column | Type | Modifiers | Storage  | Description 
+--------+------+-----------+----------+-------------
+ a      | text | not null  | main     | 
+ b      | text |           | extended | 
+ c      | text |           | external | 
+Check constraints:
+    "t1_a_check" CHECK (length(a) > 2)
+    "t3_a_check" CHECK (length(a) < 5)
+Inherits: t1,
+          t3
+Has OIDs: no
+
+CREATE TABLE t13_like (LIKE t3 INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (t1);
+NOTICE:  merging column "a" with inherited definition
+\d+ t13_like
+              Table "public.t13_like"
+ Column | Type | Modifiers | Storage  | Description 
+--------+------+-----------+----------+-------------
+ a      | text | not null  | main     | A3
+ b      | text |           | extended | 
+ c      | text |           | external | C
+Check constraints:
+    "t1_a_check" CHECK (length(a) > 2)
+    "t3_a_check" CHECK (length(a) < 5)
+Inherits: t1
+Has OIDs: no
+
+SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 't13_like'::regclass;
+ description 
+-------------
+ t3_a_check
+(1 row)
+
+CREATE TABLE t_all (LIKE t1 INCLUDING ALL);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t_all_pkey" for table "t_all"
+\d+ t_all
+                Table "public.t_all"
+ Column | Type | Modifiers | Storage  | Description 
+--------+------+-----------+----------+-------------
+ a      | text | not null  | main     | A
+ b      | text |           | extended | B
+Indexes:
+    "t_all_pkey" PRIMARY KEY, btree (a)
+    "t_all_b_key" btree (b)
+    "t_all_key" btree ((a || b))
+Check constraints:
+    "t1_a_check" CHECK (length(a) > 2)
+Has OIDs: no
+
+SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 't_all'::regclass ORDER BY c.relname, objsubid;
+   relname   | objsubid |     description     
+-------------+----------+---------------------
+ t_all_b_key |        0 | index b_key
+ t_all_key   |        1 | index column fnidx
+ t_all_pkey  |        0 | index pkey
+ t_all_pkey  |        1 | index column pkey.a
+(4 rows)
+
+CREATE TABLE inh_error1 () INHERITS (t1, t4);
+NOTICE:  merging multiple inherited definitions of column "a"
+ERROR:  inherited column "a" has a storage parameter conflict
+DETAIL:  MAIN versus EXTENDED
+CREATE TABLE inh_error2 (LIKE t4 INCLUDING STORAGE) INHERITS (t1);
+NOTICE:  merging column "a" with inherited definition
+ERROR:  column "a" has a storage parameter conflict
+DETAIL:  MAIN versus EXTENDED
+DROP TABLE t1, t2, t3, t4, t12_storage, t12_comments, t1_inh, t13_inh, t13_like, t_all;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.47 2009/07/28 02:56:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.48 2009/10/12 19:49:24 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,4 +701,66 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 	systable_endscan(scan);
 
 	heap_close(conRel, RowExclusiveLock);
+}
+
+/*
+ * GetConstraintByName
+ *		Find a constraint with the specified name.
+ */
+Oid
+GetConstraintByName(Oid relid, const char *conname)
+{
+	Relation	pg_constraint;
+	HeapTuple	tuple;
+	SysScanDesc scan;
+	ScanKeyData skey[1];
+	Oid			conOid = InvalidOid;
+
+	/*
+	 * Fetch the constraint tuple from pg_constraint.  There may be more than
+	 * one match, because constraints are not required to have unique names;
+	 * if so, error out.
+	 */
+	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ, relid);
+
+	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
+							  SnapshotNow, 1, skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		if (strcmp(NameStr(con->conname), conname) == 0)
+		{
+			if (OidIsValid(conOid))
+			{
+				char *relname = get_rel_name(relid);
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("table \"%s\" has multiple constraints named \"%s\"",
+					(relname ? relname : "(unknown)"), conname)));
+			}
+			conOid = HeapTupleGetOid(tuple);
+		}
+	}
+
+	systable_endscan(scan);
+
+	/* If no constraint exists for the relation specified, notify user */
+	if (!OidIsValid(conOid))
+	{
+		char *relname = get_rel_name(relid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("constraint \"%s\" for table \"%s\" does not exist",
+						conname, (relname ? relname : "(unknown)"))));
+	}
+
+	heap_close(pg_constraint, AccessShareLock);
+
+	return conOid;
 }

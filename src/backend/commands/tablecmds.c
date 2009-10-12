@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.301 2009/10/06 00:55:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.302 2009/10/12 19:49:24 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "catalog/storage.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
+#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
@@ -332,6 +333,7 @@ static void ATExecAddInherit(Relation rel, RangeVar *parent);
 static void ATExecDropInherit(Relation rel, RangeVar *parent);
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 				   ForkNumber forkNum, bool istemp);
+static const char * storage_name(char c);
 
 
 /* ----------------------------------------------------------------
@@ -1100,6 +1102,25 @@ truncate_check_rel(Relation rel)
 	CheckTableNotInUse(rel, "TRUNCATE");
 }
 
+
+/*----------------
+ * storage_name
+ *    returns a name corresponding to a storage enum value
+ * For use in error messages
+ */
+static const char *
+storage_name(char c)
+{
+	switch (c)
+	{
+		case 'p': return "PLAIN";
+		case 'm': return "MAIN";
+		case 'x': return "EXTENDED";
+		case 'e': return "EXTERNAL";
+		default: return "???";
+	}
+}
+
 /*----------
  * MergeAttributes
  *		Returns new schema given initial schema and superclasses.
@@ -1168,6 +1189,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	List	   *constraints = NIL;
 	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
+	bool            have_bogus_comments = false;
 	int			child_attno;
 	static Node	bogus_marker = { 0 };		/* marks conflicting defaults */
 
@@ -1323,6 +1345,18 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   format_type_be(attribute->atttypid))));
+
+				/* Copy storage parameter */
+				if (def->storage == 0)
+					def->storage = attribute->attstorage;
+				else if (def->storage != attribute->attstorage)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+						errmsg("inherited column \"%s\" has a storage parameter conflict",
+							   attributeName),
+							   errdetail("%s versus %s", storage_name(def->storage),
+										 storage_name(attribute->attstorage))));
+
 				def->inhcount++;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= attribute->attnotnull;
@@ -1344,6 +1378,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
 				def->constraints = NIL;
+				def->storage = attribute->attstorage;
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
 			}
@@ -1481,6 +1516,18 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typeName),
 									   TypeNameToString(newdef->typeName))));
+
+				/* Copy storage parameter */
+				if (def->storage == 0)
+					def->storage = newdef->storage;
+				else if (newdef->storage != 0 && def->storage != newdef->storage)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+						errmsg("column \"%s\" has a storage parameter conflict",
+							   attributeName),
+							   errdetail("%s versus %s", storage_name(def->storage),
+										 storage_name(newdef->storage))));
+
 				/* Mark the column as locally defined */
 				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
@@ -1530,6 +1577,20 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				  errmsg("column \"%s\" inherits conflicting default values",
 						 def->colname),
 						 errhint("To resolve the conflict, specify a default explicitly.")));
+		}
+	}
+
+	/* Raise an error if we found conflicting comments. */
+	if (have_bogus_comments)
+	{
+		foreach(entry, schema)
+		{
+			ColumnDef  *def = lfirst(entry);
+
+			if (def->cooked_default == &bogus_marker)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+				  errmsg("column \"%s\" inherits conflicting comments", def->colname)));
 		}
 	}
 

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.3 2009/09/22 23:43:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.4 2009/10/12 19:49:24 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,7 @@ PG_KEYWORD("coalesce", COALESCE, COL_NAME_KEYWORD)
 PG_KEYWORD("collate", COLLATE, RESERVED_KEYWORD)
 PG_KEYWORD("column", COLUMN, RESERVED_KEYWORD)
 PG_KEYWORD("comment", COMMENT, UNRESERVED_KEYWORD)
+PG_KEYWORD("comments", COMMENTS, UNRESERVED_KEYWORD)
 PG_KEYWORD("commit", COMMIT, UNRESERVED_KEYWORD)
 PG_KEYWORD("committed", COMMITTED, UNRESERVED_KEYWORD)
 PG_KEYWORD("concurrently", CONCURRENTLY, UNRESERVED_KEYWORD)

@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.26 2009/10/06 00:55:26 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.27 2009/10/12 19:49:24 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"
+#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
@@ -101,6 +102,7 @@ static void transformTableConstraint(ParseState *pstate,
 						 Constraint *constraint);
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 					 InhRelation *inhrelation);
+static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation parent_index, AttrNumber *attmap);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
@@ -546,10 +548,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	TupleDesc	tupleDesc;
 	TupleConstr *constr;
 	AclResult	aclresult;
-	bool		including_defaults = false;
-	bool		including_constraints = false;
-	bool		including_indexes = false;
-	ListCell   *elem;
+	char	   *comment;
 
 	relation = parserOpenTable(pstate, inhRelation->relation, AccessShareLock);
 
@@ -570,36 +569,6 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;
-
-	foreach(elem, inhRelation->options)
-	{
-		int			option = lfirst_int(elem);
-
-		switch (option)
-		{
-			case CREATE_TABLE_LIKE_INCLUDING_DEFAULTS:
-				including_defaults = true;
-				break;
-			case CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS:
-				including_defaults = false;
-				break;
-			case CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS:
-				including_constraints = true;
-				break;
-			case CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS:
-				including_constraints = false;
-				break;
-			case CREATE_TABLE_LIKE_INCLUDING_INDEXES:
-				including_indexes = true;
-				break;
-			case CREATE_TABLE_LIKE_EXCLUDING_INDEXES:
-				including_indexes = false;
-				break;
-			default:
-				elog(ERROR, "unrecognized CREATE TABLE LIKE option: %d",
-					 option);
-		}
-	}
 
 	/*
 	 * Insert the copied attributes into the cxt for the new table definition.
@@ -642,7 +611,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		/*
 		 * Copy default, if present and the default has been requested
 		 */
-		if (attribute->atthasdef && including_defaults)
+		if (attribute->atthasdef &&
+			(inhRelation->options & CREATE_TABLE_LIKE_DEFAULTS))
 		{
 			Node	   *this_default = NULL;
 			AttrDefault *attrdef;
@@ -668,13 +638,34 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 			def->cooked_default = this_default;
 		}
+
+		/* Likewise, copy storage if requested */
+		if (inhRelation->options & CREATE_TABLE_LIKE_STORAGE)
+			def->storage = attribute->attstorage;
+
+		/* Likewise, copy comment if requested */
+		if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
+			(comment = GetComment(attribute->attrelid, RelationRelationId,
+			attribute->attnum)) != NULL)
+		{
+			CommentStmt *stmt = makeNode(CommentStmt);
+
+			stmt->objtype = OBJECT_COLUMN;
+			stmt->objname = list_make3(makeString(cxt->relation->schemaname),
+									   makeString(cxt->relation->relname),
+									   makeString(def->colname));
+			stmt->objargs = NIL;
+			stmt->comment = comment;
+
+			cxt->alist = lappend(cxt->alist, stmt);
+		}
 	}
 
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
 	 * numbers
 	 */
-	if (including_constraints && tupleDesc->constr)
+	if ((inhRelation->options & CREATE_TABLE_LIKE_CONSTRAINTS) && tupleDesc->constr)
 	{
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
 		int			ccnum;
@@ -694,13 +685,31 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			n->raw_expr = NULL;
 			n->cooked_expr = nodeToString(ccbin_node);
 			cxt->ckconstraints = lappend(cxt->ckconstraints, n);
+
+			/* Copy comment on constraint */
+			if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
+				(comment = GetComment(GetConstraintByName(RelationGetRelid(
+				relation), n->conname), ConstraintRelationId, 0)) != NULL)
+			{
+				CommentStmt *stmt = makeNode(CommentStmt);
+
+				stmt->objtype = OBJECT_CONSTRAINT;
+				stmt->objname = list_make3(makeString(cxt->relation->schemaname),
+										   makeString(cxt->relation->relname),
+										   makeString(n->conname));
+				stmt->objargs = NIL;
+				stmt->comment = comment;
+
+				cxt->alist = lappend(cxt->alist, stmt);
+			}
 		}
 	}
 
 	/*
 	 * Likewise, copy indexes if requested
 	 */
-	if (including_indexes && relation->rd_rel->relhasindex)
+	if ((inhRelation->options & CREATE_TABLE_LIKE_INDEXES) &&
+		relation->rd_rel->relhasindex)
 	{
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
 		List	   *parent_indexes;
@@ -719,6 +728,68 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			/* Build CREATE INDEX statement to recreate the parent_index */
 			index_stmt = generateClonedIndexStmt(cxt, parent_index, attmap);
 
+			/* Copy comment on index */
+			if (inhRelation->options & CREATE_TABLE_LIKE_COMMENTS)
+			{
+				CommentStmt	   *stmt;
+				ListCell	   *lc;
+				int				i;
+
+				comment = GetComment(parent_index_oid, RelationRelationId, 0);
+				
+				if (comment != NULL)
+				{
+					/* Assign name for index because CommentStmt requires name. */
+					if (index_stmt->idxname == NULL)
+						index_stmt->idxname = chooseIndexName(cxt->relation, index_stmt);
+
+					stmt = makeNode(CommentStmt);
+					stmt->objtype = OBJECT_INDEX;
+					stmt->objname = list_make2(makeString(cxt->relation->schemaname),
+											   makeString(index_stmt->idxname));
+					stmt->objargs = NIL;
+					stmt->comment = comment;
+
+					cxt->alist = lappend(cxt->alist, stmt);
+				}
+
+				/* Copy comment on index's columns */
+				i = 0;
+				foreach(lc, index_stmt->indexParams)
+				{
+					char	   *attname;
+
+					i++;
+					comment = GetComment(parent_index_oid, RelationRelationId, i);
+					if (comment == NULL)
+						continue;
+
+					/* Assign name for index because CommentStmt requires name. */
+					if (index_stmt->idxname == NULL)
+						index_stmt->idxname = chooseIndexName(cxt->relation, index_stmt);
+
+					attname = ((IndexElem *) lfirst(lc))->name;
+
+					/* expression index has a dummy column name */
+					if (attname == NULL)
+					{
+						attname = palloc(NAMEDATALEN);
+						sprintf(attname, "pg_expression_%d", i);
+					}
+
+					stmt = makeNode(CommentStmt);
+					stmt->objtype = OBJECT_COLUMN;
+					stmt->objname = list_make3(
+										makeString(cxt->relation->schemaname),
+										makeString(index_stmt->idxname),
+										makeString(attname));
+					stmt->objargs = NIL;
+					stmt->comment = comment;
+
+					cxt->alist = lappend(cxt->alist, stmt);
+				}
+			}
+
 			/* Save it in the inh_indexes list for the time being */
 			cxt->inh_indexes = lappend(cxt->inh_indexes, index_stmt);
 
@@ -732,6 +803,32 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	 * parent before the child is committed.
 	 */
 	heap_close(relation, NoLock);
+}
+
+/*
+ * chooseIndexName
+ *
+ * Set name to unnamed index. See also the same logic in DefineIndex.
+ */
+static char *
+chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt)
+{
+	Oid	namespaceId;
+	
+	namespaceId = RangeVarGetCreationNamespace(relation);
+	if (index_stmt->primary)
+	{
+		/* no need for column list with pkey */
+		return ChooseRelationName(relation->relname, NULL, 
+								  "pkey", namespaceId);
+	}
+	else
+	{
+		IndexElem  *iparam = (IndexElem *) linitial(index_stmt->indexParams);
+
+		return ChooseRelationName(relation->relname, iparam->name,
+								  "key", namespaceId);
+	}
 }
 
 /*

@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.366 2009/10/12 18:10:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.367 2009/10/12 19:49:24 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1107,7 +1107,7 @@ static bool
 _equalInhRelation(InhRelation *a, InhRelation *b)
 {
 	COMPARE_NODE_FIELD(relation);
-	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(options);
 
 	return true;
 }
