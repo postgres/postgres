@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.489 2009/10/10 03:50:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.490 2009/10/13 22:46:13 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3230,7 +3230,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
-    Some examples, with <literal>#"</> delimiting the return string:
+    Some examples, with <literal>#&quot;</> delimiting the return string:
 <programlisting>
 substring('foobar' from '%#"o_b#"%' for '#')   <lineannotation>oob</lineannotation>
 substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotation>
