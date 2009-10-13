@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.520 2009/10/03 18:04:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.521 2009/10/13 14:18:40 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -460,6 +460,7 @@ const char *const GucSource_Names[] =
 	 /* PGC_S_ARGV */ "command line",
 	 /* PGC_S_DATABASE */ "database",
 	 /* PGC_S_USER */ "user",
+	 /* PGC_S_DATABASE_USER */ "database user",
 	 /* PGC_S_CLIENT */ "client",
 	 /* PGC_S_OVERRIDE */ "override",
 	 /* PGC_S_INTERACTIVE */ "interactive",
@@ -4556,7 +4557,8 @@ set_config_option(const char *name, const char *value,
 		 */
 		elevel = IsUnderPostmaster ? DEBUG3 : LOG;
 	}
-	else if (source == PGC_S_DATABASE || source == PGC_S_USER)
+	else if (source == PGC_S_DATABASE || source == PGC_S_USER ||
+			 source == PGC_S_DATABASE_USER)
 		elevel = WARNING;
 	else
 		elevel = ERROR;
@@ -5762,6 +5764,7 @@ define_custom_variable(struct config_generic * variable)
 			break;
 		case PGC_S_DATABASE:
 		case PGC_S_USER:
+		case PGC_S_DATABASE_USER:
 		case PGC_S_CLIENT:
 		case PGC_S_SESSION:
 		default:
