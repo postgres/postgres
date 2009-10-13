@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.23 2009/06/11 14:49:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.23.2.1 2009/10/13 14:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -959,17 +959,21 @@ ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 
 	node = stat->root;
 	/* find leftmost value */
-	for (;;)
-	{
-		stat->stack[stat->stackpos] = node;
-		if (node->left)
+	if (node == NULL)
+		stat->stack[stat->stackpos] = NULL;
+	else
+		for (;;)
 		{
-			stat->stackpos++;
-			node = node->left;
+			stat->stack[stat->stackpos] = node;
+			if (node->left)
+			{
+				stat->stackpos++;
+				node = node->left;
+			}
+			else
+				break;
 		}
-		else
-			break;
-	}
+	Assert(stat->stackpos <= stat->maxdepth);
 
 	tupdesc = CreateTemplateTupleDesc(3, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "word",
@@ -1015,6 +1019,7 @@ walkStatEntryTree(TSVectorStat *stat)
 			else
 				break;
 		}
+		Assert(stat->stackpos <= stat->maxdepth);
 	}
 	else
 	{
