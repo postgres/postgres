@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.302 2009/10/12 19:49:24 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.303 2009/10/13 00:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,7 @@ static void ATExecAddInherit(Relation rel, RangeVar *parent);
 static void ATExecDropInherit(Relation rel, RangeVar *parent);
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 				   ForkNumber forkNum, bool istemp);
-static const char * storage_name(char c);
+static const char *storage_name(char c);
 
 
 /* ----------------------------------------------------------------
@@ -1102,22 +1102,25 @@ truncate_check_rel(Relation rel)
 	CheckTableNotInUse(rel, "TRUNCATE");
 }
 
-
-/*----------------
+/*
  * storage_name
- *    returns a name corresponding to a storage enum value
- * For use in error messages
+ *    returns the name corresponding to a typstorage/attstorage enum value
  */
 static const char *
 storage_name(char c)
 {
 	switch (c)
 	{
-		case 'p': return "PLAIN";
-		case 'm': return "MAIN";
-		case 'x': return "EXTENDED";
-		case 'e': return "EXTERNAL";
-		default: return "???";
+		case 'p':
+			return "PLAIN";
+		case 'm':
+			return "MAIN";
+		case 'x':
+			return "EXTENDED";
+		case 'e':
+			return "EXTERNAL";
+		default:
+			return "???";
 	}
 }
 
@@ -1189,7 +1192,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	List	   *constraints = NIL;
 	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
-	bool            have_bogus_comments = false;
 	int			child_attno;
 	static Node	bogus_marker = { 0 };		/* marks conflicting defaults */
 
@@ -1354,7 +1356,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 						errmsg("inherited column \"%s\" has a storage parameter conflict",
 							   attributeName),
-							   errdetail("%s versus %s", storage_name(def->storage),
+							   errdetail("%s versus %s",
+										 storage_name(def->storage),
 										 storage_name(attribute->attstorage))));
 
 				def->inhcount++;
@@ -1375,10 +1378,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				def->inhcount = 1;
 				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
+				def->storage = attribute->attstorage;
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
 				def->constraints = NIL;
-				def->storage = attribute->attstorage;
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
 			}
@@ -1525,7 +1528,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 						errmsg("column \"%s\" has a storage parameter conflict",
 							   attributeName),
-							   errdetail("%s versus %s", storage_name(def->storage),
+							   errdetail("%s versus %s",
+										 storage_name(def->storage),
 										 storage_name(newdef->storage))));
 
 				/* Mark the column as locally defined */
@@ -1577,20 +1581,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				  errmsg("column \"%s\" inherits conflicting default values",
 						 def->colname),
 						 errhint("To resolve the conflict, specify a default explicitly.")));
-		}
-	}
-
-	/* Raise an error if we found conflicting comments. */
-	if (have_bogus_comments)
-	{
-		foreach(entry, schema)
-		{
-			ColumnDef  *def = lfirst(entry);
-
-			if (def->cooked_default == &bogus_marker)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-				  errmsg("column \"%s\" inherits conflicting comments", def->colname)));
 		}
 	}
 
@@ -3903,6 +3893,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd)
 		cdef->inhcount = 0;
 		cdef->is_local = true;
 		cdef->is_not_null = true;
+		cdef->storage = 0;
 		cmd->def = (Node *) cdef;
 	}
 	ATPrepAddColumn(wqueue, rel, recurse, cmd);

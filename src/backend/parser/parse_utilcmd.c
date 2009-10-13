@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.27 2009/10/12 19:49:24 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.28 2009/10/13 00:53:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,6 +642,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		/* Likewise, copy storage if requested */
 		if (inhRelation->options & CREATE_TABLE_LIKE_STORAGE)
 			def->storage = attribute->attstorage;
+		else
+			def->storage = 0;
 
 		/* Likewise, copy comment if requested */
 		if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&

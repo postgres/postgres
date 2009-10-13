@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.129 2009/10/12 19:49:24 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.130 2009/10/13 00:53:07 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -553,13 +553,15 @@ BuildDescForRelation(List *schema)
 		TupleDescInitEntry(desc, attnum, attname,
 						   atttypid, atttypmod, attdim);
 
+		/* Override TupleDescInitEntry's settings as requested */
+		if (entry->storage)
+			desc->attrs[attnum - 1]->attstorage = entry->storage;
+
 		/* Fill in additional stuff not handled by TupleDescInitEntry */
 		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
 		has_not_null |= entry->is_not_null;
 		desc->attrs[attnum - 1]->attislocal = entry->is_local;
 		desc->attrs[attnum - 1]->attinhcount = entry->inhcount;
-		if (entry->storage)
-			desc->attrs[attnum - 1]->attstorage = entry->storage;
 	}
 
 	if (has_not_null)

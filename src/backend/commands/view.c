@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.117 2009/07/16 06:33:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.118 2009/10/13 00:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 			def->inhcount = 0;
 			def->is_local = true;
 			def->is_not_null = false;
+			def->storage = 0;
 			def->raw_default = NULL;
 			def->cooked_default = NULL;
 			def->constraints = NIL;

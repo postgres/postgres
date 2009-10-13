@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.408 2009/10/12 20:39:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.409 2009/10/13 00:53:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -460,20 +460,20 @@ typedef struct ColumnDef
 	int			inhcount;		/* number of times column is inherited */
 	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
-	char		storage;		/* storage parameter of column */
+	char		storage;		/* attstorage setting, or 0 for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
 	List	   *constraints;	/* other constraints on column */
 } ColumnDef;
 
 /*
- * inhRelation - Relations a CREATE TABLE is to inherit attributes of
+ * inhRelation - Relation a CREATE TABLE is to inherit attributes of
  */
 typedef struct InhRelation
 {
 	NodeTag		type;
 	RangeVar   *relation;
-	bits32		options;		/* bitmap of CreateStmtLikeOption */
+	bits32		options;		/* OR of CreateStmtLikeOption flags */
 } InhRelation;
 
 typedef enum CreateStmtLikeOption
