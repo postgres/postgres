@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.231 2009/10/08 16:34:00 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.232 2009/10/13 21:04:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1756,6 +1756,39 @@ lo_import 152801
           into the <literal>border=...</literal> attribute, in the
           others only values 0 (no border), 1 (internal dividing lines),
           and 2 (table frame) make sense.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>linestyle</literal></term>
+          <listitem>
+          <para>
+          Sets the border line drawing style to one
+          of <literal>ascii</literal> or <literal>unicode</literal>.
+          Unique abbreviations are allowed.  (That would mean one
+          letter is enough.)
+          </para>
+
+          <para>
+          <quote>ASCII</quote> uses plain <acronym>ASCII</acronym> characters.
+          </para>
+
+          <para>
+          <quote>Unicode</quote> uses Unicode box-drawing characters.
+          </para>
+
+          <para>
+          When the selected output format is one that draws lines or boxes
+          around the data, this setting controls how the lines are drawn.
+          Plain <acronym>ASCII</acronym> characters work everywhere, but
+          Unicode characters look nicer on displays that recognize them.
+          </para>
+
+          <para>
+          If this option has not been set, the default behavior is to
+          use Unicode characters if the client character set encoding
+          is UTF-8, otherwise <acronym>ASCII</acronym> characters.
           </para>
           </listitem>
           </varlistentry>

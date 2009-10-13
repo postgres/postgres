@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.6 2009/06/11 14:49:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress_main.c,v 1.7 2009/10/13 21:04:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ psql_start_test(const char *testname,
 	add_stringlist_item(expectfiles, expectfile);
 
 	snprintf(psql_cmd, sizeof(psql_cmd),
-			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -P linestyle=ascii -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 			 psqldir ? psqldir : "",
 			 psqldir ? "/" : "",
 			 dblist->str,

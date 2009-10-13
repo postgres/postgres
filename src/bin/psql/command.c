@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.209 2009/10/07 22:14:24 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.210 2009/10/13 21:04:01 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1786,6 +1786,26 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 
 		if (!quiet)
 			printf(_("Output format is %s.\n"), _align2string(popt->topt.format));
+	}
+
+	/* set table line style */
+	else if (strcmp(param, "linestyle") == 0)
+	{
+		if (!value)
+			;
+		else if (pg_strncasecmp("ascii", value, vallen) == 0)
+			popt->topt.line_style = &pg_asciiformat;
+		else if (pg_strncasecmp("unicode", value, vallen) == 0)
+			popt->topt.line_style = &pg_utf8format;
+		else
+		{
+			psql_error("\\pset: allowed line styles are ascii, unicode\n");
+			return false;
+		}
+
+		if (!quiet)
+			printf(_("Line style is %s.\n"),
+				   get_line_style(&popt->topt)->name);
 	}
 
 	/* set border style/width */

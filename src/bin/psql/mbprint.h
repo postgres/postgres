@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/bin/psql/mbprint.h,v 1.13 2009/06/11 14:49:08 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/bin/psql/mbprint.h,v 1.14 2009/10/13 21:04:01 tgl Exp $ */
 #ifndef MBPRINT_H
 #define MBPRINT_H
 
@@ -9,8 +9,8 @@ struct lineptr
 	int			width;
 };
 
+extern int	pg_get_utf8_id(void);
 extern unsigned char *mbvalidate(unsigned char *pwcs, int encoding);
-
 extern int	pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding);
 extern void pg_wcsformat(unsigned char *pwcs, size_t len, int encoding, struct lineptr * lines, int count);
 extern void pg_wcssize(unsigned char *pwcs, size_t len, int encoding,

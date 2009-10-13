@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.186 2009/10/08 16:34:01 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.187 2009/10/13 21:04:01 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -2264,8 +2264,8 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const my_list[] =
 		{"format", "border", "expanded",
-			"null", "fieldsep", "tuples_only", "title", "tableattr", "pager",
-		"recordsep", NULL};
+		 "null", "fieldsep", "tuples_only", "title", "tableattr",
+		 "linestyle", "pager", "recordsep", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
