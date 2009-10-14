@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.184 2009/08/29 19:26:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.185 2009/10/14 07:27:13 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,21 @@ typedef SECURITY_STATUS
 static int	pg_SSPI_recvauth(Port *port);
 #endif
 
+
+/*
+ * Maximum size of GSS and SSPI authentication tokens.
+ *
+ * Kerberos tickets are usually quite small, but the TGTs issued by Windows
+ * domain controllers include an authorization field known as the Privilege
+ * Attribute Certificate (PAC), which contains the user's Windows permissions
+ * (group memberships etc.). The PAC is copied into all tickets obtained on
+ * the basis of this TGT (even those issued by Unix realms which the Windows
+ * realm trusts), and can be several kB in size. The maximum token size
+ * accepted by Windows systems is determined by the MaxAuthToken Windows
+ * registry setting. Microsoft recommends that it is not set higher than
+ * 65535 bytes, so that seems like a reasonable limit for us as well.
+ */
+#define MAX_AUTH_TOKEN_LENGTH	65535
 
 
 /*----------------------------------------------------------------
@@ -948,7 +963,7 @@ pg_GSS_recvauth(Port *port)
 
 		/* Get the actual GSS token */
 		initStringInfo(&buf);
-		if (pq_getmessage(&buf, 2000))
+		if (pq_getmessage(&buf, MAX_AUTH_TOKEN_LENGTH))
 		{
 			/* EOF - pq_getmessage already logged error */
 			pfree(buf.data);
@@ -1186,7 +1201,7 @@ pg_SSPI_recvauth(Port *port)
 
 		/* Get the actual SSPI token */
 		initStringInfo(&buf);
-		if (pq_getmessage(&buf, 2000))
+		if (pq_getmessage(&buf, MAX_AUTH_TOKEN_LENGTH))
 		{
 			/* EOF - pq_getmessage already logged error */
 			pfree(buf.data);
