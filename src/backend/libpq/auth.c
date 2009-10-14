@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.164.2.3 2009/10/14 07:27:44 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.164.2.4 2009/10/14 22:10:17 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static int	CheckLDAPAuth(Port *port);
 #endif
 
 /*
- * Maximum size of GSS and SSPI authentication tokens.
+ * Maximum accepted size of GSS and SSPI authentication tokens.
  *
  * Kerberos tickets are usually quite small, but the TGTs issued by Windows
  * domain controllers include an authorization field known as the Privilege
@@ -103,7 +103,7 @@ static int	CheckLDAPAuth(Port *port);
  * registry setting. Microsoft recommends that it is not set higher than
  * 65535 bytes, so that seems like a reasonable limit for us as well.
  */
-#define MAX_AUTH_TOKEN_LENGTH	65535
+#define PG_MAX_AUTH_TOKEN_LENGTH	65535
 
 #ifdef KRB5
 /*----------------------------------------------------------------
@@ -477,7 +477,7 @@ pg_GSS_recvauth(Port *port)
 
 		/* Get the actual GSS token */
 		initStringInfo(&buf);
-		if (pq_getmessage(&buf, MAX_AUTH_TOKEN_LENGTH))
+		if (pq_getmessage(&buf, PG_MAX_AUTH_TOKEN_LENGTH))
 		{
 			/* EOF - pq_getmessage already logged error */
 			pfree(buf.data);
@@ -739,7 +739,7 @@ pg_SSPI_recvauth(Port *port)
 
 		/* Get the actual SSPI token */
 		initStringInfo(&buf);
-		if (pq_getmessage(&buf, MAX_AUTH_TOKEN_LENGTH))
+		if (pq_getmessage(&buf, PG_MAX_AUTH_TOKEN_LENGTH))
 		{
 			/* EOF - pq_getmessage already logged error */
 			pfree(buf.data);
