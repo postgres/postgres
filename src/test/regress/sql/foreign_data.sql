@@ -204,7 +204,7 @@ DROP SERVER s3 CASCADE;
 \deu
 
 -- CREATE USER MAPPING
-CREATE USER MAPPING FOR baz SERVER s1;                      -- ERROR
+CREATE USER MAPPING FOR regress_test_missing_role SERVER s1;  -- ERROR
 CREATE USER MAPPING FOR current_user SERVER s1;             -- ERROR
 CREATE USER MAPPING FOR current_user SERVER s4;
 CREATE USER MAPPING FOR user SERVER s4;                     -- ERROR duplicate
@@ -228,7 +228,7 @@ RESET ROLE;
 \deu
 
 -- ALTER USER MAPPING
-ALTER USER MAPPING FOR bob SERVER s4 OPTIONS (gotcha 'true');   -- ERROR
+ALTER USER MAPPING FOR regress_test_missing_role SERVER s4 OPTIONS (gotcha 'true'); -- ERROR
 ALTER USER MAPPING FOR user SERVER ss4 OPTIONS (gotcha 'true'); -- ERROR
 ALTER USER MAPPING FOR public SERVER s5 OPTIONS (gotcha 'true');            -- ERROR
 ALTER USER MAPPING FOR current_user SERVER s8 OPTIONS (username 'test');    -- ERROR
@@ -241,10 +241,10 @@ RESET ROLE;
 \deu+
 
 -- DROP USER MAPPING
-DROP USER MAPPING FOR bob SERVER s4;                        -- ERROR
+DROP USER MAPPING FOR regress_test_missing_role SERVER s4;  -- ERROR
 DROP USER MAPPING FOR user SERVER ss4;
 DROP USER MAPPING FOR public SERVER s7;                     -- ERROR
-DROP USER MAPPING IF EXISTS FOR bob SERVER s4;
+DROP USER MAPPING IF EXISTS FOR regress_test_missing_role SERVER s4;
 DROP USER MAPPING IF EXISTS FOR user SERVER ss4;
 DROP USER MAPPING IF EXISTS FOR public SERVER s7;
 CREATE USER MAPPING FOR public SERVER s8;

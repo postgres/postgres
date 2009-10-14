@@ -524,8 +524,8 @@ List of user mappings
 (0 rows)
 
 -- CREATE USER MAPPING
-CREATE USER MAPPING FOR baz SERVER s1;                      -- ERROR
-ERROR:  role "baz" does not exist
+CREATE USER MAPPING FOR regress_test_missing_role SERVER s1;  -- ERROR
+ERROR:  role "regress_test_missing_role" does not exist
 CREATE USER MAPPING FOR current_user SERVER s1;             -- ERROR
 ERROR:  server "s1" does not exist
 CREATE USER MAPPING FOR current_user SERVER s4;
@@ -565,8 +565,8 @@ RESET ROLE;
 (7 rows)
 
 -- ALTER USER MAPPING
-ALTER USER MAPPING FOR bob SERVER s4 OPTIONS (gotcha 'true');   -- ERROR
-ERROR:  role "bob" does not exist
+ALTER USER MAPPING FOR regress_test_missing_role SERVER s4 OPTIONS (gotcha 'true'); -- ERROR
+ERROR:  role "regress_test_missing_role" does not exist
 ALTER USER MAPPING FOR user SERVER ss4 OPTIONS (gotcha 'true'); -- ERROR
 ERROR:  server "ss4" does not exist
 ALTER USER MAPPING FOR public SERVER s5 OPTIONS (gotcha 'true');            -- ERROR
@@ -595,14 +595,14 @@ RESET ROLE;
 (7 rows)
 
 -- DROP USER MAPPING
-DROP USER MAPPING FOR bob SERVER s4;                        -- ERROR
-ERROR:  role "bob" does not exist
+DROP USER MAPPING FOR regress_test_missing_role SERVER s4;  -- ERROR
+ERROR:  role "regress_test_missing_role" does not exist
 DROP USER MAPPING FOR user SERVER ss4;
 ERROR:  server "ss4" does not exist
 DROP USER MAPPING FOR public SERVER s7;                     -- ERROR
 ERROR:  user mapping "public" does not exist for the server
-DROP USER MAPPING IF EXISTS FOR bob SERVER s4;
-NOTICE:  role "bob" does not exist, skipping
+DROP USER MAPPING IF EXISTS FOR regress_test_missing_role SERVER s4;
+NOTICE:  role "regress_test_missing_role" does not exist, skipping
 DROP USER MAPPING IF EXISTS FOR user SERVER ss4;
 NOTICE:  server does not exist, skipping
 DROP USER MAPPING IF EXISTS FOR public SERVER s7;
