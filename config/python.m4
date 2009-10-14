@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.15 2009/01/04 00:54:15 petere Exp $
+# $PostgreSQL: pgsql/config/python.m4,v 1.16 2009/10/14 21:59:15 petere Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -22,7 +22,7 @@ fi
 AC_DEFUN([_PGAC_CHECK_PYTHON_DIRS],
 [AC_REQUIRE([PGAC_PATH_PYTHON])
 AC_MSG_CHECKING([for Python distutils module])
-if "${PYTHON}" 2>&- -c 'import distutils'
+if "${PYTHON}" -c 'import distutils' 2>&AS_MESSAGE_LOG_FD
 then
     AC_MSG_RESULT(yes)
 else
