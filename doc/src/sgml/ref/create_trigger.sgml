@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.50 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.51 2009/10/14 22:14:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -49,7 +49,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    current row, or change the row being inserted (for
    <command>INSERT</command> and <command>UPDATE</command> operations
    only). If the trigger fires after the event, all changes, including
-   the last insertion, update, or deletion, are <quote>visible</quote>
+   the effects of other triggers, are <quote>visible</quote>
    to the trigger.
   </para>
 
@@ -122,6 +122,16 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       this specifies the event that will fire the trigger. Multiple
       events can be specified using <literal>OR</literal>.
      </para>
+
+     <para>
+      For <command>UPDATE</command> triggers, it is possible to
+      specify a list of columns using this syntax:
+<synopsis>
+UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</replaceable> ... ]
+</synopsis>
+      The trigger will only fire if at least one of the listed columns
+      is mentioned as a target of the update.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -169,8 +179,8 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       literal string constants.  Simple names and numeric constants
       can be written here, too, but they will all be converted to
       strings.  Please check the description of the implementation
-      language of the trigger function about how the trigger arguments
-      are accessible within the function; it might be different from
+      language of the trigger function to find out how these arguments
+      can be accessed within the function; it might be different from
       normal function arguments.
      </para>
     </listitem>
@@ -189,6 +199,18 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   <para>
    Use <xref linkend="sql-droptrigger"
    endterm="sql-droptrigger-title"> to remove a trigger.
+  </para>
+
+  <para>
+   A column-specific trigger (<literal>FOR UPDATE OF
+   <replaceable>column_name</replaceable></literal>) will fire when any
+   of its columns are listed as targets in the <command>UPDATE</>
+   command's <literal>SET</> list.  It is possible for a column's value
+   to change even when the trigger is not fired, because changes made to the
+   row's contents by <literal>BEFORE UPDATE</> triggers are not considered.
+   Conversely, a command such as <literal>UPDATE ... SET x = x ...</>
+   will fire a trigger on column <literal>x</>, even though the column's
+   value did not change.
   </para>
 
   <para>
@@ -218,13 +240,6 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    <acronym>SQL</> standard. The following functionality is currently missing:
 
    <itemizedlist>
-    <listitem>
-     <para>
-      SQL allows triggers to fire on updates to specific columns
-      (e.g., <literal>AFTER UPDATE OF col1, col2</literal>).
-     </para>
-    </listitem>
-
     <listitem>
      <para>
       SQL allows you to define aliases for the <quote>old</quote>
@@ -264,9 +279,10 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    The <productname>PostgreSQL</productname> behavior is for <literal>BEFORE
    DELETE</literal> to always fire before the delete action, even a cascading
    one.  This is considered more consistent.  There is also unpredictable
-   behavior when <literal>BEFORE</literal> triggers modify rows that are later
-   to be modified by referential actions.  This can lead to constraint violations
-   or stored data that does not honor the referential constraint.
+   behavior when <literal>BEFORE</literal> triggers modify rows or prevent
+   updates during an update that is caused by a referential action.  This can
+   lead to constraint violations or stored data that does not honor the
+   referential constraint.
   </para>
 
   <para>

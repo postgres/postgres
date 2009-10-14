@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.253 2009/10/10 01:43:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.254 2009/10/14 22:14:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,11 @@
 #include "executor/executor.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
+#include "nodes/bitmapset.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
+#include "parser/parse_relation.h"
+#include "parser/parsetree.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "tcop/utility.h"
@@ -51,6 +54,9 @@
 int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 
 
+#define GetModifiedColumns(relinfo, estate) \
+	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->modifiedCols)
+
 /* Local function prototypes */
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);
 static void InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx);
@@ -59,6 +65,8 @@ static HeapTuple GetTupleForTrigger(EState *estate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
 				   TupleTableSlot **newSlot);
+static bool TriggerEnabled(Trigger *trigger, TriggerEvent event,
+						   Bitmapset *modifiedCols);
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					int tgindx,
 					FmgrInfo *finfo,
@@ -66,7 +74,7 @@ static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					MemoryContext per_tuple_context);
 static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 					  bool row_trigger, HeapTuple oldtup, HeapTuple newtup,
-					  List *recheckIndexes);
+					  List *recheckIndexes, Bitmapset *modifiedCols);
 
 
 /*
@@ -98,6 +106,8 @@ CreateTrigger(CreateTrigStmt *stmt,
 			  bool checkPermissions)
 {
 	int16		tgtype;
+	int			ncolumns;
+	int2       *columns;
 	int2vector *tgattr;
 	Datum		values[Natts_pg_trigger];
 	bool		nulls[Natts_pg_trigger];
@@ -337,8 +347,44 @@ CreateTrigger(CreateTrigStmt *stmt,
 														CStringGetDatum(""));
 	}
 
-	/* tgattr is currently always a zero-length array */
-	tgattr = buildint2vector(NULL, 0);
+	/* build column number array if it's a column-specific trigger */
+	ncolumns = list_length(stmt->columns);
+	if (ncolumns == 0)
+		columns = NULL;
+	else
+	{
+		ListCell   *cell;
+		int			i = 0;
+
+		columns = (int2 *) palloc(ncolumns * sizeof(int2));
+		foreach(cell, stmt->columns)
+		{
+			char   *name = strVal(lfirst(cell));
+			int2	attnum;
+			int		j;
+
+			/* Lookup column name.  System columns are not allowed */
+			attnum = attnameAttNum(rel, name, false);
+			if (attnum == InvalidAttrNumber)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name, RelationGetRelationName(rel))));
+
+			/* Check for duplicates */
+			for (j = i - 1; j >= 0; j--)
+			{
+				if (columns[j] == attnum)
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_COLUMN),
+							 errmsg("column \"%s\" specified more than once",
+									name)));
+			}
+
+			columns[i++] = attnum;
+		}
+	}
+	tgattr = buildint2vector(columns, ncolumns);
 	values[Anum_pg_trigger_tgattr - 1] = PointerGetDatum(tgattr);
 
 	tuple = heap_form_tuple(tgrel->rd_att, values, nulls);
@@ -358,6 +404,7 @@ CreateTrigger(CreateTrigStmt *stmt,
 
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgname - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgargs - 1]));
+	pfree(DatumGetPointer(values[Anum_pg_trigger_tgattr - 1]));
 
 	/*
 	 * Update relation's pg_class entry.  Crucial side-effect: other backends
@@ -432,6 +479,20 @@ CreateTrigger(CreateTrigStmt *stmt,
 		}
 		/* Not possible to have an index dependency in this case */
 		Assert(!OidIsValid(indexOid));
+	}
+
+	/* If column-specific trigger, add normal dependencies on columns */
+	if (columns != NULL)
+	{
+		int		i;
+
+		referenced.classId = RelationRelationId;
+		referenced.objectId = RelationGetRelid(rel);
+		for (i = 0; i < ncolumns; i++)
+		{
+			referenced.objectSubId = columns[i];
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
 	}
 
 	/* Keep lock on target rel until end of xact */
@@ -1626,18 +1687,9 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, NULL))
+			continue;
+
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -1659,7 +1711,7 @@ ExecASInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_INSERT] > 0)
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
-							  false, NULL, NULL, NIL);
+							  false, NULL, NULL, NIL, NULL);
 }
 
 HeapTuple
@@ -1685,18 +1737,9 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, NULL))
+			continue;
+
 		LocTriggerData.tg_trigtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
@@ -1721,7 +1764,7 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
-							  true, NULL, trigtuple, recheckIndexes);
+							  true, NULL, trigtuple, recheckIndexes, NULL);
 }
 
 void
@@ -1757,18 +1800,9 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, NULL))
+			continue;
+
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -1790,7 +1824,7 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_DELETE] > 0)
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
-							  false, NULL, NULL, NIL);
+							  false, NULL, NULL, NIL, NULL);
 }
 
 bool
@@ -1824,18 +1858,9 @@ ExecBRDeleteTriggers(EState *estate, PlanState *subplanstate,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, NULL))
+			continue;
+
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
@@ -1869,7 +1894,7 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 												   tupleid, NULL);
 
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
-							  true, trigtuple, NULL, NIL);
+							  true, trigtuple, NULL, NIL, NULL);
 		heap_freetuple(trigtuple);
 	}
 }
@@ -1882,6 +1907,7 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	int		   *tgindx;
 	int			i;
 	TriggerData LocTriggerData;
+	Bitmapset   *modifiedCols;
 
 	trigdesc = relinfo->ri_TrigDesc;
 
@@ -1893,6 +1919,8 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	if (ntrigs == 0)
 		return;
+
+	modifiedCols = GetModifiedColumns(relinfo, estate);
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
@@ -1907,18 +1935,9 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, modifiedCols))
+			continue;
+
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -1940,7 +1959,8 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_UPDATE] > 0)
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
-							  false, NULL, NULL, NIL);
+							  false, NULL, NULL, NIL,
+							  GetModifiedColumns(relinfo, estate));
 }
 
 HeapTuple
@@ -1957,6 +1977,7 @@ ExecBRUpdateTriggers(EState *estate, PlanState *subplanstate,
 	HeapTuple	intuple = newtuple;
 	TupleTableSlot *newSlot;
 	int			i;
+	Bitmapset   *modifiedCols;
 
 	trigtuple = GetTupleForTrigger(estate, subplanstate, relinfo, tupleid,
 								   &newSlot);
@@ -1971,6 +1992,8 @@ ExecBRUpdateTriggers(EState *estate, PlanState *subplanstate,
 	if (newSlot != NULL)
 		intuple = newtuple = ExecRemoveJunk(relinfo->ri_junkFilter, newSlot);
 
+	modifiedCols = GetModifiedColumns(relinfo, estate);
+
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
 		TRIGGER_EVENT_ROW |
@@ -1980,18 +2003,9 @@ ExecBRUpdateTriggers(EState *estate, PlanState *subplanstate,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, modifiedCols))
+			continue;
+
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_newtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
@@ -2024,7 +2038,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 												   tupleid, NULL);
 
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
-							  true, trigtuple, newtuple, recheckIndexes);
+							  true, trigtuple, newtuple, recheckIndexes,
+							  GetModifiedColumns(relinfo, estate));
 		heap_freetuple(trigtuple);
 	}
 }
@@ -2062,18 +2077,9 @@ ExecBSTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, LocTriggerData.tg_event, NULL))
+			continue;
+
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -2095,7 +2101,7 @@ ExecASTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_TRUNCATE] > 0)
 		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_TRUNCATE,
-							  false, NULL, NULL, NIL);
+							  false, NULL, NULL, NIL, NULL);
 }
 
 
@@ -2199,6 +2205,52 @@ ltrmark:;
 	ReleaseBuffer(buffer);
 
 	return result;
+}
+
+/*
+ * Is trigger enabled to fire?
+ */
+static bool
+TriggerEnabled(Trigger *trigger, TriggerEvent event, Bitmapset *modifiedCols)
+{
+	/* Check replication-role-dependent enable state */
+	if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+	{
+		if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+			trigger->tgenabled == TRIGGER_DISABLED)
+			return false;
+	}
+	else	/* ORIGIN or LOCAL role */
+	{
+		if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+			trigger->tgenabled == TRIGGER_DISABLED)
+			return false;
+	}
+
+	/*
+	 * Check for column-specific trigger (only possible for UPDATE, and in
+	 * fact we *must* ignore tgattr for other event types)
+	 */
+	if (trigger->tgnattr > 0 && TRIGGER_FIRED_BY_UPDATE(event))
+	{
+		int			i;
+		bool		modified;
+
+		modified = false;
+		for (i = 0; i < trigger->tgnattr; i++)
+		{
+			if (bms_is_member(trigger->tgattr[i] - FirstLowInvalidHeapAttributeNumber,
+							  modifiedCols))
+			{
+				modified = true;
+				break;
+			}
+		}
+		if (!modified)
+			return false;
+	}
+
+	return true;
 }
 
 
@@ -3825,7 +3877,7 @@ AfterTriggerPendingOnRel(Oid relid)
 static void
 AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 					  HeapTuple oldtup, HeapTuple newtup,
-					  List *recheckIndexes)
+					  List *recheckIndexes, Bitmapset *modifiedCols)
 {
 	Relation	rel = relinfo->ri_RelationDesc;
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -3927,26 +3979,15 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		/* Ignore disabled triggers */
-		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
-		else	/* ORIGIN or LOCAL role */
-		{
-			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
-				trigger->tgenabled == TRIGGER_DISABLED)
-				continue;
-		}
+		if (!TriggerEnabled(trigger, event, modifiedCols))
+			continue;
 
 		/*
 		 * If this is an UPDATE of a PK table or FK table that does not change
 		 * the PK or FK respectively, we can skip queuing the event: there is
 		 * no need to fire the trigger.
 		 */
-		if ((event & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_UPDATE)
+		if (TRIGGER_FIRED_BY_UPDATE(event))
 		{
 			switch (RI_FKey_trigger_type(trigger->tgfoid))
 			{

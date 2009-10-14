@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_trigger.h,v 1.34 2009/07/28 02:56:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_trigger.h,v 1.35 2009/10/14 22:14:24 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -52,8 +52,8 @@ CATALOG(pg_trigger,2620)
 	bool		tginitdeferred; /* constraint trigger is deferred initially */
 	int2		tgnargs;		/* # of extra arguments in tgargs */
 
-	/* VARIABLE LENGTH FIELDS: */
-	int2vector	tgattr;			/* reserved for column-specific triggers */
+	/* VARIABLE LENGTH FIELDS (note: these are not supposed to be null) */
+	int2vector	tgattr;			/* column numbers, if trigger is on columns */
 	bytea		tgargs;			/* first\000second\000tgnargs\000 */
 } FormData_pg_trigger;
 

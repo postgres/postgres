@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.685 2009/10/12 23:41:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.686 2009/10/14 22:14:22 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -251,7 +251,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <boolean> TriggerActionTime TriggerForSpec opt_trusted opt_restart_seqs
 
-%type <ival>	TriggerEvents TriggerOneEvent
+%type <list>	TriggerEvents TriggerOneEvent
 %type <value>	TriggerFuncArg
 
 %type <str>		relation_name copy_file_name
@@ -3240,7 +3240,8 @@ CreateTrigStmt:
 					n->args = $13;
 					n->before = $4;
 					n->row = $8;
-					n->events = $5;
+					n->events = intVal(linitial($5));
+					n->columns = (List *) lsecond($5);
 					n->isconstraint  = FALSE;
 					n->deferrable	 = FALSE;
 					n->initdeferred  = FALSE;
@@ -3260,7 +3261,8 @@ CreateTrigStmt:
 					n->args = $18;
 					n->before = FALSE;
 					n->row = TRUE;
-					n->events = $6;
+					n->events = intVal(linitial($6));
+					n->columns = (List *) lsecond($6);
 					n->isconstraint  = TRUE;
 					n->deferrable = ($10 & 1) != 0;
 					n->initdeferred = ($10 & 2) != 0;
@@ -3279,17 +3281,36 @@ TriggerEvents:
 				{ $$ = $1; }
 			| TriggerEvents OR TriggerOneEvent
 				{
-					if ($1 & $3)
+					int		events1 = intVal(linitial($1));
+					int		events2 = intVal(linitial($3));
+					List   *columns1 = (List *) lsecond($1);
+					List   *columns2 = (List *) lsecond($3);
+
+					if (events1 & events2)
 						parser_yyerror("duplicate trigger events specified");
-					$$ = $1 | $3;
+					/*
+					 * concat'ing the columns lists loses information about
+					 * which columns went with which event, but so long as
+					 * only UPDATE carries columns and we disallow multiple
+					 * UPDATE items, it doesn't matter.  Command execution
+					 * should just ignore the columns for non-UPDATE events.
+					 */
+					$$ = list_make2(makeInteger(events1 | events2),
+									list_concat(columns1, columns2));
 				}
 		;
 
 TriggerOneEvent:
-			INSERT								{ $$ = TRIGGER_TYPE_INSERT; }
-			| DELETE_P							{ $$ = TRIGGER_TYPE_DELETE; }
-			| UPDATE							{ $$ = TRIGGER_TYPE_UPDATE; }
-			| TRUNCATE							{ $$ = TRIGGER_TYPE_TRUNCATE; }
+			INSERT
+				{ $$ = list_make2(makeInteger(TRIGGER_TYPE_INSERT), NIL); }
+			| DELETE_P
+				{ $$ = list_make2(makeInteger(TRIGGER_TYPE_DELETE), NIL); }
+			| UPDATE
+				{ $$ = list_make2(makeInteger(TRIGGER_TYPE_UPDATE), NIL); }
+			| UPDATE OF columnList
+				{ $$ = list_make2(makeInteger(TRIGGER_TYPE_UPDATE), $3); }
+			| TRUNCATE
+				{ $$ = list_make2(makeInteger(TRIGGER_TYPE_TRUNCATE), NIL); }
 		;
 
 TriggerForSpec:

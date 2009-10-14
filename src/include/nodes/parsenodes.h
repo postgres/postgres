@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.409 2009/10/13 00:53:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.410 2009/10/14 22:14:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1560,10 +1560,9 @@ typedef struct DropUserMappingStmt
 } DropUserMappingStmt;
 
 /* ----------------------
- *		Create/Drop TRIGGER Statements
+ *		Create TRIGGER Statement
  * ----------------------
  */
-
 typedef struct CreateTrigStmt
 {
 	NodeTag		type;
@@ -1575,6 +1574,7 @@ typedef struct CreateTrigStmt
 	bool		row;			/* ROW/STATEMENT */
 	/* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
 	int16		events;			/* INSERT/UPDATE/DELETE/TRUNCATE */
+	List	   *columns;		/* column names, or NIL for all columns */
 
 	/* The following are used for constraint triggers (RI and unique checks) */
 	bool		isconstraint;	/* This is a constraint trigger */
@@ -1584,7 +1584,7 @@ typedef struct CreateTrigStmt
 } CreateTrigStmt;
 
 /* ----------------------
- *		Create/Drop PROCEDURAL LANGUAGE Statement
+ *		Create/Drop PROCEDURAL LANGUAGE Statements
  * ----------------------
  */
 typedef struct CreatePLangStmt

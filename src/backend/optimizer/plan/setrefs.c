@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.152 2009/10/12 18:10:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.153 2009/10/14 22:14:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,8 @@ set_plan_references(PlannerGlobal *glob, Plan *plan,
 	 * needed by the executor; this reduces the storage space and copying cost
 	 * for cached plans.  We keep only the alias and eref Alias fields, which
 	 * are needed by EXPLAIN, and the selectedCols and modifiedCols bitmaps,
-	 * which are needed for executor-startup permissions checking.
+	 * which are needed for executor-startup permissions checking and for
+	 * trigger event checking.
 	 */
 	foreach(lc, rtable)
 	{

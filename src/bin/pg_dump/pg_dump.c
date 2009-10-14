@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.551 2009/10/12 23:41:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.552 2009/10/14 22:14:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4419,6 +4419,18 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			if (i_tgdef >= 0)
 			{
 				tginfo[j].tgdef = strdup(PQgetvalue(res, j, i_tgdef));
+
+				/* remaining fields are not valid if we have tgdef */
+				tginfo[j].tgfname = NULL;
+				tginfo[j].tgtype = 0;
+				tginfo[j].tgnargs = 0;
+				tginfo[j].tgargs = NULL;
+				tginfo[j].tgisconstraint = false;
+				tginfo[j].tgdeferrable = false;
+				tginfo[j].tginitdeferred = false;
+				tginfo[j].tgconstrname = NULL;
+				tginfo[j].tgconstrrelid = InvalidOid;
+				tginfo[j].tgconstrrelname = NULL;
 			}
 			else
 			{

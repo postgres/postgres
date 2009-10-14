@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.58 2009/08/04 22:04:37 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.59 2009/10/14 22:14:21 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -36,10 +36,13 @@
     performed.  Triggers can be defined to execute either before or after any
     <command>INSERT</command>, <command>UPDATE</command>, or
     <command>DELETE</command> operation, either once per modified row,
-    or once per <acronym>SQL</acronym> statement.  Triggers can also fire
-    for <command>TRUNCATE</command> statements.  If a trigger event occurs,
-    the trigger's function is called at the appropriate time to handle the
-    event.
+    or once per <acronym>SQL</acronym> statement.
+    <command>UPDATE</command> triggers can moreover be set to fire only if
+    certain columns are mentioned in the <literal>SET</literal> clause of the
+    <command>UPDATE</command> statement.
+    Triggers can also fire for <command>TRUNCATE</command> statements.
+    If a trigger event occurs, the trigger's function is called at the
+    appropriate time to handle the event.
    </para>
 
    <para>

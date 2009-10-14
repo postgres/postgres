@@ -220,25 +220,25 @@ COPY main_table (a,b) FROM stdin;
 
 CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE plpgsql AS '
 BEGIN
-	RAISE NOTICE ''trigger_func() called: action = %, when = %, level = %'', TG_OP, TG_WHEN, TG_LEVEL;
+	RAISE NOTICE ''trigger_func(%) called: action = %, when = %, level = %'', TG_ARGV[0], TG_OP, TG_WHEN, TG_LEVEL;
 	RETURN NULL;
 END;';
 
 CREATE TRIGGER before_ins_stmt_trig BEFORE INSERT ON main_table
-FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('before_ins_stmt');
 
 CREATE TRIGGER after_ins_stmt_trig AFTER INSERT ON main_table
-FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('after_ins_stmt');
 
 --
 -- if neither 'FOR EACH ROW' nor 'FOR EACH STATEMENT' was specified,
 -- CREATE TRIGGER should default to 'FOR EACH STATEMENT'
 --
-CREATE TRIGGER before_upd_stmt_trig AFTER UPDATE ON main_table
-EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER after_upd_stmt_trig AFTER UPDATE ON main_table
+EXECUTE PROCEDURE trigger_func('after_upd_stmt');
 
-CREATE TRIGGER before_upd_row_trig AFTER UPDATE ON main_table
-FOR EACH ROW EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER after_upd_row_trig AFTER UPDATE ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_row');
 
 INSERT INTO main_table DEFAULT VALUES;
 
@@ -253,6 +253,45 @@ COPY main_table (a, b) FROM stdin;
 \.
 
 SELECT * FROM main_table ORDER BY a, b;
+
+-- Test column-level triggers
+DROP TRIGGER after_upd_row_trig ON main_table;
+
+CREATE TRIGGER before_upd_a_row_trig BEFORE UPDATE OF a ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('before_upd_a_row');
+CREATE TRIGGER after_upd_b_row_trig AFTER UPDATE OF b ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_b_row');
+CREATE TRIGGER after_upd_a_b_row_trig AFTER UPDATE OF a, b ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('after_upd_a_b_row');
+
+CREATE TRIGGER before_upd_a_stmt_trig BEFORE UPDATE OF a ON main_table
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('before_upd_a_stmt');
+CREATE TRIGGER after_upd_b_stmt_trig AFTER UPDATE OF b ON main_table
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func('after_upd_b_stmt');
+
+SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'after_upd_a_b_row_trig';
+SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'after_upd_a_b_row_trig';
+
+UPDATE main_table SET a = 50;
+UPDATE main_table SET b = 10;
+
+-- bogus cases
+CREATE TRIGGER error_upd_and_col BEFORE UPDATE OR UPDATE OF a ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_upd_and_col');
+CREATE TRIGGER error_upd_a_a BEFORE UPDATE OF a, a ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_upd_a_a');
+CREATE TRIGGER error_ins_a BEFORE INSERT OF a ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_ins_a');
+
+-- check dependency restrictions
+ALTER TABLE main_table DROP COLUMN b;
+-- this should succeed, but we'll roll it back to keep the triggers around
+begin;
+DROP TRIGGER after_upd_a_b_row_trig ON main_table;
+DROP TRIGGER after_upd_b_row_trig ON main_table;
+DROP TRIGGER after_upd_b_stmt_trig ON main_table;
+ALTER TABLE main_table DROP COLUMN b;
+rollback;
 
 -- Test enable/disable triggers
 

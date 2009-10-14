@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.209 2009/10/07 22:14:14 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.210 2009/10/14 22:14:21 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4745,8 +4745,9 @@
      <row>
       <entry><structfield>tgattr</structfield></entry>
       <entry><type>int2vector</type></entry>
-      <entry></entry>
-      <entry>Currently unused</entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
+      <entry>column numbers, if trigger is column-specific; otherwise an
+       empty array</entry>
      </row>
 
      <row>
@@ -4758,6 +4759,14 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Currently, column-specific triggering is supported only for
+   <literal>UPDATE</> events, and so <structfield>tgattr</> is relevant
+   only for that event type.  <structfield>tgtype</structfield> might
+   contain bits for other event types as well, but those are presumed
+   to be table-wide regardless of what is in <structfield>tgattr</>.
+  </para>
 
   <note>
    <para>

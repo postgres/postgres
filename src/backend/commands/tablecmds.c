@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.303 2009/10/13 00:53:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.304 2009/10/14 22:14:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5441,6 +5441,7 @@ CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 		fk_trigger->events = TRIGGER_TYPE_UPDATE;
 	}
 
+	fk_trigger->columns = NIL;
 	fk_trigger->isconstraint = true;
 	fk_trigger->deferrable = fkconstraint->deferrable;
 	fk_trigger->initdeferred = fkconstraint->initdeferred;
@@ -5491,6 +5492,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	fk_trigger->before = false;
 	fk_trigger->row = true;
 	fk_trigger->events = TRIGGER_TYPE_DELETE;
+	fk_trigger->columns = NIL;
 	fk_trigger->isconstraint = true;
 	fk_trigger->constrrel = myRel;
 	switch (fkconstraint->fk_del_action)
@@ -5543,6 +5545,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	fk_trigger->before = false;
 	fk_trigger->row = true;
 	fk_trigger->events = TRIGGER_TYPE_UPDATE;
+	fk_trigger->columns = NIL;
 	fk_trigger->isconstraint = true;
 	fk_trigger->constrrel = myRel;
 	switch (fkconstraint->fk_upd_action)
