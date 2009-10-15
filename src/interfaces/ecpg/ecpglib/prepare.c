@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.32 2009/07/22 11:07:02 mha Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.33 2009/10/15 10:20:15 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -152,7 +152,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 	replace_variables(&(stmt->command), lineno);
 
 	/* add prepared statement to our list */
-	this->name = (char *) name;
+	this->name = ecpg_strdup(name, lineno);
 	this->stmt = stmt;
 
 	/* and finally really prepare the statement */
@@ -160,6 +160,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 	if (!ecpg_check_PQresult(query, stmt->lineno, stmt->connection->connection, stmt->compat))
 	{
 		ecpg_free(stmt->command);
+		ecpg_free(this->name);
 		ecpg_free(this);
 		ecpg_free(stmt);
 		return false;
@@ -238,6 +239,7 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection * con, struct p
 	/* okay, free all the resources */
 	ecpg_free(this->stmt->command);
 	ecpg_free(this->stmt);
+	ecpg_free(this->name);
 	if (prev != NULL)
 		prev->next = this->next;
 	else
