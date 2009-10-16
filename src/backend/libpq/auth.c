@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.186 2009/10/14 22:09:46 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.187 2009/10/16 22:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,7 +452,6 @@ ClientAuthentication(Port *port)
 
 		case uaPAM:
 #ifdef USE_PAM
-			pam_port_cludge = port;
 			status = CheckPAMAuth(port, port->user_name, "");
 #else
 			Assert(false);
@@ -1888,61 +1887,31 @@ static int
 pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 					 struct pam_response ** resp, void *appdata_ptr)
 {
-	if (num_msg != 1 || msg[0]->msg_style != PAM_PROMPT_ECHO_OFF)
-	{
-		switch (msg[0]->msg_style)
-		{
-			case PAM_ERROR_MSG:
-				ereport(LOG,
-						(errmsg("error from underlying PAM layer: %s",
-								msg[0]->msg)));
-				return PAM_CONV_ERR;
-			default:
-				ereport(LOG,
-						(errmsg("unsupported PAM conversation %d/%s",
-								msg[0]->msg_style, msg[0]->msg)));
-				return PAM_CONV_ERR;
-		}
-	}
+	char	   *passwd;
+	struct pam_response *reply;
+	int			i;
 
-	if (!appdata_ptr)
+	if (appdata_ptr)
+		passwd = (char *) appdata_ptr;
+	else
 	{
 		/*
 		 * Workaround for Solaris 2.6 where the PAM library is broken and does
 		 * not pass appdata_ptr to the conversation routine
 		 */
-		appdata_ptr = pam_passwd;
+		passwd = pam_passwd;
 	}
 
-	/*
-	 * Password wasn't passed to PAM the first time around - let's go ask the
-	 * client to send a password, which we then stuff into PAM.
-	 */
-	if (strlen(appdata_ptr) == 0)
-	{
-		char	   *passwd;
+	*resp = NULL;				/* in case of error exit */
 
-		sendAuthRequest(pam_port_cludge, AUTH_REQ_PASSWORD);
-		passwd = recv_password_packet(pam_port_cludge);
-
-		if (passwd == NULL)
-			return PAM_CONV_ERR;	/* client didn't want to send password */
-
-		if (strlen(passwd) == 0)
-		{
-			ereport(LOG,
-					(errmsg("empty password returned by client")));
-			return PAM_CONV_ERR;
-		}
-		appdata_ptr = passwd;
-	}
+	if (num_msg <= 0 || num_msg > PAM_MAX_NUM_MSG)
+		return PAM_CONV_ERR;
 
 	/*
 	 * Explicitly not using palloc here - PAM will free this memory in
 	 * pam_end()
 	 */
-	*resp = calloc(num_msg, sizeof(struct pam_response));
-	if (!*resp)
+	if ((reply = calloc(num_msg, sizeof(struct pam_response))) == NULL)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1950,10 +1919,71 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 		return PAM_CONV_ERR;
 	}
 
-	(*resp)[0].resp = strdup((char *) appdata_ptr);
-	(*resp)[0].resp_retcode = 0;
+	for (i = 0; i < num_msg; i++)
+	{
+		switch (msg[i]->msg_style)
+		{
+			case PAM_PROMPT_ECHO_OFF:
+				if (strlen(passwd) == 0)
+				{
+					/*
+					 * Password wasn't passed to PAM the first time around -
+					 * let's go ask the client to send a password, which we
+					 * then stuff into PAM.
+					 */
+					sendAuthRequest(pam_port_cludge, AUTH_REQ_PASSWORD);
+					passwd = recv_password_packet(pam_port_cludge);
+					if (passwd == NULL)
+					{
+						/*
+						 * Client didn't want to send password.  We
+						 * intentionally do not log anything about this.
+						 */
+						goto fail;
+					}
+					if (strlen(passwd) == 0)
+					{
+						ereport(LOG,
+								(errmsg("empty password returned by client")));
+						goto fail;
+					}
+				}
+				if ((reply[i].resp = strdup(passwd)) == NULL)
+					goto fail;
+				reply[i].resp_retcode = PAM_SUCCESS;
+				break;
+			case PAM_ERROR_MSG:
+				ereport(LOG,
+						(errmsg("error from underlying PAM layer: %s",
+								msg[i]->msg)));
+				/* FALL THROUGH */
+			case PAM_TEXT_INFO:
+				/* we don't bother to log TEXT_INFO messages */
+				if ((reply[i].resp = strdup("")) == NULL)
+					goto fail;
+				reply[i].resp_retcode = PAM_SUCCESS;
+				break;
+			default:
+				elog(LOG, "unsupported PAM conversation %d/\"%s\"",
+					 msg[i]->msg_style,
+					 msg[i]->msg ? msg[i]->msg : "(none)");
+				goto fail;
+		}
+	}
 
-	return ((*resp)[0].resp ? PAM_SUCCESS : PAM_CONV_ERR);
+	*resp = reply;
+	return PAM_SUCCESS;
+
+fail:
+	/* free up whatever we allocated */
+	for (i = 0; i < num_msg; i++)
+	{
+		if (reply[i].resp != NULL)
+			free(reply[i].resp);
+	}
+	free(reply);
+
+	return PAM_CONV_ERR;
 }
 
 
@@ -1967,10 +1997,12 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	pam_handle_t *pamh = NULL;
 
 	/*
-	 * Apparently, Solaris 2.6 is broken, and needs ugly static variable
-	 * workaround
+	 * We can't entirely rely on PAM to pass through appdata --- it appears
+	 * not to work on at least Solaris 2.6.  So use these ugly static
+	 * variables instead.
 	 */
 	pam_passwd = password;
+	pam_port_cludge = port;
 
 	/*
 	 * Set the application data portion of the conversation struct This is
