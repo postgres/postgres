@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.26 2009/04/28 02:37:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.27 2009/10/16 10:38:25 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,10 +195,10 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 	appendPQExpBuffer(&sql, "VACUUM");
 	if (full)
 		appendPQExpBuffer(&sql, " FULL");
-	if (verbose)
-		appendPQExpBuffer(&sql, " VERBOSE");
 	if (freeze)
 		appendPQExpBuffer(&sql, " FREEZE");
+	if (verbose)
+		appendPQExpBuffer(&sql, " VERBOSE");
 	if (analyze)
 		appendPQExpBuffer(&sql, " ANALYZE");
 	if (table)
