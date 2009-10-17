@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.217 2009/07/03 19:14:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.218 2009/10/17 00:24:50 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,8 +111,10 @@ static int	syslog_facility = LOG_LOCAL0;
 static void write_syslog(int level, const char *line);
 #endif
 
+static void write_console(const char *line, int len);
+
 #ifdef WIN32
-static void write_eventlog(int level, const char *line);
+static void write_eventlog(int level, const char *line, int len);
 #endif
 
 /* We provide a small stack of ErrorData records for re-entrant cases */
@@ -1567,10 +1569,11 @@ write_syslog(int level, const char *line)
  * Write a message line to the windows event log
  */
 static void
-write_eventlog(int level, const char *line)
+write_eventlog(int level, const char *line, int len)
 {
-	int			eventlevel = EVENTLOG_ERROR_TYPE;
-	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
+	WCHAR		   *utf16;
+	int				eventlevel = EVENTLOG_ERROR_TYPE;
+	static HANDLE	evtHandle = INVALID_HANDLE_VALUE;
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
@@ -1606,8 +1609,34 @@ write_eventlog(int level, const char *line)
 			break;
 	}
 
+	/*
+	 * Convert message to UTF16 text and write it with ReportEventW,
+	 * but fall-back into ReportEventA if conversion failed.
+	 *
+	 * Also verify that we are not on our way into error recursion trouble
+	 * due to error messages thrown deep inside pgwin32_toUTF16().
+	 */
+	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
+		!in_error_recursion_trouble())
+	{
+		utf16 = pgwin32_toUTF16(line, len, NULL);
+		if (utf16)
+		{
+			ReportEventW(evtHandle,
+					eventlevel,
+					0,
+					0,				/* All events are Id 0 */
+					NULL,
+					1,
+					0,
+					(LPCWSTR *) &utf16,
+					NULL);
 
-	ReportEvent(evtHandle,
+			pfree(utf16);
+			return;
+		}
+	}
+	ReportEventA(evtHandle,
 				eventlevel,
 				0,
 				0,				/* All events are Id 0 */
@@ -1618,6 +1647,52 @@ write_eventlog(int level, const char *line)
 				NULL);
 }
 #endif   /* WIN32 */
+
+static void
+write_console(const char *line, int len)
+{
+#ifdef WIN32
+	/*
+	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
+	 * to writing unconverted to the logfile in this case.
+	 */
+	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
+		!in_error_recursion_trouble() &&
+		!redirection_done)
+	{
+		WCHAR	   *utf16;
+		int			utf16len;
+
+		utf16 = pgwin32_toUTF16(line, len, &utf16len);
+		if (utf16 != NULL)
+		{
+			HANDLE		stdHandle;
+			DWORD		written;
+
+			stdHandle = GetStdHandle(STD_ERROR_HANDLE);
+			if (WriteConsoleW(stdHandle, utf16, utf16len, &written, NULL))
+			{
+				pfree(utf16);
+				return;
+			}
+
+			/*
+			 * In case WriteConsoleW() failed, fall back to writing the message
+			 * unconverted.
+			 */
+			pfree(utf16);
+		}
+	}
+#else
+	/*
+	 * Conversion on non-win32 platform is not implemented yet.
+	 * It requires non-throw version of pg_do_encoding_conversion(),
+	 * that converts unconvertable characters to '?' without errors.
+	 */
+#endif
+
+	write(fileno(stderr), line, len);
+}
 
 /*
  * setup formatted_log_time, for consistent times between CSV and regular logs
@@ -2206,7 +2281,7 @@ send_message_to_server_log(ErrorData *edata)
 	/* Write to eventlog, if enabled */
 	if (Log_destination & LOG_DESTINATION_EVENTLOG)
 	{
-		write_eventlog(edata->elevel, buf.data);
+		write_eventlog(edata->elevel, buf.data, buf.len);
 	}
 #endif   /* WIN32 */
 
@@ -2230,10 +2305,10 @@ send_message_to_server_log(ErrorData *edata)
 		 * because that's really a pipe to the syslogger process.
 		 */
 		else if (pgwin32_is_service())
-			write_eventlog(edata->elevel, buf.data);
+			write_eventlog(edata->elevel, buf.data, buf.len);
 #endif
 		else
-			write(fileno(stderr), buf.data, buf.len);
+			write_console(buf.data, buf.len);
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
@@ -2256,12 +2331,12 @@ send_message_to_server_log(ErrorData *edata)
 		{
 			const char *msg = _("Not safe to send CSV data\n");
 
-			write(fileno(stderr), msg, strlen(msg));
+			write_console(msg, strlen(msg));
 			if (!(Log_destination & LOG_DESTINATION_STDERR) &&
 				whereToSendOutput != DestDebug)
 			{
 				/* write message to stderr unless we just sent it above */
-				write(fileno(stderr), buf.data, buf.len);
+				write_console(buf.data, buf.len);
 			}
 			pfree(buf.data);
 		}
@@ -2642,6 +2717,9 @@ void
 write_stderr(const char *fmt,...)
 {
 	va_list		ap;
+#ifdef WIN32
+	char		errbuf[2048];		/* Arbitrary size? */
+#endif
 
 	fmt = _(fmt);
 
@@ -2651,6 +2729,7 @@ write_stderr(const char *fmt,...)
 	vfprintf(stderr, fmt, ap);
 	fflush(stderr);
 #else
+	vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
 
 	/*
 	 * On Win32, we print to stderr if running on a console, or write to
@@ -2658,16 +2737,12 @@ write_stderr(const char *fmt,...)
 	 */
 	if (pgwin32_is_service())	/* Running as a service */
 	{
-		char		errbuf[2048];		/* Arbitrary size? */
-
-		vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
-
-		write_eventlog(ERROR, errbuf);
+		write_eventlog(ERROR, errbuf, strlen(errbuf));
 	}
 	else
 	{
 		/* Not running as service, write to stderr */
-		vfprintf(stderr, fmt, ap);
+		write_console(errbuf, strlen(errbuf));
 		fflush(stderr);
 	}
 #endif
