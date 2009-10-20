@@ -1,0 +1,312 @@
+#
+# Translation of pg_controldata to Italian
+# PostgreSQL Project
+#
+# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
+# http://www.itpug.org/ - info@itpug.org
+#
+# Traduttori:
+#  * Cosimo D'Arcangelo <cosimo.darcangelo@itpug.org>
+# 
+# Revisori:
+#  * Gabriele Bartolini <gabriele.bartolini@itpug.org>
+#  * Emanuele Zamprogno <emanuele.zamprogno@itpug.org>
+# 
+# Traduttori precedenti:
+#  * Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
+#
+# Copyright (c) 2009, Associazione Culturale ITPUG
+# Distributed under the same license of the PostgreSQL project
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-07-11 05:55+0000\n"
+"PO-Revision-Date: 2009-07-18 03:26:28+0200\n"
+"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Italian\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: pg_controldata.c:24
+#, c-format
+msgid ""
+"%s displays control information of a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s mostra informazioni di controllo su un cluster di database in PostgreSQL.\n"
+"\n"
+
+#: pg_controldata.c:28
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION] [DATADIR]\n"
+"\n"
+"Options:\n"
+"  --help         show this help, then exit\n"
+"  --version      output version information, then exit\n"
+msgstr ""
+"Uso:\n"
+"  %s [OPZIONI] [DATADIR]\n"
+"\n"
+"Opzioni:\n"
+"  --help         mostra questo help, poi esci\n"
+"  --version      mostra le informazioni circa la versione, poi esci\n"
+
+#: pg_controldata.c:36
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Se non viene specificata un directory per i dati (DATADIR), la variabile d'ambiente PGDATA\n"
+"sarà usata come predefinita.\n"
+"\n"
+
+#: pg_controldata.c:38
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Segnala errori a <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_controldata.c:48
+msgid "starting up"
+msgstr "avvio in corso"
+
+#: pg_controldata.c:50
+msgid "shut down"
+msgstr "spento"
+
+#: pg_controldata.c:52
+msgid "shutting down"
+msgstr "arresto in corso"
+
+#: pg_controldata.c:54
+msgid "in crash recovery"
+msgstr "in fase di recupero da un crash"
+
+#: pg_controldata.c:56
+msgid "in archive recovery"
+msgstr "in fase di recupero da un archivio"
+
+#: pg_controldata.c:58
+msgid "in production"
+msgstr "in produzione"
+
+#: pg_controldata.c:60
+msgid "unrecognized status code"
+msgstr "codice di stato non riconosciuto"
+
+#: pg_controldata.c:103
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: non è stata specificata una directory per i dati\n"
+
+#: pg_controldata.c:104
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
+
+#: pg_controldata.c:112
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: impossibile aprire il file \"%s\" in lettura: %s\n"
+
+#: pg_controldata.c:119
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: impossibile leggere dal file \"%s\": %s\n"
+
+#: pg_controldata.c:133
+#, c-format
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"ATTENZIONE: La somma di controllo CRC non corrisponde al valore memorizzato nel file.\n"
+"O il file è corrotto oppure ha un formato differente da quello previsto.\n"
+"I risultati che ne conseguono sono senza garanzie.\n"
+"\n"
+
+#: pg_controldata.c:160
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "numero di versione di pg_control:        %u\n"
+
+#: pg_controldata.c:163
+#, c-format
+msgid ""
+"WARNING: possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory.\n"
+msgstr ""
+"Attenzione: possibile errore nel byte ordering\n"
+"il byte ordering usato per archiviare il file pg_control potrebbe non corrispondere\n"
+"a quello usato da questo programma. In questo caso il risultato qui sotto potrebbe essere non corretto, e\n"
+"l'installazione di PostgreSQL potrebbe essere incompatibile con questa directory dei dati.\n"
+
+#: pg_controldata.c:167
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "Numero di versione del catalogo:             %u\n"
+
+#: pg_controldata.c:169
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "Identificatore del sistema di database:               %s\n"
+
+#: pg_controldata.c:171
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "Stato del cluster di database:               %s\n"
+
+#: pg_controldata.c:173
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "Ultima modifica a pg_control:             %s\n"
+
+#: pg_controldata.c:175
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "Ultima posizione del checkpoint:          %X/%X\n"
+
+#: pg_controldata.c:178
+#, c-format
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "Posizione precedente del checkpoint:      %X/%X\n"
+
+#: pg_controldata.c:181
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "Ultima posizione REDO checkpoint:     %X/%X\n"
+
+#: pg_controldata.c:184
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "Ultimo TimeLineID del checkpoint :       %u\n"
+
+#: pg_controldata.c:186
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "Ultimo NextXID checkpoint :         %u %u\n"
+
+#: pg_controldata.c:189
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "Ultimo NextOID checkpoint:            %u\n"
+
+#: pg_controldata.c:191
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "Ultimo NextMultiXactId checkpoint:  %u\n"
+
+#: pg_controldata.c:193
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "Ultimo NextMultiOffset checkpoint:  %u\n"
+
+#: pg_controldata.c:195
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "Orario ultimo checkpoint:             %s\n"
+
+#: pg_controldata.c:197
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "locazione del minimum recovery ending:      %X/%X\n"
+
+#: pg_controldata.c:200
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "Massimo allineamento per i dati:         %u\n"
+
+#: pg_controldata.c:203
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "Dimensione blocco database:           %u\n"
+
+#: pg_controldata.c:205
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "Blocchi per segmento grandi relaz.:   %u\n"
+
+#: pg_controldata.c:207
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "Dimensione blocco WAL:           %u\n"
+
+#: pg_controldata.c:209
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "Byte per segmento WAL:                %u\n"
+
+#: pg_controldata.c:211
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "Massima lunghezza identificatori:     %u\n"
+
+#: pg_controldata.c:213
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "Massimo numero di colonne in un indice:   %u\n"
+
+#: pg_controldata.c:215
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "Massima dimensione di un segmento TOAST:   %u\n"
+
+#: pg_controldata.c:217
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "Memorizzazione tipi Data/ora:         %s\n"
+
+#: pg_controldata.c:218
+msgid "64-bit integers"
+msgstr "Interi a 64-bit"
+
+#: pg_controldata.c:218
+msgid "floating-point numbers"
+msgstr "numeri in virgola mobile"
+
+#: pg_controldata.c:219
+#, c-format
+msgid "Float4 argument passing:              %s\n"
+msgstr "Passaggio di argomento Float4:         %s\n"
+
+#: pg_controldata.c:220
+#: pg_controldata.c:222
+msgid "by value"
+msgstr "per valore"
+
+#: pg_controldata.c:220
+#: pg_controldata.c:222
+msgid "by reference"
+msgstr "per riferimento"
+
+#: pg_controldata.c:221
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Passaggio di argomento Float8:         %s\n"
+
+#~ msgid "Current log file ID:                  %u\n"
+#~ msgstr "Id corrente file di log:              %u\n"
+#~ msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+#~ msgstr "Ultima posizione UNDO checkpoint:     %X/%X\n"
+#~ msgid "Maximum number of function arguments: %u\n"
+#~ msgstr "N° massimo di argomenti per funzione: %u\n"
+#~ msgid "LC_COLLATE:                           %s\n"
+#~ msgstr "LC_COLLATE:                           %s\n"
+#~ msgid "LC_CTYPE:                             %s\n"
+#~ msgstr "LC_CTYPE:                             %s\n"
+

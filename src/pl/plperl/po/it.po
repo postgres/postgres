@@ -1,0 +1,113 @@
+#
+# Translation of plperl to Italian
+# PostgreSQL Project
+#
+# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
+# http://www.itpug.org/ - info@itpug.org
+#
+# Traduttori:
+#  * Emanuele Zamprogno <emanuele.zamprogno@itpug.org>
+# 
+# Revisori:
+#  * Gabriele Bartolini <gabriele.bartolini@itpug.org>
+#
+# Copyright (c) 2009, Associazione Culturale ITPUG
+# Distributed under the same license of the PostgreSQL project
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-07-11 05:48+0000\n"
+"PO-Revision-Date: 2009-07-18 03:10:24+0200\n"
+"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Italian\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: plperl.c:202
+msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
+msgstr "Se vero, il codice Perl affidabile e non affidabile sarà compilato in modalità strict"
+
+#: plperl.c:624
+#: plperl.c:817
+#, c-format
+msgid "Perl hash contains nonexistent column \"%s\""
+msgstr "La struttura hash in Perl contiene la colonna inesistente \"%s\""
+
+#: plperl.c:793
+msgid "$_TD->{new} does not exist"
+msgstr "$_TD->{new} non esiste"
+
+#: plperl.c:797
+msgid "$_TD->{new} is not a hash reference"
+msgstr "$_TD->{new} non è un riferimento ad un hash"
+
+#: plperl.c:934
+#: plperl.c:1633
+#, c-format
+msgid "PL/Perl functions cannot return type %s"
+msgstr "la funzione PL/Perl non può ritornare il tipo %s"
+
+#: plperl.c:946
+#: plperl.c:1680
+#, c-format
+msgid "PL/Perl functions cannot accept type %s"
+msgstr "la funzione PL/Perl non può accettare il tipo %s"
+
+#: plperl.c:1022
+#, c-format
+msgid "creation of Perl function \"%s\" failed: %s"
+msgstr "creazione della funzione Perl \"%s\" fallita: %s"
+
+#: plperl.c:1152
+#: plperl.c:1210
+#, c-format
+msgid "error from Perl function \"%s\": %s"
+msgstr "errore dalla funzione Perl \"%s\": %s"
+
+#: plperl.c:1258
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "la funzione set-valued è stata chiamata all'interno di un contesto che non può accettare un set"
+
+#: plperl.c:1301
+msgid "set-returning PL/Perl function must return reference to array or use return_next"
+msgstr "la funzione PL/Perl di tipo \"set-returning\" deve ritornare un riferimento ad un array o usare return_next"
+
+#: plperl.c:1334
+msgid "composite-returning PL/Perl function must return reference to hash"
+msgstr "la funzione PL/Perl \"composite-returning\" deve ritornare un riferimento all'hash"
+
+#: plperl.c:1343
+msgid "function returning record called in context that cannot accept type record"
+msgstr "la funzione che restituisce un record è chiamata all'interno di un contesto che non può accettare il tipo record"
+
+#: plperl.c:1459
+msgid "ignoring modified row in DELETE trigger"
+msgstr "ignorata la riga modificata all'interno del trigger DELETE"
+
+#: plperl.c:1467
+msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
+msgstr "il risultato della funzione trigger PL/Perl deve essere undef, \"SKIP\" oppure \"MODIFY\""
+
+# in teoria non servirebbe tradurre
+#: plperl.c:1567
+msgid "out of memory"
+msgstr "memoria esaurita"
+
+#: plperl.c:1624
+msgid "trigger functions can only be called as triggers"
+msgstr "le funzioni trigger possono solo essere chiamate come trigger"
+
+#: plperl.c:1917
+msgid "cannot use return_next in a non-SETOF function"
+msgstr "non si può usare return_next in una funzione non-SETOF"
+
+#: plperl.c:1923
+msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
+msgstr "la funzione PL/Perl SETOF-composite-returning deve chiamare return_next con riferimento all'hash"
+

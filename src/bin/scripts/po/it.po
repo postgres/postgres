@@ -1,0 +1,1013 @@
+#
+# Translation of pgscripts to Italian
+# PostgreSQL Project
+#
+# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
+# http://www.itpug.org/ - info@itpug.org
+#
+# Traduttori:
+#  * Emanuele Zamprogno <ez@medicinaopen.info>
+# 
+# Revisori:
+#  * Diego Cinelli <diego.cinelli@gmail.com>
+# 
+# Traduttori precedenti:
+#  * Primo traduttore: Fabrizio Mazzoni <veramente@libero.it>, 2003.
+#  * Secondo traduttore: Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
+#
+# Copyright (c) 2009, Associazione Culturale ITPUG
+# Distributed under the same license of the PostgreSQL project
+#
+# Italian message translation file for pgscripts
+# Primo traduttore: Fabrizio Mazzoni <veramente@libero.it>, 2003.
+# Secondo traduttore: Mirko Tebaldi <mirko.tebaldi@libero.it>, 2004.
+# Attuale traduttore: Emanuele Zamprogno <ez@medicinaopen.info>, 2009.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-07-17 03:08+0000\n"
+"PO-Revision-Date: 2009-07-17 10:15:44+0200\n"
+"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Italian\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: createdb.c:114
+#: createdb.c:133
+#: createlang.c:89
+#: createlang.c:110
+#: createlang.c:163
+#: createuser.c:149
+#: createuser.c:164
+#: dropdb.c:83
+#: dropdb.c:92
+#: dropdb.c:100
+#: droplang.c:100
+#: droplang.c:121
+#: droplang.c:175
+#: dropuser.c:83
+#: dropuser.c:98
+#: clusterdb.c:104
+#: clusterdb.c:119
+#: vacuumdb.c:121
+#: vacuumdb.c:136
+#: reindexdb.c:114
+#: reindexdb.c:128
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Prova \"%s --help\" per avere più informazioni.\n"
+
+#: createdb.c:131
+#: createlang.c:108
+#: createuser.c:162
+#: dropdb.c:98
+#: droplang.c:119
+#: dropuser.c:96
+#: clusterdb.c:117
+#: vacuumdb.c:134
+#: reindexdb.c:127
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: troppi parametri dalla riga di comando (il primo è \"%s\")\n"
+
+#: createdb.c:141
+#, c-format
+msgid "%s: only one of --locale and --lc-ctype can be specified\n"
+msgstr "%s: solo uno dei  --locale e --lc-ctype può essere specificato\n"
+
+#: createdb.c:147
+#, c-format
+msgid "%s: only one of --locale and --lc-collate can be specified\n"
+msgstr "%s: solo uno di --locale e --lc-collate può essere specificato\n"
+
+#: createdb.c:159
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" non è un nome di codifica valido\n"
+
+#: createdb.c:204
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: creazione del database fallita: %s"
+
+#: createdb.c:227
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: creazione del commento fallita (il database è stato creato): %s"
+
+#: createdb.c:244
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s crea un database PostgreSQL.\n"
+"\n"
+
+#: createdb.c:245
+#: createlang.c:215
+#: createuser.c:300
+#: dropdb.c:140
+#: droplang.c:332
+#: dropuser.c:139
+#: clusterdb.c:236
+#: vacuumdb.c:262
+#: reindexdb.c:313
+#, c-format
+msgid "Usage:\n"
+msgstr "Utilizzo:\n"
+
+#: createdb.c:246
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [OPZIONE]... [NOME_DB] [DESCRIZIONE]\n"
+
+#: createdb.c:247
+#: createlang.c:217
+#: createuser.c:302
+#: dropdb.c:142
+#: droplang.c:334
+#: dropuser.c:141
+#: clusterdb.c:238
+#: vacuumdb.c:264
+#: reindexdb.c:315
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Opzioni:\n"
+
+#: createdb.c:248
+#, c-format
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr "  -D, --tablespace=TABLESPACE  tablespace predefinito per il database\n"
+
+#: createdb.c:249
+#, c-format
+msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   mostra i comandi che vengono inviati al server\n"
+
+#: createdb.c:250
+#, c-format
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING      codifica del database\n"
+
+#: createdb.c:251
+#, c-format
+msgid "  -l, --locale=LOCALE          locale settings for the database\n"
+msgstr "  -l, --locale=LOCALE          settaggi per la localizzazione del database\n"
+
+#: createdb.c:252
+#, c-format
+msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
+msgstr "      --lc-collate=LOCALE      LC_COLLATE settaggio per il database\n"
+
+#: createdb.c:253
+#, c-format
+msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
+msgstr "      --lc-ctype=LOCALE        LC_CTYPE settaggio per il database\n"
+
+#: createdb.c:254
+#, c-format
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr "  -O, --owner=OWNER            utente database propietario del nuovo database\n"
+
+#: createdb.c:255
+#, c-format
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --template=TEMPLATE      modello database da copiare\n"
+
+#: createdb.c:256
+#, c-format
+msgid "  --help                       show this help, then exit\n"
+msgstr "  --help                       mostra questa guida, quindi esce\n"
+
+#: createdb.c:257
+#, c-format
+msgid "  --version                    output version information, then exit\n"
+msgstr "  --version                       mostra informazioni sulla versione e poi esce\n"
+
+#: createdb.c:258
+#: createlang.c:223
+#: createuser.c:321
+#: dropdb.c:147
+#: droplang.c:340
+#: dropuser.c:146
+#: clusterdb.c:247
+#: vacuumdb.c:276
+#: reindexdb.c:325
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Opzioni di connessione:\n"
+
+#: createdb.c:259
+#, c-format
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME          host server database o directory socket \n"
+
+#: createdb.c:260
+#, c-format
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=PORT          porta del server database\n"
+
+#: createdb.c:261
+#, c-format
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=USERNAME      nome utente da usare per connettersi\n"
+
+#: createdb.c:262
+#, c-format
+msgid "  -w, --no-password            never prompt for password\n"
+msgstr "  -w, --no-password            non richiedere mai una password\n"
+
+#: createdb.c:263
+#, c-format
+msgid "  -W, --password               force password prompt\n"
+msgstr "  -W, --password               forza la richiesta di una password\n"
+
+#: createdb.c:264
+#, c-format
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"Di base, un database con lo stesso nome dell'utente corrente verrà creato.\n"
+
+#: createdb.c:265
+#: createlang.c:229
+#: createuser.c:329
+#: dropdb.c:153
+#: droplang.c:346
+#: dropuser.c:152
+#: clusterdb.c:254
+#: vacuumdb.c:283
+#: reindexdb.c:332
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Segnalare bachi a <pgsql-bugs@postgresql.org>.\n"
+
+#: createlang.c:140
+#: droplang.c:151
+msgid "Name"
+msgstr "Nome"
+
+#: createlang.c:141
+#: droplang.c:152
+msgid "yes"
+msgstr "si"
+
+#: createlang.c:141
+#: droplang.c:152
+msgid "no"
+msgstr "no"
+
+#: createlang.c:142
+#: droplang.c:153
+msgid "Trusted?"
+msgstr "Affidabile?"
+
+#: createlang.c:151
+#: droplang.c:162
+msgid "Procedural Languages"
+msgstr "Linguaggi Procedurali"
+
+#: createlang.c:162
+#: droplang.c:173
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: parametro mancante necessario: nome del linguaggio\n"
+
+#: createlang.c:184
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%s: linguaggio \"%s\" già installato nel database \"%s\"\n"
+
+#: createlang.c:198
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: installazione linguaggio fallita: %s"
+
+#: createlang.c:214
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s installa un linguaggio procedurale in un database PostgreSQL.\n"
+"\n"
+
+#: createlang.c:216
+#: droplang.c:333
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [OPZIONE]... NOME_LINGUAGGIO [NOME_DB]\n"
+
+#: createlang.c:218
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=NOME_DB      database in cui installare il linguaggio\n"
+
+#: createlang.c:219
+#: createuser.c:306
+#: dropdb.c:143
+#: droplang.c:336
+#: dropuser.c:142
+#: clusterdb.c:241
+#: reindexdb.c:318
+#, c-format
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                mostra i comandi inviati al server\n"
+
+#: createlang.c:220
+#: droplang.c:337
+#, c-format
+msgid "  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                mostra la lista dei linguaggi attualmente installati\n"
+
+#: createlang.c:221
+#: createuser.c:319
+#: dropdb.c:145
+#: droplang.c:338
+#: dropuser.c:144
+#: clusterdb.c:245
+#: reindexdb.c:323
+#, c-format
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    mostra questo aiuto e poi esci\n"
+
+#: createlang.c:222
+#: createuser.c:320
+#: dropdb.c:146
+#: droplang.c:339
+#: dropuser.c:145
+#: clusterdb.c:246
+#: reindexdb.c:324
+#, c-format
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 mostra informazioni sulla versione, poi esci\n"
+
+#: createlang.c:224
+#: createuser.c:322
+#: dropdb.c:148
+#: droplang.c:341
+#: dropuser.c:147
+#: clusterdb.c:248
+#: vacuumdb.c:277
+#: reindexdb.c:326
+#, c-format
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=NOME_HOST      indirizzo database o directory socket\n"
+
+#: createlang.c:225
+#: createuser.c:323
+#: dropdb.c:149
+#: droplang.c:342
+#: dropuser.c:148
+#: clusterdb.c:249
+#: vacuumdb.c:278
+#: reindexdb.c:327
+#, c-format
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORTA          porta del server database\n"
+
+#: createlang.c:226
+#: dropdb.c:150
+#: droplang.c:343
+#: clusterdb.c:250
+#: vacuumdb.c:279
+#: reindexdb.c:328
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=UTENTE     nome utente da utilizzare per la connessione\n"
+
+#: createlang.c:227
+#: createuser.c:325
+#: dropdb.c:151
+#: droplang.c:344
+#: dropuser.c:150
+#: clusterdb.c:251
+#: vacuumdb.c:280
+#: reindexdb.c:329
+#, c-format
+msgid "  -w, --no-password         never prompt for password\n"
+msgstr "  -w, --no-password         non richiedere mai una password\n"
+
+#: createlang.c:228
+#: createuser.c:326
+#: dropdb.c:152
+#: droplang.c:345
+#: dropuser.c:151
+#: clusterdb.c:252
+#: vacuumdb.c:281
+#: reindexdb.c:330
+#, c-format
+msgid "  -W, --password            force password prompt\n"
+msgstr "  -W, --password            forza la richiesta di una password\n"
+
+#: createuser.c:169
+msgid "Enter name of role to add: "
+msgstr "Inserisci il nome dell'utente da aggiungere:"
+
+#: createuser.c:176
+msgid "Enter password for new role: "
+msgstr "Inserisci la password per il nuovo utente:"
+
+#: createuser.c:177
+msgid "Enter it again: "
+msgstr "Conferma password:"
+
+#: createuser.c:180
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "Le password non corrispondono. \n"
+
+#: createuser.c:189
+msgid "Shall the new role be a superuser?"
+msgstr "Il nuovo utente dev'essere un superuser?"
+
+#: createuser.c:204
+msgid "Shall the new role be allowed to create databases?"
+msgstr "Il nuovo utente può creare database?"
+
+#: createuser.c:212
+msgid "Shall the new role be allowed to create more new roles?"
+msgstr "Il nuovo utente può creare altri utenti?"
+
+#: createuser.c:245
+#, c-format
+msgid "Password encryption failed.\n"
+msgstr "crittazione della password fallita.\n"
+
+#: createuser.c:284
+#, c-format
+msgid "%s: creation of new role failed: %s"
+msgstr "%s: creazione del nuovo utente fallita: %s"
+
+#: createuser.c:299
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s crea un nuovo utente PostgreSQL.\n"
+"\n"
+
+#: createuser.c:301
+#: dropuser.c:140
+#, c-format
+msgid "  %s [OPTION]... [ROLENAME]\n"
+msgstr "  %s [OPZIONI]... [NOME_UTENTE]\n"
+
+#: createuser.c:303
+#, c-format
+msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N  limite di connessione per un utente(default: nessun limite)\n"
+
+#: createuser.c:304
+#, c-format
+msgid "  -d, --createdb            role can create new databases\n"
+msgstr "  -d, --createdb            l'utente può creare database\n"
+
+#: createuser.c:305
+#, c-format
+msgid "  -D, --no-createdb         role cannot create databases\n"
+msgstr "  -D, --no-createdb         l'utente non può creare database\n"
+
+#: createuser.c:307
+#, c-format
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           cifra la password salvata\n"
+
+#: createuser.c:308
+#, c-format
+msgid ""
+"  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+msgstr ""
+"  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+
+#: createuser.c:310
+#, c-format
+msgid "  -I, --no-inherit          role does not inherit privileges\n"
+msgstr "  -I, --no-inherit          role does not inherit privileges\n"
+
+#: createuser.c:311
+#, c-format
+msgid "  -l, --login               role can login (default)\n"
+msgstr "  -l, --login               role can login (default)\n"
+
+#: createuser.c:312
+#, c-format
+msgid "  -L, --no-login            role cannot login\n"
+msgstr "  -L, --no-login            role cannot login\n"
+
+#: createuser.c:313
+#, c-format
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
+msgstr "  -N, --unencrypted         non cifrare la password salvata\n"
+
+#: createuser.c:314
+#, c-format
+msgid "  -P, --pwprompt            assign a password to new role\n"
+msgstr "  -P, --pwprompt            assign a password to new role\n"
+
+#: createuser.c:315
+#, c-format
+msgid "  -r, --createrole          role can create new roles\n"
+msgstr "  -r, --createrole          role can create new roles\n"
+
+#: createuser.c:316
+#, c-format
+msgid "  -R, --no-createrole       role cannot create roles\n"
+msgstr "  -R, --no-createrole       role cannot create roles\n"
+
+#: createuser.c:317
+#, c-format
+msgid "  -s, --superuser           role will be superuser\n"
+msgstr "  -s, --superuser           role will be superuser\n"
+
+#: createuser.c:318
+#, c-format
+msgid "  -S, --no-superuser        role will not be superuser\n"
+msgstr "  -S, --no-superuser        role will not be superuser\n"
+
+#: createuser.c:324
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=UTENTE     nome utente con cui collegarsi (non quello da creare)\n"
+
+#: createuser.c:327
+#, c-format
+msgid ""
+"\n"
+"If one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"Se uno tra -d, -D, -r, -R, -s, -S ed UTENTE non è specificato, ti sarà richesto interattivamente.\n"
+
+#: dropdb.c:91
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: parametro mancante, nome del database\n"
+
+#: dropdb.c:106
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "Il database \"%s\" sarà eliminato definitivamente.\n"
+
+#: dropdb.c:107
+#: dropuser.c:108
+msgid "Are you sure?"
+msgstr "Sei sicuro?"
+
+#: dropdb.c:124
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: eliminazione database fallita: %s"
+
+#: dropdb.c:139
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s elimina un database PostgreSQL.\n"
+"\n"
+
+#: dropdb.c:141
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [OPZIONE]... NOME_DB\n"
+
+#: dropdb.c:144
+#: dropuser.c:143
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         chiedi conferma prima di eseguire un operazione\n"
+
+#: droplang.c:203
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%s: linguaggio \"%s\" non installato nel database \"%s\"\n"
+
+#: droplang.c:223
+#, c-format
+msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+msgstr "%s: ancora %s funzioni dichiarate nel linguaggio \"%s\"; linguaggio non eliminato\n"
+
+#: droplang.c:316
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: eliminazione linguaggio fallita: %s"
+
+#: droplang.c:331
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s elimina un linguaggio procedurale da un database.\n"
+"\n"
+
+#: droplang.c:335
+#, c-format
+msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgstr "  -d, --dbname=NOME_DB      database dal quale eliminare il linguaggio\n"
+
+#: dropuser.c:103
+msgid "Enter name of role to drop: "
+msgstr "Inserisci il nome dell'utente da eliminare:"
+
+#: dropuser.c:107
+#, c-format
+msgid "Role \"%s\" will be permanently removed.\n"
+msgstr "L'utente \"%s\" sarà definitivamente eliminato.\n"
+
+#: dropuser.c:123
+#, c-format
+msgid "%s: removal of role \"%s\" failed: %s"
+msgstr "%s: eliminazione dell'utente \"%s\" fallita: %s"
+
+#: dropuser.c:138
+#, c-format
+msgid ""
+"%s removes a PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s elimina un utente PostgreSQL.\n"
+"\n"
+
+#: dropuser.c:149
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=UTENTE     nome utente con cui collegarsi (non quello da eliminare)\n"
+
+#: clusterdb.c:129
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: impossibile riordinare tutti i database ed uno specifico nello stesso momento\n"
+
+#: clusterdb.c:135
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: impossibile riordinare una tabella specifica in tutti i database\n"
+
+#: clusterdb.c:187
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: il riordino della tabella \"%s\" nel database \"%s\" è fallito: %s"
+
+#: clusterdb.c:190
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: il riordino del database \"%s\" è fallito: %s"
+
+#: clusterdb.c:219
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: riordino del database \"%s\"\n"
+
+#: clusterdb.c:235
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s riordina tutte le tabelle precedentemente riordinate nel database.\n"
+"\n"
+
+#: clusterdb.c:237
+#: vacuumdb.c:263
+#: reindexdb.c:314
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPZIONI]... [NOME_DB]\n"
+
+#: clusterdb.c:239
+#, c-format
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 riordina tutti i database\n"
+
+#: clusterdb.c:240
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=NOME_DB       database da riordinare\n"
+
+#: clusterdb.c:242
+#: reindexdb.c:320
+#, c-format
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               non stampare messaggi\n"
+
+#: clusterdb.c:243
+#, c-format
+msgid "  -t, --table=TABLE         cluster specific table only\n"
+msgstr "  -t, --table=TABELLA         riordina solo una tabella\n"
+
+#: clusterdb.c:244
+#, c-format
+msgid "  -v, --verbose             write a lot of output\n"
+msgstr "  -v, --verbose                   mostra un output completo\n"
+
+#: clusterdb.c:253
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"Consulta la descrizione del comando SQL CLUSTER per maggiori informazioni.\n"
+
+#: vacuumdb.c:146
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: impossibile effettuare la pulizia di tutti i database e di uno in particolare nello stesso momento\n"
+
+#: vacuumdb.c:152
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: impossibile effettuare la pulizia di una tabella specifica in tutti i database\n"
+
+#: vacuumdb.c:212
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: la pulizia della tabella \"%s\" nel database \"%s\" è fallito: %s"
+
+#: vacuumdb.c:215
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: la pulizia del database \"%s\" è fallito: %s"
+
+#: vacuumdb.c:245
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: pulizia del database \"%s\"\n"
+
+#: vacuumdb.c:261
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s pulisce ed analizza un database PostgreSQL.\n"
+"\n"
+
+#: vacuumdb.c:265
+#, c-format
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       pulisci tutti i database\n"
+
+#: vacuumdb.c:266
+#, c-format
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=NOME_DB             database da pulire\n"
+
+#: vacuumdb.c:267
+#, c-format
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      mostra i comandi inviati al server\n"
+
+#: vacuumdb.c:268
+#, c-format
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      esegui una pulizia completa\n"
+
+#: vacuumdb.c:269
+#, c-format
+msgid "  -F, --freeze                    freeze row transaction information\n"
+msgstr "  -F, --freeze                    congela le informazioni per la transazione sulla riga\n"
+
+#: vacuumdb.c:270
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     non stampare alcun messaggio\n"
+
+#: vacuumdb.c:271
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='TABELLA[(COLONNE)]'  pulisci solamente una tabella specifica\n"
+
+#: vacuumdb.c:272
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   mostra molti messaggi\n"
+
+#: vacuumdb.c:273
+#, c-format
+msgid "  -z, --analyze                   update optimizer hints\n"
+msgstr "  -z, --analyze                   aggiorna i suggerimenti per l'ottimizzazione\n"
+
+#: vacuumdb.c:274
+#, c-format
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          mostra questi aiuti ed esci\n"
+
+#: vacuumdb.c:275
+#, c-format
+msgid "  --version                       output version information, then exit\n"
+msgstr "  --version                       mostra informazioni sulla versione e poi esci\n"
+
+#: vacuumdb.c:282
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"Consulta la descrizione del comando SQL VACUUM per maggiori informazioni.\n"
+
+#: reindexdb.c:138
+#, c-format
+msgid "%s: cannot reindex all databases and a specific one at the same time\n"
+msgstr "%s: impossibile riordinare tutti i database ed uno specifico nello stesso momento\n"
+
+#: reindexdb.c:143
+#, c-format
+msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
+msgstr "%s: impossibile riordinare tutti i database ed uno specifico nello stesso momento\n"
+
+#: reindexdb.c:148
+#, c-format
+msgid "%s: cannot reindex a specific table in all databases\n"
+msgstr "%s: impossibile riordinare una tabella specifica in tutti i database\n"
+
+#: reindexdb.c:153
+#, c-format
+msgid "%s: cannot reindex a specific index in all databases\n"
+msgstr "%s: impossibile riordinare un indice specifico in tutti i database\n"
+
+#: reindexdb.c:164
+#, c-format
+msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
+msgstr "%s: impossibile riordinare una specifica tabella ed i cataloghi di sistema nello stesso momento\n"
+
+#: reindexdb.c:169
+#, c-format
+msgid "%s: cannot reindex a specific index and system catalogs at the same time\n"
+msgstr "%s: impossibile riordinare un indice specifico ed i cataloghi di sistema stesso momento\n"
+
+#: reindexdb.c:238
+#, c-format
+msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: il riordino della tabella \"%s\" nel database \"%s\" è fallito: %s"
+
+#: reindexdb.c:241
+#, c-format
+msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: il riordino di un indice \"%s\" nel database \"%s\" è fallito: %s"
+
+#: reindexdb.c:244
+#, c-format
+msgid "%s: reindexing of database \"%s\" failed: %s"
+msgstr "%s: il riordino del database \"%s\" è fallito: %s"
+
+#: reindexdb.c:273
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: riordino del database \"%s\"\n"
+
+#: reindexdb.c:300
+#, c-format
+msgid "%s: reindexing of system catalogs failed: %s"
+msgstr "%s: riordino dei cataloghi di sistema fallito: %s"
+
+#: reindexdb.c:312
+#, c-format
+msgid ""
+"%s reindexes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s riordina un database PostgreSQL.\n"
+"\n"
+
+#: reindexdb.c:316
+#, c-format
+msgid "  -a, --all                 reindex all databases\n"
+msgstr "  -a, --all                 riordina tutti i database\n"
+
+#: reindexdb.c:317
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to reindex\n"
+msgstr "  -d, --dbname=NOME_DB       database da riordinare\n"
+
+#: reindexdb.c:319
+#, c-format
+msgid "  -i, --index=INDEX         recreate specific index only\n"
+msgstr "  -I, --index=NOME         ricrea l'indice specificato\n"
+
+#: reindexdb.c:321
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --show                mostra le impostazioni interne\n"
+
+#: reindexdb.c:322
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table only\n"
+msgstr "  -t, --table=TABELLA         riordina solo una tabella\n"
+
+#: reindexdb.c:331
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr ""
+"\n"
+"Consulta la descrizione del comando SQL REINDEX per maggiori informazioni.\n"
+
+#: common.c:45
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: impossibile acquisire informazioni sull'utente: %s\n"
+
+#: common.c:56
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: impossibile determinare il nome utente: %s\n"
+
+#: common.c:103
+#: common.c:127
+msgid "Password: "
+msgstr "Password: "
+
+#: common.c:116
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: impossibile connettersi al database %s\n"
+
+#: common.c:138
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: impossibile connettersi al database %s: %s"
+
+#: common.c:162
+#: common.c:190
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: query fallita: %s"
+
+#: common.c:164
+#: common.c:192
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: query eseguita: %s\n"
+
+#: common.c:238
+#, c-format
+msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
+msgstr "pg_strdup: impossibile duplicare un  puntatore nullo (errore interno)\n"
+
+#: common.c:244
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria esaurita\n"
+
+#. translator: abbreviation for "yes"
+#: common.c:255
+msgid "y"
+msgstr "s"
+
+#. translator: abbreviation for "no"
+#: common.c:257
+msgid "n"
+msgstr "n"
+
+#: common.c:268
+#, c-format
+msgid "%s (%s/%s) "
+msgstr "%s (%s/%s) "
+
+#: common.c:289
+#, c-format
+msgid "Please answer \"%s\" or \"%s\".\n"
+msgstr "Prego rispondere \"%s\" o \"%s\".\n"
+
+#: common.c:367
+#: common.c:400
+#, c-format
+msgid "Cancel request sent\n"
+msgstr "Cancella la richiesta spedita\n"
+
+#: common.c:369
+#: common.c:402
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "Impossibile mandare la richiesta di cancellazione: %s"
+

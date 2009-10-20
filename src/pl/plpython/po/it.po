@@ -1,0 +1,283 @@
+#
+# Translation of plpython to Italian
+# PostgreSQL Project
+#
+# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
+# http://www.itpug.org/ - info@itpug.org
+#
+# Traduttori:
+#  * Flavio Spada <f.spada@sbv.mi.it>
+# 
+# Revisori:
+#  * Gabriele Bartolini <gabriele.bartolini@2ndQuadrant.it>
+#
+# Copyright (c) 2009, Associazione Culturale ITPUG
+# Distributed under the same license of the PostgreSQL project
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plpython-it\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2009-07-11 05:48+0000\n"
+"PO-Revision-Date: 2009-07-17 00:38:50+0200\n"
+"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: plpython.c:428
+#: plpython.c:453
+msgid "unexpected return value from trigger procedure"
+msgstr "valore di ritorno inatteso dalla prodedura di trigger"
+
+#: plpython.c:429
+msgid "Expected None or a string."
+msgstr "Atteso None o una stringa."
+
+#: plpython.c:443
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "la funzione PL/Python trigger ha restituito \"MODIFY\" in un trigger DELETE -- ignorato"
+
+#: plpython.c:454
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Atteso None, \"OK\", \"SKIP\", o \"MODIFY\"."
+
+#: plpython.c:501
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] cancellato, impossibile modificare la riga"
+
+#: plpython.c:504
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] non è un dizionario"
+
+#: plpython.c:523
+#, c-format
+msgid "name of TD[\"new\"] attribute at ordinal position %d is not a string"
+msgstr "il nome dell'attributo TD[\"new\"] alla posizione %d non è una stringa"
+
+#: plpython.c:527
+#, c-format
+msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
+msgstr "la chiave \"%s\" trovata in TD[\"new\"] non esiste come colonna nella riga del trigger"
+
+#: plpython.c:548
+#, c-format
+msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
+msgstr "impossibile calcolare la rappresentazione di tipo stringa dell'oggetto Python nella funzione PL/Python \"%s\" mentre si sta modificando la riga di trigger"
+
+#: plpython.c:630
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "impossibile creare un nuovo dizionario mentre si stanno costruendo gli argomenti del trigger"
+
+#: plpython.c:838
+msgid "unsupported set function return mode"
+msgstr "modalità di ritorno della funzione set non supportata"
+
+#: plpython.c:839
+msgid "PL/Python set-returning functions only support returning only value per call."
+msgstr "le funzioni set-returning di PL/Python supportano il valore di ritorno solo una volta per chiamata"
+
+#: plpython.c:851
+msgid "returned object cannot be iterated"
+msgstr "l'oggetto ritornato non può essere iterato"
+
+#: plpython.c:852
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "le funzioni set-returning di PL/Python devono tornare un oggetto iterabile"
+
+#: plpython.c:880
+msgid "error fetching next item from iterator"
+msgstr "errore nell'ottenere l'elemento successivo dall'iteratore"
+
+#: plpython.c:898
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "la funzione PL/Python con valore di ritorno \"void\" non ha restituito None"
+
+#: plpython.c:945
+#, c-format
+msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
+msgstr "impossibile creare una rappresentazione di tipo stringa dell'oggetto Python nella funzione PL/Python \"%s\" durante la creazione del valore di ritorno"
+
+#: plpython.c:994
+#, c-format
+msgid "PL/Python function \"%s\" failed"
+msgstr "la funzione PL/Python \"%s\" è fallita"
+
+#: plpython.c:1064
+#, c-format
+msgid "PyList_SetItem() failed for PL/Python function \"%s\" while setting up arguments"
+msgstr "PyList_SetItem() è fallita eseguendo la funzione PL/Python \"%s\" durante l'impostazione degli argomenti"
+
+#: plpython.c:1068
+#, c-format
+msgid "PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up arguments"
+msgstr "PyDict_SetItemString() è fallita eseguendo la funzione PL/Python \"%s\" durante l'impostazione degli argomenti"
+
+#: plpython.c:1246
+msgid "trigger functions can only be called as triggers"
+msgstr "le funzioni trigger possono essere chiamate solo come trigger"
+
+#: plpython.c:1250
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "le funzioni PL/Python non possono tornare il tipo %s"
+
+#: plpython.c:1329
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "le funzioni PL/Python non possono accettare il tipo %s"
+
+#: plpython.c:1423
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "impossibile compilare la funzione PL/Python \"%s\""
+
+#: plpython.c:1735
+msgid "could not create new dictionary"
+msgstr "impossibile creare il nuovo dizionario"
+
+#: plpython.c:1822
+#: plpython.c:1911
+#: plpython.c:1982
+msgid "could not compute string representation of Python object"
+msgstr "impossibile calcolare la rappresentazione di tipo stringa dell'oggetto Python"
+
+#: plpython.c:1836
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "la chiave \"%s\" non è stata trovata nel dizionario"
+
+#: plpython.c:1837
+msgid "To return null in a column, add the value None to the mapping with the key named after the column."
+msgstr "Per ritornare null in una colonna, inserire nella mappa il valore None in corrispondenza del nome di colonna come chiave."
+
+#: plpython.c:1881
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "la lunghezza della sequenza ritornata non rispetta il numero di colonne presenti nella riga"
+
+#: plpython.c:1995
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "l'attributo \"%s\" non esiste nell'oggetto Python"
+
+#: plpython.c:1996
+msgid "To return null in a column, let the returned object have an attribute named after column with value None."
+msgstr "Per ritornare null in una colonna, assicurarsi che all'oggetto di ritorno corrisponda nel dizionario un attributo con valore None."
+
+#: plpython.c:2218
+msgid "plan.status takes no arguments"
+msgstr "plan.status non accetta argomenti"
+
+#: plpython.c:2348
+#: plpython.c:2487
+msgid "transaction aborted"
+msgstr "transazione abortita"
+
+#: plpython.c:2355
+msgid "invalid arguments for plpy.prepare"
+msgstr "argomenti non validi per plpy.prepare"
+
+#: plpython.c:2362
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "il secondo argomento di plpy.prepare deve essere una sequenza"
+
+#: plpython.c:2407
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: il nome del tipo nella posizione %d non è una stringa"
+
+#: plpython.c:2434
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare non supporta tipi composti"
+
+#: plpython.c:2462
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "errore non riconosciuto in PLy_spi_prepare"
+
+#: plpython.c:2464
+#: plpython.c:2628
+#: plpython.c:2675
+#, c-format
+msgid "in PL/Python function \"%s\""
+msgstr "nella funzione PL/Python \"%s\""
+
+#: plpython.c:2500
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute si aspetta una query o un plan"
+
+#: plpython.c:2517
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute richiede una sequenza come secondo argomento"
+
+#: plpython.c:2533
+#: plpython.c:2562
+#, c-format
+msgid "PL/Python function \"%s\" could not execute plan"
+msgstr "la funzione PL/Python \"%s\" non può eseguire il piano"
+
+#: plpython.c:2537
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Sequenza attesa per l'argomento %d, ricevuto %d: %s"
+msgstr[1] "Sequenza attesa di %d argomenti, ricevuti %d: %s"
+
+#: plpython.c:2626
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "errore non riconosciuto nella funzione PLy_spi_execute_plan"
+
+#: plpython.c:2647
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "SPI_execute_plan ha fallito: %s"
+
+#: plpython.c:2673
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "errore non riconosciuto nella funzione PLy_spi_execute_query"
+
+#: plpython.c:2684
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "SPI_execute ha fallito: %s"
+
+#: plpython.c:2744
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "errore non riconosciuto nella funzione PLy_spi_execute_fetch_result"
+
+#: plpython.c:2780
+msgid "untrapped error in initialization"
+msgstr "errore non catturato durante l'inizializzazione"
+
+#: plpython.c:2783
+msgid "could not create procedure cache"
+msgstr "impossibile creare la procedura cache"
+
+#: plpython.c:2795
+msgid "could not import \"__main__\" module"
+msgstr "impossibile importare il modulo \"__main__\""
+
+#: plpython.c:2802
+msgid "could not initialize globals"
+msgstr "impossibile inizializzare le variabili globali"
+
+#: plpython.c:2904
+msgid "could not parse error message in plpy.elog"
+msgstr "impossibile interpretare il messaggio di errore in plpy.elog"
+
+#: plpython.c:3020
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python: %s"
+
+#: plpython.c:3021
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpython.c:3111
+msgid "out of memory"
+msgstr "memoria esaurita"
+
