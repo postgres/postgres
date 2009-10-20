@@ -17,9 +17,12 @@ For All Releases (major, minor, beta, RC)
 * Translation updates
 	Translations are kept in the project "pgtranslation" on PgFoundry.
 	1. Check out the messages module (of the right branch).
-	2. Check out the admin module.
-	3. Run "sh .../admin/cp-po .../messages .../pgsql
-	4. Commit.
+	2. Tag the messages: cvs tag -c RELx_y_z
+	3. Check out the admin module.
+	4. From babel.postgresql.org, download the "qualified list"
+	   for the respective branch.
+	5. Run "sh .../admin/cp-po -L qualified-list-xxx.txt .../messages .../pgsql
+	6. Commit.
 
 
 For Major Releases
