@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.5 2009/10/20 19:52:58 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release-8.5.sgml,v 1.6 2009/10/21 19:43:06 petere Exp $ -->
 
 <sect1 id="release-8-5">
   <title>Release 8.5alpha2</title>
@@ -53,59 +53,50 @@
     </para>
   </sect2>
   <sect2>
+    <title>Testing</title>
+    <para>
+      The primary reason we release alphas is to get users to test new 
+      features as early as possible.  If you are interested in helping
+      with organized testing, please see 
+      <ulink url="http://wiki.postgresql.org/wiki/HowToBetaTest">the 
+      testing information page</ulink>.
+      </para>
+  </sect2>
+  <sect2>
     <title>Changes</title>
     <sect3>
       <title>SQL Features</title>
       <itemizedlist>
-       <listitem override="box">
-        <para>
-         <emphasis>Modify the definition of window-function PARTITION
-         BY and ORDER BY clauses so that their elements are always
-         taken as simple expressions over the query's input
-         columns.</>
-        </para>
-       </listitem>
        <listitem>
         <para>
-         <emphasis>Fix bug with WITH RECURSIVE immediately inside WITH
-         RECURSIVE.</>
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <emphasis>Define a new, more extensible syntax for COPY options.</>
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <emphasis>Add ALTER DEFAULT PRIVILEGES command, which allows
-         users to adjust the privileges that will be applied to
-         subsequently-created objects.</>
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <emphasis>Support use of function argument names to identify which
-         actual arguments match which function parameters. The syntax
-         uses AS, for example funcname(value AS arg1, anothervalue AS
-         arg2).</>
+         <emphasis>Add SQL-compliant triggers on columns, which fire only if
+         certain columns are named in the UPDATE's SET list.</>
         </para>
        </listitem>
        <listitem>
         <para>
          <emphasis>Add CREATE LIKE INCLUDING COMMENTS and STORAGE, and INCLUDING
-         ALL shortcut.</>
+         ALL shortcut to allow users to make an exact copy of a table including
+         all options and features.</>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add GRANT/REVOKE ON ALL TABLES/SEQUENCES/FUNCTIONS IN SCHEMA.</>
+         <emphasis>Define a new, more extensible syntax for COPY options
+         in order to support additional COPY options in the future.</>
         </para>
        </listitem>
        <listitem>
         <para>
-         <emphasis>Add SQL-compliant triggers on columns, ie fire only if
-         certain columns are named in the UPDATE's SET list.</>
+         <emphasis>Modify the definition of window-function PARTITION
+         BY and ORDER BY clauses so that their elements are always
+         taken as simple expressions over the query's input
+         columns. This fixes a bug.</>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Fix bug with nested WITH RECURSIVE statements.</>
         </para>
        </listitem>
        <listitem>
@@ -171,7 +162,16 @@
        <listitem>
         <para>
          <emphasis>Implement &quot;join removal&quot; for cases where the inner side
-          of a left join is unique and is not referenced above the join.</>
+          of a left join is unique and is not referenced above the join.  This should
+          speed up many ORM-generated and reporting tool queries.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Remove the use of the flat files pg_auth and
+         pg_database in order to improve performance. (Warning: pgbouncer
+         and possibly other tools currently suggest referring to the pg_auth
+         file for its user database. Such schemes will no longer work.)</emphasis>
         </para>
        </listitem>
         <listitem>
@@ -249,7 +249,7 @@
        <listitem>
         <para>
          <emphasis>Make it possibly to specify server configuration parameters
-         per user and per database. psql has gained a drds command to
+         per user-database combination. Add a \drds command to psql to
          display the settings.</>
         </para>
        </listitem>
@@ -258,6 +258,14 @@
          <emphasis>Allow the collection of statistics on sequences.</>
         </para>
        </listitem>
+      <listitem>
+       <para>
+        <emphasis>Increase the maximum value of extra_float_digits to
+        3, and have pg_dump use that value when the backend is new
+        enough to allow it, because it is possible to need 3 extra
+        digits for float4 values (but not for float8 values).</>
+       </para>
+      </listitem>
         <listitem>
           <para>
             Add the ability to include the SQLSTATE error code of any error
@@ -275,25 +283,26 @@
       </itemizedlist>
     </sect3>
     <sect3>
-     <title>Server Configuration</title>
-     <itemizedlist>
-      <listitem>
-       <para>
-        <emphasis>Increase the maximum value of extra_float_digits to
-        3, and have pg_dump use that value when the backend is new
-        enough to allow it, because it is possible to need 3 extra
-        digits for float4 values (but not for float8 values).</>
-       </para>
-      </listitem>
-     </itemizedlist>
-    </sect3>
-    <sect3>
       <title>Security</title>
       <itemizedlist>
        <listitem>
         <para>
+         <emphasis>Add ALTER DEFAULT PRIVILEGES command, which allows
+         users to adjust the privileges that will be applied to
+         subsequently-created objects.</>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <emphasis>Add GRANT/REVOKE ON ALL TABLES/SEQUENCES/FUNCTIONS IN SCHEMA.
+         This makes it easier to manage permissions on database objects.</emphasis>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
          <emphasis>Support &quot;samehost&quot; and &quot;samenet&quot; specifications
-         in pg_hba.conf.</emphasis>
+         in pg_hba.conf.  This allows users with dynamic server addresses to run
+         PostgreSQL without frequently modifying pg_hba.conf</emphasis>
         </para>
        </listitem>
         <listitem>
@@ -375,14 +384,6 @@
         </para>
        </listitem>
        <listitem>
-        <para>
-         <emphasis>Remove the use of the flat files pg_auth and
-         pg_database. (At least pgbouncer currently suggests referring
-         to the pg_auth file for its user database. Such schemes will
-         no longer work.)</emphasis>
-        </para>
-       </listitem>
-       <listitem>
           <para>
             pg_dump/pg_restore --clean now drops large objects.
           </para>
@@ -436,6 +437,14 @@
        </listitem>
        <listitem>
         <para>
+         <emphasis>Support use of function argument names to identify which
+         actual arguments match which function parameters. The syntax
+         uses AS, for example funcname(value AS arg1, anothervalue AS
+         arg2).</>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
          <emphasis>Fix/improve bytea and boolean support in PL/Python. Data type
          conversion into and out of PL/Python previously went through
          an intermediate string representation, which caused various
@@ -459,7 +468,7 @@
        </listitem>
        <listitem>
         <para>
-         <emphasis>Allow plpgsql IN parameters to be assigned to.</>
+         <emphasis>PL/pgSQL IN parameters now accept value assignments.</>
         </para>
        </listitem>
        <listitem>
@@ -470,8 +479,8 @@
        </listitem>
        <listitem>
         <para>
-         <emphasis>Allow MOVE FORWARD n, MOVE BACKWARD n, MOVE FORWARD ALL, MOVE
-         BACKWARD ALL in PL/pgSQL.</>
+         <emphasis>Allow cursor commands MOVE FORWARD n, MOVE BACKWARD n, 
+         MOVE FORWARD ALL, MOVE BACKWARD ALL in PL/pgSQL.</>
         </para>
        </listitem>
         <listitem>
@@ -498,7 +507,9 @@
       <itemizedlist>
        <listitem>
         <para>
-         <emphasis>Assorted improvements in contrib/hstore.</>
+         <emphasis>Multiple improvements in contrib/hstore, including
+         raising limits on keys and values, conversions to and from
+         records and arrays, and support for GROUP BY and DISTINCT.</emphasis>
         </para>
        </listitem>
         <listitem>
@@ -528,8 +539,8 @@
       </itemizedlist>
     </sect3>
     <sect3>
-     <title>Programming Tools</title>
-     <itemizedlist>
+      <title>Development</title>
+      <itemizedlist>
       <listitem>
        <para>
         <emphasis>Add ECPG function that returns the current transaction status.</>
@@ -543,14 +554,9 @@
       <listitem>
        <para>
         <emphasis>Make libpq reject non-numeric and out-of-range port numbers with a
-        suitable error message.</>
+        suitable error message.</emphasis>
        </para>
       </listitem>
-     </itemizedlist>
-    </sect3>
-    <sect3>
-      <title>Development</title>
-      <itemizedlist>
         <listitem>
           <para>
             Functions which conflict with C++ reserved words have been renamed,
