@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.490 2009/10/13 22:46:13 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.491 2009/10/21 20:38:58 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3308,8 +3308,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
 
     <para>
      <acronym>POSIX</acronym> regular expressions provide a more
-     powerful means for 
-     pattern matching than the <function>LIKE</function> and
+     powerful means for pattern matching than the <function>LIKE</function> and
      <function>SIMILAR TO</> operators.
      Many Unix tools such as <command>egrep</command>,
      <command>sed</command>, or <command>awk</command> use a pattern
@@ -3572,12 +3571,12 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
 
    <note>
     <para>
-     The form of regular expressions accepted by
-     <productname>PostgreSQL</> can be chosen by setting the <xref
-     linkend="guc-regex-flavor"> run-time parameter.  The usual
-     setting is <literal>advanced</>, but one might choose
-     <literal>extended</> for backwards compatibility with
-     pre-7.4 releases of <productname>PostgreSQL</>.
+     <productname>PostgreSQL</> always initially presumes that a regular
+     expression follows the ARE rules.  However, the more limited ERE or
+     BRE rules can be chosen by prepending an <firstterm>embedded option</>
+     to the RE pattern, as described in <xref linkend="posix-metasyntax">.
+     This can be useful for compatibility with applications that expect
+     exactly the <acronym>POSIX</acronym> 1003.2 rules.
     </para>
    </note>
 
@@ -4278,7 +4277,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
        <entry> (where <replaceable>m</> is a nonzero digit, and
        <replaceable>nn</> is some more digits, and the decimal value
        <replaceable>mnn</> is not greater than the number of closing capturing
-       parentheses seen so far) 
+       parentheses seen so far)
        a back reference to the <replaceable>mnn</>'th subexpression </entry>
        </row>
       </tbody>
@@ -4310,12 +4309,12 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    </para>
 
    <para>
-    Normally the flavor of RE being used is determined by
-    <varname>regex_flavor</>.
-    However, this can be overridden by a <firstterm>director</> prefix.
+    An RE can begin with one of two special <firstterm>director</> prefixes.
     If an RE begins with <literal>***:</>,
-    the rest of the RE is taken as an ARE regardless of
-    <varname>regex_flavor</>.
+    the rest of the RE is taken as an ARE.  (This normally has no effect in
+    <productname>PostgreSQL</>, since REs are assumed to be AREs;
+    but it does have an effect if ERE or BRE mode had been specified by
+    the <replaceable>flags</> parameter to a regex function.)
     If an RE begins with <literal>***=</>,
     the rest of the RE is taken to be a literal string,
     with all characters considered ordinary characters.
@@ -4326,10 +4325,14 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     a sequence <literal>(?</><replaceable>xyz</><literal>)</>
     (where <replaceable>xyz</> is one or more alphabetic characters)
     specifies options affecting the rest of the RE.
-    These options override any previously determined options (including
-    both the RE flavor and case sensitivity).
+    These options override any previously determined options &mdash;
+    in particular, they can override the case-sensitivity behavior implied by
+    a regex operator, or the <replaceable>flags</> parameter to a regex
+    function.
     The available option letters are
     shown in <xref linkend="posix-embedded-options-table">.
+    Note that these same option letters are used in the <replaceable>flags</>
+    parameters of regex functions.
    </para>
 
    <table id="posix-embedded-options-table">
@@ -4700,10 +4703,6 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       </para>
      </listitem>
     </itemizedlist>
-
-    While these differences are unlikely to create a problem for most
-    applications, you can avoid them if necessary by
-    setting <varname>regex_flavor</> to <literal>extended</>.
    </para>
    </sect3>
 

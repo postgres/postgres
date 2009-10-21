@@ -186,68 +186,68 @@ DROP ROLE temp_reset_user;
 -- Tests for function-local GUC settings
 --
 
-set regex_flavor = advanced;
+set work_mem = '3MB';
 
 create function report_guc(text) returns text as
 $$ select current_setting($1) $$ language sql
-set regex_flavor = basic;
+set work_mem = '1MB';
 
-select report_guc('regex_flavor'), current_setting('regex_flavor');
+select report_guc('work_mem'), current_setting('work_mem');
 
 -- this should draw only a warning
 alter function report_guc(text) set search_path = no_such_schema;
 
 -- with error occurring here
-select report_guc('regex_flavor'), current_setting('regex_flavor');
+select report_guc('work_mem'), current_setting('work_mem');
 
-alter function report_guc(text) reset search_path set regex_flavor = extended;
+alter function report_guc(text) reset search_path set work_mem = '2MB';
 
-select report_guc('regex_flavor'), current_setting('regex_flavor');
+select report_guc('work_mem'), current_setting('work_mem');
 
 alter function report_guc(text) reset all;
 
-select report_guc('regex_flavor'), current_setting('regex_flavor');
+select report_guc('work_mem'), current_setting('work_mem');
 
 -- SET LOCAL is restricted by a function SET option
 create or replace function myfunc(int) returns text as $$
 begin
-  set local regex_flavor = extended;
-  return current_setting('regex_flavor');
+  set local work_mem = '2MB';
+  return current_setting('work_mem');
 end $$
 language plpgsql
-set regex_flavor = basic;
+set work_mem = '1MB';
 
-select myfunc(0), current_setting('regex_flavor');
+select myfunc(0), current_setting('work_mem');
 
 alter function myfunc(int) reset all;
 
-select myfunc(0), current_setting('regex_flavor');
+select myfunc(0), current_setting('work_mem');
 
-set regex_flavor = advanced;
+set work_mem = '3MB';
 
 -- but SET isn't
 create or replace function myfunc(int) returns text as $$
 begin
-  set regex_flavor = extended;
-  return current_setting('regex_flavor');
+  set work_mem = '2MB';
+  return current_setting('work_mem');
 end $$
 language plpgsql
-set regex_flavor = basic;
+set work_mem = '1MB';
 
-select myfunc(0), current_setting('regex_flavor');
+select myfunc(0), current_setting('work_mem');
 
-set regex_flavor = advanced;
+set work_mem = '3MB';
 
 -- it should roll back on error, though
 create or replace function myfunc(int) returns text as $$
 begin
-  set regex_flavor = extended;
+  set work_mem = '2MB';
   perform 1/$1;
-  return current_setting('regex_flavor');
+  return current_setting('work_mem');
 end $$
 language plpgsql
-set regex_flavor = basic;
+set work_mem = '1MB';
 
 select myfunc(0);
-select current_setting('regex_flavor');
-select myfunc(1), current_setting('regex_flavor');
+select current_setting('work_mem');
+select myfunc(1), current_setting('work_mem');

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.231 2009/10/21 20:22:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.232 2009/10/21 20:38:58 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4768,24 +4768,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         because the default behavior of ordinary strings will change
         in a future release for SQL compatibility.  This variable can
         be enabled to help detect applications that will break.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-regex-flavor" xreflabel="regex_flavor">
-      <term><varname>regex_flavor</varname> (<type>enum</type>)</term>
-      <indexterm><primary>regular expressions</></>
-      <indexterm>
-       <primary><varname>regex_flavor</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        The regular expression <quote>flavor</> can be set to
-        <literal>advanced</>, <literal>extended</>, or <literal>basic</>.
-        The default is <literal>advanced</>.  The <literal>extended</>
-        setting might be useful for exact backwards compatibility with
-        pre-7.4 releases of <productname>PostgreSQL</>.  See
-        <xref linkend="posix-syntax-details"> for details.
        </para>
       </listitem>
      </varlistentry>

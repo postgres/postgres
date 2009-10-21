@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.262 2009/08/04 16:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.263 2009/10/21 20:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4580,7 +4580,6 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	char	   *patt;
 	char	   *rest;
 	Oid			typeid = patt_const->consttype;
-	bool		is_basic = regex_flavor_is_basic();
 	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
 
 	/*
@@ -4598,14 +4597,12 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	/*
 	 * Check for ARE director prefix.  It's worth our trouble to recognize
-	 * this because similar_escape() uses it.
+	 * this because similar_escape() used to use it, and some other code
+	 * might still use it, to force ARE mode.
 	 */
 	pos = 0;
 	if (strncmp(patt, "***:", 4) == 0)
-	{
 		pos = 4;
-		is_basic = false;
-	}
 
 	/* Pattern must be anchored left */
 	if (patt[pos] != '^')
@@ -4641,17 +4638,11 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	/*
 	 * We special-case the syntax '^(...)$' because psql uses it.  But beware:
-	 * in BRE mode these parentheses are just ordinary characters.	Also,
 	 * sequences beginning "(?" are not what they seem, unless they're "(?:".
-	 * (We should recognize that, too, because of similar_escape().)
-	 *
-	 * Note: it's a bit bogus to be depending on the current regex_flavor
-	 * setting here, because the setting could change before the pattern is
-	 * used.  We minimize the risk by trusting the flavor as little as we can,
-	 * but perhaps it would be a good idea to get rid of the "basic" setting.
+	 * (We must recognize that because of similar_escape().)
 	 */
 	have_leading_paren = false;
-	if (patt[pos] == '(' && !is_basic &&
+	if (patt[pos] == '(' &&
 		(patt[pos + 1] != '?' || patt[pos + 2] == ':'))
 	{
 		have_leading_paren = true;
@@ -4691,12 +4682,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		/*
 		 * Check for quantifiers.  Except for +, this means the preceding
 		 * character is optional, so we must remove it from the prefix too!
-		 * Note: in BREs, \{ is a quantifier.
 		 */
 		if (patt[pos] == '*' ||
 			patt[pos] == '?' ||
-			patt[pos] == '{' ||
-			(patt[pos] == '\\' && patt[pos + 1] == '{'))
+			patt[pos] == '{')
 		{
 			match_pos = prev_match_pos;
 			pos = prev_pos;
@@ -4711,14 +4700,13 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		/*
 		 * Normally, backslash quotes the next character.  But in AREs,
 		 * backslash followed by alphanumeric is an escape, not a quoted
-		 * character.  Must treat it as having multiple possible matches. In
-		 * BREs, \( is a parenthesis, so don't trust that either. Note: since
-		 * only ASCII alphanumerics are escapes, we don't have to be paranoid
-		 * about multibyte here.
+		 * character.  Must treat it as having multiple possible matches.
+		 * Note: since only ASCII alphanumerics are escapes, we don't have to
+		 * be paranoid about multibyte here.
 		 */
 		if (patt[pos] == '\\')
 		{
-			if (isalnum((unsigned char) patt[pos + 1]) || patt[pos + 1] == '(')
+			if (isalnum((unsigned char) patt[pos + 1]))
 				break;
 			pos++;
 			if (patt[pos] == '\0')

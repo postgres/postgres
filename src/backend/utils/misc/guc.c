@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.522 2009/10/21 20:22:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.523 2009/10/21 20:38:58 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
-#include "regex/regex.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "tcop/tcopprot.h"
@@ -245,13 +244,6 @@ static const struct config_enum_entry log_statement_options[] = {
 	{"ddl", LOGSTMT_DDL, false},
 	{"mod", LOGSTMT_MOD, false},
 	{"all", LOGSTMT_ALL, false},
-	{NULL, 0, false}
-};
-
-static const struct config_enum_entry regex_flavor_options[] = {
-	{"advanced", REG_ADVANCED, false},
-	{"extended", REG_EXTENDED, false},
-	{"basic", REG_BASIC, false},
 	{NULL, 0, false}
 };
 
@@ -2657,15 +2649,6 @@ static struct config_enum ConfigureNamesEnum[] =
 		LOG_LOCAL0, syslog_facility_options, assign_syslog_facility, NULL
 	},
 #endif
-
-	{
-		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Sets the regular expression \"flavor\"."),
-			NULL
-		},
-		&regex_flavor,
-		REG_ADVANCED, regex_flavor_options, NULL, NULL
-	},
 
 	{
 		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.83 2009/10/10 03:50:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.84 2009/10/21 20:38:58 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -37,10 +37,6 @@
 
 #define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \
 	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_PP(_n) : NULL)
-
-
-/* GUC-settable flavor parameter */
-int			regex_flavor = REG_ADVANCED;
 
 
 /* all the options of interest for regex functions */
@@ -347,8 +343,8 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 static void
 parse_re_flags(pg_re_flags *flags, text *opts)
 {
-	/* regex_flavor is always folded into the compile flags */
-	flags->cflags = regex_flavor;
+	/* regex flavor is always folded into the compile flags */
+	flags->cflags = REG_ADVANCED;
 	flags->glob = false;
 
 	if (opts)
@@ -415,16 +411,6 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 
 
 /*
- * report whether regex_flavor is currently BASIC
- */
-bool
-regex_flavor_is_basic(void)
-{
-	return (regex_flavor == REG_BASIC);
-}
-
-
-/*
  *	interface routines called by the function manager
  */
 
@@ -437,7 +423,7 @@ nameregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  NameStr(*n),
 										  strlen(NameStr(*n)),
-										  regex_flavor,
+										  REG_ADVANCED,
 										  0, NULL));
 }
 
@@ -450,7 +436,7 @@ nameregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   NameStr(*n),
 										   strlen(NameStr(*n)),
-										   regex_flavor,
+										   REG_ADVANCED,
 										   0, NULL));
 }
 
@@ -463,7 +449,7 @@ textregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  VARDATA_ANY(s),
 										  VARSIZE_ANY_EXHDR(s),
-										  regex_flavor,
+										  REG_ADVANCED,
 										  0, NULL));
 }
 
@@ -476,7 +462,7 @@ textregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   VARDATA_ANY(s),
 										   VARSIZE_ANY_EXHDR(s),
-										   regex_flavor,
+										   REG_ADVANCED,
 										   0, NULL));
 }
 
@@ -496,7 +482,7 @@ nameicregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  NameStr(*n),
 										  strlen(NameStr(*n)),
-										  regex_flavor | REG_ICASE,
+										  REG_ADVANCED | REG_ICASE,
 										  0, NULL));
 }
 
@@ -509,7 +495,7 @@ nameicregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   NameStr(*n),
 										   strlen(NameStr(*n)),
-										   regex_flavor | REG_ICASE,
+										   REG_ADVANCED | REG_ICASE,
 										   0, NULL));
 }
 
@@ -522,7 +508,7 @@ texticregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  VARDATA_ANY(s),
 										  VARSIZE_ANY_EXHDR(s),
-										  regex_flavor | REG_ICASE,
+										  REG_ADVANCED | REG_ICASE,
 										  0, NULL));
 }
 
@@ -535,7 +521,7 @@ texticregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   VARDATA_ANY(s),
 										   VARSIZE_ANY_EXHDR(s),
-										   regex_flavor | REG_ICASE,
+										   REG_ADVANCED | REG_ICASE,
 										   0, NULL));
 }
 
@@ -555,7 +541,7 @@ textregexsubstr(PG_FUNCTION_ARGS)
 				eo;
 
 	/* Compile RE */
-	re = RE_compile_and_cache(p, regex_flavor);
+	re = RE_compile_and_cache(p, REG_ADVANCED);
 
 	/*
 	 * We pass two regmatch_t structs to get info about the overall match and
@@ -611,7 +597,7 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 	text	   *r = PG_GETARG_TEXT_PP(2);
 	regex_t    *re;
 
-	re = RE_compile_and_cache(p, regex_flavor);
+	re = RE_compile_and_cache(p, REG_ADVANCED);
 
 	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, false));
 }
@@ -684,12 +670,10 @@ similar_escape(PG_FUNCTION_ARGS)
 
 	/*----------
 	 * We surround the transformed input string with
-	 *			***:^(?: ... )$
-	 * which is bizarre enough to require some explanation.  "***:" is a
-	 * director prefix to force the regex to be treated as an ARE regardless
-	 * of the current regex_flavor setting.  We need "^" and "$" to force
-	 * the pattern to match the entire input string as per SQL99 spec.	The
-	 * "(?:" and ")" are a non-capturing set of parens; we have to have
+	 *			^(?: ... )$
+	 * which requires some explanation.  We need "^" and "$" to force
+	 * the pattern to match the entire input string as per SQL99 spec.
+	 * The "(?:" and ")" are a non-capturing set of parens; we have to have
 	 * parens in case the string contains "|", else the "^" and "$" will
 	 * be bound into the first and last alternatives which is not what we
 	 * want, and the parens must be non capturing because we don't want them
@@ -701,13 +685,9 @@ similar_escape(PG_FUNCTION_ARGS)
 	 * We need room for the prefix/postfix plus as many as 2 output bytes per
 	 * input byte
 	 */
-	result = (text *) palloc(VARHDRSZ + 10 + 2 * plen);
+	result = (text *) palloc(VARHDRSZ + 6 + 2 * plen);
 	r = VARDATA(result);
 
-	*r++ = '*';
-	*r++ = '*';
-	*r++ = '*';
-	*r++ = ':';
 	*r++ = '^';
 	*r++ = '(';
 	*r++ = '?';
