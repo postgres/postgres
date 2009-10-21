@@ -12,10 +12,7 @@ DELETE FROM delete_test AS dt WHERE dt.a > 75;
 
 -- if an alias is specified, don't allow the original table name
 -- to be referenced
-BEGIN;
-SET LOCAL add_missing_from = false;
 DELETE FROM delete_test dt WHERE delete_test.a > 25;
-ROLLBACK;
 
 SELECT * FROM delete_test;
 

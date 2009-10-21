@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.244 2009/10/08 02:39:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.245 2009/10/21 20:22:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,14 +500,13 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				name2 = strVal(field2);
 
 				/* Try to identify as a once-qualified column */
-				node = qualifiedNameToVar(pstate, NULL, name1, name2, true,
+				node = qualifiedNameToVar(pstate, NULL, name1, name2,
 										  cref->location);
 				if (node == NULL)
 				{
 					/*
 					 * Not known as a column of any range-table entry, so try
-					 * it as a function call.  Here, we will create an
-					 * implicit RTE for tables not already entered.
+					 * it as a function call.
 					 */
 					node = transformWholeRowRef(pstate, NULL, name1,
 												cref->location);
@@ -545,7 +544,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				name3 = strVal(field3);
 
 				/* Try to identify as a twice-qualified column */
-				node = qualifiedNameToVar(pstate, name1, name2, name3, true,
+				node = qualifiedNameToVar(pstate, name1, name2, name3,
 										  cref->location);
 				if (node == NULL)
 				{
@@ -600,7 +599,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				name4 = strVal(field4);
 
 				/* Try to identify as a twice-qualified column */
-				node = qualifiedNameToVar(pstate, name2, name3, name4, true,
+				node = qualifiedNameToVar(pstate, name2, name3, name4,
 										  cref->location);
 				if (node == NULL)
 				{
@@ -1906,14 +1905,14 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 	int			sublevels_up;
 	Oid			toid;
 
-	/* Look up the referenced RTE, creating it if needed */
+	/* Look up the referenced RTE, failing if not present */
 
 	rte = refnameRangeTblEntry(pstate, schemaname, relname, location,
 							   &sublevels_up);
 
 	if (rte == NULL)
-		rte = addImplicitRTE(pstate,
-							 makeRangeVar(schemaname, relname, location));
+		errorMissingRTE(pstate,
+						makeRangeVar(schemaname, relname, location));
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 

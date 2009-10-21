@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.230 2009/10/03 23:10:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.231 2009/10/21 20:22:38 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4658,37 +4658,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      <title>Previous PostgreSQL Versions</title>
 
      <variablelist>
-
-     <varlistentry id="guc-add-missing-from" xreflabel="add_missing_from">
-      <term><varname>add_missing_from</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>FROM</><secondary>missing</></>
-      <indexterm>
-       <primary><varname>add_missing_from</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        When on, tables that are referenced by a query will be
-        automatically added to the <literal>FROM</> clause if not
-        already present. This behavior does not comply with the SQL
-        standard and many people dislike it because it can mask mistakes
-        (such as referencing a table where you should have referenced
-        its alias). The default is <literal>off</>. This variable can be
-        enabled for compatibility with releases of
-        <productname>PostgreSQL</> prior to 8.1, where this behavior was
-        allowed by default.
-       </para>
-
-       <para>
-        Note that even when this variable is enabled, a warning
-        message will be emitted for each implicit <literal>FROM</>
-        entry referenced by a query. Users are encouraged to update
-        their applications to not rely on this behavior, by adding all
-        tables referenced by a query to the query's <literal>FROM</>
-        clause (or its <literal>USING</> clause in the case of
-        <command>DELETE</>).
-       </para>
-      </listitem>
-     </varlistentry>
 
      <varlistentry id="guc-array-nulls" xreflabel="array_nulls">
       <term><varname>array_nulls</varname> (<type>boolean</type>)</term>

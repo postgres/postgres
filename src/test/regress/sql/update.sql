@@ -52,9 +52,6 @@ UPDATE update_test SET (a,b) = (select a,b FROM update_test where c = 'foo')
 
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
-BEGIN;
-SET LOCAL add_missing_from = false;
 UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
-ROLLBACK;
 
 DROP TABLE update_test;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.125 2009/09/18 05:00:42 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.126 2009/10/21 20:22:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1451,12 +1451,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     <productname>PostgreSQL</productname> releases prior to
     8.1 would accept queries of this form, and add an implicit entry
     to the query's <literal>FROM</literal> clause for each table
-    referenced by the query. This is no longer the default behavior,
-    because it does not comply with the SQL standard, and is
-    considered by many to be error-prone. For compatibility with
-    applications that rely on this behavior the <xref
-    linkend="guc-add-missing-from"> configuration variable can be
-    enabled.
+    referenced by the query. This is no longer allowed.
    </para>
   </refsect2>
 

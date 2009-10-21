@@ -35,10 +35,7 @@ insert into quadtable values (2, ((null,4.4),(5.5,6.6)));
 
 select * from quadtable;
 
-begin;
-set local add_missing_from = false;
 select f1, q.c1 from quadtable;		-- fails, q is a table reference
-rollback;
 
 select f1, (q).c1, (qq.q).c1.i from quadtable qq;
 

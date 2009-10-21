@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.143 2009/07/16 06:33:43 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.144 2009/10/21 20:22:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,6 @@
 #include "utils/syscache.h"
 
 
-/* GUC parameter */
-bool		add_missing_from;
-
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
 						const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
@@ -51,7 +48,6 @@ static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				int location, bool include_dropped,
 				List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
-static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
 
 /*
@@ -249,7 +245,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
  * visible in the p_relnamespace lists.  This behavior is invalid per the SQL
  * spec, and it may give ambiguous results (there might be multiple equally
  * valid matches, but only one will be returned).  This must be used ONLY
- * as a heuristic in giving suitable error messages.  See warnAutoRange.
+ * as a heuristic in giving suitable error messages.  See errorMissingRTE.
  *
  * Notice that we consider both matches on actual relation (or CTE) name
  * and matches on alias.
@@ -573,7 +569,6 @@ qualifiedNameToVar(ParseState *pstate,
 				   char *schemaname,
 				   char *refname,
 				   char *colname,
-				   bool implicitRTEOK,
 				   int location)
 {
 	RangeTblEntry *rte;
@@ -581,14 +576,8 @@ qualifiedNameToVar(ParseState *pstate,
 
 	rte = refnameRangeTblEntry(pstate, schemaname, refname, location,
 							   &sublevels_up);
-
 	if (rte == NULL)
-	{
-		if (!implicitRTEOK)
-			return NULL;
-		rte = addImplicitRTE(pstate,
-							 makeRangeVar(schemaname, refname, location));
-	}
+		return NULL;
 
 	return scanRTEForColumn(pstate, rte, colname, location);
 }
@@ -1528,42 +1517,6 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 }
 
 /*
- * Add a POSTQUEL-style implicit RTE.
- *
- * We assume caller has already checked that there is no RTE or join with
- * a conflicting name.
- */
-RangeTblEntry *
-addImplicitRTE(ParseState *pstate, RangeVar *relation)
-{
-	CommonTableExpr *cte = NULL;
-	Index		levelsup = 0;
-	RangeTblEntry *rte;
-
-	/* issue warning or error as needed */
-	warnAutoRange(pstate, relation);
-
-	/* if it is an unqualified name, it might be a CTE reference */
-	if (!relation->schemaname)
-		cte = scanNameSpaceForCTE(pstate, relation->relname, &levelsup);
-
-	/*
-	 * Note that we set inFromCl true, so that the RTE will be listed
-	 * explicitly if the parsetree is ever decompiled by ruleutils.c. This
-	 * provides a migration path for views/rules that were originally written
-	 * with implicit-RTE syntax.
-	 */
-	if (cte)
-		rte = addRangeTableEntryForCTE(pstate, cte, levelsup, NULL, true);
-	else
-		rte = addRangeTableEntry(pstate, relation, NULL, false, true);
-	/* Add to joinlist and relnamespace, but not varnamespace */
-	addRTEtoQuery(pstate, rte, true, true, false);
-
-	return rte;
-}
-
-/*
  * expandRTE -- expand the columns of a rangetable entry
  *
  * This creates lists of an RTE's column names (aliases if provided, else
@@ -2417,13 +2370,13 @@ attnumTypeId(Relation rd, int attid)
 }
 
 /*
- * Generate a warning or error about an implicit RTE, if appropriate.
+ * Generate a suitable error about a missing RTE.
  *
- * If ADD_MISSING_FROM is not enabled, raise an error. Otherwise, emit
- * a warning.
+ * Since this is a very common type of error, we work rather hard to
+ * produce a helpful message.
  */
-static void
-warnAutoRange(ParseState *pstate, RangeVar *relation)
+void
+errorMissingRTE(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
 	int			sublevels_up;
@@ -2431,7 +2384,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * Check to see if there are any potential matches in the query's
-	 * rangetable.	This affects the message we provide.
+	 * rangetable.
 	 */
 	rte = searchRangeTable(pstate, relation);
 
@@ -2452,39 +2405,21 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 							 &sublevels_up) == rte)
 		badAlias = rte->eref->aliasname;
 
-	if (!add_missing_from)
-	{
-		if (rte)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-			errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-				   relation->relname),
-					 (badAlias ?
-			errhint("Perhaps you meant to reference the table alias \"%s\".",
-					badAlias) :
-					  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
-							  rte->eref->aliasname)),
-					 parser_errposition(pstate, relation->location)));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("missing FROM-clause entry for table \"%s\"",
-							relation->relname),
-					 parser_errposition(pstate, relation->location)));
-	}
-	else
-	{
-		/* just issue a warning */
-		ereport(NOTICE,
+	if (rte)
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("adding missing FROM-clause entry for table \"%s\"",
+				 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
 						relation->relname),
 				 (badAlias ?
-			errhint("Perhaps you meant to reference the table alias \"%s\".",
-					badAlias) :
-				  (rte ?
-				   errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
-						   rte->eref->aliasname) : 0)),
+				  errhint("Perhaps you meant to reference the table alias \"%s\".",
+						  badAlias) :
+				  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
+						  rte->eref->aliasname)),
 				 parser_errposition(pstate, relation->location)));
-	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("missing FROM-clause entry for table \"%s\"",
+						relation->relname),
+				 parser_errposition(pstate, relation->location)));
 }

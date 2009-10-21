@@ -11,14 +11,11 @@ INSERT INTO delete_test (a) VALUES (100);
 DELETE FROM delete_test AS dt WHERE dt.a > 75;
 -- if an alias is specified, don't allow the original table name
 -- to be referenced
-BEGIN;
-SET LOCAL add_missing_from = false;
 DELETE FROM delete_test dt WHERE delete_test.a > 25;
 ERROR:  invalid reference to FROM-clause entry for table "delete_test"
 LINE 1: DELETE FROM delete_test dt WHERE delete_test.a > 25;
                                          ^
 HINT:  Perhaps you meant to reference the table alias "dt".
-ROLLBACK;
 SELECT * FROM delete_test;
  id | a  
 ----+----

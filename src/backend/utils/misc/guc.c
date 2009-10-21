@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.521 2009/10/13 14:18:40 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.522 2009/10/21 20:22:38 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "parser/parser.h"
 #include "parser/scansup.h"
@@ -1056,14 +1055,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&XactReadOnly,
 		false, assign_transaction_read_only, NULL
-	},
-	{
-		{"add_missing_from", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Automatically adds missing table references to FROM clauses."),
-			NULL
-		},
-		&add_missing_from,
-		false, NULL, NULL
 	},
 	{
 		{"check_function_bodies", PGC_USERSET, CLIENT_CONN_STATEMENT,

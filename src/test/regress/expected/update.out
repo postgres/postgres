@@ -82,12 +82,9 @@ LINE 1: UPDATE update_test SET (a,b) = (select a,b FROM update_test ...
                                         ^
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
-BEGIN;
-SET LOCAL add_missing_from = false;
 UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
 ERROR:  invalid reference to FROM-clause entry for table "update_test"
 LINE 1: UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a...
                                         ^
 HINT:  Perhaps you meant to reference the table alias "t".
-ROLLBACK;
 DROP TABLE update_test;

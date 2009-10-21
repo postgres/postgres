@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.47 2008/11/14 10:22:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.48 2009/10/21 20:22:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -168,16 +168,15 @@ SHOW geqo;
    Show all settings:
 <programlisting>
 SHOW ALL;
-              name              |            setting             |                                         description                                          
---------------------------------+--------------------------------+----------------------------------------------------------------------------------------------
- add_missing_from               | off                            | Automatically adds missing table references to FROM clauses.
- allow_system_table_mods        | off                            | Allows modifications of the structure of system tables.
+              name               |                     setting                     |                                                          description                                                          
+---------------------------------+-------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------
+ allow_system_table_mods         | off                                             | Allows modifications of the structure of system tables.
     .
     .
     .
- work_mem                       | 1024                           | Sets the maximum memory to be used for query workspaces.
- zero_damaged_pages             | off                            | Continues processing past damaged page headers.
-(146 rows)
+ xmloption                       | content                                         | Sets whether XML data in implicit parsing and serialization operations is to be considered as documents or content fragments.
+ zero_damaged_pages              | off                                             | Continues processing past damaged page headers.
+(196 rows)
 </programlisting>
   </para>
  </refsect1>

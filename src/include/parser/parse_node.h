@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.63 2009/09/09 03:32:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.64 2009/10/21 20:22:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,8 @@
  * This is different from p_relnamespace because a JOIN without an alias does
  * not hide the contained tables (so they must still be in p_relnamespace)
  * but it does hide their columns (unqualified references to the columns must
- * refer to the JOIN, not the member tables).  Also, we put POSTQUEL-style
- * implicit RTEs into p_relnamespace but not p_varnamespace, so that they
- * do not affect the set of columns available for unqualified references.
+ * refer to the JOIN, not the member tables).  Other special RTEs such as
+ * NEW/OLD for rules may also appear in just one of these lists.
  *
  * p_ctenamespace: list of CommonTableExprs (WITH items) that are visible
  * at the moment.  This is different from p_relnamespace because you have

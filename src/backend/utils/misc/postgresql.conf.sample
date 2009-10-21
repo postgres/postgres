@@ -484,7 +484,6 @@
 
 # - Previous PostgreSQL Versions -
 
-#add_missing_from = off
 #array_nulls = on
 #backslash_quote = safe_encoding	# on, off, or safe_encoding
 #default_with_oids = off

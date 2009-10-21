@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.64 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.65 2009/10/21 20:22:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,6 @@
 #define PARSE_RELATION_H
 
 #include "parser/parse_node.h"
-
-extern bool add_missing_from;
 
 extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 					 const char *schemaname,
@@ -44,7 +42,6 @@ extern Node *qualifiedNameToVar(ParseState *pstate,
 				   char *schemaname,
 				   char *refname,
 				   char *colname,
-				   bool implicitRTEOK,
 				   int location);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,
 					 RangeTblEntry *rte);
@@ -87,7 +84,7 @@ extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
-extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation);
+extern void errorMissingRTE(ParseState *pstate, RangeVar *relation);
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		  int location, bool include_dropped,
 		  List **colnames, List **colvars);
