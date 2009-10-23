@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.87 2009/06/17 21:58:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.88 2009/10/23 05:24:52 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2124,20 +2124,20 @@ VALUES ('New York', NULL, NULL, 'NY');
    and rejection that apply during <command>CREATE TABLE</command>.
   </para>
 
+  <para>
+   Note how table access permissions are handled.  Querying a parent
+   table can automatically access data in child tables without further
+   access privilege checking.  This preserves the appearance that the
+   data is (also) in the parent table.  Accessing the child tables
+   directly is, however, not automatically allowed and would require
+   further privileges to be granted.
+  </para>
+
  <sect2 id="ddl-inherit-caveats">
   <title>Caveats</title>
 
   <para>
-   Table access permissions are not automatically inherited.  Therefore,
-   a user attempting to access a parent table must either have permissions
-   to do the same operation on all its child tables as well, or must use the
-   <literal>ONLY</literal> notation.  When adding a new child table to
-   an existing inheritance hierarchy, be careful to grant all the needed
-   permissions on it.
-  </para>
-
-  <para>
-   More generally, note that not all SQL commands are able to work on
+   Note that not all SQL commands are able to work on
    inheritance hierarchies.  Commands that are used for data querying,
    data modification, or schema modification
    (e.g., <literal>SELECT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>,

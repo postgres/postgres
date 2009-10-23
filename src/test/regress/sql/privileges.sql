@@ -277,9 +277,10 @@ GRANT SELECT(fx) ON atestc TO regressuser2;
 
 SET SESSION AUTHORIZATION regressuser2;
 SELECT fx FROM atestp2; -- ok
-SELECT fy FROM atestp2; -- fail, no privilege on atestc.fy
-SELECT atestp2 FROM atestp2; -- fail, no privilege on atestc.fy
-SELECT oid FROM atestp2; -- fail, no privilege on atestc.oid
+SELECT fy FROM atestp2; -- ok
+SELECT atestp2 FROM atestp2; -- ok
+SELECT oid FROM atestp2; -- ok
+SELECT fy FROM atestc; -- fail
 
 SET SESSION AUTHORIZATION regressuser1;
 GRANT SELECT(fy,oid) ON atestc TO regressuser2;

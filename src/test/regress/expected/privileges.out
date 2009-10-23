@@ -406,11 +406,22 @@ SELECT fx FROM atestp2; -- ok
 ----
 (0 rows)
 
-SELECT fy FROM atestp2; -- fail, no privilege on atestc.fy
-ERROR:  permission denied for relation atestc
-SELECT atestp2 FROM atestp2; -- fail, no privilege on atestc.fy
-ERROR:  permission denied for relation atestc
-SELECT oid FROM atestp2; -- fail, no privilege on atestc.oid
+SELECT fy FROM atestp2; -- ok
+ fy 
+----
+(0 rows)
+
+SELECT atestp2 FROM atestp2; -- ok
+ atestp2 
+---------
+(0 rows)
+
+SELECT oid FROM atestp2; -- ok
+ oid 
+-----
+(0 rows)
+
+SELECT fy FROM atestc; -- fail
 ERROR:  permission denied for relation atestc
 SET SESSION AUTHORIZATION regressuser1;
 GRANT SELECT(fy,oid) ON atestc TO regressuser2;
