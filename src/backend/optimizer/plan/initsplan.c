@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.155 2009/07/21 02:02:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.156 2009/10/26 02:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,6 +559,9 @@ make_outerjoininfo(PlannerInfo *root,
 	 * parser.	It's because the parser hasn't got enough info --- consider
 	 * FOR UPDATE applied to a view.  Only after rewriting and flattening do
 	 * we know whether the view contains an outer join.
+	 *
+	 * We use the original RowMarkClause list here; the PlanRowMark list
+	 * would list everything.
 	 */
 	foreach(l, root->parse->rowMarks)
 	{

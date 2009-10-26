@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.29 2009/10/10 01:43:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.30 2009/10/26 02:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@
 #include "executor/spi.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
+#include "parser/parsetree.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -67,7 +69,6 @@ static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
-static bool rowmark_member(List *rowMarks, int rt_index);
 static bool plan_list_is_transient(List *stmt_list);
 static void PlanCacheRelCallback(Datum arg, Oid relid);
 static void PlanCacheFuncCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
@@ -658,6 +659,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
 			LOCKMODE	lockmode;
+			PlanRowMark *rc;
 
 			rt_index++;
 
@@ -672,7 +674,8 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			 */
 			if (list_member_int(plannedstmt->resultRelations, rt_index))
 				lockmode = RowExclusiveLock;
-			else if (rowmark_member(plannedstmt->rowMarks, rt_index))
+			else if ((rc = get_plan_rowmark(plannedstmt->rowMarks, rt_index)) != NULL &&
+					 RowMarkRequiresRowShareLock(rc->markType))
 				lockmode = RowShareLock;
 			else
 				lockmode = AccessShareLock;
@@ -732,7 +735,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 				/* Acquire or release the appropriate type of lock */
 				if (rt_index == parsetree->resultRelation)
 					lockmode = RowExclusiveLock;
-				else if (rowmark_member(parsetree->rowMarks, rt_index))
+				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
 					lockmode = RowShareLock;
 				else
 					lockmode = AccessShareLock;
@@ -796,24 +799,6 @@ ScanQueryWalker(Node *node, bool *acquire)
 	 */
 	return expression_tree_walker(node, ScanQueryWalker,
 								  (void *) acquire);
-}
-
-/*
- * rowmark_member: check whether an RT index appears in a RowMarkClause list.
- */
-static bool
-rowmark_member(List *rowMarks, int rt_index)
-{
-	ListCell   *l;
-
-	foreach(l, rowMarks)
-	{
-		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-
-		if (rc->rti == rt_index)
-			return true;
-	}
-	return false;
 }
 
 /*

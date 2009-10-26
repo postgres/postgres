@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.448 2009/10/14 22:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.449 2009/10/26 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,8 @@ _copyModifyTable(ModifyTable *from)
 	COPY_NODE_FIELD(resultRelations);
 	COPY_NODE_FIELD(plans);
 	COPY_NODE_FIELD(returningLists);
+	COPY_NODE_FIELD(rowMarks);
+	COPY_SCALAR_FIELD(epqParam);
 
 	return newnode;
 }
@@ -812,6 +814,7 @@ _copyLockRows(LockRows *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(rowMarks);
+	COPY_SCALAR_FIELD(epqParam);
 
 	return newnode;
 }
@@ -834,6 +837,26 @@ _copyLimit(Limit *from)
 	 */
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
+
+	return newnode;
+}
+
+/*
+ * _copyPlanRowMark
+ */
+static PlanRowMark *
+_copyPlanRowMark(PlanRowMark *from)
+{
+	PlanRowMark *newnode = makeNode(PlanRowMark);
+
+	COPY_SCALAR_FIELD(rti);
+	COPY_SCALAR_FIELD(prti);
+	COPY_SCALAR_FIELD(markType);
+	COPY_SCALAR_FIELD(noWait);
+	COPY_SCALAR_FIELD(isParent);
+	COPY_SCALAR_FIELD(ctidAttNo);
+	COPY_SCALAR_FIELD(toidAttNo);
+	COPY_SCALAR_FIELD(wholeAttNo);
 
 	return newnode;
 }
@@ -1834,11 +1857,8 @@ _copyRowMarkClause(RowMarkClause *from)
 	RowMarkClause *newnode = makeNode(RowMarkClause);
 
 	COPY_SCALAR_FIELD(rti);
-	COPY_SCALAR_FIELD(prti);
-	COPY_SCALAR_FIELD(rowmarkId);
 	COPY_SCALAR_FIELD(forUpdate);
 	COPY_SCALAR_FIELD(noWait);
-	COPY_SCALAR_FIELD(isParent);
 
 	return newnode;
 }
@@ -3620,6 +3640,9 @@ copyObject(void *from)
 			break;
 		case T_Limit:
 			retval = _copyLimit(from);
+			break;
+		case T_PlanRowMark:
+			retval = _copyPlanRowMark(from);
 			break;
 		case T_PlanInvalItem:
 			retval = _copyPlanInvalItem(from);

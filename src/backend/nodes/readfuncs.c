@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.225 2009/10/12 18:10:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.226 2009/10/26 02:26:32 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -293,11 +293,8 @@ _readRowMarkClause(void)
 	READ_LOCALS(RowMarkClause);
 
 	READ_UINT_FIELD(rti);
-	READ_UINT_FIELD(prti);
-	READ_UINT_FIELD(rowmarkId);
 	READ_BOOL_FIELD(forUpdate);
 	READ_BOOL_FIELD(noWait);
-	READ_BOOL_FIELD(isParent);
 
 	READ_DONE();
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.162 2009/10/12 18:10:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.163 2009/10/26 02:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,16 +166,23 @@ extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
-extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-			 PlanState *subplanstate,
+extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
+			 Relation relation, Index rti,
 			 ItemPointer tid, TransactionId priorXmax);
-extern HeapTuple EvalPlanQualFetch(EState *estate, Index rti,
-				  ItemPointer tid, TransactionId priorXmax);
-extern void EvalPlanQualPush(EState *estate, Index rti,
-							 PlanState *subplanstate);
-extern void EvalPlanQualSetTuple(EState *estate, Index rti, HeapTuple tuple);
-extern TupleTableSlot *EvalPlanQualNext(EState *estate);
-extern void EvalPlanQualPop(EState *estate, PlanState *subplanstate);
+extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
+				  int lockmode, ItemPointer tid, TransactionId priorXmax);
+extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
+							 Plan *subplan, int epqParam);
+extern void EvalPlanQualSetPlan(EPQState *epqstate, Plan *subplan);
+extern void EvalPlanQualAddRowMark(EPQState *epqstate, ExecRowMark *erm);
+extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
+								 HeapTuple tuple);
+extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
+#define EvalPlanQualSetSlot(epqstate, slot)  ((epqstate)->origslot = (slot))
+extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);
+extern TupleTableSlot *EvalPlanQualNext(EPQState *epqstate);
+extern void EvalPlanQualBegin(EPQState *epqstate, EState *parentestate);
+extern void EvalPlanQualEnd(EPQState *epqstate);
 extern DestReceiver *CreateIntoRelDestReceiver(void);
 
 /*
@@ -211,9 +218,12 @@ extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo,
  * prototypes from functions in execScan.c
  */
 typedef TupleTableSlot *(*ExecScanAccessMtd) (ScanState *node);
+typedef bool (*ExecScanRecheckMtd) (ScanState *node, TupleTableSlot *slot);
 
-extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd);
+extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd,
+								ExecScanRecheckMtd recheckMtd);
 extern void ExecAssignScanProjectionInfo(ScanState *node);
+extern void ExecScanReScan(ScanState *node);
 
 /*
  * prototypes from functions in execTuples.c

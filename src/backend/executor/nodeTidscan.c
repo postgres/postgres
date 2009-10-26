@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.63 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.64 2009/10/26 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,6 @@ TidNext(TidScanState *node)
 	Relation	heapRelation;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
-	Index		scanrelid;
 	Buffer		buffer = InvalidBuffer;
 	ItemPointerData *tidList;
 	int			numTids;
@@ -272,33 +271,6 @@ TidNext(TidScanState *node)
 	snapshot = estate->es_snapshot;
 	heapRelation = node->ss.ss_currentRelation;
 	slot = node->ss.ss_ScanTupleSlot;
-	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle TidScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-			return ExecClearTuple(slot);
-
-		/*
-		 * XXX shouldn't we check here to make sure tuple matches TID list? In
-		 * runtime-key case this is not certain, is it?  However, in the WHERE
-		 * CURRENT OF case it might not match anyway ...
-		 */
-
-		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-		return slot;
-	}
 
 	/*
 	 * First time through, compute the list of TIDs to be visited
@@ -384,13 +356,28 @@ TidNext(TidScanState *node)
 	return ExecClearTuple(slot);
 }
 
+/*
+ * TidRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+TidRecheck(TidScanState *node, TupleTableSlot *slot)
+{
+	/*
+	 * XXX shouldn't we check here to make sure tuple matches TID list? In
+	 * runtime-key case this is not certain, is it?  However, in the WHERE
+	 * CURRENT OF case it might not match anyway ...
+	 */
+	return true;
+}
+
+
 /* ----------------------------------------------------------------
  *		ExecTidScan(node)
  *
  *		Scans the relation using tids and returns
  *		   the next qualifying tuple in the direction specified.
- *		It calls ExecScan() and passes it the access methods which returns
- *		the next tuple using the tids.
+ *		We call the ExecScan() routine and pass it the appropriate
+ *		access method functions.
  *
  *		Conditions:
  *		  -- the "cursor" maintained by the AMI is positioned at the tuple
@@ -405,10 +392,9 @@ TidNext(TidScanState *node)
 TupleTableSlot *
 ExecTidScan(TidScanState *node)
 {
-	/*
-	 * use TidNext as access method
-	 */
-	return ExecScan(&node->ss, (ExecScanAccessMtd) TidNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) TidNext,
+					(ExecScanRecheckMtd) TidRecheck);
 }
 
 /* ----------------------------------------------------------------
@@ -418,32 +404,18 @@ ExecTidScan(TidScanState *node)
 void
 ExecTidReScan(TidScanState *node, ExprContext *exprCtxt)
 {
-	EState	   *estate;
-	Index		scanrelid;
-
-	estate = node->ss.ps.state;
-	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	node->ss.ps.ps_TupFromTlist = false;
-
 	/* If we are being passed an outer tuple, save it for runtime key calc */
 	if (exprCtxt != NULL)
 		node->ss.ps.ps_ExprContext->ecxt_outertuple =
 			exprCtxt->ecxt_outertuple;
-
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[scanrelid - 1] = false;
-		return;
-	}
 
 	if (node->tss_TidList)
 		pfree(node->tss_TidList);
 	node->tss_TidList = NULL;
 	node->tss_NumTids = 0;
 	node->tss_TidPtr = -1;
+
+	ExecScanReScan(&node->ss);
 }
 
 /* ----------------------------------------------------------------

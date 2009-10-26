@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.1 2009/10/10 01:43:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeModifyTable.c,v 1.2 2009/10/26 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ ExecInsert(TupleTableSlot *slot,
 static TupleTableSlot *
 ExecDelete(ItemPointer tupleid,
 		   TupleTableSlot *planSlot,
-		   PlanState *subplanstate,
+		   EPQState *epqstate,
 		   EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
@@ -294,7 +294,7 @@ ExecDelete(ItemPointer tupleid,
 	{
 		bool		dodelete;
 
-		dodelete = ExecBRDeleteTriggers(estate, subplanstate, resultRelInfo,
+		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 										tupleid);
 
 		if (!dodelete)			/* "do nothing" */
@@ -329,13 +329,14 @@ ldelete:;
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));
-			else if (!ItemPointerEquals(tupleid, &update_ctid))
+			if (!ItemPointerEquals(tupleid, &update_ctid))
 			{
 				TupleTableSlot *epqslot;
 
 				epqslot = EvalPlanQual(estate,
+									   epqstate,
+									   resultRelationDesc,
 									   resultRelInfo->ri_RangeTableIndex,
-									   subplanstate,
 									   &update_ctid,
 									   update_xmax);
 				if (!TupIsNull(epqslot))
@@ -416,7 +417,7 @@ static TupleTableSlot *
 ExecUpdate(ItemPointer tupleid,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
-		   PlanState *subplanstate,
+		   EPQState *epqstate,
 		   EState *estate)
 {
 	HeapTuple	tuple;
@@ -451,7 +452,7 @@ ExecUpdate(ItemPointer tupleid,
 	{
 		HeapTuple	newtuple;
 
-		newtuple = ExecBRUpdateTriggers(estate, subplanstate, resultRelInfo,
+		newtuple = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
 										tupleid, tuple);
 
 		if (newtuple == NULL)	/* "do nothing" */
@@ -515,13 +516,14 @@ lreplace:;
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));
-			else if (!ItemPointerEquals(tupleid, &update_ctid))
+			if (!ItemPointerEquals(tupleid, &update_ctid))
 			{
 				TupleTableSlot *epqslot;
 
 				epqslot = EvalPlanQual(estate,
+									   epqstate,
+									   resultRelationDesc,
 									   resultRelInfo->ri_RangeTableIndex,
-									   subplanstate,
 									   &update_ctid,
 									   update_xmax);
 				if (!TupIsNull(epqslot))
@@ -685,12 +687,14 @@ ExecModifyTable(ModifyTableState *node)
 				estate->es_result_relation_info++;
 				subplanstate = node->mt_plans[node->mt_whichplan];
 				junkfilter = estate->es_result_relation_info->ri_junkFilter;
+				EvalPlanQualSetPlan(&node->mt_epqstate, subplanstate->plan);
 				continue;
 			}
 			else
 				break;
 		}
 
+		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
 		slot = planSlot;
 
 		if (junkfilter != NULL)
@@ -728,11 +732,11 @@ ExecModifyTable(ModifyTableState *node)
 				break;
 			case CMD_UPDATE:
 				slot = ExecUpdate(tupleid, slot, planSlot,
-								  subplanstate, estate);
+								  &node->mt_epqstate, estate);
 				break;
 			case CMD_DELETE:
 				slot = ExecDelete(tupleid, planSlot,
-								  subplanstate, estate);
+								  &node->mt_epqstate, estate);
 				break;
 			default:
 				elog(ERROR, "unknown operation");
@@ -785,7 +789,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * a subplan tree to EvalPlanQual, instead.  Use a runtime test not just
 	 * Assert because this condition is easy to miss in testing ...
 	 */
-	if (estate->es_evTuple != NULL)
+	if (estate->es_epqTuple != NULL)
 		elog(ERROR, "ModifyTable should not be called during EvalPlanQual");
 
 	/*
@@ -799,6 +803,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->mt_plans = (PlanState **) palloc0(sizeof(PlanState *) * nplans);
 	mtstate->mt_nplans = nplans;
 	mtstate->operation = operation;
+	/* set up epqstate with dummy subplan pointer for the moment */
+	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, node->epqParam);
 	mtstate->fireBSTriggers = true;
 
 	/* For the moment, assume our targets are exactly the global result rels */
@@ -823,6 +829,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/* select first subplan */
 	mtstate->mt_whichplan = 0;
 	subplan = (Plan *) linitial(node->plans);
+	EvalPlanQualSetPlan(&mtstate->mt_epqstate, subplan);
 
 	/*
 	 * Initialize RETURNING projections if needed.
@@ -876,6 +883,38 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		ExecAssignResultType(&mtstate->ps, tupDesc);
 
 		mtstate->ps.ps_ExprContext = NULL;
+	}
+
+	/*
+	 * If we have any secondary relations in an UPDATE or DELETE, they need
+	 * to be treated like non-locked relations in SELECT FOR UPDATE, ie,
+	 * the EvalPlanQual mechanism needs to be told about them.  Locate
+	 * the relevant ExecRowMarks.
+	 */
+	foreach(l, node->rowMarks)
+	{
+		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
+		ExecRowMark *erm = NULL;
+		ListCell   *lce;
+
+		Assert(IsA(rc, PlanRowMark));
+
+		/* ignore "parent" rowmarks; they are irrelevant at runtime */
+		if (rc->isParent)
+			continue;
+
+		foreach(lce, estate->es_rowMarks)
+		{
+			erm = (ExecRowMark *) lfirst(lce);
+			if (erm->rti == rc->rti)
+				break;
+			erm = NULL;
+		}
+		if (erm == NULL)
+			elog(ERROR, "failed to find ExecRowMark for PlanRowMark %u",
+				 rc->rti);
+
+		EvalPlanQualAddRowMark(&mtstate->mt_epqstate, erm);
 	}
 
 	/*
@@ -986,6 +1025,11 @@ ExecEndModifyTable(ModifyTableState *node)
 	 * clean out the tuple table
 	 */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
+
+	/*
+	 * Terminate EPQ execution if active
+	 */
+	EvalPlanQualEnd(&node->mt_epqstate);
 
 	/*
 	 * shut down subplans

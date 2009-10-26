@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/subselect.h,v 1.37 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/subselect.h,v 1.38 2009/10/26 02:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,6 @@ extern void SS_finalize_plan(PlannerInfo *root, Plan *plan,
 				 bool attach_initplans);
 extern Param *SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 						   Oid resulttype, int32 resulttypmod);
-extern int	SS_assign_worktable_param(PlannerInfo *root);
+extern int	SS_assign_special_param(PlannerInfo *root);
 
 #endif   /* SUBSELECT_H */

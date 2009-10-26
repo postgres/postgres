@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.46 2009/04/02 20:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.47 2009/10/26 02:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,62 @@
 static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc);
 
 
+/*
+ * ExecScanFetch -- fetch next potential tuple
+ *
+ * This routine is concerned with substituting a test tuple if we are
+ * inside an EvalPlanQual recheck.  If we aren't, just execute
+ * the access method's next-tuple routine.
+ */
+static inline TupleTableSlot *
+ExecScanFetch(ScanState *node,
+			  ExecScanAccessMtd accessMtd,
+			  ExecScanRecheckMtd recheckMtd)
+{
+	EState	   *estate = node->ps.state;
+
+	if (estate->es_epqTuple != NULL)
+	{
+		/*
+		 * We are inside an EvalPlanQual recheck.  Return the test tuple if
+		 * one is available, after rechecking any access-method-specific
+		 * conditions.
+		 */
+		Index		scanrelid = ((Scan *) node->ps.plan)->scanrelid;
+
+		Assert(scanrelid > 0);
+		if (estate->es_epqTupleSet[scanrelid - 1])
+		{
+			TupleTableSlot *slot = node->ss_ScanTupleSlot;
+
+			/* Return empty slot if we already returned a tuple */
+			if (estate->es_epqScanDone[scanrelid - 1])
+				return ExecClearTuple(slot);
+			/* Else mark to remember that we shouldn't return more */
+			estate->es_epqScanDone[scanrelid - 1] = true;
+
+			/* Return empty slot if we haven't got a test tuple */
+			if (estate->es_epqTuple[scanrelid - 1] == NULL)
+				return ExecClearTuple(slot);
+
+			/* Store test tuple in the plan node's scan slot */
+			ExecStoreTuple(estate->es_epqTuple[scanrelid - 1],
+						   slot, InvalidBuffer, false);
+
+			/* Check if it meets the access-method conditions */
+			if (!(*recheckMtd) (node, slot))
+				ExecClearTuple(slot);	/* would not be returned by scan */
+
+			return slot;
+		}
+	}
+
+	/*
+	 * Run the node-type-specific access method function to get the next tuple
+	 */
+	return (*accessMtd) (node);
+}
+
 /* ----------------------------------------------------------------
  *		ExecScan
  *
@@ -34,6 +90,10 @@ static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, Tuple
  *		in the global variable ExecDirection.
  *		The access method returns the next tuple and execScan() is
  *		responsible for checking the tuple returned against the qual-clause.
+ *
+ *		A 'recheck method' must also be provided that can check an
+ *		arbitrary tuple of the relation against any qual conditions
+ *		that are implemented internal to the access method.
  *
  *		Conditions:
  *		  -- the "cursor" maintained by the AMI is positioned at the tuple
@@ -46,7 +106,8 @@ static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, Tuple
  */
 TupleTableSlot *
 ExecScan(ScanState *node,
-		 ExecScanAccessMtd accessMtd)	/* function returning a tuple */
+		 ExecScanAccessMtd accessMtd,	/* function returning a tuple */
+		 ExecScanRecheckMtd recheckMtd)
 {
 	ExprContext *econtext;
 	List	   *qual;
@@ -65,7 +126,7 @@ ExecScan(ScanState *node,
 	 * all the overhead and return the raw scan tuple.
 	 */
 	if (!qual && !projInfo)
-		return (*accessMtd) (node);
+		return ExecScanFetch(node, accessMtd, recheckMtd);
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous scan
@@ -91,7 +152,7 @@ ExecScan(ScanState *node,
 	ResetExprContext(econtext);
 
 	/*
-	 * get a tuple from the access method loop until we obtain a tuple which
+	 * get a tuple from the access method.  Loop until we obtain a tuple that
 	 * passes the qualification.
 	 */
 	for (;;)
@@ -100,7 +161,7 @@ ExecScan(ScanState *node,
 
 		CHECK_FOR_INTERRUPTS();
 
-		slot = (*accessMtd) (node);
+		slot = ExecScanFetch(node, accessMtd, recheckMtd);
 
 		/*
 		 * if the slot returned by the accessMtd contains NULL, then it means
@@ -248,4 +309,29 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 		return false;
 
 	return true;
+}
+
+/*
+ * ExecScanReScan
+ *
+ * This must be called within the ReScan function of any plan node type
+ * that uses ExecScan().
+ */
+void
+ExecScanReScan(ScanState *node)
+{
+	EState	   *estate = node->ps.state;
+
+	/* Stop projecting any tuples from SRFs in the targetlist */
+	node->ps.ps_TupFromTlist = false;
+
+	/* Rescan EvalPlanQual tuple if we're inside an EvalPlanQual recheck */
+	if (estate->es_epqScanDone != NULL)
+	{
+		Index		scanrelid = ((Scan *) node->ps.plan)->scanrelid;
+
+		Assert(scanrelid > 0);
+
+		estate->es_epqScanDone[scanrelid - 1] = false;
+	}
 }

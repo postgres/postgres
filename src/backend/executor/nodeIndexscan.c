@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.135 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.136 2009/10/26 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@ IndexNext(IndexScanState *node)
 	ExprContext *econtext;
 	ScanDirection direction;
 	IndexScanDesc scandesc;
-	Index		scanrelid;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
 
@@ -72,36 +71,6 @@ IndexNext(IndexScanState *node)
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
-	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle IndexScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-			return ExecClearTuple(slot);
-
-		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/* Does the tuple meet the indexqual condition? */
-		econtext->ecxt_scantuple = slot;
-
-		ResetExprContext(econtext);
-
-		if (!ExecQual(node->indexqualorig, econtext, false))
-			ExecClearTuple(slot);		/* would not be returned by scan */
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-
-		return slot;
-	}
 
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
@@ -140,6 +109,27 @@ IndexNext(IndexScanState *node)
 	return ExecClearTuple(slot);
 }
 
+/*
+ * IndexRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+IndexRecheck(IndexScanState *node, TupleTableSlot *slot)
+{
+	ExprContext *econtext;
+
+	/*
+	 * extract necessary information from index scan node
+	 */
+	econtext = node->ss.ps.ps_ExprContext;
+
+	/* Does the tuple meet the indexqual condition? */
+	econtext->ecxt_scantuple = slot;
+
+	ResetExprContext(econtext);
+
+	return ExecQual(node->indexqualorig, econtext, false);
+}
+
 /* ----------------------------------------------------------------
  *		ExecIndexScan(node)
  * ----------------------------------------------------------------
@@ -153,10 +143,9 @@ ExecIndexScan(IndexScanState *node)
 	if (node->iss_NumRuntimeKeys != 0 && !node->iss_RuntimeKeysReady)
 		ExecReScan((PlanState *) node, NULL);
 
-	/*
-	 * use IndexNext as access method
-	 */
-	return ExecScan(&node->ss, (ExecScanAccessMtd) IndexNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) IndexNext,
+					(ExecScanRecheckMtd) IndexRecheck);
 }
 
 /* ----------------------------------------------------------------
@@ -172,15 +161,9 @@ ExecIndexScan(IndexScanState *node)
 void
 ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 {
-	EState	   *estate;
 	ExprContext *econtext;
-	Index		scanrelid;
 
-	estate = node->ss.ps.state;
 	econtext = node->iss_RuntimeContext;		/* context for runtime keys */
-	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	node->ss.ps.ps_TupFromTlist = false;
 
 	if (econtext)
 	{
@@ -216,16 +199,10 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 								 node->iss_NumRuntimeKeys);
 	node->iss_RuntimeKeysReady = true;
 
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[scanrelid - 1] = false;
-		return;
-	}
-
 	/* reset index scan */
 	index_rescan(node->iss_ScanDesc, node->iss_ScanKeys);
+
+	ExecScanReScan(&node->ss);
 }
 
 

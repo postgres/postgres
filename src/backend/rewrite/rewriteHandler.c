@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.187 2009/09/02 17:52:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.188 2009/10/26 02:26:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ AcquireRewriteLocks(Query *parsetree)
 				 */
 				if (rt_index == parsetree->resultRelation)
 					lockmode = RowExclusiveLock;
-				else if (get_rowmark(parsetree, rt_index))
+				else if (get_parse_rowmark(parsetree, rt_index) != NULL)
 					lockmode = RowShareLock;
 				else
 					lockmode = AccessShareLock;
@@ -1191,7 +1191,7 @@ ApplyRetrieveRule(Query *parsetree,
 	/*
 	 * FOR UPDATE/SHARE of view?
 	 */
-	if ((rc = get_rowmark(parsetree, rt_index)) != NULL)
+	if ((rc = get_parse_rowmark(parsetree, rt_index)) != NULL)
 	{
 		/*
 		 * Remove the view from the list of rels that will actually be marked

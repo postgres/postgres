@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.6 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeCtescan.c,v 1.7 2009/10/26 02:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,21 +131,30 @@ CteScanNext(CteScanState *node)
 	return ExecClearTuple(slot);
 }
 
+/*
+ * CteScanRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+CteScanRecheck(CteScanState *node, TupleTableSlot *slot)
+{
+	/* nothing to check */
+	return true;
+}
+
 /* ----------------------------------------------------------------
  *		ExecCteScan(node)
  *
  *		Scans the CTE sequentially and returns the next qualifying tuple.
- *		It calls the ExecScan() routine and passes it the access method
- *		which retrieves tuples sequentially.
+ *		We call the ExecScan() routine and pass it the appropriate
+ *		access method functions.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecCteScan(CteScanState *node)
 {
-	/*
-	 * use CteScanNext as access method
-	 */
-	return ExecScan(&node->ss, (ExecScanAccessMtd) CteScanNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) CteScanNext,
+					(ExecScanRecheckMtd) CteScanRecheck);
 }
 
 
@@ -300,7 +309,8 @@ ExecCteScanReScan(CteScanState *node, ExprContext *exprCtxt)
 	Tuplestorestate *tuplestorestate = node->leader->cte_table;
 
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	node->ss.ps.ps_TupFromTlist = false;
+
+	ExecScanReScan(&node->ss);
 
 	if (node->leader == node)
 	{

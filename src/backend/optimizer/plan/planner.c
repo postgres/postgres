@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.259 2009/10/12 18:10:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.260 2009/10/26 02:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
+#include "parser/analyze.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
@@ -63,6 +64,7 @@ static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
 static bool is_dummy_plan(Plan *plan);
+static void preprocess_rowmarks(PlannerInfo *root);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
@@ -159,7 +161,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 	glob->lastPHId = 0;
-	glob->lastRowmarkId = 0;
 	glob->transientPlan = false;
 
 	/* Determine what fraction of the plan is likely to be scanned */
@@ -209,7 +210,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrowmarks == NIL);
 	top_plan = set_plan_references(glob, top_plan,
 								   root->parse->rtable,
-								   root->parse->rowMarks);
+								   root->rowMarks);
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
 	Assert(list_length(glob->subplans) == list_length(glob->subrowmarks));
@@ -301,10 +302,11 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->cte_plan_ids = NIL;
 	root->eq_classes = NIL;
 	root->append_rel_list = NIL;
+	root->rowMarks = NIL;
 
 	root->hasRecursion = hasRecursion;
 	if (hasRecursion)
-		root->wt_param_id = SS_assign_worktable_param(root);
+		root->wt_param_id = SS_assign_special_param(root);
 	else
 		root->wt_param_id = -1;
 	root->non_recursive_plan = NULL;
@@ -364,19 +366,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	}
 
 	/*
-	 * Assign unique IDs (unique within this planner run) to RowMarkClauses.
-	 * We can't identify them just by RT index because that will change
-	 * during final rtable flattening, and we don't want to have to go back
-	 * and change the resnames assigned to junk CTID tlist entries at that
-	 * point.  Do it now before expanding inheritance sets, because child
-	 * relations should inherit their parents' rowmarkId.
+	 * Preprocess RowMark information.  We need to do this after subquery
+	 * pullup (so that all non-inherited RTEs are present) and before
+	 * inheritance expansion (so that the info is available for
+	 * expand_inherited_tables to examine and modify).
 	 */
-	foreach(l, parse->rowMarks)
-	{
-		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-
-		rc->rowmarkId = ++(root->glob->lastRowmarkId);
-	}
+	preprocess_rowmarks(root);
 
 	/*
 	 * Expand any rangetable entries that are inheritance sets into "append
@@ -512,14 +507,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		/* If it's not SELECT, we need a ModifyTable node */
 		if (parse->commandType != CMD_SELECT)
 		{
+			List   *returningLists;
+			List   *rowMarks;
+
 			/*
 			 * Deal with the RETURNING clause if any.  It's convenient to pass
 			 * the returningList through setrefs.c now rather than at top
 			 * level (if we waited, handling inherited UPDATE/DELETE would be
 			 * much harder).
 			 */
-			List   *returningLists;
-
 			if (parse->returningList)
 			{
 				List	   *rlist;
@@ -534,20 +530,32 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			else
 				returningLists = NIL;
 
+			/*
+			 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
+			 * have dealt with fetching non-locked marked rows, else we need
+			 * to have ModifyTable do that.
+			 */
+			if (parse->rowMarks)
+				rowMarks = NIL;
+			else
+				rowMarks = root->rowMarks;
+
 			plan = (Plan *) make_modifytable(parse->commandType,
 											 copyObject(root->resultRelations),
 											 list_make1(plan),
-											 returningLists);
+											 returningLists,
+											 rowMarks,
+											 SS_assign_special_param(root));
 		}
 	}
 
 	/*
-	 * If any subplans were generated, or if we're inside a subplan, build
-	 * initPlan list and extParam/allParam sets for plan nodes, and attach the
-	 * initPlans to the top plan node.
+	 * If any subplans were generated, or if there are any parameters to worry
+	 * about, build initPlan list and extParam/allParam sets for plan nodes,
+	 * and attach the initPlans to the top plan node.
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
-		root->query_level > 1)
+		root->glob->paramlist != NIL)
 		SS_finalize_plan(root, plan, true);
 
 	/* Return internal info if caller wants it */
@@ -701,6 +709,7 @@ inheritance_planner(PlannerInfo *root)
 	List	   *resultRelations = NIL;
 	List	   *returningLists = NIL;
 	List	   *rtable = NIL;
+	List	   *rowMarks;
 	List	   *tlist;
 	PlannerInfo subroot;
 	ListCell   *l;
@@ -797,11 +806,23 @@ inheritance_planner(PlannerInfo *root)
 	 */
 	parse->rtable = rtable;
 
+	/*
+	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
+	 * have dealt with fetching non-locked marked rows, else we need
+	 * to have ModifyTable do that.
+	 */
+	if (parse->rowMarks)
+		rowMarks = NIL;
+	else
+		rowMarks = root->rowMarks;
+
 	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
 	return (Plan *) make_modifytable(parse->commandType,
 									 copyObject(root->resultRelations),
 									 subplans, 
-									 returningLists);
+									 returningLists,
+									 rowMarks,
+									 SS_assign_special_param(root));
 }
 
 /*--------------------
@@ -1630,11 +1651,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 	/*
 	 * Finally, if there is a FOR UPDATE/SHARE clause, add the LockRows node.
+	 * (Note: we intentionally test parse->rowMarks not root->rowMarks here.
+	 * If there are only non-locking rowmarks, they should be handled by
+	 * the ModifyTable node instead.)
 	 */
 	if (parse->rowMarks)
 	{
 		result_plan = (Plan *) make_lockrows(result_plan,
-											 parse->rowMarks);
+											 root->rowMarks,
+											 SS_assign_special_param(root));
 	}
 
 	/* Compute result-relations list if needed */
@@ -1679,6 +1704,158 @@ is_dummy_plan(Plan *plan)
 		}
 	}
 	return false;
+}
+
+/*
+ * Create a bitmapset of the RT indexes of live base relations
+ *
+ * Helper for preprocess_rowmarks ... at this point in the proceedings,
+ * the only good way to distinguish baserels from appendrel children
+ * is to see what is in the join tree.
+ */
+static Bitmapset *
+get_base_rel_indexes(Node *jtnode)
+{
+	Bitmapset  *result;
+
+	if (jtnode == NULL)
+		return NULL;
+	if (IsA(jtnode, RangeTblRef))
+	{
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+
+		result = bms_make_singleton(varno);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		result = NULL;
+		foreach(l, f->fromlist)
+			result = bms_join(result,
+							  get_base_rel_indexes(lfirst(l)));
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		result = bms_join(get_base_rel_indexes(j->larg),
+						  get_base_rel_indexes(j->rarg));
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
+		result = NULL;			/* keep compiler quiet */
+	}
+	return result;
+}
+
+/*
+ * preprocess_rowmarks - set up PlanRowMarks if needed
+ */
+static void
+preprocess_rowmarks(PlannerInfo *root)
+{
+	Query	   *parse = root->parse;
+	Bitmapset  *rels;
+	List	   *prowmarks;
+	ListCell   *l;
+	int			i;
+
+	if (parse->rowMarks)
+	{
+		/*
+		 * We've got trouble if FOR UPDATE/SHARE appears inside grouping,
+		 * since grouping renders a reference to individual tuple CTIDs
+		 * invalid.  This is also checked at parse time, but that's
+		 * insufficient because of rule substitution, query pullup, etc.
+		 */
+		CheckSelectLocking(parse);
+	}
+	else
+	{
+		/*
+		 * We only need rowmarks for UPDATE, DELETE, or FOR UPDATE/SHARE.
+		 */
+		if (parse->commandType != CMD_UPDATE &&
+			parse->commandType != CMD_DELETE)
+			return;
+	}
+
+	/*
+	 * We need to have rowmarks for all base relations except the target.
+	 * We make a bitmapset of all base rels and then remove the items we
+	 * don't need or have FOR UPDATE/SHARE marks for.
+	 */
+	rels = get_base_rel_indexes((Node *) parse->jointree);
+	if (parse->resultRelation)
+		rels = bms_del_member(rels, parse->resultRelation);
+
+	/*
+	 * Convert RowMarkClauses to PlanRowMark representation.
+	 *
+	 * Note: currently, it is syntactically impossible to have FOR UPDATE
+	 * applied to an update/delete target rel.  If that ever becomes
+	 * possible, we should drop the target from the PlanRowMark list.
+	 */
+	prowmarks = NIL;
+	foreach(l, parse->rowMarks)
+	{
+		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+		PlanRowMark *newrc = makeNode(PlanRowMark);
+
+		Assert(rc->rti != parse->resultRelation);
+		rels = bms_del_member(rels, rc->rti);
+
+		newrc->rti = newrc->prti = rc->rti;
+		if (rc->forUpdate)
+			newrc->markType = ROW_MARK_EXCLUSIVE;
+		else
+			newrc->markType = ROW_MARK_SHARE;
+		newrc->noWait = rc->noWait;
+		newrc->isParent = false;
+		/* attnos will be assigned in preprocess_targetlist */
+		newrc->ctidAttNo = InvalidAttrNumber;
+		newrc->toidAttNo = InvalidAttrNumber;
+		newrc->wholeAttNo = InvalidAttrNumber;
+
+		prowmarks = lappend(prowmarks, newrc);
+	}
+
+	/*
+	 * Now, add rowmarks for any non-target, non-locked base relations.
+	 */
+	i = 0;
+	foreach(l, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		PlanRowMark *newrc;
+
+		i++;
+		if (!bms_is_member(i, rels))
+			continue;
+
+		newrc = makeNode(PlanRowMark);
+
+		newrc->rti = newrc->prti = i;
+		/* real tables support REFERENCE, anything else needs COPY */
+		if (rte->rtekind == RTE_RELATION)
+			newrc->markType = ROW_MARK_REFERENCE;
+		else
+			newrc->markType = ROW_MARK_COPY;
+		newrc->noWait = false;			/* doesn't matter */
+		newrc->isParent = false;
+		/* attnos will be assigned in preprocess_targetlist */
+		newrc->ctidAttNo = InvalidAttrNumber;
+		newrc->toidAttNo = InvalidAttrNumber;
+		newrc->wholeAttNo = InvalidAttrNumber;
+
+		prowmarks = lappend(prowmarks, newrc);
+	}
+
+	root->rowMarks = prowmarks;
 }
 
 /*

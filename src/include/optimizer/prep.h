@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.66 2009/05/12 00:56:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.67 2009/10/26 02:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,8 @@ extern Expr *canonicalize_qual(Expr *qual);
  * prototypes for preptlist.c
  */
 extern List *preprocess_targetlist(PlannerInfo *root, List *tlist);
+
+extern PlanRowMark *get_plan_rowmark(List *rowmarks, Index rtindex);
 
 /*
  * prototypes for prepunion.c

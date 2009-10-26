@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.254 2009/10/14 22:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.255 2009/10/26 02:26:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 static void ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid);
 static void InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx);
 static HeapTuple GetTupleForTrigger(EState *estate,
-				   PlanState *subplanstate,
+				   EPQState *epqstate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
 				   TupleTableSlot **newSlot);
@@ -1828,7 +1828,7 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 }
 
 bool
-ExecBRDeleteTriggers(EState *estate, PlanState *subplanstate,
+ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid)
 {
@@ -1842,7 +1842,7 @@ ExecBRDeleteTriggers(EState *estate, PlanState *subplanstate,
 	TupleTableSlot *newSlot;
 	int			i;
 
-	trigtuple = GetTupleForTrigger(estate, subplanstate, relinfo, tupleid,
+	trigtuple = GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
 								   &newSlot);
 	if (trigtuple == NULL)
 		return false;
@@ -1964,7 +1964,7 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 }
 
 HeapTuple
-ExecBRUpdateTriggers(EState *estate, PlanState *subplanstate,
+ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid, HeapTuple newtuple)
 {
@@ -1979,7 +1979,7 @@ ExecBRUpdateTriggers(EState *estate, PlanState *subplanstate,
 	int			i;
 	Bitmapset   *modifiedCols;
 
-	trigtuple = GetTupleForTrigger(estate, subplanstate, relinfo, tupleid,
+	trigtuple = GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
 								   &newSlot);
 	if (trigtuple == NULL)
 		return NULL;
@@ -2107,7 +2107,7 @@ ExecASTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
 
 static HeapTuple
 GetTupleForTrigger(EState *estate,
-				   PlanState *subplanstate,
+				   EPQState *epqstate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
 				   TupleTableSlot **newSlot)
@@ -2125,8 +2125,8 @@ GetTupleForTrigger(EState *estate,
 
 		*newSlot = NULL;
 
-		/* caller must pass a subplanstate if EvalPlanQual is possible */
-		Assert(subplanstate != NULL);
+		/* caller must pass an epqstate if EvalPlanQual is possible */
+		Assert(epqstate != NULL);
 
 		/*
 		 * lock tuple for update
@@ -2153,27 +2153,35 @@ ltrmark:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				else if (!ItemPointerEquals(&update_ctid, &tuple.t_self))
+				if (!ItemPointerEquals(&update_ctid, &tuple.t_self))
 				{
 					/* it was updated, so look at the updated version */
 					TupleTableSlot *epqslot;
 
 					epqslot = EvalPlanQual(estate,
+										   epqstate,
+										   relation,
 										   relinfo->ri_RangeTableIndex,
-										   subplanstate,
 										   &update_ctid,
 										   update_xmax);
 					if (!TupIsNull(epqslot))
 					{
 						*tid = update_ctid;
 						*newSlot = epqslot;
+
+						/*
+						 * EvalPlanQual already locked the tuple, but we
+						 * re-call heap_lock_tuple anyway as an easy way
+						 * of re-fetching the correct tuple.  Speed is
+						 * hardly a criterion in this path anyhow.
+						 */
 						goto ltrmark;
 					}
 				}
 
 				/*
 				 * if tuple was deleted or PlanQual failed for updated tuple -
-				 * we have not process this tuple!
+				 * we must not process this tuple!
 				 */
 				return NULL;
 

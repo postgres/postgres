@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.210 2009/10/12 18:10:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.211 2009/10/26 02:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,6 +331,7 @@ typedef struct EState
 	Snapshot	es_snapshot;	/* time qual to use */
 	Snapshot	es_crosscheck_snapshot; /* crosscheck time qual for RI */
 	List	   *es_range_table; /* List of RangeTblEntry */
+	PlannedStmt *es_plannedstmt;	/* link to top of plan tree */
 
 	JunkFilter *es_junkFilter;	/* top-level junk filter, if any */
 
@@ -375,31 +376,45 @@ typedef struct EState
 	 */
 	ExprContext *es_per_tuple_exprcontext;
 
-	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
-	PlannedStmt *es_plannedstmt;	/* link to top of plan tree */
-	struct evalPlanQual *es_evalPlanQual;		/* chain of PlanQual states */
-	bool	   *es_evTupleNull; /* local array of EPQ status */
-	HeapTuple  *es_evTuple;		/* shared array of EPQ substitute tuples */
+	/*
+	 * These fields are for re-evaluating plan quals when an updated tuple is
+	 * substituted in READ COMMITTED mode.  es_epqTuple[] contains tuples
+	 * that scan plan nodes should return instead of whatever they'd normally
+	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
+	 * particular array entry is valid; and es_epqScanDone[] is state to
+	 * remember if the tuple has been returned already.  Arrays are of size
+	 * list_length(es_range_table) and are indexed by scan node scanrelid - 1.
+	 */
+	HeapTuple  *es_epqTuple;		/* array of EPQ substitute tuples */
+	bool	   *es_epqTupleSet;		/* true if EPQ tuple is provided */
+	bool	   *es_epqScanDone;		/* true if EPQ tuple has been fetched */
 } EState;
 
 
 /*
+ * ExecRowMark -
+ *	   runtime representation of FOR UPDATE/SHARE clauses
+ *
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we should have an
+ * ExecRowMark for each non-target relation in the query (except inheritance
+ * parent RTEs, which can be ignored at runtime).  See PlanRowMark for details
+ * about most of the fields.
+ *
  * es_rowMarks is a list of these structs.  Each LockRows node has its own
  * list, which is the subset of locks that it is supposed to enforce; note
  * that the per-node lists point to the same structs that are in the global
- * list.  See RowMarkClause for details about rti, prti, and rowmarkId.
- * toidAttno is not used in a "plain" (non-inherited) rowmark.
+ * list.
  */
 typedef struct ExecRowMark
 {
-	Relation	relation;		/* opened and RowShareLock'd relation */
+	Relation	relation;		/* opened and suitably locked relation */
 	Index		rti;			/* its range table index */
 	Index		prti;			/* parent range table index, if child */
-	Index		rowmarkId;		/* unique identifier assigned by planner */
-	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
+	RowMarkType	markType;		/* see enum in nodes/plannodes.h */
 	bool		noWait;			/* NOWAIT option */
-	AttrNumber	ctidAttNo;		/* resno of its ctid junk attribute */
+	AttrNumber	ctidAttNo;		/* resno of ctid junk attribute, if any */
 	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
+	AttrNumber	wholeAttNo;		/* resno of whole-row junk attribute, if any */
 	ItemPointerData curCtid;	/* ctid of currently locked tuple, if any */
 } ExecRowMark;
 
@@ -967,6 +982,21 @@ typedef struct PlanState
 #define innerPlanState(node)		(((PlanState *)(node))->righttree)
 #define outerPlanState(node)		(((PlanState *)(node))->lefttree)
 
+/*
+ * EPQState is state for executing an EvalPlanQual recheck on a candidate
+ * tuple in ModifyTable or LockRows.  The estate and planstate fields are
+ * NULL if inactive.
+ */
+typedef struct EPQState
+{
+	EState	   *estate;			/* subsidiary EState */
+	PlanState  *planstate;		/* plan state tree ready to be executed */
+	TupleTableSlot *origslot;	/* original output tuple to be rechecked */
+	Plan	   *plan;			/* plan tree to be executed */
+	List	   *rowMarks;		/* ExecRowMarks (non-locking only) */
+	int			epqParam;		/* ID of Param to force scan node re-eval */
+} EPQState;
+
 
 /* ----------------
  *	 ResultState information
@@ -991,6 +1021,7 @@ typedef struct ModifyTableState
 	PlanState	  **mt_plans;		/* subplans (one per target rel) */
 	int				mt_nplans;		/* number of plans in the array */
 	int				mt_whichplan;	/* which one is being executed (0..n-1) */
+	EPQState		mt_epqstate;	/* for evaluating EvalPlanQual rechecks */
 	bool			fireBSTriggers;	/* do we need to fire stmt triggers? */
 } ModifyTableState;
 
@@ -1651,8 +1682,7 @@ typedef struct LockRowsState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	List	   *lr_rowMarks;	/* List of ExecRowMarks */
-	JunkFilter *lr_junkFilter;	/* needed for getting ctid columns */
-	bool		lr_useEvalPlan;	/* evaluating EPQ tuples? */
+	EPQState	lr_epqstate;	/* for evaluating EvalPlanQual rechecks */
 } LockRowsState;
 
 /* ----------------

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.177 2009/10/23 05:24:52 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.178 2009/10/26 02:26:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 							  rtr->rtindex,
 							  subplan,
 							  subroot->parse->rtable,
-							  subroot->parse->rowMarks);
+							  subroot->rowMarks);
 
 		/*
 		 * We don't bother to determine the subquery's output ordering since
@@ -1133,7 +1133,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 {
 	Query	   *parse = root->parse;
 	Oid			parentOID;
-	RowMarkClause *oldrc;
+	PlanRowMark *oldrc;
 	Relation	oldrelation;
 	LOCKMODE	lockmode;
 	List	   *inhOIDs;
@@ -1171,10 +1171,10 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 * the lock, leading to possible deadlocks.  (This code should match the
 	 * parser and rewriter.)
 	 */
-	oldrc = get_rowmark(parse, rti);
+	oldrc = get_plan_rowmark(root->rowMarks, rti);
 	if (rti == parse->resultRelation)
 		lockmode = RowExclusiveLock;
-	else if (oldrc)
+	else if (oldrc && RowMarkRequiresRowShareLock(oldrc->markType))
 		lockmode = RowShareLock;
 	else
 		lockmode = AccessShareLock;
@@ -1196,7 +1196,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/*
 	 * If parent relation is selected FOR UPDATE/SHARE, we need to mark its
-	 * RowMarkClause as isParent = true, and generate a new RowMarkClause for
+	 * PlanRowMark as isParent = true, and generate a new PlanRowMark for
 	 * each child.
 	 */
 	if (oldrc)
@@ -1275,21 +1275,23 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		}
 
 		/*
-		 * Build a RowMarkClause if parent is marked FOR UPDATE/SHARE.
+		 * Build a PlanRowMark if parent is marked FOR UPDATE/SHARE.
 		 */
 		if (oldrc)
 		{
-			RowMarkClause *newrc = makeNode(RowMarkClause);
+			PlanRowMark *newrc = makeNode(PlanRowMark);
 
 			newrc->rti = childRTindex;
 			newrc->prti = rti;
-			/* children use the same rowmarkId as their parent */
-			newrc->rowmarkId = oldrc->rowmarkId;
-			newrc->forUpdate = oldrc->forUpdate;
+			newrc->markType = oldrc->markType;
 			newrc->noWait = oldrc->noWait;
 			newrc->isParent = false;
+			/* junk attrs for children are not identified yet */
+			newrc->ctidAttNo = InvalidAttrNumber;
+			newrc->toidAttNo = InvalidAttrNumber;
+			newrc->wholeAttNo = InvalidAttrNumber;
 
-			parse->rowMarks = lappend(parse->rowMarks, newrc);
+			root->rowMarks = lappend(root->rowMarks, newrc);
 		}
 
 		/* Close child relations, but keep locks */

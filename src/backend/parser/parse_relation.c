@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.144 2009/10/21 20:22:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.145 2009/10/26 02:26:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2254,7 +2254,7 @@ get_tle_by_resno(List *tlist, AttrNumber resno)
  * Returns NULL if relation is not selected FOR UPDATE/SHARE
  */
 RowMarkClause *
-get_rowmark(Query *qry, Index rtindex)
+get_parse_rowmark(Query *qry, Index rtindex)
 {
 	ListCell   *l;
 

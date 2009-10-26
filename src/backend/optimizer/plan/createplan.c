@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.265 2009/10/12 18:10:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.266 2009/10/26 02:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -951,7 +951,7 @@ create_indexscan_plan(PlannerInfo *root,
 			if (best_path->indexinfo->indpred)
 			{
 				if (baserelid != root->parse->resultRelation &&
-					get_rowmark(root->parse, baserelid) == NULL)
+					get_parse_rowmark(root->parse, baserelid) == NULL)
 					if (predicate_implied_by(clausel,
 											 best_path->indexinfo->indpred))
 						continue;
@@ -3598,7 +3598,7 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
  *	  Build a LockRows plan node
  */
 LockRows *
-make_lockrows(Plan *lefttree, List *rowMarks)
+make_lockrows(Plan *lefttree, List *rowMarks, int epqParam)
 {
 	LockRows   *node = makeNode(LockRows);
 	Plan	   *plan = &node->plan;
@@ -3614,6 +3614,7 @@ make_lockrows(Plan *lefttree, List *rowMarks)
 	plan->righttree = NULL;
 
 	node->rowMarks = rowMarks;
+	node->epqParam = epqParam;
 
 	return node;
 }
@@ -3750,7 +3751,8 @@ make_result(PlannerInfo *root,
  */
 ModifyTable *
 make_modifytable(CmdType operation, List *resultRelations,
-				 List *subplans, List *returningLists)
+				 List *subplans, List *returningLists,
+				 List *rowMarks, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
 	Plan	   *plan = &node->plan;
@@ -3801,6 +3803,8 @@ make_modifytable(CmdType operation, List *resultRelations,
 	node->resultRelations = resultRelations;
 	node->plans = subplans;
 	node->returningLists = returningLists;
+	node->rowMarks = rowMarks;
+	node->epqParam = epqParam;
 
 	return node;
 }

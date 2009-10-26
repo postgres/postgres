@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.1 2009/10/12 18:10:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLockRows.c,v 1.2 2009/10/26 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "executor/executor.h"
 #include "executor/nodeLockRows.h"
 #include "storage/bufmgr.h"
+#include "utils/tqual.h"
 
 
 /* ----------------------------------------------------------------
@@ -37,7 +38,7 @@ ExecLockRows(LockRowsState *node)
 	TupleTableSlot *slot;
 	EState	   *estate;
 	PlanState  *outerPlan;
-	bool		epq_pushed;
+	bool		epq_started;
 	ListCell   *lc;
 
 	/*
@@ -47,30 +48,19 @@ ExecLockRows(LockRowsState *node)
 	outerPlan = outerPlanState(node);
 
 	/*
-	 * Get next tuple from subplan, if any; but if we are evaluating
-	 * an EvalPlanQual substitution, first finish that.
+	 * Get next tuple from subplan, if any.
 	 */
 lnext:
-	if (node->lr_useEvalPlan)
-	{
-		slot = EvalPlanQualNext(estate);
-		if (TupIsNull(slot))
-		{
-			EvalPlanQualPop(estate, outerPlan);
-			node->lr_useEvalPlan = false;
-			slot = ExecProcNode(outerPlan);
-		}
-	}
-	else
-		slot = ExecProcNode(outerPlan);
+	slot = ExecProcNode(outerPlan);
 
 	if (TupIsNull(slot))
 		return NULL;
 
 	/*
-	 * Attempt to lock the source tuple(s).
+	 * Attempt to lock the source tuple(s).  (Note we only have locking
+	 * rowmarks in lr_rowMarks.)
 	 */
-	epq_pushed = false;
+	epq_started = false;
 	foreach(lc, node->lr_rowMarks)
 	{
 		ExecRowMark *erm = (ExecRowMark *) lfirst(lc);
@@ -83,6 +73,10 @@ lnext:
 		LockTupleMode lockmode;
 		HTSU_Result test;
 		HeapTuple	copyTuple;
+
+		/* clear any leftover test tuple for this rel */
+		if (node->lr_epqstate.estate != NULL)
+			EvalPlanQualSetTuple(&node->lr_epqstate, erm->rti, NULL);
 
 		/* if child rel, must check whether it produced this row */
 		if (erm->rti != erm->prti)
@@ -115,7 +109,7 @@ lnext:
 		tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 
 		/* okay, try to lock the tuple */
-		if (erm->forUpdate)
+		if (erm->markType == ROW_MARK_EXCLUSIVE)
 			lockmode = LockTupleExclusive;
 		else
 			lockmode = LockTupleShared;
@@ -129,8 +123,6 @@ lnext:
 		{
 			case HeapTupleSelfUpdated:
 				/* treat it as deleted; do not process */
-				if (epq_pushed)
-					EvalPlanQualPop(estate, outerPlan);
 				goto lnext;
 
 			case HeapTupleMayBeUpdated:
@@ -146,35 +138,33 @@ lnext:
 									  &tuple.t_self))
 				{
 					/* Tuple was deleted, so don't return it */
-					if (epq_pushed)
-						EvalPlanQualPop(estate, outerPlan);
 					goto lnext;
 				}
 
-				/* updated, so look at updated version */
-				copyTuple = EvalPlanQualFetch(estate, erm->rti,
+				/* updated, so fetch and lock the updated version */
+				copyTuple = EvalPlanQualFetch(estate, erm->relation, lockmode,
 											  &update_ctid, update_xmax);
 
 				if (copyTuple == NULL)
 				{
 					/* Tuple was deleted, so don't return it */
-					if (epq_pushed)
-						EvalPlanQualPop(estate, outerPlan);
 					goto lnext;
 				}
+				/* remember the actually locked tuple's TID */
+				tuple.t_self = copyTuple->t_self;
 
 				/*
-				 * Need to run a recheck subquery.
-				 * Find or create a PQ stack entry.
+				 * Need to run a recheck subquery.  Initialize EPQ state
+				 * if we didn't do so already.
 				 */
-				if (!epq_pushed)
+				if (!epq_started)
 				{
-					EvalPlanQualPush(estate, erm->rti, outerPlan);
-					epq_pushed = true;
+					EvalPlanQualBegin(&node->lr_epqstate, estate);
+					epq_started = true;
 				}
 
 				/* Store target tuple for relation's scan node */
-				EvalPlanQualSetTuple(estate, erm->rti, copyTuple);
+				EvalPlanQualSetTuple(&node->lr_epqstate, erm->rti, copyTuple);
 
 				/* Continue loop until we have all target tuples */
 				break;
@@ -188,11 +178,52 @@ lnext:
 		erm->curCtid = tuple.t_self;
 	}
 
-	/* If we need to do EvalPlanQual testing, loop back to do that */
-	if (epq_pushed)
+	/*
+	 * If we need to do EvalPlanQual testing, do so.
+	 */
+	if (epq_started)
 	{
-		node->lr_useEvalPlan = true;
-		goto lnext;
+		/*
+		 * First, fetch a copy of any rows that were successfully locked
+		 * without any update having occurred.  (We do this in a separate
+		 * pass so as to avoid overhead in the common case where there are
+		 * no concurrent updates.)
+		 */
+		foreach(lc, node->lr_rowMarks)
+		{
+			ExecRowMark *erm = (ExecRowMark *) lfirst(lc);
+			HeapTupleData tuple;
+			Buffer		buffer;
+
+			if (EvalPlanQualGetTuple(&node->lr_epqstate, erm->rti) != NULL)
+				continue;		/* it was updated and fetched above */
+
+			/* okay, fetch the tuple */
+			tuple.t_self = erm->curCtid;
+			if (!heap_fetch(erm->relation, SnapshotAny, &tuple, &buffer,
+							false, NULL))
+				elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
+
+			/* successful, copy and store tuple */
+			EvalPlanQualSetTuple(&node->lr_epqstate, erm->rti,
+								 heap_copytuple(&tuple));
+			ReleaseBuffer(buffer);
+		}
+		/*
+		 * Now fetch any non-locked source rows --- the EPQ logic knows
+		 * how to do that.
+		 */
+		EvalPlanQualSetSlot(&node->lr_epqstate, slot);
+		EvalPlanQualFetchRowMarks(&node->lr_epqstate);
+		/*
+		 * And finally we can re-evaluate the tuple.
+		 */
+		slot = EvalPlanQualNext(&node->lr_epqstate);
+		if (TupIsNull(slot))
+		{
+			/* Updated tuple fails qual, so ignore it and go on */
+			goto lnext;
+		}
 	}
 
 	/* Got all locks, so return the current tuple */
@@ -210,8 +241,7 @@ LockRowsState *
 ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 {
 	LockRowsState *lrstate;
-	Plan	   *outerPlan;
-	JunkFilter *j;
+	Plan	   *outerPlan = outerPlan(node);
 	ListCell   *lc;
 
 	/* check for unsupported flags */
@@ -223,7 +253,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	lrstate = makeNode(LockRowsState);
 	lrstate->ps.plan = (Plan *) node;
 	lrstate->ps.state = estate;
-	lrstate->lr_useEvalPlan = false;
+	EvalPlanQualInit(&lrstate->lr_epqstate, estate, outerPlan, node->epqParam);
 
 	/*
 	 * Miscellaneous initialization
@@ -239,7 +269,6 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	/*
 	 * then initialize outer plan
 	 */
-	outerPlan = outerPlan(node);
 	outerPlanState(lrstate) = ExecInitNode(outerPlan, estate, eflags);
 
 	/*
@@ -250,27 +279,17 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	lrstate->ps.ps_ProjInfo = NULL;
 
 	/*
-	 * Initialize a junkfilter that we'll use to extract the ctid junk
-	 * attributes.  (We won't actually apply the filter to remove the
-	 * junk, we just pass the rows on as-is.  This is because the
-	 * junkfilter isn't smart enough to not remove junk attrs that
-	 * might be needed further up.)
-	 */
-	j = ExecInitJunkFilter(outerPlan->targetlist, false,
-						   ExecInitExtraTupleSlot(estate));
-	lrstate->lr_junkFilter = j;
-
-	/*
 	 * Locate the ExecRowMark(s) that this node is responsible for.
 	 * (InitPlan should already have built the global list of ExecRowMarks.)
 	 */
 	lrstate->lr_rowMarks = NIL;
 	foreach(lc, node->rowMarks)
 	{
-		RowMarkClause *rc = (RowMarkClause *) lfirst(lc);
+		PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
 		ExecRowMark *erm = NULL;
-		char		resname[32];
 		ListCell   *lce;
+
+		Assert(IsA(rc, PlanRowMark));
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)
@@ -279,36 +298,24 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 		foreach(lce, estate->es_rowMarks)
 		{
 			erm = (ExecRowMark *) lfirst(lce);
-			if (erm->rti == rc->rti &&
-				erm->prti == rc->prti &&
-				erm->rowmarkId == rc->rowmarkId)
+			if (erm->rti == rc->rti)
 				break;
 			erm = NULL;
 		}
 		if (erm == NULL)
-			elog(ERROR, "failed to find ExecRowMark for RowMarkClause");
-		if (AttributeNumberIsValid(erm->ctidAttNo))
-			elog(ERROR, "ExecRowMark is already claimed");
+			elog(ERROR, "failed to find ExecRowMark for PlanRowMark %u",
+				 rc->rti);
 
-		/* Locate the junk attribute columns in the subplan output */
-
-		/* always need the ctid */
-		snprintf(resname, sizeof(resname), "ctid%u", erm->rowmarkId);
-		erm->ctidAttNo = ExecFindJunkAttribute(j, resname);
-		if (!AttributeNumberIsValid(erm->ctidAttNo))
-			elog(ERROR, "could not find junk \"%s\" column",
-				 resname);
-		/* if child relation, need tableoid too */
-		if (erm->rti != erm->prti)
-		{
-			snprintf(resname, sizeof(resname), "tableoid%u", erm->rowmarkId);
-			erm->toidAttNo = ExecFindJunkAttribute(j, resname);
-			if (!AttributeNumberIsValid(erm->toidAttNo))
-				elog(ERROR, "could not find junk \"%s\" column",
-					 resname);
-		}
-
-		lrstate->lr_rowMarks = lappend(lrstate->lr_rowMarks, erm);
+		/*
+		 * Only locking rowmarks go into our own list.  Non-locking marks
+		 * are passed off to the EvalPlanQual machinery.  This is because
+		 * we don't want to bother fetching non-locked rows unless we
+		 * actually have to do an EPQ recheck.
+		 */
+		if (RowMarkRequiresRowShareLock(erm->markType))
+			lrstate->lr_rowMarks = lappend(lrstate->lr_rowMarks, erm);
+		else
+			EvalPlanQualAddRowMark(&lrstate->lr_epqstate, erm);
 	}
 
 	return lrstate;
@@ -324,6 +331,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 void
 ExecEndLockRows(LockRowsState *node)
 {
+	EvalPlanQualEnd(&node->lr_epqstate);
 	ExecEndNode(outerPlanState(node));
 }
 
@@ -331,8 +339,6 @@ ExecEndLockRows(LockRowsState *node)
 void
 ExecReScanLockRows(LockRowsState *node, ExprContext *exprCtxt)
 {
-	node->lr_useEvalPlan = false;
-
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.

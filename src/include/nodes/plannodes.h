@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.112 2009/10/12 18:10:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.113 2009/10/26 02:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef struct PlannedStmt
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
-	List	   *rowMarks;		/* a list of RowMarkClause's */
+	List	   *rowMarks;		/* a list of PlanRowMark's */
 
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
@@ -167,6 +167,8 @@ typedef struct ModifyTable
 	List	   *resultRelations;	/* integer list of RT indexes */
 	List	   *plans;				/* plan(s) producing source data */
 	List	   *returningLists;		/* per-target-table RETURNING tlists */
+	List	   *rowMarks;			/* PlanRowMarks (non-locking only) */
+	int			epqParam;			/* ID of Param for EvalPlanQual re-eval */
 } ModifyTable;
 
 /* ----------------
@@ -620,12 +622,15 @@ typedef struct SetOp
  *
  * rowMarks identifies the rels to be locked by this node; it should be
  * a subset of the rowMarks listed in the top-level PlannedStmt.
+ * epqParam is a Param that all scan nodes below this one must depend on.
+ * It is used to force re-evaluation of the plan during EvalPlanQual.
  * ----------------
  */
 typedef struct LockRows
 {
 	Plan		plan;
-	List	   *rowMarks;		/* a list of RowMarkClause's */
+	List	   *rowMarks;		/* a list of PlanRowMark's */
+	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
 } LockRows;
 
 /* ----------------
@@ -641,6 +646,63 @@ typedef struct Limit
 	Node	   *limitOffset;	/* OFFSET parameter, or NULL if none */
 	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
 } Limit;
+
+
+/*
+ * RowMarkType -
+ *	  enums for types of row-marking operations
+ *
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we have to uniquely
+ * identify all the source rows, not only those from the target relations, so
+ * that we can perform EvalPlanQual rechecking at need.  For plain tables we
+ * can just fetch the TID, the same as for a target relation.  Otherwise (for
+ * example for VALUES or FUNCTION scans) we have to copy the whole row value.
+ * The latter is pretty inefficient but fortunately the case is not
+ * performance-critical in practice.
+ */
+typedef enum RowMarkType
+{
+	ROW_MARK_EXCLUSIVE,			/* obtain exclusive tuple lock */
+	ROW_MARK_SHARE,				/* obtain shared tuple lock */
+	ROW_MARK_REFERENCE,			/* just fetch the TID */
+	ROW_MARK_COPY				/* physically copy the row value */
+} RowMarkType;
+
+#define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_SHARE)
+
+/*
+ * PlanRowMark -
+ *	   plan-time representation of FOR UPDATE/SHARE clauses
+ *
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
+ * PlanRowMark node for each non-target relation in the query.  Relations that
+ * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
+ * real tables) or ROW_MARK_COPY (if not).
+ *
+ * Initially all PlanRowMarks have rti == prti and isParent == false.
+ * When the planner discovers that a relation is the root of an inheritance
+ * tree, it sets isParent true, and adds an additional PlanRowMark to the
+ * list for each child relation (including the target rel itself in its role
+ * as a child).  The child entries have rti == child rel's RT index and
+ * prti == parent's RT index, and can therefore be recognized as children by
+ * the fact that prti != rti.
+ *
+ * The AttrNumbers are filled in during preprocess_targetlist.  We use
+ * different subsets of them for plain relations, inheritance children,
+ * and non-table relations.
+ */
+typedef struct PlanRowMark
+{
+	NodeTag		type;
+	Index		rti;			/* range table index of markable relation */
+	Index		prti;			/* range table index of parent relation */
+	RowMarkType	markType;		/* see enum above */
+	bool		noWait;			/* NOWAIT option */
+	bool		isParent;		/* true if this is a "dummy" parent entry */
+	AttrNumber	ctidAttNo;		/* resno of ctid junk attribute, if any */
+	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
+	AttrNumber	wholeAttNo;		/* resno of whole-row junk attribute, if any */
+} PlanRowMark;
 
 
 /*

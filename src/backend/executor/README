@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.10 2009/10/12 18:10:41 tgl Exp $
+$PostgreSQL: pgsql/src/backend/executor/README,v 1.11 2009/10/26 02:26:29 tgl Exp $
 
 The Postgres Executor
 =====================
@@ -160,41 +160,38 @@ modified tuple.  SELECT FOR UPDATE/SHARE behaves similarly, except that its
 action is just to lock the modified tuple and return results based on that
 version of the tuple.
 
-To implement this checking, we actually re-run the entire query from scratch
-for each modified tuple, but with the scan node that sourced the original
-tuple set to return only the modified tuple, not the original tuple or any
-of the rest of the relation.  If this query returns a tuple, then the
-modified tuple passes the quals (and the query output is the suitably
-modified update tuple, if we're doing UPDATE).  If no tuple is returned,
-then the modified tuple fails the quals, so we ignore it and continue the
-original query.  (This is reasonably efficient for simple queries, but may
-be horribly slow for joins.  A better design would be nice; one thought for
-future investigation is to treat the tuple substitution like a parameter,
-so that we can avoid rescanning unrelated nodes.)
+To implement this checking, we actually re-run the query from scratch for
+each modified tuple (or set of tuples, for SELECT FOR UPDATE), with the
+relation scan nodes tweaked to return only the current tuples --- either
+the original ones, or the updated (and now locked) versions of the modified
+tuple(s).  If this query returns a tuple, then the modified tuple(s) pass
+the quals (and the query output is the suitably modified update tuple, if
+we're doing UPDATE).  If no tuple is returned, then the modified tuple(s)
+fail the quals, so we ignore the current result tuple and continue the
+original query.
 
-Note a fundamental bogosity of this approach: if the relation containing
-the original tuple is being used in a self-join, the other instance(s) of
-the relation will be treated as still containing the original tuple, whereas
-logical consistency would demand that the modified tuple appear in them too.
-But we'd have to actually substitute the modified tuple for the original,
-while still returning all the rest of the relation, to ensure consistent
-answers.  Implementing this correctly is a task for future work.
+In UPDATE/DELETE, only the target relation needs to be handled this way.
+In SELECT FOR UPDATE, there may be multiple relations flagged FOR UPDATE,
+so we obtain lock on the current tuple version in each such relation before
+executing the recheck.
 
-In UPDATE/DELETE, only the target relation needs to be handled this way,
-so only one special recheck query needs to execute at a time.  In SELECT FOR
-UPDATE, there may be multiple relations flagged FOR UPDATE, so it's possible
-that while we are executing a recheck query for one modified tuple, we will
-hit another modified tuple in another relation.  In this case we "stack up"
-recheck queries: a sub-recheck query is spawned in which both the first and
-second modified tuples will be returned as the only components of their
-relations.  (In event of success, all these modified tuples will be locked.)
-Again, this isn't necessarily quite the right thing ... but in simple cases
-it works.  Potentially, recheck queries could get nested to the depth of the
-number of FOR UPDATE/SHARE relations in the query.
+It is also possible that there are relations in the query that are not
+to be locked (they are neither the UPDATE/DELETE target nor specified to
+be locked in SELECT FOR UPDATE/SHARE).  When re-running the test query
+we want to use the same rows from these relations that were joined to
+the locked rows.  For ordinary relations this can be implemented relatively
+cheaply by including the row TID in the join outputs and re-fetching that
+TID.  (The re-fetch is expensive, but we're trying to optimize the normal
+case where no re-test is needed.)  We have also to consider non-table
+relations, such as a ValuesScan or FunctionScan.  For these, since there
+is no equivalent of TID, the only practical solution seems to be to include
+the entire row value in the join output row.
 
-It should be noted also that UPDATE/DELETE expect at most one tuple to
-result from the modified query, whereas in the FOR UPDATE case it's possible
-for multiple tuples to result (since we could be dealing with a join in
-which multiple tuples join to the modified tuple).  We want FOR UPDATE to
-lock all relevant tuples, so we process all tuples output by all the stacked
-recheck queries.
+We disallow set-returning functions in the targetlist of SELECT FOR UPDATE,
+so as to ensure that at most one tuple can be returned for any particular
+set of scan tuples.  Otherwise we'd get duplicates due to the original
+query returning the same set of scan tuples multiple times.  (Note: there
+is no explicit prohibition on SRFs in UPDATE, but the net effect will be
+that only the first result row of an SRF counts, because all subsequent
+rows will result in attempts to re-update an already updated target row.
+This is historical behavior and seems not worth changing.)

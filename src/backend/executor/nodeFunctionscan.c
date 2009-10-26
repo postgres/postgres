@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.53 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.54 2009/10/26 02:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,23 +79,31 @@ FunctionNext(FunctionScanState *node)
 	return slot;
 }
 
+/*
+ * FunctionRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+FunctionRecheck(FunctionScanState *node, TupleTableSlot *slot)
+{
+	/* nothing to check */
+	return true;
+}
+
 /* ----------------------------------------------------------------
  *		ExecFunctionScan(node)
  *
  *		Scans the function sequentially and returns the next qualifying
  *		tuple.
- *		It calls the ExecScan() routine and passes it the access method
- *		which retrieves tuples sequentially.
- *
+ *		We call the ExecScan() routine and pass it the appropriate
+ *		access method functions.
+ * ----------------------------------------------------------------
  */
-
 TupleTableSlot *
 ExecFunctionScan(FunctionScanState *node)
 {
-	/*
-	 * use FunctionNext as access method
-	 */
-	return ExecScan(&node->ss, (ExecScanAccessMtd) FunctionNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) FunctionNext,
+					(ExecScanRecheckMtd) FunctionRecheck);
 }
 
 /* ----------------------------------------------------------------
@@ -256,7 +264,8 @@ void
 ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	node->ss.ps.ps_TupFromTlist = false;
+
+	ExecScanReScan(&node->ss);
 
 	/*
 	 * If we haven't materialized yet, just return.

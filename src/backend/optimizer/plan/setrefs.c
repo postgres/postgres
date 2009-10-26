@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.153 2009/10/14 22:14:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.154 2009/10/26 02:26:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ static bool extract_query_dependencies_walker(Node *node,
  *	glob: global data for planner run
  *	plan: the topmost node of the plan
  *	rtable: the rangetable for the current subquery
- *	rowmarks: the RowMarkClause list for the current subquery
+ *	rowmarks: the PlanRowMark list for the current subquery
  *
  * The return value is normally the same Plan node passed in, but can be
  * different when the passed-in Plan is a SubqueryScan we decide isn't needed.
@@ -235,21 +235,22 @@ set_plan_references(PlannerGlobal *glob, Plan *plan,
 	}
 
 	/*
-	 * Adjust RT indexes of RowMarkClauses and add to final rowmarks list
+	 * Adjust RT indexes of PlanRowMarks and add to final rowmarks list
 	 */
 	foreach(lc, rowmarks)
 	{
-		RowMarkClause *rc = (RowMarkClause *) lfirst(lc);
-		RowMarkClause *newrc;
+		PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
+		PlanRowMark *newrc;
 
-		/* flat copy to duplicate all the scalar fields */
-		newrc = (RowMarkClause *) palloc(sizeof(RowMarkClause));
-		memcpy(newrc, rc, sizeof(RowMarkClause));
+		Assert(IsA(rc, PlanRowMark));
+
+		/* flat copy is enough since all fields are scalars */
+		newrc = (PlanRowMark *) palloc(sizeof(PlanRowMark));
+		memcpy(newrc, rc, sizeof(PlanRowMark));
 
 		/* adjust indexes */
 		newrc->rti += rtoffset;
 		newrc->prti += rtoffset;
-		/* rowmarkId must NOT be adjusted */
 
 		glob->finalrowmarks = lappend(glob->finalrowmarks, newrc);
 	}
@@ -434,7 +435,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
 				foreach(l, splan->rowMarks)
 				{
-					RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+					PlanRowMark *rc = (PlanRowMark *) lfirst(l);
 
 					rc->rti += rtoffset;
 					rc->prti += rtoffset;
@@ -501,6 +502,13 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				foreach(l, splan->resultRelations)
 				{
 					lfirst_int(l) += rtoffset;
+				}
+				foreach(l, splan->rowMarks)
+				{
+					PlanRowMark *rc = (PlanRowMark *) lfirst(l);
+
+					rc->rti += rtoffset;
+					rc->prti += rtoffset;
 				}
 				foreach(l, splan->plans)
 				{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.67 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.68 2009/10/26 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ static TupleTableSlot *SeqNext(SeqScanState *node);
  *						Scan Support
  * ----------------------------------------------------------------
  */
+
 /* ----------------------------------------------------------------
  *		SeqNext
  *
@@ -47,7 +48,6 @@ SeqNext(SeqScanState *node)
 {
 	HeapTuple	tuple;
 	HeapScanDesc scandesc;
-	Index		scanrelid;
 	EState	   *estate;
 	ScanDirection direction;
 	TupleTableSlot *slot;
@@ -55,40 +55,13 @@ SeqNext(SeqScanState *node)
 	/*
 	 * get information from the estate and scan state
 	 */
-	estate = node->ps.state;
 	scandesc = node->ss_currentScanDesc;
-	scanrelid = ((SeqScan *) node->ps.plan)->scanrelid;
+	estate = node->ps.state;
 	direction = estate->es_direction;
 	slot = node->ss_ScanTupleSlot;
 
 	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle SeqScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-			return ExecClearTuple(slot);
-
-		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/*
-		 * Note that unlike IndexScan, SeqScan never use keys in
-		 * heap_beginscan (and this is very bad) - so, here we do not check
-		 * are keys ok or not.
-		 */
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-		return slot;
-	}
-
-	/*
-	 * get the next tuple from the access methods
+	 * get the next tuple from the table
 	 */
 	tuple = heap_getnext(scandesc, direction);
 
@@ -112,23 +85,35 @@ SeqNext(SeqScanState *node)
 	return slot;
 }
 
+/*
+ * SeqRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+SeqRecheck(SeqScanState *node, TupleTableSlot *slot)
+{
+	/*
+	 * Note that unlike IndexScan, SeqScan never use keys in
+	 * heap_beginscan (and this is very bad) - so, here we do not check
+	 * are keys ok or not.
+	 */
+	return true;
+}
+
 /* ----------------------------------------------------------------
  *		ExecSeqScan(node)
  *
  *		Scans the relation sequentially and returns the next qualifying
  *		tuple.
- *		It calls the ExecScan() routine and passes it the access method
- *		which retrieve tuples sequentially.
- *
+ *		We call the ExecScan() routine and pass it the appropriate
+ *		access method functions.
+ * ----------------------------------------------------------------
  */
-
 TupleTableSlot *
 ExecSeqScan(SeqScanState *node)
 {
-	/*
-	 * use SeqNext as access method
-	 */
-	return ExecScan((ScanState *) node, (ExecScanAccessMtd) SeqNext);
+	return ExecScan((ScanState *) node,
+					(ExecScanAccessMtd) SeqNext,
+					(ExecScanRecheckMtd) SeqRecheck);
 }
 
 /* ----------------------------------------------------------------
@@ -279,27 +264,14 @@ ExecEndSeqScan(SeqScanState *node)
 void
 ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt)
 {
-	EState	   *estate;
-	Index		scanrelid;
 	HeapScanDesc scan;
-
-	estate = node->ps.state;
-	scanrelid = ((SeqScan *) node->ps.plan)->scanrelid;
-
-	node->ps.ps_TupFromTlist = false;
-
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[scanrelid - 1] = false;
-		return;
-	}
 
 	scan = node->ss_currentScanDesc;
 
 	heap_rescan(scan,			/* scan desc */
 				NULL);			/* new scan keys */
+
+	ExecScanReScan((ScanState *) node);
 }
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.155 2009/10/12 18:10:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.156 2009/10/26 02:26:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,8 @@ static Node *process_sublinks_mutator(Node *node,
 						 process_sublinks_context *context);
 static Bitmapset *finalize_plan(PlannerInfo *root,
 			  Plan *plan,
-			  Bitmapset *valid_params);
+			  Bitmapset *valid_params,
+			  Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
 
@@ -215,10 +216,14 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 }
 
 /*
- * Assign a (nonnegative) PARAM_EXEC ID for a recursive query's worktable.
+ * Assign a (nonnegative) PARAM_EXEC ID for a special parameter (one that
+ * is not actually used to carry a value at runtime).  Such parameters are
+ * used for special runtime signaling purposes, such as connecting a
+ * recursive union node to its worktable scan node or forcing plan
+ * re-evaluation within the EvalPlanQual mechanism.
  */
 int
-SS_assign_worktable_param(PlannerInfo *root)
+SS_assign_special_param(PlannerInfo *root)
 {
 	Param	   *param;
 
@@ -335,7 +340,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 
 	/* And convert to SubPlan or InitPlan format. */
 	result = build_subplan(root, plan,
-						   subroot->parse->rtable, subroot->parse->rowMarks,
+						   subroot->parse->rtable, subroot->rowMarks,
 						   subLinkType, testexpr, true, isTopQual);
 
 	/*
@@ -377,7 +382,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 				/* OK, convert to SubPlan format. */
 				hashplan = (SubPlan *) build_subplan(root, plan,
 													 subroot->parse->rtable,
-													 subroot->parse->rowMarks,
+													 subroot->rowMarks,
 													 ANY_SUBLINK, newtestexpr,
 													 false, true);
 				/* Check we got what we expected */
@@ -949,7 +954,7 @@ SS_process_ctes(PlannerInfo *root)
 		root->glob->subrtables = lappend(root->glob->subrtables,
 										 subroot->parse->rtable);
 		root->glob->subrowmarks = lappend(root->glob->subrowmarks,
-										  subroot->parse->rowMarks);
+										  subroot->rowMarks);
 		splan->plan_id = list_length(root->glob->subplans);
 
 		root->init_plans = lappend(root->init_plans, splan);
@@ -1702,7 +1707,8 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 }
 
 /*
- * SS_finalize_plan - do final sublink processing for a completed Plan.
+ * SS_finalize_plan - do final sublink and parameter processing for a
+ * completed Plan.
  *
  * This recursively computes the extParam and allParam sets for every Plan
  * node in the given plan tree.  It also optionally attaches any previously
@@ -1751,7 +1757,8 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	 * output parameters of any initPlans.	(We do not include output
 	 * parameters of regular subplans.	Those should only appear within the
 	 * testexpr of SubPlan nodes, and are taken care of locally within
-	 * finalize_primnode.)
+	 * finalize_primnode.  Likewise, special parameters that are generated
+	 * by nodes such as ModifyTable are handled within finalize_plan.)
 	 *
 	 * Note: this is a bit overly generous since some parameters of upper
 	 * query levels might belong to query subtrees that don't include this
@@ -1772,14 +1779,11 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 
 		paramid++;
 	}
-	/* Also include the recursion working table, if any */
-	if (root->wt_param_id >= 0)
-		valid_params = bms_add_member(valid_params, root->wt_param_id);
 
 	/*
 	 * Now recurse through plan tree.
 	 */
-	(void) finalize_plan(root, plan, valid_params);
+	(void) finalize_plan(root, plan, valid_params, NULL);
 
 	bms_free(valid_params);
 
@@ -1819,19 +1823,28 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 /*
  * Recursive processing of all nodes in the plan tree
  *
+ * valid_params is the set of param IDs considered valid to reference in
+ * this plan node or its children.
+ * scan_params is a set of param IDs to force scan plan nodes to reference.
+ * This is for EvalPlanQual support, and is always NULL at the top of the
+ * recursion.
+ *
  * The return value is the computed allParam set for the given Plan node.
  * This is just an internal notational convenience.
  */
 static Bitmapset *
-finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
+finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
+			  Bitmapset *scan_params)
 {
 	finalize_primnode_context context;
+	int			locally_added_param;
 
 	if (plan == NULL)
 		return NULL;
 
 	context.root = root;
 	context.paramids = NULL;	/* initialize set to empty */
+	locally_added_param = -1;	/* there isn't one */
 
 	/*
 	 * When we call finalize_primnode, context.paramids sets are automatically
@@ -1852,6 +1865,10 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 							  &context);
 			break;
 
+		case T_SeqScan:
+			context.paramids = bms_add_members(context.paramids, scan_params);
+			break;
+
 		case T_IndexScan:
 			finalize_primnode((Node *) ((IndexScan *) plan)->indexqual,
 							  &context);
@@ -1860,6 +1877,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			 * we need not look at indexqualorig, since it will have the same
 			 * param references as indexqual.
 			 */
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_BitmapIndexScan:
@@ -1875,11 +1893,13 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 		case T_BitmapHeapScan:
 			finalize_primnode((Node *) ((BitmapHeapScan *) plan)->bitmapqualorig,
 							  &context);
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_TidScan:
 			finalize_primnode((Node *) ((TidScan *) plan)->tidquals,
 							  &context);
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_SubqueryScan:
@@ -1893,16 +1913,20 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			 */
 			context.paramids = bms_add_members(context.paramids,
 								 ((SubqueryScan *) plan)->subplan->extParam);
+			/* We need scan_params too, though */
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_FunctionScan:
 			finalize_primnode(((FunctionScan *) plan)->funcexpr,
 							  &context);
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_ValuesScan:
 			finalize_primnode((Node *) ((ValuesScan *) plan)->values_lists,
 							  &context);
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_CteScan:
@@ -1934,6 +1958,9 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 					bms_add_member(context.paramids,
 								   ((CteScan *) plan)->cteParam);
 #endif
+
+				context.paramids = bms_add_members(context.paramids,
+												   scan_params);
 			}
 			break;
 
@@ -1941,21 +1968,30 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			context.paramids =
 				bms_add_member(context.paramids,
 							   ((WorkTableScan *) plan)->wtParam);
+			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
 		case T_ModifyTable:
 			{
+				ModifyTable *mtplan = (ModifyTable *) plan;
 				ListCell   *l;
 
-				finalize_primnode((Node *) ((ModifyTable *) plan)->returningLists,
+				/* Force descendant scan nodes to reference epqParam */
+				locally_added_param = mtplan->epqParam;
+				valid_params = bms_add_member(bms_copy(valid_params),
+											  locally_added_param);
+				scan_params = bms_add_member(bms_copy(scan_params),
+											 locally_added_param);
+				finalize_primnode((Node *) mtplan->returningLists,
 								  &context);
-				foreach(l, ((ModifyTable *) plan)->plans)
+				foreach(l, mtplan->plans)
 				{
 					context.paramids =
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  valid_params));
+													  valid_params,
+													  scan_params));
 				}
 			}
 			break;
@@ -1970,7 +2006,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  valid_params));
+													  valid_params,
+													  scan_params));
 				}
 			}
 			break;
@@ -1985,7 +2022,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  valid_params));
+													  valid_params,
+													  scan_params));
 				}
 			}
 			break;
@@ -2000,7 +2038,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 						bms_add_members(context.paramids,
 										finalize_plan(root,
 													  (Plan *) lfirst(l),
-													  valid_params));
+													  valid_params,
+													  scan_params));
 				}
 			}
 			break;
@@ -2032,16 +2071,30 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			break;
 
 		case T_RecursiveUnion:
+			/* child nodes are allowed to reference wtParam */
+			locally_added_param = ((RecursiveUnion *) plan)->wtParam;
+			valid_params = bms_add_member(bms_copy(valid_params),
+										  locally_added_param);
+			/* wtParam does *not* get added to scan_params */
+			break;
+
+		case T_LockRows:
+			/* Force descendant scan nodes to reference epqParam */
+			locally_added_param = ((LockRows *) plan)->epqParam;
+			valid_params = bms_add_member(bms_copy(valid_params),
+										  locally_added_param);
+			scan_params = bms_add_member(bms_copy(scan_params),
+										 locally_added_param);
+			break;
+
 		case T_Hash:
 		case T_Agg:
 		case T_WindowAgg:
-		case T_SeqScan:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
 		case T_Group:
-		case T_LockRows:
 			break;
 
 		default:
@@ -2053,20 +2106,25 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,
 													 plan->lefttree,
-													 valid_params));
+													 valid_params,
+													 scan_params));
 
 	context.paramids = bms_add_members(context.paramids,
 									   finalize_plan(root,
 													 plan->righttree,
-													 valid_params));
+													 valid_params,
+													 scan_params));
 
 	/*
-	 * RecursiveUnion *generates* its worktable param, so don't bubble that up
+	 * Any locally generated parameter doesn't count towards its generating
+	 * plan node's external dependencies.  (Note: if we changed valid_params
+	 * and/or scan_params, we leak those bitmapsets; not worth the notational
+	 * trouble to clean them up.)
 	 */
-	if (IsA(plan, RecursiveUnion))
+	if (locally_added_param >= 0)
 	{
 		context.paramids = bms_del_member(context.paramids,
-										  ((RecursiveUnion *) plan)->wtParam);
+										  locally_added_param);
 	}
 
 	/* Now we have all the paramids */
@@ -2199,7 +2257,7 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	root->glob->subrtables = lappend(root->glob->subrtables,
 									 root->parse->rtable);
 	root->glob->subrowmarks = lappend(root->glob->subrowmarks,
-									  root->parse->rowMarks);
+									  root->rowMarks);
 
 	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans. Note

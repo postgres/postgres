@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.393 2009/09/01 04:46:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.394 2009/10/26 02:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ typedef VacPageListData *VacPageList;
  * Note: because t_ctid links can be stale (this would only occur if a prior
  * VACUUM crashed partway through), it is possible that new_tid points to an
  * empty slot or unrelated tuple.  We have to check the linkage as we follow
- * it, just as is done in EvalPlanQual.
+ * it, just as is done in EvalPlanQualFetch.
  */
 typedef struct VTupleLinkData
 {

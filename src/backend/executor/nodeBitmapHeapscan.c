@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.36 2009/09/27 21:10:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.37 2009/10/26 02:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,10 +60,8 @@ static void bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres);
 static TupleTableSlot *
 BitmapHeapNext(BitmapHeapScanState *node)
 {
-	EState	   *estate;
 	ExprContext *econtext;
 	HeapScanDesc scan;
-	Index		scanrelid;
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
@@ -74,44 +72,13 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	/*
 	 * extract necessary information from index scan node
 	 */
-	estate = node->ss.ps.state;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
 	scan = node->ss.ss_currentScanDesc;
-	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
 	prefetch_iterator = node->prefetch_iterator;
-
-	/*
-	 * Check if we are evaluating PlanQual for tuple of this relation.
-	 * Additional checking is not good, but no other way for now. We could
-	 * introduce new nodes for this case and handle IndexScan --> NewNode
-	 * switching in Init/ReScan plan...
-	 */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		if (estate->es_evTupleNull[scanrelid - 1])
-			return ExecClearTuple(slot);
-
-		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
-					   slot, InvalidBuffer, false);
-
-		/* Does the tuple meet the original qual conditions? */
-		econtext->ecxt_scantuple = slot;
-
-		ResetExprContext(econtext);
-
-		if (!ExecQual(node->bitmapqualorig, econtext, false))
-			ExecClearTuple(slot);		/* would not be returned by scan */
-
-		/* Flag for the next call that no more tuples */
-		estate->es_evTupleNull[scanrelid - 1] = true;
-
-		return slot;
-	}
 
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and begin
@@ -419,6 +386,27 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	scan->rs_ntuples = ntup;
 }
 
+/*
+ * BitmapHeapRecheck -- access method routine to recheck a tuple in EvalPlanQual
+ */
+static bool
+BitmapHeapRecheck(BitmapHeapScanState *node, TupleTableSlot *slot)
+{
+	ExprContext *econtext;
+
+	/*
+	 * extract necessary information from index scan node
+	 */
+	econtext = node->ss.ps.ps_ExprContext;
+
+	/* Does the tuple meet the original qual conditions? */
+	econtext->ecxt_scantuple = slot;
+
+	ResetExprContext(econtext);
+
+	return ExecQual(node->bitmapqualorig, econtext, false);
+}
+
 /* ----------------------------------------------------------------
  *		ExecBitmapHeapScan(node)
  * ----------------------------------------------------------------
@@ -426,10 +414,9 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 TupleTableSlot *
 ExecBitmapHeapScan(BitmapHeapScanState *node)
 {
-	/*
-	 * use BitmapHeapNext as access method
-	 */
-	return ExecScan(&node->ss, (ExecScanAccessMtd) BitmapHeapNext);
+	return ExecScan(&node->ss,
+					(ExecScanAccessMtd) BitmapHeapNext,
+					(ExecScanRecheckMtd) BitmapHeapRecheck);
 }
 
 /* ----------------------------------------------------------------
@@ -439,14 +426,6 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 void
 ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 {
-	EState	   *estate;
-	Index		scanrelid;
-
-	estate = node->ss.ps.state;
-	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
-
-	node->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * If we are being passed an outer tuple, link it into the "regular"
 	 * per-tuple econtext for possible qual eval.
@@ -457,13 +436,6 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 
 		stdecontext = node->ss.ps.ps_ExprContext;
 		stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-	}
-
-	/* If this is re-scanning of PlanQual ... */
-	if (estate->es_evTuple != NULL &&
-		estate->es_evTuple[scanrelid - 1] != NULL)
-	{
-		estate->es_evTupleNull[scanrelid - 1] = false;
 	}
 
 	/* rescan to release any page pin */
@@ -479,6 +451,8 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	node->tbmiterator = NULL;
 	node->tbmres = NULL;
 	node->prefetch_iterator = NULL;
+
+	ExecScanReScan(&node->ss);
 
 	/*
 	 * Always rescan the input immediately, to ensure we can pass down any

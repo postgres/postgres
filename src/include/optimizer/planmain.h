@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.120 2009/10/12 18:10:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.121 2009/10/26 02:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
 		   Plan *lefttree);
 extern Plan *materialize_finished_plan(Plan *subplan);
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
-extern LockRows *make_lockrows(Plan *lefttree, List *rowMarks);
+extern LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 		   int64 offset_est, int64 count_est);
 extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
@@ -77,7 +77,8 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
 extern ModifyTable *make_modifytable(CmdType operation, List *resultRelations,
-									 List *subplans, List *returningLists);
+									 List *subplans, List *returningLists,
+									 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
 
 /*

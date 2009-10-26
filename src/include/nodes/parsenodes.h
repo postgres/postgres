@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.410 2009/10/14 22:14:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.411 2009/10/26 02:26:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,28 +800,17 @@ typedef struct WindowClause
 
 /*
  * RowMarkClause -
- *	   representation of FOR UPDATE/SHARE clauses
+ *	   parser output representation of FOR UPDATE/SHARE clauses
  *
- * We create a separate RowMarkClause node for each target relation.  In the
- * output of the parser and rewriter, all RowMarkClauses have rti == prti and
- * isParent == false.  When the planner discovers that a target relation
- * is the root of an inheritance tree, it sets isParent true, and adds an
- * additional RowMarkClause to the list for each child relation (including
- * the target rel itself in its role as a child).  The child entries have
- * rti == child rel's RT index, prti == parent's RT index, and can therefore
- * be recognized as children by the fact that prti != rti.
- * rowmarkId is a unique ID for the RowMarkClause across an entire query,
- * and is assigned during planning; it's always zero upstream of the planner.
+ * Query.rowMarks contains a separate RowMarkClause node for each relation
+ * identified as a FOR UPDATE/SHARE target.
  */
 typedef struct RowMarkClause
 {
 	NodeTag		type;
 	Index		rti;			/* range table index of target relation */
-	Index		prti;			/* range table index of parent relation */
-	Index		rowmarkId;		/* unique identifier assigned by planner */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
-	bool		isParent;		/* set by planner when expanding inheritance */
 } RowMarkClause;
 
 /*

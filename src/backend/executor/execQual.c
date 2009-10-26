@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.252 2009/10/08 22:34:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.253 2009/10/26 02:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -660,7 +660,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			exprstate->evalfunc = ExecEvalWholeRowVar;
 
 		/* Fetch the value */
-		return ExecEvalWholeRowVar(exprstate, econtext, isNull, isDone);
+		return (*exprstate->evalfunc) (exprstate, econtext, isNull, isDone);
 	}
 }
 

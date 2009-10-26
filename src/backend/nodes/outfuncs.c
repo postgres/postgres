@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.369 2009/10/13 00:53:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.370 2009/10/26 02:26:31 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -329,6 +329,8 @@ _outModifyTable(StringInfo str, ModifyTable *node)
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(plans);
 	WRITE_NODE_FIELD(returningLists);
+	WRITE_NODE_FIELD(rowMarks);
+	WRITE_INT_FIELD(epqParam);
 }
 
 static void
@@ -729,6 +731,7 @@ _outLockRows(StringInfo str, LockRows *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	WRITE_NODE_FIELD(rowMarks);
+	WRITE_INT_FIELD(epqParam);
 }
 
 static void
@@ -740,6 +743,21 @@ _outLimit(StringInfo str, Limit *node)
 
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
+}
+
+static void
+_outPlanRowMark(StringInfo str, PlanRowMark *node)
+{
+	WRITE_NODE_TYPE("PLANROWMARK");
+
+	WRITE_UINT_FIELD(rti);
+	WRITE_UINT_FIELD(prti);
+	WRITE_ENUM_FIELD(markType, RowMarkType);
+	WRITE_BOOL_FIELD(noWait);
+	WRITE_BOOL_FIELD(isParent);
+	WRITE_INT_FIELD(ctidAttNo);
+	WRITE_INT_FIELD(toidAttNo);
+	WRITE_INT_FIELD(wholeAttNo);
 }
 
 static void
@@ -1512,7 +1530,6 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
 	WRITE_UINT_FIELD(lastPHId);
-	WRITE_UINT_FIELD(lastRowmarkId);
 	WRITE_BOOL_FIELD(transientPlan);
 }
 
@@ -1536,6 +1553,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(full_join_clauses);
 	WRITE_NODE_FIELD(join_info_list);
 	WRITE_NODE_FIELD(append_rel_list);
+	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(placeholder_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
@@ -2016,11 +2034,8 @@ _outRowMarkClause(StringInfo str, RowMarkClause *node)
 	WRITE_NODE_TYPE("ROWMARKCLAUSE");
 
 	WRITE_UINT_FIELD(rti);
-	WRITE_UINT_FIELD(prti);
-	WRITE_UINT_FIELD(rowmarkId);
 	WRITE_BOOL_FIELD(forUpdate);
 	WRITE_BOOL_FIELD(noWait);
-	WRITE_BOOL_FIELD(isParent);
 }
 
 static void
@@ -2525,6 +2540,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Limit:
 				_outLimit(str, obj);
+				break;
+			case T_PlanRowMark:
+				_outPlanRowMark(str, obj);
 				break;
 			case T_PlanInvalItem:
 				_outPlanInvalItem(str, obj);
