@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.248 2009/06/18 01:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.248.2.1 2009/10/27 20:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3800,9 +3800,15 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	int			ntriggers;
 	int		   *tgindx;
 
+	/*
+	 * Check state.  We use normal tests not Asserts because it is possible
+	 * to reach here in the wrong state given misconfigured RI triggers,
+	 * in particular deferring a cascade action trigger.
+	 */
 	if (afterTriggers == NULL)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
-	Assert(afterTriggers->query_depth >= 0);
+	if (afterTriggers->query_depth < 0)
+		elog(ERROR, "AfterTriggerSaveEvent() called outside of query");
 
 	/*
 	 * Validate the event code and collect the associated tuple CTIDs.
