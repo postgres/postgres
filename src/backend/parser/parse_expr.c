@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.241.2.1 2009/09/09 03:33:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.241.2.2 2009/10/27 17:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1251,7 +1251,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		return result;
 
 	pstate->p_hasSubLinks = true;
-	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL);
+	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false);
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are

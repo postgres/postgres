@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.389.2.2 2009/09/09 03:33:01 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.389.2.3 2009/10/27 17:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,12 +138,14 @@ parse_analyze_varparams(Node *parseTree, const char *sourceText,
  */
 Query *
 parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
-				  CommonTableExpr *parentCTE)
+				  CommonTableExpr *parentCTE,
+				  bool locked_from_parent)
 {
 	ParseState *pstate = make_parsestate(parentParseState);
 	Query	   *query;
 
 	pstate->p_parent_cte = parentCTE;
+	pstate->p_locked_from_parent = locked_from_parent;
 
 	query = transformStmt(pstate, parseTree);
 
@@ -1424,7 +1426,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		 * of this sub-query, because they are not in the toplevel pstate's
 		 * namespace list.
 		 */
-		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL);
+		selectQuery = parse_sub_analyze((Node *) stmt, pstate, NULL, false);
 
 		/*
 		 * Check for bogus references to Vars on the current query level (but
@@ -2043,7 +2045,7 @@ CheckSelectLocking(Query *qry)
  * This basically involves replacing names by integer relids.
  *
  * NB: if you need to change this, see also markQueryForLocking()
- * in rewriteHandler.c, and isLockedRel() in parse_relation.c.
+ * in rewriteHandler.c, and isLockedRefname() in parse_relation.c.
  */
 static void
 transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
@@ -2085,32 +2087,8 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
 					 */
 					transformLockingClause(pstate, rte->subquery, allrels);
 					break;
-				case RTE_CTE:
-					{
-						/*
-						 * We allow FOR UPDATE/SHARE of a WITH query to be
-						 * propagated into the WITH, but it doesn't seem very
-						 * sane to allow this for a reference to an
-						 * outer-level WITH.  And it definitely wouldn't work
-						 * for a self-reference, since we're not done
-						 * analyzing the CTE anyway.
-						 */
-						CommonTableExpr *cte;
-
-						if (rte->ctelevelsup > 0 || rte->self_reference)
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to an outer-level WITH query")));
-						cte = GetCTEForRTE(pstate, rte, -1);
-						/* should be analyzed by now */
-						Assert(IsA(cte->ctequery, Query));
-						transformLockingClause(pstate,
-											   (Query *) cte->ctequery,
-											   allrels);
-					}
-					break;
 				default:
-					/* ignore JOIN, SPECIAL, FUNCTION RTEs */
+					/* ignore JOIN, SPECIAL, FUNCTION, VALUES, CTE RTEs */
 					break;
 			}
 		}
@@ -2177,30 +2155,10 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
 							 parser_errposition(pstate, thisrel->location)));
 							break;
 						case RTE_CTE:
-							{
-								/*
-								 * We allow FOR UPDATE/SHARE of a WITH query
-								 * to be propagated into the WITH, but it
-								 * doesn't seem very sane to allow this for a
-								 * reference to an outer-level WITH.  And it
-								 * definitely wouldn't work for a
-								 * self-reference, since we're not done
-								 * analyzing the CTE anyway.
-								 */
-								CommonTableExpr *cte;
-
-								if (rte->ctelevelsup > 0 || rte->self_reference)
-									ereport(ERROR,
-									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									  errmsg("SELECT FOR UPDATE/SHARE cannot be applied to an outer-level WITH query"),
-									  parser_errposition(pstate, thisrel->location)));
-								cte = GetCTEForRTE(pstate, rte, -1);
-								/* should be analyzed by now */
-								Assert(IsA(cte->ctequery, Query));
-								transformLockingClause(pstate,
-													 (Query *) cte->ctequery,
-													   allrels);
-							}
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to a WITH query"),
+							 parser_errposition(pstate, thisrel->location)));
 							break;
 						default:
 							elog(ERROR, "unrecognized RTE type: %d",

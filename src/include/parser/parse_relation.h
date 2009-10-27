@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.64 2009/06/11 14:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.64.2.1 2009/10/27 17:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@ extern RangeTblEntry *addRangeTableEntryForCTE(ParseState *pstate,
 						 Index levelsup,
 						 Alias *alias,
 						 bool inFromCl);
+extern bool isLockedRefname(ParseState *pstate, const char *refname);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
