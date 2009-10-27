@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.195.2.6 2008/10/25 03:32:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.195.2.7 2009/10/27 20:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3157,8 +3157,15 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	ItemPointerData oldctid;
 	ItemPointerData newctid;
 
+	/*
+	 * Check state.  We use normal tests not Asserts because it is possible
+	 * to reach here in the wrong state given misconfigured RI triggers,
+	 * in particular deferring a cascade action trigger.
+	 */
 	if (afterTriggers == NULL)
 		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
+	if (afterTriggers->query_depth < 0)
+		elog(ERROR, "AfterTriggerSaveEvent() called outside of query");
 
 	/*
 	 * Get the CTID's of OLD and NEW
