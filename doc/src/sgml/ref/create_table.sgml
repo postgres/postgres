@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.118 2009/10/13 00:53:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.119 2009/10/27 13:58:28 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -719,8 +719,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     <literal>PRIMARY KEY</literal> constraint.  Storage parameters for
     indexes are documented in <xref linkend="SQL-CREATEINDEX"
     endterm="sql-createindex-title">.  The storage parameters currently
-    available for tables are listed below.  For each parameter, there is an
-    additional, identically named parameter, prefixed with
+    available for tables are listed below.  For each parameter, unless noted,
+    there is an additional, identically named parameter, prefixed with
     <literal>toast.</literal> which can be used to control the behavior of the
     supplementary storage table, if any; see <xref linkend="storage-toast">.
     Note that the supplementary storage table inherits the
@@ -731,7 +731,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    <variablelist>
 
    <varlistentry>
-    <term><literal>fillfactor</>, <literal>toast.fillfactor</literal> (<type>integer</>)</term>
+    <term><literal>fillfactor</> (<type>integer</>)</term>
     <listitem>
      <para>
       The fillfactor for a table is a percentage between 10 and 100.
@@ -743,7 +743,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
       original, which is more efficient than placing it on a different page.
       For a table whose entries are never updated, complete packing is the
       best choice, but in heavily updated tables smaller fillfactors are
-      appropriate.
+      appropriate.  This parameter cannot be set for the supplementary
+      storage table.
      </para>
     </listitem>
    </varlistentry>
@@ -857,7 +858,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_freeze_table_age</literal> (<type>integer</type>)</term>
+    <term><literal>autovacuum_freeze_table_age</literal>, <literal>toast.autovacuum_freeze_table_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Custom <xref linkend="guc-vacuum-freeze-table-age"> parameter.
