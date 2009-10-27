@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.145 2009/10/26 02:26:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.146 2009/10/27 17:11:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
 					  int location);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 					 int rtindex, AttrNumber col);
-static bool isLockedRel(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
 			   int location, bool include_dropped,
@@ -909,7 +908,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * to a rel in a statement, be careful to get the right access level
 	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
-	lockmode = isLockedRel(pstate, refname) ? RowShareLock : AccessShareLock;
+	lockmode = isLockedRefname(pstate, refname) ? RowShareLock : AccessShareLock;
 	rel = parserOpenTable(pstate, relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
@@ -1454,40 +1453,46 @@ addRangeTableEntryForCTE(ParseState *pstate,
 /*
  * Has the specified refname been selected FOR UPDATE/FOR SHARE?
  *
- * Note: we pay no attention to whether it's FOR UPDATE vs FOR SHARE.
+ * This is used when we have not yet done transformLockingClause, but need
+ * to know the correct lock to take during initial opening of relations.
+ *
+ * Note: we pay no attention to whether it's FOR UPDATE vs FOR SHARE,
+ * since the table-level lock is the same either way.
  */
-static bool
-isLockedRel(ParseState *pstate, char *refname)
+bool
+isLockedRefname(ParseState *pstate, const char *refname)
 {
-	/* Outer loop to check parent query levels as well as this one */
-	while (pstate != NULL)
+	ListCell   *l;
+
+	/*
+	 * If we are in a subquery specified as locked FOR UPDATE/SHARE from
+	 * parent level, then act as though there's a generic FOR UPDATE here.
+	 */
+	if (pstate->p_locked_from_parent)
+		return true;
+
+	foreach(l, pstate->p_locking_clause)
 	{
-		ListCell   *l;
+		LockingClause *lc = (LockingClause *) lfirst(l);
 
-		foreach(l, pstate->p_locking_clause)
+		if (lc->lockedRels == NIL)
 		{
-			LockingClause *lc = (LockingClause *) lfirst(l);
+			/* all tables used in query */
+			return true;
+		}
+		else
+		{
+			/* just the named tables */
+			ListCell   *l2;
 
-			if (lc->lockedRels == NIL)
+			foreach(l2, lc->lockedRels)
 			{
-				/* all tables used in query */
-				return true;
-			}
-			else
-			{
-				/* just the named tables */
-				ListCell   *l2;
+				RangeVar   *thisrel = (RangeVar *) lfirst(l2);
 
-				foreach(l2, lc->lockedRels)
-				{
-					RangeVar   *thisrel = (RangeVar *) lfirst(l2);
-
-					if (strcmp(refname, thisrel->relname) == 0)
-						return true;
-				}
+				if (strcmp(refname, thisrel->relname) == 0)
+					return true;
 			}
 		}
-		pstate = pstate->parentParseState;
 	}
 	return false;
 }

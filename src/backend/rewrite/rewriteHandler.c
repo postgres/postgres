@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.188 2009/10/26 02:26:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.189 2009/10/27 17:11:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1242,35 +1242,7 @@ markQueryForLocking(Query *qry, Node *jtnode, bool forUpdate, bool noWait)
 			markQueryForLocking(rte->subquery, (Node *) rte->subquery->jointree,
 								forUpdate, noWait);
 		}
-		else if (rte->rtekind == RTE_CTE)
-		{
-			/*
-			 * We allow FOR UPDATE/SHARE of a WITH query to be propagated into
-			 * the WITH, but it doesn't seem very sane to allow this for a
-			 * reference to an outer-level WITH (compare
-			 * transformLockingClause).  Which simplifies life here.
-			 */
-			CommonTableExpr *cte = NULL;
-			ListCell   *lc;
-
-			if (rte->ctelevelsup > 0 || rte->self_reference)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to an outer-level WITH query")));
-			foreach(lc, qry->cteList)
-			{
-				cte = (CommonTableExpr *) lfirst(lc);
-				if (strcmp(cte->ctename, rte->ctename) == 0)
-					break;
-			}
-			if (lc == NULL)		/* shouldn't happen */
-				elog(ERROR, "could not find CTE \"%s\"", rte->ctename);
-			/* should be analyzed by now */
-			Assert(IsA(cte->ctequery, Query));
-			markQueryForLocking((Query *) cte->ctequery,
-								(Node *) ((Query *) cte->ctequery)->jointree,
-								forUpdate, noWait);
-		}
+		/* other RTE types are unaffected by FOR UPDATE */
 	}
 	else if (IsA(jtnode, FromExpr))
 	{

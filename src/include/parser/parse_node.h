@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.64 2009/10/21 20:22:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.65 2009/10/27 17:11:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ typedef struct ParseState
 	bool		p_hasSubLinks;
 	bool		p_is_insert;
 	bool		p_is_update;
+	bool		p_locked_from_parent;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
 } ParseState;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.126 2009/10/21 20:22:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.127 2009/10/27 17:11:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1127,6 +1127,11 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     If <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal> is
     applied to a view or sub-query, it affects all tables used in
     the view or sub-query.
+    However, <literal>FOR UPDATE</literal>/<literal>FOR SHARE</literal>
+    do not apply to <literal>WITH</> queries referenced by the primary query.
+    If you want row locking to occur within a <literal>WITH</> query, specify
+    <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal> within the
+    <literal>WITH</> query.
    </para>
 
    <para>

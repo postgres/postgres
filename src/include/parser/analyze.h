@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.41 2009/09/09 03:32:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.42 2009/10/27 17:11:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@ extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams);
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
-								CommonTableExpr *parentCTE);
+								CommonTableExpr *parentCTE,
+								bool locked_from_parent);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
 extern bool analyze_requires_snapshot(Node *parseTree);
