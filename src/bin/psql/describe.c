@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.228 2009/10/07 22:14:24 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.229 2009/10/28 18:09:44 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -415,7 +415,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 		appendPQExpBuffer(&buf, "      )\n");
 	}
 
-	processSQLNamePattern(pset.db, &buf, pattern, have_where, true,
+	processSQLNamePattern(pset.db, &buf, pattern, have_where, false,
 						  "n.nspname", "p.proname", NULL,
 						  "pg_catalog.pg_function_is_visible(p.oid)");
 
