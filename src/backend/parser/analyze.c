@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.394 2009/10/27 17:11:18 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.395 2009/10/28 14:55:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@ static Query *transformDeclareCursorStmt(ParseState *pstate,
 						   DeclareCursorStmt *stmt);
 static Query *transformExplainStmt(ParseState *pstate,
 					 ExplainStmt *stmt);
-static void transformLockingClause(ParseState *pstate,
-					   Query *qry, LockingClause *lc);
+static void transformLockingClause(ParseState *pstate, Query *qry,
+								   LockingClause *lc, bool pushedDown);
 static bool check_parameter_resolution_walker(Node *node, ParseState *pstate);
 
 
@@ -896,7 +896,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	foreach(l, stmt->lockingClause)
 	{
-		transformLockingClause(pstate, qry, (LockingClause *) lfirst(l));
+		transformLockingClause(pstate, qry,
+							   (LockingClause *) lfirst(l), false);
 	}
 
 	return qry;
@@ -1348,7 +1349,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	foreach(l, lockingClause)
 	{
-		transformLockingClause(pstate, qry, (LockingClause *) lfirst(l));
+		transformLockingClause(pstate, qry,
+							   (LockingClause *) lfirst(l), false);
 	}
 
 	return qry;
@@ -2056,7 +2058,8 @@ CheckSelectLocking(Query *qry)
  * in rewriteHandler.c, and isLockedRefname() in parse_relation.c.
  */
 static void
-transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
+transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
+					   bool pushedDown)
 {
 	List	   *lockedRels = lc->lockedRels;
 	ListCell   *l;
@@ -2084,16 +2087,22 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-					applyLockingClause(qry, i, lc->forUpdate, lc->noWait);
+					applyLockingClause(qry, i,
+									   lc->forUpdate, lc->noWait, pushedDown);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
-
+					applyLockingClause(qry, i,
+									   lc->forUpdate, lc->noWait, pushedDown);
 					/*
 					 * FOR UPDATE/SHARE of subquery is propagated to all of
-					 * subquery's rels
+					 * subquery's rels, too.  We could do this later (based
+					 * on the marking of the subquery RTE) but it is convenient
+					 * to have local knowledge in each query level about
+					 * which rels need to be opened with RowShareLock.
 					 */
-					transformLockingClause(pstate, rte->subquery, allrels);
+					transformLockingClause(pstate, rte->subquery,
+										   allrels, true);
 					break;
 				default:
 					/* ignore JOIN, SPECIAL, FUNCTION, VALUES, CTE RTEs */
@@ -2127,16 +2136,17 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
 					{
 						case RTE_RELATION:
 							applyLockingClause(qry, i,
-											   lc->forUpdate, lc->noWait);
+											   lc->forUpdate, lc->noWait,
+											   pushedDown);
 							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:
-
-							/*
-							 * FOR UPDATE/SHARE of subquery is propagated to
-							 * all of subquery's rels
-							 */
-							transformLockingClause(pstate, rte->subquery, allrels);
+							applyLockingClause(qry, i,
+											   lc->forUpdate, lc->noWait,
+											   pushedDown);
+							/* see comment above */
+							transformLockingClause(pstate, rte->subquery,
+												   allrels, true);
 							break;
 						case RTE_JOIN:
 							ereport(ERROR,
@@ -2190,9 +2200,14 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)
  * Record locking info for a single rangetable item
  */
 void
-applyLockingClause(Query *qry, Index rtindex, bool forUpdate, bool noWait)
+applyLockingClause(Query *qry, Index rtindex,
+				   bool forUpdate, bool noWait, bool pushedDown)
 {
 	RowMarkClause *rc;
+
+	/* If it's an explicit clause, make sure hasForUpdate gets set */
+	if (!pushedDown)
+		qry->hasForUpdate = true;
 
 	/* Check for pre-existing entry for same rtindex */
 	if ((rc = get_parse_rowmark(qry, rtindex)) != NULL)
@@ -2207,9 +2222,12 @@ applyLockingClause(Query *qry, Index rtindex, bool forUpdate, bool noWait)
 		 * is a bit more debatable but raising an error doesn't seem helpful.
 		 * (Consider for instance SELECT FOR UPDATE NOWAIT from a view that
 		 * internally contains a plain FOR UPDATE spec.)
+		 *
+		 * And of course pushedDown becomes false if any clause is explicit.
 		 */
 		rc->forUpdate |= forUpdate;
 		rc->noWait |= noWait;
+		rc->pushedDown &= pushedDown;
 		return;
 	}
 
@@ -2218,6 +2236,7 @@ applyLockingClause(Query *qry, Index rtindex, bool forUpdate, bool noWait)
 	rc->rti = rtindex;
 	rc->forUpdate = forUpdate;
 	rc->noWait = noWait;
+	rc->pushedDown = pushedDown;
 	qry->rowMarks = lappend(qry->rowMarks, rc);
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.260 2009/10/26 02:26:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.261 2009/10/28 14:55:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1638,19 +1638,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
-	 * If there is a LIMIT/OFFSET clause, add the LIMIT node.
-	 */
-	if (parse->limitCount || parse->limitOffset)
-	{
-		result_plan = (Plan *) make_limit(result_plan,
-										  parse->limitOffset,
-										  parse->limitCount,
-										  offset_est,
-										  count_est);
-	}
-
-	/*
-	 * Finally, if there is a FOR UPDATE/SHARE clause, add the LockRows node.
+	 * If there is a FOR UPDATE/SHARE clause, add the LockRows node.
 	 * (Note: we intentionally test parse->rowMarks not root->rowMarks here.
 	 * If there are only non-locking rowmarks, they should be handled by
 	 * the ModifyTable node instead.)
@@ -1660,6 +1648,23 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		result_plan = (Plan *) make_lockrows(result_plan,
 											 root->rowMarks,
 											 SS_assign_special_param(root));
+		/*
+		 * The result can no longer be assumed sorted, since locking might
+		 * cause the sort key columns to be replaced with new values.
+		 */
+		current_pathkeys = NIL;
+	}
+
+	/*
+	 * Finally, if there is a LIMIT/OFFSET clause, add the LIMIT node.
+	 */
+	if (parse->limitCount || parse->limitOffset)
+	{
+		result_plan = (Plan *) make_limit(result_plan,
+										  parse->limitOffset,
+										  parse->limitCount,
+										  offset_est,
+										  count_est);
 	}
 
 	/* Compute result-relations list if needed */
@@ -1795,20 +1800,33 @@ preprocess_rowmarks(PlannerInfo *root)
 
 	/*
 	 * Convert RowMarkClauses to PlanRowMark representation.
-	 *
-	 * Note: currently, it is syntactically impossible to have FOR UPDATE
-	 * applied to an update/delete target rel.  If that ever becomes
-	 * possible, we should drop the target from the PlanRowMark list.
 	 */
 	prowmarks = NIL;
 	foreach(l, parse->rowMarks)
 	{
 		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-		PlanRowMark *newrc = makeNode(PlanRowMark);
+		RangeTblEntry *rte = rt_fetch(rc->rti, parse->rtable);
+		PlanRowMark *newrc;
 
+		/*
+		 * Currently, it is syntactically impossible to have FOR UPDATE
+		 * applied to an update/delete target rel.  If that ever becomes
+		 * possible, we should drop the target from the PlanRowMark list.
+		 */
 		Assert(rc->rti != parse->resultRelation);
+
+		/*
+		 * Ignore RowMarkClauses for subqueries; they aren't real tables
+		 * and can't support true locking.  Subqueries that got flattened
+		 * into the main query should be ignored completely.  Any that didn't
+		 * will get ROW_MARK_COPY items in the next loop.
+		 */
+		if (rte->rtekind != RTE_RELATION)
+			continue;
+
 		rels = bms_del_member(rels, rc->rti);
 
+		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = rc->rti;
 		if (rc->forUpdate)
 			newrc->markType = ROW_MARK_EXCLUSIVE;
@@ -1838,7 +1856,6 @@ preprocess_rowmarks(PlannerInfo *root)
 			continue;
 
 		newrc = makeNode(PlanRowMark);
-
 		newrc->rti = newrc->prti = i;
 		/* real tables support REFERENCE, anything else needs COPY */
 		if (rte->rtekind == RTE_RELATION)

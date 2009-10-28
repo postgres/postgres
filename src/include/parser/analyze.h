@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.42 2009/10/27 17:11:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.43 2009/10/28 14:55:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,6 @@ extern bool analyze_requires_snapshot(Node *parseTree);
 
 extern void CheckSelectLocking(Query *qry);
 extern void applyLockingClause(Query *qry, Index rtindex,
-				   bool forUpdate, bool noWait);
+				   bool forUpdate, bool noWait, bool pushedDown);
 
 #endif   /* ANALYZE_H */

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.68 2009/10/26 02:26:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.69 2009/10/28 14:55:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1030,6 +1030,12 @@ is_simple_subquery(Query *subquery)
 	/*
 	 * Can't pull up a subquery involving grouping, aggregation, sorting,
 	 * limiting, or WITH.  (XXX WITH could possibly be allowed later)
+	 *
+	 * We also don't pull up a subquery that has explicit FOR UPDATE/SHARE
+	 * clauses, because pullup would cause the locking to occur semantically
+	 * higher than it should.  Implicit FOR UPDATE/SHARE is okay because
+	 * in that case the locking was originally declared in the upper query
+	 * anyway.
 	 */
 	if (subquery->hasAggs ||
 		subquery->hasWindowFuncs ||
@@ -1039,6 +1045,7 @@ is_simple_subquery(Query *subquery)
 		subquery->distinctClause ||
 		subquery->limitOffset ||
 		subquery->limitCount ||
+		subquery->hasForUpdate ||
 		subquery->cteList)
 		return false;
 

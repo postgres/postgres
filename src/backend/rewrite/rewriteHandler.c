@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.189 2009/10/27 17:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.190 2009/10/28 14:55:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static Node *get_assignment_input(Node *node);
 static void rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation,
 				 List *attrnos);
 static void markQueryForLocking(Query *qry, Node *jtnode,
-					bool forUpdate, bool noWait);
+					bool forUpdate, bool noWait, bool pushedDown);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -1189,23 +1189,13 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->modifiedCols = NULL;
 
 	/*
-	 * FOR UPDATE/SHARE of view?
+	 * If FOR UPDATE/SHARE of view, mark all the contained tables as
+	 * implicit FOR UPDATE/SHARE, the same as the parser would have done
+	 * if the view's subquery had been written out explicitly.
 	 */
 	if ((rc = get_parse_rowmark(parsetree, rt_index)) != NULL)
-	{
-		/*
-		 * Remove the view from the list of rels that will actually be marked
-		 * FOR UPDATE/SHARE by the executor.  It will still be access-checked
-		 * for write access, though.
-		 */
-		parsetree->rowMarks = list_delete_ptr(parsetree->rowMarks, rc);
-
-		/*
-		 * Set up the view's referenced tables as if FOR UPDATE/SHARE.
-		 */
 		markQueryForLocking(rule_action, (Node *) rule_action->jointree,
-							rc->forUpdate, rc->noWait);
-	}
+							rc->forUpdate, rc->noWait, true);
 
 	return parsetree;
 }
@@ -1222,7 +1212,8 @@ ApplyRetrieveRule(Query *parsetree,
  * to scan the jointree to determine which rels are used.
  */
 static void
-markQueryForLocking(Query *qry, Node *jtnode, bool forUpdate, bool noWait)
+markQueryForLocking(Query *qry, Node *jtnode,
+					bool forUpdate, bool noWait, bool pushedDown)
 {
 	if (jtnode == NULL)
 		return;
@@ -1233,14 +1224,15 @@ markQueryForLocking(Query *qry, Node *jtnode, bool forUpdate, bool noWait)
 
 		if (rte->rtekind == RTE_RELATION)
 		{
-			applyLockingClause(qry, rti, forUpdate, noWait);
+			applyLockingClause(qry, rti, forUpdate, noWait, pushedDown);
 			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
+			applyLockingClause(qry, rti, forUpdate, noWait, pushedDown);
 			/* FOR UPDATE/SHARE of subquery is propagated to subquery's rels */
 			markQueryForLocking(rte->subquery, (Node *) rte->subquery->jointree,
-								forUpdate, noWait);
+								forUpdate, noWait, true);
 		}
 		/* other RTE types are unaffected by FOR UPDATE */
 	}
@@ -1250,14 +1242,14 @@ markQueryForLocking(Query *qry, Node *jtnode, bool forUpdate, bool noWait)
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			markQueryForLocking(qry, lfirst(l), forUpdate, noWait);
+			markQueryForLocking(qry, lfirst(l), forUpdate, noWait, pushedDown);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		markQueryForLocking(qry, j->larg, forUpdate, noWait);
-		markQueryForLocking(qry, j->rarg, forUpdate, noWait);
+		markQueryForLocking(qry, j->larg, forUpdate, noWait, pushedDown);
+		markQueryForLocking(qry, j->rarg, forUpdate, noWait, pushedDown);
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",

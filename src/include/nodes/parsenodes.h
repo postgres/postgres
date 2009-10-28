@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.411 2009/10/26 02:26:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.412 2009/10/28 14:55:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ typedef struct Query
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
+	bool		hasForUpdate;	/* FOR UPDATE or FOR SHARE was specified */
 
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
@@ -803,7 +804,12 @@ typedef struct WindowClause
  *	   parser output representation of FOR UPDATE/SHARE clauses
  *
  * Query.rowMarks contains a separate RowMarkClause node for each relation
- * identified as a FOR UPDATE/SHARE target.
+ * identified as a FOR UPDATE/SHARE target.  If FOR UPDATE/SHARE is applied
+ * to a subquery, we generate RowMarkClauses for all normal and subquery rels
+ * in the subquery, but they are marked pushedDown = true to distinguish them
+ * from clauses that were explicitly written at this query level.  Also,
+ * Query.hasForUpdate tells whether there were explicit FOR UPDATE/SHARE
+ * clauses in the current query level.
  */
 typedef struct RowMarkClause
 {
@@ -811,6 +817,7 @@ typedef struct RowMarkClause
 	Index		rti;			/* range table index of target relation */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
+	bool		pushedDown;		/* pushed down from higher query level? */
 } RowMarkClause;
 
 /*
