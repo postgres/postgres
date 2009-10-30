@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.79 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.79.4.1 2009/10/30 20:59:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,6 +377,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	nbuckets = (int) (hash_table_bytes / (bucketsize * FUDGE_FAC));
 	if (nbuckets <= 0)
 		nbuckets = 1;
+	/* Ensure we can allocate an array of nbuckets pointers */
+	nbuckets = Min(nbuckets, MaxAllocSize / sizeof(void *));
 
 	if (totalbuckets <= nbuckets)
 	{
@@ -401,10 +403,10 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		 */
 		dtmp = ceil((inner_rel_bytes - hash_table_bytes) /
 					hash_table_bytes);
-		if (dtmp < INT_MAX)
+		if (dtmp < MaxAllocSize / sizeof(void *))
 			nbatch = (int) dtmp;
 		else
-			nbatch = INT_MAX;
+			nbatch = MaxAllocSize / sizeof(void *);
 		if (nbatch <= 0)
 			nbatch = 1;
 	}
