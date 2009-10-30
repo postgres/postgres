@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.88 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.88.4.1 2009/10/30 20:59:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,6 +380,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	nbuckets = (int) (hash_table_bytes / (bucketsize * FUDGE_FAC));
 	if (nbuckets <= 0)
 		nbuckets = 1;
+	/* Ensure we can allocate an array of nbuckets pointers */
+	nbuckets = Min(nbuckets, MaxAllocSize / sizeof(void *));
 
 	if (totalbuckets <= nbuckets)
 	{
@@ -404,10 +406,10 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		 */
 		dtmp = ceil((inner_rel_bytes - hash_table_bytes) /
 					hash_table_bytes);
-		if (dtmp < INT_MAX)
+		if (dtmp < MaxAllocSize / sizeof(void *))
 			nbatch = (int) dtmp;
 		else
-			nbatch = INT_MAX;
+			nbatch = MaxAllocSize / sizeof(void *);
 		if (nbatch <= 0)
 			nbatch = 1;
 	}
