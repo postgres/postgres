@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.107.2.1 2007/06/01 15:58:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.107.2.2 2009/10/30 20:59:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,6 +350,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	int			tupsize;
 	double		inner_rel_bytes;
 	long		hash_table_bytes;
+	long		max_pointers;
 	int			nbatch;
 	int			nbuckets;
 	int			i;
@@ -376,8 +377,13 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	/*
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
 	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
-	 * sufficient.
+	 * sufficient.  The Min() steps limit the results so that the pointer
+	 * arrays we'll try to allocate do not exceed work_mem.
 	 */
+	max_pointers = (work_mem * 1024L) / sizeof(void *);
+	/* also ensure we avoid integer overflow in nbatch and nbuckets */
+	max_pointers = Min(max_pointers, INT_MAX / 2);
+
 	if (inner_rel_bytes > hash_table_bytes)
 	{
 		/* We'll need multiple batches */
@@ -386,11 +392,11 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		int			minbatch;
 
 		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
-		lbuckets = Min(lbuckets, INT_MAX);
+		lbuckets = Min(lbuckets, max_pointers);
 		nbuckets = (int) lbuckets;
 
 		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
-		dbatch = Min(dbatch, INT_MAX / 2);
+		dbatch = Min(dbatch, max_pointers);
 		minbatch = (int) dbatch;
 		nbatch = 2;
 		while (nbatch < minbatch)
@@ -402,7 +408,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		double		dbuckets;
 
 		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
-		dbuckets = Min(dbuckets, INT_MAX);
+		dbuckets = Min(dbuckets, max_pointers);
 		nbuckets = (int) dbuckets;
 
 		nbatch = 1;
@@ -481,7 +487,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		return;
 
 	/* safety check to avoid overflow */
-	if (oldnbatch > INT_MAX / 2)
+	if (oldnbatch > Min(INT_MAX / 2, MaxAllocSize / (sizeof(void *) * 2)))
 		return;
 
 	nbatch = oldnbatch * 2;
