@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.152 2009/09/28 17:31:12 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.153 2009/10/31 18:11:59 tgl Exp $
  *
  **********************************************************************/
 
@@ -150,8 +150,8 @@ void		_PG_init(void);
 static void plperl_init_interp(void);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
-
 static Datum plperl_trigger_handler(PG_FUNCTION_ARGS);
+
 static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
@@ -380,11 +380,13 @@ check_interp(bool trusted)
 	}
 }
 
-
+/*
+ * Restore previous interpreter selection, if two are active
+ */
 static void
 restore_context(bool old_context)
 {
-	if (trusted_context != old_context)
+	if (interp_state == INTERP_BOTH && trusted_context != old_context)
 	{
 		if (old_context)
 			PERL_SET_CONTEXT(plperl_trusted_interp);
@@ -870,9 +872,9 @@ Datum
 plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
-	plperl_call_data *save_call_data;
+	plperl_call_data *save_call_data = current_call_data;
+	bool		oldcontext = trusted_context;
 
-	save_call_data = current_call_data;
 	PG_TRY();
 	{
 		if (CALLED_AS_TRIGGER(fcinfo))
@@ -883,11 +885,13 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		current_call_data = save_call_data;
+		restore_context(oldcontext);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	current_call_data = save_call_data;
+	restore_context(oldcontext);
 	return retval;
 }
 
@@ -1226,7 +1230,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	ReturnSetInfo *rsi;
 	SV		   *array_ret = NULL;
-	bool		oldcontext = trusted_context;
 	ErrorContextCallback pl_error_context;
 
 	/*
@@ -1376,9 +1379,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (array_ret == NULL)
 		SvREFCNT_dec(perlret);
 
-	current_call_data = NULL;
-	restore_context(oldcontext);
-
 	return retval;
 }
 
@@ -1391,7 +1391,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	SV		   *svTD;
 	HV		   *hvTD;
-	bool		oldcontext = trusted_context;
 	ErrorContextCallback pl_error_context;
 
 	/*
@@ -1491,8 +1490,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	if (perlret)
 		SvREFCNT_dec(perlret);
 
-	current_call_data = NULL;
-	restore_context(oldcontext);
 	return retval;
 }
 
