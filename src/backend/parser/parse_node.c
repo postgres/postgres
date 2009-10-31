@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.105 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.106 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,12 @@ make_parsestate(ParseState *parentParseState)
 	if (parentParseState)
 	{
 		pstate->p_sourcetext = parentParseState->p_sourcetext;
-		pstate->p_variableparams = parentParseState->p_variableparams;
+		/* all hooks are copied from parent */
+		pstate->p_pre_columnref_hook = parentParseState->p_pre_columnref_hook;
+		pstate->p_post_columnref_hook = parentParseState->p_post_columnref_hook;
+		pstate->p_paramref_hook = parentParseState->p_paramref_hook;
+		pstate->p_coerce_param_hook = parentParseState->p_coerce_param_hook;
+		pstate->p_ref_hook_state = parentParseState->p_ref_hook_state;
 	}
 
 	return pstate;

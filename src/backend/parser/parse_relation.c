@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.146 2009/10/27 17:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.147 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,17 @@ refnameRangeTblEntry(ParseState *pstate,
 	{
 		Oid			namespaceId;
 
-		namespaceId = LookupExplicitNamespace(schemaname);
+		/*
+		 * We can use LookupNamespaceNoError() here because we are only
+		 * interested in finding existing RTEs.  Checking USAGE permission
+		 * on the schema is unnecessary since it would have already been
+		 * checked when the RTE was made.  Furthermore, we want to report
+		 * "RTE not found", not "no permissions for schema", if the name
+		 * happens to match a schema name the user hasn't got access to.
+		 */
+		namespaceId = LookupNamespaceNoError(schemaname);
+		if (!OidIsValid(relId))
+			return NULL;
 		relId = get_relname_relid(refname, namespaceId);
 		if (!OidIsValid(relId))
 			return NULL;
@@ -553,32 +563,6 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 	}
 
 	return result;
-}
-
-/*
- * qualifiedNameToVar
- *	  Search for a qualified column name: either refname.colname or
- *	  schemaname.relname.colname.
- *
- *	  If found, return the appropriate Var node.
- *	  If not found, return NULL.  If the name proves ambiguous, raise error.
- */
-Node *
-qualifiedNameToVar(ParseState *pstate,
-				   char *schemaname,
-				   char *refname,
-				   char *colname,
-				   int location)
-{
-	RangeTblEntry *rte;
-	int			sublevels_up;
-
-	rte = refnameRangeTblEntry(pstate, schemaname, refname, location,
-							   &sublevels_up);
-	if (rte == NULL)
-		return NULL;
-
-	return scanRTEForColumn(pstate, rte, colname, location);
 }
 
 /*
@@ -2389,7 +2373,8 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * Check to see if there are any potential matches in the query's
-	 * rangetable.
+	 * rangetable.  (Note: cases involving a bad schema name in the
+	 * RangeVar will throw error immediately here.  That seems OK.)
 	 */
 	rte = searchRangeTable(pstate, relation);
 

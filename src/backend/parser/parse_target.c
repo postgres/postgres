@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.173 2009/10/21 20:22:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.174 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,10 @@ static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 static List *ExpandAllTables(ParseState *pstate, int location);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 					  bool targetlist);
+static List *ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
+							   int location, bool targetlist);
+static List *ExpandRowReference(ParseState *pstate, Node *expr,
+								bool targetlist);
 static int	FigureColnameInternal(Node *node, char **name);
 
 
@@ -879,90 +883,135 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * Target item is relation.*, expand that table
 		 *
 		 * (e.g., SELECT emp.*, dname FROM emp, dept)
+		 *
+		 * Note: this code is a lot like transformColumnRef; it's tempting
+		 * to call that instead and then replace the resulting whole-row Var
+		 * with a list of Vars.  However, that would leave us with the
+		 * RTE's selectedCols bitmap showing the whole row as needing
+		 * select permission, as well as the individual columns.  That would
+		 * be incorrect (since columns added later shouldn't need select
+		 * permissions).  We could try to remove the whole-row permission bit
+		 * after the fact, but duplicating code is less messy.
 		 */
-		char	   *schemaname;
-		char	   *relname;
-		RangeTblEntry *rte;
-		int			sublevels_up;
-		int			rtindex;
+		char	   *nspname = NULL;
+		char	   *relname = NULL;
+		RangeTblEntry *rte = NULL;
+		int			levels_up;
+		enum {
+			CRSERR_NO_RTE,
+			CRSERR_WRONG_DB,
+			CRSERR_TOO_MANY
+		}			crserr = CRSERR_NO_RTE;
+
+		/*
+		 * Give the PreParseColumnRefHook, if any, first shot.  If it returns
+		 * non-null then we should use that expression.
+		 */
+		if (pstate->p_pre_columnref_hook != NULL)
+		{
+			Node	   *node;
+
+			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
+			if (node != NULL)
+				return ExpandRowReference(pstate, node, targetlist);
+		}
 
 		switch (numnames)
 		{
 			case 2:
-				schemaname = NULL;
 				relname = strVal(linitial(fields));
+				rte = refnameRangeTblEntry(pstate, nspname, relname,
+										   cref->location,
+										   &levels_up);
 				break;
 			case 3:
-				schemaname = strVal(linitial(fields));
+				nspname = strVal(linitial(fields));
 				relname = strVal(lsecond(fields));
+				rte = refnameRangeTblEntry(pstate, nspname, relname,
+										   cref->location,
+										   &levels_up);
 				break;
 			case 4:
-				{
-					char	   *name1 = strVal(linitial(fields));
+			{
+				char	   *catname = strVal(linitial(fields));
 
-					/*
-					 * We check the catalog name and then ignore it.
-					 */
-					if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cross-database references are not implemented: %s",
-										NameListToString(fields)),
-								 parser_errposition(pstate, cref->location)));
-					schemaname = strVal(lsecond(fields));
-					relname = strVal(lthird(fields));
+				/*
+				 * We check the catalog name and then ignore it.
+				 */
+				if (strcmp(catname, get_database_name(MyDatabaseId)) != 0)
+				{
+					crserr = CRSERR_WRONG_DB;
 					break;
 				}
+				nspname = strVal(lsecond(fields));
+				relname = strVal(lthird(fields));
+				rte = refnameRangeTblEntry(pstate, nspname, relname,
+										   cref->location,
+										   &levels_up);
+				break;
+			}
 			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("improper qualified name (too many dotted names): %s",
-					   NameListToString(fields)),
-						 parser_errposition(pstate, cref->location)));
-				schemaname = NULL;		/* keep compiler quiet */
-				relname = NULL;
+				crserr = CRSERR_TOO_MANY;
 				break;
 		}
 
-		rte = refnameRangeTblEntry(pstate, schemaname, relname, cref->location,
-								   &sublevels_up);
-		if (rte == NULL)
-			errorMissingRTE(pstate,
-							makeRangeVar(schemaname, relname, cref->location));
-
-		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
-
-		if (targetlist)
+		/*
+		 * Now give the PostParseColumnRefHook, if any, a chance.
+		 * We cheat a bit by passing the RangeTblEntry, not a Var,
+		 * as the planned translation.  (A single Var wouldn't be
+		 * strictly correct anyway.  This convention allows hooks
+		 * that really care to know what is happening.)
+		 */
+		if (pstate->p_post_columnref_hook != NULL)
 		{
-			/* expandRelAttrs handles permissions marking */
-			return expandRelAttrs(pstate, rte, rtindex, sublevels_up,
-								  cref->location);
-		}
-		else
-		{
-			List	   *vars;
-			ListCell   *l;
+			Node	   *node;
 
-			expandRTE(rte, rtindex, sublevels_up, cref->location, false,
-					  NULL, &vars);
-
-			/*
-			 * Require read access to the table.  This is normally redundant
-			 * with the markVarForSelectPriv calls below, but not if the table
-			 * has zero columns.
-			 */
-			rte->requiredPerms |= ACL_SELECT;
-
-			/* Require read access to each column */
-			foreach(l, vars)
+			node = (*pstate->p_post_columnref_hook) (pstate, cref,
+													 (Node *) rte);
+			if (node != NULL)
 			{
-				Var		   *var = (Var *) lfirst(l);
-
-				markVarForSelectPriv(pstate, var, rte);
+				if (rte != NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+							 errmsg("column reference \"%s\" is ambiguous",
+									NameListToString(cref->fields)),
+							 parser_errposition(pstate, cref->location)));
+				return ExpandRowReference(pstate, node, targetlist);
 			}
-
-			return vars;
 		}
+
+		/*
+		 * Throw error if no translation found.
+		 */
+		if (rte == NULL)
+		{
+			switch (crserr)
+			{
+				case CRSERR_NO_RTE:
+					errorMissingRTE(pstate, makeRangeVar(nspname, relname,
+														 cref->location));
+					break;
+				case CRSERR_WRONG_DB:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cross-database references are not implemented: %s",
+									NameListToString(cref->fields)),
+							 parser_errposition(pstate, cref->location)));
+					break;
+				case CRSERR_TOO_MANY:
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("improper qualified name (too many dotted names): %s",
+									NameListToString(cref->fields)),
+							 parser_errposition(pstate, cref->location)));
+					break;
+			}
+		}
+
+		/*
+		 * OK, expand the RTE into fields.
+		 */
+		return ExpandSingleTable(pstate, rte, cref->location, targetlist);
 	}
 }
 
@@ -1015,11 +1064,7 @@ static List *
 ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 					  bool targetlist)
 {
-	List	   *result = NIL;
 	Node	   *expr;
-	TupleDesc	tupleDesc;
-	int			numAttrs;
-	int			i;
 
 	/* Strip off the '*' to create a reference to the rowtype object */
 	ind = copyObject(ind);
@@ -1029,7 +1074,102 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 	/* And transform that */
 	expr = transformExpr(pstate, (Node *) ind);
 
+	/* Expand the rowtype expression into individual fields */
+	return ExpandRowReference(pstate, expr, targetlist);
+}
+
+/*
+ * ExpandSingleTable()
+ *		Transforms foo.* into a list of expressions or targetlist entries.
+ *
+ * This handles the case where foo has been determined to be a simple
+ * reference to an RTE, so we can just generate Vars for the expressions.
+ *
+ * The referenced columns are marked as requiring SELECT access.
+ */
+static List *
+ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
+				  int location, bool targetlist)
+{
+	int			sublevels_up;
+	int			rtindex;
+
+	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
+
+	if (targetlist)
+	{
+		/* expandRelAttrs handles permissions marking */
+		return expandRelAttrs(pstate, rte, rtindex, sublevels_up,
+							  location);
+	}
+	else
+	{
+		List	   *vars;
+		ListCell   *l;
+
+		expandRTE(rte, rtindex, sublevels_up, location, false,
+				  NULL, &vars);
+
+		/*
+		 * Require read access to the table.  This is normally redundant
+		 * with the markVarForSelectPriv calls below, but not if the table
+		 * has zero columns.
+		 */
+		rte->requiredPerms |= ACL_SELECT;
+
+		/* Require read access to each column */
+		foreach(l, vars)
+		{
+			Var		   *var = (Var *) lfirst(l);
+
+			markVarForSelectPriv(pstate, var, rte);
+		}
+
+		return vars;
+	}
+}
+
+/*
+ * ExpandRowReference()
+ *		Transforms foo.* into a list of expressions or targetlist entries.
+ *
+ * This handles the case where foo is an arbitrary expression of composite
+ * type.
+ */
+static List *
+ExpandRowReference(ParseState *pstate, Node *expr,
+				   bool targetlist)
+{
+	List	   *result = NIL;
+	TupleDesc	tupleDesc;
+	int			numAttrs;
+	int			i;
+
 	/*
+	 * If the rowtype expression is a whole-row Var, we can expand the fields
+	 * as simple Vars.  Note: if the RTE is a relation, this case leaves us
+	 * with the RTE's selectedCols bitmap showing the whole row as needing
+	 * select permission, as well as the individual columns.  However, we can
+	 * only get here for weird notations like (table.*).*, so it's not worth
+	 * trying to clean up --- arguably, the permissions marking is correct
+	 * anyway for such cases.
+	 */
+	if (IsA(expr, Var) &&
+		((Var *) expr)->varattno == InvalidAttrNumber)
+	{
+		Var		   *var = (Var *) expr;
+		RangeTblEntry *rte;
+
+		rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+		return ExpandSingleTable(pstate, rte, var->location, targetlist);
+	}
+
+	/*
+	 * Otherwise we have to do it the hard way.  Our current implementation
+	 * is to generate multiple copies of the expression and do FieldSelects.
+	 * (This can be pretty inefficient if the expression involves nontrivial
+	 * computation :-(.)
+	 *
 	 * Verify it's a composite type, and get the tupdesc.  We use
 	 * get_expr_result_type() because that can handle references to functions
 	 * returning anonymous record types.  If that fails, use
@@ -1053,56 +1193,30 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 	for (i = 0; i < numAttrs; i++)
 	{
 		Form_pg_attribute att = tupleDesc->attrs[i];
-		Node	   *fieldnode;
+		FieldSelect *fselect;
 
 		if (att->attisdropped)
 			continue;
 
-		/*
-		 * If we got a whole-row Var from the rowtype reference, we can expand
-		 * the fields as simple Vars.  Otherwise we must generate multiple
-		 * copies of the rowtype reference and do FieldSelects.
-		 */
-		if (IsA(expr, Var) &&
-			((Var *) expr)->varattno == InvalidAttrNumber)
-		{
-			Var		   *var = (Var *) expr;
-			Var		   *newvar;
-
-			newvar = makeVar(var->varno,
-							 i + 1,
-							 att->atttypid,
-							 att->atttypmod,
-							 var->varlevelsup);
-			newvar->location = var->location;
-
-			fieldnode = (Node *) newvar;
-		}
-		else
-		{
-			FieldSelect *fselect = makeNode(FieldSelect);
-
-			fselect->arg = (Expr *) copyObject(expr);
-			fselect->fieldnum = i + 1;
-			fselect->resulttype = att->atttypid;
-			fselect->resulttypmod = att->atttypmod;
-
-			fieldnode = (Node *) fselect;
-		}
+		fselect = makeNode(FieldSelect);
+		fselect->arg = (Expr *) copyObject(expr);
+		fselect->fieldnum = i + 1;
+		fselect->resulttype = att->atttypid;
+		fselect->resulttypmod = att->atttypmod;
 
 		if (targetlist)
 		{
 			/* add TargetEntry decoration */
 			TargetEntry *te;
 
-			te = makeTargetEntry((Expr *) fieldnode,
+			te = makeTargetEntry((Expr *) fselect,
 								 (AttrNumber) pstate->p_next_resno++,
 								 pstrdup(NameStr(att->attname)),
 								 false);
 			result = lappend(result, te);
 		}
 		else
-			result = lappend(result, fieldnode);
+			result = lappend(result, fselect);
 	}
 
 	return result;

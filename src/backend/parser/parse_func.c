@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.217 2009/10/08 02:39:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.218 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,6 @@
 static Oid	FuncNameAsType(List *funcname);
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
 					   Node *first_arg, int location);
-static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
-				  int location);
 
 
 /*
@@ -53,6 +51,8 @@ static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
  *	not to affect the semantics.  When is_column is true, we should have
  *	a single argument (the putative table), unqualified function name
  *	equal to the column name, and no aggregate or variadic decoration.
+ *	Also, when is_column is true, we return NULL on failure rather than
+ *	reporting a no-such-function error.
  *
  *	The argument expressions (in fargs) must have been transformed already.
  */
@@ -253,16 +253,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * Oops.  Time to die.
 		 *
-		 * If we are dealing with the attribute notation rel.function, give an
-		 * error message that is appropriate for that case.
+		 * If we are dealing with the attribute notation rel.function,
+		 * let the caller handle failure.
 		 */
 		if (is_column)
-		{
-			Assert(nargs == 1);
-			Assert(list_length(funcname) == 1);
-			unknown_attribute(pstate, first_arg, strVal(linitial(funcname)),
-							  location);
-		}
+			return NULL;
 
 		/*
 		 * Else generate a detailed complaint for a function
@@ -1341,55 +1336,6 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 	}
 
 	return NULL;				/* funcname does not match any column */
-}
-
-/*
- * helper routine for delivering "column does not exist" error message
- */
-static void
-unknown_attribute(ParseState *pstate, Node *relref, char *attname,
-				  int location)
-{
-	RangeTblEntry *rte;
-
-	if (IsA(relref, Var) &&
-		((Var *) relref)->varattno == InvalidAttrNumber)
-	{
-		/* Reference the RTE by alias not by actual table name */
-		rte = GetRTEByRangeTablePosn(pstate,
-									 ((Var *) relref)->varno,
-									 ((Var *) relref)->varlevelsup);
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column %s.%s does not exist",
-						rte->eref->aliasname, attname),
-				 parser_errposition(pstate, location)));
-	}
-	else
-	{
-		/* Have to do it by reference to the type of the expression */
-		Oid			relTypeId = exprType(relref);
-
-		if (ISCOMPLEX(relTypeId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("column \"%s\" not found in data type %s",
-							attname, format_type_be(relTypeId)),
-					 parser_errposition(pstate, location)));
-		else if (relTypeId == RECORDOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-			   errmsg("could not identify column \"%s\" in record data type",
-					  attname),
-					 parser_errposition(pstate, location)));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("column notation .%s applied to type %s, "
-							"which is not a composite type",
-							attname, format_type_be(relTypeId)),
-					 parser_errposition(pstate, location)));
-	}
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.177 2009/06/11 14:49:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.178 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,69 +259,21 @@ coerce_type(ParseState *pstate, Node *node,
 
 		return result;
 	}
-	if (inputTypeId == UNKNOWNOID && IsA(node, Param) &&
-		((Param *) node)->paramkind == PARAM_EXTERN &&
-		pstate != NULL && pstate->p_variableparams)
+	if (IsA(node, Param) &&
+		pstate != NULL && pstate->p_coerce_param_hook != NULL)
 	{
 		/*
-		 * Input is a Param of previously undetermined type, and we want to
-		 * update our knowledge of the Param's type.  Find the topmost
-		 * ParseState and update the state.
+		 * Allow the CoerceParamHook to decide what happens.  It can return
+		 * a transformed node (very possibly the same Param node), or return
+		 * NULL to indicate we should proceed with normal coercion.
 		 */
-		Param	   *param = (Param *) node;
-		int			paramno = param->paramid;
-		ParseState *toppstate;
-
-		toppstate = pstate;
-		while (toppstate->parentParseState != NULL)
-			toppstate = toppstate->parentParseState;
-
-		if (paramno <= 0 ||		/* shouldn't happen, but... */
-			paramno > toppstate->p_numparams)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_PARAMETER),
-					 errmsg("there is no parameter $%d", paramno),
-					 parser_errposition(pstate, param->location)));
-
-		if (toppstate->p_paramtypes[paramno - 1] == UNKNOWNOID)
-		{
-			/* We've successfully resolved the type */
-			toppstate->p_paramtypes[paramno - 1] = targetTypeId;
-		}
-		else if (toppstate->p_paramtypes[paramno - 1] == targetTypeId)
-		{
-			/* We previously resolved the type, and it matches */
-		}
-		else
-		{
-			/* Ooops */
-			ereport(ERROR,
-					(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-					 errmsg("inconsistent types deduced for parameter $%d",
-							paramno),
-					 errdetail("%s versus %s",
-						format_type_be(toppstate->p_paramtypes[paramno - 1]),
-							   format_type_be(targetTypeId)),
-					 parser_errposition(pstate, param->location)));
-		}
-
-		param->paramtype = targetTypeId;
-
-		/*
-		 * Note: it is tempting here to set the Param's paramtypmod to
-		 * targetTypeMod, but that is probably unwise because we have no
-		 * infrastructure that enforces that the value delivered for a Param
-		 * will match any particular typmod.  Leaving it -1 ensures that a
-		 * run-time length check/coercion will occur if needed.
-		 */
-		param->paramtypmod = -1;
-
-		/* Use the leftmost of the param's and coercion's locations */
-		if (location >= 0 &&
-			(param->location < 0 || location < param->location))
-			param->location = location;
-
-		return (Node *) param;
+		result = (*pstate->p_coerce_param_hook) (pstate,
+												 (Param *) node,
+												 targetTypeId,
+												 targetTypeMod,
+												 location);
+		if (result)
+			return result;
 	}
 	pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 									 &funcId);

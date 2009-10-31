@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.395 2009/10/28 14:55:43 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.396 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_cte.h"
 #include "parser/parse_oper.h"
+#include "parser/parse_param.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parsetree.h"
@@ -62,7 +63,6 @@ static Query *transformExplainStmt(ParseState *pstate,
 					 ExplainStmt *stmt);
 static void transformLockingClause(ParseState *pstate, Query *qry,
 								   LockingClause *lc, bool pushedDown);
-static bool check_parameter_resolution_walker(Node *node, ParseState *pstate);
 
 
 /*
@@ -86,9 +86,9 @@ parse_analyze(Node *parseTree, const char *sourceText,
 	Assert(sourceText != NULL); /* required as of 8.4 */
 
 	pstate->p_sourcetext = sourceText;
-	pstate->p_paramtypes = paramTypes;
-	pstate->p_numparams = numParams;
-	pstate->p_variableparams = false;
+
+	if (numParams > 0)
+		parse_fixed_parameters(pstate, paramTypes, numParams);
 
 	query = transformStmt(pstate, parseTree);
 
@@ -114,18 +114,13 @@ parse_analyze_varparams(Node *parseTree, const char *sourceText,
 	Assert(sourceText != NULL); /* required as of 8.4 */
 
 	pstate->p_sourcetext = sourceText;
-	pstate->p_paramtypes = *paramTypes;
-	pstate->p_numparams = *numParams;
-	pstate->p_variableparams = true;
+
+	parse_variable_parameters(pstate, paramTypes, numParams);
 
 	query = transformStmt(pstate, parseTree);
 
 	/* make sure all is well with parameter types */
-	if (pstate->p_numparams > 0)
-		check_parameter_resolution_walker((Node *) query, pstate);
-
-	*paramTypes = pstate->p_paramtypes;
-	*numParams = pstate->p_numparams;
+	check_variable_parameters(pstate, query);
 
 	free_parsestate(pstate);
 
@@ -1982,7 +1977,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
  *
  * EXPLAIN is just like other utility statements in that we emit it as a
  * CMD_UTILITY Query node with no transformation of the raw parse tree.
- * However, if p_variableparams is set, it could be that the client is
+ * However, if p_coerce_param_hook is set, it could be that the client is
  * expecting us to resolve parameter types in something like
  *		EXPLAIN SELECT * FROM tab WHERE col = $1
  * To deal with such cases, we run parse analysis and throw away the result;
@@ -1996,7 +1991,7 @@ transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
 {
 	Query	   *result;
 
-	if (pstate->p_variableparams)
+	if (pstate->p_coerce_param_hook != NULL)
 	{
 		/* Since parse analysis scribbles on its input, copy the tree first! */
 		(void) transformStmt(pstate, copyObject(stmt->query));
@@ -2238,51 +2233,4 @@ applyLockingClause(Query *qry, Index rtindex,
 	rc->noWait = noWait;
 	rc->pushedDown = pushedDown;
 	qry->rowMarks = lappend(qry->rowMarks, rc);
-}
-
-
-/*
- * Traverse a fully-analyzed tree to verify that parameter symbols
- * match their types.  We need this because some Params might still
- * be UNKNOWN, if there wasn't anything to force their coercion,
- * and yet other instances seen later might have gotten coerced.
- */
-static bool
-check_parameter_resolution_walker(Node *node, ParseState *pstate)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Param))
-	{
-		Param	   *param = (Param *) node;
-
-		if (param->paramkind == PARAM_EXTERN)
-		{
-			int			paramno = param->paramid;
-
-			if (paramno <= 0 || /* shouldn't happen, but... */
-				paramno > pstate->p_numparams)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_PARAMETER),
-						 errmsg("there is no parameter $%d", paramno),
-						 parser_errposition(pstate, param->location)));
-
-			if (param->paramtype != pstate->p_paramtypes[paramno - 1])
-				ereport(ERROR,
-						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-					 errmsg("could not determine data type of parameter $%d",
-							paramno),
-						 parser_errposition(pstate, param->location)));
-		}
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		return query_tree_walker((Query *) node,
-								 check_parameter_resolution_walker,
-								 (void *) pstate, 0);
-	}
-	return expression_tree_walker(node, check_parameter_resolution_walker,
-								  (void *) pstate);
 }

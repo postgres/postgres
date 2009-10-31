@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.60 2009/10/08 02:39:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.61 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,7 @@ extern bool TSConfigIsVisible(Oid cfgid);
 extern void DeconstructQualifiedName(List *names,
 						 char **nspname_p,
 						 char **objname_p);
+extern Oid	LookupNamespaceNoError(const char *nspname);
 extern Oid	LookupExplicitNamespace(const char *nspname);
 
 extern Oid	LookupCreationNamespace(const char *nspname);

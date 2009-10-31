@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.119 2009/10/08 02:39:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.120 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2290,6 +2290,38 @@ DeconstructQualifiedName(List *names,
 }
 
 /*
+ * LookupNamespaceNoError
+ *		Look up a schema name.
+ *
+ * Returns the namespace OID, or InvalidOid if not found.
+ *
+ * Note this does NOT perform any permissions check --- callers are
+ * responsible for being sure that an appropriate check is made.
+ * In the majority of cases LookupExplicitNamespace is preferable.
+ */
+Oid
+LookupNamespaceNoError(const char *nspname)
+{
+	/* check for pg_temp alias */
+	if (strcmp(nspname, "pg_temp") == 0)
+	{
+		if (OidIsValid(myTempNamespace))
+			return myTempNamespace;
+
+		/*
+		 * Since this is used only for looking up existing objects, there is
+		 * no point in trying to initialize the temp namespace here; and doing
+		 * so might create problems for some callers. Just report "not found".
+		 */
+		return InvalidOid;
+	}
+
+	return GetSysCacheOid(NAMESPACENAME,
+						  CStringGetDatum(nspname),
+						  0, 0, 0);
+}
+
+/*
  * LookupExplicitNamespace
  *		Process an explicitly-specified schema name: look up the schema
  *		and verify we have USAGE (lookup) rights in it.
@@ -2336,8 +2368,8 @@ LookupExplicitNamespace(const char *nspname)
  * LookupCreationNamespace
  *		Look up the schema and verify we have CREATE rights on it.
  *
- * This is just like LookupExplicitNamespace except for the permission check,
- * and that we are willing to create pg_temp if needed.
+ * This is just like LookupExplicitNamespace except for the different
+ * permission check, and that we are willing to create pg_temp if needed.
  *
  * Note: calling this may result in a CommandCounterIncrement operation,
  * if we have to create or clean out the temp namespace.

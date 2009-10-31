@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.65 2009/10/27 17:11:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.66 2009/10/31 01:41:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,20 @@
 
 #include "nodes/parsenodes.h"
 #include "utils/relcache.h"
+
+
+/*
+ * Function signatures for parser hooks
+ */
+typedef struct ParseState ParseState;
+
+typedef Node * (*PreParseColumnRefHook) (ParseState *pstate, ColumnRef *cref);
+typedef Node * (*PostParseColumnRefHook) (ParseState *pstate, ColumnRef *cref, Node *var);
+typedef Node * (*ParseParamRefHook) (ParseState *pstate, ParamRef *pref);
+typedef Node * (*CoerceParamHook) (ParseState *pstate, Param *param,
+								   Oid targetTypeId, int32 targetTypeMod,
+								   int location);
+
 
 /*
  * State information used during parse analysis
@@ -68,17 +82,8 @@
  * afterwards (so that any resjunk tlist items needed for the sort/group
  * clauses end up at the end of the query tlist).  A WindowDef's location in
  * this list, counting from 1, is the winref number to use to reference it.
- *
- * p_paramtypes: an array of p_numparams type OIDs for $n parameter symbols
- * (zeroth entry in array corresponds to $1).  If p_variableparams is true, the
- * set of param types is not predetermined; in that case, a zero array entry
- * means that parameter number hasn't been seen, and UNKNOWNOID means the
- * parameter has been used but its type is not yet known.  NOTE: in a stack
- * of ParseStates, only the topmost ParseState contains paramtype info; but
- * we copy the p_variableparams flag down to the child nodes for speed in
- * coerce_type.
  */
-typedef struct ParseState
+struct ParseState
 {
 	struct ParseState *parentParseState;		/* stack link */
 	const char *p_sourcetext;	/* source text, or NULL if not available */
@@ -92,12 +97,9 @@ typedef struct ParseState
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
 	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
-	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
-	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
 	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
-	bool		p_variableparams;
 	bool		p_hasAggs;
 	bool		p_hasWindowFuncs;
 	bool		p_hasSubLinks;
@@ -106,7 +108,17 @@ typedef struct ParseState
 	bool		p_locked_from_parent;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
-} ParseState;
+
+	/*
+	 * Optional hook functions for parser callbacks.  These are null unless
+	 * set up by the caller of make_parsestate.
+	 */
+	PreParseColumnRefHook p_pre_columnref_hook;
+	PostParseColumnRefHook p_post_columnref_hook;
+	ParseParamRefHook p_paramref_hook;
+	CoerceParamHook p_coerce_param_hook;
+	void	   *p_ref_hook_state;	/* common passthrough link for above */
+};
 
 /* Support for parser_errposition_callback function */
 typedef struct ParseCallbackState
