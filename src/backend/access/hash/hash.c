@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.113 2009/07/29 20:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.114 2009/11/01 21:25:25 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -206,8 +206,10 @@ hashgettuple(PG_FUNCTION_ARGS)
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
+	Buffer		buf;
 	Page		page;
 	OffsetNumber offnum;
+	ItemPointer current;
 	bool		res;
 
 	/* Hash indexes are always lossy since we store only the hash code */
@@ -225,8 +227,38 @@ hashgettuple(PG_FUNCTION_ARGS)
 	 * appropriate direction.  If we haven't done so yet, we call a routine to
 	 * get the first item in the scan.
 	 */
-	if (ItemPointerIsValid(&(so->hashso_curpos)))
+	current = &(so->hashso_curpos);
+	if (ItemPointerIsValid(current))
 	{
+		/*
+		 * An insertion into the current index page could have happened while
+		 * we didn't have read lock on it.  Re-find our position by looking
+		 * for the TID we previously returned.  (Because we hold share lock on
+		 * the bucket, no deletions or splits could have occurred; therefore
+		 * we can expect that the TID still exists in the current index page,
+		 * at an offset >= where we were.)
+		 */
+		OffsetNumber maxoffnum;
+
+		buf = so->hashso_curbuf;
+		Assert(BufferIsValid(buf));
+		page = BufferGetPage(buf);
+		maxoffnum = PageGetMaxOffsetNumber(page);
+		for (offnum = ItemPointerGetOffsetNumber(current);
+			 offnum <= maxoffnum;
+			 offnum = OffsetNumberNext(offnum))
+		{
+			IndexTuple	itup;
+
+			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+			if (ItemPointerEquals(&scan->xs_ctup.t_self, &itup->t_tid))
+				break;
+		}
+		if (offnum > maxoffnum)
+			elog(ERROR, "failed to re-find scan position within index \"%s\"",
+				 RelationGetRelationName(rel));
+		ItemPointerSetOffsetNumber(current, offnum);
+
 		/*
 		 * Check to see if we should kill the previously-fetched tuple.
 		 */
@@ -235,8 +267,6 @@ hashgettuple(PG_FUNCTION_ARGS)
 			/*
 			 * Yes, so mark it by setting the LP_DEAD state in the item flags.
 			 */
-			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
-			page = BufferGetPage(so->hashso_curbuf);
 			ItemIdMarkDead(PageGetItemId(page, offnum));
 
 			/*
@@ -244,7 +274,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			 * as a commit-hint-bit status update for heap tuples: we mark the
 			 * buffer dirty but don't make a WAL log entry.
 			 */
-			SetBufferCommitInfoNeedsSave(so->hashso_curbuf);
+			SetBufferCommitInfoNeedsSave(buf);
 		}
 
 		/*
@@ -262,7 +292,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 	{
 		while (res)
 		{
-			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
+			offnum = ItemPointerGetOffsetNumber(current);
 			page = BufferGetPage(so->hashso_curbuf);
 			if (!ItemIdIsDead(PageGetItemId(page, offnum)))
 				break;
@@ -517,7 +547,8 @@ loop_top:
 			HashPageOpaque opaque;
 			OffsetNumber offno;
 			OffsetNumber maxoffno;
-			bool		page_dirty = false;
+			OffsetNumber deletable[MaxOffsetNumber];
+			int			ndeletable = 0;
 
 			vacuum_delay_point();
 
@@ -529,9 +560,10 @@ loop_top:
 			Assert(opaque->hasho_bucket == cur_bucket);
 
 			/* Scan each tuple in page */
-			offno = FirstOffsetNumber;
 			maxoffno = PageGetMaxOffsetNumber(page);
-			while (offno <= maxoffno)
+			for (offno = FirstOffsetNumber;
+				 offno <= maxoffno;
+				 offno = OffsetNumberNext(offno))
 			{
 				IndexTuple	itup;
 				ItemPointer htup;
@@ -541,30 +573,25 @@ loop_top:
 				htup = &(itup->t_tid);
 				if (callback(htup, callback_state))
 				{
-					/* delete the item from the page */
-					PageIndexTupleDelete(page, offno);
-					bucket_dirty = page_dirty = true;
-
-					/* don't increment offno, instead decrement maxoffno */
-					maxoffno = OffsetNumberPrev(maxoffno);
-
+					/* mark the item for deletion */
+					deletable[ndeletable++] = offno;
 					tuples_removed += 1;
 				}
 				else
-				{
-					offno = OffsetNumberNext(offno);
-
 					num_index_tuples += 1;
-				}
 			}
 
 			/*
-			 * Write page if needed, advance to next page.
+			 * Apply deletions and write page if needed, advance to next page.
 			 */
 			blkno = opaque->hasho_nextblkno;
 
-			if (page_dirty)
+			if (ndeletable > 0)
+			{
+				PageIndexMultiDelete(page, deletable, ndeletable);
 				_hash_wrtbuf(rel, buf);
+				bucket_dirty = true;
+			}
 			else
 				_hash_relbuf(rel, buf);
 		}

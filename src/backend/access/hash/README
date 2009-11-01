@@ -1,14 +1,15 @@
-$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.8 2008/03/20 17:55:14 momjian Exp $
+$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.9 2009/11/01 21:25:25 tgl Exp $
 
 Hash Indexing
 =============
 
-This directory contains an implementation of hash indexing for Postgres.  Most
-of the core ideas are taken from Margo Seltzer and Ozan Yigit, A New Hashing
-Package for UNIX, Proceedings of the Winter USENIX Conference, January 1991.
-(Our in-memory hashtable implementation, src/backend/utils/hash/dynahash.c,
-also relies on some of the same concepts; it is derived from code written by
-Esmond Pitt and later improved by Margo among others.)
+This directory contains an implementation of hash indexing for Postgres.
+Most of the core ideas are taken from Margo Seltzer and Ozan Yigit,
+A New Hashing Package for UNIX, Proceedings of the Winter USENIX Conference,
+January 1991.  (Our in-memory hashtable implementation,
+src/backend/utils/hash/dynahash.c, also relies on some of the same concepts;
+it is derived from code written by Esmond Pitt and later improved by Margo
+among others.)
 
 A hash index consists of two or more "buckets", into which tuples are
 placed whenever their hash key maps to the bucket number.  The
@@ -31,6 +32,14 @@ There is currently no provision to shrink a hash index, other than by
 rebuilding it with REINDEX.  Overflow pages can be recycled for reuse
 in other buckets, but we never give them back to the operating system.
 There is no provision for reducing the number of buckets, either.
+
+As of PostgreSQL 8.4, hash index entries store only the hash code, not the
+actual data value, for each indexed item.  This makes the index entries
+smaller (perhaps very substantially so) and speeds up various operations.
+In particular, we can speed searches by keeping the index entries in any
+one index page sorted by hash code, thus allowing binary search to be used
+within an index page.  Note however that there is *no* assumption about the
+relative ordering of hash codes across different index pages of a bucket.
 
 
 Page Addressing
@@ -205,8 +214,18 @@ the reader ensures that the target bucket calculation is valid (otherwise
 the bucket might be split before the reader arrives at it, and the target
 entries might go into the new bucket).  Holding the bucket sharelock for
 the remainder of the scan prevents the reader's current-tuple pointer from
-being invalidated by other processes.  Notice though that the reader need
-not prevent other buckets from being split or compacted.
+being invalidated by splits or compactions.  Notice that the reader's lock
+does not prevent other buckets from being split or compacted.
+
+To keep concurrency reasonably good, we require readers to cope with
+concurrent insertions, which means that they have to be able to re-find
+their current scan position after re-acquiring the page sharelock.  Since
+deletion is not possible while a reader holds the bucket sharelock, and
+we assume that heap tuple TIDs are unique, this can be implemented by
+searching for the same heap tuple TID previously returned.  Insertion does
+not move index entries across pages, so the previously-returned index entry
+should always be on the same page, at the same or higher offset number,
+as it was before.
 
 The insertion algorithm is rather similar:
 
@@ -220,7 +239,7 @@ The insertion algorithm is rather similar:
 	read/exclusive-lock current page of bucket
 	if full, release, read/exclusive-lock next page; repeat as needed
 	>> see below if no space in any page of bucket
-	insert tuple
+	insert tuple at appropriate place in page
 	write/release current page
 	release bucket share-lock
 	read/exclusive-lock meta page
@@ -228,11 +247,12 @@ The insertion algorithm is rather similar:
 	write/release meta page
 	done if no split needed, else enter Split algorithm below
 
-It is okay for an insertion to take place in a bucket that is being
-actively scanned, because it does not change the position of any existing
-item in the bucket, so scan states are not invalidated.  We only need the
-short-term buffer locks to ensure that readers do not see a
-partially-updated page.
+To speed searches, the index entries within any individual index page are
+kept sorted by hash code; the insertion code must take care to insert new
+entries in the right place.  It is okay for an insertion to take place in a
+bucket that is being actively scanned, because readers can cope with this
+as explained above.  We only need the short-term buffer locks to ensure
+that readers do not see a partially-updated page.
 
 It is clearly impossible for readers and inserters to deadlock, and in
 fact this algorithm allows them a very high degree of concurrency.

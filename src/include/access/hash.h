@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.93 2009/06/11 14:49:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.94 2009/11/01 21:25:25 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -280,6 +280,8 @@ extern Datum hash_uint32(uint32 k);
 
 /* hashinsert.c */
 extern void _hash_doinsert(Relation rel, IndexTuple itup);
+extern OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
+			   Size itemsize, IndexTuple itup);
 
 /* hashovfl.c */
 extern Buffer _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf);
