@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.57 2009/06/11 14:48:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.58 2009/11/01 22:30:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-	scan->xs_ctup.t_self = itup->t_tid;
+	so->hashso_heappos = itup->t_tid;
 
 	return true;
 }
@@ -242,7 +242,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-	scan->xs_ctup.t_self = itup->t_tid;
+	so->hashso_heappos = itup->t_tid;
 
 	return true;
 }

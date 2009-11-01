@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.94 2009/11/01 21:25:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.95 2009/11/01 22:30:54 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -99,8 +99,11 @@ typedef struct HashScanOpaqueData
 	 */
 	Buffer		hashso_curbuf;
 
-	/* Current position of the scan */
+	/* Current position of the scan, as an index TID */
 	ItemPointerData hashso_curpos;
+
+	/* Current position of the scan, as a heap TID */
+	ItemPointerData hashso_heappos;
 } HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;

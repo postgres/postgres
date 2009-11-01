@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.114 2009/11/01 21:25:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.115 2009/11/01 22:30:54 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -251,7 +251,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			IndexTuple	itup;
 
 			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-			if (ItemPointerEquals(&scan->xs_ctup.t_self, &itup->t_tid))
+			if (ItemPointerEquals(&(so->hashso_heappos), &(itup->t_tid)))
 				break;
 		}
 		if (offnum > maxoffnum)
@@ -304,6 +304,9 @@ hashgettuple(PG_FUNCTION_ARGS)
 	if (BufferIsValid(so->hashso_curbuf))
 		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_READ, HASH_NOLOCK);
 
+	/* Return current heap TID on success */
+	scan->xs_ctup.t_self = so->hashso_heappos;
+
 	PG_RETURN_BOOL(res);
 }
 
@@ -345,7 +348,7 @@ hashgetbitmap(PG_FUNCTION_ARGS)
 		if (add_tuple)
 		{
 			/* Note we mark the tuple ID as requiring recheck */
-			tbm_add_tuples(tbm, &scan->xs_ctup.t_self, 1, true);
+			tbm_add_tuples(tbm, &(so->hashso_heappos), 1, true);
 			ntids++;
 		}
 
@@ -375,6 +378,7 @@ hashbeginscan(PG_FUNCTION_ARGS)
 	so->hashso_curbuf = InvalidBuffer;
 	/* set position invalid (this will cause _hash_first call) */
 	ItemPointerSetInvalid(&(so->hashso_curpos));
+	ItemPointerSetInvalid(&(so->hashso_heappos));
 
 	scan->opaque = so;
 
@@ -410,6 +414,7 @@ hashrescan(PG_FUNCTION_ARGS)
 
 		/* set position invalid (this will cause _hash_first call) */
 		ItemPointerSetInvalid(&(so->hashso_curpos));
+		ItemPointerSetInvalid(&(so->hashso_heappos));
 	}
 
 	/* Update scan key, if a new one is given */
