@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.54 2009/10/29 21:57:17 petere Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.55 2009/11/03 21:28:10 petere Exp $
 #
 
 subdir =
@@ -70,11 +70,13 @@ distdir	= postgresql-$(VERSION)
 dummy	= =install=
 garbage = =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
-dist: $(distdir).tar.gz 
+dist: $(distdir).tar.gz $(distdir).tar.bz2
 	rm -rf $(distdir)
 
 $(distdir).tar: distdir
 	$(TAR) chf $@ $(distdir)
+
+.INTERMEDIATE: $(distdir).tar
 
 distdir-location:
 	@echo $(distdir)
@@ -98,10 +100,10 @@ distdir:
 	$(MAKE) -C $(distdir) distclean
 	rm -f $(distdir)/README.CVS
 
-distcheck: $(distdir).tar.gz
+distcheck: dist
 	rm -rf $(dummy)
 	mkdir $(dummy)
-	$(GZIP) -d -c $< | $(TAR) xf -
+	$(GZIP) -d -c $(distdir).tar.gz | $(TAR) xf -
 	install_prefix=`cd $(dummy) && pwd`; \
 	cd $(distdir) \
 	&& ./configure --prefix="$$install_prefix"

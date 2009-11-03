@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.258 2009/08/26 22:24:42 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.259 2009/11/03 21:28:10 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -475,10 +475,10 @@ TAS         = @TAS@
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 %.gz: %
-	$(GZIP) -f --best $<
+	$(GZIP) --best -c $< >$@
 
 %.bz2: %
-	$(BZIP2) -f $<
+	$(BZIP2) -c $< >$@
 
 ifndef PGXS
 
