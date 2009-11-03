@@ -125,7 +125,7 @@ else:
    return None
 $$ LANGUAGE plpythonu;
 SELECT result_nrows_test();
-INFO:  (True,)
+INFO:  True
 CONTEXT:  PL/Python function "result_nrows_test"
  result_nrows_test 
 -------------------

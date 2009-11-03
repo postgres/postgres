@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.131 2009/11/03 09:35:18 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.132 2009/11/03 11:05:02 petere Exp $
  *
  *********************************************************************
  */
@@ -3080,7 +3080,16 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 	char	   *volatile sv;
 	volatile MemoryContext oldcontext;
 
-	so = PyObject_Str(args);
+	if (PyTuple_Size(args) == 1)
+	{
+		/* Treat single argument specially to avoid undesirable
+		 * ('tuple',) decoration. */
+		PyObject *o;
+		PyArg_UnpackTuple(args, "plpy.elog", 1, 1, &o);
+		so = PyObject_Str(o);
+	}
+	else
+		so = PyObject_Str(args);
 	if (so == NULL || ((sv = PyString_AsString(so)) == NULL))
 	{
 		level = ERROR;

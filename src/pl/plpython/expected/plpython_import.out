@@ -51,7 +51,7 @@ return "sha hash of " + plain + " is " + digest.hexdigest()'
 -- import python modules
 --
 SELECT import_fail();
-NOTICE:  ('import socket failed -- No module named foosocket',)
+NOTICE:  import socket failed -- No module named foosocket
 CONTEXT:  PL/Python function "import_fail"
     import_fail     
 --------------------

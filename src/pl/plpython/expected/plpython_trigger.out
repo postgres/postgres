@@ -91,208 +91,208 @@ CREATE TRIGGER show_trigger_data_trig_stmt
 BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON trigger_test
 FOR EACH STATEMENT EXECUTE PROCEDURE trigger_data(23,'skidoo');
 insert into trigger_test values(1,'insert');
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => INSERT',)
+NOTICE:  TD[event] => INSERT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => STATEMENT',)
+NOTICE:  TD[level] => STATEMENT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_stmt',)
+NOTICE:  TD[name] => show_trigger_data_trig_stmt
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[new] => None',)
+NOTICE:  TD[new] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[old] => None',)
+NOTICE:  TD[old] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => INSERT',)
+NOTICE:  TD[event] => INSERT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => ROW',)
+NOTICE:  TD[level] => ROW
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_before',)
+NOTICE:  TD[name] => show_trigger_data_trig_before
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[new] => {'i': 1, 'v': 'insert'}",)
+NOTICE:  TD[new] => {'i': 1, 'v': 'insert'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[old] => None',)
+NOTICE:  TD[old] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => INSERT',)
+NOTICE:  TD[event] => INSERT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => ROW',)
+NOTICE:  TD[level] => ROW
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_after',)
+NOTICE:  TD[name] => show_trigger_data_trig_after
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[new] => {'i': 1, 'v': 'insert'}",)
+NOTICE:  TD[new] => {'i': 1, 'v': 'insert'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[old] => None',)
+NOTICE:  TD[old] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => AFTER',)
+NOTICE:  TD[when] => AFTER
 CONTEXT:  PL/Python function "trigger_data"
 update trigger_test set v = 'update' where i = 1;
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => UPDATE',)
+NOTICE:  TD[event] => UPDATE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => STATEMENT',)
+NOTICE:  TD[level] => STATEMENT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_stmt',)
+NOTICE:  TD[name] => show_trigger_data_trig_stmt
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[new] => None',)
+NOTICE:  TD[new] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[old] => None',)
+NOTICE:  TD[old] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => UPDATE',)
+NOTICE:  TD[event] => UPDATE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => ROW',)
+NOTICE:  TD[level] => ROW
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_before',)
+NOTICE:  TD[name] => show_trigger_data_trig_before
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[new] => {'i': 1, 'v': 'update'}",)
+NOTICE:  TD[new] => {'i': 1, 'v': 'update'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[old] => {'i': 1, 'v': 'insert'}",)
+NOTICE:  TD[old] => {'i': 1, 'v': 'insert'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => UPDATE',)
+NOTICE:  TD[event] => UPDATE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => ROW',)
+NOTICE:  TD[level] => ROW
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_after',)
+NOTICE:  TD[name] => show_trigger_data_trig_after
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[new] => {'i': 1, 'v': 'update'}",)
+NOTICE:  TD[new] => {'i': 1, 'v': 'update'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[old] => {'i': 1, 'v': 'insert'}",)
+NOTICE:  TD[old] => {'i': 1, 'v': 'insert'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => AFTER',)
+NOTICE:  TD[when] => AFTER
 CONTEXT:  PL/Python function "trigger_data"
 delete from trigger_test;
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => DELETE',)
+NOTICE:  TD[event] => DELETE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => STATEMENT',)
+NOTICE:  TD[level] => STATEMENT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_stmt',)
+NOTICE:  TD[name] => show_trigger_data_trig_stmt
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[new] => None',)
+NOTICE:  TD[new] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[old] => None',)
+NOTICE:  TD[old] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => DELETE',)
+NOTICE:  TD[event] => DELETE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => ROW',)
+NOTICE:  TD[level] => ROW
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_before',)
+NOTICE:  TD[name] => show_trigger_data_trig_before
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[new] => None',)
+NOTICE:  TD[new] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[old] => {'i': 1, 'v': 'update'}",)
+NOTICE:  TD[old] => {'i': 1, 'v': 'update'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => DELETE',)
+NOTICE:  TD[event] => DELETE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => ROW',)
+NOTICE:  TD[level] => ROW
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_after',)
+NOTICE:  TD[name] => show_trigger_data_trig_after
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[new] => None',)
+NOTICE:  TD[new] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ("TD[old] => {'i': 1, 'v': 'update'}",)
+NOTICE:  TD[old] => {'i': 1, 'v': 'update'}
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => AFTER',)
+NOTICE:  TD[when] => AFTER
 CONTEXT:  PL/Python function "trigger_data"
 truncate table trigger_test;
-NOTICE:  ("TD[args] => ['23', 'skidoo']",)
+NOTICE:  TD[args] => ['23', 'skidoo']
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[event] => TRUNCATE',)
+NOTICE:  TD[event] => TRUNCATE
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[level] => STATEMENT',)
+NOTICE:  TD[level] => STATEMENT
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[name] => show_trigger_data_trig_stmt',)
+NOTICE:  TD[name] => show_trigger_data_trig_stmt
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[new] => None',)
+NOTICE:  TD[new] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[old] => None',)
+NOTICE:  TD[old] => None
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[relid] => bogus:12345',)
+NOTICE:  TD[relid] => bogus:12345
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_name] => trigger_test',)
+NOTICE:  TD[table_name] => trigger_test
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[table_schema] => public',)
+NOTICE:  TD[table_schema] => public
 CONTEXT:  PL/Python function "trigger_data"
-NOTICE:  ('TD[when] => BEFORE',)
+NOTICE:  TD[when] => BEFORE
 CONTEXT:  PL/Python function "trigger_data"
 DROP FUNCTION trigger_data() CASCADE;
 NOTICE:  drop cascades to 3 other objects

@@ -32,21 +32,24 @@ plpy.debug('debug')
 plpy.log('log')
 plpy.info('info')
 plpy.info(37)
+plpy.info()
 plpy.info('info', 37, [1, 2, 3])
 plpy.notice('notice')
 plpy.warning('warning')
 plpy.error('error')
 $$ LANGUAGE plpythonu;
 SELECT elog_test();
-INFO:  ('info',)
+INFO:  info
 CONTEXT:  PL/Python function "elog_test"
-INFO:  (37,)
+INFO:  37
+CONTEXT:  PL/Python function "elog_test"
+INFO:  ()
 CONTEXT:  PL/Python function "elog_test"
 INFO:  ('info', 37, [1, 2, 3])
 CONTEXT:  PL/Python function "elog_test"
-NOTICE:  ('notice',)
+NOTICE:  notice
 CONTEXT:  PL/Python function "elog_test"
-WARNING:  ('warning',)
+WARNING:  warning
 CONTEXT:  PL/Python function "elog_test"
-ERROR:  ('error',)
+ERROR:  error
 CONTEXT:  PL/Python function "elog_test"
