@@ -741,7 +741,7 @@ CREATE VIEW dfview AS
 
 select * from dfview;
 
-\d dfview
+\d+ dfview
 
 drop view dfview;
 drop function dfunc(anyelement, anyelement, bool);

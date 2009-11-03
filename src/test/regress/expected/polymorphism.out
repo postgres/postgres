@@ -1350,14 +1350,14 @@ select * from dfview;
  4567890123456789 | -4567890123456789 | 4567890123456789 | -4567890123456789
 (5 rows)
 
-\d dfview
-    View "public.dfview"
- Column |  Type  | Modifiers 
---------+--------+-----------
- q1     | bigint | 
- q2     | bigint | 
- c3     | bigint | 
- c4     | bigint | 
+\d+ dfview
+                View "public.dfview"
+ Column |  Type  | Modifiers | Storage | Description 
+--------+--------+-----------+---------+-------------
+ q1     | bigint |           | plain   | 
+ q2     | bigint |           | plain   | 
+ c3     | bigint |           | plain   | 
+ c4     | bigint |           | plain   | 
 View definition:
  SELECT int8_tbl.q1, int8_tbl.q2, dfunc(int8_tbl.q1, int8_tbl.q2, int8_tbl.q1 > int8_tbl.q2 AS flag) AS c3, dfunc(int8_tbl.q1, int8_tbl.q1 < int8_tbl.q2 AS flag, int8_tbl.q2 AS b) AS c4
    FROM int8_tbl;
