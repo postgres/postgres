@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.90.2.4 2008/01/02 03:10:34 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.90.2.5 2009/11/03 08:29:51 petere Exp $
  *
  *********************************************************************
  */
@@ -2814,9 +2814,9 @@ PLy_fatal(PyObject * self, PyObject * args)
 static PyObject *
 PLy_output(volatile int level, PyObject * self, PyObject * args)
 {
-	PyObject   *so;
+	PyObject   *volatile so;
 	char	   *volatile sv;
-	MemoryContext oldcontext;
+	volatile MemoryContext oldcontext;
 
 	so = PyObject_Str(args);
 	if (so == NULL || ((sv = PyString_AsString(so)) == NULL))
@@ -2835,6 +2835,10 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 		MemoryContextSwitchTo(oldcontext);
 		PLy_error_in_progress = CopyErrorData();
 		FlushErrorState();
+
+		PyErr_SetString(PLy_exc_error, sv);
+		/* Note: If sv came from PyString_AsString(), it points into
+		 * storage owned by so.  So free so after using sv. */
 		Py_XDECREF(so);
 
 		/*
@@ -2842,7 +2846,6 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 		 * control passes back to PLy_procedure_call, we check for PG
 		 * exceptions and re-throw the error.
 		 */
-		PyErr_SetString(PLy_exc_error, sv);
 		return NULL;
 	}
 	PG_END_TRY();
