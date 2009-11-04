@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.26 2009/06/25 19:33:25 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_standby/pg_standby.c,v 1.27 2009/11/04 12:51:30 heikki Exp $
  *
  *
  * pg_standby.c
@@ -56,7 +56,9 @@ bool		debug = false;		/* are we debugging? */
 bool		need_cleanup = false;		/* do we need to remove files from
 										 * archive? */
 
+#ifndef WIN32
 static volatile sig_atomic_t signaled = false;
+#endif
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *triggerPath;		/* where to find the trigger file? */
@@ -535,13 +537,13 @@ usage(void)
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
+#ifndef WIN32
 static void
 sighandler(int sig)
 {
 	signaled = true;
 }
 
-#ifndef WIN32
 /* We don't want SIGQUIT to core dump */
 static void
 sigquit_handler(int sig)
@@ -573,6 +575,7 @@ main(int argc, char **argv)
 		}
 	}
 
+#ifndef WIN32
 	/*
 	 * You can send SIGUSR1 to trigger failover.
 	 *
@@ -584,10 +587,11 @@ main(int argc, char **argv)
 	 * out to be a bad idea because postmaster uses SIGQUIT to request
 	 * immediate shutdown. We still trap SIGINT, but that may change in a
 	 * future release.
+	 *
+	 * There's no way to trigger failover via signal on Windows.
 	 */
 	(void) signal(SIGUSR1, sighandler);
 	(void) signal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
-#ifndef WIN32
 	(void) signal(SIGQUIT, sigquit_handler);
 #endif
 
@@ -763,6 +767,7 @@ main(int argc, char **argv)
 	{
 		/* Check for trigger file or signal first */
 		CheckForExternalTrigger();
+#ifndef WIN32
 		if (signaled)
 		{
 			Failover = FastFailover;
@@ -772,6 +777,7 @@ main(int argc, char **argv)
 				fflush(stderr);
 			}
 		}
+#endif
 
 		/*
 		 * Check for fast failover immediately, before checking if the
