@@ -51,7 +51,9 @@ bool		triggered = false;	/* have we been triggered? */
 bool		need_cleanup = false;		/* do we need to remove files from
 										 * archive? */
 
+#ifndef WIN32
 static volatile sig_atomic_t signaled = false;
+#endif
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *triggerPath;		/* where to find the trigger file? */
@@ -445,13 +447,13 @@ usage(void)
 	fflush(stderr);
 }
 
+#ifndef WIN32
 static void
 sighandler(int sig)
 {
 	signaled = true;
 }
 
-#ifndef WIN32
 /* We don't want SIGQUIT to core dump */
 static void
 sigquit_handler(int sig)
@@ -467,6 +469,7 @@ main(int argc, char **argv)
 {
 	int			c;
 
+#ifndef WIN32
 	/*
 	 * You can send SIGUSR1 to trigger failover.
 	 *
@@ -478,10 +481,11 @@ main(int argc, char **argv)
 	 * turned out to be a bad idea because postmaster uses SIGQUIT to
 	 * request immediate shutdown. We still trap SIGINT, but that may
 	 * change in a future release.
+	 *
+	 * There's no way to trigger failover via signal on Windows.
 	 */
 	(void) signal(SIGUSR1, sighandler);
 	(void) signal(SIGINT, sighandler); /* deprecated, use SIGUSR1 */
-#ifndef WIN32
 	(void) signal(SIGQUIT, sigquit_handler);
 #endif
 
@@ -657,6 +661,7 @@ main(int argc, char **argv)
 		if (sleeptime <= 60)
 			pg_usleep(sleeptime * 1000000L);
 
+#ifndef WIN32
 		if (signaled)
 		{
 			triggered = true;
@@ -667,6 +672,7 @@ main(int argc, char **argv)
 			}
 		}
 		else
+#endif
 		{
 
 			if (debug)
