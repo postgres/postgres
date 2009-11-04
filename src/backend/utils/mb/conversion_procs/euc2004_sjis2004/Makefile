@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_shift_jis_2004/Makefile,v 1.1 2007/03/25 11:56:03 ishii Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc2004_sjis2004/Makefile,v 1.1 2009/11/04 23:47:04 tgl Exp $
 #
 #-------------------------------------------------------------------------
-subdir = src/backend/utils/mb/conversion_procs/utf8_and_shift_jis_2004
+subdir = src/backend/utils/mb/conversion_procs/euc2004_sjis2004
 top_builddir = ../../../../../..
 include $(top_builddir)/src/Makefile.global
 
-NAME		= utf8_and_shift_jis_2004
+NAME		= euc2004_sjis2004
 
 include $(srcdir)/../proc.mk
