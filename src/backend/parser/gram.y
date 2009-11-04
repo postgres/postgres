@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.686 2009/10/14 22:14:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.687 2009/11/04 23:15:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -8607,7 +8607,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @4;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n, @2);
 				}
 			| a_expr NOT LIKE a_expr
@@ -8621,7 +8621,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @5;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n, @2);
 				}
 			| a_expr ILIKE a_expr
@@ -8635,7 +8635,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @4;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n, @2);
 				}
 			| a_expr NOT ILIKE a_expr
@@ -8649,7 +8649,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @5;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n, @2);
 				}
 
@@ -8674,7 +8674,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @5;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
 			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
@@ -8686,7 +8686,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @5;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
 			| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
@@ -8698,7 +8698,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
 					n->over = NULL;
-					n->location = @6;
+					n->location = @2;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
 
