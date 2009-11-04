@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.304 2009/10/14 22:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.305 2009/11/04 12:24:23 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3037,6 +3037,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	int			i;
 	ListCell   *l;
 	EState	   *estate;
+	CommandId	mycid;
+	BulkInsertState bistate;
+	int			hi_options;
 
 	/*
 	 * Open the relation(s).  We have surely already locked the existing
@@ -3050,6 +3053,29 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		newrel = heap_open(OIDNewHeap, AccessExclusiveLock);
 	else
 		newrel = NULL;
+
+	/*
+	 * Prepare a BulkInsertState and options for heap_insert. Because
+	 * we're building a new heap, we can skip WAL-logging and fsync it
+	 * to disk at the end instead (unless WAL-logging is required for
+	 * archiving). The FSM is empty too, so don't bother using it.
+	 */
+	if (newrel)
+	{
+		mycid = GetCurrentCommandId(true);
+		bistate = GetBulkInsertState();
+
+		hi_options = HEAP_INSERT_SKIP_FSM;
+		if (!XLogArchivingActive())
+			hi_options |= HEAP_INSERT_SKIP_WAL;
+	}
+	else
+	{
+		/* keep compiler quiet about using these uninitialized */
+		mycid = 0;
+		bistate = NULL;
+		hi_options = 0;
+	}
 
 	/*
 	 * If we need to rewrite the table, the operation has to be propagated to
@@ -3252,7 +3278,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 			/* Write the tuple out to the new relation */
 			if (newrel)
-				simple_heap_insert(newrel, tuple);
+				heap_insert(newrel, tuple, mycid, hi_options, bistate);
 
 			ResetExprContext(econtext);
 
@@ -3270,7 +3296,15 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 	heap_close(oldrel, NoLock);
 	if (newrel)
+	{
+		FreeBulkInsertState(bistate);
+
+		/* If we skipped writing WAL, then we need to sync the heap. */
+		if (hi_options & HEAP_INSERT_SKIP_WAL)
+			heap_sync(newrel);
+
 		heap_close(newrel, NoLock);
+	}
 }
 
 /*
