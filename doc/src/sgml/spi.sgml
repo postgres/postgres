@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.65 2009/08/05 19:31:50 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.66 2009/11/04 22:26:04 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -861,7 +861,7 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
 
   <para>
    <function>SPI_prepare</function> creates and returns an execution
-   plan for the specified command but doesn't execute the command.
+   plan for the specified command, but doesn't execute the command.
    This function should only be called from a connected procedure.
   </para>
 
@@ -990,7 +990,7 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
    of the planner's <quote>cursor options</> parameter.  This is a bitmask
    having the values shown in <filename>nodes/parsenodes.h</filename>
    for the <structfield>options</> field of <structname>DeclareCursorStmt</>.
-   <function>SPI_prepare</function> always takes these options as zero.
+   <function>SPI_prepare</function> always takes the cursor options as zero.
   </para>
  </refsect1>
 
@@ -1055,6 +1055,94 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
    <symbol>CURSOR_OPT_NO_SCROLL</symbol>, and
    <symbol>CURSOR_OPT_FAST_PLAN</symbol>.  Note in particular that
    <symbol>CURSOR_OPT_HOLD</symbol> is ignored.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-prepare-params">
+ <refmeta>
+  <refentrytitle>SPI_prepare_params</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_prepare_params</refname>
+  <refpurpose>prepare a plan for a command, without executing it yet</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_prepare_params</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+SPIPlanPtr SPI_prepare_params(const char * <parameter>command</parameter>,
+                              ParserSetupHook <parameter>parserSetup</parameter>,
+                              void * <parameter>parserSetupArg</parameter>,
+                              int <parameter>cursorOptions</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_prepare_params</function> creates and returns an execution
+   plan for the specified command, but doesn't execute the command.
+   This function is equivalent to <function>SPI_prepare_cursor</function>,
+   with the addition that the caller can specify parser hook functions
+   to control the parsing of external parameter references.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>command</parameter></literal></term>
+    <listitem>
+     <para>
+      command string
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ParserSetupHook <parameter>parserSetup</parameter></literal></term>
+    <listitem>
+     <para>
+      Parser hook setup function
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>void * <parameter>parserSetupArg</parameter></literal></term>
+    <listitem>
+     <para>
+      passthrough argument for <parameter>parserSetup</parameter>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>cursorOptions</parameter></literal></term>
+    <listitem>
+     <para>
+      integer bitmask of cursor options; zero produces default behavior
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   <function>SPI_prepare_params</function> has the same return conventions as
+   <function>SPI_prepare</function>.
   </para>
  </refsect1>
 </refentry>
@@ -1386,14 +1474,100 @@ int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>
    <function>SPI_execute</function> if successful.
   </para>
  </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-execute-plan-with-paramlist">
+ <refmeta>
+  <refentrytitle>SPI_execute_plan_with_paramlist</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_execute_plan_with_paramlist</refname>
+  <refpurpose>execute a plan prepared by <function>SPI_prepare</function></refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_execute_plan_with_paramlist</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_execute_plan_with_paramlist(SPIPlanPtr <parameter>plan</parameter>,
+                                    ParamListInfo <parameter>params</parameter>,
+                                    bool <parameter>read_only</parameter>,
+                                    long <parameter>count</parameter>)
+</synopsis>
+ </refsynopsisdiv>
 
  <refsect1>
-  <title>Notes</title>
+  <title>Description</title>
 
   <para>
-   If one of the objects (a table, function, etc.) referenced by the
-   prepared plan is dropped during the session then the result of
-   <function>SPI_execute_plan</function> for this plan will be unpredictable.
+   <function>SPI_execute_plan_with_paramlist</function> executes a plan
+   prepared by <function>SPI_prepare</function>.
+   This function is equivalent to <function>SPI_execute_plan</function>
+   except that information about the parameter values to be passed to the
+   query is presented differently.  The <literal>ParamListInfo</>
+   representation can be convenient for passing down values that are
+   already available in that format.  It also supports use of dynamic
+   parameter sets via hook functions specified in <literal>ParamListInfo</>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
+    <listitem>
+     <para>
+      execution plan (returned by <function>SPI_prepare</function>)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ParamListInfo <parameter>params</parameter></literal></term>
+    <listitem>
+     <para>
+      data structure containing parameter types and values; NULL if none
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>bool <parameter>read_only</parameter></literal></term>
+    <listitem>
+     <para>
+      <literal>true</> for read-only execution
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>long <parameter>count</parameter></literal></term>
+    <listitem>
+     <para>
+      maximum number of rows to process or return
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   The return value is the same as for <function>SPI_execute_plan</function>.
+  </para>
+
+  <para>
+   <varname>SPI_processed</varname> and
+   <varname>SPI_tuptable</varname> are set as in
+   <function>SPI_execute_plan</function> if successful.
   </para>
  </refsect1>
 </refentry>
@@ -1543,7 +1717,7 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
   </para>
 
   <para>
-   The passed-in data will be copied into the cursor's portal, so it
+   The passed-in parameter data will be copied into the cursor's portal, so it
    can be freed while the cursor still exists.
   </para>
  </refsect1>
@@ -1667,7 +1841,7 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
   </para>
 
   <para>
-   The passed-in data will be copied into the cursor's portal, so it
+   The passed-in parameter data will be copied into the cursor's portal, so it
    can be freed while the cursor still exists.
   </para>
  </refsect1>
@@ -1752,6 +1926,104 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
     <listitem>
      <para>
       integer bitmask of cursor options; zero produces default behavior
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   Pointer to portal containing the cursor.  Note there is no error
+   return convention; any error will be reported via <function>elog</>.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-cursor-open-with-paramlist">
+ <refmeta>
+  <refentrytitle>SPI_cursor_open_with_paramlist</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_cursor_open_with_paramlist</refname>
+  <refpurpose>set up a cursor using parameters</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_cursor_open_with_paramlist</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+Portal SPI_cursor_open_with_paramlist(const char *<parameter>name</parameter>,
+                                      SPIPlanPtr <parameter>plan</parameter>,
+                                      ParamListInfo <parameter>params</parameter>,
+                                      bool <parameter>read_only</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_cursor_open_with_paramlist</function> sets up a cursor
+   (internally, a portal) that will execute a plan prepared by
+   <function>SPI_prepare</function>.
+   This function is equivalent to <function>SPI_cursor_open</function>
+   except that information about the parameter values to be passed to the
+   query is presented differently.  The <literal>ParamListInfo</>
+   representation can be convenient for passing down values that are
+   already available in that format.  It also supports use of dynamic
+   parameter sets via hook functions specified in <literal>ParamListInfo</>.
+  </para>
+
+  <para>
+   The passed-in parameter data will be copied into the cursor's portal, so it
+   can be freed while the cursor still exists.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>name</parameter></literal></term>
+    <listitem>
+     <para>
+      name for portal, or <symbol>NULL</symbol> to let the system
+      select a name
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
+    <listitem>
+     <para>
+      execution plan (returned by <function>SPI_prepare</function>)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ParamListInfo <parameter>params</parameter></literal></term>
+    <listitem>
+     <para>
+      data structure containing parameter types and values; NULL if none
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>bool <parameter>read_only</parameter></literal></term>
+    <listitem>
+     <para>
+      <literal>true</> for read-only execution
      </para>
     </listitem>
    </varlistentry>

@@ -347,11 +347,9 @@ begin
     if new.slotno < 1 or new.slotno > hubrec.nslots then
         raise exception ''no manual manipulation of HSlot'';
     end if;
-    if tg_op = ''UPDATE'' then
-	if new.hubname != old.hubname then
-	    if count(*) > 0 from Hub where name = old.hubname then
-		raise exception ''no manual manipulation of HSlot'';
-	    end if;
+    if tg_op = ''UPDATE'' and new.hubname != old.hubname then
+	if count(*) > 0 from Hub where name = old.hubname then
+	    raise exception ''no manual manipulation of HSlot'';
 	end if;
     end if;
     sname := ''HS.'' || trim(new.hubname);

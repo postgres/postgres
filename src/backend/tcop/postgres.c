@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.574 2009/10/08 22:34:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.575 2009/11/04 22:26:06 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -613,6 +613,52 @@ pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
 		ResetUsage();
 
 	query = parse_analyze(parsetree, query_string, paramTypes, numParams);
+
+	if (log_parser_stats)
+		ShowUsage("PARSE ANALYSIS STATISTICS");
+
+	/*
+	 * (2) Rewrite the queries, as necessary
+	 */
+	querytree_list = pg_rewrite_query(query);
+
+	TRACE_POSTGRESQL_QUERY_REWRITE_DONE(query_string);
+
+	return querytree_list;
+}
+
+/*
+ * Do parse analysis and rewriting.  This is the same as pg_analyze_and_rewrite
+ * except that external-parameter resolution is determined by parser callback
+ * hooks instead of a fixed list of parameter datatypes.
+ */
+List *
+pg_analyze_and_rewrite_params(Node *parsetree,
+							  const char *query_string,
+							  ParserSetupHook parserSetup,
+							  void *parserSetupArg)
+{
+	ParseState *pstate;
+	Query	   *query;
+	List	   *querytree_list;
+
+	Assert(query_string != NULL); /* required as of 8.4 */
+
+	TRACE_POSTGRESQL_QUERY_REWRITE_START(query_string);
+
+	/*
+	 * (1) Perform parse analysis.
+	 */
+	if (log_parser_stats)
+		ResetUsage();
+
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = query_string;
+	(*parserSetup) (pstate, parserSetupArg);
+
+	query = transformStmt(pstate, parsetree);
+
+	free_parsestate(pstate);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");
@@ -1536,6 +1582,11 @@ exec_bind_message(StringInfo input_message)
 		/* sizeof(ParamListInfoData) includes the first array element */
 		params = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
 								   (numParams - 1) *sizeof(ParamExternData));
+		/* we have static list of params, so no hooks needed */
+		params->paramFetch = NULL;
+		params->paramFetchArg = NULL;
+		params->parserSetup = NULL;
+		params->parserSetupArg = NULL;
 		params->numParams = numParams;
 
 		for (paramno = 0; paramno < numParams; paramno++)

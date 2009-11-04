@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.135 2009/06/11 17:25:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.136 2009/11/04 22:26:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,6 +526,11 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 			/* sizeof(ParamListInfoData) includes the first array element */
 			paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
 									   (nargs - 1) *sizeof(ParamExternData));
+			/* we have static list of params, so no hooks needed */
+			paramLI->paramFetch = NULL;
+			paramLI->paramFetchArg = NULL;
+			paramLI->parserSetup = NULL;
+			paramLI->parserSetupArg = NULL;
 			paramLI->numParams = nargs;
 			fcache->paramLI = paramLI;
 		}

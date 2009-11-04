@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.100 2009/09/01 00:09:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.101 2009/11/04 22:26:07 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -49,6 +49,10 @@ extern List *pg_parse_and_rewrite(const char *query_string,
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
 					   Oid *paramTypes, int numParams);
+extern List *pg_analyze_and_rewrite_params(Node *parsetree,
+										   const char *query_string,
+										   ParserSetupHook parserSetup,
+										   void *parserSetupArg);
 extern PlannedStmt *pg_plan_query(Query *querytree, int cursorOptions,
 			  ParamListInfo boundParams);
 extern List *pg_plan_queries(List *querytrees, int cursorOptions,

@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.30 2009/10/26 02:26:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.31 2009/11/04 22:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,8 @@ InitPlanCache(void)
  * raw_parse_tree: output of raw_parser()
  * query_string: original query text (as of PG 8.4, must not be NULL)
  * commandTag: compile-time-constant tag for query, or NULL if empty query
- * param_types: array of parameter type OIDs, or NULL if none
- * num_params: number of parameters
+ * param_types: array of fixed parameter type OIDs, or NULL if none
+ * num_params: number of fixed parameters
  * cursor_options: options bitmask that was/will be passed to planner
  * stmt_list: list of PlannedStmts/utility stmts, or list of Query trees
  * fully_planned: are we caching planner or rewriter output?
@@ -156,6 +156,9 @@ CreateCachedPlan(Node *raw_parse_tree,
 	else
 		plansource->param_types = NULL;
 	plansource->num_params = num_params;
+	/* these can be set later with CachedPlanSetParserHook: */
+	plansource->parserSetup = NULL;
+	plansource->parserSetupArg = NULL;
 	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
@@ -240,6 +243,9 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	plansource->commandTag = commandTag;		/* no copying needed */
 	plansource->param_types = param_types;
 	plansource->num_params = num_params;
+	/* these can be set later with CachedPlanSetParserHook: */
+	plansource->parserSetup = NULL;
+	plansource->parserSetupArg = NULL;
 	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
@@ -272,6 +278,27 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	MemoryContextSwitchTo(oldcxt);
 
 	return plansource;
+}
+
+/*
+ * CachedPlanSetParserHook: set up to use parser callback hooks
+ *
+ * Use this when a caller wants to manage parameter information via parser
+ * callbacks rather than a fixed parameter-types list.  Beware that the
+ * information pointed to by parserSetupArg must be valid for as long as
+ * the cached plan might be replanned!
+ */
+void
+CachedPlanSetParserHook(CachedPlanSource *plansource,
+						ParserSetupHook parserSetup,
+						void *parserSetupArg)
+{
+	/* Must not have specified a fixed parameter-types list */
+	Assert(plansource->param_types == NULL);
+	Assert(plansource->num_params == 0);
+	/* OK, save hook info */
+	plansource->parserSetup = parserSetup;
+	plansource->parserSetupArg = parserSetupArg;
 }
 
 /*
@@ -466,6 +493,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 	if (!plan)
 	{
 		bool		snapshot_set = false;
+		Node	   *rawtree;
 		List	   *slist;
 		TupleDesc	resultDesc;
 
@@ -491,14 +519,19 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		/*
 		 * Run parse analysis and rule rewriting.  The parser tends to
 		 * scribble on its input, so we must copy the raw parse tree to
-		 * prevent corruption of the cache.  Note that we do not use
-		 * parse_analyze_varparams(), assuming that the caller never wants the
-		 * parameter types to change from the original values.
+		 * prevent corruption of the cache.
 		 */
-		slist = pg_analyze_and_rewrite(copyObject(plansource->raw_parse_tree),
-									   plansource->query_string,
-									   plansource->param_types,
-									   plansource->num_params);
+		rawtree = copyObject(plansource->raw_parse_tree);
+		if (plansource->parserSetup != NULL)
+			slist = pg_analyze_and_rewrite_params(rawtree,
+												  plansource->query_string,
+												  plansource->parserSetup,
+												  plansource->parserSetupArg);
+		else
+			slist = pg_analyze_and_rewrite(rawtree,
+										   plansource->query_string,
+										   plansource->param_types,
+										   plansource->num_params);
 
 		if (plansource->fully_planned)
 		{

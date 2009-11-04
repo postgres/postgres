@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.117 2009/09/29 20:05:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.118 2009/11/04 22:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "fmgr.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "nodes/bitmapset.h"
 #include "utils/tuplestore.h"
 
 /**********************************************************************
@@ -58,8 +59,7 @@ enum
 	PLPGSQL_DTYPE_REC,
 	PLPGSQL_DTYPE_RECFIELD,
 	PLPGSQL_DTYPE_ARRAYELEM,
-	PLPGSQL_DTYPE_EXPR,
-	PLPGSQL_DTYPE_TRIGARG
+	PLPGSQL_DTYPE_EXPR
 };
 
 /* ----------
@@ -162,8 +162,7 @@ typedef struct
 
 /*
  * PLpgSQL_datum is the common supertype for PLpgSQL_expr, PLpgSQL_var,
- * PLpgSQL_row, PLpgSQL_rec, PLpgSQL_recfield, PLpgSQL_arrayelem, and
- * PLpgSQL_trigarg
+ * PLpgSQL_row, PLpgSQL_rec, PLpgSQL_recfield, and PLpgSQL_arrayelem
  */
 typedef struct
 {								/* Generic datum array item		*/
@@ -189,7 +188,11 @@ typedef struct PLpgSQL_expr
 	int			dno;
 	char	   *query;
 	SPIPlanPtr	plan;
-	Oid		   *plan_argtypes;
+	Bitmapset  *paramnos;		/* all dnos referenced by this query */
+
+	/* function containing this expr (not set until we first parse query) */
+	struct PLpgSQL_function *func;
+
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	int			expr_simple_generation; /* plancache generation we checked */
@@ -202,10 +205,6 @@ typedef struct PLpgSQL_expr
 	 */
 	ExprState  *expr_simple_state;
 	LocalTransactionId expr_simple_lxid;
-
-	/* params to pass to expr */
-	int			nparams;
-	int			params[1];		/* VARIABLE SIZE ARRAY ... must be last */
 } PLpgSQL_expr;
 
 
@@ -282,14 +281,6 @@ typedef struct
 	PLpgSQL_expr *subscript;
 	int			arrayparentno;	/* dno of parent array variable */
 } PLpgSQL_arrayelem;
-
-
-typedef struct
-{								/* Positional argument to trigger	*/
-	int			dtype;
-	int			dno;
-	PLpgSQL_expr *argnum;
-} PLpgSQL_trigarg;
 
 
 typedef struct
@@ -670,17 +661,22 @@ typedef struct PLpgSQL_function
 	int			tg_table_name_varno;
 	int			tg_table_schema_varno;
 	int			tg_nargs_varno;
+	int			tg_argv_varno;
 
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
 
+	/* these fields change when the function is used */
+	struct PLpgSQL_execstate *cur_estate;
 	unsigned long use_count;
 } PLpgSQL_function;
 
 
-typedef struct
+typedef struct PLpgSQL_execstate
 {								/* Runtime execution data	*/
+	PLpgSQL_function *func;		/* function being executed */
+
 	Datum		retval;
 	bool		retisnull;
 	Oid			rettype;		/* type of current retval */
@@ -699,9 +695,6 @@ typedef struct
 	MemoryContext tuple_store_cxt;
 	ReturnSetInfo *rsi;
 
-	int			trig_nargs;
-	Datum	   *trig_argv;
-
 	int			found_varno;
 	int			ndatums;
 	PLpgSQL_datum **datums;
@@ -711,11 +704,12 @@ typedef struct
 	uint32		eval_processed;
 	Oid			eval_lastoid;
 	ExprContext *eval_econtext; /* for executing simple expressions */
+	PLpgSQL_expr *cur_expr;		/* current query/expr being evaluated */
 
 	/* status information for error context reporting */
-	PLpgSQL_function *err_func; /* current func */
 	PLpgSQL_stmt *err_stmt;		/* current stmt */
 	const char *err_text;		/* additional state info */
+
 	void	   *plugin_info;	/* reserved for use by optional plugin */
 } PLpgSQL_execstate;
 

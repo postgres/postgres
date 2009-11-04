@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.128 2009/09/29 20:05:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.129 2009/11/04 22:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ static List				*read_raise_options(void);
 		}						loop_body;
 		List					*list;
 		PLpgSQL_type			*dtype;
-		PLpgSQL_datum			*scalar;	/* a VAR, RECFIELD, or TRIGARG */
+		PLpgSQL_datum			*scalar;	/* a VAR or RECFIELD */
 		PLpgSQL_variable		*variable;	/* a VAR, REC, or ROW */
 		PLpgSQL_var				*var;
 		PLpgSQL_row				*row;
@@ -236,7 +236,7 @@ static List				*read_raise_options(void);
 		 */
 %token	T_STRING
 %token	T_NUMBER
-%token	T_SCALAR				/* a VAR, RECFIELD, or TRIGARG */
+%token	T_SCALAR				/* a VAR or RECFIELD */
 %token	T_ROW
 %token	T_RECORD
 %token	T_DTYPE
@@ -1903,44 +1903,6 @@ lno				:
 %%
 
 
-#define MAX_EXPR_PARAMS  1024
-
-/*
- * determine the expression parameter position to use for a plpgsql datum
- *
- * It is important that any given plpgsql datum map to just one parameter.
- * We used to be sloppy and assign a separate parameter for each occurrence
- * of a datum reference, but that fails for situations such as "select DATUM
- * from ... group by DATUM".
- *
- * The params[] array must be of size MAX_EXPR_PARAMS.
- */
-static int
-assign_expr_param(int dno, int *params, int *nparams)
-{
-	int		i;
-
-	/* already have an instance of this dno? */
-	for (i = 0; i < *nparams; i++)
-	{
-		if (params[i] == dno)
-			return i+1;
-	}
-	/* check for array overflow */
-	if (*nparams >= MAX_EXPR_PARAMS)
-	{
-		plpgsql_error_lineno = plpgsql_scanner_lineno();
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("too many variables specified in SQL statement")));
-	}
-	/* add new parameter dno to array */
-	params[*nparams] = dno;
-	(*nparams)++;
-	return *nparams;
-}
-
-
 /* Convenience routine to read an expression with one possible terminator */
 PLpgSQL_expr *
 plpgsql_read_expression(int until, const char *expected)
@@ -1993,8 +1955,7 @@ read_sql_construct(int until,
 	int					lno;
 	StringInfoData		ds;
 	int					parenlevel = 0;
-	int					nparams = 0;
-	int					params[MAX_EXPR_PARAMS];
+	Bitmapset		   *paramnos = NULL;
 	char				buf[32];
 	PLpgSQL_expr		*expr;
 
@@ -2047,24 +2008,21 @@ read_sql_construct(int until,
 		switch (tok)
 		{
 			case T_SCALAR:
-				snprintf(buf, sizeof(buf), " $%d ",
-						 assign_expr_param(yylval.scalar->dno,
-										   params, &nparams));
+				snprintf(buf, sizeof(buf), " $%d ", yylval.scalar->dno + 1);
 				appendStringInfoString(&ds, buf);
+				paramnos = bms_add_member(paramnos, yylval.scalar->dno);
 				break;
 
 			case T_ROW:
-				snprintf(buf, sizeof(buf), " $%d ",
-						 assign_expr_param(yylval.row->dno,
-										   params, &nparams));
+				snprintf(buf, sizeof(buf), " $%d ", yylval.row->dno + 1);
 				appendStringInfoString(&ds, buf);
+				paramnos = bms_add_member(paramnos, yylval.row->dno);
 				break;
 
 			case T_RECORD:
-				snprintf(buf, sizeof(buf), " $%d ",
-						 assign_expr_param(yylval.rec->dno,
-										   params, &nparams));
+				snprintf(buf, sizeof(buf), " $%d ", yylval.rec->dno + 1);
 				appendStringInfoString(&ds, buf);
+				paramnos = bms_add_member(paramnos, yylval.rec->dno);
 				break;
 
 			default:
@@ -2076,13 +2034,11 @@ read_sql_construct(int until,
 	if (endtoken)
 		*endtoken = tok;
 
-	expr = palloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
+	expr = palloc0(sizeof(PLpgSQL_expr));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
-	expr->nparams		= nparams;
-	while(nparams-- > 0)
-		expr->params[nparams] = params[nparams];
+	expr->paramnos		= paramnos;
 	pfree(ds.data);
 
 	if (valid_sql)
@@ -2162,8 +2118,7 @@ static PLpgSQL_stmt *
 make_execsql_stmt(const char *sqlstart, int lineno)
 {
 	StringInfoData		ds;
-	int					nparams = 0;
-	int					params[MAX_EXPR_PARAMS];
+	Bitmapset		   *paramnos = NULL;
 	char				buf[32];
 	PLpgSQL_stmt_execsql *execsql;
 	PLpgSQL_expr		*expr;
@@ -2214,24 +2169,21 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 		switch (tok)
 		{
 			case T_SCALAR:
-				snprintf(buf, sizeof(buf), " $%d ",
-						 assign_expr_param(yylval.scalar->dno,
-										   params, &nparams));
+				snprintf(buf, sizeof(buf), " $%d ", yylval.scalar->dno + 1);
 				appendStringInfoString(&ds, buf);
+				paramnos = bms_add_member(paramnos, yylval.scalar->dno);
 				break;
 
 			case T_ROW:
-				snprintf(buf, sizeof(buf), " $%d ",
-						 assign_expr_param(yylval.row->dno,
-										   params, &nparams));
+				snprintf(buf, sizeof(buf), " $%d ", yylval.row->dno + 1);
 				appendStringInfoString(&ds, buf);
+				paramnos = bms_add_member(paramnos, yylval.row->dno);
 				break;
 
 			case T_RECORD:
-				snprintf(buf, sizeof(buf), " $%d ",
-						 assign_expr_param(yylval.rec->dno,
-										   params, &nparams));
+				snprintf(buf, sizeof(buf), " $%d ", yylval.rec->dno + 1);
 				appendStringInfoString(&ds, buf);
+				paramnos = bms_add_member(paramnos, yylval.rec->dno);
 				break;
 
 			default:
@@ -2240,13 +2192,11 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 		}
 	}
 
-	expr = palloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
+	expr = palloc0(sizeof(PLpgSQL_expr));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
-	expr->nparams		= nparams;
-	while(nparams-- > 0)
-		expr->params[nparams] = params[nparams];
+	expr->paramnos		= paramnos;
 	pfree(ds.data);
 
 	check_sql_expr(expr->query);
@@ -2599,9 +2549,6 @@ check_assignable(PLpgSQL_datum *datum)
 			break;
 		case PLPGSQL_DTYPE_ARRAYELEM:
 			/* always assignable? */
-			break;
-		case PLPGSQL_DTYPE_TRIGARG:
-			yyerror("cannot assign to tg_argv");
 			break;
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
@@ -3095,24 +3042,10 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 		{
 			PLpgSQL_case_when *cwt = (PLpgSQL_case_when *) lfirst(l);
 			PLpgSQL_expr *expr = cwt->expr;
-			int		nparams = expr->nparams;
-			PLpgSQL_expr *new_expr;
 			StringInfoData	ds;
 
 			/* Must add the CASE variable as an extra param to expression */
-			if (nparams >= MAX_EXPR_PARAMS)
-			{
-				plpgsql_error_lineno = cwt->lineno;
-				ereport(ERROR,
-					    (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					     errmsg("too many variables specified in SQL statement")));
-			}
-
-			new_expr = palloc(sizeof(PLpgSQL_expr) + sizeof(int) * (nparams + 1) - sizeof(int));
-			memcpy(new_expr, expr,
-				   sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
-			new_expr->nparams = nparams + 1;
-			new_expr->params[nparams] = t_varno;
+			expr->paramnos = bms_add_member(expr->paramnos, t_varno);
 
 			/* copy expression query without SELECT keyword (expr->query + 7) */
 			Assert(strncmp(expr->query, "SELECT ", 7) == 0);
@@ -3120,17 +3053,14 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 			/* And do the string hacking */
 			initStringInfo(&ds);
 
-			appendStringInfo(&ds, "SELECT $%d IN(%s)",
-								nparams + 1,
-								expr->query + 7);
+			appendStringInfo(&ds, "SELECT $%d IN (%s)",
+							 t_varno + 1,
+							 expr->query + 7);
 
-			new_expr->query = pstrdup(ds.data);
+			pfree(expr->query);
+			expr->query = pstrdup(ds.data);
 
 			pfree(ds.data);
-			pfree(expr->query);
-			pfree(expr);
-
-			cwt->expr = new_expr;
 		}
 	}
 

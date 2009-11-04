@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.81 2009/09/29 20:05:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.82 2009/11/04 22:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1148,21 +1148,7 @@ dump_getdiag(PLpgSQL_stmt_getdiag *stmt)
 static void
 dump_expr(PLpgSQL_expr *expr)
 {
-	int			i;
-
-	printf("'%s", expr->query);
-	if (expr->nparams > 0)
-	{
-		printf(" {");
-		for (i = 0; i < expr->nparams; i++)
-		{
-			if (i > 0)
-				printf(", ");
-			printf("$%d=%d", i + 1, expr->params[i]);
-		}
-		printf("}");
-	}
-	printf("'");
+	printf("'%s'", expr->query);
 }
 
 void
@@ -1238,11 +1224,6 @@ plpgsql_dumptree(PLpgSQL_function *func)
 				printf("ARRAYELEM of VAR %d subscript ",
 					   ((PLpgSQL_arrayelem *) d)->arrayparentno);
 				dump_expr(((PLpgSQL_arrayelem *) d)->subscript);
-				printf("\n");
-				break;
-			case PLPGSQL_DTYPE_TRIGARG:
-				printf("TRIGARG ");
-				dump_expr(((PLpgSQL_trigarg *) d)->argnum);
 				printf("\n");
 				break;
 			default:

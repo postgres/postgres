@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.192 2009/10/12 18:10:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.193 2009/11/04 22:26:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,8 +107,6 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			 ParamListInfo params, DestReceiver *dest)
 {
 	ExplainState es;
-	Oid		   *param_types;
-	int			num_params;
 	TupOutputState *tstate;
 	List	   *rewritten;
 	ListCell   *lc;
@@ -150,9 +148,6 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 							opt->defname)));
 	}
 
-	/* Convert parameter type data to the form parser wants */
-	getParamListTypes(params, &param_types, &num_params);
-
 	/*
 	 * Run parse analysis and rewrite.	Note this also acquires sufficient
 	 * locks on the source table(s).
@@ -163,8 +158,10 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	 * executed repeatedly.  (See also the same hack in DECLARE CURSOR and
 	 * PREPARE.)  XXX FIXME someday.
 	 */
-	rewritten = pg_analyze_and_rewrite((Node *) copyObject(stmt->query),
-									   queryString, param_types, num_params);
+	rewritten = pg_analyze_and_rewrite_params((Node *) copyObject(stmt->query),
+											  queryString,
+											  (ParserSetupHook) setupParserWithParamList,
+											  params);
 
 	/* emit opening boilerplate */
 	ExplainBeginOutput(&es);

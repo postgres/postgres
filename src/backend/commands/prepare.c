@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2009, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.99 2009/08/10 05:46:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.100 2009/11/04 22:26:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,6 +379,11 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	paramLI = (ParamListInfo)
 		palloc(sizeof(ParamListInfoData) +
 			   (num_params - 1) *sizeof(ParamExternData));
+	/* we have static list of params, so no hooks needed */
+	paramLI->paramFetch = NULL;
+	paramLI->paramFetchArg = NULL;
+	paramLI->parserSetup = NULL;
+	paramLI->parserSetupArg = NULL;
 	paramLI->numParams = num_params;
 
 	i = 0;

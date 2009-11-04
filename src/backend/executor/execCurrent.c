@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.12 2009/10/26 02:26:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.13 2009/11/04 22:26:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,9 +217,21 @@ fetch_param_value(ExprContext *econtext, int paramId)
 	{
 		ParamExternData *prm = &paramInfo->params[paramId - 1];
 
+		/* give hook a chance in case parameter is dynamic */
+		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
+			(*paramInfo->paramFetch) (paramInfo, paramId);
+
 		if (OidIsValid(prm->ptype) && !prm->isnull)
 		{
-			Assert(prm->ptype == REFCURSOROID);
+			/* safety check in case hook did something unexpected */
+			if (prm->ptype != REFCURSOROID)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of parameter %d (%s) does not match that when preparing the plan (%s)",
+								paramId,
+								format_type_be(prm->ptype),
+								format_type_be(REFCURSOROID))));
+
 			/* We know that refcursor uses text's I/O routines */
 			return TextDatumGetCString(prm->value);
 		}

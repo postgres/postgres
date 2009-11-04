@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.139 2009/09/22 23:43:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.140 2009/11/04 22:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,19 +624,23 @@ do_compile(FunctionCallInfo fcinfo,
 										 true);
 			function->tg_table_name_varno = var->dno;
 
-
-			/* add variable tg_table_schema */
+			/* add the variable tg_table_schema */
 			var = plpgsql_build_variable("tg_table_schema", 0,
 										 plpgsql_build_datatype(NAMEOID, -1),
 										 true);
 			function->tg_table_schema_varno = var->dno;
-
 
 			/* Add the variable tg_nargs */
 			var = plpgsql_build_variable("tg_nargs", 0,
 										 plpgsql_build_datatype(INT4OID, -1),
 										 true);
 			function->tg_nargs_varno = var->dno;
+
+			/* Add the variable tg_argv */
+			var = plpgsql_build_variable("tg_argv", 0,
+										 plpgsql_build_datatype(TEXTARRAYOID, -1),
+										 true);
+			function->tg_argv_varno = var->dno;
 
 			break;
 
@@ -930,34 +934,6 @@ plpgsql_parse_word(const char *word)
 
 	/* Do case conversion and word separation */
 	plpgsql_convert_ident(word, cp, 1);
-
-	/*
-	 * Recognize tg_argv when compiling triggers (XXX this sucks, it should be
-	 * a regular variable in the namestack)
-	 */
-	if (plpgsql_curr_compile->fn_is_trigger)
-	{
-		if (strcmp(cp[0], "tg_argv") == 0)
-		{
-			bool		save_spacescanned = plpgsql_SpaceScanned;
-			PLpgSQL_trigarg *trigarg;
-
-			trigarg = palloc0(sizeof(PLpgSQL_trigarg));
-			trigarg->dtype = PLPGSQL_DTYPE_TRIGARG;
-
-			if (plpgsql_yylex() != '[')
-				plpgsql_yyerror("expected \"[\"");
-
-			trigarg->argnum = plpgsql_read_expression(']', "]");
-
-			plpgsql_adddatum((PLpgSQL_datum *) trigarg);
-			plpgsql_yylval.scalar = (PLpgSQL_datum *) trigarg;
-
-			plpgsql_SpaceScanned = save_spacescanned;
-			pfree(cp[0]);
-			return T_SCALAR;
-		}
-	}
 
 	/*
 	 * Do a lookup on the compiler's namestack

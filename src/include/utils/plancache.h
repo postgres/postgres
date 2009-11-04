@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.15 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.16 2009/11/04 22:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #define PLANCACHE_H
 
 #include "access/tupdesc.h"
+#include "nodes/params.h"
 
 /*
  * CachedPlanSource represents the portion of a cached plan that persists
@@ -50,6 +51,8 @@ typedef struct CachedPlanSource
 	const char *commandTag;		/* command tag (a constant!), or NULL */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
 	int			num_params;		/* length of param_types array */
+	ParserSetupHook parserSetup;	/* alternative parameter spec method */
+	void	   *parserSetupArg;	
 	int			cursor_options; /* cursor options used for planning */
 	bool		fully_planned;	/* do we cache planner or rewriter output? */
 	bool		fixed_result;	/* disallow change in result tupdesc? */
@@ -105,6 +108,9 @@ extern CachedPlanSource *FastCreateCachedPlan(Node *raw_parse_tree,
 					 bool fully_planned,
 					 bool fixed_result,
 					 MemoryContext context);
+extern void CachedPlanSetParserHook(CachedPlanSource *plansource,
+									ParserSetupHook parserSetup,
+									void *parserSetupArg);
 extern void DropCachedPlan(CachedPlanSource *plansource);
 extern CachedPlan *RevalidateCachedPlan(CachedPlanSource *plansource,
 					 bool useResOwner);
