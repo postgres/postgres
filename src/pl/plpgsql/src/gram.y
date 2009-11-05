@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.129 2009/11/04 22:26:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.130 2009/11/05 16:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,6 @@ static List				*read_raise_options(void);
 
 %type <declhdr> decl_sect
 %type <varname> decl_varname
-%type <str>		decl_renname
 %type <boolean>	decl_const decl_notnull exit_type
 %type <expr>	decl_defval decl_cursor_query
 %type <dtype>	decl_datatype
@@ -218,7 +217,6 @@ static List				*read_raise_options(void);
 %token	K_PERFORM
 %token	K_ROW_COUNT
 %token	K_RAISE
-%token	K_RENAME
 %token	K_RESULT_OID
 %token	K_RETURN
 %token	K_REVERSE
@@ -382,10 +380,6 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						plpgsql_ns_additem($4->itemtype,
 										   $4->itemno, $1.name);
 					}
-				| K_RENAME decl_renname K_TO decl_renname ';'
-					{
-						plpgsql_ns_rename($2, $4);
-					}
 				| decl_varname opt_scrollable K_CURSOR
 					{ plpgsql_ns_push($1.name); }
 				  decl_cursor_args decl_is_for decl_cursor_query
@@ -521,9 +515,8 @@ decl_aliasitem	: any_identifier
 						char	*name;
 						PLpgSQL_nsitem *nsi;
 
+						/* XXX should allow block-label-qualified names */
 						plpgsql_convert_ident($1, &name, 1);
-						if (name[0] != '$')
-							yyerror("only positional parameters can be aliased");
 
 						plpgsql_ns_setlocal(false);
 
@@ -532,8 +525,8 @@ decl_aliasitem	: any_identifier
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_PARAMETER),
-									 errmsg("function has no parameter \"%s\"",
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+									 errmsg("variable \"%s\" does not exist",
 											name)));
 						}
 
@@ -570,17 +563,6 @@ decl_varname	: T_WORD
 				| T_RECORD
 					{
 						yyerror("duplicate declaration");
-					}
-				;
-
-/* XXX this is broken because it doesn't allow for T_SCALAR,T_ROW,T_RECORD */
-decl_renname	: T_WORD
-					{
-						char	*name;
-
-						plpgsql_convert_ident(yytext, &name, 1);
-						/* the result must be palloc'd, see plpgsql_ns_rename */
-						$$ = name;
 					}
 				;
 

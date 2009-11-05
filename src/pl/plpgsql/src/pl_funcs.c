@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.82 2009/11/04 22:26:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.83 2009/11/05 16:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,48 +232,6 @@ plpgsql_ns_lookup_label(const char *name)
 	}
 
 	return NULL;				/* label not found */
-}
-
-
-/* ----------
- * plpgsql_ns_rename			Rename a namespace entry
- * ----------
- */
-void
-plpgsql_ns_rename(char *oldname, char *newname)
-{
-	PLpgSQL_ns *ns;
-	PLpgSQL_nsitem *newitem;
-	int			i;
-
-	/*
-	 * Lookup name in the namestack
-	 */
-	for (ns = ns_current; ns != NULL; ns = ns->upper)
-	{
-		for (i = 1; i < ns->items_used; i++)
-		{
-			if (strcmp(ns->items[i]->name, oldname) == 0)
-			{
-				newitem = palloc(sizeof(PLpgSQL_nsitem) + strlen(newname));
-				newitem->itemtype = ns->items[i]->itemtype;
-				newitem->itemno = ns->items[i]->itemno;
-				strcpy(newitem->name, newname);
-
-				pfree(oldname);
-				pfree(newname);
-
-				pfree(ns->items[i]);
-				ns->items[i] = newitem;
-				return;
-			}
-		}
-	}
-
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("variable \"%s\" does not exist in the current block",
-					oldname)));
 }
 
 

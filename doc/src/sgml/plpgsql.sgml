@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.143 2009/09/29 20:05:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.144 2009/11/05 16:58:36 tgl Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -135,7 +135,7 @@
      and <type>anyenum</>.  The actual
      data types handled by a polymorphic function can vary from call to
      call, as discussed in <xref linkend="extend-types-polymorphic">.
-     An example is shown in <xref linkend="plpgsql-declaration-aliases">.
+     An example is shown in <xref linkend="plpgsql-declaration-parameters">.
     </para>
 
     <para>
@@ -163,7 +163,7 @@
 
     <para>
      Specific examples appear in
-     <xref linkend="plpgsql-declaration-aliases"> and
+     <xref linkend="plpgsql-declaration-parameters"> and
      <xref linkend="plpgsql-statements-returning">.
     </para>
   </sect2>
@@ -353,8 +353,8 @@ user_id CONSTANT integer := 10;
 </programlisting>
      </para>
 
-    <sect2 id="plpgsql-declaration-aliases">
-     <title>Aliases for Function Parameters</title>
+    <sect2 id="plpgsql-declaration-parameters">
+     <title>Declaring Function Parameters</title>
 
      <para>
       Parameters passed to functions are named with the identifiers
@@ -401,7 +401,7 @@ $$ LANGUAGE plpgsql;
       These two examples are not perfectly equivalent.  In the first case,
       <literal>subtotal</> could be referenced as
       <literal>sales_tax.subtotal</>, but in the second case it could not.
-      (Had we attached a label to the block, <literal>subtotal</> could
+      (Had we attached a label to the inner block, <literal>subtotal</> could
       be qualified with that label, instead.)
      </para>
     </note>
@@ -531,6 +531,38 @@ $$ LANGUAGE plpgsql;
 </programlisting>
      </para>
     </sect2>
+
+  <sect2 id="plpgsql-declaration-alias">
+   <title><literal>ALIAS</></title>
+
+<synopsis>
+<replaceable>newname</> ALIAS FOR <replaceable>oldname</>;
+</synopsis>
+
+   <para>
+    The <literal>ALIAS</> syntax is more general than is suggested in the
+    previous section: you can declare an alias for any variable, not just
+    function parameters.  The main practical use for this is to assign
+    a different name for variables with predetermined names, such as
+    <varname>NEW</varname> or <varname>OLD</varname> within
+    a trigger procedure.
+   </para>
+
+   <para>
+    Examples:
+<programlisting>
+DECLARE
+  prior ALIAS FOR old;
+  updated ALIAS FOR new;
+</programlisting>
+   </para>
+
+   <para>
+    Since <literal>ALIAS</> creates two different ways to name the same
+    object, unrestricted use can be confusing.  It's best to use it only
+    for the purpose of overriding predetermined names.
+   </para>
+   </sect2>
 
   <sect2 id="plpgsql-declaration-type">
    <title>Copying Types</title>
@@ -664,39 +696,6 @@ SELECT merge_fields(t.*) FROM table1 t WHERE ... ;
     structure on-the-fly.
    </para>
   </sect2>
-
-  <sect2 id="plpgsql-declaration-renaming-vars">
-   <title><literal>RENAME</></title>
-
-<synopsis>
-RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
-</synopsis>
-
-   <para>
-    Using the <literal>RENAME</literal> declaration you can change the
-    name of a variable, record or row. This is primarily useful if
-    <varname>NEW</varname> or <varname>OLD</varname> should be
-    referenced by another name inside a trigger procedure.  See also
-    <literal>ALIAS</literal>.
-   </para>
-
-   <para>
-    Examples:
-<programlisting>
-RENAME id TO user_id;
-RENAME this_var TO that_var;
-</programlisting>
-   </para>
-
-    <note>
-     <para>
-      <literal>RENAME</literal> appears to be broken as of
-      <productname>PostgreSQL</> 7.3.  Fixing this is of low priority,
-      since <literal>ALIAS</literal> covers most of the practical uses
-      of <literal>RENAME</literal>.
-     </para>
-    </note>
-   </sect2>
   </sect1>
 
   <sect1 id="plpgsql-expressions">

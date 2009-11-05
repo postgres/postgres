@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.118 2009/11/04 22:26:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.119 2009/11/05 16:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ typedef struct
 {								/* Item in the compilers namestack	*/
 	int			itemtype;
 	int			itemno;
-	char		name[1];
+	char		name[1];		/* actually, as long as needed */
 } PLpgSQL_nsitem;
 
 
@@ -851,7 +851,6 @@ extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup(const char *name1, const char *name2,
 				  const char *name3, int *names_used);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(const char *name);
-extern void plpgsql_ns_rename(char *oldname, char *newname);
 
 /* ----------
  * Other functions in pl_funcs.c

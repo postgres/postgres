@@ -211,7 +211,7 @@ create trigger tg_pfield_ad after delete
 create function tg_pslot_biu() returns trigger as $proc$
 declare
     pfrec	record;
-    rename new to ps;
+    ps          alias for new;
 begin
     select into pfrec * from PField where name = ps.pfname;
     if not found then
