@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.52 2008/12/16 03:12:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.53 2009/11/05 23:24:22 tgl Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -435,8 +435,7 @@ CREATE VIEW shoe_ready AS
     <note>
     <para>
     The two extra range
-    table entries for <literal>NEW</> and <literal>OLD</> (named <literal>*NEW*</> and <literal>*OLD*</> for
-    historical reasons in the printed query tree) you can see in
+    table entries for <literal>NEW</> and <literal>OLD</> that you can see in
     the <structname>pg_rewrite</structname> entry aren't of interest
     for <command>SELECT</command> rules.
     </para>
@@ -504,7 +503,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
 SELECT s.sl_name, s.sl_avail,
        s.sl_color, s.sl_len, s.sl_unit,
        s.sl_len * u.un_fact AS sl_len_cm
-  FROM shoelace *OLD*, shoelace *NEW*,
+  FROM shoelace old, shoelace new,
        shoelace_data s, unit u
  WHERE s.sl_unit = u.un_name;
 </programlisting>
@@ -531,7 +530,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
 </programlisting>
 
      There is one difference however: the subquery's range table has two
-     extra entries <literal>shoelace *OLD*</> and <literal>shoelace *NEW*</>.  These entries don't
+     extra entries <literal>shoelace old</> and <literal>shoelace new</>.  These entries don't
      participate directly in the query, since they aren't referenced by
      the subquery's join tree or target list.  The rewriter uses them
      to store the access privilege check information that was originally present
@@ -546,7 +545,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
     the remaining range-table entries in the top query (in this example there
     are no more), and it will recursively check the range-table entries in
     the added subquery to see if any of them reference views.  (But it
-    won't expand <literal>*OLD*</> or <literal>*NEW*</> &mdash; otherwise we'd have infinite recursion!)
+    won't expand <literal>old</> or <literal>new</> &mdash; otherwise we'd have infinite recursion!)
     In this example, there are no rewrite rules for <literal>shoelace_data</> or <literal>unit</>,
     so rewriting is complete and the above is the final result given to
     the planner.
@@ -1073,15 +1072,15 @@ NEW.sl_avail &lt;&gt; OLD.sl_avail
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
-       *NEW*.sl_name, *NEW*.sl_avail,
+       new.sl_name, new.sl_avail,
        current_user, current_timestamp )
-  FROM shoelace_data *NEW*, shoelace_data *OLD*;
+  FROM shoelace_data new, shoelace_data old;
 </programlisting>
 
     (This looks a little strange since you cannot normally write
     <literal>INSERT ... VALUES ... FROM</>.  The <literal>FROM</>
     clause here is just to indicate that there are range-table entries
-    in the query tree for <literal>*NEW*</> and <literal>*OLD*</>.
+    in the query tree for <literal>new</> and <literal>old</>.
     These are needed so that they can be referenced by variables in
     the <command>INSERT</command> command's query tree.)
 </para>
@@ -1094,9 +1093,9 @@ INSERT INTO shoelace_log VALUES (
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
-       *NEW*.sl_name, *NEW*.sl_avail,
+       new.sl_name, new.sl_avail,
        current_user, current_timestamp )
-  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+  FROM shoelace_data new, shoelace_data old,
        <emphasis>shoelace_data shoelace_data</emphasis>;
 </programlisting>
 
@@ -1105,11 +1104,11 @@ INSERT INTO shoelace_log VALUES (
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
-       *NEW*.sl_name, *NEW*.sl_avail,
+       new.sl_name, new.sl_avail,
        current_user, current_timestamp )
-  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+  FROM shoelace_data new, shoelace_data old,
        shoelace_data shoelace_data
- <emphasis>WHERE *NEW*.sl_avail &lt;&gt; *OLD*.sl_avail</emphasis>;
+ <emphasis>WHERE new.sl_avail &lt;&gt; old.sl_avail</emphasis>;
 </programlisting>
 
     (This looks even stranger, since <literal>INSERT ... VALUES</> doesn't have
@@ -1125,11 +1124,11 @@ INSERT INTO shoelace_log VALUES (
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
-       *NEW*.sl_name, *NEW*.sl_avail,
+       new.sl_name, new.sl_avail,
        current_user, current_timestamp )
-  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+  FROM shoelace_data new, shoelace_data old,
        shoelace_data shoelace_data
- WHERE *NEW*.sl_avail &lt;&gt; *OLD*.sl_avail
+ WHERE new.sl_avail &lt;&gt; old.sl_avail
    <emphasis>AND shoelace_data.sl_name = 'sl7'</emphasis>;
 </programlisting>
    </para>
@@ -1143,9 +1142,9 @@ INSERT INTO shoelace_log VALUES (
 INSERT INTO shoelace_log VALUES (
        <emphasis>shoelace_data.sl_name</emphasis>, <emphasis>6</emphasis>,
        current_user, current_timestamp )
-  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+  FROM shoelace_data new, shoelace_data old,
        shoelace_data shoelace_data
- WHERE <emphasis>6</emphasis> &lt;&gt; *OLD*.sl_avail
+ WHERE <emphasis>6</emphasis> &lt;&gt; old.sl_avail
    AND shoelace_data.sl_name = 'sl7';
 </programlisting>
 
@@ -1158,7 +1157,7 @@ INSERT INTO shoelace_log VALUES (
 INSERT INTO shoelace_log VALUES (
        shoelace_data.sl_name, 6,
        current_user, current_timestamp )
-  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+  FROM shoelace_data new, shoelace_data old,
        shoelace_data shoelace_data
  WHERE 6 &lt;&gt; <emphasis>shoelace_data.sl_avail</emphasis>
    AND shoelace_data.sl_name = 'sl7';
@@ -1455,7 +1454,7 @@ SELECT shoelace_arrive.arr_name, shoelace_arrive.arr_quant
 UPDATE shoelace
    SET sl_avail = shoelace.sl_avail + shoelace_arrive.arr_quant
   FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-       shoelace_ok *OLD*, shoelace_ok *NEW*,
+       shoelace_ok old, shoelace_ok new,
        shoelace shoelace
  WHERE shoelace.sl_name = shoelace_arrive.arr_name;
 </programlisting>
@@ -1473,9 +1472,9 @@ UPDATE shoelace_data
        sl_len = shoelace.sl_len,
        sl_unit = shoelace.sl_unit
   FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-       shoelace_ok *OLD*, shoelace_ok *NEW*,
-       shoelace shoelace, shoelace *OLD*,
-       shoelace *NEW*, shoelace_data shoelace_data
+       shoelace_ok old, shoelace_ok new,
+       shoelace shoelace, shoelace old,
+       shoelace new, shoelace_data shoelace_data
  WHERE shoelace.sl_name = shoelace_arrive.arr_name
    AND shoelace_data.sl_name = shoelace.sl_name;
 </programlisting>
@@ -1493,10 +1492,10 @@ UPDATE shoelace_data
        sl_len = s.sl_len,
        sl_unit = s.sl_unit
   FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-       shoelace_ok *OLD*, shoelace_ok *NEW*,
-       shoelace shoelace, shoelace *OLD*,
-       shoelace *NEW*, shoelace_data shoelace_data,
-       shoelace *OLD*, shoelace *NEW*,
+       shoelace_ok old, shoelace_ok new,
+       shoelace shoelace, shoelace old,
+       shoelace new, shoelace_data shoelace_data,
+       shoelace old, shoelace new,
        shoelace_data s, unit u
  WHERE s.sl_name = shoelace_arrive.arr_name
    AND shoelace_data.sl_name = s.sl_name;
@@ -1512,12 +1511,12 @@ SELECT s.sl_name,
        current_user,
        current_timestamp
   FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-       shoelace_ok *OLD*, shoelace_ok *NEW*,
-       shoelace shoelace, shoelace *OLD*,
-       shoelace *NEW*, shoelace_data shoelace_data,
-       shoelace *OLD*, shoelace *NEW*,
+       shoelace_ok old, shoelace_ok new,
+       shoelace shoelace, shoelace old,
+       shoelace new, shoelace_data shoelace_data,
+       shoelace old, shoelace new,
        shoelace_data s, unit u,
-       shoelace_data *OLD*, shoelace_data *NEW*
+       shoelace_data old, shoelace_data new
        shoelace_log shoelace_log
  WHERE s.sl_name = shoelace_arrive.arr_name
    AND shoelace_data.sl_name = s.sl_name

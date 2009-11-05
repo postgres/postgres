@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.313 2009/10/28 18:51:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.314 2009/11/05 23:24:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3572,14 +3572,7 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		if (schemaname)
 			appendStringInfo(buf, "%s.",
 							 quote_identifier(schemaname));
-
-		if (strcmp(refname, "*NEW*") == 0)
-			appendStringInfoString(buf, "new");
-		else if (strcmp(refname, "*OLD*") == 0)
-			appendStringInfoString(buf, "old");
-		else
-			appendStringInfoString(buf, quote_identifier(refname));
-
+		appendStringInfoString(buf, quote_identifier(refname));
 		if (attname || showstar)
 			appendStringInfoChar(buf, '.');
 	}

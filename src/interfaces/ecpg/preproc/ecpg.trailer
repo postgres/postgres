@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.12 2009/09/22 23:43:42 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.trailer,v 1.13 2009/11/05 23:24:27 tgl Exp $ */
 
 statements: /*EMPTY*/
                 | statements statement
@@ -25,16 +25,6 @@ CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectSt
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE AS cannot specify INTO");
 
 			$$ = cat_str(6, make_str("create"), $2, make_str("table"), $4, make_str("as"), $7);
-		}
-	;
-
-RuleStmt: CREATE opt_or_replace RULE name AS
-		{QueryIsRule = 1;}
-		ON event TO qualified_name where_clause
-		DO opt_instead RuleActionList
-		{
-			QueryIsRule=0;
-			$$ = cat_str(12, make_str("create"), $2, make_str("rule"), $4, make_str("as on"), $8, make_str("to"), $10, $11, make_str("do"), $13, $14);
 		}
 	;
 

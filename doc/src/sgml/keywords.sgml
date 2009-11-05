@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.26 2009/09/22 23:43:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.27 2009/11/05 23:24:22 tgl Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -3089,7 +3089,7 @@
    </row>
    <row>
     <entry><token>NEW</token></entry>
-    <entry>reserved</entry>
+    <entry></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -3393,7 +3393,7 @@
    </row>
    <row>
     <entry><token>OLD</token></entry>
-    <entry>reserved</entry>
+    <entry></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.1 2008/11/14 10:03:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.2 2009/11/05 23:24:27 tgl Exp $ */
 %type <str> ECPGAllocateDescr
 %type <str> ECPGCKeywords
 %type <str> ECPGColId
@@ -90,7 +90,6 @@
 %type <str> precision
 %type <str> prepared_name
 %type <str> quoted_ident_stringvar
-%type <str> RuleStmt
 %type <str> s_struct_union
 %type <str> server
 %type <str> server_name

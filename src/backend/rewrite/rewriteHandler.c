@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.191 2009/10/28 17:36:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.192 2009/11/05 23:24:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,7 +325,7 @@ rewriteRuleAction(Query *parsetree,
 
 	OffsetVarNodes((Node *) sub_action, rt_length, 0);
 	OffsetVarNodes(rule_qual, rt_length, 0);
-	/* but references to *OLD* should point at original rt_index */
+	/* but references to OLD should point at original rt_index */
 	ChangeVarNodes((Node *) sub_action,
 				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 	ChangeVarNodes(rule_qual,
@@ -1190,7 +1190,7 @@ ApplyRetrieveRule(Query *parsetree,
 
 	/*
 	 * We move the view's permission check data down to its rangetable. The
-	 * checks will actually be done against the *OLD* entry therein.
+	 * checks will actually be done against the OLD entry therein.
 	 */
 	subrte = rt_fetch(PRS2_OLD_VARNO, rule_action->rtable);
 	Assert(subrte->relid == relation->rd_id);

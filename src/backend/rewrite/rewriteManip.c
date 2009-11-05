@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.124 2009/10/26 02:26:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.125 2009/11/05 23:24:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -940,15 +940,15 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 
 	/*
 	 * Currently, this is ONLY applied to rule-action queries, and so we
-	 * expect to find the *OLD* and *NEW* placeholder entries in the given
+	 * expect to find the OLD and NEW placeholder entries in the given
 	 * query.  If they're not there, it must be an INSERT/SELECT in which
 	 * they've been pushed down to the SELECT.
 	 */
 	if (list_length(parsetree->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
-			   "*OLD*") == 0 &&
+			   "old") == 0 &&
 		strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
-			   "*NEW*") == 0)
+			   "new") == 0)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (list_length(parsetree->jointree->fromlist) != 1)
@@ -962,9 +962,9 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		elog(ERROR, "expected to find SELECT subquery");
 	if (list_length(selectquery->rtable) >= 2 &&
 		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
-			   "*OLD*") == 0 &&
+			   "old") == 0 &&
 		strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
-			   "*NEW*") == 0)
+			   "new") == 0)
 	{
 		if (subquery_ptr)
 			*subquery_ptr = &(selectrte->subquery);

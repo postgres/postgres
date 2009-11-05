@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.3 2009/01/29 09:38:38 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/parse.pl,v 1.4 2009/11/05 23:24:27 tgl Exp $
 # parser generater for ecpg
 # call with backend parser as stdin
 #
@@ -51,7 +51,6 @@ $replace_types{'stmtblock'} = 'ignore';
 $replace_types{'stmtmulti'} = 'ignore';
 $replace_types{'CreateAsStmt'} = 'ignore';
 $replace_types{'DeallocateStmt'} = 'ignore';
-$replace_types{'RuleStmt'} = 'ignore';
 $replace_types{'ColLabel'} = 'ignore';
 $replace_types{'unreserved_keyword'} = 'ignore';
 $replace_types{'Sconst'} = 'ignore';

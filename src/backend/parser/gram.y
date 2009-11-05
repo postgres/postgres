@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.687 2009/11/04 23:15:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.688 2009/11/05 23:24:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -254,7 +254,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <list>	TriggerEvents TriggerOneEvent
 %type <value>	TriggerFuncArg
 
-%type <str>		relation_name copy_file_name
+%type <str>		copy_file_name
 				database_name access_method_clause access_method attr_name
 				index_name name file_name cluster_index_specification
 
@@ -263,7 +263,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <range>	qualified_name OptConstrFromTable
 
-%type <str>		all_Op MathOp SpecialRuleRelation
+%type <str>		all_Op MathOp
 
 %type <str>		iso_level opt_encoding
 %type <node>	grantee
@@ -502,11 +502,11 @@ static TypeName *TableFuncTypeName(List *columns);
 
 	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
+	NAME_P NAMES NATIONAL NATURAL NCHAR NEXT NO NOCREATEDB
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NULLS_P NUMERIC
 
-	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OPTIONS OR
+	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
 	ORDER OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
 
 	PARSER PARTIAL PARTITION PASSWORD PLACING PLANS POSITION
@@ -5886,20 +5886,18 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
  *****************************************************************************/
 
 RuleStmt:	CREATE opt_or_replace RULE name AS
-			{ pg_yyget_extra(yyscanner)->QueryIsRule = TRUE; }
 			ON event TO qualified_name where_clause
 			DO opt_instead RuleActionList
 				{
 					RuleStmt *n = makeNode(RuleStmt);
 					n->replace = $2;
-					n->relation = $10;
+					n->relation = $9;
 					n->rulename = $4;
-					n->whereClause = $11;
-					n->event = $8;
-					n->instead = $13;
-					n->actions = $14;
+					n->whereClause = $10;
+					n->event = $7;
+					n->instead = $12;
+					n->actions = $13;
 					$$ = (Node *)n;
-					pg_yyget_extra(yyscanner)->QueryIsRule = FALSE;
 				}
 		;
 
@@ -10109,16 +10107,11 @@ case_arg:	a_expr									{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-/*
- * columnref starts with relation_name not ColId, so that OLD and NEW
- * references can be accepted.	Note that when there are more than two
- * dotted names, the first name is not actually a relation name...
- */
-columnref:	relation_name
+columnref:	ColId
 				{
 					$$ = makeColumnRef($1, NIL, @1, yyscanner);
 				}
-			| relation_name indirection
+			| ColId indirection
 				{
 					$$ = makeColumnRef($1, $2, @1, yyscanner);
 				}
@@ -10258,11 +10251,6 @@ target_el:	a_expr AS ColLabel
  *
  *****************************************************************************/
 
-relation_name:
-			SpecialRuleRelation						{ $$ = $1; }
-			| ColId									{ $$ = $1; }
-		;
-
 qualified_name_list:
 			qualified_name							{ $$ = list_make1($1); }
 			| qualified_name_list ',' qualified_name { $$ = lappend($1, $3); }
@@ -10276,7 +10264,7 @@ qualified_name_list:
  * which may contain subscripts, and reject that case in the C code.
  */
 qualified_name:
-			relation_name
+			ColId
 				{
 					$$ = makeNode(RangeVar);
 					$$->catalogname = NULL;
@@ -10284,7 +10272,7 @@ qualified_name:
 					$$->relname = $1;
 					$$->location = @1;
 				}
-			| relation_name indirection
+			| ColId indirection
 				{
 					check_qualified_name($2, yyscanner);
 					$$ = makeNode(RangeVar);
@@ -10343,7 +10331,7 @@ file_name:	Sconst									{ $$ = $1; };
  */
 func_name:	type_function_name
 					{ $$ = list_make1(makeString($1)); }
-			| relation_name indirection
+			| ColId indirection
 					{
 						$$ = check_func_name(lcons(makeString($1), $2),
 											 yyscanner);
@@ -10912,12 +10900,10 @@ reserved_keyword:
 			| LIMIT
 			| LOCALTIME
 			| LOCALTIMESTAMP
-			| NEW
 			| NOT
 			| NULL_P
 			| OFF
 			| OFFSET
-			| OLD
 			| ON
 			| ONLY
 			| OR
@@ -10944,30 +10930,6 @@ reserved_keyword:
 			| WHERE
 			| WINDOW
 			| WITH
-		;
-
-
-SpecialRuleRelation:
-			OLD
-				{
-					if (pg_yyget_extra(yyscanner)->QueryIsRule)
-						$$ = "*OLD*";
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("OLD used in query that is not in a rule"),
-								 parser_errposition(@1)));
-				}
-			| NEW
-				{
-					if (pg_yyget_extra(yyscanner)->QueryIsRule)
-						$$ = "*NEW*";
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("NEW used in query that is not in a rule"),
-								 parser_errposition(@1)));
-				}
 		;
 
 %%
@@ -11461,7 +11423,6 @@ void
 parser_init(base_yy_extra_type *yyext)
 {
 	yyext->parsetree = NIL;		/* in case grammar forgets to set it */
-	yyext->QueryIsRule = FALSE;
 }
 
 /*

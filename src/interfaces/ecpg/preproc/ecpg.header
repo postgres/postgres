@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.9 2009/09/08 04:25:00 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.header,v 1.10 2009/11/05 23:24:27 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -37,7 +37,7 @@ int ecpg_informix_var = 0;
 char	*connection = NULL;
 char	*input_filename = NULL;
 
-static int	QueryIsRule = 0, FoundInto = 0;
+static int	FoundInto = 0;
 static int	initializer = 0;
 static int	pacounter = 1;
 static char     pacounter_buffer[sizeof(int) * CHAR_BIT * 10 / 3]; /* a rough guess at the size we need */

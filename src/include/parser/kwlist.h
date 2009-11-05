@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.5 2009/10/12 20:39:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/parser/kwlist.h,v 1.6 2009/11/05 23:24:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,6 @@ PG_KEYWORD("names", NAMES, UNRESERVED_KEYWORD)
 PG_KEYWORD("national", NATIONAL, COL_NAME_KEYWORD)
 PG_KEYWORD("natural", NATURAL, TYPE_FUNC_NAME_KEYWORD)
 PG_KEYWORD("nchar", NCHAR, COL_NAME_KEYWORD)
-PG_KEYWORD("new", NEW, RESERVED_KEYWORD)
 PG_KEYWORD("next", NEXT, UNRESERVED_KEYWORD)
 PG_KEYWORD("no", NO, UNRESERVED_KEYWORD)
 PG_KEYWORD("nocreatedb", NOCREATEDB, UNRESERVED_KEYWORD)
@@ -263,7 +262,6 @@ PG_KEYWORD("of", OF, UNRESERVED_KEYWORD)
 PG_KEYWORD("off", OFF, RESERVED_KEYWORD)
 PG_KEYWORD("offset", OFFSET, RESERVED_KEYWORD)
 PG_KEYWORD("oids", OIDS, UNRESERVED_KEYWORD)
-PG_KEYWORD("old", OLD, RESERVED_KEYWORD)
 PG_KEYWORD("on", ON, RESERVED_KEYWORD)
 PG_KEYWORD("only", ONLY, RESERVED_KEYWORD)
 PG_KEYWORD("operator", OPERATOR, UNRESERVED_KEYWORD)

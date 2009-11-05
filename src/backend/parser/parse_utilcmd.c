@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.28 2009/10/13 00:53:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.29 2009/11/05 23:24:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1549,10 +1549,10 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	 * qualification.
 	 */
 	oldrte = addRangeTableEntryForRelation(pstate, rel,
-										   makeAlias("*OLD*", NIL),
+										   makeAlias("old", NIL),
 										   false, false);
 	newrte = addRangeTableEntryForRelation(pstate, rel,
-										   makeAlias("*NEW*", NIL),
+										   makeAlias("new", NIL),
 										   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->requiredPerms = 0;
@@ -1653,10 +1653,10 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			 * them in the joinlist.
 			 */
 			oldrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   makeAlias("*OLD*", NIL),
+												   makeAlias("old", NIL),
 												   false, false);
 			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   makeAlias("*NEW*", NIL),
+												   makeAlias("new", NIL),
 												   false, false);
 			oldrte->requiredPerms = 0;
 			newrte->requiredPerms = 0;

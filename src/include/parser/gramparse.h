@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.48 2009/09/22 23:52:53 petere Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.49 2009/11/05 23:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,8 +93,6 @@ typedef struct base_yy_extra_type
 	 */
 
 	List	   *parsetree;		/* final parse result is delivered here */
-
-	bool		QueryIsRule;	/* signals we are parsing CREATE RULE */
 } base_yy_extra_type;
 
 /*
