@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.412 2009/10/28 14:55:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.413 2009/11/06 21:57:57 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1959,6 +1959,7 @@ typedef struct InlineCodeBlock
 	NodeTag		type;
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
+	bool        langIsTrusted;  /* trusted property of the language */
 } InlineCodeBlock;
 
 /* ----------------------

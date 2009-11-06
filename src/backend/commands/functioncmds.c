@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.112 2009/10/08 02:39:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.113 2009/11/06 21:57:57 adunstan Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -2023,6 +2023,7 @@ ExecuteDoStmt(DoStmt *stmt)
 
 	codeblock->langOid = HeapTupleGetOid(languageTuple);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+	codeblock->langIsTrusted = languageStruct->lanpltrusted;
 
 	if (languageStruct->lanpltrusted)
 	{
