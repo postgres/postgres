@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.119 2009/11/05 16:58:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.120 2009/11/06 18:37:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #define _(x) dgettext(TEXTDOMAIN, x)
 
 /* ----------
- * Compiler's namestack item types
+ * Compiler's namespace item types
  * ----------
  */
 enum
@@ -140,6 +140,17 @@ enum
 	PLPGSQL_RAISEOPTION_HINT
 };
 
+/* --------
+ * Behavioral modes for plpgsql variable resolution
+ * --------
+ */
+typedef enum
+{
+	PLPGSQL_RESOLVE_BEFORE,		/* prefer plpgsql var to table column */
+	PLPGSQL_RESOLVE_AFTER,		/* prefer table column to plpgsql var */
+	PLPGSQL_RESOLVE_ERROR		/* throw error if ambiguous */
+} PLpgSQL_resolve_option;
+
 
 /**********************************************************************
  * Node and structure definitions
@@ -192,6 +203,9 @@ typedef struct PLpgSQL_expr
 
 	/* function containing this expr (not set until we first parse query) */
 	struct PLpgSQL_function *func;
+
+	/* namespace chain visible to this expr */
+	struct PLpgSQL_nsitem *ns;
 
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
@@ -283,22 +297,13 @@ typedef struct
 } PLpgSQL_arrayelem;
 
 
-typedef struct
-{								/* Item in the compilers namestack	*/
+typedef struct PLpgSQL_nsitem
+{								/* Item in the compilers namespace tree */
 	int			itemtype;
 	int			itemno;
+	struct PLpgSQL_nsitem *prev;
 	char		name[1];		/* actually, as long as needed */
 } PLpgSQL_nsitem;
-
-
-/* XXX: consider adapting this to use List */
-typedef struct PLpgSQL_ns
-{								/* Compiler namestack level		*/
-	int			items_alloc;
-	int			items_used;
-	PLpgSQL_nsitem **items;
-	struct PLpgSQL_ns *upper;
-} PLpgSQL_ns;
 
 
 typedef struct
@@ -663,6 +668,8 @@ typedef struct PLpgSQL_function
 	int			tg_nargs_varno;
 	int			tg_argv_varno;
 
+	PLpgSQL_resolve_option resolve_option;
+
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
@@ -795,6 +802,8 @@ extern PLpgSQL_plugin **plugin_ptr;
 extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 				bool forValidator);
 extern PLpgSQL_function *plpgsql_compile_inline(char *proc_source);
+extern void plpgsql_parser_setup(struct ParseState *pstate,
+								 PLpgSQL_expr *expr);
 extern int	plpgsql_parse_word(const char *word);
 extern int	plpgsql_parse_dblword(const char *word);
 extern int	plpgsql_parse_tripword(const char *word);
@@ -838,19 +847,26 @@ extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);
+extern Oid exec_get_datum_type(PLpgSQL_execstate *estate,
+							   PLpgSQL_datum *datum);
+extern Oid exec_get_rec_fieldtype(PLpgSQL_rec *rec, const char *fieldname,
+					   int *fieldno);
 
 /* ----------
- * Functions for namestack handling in pl_funcs.c
+ * Functions for namespace handling in pl_funcs.c
  * ----------
  */
 extern void plpgsql_ns_init(void);
 extern bool plpgsql_ns_setlocal(bool flag);
 extern void plpgsql_ns_push(const char *label);
 extern void plpgsql_ns_pop(void);
+extern PLpgSQL_nsitem *plpgsql_ns_top(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
-extern PLpgSQL_nsitem *plpgsql_ns_lookup(const char *name1, const char *name2,
-				  const char *name3, int *names_used);
-extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(const char *name);
+extern PLpgSQL_nsitem *plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur,
+										 const char *name1, const char *name2,
+										 const char *name3, int *names_used);
+extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
+											   const char *name);
 
 /* ----------
  * Other functions in pl_funcs.c

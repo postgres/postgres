@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.130 2009/11/05 16:58:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.131 2009/11/06 18:37:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,7 +520,9 @@ decl_aliasitem	: any_identifier
 
 						plpgsql_ns_setlocal(false);
 
-						nsi = plpgsql_ns_lookup(name, NULL, NULL, NULL);
+						nsi = plpgsql_ns_lookup(plpgsql_ns_top(),
+												name, NULL, NULL,
+												NULL);
 						if (nsi == NULL)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
@@ -550,7 +552,7 @@ decl_varname	: T_WORD
 					{
 						/*
 						 * Since the scanner is only searching the topmost
-						 * namestack entry, getting T_SCALAR etc can only
+						 * namespace level, getting T_SCALAR etc can only
 						 * happen if the name is already declared in this
 						 * block.
 						 */
@@ -1046,12 +1048,6 @@ for_control		:
 										(errcode(ERRCODE_SYNTAX_ERROR),
 										 errmsg("cursor FOR loop must have only one target variable")));
 
-							/* create loop's private RECORD variable */
-							plpgsql_convert_ident($2.name, &varname, 1);
-							new->rec = plpgsql_build_record(varname,
-															$2.lineno,
-															true);
-
 							/* can't use an unbound cursor this way */
 							if (cursor->cursor_explicit_expr == NULL)
 								ereport(ERROR,
@@ -1062,6 +1058,12 @@ for_control		:
 							new->argquery = read_cursor_args(cursor,
 															 K_LOOP,
 															 "LOOP");
+
+							/* create loop's private RECORD variable */
+							plpgsql_convert_ident($2.name, &varname, 1);
+							new->rec = plpgsql_build_record(varname,
+															$2.lineno,
+															true);
 
 							$$ = (PLpgSQL_stmt *) new;
 						}
@@ -1157,9 +1159,10 @@ for_control		:
 							else
 							{
 								/*
-								 * No "..", so it must be a query loop. We've prefixed an
-								 * extra SELECT to the query text, so we need to remove that
-								 * before performing syntax checking.
+								 * No "..", so it must be a query loop. We've
+								 * prefixed an extra SELECT to the query text,
+								 * so we need to remove that before performing
+								 * syntax checking.
 								 */
 								char				*tmp_query;
 								PLpgSQL_stmt_fors	*new;
@@ -1700,7 +1703,9 @@ exception_sect	:
 						/*
 						 * We use a mid-rule action to add these
 						 * special variables to the namespace before
-						 * parsing the WHEN clauses themselves.
+						 * parsing the WHEN clauses themselves.  The
+						 * scope of the names extends to the end of the
+						 * current block.
 						 */
 						PLpgSQL_exception_block *new = palloc(sizeof(PLpgSQL_exception_block));
 						PLpgSQL_variable *var;
@@ -1937,8 +1942,6 @@ read_sql_construct(int until,
 	int					lno;
 	StringInfoData		ds;
 	int					parenlevel = 0;
-	Bitmapset		   *paramnos = NULL;
-	char				buf[32];
 	PLpgSQL_expr		*expr;
 
 	lno = plpgsql_scanner_lineno();
@@ -1986,31 +1989,7 @@ read_sql_construct(int until,
 
 		if (plpgsql_SpaceScanned)
 			appendStringInfoChar(&ds, ' ');
-
-		switch (tok)
-		{
-			case T_SCALAR:
-				snprintf(buf, sizeof(buf), " $%d ", yylval.scalar->dno + 1);
-				appendStringInfoString(&ds, buf);
-				paramnos = bms_add_member(paramnos, yylval.scalar->dno);
-				break;
-
-			case T_ROW:
-				snprintf(buf, sizeof(buf), " $%d ", yylval.row->dno + 1);
-				appendStringInfoString(&ds, buf);
-				paramnos = bms_add_member(paramnos, yylval.row->dno);
-				break;
-
-			case T_RECORD:
-				snprintf(buf, sizeof(buf), " $%d ", yylval.rec->dno + 1);
-				appendStringInfoString(&ds, buf);
-				paramnos = bms_add_member(paramnos, yylval.rec->dno);
-				break;
-
-			default:
-				appendStringInfoString(&ds, yytext);
-				break;
-		}
+		appendStringInfoString(&ds, yytext);
 	}
 
 	if (endtoken)
@@ -2020,7 +1999,8 @@ read_sql_construct(int until,
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
-	expr->paramnos		= paramnos;
+	expr->paramnos		= NULL;
+	expr->ns            = plpgsql_ns_top();
 	pfree(ds.data);
 
 	if (valid_sql)
@@ -2100,8 +2080,6 @@ static PLpgSQL_stmt *
 make_execsql_stmt(const char *sqlstart, int lineno)
 {
 	StringInfoData		ds;
-	Bitmapset		   *paramnos = NULL;
-	char				buf[32];
 	PLpgSQL_stmt_execsql *execsql;
 	PLpgSQL_expr		*expr;
 	PLpgSQL_row			*row = NULL;
@@ -2147,38 +2125,15 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 
 		if (plpgsql_SpaceScanned)
 			appendStringInfoChar(&ds, ' ');
-
-		switch (tok)
-		{
-			case T_SCALAR:
-				snprintf(buf, sizeof(buf), " $%d ", yylval.scalar->dno + 1);
-				appendStringInfoString(&ds, buf);
-				paramnos = bms_add_member(paramnos, yylval.scalar->dno);
-				break;
-
-			case T_ROW:
-				snprintf(buf, sizeof(buf), " $%d ", yylval.row->dno + 1);
-				appendStringInfoString(&ds, buf);
-				paramnos = bms_add_member(paramnos, yylval.row->dno);
-				break;
-
-			case T_RECORD:
-				snprintf(buf, sizeof(buf), " $%d ", yylval.rec->dno + 1);
-				appendStringInfoString(&ds, buf);
-				paramnos = bms_add_member(paramnos, yylval.rec->dno);
-				break;
-
-			default:
-				appendStringInfoString(&ds, yytext);
-				break;
-		}
+		appendStringInfoString(&ds, yytext);
 	}
 
 	expr = palloc0(sizeof(PLpgSQL_expr));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
-	expr->paramnos		= paramnos;
+	expr->paramnos		= NULL;
+	expr->ns            = plpgsql_ns_top();
 	pfree(ds.data);
 
 	check_sql_expr(expr->query);
@@ -2804,7 +2759,7 @@ check_label(const char *yytxt)
 	char	   *label_name;
 
 	plpgsql_convert_ident(yytxt, &label_name, 1);
-	if (plpgsql_ns_lookup_label(label_name) == NULL)
+	if (plpgsql_ns_lookup_label(plpgsql_ns_top(), label_name) == NULL)
 		yyerror("label does not exist");
 	return label_name;
 }
@@ -3005,20 +2960,23 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 	 */
 	if (t_expr)
 	{
-		ListCell *l;
+		char	varname[32];
 		PLpgSQL_var *t_var;
-		int		t_varno;
+		ListCell *l;
+
+		/* use a name unlikely to collide with any user names */
+		snprintf(varname, sizeof(varname), "__Case__Variable_%d__",
+				 plpgsql_nDatums);
 
 		/*
 		 * We don't yet know the result datatype of t_expr.  Build the
 		 * variable as if it were INT4; we'll fix this at runtime if needed.
 		 */
 		t_var = (PLpgSQL_var *)
-			plpgsql_build_variable("*case*", lineno,
+			plpgsql_build_variable(varname, lineno,
 								   plpgsql_build_datatype(INT4OID, -1),
-								   false);
-		t_varno = t_var->dno;
-		new->t_varno = t_varno;
+								   true);
+		new->t_varno = t_var->dno;
 
 		foreach(l, case_when_list)
 		{
@@ -3026,21 +2984,19 @@ make_case(int lineno, PLpgSQL_expr *t_expr,
 			PLpgSQL_expr *expr = cwt->expr;
 			StringInfoData	ds;
 
-			/* Must add the CASE variable as an extra param to expression */
-			expr->paramnos = bms_add_member(expr->paramnos, t_varno);
-
 			/* copy expression query without SELECT keyword (expr->query + 7) */
 			Assert(strncmp(expr->query, "SELECT ", 7) == 0);
 
 			/* And do the string hacking */
 			initStringInfo(&ds);
 
-			appendStringInfo(&ds, "SELECT $%d IN (%s)",
-							 t_varno + 1,
-							 expr->query + 7);
+			appendStringInfo(&ds, "SELECT \"%s\" IN (%s)",
+							 varname, expr->query + 7);
 
 			pfree(expr->query);
 			expr->query = pstrdup(ds.data);
+			/* Adjust expr's namespace to include the case variable */
+			expr->ns = plpgsql_ns_top();
 
 			pfree(ds.data);
 		}

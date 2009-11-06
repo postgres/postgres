@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.83 2009/11/05 16:58:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.84 2009/11/06 18:37:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,21 +21,31 @@
 
 
 /* ----------
- * Local variables for the namestack handling
+ * Local variables for namespace handling
+ *
+ * The namespace structure actually forms a tree, of which only one linear
+ * list or "chain" (from the youngest item to the root) is accessible from
+ * any one plpgsql statement.  During initial parsing of a function, ns_top
+ * points to the youngest item accessible from the block currently being
+ * parsed.  We store the entire tree, however, since at runtime we will need
+ * to access the chain that's relevant to any one statement.
+ *
+ * Block boundaries in the namespace chain are marked by PLPGSQL_NSTYPE_LABEL
+ * items.
  * ----------
  */
-static PLpgSQL_ns *ns_current = NULL;
+static PLpgSQL_nsitem *ns_top = NULL;
 static bool ns_localmode = false;
 
 
 /* ----------
- * plpgsql_ns_init			Initialize the namestack
+ * plpgsql_ns_init			Initialize namespace processing for a new function
  * ----------
  */
 void
 plpgsql_ns_init(void)
 {
-	ns_current = NULL;
+	ns_top = NULL;
 	ns_localmode = false;
 }
 
@@ -49,7 +59,9 @@ plpgsql_ns_init(void)
  * examining a name being declared in a DECLARE section.  For that case
  * we only want to know if there is a conflicting name earlier in the
  * same DECLARE section.  So the grammar must temporarily set local mode
- * before scanning decl_varnames.
+ * before scanning decl_varnames.  This should eventually go away in favor
+ * of a localmode argument to plpgsql_ns_lookup, or perhaps some less
+ * indirect method of dealing with duplicate namespace entries.
  * ----------
  */
 bool
@@ -64,83 +76,67 @@ plpgsql_ns_setlocal(bool flag)
 
 
 /* ----------
- * plpgsql_ns_push			Enter a new namestack level
+ * plpgsql_ns_push			Create a new namespace level
  * ----------
  */
 void
 plpgsql_ns_push(const char *label)
 {
-	PLpgSQL_ns *new;
-
 	if (label == NULL)
 		label = "";
-
-	new = palloc0(sizeof(PLpgSQL_ns));
-	new->upper = ns_current;
-	ns_current = new;
-
 	plpgsql_ns_additem(PLPGSQL_NSTYPE_LABEL, 0, label);
 }
 
 
 /* ----------
- * plpgsql_ns_pop			Return to the previous level
+ * plpgsql_ns_pop			Pop entries back to (and including) the last label
  * ----------
  */
 void
 plpgsql_ns_pop(void)
 {
-	int			i;
-	PLpgSQL_ns *old;
-
-	old = ns_current;
-	ns_current = old->upper;
-
-	for (i = 0; i < old->items_used; i++)
-		pfree(old->items[i]);
-	pfree(old->items);
-	pfree(old);
+	Assert(ns_top != NULL);
+	while (ns_top->itemtype != PLPGSQL_NSTYPE_LABEL)
+		ns_top = ns_top->prev;
+	ns_top = ns_top->prev;
 }
 
 
 /* ----------
- * plpgsql_ns_additem			Add an item to the current
- *					namestack level
+ * plpgsql_ns_top			Fetch the current namespace chain end
+ * ----------
+ */
+PLpgSQL_nsitem *
+plpgsql_ns_top(void)
+{
+	return ns_top;
+}
+
+
+/* ----------
+ * plpgsql_ns_additem		Add an item to the current namespace chain
  * ----------
  */
 void
 plpgsql_ns_additem(int itemtype, int itemno, const char *name)
 {
-	PLpgSQL_ns *ns = ns_current;
 	PLpgSQL_nsitem *nse;
 
 	Assert(name != NULL);
-
-	if (ns->items_used == ns->items_alloc)
-	{
-		if (ns->items_alloc == 0)
-		{
-			ns->items_alloc = 32;
-			ns->items = palloc(sizeof(PLpgSQL_nsitem *) * ns->items_alloc);
-		}
-		else
-		{
-			ns->items_alloc *= 2;
-			ns->items = repalloc(ns->items,
-								 sizeof(PLpgSQL_nsitem *) * ns->items_alloc);
-		}
-	}
+	/* first item added must be a label */
+	Assert(ns_top != NULL || itemtype == PLPGSQL_NSTYPE_LABEL);
 
 	nse = palloc(sizeof(PLpgSQL_nsitem) + strlen(name));
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
+	nse->prev = ns_top;
 	strcpy(nse->name, name);
-	ns->items[ns->items_used++] = nse;
+	ns_top = nse;
 }
 
 
 /* ----------
- * plpgsql_ns_lookup			Lookup an identifier in the namestack
+ * plpgsql_ns_lookup		Lookup an identifier in the given namespace chain
  *
  * Note that this only searches for variables, not labels.
  *
@@ -158,20 +154,20 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
  * ----------
  */
 PLpgSQL_nsitem *
-plpgsql_ns_lookup(const char *name1, const char *name2, const char *name3,
+plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur,
+				  const char *name1, const char *name2, const char *name3,
 				  int *names_used)
 {
-	PLpgSQL_ns *ns;
-	int			i;
-
-	/* Scan each level of the namestack */
-	for (ns = ns_current; ns != NULL; ns = ns->upper)
+	/* Outer loop iterates once per block level in the namespace chain */
+	while (ns_cur != NULL)
 	{
-		/* Check for unqualified match to variable name */
-		for (i = 1; i < ns->items_used; i++)
-		{
-			PLpgSQL_nsitem *nsitem = ns->items[i];
+		PLpgSQL_nsitem *nsitem;
 
+		/* Check this level for unqualified match to variable name */
+		for (nsitem = ns_cur;
+			 nsitem->itemtype != PLPGSQL_NSTYPE_LABEL;
+			 nsitem = nsitem->prev)
+		{
 			if (strcmp(nsitem->name, name1) == 0)
 			{
 				if (name2 == NULL ||
@@ -184,14 +180,14 @@ plpgsql_ns_lookup(const char *name1, const char *name2, const char *name3,
 			}
 		}
 
-		/* Check for qualified match to variable name */
+		/* Check this level for qualified match to variable name */
 		if (name2 != NULL &&
-			strcmp(ns->items[0]->name, name1) == 0)
+			strcmp(nsitem->name, name1) == 0)
 		{
-			for (i = 1; i < ns->items_used; i++)
+			for (nsitem = ns_cur;
+				 nsitem->itemtype != PLPGSQL_NSTYPE_LABEL;
+				 nsitem = nsitem->prev)
 			{
-				PLpgSQL_nsitem *nsitem = ns->items[i];
-
 				if (strcmp(nsitem->name, name2) == 0)
 				{
 					if (name3 == NULL ||
@@ -207,6 +203,8 @@ plpgsql_ns_lookup(const char *name1, const char *name2, const char *name3,
 
 		if (ns_localmode)
 			break;				/* do not look into upper levels */
+
+		ns_cur = nsitem->prev;
 	}
 
 	/* This is just to suppress possibly-uninitialized-variable warnings */
@@ -217,18 +215,18 @@ plpgsql_ns_lookup(const char *name1, const char *name2, const char *name3,
 
 
 /* ----------
- * plpgsql_ns_lookup_label		Lookup a label in the namestack
+ * plpgsql_ns_lookup_label		Lookup a label in the given namespace chain
  * ----------
  */
 PLpgSQL_nsitem *
-plpgsql_ns_lookup_label(const char *name)
+plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur, const char *name)
 {
-	PLpgSQL_ns *ns;
-
-	for (ns = ns_current; ns != NULL; ns = ns->upper)
+	while (ns_cur != NULL)
 	{
-		if (strcmp(ns->items[0]->name, name) == 0)
-			return ns->items[0];
+		if (ns_cur->itemtype == PLPGSQL_NSTYPE_LABEL &&
+			strcmp(ns_cur->name, name) == 0)
+			return ns_cur;
+		ns_cur = ns_cur->prev;
 	}
 
 	return NULL;				/* label not found */

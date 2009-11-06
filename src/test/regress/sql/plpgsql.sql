@@ -1026,7 +1026,7 @@ begin
         declare
 	    rec		record;
 	begin
-	    select into rec * from PLine where slotname = outer.rec.backlink;
+	    select into rec * from PLine where slotname = "outer".rec.backlink;
 	    retval := ''Phone line '' || trim(rec.phonenumber);
 	    if rec.comment != '''' then
 	        retval := retval || '' ('';
@@ -3135,3 +3135,37 @@ BEGIN
         RAISE NOTICE '%, %', r.roomno, r.comment;
     END LOOP;
 END$$;
+
+-- Check variable scoping -- a var is not available in its own or prior
+-- default expressions.
+
+create function scope_test() returns int as $$
+declare x int := 42;
+begin
+  declare y int := x + 1;
+          x int := x + 2;
+  begin
+    return x * 100 + y;
+  end;
+end;
+$$ language plpgsql;
+
+select scope_test();
+
+drop function scope_test();
+
+-- Check handling of conflicts between plpgsql vars and table columns.
+
+create function conflict_test() returns setof int8_tbl as $$
+declare r record;
+  q1 bigint := 42;
+begin
+  for r in select q1,q2 from int8_tbl loop
+    return next r;
+  end loop;
+end;
+$$ language plpgsql;
+
+select * from conflict_test();
+
+drop function conflict_test();

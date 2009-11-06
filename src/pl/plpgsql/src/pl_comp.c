@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.140 2009/11/04 22:26:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.141 2009/11/06 18:37:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,11 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
 static void add_dummy_return(PLpgSQL_function *function);
+static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
+static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
+static Node *plpgsql_param_ref(ParseState *pstate, ParamRef *pref);
+static Node *resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref);
+static Node *make_datum_param(PLpgSQL_expr *expr, int dno, int location);
 static PLpgSQL_row *build_row_from_class(Oid classOid);
 static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
@@ -307,21 +312,6 @@ do_compile(FunctionCallInfo fcinfo,
 	error_context_stack = &plerrcontext;
 
 	/*
-	 * Initialize the compiler, particularly the namespace stack.  The
-	 * outermost namespace contains function parameters and other special
-	 * variables (such as FOUND), and is named after the function itself.
-	 */
-	plpgsql_ns_init();
-	plpgsql_ns_push(NameStr(procStruct->proname));
-	plpgsql_DumpExecTree = false;
-
-	datums_alloc = 128;
-	plpgsql_nDatums = 0;
-	/* This is short-lived, so needn't allocate in function's cxt */
-	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
-	datums_last = 0;
-
-	/*
 	 * Do extra syntax checks when validating the function definition. We skip
 	 * this when actually compiling functions for execution, for performance
 	 * reasons.
@@ -345,8 +335,8 @@ do_compile(FunctionCallInfo fcinfo,
 	plpgsql_curr_compile = function;
 
 	/*
-	 * All the rest of the compile-time storage (e.g. parse tree) is kept in
-	 * its own memory context, so it can be reclaimed easily.
+	 * All the permanent output of compilation (e.g. parse tree) is kept in
+	 * a per-function memory context, so it can be reclaimed easily.
 	 */
 	func_cxt = AllocSetContextCreate(TopMemoryContext,
 									 "PL/PgSQL function context",
@@ -362,6 +352,23 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_is_trigger = is_trigger;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
+	function->resolve_option = PLPGSQL_RESOLVE_BEFORE;
+
+	/*
+	 * Initialize the compiler, particularly the namespace stack.  The
+	 * outermost namespace contains function parameters and other special
+	 * variables (such as FOUND), and is named after the function itself.
+	 */
+	plpgsql_ns_init();
+	plpgsql_ns_push(NameStr(procStruct->proname));
+	plpgsql_DumpExecTree = false;
+
+	datums_alloc = 128;
+	plpgsql_nDatums = 0;
+	/* This is short-lived, so needn't allocate in function's cxt */
+	plpgsql_Datums = MemoryContextAlloc(compile_tmp_cxt,
+										sizeof(PLpgSQL_datum *) * datums_alloc);
+	datums_last = 0;
 
 	switch (is_trigger)
 	{
@@ -755,15 +762,6 @@ plpgsql_compile_inline(char *proc_source)
 	plerrcontext.previous = error_context_stack;
 	error_context_stack = &plerrcontext;
 
-	plpgsql_ns_init();
-	plpgsql_ns_push(func_name);
-	plpgsql_DumpExecTree = false;
-
-	datums_alloc = 128;
-	plpgsql_nDatums = 0;
-	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
-	datums_last = 0;
-
 	/* Do extra syntax checking if check_function_bodies is on */
 	plpgsql_check_syntax = check_function_bodies;
 
@@ -787,6 +785,16 @@ plpgsql_compile_inline(char *proc_source)
 	function->fn_is_trigger = false;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
+	function->resolve_option = PLPGSQL_RESOLVE_BEFORE;
+
+	plpgsql_ns_init();
+	plpgsql_ns_push(func_name);
+	plpgsql_DumpExecTree = false;
+
+	datums_alloc = 128;
+	plpgsql_nDatums = 0;
+	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
+	datums_last = 0;
 
 	/* Set up as though in a function returning VOID */
 	function->fn_rettype = VOIDOID;
@@ -920,6 +928,319 @@ add_dummy_return(PLpgSQL_function *function)
 }
 
 
+/*
+ * plpgsql_parser_setup		set up parser hooks for dynamic parameters
+ *
+ * Note: this routine, and the hook functions it prepares for, are logically
+ * part of plpgsql parsing.  But they actually run during function execution,
+ * when we are ready to evaluate a SQL query or expression that has not
+ * previously been parsed and planned.
+ */
+void
+plpgsql_parser_setup(struct ParseState *pstate, PLpgSQL_expr *expr)
+{
+	pstate->p_pre_columnref_hook = plpgsql_pre_column_ref;
+	pstate->p_post_columnref_hook = plpgsql_post_column_ref;
+	pstate->p_paramref_hook = plpgsql_param_ref;
+	/* no need to use p_coerce_param_hook */
+	pstate->p_ref_hook_state = (void *) expr;
+}
+
+/*
+ * plpgsql_pre_column_ref		parser callback before parsing a ColumnRef
+ */
+static Node *
+plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref)
+{
+	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
+
+	if (expr->func->resolve_option == PLPGSQL_RESOLVE_BEFORE)
+		return resolve_column_ref(expr, cref);
+	else
+		return NULL;
+}
+
+/*
+ * plpgsql_post_column_ref		parser callback after parsing a ColumnRef
+ */
+static Node *
+plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
+{
+	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
+	Node	   *myvar;
+
+	if (expr->func->resolve_option == PLPGSQL_RESOLVE_BEFORE)
+		return NULL;			/* we already found there's no match */
+
+	if (expr->func->resolve_option == PLPGSQL_RESOLVE_AFTER && var != NULL)
+		return NULL;			/* there's a table column, prefer that */
+
+	myvar = resolve_column_ref(expr, cref);
+
+	if (myvar != NULL && var != NULL)
+	{
+		/*
+		 * We could leave it to the core parser to throw this error, but
+		 * we can add a more useful detail message than the core could.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+				 errmsg("column reference \"%s\" is ambiguous",
+						NameListToString(cref->fields)),
+				 errdetail("It could refer to either a PL/pgSQL variable or a table column."),
+				 parser_errposition(pstate, cref->location)));
+	}
+
+	return myvar;
+}
+
+/*
+ * plpgsql_param_ref		parser callback for ParamRefs ($n symbols)
+ */
+static Node *
+plpgsql_param_ref(ParseState *pstate, ParamRef *pref)
+{
+	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
+	char		pname[32];
+	PLpgSQL_nsitem *nse;
+
+	snprintf(pname, sizeof(pname), "$%d", pref->number);
+
+	nse = plpgsql_ns_lookup(expr->ns,
+							pname, NULL, NULL,
+							NULL);
+
+	if (nse == NULL)
+		return NULL;			/* name not known to plpgsql */
+
+	return make_datum_param(expr, nse->itemno, pref->location);
+}
+
+/*
+ * resolve_column_ref		attempt to resolve a ColumnRef as a plpgsql var
+ *
+ * Returns the translated node structure, or NULL if name not found
+ */
+static Node *
+resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
+{
+	PLpgSQL_execstate *estate;
+	PLpgSQL_nsitem *nse;
+	const char *name1;
+	const char *name2 = NULL;
+	const char *name3 = NULL;
+	const char *colname = NULL;
+	int			nnames;
+	int			nnames_scalar = 0;
+	int			nnames_wholerow = 0;
+	int			nnames_field = 0;
+
+	/*
+	 * We use the function's current estate to resolve parameter data types.
+	 * This is really pretty bogus because there is no provision for updating
+	 * plans when those types change ...
+	 */
+	estate = expr->func->cur_estate;
+
+	/*----------
+	 * The allowed syntaxes are:
+	 *
+	 * A		Scalar variable reference, or whole-row record reference.
+	 * A.B		Qualified scalar or whole-row reference, or field reference.
+	 * A.B.C	Qualified record field reference.
+	 * A.*		Whole-row record reference.
+	 * A.B.*	Qualified whole-row record reference.
+	 *----------
+	 */
+	switch (list_length(cref->fields))
+	{
+		case 1:
+			{
+				Node	   *field1 = (Node *) linitial(cref->fields);
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+				nnames_scalar = 1;
+				nnames_wholerow = 1;
+				break;
+			}
+		case 2:
+			{
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+
+				/* Whole-row reference? */
+				if (IsA(field2, A_Star))
+				{
+					/* Set name2 to prevent matches to scalar variables */
+					name2 = "*";
+					nnames_wholerow = 1;
+					break;
+				}
+
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
+				colname = name2;
+				nnames_scalar = 2;
+				nnames_wholerow = 2;
+				nnames_field = 1;
+				break;
+			}
+		case 3:
+			{
+				Node	   *field1 = (Node *) linitial(cref->fields);
+				Node	   *field2 = (Node *) lsecond(cref->fields);
+				Node	   *field3 = (Node *) lthird(cref->fields);
+
+				Assert(IsA(field1, String));
+				name1 = strVal(field1);
+				Assert(IsA(field2, String));
+				name2 = strVal(field2);
+
+				/* Whole-row reference? */
+				if (IsA(field3, A_Star))
+				{
+					/* Set name3 to prevent matches to scalar variables */
+					name3 = "*";
+					nnames_wholerow = 2;
+					break;
+				}
+
+				Assert(IsA(field3, String));
+				name3 = strVal(field3);
+				colname = name3;
+				nnames_field = 2;
+				break;
+			}
+		default:
+			/* too many names, ignore */
+			return NULL;
+	}
+
+	nse = plpgsql_ns_lookup(expr->ns,
+							name1, name2, name3,
+							&nnames);
+
+	if (nse == NULL)
+		return NULL;			/* name not known to plpgsql */
+
+	switch (nse->itemtype)
+	{
+		case PLPGSQL_NSTYPE_VAR:
+			if (nnames == nnames_scalar)
+				return make_datum_param(expr, nse->itemno, cref->location);
+			break;
+		case PLPGSQL_NSTYPE_REC:
+			if (nnames == nnames_wholerow)
+				return make_datum_param(expr, nse->itemno, cref->location);
+			if (nnames == nnames_field)
+			{
+				/* colname must be a field in this record */
+				PLpgSQL_rec *rec = (PLpgSQL_rec *) estate->datums[nse->itemno];
+				FieldSelect *fselect;
+				Oid			fldtype;
+				int			fldno;
+				int			i;
+
+				/* search for a datum referencing this field */
+				for (i = 0; i < estate->ndatums; i++)
+				{
+					PLpgSQL_recfield *fld = (PLpgSQL_recfield *) estate->datums[i];
+
+					if (fld->dtype == PLPGSQL_DTYPE_RECFIELD &&
+						fld->recparentno == nse->itemno &&
+						strcmp(fld->fieldname, colname) == 0)
+					{
+						return make_datum_param(expr, i, cref->location);
+					}
+				}
+
+				/*
+				 * We can't readily add a recfield datum at runtime, so
+				 * instead build a whole-row Param and a FieldSelect node.
+				 * This is a bit less efficient, so we prefer the recfield
+				 * way when possible.
+				 */
+				fldtype = exec_get_rec_fieldtype(rec, colname,
+												 &fldno);
+				fselect = makeNode(FieldSelect);
+				fselect->arg = (Expr *) make_datum_param(expr, nse->itemno,
+														 cref->location);
+				fselect->fieldnum = fldno;
+				fselect->resulttype = fldtype;
+				fselect->resulttypmod = -1;
+				return (Node *) fselect;
+			}
+			break;
+		case PLPGSQL_NSTYPE_ROW:
+			if (nnames == nnames_wholerow)
+				return make_datum_param(expr, nse->itemno, cref->location);
+			if (nnames == nnames_field)
+			{
+				/* colname must be a field in this row */
+				PLpgSQL_row *row = (PLpgSQL_row *) estate->datums[nse->itemno];
+				int			i;
+
+				for (i = 0; i < row->nfields; i++)
+				{
+					if (row->fieldnames[i] &&
+						strcmp(row->fieldnames[i], colname) == 0)
+					{
+						return make_datum_param(expr, row->varnos[i],
+												cref->location);
+					}
+				}
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("row \"%s\" has no field \"%s\"",
+								row->refname, colname)));
+			}
+			break;
+		default:
+			elog(ERROR, "unrecognized plpgsql itemtype");
+	}
+
+	/* Name format doesn't match the plpgsql variable type */
+	return NULL;
+}
+
+/*
+ * Helper for columnref parsing: build a Param referencing a plpgsql datum,
+ * and make sure that that datum is listed in the expression's paramnos.
+ */
+static Node *
+make_datum_param(PLpgSQL_expr *expr, int dno, int location)
+{
+	PLpgSQL_execstate *estate;
+	Param	   *param;
+	MemoryContext oldcontext;
+
+	/* see comment in resolve_column_ref */
+	estate = expr->func->cur_estate;
+
+	Assert(dno >= 0 && dno < estate->ndatums);
+
+	/*
+	 * Bitmapset must be allocated in function's permanent memory context
+	 */
+	oldcontext = MemoryContextSwitchTo(expr->func->fn_cxt);
+	expr->paramnos = bms_add_member(expr->paramnos, dno);
+	MemoryContextSwitchTo(oldcontext);
+
+	param = makeNode(Param);
+	param->paramkind = PARAM_EXTERN;
+	param->paramid = dno + 1;
+	param->paramtype = exec_get_datum_type(estate, estate->datums[dno]);
+	param->paramtypmod = -1;
+	param->location = location;
+
+	return (Node *) param;
+}
+
+
 /* ----------
  * plpgsql_parse_word		The scanner calls this to postparse
  *				any single word not found by a
@@ -936,9 +1257,11 @@ plpgsql_parse_word(const char *word)
 	plpgsql_convert_ident(word, cp, 1);
 
 	/*
-	 * Do a lookup on the compiler's namestack
+	 * Do a lookup in the current namespace stack
 	 */
-	nse = plpgsql_ns_lookup(cp[0], NULL, NULL, NULL);
+	nse = plpgsql_ns_lookup(plpgsql_ns_top(),
+							cp[0], NULL, NULL,
+							NULL);
 	pfree(cp[0]);
 
 	if (nse != NULL)
@@ -986,9 +1309,11 @@ plpgsql_parse_dblword(const char *word)
 	plpgsql_convert_ident(word, cp, 2);
 
 	/*
-	 * Do a lookup on the compiler's namestack
+	 * Do a lookup in the current namespace stack
 	 */
-	ns = plpgsql_ns_lookup(cp[0], cp[1], NULL, &nnames);
+	ns = plpgsql_ns_lookup(plpgsql_ns_top(),
+						   cp[0], cp[1], NULL,
+						   &nnames);
 	if (ns == NULL)
 	{
 		pfree(cp[0]);
@@ -1098,10 +1423,12 @@ plpgsql_parse_tripword(const char *word)
 	plpgsql_convert_ident(word, cp, 3);
 
 	/*
-	 * Do a lookup on the compiler's namestack. Must find a qualified
+	 * Do a lookup in the current namespace stack. Must find a qualified
 	 * reference.
 	 */
-	ns = plpgsql_ns_lookup(cp[0], cp[1], cp[2], &nnames);
+	ns = plpgsql_ns_lookup(plpgsql_ns_top(),
+						   cp[0], cp[1], cp[2],
+						   &nnames);
 	if (ns == NULL || nnames != 2)
 	{
 		pfree(cp[0]);
@@ -1201,10 +1528,12 @@ plpgsql_parse_wordtype(char *word)
 	pfree(cp[1]);
 
 	/*
-	 * Do a lookup on the compiler's namestack.  Ensure we scan all levels.
+	 * Do a lookup in the current namespace stack.  Ensure we scan all levels.
 	 */
 	old_nsstate = plpgsql_ns_setlocal(false);
-	nse = plpgsql_ns_lookup(cp[0], NULL, NULL, NULL);
+	nse = plpgsql_ns_lookup(plpgsql_ns_top(),
+							cp[0], NULL, NULL,
+							NULL);
 	plpgsql_ns_setlocal(old_nsstate);
 
 	if (nse != NULL)
@@ -1224,8 +1553,8 @@ plpgsql_parse_wordtype(char *word)
 	}
 
 	/*
-	 * Word wasn't found on the namestack. Try to find a data type with that
-	 * name, but ignore shell types and complex types.
+	 * Word wasn't found in the namespace stack. Try to find a data type
+	 * with that name, but ignore shell types and complex types.
 	 */
 	typeTup = LookupTypeName(NULL, makeTypeName(cp[0]), NULL);
 	if (typeTup)
@@ -1289,12 +1618,14 @@ plpgsql_parse_dblwordtype(char *word)
 	pfree(cp[2]);
 
 	/*
-	 * Do a lookup on the compiler's namestack.  Ensure we scan all levels. We
-	 * don't need to check number of names matched, because we will only
+	 * Do a lookup in the current namespace stack.  Ensure we scan all levels.
+	 * We don't need to check number of names matched, because we will only
 	 * consider scalar variables.
 	 */
 	old_nsstate = plpgsql_ns_setlocal(false);
-	nse = plpgsql_ns_lookup(cp[0], cp[1], NULL, NULL);
+	nse = plpgsql_ns_lookup(plpgsql_ns_top(),
+							cp[0], cp[1], NULL,
+							NULL);
 	plpgsql_ns_setlocal(old_nsstate);
 
 	if (nse != NULL && nse->itemtype == PLPGSQL_NSTYPE_VAR)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.249 2009/11/04 22:26:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.250 2009/11/06 18:37:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parse_node.h"
 #include "parser/scansup.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -158,8 +157,6 @@ static void exec_eval_datum(PLpgSQL_execstate *estate,
 				Oid *typeid,
 				Datum *value,
 				bool *isnull);
-static Oid exec_get_datum_type(PLpgSQL_execstate *estate,
-							   PLpgSQL_datum *datum);
 static int exec_eval_integer(PLpgSQL_execstate *estate,
 				  PLpgSQL_expr *expr,
 				  bool *isNull);
@@ -176,8 +173,6 @@ static int exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLpgSQL_execstate *estate,
 									  PLpgSQL_expr *expr);
-static void plpgsql_parser_setup(ParseState *pstate, PLpgSQL_expr *expr);
-static Node *plpgsql_param_ref(ParseState *pstate, ParamRef *pref);
 static void plpgsql_param_fetch(ParamListInfo params, int paramid);
 static void exec_move_row(PLpgSQL_execstate *estate,
 			  PLpgSQL_rec *rec,
@@ -3992,7 +3987,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
  * a tupdesc but no row value for a record variable.  (This currently can
  * happen only for a trigger's NEW/OLD records.)
  */
-static Oid
+Oid
 exec_get_datum_type(PLpgSQL_execstate *estate,
 					PLpgSQL_datum *datum)
 {
@@ -4065,6 +4060,36 @@ exec_get_datum_type(PLpgSQL_execstate *estate,
 			break;
 	}
 
+	return typeid;
+}
+
+/*
+ * exec_get_rec_fieldtype				Get datatype of a PLpgSQL record field
+ *
+ * Also returns the field number to *fieldno.
+ */
+Oid
+exec_get_rec_fieldtype(PLpgSQL_rec *rec, const char *fieldname,
+					   int *fieldno)
+{
+	Oid			typeid;
+	int			fno;
+
+	if (rec->tupdesc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("record \"%s\" is not assigned yet",
+						rec->refname),
+				 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+	fno = SPI_fnumber(rec->tupdesc, fieldname);
+	if (fno == SPI_ERROR_NOATTRIBUTE)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("record \"%s\" has no field \"%s\"",
+						rec->refname, fieldname)));
+	typeid = SPI_gettypeid(rec->tupdesc, fno);
+
+	*fieldno = fno;
 	return typeid;
 }
 
@@ -4588,51 +4613,6 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	else
 		paramLI = NULL;
 	return paramLI;
-}
-
-/*
- * plpgsql_parser_setup		set up parser hooks for dynamic parameters
- */
-static void
-plpgsql_parser_setup(ParseState *pstate, PLpgSQL_expr *expr)
-{
-	pstate->p_ref_hook_state = (void *) expr;
-	pstate->p_paramref_hook = plpgsql_param_ref;
-	/* no need to use p_coerce_param_hook */
-}
-
-/*
- * plpgsql_param_ref		parser callback for ParamRefs ($n symbols)
- */
-static Node *
-plpgsql_param_ref(ParseState *pstate, ParamRef *pref)
-{
-	int			paramno = pref->number;
-	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
-	PLpgSQL_execstate *estate;
-	Param	   *param;
-
-	/* Let's just check parameter number is in range */
-	if (!bms_is_member(paramno-1, expr->paramnos))
-		return NULL;
-
-	/*
-	 * We use the function's current estate to resolve parameter data types.
-	 * This is really pretty bogus because there is no provision for updating
-	 * plans when those types change ...
-	 */
-	estate = expr->func->cur_estate;
-	Assert(paramno <= estate->ndatums);
-
-	param = makeNode(Param);
-	param->paramkind = PARAM_EXTERN;
-	param->paramid = paramno;
-	param->paramtype = exec_get_datum_type(estate,
-										   estate->datums[paramno-1]);
-	param->paramtypmod = -1;
-	param->location = pref->location;
-
-	return (Node *) param;
 }
 
 /*
