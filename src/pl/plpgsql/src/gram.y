@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.131 2009/11/06 18:37:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.132 2009/11/07 00:52:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,11 +109,8 @@ static List				*read_raise_options(void);
 		}						loop_body;
 		List					*list;
 		PLpgSQL_type			*dtype;
-		PLpgSQL_datum			*scalar;	/* a VAR or RECFIELD */
-		PLpgSQL_variable		*variable;	/* a VAR, REC, or ROW */
+		PLpgSQL_datum			*datum;
 		PLpgSQL_var				*var;
-		PLpgSQL_row				*row;
-		PLpgSQL_rec				*rec;
 		PLpgSQL_expr			*expr;
 		PLpgSQL_stmt			*stmt;
 		PLpgSQL_stmt_block		*program;
@@ -131,7 +128,7 @@ static List				*read_raise_options(void);
 %type <boolean>	decl_const decl_notnull exit_type
 %type <expr>	decl_defval decl_cursor_query
 %type <dtype>	decl_datatype
-%type <row>		decl_cursor_args
+%type <datum>	decl_cursor_args
 %type <list>	decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
 %type <str>		decl_stmts decl_stmt
@@ -142,7 +139,7 @@ static List				*read_raise_options(void);
 
 %type <ival>	assign_var
 %type <var>		cursor_variable
-%type <variable>	decl_cursor_arg
+%type <datum>	decl_cursor_arg
 %type <forvariable>	for_variable
 %type <stmt>	for_control
 
@@ -234,12 +231,10 @@ static List				*read_raise_options(void);
 		 */
 %token	T_STRING
 %token	T_NUMBER
-%token	T_SCALAR				/* a VAR or RECFIELD */
-%token	T_ROW
-%token	T_RECORD
-%token	T_DTYPE
-%token	T_WORD
-%token	T_ERROR
+%token	T_DATUM					/* a VAR, ROW, REC, or RECFIELD variable */
+%token	T_WORD					/* unrecognized simple identifier */
+%token	T_DBLWORD				/* unrecognized ident.ident */
+%token	T_TRIPWORD				/* unrecognized ident.ident.ident */
 
 %token	O_OPTION
 %token	O_DUMP
@@ -294,21 +289,22 @@ pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END opt_label
 
 decl_sect		: opt_block_label
 					{
-						plpgsql_ns_setlocal(false);
+						/* done with decls, so resume identifier lookup */
+						plpgsql_LookupIdentifiers = true;
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
 					}
 				| opt_block_label decl_start
 					{
-						plpgsql_ns_setlocal(false);
+						plpgsql_LookupIdentifiers = true;
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
 					}
 				| opt_block_label decl_start decl_stmts
 					{
-						plpgsql_ns_setlocal(false);
+						plpgsql_LookupIdentifiers = true;
 						if ($3 != NULL)
 							$$.label = $3;
 						else
@@ -322,8 +318,11 @@ decl_start		: K_DECLARE
 					{
 						/* Forget any variables created before block */
 						plpgsql_add_initdatums(NULL);
-						/* Make variable names be local to block */
-						plpgsql_ns_setlocal(true);
+						/*
+						 * Disable scanner lookup of identifiers while
+						 * we process the decl_stmts
+						 */
+						plpgsql_LookupIdentifiers = false;
 					}
 				;
 
@@ -447,13 +446,7 @@ opt_scrollable :
 
 decl_cursor_query :
 					{
-						PLpgSQL_expr *query;
-
-						plpgsql_ns_setlocal(false);
-						query = read_sql_stmt("");
-						plpgsql_ns_setlocal(true);
-
-						$$ = query;
+						$$ = read_sql_stmt("");
 					}
 				;
 
@@ -486,7 +479,7 @@ decl_cursor_args :
 						list_free($2);
 
 						plpgsql_adddatum((PLpgSQL_datum *) new);
-						$$ = new;
+						$$ = (PLpgSQL_datum *) new;
 					}
 				;
 
@@ -502,26 +495,24 @@ decl_cursor_arglist : decl_cursor_arg
 
 decl_cursor_arg : decl_varname decl_datatype
 					{
-						$$ = plpgsql_build_variable($1.name, $1.lineno,
-													$2, true);
+						$$ = (PLpgSQL_datum *)
+							plpgsql_build_variable($1.name, $1.lineno,
+												   $2, true);
 					}
 				;
 
 decl_is_for		:	K_IS |		/* Oracle */
 					K_FOR;		/* SQL standard */
 
-decl_aliasitem	: any_identifier
+decl_aliasitem	: T_WORD
 					{
-						char	*name;
+						char	*name[1];
 						PLpgSQL_nsitem *nsi;
 
-						/* XXX should allow block-label-qualified names */
-						plpgsql_convert_ident($1, &name, 1);
+						plpgsql_convert_ident(yytext, name, 1);
 
-						plpgsql_ns_setlocal(false);
-
-						nsi = plpgsql_ns_lookup(plpgsql_ns_top(),
-												name, NULL, NULL,
+						nsi = plpgsql_ns_lookup(plpgsql_ns_top(), false,
+												name[0], NULL, NULL,
 												NULL);
 						if (nsi == NULL)
 						{
@@ -529,12 +520,34 @@ decl_aliasitem	: any_identifier
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("variable \"%s\" does not exist",
-											name)));
+											name[0])));
 						}
 
-						plpgsql_ns_setlocal(true);
+						pfree(name[0]);
 
-						pfree(name);
+						$$ = nsi;
+					}
+				| T_DBLWORD
+					{
+						char	*name[2];
+						PLpgSQL_nsitem *nsi;
+
+						plpgsql_convert_ident(yytext, name, 2);
+
+						nsi = plpgsql_ns_lookup(plpgsql_ns_top(), false,
+												name[0], name[1], NULL,
+												NULL);
+						if (nsi == NULL)
+						{
+							plpgsql_error_lineno = plpgsql_scanner_lineno();
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+									 errmsg("variable \"%s.%s\" does not exist",
+											name[0], name[1])));
+						}
+
+						pfree(name[0]);
+						pfree(name[1]);
 
 						$$ = nsi;
 					}
@@ -547,24 +560,14 @@ decl_varname	: T_WORD
 						plpgsql_convert_ident(yytext, &name, 1);
 						$$.name = name;
 						$$.lineno  = plpgsql_scanner_lineno();
-					}
-				| T_SCALAR
-					{
 						/*
-						 * Since the scanner is only searching the topmost
-						 * namespace level, getting T_SCALAR etc can only
-						 * happen if the name is already declared in this
-						 * block.
+						 * Check to make sure name isn't already declared
+						 * in the current block.
 						 */
-						yyerror("duplicate declaration");
-					}
-				| T_ROW
-					{
-						yyerror("duplicate declaration");
-					}
-				| T_RECORD
-					{
-						yyerror("duplicate declaration");
+						if (plpgsql_ns_lookup(plpgsql_ns_top(), true,
+											  name, NULL, NULL,
+											  NULL) != NULL)
+							yyerror("duplicate declaration");
 					}
 				;
 
@@ -595,9 +598,7 @@ decl_defval		: ';'
 					{ $$ = NULL; }
 				| decl_defkey
 					{
-						plpgsql_ns_setlocal(false);
 						$$ = plpgsql_read_expression(';', ";");
-						plpgsql_ns_setlocal(true);
 					}
 				;
 
@@ -739,40 +740,32 @@ getdiag_kind : K_ROW_COUNT
 					}
 				;
 
-getdiag_target	: T_SCALAR
+getdiag_target	: T_DATUM
 					{
-						check_assignable(yylval.scalar);
-						$$ = yylval.scalar->dno;
-					}
-				| T_ROW
-					{
-						yyerror("expected an integer variable");
-					}
-				| T_RECORD
-					{
-						yyerror("expected an integer variable");
+						check_assignable(yylval.datum);
+						if (yylval.datum->dtype == PLPGSQL_DTYPE_ROW ||
+							yylval.datum->dtype == PLPGSQL_DTYPE_REC)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("\"%s\" is not a scalar variable",
+											yytext)));
+						$$ = yylval.datum->dno;
 					}
 				| T_WORD
 					{
-						yyerror("expected an integer variable");
+						/* just to give a better message than "syntax error" */
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("\"%s\" is not a known variable",
+										yytext)));
 					}
 				;
 
 
-assign_var		: T_SCALAR
+assign_var		: T_DATUM
 					{
-						check_assignable(yylval.scalar);
-						$$ = yylval.scalar->dno;
-					}
-				| T_ROW
-					{
-						check_assignable((PLpgSQL_datum *) yylval.row);
-						$$ = yylval.row->dno;
-					}
-				| T_RECORD
-					{
-						check_assignable((PLpgSQL_datum *) yylval.rec);
-						$$ = yylval.rec->dno;
+						check_assignable(yylval.datum);
+						$$ = yylval.datum->dno;
 					}
 				| assign_var '[' expr_until_rightbracket
 					{
@@ -783,7 +776,7 @@ assign_var		: T_SCALAR
 						new->subscript	= $3;
 						new->arrayparentno = $1;
 
-						plpgsql_adddatum((PLpgSQL_datum *)new);
+						plpgsql_adddatum((PLpgSQL_datum *) new);
 
 						$$ = new->dno;
 					}
@@ -1026,13 +1019,13 @@ for_control		:
 
 							$$ = (PLpgSQL_stmt *) new;
 						}
-						else if (tok == T_SCALAR &&
-								 yylval.scalar->dtype == PLPGSQL_DTYPE_VAR &&
-								 ((PLpgSQL_var *) yylval.scalar)->datatype->typoid == REFCURSOROID)
+						else if (tok == T_DATUM &&
+								 yylval.datum->dtype == PLPGSQL_DTYPE_VAR &&
+								 ((PLpgSQL_var *) yylval.datum)->datatype->typoid == REFCURSOROID)
 						{
 							/* It's FOR var IN cursor */
 							PLpgSQL_stmt_forc	*new;
-							PLpgSQL_var			*cursor = (PLpgSQL_var *) yylval.scalar;
+							PLpgSQL_var			*cursor = (PLpgSQL_var *) yylval.datum;
 							char				*varname;
 
 							new = (PLpgSQL_stmt_forc *) palloc0(sizeof(PLpgSQL_stmt_forc));
@@ -1227,20 +1220,36 @@ for_control		:
  * Note that the non-error result of this case sets *both* $$.scalar and
  * $$.row; see the for_control production.
  */
-for_variable	: T_SCALAR
+for_variable	: T_DATUM
 					{
-						int			tok;
-
 						$$.name = pstrdup(yytext);
 						$$.lineno  = plpgsql_scanner_lineno();
-						$$.scalar = yylval.scalar;
-						$$.rec = NULL;
-						$$.row = NULL;
-						/* check for comma-separated list */
-						tok = yylex();
-						plpgsql_push_back_token(tok);
-						if (tok == ',')
-							$$.row = read_into_scalar_list($$.name, $$.scalar);
+						if (yylval.datum->dtype == PLPGSQL_DTYPE_ROW)
+						{
+							$$.scalar = NULL;
+							$$.rec = NULL;
+							$$.row = (PLpgSQL_row *) yylval.datum;
+						}
+						else if (yylval.datum->dtype == PLPGSQL_DTYPE_REC)
+						{
+							$$.scalar = NULL;
+							$$.rec = (PLpgSQL_rec *) yylval.datum;
+							$$.row = NULL;
+						}
+						else
+						{
+							int			tok;
+
+							$$.scalar = yylval.datum;
+							$$.rec = NULL;
+							$$.row = NULL;
+							/* check for comma-separated list */
+							tok = yylex();
+							plpgsql_push_back_token(tok);
+							if (tok == ',')
+								$$.row = read_into_scalar_list($$.name,
+															   $$.scalar);
+						}
 					}
 				| T_WORD
 					{
@@ -1259,25 +1268,9 @@ for_variable	: T_SCALAR
 							plpgsql_error_lineno = $$.lineno;
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("\"%s\" is not a scalar variable",
+									 errmsg("\"%s\" is not a known variable",
 											$$.name)));
 						}
-					}
-				| T_RECORD
-					{
-						$$.name = pstrdup(yytext);
-						$$.lineno  = plpgsql_scanner_lineno();
-						$$.scalar = NULL;
-						$$.rec = yylval.rec;
-						$$.row = NULL;
-					}
-				| T_ROW
-					{
-						$$.name = pstrdup(yytext);
-						$$.lineno  = plpgsql_scanner_lineno();
-						$$.scalar = NULL;
-						$$.row = yylval.row;
-						$$.rec = NULL;
 					}
 				;
 
@@ -1484,12 +1477,18 @@ stmt_execsql	: execsql_start lno
 					}
 				;
 
-/* T_WORD+T_ERROR match any otherwise-unrecognized starting keyword */
+/*
+ * T_WORD+T_DBLWORD+T_TRIPWORD match any initial identifier that is not a
+ * known plpgsql variable.  The latter two cases are probably syntax errors,
+ * but we'll let the core parser decide that.
+ */
 execsql_start	: K_INSERT
 					{ $$ = pstrdup(yytext); }
 				| T_WORD
 					{ $$ = pstrdup(yytext); }
-				| T_ERROR
+				| T_DBLWORD
+					{ $$ = pstrdup(yytext); }
+				| T_TRIPWORD
 					{ $$ = pstrdup(yytext); }
 				;
 
@@ -1667,32 +1666,28 @@ stmt_null		: K_NULL ';'
 					}
 				;
 
-cursor_variable	: T_SCALAR
+cursor_variable	: T_DATUM
 					{
-						if (yylval.scalar->dtype != PLPGSQL_DTYPE_VAR)
+						if (yylval.datum->dtype != PLPGSQL_DTYPE_VAR)
 							yyerror("cursor variable must be a simple variable");
 
-						if (((PLpgSQL_var *) yylval.scalar)->datatype->typoid != REFCURSOROID)
+						if (((PLpgSQL_var *) yylval.datum)->datatype->typoid != REFCURSOROID)
 						{
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("variable \"%s\" must be of type cursor or refcursor",
-											((PLpgSQL_var *) yylval.scalar)->refname)));
+											((PLpgSQL_var *) yylval.datum)->refname)));
 						}
-						$$ = (PLpgSQL_var *) yylval.scalar;
-					}
-				| T_ROW
-					{
-						yyerror("expected a cursor or refcursor variable");
-					}
-				| T_RECORD
-					{
-						yyerror("expected a cursor or refcursor variable");
+						$$ = (PLpgSQL_var *) yylval.datum;
 					}
 				| T_WORD
 					{
-						yyerror("expected a cursor or refcursor variable");
+						/* just to give a better message than "syntax error" */
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("\"%s\" is not a known variable",
+										yytext)));
 					}
 				;
 
@@ -1852,21 +1847,13 @@ opt_exitcond	: ';'
 				;
 
 /*
- * need all the options because scanner will have tried to resolve as variable
+ * need both options because scanner will have tried to resolve as variable
  */
 any_identifier	: T_WORD
 					{
 						$$ = yytext;
 					}
-				| T_SCALAR
-					{
-						$$ = yytext;
-					}
-				| T_RECORD
-					{
-						$$ = yytext;
-					}
-				| T_ROW
+				| T_DATUM
 					{
 						$$ = yytext;
 					}
@@ -1941,12 +1928,17 @@ read_sql_construct(int until,
 	int					tok;
 	int					lno;
 	StringInfoData		ds;
+	bool				save_LookupIdentifiers;
 	int					parenlevel = 0;
 	PLpgSQL_expr		*expr;
 
 	lno = plpgsql_scanner_lineno();
 	initStringInfo(&ds);
 	appendStringInfoString(&ds, sqlstart);
+
+	/* no need to lookup identifiers within the SQL text */
+	save_LookupIdentifiers = plpgsql_LookupIdentifiers;
+	plpgsql_LookupIdentifiers = false;
 
 	for (;;)
 	{
@@ -1992,6 +1984,8 @@ read_sql_construct(int until,
 		appendStringInfoString(&ds, yytext);
 	}
 
+	plpgsql_LookupIdentifiers = save_LookupIdentifiers;
+
 	if (endtoken)
 		*endtoken = tok;
 
@@ -2019,19 +2013,100 @@ read_datatype(int tok)
 	bool				needspace = false;
 	int					parenlevel = 0;
 
+	/* Should always be called with LookupIdentifiers off */
+	Assert(!plpgsql_LookupIdentifiers);
+
 	lno = plpgsql_scanner_lineno();
+
+	initStringInfo(&ds);
 
 	/* Often there will be a lookahead token, but if not, get one */
 	if (tok == YYEMPTY)
 		tok = yylex();
 
-	if (tok == T_DTYPE)
+	/*
+	 * If we have a single, double, or triple identifier, check for %TYPE
+	 * and %ROWTYPE constructs.
+	 */
+	if (tok == T_WORD)
 	{
-		/* lexer found word%TYPE and did its thing already */
-		return yylval.dtype;
+		appendStringInfoString(&ds, yytext);
+		tok = yylex();
+		if (tok == '%')
+		{
+			tok = yylex();
+			if (pg_strcasecmp(yytext, "type") == 0)
+			{
+				result = plpgsql_parse_wordtype(ds.data);
+				if (result)
+				{
+					pfree(ds.data);
+					return result;
+				}
+			}
+			else if (pg_strcasecmp(yytext, "rowtype") == 0)
+			{
+				result = plpgsql_parse_wordrowtype(ds.data);
+				if (result)
+				{
+					pfree(ds.data);
+					return result;
+				}
+			}
+			appendStringInfoString(&ds, " %");
+		}
+		needspace = true;
 	}
-
-	initStringInfo(&ds);
+	else if (tok == T_DBLWORD)
+	{
+		appendStringInfoString(&ds, yytext);
+		tok = yylex();
+		if (tok == '%')
+		{
+			tok = yylex();
+			if (pg_strcasecmp(yytext, "type") == 0)
+			{
+				result = plpgsql_parse_dblwordtype(ds.data);
+				if (result)
+				{
+					pfree(ds.data);
+					return result;
+				}
+			}
+			else if (pg_strcasecmp(yytext, "rowtype") == 0)
+			{
+				result = plpgsql_parse_dblwordrowtype(ds.data);
+				if (result)
+				{
+					pfree(ds.data);
+					return result;
+				}
+			}
+			appendStringInfoString(&ds, " %");
+		}
+		needspace = true;
+	}
+	else if (tok == T_TRIPWORD)
+	{
+		appendStringInfoString(&ds, yytext);
+		tok = yylex();
+		if (tok == '%')
+		{
+			tok = yylex();
+			if (pg_strcasecmp(yytext, "type") == 0)
+			{
+				result = plpgsql_parse_tripwordtype(ds.data);
+				if (result)
+				{
+					pfree(ds.data);
+					return result;
+				}
+			}
+			/* there's no tripword rowtype construct */
+			appendStringInfoString(&ds, " %");
+		}
+		needspace = true;
+	}
 
 	while (tok != ';')
 	{
@@ -2080,6 +2155,7 @@ static PLpgSQL_stmt *
 make_execsql_stmt(const char *sqlstart, int lineno)
 {
 	StringInfoData		ds;
+	bool				save_LookupIdentifiers;
 	PLpgSQL_stmt_execsql *execsql;
 	PLpgSQL_expr		*expr;
 	PLpgSQL_row			*row = NULL;
@@ -2091,6 +2167,10 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 
 	initStringInfo(&ds);
 	appendStringInfoString(&ds, sqlstart);
+
+	/* no need to lookup identifiers within the SQL text */
+	save_LookupIdentifiers = plpgsql_LookupIdentifiers;
+	plpgsql_LookupIdentifiers = false;
 
 	/*
 	 * We have to special-case the sequence INSERT INTO, because we don't want
@@ -2119,7 +2199,9 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 			if (have_into)
 				yyerror("INTO specified more than once");
 			have_into = true;
+			plpgsql_LookupIdentifiers = true;
 			read_into_target(&rec, &row, &have_strict);
+			plpgsql_LookupIdentifiers = false;
 			continue;
 		}
 
@@ -2127,6 +2209,8 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 			appendStringInfoChar(&ds, ' ');
 		appendStringInfoString(&ds, yytext);
 	}
+
+	plpgsql_LookupIdentifiers = save_LookupIdentifiers;
 
 	expr = palloc0(sizeof(PLpgSQL_expr));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
@@ -2233,7 +2317,7 @@ read_fetch_direction(void)
 		/* empty direction */
 		check_FROM = false;
 	}
-	else if (tok == T_SCALAR)
+	else if (tok == T_DATUM)
 	{
 		/* Assume there's no direction clause and tok is a cursor name */
 		plpgsql_push_back_token(tok);
@@ -2245,7 +2329,7 @@ read_fetch_direction(void)
 		 * Assume it's a count expression with no preceding keyword.
 		 * Note: we allow this syntax because core SQL does, but we don't
 		 * document it because of the ambiguity with the omitted-direction
-		 * case.  For instance, "MOVE n IN c" will fail if n is a scalar.
+		 * case.  For instance, "MOVE n IN c" will fail if n is a variable.
 		 * Perhaps this can be improved someday, but it's hardly worth a
 		 * lot of work.
 		 */
@@ -2342,12 +2426,12 @@ make_return_stmt(int lineno)
 				/* we allow this to support RETURN NULL in triggers */
 				break;
 
-			case T_ROW:
-				new->retvarno = yylval.row->dno;
-				break;
-
-			case T_RECORD:
-				new->retvarno = yylval.rec->dno;
+			case T_DATUM:
+				if (yylval.datum->dtype == PLPGSQL_DTYPE_ROW ||
+					yylval.datum->dtype == PLPGSQL_DTYPE_REC)
+					new->retvarno = yylval.datum->dno;
+				else
+					yyerror("RETURN must specify a record or row variable in function returning row");
 				break;
 
 			default:
@@ -2395,12 +2479,12 @@ make_return_next_stmt(int lineno)
 	{
 		switch (yylex())
 		{
-			case T_ROW:
-				new->retvarno = yylval.row->dno;
-				break;
-
-			case T_RECORD:
-				new->retvarno = yylval.rec->dno;
+			case T_DATUM:
+				if (yylval.datum->dtype == PLPGSQL_DTYPE_ROW ||
+					yylval.datum->dtype == PLPGSQL_DTYPE_REC)
+					new->retvarno = yylval.datum->dno;
+				else
+					yyerror("RETURN NEXT must specify a record or row variable in function returning row");
 				break;
 
 			default:
@@ -2517,18 +2601,21 @@ read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
 
 	switch (tok)
 	{
-		case T_ROW:
-			*row = yylval.row;
-			check_assignable((PLpgSQL_datum *) *row);
-			break;
-
-		case T_RECORD:
-			*rec = yylval.rec;
-			check_assignable((PLpgSQL_datum *) *rec);
-			break;
-
-		case T_SCALAR:
-			*row = read_into_scalar_list(yytext, yylval.scalar);
+		case T_DATUM:
+			if (yylval.datum->dtype == PLPGSQL_DTYPE_ROW)
+			{
+				check_assignable(yylval.datum);
+				*row = (PLpgSQL_row *) yylval.datum;
+			}
+			else if (yylval.datum->dtype == PLPGSQL_DTYPE_REC)
+			{
+				check_assignable(yylval.datum);
+				*rec = (PLpgSQL_rec *) yylval.datum;
+			}
+			else
+			{
+				*row = read_into_scalar_list(yytext, yylval.datum);
+			}
 			break;
 
 		default:
@@ -2576,17 +2663,23 @@ read_into_scalar_list(const char *initial_name,
 		tok = yylex();
 		switch(tok)
 		{
-			case T_SCALAR:
-				check_assignable(yylval.scalar);
+			case T_DATUM:
+				check_assignable(yylval.datum);
+				if (yylval.datum->dtype == PLPGSQL_DTYPE_ROW ||
+					yylval.datum->dtype == PLPGSQL_DTYPE_REC)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("\"%s\" is not a scalar variable",
+									yytext)));
 				fieldnames[nfields] = pstrdup(yytext);
-				varnos[nfields++]	= yylval.scalar->dno;
+				varnos[nfields++]	= yylval.datum->dno;
 				break;
 
 			default:
 				plpgsql_error_lineno = plpgsql_scanner_lineno();
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"%s\" is not a scalar variable",
+						 errmsg("\"%s\" is not a known variable",
 								yytext)));
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.141 2009/11/06 18:37:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.142 2009/11/07 00:52:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1006,7 +1006,7 @@ plpgsql_param_ref(ParseState *pstate, ParamRef *pref)
 
 	snprintf(pname, sizeof(pname), "$%d", pref->number);
 
-	nse = plpgsql_ns_lookup(expr->ns,
+	nse = plpgsql_ns_lookup(expr->ns, false,
 							pname, NULL, NULL,
 							NULL);
 
@@ -1120,7 +1120,7 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 			return NULL;
 	}
 
-	nse = plpgsql_ns_lookup(expr->ns,
+	nse = plpgsql_ns_lookup(expr->ns, false,
 							name1, name2, name3,
 							&nnames);
 
@@ -1200,7 +1200,7 @@ resolve_column_ref(PLpgSQL_expr *expr, ColumnRef *cref)
 			}
 			break;
 		default:
-			elog(ERROR, "unrecognized plpgsql itemtype");
+			elog(ERROR, "unrecognized plpgsql itemtype: %d", nse->itemtype);
 	}
 
 	/* Name format doesn't match the plpgsql variable type */
@@ -1259,7 +1259,7 @@ plpgsql_parse_word(const char *word)
 	/*
 	 * Do a lookup in the current namespace stack
 	 */
-	nse = plpgsql_ns_lookup(plpgsql_ns_top(),
+	nse = plpgsql_ns_lookup(plpgsql_ns_top(), false,
 							cp[0], NULL, NULL,
 							NULL);
 	pfree(cp[0]);
@@ -1269,19 +1269,13 @@ plpgsql_parse_word(const char *word)
 		switch (nse->itemtype)
 		{
 			case PLPGSQL_NSTYPE_VAR:
-				plpgsql_yylval.scalar = plpgsql_Datums[nse->itemno];
-				return T_SCALAR;
-
-			case PLPGSQL_NSTYPE_REC:
-				plpgsql_yylval.rec = (PLpgSQL_rec *) (plpgsql_Datums[nse->itemno]);
-				return T_RECORD;
-
 			case PLPGSQL_NSTYPE_ROW:
-				plpgsql_yylval.row = (PLpgSQL_row *) (plpgsql_Datums[nse->itemno]);
-				return T_ROW;
+			case PLPGSQL_NSTYPE_REC:
+				plpgsql_yylval.datum = plpgsql_Datums[nse->itemno];
+				return T_DATUM;
 
 			default:
-				return T_ERROR;
+				elog(ERROR, "unrecognized plpgsql itemtype: %d", nse->itemtype);
 		}
 	}
 
@@ -1311,24 +1305,24 @@ plpgsql_parse_dblword(const char *word)
 	/*
 	 * Do a lookup in the current namespace stack
 	 */
-	ns = plpgsql_ns_lookup(plpgsql_ns_top(),
+	ns = plpgsql_ns_lookup(plpgsql_ns_top(), false,
 						   cp[0], cp[1], NULL,
 						   &nnames);
 	if (ns == NULL)
 	{
 		pfree(cp[0]);
 		pfree(cp[1]);
-		return T_ERROR;
+		return T_DBLWORD;
 	}
 
 	switch (ns->itemtype)
 	{
 		case PLPGSQL_NSTYPE_VAR:
 			/* Block-qualified reference to scalar variable. */
-			plpgsql_yylval.scalar = plpgsql_Datums[ns->itemno];
+			plpgsql_yylval.datum = plpgsql_Datums[ns->itemno];
 			pfree(cp[0]);
 			pfree(cp[1]);
-			return T_SCALAR;
+			return T_DATUM;
 
 		case PLPGSQL_NSTYPE_REC:
 			if (nnames == 1)
@@ -1346,19 +1340,19 @@ plpgsql_parse_dblword(const char *word)
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
 
-				plpgsql_yylval.scalar = (PLpgSQL_datum *) new;
+				plpgsql_yylval.datum = (PLpgSQL_datum *) new;
 
 				pfree(cp[0]);
 				pfree(cp[1]);
-				return T_SCALAR;
+				return T_DATUM;
 			}
 			else
 			{
 				/* Block-qualified reference to record variable. */
-				plpgsql_yylval.rec = (PLpgSQL_rec *) (plpgsql_Datums[ns->itemno]);
+				plpgsql_yylval.datum = plpgsql_Datums[ns->itemno];
 				pfree(cp[0]);
 				pfree(cp[1]);
-				return T_RECORD;
+				return T_DATUM;
 			}
 
 		case PLPGSQL_NSTYPE_ROW:
@@ -1377,10 +1371,10 @@ plpgsql_parse_dblword(const char *word)
 					if (row->fieldnames[i] &&
 						strcmp(row->fieldnames[i], cp[1]) == 0)
 					{
-						plpgsql_yylval.scalar = plpgsql_Datums[row->varnos[i]];
+						plpgsql_yylval.datum = plpgsql_Datums[row->varnos[i]];
 						pfree(cp[0]);
 						pfree(cp[1]);
-						return T_SCALAR;
+						return T_DATUM;
 					}
 				}
 				ereport(ERROR,
@@ -1391,10 +1385,10 @@ plpgsql_parse_dblword(const char *word)
 			else
 			{
 				/* Block-qualified reference to row variable. */
-				plpgsql_yylval.row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
+				plpgsql_yylval.datum = plpgsql_Datums[ns->itemno];
 				pfree(cp[0]);
 				pfree(cp[1]);
-				return T_ROW;
+				return T_DATUM;
 			}
 
 		default:
@@ -1403,7 +1397,7 @@ plpgsql_parse_dblword(const char *word)
 
 	pfree(cp[0]);
 	pfree(cp[1]);
-	return T_ERROR;
+	return T_DBLWORD;
 }
 
 
@@ -1426,7 +1420,7 @@ plpgsql_parse_tripword(const char *word)
 	 * Do a lookup in the current namespace stack. Must find a qualified
 	 * reference.
 	 */
-	ns = plpgsql_ns_lookup(plpgsql_ns_top(),
+	ns = plpgsql_ns_lookup(plpgsql_ns_top(), false,
 						   cp[0], cp[1], cp[2],
 						   &nnames);
 	if (ns == NULL || nnames != 2)
@@ -1434,7 +1428,7 @@ plpgsql_parse_tripword(const char *word)
 		pfree(cp[0]);
 		pfree(cp[1]);
 		pfree(cp[2]);
-		return T_ERROR;
+		return T_TRIPWORD;
 	}
 
 	switch (ns->itemtype)
@@ -1454,13 +1448,13 @@ plpgsql_parse_tripword(const char *word)
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
 
-				plpgsql_yylval.scalar = (PLpgSQL_datum *) new;
+				plpgsql_yylval.datum = (PLpgSQL_datum *) new;
 
 				pfree(cp[0]);
 				pfree(cp[1]);
 				pfree(cp[2]);
 
-				return T_SCALAR;
+				return T_DATUM;
 			}
 
 		case PLPGSQL_NSTYPE_ROW:
@@ -1478,13 +1472,13 @@ plpgsql_parse_tripword(const char *word)
 					if (row->fieldnames[i] &&
 						strcmp(row->fieldnames[i], cp[2]) == 0)
 					{
-						plpgsql_yylval.scalar = plpgsql_Datums[row->varnos[i]];
+						plpgsql_yylval.datum = plpgsql_Datums[row->varnos[i]];
 
 						pfree(cp[0]);
 						pfree(cp[1]);
 						pfree(cp[2]);
 
-						return T_SCALAR;
+						return T_DATUM;
 					}
 				}
 				ereport(ERROR,
@@ -1500,41 +1494,34 @@ plpgsql_parse_tripword(const char *word)
 	pfree(cp[0]);
 	pfree(cp[1]);
 	pfree(cp[2]);
-	return T_ERROR;
+	return T_TRIPWORD;
 }
 
 
 /* ----------
  * plpgsql_parse_wordtype	The scanner found word%TYPE. word can be
  *				a variable name or a basetype.
+ *
+ * Returns datatype struct, or NULL if no match found for word.
  * ----------
  */
-int
-plpgsql_parse_wordtype(char *word)
+PLpgSQL_type *
+plpgsql_parse_wordtype(const char *word)
 {
+	PLpgSQL_type *dtype;
 	PLpgSQL_nsitem *nse;
-	bool		old_nsstate;
 	HeapTuple	typeTup;
-	char	   *cp[2];
-	int			i;
+	char	   *cp[1];
 
 	/* Do case conversion and word separation */
-	/* We convert %type to .type momentarily to keep converter happy */
-	i = strlen(word) - 5;
-	Assert(word[i] == '%');
-	word[i] = '.';
-	plpgsql_convert_ident(word, cp, 2);
-	word[i] = '%';
-	pfree(cp[1]);
+	plpgsql_convert_ident(word, cp, 1);
 
 	/*
-	 * Do a lookup in the current namespace stack.  Ensure we scan all levels.
+	 * Do a lookup in the current namespace stack
 	 */
-	old_nsstate = plpgsql_ns_setlocal(false);
-	nse = plpgsql_ns_lookup(plpgsql_ns_top(),
+	nse = plpgsql_ns_lookup(plpgsql_ns_top(), false,
 							cp[0], NULL, NULL,
 							NULL);
-	plpgsql_ns_setlocal(old_nsstate);
 
 	if (nse != NULL)
 	{
@@ -1542,13 +1529,12 @@ plpgsql_parse_wordtype(char *word)
 		switch (nse->itemtype)
 		{
 			case PLPGSQL_NSTYPE_VAR:
-				plpgsql_yylval.dtype = ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
-				return T_DTYPE;
+				return ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
 
-				/* XXX perhaps allow REC here? */
+				/* XXX perhaps allow REC/ROW here? */
 
 			default:
-				return T_ERROR;
+				return NULL;
 		}
 	}
 
@@ -1566,14 +1552,14 @@ plpgsql_parse_wordtype(char *word)
 		{
 			ReleaseSysCache(typeTup);
 			pfree(cp[0]);
-			return T_ERROR;
+			return NULL;
 		}
 
-		plpgsql_yylval.dtype = build_datatype(typeTup, -1);
+		dtype = build_datatype(typeTup, -1);
 
 		ReleaseSysCache(typeTup);
 		pfree(cp[0]);
-		return T_DTYPE;
+		return dtype;
 	}
 
 	/*
@@ -1581,7 +1567,7 @@ plpgsql_parse_wordtype(char *word)
 	 * us.
 	 */
 	pfree(cp[0]);
-	return T_ERROR;
+	return NULL;
 }
 
 
@@ -1589,49 +1575,38 @@ plpgsql_parse_wordtype(char *word)
  * plpgsql_parse_dblwordtype		Same lookup for word.word%TYPE
  * ----------
  */
-int
-plpgsql_parse_dblwordtype(char *word)
+PLpgSQL_type *
+plpgsql_parse_dblwordtype(const char *word)
 {
+	PLpgSQL_type *dtype = NULL;
 	PLpgSQL_nsitem *nse;
-	bool		old_nsstate;
 	Oid			classOid;
 	HeapTuple	classtup = NULL;
 	HeapTuple	attrtup = NULL;
 	HeapTuple	typetup = NULL;
 	Form_pg_class classStruct;
 	Form_pg_attribute attrStruct;
-	char	   *cp[3];
-	int			i;
+	char	   *cp[2];
 	MemoryContext oldCxt;
-	int			result = T_ERROR;
 
 	/* Avoid memory leaks in the long-term function context */
 	oldCxt = MemoryContextSwitchTo(compile_tmp_cxt);
 
 	/* Do case conversion and word separation */
-	/* We convert %type to .type momentarily to keep converter happy */
-	i = strlen(word) - 5;
-	Assert(word[i] == '%');
-	word[i] = '.';
-	plpgsql_convert_ident(word, cp, 3);
-	word[i] = '%';
-	pfree(cp[2]);
+	plpgsql_convert_ident(word, cp, 2);
 
 	/*
-	 * Do a lookup in the current namespace stack.  Ensure we scan all levels.
+	 * Do a lookup in the current namespace stack.
 	 * We don't need to check number of names matched, because we will only
 	 * consider scalar variables.
 	 */
-	old_nsstate = plpgsql_ns_setlocal(false);
-	nse = plpgsql_ns_lookup(plpgsql_ns_top(),
+	nse = plpgsql_ns_lookup(plpgsql_ns_top(), false,
 							cp[0], cp[1], NULL,
 							NULL);
-	plpgsql_ns_setlocal(old_nsstate);
 
 	if (nse != NULL && nse->itemtype == PLPGSQL_NSTYPE_VAR)
 	{
-		plpgsql_yylval.dtype = ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
-		result = T_DTYPE;
+		dtype = ((PLpgSQL_var *) (plpgsql_Datums[nse->itemno]))->datatype;
 		goto done;
 	}
 
@@ -1677,9 +1652,8 @@ plpgsql_parse_dblwordtype(char *word)
 	 * return it
 	 */
 	MemoryContextSwitchTo(oldCxt);
-	plpgsql_yylval.dtype = build_datatype(typetup, attrStruct->atttypmod);
+	dtype = build_datatype(typetup, attrStruct->atttypmod);
 	MemoryContextSwitchTo(compile_tmp_cxt);
-	result = T_DTYPE;
 
 done:
 	if (HeapTupleIsValid(classtup))
@@ -1690,39 +1664,32 @@ done:
 		ReleaseSysCache(typetup);
 
 	MemoryContextSwitchTo(oldCxt);
-	return result;
+	return dtype;
 }
 
 /* ----------
  * plpgsql_parse_tripwordtype		Same lookup for word.word.word%TYPE
  * ----------
  */
-int
-plpgsql_parse_tripwordtype(char *word)
+PLpgSQL_type *
+plpgsql_parse_tripwordtype(const char *word)
 {
+	PLpgSQL_type *dtype = NULL;
 	Oid			classOid;
 	HeapTuple	classtup = NULL;
 	HeapTuple	attrtup = NULL;
 	HeapTuple	typetup = NULL;
 	Form_pg_class classStruct;
 	Form_pg_attribute attrStruct;
-	char	   *cp[4];
-	int			i;
+	char	   *cp[3];
 	RangeVar   *relvar;
 	MemoryContext oldCxt;
-	int			result = T_ERROR;
 
 	/* Avoid memory leaks in the long-term function context */
 	oldCxt = MemoryContextSwitchTo(compile_tmp_cxt);
 
 	/* Do case conversion and word separation */
-	/* We convert %type to .type momentarily to keep converter happy */
-	i = strlen(word) - 5;
-	Assert(word[i] == '%');
-	word[i] = '.';
-	plpgsql_convert_ident(word, cp, 4);
-	word[i] = '%';
-	pfree(cp[3]);
+	plpgsql_convert_ident(word, cp, 3);
 
 	relvar = makeRangeVar(cp[0], cp[1], -1);
 	classOid = RangeVarGetRelid(relvar, true);
@@ -1764,9 +1731,8 @@ plpgsql_parse_tripwordtype(char *word)
 	 * return it
 	 */
 	MemoryContextSwitchTo(oldCxt);
-	plpgsql_yylval.dtype = build_datatype(typetup, attrStruct->atttypmod);
+	dtype = build_datatype(typetup, attrStruct->atttypmod);
 	MemoryContextSwitchTo(compile_tmp_cxt);
-	result = T_DTYPE;
 
 done:
 	if (HeapTupleIsValid(classtup))
@@ -1777,7 +1743,7 @@ done:
 		ReleaseSysCache(typetup);
 
 	MemoryContextSwitchTo(oldCxt);
-	return result;
+	return dtype;
 }
 
 /* ----------
@@ -1785,20 +1751,15 @@ done:
  *					So word must be a table name.
  * ----------
  */
-int
-plpgsql_parse_wordrowtype(char *word)
+PLpgSQL_type *
+plpgsql_parse_wordrowtype(const char *word)
 {
+	PLpgSQL_type *dtype;
 	Oid			classOid;
-	char	   *cp[2];
-	int			i;
+	char	   *cp[1];
 
 	/* Do case conversion and word separation */
-	/* We convert %rowtype to .rowtype momentarily to keep converter happy */
-	i = strlen(word) - 8;
-	Assert(word[i] == '%');
-	word[i] = '.';
-	plpgsql_convert_ident(word, cp, 2);
-	word[i] = '%';
+	plpgsql_convert_ident(word, cp, 1);
 
 	/* Lookup the relation */
 	classOid = RelnameGetRelid(cp[0]);
@@ -1807,16 +1768,12 @@ plpgsql_parse_wordrowtype(char *word)
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("relation \"%s\" does not exist", cp[0])));
 
-	/*
-	 * Build and return the row type struct
-	 */
-	plpgsql_yylval.dtype = plpgsql_build_datatype(get_rel_type_id(classOid),
-												  -1);
+	/* Build and return the row type struct */
+	dtype = plpgsql_build_datatype(get_rel_type_id(classOid), -1);
 
 	pfree(cp[0]);
-	pfree(cp[1]);
 
-	return T_DTYPE;
+	return dtype;
 }
 
 /* ----------
@@ -1824,12 +1781,12 @@ plpgsql_parse_wordrowtype(char *word)
  *			So word must be a namespace qualified table name.
  * ----------
  */
-int
-plpgsql_parse_dblwordrowtype(char *word)
+PLpgSQL_type *
+plpgsql_parse_dblwordrowtype(const char *word)
 {
+	PLpgSQL_type *dtype;
 	Oid			classOid;
-	char	   *cp[3];
-	int			i;
+	char	   *cp[2];
 	RangeVar   *relvar;
 	MemoryContext oldCxt;
 
@@ -1837,12 +1794,7 @@ plpgsql_parse_dblwordrowtype(char *word)
 	oldCxt = MemoryContextSwitchTo(compile_tmp_cxt);
 
 	/* Do case conversion and word separation */
-	/* We convert %rowtype to .rowtype momentarily to keep converter happy */
-	i = strlen(word) - 8;
-	Assert(word[i] == '%');
-	word[i] = '.';
-	plpgsql_convert_ident(word, cp, 3);
-	word[i] = '%';
+	plpgsql_convert_ident(word, cp, 2);
 
 	/* Lookup the relation */
 	relvar = makeRangeVar(cp[0], cp[1], -1);
@@ -1852,12 +1804,12 @@ plpgsql_parse_dblwordrowtype(char *word)
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("relation \"%s.%s\" does not exist", cp[0], cp[1])));
 
-	/* Build and return the row type struct */
-	plpgsql_yylval.dtype = plpgsql_build_datatype(get_rel_type_id(classOid),
-												  -1);
-
 	MemoryContextSwitchTo(oldCxt);
-	return T_DTYPE;
+
+	/* Build and return the row type struct */
+	dtype = plpgsql_build_datatype(get_rel_type_id(classOid), -1);
+
+	return dtype;
 }
 
 /*

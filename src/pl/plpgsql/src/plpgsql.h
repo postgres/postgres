@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.120 2009/11/06 18:37:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.121 2009/11/07 00:52:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -773,6 +773,7 @@ typedef struct
  **********************************************************************/
 
 extern bool plpgsql_DumpExecTree;
+extern bool plpgsql_LookupIdentifiers;
 extern bool plpgsql_SpaceScanned;
 extern int	plpgsql_nDatums;
 extern PLpgSQL_datum **plpgsql_Datums;
@@ -807,11 +808,11 @@ extern void plpgsql_parser_setup(struct ParseState *pstate,
 extern int	plpgsql_parse_word(const char *word);
 extern int	plpgsql_parse_dblword(const char *word);
 extern int	plpgsql_parse_tripword(const char *word);
-extern int	plpgsql_parse_wordtype(char *word);
-extern int	plpgsql_parse_dblwordtype(char *word);
-extern int	plpgsql_parse_tripwordtype(char *word);
-extern int	plpgsql_parse_wordrowtype(char *word);
-extern int	plpgsql_parse_dblwordrowtype(char *word);
+extern PLpgSQL_type *plpgsql_parse_wordtype(const char *word);
+extern PLpgSQL_type *plpgsql_parse_dblwordtype(const char *word);
+extern PLpgSQL_type *plpgsql_parse_tripwordtype(const char *word);
+extern PLpgSQL_type *plpgsql_parse_wordrowtype(const char *word);
+extern PLpgSQL_type *plpgsql_parse_dblwordrowtype(const char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
@@ -857,12 +858,11 @@ extern Oid exec_get_rec_fieldtype(PLpgSQL_rec *rec, const char *fieldname,
  * ----------
  */
 extern void plpgsql_ns_init(void);
-extern bool plpgsql_ns_setlocal(bool flag);
 extern void plpgsql_ns_push(const char *label);
 extern void plpgsql_ns_pop(void);
 extern PLpgSQL_nsitem *plpgsql_ns_top(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
-extern PLpgSQL_nsitem *plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur,
+extern PLpgSQL_nsitem *plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur, bool localmode,
 										 const char *name1, const char *name2,
 										 const char *name3, int *names_used);
 extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,

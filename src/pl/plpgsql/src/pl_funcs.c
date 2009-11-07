@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.84 2009/11/06 18:37:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.85 2009/11/07 00:52:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@
  * ----------
  */
 static PLpgSQL_nsitem *ns_top = NULL;
-static bool ns_localmode = false;
 
 
 /* ----------
@@ -46,32 +45,6 @@ void
 plpgsql_ns_init(void)
 {
 	ns_top = NULL;
-	ns_localmode = false;
-}
-
-
-/* ----------
- * plpgsql_ns_setlocal			Tell plpgsql_ns_lookup whether to
- *					look into the current level only.
- *
- * This is a crock, but in the current design we need it because scan.l
- * initiates name lookup, and the scanner does not know whether we are
- * examining a name being declared in a DECLARE section.  For that case
- * we only want to know if there is a conflicting name earlier in the
- * same DECLARE section.  So the grammar must temporarily set local mode
- * before scanning decl_varnames.  This should eventually go away in favor
- * of a localmode argument to plpgsql_ns_lookup, or perhaps some less
- * indirect method of dealing with duplicate namespace entries.
- * ----------
- */
-bool
-plpgsql_ns_setlocal(bool flag)
-{
-	bool		oldstate;
-
-	oldstate = ns_localmode;
-	ns_localmode = flag;
-	return oldstate;
 }
 
 
@@ -140,6 +113,8 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
  *
  * Note that this only searches for variables, not labels.
  *
+ * If localmode is TRUE, only the topmost block level is searched.
+ *
  * name1 must be non-NULL.	Pass NULL for name2 and/or name3 if parsing a name
  * with fewer than three components.
  *
@@ -154,7 +129,7 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
  * ----------
  */
 PLpgSQL_nsitem *
-plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur,
+plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur, bool localmode,
 				  const char *name1, const char *name2, const char *name3,
 				  int *names_used)
 {
@@ -201,7 +176,7 @@ plpgsql_ns_lookup(PLpgSQL_nsitem *ns_cur,
 			}
 		}
 
-		if (ns_localmode)
+		if (localmode)
 			break;				/* do not look into upper levels */
 
 		ns_cur = nsitem->prev;

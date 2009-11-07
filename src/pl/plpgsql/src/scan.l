@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.73 2009/11/05 16:58:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.74 2009/11/07 00:52:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ static int	cur_line_num;
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char    *dolqstart;      /* current $foo$ quote start string */
 
+bool plpgsql_LookupIdentifiers = true;
 bool plpgsql_SpaceScanned = false;
 %}
 
@@ -209,52 +210,28 @@ dump			{ return O_DUMP;			}
      */
 {identifier}					{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	if (!plpgsql_LookupIdentifiers) return T_WORD;
 	return plpgsql_parse_word(yytext); }
 {identifier}{space}*\.{space}*{identifier}	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	if (!plpgsql_LookupIdentifiers) return T_DBLWORD;
 	return plpgsql_parse_dblword(yytext); }
 {identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	if (!plpgsql_LookupIdentifiers) return T_TRIPWORD;
 	return plpgsql_parse_tripword(yytext); }
-{identifier}{space}*%TYPE		{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_wordtype(yytext); }
-{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_dblwordtype(yytext); }
-{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_tripwordtype(yytext); }
-{identifier}{space}*%ROWTYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_wordrowtype(yytext); }
-{identifier}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_dblwordrowtype(yytext); }
 {param}							{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	if (!plpgsql_LookupIdentifiers) return T_WORD;
 	return plpgsql_parse_word(yytext); }
 {param}{space}*\.{space}*{identifier}	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	if (!plpgsql_LookupIdentifiers) return T_DBLWORD;
 	return plpgsql_parse_dblword(yytext); }
 {param}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	if (!plpgsql_LookupIdentifiers) return T_TRIPWORD;
 	return plpgsql_parse_tripword(yytext); }
-{param}{space}*%TYPE			{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_wordtype(yytext); }
-{param}{space}*\.{space}*{identifier}{space}*%TYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_dblwordtype(yytext); }
-{param}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_tripwordtype(yytext); }
-{param}{space}*%ROWTYPE		{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_wordrowtype(yytext); }
-{param}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
-	plpgsql_error_lineno = plpgsql_scanner_lineno();
-	return plpgsql_parse_dblwordrowtype(yytext); }
 
 {digit}+		{ return T_NUMBER;			}
 
@@ -527,6 +504,8 @@ plpgsql_scanner_init(const char *str)
         cur_line_start++;
 
 	BEGIN(INITIAL);
+	plpgsql_LookupIdentifiers = true;
+	plpgsql_SpaceScanned = false;
 }
 
 /*
