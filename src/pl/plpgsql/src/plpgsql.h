@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.121 2009/11/07 00:52:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.122 2009/11/09 00:26:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "fmgr.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
 #include "utils/tuplestore.h"
 
@@ -774,11 +775,9 @@ typedef struct
 
 extern bool plpgsql_DumpExecTree;
 extern bool plpgsql_LookupIdentifiers;
-extern bool plpgsql_SpaceScanned;
 extern int	plpgsql_nDatums;
 extern PLpgSQL_datum **plpgsql_Datums;
 
-extern int	plpgsql_error_lineno;
 extern char *plpgsql_error_funcname;
 
 /* linkage to the real yytext variable */
@@ -813,7 +812,6 @@ extern PLpgSQL_type *plpgsql_parse_dblwordtype(const char *word);
 extern PLpgSQL_type *plpgsql_parse_tripwordtype(const char *word);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(const char *word);
 extern PLpgSQL_type *plpgsql_parse_dblwordrowtype(const char *word);
-extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,
@@ -826,7 +824,6 @@ extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
 extern void plpgsql_adddatum(PLpgSQL_datum *new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_HashTableInit(void);
-extern void plpgsql_compile_error_callback(void *arg);
 
 /* ----------
  * Functions in pl_handler.c
@@ -885,8 +882,12 @@ extern int	plpgsql_yyparse(void);
 extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
+extern void plpgsql_append_source_text(StringInfo buf,
+									   int startlocation, int endlocation);
+extern int	plpgsql_scanner_errposition(int location);
 extern void plpgsql_yyerror(const char *message);
-extern int	plpgsql_scanner_lineno(void);
+extern int	plpgsql_location_to_lineno(int location);
+extern int	plpgsql_latest_lineno(void);
 extern void plpgsql_scanner_init(const char *str);
 extern void plpgsql_scanner_finish(void);
 

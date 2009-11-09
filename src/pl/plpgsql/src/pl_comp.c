@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.142 2009/11/07 00:52:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.143 2009/11/09 00:26:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,6 @@ int			plpgsql_nDatums;
 PLpgSQL_datum **plpgsql_Datums;
 static int	datums_last = 0;
 
-int			plpgsql_error_lineno;
 char	   *plpgsql_error_funcname;
 bool		plpgsql_DumpExecTree = false;
 bool		plpgsql_check_syntax = false;
@@ -95,6 +94,7 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   PLpgSQL_function *function,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
+static void plpgsql_compile_error_callback(void *arg);
 static void add_dummy_return(PLpgSQL_function *function);
 static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
@@ -301,7 +301,6 @@ do_compile(FunctionCallInfo fcinfo,
 	plpgsql_scanner_init(proc_source);
 
 	plpgsql_error_funcname = pstrdup(NameStr(procStruct->proname));
-	plpgsql_error_lineno = 0;
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -713,7 +712,6 @@ do_compile(FunctionCallInfo fcinfo,
 	 */
 	error_context_stack = plerrcontext.previous;
 	plpgsql_error_funcname = NULL;
-	plpgsql_error_lineno = 0;
 
 	plpgsql_check_syntax = false;
 
@@ -752,7 +750,6 @@ plpgsql_compile_inline(char *proc_source)
 	plpgsql_scanner_init(proc_source);
 
 	plpgsql_error_funcname = func_name;
-	plpgsql_error_lineno = 0;
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -851,7 +848,6 @@ plpgsql_compile_inline(char *proc_source)
 	 */
 	error_context_stack = plerrcontext.previous;
 	plpgsql_error_funcname = NULL;
-	plpgsql_error_lineno = 0;
 
 	plpgsql_check_syntax = false;
 
@@ -865,10 +861,8 @@ plpgsql_compile_inline(char *proc_source)
  * error context callback to let us supply a call-stack traceback.
  * If we are validating or executing an anonymous code block, the function
  * source text is passed as an argument.
- *
- * This function is public only for the sake of an assertion in gram.y
  */
-void
+static void
 plpgsql_compile_error_callback(void *arg)
 {
 	if (arg)
@@ -888,7 +882,7 @@ plpgsql_compile_error_callback(void *arg)
 
 	if (plpgsql_error_funcname)
 		errcontext("compilation of PL/pgSQL function \"%s\" near line %d",
-				   plpgsql_error_funcname, plpgsql_error_lineno);
+				   plpgsql_error_funcname, plpgsql_latest_lineno());
 }
 
 
@@ -2063,25 +2057,6 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 	}
 
 	return row;
-}
-
-
-/* ----------
- * plpgsql_parse_datatype			Scanner found something that should
- *					be a datatype name.
- * ----------
- */
-PLpgSQL_type *
-plpgsql_parse_datatype(const char *string)
-{
-	Oid			type_id;
-	int32		typmod;
-
-	/* Let the main parser try to parse it under standard SQL rules */
-	parseTypeString(string, &type_id, &typmod);
-
-	/* Okay, build a PLpgSQL_type data structure for it */
-	return plpgsql_build_datatype(type_id, typmod);
 }
 
 /*

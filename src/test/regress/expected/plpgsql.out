@@ -1747,7 +1747,7 @@ create function f1(in i int, out j int) returns int as $$
 begin
   return i+1;
 end$$ language plpgsql;
-ERROR:  RETURN cannot have a parameter in function with OUT parameters at or near "i"
+ERROR:  RETURN cannot have a parameter in function with OUT parameters
 LINE 3:   return i+1;
                  ^
 create function f1(in i int, out j int) as $$
@@ -2066,13 +2066,13 @@ begin
 end$$ language plpgsql;
 select test_variable_storage();
 NOTICE:  should see this
-CONTEXT:  SQL statement "SELECT  trap_zero_divide(-100)"
+CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
 PL/pgSQL function "test_variable_storage" line 7 at PERFORM
 NOTICE:  should see this only if -100 <> 0
-CONTEXT:  SQL statement "SELECT  trap_zero_divide(-100)"
+CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
 PL/pgSQL function "test_variable_storage" line 7 at PERFORM
 NOTICE:  should see this only if -100 fits in smallint
-CONTEXT:  SQL statement "SELECT  trap_zero_divide(-100)"
+CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
 PL/pgSQL function "test_variable_storage" line 7 at PERFORM
  test_variable_storage 
 -----------------------
@@ -2325,10 +2325,8 @@ begin
     return a;
 end$$ language plpgsql;
 ERROR:  syntax error at or near "Johnny"
-LINE 1: Johnny Yuma
-        ^
-QUERY:  Johnny Yuma
-CONTEXT:  SQL statement in PL/PgSQL function "bad_sql1" near line 4
+LINE 5:     Johnny Yuma;
+            ^
 create function bad_sql2() returns int as $$
 declare r record;
 begin
@@ -2338,26 +2336,22 @@ begin
     return 5;
 end;$$ language plpgsql;
 ERROR:  syntax error at or near "the"
-LINE 1:  select I fought the law, the law won
-                         ^
-QUERY:   select I fought the law, the law won
-CONTEXT:  SQL statement in PL/PgSQL function "bad_sql2" near line 3
+LINE 4:     for r in select I fought the law, the law won LOOP
+                                     ^
 -- a RETURN expression is mandatory, except for void-returning
 -- functions, where it is not allowed
 create function missing_return_expr() returns int as $$
 begin
     return ;
 end;$$ language plpgsql;
-ERROR:  syntax error at end of input
-LINE 1: SELECT 
-               ^
-QUERY:  SELECT 
-CONTEXT:  SQL statement in PL/PgSQL function "missing_return_expr" near line 2
+ERROR:  missing expression at or near ";"
+LINE 3:     return ;
+                   ^
 create function void_return_expr() returns void as $$
 begin
     return 5;
 end;$$ language plpgsql;
-ERROR:  RETURN cannot have a parameter in function returning void at or near "5"
+ERROR:  RETURN cannot have a parameter in function returning void
 LINE 3:     return 5;
                    ^
 -- VOID functions are allowed to omit RETURN
@@ -2427,9 +2421,9 @@ end; $$ language plpgsql;
 -- blocks
 select excpt_test1();
 ERROR:  column "sqlstate" does not exist
-LINE 1: SELECT  sqlstate
-                ^
-QUERY:  SELECT  sqlstate
+LINE 1: SELECT sqlstate
+               ^
+QUERY:  SELECT sqlstate
 CONTEXT:  PL/pgSQL function "excpt_test1" line 2 at RAISE
 create function excpt_test2() returns void as $$
 begin
@@ -2442,9 +2436,9 @@ end; $$ language plpgsql;
 -- should fail
 select excpt_test2();
 ERROR:  column "sqlstate" does not exist
-LINE 1: SELECT  sqlstate
-                ^
-QUERY:  SELECT  sqlstate
+LINE 1: SELECT sqlstate
+               ^
+QUERY:  SELECT sqlstate
 CONTEXT:  PL/pgSQL function "excpt_test2" line 4 at RAISE
 create function excpt_test3() returns void as $$
 begin
@@ -2714,7 +2708,8 @@ begin
 end;
 $$ language plpgsql;
 ERROR:  end label "outer_label" differs from block's label "inner_label"
-CONTEXT:  compilation of PL/pgSQL function "end_label3" near line 6
+LINE 7:   end loop outer_label;
+                   ^
 -- should fail: end label on a block without a start label
 create function end_label4() returns void as $$
 <<outer_label>>
@@ -2725,7 +2720,8 @@ begin
 end;
 $$ language plpgsql;
 ERROR:  end label "outer_label" specified for unlabelled block
-CONTEXT:  compilation of PL/pgSQL function "end_label4" near line 5
+LINE 6:   end loop outer_label;
+                   ^
 -- using list of scalars in fori and fore stmts
 create function for_vect() returns void as $proc$
 <<lbl>>declare a integer; b varchar; c varchar; r record;
@@ -3308,7 +3304,8 @@ begin
 end;
 $$ language plpgsql;
 ERROR:  cursor FOR loop must use a bound cursor variable
-CONTEXT:  compilation of PL/pgSQL function "forc_bad" near line 4
+LINE 5:   for r in c loop
+                   ^
 -- test RETURN QUERY EXECUTE
 create or replace function return_dquery()
 returns setof int as $$
@@ -3839,21 +3836,20 @@ begin
 end
 $$ language plpgsql;
 WARNING:  nonstandard use of \\ in a string literal
+LINE 3:   raise notice 'foo\\bar\041baz';
+                       ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-CONTEXT:  string literal in PL/PgSQL function "strtest" near line 2
 WARNING:  nonstandard use of \\ in a string literal
-LINE 1: SELECT  'foo\\bar\041baz'
-                ^
+LINE 4:   return 'foo\\bar\041baz';
+                 ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-QUERY:  SELECT  'foo\\bar\041baz'
-CONTEXT:  SQL statement in PL/PgSQL function "strtest" near line 3
 select strtest();
 NOTICE:  foo\bar!baz
 WARNING:  nonstandard use of \\ in a string literal
-LINE 1: SELECT  'foo\\bar\041baz'
-                ^
+LINE 1: SELECT 'foo\\bar\041baz'
+               ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-QUERY:  SELECT  'foo\\bar\041baz'
+QUERY:  SELECT 'foo\\bar\041baz'
 CONTEXT:  PL/pgSQL function "strtest" line 3 at RETURN
    strtest   
 -------------
@@ -3922,7 +3918,7 @@ NOTICE:  105, Office
 NOTICE:  106, Office
 -- these are to check syntax error reporting
 DO LANGUAGE plpgsql $$begin return 1; end$$;
-ERROR:  RETURN cannot have a parameter in function returning void at or near "1"
+ERROR:  RETURN cannot have a parameter in function returning void
 LINE 1: DO LANGUAGE plpgsql $$begin return 1; end$$;
                                            ^
 DO LANGUAGE plpgsql $$
@@ -3934,9 +3930,9 @@ BEGIN
     END LOOP;
 END$$;
 ERROR:  column "foo" does not exist
-LINE 1:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY room...
-                                         ^
-QUERY:   SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+LINE 1: SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomn...
+                                        ^
+QUERY:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
 CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
