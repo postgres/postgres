@@ -3292,6 +3292,52 @@ select * from forc_test;
  1000 | 20
 (10 rows)
 
+-- same, with a cursor whose portal name doesn't match variable name
+create or replace function forc01() returns void as $$
+declare
+  c refcursor := 'fooled_ya';
+  r record;
+begin
+  open c for select * from forc_test;
+  loop
+    fetch c into r;
+    exit when not found;
+    raise notice '%, %', r.i, r.j;
+    update forc_test set i = i * 100, j = r.j * 2 where current of c;
+  end loop;
+end;
+$$ language plpgsql;
+select forc01();
+NOTICE:  100, 2
+NOTICE:  200, 4
+NOTICE:  300, 6
+NOTICE:  400, 8
+NOTICE:  500, 10
+NOTICE:  600, 12
+NOTICE:  700, 14
+NOTICE:  800, 16
+NOTICE:  900, 18
+NOTICE:  1000, 20
+ forc01 
+--------
+ 
+(1 row)
+
+select * from forc_test;
+   i    | j  
+--------+----
+  10000 |  4
+  20000 |  8
+  30000 | 12
+  40000 | 16
+  50000 | 20
+  60000 | 24
+  70000 | 28
+  80000 | 32
+  90000 | 36
+ 100000 | 40
+(10 rows)
+
 drop function forc01();
 -- fail because cursor has no query bound to it
 create or replace function forc_bad() returns void as $$

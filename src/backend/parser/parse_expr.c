@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.247 2009/10/31 01:41:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.248 2009/11/09 02:36:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1963,32 +1963,42 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 	Assert(sublevels_up == 0);
 
 	/*
-	 * If a parameter is used, it must be of type REFCURSOR.  To verify
-	 * that the parameter hooks think so, build a dummy ParamRef and
-	 * transform it.
+	 * Check to see if the cursor name matches a parameter of type REFCURSOR.
+	 * If so, replace the raw name reference with a parameter reference.
+	 * (This is a hack for the convenience of plpgsql.)
 	 */
-	if (cexpr->cursor_name == NULL)
+	if (cexpr->cursor_name != NULL)			/* in case already transformed */
 	{
-		ParamRef *p = makeNode(ParamRef);
-		Node   *n;
+		ColumnRef  *cref = makeNode(ColumnRef);
+		Node	   *node = NULL;
 
-		p->number = cexpr->cursor_param;
-		p->location = -1;
-		n = transformParamRef(pstate, p);
-		/* Allow the parameter type to be inferred if it's unknown */
-		if (exprType(n) == UNKNOWNOID)
-			n = coerce_type(pstate, n, UNKNOWNOID,
-							REFCURSOROID, -1,
-							COERCION_IMPLICIT, COERCE_IMPLICIT_CAST,
-							-1);
-		if (exprType(n) != REFCURSOROID)
-			ereport(ERROR,
-					(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-					 errmsg("inconsistent types deduced for parameter $%d",
-							cexpr->cursor_param),
-					 errdetail("%s versus %s",
-							   format_type_be(exprType(n)),
-							   format_type_be(REFCURSOROID))));
+		/* Build an unqualified ColumnRef with the given name */
+		cref->fields = list_make1(makeString(cexpr->cursor_name));
+		cref->location = -1;
+
+		/* See if there is a translation available from a parser hook */
+		if (pstate->p_pre_columnref_hook != NULL)
+			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
+		if (node == NULL && pstate->p_post_columnref_hook != NULL)
+			node = (*pstate->p_post_columnref_hook) (pstate, cref, NULL);
+
+		/*
+		 * XXX Should we throw an error if we get a translation that isn't
+		 * a refcursor Param?  For now it seems best to silently ignore
+		 * false matches.
+		 */
+		if (node != NULL && IsA(node, Param))
+		{
+			Param  *p = (Param *) node;
+
+			if (p->paramkind == PARAM_EXTERN &&
+				p->paramtype == REFCURSOROID)
+			{
+				/* Matches, so convert CURRENT OF to a param reference */
+				cexpr->cursor_name = NULL;
+				cexpr->cursor_param = p->paramid;
+			}
+		}
 	}
 
 	return (Node *) cexpr;

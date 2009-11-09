@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.688 2009/11/05 23:24:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.689 2009/11/09 02:36:56 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -7977,14 +7977,6 @@ where_or_current_clause:
 					/* cvarno is filled in by parse analysis */
 					n->cursor_name = $4;
 					n->cursor_param = 0;
-					$$ = (Node *) n;
-				}
-			| WHERE CURRENT_P OF PARAM
-				{
-					CurrentOfExpr *n = makeNode(CurrentOfExpr);
-					/* cvarno is filled in by parse analysis */
-					n->cursor_name = NULL;
-					n->cursor_param = $4;
 					$$ = (Node *) n;
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
