@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.689 2009/11/09 02:36:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.690 2009/11/09 18:38:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -76,12 +76,6 @@
 	} while (0)
 
 /*
- * The %name-prefix option below will make bison call base_yylex, but we
- * really want it to call filtered_base_yylex (see parser.c).
- */
-#define base_yylex filtered_base_yylex
-
-/*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
  * memory leaks if we error out during parsing.  Note this only works with
@@ -104,10 +98,10 @@ typedef struct PrivTarget
 #define parser_yyerror(msg)  scanner_yyerror(msg, yyscanner)
 #define parser_errposition(pos)  scanner_errposition(pos, yyscanner)
 
-static void base_yyerror(YYLTYPE *yylloc, base_yyscan_t yyscanner,
+static void base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
 						 const char *msg);
 static Node *makeColumnRef(char *colname, List *indirection,
-						   int location, base_yyscan_t yyscanner);
+						   int location, core_yyscan_t yyscanner);
 static Node *makeTypeCast(Node *arg, TypeName *typename, int location);
 static Node *makeStringConst(char *str, int location);
 static Node *makeStringConstCast(char *str, int location, TypeName *typename);
@@ -118,17 +112,17 @@ static Node *makeNullAConst(int location);
 static Node *makeAConst(Value *v, int location);
 static Node *makeBoolAConst(bool state, int location);
 static FuncCall *makeOverlaps(List *largs, List *rargs,
-							  int location, base_yyscan_t yyscanner);
-static void check_qualified_name(List *names, base_yyscan_t yyscanner);
-static List *check_func_name(List *names, base_yyscan_t yyscanner);
-static List *check_indirection(List *indirection, base_yyscan_t yyscanner);
+							  int location, core_yyscan_t yyscanner);
+static void check_qualified_name(List *names, core_yyscan_t yyscanner);
+static List *check_func_name(List *names, core_yyscan_t yyscanner);
+static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
 static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount,
 								WithClause *withClause,
-								base_yyscan_t yyscanner);
+								core_yyscan_t yyscanner);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
@@ -145,15 +139,18 @@ static TypeName *TableFuncTypeName(List *columns);
 %name-prefix="base_yy"
 %locations
 
-%parse-param {base_yyscan_t yyscanner}
-%lex-param   {base_yyscan_t yyscanner}
+%parse-param {core_yyscan_t yyscanner}
+%lex-param   {core_yyscan_t yyscanner}
 
 %union
 {
+	core_YYSTYPE		core_yystype;
+	/* these fields must match core_YYSTYPE: */
 	int					ival;
-	char				chr;
 	char				*str;
 	const char			*keyword;
+
+	char				chr;
 	bool				boolean;
 	JoinType			jtype;
 	DropBehavior		dbehavior;
@@ -162,7 +159,6 @@ static TypeName *TableFuncTypeName(List *columns);
 	Node				*node;
 	Value				*value;
 	ObjectType			objtype;
-
 	TypeName			*typnam;
 	FunctionParameter   *fun_param;
 	FunctionParameterMode fun_param_mode;
@@ -180,7 +176,6 @@ static TypeName *TableFuncTypeName(List *columns);
 	ResTarget			*target;
 	struct PrivTarget	*privtarget;
 	AccessPriv			*accesspriv;
-
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
 }
@@ -602,6 +597,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %left		JOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 /* kluge to keep xml_whitespace_option from causing shift/reduce conflicts */
 %right		PRESERVE STRIP_P
+
 %%
 
 /*
@@ -10932,14 +10928,14 @@ reserved_keyword:
  * available from the scanner.
  */
 static void
-base_yyerror(YYLTYPE *yylloc, base_yyscan_t yyscanner, const char *msg)
+base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const char *msg)
 {
 	parser_yyerror(msg);
 }
 
 static Node *
 makeColumnRef(char *colname, List *indirection,
-			  int location, base_yyscan_t yyscanner)
+			  int location, core_yyscan_t yyscanner)
 {
 	/*
 	 * Generate a ColumnRef node, with an A_Indirection node added if there
@@ -11109,7 +11105,7 @@ makeBoolAConst(bool state, int location)
  * Create and populate a FuncCall node to support the OVERLAPS operator.
  */
 static FuncCall *
-makeOverlaps(List *largs, List *rargs, int location, base_yyscan_t yyscanner)
+makeOverlaps(List *largs, List *rargs, int location, core_yyscan_t yyscanner)
 {
 	FuncCall *n = makeNode(FuncCall);
 
@@ -11143,7 +11139,7 @@ makeOverlaps(List *largs, List *rargs, int location, base_yyscan_t yyscanner)
  * subscripts and '*', which we then must reject here.
  */
 static void
-check_qualified_name(List *names, base_yyscan_t yyscanner)
+check_qualified_name(List *names, core_yyscan_t yyscanner)
 {
 	ListCell   *i;
 
@@ -11160,7 +11156,7 @@ check_qualified_name(List *names, base_yyscan_t yyscanner)
  * and '*', which we then must reject here.
  */
 static List *
-check_func_name(List *names, base_yyscan_t yyscanner)
+check_func_name(List *names, core_yyscan_t yyscanner)
 {
 	ListCell   *i;
 
@@ -11178,7 +11174,7 @@ check_func_name(List *names, base_yyscan_t yyscanner)
  * in the grammar, so do it here.
  */
 static List *
-check_indirection(List *indirection, base_yyscan_t yyscanner)
+check_indirection(List *indirection, core_yyscan_t yyscanner)
 {
 	ListCell *l;
 
@@ -11237,7 +11233,7 @@ insertSelectOptions(SelectStmt *stmt,
 					List *sortClause, List *lockingClause,
 					Node *limitOffset, Node *limitCount,
 					WithClause *withClause,
-					base_yyscan_t yyscanner)
+					core_yyscan_t yyscanner)
 {
 	Assert(IsA(stmt, SelectStmt));
 
@@ -11463,12 +11459,9 @@ TableFuncTypeName(List *columns)
 }
 
 /*
- * Must undefine base_yylex before including scan.c, since we want it
- * to create the function base_yylex not filtered_base_yylex.
+ * Must undefine this stuff before including scan.c, since it has different
+ * definitions for these macros.
  */
-#undef base_yylex
-
-/* Undefine some other stuff that would conflict in scan.c, too */
 #undef yyerror
 #undef yylval
 #undef yylloc

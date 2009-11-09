@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.162 2009/09/27 03:27:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.163 2009/11/09 18:38:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#include "parser/gramparse.h"
-#include "parser/keywords.h"
+#include "parser/parser.h"				/* only needed for GUC variables */
+#include "parser/scanner.h"
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
 
@@ -55,10 +55,15 @@ bool			escape_string_warning = true;
 bool			standard_conforming_strings = false;
 
 /*
+ * Set the type of YYSTYPE.
+ */
+#define YYSTYPE core_YYSTYPE
+
+/*
  * Set the type of yyextra.  All state variables used by the scanner should
  * be in yyextra, *not* statically allocated.
  */
-#define YY_EXTRA_TYPE base_yy_extra_type *
+#define YY_EXTRA_TYPE core_yy_extra_type *
 
 /*
  * Each call to yylex must set yylloc to the location of the found token
@@ -75,21 +80,22 @@ bool			standard_conforming_strings = false;
 #define ADVANCE_YYLLOC(delta)  ( *(yylloc) += (delta) )
 
 #define startlit()  ( yyextra->literallen = 0 )
-static void addlit(char *ytext, int yleng, base_yyscan_t yyscanner);
-static void addlitchar(unsigned char ychar, base_yyscan_t yyscanner);
-static char *litbufdup(base_yyscan_t yyscanner);
-static char *litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner);
-static unsigned char unescape_single_char(unsigned char c, base_yyscan_t yyscanner);
+static void addlit(char *ytext, int yleng, core_yyscan_t yyscanner);
+static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
+static char *litbufdup(core_yyscan_t yyscanner);
+static char *litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner);
+static unsigned char unescape_single_char(unsigned char c, core_yyscan_t yyscanner);
 static bool is_utf16_surrogate_first(pg_wchar c);
 static bool is_utf16_surrogate_second(pg_wchar c);
 static pg_wchar surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second);
+static void addunicode(pg_wchar c, yyscan_t yyscanner);
 
 #define yyerror(msg)  scanner_yyerror(msg, yyscanner)
 
 #define lexer_errposition()  scanner_errposition(*(yylloc), yyscanner)
 
-static void check_string_escape_warning(unsigned char ychar, base_yyscan_t yyscanner);
-static void check_escape_warning(base_yyscan_t yyscanner);
+static void check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner);
+static void check_escape_warning(core_yyscan_t yyscanner);
 
 /*
  * Work around a bug in flex 2.5.35: it emits a couple of functions that
@@ -97,10 +103,8 @@ static void check_escape_warning(base_yyscan_t yyscanner);
  * this would cause warnings.  Providing our own declarations should be
  * harmless even when the bug gets fixed.
  */
-extern int	base_yyget_column(yyscan_t yyscanner);
-extern void base_yyset_column(int column_no, yyscan_t yyscanner);
-
-static void addunicode(pg_wchar c, yyscan_t yyscanner);
+extern int	core_yyget_column(yyscan_t yyscanner);
+extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 
 %}
 
@@ -117,7 +121,7 @@ static void addunicode(pg_wchar c, yyscan_t yyscanner);
 %option noyyrealloc
 %option noyyfree
 %option warn
-%option prefix="base_yy"
+%option prefix="core_yy"
 
 /*
  * OK, here is a short description of lex/flex rules behavior.
@@ -958,7 +962,7 @@ other			.
  * to still be available.
  */
 int
-scanner_errposition(int location, base_yyscan_t yyscanner)
+scanner_errposition(int location, core_yyscan_t yyscanner)
 {
 	int		pos;
 
@@ -984,7 +988,7 @@ scanner_errposition(int location, base_yyscan_t yyscanner)
  * be misleading!
  */
 void
-scanner_yyerror(const char *message, base_yyscan_t yyscanner)
+scanner_yyerror(const char *message, core_yyscan_t yyscanner)
 {
 	const char *loc = yyextra->scanbuf + *yylloc;
 
@@ -1010,9 +1014,9 @@ scanner_yyerror(const char *message, base_yyscan_t yyscanner)
 /*
  * Called before any actual parsing is done
  */
-base_yyscan_t
+core_yyscan_t
 scanner_init(const char *str,
-			 base_yy_extra_type *yyext,
+			 core_yy_extra_type *yyext,
 			 const ScanKeyword *keywords,
 			 int num_keywords)
 {
@@ -1022,7 +1026,7 @@ scanner_init(const char *str,
 	if (yylex_init(&scanner) != 0)
 		elog(ERROR, "yylex_init() failed: %m");
 
-	base_yyset_extra(yyext, scanner);
+	core_yyset_extra(yyext, scanner);
 
 	yyext->keywords = keywords;
 	yyext->num_keywords = num_keywords;
@@ -1049,7 +1053,7 @@ scanner_init(const char *str,
  * Called after parsing is done to clean up after scanner_init()
  */
 void
-scanner_finish(base_yyscan_t yyscanner)
+scanner_finish(core_yyscan_t yyscanner)
 {
 	/*
 	 * We don't bother to call yylex_destroy(), because all it would do
@@ -1069,7 +1073,7 @@ scanner_finish(base_yyscan_t yyscanner)
 
 
 static void
-addlit(char *ytext, int yleng, base_yyscan_t yyscanner)
+addlit(char *ytext, int yleng, core_yyscan_t yyscanner)
 {
 	/* enlarge buffer if needed */
 	if ((yyextra->literallen + yleng) >= yyextra->literalalloc)
@@ -1087,7 +1091,7 @@ addlit(char *ytext, int yleng, base_yyscan_t yyscanner)
 
 
 static void
-addlitchar(unsigned char ychar, base_yyscan_t yyscanner)
+addlitchar(unsigned char ychar, core_yyscan_t yyscanner)
 {
 	/* enlarge buffer if needed */
 	if ((yyextra->literallen + 1) >= yyextra->literalalloc)
@@ -1106,7 +1110,7 @@ addlitchar(unsigned char ychar, base_yyscan_t yyscanner)
  * Create a palloc'd copy of literalbuf, adding a trailing null.
  */
 static char *
-litbufdup(base_yyscan_t yyscanner)
+litbufdup(core_yyscan_t yyscanner)
 {
 	int			llen = yyextra->literallen;
 	char	   *new;
@@ -1131,7 +1135,7 @@ hexval(unsigned char c)
 }
 
 static void
-check_unicode_value(pg_wchar c, char *loc, base_yyscan_t yyscanner)
+check_unicode_value(pg_wchar c, char *loc, core_yyscan_t yyscanner)
 {
 	if (GetDatabaseEncoding() == PG_UTF8)
 		return;
@@ -1161,8 +1165,25 @@ surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
 	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
 }
 
+static void
+addunicode(pg_wchar c, core_yyscan_t yyscanner)
+{
+	char buf[8];
+
+	if (c == 0 || c > 0x10FFFF)
+		yyerror("invalid Unicode escape value");
+	if (c > 0x7F)
+	{
+		if (GetDatabaseEncoding() != PG_UTF8)
+			yyerror("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8");
+		yyextra->saw_non_ascii = true;
+	}
+	unicode_to_utf8(c, (unsigned char *)buf);
+	addlit(buf, pg_mblen(buf), yyscanner);
+}
+
 static char *
-litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
+litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 {
 	char *new;
 	char *litbuf, *in, *out;
@@ -1294,7 +1315,7 @@ litbuf_udeescape(unsigned char escape, base_yyscan_t yyscanner)
 }
 
 static unsigned char
-unescape_single_char(unsigned char c, base_yyscan_t yyscanner)
+unescape_single_char(unsigned char c, core_yyscan_t yyscanner)
 {
 	switch (c)
 	{
@@ -1318,7 +1339,7 @@ unescape_single_char(unsigned char c, base_yyscan_t yyscanner)
 }
 
 static void
-check_string_escape_warning(unsigned char ychar, base_yyscan_t yyscanner)
+check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
 {
 	if (ychar == '\'')
 	{
@@ -1345,7 +1366,7 @@ check_string_escape_warning(unsigned char ychar, base_yyscan_t yyscanner)
 }
 
 static void
-check_escape_warning(base_yyscan_t yyscanner)
+check_escape_warning(core_yyscan_t yyscanner)
 {
 	if (yyextra->warn_on_first_escape && escape_string_warning)
 		ereport(WARNING,
@@ -1362,13 +1383,13 @@ check_escape_warning(base_yyscan_t yyscanner)
  */
 
 void *
-base_yyalloc(yy_size_t bytes, base_yyscan_t yyscanner)
+core_yyalloc(yy_size_t bytes, core_yyscan_t yyscanner)
 {
 	return palloc(bytes);
 }
 
 void *
-base_yyrealloc(void *ptr, yy_size_t bytes, base_yyscan_t yyscanner)
+core_yyrealloc(void *ptr, yy_size_t bytes, core_yyscan_t yyscanner)
 {
 	if (ptr)
 		return repalloc(ptr, bytes);
@@ -1377,26 +1398,8 @@ base_yyrealloc(void *ptr, yy_size_t bytes, base_yyscan_t yyscanner)
 }
 
 void
-base_yyfree(void *ptr, base_yyscan_t yyscanner)
+core_yyfree(void *ptr, core_yyscan_t yyscanner)
 {
 	if (ptr)
 		pfree(ptr);
 }
-
-static void
-addunicode(pg_wchar c, base_yyscan_t yyscanner)
-{
-	char buf[8];
-
-	if (c == 0 || c > 0x10FFFF)
-		yyerror("invalid Unicode escape value");
-	if (c > 0x7F)
-	{
-		if (GetDatabaseEncoding() != PG_UTF8)
-			yyerror("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8");
-		yyextra->saw_non_ascii = true;
-	}
-	unicode_to_utf8(c, (unsigned char *)buf);
-	addlit(buf, pg_mblen(buf), yyscanner);
-}
-
