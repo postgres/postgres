@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.46 2003/08/04 02:40:13 momjian Exp $
+ * $Id: vacuum.h,v 1.46.4.1 2009/11/10 18:01:46 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ extern void vac_init_rusage(VacRUsage *ru0);
 extern const char *vac_show_rusage(VacRUsage *ru0);
 
 /* in commands/vacuumlazy.c */
-extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
+extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt);
