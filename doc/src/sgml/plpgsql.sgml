@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.145 2009/11/10 02:09:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.146 2009/11/10 14:22:45 momjian Exp $ -->
 
 <chapter id="plpgsql">
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1365,9 +1365,9 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
 
      <literal>FOUND</literal> is a local variable within each
      <application>PL/pgSQL</application> function; any changes to it
-     affect only the current function.  <literal>FOUND</literal> is not
-     affected by <literal>EXECUTE</literal>, while <command>GET
-     DIAGNOSTICS</command> is effected.
+     affect only the current function.   <literal>EXECUTE</literal>
+     changes the output of <command>GET DIAGNOSTICS</command>, but
+     does not change the state of <literal>FOUND</literal>.
     </para>
 
    </sect2>
