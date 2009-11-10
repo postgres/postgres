@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.122 2009/11/09 00:26:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.123 2009/11/10 02:13:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,6 +769,27 @@ typedef struct
 } PLpgSQL_plugin;
 
 
+/* Struct types used during parsing */
+
+typedef struct
+{
+	char	   *ident;			/* palloc'd converted identifier */
+	bool		quoted;			/* Was it double-quoted? */
+} PLword;
+
+typedef struct
+{
+	List	   *idents;			/* composite identifiers (list of String) */
+} PLcword;
+
+typedef struct
+{
+	PLpgSQL_datum *datum;		/* referenced variable */
+	char	   *ident;			/* valid if simple name */
+	bool		quoted;
+	List	   *idents;			/* valid if composite name */
+} PLwdatum;
+
 /**********************************************************************
  * Global variable declarations
  **********************************************************************/
@@ -807,11 +828,10 @@ extern void plpgsql_parser_setup(struct ParseState *pstate,
 extern int	plpgsql_parse_word(const char *word);
 extern int	plpgsql_parse_dblword(const char *word);
 extern int	plpgsql_parse_tripword(const char *word);
-extern PLpgSQL_type *plpgsql_parse_wordtype(const char *word);
-extern PLpgSQL_type *plpgsql_parse_dblwordtype(const char *word);
-extern PLpgSQL_type *plpgsql_parse_tripwordtype(const char *word);
-extern PLpgSQL_type *plpgsql_parse_wordrowtype(const char *word);
-extern PLpgSQL_type *plpgsql_parse_dblwordrowtype(const char *word);
+extern PLpgSQL_type *plpgsql_parse_wordtype(char *ident);
+extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
+extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
+extern PLpgSQL_type *plpgsql_parse_cwordrowtype(List *idents);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,
 					   PLpgSQL_type *dtype,

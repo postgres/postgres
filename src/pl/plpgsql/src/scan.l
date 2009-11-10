@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.75 2009/11/09 00:26:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.76 2009/11/10 02:13:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,15 +183,11 @@ open			{ SET_YYLLOC(); return K_OPEN;			}
 or				{ SET_YYLLOC(); return K_OR;			}
 perform			{ SET_YYLLOC(); return K_PERFORM;		}
 raise			{ SET_YYLLOC(); return K_RAISE;			}
-result_oid		{ SET_YYLLOC(); return K_RESULT_OID;	}
 return			{ SET_YYLLOC(); return K_RETURN;		}
-reverse			{ SET_YYLLOC(); return K_REVERSE;		}
-row_count		{ SET_YYLLOC(); return K_ROW_COUNT;		}
 scroll			{ SET_YYLLOC(); return K_SCROLL;		}
 strict			{ SET_YYLLOC(); return K_STRICT;	    }
 then			{ SET_YYLLOC(); return K_THEN;			}
 to				{ SET_YYLLOC(); return K_TO;			}
-type			{ SET_YYLLOC(); return K_TYPE;			}
 using			{ SET_YYLLOC(); return K_USING;			}
 when			{ SET_YYLLOC(); return K_WHEN;			}
 while			{ SET_YYLLOC(); return K_WHILE;			}
@@ -206,27 +202,21 @@ dump			{ SET_YYLLOC(); return O_DUMP;			}
      */
 {identifier}					{
 	SET_YYLLOC();
-	if (!plpgsql_LookupIdentifiers) return T_WORD;
 	return plpgsql_parse_word(yytext); }
 {identifier}{space}*\.{space}*{identifier}	{
 	SET_YYLLOC();
-	if (!plpgsql_LookupIdentifiers) return T_DBLWORD;
 	return plpgsql_parse_dblword(yytext); }
 {identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
 	SET_YYLLOC();
-	if (!plpgsql_LookupIdentifiers) return T_TRIPWORD;
 	return plpgsql_parse_tripword(yytext); }
 {param}							{
 	SET_YYLLOC();
-	if (!plpgsql_LookupIdentifiers) return T_WORD;
 	return plpgsql_parse_word(yytext); }
 {param}{space}*\.{space}*{identifier}	{
 	SET_YYLLOC();
-	if (!plpgsql_LookupIdentifiers) return T_DBLWORD;
 	return plpgsql_parse_dblword(yytext); }
 {param}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
 	SET_YYLLOC();
-	if (!plpgsql_LookupIdentifiers) return T_TRIPWORD;
 	return plpgsql_parse_tripword(yytext); }
 
 {digit}+		{ SET_YYLLOC(); return T_NUMBER;		}
