@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.203 2009/09/04 11:20:22 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.204 2009/11/10 18:41:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2779,6 +2779,12 @@ interval_mi(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
+/*
+ *  There is no interval_abs():  it is unclear what value to return:
+ *    http://archives.postgresql.org/pgsql-general/2009-10/msg01031.php
+ *    http://archives.postgresql.org/pgsql-general/2009-11/msg00041.php
+ */
+ 
 Datum
 interval_mul(PG_FUNCTION_ARGS)
 {
