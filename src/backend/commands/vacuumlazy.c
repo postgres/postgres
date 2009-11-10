@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.81.2.5 2009/01/06 14:55:50 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.81.2.6 2009/11/10 18:00:57 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,14 +141,18 @@ static int	vac_cmp_page_spaces(const void *left, const void *right);
  *
  *		At entry, we have already established a transaction and opened
  *		and locked the relation.
+ *
+ *		The return value indicates whether this function has held off
+ *		interrupts -- caller must RESUME_INTERRUPTS() after commit if true.
  */
-void
+bool
 lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
 	int			nindexes;
 	BlockNumber possibly_freeable;
+	bool		heldoff = false;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -179,12 +183,23 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	 *
 	 * Don't even think about it unless we have a shot at releasing a goodly
 	 * number of pages.  Otherwise, the time taken isn't worth it.
+	 *
+	 * 
+	 * Note that after we've truncated the heap, it's too late to abort the
+	 * transaction; doing so would lose the sinval messages needed to tell
+	 * the other backends about the table being shrunk.  We prevent interrupts
+	 * in that case; caller is responsible for re-enabling them after
+	 * committing the transaction.
 	 */
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
 		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION))
+	{
+		HOLD_INTERRUPTS();
+		heldoff = true;
 		lazy_truncate_heap(onerel, vacrelstats);
+	}
 
 	/* Update shared free space map with final free space info */
 	lazy_update_fsm(onerel, vacrelstats);
@@ -199,6 +214,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
 						 vacstmt->analyze, vacrelstats->rel_tuples);
+
+	return heldoff;
 }
 
 
