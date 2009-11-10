@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.364.2.2 2008/09/11 14:01:35 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.364.2.3 2009/11/10 18:00:44 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,10 +210,10 @@ static List *get_rel_oids(List *relids, const RangeVar *vacrel,
 static void vac_truncate_clog(TransactionId frozenXID);
 static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 					   bool for_wraparound);
-static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
+static bool full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
-static void repair_frag(VRelStats *vacrelstats, Relation onerel,
+static bool repair_frag(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacuum_pages, VacPageList fraged_pages,
 			int nindexes, Relation *Irel);
 static void move_chain_tuple(Relation rel,
@@ -976,6 +976,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	Oid			toast_relid;
 	Oid			save_userid;
 	bool		save_secdefcxt;
+	bool		heldoff;
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -1121,9 +1122,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
 	if (vacstmt->full)
-		full_vacuum_rel(onerel, vacstmt);
+		heldoff = full_vacuum_rel(onerel, vacstmt);
 	else
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
+		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
 
 	/* Restore userid */
 	SetUserIdAndContext(save_userid, save_secdefcxt);
@@ -1135,6 +1136,10 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
 	 * Complete the transaction and free all temporary memory used.
 	 */
 	CommitTransactionCommand();
+
+	/* now we can allow interrupts again, if disabled */
+	if (heldoff)
+		RESUME_INTERRUPTS();
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
@@ -1169,8 +1174,11 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind,
  *
  *		At entry, we have already established a transaction and opened
  *		and locked the relation.
+ *
+ *		The return value indicates whether this function has held off
+ *		interrupts -- caller must RESUME_INTERRUPTS() after commit if true.
  */
-static void
+static bool
 full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 {
 	VacPageListData vacuum_pages;		/* List of pages to vacuum and/or
@@ -1181,6 +1189,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	int			nindexes,
 				i;
 	VRelStats  *vacrelstats;
+	bool		heldoff = false;
 
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
@@ -1231,7 +1240,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	if (fraged_pages.num_pages > 0)
 	{
 		/* Try to shrink heap */
-		repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages,
+		heldoff = repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages,
 					nindexes, Irel);
 		vac_close_indexes(nindexes, Irel, NoLock);
 	}
@@ -1256,6 +1265,8 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
 						 vacstmt->analyze, vacrelstats->rel_tuples);
+
+	return heldoff;
 }
 
 
@@ -1805,8 +1816,11 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
  *		for them after committing (in hack-manner - without losing locks
  *		and freeing memory!) current transaction. It truncates relation
  *		if some end-blocks are gone away.
+ *
+ *		The return value indicates whether this function has held off
+ *		interrupts -- caller must RESUME_INTERRUPTS() after commit if true.
  */
-static void
+static bool
 repair_frag(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacuum_pages, VacPageList fraged_pages,
 			int nindexes, Relation *Irel)
@@ -1831,6 +1845,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	int			keep_tuples = 0;
 	int			keep_indexed_tuples = 0;
 	PGRUsage	ru0;
+	bool		heldoff = false;
 
 	pg_rusage_init(&ru0);
 
@@ -2635,8 +2650,12 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 *
 		 * XXX This desperately needs to be revisited.	Any failure after this
 		 * point will result in a PANIC "cannot abort transaction nnn, it was
-		 * already committed"!
+		 * already committed"!  As a precaution, we prevent cancel interrupts
+		 * after this point to mitigate this problem; caller is responsible for
+		 * re-enabling them after committing the transaction.
 		 */
+		HOLD_INTERRUPTS();
+		heldoff = true;
 		ForceSyncCommit();
 		(void) RecordTransactionCommit();
 	}
@@ -2832,6 +2851,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		pfree(vacrelstats->vtlinks);
 
 	ExecContext_Finish(&ec);
+
+	return heldoff;
 }
 
 /*
