@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.7 2009/11/11 19:25:40 alvherre Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.8 2009/11/11 20:31:26 alvherre Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{
@@ -211,32 +211,32 @@ ECPG: var_valueNumericOnly addon
 			free($1);
 			$1 = make_str("$0");
 		}
-ECPG: fetch_argsname addon
+ECPG: fetch_argscursor_name addon
 		add_additional_variables($1, false);
-ECPG: fetch_argsfrom_inname addon
+ECPG: fetch_argsfrom_incursor_name addon
 		add_additional_variables($2, false);
-ECPG: fetch_argsNEXTopt_from_inname addon
-ECPG: fetch_argsPRIORopt_from_inname addon
-ECPG: fetch_argsFIRST_Popt_from_inname addon
-ECPG: fetch_argsLAST_Popt_from_inname addon
-ECPG: fetch_argsALLopt_from_inname addon
-ECPG: fetch_argsFORWARDopt_from_inname addon
-ECPG: fetch_argsBACKWARDopt_from_inname addon
+ECPG: fetch_argsNEXTopt_from_incursor_name addon
+ECPG: fetch_argsPRIORopt_from_incursor_name addon
+ECPG: fetch_argsFIRST_Popt_from_incursor_name addon
+ECPG: fetch_argsLAST_Popt_from_incursor_name addon
+ECPG: fetch_argsALLopt_from_incursor_name addon
+ECPG: fetch_argsFORWARDopt_from_incursor_name addon
+ECPG: fetch_argsBACKWARDopt_from_incursor_name addon
 		add_additional_variables($3, false);
-ECPG: fetch_argsSignedIconstopt_from_inname addon
+ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 		add_additional_variables($3, false);
 		if ($1[0] == '$')
 		{
 			free($1);
 			$1 = make_str("$0");
 		}
-ECPG: fetch_argsFORWARDALLopt_from_inname addon
-ECPG: fetch_argsBACKWARDALLopt_from_inname addon
+ECPG: fetch_argsFORWARDALLopt_from_incursor_name addon
+ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
 		add_additional_variables($4, false);
-ECPG: fetch_argsABSOLUTE_PSignedIconstopt_from_inname addon
-ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_inname addon
-ECPG: fetch_argsFORWARDSignedIconstopt_from_inname addon
-ECPG: fetch_argsBACKWARDSignedIconstopt_from_inname addon
+ECPG: fetch_argsABSOLUTE_PSignedIconstopt_from_incursor_name addon
+ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_incursor_name addon
+ECPG: fetch_argsFORWARDSignedIconstopt_from_incursor_name addon
+ECPG: fetch_argsBACKWARDSignedIconstopt_from_incursor_name addon
 		add_additional_variables($4, false);
 		if ($2[0] == '$')
 		{
@@ -257,7 +257,7 @@ ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
 	}
 ECPG: ExecuteStmtEXECUTEprepared_nameexecute_param_clauseexecute_rest block
 	{ $$ = $2; }
-ECPG: DeclareCursorStmtDECLAREnamecursor_optionsCURSORopt_holdFORSelectStmt block
+ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectStmt block
 	{
 		struct cursor *ptr, *this;
 		char *comment;

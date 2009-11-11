@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.691 2009/11/11 19:25:40 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.692 2009/11/11 20:31:26 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -251,7 +251,7 @@ static TypeName *TableFuncTypeName(List *columns);
 
 %type <str>		copy_file_name
 				database_name access_method_clause access_method attr_name
-				index_name name file_name cluster_index_specification
+				index_name name cursor_name file_name cluster_index_specification
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_inline_handler opt_validator validator_clause
@@ -1941,7 +1941,7 @@ reloption_elem:
  *****************************************************************************/
 
 ClosePortalStmt:
-			CLOSE name
+			CLOSE cursor_name
 				{
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
 					n->portalname = $2;
@@ -4194,7 +4194,7 @@ FetchStmt:	FETCH fetch_args
 				}
 		;
 
-fetch_args:	name
+fetch_args:	cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $1;
@@ -4202,7 +4202,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| from_in name
+			| from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $2;
@@ -4210,7 +4210,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| NEXT opt_from_in name
+			| NEXT opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4218,7 +4218,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| PRIOR opt_from_in name
+			| PRIOR opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4226,7 +4226,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| FIRST_P opt_from_in name
+			| FIRST_P opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4234,7 +4234,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| LAST_P opt_from_in name
+			| LAST_P opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4242,7 +4242,7 @@ fetch_args:	name
 					n->howMany = -1;
 					$$ = (Node *)n;
 				}
-			| ABSOLUTE_P SignedIconst opt_from_in name
+			| ABSOLUTE_P SignedIconst opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $4;
@@ -4250,7 +4250,7 @@ fetch_args:	name
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| RELATIVE_P SignedIconst opt_from_in name
+			| RELATIVE_P SignedIconst opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $4;
@@ -4258,7 +4258,7 @@ fetch_args:	name
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| SignedIconst opt_from_in name
+			| SignedIconst opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4266,7 +4266,7 @@ fetch_args:	name
 					n->howMany = $1;
 					$$ = (Node *)n;
 				}
-			| ALL opt_from_in name
+			| ALL opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4274,7 +4274,7 @@ fetch_args:	name
 					n->howMany = FETCH_ALL;
 					$$ = (Node *)n;
 				}
-			| FORWARD opt_from_in name
+			| FORWARD opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4282,7 +4282,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| FORWARD SignedIconst opt_from_in name
+			| FORWARD SignedIconst opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $4;
@@ -4290,7 +4290,7 @@ fetch_args:	name
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| FORWARD ALL opt_from_in name
+			| FORWARD ALL opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $4;
@@ -4298,7 +4298,7 @@ fetch_args:	name
 					n->howMany = FETCH_ALL;
 					$$ = (Node *)n;
 				}
-			| BACKWARD opt_from_in name
+			| BACKWARD opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $3;
@@ -4306,7 +4306,7 @@ fetch_args:	name
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| BACKWARD SignedIconst opt_from_in name
+			| BACKWARD SignedIconst opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $4;
@@ -4314,7 +4314,7 @@ fetch_args:	name
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| BACKWARD ALL opt_from_in name
+			| BACKWARD ALL opt_from_in cursor_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = $4;
@@ -7108,7 +7108,7 @@ set_target_list:
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-DeclareCursorStmt: DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
+DeclareCursorStmt: DECLARE cursor_name cursor_options CURSOR opt_hold FOR SelectStmt
 				{
 					DeclareCursorStmt *n = makeNode(DeclareCursorStmt);
 					n->portalname = $2;
@@ -7117,6 +7117,9 @@ DeclareCursorStmt: DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 					n->query = $7;
 					$$ = (Node *)n;
 				}
+		;
+
+cursor_name:	name						{ $$ = $1; }
 		;
 
 cursor_options: /*EMPTY*/					{ $$ = 0; }
