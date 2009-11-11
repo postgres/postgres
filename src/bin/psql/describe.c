@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.230 2009/11/03 10:34:47 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.231 2009/11/11 21:07:41 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -2238,7 +2238,7 @@ static void
 add_role_attribute(PQExpBuffer buf, const char *const str)
 {
 	if (buf->len > 0)
-		appendPQExpBufferStr(buf, "\n");
+		appendPQExpBufferStr(buf, ", ");
 
 	appendPQExpBufferStr(buf, str);
 }
