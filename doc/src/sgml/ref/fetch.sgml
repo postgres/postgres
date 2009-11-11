@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.45 2009/09/19 10:23:27 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.46 2009/11/11 20:07:57 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-FETCH [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursor_name</replaceable>
+FETCH [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <replaceable class="PARAMETER">cursor_name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:</phrase>
 
@@ -404,7 +404,8 @@ COMMIT WORK;
 
   <para>
    The SQL standard allows only <literal>FROM</> preceding the cursor
-   name; the option to use <literal>IN</> is an extension.
+   name; the option to use <literal>IN</>, or to leave them out altogether, is
+   an extension.
   </para>
  </refsect1>
 
