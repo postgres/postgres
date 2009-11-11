@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.690 2009/11/09 18:38:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.691 2009/11/11 19:25:40 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -332,7 +332,7 @@ static TypeName *TableFuncTypeName(List *columns);
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
 %type <objtype>	reindex_type drop_type comment_type
 
-%type <node>	fetch_direction limit_clause select_limit_value
+%type <node>	fetch_args limit_clause select_limit_value
 				offset_clause select_offset_value
 				select_offset_value2 opt_select_fetch_first_value
 %type <ival>	row_or_rows first_or_next
@@ -4180,142 +4180,144 @@ comment_text:
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH fetch_direction from_in name
+FetchStmt:	FETCH fetch_args
 				{
 					FetchStmt *n = (FetchStmt *) $2;
-					n->portalname = $4;
 					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
-			| FETCH name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					n->direction = FETCH_FORWARD;
-					n->howMany = 1;
-					n->portalname = $2;
-					n->ismove = FALSE;
-					$$ = (Node *)n;
-				}
-			| MOVE fetch_direction from_in name
+			| MOVE fetch_args
 				{
 					FetchStmt *n = (FetchStmt *) $2;
-					n->portalname = $4;
-					n->ismove = TRUE;
-					$$ = (Node *)n;
-				}
-			| MOVE name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-					n->direction = FETCH_FORWARD;
-					n->howMany = 1;
-					n->portalname = $2;
 					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
 		;
 
-fetch_direction:
-			/*EMPTY*/
+fetch_args:	name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $1;
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| NEXT
+			| from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $2;
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| PRIOR
+			| NEXT opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
+					n->direction = FETCH_FORWARD;
+					n->howMany = 1;
+					$$ = (Node *)n;
+				}
+			| PRIOR opt_from_in name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| FIRST_P
+			| FIRST_P opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_ABSOLUTE;
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| LAST_P
+			| LAST_P opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_ABSOLUTE;
 					n->howMany = -1;
 					$$ = (Node *)n;
 				}
-			| ABSOLUTE_P SignedIconst
+			| ABSOLUTE_P SignedIconst opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $4;
 					n->direction = FETCH_ABSOLUTE;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| RELATIVE_P SignedIconst
+			| RELATIVE_P SignedIconst opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $4;
 					n->direction = FETCH_RELATIVE;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| SignedIconst
+			| SignedIconst opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_FORWARD;
 					n->howMany = $1;
 					$$ = (Node *)n;
 				}
-			| ALL
+			| ALL opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_FORWARD;
 					n->howMany = FETCH_ALL;
 					$$ = (Node *)n;
 				}
-			| FORWARD
+			| FORWARD opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| FORWARD SignedIconst
+			| FORWARD SignedIconst opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $4;
 					n->direction = FETCH_FORWARD;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| FORWARD ALL
+			| FORWARD ALL opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $4;
 					n->direction = FETCH_FORWARD;
 					n->howMany = FETCH_ALL;
 					$$ = (Node *)n;
 				}
-			| BACKWARD
+			| BACKWARD opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $3;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| BACKWARD SignedIconst
+			| BACKWARD SignedIconst opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $4;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| BACKWARD ALL
+			| BACKWARD ALL opt_from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					n->portalname = $4;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = FETCH_ALL;
 					$$ = (Node *)n;
@@ -4324,6 +4326,10 @@ fetch_direction:
 
 from_in:	FROM									{}
 			| IN_P									{}
+		;
+
+opt_from_in:	from_in								{}
+			| /* EMPTY */							{}
 		;
 
 

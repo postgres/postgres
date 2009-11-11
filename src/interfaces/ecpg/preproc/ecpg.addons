@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.6 2009/11/05 23:24:27 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.addons,v 1.7 2009/11/11 19:25:40 alvherre Exp $ */
 
 ECPG: stmtClosePortalStmt block
 	{
@@ -206,16 +206,38 @@ ECPG: ConstraintAttributeSpecConstraintTimeSpecConstraintDeferrabilitySpec addon
 			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
 				mmerror(PARSE_ERROR, ET_ERROR, "constraint declared INITIALLY DEFERRED must be DEFERRABLE");
 ECPG: var_valueNumericOnly addon
-ECPG: fetch_directionSignedIconst addon
 		if ($1[0] == '$')
 		{
 			free($1);
 			$1 = make_str("$0");
 		}
-ECPG: fetch_directionABSOLUTE_PSignedIconst addon
-ECPG: fetch_directionRELATIVE_PSignedIconst addon
-ECPG: fetch_directionFORWARDSignedIconst addon
-ECPG: fetch_directionBACKWARDSignedIconst addon
+ECPG: fetch_argsname addon
+		add_additional_variables($1, false);
+ECPG: fetch_argsfrom_inname addon
+		add_additional_variables($2, false);
+ECPG: fetch_argsNEXTopt_from_inname addon
+ECPG: fetch_argsPRIORopt_from_inname addon
+ECPG: fetch_argsFIRST_Popt_from_inname addon
+ECPG: fetch_argsLAST_Popt_from_inname addon
+ECPG: fetch_argsALLopt_from_inname addon
+ECPG: fetch_argsFORWARDopt_from_inname addon
+ECPG: fetch_argsBACKWARDopt_from_inname addon
+		add_additional_variables($3, false);
+ECPG: fetch_argsSignedIconstopt_from_inname addon
+		add_additional_variables($3, false);
+		if ($1[0] == '$')
+		{
+			free($1);
+			$1 = make_str("$0");
+		}
+ECPG: fetch_argsFORWARDALLopt_from_inname addon
+ECPG: fetch_argsBACKWARDALLopt_from_inname addon
+		add_additional_variables($4, false);
+ECPG: fetch_argsABSOLUTE_PSignedIconstopt_from_inname addon
+ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_inname addon
+ECPG: fetch_argsFORWARDSignedIconstopt_from_inname addon
+ECPG: fetch_argsBACKWARDSignedIconstopt_from_inname addon
+		add_additional_variables($4, false);
 		if ($2[0] == '$')
 		{
 			free($2);
@@ -336,47 +358,11 @@ ECPG: VariableShowStmtSHOWALL block
 		mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL is not implemented");
 		$$ = EMPTY;
 	}
-ECPG: FetchStmtFETCHfetch_directionfrom_inname block 
+ECPG: FetchStmtMOVEfetch_args rule
+	| FETCH fetch_args ecpg_into
 	{
-		add_additional_variables($4, false);
-		$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
+		$$ = cat2_str(make_str("fetch"), $2);
 	}
-ECPG: FetchStmtFETCHname block
-	{
-		add_additional_variables($2, false);
-		$$ = cat_str(2, make_str("fetch"), $2);
-	}
-ECPG: FetchStmtMOVEname rule
-	| FETCH fetch_direction from_in name ecpg_into
-		{
-			add_additional_variables($4, false);
-			$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
-		}
-	| FETCH fetch_direction name ecpg_into
-		{
-			add_additional_variables($3, false);
-			$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
-		}
-	| FETCH from_in name ecpg_into
-		{
-			add_additional_variables($3, false);
-			$$ = cat_str(3, make_str("fetch"), $2, $3);
-		}
-	| FETCH name ecpg_into
-		{
-			add_additional_variables($2, false);
-			$$ = cat2_str(make_str("fetch"), $2);
-		}
-	| FETCH fetch_direction name
-		{
-			add_additional_variables($3, false);
-			$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
-		}
-	| FETCH from_in name
-		{
-			add_additional_variables($3, false);
-			$$ = cat_str(3, make_str("fetch"), $2, $3);
-		}
 ECPG: select_limitLIMITselect_limit_value','select_offset_value block
         {
                 mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");

@@ -158,7 +158,7 @@ if (sqlca.sqlcode < 0) dosqlprint ( );}
 
 	while (1)
 	{
-		{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch forward from c", ECPGt_EOIT, 
+		{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch forward c", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_decimal,&(j),(long)1,(long)1,sizeof(decimal), 
