@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.62 2009/10/03 18:04:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.63 2009/11/12 18:20:23 tgl Exp $
  */
 
 %{
@@ -316,18 +316,33 @@ ProcessConfigFile(GucContext context)
 
 		/* In SIGHUP cases in the postmaster, report changes */
 		if (context == PGC_SIGHUP && !IsUnderPostmaster)
-			pre_value = pstrdup(GetConfigOption(item->name, false));
+		{
+			const char *preval = GetConfigOption(item->name, false);
+
+			/* string variables could be NULL; treat that as empty */
+			if (!preval)
+				preval = "";
+			/* must dup, else might have dangling pointer below */
+			pre_value = pstrdup(preval);
+		}
 
 		if (set_config_option(item->name, item->value, context,
 			   					 PGC_S_FILE, GUC_ACTION_SET, true))
 		{
 			set_config_sourcefile(item->name, item->filename,
 								  item->sourceline);
-			if (pre_value &&
-				strcmp(pre_value, GetConfigOption(item->name, false)) != 0)
-				ereport(elevel,
-						(errmsg("parameter \"%s\" changed to \"%s\"",
-								item->name, item->value)));
+
+			if (pre_value)
+			{
+				const char *post_value = GetConfigOption(item->name, false);
+
+				if (!post_value)
+					post_value = "";
+				if (strcmp(pre_value, post_value) != 0)
+					ereport(elevel,
+							(errmsg("parameter \"%s\" changed to \"%s\"",
+									item->name, item->value)));
+			}
 		}
 
 		if (pre_value)
