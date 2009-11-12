@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.144 2009/11/10 02:13:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.145 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,6 @@
 #include "plpgsql.h"
 
 #include <ctype.h>
-
-#include "pl_gram.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
@@ -41,6 +39,8 @@
  * Our own local and global variables
  * ----------
  */
+PLpgSQL_stmt_block *plpgsql_parse_result;
+
 static int	datums_alloc;
 int			plpgsql_nDatums;
 PLpgSQL_datum **plpgsql_Datums;
@@ -672,7 +672,7 @@ do_compile(FunctionCallInfo fcinfo,
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
 		elog(ERROR, "plpgsql parser returned %d", parse_rc);
-	function->action = plpgsql_yylval.program;
+	function->action = plpgsql_parse_result;
 
 	plpgsql_scanner_finish();
 	pfree(proc_source);
@@ -823,7 +823,7 @@ plpgsql_compile_inline(char *proc_source)
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
 		elog(ERROR, "plpgsql parser returned %d", parse_rc);
-	function->action = plpgsql_yylval.program;
+	function->action = plpgsql_parse_result;
 
 	plpgsql_scanner_finish();
 
@@ -1237,77 +1237,25 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
 
 /* ----------
  * plpgsql_parse_word		The scanner calls this to postparse
- *				any single word not found by a
- *				keyword rule.
+ *				any single word that is not a reserved keyword.
+ *
+ * word1 is the downcased/dequoted identifier; it must be palloc'd in the
+ * function's long-term memory context.
+ *
+ * yytxt is the original token text; we need this to check for quoting,
+ * so that later checks for unreserved keywords work properly.
+ *
+ * If recognized as a variable, fill in *wdatum and return TRUE;
+ * if not recognized, fill in *word and return FALSE.
+ * (Note: those two pointers actually point to members of the same union,
+ * but for notational reasons we pass them separately.)
  * ----------
  */
-int
-plpgsql_parse_word(const char *word)
-{
-	PLpgSQL_nsitem *nse;
-	char	   *cp[1];
-
-	/* Do case conversion and word separation */
-	plpgsql_convert_ident(word, cp, 1);
-
-	/* No lookup if disabled */
-	if (plpgsql_LookupIdentifiers)
-	{
-		/*
-		 * Do a lookup in the current namespace stack
-		 */
-		nse = plpgsql_ns_lookup(plpgsql_ns_top(), false,
-								cp[0], NULL, NULL,
-								NULL);
-
-		if (nse != NULL)
-		{
-			switch (nse->itemtype)
-			{
-				case PLPGSQL_NSTYPE_VAR:
-				case PLPGSQL_NSTYPE_ROW:
-				case PLPGSQL_NSTYPE_REC:
-					plpgsql_yylval.wdatum.datum = plpgsql_Datums[nse->itemno];
-					plpgsql_yylval.wdatum.ident = cp[0];
-					plpgsql_yylval.wdatum.quoted = (word[0] == '"');
-					plpgsql_yylval.wdatum.idents = NIL;
-					return T_DATUM;
-
-				default:
-					elog(ERROR, "unrecognized plpgsql itemtype: %d",
-						 nse->itemtype);
-			}
-		}
-	}
-
-	/*
-	 * Nothing found - up to now it's a word without any special meaning for
-	 * us.
-	 */
-	plpgsql_yylval.word.ident = cp[0];
-	plpgsql_yylval.word.quoted = (word[0] == '"');
-	return T_WORD;
-}
-
-
-/* ----------
- * plpgsql_parse_dblword		Same lookup for two words
- *					separated by a dot.
- * ----------
- */
-int
-plpgsql_parse_dblword(const char *word)
+bool
+plpgsql_parse_word(char *word1, const char *yytxt,
+				   PLwdatum *wdatum, PLword *word)
 {
 	PLpgSQL_nsitem *ns;
-	char	   *cp[2];
-	List	   *idents;
-	int			nnames;
-
-	/* Do case conversion and word separation */
-	plpgsql_convert_ident(word, cp, 2);
-
-	idents = list_make2(makeString(cp[0]),
-						makeString(cp[1]));
 
 	/* No lookup if disabled */
 	if (plpgsql_LookupIdentifiers)
@@ -1316,7 +1264,63 @@ plpgsql_parse_dblword(const char *word)
 		 * Do a lookup in the current namespace stack
 		 */
 		ns = plpgsql_ns_lookup(plpgsql_ns_top(), false,
-							   cp[0], cp[1], NULL,
+							   word1, NULL, NULL,
+							   NULL);
+
+		if (ns != NULL)
+		{
+			switch (ns->itemtype)
+			{
+				case PLPGSQL_NSTYPE_VAR:
+				case PLPGSQL_NSTYPE_ROW:
+				case PLPGSQL_NSTYPE_REC:
+					wdatum->datum = plpgsql_Datums[ns->itemno];
+					wdatum->ident = word1;
+					wdatum->quoted = (yytxt[0] == '"');
+					wdatum->idents = NIL;
+					return true;
+
+				default:
+					elog(ERROR, "unrecognized plpgsql itemtype: %d",
+						 ns->itemtype);
+			}
+		}
+	}
+
+	/*
+	 * Nothing found - up to now it's a word without any special meaning for
+	 * us.
+	 */
+	word->ident = word1;
+	word->quoted = (yytxt[0] == '"');
+	return false;
+}
+
+
+/* ----------
+ * plpgsql_parse_dblword		Same lookup for two words
+ *					separated by a dot.
+ * ----------
+ */
+bool
+plpgsql_parse_dblword(char *word1, char *word2,
+					  PLwdatum *wdatum, PLcword *cword)
+{
+	PLpgSQL_nsitem *ns;
+	List	   *idents;
+	int			nnames;
+
+	idents = list_make2(makeString(word1),
+						makeString(word2));
+
+	/* No lookup if disabled */
+	if (plpgsql_LookupIdentifiers)
+	{
+		/*
+		 * Do a lookup in the current namespace stack
+		 */
+		ns = plpgsql_ns_lookup(plpgsql_ns_top(), false,
+							   word1, word2, NULL,
 							   &nnames);
 		if (ns != NULL)
 		{
@@ -1324,11 +1328,11 @@ plpgsql_parse_dblword(const char *word)
 			{
 				case PLPGSQL_NSTYPE_VAR:
 					/* Block-qualified reference to scalar variable. */
-					plpgsql_yylval.wdatum.datum = plpgsql_Datums[ns->itemno];
-					plpgsql_yylval.wdatum.ident = NULL;
-					plpgsql_yylval.wdatum.quoted = false; /* not used */
-					plpgsql_yylval.wdatum.idents = idents;
-					return T_DATUM;
+					wdatum->datum = plpgsql_Datums[ns->itemno];
+					wdatum->ident = NULL;
+					wdatum->quoted = false; /* not used */
+					wdatum->idents = idents;
+					return true;
 
 				case PLPGSQL_NSTYPE_REC:
 					if (nnames == 1)
@@ -1341,22 +1345,22 @@ plpgsql_parse_dblword(const char *word)
 
 						new = palloc(sizeof(PLpgSQL_recfield));
 						new->dtype = PLPGSQL_DTYPE_RECFIELD;
-						new->fieldname = pstrdup(cp[1]);
+						new->fieldname = pstrdup(word2);
 						new->recparentno = ns->itemno;
 
 						plpgsql_adddatum((PLpgSQL_datum *) new);
 
-						plpgsql_yylval.wdatum.datum = (PLpgSQL_datum *) new;
+						wdatum->datum = (PLpgSQL_datum *) new;
 					}
 					else
 					{
 						/* Block-qualified reference to record variable. */
-						plpgsql_yylval.wdatum.datum = plpgsql_Datums[ns->itemno];
+						wdatum->datum = plpgsql_Datums[ns->itemno];
 					}
-					plpgsql_yylval.wdatum.ident = NULL;
-					plpgsql_yylval.wdatum.quoted = false; /* not used */
-					plpgsql_yylval.wdatum.idents = idents;
-					return T_DATUM;
+					wdatum->ident = NULL;
+					wdatum->quoted = false; /* not used */
+					wdatum->idents = idents;
+					return true;
 
 				case PLPGSQL_NSTYPE_ROW:
 					if (nnames == 1)
@@ -1372,28 +1376,28 @@ plpgsql_parse_dblword(const char *word)
 						for (i = 0; i < row->nfields; i++)
 						{
 							if (row->fieldnames[i] &&
-								strcmp(row->fieldnames[i], cp[1]) == 0)
+								strcmp(row->fieldnames[i], word2) == 0)
 							{
-								plpgsql_yylval.wdatum.datum = plpgsql_Datums[row->varnos[i]];
-								plpgsql_yylval.wdatum.ident = NULL;
-								plpgsql_yylval.wdatum.quoted = false; /* not used */
-								plpgsql_yylval.wdatum.idents = idents;
-								return T_DATUM;
+								wdatum->datum = plpgsql_Datums[row->varnos[i]];
+								wdatum->ident = NULL;
+								wdatum->quoted = false; /* not used */
+								wdatum->idents = idents;
+								return true;
 							}
 						}
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
 								 errmsg("row \"%s\" has no field \"%s\"",
-										cp[0], cp[1])));
+										word1, word2)));
 					}
 					else
 					{
 						/* Block-qualified reference to row variable. */
-						plpgsql_yylval.wdatum.datum = plpgsql_Datums[ns->itemno];
-						plpgsql_yylval.wdatum.ident = NULL;
-						plpgsql_yylval.wdatum.quoted = false; /* not used */
-						plpgsql_yylval.wdatum.idents = idents;
-						return T_DATUM;
+						wdatum->datum = plpgsql_Datums[ns->itemno];
+						wdatum->ident = NULL;
+						wdatum->quoted = false; /* not used */
+						wdatum->idents = idents;
+						return true;
 					}
 
 				default:
@@ -1403,8 +1407,8 @@ plpgsql_parse_dblword(const char *word)
 	}
 
 	/* Nothing found */
-	plpgsql_yylval.cword.idents = idents;
-	return T_CWORD;
+	cword->idents = idents;
+	return false;
 }
 
 
@@ -1413,20 +1417,17 @@ plpgsql_parse_dblword(const char *word)
  *					separated by dots.
  * ----------
  */
-int
-plpgsql_parse_tripword(const char *word)
+bool
+plpgsql_parse_tripword(char *word1, char *word2, char *word3,
+					   PLwdatum *wdatum, PLcword *cword)
 {
 	PLpgSQL_nsitem *ns;
-	char	   *cp[3];
 	List	   *idents;
 	int			nnames;
 
-	/* Do case conversion and word separation */
-	plpgsql_convert_ident(word, cp, 3);
-
-	idents = list_make3(makeString(cp[0]),
-						makeString(cp[1]),
-						makeString(cp[2]));
+	idents = list_make3(makeString(word1),
+						makeString(word2),
+						makeString(word3));
 
 	/* No lookup if disabled */
 	if (plpgsql_LookupIdentifiers)
@@ -1436,7 +1437,7 @@ plpgsql_parse_tripword(const char *word)
 		 * reference, else ignore.
 		 */
 		ns = plpgsql_ns_lookup(plpgsql_ns_top(), false,
-							   cp[0], cp[1], cp[2],
+							   word1, word2, word3,
 							   &nnames);
 		if (ns != NULL && nnames == 2)
 		{
@@ -1452,16 +1453,16 @@ plpgsql_parse_tripword(const char *word)
 
 					new = palloc(sizeof(PLpgSQL_recfield));
 					new->dtype = PLPGSQL_DTYPE_RECFIELD;
-					new->fieldname = pstrdup(cp[2]);
+					new->fieldname = pstrdup(word3);
 					new->recparentno = ns->itemno;
 
 					plpgsql_adddatum((PLpgSQL_datum *) new);
 
-					plpgsql_yylval.wdatum.datum = (PLpgSQL_datum *) new;
-					plpgsql_yylval.wdatum.ident = NULL;
-					plpgsql_yylval.wdatum.quoted = false; /* not used */
-					plpgsql_yylval.wdatum.idents = idents;
-					return T_DATUM;
+					wdatum->datum = (PLpgSQL_datum *) new;
+					wdatum->ident = NULL;
+					wdatum->quoted = false; /* not used */
+					wdatum->idents = idents;
+					return true;
 				}
 
 				case PLPGSQL_NSTYPE_ROW:
@@ -1477,19 +1478,19 @@ plpgsql_parse_tripword(const char *word)
 					for (i = 0; i < row->nfields; i++)
 					{
 						if (row->fieldnames[i] &&
-							strcmp(row->fieldnames[i], cp[2]) == 0)
+							strcmp(row->fieldnames[i], word3) == 0)
 						{
-							plpgsql_yylval.wdatum.datum = plpgsql_Datums[row->varnos[i]];
-							plpgsql_yylval.wdatum.ident = NULL;
-							plpgsql_yylval.wdatum.quoted = false; /* not used */
-							plpgsql_yylval.wdatum.idents = idents;
-							return T_DATUM;
+							wdatum->datum = plpgsql_Datums[row->varnos[i]];
+							wdatum->ident = NULL;
+							wdatum->quoted = false; /* not used */
+							wdatum->idents = idents;
+							return true;
 						}
 					}
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("row \"%s.%s\" has no field \"%s\"",
-									cp[0], cp[1], cp[2])));
+									word1, word2, word3)));
 				}
 
 				default:
@@ -1499,8 +1500,8 @@ plpgsql_parse_tripword(const char *word)
 	}
 
 	/* Nothing found */
-	plpgsql_yylval.cword.idents = idents;
-	return T_CWORD;
+	cword->idents = idents;
+	return false;
 }
 
 

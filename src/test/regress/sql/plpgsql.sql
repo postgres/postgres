@@ -3189,3 +3189,18 @@ $$ language plpgsql;
 select * from conflict_test();
 
 drop function conflict_test();
+
+-- Check that an unreserved keyword can be used as a variable name
+
+create function unreserved_test() returns int as $$
+declare
+  forward int := 21;
+begin
+  forward := forward * 2;
+  return forward;
+end
+$$ language plpgsql;
+
+select unreserved_test();
+
+drop function unreserved_test();

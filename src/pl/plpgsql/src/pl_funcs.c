@@ -8,16 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.85 2009/11/07 00:52:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.86 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "plpgsql.h"
-
-#include <ctype.h>
-
-#include "parser/scansup.h"
 
 
 /* ----------
@@ -205,104 +201,6 @@ plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur, const char *name)
 	}
 
 	return NULL;				/* label not found */
-}
-
-
-/* ----------
- * plpgsql_convert_ident
- *
- * Convert a possibly-qualified identifier to internal form: handle
- * double quotes, translate to lower case where not inside quotes,
- * truncate to NAMEDATALEN.
- *
- * There may be several identifiers separated by dots and optional
- * whitespace.	Each one is converted to a separate palloc'd string.
- * The caller passes the expected number of identifiers, as well as
- * a char* array to hold them.	It is an error if we find the wrong
- * number of identifiers (cf grammar processing of fori_varname).
- *
- * NOTE: the input string has already been accepted by the flex lexer,
- * so we don't need a heckuva lot of error checking here.
- * ----------
- */
-void
-plpgsql_convert_ident(const char *s, char **output, int numidents)
-{
-	const char *sstart = s;
-	int			identctr = 0;
-
-	/* Outer loop over identifiers */
-	while (*s)
-	{
-		char	   *curident;
-		char	   *cp;
-
-		/* Process current identifier */
-
-		if (*s == '"')
-		{
-			/* Quoted identifier: copy, collapsing out doubled quotes */
-
-			curident = palloc(strlen(s) + 1);	/* surely enough room */
-			cp = curident;
-			s++;
-			while (*s)
-			{
-				if (*s == '"')
-				{
-					if (s[1] != '"')
-						break;
-					s++;
-				}
-				*cp++ = *s++;
-			}
-			if (*s != '"')		/* should not happen if lexer checked */
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-					   errmsg("unterminated \" in identifier: %s", sstart)));
-			s++;
-			*cp = '\0';
-			/* Truncate to NAMEDATALEN */
-			truncate_identifier(curident, cp - curident, false);
-		}
-		else
-		{
-			/* Normal identifier: extends till dot or whitespace */
-			const char *thisstart = s;
-
-			while (*s && *s != '.' && !scanner_isspace(*s))
-				s++;
-			/* Downcase and truncate to NAMEDATALEN */
-			curident = downcase_truncate_identifier(thisstart, s - thisstart,
-													false);
-		}
-
-		/* Pass ident to caller */
-		if (identctr < numidents)
-			output[identctr++] = curident;
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("qualified identifier cannot be used here: %s",
-							sstart)));
-
-		/* If not done, skip whitespace, dot, whitespace */
-		if (*s)
-		{
-			while (*s && scanner_isspace(*s))
-				s++;
-			if (*s++ != '.')
-				elog(ERROR, "expected dot between identifiers: %s", sstart);
-			while (*s && scanner_isspace(*s))
-				s++;
-			if (*s == '\0')
-				elog(ERROR, "expected another identifier: %s", sstart);
-		}
-	}
-
-	if (identctr != numidents)
-		elog(ERROR, "improperly qualified identifier: %s",
-			 sstart);
 }
 
 

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.163 2009/11/09 18:38:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.164 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
 static char *litbufdup(core_yyscan_t yyscanner);
 static char *litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner);
 static unsigned char unescape_single_char(unsigned char c, core_yyscan_t yyscanner);
+static int	process_integer_literal(const char *token, YYSTYPE *lval);
 static bool is_utf16_surrogate_first(pg_wchar c);
 static bool is_utf16_surrogate_second(pg_wchar c);
 static pg_wchar surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second);
@@ -339,12 +340,15 @@ operator		{op_chars}+
  * instead we pass it separately to parser. there it gets
  * coerced via doNegate() -- Leon aug 20 1999
  *
+* {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
+*
  * {realfail1} and {realfail2} are added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
+decimalfail		{digit}+\.\.
 real			({integer}|{decimal})[Ee][-+]?{digit}+
 realfail1		({integer}|{decimal})[Ee]
 realfail2		({integer}|{decimal})[Ee][-+]
@@ -846,30 +850,19 @@ other			.
 				}
 
 {integer}		{
-					long val;
-					char* endptr;
-
 					SET_YYLLOC();
-					errno = 0;
-					val = strtol(yytext, &endptr, 10);
-					if (*endptr != '\0' || errno == ERANGE
-#ifdef HAVE_LONG_INT_64
-						/* if long > 32 bits, check for overflow of int4 */
-						|| val != (long) ((int32) val)
-#endif
-						)
-					{
-						/* integer too large, treat it as a float */
-						yylval->str = pstrdup(yytext);
-						return FCONST;
-					}
-					yylval->ival = val;
-					return ICONST;
+					return process_integer_literal(yytext, yylval);
 				}
 {decimal}		{
 					SET_YYLLOC();
 					yylval->str = pstrdup(yytext);
 					return FCONST;
+				}
+{decimalfail}	{
+					/* throw back the .., and treat as integer */
+					yyless(yyleng-2);
+					SET_YYLLOC();
+					return process_integer_literal(yytext, yylval);
 				}
 {real}			{
 					SET_YYLLOC();
@@ -1119,6 +1112,29 @@ litbufdup(core_yyscan_t yyscanner)
 	memcpy(new, yyextra->literalbuf, llen);
 	new[llen] = '\0';
 	return new;
+}
+
+static int
+process_integer_literal(const char *token, YYSTYPE *lval)
+{
+	long		val;
+	char	   *endptr;
+
+	errno = 0;
+	val = strtol(token, &endptr, 10);
+	if (*endptr != '\0' || errno == ERANGE
+#ifdef HAVE_LONG_INT_64
+		/* if long > 32 bits, check for overflow of int4 */
+		|| val != (long) ((int32) val)
+#endif
+		)
+	{
+		/* integer too large, treat it as a float */
+		lval->str = pstrdup(token);
+		return FCONST;
+	}
+	lval->ival = val;
+	return ICONST;
 }
 
 static int

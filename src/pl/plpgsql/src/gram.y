@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.134 2009/11/10 02:13:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.135 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,18 +19,9 @@
 #include "catalog/pg_type.h"
 #include "parser/parser.h"
 #include "parser/parse_type.h"
+#include "parser/scanner.h"
 #include "parser/scansup.h"
 
-
-/*
- * We track token locations in terms of byte offsets from the start of the
- * source string, not the column number/line number representation that
- * bison uses by default.  Also, to minimize overhead we track only one
- * location (usually the first token location) for each construct, not
- * the beginning and ending locations as bison does by default.  It's
- * therefore sufficient to make YYLTYPE an int.
- */
-#define YYLTYPE  int
 
 /* Location tracking support --- simpler than bison's default */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
@@ -64,7 +55,7 @@ typedef struct
 union YYSTYPE;					/* need forward reference for tok_is_keyword */
 
 static	bool			tok_is_keyword(int token, union YYSTYPE *lval,
-									   const char *keyword);
+									   int kw_token, const char *kw_str);
 static	void			token_is_not_variable(int tok);
 static	PLpgSQL_expr	*read_sql_construct(int until,
 											int until2,
@@ -75,6 +66,8 @@ static	PLpgSQL_expr	*read_sql_construct(int until,
 											bool valid_sql,
 											int *startloc,
 											int *endtoken);
+static	PLpgSQL_expr	*read_sql_expression(int until,
+											 const char *expected);
 static	PLpgSQL_expr	*read_sql_expression2(int until, int until2,
 											  const char *expected,
 											  int *endtoken);
@@ -103,7 +96,6 @@ static	void			 check_sql_expr(const char *stmt, int location,
 										int leaderlen);
 static	void			 plpgsql_sql_error_callback(void *arg);
 static	PLpgSQL_type	*parse_datatype(const char *string, int location);
-static	char			*parse_string_token(const char *token, int location);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label,
 									  int end_location);
@@ -118,6 +110,7 @@ static	List			*read_raise_options(void);
 %locations
 
 %union {
+		core_YYSTYPE			core_yystype;
 		/* these fields must match core_YYSTYPE: */
 		int						ival;
 		char					*str;
@@ -158,7 +151,6 @@ static	List			*read_raise_options(void);
 		PLpgSQL_var				*var;
 		PLpgSQL_expr			*expr;
 		PLpgSQL_stmt			*stmt;
-		PLpgSQL_stmt_block		*program;
 		PLpgSQL_condition		*condition;
 		PLpgSQL_exception		*exception;
 		PLpgSQL_exception_block	*exception_block;
@@ -212,7 +204,10 @@ static	List			*read_raise_options(void);
 %type <ival>	getdiag_item getdiag_target
 
 %type <ival>	opt_scrollable
-%type <fetch>   opt_fetch_direction
+%type <fetch>	opt_fetch_direction
+
+%type <keyword>	unreserved_keyword
+
 
 /*
  * Basic non-keyword token types.  These are hard-wired into the core lexer.
@@ -227,84 +222,103 @@ static	List			*read_raise_options(void);
 %token			TYPECAST DOT_DOT COLON_EQUALS
 
 /*
- * Other tokens recognized by plpgsql's lexer interface layer.
+ * Other tokens recognized by plpgsql's lexer interface layer (pl_scanner.c).
  */
-%token				T_STRING
-%token				T_NUMBER
 %token <word>		T_WORD		/* unrecognized simple identifier */
 %token <cword>		T_CWORD		/* unrecognized composite identifier */
 %token <wdatum>		T_DATUM		/* a VAR, ROW, REC, or RECFIELD variable */
-
-%token	O_OPTION
-%token	O_DUMP
+%token				LESS_LESS
+%token				GREATER_GREATER
 
 /*
- * Keyword tokens
+ * Keyword tokens.  Some of these are reserved and some are not;
+ * see pl_scanner.c for info.  Be sure unreserved keywords are listed
+ * in the "unreserved_keyword" production below.
  */
-%token	K_ALIAS
-%token	K_ALL
-%token	K_ASSIGN
-%token	K_BEGIN
-%token	K_BY
-%token	K_CASE
-%token	K_CLOSE
-%token	K_CONSTANT
-%token	K_CONTINUE
-%token	K_CURSOR
-%token	K_DECLARE
-%token	K_DEFAULT
-%token	K_DIAGNOSTICS
-%token	K_DOTDOT
-%token	K_ELSE
-%token	K_ELSIF
-%token	K_END
-%token	K_EXCEPTION
-%token	K_EXECUTE
-%token	K_EXIT
-%token	K_FOR
-%token	K_FETCH
-%token	K_FROM
-%token	K_GET
-%token	K_IF
-%token	K_IN
-%token	K_INSERT
-%token	K_INTO
-%token	K_IS
-%token	K_LOOP
-%token	K_MOVE
-%token	K_NOSCROLL
-%token	K_NOT
-%token	K_NULL
-%token	K_OPEN
-%token	K_OR
-%token	K_PERFORM
-%token	K_RAISE
-%token	K_RETURN
-%token	K_SCROLL
-%token	K_STRICT
-%token	K_THEN
-%token	K_TO
-%token	K_USING
-%token	K_WHEN
-%token	K_WHILE
+%token <keyword>	K_ABSOLUTE
+%token <keyword>	K_ALIAS
+%token <keyword>	K_ALL
+%token <keyword>	K_BACKWARD
+%token <keyword>	K_BEGIN
+%token <keyword>	K_BY
+%token <keyword>	K_CASE
+%token <keyword>	K_CLOSE
+%token <keyword>	K_CONSTANT
+%token <keyword>	K_CONTINUE
+%token <keyword>	K_CURSOR
+%token <keyword>	K_DEBUG
+%token <keyword>	K_DECLARE
+%token <keyword>	K_DEFAULT
+%token <keyword>	K_DETAIL
+%token <keyword>	K_DIAGNOSTICS
+%token <keyword>	K_DUMP
+%token <keyword>	K_ELSE
+%token <keyword>	K_ELSIF
+%token <keyword>	K_END
+%token <keyword>	K_ERRCODE
+%token <keyword>	K_EXCEPTION
+%token <keyword>	K_EXECUTE
+%token <keyword>	K_EXIT
+%token <keyword>	K_FETCH
+%token <keyword>	K_FIRST
+%token <keyword>	K_FOR
+%token <keyword>	K_FORWARD
+%token <keyword>	K_FROM
+%token <keyword>	K_GET
+%token <keyword>	K_HINT
+%token <keyword>	K_IF
+%token <keyword>	K_IN
+%token <keyword>	K_INFO
+%token <keyword>	K_INSERT
+%token <keyword>	K_INTO
+%token <keyword>	K_IS
+%token <keyword>	K_LAST
+%token <keyword>	K_LOG
+%token <keyword>	K_LOOP
+%token <keyword>	K_MESSAGE
+%token <keyword>	K_MOVE
+%token <keyword>	K_NEXT
+%token <keyword>	K_NO
+%token <keyword>	K_NOT
+%token <keyword>	K_NOTICE
+%token <keyword>	K_NULL
+%token <keyword>	K_OPEN
+%token <keyword>	K_OPTION
+%token <keyword>	K_OR
+%token <keyword>	K_PERFORM
+%token <keyword>	K_PRIOR
+%token <keyword>	K_QUERY
+%token <keyword>	K_RAISE
+%token <keyword>	K_RELATIVE
+%token <keyword>	K_RESULT_OID
+%token <keyword>	K_RETURN
+%token <keyword>	K_REVERSE
+%token <keyword>	K_ROWTYPE
+%token <keyword>	K_ROW_COUNT
+%token <keyword>	K_SCROLL
+%token <keyword>	K_SQLSTATE
+%token <keyword>	K_STRICT
+%token <keyword>	K_THEN
+%token <keyword>	K_TO
+%token <keyword>	K_TYPE
+%token <keyword>	K_USING
+%token <keyword>	K_WARNING
+%token <keyword>	K_WHEN
+%token <keyword>	K_WHILE
 
 %%
 
-pl_function		: comp_optsect pl_block opt_semi
+pl_function		: comp_options pl_block opt_semi
 					{
-						yylval.program = (PLpgSQL_stmt_block *) $2;
+						plpgsql_parse_result = (PLpgSQL_stmt_block *) $2;
 					}
 				;
 
-comp_optsect	:
-				| comp_options
+comp_options	:
+				| comp_options comp_option
 				;
 
-comp_options	: comp_options comp_option
-				| comp_option
-				;
-
-comp_option		: O_OPTION O_DUMP
+comp_option		: '#' K_OPTION K_DUMP
 					{
 						plpgsql_DumpExecTree = true;
 					}
@@ -381,8 +395,8 @@ decl_stmts		: decl_stmts decl_stmt
 					{	$$ = $1;	}
 				;
 
-decl_stmt		: '<' '<' any_identifier '>' '>'
-					{	$$ = $3;	}
+decl_stmt		: LESS_LESS any_identifier GREATER_GREATER
+					{	$$ = $2;	}
 				| K_DECLARE
 					{	$$ = NULL;	}
 				| decl_statement
@@ -487,7 +501,7 @@ opt_scrollable :
 					{
 						$$ = 0;
 					}
-				| K_NOSCROLL
+				| K_NO K_SCROLL
 					{
 						$$ = CURSOR_OPT_NO_SCROLL;
 					}
@@ -613,6 +627,19 @@ decl_varname	: T_WORD
 											  NULL) != NULL)
 							yyerror("duplicate declaration");
 					}
+				| unreserved_keyword
+					{
+						$$.name = pstrdup($1);
+						$$.lineno = plpgsql_location_to_lineno(@1);
+						/*
+						 * Check to make sure name isn't already declared
+						 * in the current block.
+						 */
+						if (plpgsql_ns_lookup(plpgsql_ns_top(), true,
+											  $1, NULL, NULL,
+											  NULL) != NULL)
+							yyerror("duplicate declaration");
+					}
 				;
 
 decl_const		:
@@ -642,12 +669,16 @@ decl_defval		: ';'
 					{ $$ = NULL; }
 				| decl_defkey
 					{
-						$$ = plpgsql_read_expression(';', ";");
+						$$ = read_sql_expression(';', ";");
 					}
 				;
 
-decl_defkey		: K_ASSIGN
+decl_defkey		: assign_operator
 				| K_DEFAULT
+				;
+
+assign_operator	: '='
+				| COLON_EQUALS
 				;
 
 proc_sect		:
@@ -725,7 +756,7 @@ stmt_perform	: K_PERFORM expr_until_semi
 					}
 				;
 
-stmt_assign		: assign_var K_ASSIGN expr_until_semi
+stmt_assign		: assign_var assign_operator expr_until_semi
 					{
 						PLpgSQL_stmt_assign *new;
 
@@ -762,7 +793,7 @@ getdiag_list : getdiag_list ',' getdiag_list_item
 					}
 				;
 
-getdiag_list_item : getdiag_target K_ASSIGN getdiag_item
+getdiag_list_item : getdiag_target assign_operator getdiag_item
 					{
 						PLpgSQL_diag_item *new;
 
@@ -778,9 +809,11 @@ getdiag_item :
 					{
 						int	tok = yylex();
 
-						if (tok_is_keyword(tok, &yylval, "row_count"))
+						if (tok_is_keyword(tok, &yylval,
+										   K_ROW_COUNT, "row_count"))
 							$$ = PLPGSQL_GETDIAG_ROW_COUNT;
-						else if (tok_is_keyword(tok, &yylval, "result_oid"))
+						else if (tok_is_keyword(tok, &yylval,
+												K_RESULT_OID, "result_oid"))
 							$$ = PLPGSQL_GETDIAG_RESULT_OID;
 						else
 							yyerror("unrecognized GET DIAGNOSTICS item");
@@ -901,7 +934,7 @@ opt_expr_until_when	:
 						if (tok != K_WHEN)
 						{
 							plpgsql_push_back_token(tok);
-							expr = plpgsql_read_expression(K_WHEN, "WHEN");
+							expr = read_sql_expression(K_WHEN, "WHEN");
 						}
 						plpgsql_push_back_token(K_WHEN);
 						$$ = expr;
@@ -1130,7 +1163,8 @@ for_control		: for_variable K_IN
 							 * keyword, which means it must be an
 							 * integer loop.
 							 */
-							if (tok_is_keyword(tok, &yylval, "reverse"))
+							if (tok_is_keyword(tok, &yylval,
+											   K_REVERSE, "reverse"))
 								reverse = true;
 							else
 								plpgsql_push_back_token(tok);
@@ -1142,7 +1176,7 @@ for_control		: for_variable K_IN
 							 * statement, so we need to invoke
 							 * read_sql_construct directly.
 							 */
-							expr1 = read_sql_construct(K_DOTDOT,
+							expr1 = read_sql_construct(DOT_DOT,
 													   K_LOOP,
 													   0,
 													   "LOOP",
@@ -1152,7 +1186,7 @@ for_control		: for_variable K_IN
 													   &expr1loc,
 													   &tok);
 
-							if (tok == K_DOTDOT)
+							if (tok == DOT_DOT)
 							{
 								/* Saw "..", so it must be an integer loop */
 								PLpgSQL_expr		*expr2;
@@ -1170,8 +1204,8 @@ for_control		: for_variable K_IN
 
 								/* Get the BY clause if any */
 								if (tok == K_BY)
-									expr_by = plpgsql_read_expression(K_LOOP,
-																	  "LOOP");
+									expr_by = read_sql_expression(K_LOOP,
+																  "LOOP");
 								else
 									expr_by = NULL;
 
@@ -1370,11 +1404,13 @@ stmt_return		: K_RETURN
 						if (tok == 0)
 							yyerror("unexpected end of function definition");
 
-						if (tok_is_keyword(tok, &yylval, "next"))
+						if (tok_is_keyword(tok, &yylval,
+										   K_NEXT, "next"))
 						{
 							$$ = make_return_next_stmt(@1);
 						}
-						else if (tok_is_keyword(tok, &yylval, "query"))
+						else if (tok_is_keyword(tok, &yylval,
+												K_QUERY, "query"))
 						{
 							$$ = make_return_query_stmt(@1);
 						}
@@ -1414,32 +1450,38 @@ stmt_raise		: K_RAISE
 							/*
 							 * First is an optional elog severity level.
 							 */
-							if (tok == K_EXCEPTION)
+							if (tok_is_keyword(tok, &yylval,
+											   K_EXCEPTION, "exception"))
 							{
 								new->elog_level = ERROR;
 								tok = yylex();
 							}
-							else if (tok_is_keyword(tok, &yylval, "warning"))
+							else if (tok_is_keyword(tok, &yylval,
+													K_WARNING, "warning"))
 							{
 								new->elog_level = WARNING;
 								tok = yylex();
 							}
-							else if (tok_is_keyword(tok, &yylval, "notice"))
+							else if (tok_is_keyword(tok, &yylval,
+													K_NOTICE, "notice"))
 							{
 								new->elog_level = NOTICE;
 								tok = yylex();
 							}
-							else if (tok_is_keyword(tok, &yylval, "info"))
+							else if (tok_is_keyword(tok, &yylval,
+													K_INFO, "info"))
 							{
 								new->elog_level = INFO;
 								tok = yylex();
 							}
-							else if (tok_is_keyword(tok, &yylval, "log"))
+							else if (tok_is_keyword(tok, &yylval,
+													K_LOG, "log"))
 							{
 								new->elog_level = LOG;
 								tok = yylex();
 							}
-							else if (tok_is_keyword(tok, &yylval, "debug"))
+							else if (tok_is_keyword(tok, &yylval,
+													K_DEBUG, "debug"))
 							{
 								new->elog_level = DEBUG1;
 								tok = yylex();
@@ -1453,10 +1495,10 @@ stmt_raise		: K_RAISE
 							 * literal that is the old-style message format,
 							 * or USING to start the option list immediately.
 							 */
-							if (tok == T_STRING)
+							if (tok == SCONST)
 							{
 								/* old style message and parameters */
-								new->message = parse_string_token(yytext, yylloc);
+								new->message = yylval.str;
 								/*
 								 * We expect either a semi-colon, which
 								 * indicates no parameters, or a comma that
@@ -1482,14 +1524,15 @@ stmt_raise		: K_RAISE
 							else if (tok != K_USING)
 							{
 								/* must be condition name or SQLSTATE */
-								if (tok_is_keyword(tok, &yylval, "sqlstate"))
+								if (tok_is_keyword(tok, &yylval,
+												   K_SQLSTATE, "sqlstate"))
 								{
 									/* next token should be a string literal */
 									char   *sqlstatestr;
 
-									if (yylex() != T_STRING)
+									if (yylex() != SCONST)
 										yyerror("syntax error");
-									sqlstatestr = parse_string_token(yytext, yylloc);
+									sqlstatestr = yylval.str;
 
 									if (strlen(sqlstatestr) != 5)
 										yyerror("invalid SQLSTATE code");
@@ -1603,12 +1646,19 @@ stmt_open		: K_OPEN cursor_variable
 						{
 							/* be nice if we could use opt_scrollable here */
 						    tok = yylex();
-							if (tok == K_NOSCROLL)
+							if (tok_is_keyword(tok, &yylval,
+											   K_NO, "no"))
 							{
-								new->cursor_options |= CURSOR_OPT_NO_SCROLL;
 								tok = yylex();
+								if (tok_is_keyword(tok, &yylval,
+												   K_SCROLL, "scroll"))
+								{
+									new->cursor_options |= CURSOR_OPT_NO_SCROLL;
+									tok = yylex();
+								}
 							}
-							else if (tok == K_SCROLL)
+							else if (tok_is_keyword(tok, &yylval,
+													K_SCROLL, "scroll"))
 							{
 								new->cursor_options |= CURSOR_OPT_SCROLL;
 								tok = yylex();
@@ -1824,9 +1874,9 @@ proc_condition	: any_identifier
 								char   *sqlstatestr;
 
 								/* next token should be a string literal */
-								if (yylex() != T_STRING)
+								if (yylex() != SCONST)
 									yyerror("syntax error");
-								sqlstatestr = parse_string_token(yytext, yylloc);
+								sqlstatestr = yylval.str;
 
 								if (strlen(sqlstatestr) != 5)
 									yyerror("invalid SQLSTATE code");
@@ -1849,19 +1899,19 @@ proc_condition	: any_identifier
 				;
 
 expr_until_semi :
-					{ $$ = plpgsql_read_expression(';', ";"); }
+					{ $$ = read_sql_expression(';', ";"); }
 				;
 
 expr_until_rightbracket :
-					{ $$ = plpgsql_read_expression(']', "]"); }
+					{ $$ = read_sql_expression(']', "]"); }
 				;
 
 expr_until_then :
-					{ $$ = plpgsql_read_expression(K_THEN, "THEN"); }
+					{ $$ = read_sql_expression(K_THEN, "THEN"); }
 				;
 
 expr_until_loop :
-					{ $$ = plpgsql_read_expression(K_LOOP, "LOOP"); }
+					{ $$ = read_sql_expression(K_LOOP, "LOOP"); }
 				;
 
 opt_block_label	:
@@ -1869,10 +1919,10 @@ opt_block_label	:
 						plpgsql_ns_push(NULL);
 						$$ = NULL;
 					}
-				| '<' '<' any_identifier '>' '>'
+				| LESS_LESS any_identifier GREATER_GREATER
 					{
-						plpgsql_ns_push($3);
-						$$ = $3;
+						plpgsql_ns_push($2);
+						$$ = $2;
 					}
 				;
 
@@ -1909,30 +1959,67 @@ any_identifier	: T_WORD
 					}
 				;
 
+unreserved_keyword	:
+				K_ABSOLUTE
+				| K_ALIAS
+				| K_BACKWARD
+				| K_CONSTANT
+				| K_CURSOR
+				| K_DEBUG
+				| K_DETAIL
+				| K_DUMP
+				| K_ERRCODE
+				| K_FIRST
+				| K_FORWARD
+				| K_HINT
+				| K_INFO
+				| K_IS
+				| K_LAST
+				| K_LOG
+				| K_MESSAGE
+				| K_NEXT
+				| K_NO
+				| K_NOTICE
+				| K_OPTION
+				| K_PRIOR
+				| K_QUERY
+				| K_RELATIVE
+				| K_RESULT_OID
+				| K_REVERSE
+				| K_ROW_COUNT
+				| K_ROWTYPE
+				| K_SCROLL
+				| K_SQLSTATE
+				| K_TYPE
+				| K_WARNING
+				;
+
 %%
 
 /*
  * Check whether a token represents an "unreserved keyword".
  * We have various places where we want to recognize a keyword in preference
  * to a variable name, but not reserve that keyword in other contexts.
- * Hence, this kluge.  CAUTION: don't use this for reserved keywords;
- * it won't recognize them.
+ * Hence, this kluge.
  */
 static bool
-tok_is_keyword(int token, union YYSTYPE *lval, const char *keyword)
+tok_is_keyword(int token, union YYSTYPE *lval,
+			   int kw_token, const char *kw_str)
 {
-	if (token == T_WORD)
+	if (token == kw_token)
 	{
-		/* must be unquoted and match the downcased string */
-		if (!lval->word.quoted && strcmp(lval->word.ident, keyword) == 0)
-			return true;
+		/* Normal case, was recognized by scanner (no conflicting variable) */
+		return true;
 	}
 	else if (token == T_DATUM)
 	{
-		/* like the T_WORD case, but also reject composite identifiers */
-		/* (hence an unreserved word followed by "." will not be recognized) */
+		/*
+		 * It's a variable, so recheck the string name.  Note we will not
+		 * match composite names (hence an unreserved word followed by "."
+		 * will not be recognized).
+		 */
 		if (!lval->word.quoted && lval->word.ident != NULL &&
-			strcmp(lval->word.ident, keyword) == 0)
+			strcmp(lval->word.ident, kw_str) == 0)
 			return true;
 	}
 	return false;				/* not the keyword */
@@ -1963,8 +2050,8 @@ token_is_not_variable(int tok)
 }
 
 /* Convenience routine to read an expression with one possible terminator */
-PLpgSQL_expr *
-plpgsql_read_expression(int until, const char *expected)
+static PLpgSQL_expr *
+read_sql_expression(int until, const char *expected)
 {
 	return read_sql_construct(until, 0, 0, expected,
 							  "SELECT ", true, true, NULL, NULL);
@@ -2135,13 +2222,15 @@ read_datatype(int tok)
 		if (tok == '%')
 		{
 			tok = yylex();
-			if (tok_is_keyword(tok, &yylval, "type"))
+			if (tok_is_keyword(tok, &yylval,
+							   K_TYPE, "type"))
 			{
 				result = plpgsql_parse_wordtype(dtname);
 				if (result)
 					return result;
 			}
-			else if (tok_is_keyword(tok, &yylval, "rowtype"))
+			else if (tok_is_keyword(tok, &yylval,
+									K_ROWTYPE, "rowtype"))
 			{
 				result = plpgsql_parse_wordrowtype(dtname);
 				if (result)
@@ -2157,13 +2246,15 @@ read_datatype(int tok)
 		if (tok == '%')
 		{
 			tok = yylex();
-			if (tok_is_keyword(tok, &yylval, "type"))
+			if (tok_is_keyword(tok, &yylval,
+							   K_TYPE, "type"))
 			{
 				result = plpgsql_parse_cwordtype(dtnames);
 				if (result)
 					return result;
 			}
-			else if (tok_is_keyword(tok, &yylval, "rowtype"))
+			else if (tok_is_keyword(tok, &yylval,
+									K_ROWTYPE, "rowtype"))
 			{
 				result = plpgsql_parse_cwordrowtype(dtnames);
 				if (result)
@@ -2182,7 +2273,7 @@ read_datatype(int tok)
 				yyerror("incomplete data type declaration");
 		}
 		/* Possible followers for datatype in a declaration */
-		if (tok == K_NOT || tok == K_ASSIGN || tok == K_DEFAULT)
+		if (tok == K_NOT || tok == '=' || tok == COLON_EQUALS || tok == K_DEFAULT)
 			break;
 		/* Possible followers for datatype in a cursor_arg list */
 		if ((tok == ',' || tok == ')') && parenlevel == 0)
@@ -2335,24 +2426,29 @@ read_fetch_direction(void)
 	if (tok == 0)
 		yyerror("unexpected end of function definition");
 
-	if (tok_is_keyword(tok, &yylval, "next"))
+	if (tok_is_keyword(tok, &yylval,
+					   K_NEXT, "next"))
 	{
 		/* use defaults */
 	}
-	else if (tok_is_keyword(tok, &yylval, "prior"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_PRIOR, "prior"))
 	{
 		fetch->direction = FETCH_BACKWARD;
 	}
-	else if (tok_is_keyword(tok, &yylval, "first"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_FIRST, "first"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
 	}
-	else if (tok_is_keyword(tok, &yylval, "last"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_LAST, "last"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
 		fetch->how_many  = -1;
 	}
-	else if (tok_is_keyword(tok, &yylval, "absolute"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_ABSOLUTE, "absolute"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,
@@ -2360,7 +2456,8 @@ read_fetch_direction(void)
 										   NULL);
 		check_FROM = false;
 	}
-	else if (tok_is_keyword(tok, &yylval, "relative"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_RELATIVE, "relative"))
 	{
 		fetch->direction = FETCH_RELATIVE;
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,
@@ -2368,16 +2465,19 @@ read_fetch_direction(void)
 										   NULL);
 		check_FROM = false;
 	}
-	else if (tok == K_ALL)
+	else if (tok_is_keyword(tok, &yylval,
+							K_ALL, "all"))
 	{
 		fetch->how_many = FETCH_ALL;
 		fetch->returns_multiple_rows = true;
 	}
-	else if (tok_is_keyword(tok, &yylval, "forward"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_FORWARD, "forward"))
 	{
 		complete_direction(fetch, &check_FROM);
 	}
-	else if (tok_is_keyword(tok, &yylval, "backward"))
+	else if (tok_is_keyword(tok, &yylval,
+							K_BACKWARD, "backward"))
 	{
 		fetch->direction = FETCH_BACKWARD;
 		complete_direction(fetch, &check_FROM);
@@ -2532,7 +2632,7 @@ make_return_stmt(int location)
 		 * Note that a well-formed expression is _required_ here;
 		 * anything else is a compile-time error.
 		 */
-		new->expr = plpgsql_read_expression(';', ";");
+		new->expr = read_sql_expression(';', ";");
 	}
 
 	return (PLpgSQL_stmt *) new;
@@ -2591,7 +2691,7 @@ make_return_next_stmt(int location)
 			yyerror("syntax error");
 	}
 	else
-		new->expr = plpgsql_read_expression(';', ";");
+		new->expr = read_sql_expression(';', ";");
 
 	return (PLpgSQL_stmt *) new;
 }
@@ -2957,36 +3057,6 @@ parse_datatype(const char *string, int location)
 }
 
 /*
- * Convert a string-literal token to the represented string value.
- *
- * To do this, we need to invoke the core lexer.  Here we are only concerned
- * with setting up an errcontext link, which is handled the same as
- * in check_sql_expr().
- */
-static char *
-parse_string_token(const char *token, int location)
-{
-	char	   *result;
-	sql_error_callback_arg cbarg;
-	ErrorContextCallback  syntax_errcontext;
-
-	cbarg.location = location;
-	cbarg.leaderlen = 0;
-
-	syntax_errcontext.callback = plpgsql_sql_error_callback;
-	syntax_errcontext.arg = &cbarg;
-	syntax_errcontext.previous = error_context_stack;
-	error_context_stack = &syntax_errcontext;
-
-	result = pg_parse_string_token(token);
-
-	/* Restore former ereport callback */
-	error_context_stack = syntax_errcontext.previous;
-
-	return result;
-}
-
-/*
  * Check block starting and ending labels match.
  */
 static void
@@ -3052,7 +3122,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 	/*
 	 * Read expressions until the matching ')'.
 	 */
-	expr = plpgsql_read_expression(')', ")");
+	expr = read_sql_expression(')', ")");
 
 	/* Next we'd better find the until token */
 	tok = yylex();
@@ -3080,18 +3150,23 @@ read_raise_options(void)
 
 		opt = (PLpgSQL_raise_option *) palloc(sizeof(PLpgSQL_raise_option));
 
-		if (tok_is_keyword(tok, &yylval, "errcode"))
+		if (tok_is_keyword(tok, &yylval,
+						   K_ERRCODE, "errcode"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_ERRCODE;
-		else if (tok_is_keyword(tok, &yylval, "message"))
+		else if (tok_is_keyword(tok, &yylval,
+								K_MESSAGE, "message"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_MESSAGE;
-		else if (tok_is_keyword(tok, &yylval, "detail"))
+		else if (tok_is_keyword(tok, &yylval,
+								K_DETAIL, "detail"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_DETAIL;
-		else if (tok_is_keyword(tok, &yylval, "hint"))
+		else if (tok_is_keyword(tok, &yylval,
+								K_HINT, "hint"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_HINT;
 		else
 			yyerror("unrecognized RAISE statement option");
 
-		if (yylex() != K_ASSIGN)
+		tok = yylex();
+		if (tok != '=' && tok != COLON_EQUALS)
 			yyerror("syntax error, expected \"=\"");
 
 		opt->expr = read_sql_expression2(',', ';', ", or ;", &tok);
@@ -3181,9 +3256,3 @@ make_case(int location, PLpgSQL_expr *t_expr,
 
 	return (PLpgSQL_stmt *) new;
 }
-
-
-/* Needed to avoid conflict between different prefix settings: */
-#undef yylex
-
-#include "pl_scan.c"

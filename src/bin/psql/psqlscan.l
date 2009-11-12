@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.29 2009/09/27 03:27:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.30 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,12 +364,15 @@ operator		{op_chars}+
  * instead we pass it separately to parser. there it gets
  * coerced via doNegate() -- Leon aug 20 1999
  *
+ * {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
+ *
  * {realfail1} and {realfail2} are added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
+decimalfail		{digit}+\.\.
 real			({integer}|{decimal})[Ee][-+]?{digit}+
 realfail1		({integer}|{decimal})[Ee]
 realfail2		({integer}|{decimal})[Ee][-+]
@@ -774,6 +777,11 @@ other			.
 					ECHO;
 				}
 {decimal}		{
+					ECHO;
+				}
+{decimalfail}	{
+					/* throw back the .., and treat as integer */
+					yyless(yyleng-2);
 					ECHO;
 				}
 {real}			{

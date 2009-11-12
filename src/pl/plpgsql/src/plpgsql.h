@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.123 2009/11/10 02:13:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.124 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -794,20 +794,18 @@ typedef struct
  * Global variable declarations
  **********************************************************************/
 
+extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;
 extern bool plpgsql_LookupIdentifiers;
+
+extern PLpgSQL_stmt_block *plpgsql_parse_result;
+
 extern int	plpgsql_nDatums;
 extern PLpgSQL_datum **plpgsql_Datums;
 
 extern char *plpgsql_error_funcname;
 
-/* linkage to the real yytext variable */
-extern char *plpgsql_base_yytext;
-
-#define yytext plpgsql_base_yytext
-
 extern PLpgSQL_function *plpgsql_curr_compile;
-extern bool plpgsql_check_syntax;
 extern MemoryContext compile_tmp_cxt;
 
 extern PLpgSQL_plugin **plugin_ptr;
@@ -825,9 +823,12 @@ extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo,
 extern PLpgSQL_function *plpgsql_compile_inline(char *proc_source);
 extern void plpgsql_parser_setup(struct ParseState *pstate,
 								 PLpgSQL_expr *expr);
-extern int	plpgsql_parse_word(const char *word);
-extern int	plpgsql_parse_dblword(const char *word);
-extern int	plpgsql_parse_tripword(const char *word);
+extern bool plpgsql_parse_word(char *word1, const char *yytxt,
+							   PLwdatum *wdatum, PLword *word);
+extern bool plpgsql_parse_dblword(char *word1, char *word2,
+								  PLwdatum *wdatum, PLcword *cword);
+extern bool plpgsql_parse_tripword(char *word1, char *word2, char *word3,
+								   PLwdatum *wdatum, PLcword *cword);
 extern PLpgSQL_type *plpgsql_parse_wordtype(char *ident);
 extern PLpgSQL_type *plpgsql_parse_cwordtype(List *idents);
 extern PLpgSQL_type *plpgsql_parse_wordrowtype(char *ident);
@@ -889,16 +890,13 @@ extern PLpgSQL_nsitem *plpgsql_ns_lookup_label(PLpgSQL_nsitem *ns_cur,
  * Other functions in pl_funcs.c
  * ----------
  */
-extern void plpgsql_convert_ident(const char *s, char **output, int numidents);
 extern const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 
 /* ----------
- * Externs in gram.y and scan.l
+ * Scanner functions in pl_scanner.c
  * ----------
  */
-extern PLpgSQL_expr *plpgsql_read_expression(int until, const char *expected);
-extern int	plpgsql_yyparse(void);
 extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
@@ -910,5 +908,11 @@ extern int	plpgsql_location_to_lineno(int location);
 extern int	plpgsql_latest_lineno(void);
 extern void plpgsql_scanner_init(const char *str);
 extern void plpgsql_scanner_finish(void);
+
+/* ----------
+ * Externs in gram.y
+ * ----------
+ */
+extern int	plpgsql_yyparse(void);
 
 #endif   /* PLPGSQL_H */

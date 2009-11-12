@@ -3889,6 +3889,10 @@ WARNING:  nonstandard use of \\ in a string literal
 LINE 4:   return 'foo\\bar\041baz';
                  ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+WARNING:  nonstandard use of \\ in a string literal
+LINE 4:   return 'foo\\bar\041baz';
+                 ^
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
 select strtest();
 NOTICE:  foo\bar!baz
 WARNING:  nonstandard use of \\ in a string literal
@@ -4020,3 +4024,19 @@ select * from conflict_test();
 (5 rows)
 
 drop function conflict_test();
+-- Check that an unreserved keyword can be used as a variable name
+create function unreserved_test() returns int as $$
+declare
+  forward int := 21;
+begin
+  forward := forward * 2;
+  return forward;
+end
+$$ language plpgsql;
+select unreserved_test();
+ unreserved_test 
+-----------------
+              42
+(1 row)
+
+drop function unreserved_test();

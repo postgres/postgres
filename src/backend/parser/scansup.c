@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.37 2009/01/01 17:23:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.38 2009/11/12 00:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,6 @@ bool
 scanner_isspace(char ch)
 {
 	/* This must match scan.l's list of {space} characters */
-	/* and plpgsql's scan.l as well */
 	if (ch == ' ' ||
 		ch == '\t' ||
 		ch == '\n' ||
