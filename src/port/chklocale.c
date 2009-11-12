@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.12 2009/11/12 02:46:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.13 2009/11/12 03:37:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,11 @@ pg_get_encoding_from_locale(const char *ctype)
 		char	   *save;
 		char	   *name;
 
+		/* If locale is C or POSIX, we can allow all encodings */
+		if (pg_strcasecmp(ctype, "C") == 0 ||
+			pg_strcasecmp(ctype, "POSIX") == 0)
+			return PG_SQL_ASCII;
+
 		save = setlocale(LC_CTYPE, NULL);
 		if (!save)
 			return -1;				/* setlocale() broken? */
@@ -269,6 +274,12 @@ pg_get_encoding_from_locale(const char *ctype)
 		ctype = setlocale(LC_CTYPE, NULL);
 		if (!ctype)
 			return -1;				/* setlocale() broken? */
+
+		/* If locale is C or POSIX, we can allow all encodings */
+		if (pg_strcasecmp(ctype, "C") == 0 ||
+			pg_strcasecmp(ctype, "POSIX") == 0)
+			return PG_SQL_ASCII;
+
 #ifndef WIN32
 		sys = nl_langinfo(CODESET);
 		if (sys)
@@ -280,13 +291,6 @@ pg_get_encoding_from_locale(const char *ctype)
 
 	if (!sys)
 		return -1;					/* out of memory; unlikely */
-
-	/* If locale is C or POSIX, we can allow all encodings */
-	if (pg_strcasecmp(ctype, "C") == 0 || pg_strcasecmp(ctype, "POSIX") == 0)
-	{
-		free(sys);
-		return PG_SQL_ASCII;
-	}
 
 	/* Check the table */
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)
