@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.27 2009/07/13 00:42:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parser.h,v 1.28 2009/11/12 01:13:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,8 @@ extern bool escape_string_warning;
 extern PGDLLIMPORT bool standard_conforming_strings;
 
 
-/* Primary entry points for the raw parsing functions */
+/* Primary entry point for the raw parsing functions */
 extern List *raw_parser(const char *str);
-
-extern char *pg_parse_string_token(const char *token);
 
 /* Utility functions exported by gram.y (perhaps these should be elsewhere) */
 extern List *SystemFuncName(char *name);
