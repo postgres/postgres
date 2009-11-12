@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.11 2009/02/10 19:29:39 petere Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.12 2009/11/12 02:46:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,6 +181,8 @@ static const struct encoding_match encoding_match_list[] = {
 
 	{PG_SHIFT_JIS_2004, "SJIS_2004"},
 
+	{PG_SQL_ASCII, "US-ASCII"},
+
 	{PG_SQL_ASCII, NULL}		/* end marker */
 };
 
@@ -215,13 +217,13 @@ win32_langinfo(const char *ctype)
 
 /*
  * Given a setting for LC_CTYPE, return the Postgres ID of the associated
- * encoding, if we can determine it.
+ * encoding, if we can determine it.  Return -1 if we can't determine it.
  *
  * Pass in NULL to get the encoding for the current locale setting.
+ * Pass "" to get the encoding selected by the server's environment.
  *
  * If the result is PG_SQL_ASCII, callers should treat it as being compatible
- * with any desired encoding.  We return this if the locale is C/POSIX or we
- * can't determine the encoding.
+ * with any desired encoding.
  */
 int
 pg_get_encoding_from_locale(const char *ctype)
@@ -237,17 +239,17 @@ pg_get_encoding_from_locale(const char *ctype)
 
 		save = setlocale(LC_CTYPE, NULL);
 		if (!save)
-			return PG_SQL_ASCII;	/* setlocale() broken? */
+			return -1;				/* setlocale() broken? */
 		/* must copy result, or it might change after setlocale */
 		save = strdup(save);
 		if (!save)
-			return PG_SQL_ASCII;	/* out of memory; unlikely */
+			return -1;				/* out of memory; unlikely */
 
 		name = setlocale(LC_CTYPE, ctype);
 		if (!name)
 		{
 			free(save);
-			return PG_SQL_ASCII;	/* bogus ctype passed in? */
+			return -1;				/* bogus ctype passed in? */
 		}
 
 #ifndef WIN32
@@ -266,7 +268,7 @@ pg_get_encoding_from_locale(const char *ctype)
 		/* much easier... */
 		ctype = setlocale(LC_CTYPE, NULL);
 		if (!ctype)
-			return PG_SQL_ASCII;	/* setlocale() broken? */
+			return -1;				/* setlocale() broken? */
 #ifndef WIN32
 		sys = nl_langinfo(CODESET);
 		if (sys)
@@ -277,7 +279,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	}
 
 	if (!sys)
-		return PG_SQL_ASCII;	/* out of memory; unlikely */
+		return -1;					/* out of memory; unlikely */
 
 	/* If locale is C or POSIX, we can allow all encodings */
 	if (pg_strcasecmp(ctype, "C") == 0 || pg_strcasecmp(ctype, "POSIX") == 0)
@@ -328,12 +330,16 @@ pg_get_encoding_from_locale(const char *ctype)
 #endif
 
 	free(sys);
-	return PG_SQL_ASCII;
+	return -1;
 }
 #else							/* (HAVE_LANGINFO_H && CODESET) || WIN32 */
 
 /*
  * stub if no platform support
+ *
+ * Note: we could return -1 here, but that would have the effect of
+ * forcing users to specify an encoding to initdb on such platforms.
+ * It seems better to silently default to SQL_ASCII.
  */
 int
 pg_get_encoding_from_locale(const char *ctype)

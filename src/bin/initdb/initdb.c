@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.175 2009/09/03 01:40:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.176 2009/11/12 02:46:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2193,21 +2193,14 @@ check_locale_encoding(const char *locale, int user_enc)
 
 	locale_enc = pg_get_encoding_from_locale(locale);
 
-	/* We allow selection of SQL_ASCII --- see notes in createdb() */
+	/* See notes in createdb() to understand these tests */
 	if (!(locale_enc == user_enc ||
 		  locale_enc == PG_SQL_ASCII ||
-		  user_enc == PG_SQL_ASCII
+		  locale_enc == -1 ||
 #ifdef WIN32
-
-	/*
-	 * On win32, if the encoding chosen is UTF8, all locales are OK (assuming
-	 * the actual locale name passed the checks above). This is because UTF8
-	 * is a pseudo-codepage, that we convert to UTF16 before doing any
-	 * operations on, and UTF16 supports all locales.
-	 */
-		  || user_enc == PG_UTF8
+		  user_enc == PG_UTF8 ||
 #endif
-		  ))
+		  user_enc == PG_SQL_ASCII))
 	{
 		fprintf(stderr, _("%s: encoding mismatch\n"), progname);
 		fprintf(stderr,
@@ -2851,11 +2844,9 @@ main(int argc, char *argv[])
 
 		ctype_enc = pg_get_encoding_from_locale(lc_ctype);
 
-		if (ctype_enc == PG_SQL_ASCII &&
-			!(pg_strcasecmp(lc_ctype, "C") == 0 ||
-			  pg_strcasecmp(lc_ctype, "POSIX") == 0))
+		if (ctype_enc == -1)
 		{
-			/* Hmm, couldn't recognize the locale's codeset */
+			/* Couldn't recognize the locale's codeset */
 			fprintf(stderr, _("%s: could not find suitable encoding for locale %s\n"),
 					progname, lc_ctype);
 			fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);

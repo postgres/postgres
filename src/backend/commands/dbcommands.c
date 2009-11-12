@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.227 2009/10/07 22:14:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.228 2009/11/12 02:46:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,19 +334,21 @@ createdb(const CreatedbStmt *stmt)
 	 * Check whether chosen encoding matches chosen locale settings.  This
 	 * restriction is necessary because libc's locale-specific code usually
 	 * fails when presented with data in an encoding it's not expecting. We
-	 * allow mismatch in three cases:
+	 * allow mismatch in four cases:
 	 *
-	 * 1. locale encoding = SQL_ASCII, which means either that the locale is
-	 * C/POSIX which works with any encoding, or that we couldn't determine
+	 * 1. locale encoding = SQL_ASCII, which means that the locale is
+	 * C/POSIX which works with any encoding.
+	 *
+	 * 2. locale encoding = -1, which means that we couldn't determine
 	 * the locale's encoding and have to trust the user to get it right.
-	 *
-	 * 2. selected encoding is SQL_ASCII, but only if you're a superuser. This
-	 * is risky but we have historically allowed it --- notably, the
-	 * regression tests require it.
 	 *
 	 * 3. selected encoding is UTF8 and platform is win32. This is because
 	 * UTF8 is a pseudo codepage that is supported in all locales since it's
 	 * converted to UTF16 before being used.
+	 *
+	 * 4. selected encoding is SQL_ASCII, but only if you're a superuser. This
+	 * is risky but we have historically allowed it --- notably, the
+	 * regression tests require it.
 	 *
 	 * Note: if you change this policy, fix initdb to match.
 	 */
@@ -355,6 +357,7 @@ createdb(const CreatedbStmt *stmt)
 
 	if (!(ctype_encoding == encoding ||
 		  ctype_encoding == PG_SQL_ASCII ||
+		  ctype_encoding == -1 ||
 #ifdef WIN32
 		  encoding == PG_UTF8 ||
 #endif
@@ -369,6 +372,7 @@ createdb(const CreatedbStmt *stmt)
 
 	if (!(collate_encoding == encoding ||
 		  collate_encoding == PG_SQL_ASCII ||
+		  collate_encoding == -1 ||
 #ifdef WIN32
 		  encoding == PG_UTF8 ||
 #endif
