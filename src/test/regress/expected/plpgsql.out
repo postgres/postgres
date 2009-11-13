@@ -4004,7 +4004,25 @@ select scope_test();
 
 drop function scope_test();
 -- Check handling of conflicts between plpgsql vars and table columns.
+set plpgsql.variable_conflict = error;
 create function conflict_test() returns setof int8_tbl as $$
+declare r record;
+  q1 bigint := 42;
+begin
+  for r in select q1,q2 from int8_tbl loop
+    return next r;
+  end loop;
+end;
+$$ language plpgsql;
+select * from conflict_test();
+ERROR:  column reference "q1" is ambiguous
+LINE 1: select q1,q2 from int8_tbl
+               ^
+DETAIL:  It could refer to either a PL/pgSQL variable or a table column.
+QUERY:  select q1,q2 from int8_tbl
+CONTEXT:  PL/pgSQL function "conflict_test" line 4 at FOR over SELECT rows
+create or replace function conflict_test() returns setof int8_tbl as $$
+#variable_conflict use_variable
 declare r record;
   q1 bigint := 42;
 begin
@@ -4021,6 +4039,26 @@ select * from conflict_test();
  42 |               123
  42 |  4567890123456789
  42 | -4567890123456789
+(5 rows)
+
+create or replace function conflict_test() returns setof int8_tbl as $$
+#variable_conflict use_column
+declare r record;
+  q1 bigint := 42;
+begin
+  for r in select q1,q2 from int8_tbl loop
+    return next r;
+  end loop;
+end;
+$$ language plpgsql;
+select * from conflict_test();
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
 (5 rows)
 
 drop function conflict_test();

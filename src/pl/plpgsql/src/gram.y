@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.135 2009/11/12 00:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.136 2009/11/13 22:43:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,6 +256,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_ELSIF
 %token <keyword>	K_END
 %token <keyword>	K_ERRCODE
+%token <keyword>	K_ERROR
 %token <keyword>	K_EXCEPTION
 %token <keyword>	K_EXECUTE
 %token <keyword>	K_EXIT
@@ -301,7 +302,10 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_THEN
 %token <keyword>	K_TO
 %token <keyword>	K_TYPE
+%token <keyword>	K_USE_COLUMN
+%token <keyword>	K_USE_VARIABLE
 %token <keyword>	K_USING
+%token <keyword>	K_VARIABLE_CONFLICT
 %token <keyword>	K_WARNING
 %token <keyword>	K_WHEN
 %token <keyword>	K_WHILE
@@ -321,6 +325,18 @@ comp_options	:
 comp_option		: '#' K_OPTION K_DUMP
 					{
 						plpgsql_DumpExecTree = true;
+					}
+				| '#' K_VARIABLE_CONFLICT K_ERROR
+					{
+						plpgsql_curr_compile->resolve_option = PLPGSQL_RESOLVE_ERROR;
+					}
+				| '#' K_VARIABLE_CONFLICT K_USE_VARIABLE
+					{
+						plpgsql_curr_compile->resolve_option = PLPGSQL_RESOLVE_VARIABLE;
+					}
+				| '#' K_VARIABLE_CONFLICT K_USE_COLUMN
+					{
+						plpgsql_curr_compile->resolve_option = PLPGSQL_RESOLVE_COLUMN;
 					}
 				;
 
@@ -1969,6 +1985,7 @@ unreserved_keyword	:
 				| K_DETAIL
 				| K_DUMP
 				| K_ERRCODE
+				| K_ERROR
 				| K_FIRST
 				| K_FORWARD
 				| K_HINT
@@ -1991,6 +2008,9 @@ unreserved_keyword	:
 				| K_SCROLL
 				| K_SQLSTATE
 				| K_TYPE
+				| K_USE_COLUMN
+				| K_USE_VARIABLE
+				| K_VARIABLE_CONFLICT
 				| K_WARNING
 				;
 

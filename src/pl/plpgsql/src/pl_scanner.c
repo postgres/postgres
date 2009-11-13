@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.1 2009/11/12 00:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_scanner.c,v 1.2 2009/11/13 22:43:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,6 +113,7 @@ static const ScanKeyword unreserved_keywords[] = {
 	PG_KEYWORD("detail", K_DETAIL, UNRESERVED_KEYWORD)
 	PG_KEYWORD("dump", K_DUMP, UNRESERVED_KEYWORD)
 	PG_KEYWORD("errcode", K_ERRCODE, UNRESERVED_KEYWORD)
+	PG_KEYWORD("error", K_ERROR, UNRESERVED_KEYWORD)
 	PG_KEYWORD("first", K_FIRST, UNRESERVED_KEYWORD)
 	PG_KEYWORD("forward", K_FORWARD, UNRESERVED_KEYWORD)
 	PG_KEYWORD("hint", K_HINT, UNRESERVED_KEYWORD)
@@ -135,6 +136,9 @@ static const ScanKeyword unreserved_keywords[] = {
 	PG_KEYWORD("scroll", K_SCROLL, UNRESERVED_KEYWORD)
 	PG_KEYWORD("sqlstate", K_SQLSTATE, UNRESERVED_KEYWORD)
 	PG_KEYWORD("type", K_TYPE, UNRESERVED_KEYWORD)
+	PG_KEYWORD("use_column", K_USE_COLUMN, UNRESERVED_KEYWORD)
+	PG_KEYWORD("use_variable", K_USE_VARIABLE, UNRESERVED_KEYWORD)
+	PG_KEYWORD("variable_conflict", K_VARIABLE_CONFLICT, UNRESERVED_KEYWORD)
 	PG_KEYWORD("warning", K_WARNING, UNRESERVED_KEYWORD)
 };
 

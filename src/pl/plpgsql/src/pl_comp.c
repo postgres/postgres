@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.145 2009/11/12 00:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.146 2009/11/13 22:43:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_is_trigger = is_trigger;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
-	function->resolve_option = PLPGSQL_RESOLVE_BEFORE;
+	function->resolve_option = plpgsql_variable_conflict;
 
 	/*
 	 * Initialize the compiler, particularly the namespace stack.  The
@@ -782,7 +782,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->fn_is_trigger = false;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
-	function->resolve_option = PLPGSQL_RESOLVE_BEFORE;
+	function->resolve_option = plpgsql_variable_conflict;
 
 	plpgsql_ns_init();
 	plpgsql_ns_push(func_name);
@@ -948,7 +948,7 @@ plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref)
 {
 	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
 
-	if (expr->func->resolve_option == PLPGSQL_RESOLVE_BEFORE)
+	if (expr->func->resolve_option == PLPGSQL_RESOLVE_VARIABLE)
 		return resolve_column_ref(expr, cref);
 	else
 		return NULL;
@@ -963,10 +963,10 @@ plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	PLpgSQL_expr *expr = (PLpgSQL_expr *) pstate->p_ref_hook_state;
 	Node	   *myvar;
 
-	if (expr->func->resolve_option == PLPGSQL_RESOLVE_BEFORE)
+	if (expr->func->resolve_option == PLPGSQL_RESOLVE_VARIABLE)
 		return NULL;			/* we already found there's no match */
 
-	if (expr->func->resolve_option == PLPGSQL_RESOLVE_AFTER && var != NULL)
+	if (expr->func->resolve_option == PLPGSQL_RESOLVE_COLUMN && var != NULL)
 		return NULL;			/* there's a table column, prefer that */
 
 	myvar = resolve_column_ref(expr, cref);

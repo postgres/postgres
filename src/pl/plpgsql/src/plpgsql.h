@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.124 2009/11/12 00:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.125 2009/11/13 22:43:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,9 +147,9 @@ enum
  */
 typedef enum
 {
-	PLPGSQL_RESOLVE_BEFORE,		/* prefer plpgsql var to table column */
-	PLPGSQL_RESOLVE_AFTER,		/* prefer table column to plpgsql var */
-	PLPGSQL_RESOLVE_ERROR		/* throw error if ambiguous */
+	PLPGSQL_RESOLVE_ERROR,		/* throw error if ambiguous */
+	PLPGSQL_RESOLVE_VARIABLE,	/* prefer plpgsql var to table column */
+	PLPGSQL_RESOLVE_COLUMN		/* prefer table column to plpgsql var */
 } PLpgSQL_resolve_option;
 
 
@@ -793,6 +793,8 @@ typedef struct
 /**********************************************************************
  * Global variable declarations
  **********************************************************************/
+
+extern int	plpgsql_variable_conflict;
 
 extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;
