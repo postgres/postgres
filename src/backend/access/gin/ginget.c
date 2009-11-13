@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.27 2009/06/11 14:48:53 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.28 2009/11/13 11:17:04 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -25,10 +25,11 @@
 
 typedef struct pendingPosition
 {
-	Buffer		pendingBuffer;
-	OffsetNumber firstOffset;
-	OffsetNumber lastOffset;
-	ItemPointerData item;
+	Buffer				pendingBuffer;
+	OffsetNumber 		firstOffset;
+	OffsetNumber 		lastOffset;
+	ItemPointerData 	item;
+	bool			   *hasMatchKey;
 } pendingPosition;
 
 
@@ -873,6 +874,18 @@ matchPartialInPendingList(GinState *ginstate, Page page,
 	return false;
 }
 
+static bool
+hasAllMatchingKeys(GinScanOpaque so, pendingPosition *pos)
+{
+	int		i;
+
+	for (i = 0; i < so->nkeys; i++)
+		if (pos->hasMatchKey[i] == false)
+			return false;
+
+	return true;
+}
+
 /*
  * Sets entryRes array for each key by looking at
  * every entry per indexed value (heap's row) in pending list.
@@ -889,7 +902,6 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 	IndexTuple	itup;
 	int			i,
 				j;
-	bool		hasMatch = false;
 
 	/*
 	 * Resets entryRes
@@ -900,6 +912,7 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 
 		memset(key->entryRes, FALSE, key->nentries);
 	}
+	memset(pos->hasMatchKey, FALSE, so->nkeys); 
 
 	for (;;)
 	{
@@ -1005,7 +1018,7 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 												  entry->extra_data);
 				}
 
-				hasMatch |= key->entryRes[j];
+				pos->hasMatchKey[i] |= key->entryRes[j];
 			}
 		}
 
@@ -1017,7 +1030,7 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 			 * We scan all values from one tuple, go to next one
 			 */
 
-			return hasMatch;
+			return hasAllMatchingKeys(so, pos);
 		}
 		else
 		{
@@ -1034,7 +1047,7 @@ collectDatumForItem(IndexScanDesc scan, pendingPosition *pos)
 		}
 	}
 
-	return hasMatch;
+	return hasAllMatchingKeys(so, pos);
 }
 
 /*
@@ -1073,6 +1086,7 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 	LockBuffer(pos.pendingBuffer, GIN_SHARE);
 	pos.firstOffset = FirstOffsetNumber;
 	UnlockReleaseBuffer(metabuffer);
+	pos.hasMatchKey = palloc(sizeof(bool) * so->nkeys);
 
 	/*
 	 * loop for each heap row. scanGetCandidate returns full row or row's
@@ -1126,6 +1140,8 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 			(*ntids)++;
 		}
 	}
+
+	pfree(pos.hasMatchKey);
 }
 
 /*
