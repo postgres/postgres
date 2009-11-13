@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.413 2009/11/06 21:57:57 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.414 2009/11/13 23:44:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,7 +484,7 @@ typedef enum CreateStmtLikeOption
 	CREATE_TABLE_LIKE_INDEXES		= 1 << 2,
 	CREATE_TABLE_LIKE_STORAGE		= 1 << 3,
 	CREATE_TABLE_LIKE_COMMENTS		= 1 << 4,
-	CREATE_TABLE_LIKE_ALL			= 0xFFFFFFFF
+	CREATE_TABLE_LIKE_ALL			= 0x7FFFFFFF
 } CreateStmtLikeOption;
 
 /*
