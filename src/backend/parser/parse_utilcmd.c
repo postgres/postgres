@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.29 2009/11/05 23:24:24 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.30 2009/11/13 23:49:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,8 +647,9 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 		/* Likewise, copy comment if requested */
 		if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
-			(comment = GetComment(attribute->attrelid, RelationRelationId,
-			attribute->attnum)) != NULL)
+			(comment = GetComment(attribute->attrelid,
+								  RelationRelationId,
+								  attribute->attnum)) != NULL)
 		{
 			CommentStmt *stmt = makeNode(CommentStmt);
 
@@ -667,7 +668,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
 	 * numbers
 	 */
-	if ((inhRelation->options & CREATE_TABLE_LIKE_CONSTRAINTS) && tupleDesc->constr)
+	if ((inhRelation->options & CREATE_TABLE_LIKE_CONSTRAINTS) &&
+		tupleDesc->constr)
 	{
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
 		int			ccnum;
@@ -690,8 +692,10 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 			/* Copy comment on constraint */
 			if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
-				(comment = GetComment(GetConstraintByName(RelationGetRelid(
-				relation), n->conname), ConstraintRelationId, 0)) != NULL)
+				(comment = GetComment(GetConstraintByName(RelationGetRelid(relation),
+														  n->conname),
+									  ConstraintRelationId,
+									  0)) != NULL)
 			{
 				CommentStmt *stmt = makeNode(CommentStmt);
 
