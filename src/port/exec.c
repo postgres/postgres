@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.63 2009/06/11 14:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.63.2.1 2009/11/14 15:39:45 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,11 +664,10 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 #ifdef WIN32
 
 /*
- * AddUserToDacl(HANDLE hProcess)
+ * AddUserToTokenDacl(HANDLE hToken)
  *
- * This function adds the current user account to the default DACL
- * which gets attached to the restricted token used when we create
- * a restricted process.
+ * This function adds the current user account to the restricted
+ * token used when we create a restricted process.
  *
  * This is required because of some security changes in Windows
  * that appeared in patches to XP/2K3 and in Vista/2008.
@@ -681,13 +680,13 @@ set_pglocale_pgservice(const char *argv0, const char *app)
  * and CreateProcess() calls when running as Administrator.
  *
  * This function fixes this problem by modifying the DACL of the
- * specified process and explicitly re-adding the current user account.
- * This is still secure because the Administrator account inherits it's
- * privileges from the Administrators group - it doesn't have any of
- * it's own.
+ * token the process will use, and explicitly re-adding the current
+ * user account.  This is still secure because the Administrator account
+ * inherits its privileges from the Administrators group - it doesn't
+ * have any of its own.
  */
 BOOL
-AddUserToDacl(HANDLE hProcess)
+AddUserToTokenDacl(HANDLE hToken)
 {
 	int			i;
 	ACL_SIZE_INFORMATION asi;
@@ -695,20 +694,12 @@ AddUserToDacl(HANDLE hProcess)
 	DWORD		dwNewAclSize;
 	DWORD		dwSize = 0;
 	DWORD		dwTokenInfoLength = 0;
-	HANDLE		hToken = NULL;
 	PACL		pacl = NULL;
 	PSID		psidUser = NULL;
 	TOKEN_DEFAULT_DACL tddNew;
 	TOKEN_DEFAULT_DACL *ptdd = NULL;
 	TOKEN_INFORMATION_CLASS tic = TokenDefaultDacl;
 	BOOL		ret = FALSE;
-
-	/* Get the token for the process */
-	if (!OpenProcessToken(hProcess, TOKEN_QUERY | TOKEN_ADJUST_DEFAULT, &hToken))
-	{
-		log_error("could not open process token: %lu", GetLastError());
-		goto cleanup;
-	}
 
 	/* Figure out the buffer size for the DACL info */
 	if (!GetTokenInformation(hToken, tic, (LPVOID) NULL, dwTokenInfoLength, &dwSize))
@@ -785,7 +776,7 @@ AddUserToDacl(HANDLE hProcess)
 	}
 
 	/* Add the new ACE for the current user */
-	if (!AddAccessAllowedAce(pacl, ACL_REVISION, GENERIC_ALL, psidUser))
+	if (!AddAccessAllowedAceEx(pacl, ACL_REVISION, OBJECT_INHERIT_ACE, GENERIC_ALL, psidUser))
 	{
 		log_error("could not add access allowed ACE: %lu", GetLastError());
 		goto cleanup;
@@ -811,9 +802,6 @@ cleanup:
 
 	if (ptdd)
 		LocalFree((HLOCAL) ptdd);
-
-	if (hToken)
-		CloseHandle(hToken);
 
 	return ret;
 }
