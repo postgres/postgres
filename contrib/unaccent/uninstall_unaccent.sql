@@ -1,9 +1,11 @@
-/* $PostgreSQL: pgsql/contrib/unaccent/uninstall_unaccent.sql,v 1.1 2009/08/18 10:34:39 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/unaccent/uninstall_unaccent.sql,v 1.2 2009/11/14 18:24:32 tgl Exp $ */
 
-DROP FUNCTION IF EXISTS unaccent(regdictionary, text) CASCADE;
-DROP FUNCTION IF EXISTS unaccent(text) CASCADE;
-DROP TEXT SEARCH DICTIONARY IF EXISTS unaccent CASCADE;
-DROP TEXT SEARCH TEMPLATE IF EXISTS unaccent CASCADE;
-DROP FUNCTION IF EXISTS unaccent_init(internal) CASCADE;
-DROP FUNCTION IF EXISTS unaccent_lexize(internal,internal,internal,internal) CASCADE;
+-- Adjust this setting to control where the objects get dropped.
+SET search_path = public;
 
+DROP FUNCTION unaccent(regdictionary, text);
+DROP FUNCTION unaccent(text);
+DROP TEXT SEARCH DICTIONARY unaccent;
+DROP TEXT SEARCH TEMPLATE unaccent;
+DROP FUNCTION unaccent_init(internal);
+DROP FUNCTION unaccent_lexize(internal,internal,internal,internal);
