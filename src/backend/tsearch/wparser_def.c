@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.23 2009/03/11 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.23.2.1 2009/11/15 13:55:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1225,6 +1225,7 @@ static const TParserStateActionItem actionTPS_InTag[] = {
 	{p_isdigit, 0, A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '=', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '-', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '#', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '/', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, ':', A_NEXT, TPS_Null, 0, NULL},
