@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.188 2009/10/26 02:26:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.189 2009/11/15 02:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1443,13 +1443,12 @@ print_path(PlannerInfo *root, Path *path, int indent)
 		{
 			MergePath  *mp = (MergePath *) path;
 
-			if (mp->outersortkeys || mp->innersortkeys)
-			{
-				for (i = 0; i < indent; i++)
-					printf("\t");
-				printf("  sortouter=%d sortinner=%d\n",
-					   ((mp->outersortkeys) ? 1 : 0),
-					   ((mp->innersortkeys) ? 1 : 0));
+			for (i = 0; i < indent; i++)
+				printf("\t");
+			printf("  sortouter=%d sortinner=%d materializeinner=%d\n",
+				   ((mp->outersortkeys) ? 1 : 0),
+				   ((mp->innersortkeys) ? 1 : 0),
+				   ((mp->materialize_inner) ? 1 : 0));
 			}
 		}
 

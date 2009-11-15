@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.211 2009/09/12 22:12:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.212 2009/11/15 02:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1167,23 +1167,6 @@ cost_sort(Path *path, PlannerInfo *root,
 }
 
 /*
- * sort_exceeds_work_mem
- *	  Given a finished Sort plan node, detect whether it is expected to
- *	  spill to disk (ie, will need more than work_mem workspace)
- *
- * This assumes there will be no available LIMIT.
- */
-bool
-sort_exceeds_work_mem(Sort *sort)
-{
-	double		input_bytes = relation_byte_size(sort->plan.plan_rows,
-												 sort->plan.plan_width);
-	long		work_mem_bytes = work_mem * 1024L;
-
-	return (input_bytes > work_mem_bytes);
-}
-
-/*
  * cost_material
  *	  Determines and returns the cost of materializing a relation, including
  *	  the cost of reading the input data.
@@ -1543,7 +1526,18 @@ cost_nestloop(NestPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
  *	  Determines and returns the cost of joining two relations using the
  *	  merge join algorithm.
  *
- * 'path' is already filled in except for the cost fields
+ * Unlike other costsize functions, this routine makes one actual decision:
+ * whether we should materialize the inner path.  We do that either because
+ * the inner path can't support mark/restore, or because it's cheaper to
+ * use an interposed Material node to handle mark/restore.  When the decision
+ * is cost-based it would be logically cleaner to build and cost two separate
+ * paths with and without that flag set; but that would require repeating most
+ * of the calculations here, which are not all that cheap.  Since the choice
+ * will not affect output pathkeys or startup cost, only total cost, there is
+ * no possibility of wanting to keep both paths.  So it seems best to make
+ * the decision here and record it in the path's materialize_inner field.
+ *
+ * 'path' is already filled in except for the cost fields and materialize_inner
  * 'sjinfo' is extra info about the join for selectivity estimation
  *
  * Notes: path's mergeclauses should be a subset of the joinrestrictinfo list;
@@ -1561,7 +1555,10 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	List	   *innersortkeys = path->innersortkeys;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
-	Cost		cpu_per_tuple;
+	Cost		cpu_per_tuple,
+				inner_run_cost,
+				bare_inner_cost,
+				mat_inner_cost;
 	QualCost	merge_qual_cost;
 	QualCost	qp_qual_cost;
 	double		outer_path_rows = PATH_ROWS(outer_path);
@@ -1606,10 +1603,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	/*
 	 * When there are equal merge keys in the outer relation, the mergejoin
 	 * must rescan any matching tuples in the inner relation. This means
-	 * re-fetching inner tuples.  Our cost model for this is that a re-fetch
-	 * costs the same as an original fetch, which is probably an overestimate;
-	 * but on the other hand we ignore the bookkeeping costs of mark/restore.
-	 * Not clear if it's worth developing a more refined model.
+	 * re-fetching inner tuples; we have to estimate how often that happens.
 	 *
 	 * For regular inner and outer joins, the number of re-fetches can be
 	 * estimated approximately as size of merge join output minus size of
@@ -1641,7 +1635,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		if (rescannedtuples < 0)
 			rescannedtuples = 0;
 	}
-	/* We'll inflate inner run cost this much to account for rescanning */
+	/* We'll inflate various costs this much to account for rescanning */
 	rescanratio = 1.0 + (rescannedtuples / inner_path_rows);
 
 	/*
@@ -1778,31 +1772,82 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 				  -1.0);
 		startup_cost += sort_path.startup_cost;
 		startup_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* innerstartsel * rescanratio;
-		run_cost += (sort_path.total_cost - sort_path.startup_cost)
-			* (innerendsel - innerstartsel) * rescanratio;
-
-		/*
-		 * If the inner sort is expected to spill to disk, we want to add a
-		 * materialize node to shield it from the need to handle mark/restore.
-		 * This will allow it to perform the last merge pass on-the-fly, while
-		 * in most cases not requiring the materialize to spill to disk.
-		 * Charge an extra cpu_tuple_cost per tuple to account for the
-		 * materialize node.  (Keep this estimate in sync with similar ones in
-		 * create_mergejoin_path and create_mergejoin_plan.)
-		 */
-		if (relation_byte_size(inner_path_rows, inner_path->parent->width) >
-			(work_mem * 1024L))
-			run_cost += cpu_tuple_cost * inner_path_rows;
+			* innerstartsel;
+		inner_run_cost = (sort_path.total_cost - sort_path.startup_cost)
+			* (innerendsel - innerstartsel);
 	}
 	else
 	{
 		startup_cost += inner_path->startup_cost;
 		startup_cost += (inner_path->total_cost - inner_path->startup_cost)
-			* innerstartsel * rescanratio;
-		run_cost += (inner_path->total_cost - inner_path->startup_cost)
-			* (innerendsel - innerstartsel) * rescanratio;
+			* innerstartsel;
+		inner_run_cost = (inner_path->total_cost - inner_path->startup_cost)
+			* (innerendsel - innerstartsel);
 	}
+
+	/*
+	 * Decide whether we want to materialize the inner input to shield it from
+	 * mark/restore and performing re-fetches.  Our cost model for regular
+	 * re-fetches is that a re-fetch costs the same as an original fetch,
+	 * which is probably an overestimate; but on the other hand we ignore the
+	 * bookkeeping costs of mark/restore.  Not clear if it's worth developing
+	 * a more refined model.  So we just need to inflate the inner run cost
+	 * by rescanratio.
+	 */
+	bare_inner_cost = inner_run_cost * rescanratio;
+	/*
+	 * When we interpose a Material node the re-fetch cost is assumed to be
+	 * just cpu_tuple_cost per tuple, independently of the underlying plan's
+	 * cost; but we have to charge an extra cpu_tuple_cost per original fetch
+	 * as well.  Note that we're assuming the materialize node will never
+	 * spill to disk, since it only has to remember tuples back to the last
+	 * mark.  (If there are a huge number of duplicates, our other cost
+	 * factors will make the path so expensive that it probably won't get
+	 * chosen anyway.)  So we don't use cost_rescan here.
+	 *
+	 * Note: keep this estimate in sync with create_mergejoin_plan's labeling
+	 * of the generated Material node.
+	 */
+	mat_inner_cost = inner_run_cost +
+		cpu_tuple_cost * inner_path_rows * rescanratio;
+
+	/* Prefer materializing if it looks cheaper */
+	if (mat_inner_cost < bare_inner_cost)
+		path->materialize_inner = true;
+	/*
+	 * Even if materializing doesn't look cheaper, we *must* do it if the
+	 * inner path is to be used directly (without sorting) and it doesn't
+	 * support mark/restore.
+	 *
+	 * Since the inner side must be ordered, and only Sorts and IndexScans can
+	 * create order to begin with, and they both support mark/restore, you
+	 * might think there's no problem --- but you'd be wrong.  Nestloop and
+	 * merge joins can *preserve* the order of their inputs, so they can be
+	 * selected as the input of a mergejoin, and they don't support
+	 * mark/restore at present.
+	 */
+	else if (innersortkeys == NIL &&
+			 !ExecSupportsMarkRestore(inner_path->pathtype))
+		path->materialize_inner = true;
+	/*
+	 * Also, force materializing if the inner path is to be sorted and the
+	 * sort is expected to spill to disk.  This is because the final merge
+	 * pass can be done on-the-fly if it doesn't have to support mark/restore.
+	 * We don't try to adjust the cost estimates for this consideration,
+	 * though.
+	 */
+	else if (innersortkeys != NIL &&
+			 relation_byte_size(inner_path_rows, inner_path->parent->width) >
+			 (work_mem * 1024L))
+		path->materialize_inner = true;
+	else
+		path->materialize_inner = false;
+
+	/* Charge the right incremental cost for the chosen case */
+	if (path->materialize_inner)
+		run_cost += mat_inner_cost;
+	else
+		run_cost += bare_inner_cost;
 
 	/* CPU costs */
 

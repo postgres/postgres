@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.266 2009/10/26 02:26:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.267 2009/11/15 02:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1664,9 +1664,8 @@ create_mergejoin_plan(PlannerInfo *root,
 							 best_path->jpath.outerjoinpath->parent->relids);
 
 	/*
-	 * Create explicit sort nodes for the outer and inner join paths if
-	 * necessary.  The sort cost was already accounted for in the path. Make
-	 * sure there are no excess columns in the inputs if sorting.
+	 * Create explicit sort nodes for the outer and inner paths if necessary.
+	 * Make sure there are no excess columns in the inputs if sorting.
 	 */
 	if (best_path->outersortkeys)
 	{
@@ -1695,23 +1694,17 @@ create_mergejoin_plan(PlannerInfo *root,
 		innerpathkeys = best_path->jpath.innerjoinpath->pathkeys;
 
 	/*
-	 * If inner plan is a sort that is expected to spill to disk, add a
-	 * materialize node to shield it from the need to handle mark/restore.
-	 * This will allow it to perform the last merge pass on-the-fly, while in
-	 * most cases not requiring the materialize to spill to disk.
-	 *
-	 * XXX really, Sort oughta do this for itself, probably, to avoid the
-	 * overhead of a separate plan node.
+	 * If specified, add a materialize node to shield the inner plan from
+	 * the need to handle mark/restore.
 	 */
-	if (IsA(inner_plan, Sort) &&
-		sort_exceeds_work_mem((Sort *) inner_plan))
+	if (best_path->materialize_inner)
 	{
 		Plan	   *matplan = (Plan *) make_material(inner_plan);
 
 		/*
 		 * We assume the materialize will not spill to disk, and therefore
 		 * charge just cpu_tuple_cost per tuple.  (Keep this estimate in sync
-		 * with similar ones in cost_mergejoin and create_mergejoin_path.)
+		 * with cost_mergejoin.)
 		 */
 		copy_plan_costsize(matplan, inner_plan);
 		matplan->total_cost += cpu_tuple_cost * matplan->plan_rows;
@@ -1887,6 +1880,7 @@ create_mergejoin_plan(PlannerInfo *root,
 							   inner_plan,
 							   best_path->jpath.jointype);
 
+	/* Costs of sort and material steps are included in path cost already */
 	copy_path_costsize(&join_plan->join.plan, &best_path->jpath.path);
 
 	return join_plan;
