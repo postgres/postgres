@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.141 2009/08/12 18:23:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.142 2009/11/16 21:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	Oid			save_userid;
 	bool		save_secdefcxt;
 
-	if (vacstmt->verbose)
+	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -173,7 +173,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!vacstmt->vacuum)
+		if (!(vacstmt->options & VACOPT_VACUUM))
 		{
 			if (onerel->rd_rel->relisshared)
 				ereport(WARNING,
@@ -199,7 +199,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	if (onerel->rd_rel->relkind != RELKIND_RELATION)
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
-		if (!vacstmt->vacuum)
+		if (!(vacstmt->options & VACOPT_VACUUM))
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- cannot analyze indexes, views, or special system tables",
 							RelationGetRelationName(onerel))));
@@ -475,7 +475,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	 * VACUUM ANALYZE, don't overwrite the accurate count already inserted by
 	 * VACUUM.
 	 */
-	if (!vacstmt->vacuum)
+	if (!(vacstmt->options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{
@@ -493,7 +493,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 cleanup:
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
-	if (!vacstmt->vacuum)
+	if (!(vacstmt->options & VACOPT_VACUUM))
 	{
 		for (ind = 0; ind < nindexes; ind++)
 		{

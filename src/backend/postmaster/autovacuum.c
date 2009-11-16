@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.104 2009/08/31 19:40:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.105 2009/11/16 21:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2640,12 +2640,13 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 	MemSet(&vacstmt, 0, sizeof(vacstmt));
 
 	vacstmt.type = T_VacuumStmt;
-	vacstmt.vacuum = tab->at_dovacuum;
-	vacstmt.full = false;
-	vacstmt.analyze = tab->at_doanalyze;
+	vacstmt.options = 0;
+	if (tab->at_dovacuum)
+		vacstmt.options |= VACOPT_VACUUM;
+	if (tab->at_doanalyze)
+		vacstmt.options |= VACOPT_ANALYZE;
 	vacstmt.freeze_min_age = tab->at_freeze_min_age;
 	vacstmt.freeze_table_age = tab->at_freeze_table_age;
-	vacstmt.verbose = false;
 	vacstmt.relation = NULL;	/* not used since we pass a relid */
 	vacstmt.va_cols = NIL;
 

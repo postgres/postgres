@@ -49,11 +49,12 @@ SELECT count(*) FROM vactst;
 (1 row)
 
 DELETE FROM vactst WHERE i != 0;
-VACUUM FULL vactst;
+VACUUM (FULL) vactst;
 DELETE FROM vactst;
 SELECT * FROM vactst;
  i 
 ---
 (0 rows)
 
+VACUUM (FULL, FREEZE) vactst;
 DROP TABLE vactst;

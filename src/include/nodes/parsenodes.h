@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.414 2009/11/13 23:44:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.415 2009/11/16 21:32:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2209,16 +2209,25 @@ typedef struct ClusterStmt
  *		Vacuum and Analyze Statements
  *
  * Even though these are nominally two statements, it's convenient to use
- * just one node type for both.
+ * just one node type for both.  Note that at least one of VACOPT_VACUUM
+ * and VACOPT_ANALYZE must be set in options.  VACOPT_FREEZE is an internal
+ * convenience for the grammar and is not examined at runtime --- the
+ * freeze_min_age and freeze_table_age fields are what matter.
  * ----------------------
  */
+typedef enum VacuumOption
+{
+	VACOPT_VACUUM		= 1 << 0,	/* do VACUUM */
+	VACOPT_ANALYZE		= 1 << 1,	/* do ANALYZE */
+	VACOPT_VERBOSE		= 1 << 2,	/* print progress info */
+	VACOPT_FREEZE		= 1 << 3,	/* FREEZE option */
+	VACOPT_FULL			= 1 << 4	/* FULL (non-concurrent) vacuum */
+} VacuumOption;
+
 typedef struct VacuumStmt
 {
 	NodeTag		type;
-	bool		vacuum;			/* do VACUUM step */
-	bool		full;			/* do FULL (non-concurrent) vacuum */
-	bool		analyze;		/* do ANALYZE step */
-	bool		verbose;		/* print progress info */
+	int			options;		/* OR of VacuumOption flags */
 	int			freeze_min_age; /* min freeze age, or -1 to use default */
 	int			freeze_table_age;		/* age at which to scan whole table */
 	RangeVar   *relation;		/* single table to process, or NULL */

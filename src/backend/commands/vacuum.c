@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.395 2009/11/10 18:00:06 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.396 2009/11/16 21:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,14 +289,22 @@ void
 vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
-	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
+	const char *stmttype;
 	volatile MemoryContext anl_context = NULL;
 	volatile bool all_rels,
 				in_outer_xact,
 				use_own_xacts;
 	List	   *relations;
 
-	if (vacstmt->verbose)
+	/* sanity checks on options */
+	Assert(vacstmt->options & (VACOPT_VACUUM | VACOPT_ANALYZE));
+	Assert((vacstmt->options & VACOPT_VACUUM) ||
+		   !(vacstmt->options & (VACOPT_FULL | VACOPT_FREEZE)));
+	Assert((vacstmt->options & VACOPT_ANALYZE) || vacstmt->va_cols == NIL);
+
+	stmttype = (vacstmt->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
+
+	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
@@ -315,7 +323,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
 	 */
-	if (vacstmt->vacuum)
+	if (vacstmt->options & VACOPT_VACUUM)
 	{
 		PreventTransactionChain(isTopLevel, stmttype);
 		in_outer_xact = false;
@@ -327,7 +335,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * Send info about dead objects to the statistics collector, unless we are
 	 * in autovacuum --- autovacuum.c does this for itself.
 	 */
-	if (vacstmt->vacuum && !IsAutoVacuumWorkerProcess())
+	if ((vacstmt->options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
 		pgstat_vacuum_stat();
 
 	/*
@@ -378,11 +386,11 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * transaction block, and also in an autovacuum worker, use own
 	 * transactions so we can release locks sooner.
 	 */
-	if (vacstmt->vacuum)
+	if (vacstmt->options & VACOPT_VACUUM)
 		use_own_xacts = true;
 	else
 	{
-		Assert(vacstmt->analyze);
+		Assert(vacstmt->options & VACOPT_ANALYZE);
 		if (IsAutoVacuumWorkerProcess())
 			use_own_xacts = true;
 		else if (in_outer_xact)
@@ -438,11 +446,11 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 			Oid			relid = lfirst_oid(cur);
 			bool		scanned_all = false;
 
-			if (vacstmt->vacuum)
+			if (vacstmt->options & VACOPT_VACUUM)
 				vacuum_rel(relid, vacstmt, do_toast, for_wraparound,
 						   &scanned_all);
 
-			if (vacstmt->analyze)
+			if (vacstmt->options & VACOPT_ANALYZE)
 			{
 				MemoryContext old_context = NULL;
 
@@ -502,7 +510,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		StartTransactionCommand();
 	}
 
-	if (vacstmt->vacuum && !IsAutoVacuumWorkerProcess())
+	if ((vacstmt->options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
 	{
 		/*
 		 * Update pg_database.datfrozenxid, and truncate pg_clog if possible.
@@ -1034,7 +1042,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 */
 	PushActiveSnapshot(GetTransactionSnapshot());
 
-	if (!vacstmt->full)
+	if (!(vacstmt->options & VACOPT_FULL))
 	{
 		/*
 		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
@@ -1074,7 +1082,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
 	 * way, we can be sure that no other backend is vacuuming the same table.
 	 */
-	lmode = vacstmt->full ? AccessExclusiveLock : ShareUpdateExclusiveLock;
+	lmode = (vacstmt->options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
 	/*
 	 * Open the relation and get the appropriate lock on it.
@@ -1186,7 +1194,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound,
 	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
-	if (vacstmt->full)
+	if (vacstmt->options & VACOPT_FULL)
 		heldoff = full_vacuum_rel(onerel, vacstmt);
 	else
 		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
@@ -1331,8 +1339,11 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 						vacrelstats->hasindex, FreezeLimit);
 
 	/* report results to the stats collector, too */
-	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
-						 true, vacstmt->analyze, vacrelstats->rel_tuples);
+	pgstat_report_vacuum(RelationGetRelid(onerel),
+						 onerel->rd_rel->relisshared,
+						 true,
+						 (vacstmt->options & VACOPT_ANALYZE) != 0,
+						 vacrelstats->rel_tuples);
 
 	return heldoff;
 }

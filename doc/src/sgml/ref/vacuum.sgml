@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.55 2009/03/24 20:17:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.56 2009/11/16 21:32:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+VACUUM [ ( { FULL | FREEZE | VERBOSE | ANALYZE } [, ...] ) ] [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
 VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
 VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
 </synopsis>
@@ -62,6 +63,15 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    across blocks to try to compact the table to the minimum number of disk
    blocks.  This form is much slower and requires an exclusive lock on each
    table while it is being processed.
+  </para>
+
+  <para>
+   When the option list is surrounded by parentheses, the options can be
+   written in any order.  Without parentheses, options must be specified
+   in exactly the order shown above.
+   Prior to <productname>PostgreSQL</productname> 8.5, the unparenthesized
+   syntax was the only one supported.  It is expected that all new options
+   will be supported only in the parenthesized syntax.
   </para>
  </refsect1>
 
@@ -127,6 +137,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.
+      If a column list is specified, <literal>ANALYZE</> is implied.
      </para>
     </listitem>
    </varlistentry>
@@ -214,7 +225,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    table in the regression database:
 
 <programlisting>
-regression=# VACUUM VERBOSE ANALYZE onek;
+regression=# VACUUM (VERBOSE, ANALYZE) onek;
 INFO:  vacuuming "public.onek"
 INFO:  index "onek_unique1" now contains 1000 tuples in 14 pages
 DETAIL:  3000 index tuples were removed.

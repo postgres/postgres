@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.96 2009/08/07 20:54:31 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.97 2009/11/16 21:32:06 tgl Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -502,8 +502,9 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     only scans pages that have been modified since the last vacuum, but
     <structfield>relfrozenxid</> can only be advanced when the whole table is
     scanned. The whole table is scanned when <structfield>relfrozenxid</> is
-    more than <varname>vacuum_freeze_table_age</> transactions old, when the
-    <command>VACUUM FREEZE</> command is used, or when all pages happen to
+    more than <varname>vacuum_freeze_table_age</> transactions old, when
+    <command>VACUUM</>'s <literal>FREEZE</> option is used, or when all pages
+    happen to
     require vacuuming to remove dead row versions. When <command>VACUUM</>
     scans the whole table, after it's finished <literal>age(relfrozenxid)</>
     should be a little more than the <varname>vacuum_freeze_min_age</> setting
