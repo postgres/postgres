@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.154 2009/10/26 02:26:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.155 2009/11/16 18:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,10 @@ static Var *search_indexed_tlist_for_var(Var *var,
 static Var *search_indexed_tlist_for_non_var(Node *node,
 								 indexed_tlist *itlist,
 								 Index newvarno);
+static Var *search_indexed_tlist_for_sortgroupref(Node *node,
+									  Index sortgroupref,
+									  indexed_tlist *itlist,
+									  Index newvarno);
 static List *fix_join_expr(PlannerGlobal *glob,
 			  List *clauses,
 			  indexed_tlist *outer_itlist,
@@ -1197,10 +1201,25 @@ set_upper_references(PlannerGlobal *glob, Plan *plan, int rtoffset)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Node	   *newexpr;
 
-		newexpr = fix_upper_expr(glob,
-								 (Node *) tle->expr,
-								 subplan_itlist,
-								 rtoffset);
+		/* If it's a non-Var sort/group item, first try to match by sortref */
+		if (tle->ressortgroupref != 0 && !IsA(tle->expr, Var))
+		{
+			newexpr = (Node *)
+				search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
+													  tle->ressortgroupref,
+													  subplan_itlist,
+													  OUTER);
+			if (!newexpr)
+				newexpr = fix_upper_expr(glob,
+										 (Node *) tle->expr,
+										 subplan_itlist,
+										 rtoffset);
+		}
+		else
+			newexpr = fix_upper_expr(glob,
+									 (Node *) tle->expr,
+									 subplan_itlist,
+									 rtoffset);
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
 		output_targetlist = lappend(output_targetlist, tle);
@@ -1440,6 +1459,49 @@ search_indexed_tlist_for_non_var(Node *node,
 		newvar->varnoold = 0;	/* wasn't ever a plain Var */
 		newvar->varoattno = 0;
 		return newvar;
+	}
+	return NULL;				/* no match */
+}
+
+/*
+ * search_indexed_tlist_for_sortgroupref --- find a sort/group expression
+ *		(which is assumed not to be just a Var)
+ *
+ * If a match is found, return a Var constructed to reference the tlist item.
+ * If no match, return NULL.
+ *
+ * This is needed to ensure that we select the right subplan TLE in cases
+ * where there are multiple textually-equal()-but-volatile sort expressions.
+ * And it's also faster than search_indexed_tlist_for_non_var.
+ */
+static Var *
+search_indexed_tlist_for_sortgroupref(Node *node,
+									  Index sortgroupref,
+									  indexed_tlist *itlist,
+									  Index newvarno)
+{
+	ListCell   *lc;
+
+	foreach(lc, itlist->tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		/* The equal() check should be redundant, but let's be paranoid */
+		if (tle->ressortgroupref == sortgroupref &&
+			equal(node, tle->expr))
+		{
+			/* Found a matching subplan output expression */
+			Var		   *newvar;
+
+			newvar = makeVar(newvarno,
+							 tle->resno,
+							 exprType((Node *) tle->expr),
+							 exprTypmod((Node *) tle->expr),
+							 0);
+			newvar->varnoold = 0;	/* wasn't ever a plain Var */
+			newvar->varoattno = 0;
+			return newvar;
+		}
 	}
 	return NULL;				/* no match */
 }
