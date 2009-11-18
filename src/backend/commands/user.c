@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.189 2009/10/07 22:14:19 alvherre Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.190 2009/11/18 21:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,11 @@
 #include "utils/tqual.h"
 
 
+/* GUC parameter */
 extern bool Password_encryption;
+
+/* Hook to check passwords in CreateRole() and AlterRole() */
+check_password_hook_type check_password_hook = NULL;
 
 static List *roleNamesToIds(List *memberNames);
 static void AddRoleMems(const char *rolename, Oid roleid,
@@ -96,6 +100,8 @@ CreateRole(CreateRoleStmt *stmt)
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
 	List	   *adminmembers = NIL;		/* roles to be admins of this role */
 	char	   *validUntil = NULL;		/* time the login is valid until */
+	Datum		validUntil_datum;		/* same, as timestamptz Datum */
+	bool		validUntil_null;
 	DefElem    *dpassword = NULL;
 	DefElem    *dissuper = NULL;
 	DefElem    *dinherit = NULL;
@@ -298,6 +304,31 @@ CreateRole(CreateRoleStmt *stmt)
 				 errmsg("role \"%s\" already exists",
 						stmt->role)));
 
+	/* Convert validuntil to internal form */
+	if (validUntil)
+	{
+		validUntil_datum = DirectFunctionCall3(timestamptz_in,
+											   CStringGetDatum(validUntil),
+											   ObjectIdGetDatum(InvalidOid),
+											   Int32GetDatum(-1));
+		validUntil_null = false;
+	}
+	else
+	{
+		validUntil_datum = (Datum) 0;
+		validUntil_null = true;
+	}
+
+	/*
+	 * Call the password checking hook if there is one defined
+	 */
+	if (check_password_hook && password)
+		(*check_password_hook) (stmt->role,
+								password,
+								isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+								validUntil_datum,
+								validUntil_null);
+
 	/*
 	 * Build a tuple to insert
 	 */
@@ -333,15 +364,8 @@ CreateRole(CreateRoleStmt *stmt)
 	else
 		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
 
-	if (validUntil)
-		new_record[Anum_pg_authid_rolvaliduntil - 1] =
-			DirectFunctionCall3(timestamptz_in,
-								CStringGetDatum(validUntil),
-								ObjectIdGetDatum(InvalidOid),
-								Int32GetDatum(-1));
-
-	else
-		new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = true;
+	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
+	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
 
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
 
@@ -419,6 +443,8 @@ AlterRole(AlterRoleStmt *stmt)
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *rolemembers = NIL;		/* roles to be added/removed */
 	char	   *validUntil = NULL;		/* time the login is valid until */
+	Datum		validUntil_datum;		/* same, as timestamptz Datum */
+	bool		validUntil_null;
 	DefElem    *dpassword = NULL;
 	DefElem    *dissuper = NULL;
 	DefElem    *dinherit = NULL;
@@ -587,6 +613,33 @@ AlterRole(AlterRoleStmt *stmt)
 					 errmsg("permission denied")));
 	}
 
+	/* Convert validuntil to internal form */
+	if (validUntil)
+	{
+		validUntil_datum = DirectFunctionCall3(timestamptz_in,
+											   CStringGetDatum(validUntil),
+											   ObjectIdGetDatum(InvalidOid),
+											   Int32GetDatum(-1));
+		validUntil_null = false;
+	}
+	else
+	{
+		/* fetch existing setting in case hook needs it */
+		validUntil_datum = SysCacheGetAttr(AUTHNAME, tuple,
+										   Anum_pg_authid_rolvaliduntil,
+										   &validUntil_null);
+	}
+
+	/*
+	 * Call the password checking hook if there is one defined
+	 */
+	if (check_password_hook && password)
+		(*check_password_hook) (stmt->role,
+								password,
+								isMD5(password) ? PASSWORD_TYPE_MD5 : PASSWORD_TYPE_PLAINTEXT,
+								validUntil_datum,
+								validUntil_null);
+
 	/*
 	 * Build an updated tuple, perusing the information just obtained
 	 */
@@ -666,15 +719,9 @@ AlterRole(AlterRoleStmt *stmt)
 	}
 
 	/* valid until */
-	if (validUntil)
-	{
-		new_record[Anum_pg_authid_rolvaliduntil - 1] =
-			DirectFunctionCall3(timestamptz_in,
-								CStringGetDatum(validUntil),
-								ObjectIdGetDatum(InvalidOid),
-								Int32GetDatum(-1));
-		new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
-	}
+	new_record[Anum_pg_authid_rolvaliduntil - 1] = validUntil_datum;
+	new_record_nulls[Anum_pg_authid_rolvaliduntil - 1] = validUntil_null;
+	new_record_repl[Anum_pg_authid_rolvaliduntil - 1] = true;
 
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
 								  new_record_nulls, new_record_repl);

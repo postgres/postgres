@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.64 2009/08/18 10:34:39 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.65 2009/11/18 21:57:56 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -111,6 +111,7 @@
 <!entity ltree           SYSTEM "ltree.sgml">
 <!entity oid2name        SYSTEM "oid2name.sgml">
 <!entity pageinspect     SYSTEM "pageinspect.sgml">
+<!entity passwordcheck   SYSTEM "passwordcheck.sgml">
 <!entity pgbench         SYSTEM "pgbench.sgml">
 <!entity pgbuffercache   SYSTEM "pgbuffercache.sgml">
 <!entity pgcrypto        SYSTEM "pgcrypto.sgml">

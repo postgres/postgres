@@ -104,6 +104,10 @@ pageinspect -
 	Allows inspection of database pages
 	Heikki Linnakangas <heikki@enterprisedb.com>
 
+passwordcheck -
+	Simple password strength checker
+	Laurenz Albe <laurenz.albe@wien.gv.at>
+
 pg_buffercache -
 	Real time queries on the shared buffer cache
 	by Mark Kirkwood <markir@paradise.net.nz>
