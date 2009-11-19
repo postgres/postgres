@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.100 2009/06/11 14:49:07 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.101 2009/11/19 22:05:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,7 +430,7 @@ usage(const char *progname)
 	printf(_("  --no-data-for-failed-tables\n"
 			 "                           do not restore data of tables that could not be\n"
 			 "                           created\n"));
-	printf(_("  --no-tablespaces         do not dump tablespace assignments\n"));
+	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
 	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SET SESSION AUTHORIZATION commands instead of\n"
