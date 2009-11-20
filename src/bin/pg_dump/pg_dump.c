@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.539.2.2 2009/07/20 20:53:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.539.2.3 2009/11/20 20:54:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -10885,6 +10885,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			appendPQExpBuffer(query, " OR UPDATE");
 		else
 			appendPQExpBuffer(query, " UPDATE");
+		findx++;
 	}
 	if (TRIGGER_FOR_TRUNCATE(tginfo->tgtype))
 	{
@@ -10892,6 +10893,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			appendPQExpBuffer(query, " OR TRUNCATE");
 		else
 			appendPQExpBuffer(query, " TRUNCATE");
+		findx++;
 	}
 	appendPQExpBuffer(query, " ON %s\n",
 					  fmtId(tbinfo->dobj.name));
