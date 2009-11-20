@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.106.2.7 2009/11/15 09:08:46 mha Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.106.2.8 2009/11/20 01:28:17 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ extern int find_other_exec(const char *argv0, const char *target,
 
 /* Windows security token manipulation (in exec.c) */
 #ifdef WIN32
-extern BOOL AddUserToTokenDacl(HANDLE hToken);
+extern BOOL AddUserToDacl(HANDLE hProcess);
 #endif
 
 
