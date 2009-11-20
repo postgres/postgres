@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_trigger.h,v 1.35 2009/10/14 22:14:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_trigger.h,v 1.36 2009/11/20 20:38:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -52,9 +52,10 @@ CATALOG(pg_trigger,2620)
 	bool		tginitdeferred; /* constraint trigger is deferred initially */
 	int2		tgnargs;		/* # of extra arguments in tgargs */
 
-	/* VARIABLE LENGTH FIELDS (note: these are not supposed to be null) */
+	/* VARIABLE LENGTH FIELDS (note: tgattr and tgargs must not be null) */
 	int2vector	tgattr;			/* column numbers, if trigger is on columns */
 	bytea		tgargs;			/* first\000second\000tgnargs\000 */
+	text		tgqual;			/* WHEN expression, or NULL if none */
 } FormData_pg_trigger;
 
 /* ----------------
@@ -68,7 +69,7 @@ typedef FormData_pg_trigger *Form_pg_trigger;
  *		compiler constants for pg_trigger
  * ----------------
  */
-#define Natts_pg_trigger				15
+#define Natts_pg_trigger				16
 #define Anum_pg_trigger_tgrelid			1
 #define Anum_pg_trigger_tgname			2
 #define Anum_pg_trigger_tgfoid			3
@@ -84,6 +85,7 @@ typedef FormData_pg_trigger *Form_pg_trigger;
 #define Anum_pg_trigger_tgnargs			13
 #define Anum_pg_trigger_tgattr			14
 #define Anum_pg_trigger_tgargs			15
+#define Anum_pg_trigger_tgqual			16
 
 /* Bits within tgtype */
 #define TRIGGER_TYPE_ROW				(1 << 0)

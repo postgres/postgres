@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.210 2009/10/14 22:14:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.211 2009/11/20 20:38:09 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4755,6 +4755,15 @@
       <entry><type>bytea</type></entry>
       <entry></entry>
       <entry>Argument strings to pass to trigger, each NULL-terminated</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tgqual</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Expression tree (in <function>nodeToString()</function>
+       representation) for the trigger's <literal>WHEN</> condition, or NULL
+       if none</entry>
      </row>
     </tbody>
    </tgroup>

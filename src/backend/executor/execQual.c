@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.254 2009/11/04 22:26:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.255 2009/11/20 20:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,26 +491,15 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	if (isDone)
 		*isDone = ExprSingleResult;
 
-	/*
-	 * Get the input slot and attribute number we want
-	 *
-	 * The asserts check that references to system attributes only appear at
-	 * the level of a relation scan; at higher levels, system attributes must
-	 * be treated as ordinary variables (since we no longer have access to the
-	 * original tuple).
-	 */
-	attnum = variable->varattno;
-
+	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
 	{
 		case INNER:				/* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
-			Assert(attnum > 0);
 			break;
 
 		case OUTER:				/* get the tuple from the outer node */
 			slot = econtext->ecxt_outertuple;
-			Assert(attnum > 0);
 			break;
 
 		default:				/* get the tuple from the relation being
@@ -518,6 +507,8 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			slot = econtext->ecxt_scantuple;
 			break;
 	}
+
+	attnum = variable->varattno;
 
 	if (attnum != InvalidAttrNumber)
 	{
@@ -715,7 +706,7 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone)
 {
 	Var		   *variable = (Var *) exprstate->expr;
-	TupleTableSlot *slot = econtext->ecxt_scantuple;
+	TupleTableSlot *slot;
 	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
 	HeapTupleHeader dtuple;
@@ -723,6 +714,23 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	if (isDone)
 		*isDone = ExprSingleResult;
 	*isNull = false;
+
+	/* Get the input slot we want */
+	switch (variable->varno)
+	{
+		case INNER:				/* get the tuple from the inner node */
+			slot = econtext->ecxt_innertuple;
+			break;
+
+		case OUTER:				/* get the tuple from the outer node */
+			slot = econtext->ecxt_outertuple;
+			break;
+
+		default:				/* get the tuple from the relation being
+								 * scanned */
+			slot = econtext->ecxt_scantuple;
+			break;
+	}
 
 	tuple = ExecFetchSlotTuple(slot);
 	tupleDesc = slot->tts_tupleDescriptor;
@@ -766,7 +774,7 @@ ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 					 bool *isNull, ExprDoneCond *isDone)
 {
 	Var		   *variable = (Var *) exprstate->expr;
-	TupleTableSlot *slot = econtext->ecxt_scantuple;
+	TupleTableSlot *slot;
 	HeapTuple	tuple;
 	TupleDesc	var_tupdesc;
 	HeapTupleHeader dtuple;
@@ -774,6 +782,23 @@ ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 	if (isDone)
 		*isDone = ExprSingleResult;
 	*isNull = false;
+
+	/* Get the input slot we want */
+	switch (variable->varno)
+	{
+		case INNER:				/* get the tuple from the inner node */
+			slot = econtext->ecxt_innertuple;
+			break;
+
+		case OUTER:				/* get the tuple from the outer node */
+			slot = econtext->ecxt_outertuple;
+			break;
+
+		default:				/* get the tuple from the relation being
+								 * scanned */
+			slot = econtext->ecxt_scantuple;
+			break;
+	}
 
 	/*
 	 * Currently, the only case handled here is stripping of trailing resjunk

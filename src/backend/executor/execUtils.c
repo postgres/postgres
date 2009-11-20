@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.165 2009/10/26 02:26:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.166 2009/11/20 20:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ CreateExecutorState(void)
 
 	estate->es_trig_target_relations = NIL;
 	estate->es_trig_tuple_slot = NULL;
+	estate->es_trig_oldtup_slot = NULL;
 
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;

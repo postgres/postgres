@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.9 2009/10/07 22:14:25 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.10 2009/11/20 20:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ DECLARE_TOAST(pg_description, 2834, 2835);
 DECLARE_TOAST(pg_proc, 2836, 2837);
 DECLARE_TOAST(pg_rewrite, 2838, 2839);
 DECLARE_TOAST(pg_statistic, 2840, 2841);
+DECLARE_TOAST(pg_trigger, 2336, 2337);
 
 /* shared catalogs */
 DECLARE_TOAST(pg_authid, 2842, 2843);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.77 2009/10/26 02:26:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.78 2009/11/20 20:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ extern PGDLLIMPORT int SessionReplicationRole;
 #define TRIGGER_FIRES_ON_REPLICA			'R'
 #define TRIGGER_DISABLED					'D'
 
-extern Oid CreateTrigger(CreateTrigStmt *stmt,
+extern Oid CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			  Oid constraintOid, Oid indexOid, const char *prefix,
 			  bool checkPermissions);
 

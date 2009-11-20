@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.334 2009/10/26 02:26:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.335 2009/11/20 20:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,6 +752,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 */
 	estate->es_tupleTable = NIL;
 	estate->es_trig_tuple_slot = NULL;
+	estate->es_trig_oldtup_slot = NULL;
 
 	/* mark EvalPlanQual not active */
 	estate->es_epqTuple = NULL;
@@ -911,6 +912,8 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 
 		resultRelInfo->ri_TrigFunctions = (FmgrInfo *)
 			palloc0(n * sizeof(FmgrInfo));
+		resultRelInfo->ri_TrigWhenExprs = (List **)
+			palloc0(n * sizeof(List *));
 		if (doInstrument)
 			resultRelInfo->ri_TrigInstrument = InstrAlloc(n);
 		else
@@ -919,6 +922,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	else
 	{
 		resultRelInfo->ri_TrigFunctions = NULL;
+		resultRelInfo->ri_TrigWhenExprs = NULL;
 		resultRelInfo->ri_TrigInstrument = NULL;
 	}
 	resultRelInfo->ri_ConstraintExprs = NULL;

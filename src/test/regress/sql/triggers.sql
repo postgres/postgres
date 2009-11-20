@@ -254,6 +254,40 @@ COPY main_table (a, b) FROM stdin;
 
 SELECT * FROM main_table ORDER BY a, b;
 
+--
+-- test triggers with WHEN clause
+--
+
+CREATE TRIGGER modified_a BEFORE UPDATE OF a ON main_table
+FOR EACH ROW WHEN (OLD.a <> NEW.a) EXECUTE PROCEDURE trigger_func('modified_a');
+CREATE TRIGGER modified_any BEFORE UPDATE OF a ON main_table
+FOR EACH ROW WHEN (OLD.* IS DISTINCT FROM NEW.*) EXECUTE PROCEDURE trigger_func('modified_any');
+CREATE TRIGGER insert_a AFTER INSERT ON main_table
+FOR EACH ROW WHEN (NEW.a = 123) EXECUTE PROCEDURE trigger_func('insert_a');
+CREATE TRIGGER delete_a AFTER DELETE ON main_table
+FOR EACH ROW WHEN (OLD.a = 123) EXECUTE PROCEDURE trigger_func('delete_a');
+CREATE TRIGGER insert_when BEFORE INSERT ON main_table
+FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('insert_when');
+CREATE TRIGGER delete_when AFTER DELETE ON main_table
+FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('delete_when');
+INSERT INTO main_table (a) VALUES (123), (456);
+COPY main_table FROM stdin;
+123	999
+456	999
+\.
+DELETE FROM main_table WHERE a IN (123, 456);
+UPDATE main_table SET a = 50, b = 60;
+SELECT * FROM main_table ORDER BY a, b;
+SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
+SELECT pg_get_triggerdef(oid, false) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
+SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_any';
+DROP TRIGGER modified_a ON main_table;
+DROP TRIGGER modified_any ON main_table;
+DROP TRIGGER insert_a ON main_table;
+DROP TRIGGER delete_a ON main_table;
+DROP TRIGGER insert_when ON main_table;
+DROP TRIGGER delete_when ON main_table;
+
 -- Test column-level triggers
 DROP TRIGGER after_upd_row_trig ON main_table;
 
@@ -282,6 +316,18 @@ CREATE TRIGGER error_upd_a_a BEFORE UPDATE OF a, a ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_upd_a_a');
 CREATE TRIGGER error_ins_a BEFORE INSERT OF a ON main_table
 FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_ins_a');
+CREATE TRIGGER error_ins_when BEFORE INSERT OR UPDATE ON main_table
+FOR EACH ROW WHEN (OLD.a <> NEW.a)
+EXECUTE PROCEDURE trigger_func('error_ins_old');
+CREATE TRIGGER error_del_when BEFORE DELETE OR UPDATE ON main_table
+FOR EACH ROW WHEN (OLD.a <> NEW.a)
+EXECUTE PROCEDURE trigger_func('error_del_new');
+CREATE TRIGGER error_del_when BEFORE INSERT OR UPDATE ON main_table
+FOR EACH ROW WHEN (NEW.tableoid <> 0)
+EXECUTE PROCEDURE trigger_func('error_when_sys_column');
+CREATE TRIGGER error_stmt_when BEFORE UPDATE OF a ON main_table
+FOR EACH STATEMENT WHEN (OLD.* IS DISTINCT FROM NEW.*)
+EXECUTE PROCEDURE trigger_func('error_stmt_when');
 
 -- check dependency restrictions
 ALTER TABLE main_table DROP COLUMN b;

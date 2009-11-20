@@ -322,6 +322,90 @@ SELECT * FROM main_table ORDER BY a, b;
     |   
 (8 rows)
 
+--
+-- test triggers with WHEN clause
+--
+CREATE TRIGGER modified_a BEFORE UPDATE OF a ON main_table
+FOR EACH ROW WHEN (OLD.a <> NEW.a) EXECUTE PROCEDURE trigger_func('modified_a');
+CREATE TRIGGER modified_any BEFORE UPDATE OF a ON main_table
+FOR EACH ROW WHEN (OLD.* IS DISTINCT FROM NEW.*) EXECUTE PROCEDURE trigger_func('modified_any');
+CREATE TRIGGER insert_a AFTER INSERT ON main_table
+FOR EACH ROW WHEN (NEW.a = 123) EXECUTE PROCEDURE trigger_func('insert_a');
+CREATE TRIGGER delete_a AFTER DELETE ON main_table
+FOR EACH ROW WHEN (OLD.a = 123) EXECUTE PROCEDURE trigger_func('delete_a');
+CREATE TRIGGER insert_when BEFORE INSERT ON main_table
+FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('insert_when');
+CREATE TRIGGER delete_when AFTER DELETE ON main_table
+FOR EACH STATEMENT WHEN (true) EXECUTE PROCEDURE trigger_func('delete_when');
+INSERT INTO main_table (a) VALUES (123), (456);
+NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(insert_when) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(insert_a) called: action = INSERT, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
+COPY main_table FROM stdin;
+NOTICE:  trigger_func(before_ins_stmt) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(insert_when) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trigger_func(insert_a) called: action = INSERT, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_ins_stmt) called: action = INSERT, when = AFTER, level = STATEMENT
+DELETE FROM main_table WHERE a IN (123, 456);
+NOTICE:  trigger_func(delete_a) called: action = DELETE, when = AFTER, level = ROW
+NOTICE:  trigger_func(delete_a) called: action = DELETE, when = AFTER, level = ROW
+NOTICE:  trigger_func(delete_when) called: action = DELETE, when = AFTER, level = STATEMENT
+UPDATE main_table SET a = 50, b = 60;
+NOTICE:  trigger_func(modified_any) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(modified_any) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(modified_a) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(modified_a) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(modified_a) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(modified_a) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(modified_a) called: action = UPDATE, when = BEFORE, level = ROW
+NOTICE:  trigger_func(after_upd_row) called: action = UPDATE, when = AFTER, level = ROW
+NOTICE:  trigger_func(after_upd_stmt) called: action = UPDATE, when = AFTER, level = STATEMENT
+SELECT * FROM main_table ORDER BY a, b;
+ a  | b  
+----+----
+  6 | 10
+ 21 | 20
+ 30 | 40
+ 31 | 10
+ 50 | 35
+ 50 | 60
+ 81 | 15
+    |   
+(8 rows)
+
+SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
+                pg_get_triggerdef                 
+--------------------------------------------------
+ CREATE TRIGGER modified_a
+     BEFORE UPDATE OF a ON main_table
+     FOR EACH ROW
+     WHEN (old.a <> new.a)
+     EXECUTE PROCEDURE trigger_func('modified_a')
+(1 row)
+
+SELECT pg_get_triggerdef(oid, false) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_a';
+                                                              pg_get_triggerdef                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE TRIGGER modified_a BEFORE UPDATE OF a ON main_table FOR EACH ROW WHEN ((old.a <> new.a)) EXECUTE PROCEDURE trigger_func('modified_a')
+(1 row)
+
+SELECT pg_get_triggerdef(oid, true) FROM pg_trigger WHERE tgrelid = 'main_table'::regclass AND tgname = 'modified_any';
+                 pg_get_triggerdef                  
+----------------------------------------------------
+ CREATE TRIGGER modified_any
+     BEFORE UPDATE OF a ON main_table
+     FOR EACH ROW
+     WHEN (old.* IS DISTINCT FROM new.*)
+     EXECUTE PROCEDURE trigger_func('modified_any')
+(1 row)
+
+DROP TRIGGER modified_a ON main_table;
+DROP TRIGGER modified_any ON main_table;
+DROP TRIGGER insert_a ON main_table;
+DROP TRIGGER delete_a ON main_table;
+DROP TRIGGER insert_when ON main_table;
+DROP TRIGGER delete_when ON main_table;
 -- Test column-level triggers
 DROP TRIGGER after_upd_row_trig ON main_table;
 CREATE TRIGGER before_upd_a_row_trig BEFORE UPDATE OF a ON main_table
@@ -393,6 +477,30 @@ FOR EACH ROW EXECUTE PROCEDURE trigger_func('error_ins_a');
 ERROR:  syntax error at or near "OF"
 LINE 1: CREATE TRIGGER error_ins_a BEFORE INSERT OF a ON main_table
                                                  ^
+CREATE TRIGGER error_ins_when BEFORE INSERT OR UPDATE ON main_table
+FOR EACH ROW WHEN (OLD.a <> NEW.a)
+EXECUTE PROCEDURE trigger_func('error_ins_old');
+ERROR:  INSERT trigger's WHEN condition cannot reference OLD values
+LINE 2: FOR EACH ROW WHEN (OLD.a <> NEW.a)
+                           ^
+CREATE TRIGGER error_del_when BEFORE DELETE OR UPDATE ON main_table
+FOR EACH ROW WHEN (OLD.a <> NEW.a)
+EXECUTE PROCEDURE trigger_func('error_del_new');
+ERROR:  DELETE trigger's WHEN condition cannot reference NEW values
+LINE 2: FOR EACH ROW WHEN (OLD.a <> NEW.a)
+                                    ^
+CREATE TRIGGER error_del_when BEFORE INSERT OR UPDATE ON main_table
+FOR EACH ROW WHEN (NEW.tableoid <> 0)
+EXECUTE PROCEDURE trigger_func('error_when_sys_column');
+ERROR:  BEFORE trigger's WHEN condition cannot reference NEW system columns
+LINE 2: FOR EACH ROW WHEN (NEW.tableoid <> 0)
+                           ^
+CREATE TRIGGER error_stmt_when BEFORE UPDATE OF a ON main_table
+FOR EACH STATEMENT WHEN (OLD.* IS DISTINCT FROM NEW.*)
+EXECUTE PROCEDURE trigger_func('error_stmt_when');
+ERROR:  statement trigger's WHEN condition cannot reference column values
+LINE 2: FOR EACH STATEMENT WHEN (OLD.* IS DISTINCT FROM NEW.*)
+                                 ^
 -- check dependency restrictions
 ALTER TABLE main_table DROP COLUMN b;
 ERROR:  cannot drop table main_table column b because other objects depend on it

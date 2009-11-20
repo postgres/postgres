@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.59 2009/10/14 22:14:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.60 2009/11/20 20:38:09 tgl Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -138,6 +138,25 @@
     to the next trigger.  If any before trigger returns
     <symbol>NULL</>, the operation is abandoned for that row and subsequent
     triggers are not fired.
+   </para>
+
+   <para>
+    A trigger definition can also specify a boolean <literal>WHEN</>
+    condition, which will be tested to see whether the trigger should
+    be fired.  In row-level triggers the <literal>WHEN</> condition can
+    examine the old and/or new values of columns of the row.  (Statement-level
+    triggers can also have <literal>WHEN</> conditions, although the feature
+    is not so useful for them.)  In a before trigger, the <literal>WHEN</>
+    condition is evaluated just before the function is or would be executed,
+    so using <literal>WHEN</> is not materially different from testing the
+    same condition at the beginning of the trigger function.  However, in
+    an after trigger, the <literal>WHEN</> condition is evaluated just after
+    the row update occurs, and it determines whether an event is queued to
+    fire the trigger at the end of statement.  So when an after trigger's
+    <literal>WHEN</> condition does not return true, it is not necessary
+    to queue an event nor to re-fetch the row at end of statement.  This
+    can result in significant speedups in statements that modify many
+    rows, if the trigger only needs to be fired for a few of the rows.
    </para>
 
    <para>
@@ -497,6 +516,7 @@ typedef struct Trigger
     int16       tgnattr;
     int16      *tgattr;
     char      **tgargs;
+    char       *tgqual;
 } Trigger;
 </programlisting>
 

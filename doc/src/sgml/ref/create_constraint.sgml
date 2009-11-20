@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.20 2009/09/19 10:23:26 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.21 2009/11/20 20:38:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -27,6 +27,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
     { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
     FOR EACH ROW
+    [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="parameter">function_name</replaceable> ( <replaceable class="parameter">arguments</replaceable> )
 </synopsis>
  </refsynopsisdiv>
@@ -105,6 +106,22 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
       The default timing of the trigger.
       See the <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">
       documentation for details of these constraint options.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">condition</replaceable></term>
+    <listitem>
+     <para>
+      A Boolean expression that determines whether the trigger function
+      will actually be executed.  This acts the same as in <xref
+      linkend="SQL-CREATETRIGGER" endterm="SQL-CREATETRIGGER-TITLE">.
+      Note in particular that evaluation of the <literal>WHEN</>
+      condition is not deferred, but occurs immediately after the row
+      update operation is performed.  If the condition does not evaluate
+      to <literal>true</> then the trigger is not queued for deferred
+      execution.
      </para>
     </listitem>
    </varlistentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.115 2009/07/28 02:56:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.116 2009/11/20 20:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ typedef struct Trigger
 	int16		tgnattr;
 	int16	   *tgattr;
 	char	  **tgargs;
+	char	   *tgqual;
 } Trigger;
 
 typedef struct TriggerDesc

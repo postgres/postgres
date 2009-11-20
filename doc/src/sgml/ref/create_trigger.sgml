@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.51 2009/10/14 22:14:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.52 2009/11/20 20:38:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,6 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
     ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
+    [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
 </synopsis>
  </refsynopsisdiv>
@@ -70,6 +71,16 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    In addition, triggers may be defined to fire for a
    <command>TRUNCATE</command>, though only
    <literal>FOR EACH STATEMENT</literal>.
+  </para>
+
+  <para>
+   Also, a trigger definition can specify a boolean <literal>WHEN</>
+   condition, which will be tested to see whether the trigger should
+   be fired.  In row-level triggers the <literal>WHEN</> condition can
+   examine the old and/or new values of columns of the row.  Statement-level
+   triggers can also have <literal>WHEN</> conditions, although the feature
+   is not so useful for them since the condition cannot refer to any values
+   in the table.
   </para>
 
   <para>
@@ -160,6 +171,31 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">condition</replaceable></term>
+    <listitem>
+     <para>
+      A Boolean expression that determines whether the trigger function
+      will actually be executed.  If <literal>WHEN</> is specified, the
+      function will only be called if the <replaceable
+      class="parameter">condition</replaceable> returns <literal>true</>.
+      In <literal>FOR EACH ROW</literal> triggers, the <literal>WHEN</>
+      condition can refer to columns of the old and/or new row values
+      by writing <literal>OLD.<replaceable
+      class="parameter">column_name</replaceable></literal> or
+      <literal>NEW.<replaceable
+      class="parameter">column_name</replaceable></literal> respectively.
+      Of course, <literal>INSERT</> triggers cannot refer to <literal>OLD</>
+      and <literal>DELETE</> triggers cannot refer to <literal>NEW</>.
+     </para>
+
+     <para>
+      Currently, <literal>WHEN</literal> expressions cannot contain
+      subqueries.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">function_name</replaceable></term>
     <listitem>
      <para>
@@ -214,6 +250,29 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
+   In a <literal>BEFORE</> trigger, the <literal>WHEN</> condition is
+   evaluated just before the function is or would be executed, so using
+   <literal>WHEN</> is not materially different from testing the same
+   condition at the beginning of the trigger function.  Note in particular
+   that the <literal>NEW</> row seen by the condition is the current value,
+   as possibly modified by earlier triggers.  Also, a <literal>BEFORE</>
+   trigger's <literal>WHEN</> condition is not allowed to examine the
+   system columns of the <literal>NEW</> row (such as <literal>oid</>),
+   because those won't have been set yet.
+  </para>
+
+  <para>
+   In an <literal>AFTER</> trigger, the <literal>WHEN</> condition is
+   evaluated just after the row update occurs, and it determines whether an
+   event is queued to fire the trigger at the end of statement.  So when an
+   <literal>AFTER</> trigger's <literal>WHEN</> condition does not return
+   true, it is not necessary to queue an event nor to re-fetch the row at end
+   of statement.  This can result in significant speedups in statements that
+   modify many rows, if the trigger only needs to be fired for a few of the
+   rows.
+  </para>
+
+  <para>
    In <productname>PostgreSQL</productname> versions before 7.3, it was
    necessary to declare trigger functions as returning the placeholder
    type <type>opaque</>, rather than <type>trigger</>.  To support loading
@@ -223,11 +282,56 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATETRIGGER-2">
+ <refsect1 id="SQL-CREATETRIGGER-examples">
   <title>Examples</title>
 
   <para>
-   <xref linkend="trigger-example"> contains a complete example.
+   Execute the function <function>check_account_update</> whenever
+   a row of the table <literal>accounts</> is about to be updated:
+
+<programlisting>
+CREATE TRIGGER check_update
+    BEFORE UPDATE ON accounts
+    FOR EACH ROW
+    EXECUTE PROCEDURE check_account_update();
+</programlisting>
+
+   The same, but only execute the function if column <literal>balance</>
+   is specified as a target in the <command>UPDATE</> command:
+
+<programlisting>
+CREATE TRIGGER check_update
+    BEFORE UPDATE OF balance ON accounts
+    FOR EACH ROW
+    EXECUTE PROCEDURE check_account_update();
+</programlisting>
+
+   This form only executes the function if column <literal>balance</>
+   has in fact changed value:
+
+<programlisting>
+CREATE TRIGGER check_update
+    BEFORE UPDATE ON accounts
+    FOR EACH ROW
+    WHEN (OLD.balance IS DISTINCT FROM NEW.balance)
+    EXECUTE PROCEDURE check_account_update();
+</programlisting>
+
+   Call a function to log updates of <literal>accounts</>, but only if
+   something changed:
+
+<programlisting>
+CREATE TRIGGER log_update
+    AFTER UPDATE ON accounts
+    FOR EACH ROW
+    WHEN (OLD.* IS DISTINCT FROM NEW.*)
+    EXECUTE PROCEDURE log_account_update();
+</programlisting>
+  </para>
+
+  <para>
+   <xref linkend="trigger-example"> contains a complete example of a trigger
+   function written in C.
   </para>
  </refsect1>
 
@@ -258,7 +362,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       <productname>PostgreSQL</productname> only allows the execution
       of a user-defined function for the triggered action.  The standard
       allows the execution of a number of other SQL commands, such as
-      <command>CREATE TABLE</command> as the triggered action.  This
+      <command>CREATE TABLE</command>, as the triggered action.  This
       limitation is not hard to work around by creating a user-defined
       function that executes the desired commands.
      </para>

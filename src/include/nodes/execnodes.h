@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.211 2009/10/26 02:26:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.212 2009/11/20 20:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,7 @@ typedef struct JunkFilter
  *		IndexRelationInfo		array of key/attr info for indices
  *		TrigDesc				triggers to be fired, if any
  *		TrigFunctions			cached lookup info for trigger functions
+ *		TrigWhenExprs			array of trigger WHEN expr states
  *		TrigInstrument			optional runtime measurements for triggers
  *		ConstraintExprs			array of constraint-checking expr states
  *		junkFilter				for removing junk attributes from tuples
@@ -310,6 +311,7 @@ typedef struct ResultRelInfo
 	IndexInfo **ri_IndexRelationInfo;
 	TriggerDesc *ri_TrigDesc;
 	FmgrInfo   *ri_TrigFunctions;
+	List	  **ri_TrigWhenExprs;
 	struct Instrumentation *ri_TrigInstrument;
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
@@ -345,7 +347,8 @@ typedef struct EState
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
-	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
+	TupleTableSlot *es_trig_tuple_slot;		/* for trigger output tuples */
+	TupleTableSlot *es_trig_oldtup_slot;	/* for trigger old tuples */
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */

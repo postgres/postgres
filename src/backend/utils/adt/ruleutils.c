@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.314 2009/11/05 23:24:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.315 2009/11/20 20:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,6 +487,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	SysScanDesc tgscan;
 	int			findx = 0;
 	char	   *tgname;
+	Datum		value;
+	bool		isnull;
 
 	/*
 	 * Fetch the pg_trigger tuple by the Oid of the trigger
@@ -543,6 +545,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 			appendStringInfo(&buf, " OR UPDATE");
 		else
 			appendStringInfo(&buf, " UPDATE");
+		findx++;
 		/* tgattr is first var-width field, so OK to access directly */
 		if (trigrec->tgattr.dim1 > 0)
 		{
@@ -567,6 +570,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 			appendStringInfo(&buf, " OR TRUNCATE");
 		else
 			appendStringInfo(&buf, " TRUNCATE");
+		findx++;
 	}
 	appendStringInfo(&buf, " ON %s",
 					 generate_relation_name(trigrec->tgrelid, NIL));
@@ -574,7 +578,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	if (trigrec->tgisconstraint)
 	{
-		if (trigrec->tgconstrrelid != InvalidOid)
+		if (OidIsValid(trigrec->tgconstrrelid))
 		{
 			appendStringInfo(&buf, "FROM %s",
 							 generate_relation_name(trigrec->tgconstrrelid, NIL));
@@ -596,23 +600,70 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		appendStringInfo(&buf, "FOR EACH STATEMENT");
 	appendStringInfoString(&buf, pretty ? "\n    " : " ");
 
+	/* If the trigger has a WHEN qualification, add that */
+	value = fastgetattr(ht_trig, Anum_pg_trigger_tgqual,
+						tgrel->rd_att, &isnull);
+	if (!isnull)
+	{
+		Node			   *qual;
+		deparse_context		context;
+		deparse_namespace	dpns;
+		RangeTblEntry	   *oldrte;
+		RangeTblEntry	   *newrte;
+
+		appendStringInfoString(&buf, "WHEN (");
+
+		qual = stringToNode(TextDatumGetCString(value));
+
+		/* Build minimal OLD and NEW RTEs for the rel */
+		oldrte = makeNode(RangeTblEntry);
+		oldrte->rtekind = RTE_RELATION;
+		oldrte->relid = trigrec->tgrelid;
+		oldrte->eref = makeAlias("old", NIL);
+		oldrte->inh = false;
+		oldrte->inFromCl = true;
+
+		newrte = makeNode(RangeTblEntry);
+		newrte->rtekind = RTE_RELATION;
+		newrte->relid = trigrec->tgrelid;
+		newrte->eref = makeAlias("new", NIL);
+		newrte->inh = false;
+		newrte->inFromCl = true;
+
+		/* Build two-element rtable */
+		dpns.rtable = list_make2(oldrte, newrte);
+		dpns.ctes = NIL;
+		dpns.subplans = NIL;
+		dpns.outer_plan = dpns.inner_plan = NULL;
+
+		/* Set up context with one-deep namespace stack */
+		context.buf = &buf;
+		context.namespaces = list_make1(&dpns);
+		context.windowClause = NIL;
+		context.windowTList = NIL;
+		context.varprefix = true;
+		context.prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
+		context.indentLevel = PRETTYINDENT_STD;
+
+		get_rule_expr(qual, &context, false);
+
+		appendStringInfo(&buf, ")%s", pretty ? "\n    " : " ");
+	}
+
 	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
 											NIL, NULL, NULL));
 
 	if (trigrec->tgnargs > 0)
 	{
-		bytea	   *val;
-		bool		isnull;
 		char	   *p;
 		int			i;
 
-		val = DatumGetByteaP(fastgetattr(ht_trig,
-										 Anum_pg_trigger_tgargs,
-										 tgrel->rd_att, &isnull));
+		value = fastgetattr(ht_trig, Anum_pg_trigger_tgargs,
+							tgrel->rd_att, &isnull);
 		if (isnull)
 			elog(ERROR, "tgargs is null for trigger %u", trigid);
-		p = (char *) VARDATA(val);
+		p = (char *) VARDATA(DatumGetByteaP(value));
 		for (i = 0; i < trigrec->tgnargs; i++)
 		{
 			if (i > 0)

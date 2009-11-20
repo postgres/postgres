@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.415 2009/11/16 21:32:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.416 2009/11/20 20:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1571,6 +1571,7 @@ typedef struct CreateTrigStmt
 	/* events uses the TRIGGER_TYPE bits defined in catalog/pg_trigger.h */
 	int16		events;			/* INSERT/UPDATE/DELETE/TRUNCATE */
 	List	   *columns;		/* column names, or NIL for all columns */
+	Node	   *whenClause;		/* qual expression, or NULL if none */
 
 	/* The following are used for constraint triggers (RI and unique checks) */
 	bool		isconstraint;	/* This is a constraint trigger */
