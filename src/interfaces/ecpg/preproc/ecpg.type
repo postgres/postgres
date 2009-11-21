@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.2 2009/11/05 23:24:27 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.type,v 1.3 2009/11/21 05:44:05 tgl Exp $ */
 %type <str> ECPGAllocateDescr
 %type <str> ECPGCKeywords
 %type <str> ECPGColId
@@ -30,11 +30,10 @@
 %type <str> ECPGVar
 %type <str> ECPGVarDeclaration
 %type <str> ECPGWhenever
-%type <str> ECPGunreserved
-%type <str> ECPGunreserved_con
 %type <str> ECPGunreserved_interval
 %type <str> UsingConst
 %type <str> UsingValue
+%type <str> all_unreserved_keyword
 %type <str> c_anything
 %type <str> c_args
 %type <str> c_list
@@ -45,6 +44,7 @@
 %type <str> char_variable
 %type <str> civar
 %type <str> civarind
+%type <str> ColId
 %type <str> ColLabel
 %type <str> connect_options
 %type <str> connection_object
@@ -101,7 +101,7 @@
 %type <str> struct_union_type_with_symbol
 %type <str> symbol
 %type <str> type_declaration
-%type <str> unreserved_keyword 
+%type <str> type_function_name
 %type <str> user_name
 %type <str> using_descriptor
 %type <str> var_declaration
