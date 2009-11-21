@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2009, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.96 2009/11/10 23:12:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.97 2009/11/21 23:59:12 petere Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -13,6 +13,8 @@
 #include "common.h"
 #include "input.h"
 #include "settings.h"
+
+#include "mb/pg_wchar.h"
 
 
 /*
@@ -166,6 +168,10 @@ MainLoop(FILE *source)
 		count_eof = 0;
 
 		pset.lineno++;
+
+		/* ignore UTF-8 Unicode byte-order mark */
+		if (pset.lineno == 1 && pset.encoding == PG_UTF8 && strncmp(line, "\xef\xbb\xbf", 3) == 0)
+			memmove(line, line + 3, strlen(line + 3) + 1);
 
 		/* nothing left on line? then ignore */
 		if (line[0] == '\0' && !psql_scan_in_quote(scan_state))
