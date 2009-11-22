@@ -214,7 +214,7 @@ SELECT lo_lseek(fd, 2030, 0) FROM lotest_stash_values;
 -- this should get half of the value from page 0 and half from page 1 of the
 -- large object
 SELECT loread(fd, 36) FROM lotest_stash_values;
-                             loread                              
+                            loread                            
 --------------------------------------------------------------
  44\011144\0111144\0114144\0119144\01188\01189\011SNAAAA\011F
 (1 row)
@@ -244,7 +244,7 @@ SELECT lo_lseek(fd, 2030, 0) FROM lotest_stash_values;
 (1 row)
 
 SELECT loread(fd, 36) FROM lotest_stash_values;
-                       loread                        
+                      loread                      
 --------------------------------------------------
  44\011144\011114abcdefghijklmnop9\011SNAAAA\011F
 (1 row)
