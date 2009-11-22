@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.189 2009/11/15 02:45:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.190 2009/11/22 14:54:31 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1449,7 +1449,6 @@ print_path(PlannerInfo *root, Path *path, int indent)
 				   ((mp->outersortkeys) ? 1 : 0),
 				   ((mp->innersortkeys) ? 1 : 0),
 				   ((mp->materialize_inner) ? 1 : 0));
-			}
 		}
 
 		print_path(root, jp->outerjoinpath, indent + 1);
