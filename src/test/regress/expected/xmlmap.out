@@ -8,685 +8,685 @@ INSERT INTO testxmlschema.test2 VALUES (55, 'abc', 'def', 98.6, 2, 999, 0, '21:0
 SELECT table_to_xml('testxmlschema.test1', false, false, '');
                          table_to_xml                          
 ---------------------------------------------------------------
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row>
-   <a>-1</a>
- </row>
- 
- </test1>
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <a>1</a>                                                   +
+   <b>one</b>                                                 +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>2</a>                                                   +
+   <b>two</b>                                                 +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>-1</a>                                                  +
+ </row>                                                       +
+                                                              +
+ </test1>                                                     +
  
 (1 row)
 
 SELECT table_to_xml('testxmlschema.test1', true, false, 'foo');
                                table_to_xml                                
 ---------------------------------------------------------------------------
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">
- 
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row>
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </row>
- 
- </test1>
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">+
+                                                                          +
+ <row>                                                                    +
+   <a>1</a>                                                               +
+   <b>one</b>                                                             +
+ </row>                                                                   +
+                                                                          +
+ <row>                                                                    +
+   <a>2</a>                                                               +
+   <b>two</b>                                                             +
+ </row>                                                                   +
+                                                                          +
+ <row>                                                                    +
+   <a>-1</a>                                                              +
+   <b xsi:nil="true"/>                                                    +
+ </row>                                                                   +
+                                                                          +
+ </test1>                                                                 +
  
 (1 row)
 
 SELECT table_to_xml('testxmlschema.test1', false, true, '');
                          table_to_xml                          
 ---------------------------------------------------------------
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>1</a>
-   <b>one</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>2</a>
-   <b>two</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>-1</a>
- </test1>
- 
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+   <a>1</a>                                                   +
+   <b>one</b>                                                 +
+ </test1>                                                     +
+                                                              +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+   <a>2</a>                                                   +
+   <b>two</b>                                                 +
+ </test1>                                                     +
+                                                              +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+   <a>-1</a>                                                  +
+ </test1>                                                     +
+                                                              +
  
 (1 row)
 
 SELECT table_to_xml('testxmlschema.test1', true, true, '');
                          table_to_xml                          
 ---------------------------------------------------------------
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>1</a>
-   <b>one</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>2</a>
-   <b>two</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </test1>
- 
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+   <a>1</a>                                                   +
+   <b>one</b>                                                 +
+ </test1>                                                     +
+                                                              +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+   <a>2</a>                                                   +
+   <b>two</b>                                                 +
+ </test1>                                                     +
+                                                              +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+   <a>-1</a>                                                  +
+   <b xsi:nil="true"/>                                        +
+ </test1>                                                     +
+                                                              +
  
 (1 row)
 
 SELECT table_to_xml('testxmlschema.test2', false, false, '');
                          table_to_xml                          
 ---------------------------------------------------------------
- <test2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
- <row>
-   <z>55</z>
-   <y>abc</y>
-   <x>def   </x>
-   <w>98.60</w>
-   <v>2</v>
-   <u>999</u>
-   <t>0</t>
-   <s>21:07:00</s>
-   <r>2009-06-08T21:07:30</r>
-   <q>2009-06-08</q>
-   <o>ABC</o>
-   <n>true</n>
-   <m>WFla</m>
- </row>
- 
- </test2>
+ <test2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <z>55</z>                                                  +
+   <y>abc</y>                                                 +
+   <x>def   </x>                                              +
+   <w>98.60</w>                                               +
+   <v>2</v>                                                   +
+   <u>999</u>                                                 +
+   <t>0</t>                                                   +
+   <s>21:07:00</s>                                            +
+   <r>2009-06-08T21:07:30</r>                                 +
+   <q>2009-06-08</q>                                          +
+   <o>ABC</o>                                                 +
+   <n>true</n>                                                +
+   <m>WFla</m>                                                +
+ </row>                                                       +
+                                                              +
+ </test2>                                                     +
  
 (1 row)
 
 SELECT table_to_xmlschema('testxmlschema.test1', false, false, '');
                                                table_to_xmlschema                                                
 -----------------------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>
- 
+ <xsd:schema                                                                                                    +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                              +
+                                                                                                                +
+ <xsd:simpleType name="INTEGER">                                                                                +
+   <xsd:restriction base="xsd:int">                                                                             +
+     <xsd:maxInclusive value="2147483647"/>                                                                     +
+     <xsd:minInclusive value="-2147483648"/>                                                                    +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                                         +
+   <xsd:restriction base="xsd:string">                                                                          +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                                                +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                                          +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>                   +
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:complexType name="TableType.regression.testxmlschema.test1">                                              +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>                                    +
+                                                                                                                +
  </xsd:schema>
 (1 row)
 
 SELECT table_to_xmlschema('testxmlschema.test1', true, false, '');
                                                table_to_xmlschema                                                
 -----------------------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>
- 
+ <xsd:schema                                                                                                    +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                              +
+                                                                                                                +
+ <xsd:simpleType name="INTEGER">                                                                                +
+   <xsd:restriction base="xsd:int">                                                                             +
+     <xsd:maxInclusive value="2147483647"/>                                                                     +
+     <xsd:minInclusive value="-2147483648"/>                                                                    +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                                         +
+   <xsd:restriction base="xsd:string">                                                                          +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                                                +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>                                        +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>                 +
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:complexType name="TableType.regression.testxmlschema.test1">                                              +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>                                    +
+                                                                                                                +
  </xsd:schema>
 (1 row)
 
 SELECT table_to_xmlschema('testxmlschema.test1', false, true, 'foo');
                                       table_to_xmlschema                                      
 ----------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-     targetNamespace="foo"
-     elementFormDefault="qualified">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>
- 
+ <xsd:schema                                                                                 +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema"                                            +
+     targetNamespace="foo"                                                                   +
+     elementFormDefault="qualified">                                                         +
+                                                                                             +
+ <xsd:simpleType name="INTEGER">                                                             +
+   <xsd:restriction base="xsd:int">                                                          +
+     <xsd:maxInclusive value="2147483647"/>                                                  +
+     <xsd:minInclusive value="-2147483648"/>                                                 +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                      +
+   <xsd:restriction base="xsd:string">                                                       +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                             +
+   <xsd:sequence>                                                                            +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>+
+   </xsd:sequence>                                                                           +
+ </xsd:complexType>                                                                          +
+                                                                                             +
+ <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>                   +
+                                                                                             +
  </xsd:schema>
 (1 row)
 
 SELECT table_to_xmlschema('testxmlschema.test1', true, true, '');
                                        table_to_xmlschema                                       
 ------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>
- 
+ <xsd:schema                                                                                   +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                             +
+                                                                                               +
+ <xsd:simpleType name="INTEGER">                                                               +
+   <xsd:restriction base="xsd:int">                                                            +
+     <xsd:maxInclusive value="2147483647"/>                                                    +
+     <xsd:minInclusive value="-2147483648"/>                                                   +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                        +
+   <xsd:restriction base="xsd:string">                                                         +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                               +
+   <xsd:sequence>                                                                              +
+     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>+
+   </xsd:sequence>                                                                             +
+ </xsd:complexType>                                                                            +
+                                                                                               +
+ <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>                     +
+                                                                                               +
  </xsd:schema>
 (1 row)
 
 SELECT table_to_xmlschema('testxmlschema.test2', false, false, '');
                                                table_to_xmlschema                                                
 -----------------------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="VARCHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="CHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="NUMERIC">
- </xsd:simpleType>
- 
- <xsd:simpleType name="SMALLINT">
-   <xsd:restriction base="xsd:short">
-     <xsd:maxInclusive value="32767"/>
-     <xsd:minInclusive value="-32768"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BIGINT">
-   <xsd:restriction base="xsd:long">
-     <xsd:maxInclusive value="9223372036854775807"/>
-     <xsd:minInclusive value="-9223372036854775808"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="REAL">
-   <xsd:restriction base="xsd:float"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIME">
-   <xsd:restriction base="xsd:time">
-     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIMESTAMP">
-   <xsd:restriction base="xsd:dateTime">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="DATE">
-   <xsd:restriction base="xsd:date">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType mixed="true">
-   <xsd:sequence>
-     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:simpleType name="Domain.regression.public.testxmldomain">
-   <xsd:restriction base="VARCHAR"/>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BOOLEAN">
-   <xsd:restriction base="xsd:boolean"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.bytea">
-   <xsd:restriction base="xsd:base64Binary">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test2">
-   <xsd:sequence>
-     <xsd:element name="z" type="INTEGER" minOccurs="0"></xsd:element>
-     <xsd:element name="y" type="VARCHAR" minOccurs="0"></xsd:element>
-     <xsd:element name="x" type="CHAR" minOccurs="0"></xsd:element>
-     <xsd:element name="w" type="NUMERIC" minOccurs="0"></xsd:element>
-     <xsd:element name="v" type="SMALLINT" minOccurs="0"></xsd:element>
-     <xsd:element name="u" type="BIGINT" minOccurs="0"></xsd:element>
-     <xsd:element name="t" type="REAL" minOccurs="0"></xsd:element>
-     <xsd:element name="s" type="TIME" minOccurs="0"></xsd:element>
-     <xsd:element name="r" type="TIMESTAMP" minOccurs="0"></xsd:element>
-     <xsd:element name="q" type="DATE" minOccurs="0"></xsd:element>
-     <xsd:element name="p" type="XML" minOccurs="0"></xsd:element>
-     <xsd:element name="o" type="Domain.regression.public.testxmldomain" minOccurs="0"></xsd:element>
-     <xsd:element name="n" type="BOOLEAN" minOccurs="0"></xsd:element>
-     <xsd:element name="m" type="UDT.regression.pg_catalog.bytea" minOccurs="0"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType.regression.testxmlschema.test2">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType.regression.testxmlschema.test2" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test2" type="TableType.regression.testxmlschema.test2"/>
- 
+ <xsd:schema                                                                                                    +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                              +
+                                                                                                                +
+ <xsd:simpleType name="INTEGER">                                                                                +
+   <xsd:restriction base="xsd:int">                                                                             +
+     <xsd:maxInclusive value="2147483647"/>                                                                     +
+     <xsd:minInclusive value="-2147483648"/>                                                                    +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="VARCHAR">                                                                                +
+   <xsd:restriction base="xsd:string">                                                                          +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="CHAR">                                                                                   +
+   <xsd:restriction base="xsd:string">                                                                          +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="NUMERIC">                                                                                +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="SMALLINT">                                                                               +
+   <xsd:restriction base="xsd:short">                                                                           +
+     <xsd:maxInclusive value="32767"/>                                                                          +
+     <xsd:minInclusive value="-32768"/>                                                                         +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="BIGINT">                                                                                 +
+   <xsd:restriction base="xsd:long">                                                                            +
+     <xsd:maxInclusive value="9223372036854775807"/>                                                            +
+     <xsd:minInclusive value="-9223372036854775808"/>                                                           +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="REAL">                                                                                   +
+   <xsd:restriction base="xsd:float"></xsd:restriction>                                                         +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="TIME">                                                                                   +
+   <xsd:restriction base="xsd:time">                                                                            +
+     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>                                            +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="TIMESTAMP">                                                                              +
+   <xsd:restriction base="xsd:dateTime">                                                                        +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>              +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="DATE">                                                                                   +
+   <xsd:restriction base="xsd:date">                                                                            +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>                                                       +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:complexType mixed="true">                                                                                 +
+   <xsd:sequence>                                                                                               +
+     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>                       +
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:simpleType name="Domain.regression.public.testxmldomain">                                                 +
+   <xsd:restriction base="VARCHAR"/>                                                                            +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="BOOLEAN">                                                                                +
+   <xsd:restriction base="xsd:boolean"></xsd:restriction>                                                       +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="UDT.regression.pg_catalog.bytea">                                                        +
+   <xsd:restriction base="xsd:base64Binary">                                                                    +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:complexType name="RowType.regression.testxmlschema.test2">                                                +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="z" type="INTEGER" minOccurs="0"></xsd:element>                                          +
+     <xsd:element name="y" type="VARCHAR" minOccurs="0"></xsd:element>                                          +
+     <xsd:element name="x" type="CHAR" minOccurs="0"></xsd:element>                                             +
+     <xsd:element name="w" type="NUMERIC" minOccurs="0"></xsd:element>                                          +
+     <xsd:element name="v" type="SMALLINT" minOccurs="0"></xsd:element>                                         +
+     <xsd:element name="u" type="BIGINT" minOccurs="0"></xsd:element>                                           +
+     <xsd:element name="t" type="REAL" minOccurs="0"></xsd:element>                                             +
+     <xsd:element name="s" type="TIME" minOccurs="0"></xsd:element>                                             +
+     <xsd:element name="r" type="TIMESTAMP" minOccurs="0"></xsd:element>                                        +
+     <xsd:element name="q" type="DATE" minOccurs="0"></xsd:element>                                             +
+     <xsd:element name="p" type="XML" minOccurs="0"></xsd:element>                                              +
+     <xsd:element name="o" type="Domain.regression.public.testxmldomain" minOccurs="0"></xsd:element>           +
+     <xsd:element name="n" type="BOOLEAN" minOccurs="0"></xsd:element>                                          +
+     <xsd:element name="m" type="UDT.regression.pg_catalog.bytea" minOccurs="0"></xsd:element>                  +
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:complexType name="TableType.regression.testxmlschema.test2">                                              +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="row" type="RowType.regression.testxmlschema.test2" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:element name="test2" type="TableType.regression.testxmlschema.test2"/>                                    +
+                                                                                                                +
  </xsd:schema>
 (1 row)
 
 SELECT table_to_xml_and_xmlschema('testxmlschema.test1', false, false, '');
                                            table_to_xml_and_xmlschema                                            
 -----------------------------------------------------------------------------------------------------------------
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="#">
- 
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>
- 
- </xsd:schema>
- 
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row>
-   <a>-1</a>
- </row>
- 
- </test1>
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="#">                +
+                                                                                                                +
+ <xsd:schema                                                                                                    +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                              +
+                                                                                                                +
+ <xsd:simpleType name="INTEGER">                                                                                +
+   <xsd:restriction base="xsd:int">                                                                             +
+     <xsd:maxInclusive value="2147483647"/>                                                                     +
+     <xsd:minInclusive value="-2147483648"/>                                                                    +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                                         +
+   <xsd:restriction base="xsd:string">                                                                          +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                                                +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                                          +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>                   +
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:complexType name="TableType.regression.testxmlschema.test1">                                              +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>                                    +
+                                                                                                                +
+ </xsd:schema>                                                                                                  +
+                                                                                                                +
+ <row>                                                                                                          +
+   <a>1</a>                                                                                                     +
+   <b>one</b>                                                                                                   +
+ </row>                                                                                                         +
+                                                                                                                +
+ <row>                                                                                                          +
+   <a>2</a>                                                                                                     +
+   <b>two</b>                                                                                                   +
+ </row>                                                                                                         +
+                                                                                                                +
+ <row>                                                                                                          +
+   <a>-1</a>                                                                                                    +
+ </row>                                                                                                         +
+                                                                                                                +
+ </test1>                                                                                                       +
  
 (1 row)
 
 SELECT table_to_xml_and_xmlschema('testxmlschema.test1', true, false, '');
                                            table_to_xml_and_xmlschema                                            
 -----------------------------------------------------------------------------------------------------------------
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="#">
- 
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>
- 
- </xsd:schema>
- 
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row>
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </row>
- 
- </test1>
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="#">                +
+                                                                                                                +
+ <xsd:schema                                                                                                    +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                              +
+                                                                                                                +
+ <xsd:simpleType name="INTEGER">                                                                                +
+   <xsd:restriction base="xsd:int">                                                                             +
+     <xsd:maxInclusive value="2147483647"/>                                                                     +
+     <xsd:minInclusive value="-2147483648"/>                                                                    +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                                         +
+   <xsd:restriction base="xsd:string">                                                                          +
+   </xsd:restriction>                                                                                           +
+ </xsd:simpleType>                                                                                              +
+                                                                                                                +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                                                +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>                                        +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>                 +
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:complexType name="TableType.regression.testxmlschema.test1">                                              +
+   <xsd:sequence>                                                                                               +
+     <xsd:element name="row" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                              +
+ </xsd:complexType>                                                                                             +
+                                                                                                                +
+ <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>                                    +
+                                                                                                                +
+ </xsd:schema>                                                                                                  +
+                                                                                                                +
+ <row>                                                                                                          +
+   <a>1</a>                                                                                                     +
+   <b>one</b>                                                                                                   +
+ </row>                                                                                                         +
+                                                                                                                +
+ <row>                                                                                                          +
+   <a>2</a>                                                                                                     +
+   <b>two</b>                                                                                                   +
+ </row>                                                                                                         +
+                                                                                                                +
+ <row>                                                                                                          +
+   <a>-1</a>                                                                                                    +
+   <b xsi:nil="true"/>                                                                                          +
+ </row>                                                                                                         +
+                                                                                                                +
+ </test1>                                                                                                       +
  
 (1 row)
 
 SELECT table_to_xml_and_xmlschema('testxmlschema.test1', false, true, '');
                                   table_to_xml_and_xmlschema                                  
 ----------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>
- 
- </xsd:schema>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>1</a>
-   <b>one</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>2</a>
-   <b>two</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>-1</a>
- </test1>
- 
+ <xsd:schema                                                                                 +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                           +
+                                                                                             +
+ <xsd:simpleType name="INTEGER">                                                             +
+   <xsd:restriction base="xsd:int">                                                          +
+     <xsd:maxInclusive value="2147483647"/>                                                  +
+     <xsd:minInclusive value="-2147483648"/>                                                 +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                      +
+   <xsd:restriction base="xsd:string">                                                       +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                             +
+   <xsd:sequence>                                                                            +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>+
+   </xsd:sequence>                                                                           +
+ </xsd:complexType>                                                                          +
+                                                                                             +
+ <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>                   +
+                                                                                             +
+ </xsd:schema>                                                                               +
+                                                                                             +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">                               +
+                                                                                             +
+   <a>1</a>                                                                                  +
+   <b>one</b>                                                                                +
+ </test1>                                                                                    +
+                                                                                             +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">                               +
+                                                                                             +
+   <a>2</a>                                                                                  +
+   <b>two</b>                                                                                +
+ </test1>                                                                                    +
+                                                                                             +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">                               +
+                                                                                             +
+   <a>-1</a>                                                                                 +
+ </test1>                                                                                    +
+                                                                                             +
  
 (1 row)
 
 SELECT table_to_xml_and_xmlschema('testxmlschema.test1', true, true, 'foo');
                                    table_to_xml_and_xmlschema                                   
 ------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-     targetNamespace="foo"
-     elementFormDefault="qualified">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType.regression.testxmlschema.test1">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>
- 
- </xsd:schema>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">
- 
-   <a>1</a>
-   <b>one</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">
- 
-   <a>2</a>
-   <b>two</b>
- </test1>
- 
- <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">
- 
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </test1>
- 
+ <xsd:schema                                                                                   +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema"                                              +
+     targetNamespace="foo"                                                                     +
+     elementFormDefault="qualified">                                                           +
+                                                                                               +
+ <xsd:simpleType name="INTEGER">                                                               +
+   <xsd:restriction base="xsd:int">                                                            +
+     <xsd:maxInclusive value="2147483647"/>                                                    +
+     <xsd:minInclusive value="-2147483648"/>                                                   +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                        +
+   <xsd:restriction base="xsd:string">                                                         +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:complexType name="RowType.regression.testxmlschema.test1">                               +
+   <xsd:sequence>                                                                              +
+     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>+
+   </xsd:sequence>                                                                             +
+ </xsd:complexType>                                                                            +
+                                                                                               +
+ <xsd:element name="test1" type="RowType.regression.testxmlschema.test1"/>                     +
+                                                                                               +
+ </xsd:schema>                                                                                 +
+                                                                                               +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">                     +
+                                                                                               +
+   <a>1</a>                                                                                    +
+   <b>one</b>                                                                                  +
+ </test1>                                                                                      +
+                                                                                               +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">                     +
+                                                                                               +
+   <a>2</a>                                                                                    +
+   <b>two</b>                                                                                  +
+ </test1>                                                                                      +
+                                                                                               +
+ <test1 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo">                     +
+                                                                                               +
+   <a>-1</a>                                                                                   +
+   <b xsi:nil="true"/>                                                                         +
+ </test1>                                                                                      +
+                                                                                               +
  
 (1 row)
 
 SELECT query_to_xml('SELECT * FROM testxmlschema.test1', false, false, '');
                          query_to_xml                          
 ---------------------------------------------------------------
- <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row>
-   <a>-1</a>
- </row>
- 
- </table>
+ <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <a>1</a>                                                   +
+   <b>one</b>                                                 +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>2</a>                                                   +
+   <b>two</b>                                                 +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>-1</a>                                                  +
+ </row>                                                       +
+                                                              +
+ </table>                                                     +
  
 (1 row)
 
 SELECT query_to_xmlschema('SELECT * FROM testxmlschema.test1', false, false, '');
                                       query_to_xmlschema                                      
 ----------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="table" type="TableType"/>
- 
+ <xsd:schema                                                                                 +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                           +
+                                                                                             +
+ <xsd:simpleType name="INTEGER">                                                             +
+   <xsd:restriction base="xsd:int">                                                          +
+     <xsd:maxInclusive value="2147483647"/>                                                  +
+     <xsd:minInclusive value="-2147483648"/>                                                 +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                      +
+   <xsd:restriction base="xsd:string">                                                       +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:complexType name="RowType">                                                            +
+   <xsd:sequence>                                                                            +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>+
+   </xsd:sequence>                                                                           +
+ </xsd:complexType>                                                                          +
+                                                                                             +
+ <xsd:complexType name="TableType">                                                          +
+   <xsd:sequence>                                                                            +
+     <xsd:element name="row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>            +
+   </xsd:sequence>                                                                           +
+ </xsd:complexType>                                                                          +
+                                                                                             +
+ <xsd:element name="table" type="TableType"/>                                                +
+                                                                                             +
  </xsd:schema>
 (1 row)
 
 SELECT query_to_xml_and_xmlschema('SELECT * FROM testxmlschema.test1', true, true, '');
                                    query_to_xml_and_xmlschema                                   
 ------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="row" type="RowType"/>
- 
- </xsd:schema>
- 
- <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </row>
- 
+ <xsd:schema                                                                                   +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                             +
+                                                                                               +
+ <xsd:simpleType name="INTEGER">                                                               +
+   <xsd:restriction base="xsd:int">                                                            +
+     <xsd:maxInclusive value="2147483647"/>                                                    +
+     <xsd:minInclusive value="-2147483648"/>                                                   +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                        +
+   <xsd:restriction base="xsd:string">                                                         +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:complexType name="RowType">                                                              +
+   <xsd:sequence>                                                                              +
+     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>+
+   </xsd:sequence>                                                                             +
+ </xsd:complexType>                                                                            +
+                                                                                               +
+ <xsd:element name="row" type="RowType"/>                                                      +
+                                                                                               +
+ </xsd:schema>                                                                                 +
+                                                                                               +
+ <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">                                   +
+                                                                                               +
+   <a>1</a>                                                                                    +
+   <b>one</b>                                                                                  +
+ </row>                                                                                        +
+                                                                                               +
+ <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">                                   +
+                                                                                               +
+   <a>2</a>                                                                                    +
+   <b>two</b>                                                                                  +
+ </row>                                                                                        +
+                                                                                               +
+ <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">                                   +
+                                                                                               +
+   <a>-1</a>                                                                                   +
+   <b xsi:nil="true"/>                                                                         +
+ </row>                                                                                        +
+                                                                                               +
  
 (1 row)
 
@@ -694,23 +694,23 @@ DECLARE xc CURSOR WITH HOLD FOR SELECT * FROM testxmlschema.test1 ORDER BY 1, 2;
 SELECT cursor_to_xml('xc'::refcursor, 5, false, true, '');
                         cursor_to_xml                        
 -------------------------------------------------------------
- <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>-1</a>
- </row>
- 
- <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
-   <a>2</a>
-   <b>two</b>
- </row>
- 
+ <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                            +
+   <a>-1</a>                                                +
+ </row>                                                     +
+                                                            +
+ <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                            +
+   <a>1</a>                                                 +
+   <b>one</b>                                               +
+ </row>                                                     +
+                                                            +
+ <row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                            +
+   <a>2</a>                                                 +
+   <b>two</b>                                               +
+ </row>                                                     +
+                                                            +
  
 (1 row)
 
@@ -718,485 +718,485 @@ MOVE FIRST IN xc;
 SELECT cursor_to_xml('xc'::refcursor, 5, true, false, '');
  cursor_to_xml 
 ---------------
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
+ <row>        +
+   <a>1</a>   +
+   <b>one</b> +
+ </row>       +
+              +
+ <row>        +
+   <a>2</a>   +
+   <b>two</b> +
+ </row>       +
+              +
  
 (1 row)
 
 SELECT cursor_to_xmlschema('xc'::refcursor, true, false, '');
                                       cursor_to_xmlschema                                       
 ------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="RowType">
-   <xsd:sequence>
-     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>
-     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:complexType name="TableType">
-   <xsd:sequence>
-     <xsd:element name="row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="table" type="TableType"/>
- 
+ <xsd:schema                                                                                   +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                             +
+                                                                                               +
+ <xsd:simpleType name="INTEGER">                                                               +
+   <xsd:restriction base="xsd:int">                                                            +
+     <xsd:maxInclusive value="2147483647"/>                                                    +
+     <xsd:minInclusive value="-2147483648"/>                                                   +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                        +
+   <xsd:restriction base="xsd:string">                                                         +
+   </xsd:restriction>                                                                          +
+ </xsd:simpleType>                                                                             +
+                                                                                               +
+ <xsd:complexType name="RowType">                                                              +
+   <xsd:sequence>                                                                              +
+     <xsd:element name="a" type="INTEGER" nillable="true"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" nillable="true"></xsd:element>+
+   </xsd:sequence>                                                                             +
+ </xsd:complexType>                                                                            +
+                                                                                               +
+ <xsd:complexType name="TableType">                                                            +
+   <xsd:sequence>                                                                              +
+     <xsd:element name="row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>              +
+   </xsd:sequence>                                                                             +
+ </xsd:complexType>                                                                            +
+                                                                                               +
+ <xsd:element name="table" type="TableType"/>                                                  +
+                                                                                               +
  </xsd:schema>
 (1 row)
 
 SELECT schema_to_xml('testxmlschema', false, true, '');
                              schema_to_xml                             
 -----------------------------------------------------------------------
- <testxmlschema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
- <test1>
- 
-   <a>1</a>
-   <b>one</b>
- </test1>
- 
- <test1>
- 
-   <a>2</a>
-   <b>two</b>
- </test1>
- 
- <test1>
- 
-   <a>-1</a>
- </test1>
- 
- 
- <test2>
- 
-   <z>55</z>
-   <y>abc</y>
-   <x>def   </x>
-   <w>98.60</w>
-   <v>2</v>
-   <u>999</u>
-   <t>0</t>
-   <s>21:07:00</s>
-   <r>2009-06-08T21:07:30</r>
-   <q>2009-06-08</q>
-   <o>ABC</o>
-   <n>true</n>
-   <m>WFla</m>
- </test2>
- 
- 
- </testxmlschema>
+ <testxmlschema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                                      +
+ <test1>                                                              +
+                                                                      +
+   <a>1</a>                                                           +
+   <b>one</b>                                                         +
+ </test1>                                                             +
+                                                                      +
+ <test1>                                                              +
+                                                                      +
+   <a>2</a>                                                           +
+   <b>two</b>                                                         +
+ </test1>                                                             +
+                                                                      +
+ <test1>                                                              +
+                                                                      +
+   <a>-1</a>                                                          +
+ </test1>                                                             +
+                                                                      +
+                                                                      +
+ <test2>                                                              +
+                                                                      +
+   <z>55</z>                                                          +
+   <y>abc</y>                                                         +
+   <x>def   </x>                                                      +
+   <w>98.60</w>                                                       +
+   <v>2</v>                                                           +
+   <u>999</u>                                                         +
+   <t>0</t>                                                           +
+   <s>21:07:00</s>                                                    +
+   <r>2009-06-08T21:07:30</r>                                         +
+   <q>2009-06-08</q>                                                  +
+   <o>ABC</o>                                                         +
+   <n>true</n>                                                        +
+   <m>WFla</m>                                                        +
+ </test2>                                                             +
+                                                                      +
+                                                                      +
+ </testxmlschema>                                                     +
  
 (1 row)
 
 SELECT schema_to_xml('testxmlschema', true, false, '');
                              schema_to_xml                             
 -----------------------------------------------------------------------
- <testxmlschema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
- 
- <test1>
- 
- <row>
-   <a>1</a>
-   <b>one</b>
- </row>
- 
- <row>
-   <a>2</a>
-   <b>two</b>
- </row>
- 
- <row>
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </row>
- 
- </test1>
- 
- <test2>
- 
- <row>
-   <z>55</z>
-   <y>abc</y>
-   <x>def   </x>
-   <w>98.60</w>
-   <v>2</v>
-   <u>999</u>
-   <t>0</t>
-   <s>21:07:00</s>
-   <r>2009-06-08T21:07:30</r>
-   <q>2009-06-08</q>
-   <p xsi:nil="true"/>
-   <o>ABC</o>
-   <n>true</n>
-   <m>WFla</m>
- </row>
- 
- </test2>
- 
- </testxmlschema>
+ <testxmlschema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                                      +
+ <test1>                                                              +
+                                                                      +
+ <row>                                                                +
+   <a>1</a>                                                           +
+   <b>one</b>                                                         +
+ </row>                                                               +
+                                                                      +
+ <row>                                                                +
+   <a>2</a>                                                           +
+   <b>two</b>                                                         +
+ </row>                                                               +
+                                                                      +
+ <row>                                                                +
+   <a>-1</a>                                                          +
+   <b xsi:nil="true"/>                                                +
+ </row>                                                               +
+                                                                      +
+ </test1>                                                             +
+                                                                      +
+ <test2>                                                              +
+                                                                      +
+ <row>                                                                +
+   <z>55</z>                                                          +
+   <y>abc</y>                                                         +
+   <x>def   </x>                                                      +
+   <w>98.60</w>                                                       +
+   <v>2</v>                                                           +
+   <u>999</u>                                                         +
+   <t>0</t>                                                           +
+   <s>21:07:00</s>                                                    +
+   <r>2009-06-08T21:07:30</r>                                         +
+   <q>2009-06-08</q>                                                  +
+   <p xsi:nil="true"/>                                                +
+   <o>ABC</o>                                                         +
+   <n>true</n>                                                        +
+   <m>WFla</m>                                                        +
+ </row>                                                               +
+                                                                      +
+ </test2>                                                             +
+                                                                      +
+ </testxmlschema>                                                     +
  
 (1 row)
 
 SELECT schema_to_xmlschema('testxmlschema', false, true, '');
                                                 schema_to_xmlschema                                                
 -------------------------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="VARCHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="CHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="NUMERIC">
- </xsd:simpleType>
- 
- <xsd:simpleType name="SMALLINT">
-   <xsd:restriction base="xsd:short">
-     <xsd:maxInclusive value="32767"/>
-     <xsd:minInclusive value="-32768"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BIGINT">
-   <xsd:restriction base="xsd:long">
-     <xsd:maxInclusive value="9223372036854775807"/>
-     <xsd:minInclusive value="-9223372036854775808"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="REAL">
-   <xsd:restriction base="xsd:float"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIME">
-   <xsd:restriction base="xsd:time">
-     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIMESTAMP">
-   <xsd:restriction base="xsd:dateTime">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="DATE">
-   <xsd:restriction base="xsd:date">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType mixed="true">
-   <xsd:sequence>
-     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:simpleType name="Domain.regression.public.testxmldomain">
-   <xsd:restriction base="VARCHAR"/>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BOOLEAN">
-   <xsd:restriction base="xsd:boolean"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.bytea">
-   <xsd:restriction base="xsd:base64Binary">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="SchemaType.regression.testxmlschema">
-   <xsd:sequence>
-     <xsd:element name="test1" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>
-     <xsd:element name="test2" type="RowType.regression.testxmlschema.test2" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="testxmlschema" type="SchemaType.regression.testxmlschema"/>
- 
+ <xsd:schema                                                                                                      +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="INTEGER">                                                                                  +
+   <xsd:restriction base="xsd:int">                                                                               +
+     <xsd:maxInclusive value="2147483647"/>                                                                       +
+     <xsd:minInclusive value="-2147483648"/>                                                                      +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                                           +
+   <xsd:restriction base="xsd:string">                                                                            +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="VARCHAR">                                                                                  +
+   <xsd:restriction base="xsd:string">                                                                            +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="CHAR">                                                                                     +
+   <xsd:restriction base="xsd:string">                                                                            +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="NUMERIC">                                                                                  +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="SMALLINT">                                                                                 +
+   <xsd:restriction base="xsd:short">                                                                             +
+     <xsd:maxInclusive value="32767"/>                                                                            +
+     <xsd:minInclusive value="-32768"/>                                                                           +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="BIGINT">                                                                                   +
+   <xsd:restriction base="xsd:long">                                                                              +
+     <xsd:maxInclusive value="9223372036854775807"/>                                                              +
+     <xsd:minInclusive value="-9223372036854775808"/>                                                             +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="REAL">                                                                                     +
+   <xsd:restriction base="xsd:float"></xsd:restriction>                                                           +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="TIME">                                                                                     +
+   <xsd:restriction base="xsd:time">                                                                              +
+     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>                                              +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="TIMESTAMP">                                                                                +
+   <xsd:restriction base="xsd:dateTime">                                                                          +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>                +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="DATE">                                                                                     +
+   <xsd:restriction base="xsd:date">                                                                              +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>                                                         +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:complexType mixed="true">                                                                                   +
+   <xsd:sequence>                                                                                                 +
+     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>                         +
+   </xsd:sequence>                                                                                                +
+ </xsd:complexType>                                                                                               +
+                                                                                                                  +
+ <xsd:simpleType name="Domain.regression.public.testxmldomain">                                                   +
+   <xsd:restriction base="VARCHAR"/>                                                                              +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="BOOLEAN">                                                                                  +
+   <xsd:restriction base="xsd:boolean"></xsd:restriction>                                                         +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="UDT.regression.pg_catalog.bytea">                                                          +
+   <xsd:restriction base="xsd:base64Binary">                                                                      +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:complexType name="SchemaType.regression.testxmlschema">                                                     +
+   <xsd:sequence>                                                                                                 +
+     <xsd:element name="test1" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>+
+     <xsd:element name="test2" type="RowType.regression.testxmlschema.test2" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                                +
+ </xsd:complexType>                                                                                               +
+                                                                                                                  +
+ <xsd:element name="testxmlschema" type="SchemaType.regression.testxmlschema"/>                                   +
+                                                                                                                  +
  </xsd:schema>
 (1 row)
 
 SELECT schema_to_xmlschema('testxmlschema', true, false, '');
                                         schema_to_xmlschema                                        
 ---------------------------------------------------------------------------------------------------
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="VARCHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="CHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="NUMERIC">
- </xsd:simpleType>
- 
- <xsd:simpleType name="SMALLINT">
-   <xsd:restriction base="xsd:short">
-     <xsd:maxInclusive value="32767"/>
-     <xsd:minInclusive value="-32768"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BIGINT">
-   <xsd:restriction base="xsd:long">
-     <xsd:maxInclusive value="9223372036854775807"/>
-     <xsd:minInclusive value="-9223372036854775808"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="REAL">
-   <xsd:restriction base="xsd:float"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIME">
-   <xsd:restriction base="xsd:time">
-     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIMESTAMP">
-   <xsd:restriction base="xsd:dateTime">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="DATE">
-   <xsd:restriction base="xsd:date">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType mixed="true">
-   <xsd:sequence>
-     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:simpleType name="Domain.regression.public.testxmldomain">
-   <xsd:restriction base="VARCHAR"/>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BOOLEAN">
-   <xsd:restriction base="xsd:boolean"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.bytea">
-   <xsd:restriction base="xsd:base64Binary">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="SchemaType.regression.testxmlschema">
-   <xsd:all>
-     <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>
-     <xsd:element name="test2" type="TableType.regression.testxmlschema.test2"/>
-   </xsd:all>
- </xsd:complexType>
- 
- <xsd:element name="testxmlschema" type="SchemaType.regression.testxmlschema"/>
- 
+ <xsd:schema                                                                                      +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                                +
+                                                                                                  +
+ <xsd:simpleType name="INTEGER">                                                                  +
+   <xsd:restriction base="xsd:int">                                                               +
+     <xsd:maxInclusive value="2147483647"/>                                                       +
+     <xsd:minInclusive value="-2147483648"/>                                                      +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                           +
+   <xsd:restriction base="xsd:string">                                                            +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="VARCHAR">                                                                  +
+   <xsd:restriction base="xsd:string">                                                            +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="CHAR">                                                                     +
+   <xsd:restriction base="xsd:string">                                                            +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="NUMERIC">                                                                  +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="SMALLINT">                                                                 +
+   <xsd:restriction base="xsd:short">                                                             +
+     <xsd:maxInclusive value="32767"/>                                                            +
+     <xsd:minInclusive value="-32768"/>                                                           +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="BIGINT">                                                                   +
+   <xsd:restriction base="xsd:long">                                                              +
+     <xsd:maxInclusive value="9223372036854775807"/>                                              +
+     <xsd:minInclusive value="-9223372036854775808"/>                                             +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="REAL">                                                                     +
+   <xsd:restriction base="xsd:float"></xsd:restriction>                                           +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="TIME">                                                                     +
+   <xsd:restriction base="xsd:time">                                                              +
+     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>                              +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="TIMESTAMP">                                                                +
+   <xsd:restriction base="xsd:dateTime">                                                          +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>+
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="DATE">                                                                     +
+   <xsd:restriction base="xsd:date">                                                              +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>                                         +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:complexType mixed="true">                                                                   +
+   <xsd:sequence>                                                                                 +
+     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>         +
+   </xsd:sequence>                                                                                +
+ </xsd:complexType>                                                                               +
+                                                                                                  +
+ <xsd:simpleType name="Domain.regression.public.testxmldomain">                                   +
+   <xsd:restriction base="VARCHAR"/>                                                              +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="BOOLEAN">                                                                  +
+   <xsd:restriction base="xsd:boolean"></xsd:restriction>                                         +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:simpleType name="UDT.regression.pg_catalog.bytea">                                          +
+   <xsd:restriction base="xsd:base64Binary">                                                      +
+   </xsd:restriction>                                                                             +
+ </xsd:simpleType>                                                                                +
+                                                                                                  +
+ <xsd:complexType name="SchemaType.regression.testxmlschema">                                     +
+   <xsd:all>                                                                                      +
+     <xsd:element name="test1" type="TableType.regression.testxmlschema.test1"/>                  +
+     <xsd:element name="test2" type="TableType.regression.testxmlschema.test2"/>                  +
+   </xsd:all>                                                                                     +
+ </xsd:complexType>                                                                               +
+                                                                                                  +
+ <xsd:element name="testxmlschema" type="SchemaType.regression.testxmlschema"/>                   +
+                                                                                                  +
  </xsd:schema>
 (1 row)
 
 SELECT schema_to_xml_and_xmlschema('testxmlschema', true, true, 'foo');
                                             schema_to_xml_and_xmlschema                                            
 -------------------------------------------------------------------------------------------------------------------
- <testxmlschema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo" xsi:schemaLocation="foo #">
- 
- <xsd:schema
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-     targetNamespace="foo"
-     elementFormDefault="qualified">
- 
- <xsd:simpleType name="INTEGER">
-   <xsd:restriction base="xsd:int">
-     <xsd:maxInclusive value="2147483647"/>
-     <xsd:minInclusive value="-2147483648"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.text">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="VARCHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="CHAR">
-   <xsd:restriction base="xsd:string">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="NUMERIC">
- </xsd:simpleType>
- 
- <xsd:simpleType name="SMALLINT">
-   <xsd:restriction base="xsd:short">
-     <xsd:maxInclusive value="32767"/>
-     <xsd:minInclusive value="-32768"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BIGINT">
-   <xsd:restriction base="xsd:long">
-     <xsd:maxInclusive value="9223372036854775807"/>
-     <xsd:minInclusive value="-9223372036854775808"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="REAL">
-   <xsd:restriction base="xsd:float"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIME">
-   <xsd:restriction base="xsd:time">
-     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="TIMESTAMP">
-   <xsd:restriction base="xsd:dateTime">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="DATE">
-   <xsd:restriction base="xsd:date">
-     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType mixed="true">
-   <xsd:sequence>
-     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:simpleType name="Domain.regression.public.testxmldomain">
-   <xsd:restriction base="VARCHAR"/>
- </xsd:simpleType>
- 
- <xsd:simpleType name="BOOLEAN">
-   <xsd:restriction base="xsd:boolean"></xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:simpleType name="UDT.regression.pg_catalog.bytea">
-   <xsd:restriction base="xsd:base64Binary">
-   </xsd:restriction>
- </xsd:simpleType>
- 
- <xsd:complexType name="SchemaType.regression.testxmlschema">
-   <xsd:sequence>
-     <xsd:element name="test1" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>
-     <xsd:element name="test2" type="RowType.regression.testxmlschema.test2" minOccurs="0" maxOccurs="unbounded"/>
-   </xsd:sequence>
- </xsd:complexType>
- 
- <xsd:element name="testxmlschema" type="SchemaType.regression.testxmlschema"/>
- 
- </xsd:schema>
- 
- <test1>
- 
-   <a>1</a>
-   <b>one</b>
- </test1>
- 
- <test1>
- 
-   <a>2</a>
-   <b>two</b>
- </test1>
- 
- <test1>
- 
-   <a>-1</a>
-   <b xsi:nil="true"/>
- </test1>
- 
- 
- <test2>
- 
-   <z>55</z>
-   <y>abc</y>
-   <x>def   </x>
-   <w>98.60</w>
-   <v>2</v>
-   <u>999</u>
-   <t>0</t>
-   <s>21:07:00</s>
-   <r>2009-06-08T21:07:30</r>
-   <q>2009-06-08</q>
-   <p xsi:nil="true"/>
-   <o>ABC</o>
-   <n>true</n>
-   <m>WFla</m>
- </test2>
- 
- 
- </testxmlschema>
+ <testxmlschema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="foo" xsi:schemaLocation="foo #">     +
+                                                                                                                  +
+ <xsd:schema                                                                                                      +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema"                                                                 +
+     targetNamespace="foo"                                                                                        +
+     elementFormDefault="qualified">                                                                              +
+                                                                                                                  +
+ <xsd:simpleType name="INTEGER">                                                                                  +
+   <xsd:restriction base="xsd:int">                                                                               +
+     <xsd:maxInclusive value="2147483647"/>                                                                       +
+     <xsd:minInclusive value="-2147483648"/>                                                                      +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                                           +
+   <xsd:restriction base="xsd:string">                                                                            +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="VARCHAR">                                                                                  +
+   <xsd:restriction base="xsd:string">                                                                            +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="CHAR">                                                                                     +
+   <xsd:restriction base="xsd:string">                                                                            +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="NUMERIC">                                                                                  +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="SMALLINT">                                                                                 +
+   <xsd:restriction base="xsd:short">                                                                             +
+     <xsd:maxInclusive value="32767"/>                                                                            +
+     <xsd:minInclusive value="-32768"/>                                                                           +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="BIGINT">                                                                                   +
+   <xsd:restriction base="xsd:long">                                                                              +
+     <xsd:maxInclusive value="9223372036854775807"/>                                                              +
+     <xsd:minInclusive value="-9223372036854775808"/>                                                             +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="REAL">                                                                                     +
+   <xsd:restriction base="xsd:float"></xsd:restriction>                                                           +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="TIME">                                                                                     +
+   <xsd:restriction base="xsd:time">                                                                              +
+     <xsd:pattern value="\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>                                              +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="TIMESTAMP">                                                                                +
+   <xsd:restriction base="xsd:dateTime">                                                                          +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}T\p{Nd}{2}:\p{Nd}{2}:\p{Nd}{2}(.\p{Nd}+)?"/>                +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="DATE">                                                                                     +
+   <xsd:restriction base="xsd:date">                                                                              +
+     <xsd:pattern value="\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}"/>                                                         +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:complexType mixed="true">                                                                                   +
+   <xsd:sequence>                                                                                                 +
+     <xsd:any name="element" minOccurs="0" maxOccurs="unbounded" processContents="skip"/>                         +
+   </xsd:sequence>                                                                                                +
+ </xsd:complexType>                                                                                               +
+                                                                                                                  +
+ <xsd:simpleType name="Domain.regression.public.testxmldomain">                                                   +
+   <xsd:restriction base="VARCHAR"/>                                                                              +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="BOOLEAN">                                                                                  +
+   <xsd:restriction base="xsd:boolean"></xsd:restriction>                                                         +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:simpleType name="UDT.regression.pg_catalog.bytea">                                                          +
+   <xsd:restriction base="xsd:base64Binary">                                                                      +
+   </xsd:restriction>                                                                                             +
+ </xsd:simpleType>                                                                                                +
+                                                                                                                  +
+ <xsd:complexType name="SchemaType.regression.testxmlschema">                                                     +
+   <xsd:sequence>                                                                                                 +
+     <xsd:element name="test1" type="RowType.regression.testxmlschema.test1" minOccurs="0" maxOccurs="unbounded"/>+
+     <xsd:element name="test2" type="RowType.regression.testxmlschema.test2" minOccurs="0" maxOccurs="unbounded"/>+
+   </xsd:sequence>                                                                                                +
+ </xsd:complexType>                                                                                               +
+                                                                                                                  +
+ <xsd:element name="testxmlschema" type="SchemaType.regression.testxmlschema"/>                                   +
+                                                                                                                  +
+ </xsd:schema>                                                                                                    +
+                                                                                                                  +
+ <test1>                                                                                                          +
+                                                                                                                  +
+   <a>1</a>                                                                                                       +
+   <b>one</b>                                                                                                     +
+ </test1>                                                                                                         +
+                                                                                                                  +
+ <test1>                                                                                                          +
+                                                                                                                  +
+   <a>2</a>                                                                                                       +
+   <b>two</b>                                                                                                     +
+ </test1>                                                                                                         +
+                                                                                                                  +
+ <test1>                                                                                                          +
+                                                                                                                  +
+   <a>-1</a>                                                                                                      +
+   <b xsi:nil="true"/>                                                                                            +
+ </test1>                                                                                                         +
+                                                                                                                  +
+                                                                                                                  +
+ <test2>                                                                                                          +
+                                                                                                                  +
+   <z>55</z>                                                                                                      +
+   <y>abc</y>                                                                                                     +
+   <x>def   </x>                                                                                                  +
+   <w>98.60</w>                                                                                                   +
+   <v>2</v>                                                                                                       +
+   <u>999</u>                                                                                                     +
+   <t>0</t>                                                                                                       +
+   <s>21:07:00</s>                                                                                                +
+   <r>2009-06-08T21:07:30</r>                                                                                     +
+   <q>2009-06-08</q>                                                                                              +
+   <p xsi:nil="true"/>                                                                                            +
+   <o>ABC</o>                                                                                                     +
+   <n>true</n>                                                                                                    +
+   <m>WFla</m>                                                                                                    +
+ </test2>                                                                                                         +
+                                                                                                                  +
+                                                                                                                  +
+ </testxmlschema>                                                                                                 +
  
 (1 row)
 
