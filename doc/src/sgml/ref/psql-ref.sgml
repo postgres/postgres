@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.233 2009/11/22 05:20:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.234 2009/11/22 22:06:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -282,8 +282,8 @@ PostgreSQL documentation
       <term><option>--pset <replaceable class="parameter">assignment</replaceable></></term>
       <listitem>
       <para>
-      Allows you to specify printing options in the style of
-      <command>\pset</command> on the command line. Note that here you
+      Specifies printing options, in the style of
+      <command>\pset</command>. Note that here you
       have to separate name and value with an equal sign instead of a
       space. Thus to set the output format to LaTeX, you could write
       <literal>-P format=latex</literal>.
@@ -366,7 +366,7 @@ PostgreSQL documentation
       <term><option>--table-attr <replaceable class="parameter">table_options</replaceable></></term>
       <listitem>
       <para>
-      Allows you to specify options to be placed within the
+      Specifies options to be placed within the
       <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag. See
       <command>\pset</command> for details.
       </para>
@@ -1677,15 +1677,20 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\pset <replaceable class="parameter">parameter</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
+        <term><literal>\pset <replaceable class="parameter">option</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
 
         <listitem>
         <para>
-        This command sets options affecting the output of query result
-        tables. <replaceable class="parameter">parameter</replaceable>
-        describes which option is to be set. The semantics of
-        <replaceable class="parameter">value</replaceable> depend
-        thereon.
+        This command sets options affecting the output of query result tables.
+        <replaceable class="parameter">option</replaceable>
+        indicates which option is to be set. The semantics of
+        <replaceable class="parameter">value</replaceable> vary depending
+        on the selected option.  For some options, omitting <replaceable
+        class="parameter">value</replaceable> causes the option to be toggled
+        or unset, as described under the particular option.  If no such
+        behavior is mentioned, then omitting
+        <replaceable class="parameter">value</replaceable> just results in
+        the current setting being displayed.
         </para>
 
         <para>
@@ -1704,27 +1709,31 @@ lo_import 152801
           </para>
 
           <para>
-          <quote>Unaligned</quote> writes all columns of a row on a
+          <literal>unaligned</> format writes all columns of a row on one
           line, separated by the currently active field separator. This
-          is intended to create output that might be intended to be read
-          in by other programs (tab-separated, comma-separated).
-          <quote>Aligned</quote> mode is the standard, human-readable,
+          is useful for creating output that might be intended to be read
+          in by other programs (for example, tab-separated or comma-separated
+          format).
+          </para>
+
+          <para>
+          <literal>aligned</literal> format is the standard, human-readable,
           nicely formatted text output that is default.
           </para>
 
           <para>
-          <quote>Wrapped</quote> is like <literal>aligned</> but wraps
-          output to the specified width.  If <literal>\pset columns</> is
-          zero (the default), <literal>wrapped</> mode only affects screen
-          output and wrapped width is controlled by the environment
-          variable <envar>COLUMNS</> or the detected screen width.  If
-          <literal>\pset columns</> is set to a non-zero value, all output
-          is wrapped, including file and pipe output.
+          <literal>wrapped</> format is like <literal>aligned</> but wraps
+          wide data values across lines to make the output fit in the target
+          column width.  The target width is determined as described under
+          the <literal>columns</> option.  Note that <application>psql</> will
+          not attempt to wrap column header titles; therefore,
+          <literal>wrapped</> format behaves the same as <literal>aligned</>
+          if the total width needed for column headers exceeds the target.
           </para>
 
           <para>
-          The <quote><acronym>HTML</acronym></quote> and
-          <quote>LaTeX</quote> modes put out tables that are intended to
+          The <literal>html</>, <literal>latex</>, and <literal>troff-ms</>
+          formats put out tables that are intended to
           be included in documents using the respective mark-up
           language. They are not complete documents! (This might not be
           so dramatic in <acronym>HTML</acronym>, but in LaTeX you must
@@ -1737,10 +1746,16 @@ lo_import 152801
           <term><literal>columns</literal></term>
           <listitem>
           <para>
-          Controls the target width for the <literal>wrapped</> format,
-          and width for determining if wide output requires the pager.
-          Zero (the default) causes the <literal>wrapped</> format to
-          affect only screen output.
+          Sets the target width for the <literal>wrapped</> format, and also
+          the width limit for determining whether output is wide enough to
+          require the pager.
+          Zero (the default) causes the target width to be controlled by the
+          environment variable <envar>COLUMNS</>, or the detected screen width
+          if <envar>COLUMNS</> is not set.
+          In addition, if <literal>columns</> is zero then the
+          <literal>wrapped</> format only affects screen output.
+          If <literal>columns</> is nonzero then file and pipe output is
+          wrapped to that width as well.
           </para>
           </listitem>
           </varlistentry>
@@ -1749,12 +1764,13 @@ lo_import 152801
           <term><literal>border</literal></term>
           <listitem>
           <para>
-          The second argument must be a number. In general, the higher
+          The <replaceable class="parameter">value</replaceable> must be a
+          number. In general, the higher
           the number the more borders and lines the tables will have,
           but this depends on the particular format. In
-          <acronym>HTML</acronym> mode, this will translate directly
-          into the <literal>border=...</literal> attribute, in the
-          others only values 0 (no border), 1 (internal dividing lines),
+          <acronym>HTML</acronym> format, this will translate directly
+          into the <literal>border=...</literal> attribute; in the
+          other formats only values 0 (no border), 1 (internal dividing lines),
           and 2 (table frame) make sense.
           </para>
           </listitem>
@@ -1769,16 +1785,18 @@ lo_import 152801
           or <literal>unicode</literal>.
           Unique abbreviations are allowed.  (That would mean one
           letter is enough.)
+          This option only affects the <literal>aligned</> and
+          <literal>wrapped</> output formats.
           </para>
 
           <para>
           <literal>ascii</literal> style uses plain <acronym>ASCII</acronym>
           characters.  Newlines in data are shown using
           a <literal>+</literal> symbol in the right-hand margin.
-          When the data wraps from one line
-          to the next without a newline character, a dot (<literal>.</>)
-          is shown in the right-hand margin of the first line, and
-          again in the left-hand margin of the following line.
+          When the <literal>wrapped</literal> format wraps data from
+          one line to the next without a newline character, a dot
+          (<literal>.</>) is shown in the right-hand margin of the first line,
+          and again in the left-hand margin of the following line.
           </para>
 
           <para>
@@ -1787,7 +1805,7 @@ lo_import 152801
           in <productname>PostgreSQL</productname> 8.4 and earlier.
           Newlines in data are shown using a <literal>:</literal>
           symbol in place of the left-hand column separator.
-          When the data wraps from one line
+          When the data is wrapped from one line
           to the next without a newline character, a <literal>;</>
           symbol is used in place of the left-hand column separator.
           </para>
@@ -1795,16 +1813,16 @@ lo_import 152801
           <para>
           <literal>unicode</literal> style uses Unicode box-drawing characters.
           Newlines in data are shown using a carriage return symbol
-          in the right-hand margin.  When the data wraps from one line
+          in the right-hand margin.  When the data is wrapped from one line
           to the next without a newline character, an ellipsis symbol
           is shown in the right-hand margin of the first line, and
           again in the left-hand margin of the following line.
           </para>
 
           <para>
-          When the selected output format is one that draws lines or boxes
-          around the data, this setting also determines the characters
-          with which the lines are drawn.
+          When the <literal>border</> setting is greater than zero,
+          this option also determines the characters
+          with which the border lines are drawn.
           Plain <acronym>ASCII</acronym> characters work everywhere, but
           Unicode characters look nicer on displays that recognize them.
           </para>
@@ -1821,18 +1839,15 @@ lo_import 152801
           <term><literal>expanded</literal> (or <literal>x</literal>)</term>
           <listitem>
           <para>
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable expanded mode.  If the second
-          argument is not provided then we will toggle between regular and
-          expanded format. When expanded format is enabled, query results
+          If <replaceable class="parameter">value</replaceable> is specified
+          it must be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable expanded mode.  If <replaceable
+          class="parameter">value</replaceable> is omitted the command toggles
+          between regular and expanded mode.
+          When expanded mode is enabled, query results
           are displayed in two columns, with the column name on the left and
           the data on the right. This mode is useful if the data wouldn't fit
           on the screen in the normal <quote>horizontal</quote> mode.
-          </para>
-
-          <para>
-          Expanded mode is supported by all four output formats.
           </para>
           </listitem>
           </varlistentry>
@@ -1841,10 +1856,9 @@ lo_import 152801
           <term><literal>null</literal></term>
           <listitem>
           <para>
-          The second argument is a string that should be printed
-          whenever a column is null. The default is not to print
-          anything, which can easily be mistaken for, say, an empty
-          string. Thus, one might choose to write <literal>\pset null
+          Sets the string to be printed in place of a null value.
+          The default is to print nothing, which can easily be mistaken for
+          an empty string. For example, one might prefer <literal>\pset null
           '(null)'</literal>.
           </para>
           </listitem>
@@ -1855,7 +1869,7 @@ lo_import 152801
           <listitem>
           <para>
           Specifies the field separator to be used in unaligned output
-          mode. That way one can create, for example, tab- or
+          format. That way one can create, for example, tab- or
           comma-separated output, which other programs might prefer. To
           set a tab as field separator, type <literal>\pset fieldsep
           '\t'</literal>. The default field separator is
@@ -1868,11 +1882,12 @@ lo_import 152801
           <term><literal>footer</literal></term>
           <listitem>
           <para>
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable display of the default footer
-          <literal>(x rows)</literal>.  If the second argument is not
-          provided then we will toggle between on and off.
+          If <replaceable class="parameter">value</replaceable> is specified
+          it must be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable display of the table footer
+          (the <literal>(<replaceable>n</> rows)</literal> count).
+          If <replaceable class="parameter">value</replaceable> is omitted the
+          command toggles footer display on or off.
           </para>
           </listitem>
           </varlistentry>
@@ -1881,12 +1896,12 @@ lo_import 152801
           <term><literal>numericlocale</literal></term>
           <listitem>
           <para>
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable display of a locale-aware character
-          to separate groups of digits to the left of the decimal marker.  If
-          the second argument is not provided then we will toggle between
-          on and off.
+          If <replaceable class="parameter">value</replaceable> is specified
+          it must be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable display of a locale-specific character
+          to separate groups of digits to the left of the decimal marker.
+          If <replaceable class="parameter">value</replaceable> is omitted the
+          command toggles between regular and locale-specific numeric output.
           </para>
           </listitem>
           </varlistentry>
@@ -1896,7 +1911,7 @@ lo_import 152801
           <listitem>
           <para>
           Specifies the record (line) separator to use in unaligned
-          output mode. The default is a newline character.
+          output format. The default is a newline character.
           </para>
           </listitem>
           </varlistentry>
@@ -1905,48 +1920,53 @@ lo_import 152801
           <term><literal>tuples_only</literal> (or <literal>t</literal>)</term>
           <listitem>
           <para>
-          You can specify an optional second argument, if it is provided it
-          may be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable the tuples only mode.  If the
-          second argument is not provided then we will toggle between tuples
-          only and full display. Full display shows extra information such
-          as column headers, titles, and various footers. In tuples only
+          If <replaceable class="parameter">value</replaceable> is specified
+          it must be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable tuples-only mode.
+          If <replaceable class="parameter">value</replaceable> is omitted the
+          command toggles between regular and tuples-only output.
+          Regular output includes extra information such
+          as column headers, titles, and various footers. In tuples-only
           mode, only actual table data is shown.
           </para>
           </listitem>
           </varlistentry>
 
           <varlistentry>
-          <term><literal>title [ <replaceable class="parameter">text</replaceable> ]</literal></term>
+          <term><literal>title</literal></term>
           <listitem>
           <para>
           Sets the table title for any subsequently printed tables. This
           can be used to give your output descriptive tags. If no
-          argument is given, the title is unset.
+          <replaceable class="parameter">value</replaceable> is given,
+          the title is unset.
           </para>
           </listitem>
           </varlistentry>
 
           <varlistentry>
-          <term><literal>tableattr</literal> (or <literal>T</literal>) <literal>[ <replaceable class="parameter">text</replaceable> ]</literal></term>
+          <term><literal>tableattr</literal> (or <literal>T</literal>)</term>
           <listitem>
           <para>
-          Allows you to specify any attributes to be placed inside the
-          <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag. This
+          Specifies attributes to be placed inside the
+          <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag in
+          <literal>html</> output format. This
           could for example be <literal>cellpadding</literal> or
           <literal>bgcolor</literal>. Note that you probably don't want
           to specify <literal>border</literal> here, as that is already
           taken care of by <literal>\pset border</literal>.
+          If no
+          <replaceable class="parameter">value</replaceable> is given,
+          the table attributes are unset.
           </para>
           </listitem>
           </varlistentry>
-
 
           <varlistentry>
           <term><literal>pager</literal></term>
           <listitem>
           <para>
-          Controls use of a pager for query and <application>psql</>
+          Controls use of a pager program for query and <application>psql</>
           help output. If the environment variable <envar>PAGER</envar>
           is set, the output is piped to the specified program.
           Otherwise a platform-dependent default (such as
@@ -1954,12 +1974,15 @@ lo_import 152801
           </para>
 
           <para>
-          When the pager is <literal>off</>, the pager is not used. When the pager
-          is <literal>on</>, the pager is used only when appropriate, i.e. the
+          When the <literal>pager</> option is <literal>off</>, the pager
+          program is not used. When the <literal>pager</> option is
+          <literal>on</>, the pager is used when appropriate, i.e., when the
           output is to a terminal and will not fit on the screen.
-          <literal>\pset pager</> turns the pager on and off. Pager can
-          also be set to <literal>always</>, which causes the pager to be
-          always used.
+          The <literal>pager</> option can also be set to <literal>always</>,
+          which causes the pager to be used for all terminal output regardless
+          of whether it fits on the screen.  <literal>\pset pager</>
+          without a <replaceable class="parameter">value</replaceable>
+          toggles pager use on and off.
           </para>
           </listitem>
           </varlistentry>
@@ -1967,7 +1990,7 @@ lo_import 152801
         </para>
 
         <para>
-        Illustrations on how these different formats look can be seen in
+        Illustrations of how these different formats look can be seen in
         the <xref linkend="APP-PSQL-examples"
         endterm="APP-PSQL-examples-title"> section.
         </para>
@@ -1982,8 +2005,8 @@ lo_import 152801
 
         <note>
         <para>
-        It is an error to call <command>\pset</command> without
-        arguments. In the future this call might show the current status
+        It is an error to call <command>\pset</command> without any
+        arguments. In the future this case might show the current status
         of all printing options.
         </para>
         </note>
@@ -2092,9 +2115,9 @@ lo_import 152801
         <term><literal>\T <replaceable class="parameter">table_options</replaceable></literal></term>
         <listitem>
         <para>
-        Allows you to specify attributes to be placed within the
-        <sgmltag>table</sgmltag> tag in <acronym>HTML</acronym> tabular
-        output mode. This command is equivalent to <literal>\pset
+        Specifies attributes to be placed within the
+        <sgmltag>table</sgmltag> tag in <acronym>HTML</acronym>
+        output format. This command is equivalent to <literal>\pset
         tableattr <replaceable
         class="parameter">table_options</replaceable></literal>.
         </para>
